@@ -24,9 +24,10 @@ def load_word_list(file_path: str) -> Set[str]:
 def generate_random_grid(width: int, height: int) -> List[List[str]]:
     """Generate a completely random grid of letters."""
     letter_dist = {
-        'A': 800, 'B': 230, 'C': 360, 'D': 410, 'E': 1180, 'F': 150, 'G': 300, 'H': 240, 'I': 750,
-        'J': 20, 'K': 140, 'L': 560, 'M': 280, 'N': 580, 'O': 610, 'P': 290, 'Q': 20, 'R': 730,
-        'S': 940, 'T': 570, 'U': 370, 'V': 100, 'W': 120, 'X': 30, 'Y': 180, 'Z': 40
+        'A': 343, 'B': 100, 'C': 157, 'D': 161, 'E': 455, 'F': 64, 'G': 106, 'H': 108, 'I': 326,
+        'J': 11, 'K': 64, 'L': 236, 'M': 131, 'N': 232, 'O': 266, 'P': 123, 'Q': 8, 'R': 272,
+        'S': 283, 'T': 224, 'U': 168, 'V': 40, 'W': 49,
+         'X': 15, 'Y': 92, 'Z': 22
     }
     total = sum(letter_dist.values())
     letters = list(letter_dist.keys())

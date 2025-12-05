@@ -121,6 +121,10 @@ document.addEventListener('DOMContentLoaded', () => {
             container.innerHTML = `
                 <label>Min Difficult Words</label>
                 <input type="number" id="param-min-diff" value="5" min="0">
+                <label>Max Attempts per iteration</label>
+                <input type="number" id="param-max-attempts" value="100" min="10" max="10000">
+                <label>Difficult % Required</label>
+                <input type="number" id="param-diff-pct" value="0" min="0" max="100" step="5">
             `;
         } else if (algoId === 'checkerboard') {
             container.innerHTML = `
@@ -163,6 +167,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 params.density_type = document.getElementById('param-density-type').value;
             } else if (algoId === 'optimized') {
                 params.min_difficult_words = parseInt(document.getElementById('param-min-diff').value);
+                params.max_attempts = parseInt(document.getElementById('param-max-attempts').value);
+                params.difficult_percentage = parseFloat(document.getElementById('param-diff-pct').value);
             } else if (algoId === 'checkerboard') {
                 params.iterations = parseInt(document.getElementById('param-iterations').value);
             } else if (algoId === 'checkerboard_v2') {
@@ -198,7 +204,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Store current puzzle data for filtering
+    let currentPuzzleData = null;
+
     function renderSandboxResult(data) {
+        currentPuzzleData = data;
+
         // Basic counts
         document.getElementById('metric-total').textContent = data.found_words.length;
         document.getElementById('metric-difficult').textContent = data.difficult_words.length;
@@ -216,12 +227,36 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('metric-long').textContent = longWords.length;
 
         renderGrid(sandboxGrid, data.grid);
+        updateWordList();
+    }
 
-        sandboxWords.innerHTML = data.found_words.map(word => {
-            const isDiff = data.difficult_words.includes(word);
+    function updateWordList() {
+        if (!currentPuzzleData) return;
+
+        const filter = document.getElementById('word-filter')?.value || 'all';
+        let words = currentPuzzleData.found_words;
+
+        // Apply filter
+        switch (filter) {
+            case 'difficult':
+                words = currentPuzzleData.difficult_words;
+                break;
+            case '6plus':
+                words = currentPuzzleData.found_words.filter(w => w.length >= 6);
+                break;
+            case 'diff6plus':
+                words = currentPuzzleData.difficult_words.filter(w => w.length >= 6);
+                break;
+        }
+
+        sandboxWords.innerHTML = words.map(word => {
+            const isDiff = currentPuzzleData.difficult_words.includes(word);
             return `<div class="word-item ${isDiff ? 'difficult' : ''}">${word}</div>`;
         }).join('');
     }
+
+    // Word filter change listener
+    document.getElementById('word-filter')?.addEventListener('change', updateWordList);
 
     function renderGrid(container, grid) {
         container.innerHTML = '';

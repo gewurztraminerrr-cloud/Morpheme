@@ -85,7 +85,15 @@
                     <div class="game-layout">
                         <div id="sandbox-grid" class="boggle-grid"></div>
                         <div class="word-list-container">
-                            <h3>Found Words</h3>
+                            <div class="word-list-header">
+                                <h3>Words</h3>
+                                <select id="word-filter">
+                                    <option value="all">All Words</option>
+                                    <option value="difficult">Difficult Only</option>
+                                    <option value="6plus">6+ Letters</option>
+                                    <option value="diff6plus">Difficult 6+</option>
+                                </select>
+                            </div>
                             <div id="sandbox-words" class="word-list"></div>
                         </div>
                     </div>

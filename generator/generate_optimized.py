@@ -290,6 +290,7 @@ def generate_puzzle(
 ) -> Dict:
     """
     Standard interface for puzzle generation.
+    Supports adaptive mode that keeps generating until target ratio is reached.
     """
     if params is None:
         params = {}
@@ -304,20 +305,64 @@ def generate_puzzle(
     min_difficult_words = params.get('min_difficult_words', 3)
     max_attempts = params.get('max_attempts', 100)
     
+    # Adaptive mode params
+    adaptive = params.get('adaptive', False)
+    target_ratio = params.get('target_ratio', 0.8)
+    max_adaptive_iterations = params.get('max_adaptive_iterations', 50)
+    
     if seed is None:
         seed = random.randint(1, 1000000)
+    
+    best_result = None
+    best_ratio = 0.0
+    
+    iterations = max_adaptive_iterations if adaptive else 1
+    
+    for iteration in range(iterations):
+        current_seed = seed + (iteration * max_attempts)
         
-    grid, used_seed, found_words, difficult_words = generate_puzzle_internal(
-        word_list,
-        min_word_count=min_word_count,
-        seed=seed,
-        difficult_list=difficult_list,
-        difficult_percentage=difficult_percentage,
-        max_attempts=max_attempts,
-        grid_width=width,
-        grid_height=height,
-        min_difficult_words=min_difficult_words
-    )
+        try:
+            grid, used_seed, found_words, difficult_words = generate_puzzle_internal(
+                word_list,
+                min_word_count=min_word_count,
+                seed=current_seed,
+                difficult_list=difficult_list,
+                difficult_percentage=difficult_percentage,
+                max_attempts=max_attempts,
+                grid_width=width,
+                grid_height=height,
+                min_difficult_words=min_difficult_words
+            )
+            
+            # Calculate ratio for 6+ letter words
+            words_6plus = [w for w in found_words if len(w) >= 6]
+            diff_6plus = [w for w in difficult_words if len(w) >= 6]
+            ratio = len(diff_6plus) / len(words_6plus) if words_6plus else 0.0
+            
+            if adaptive:
+                print(f"Adaptive iteration {iteration + 1}: ratio={ratio*100:.1f}%, diff_6+={len(diff_6plus)}, total_6+={len(words_6plus)}")
+            
+            # Track best result
+            if ratio > best_ratio or best_result is None:
+                best_ratio = ratio
+                best_result = (grid, used_seed, found_words, difficult_words)
+            
+            # Check if target reached
+            if ratio >= target_ratio:
+                if adaptive:
+                    print(f"Target ratio {target_ratio*100:.0f}% reached!")
+                break
+                
+        except Exception as e:
+            if not adaptive:
+                raise
+            print(f"Iteration {iteration + 1} failed: {e}")
+            continue
+    
+    if best_result is None:
+        raise Exception(f"Failed to generate puzzle after {iterations} adaptive iterations")
+    
+    grid, used_seed, found_words, difficult_words = best_result
     
     return {
         'grid': grid,
@@ -325,7 +370,8 @@ def generate_puzzle(
         'difficult_words': difficult_words,
         'score': len(difficult_words) * 10 + len(found_words),
         'metadata': {
-            'seed': used_seed
+            'seed': used_seed,
+            'ratio': best_ratio
         },
         'seed': used_seed
     }
