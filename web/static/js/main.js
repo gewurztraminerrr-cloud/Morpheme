@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <label>Iterations</label>
                 <input type="number" id="param-iterations" value="2" min="1" max="10">
             `;
-        } else if (algoId === 'checkerboard_v2') {
+        } else if (algoId === 'checkerboard_v2' || algoId === 'checkerboard_v3') {
             container.innerHTML = `
                 <label>Strategy</label>
                 <select id="param-strategy">
@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 params.difficult_percentage = parseFloat(document.getElementById('param-diff-pct').value);
             } else if (algoId === 'checkerboard') {
                 params.iterations = parseInt(document.getElementById('param-iterations').value);
-            } else if (algoId === 'checkerboard_v2') {
+            } else if (algoId === 'checkerboard_v2' || algoId === 'checkerboard_v3') {
                 params.strategy = document.getElementById('param-strategy').value;
                 params.iterations = parseInt(document.getElementById('param-iterations').value);
                 if (document.getElementById('param-adaptive').checked) {

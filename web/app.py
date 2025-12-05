@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, jsonify
 # Add parent directory to path to allow imports from generator
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from generator import adaptive_puzzle, checkerboard_puzzle, checkerboard_v2, generate_optimized, hybrid_puzzle
+from generator import adaptive_puzzle, checkerboard_puzzle, checkerboard_v2, checkerboard_v3, generate_optimized, hybrid_puzzle
 
 app = Flask(__name__)
 
@@ -18,6 +18,7 @@ ALGORITHMS = {
     'adaptive': adaptive_puzzle,
     'checkerboard': checkerboard_puzzle,
     'checkerboard_v2': checkerboard_v2,
+    'checkerboard_v3': checkerboard_v3,
     'optimized': generate_optimized,
     'hybrid': hybrid_puzzle
 }
@@ -33,6 +34,7 @@ def get_algorithms():
             {'id': 'adaptive', 'name': 'Adaptive (Radial)', 'description': 'Balanced difficulty using radial density.'},
             {'id': 'checkerboard', 'name': 'Checkerboard', 'description': 'Distinct difficult word optimization.'},
             {'id': 'checkerboard_v2', 'name': 'Checkerboard v2', 'description': 'Enum strategies: total, distinct, or 6+ ratio.'},
+            {'id': 'checkerboard_v3', 'name': 'Checkerboard v3 (Parallel)', 'description': 'Parallel Trie-based optimization with persistent pool.'},
             {'id': 'optimized', 'name': 'Optimized (Legacy)', 'description': 'Original optimization algorithm.'},
             {'id': 'hybrid', 'name': 'Hybrid Beam', 'description': 'High difficulty using beam search.'}
         ]
