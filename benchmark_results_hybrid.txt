@@ -1,0 +1,380 @@
+Benchmarking 4 generators (10 iterations each)...
+Grid Size: 6x6
+--------------------------------------------------------------------------------
+Generator            | Avg Time   | Avg Words  | Avg Diff   | Max Diff   | Score     
+--------------------------------------------------------------------------------
+Adaptive (Radial)    | 1.0940     | 560.0      | 52.1       | 88         | 1081.0    
+Checkerboard         | 0.7139     | 578.6      | 44.8       | 71         | 160.1     
+Loading word lists...
+Using all 278950 words for initial placement
+Word lists loaded in 0.29 seconds
+Built prefix set in 0.46 seconds
+Attempt 1/100 with seed 42...
+  Placed first word: PIGGIE
+  Placed 8 words
+  Found 618 words in 0.01 seconds
+Success! Found 618 words in seed #42
+Attempt completed in 0.47 seconds
+Loading word lists...
+Using all 278950 words for initial placement
+Word lists loaded in 0.30 seconds
+Built prefix set in 0.45 seconds
+Attempt 1/100 with seed 43...
+  Placed first word: ANTISTATIC
+  Placed 11 words
+  Found 670 words in 0.01 seconds
+  Insufficient difficult words percentage: 46.9% < 50.0%
+Attempt 2/100 with seed 44...
+  Placed first word: ILLIBERALIZE
+  Placed 9 words
+Attempt 3/100 with seed 45...
+  Placed first word: ENDOLYMPH
+  Placed 7 words
+Attempt 4/100 with seed 46...
+  Placed first word: TRIAXIALITY
+  Placed 5 words
+Attempt 5/100 with seed 47...
+  Placed first word: GLYCERIDE
+  Placed 7 words
+Attempt 6/100 with seed 48...
+  Placed first word: NEBULOSITIES
+  Placed 9 words
+Attempt 7/100 with seed 49...
+  Placed first word: BANKROLLER
+  Placed 8 words
+  Found 466 words in 0.01 seconds
+Success! Found 466 words in seed #49
+Attempt completed in 0.01 seconds
+Loading word lists...
+Using all 278950 words for initial placement
+Word lists loaded in 0.31 seconds
+Built prefix set in 0.44 seconds
+Attempt 1/100 with seed 44...
+  Placed first word: ILLIBERALIZE
+  Placed 9 words
+Attempt 2/100 with seed 45...
+  Placed first word: ENDOLYMPH
+  Placed 7 words
+Attempt 3/100 with seed 46...
+  Placed first word: TRIAXIALITY
+  Placed 5 words
+Attempt 4/100 with seed 47...
+  Placed first word: GLYCERIDE
+  Placed 7 words
+Attempt 5/100 with seed 48...
+  Placed first word: NEBULOSITIES
+  Placed 9 words
+Attempt 6/100 with seed 49...
+  Placed first word: BANKROLLER
+  Placed 8 words
+  Found 466 words in 0.01 seconds
+Success! Found 466 words in seed #49
+Attempt completed in 0.01 seconds
+Loading word lists...
+Using all 278950 words for initial placement
+Word lists loaded in 0.28 seconds
+Built prefix set in 0.41 seconds
+Attempt 1/100 with seed 45...
+  Placed first word: ENDOLYMPH
+  Placed 7 words
+Attempt 2/100 with seed 46...
+  Placed first word: TRIAXIALITY
+  Placed 5 words
+Attempt 3/100 with seed 47...
+  Placed first word: GLYCERIDE
+  Placed 7 words
+Attempt 4/100 with seed 48...
+  Placed first word: NEBULOSITIES
+  Placed 9 words
+Attempt 5/100 with seed 49...
+  Placed first word: BANKROLLER
+  Placed 8 words
+  Found 466 words in 0.01 seconds
+Success! Found 466 words in seed #49
+Attempt completed in 0.01 seconds
+Loading word lists...
+Using all 278950 words for initial placement
+Word lists loaded in 0.30 seconds
+Built prefix set in 0.49 seconds
+Attempt 1/100 with seed 46...
+  Placed first word: TRIAXIALITY
+  Placed 5 words
+Attempt 2/100 with seed 47...
+  Placed first word: GLYCERIDE
+  Placed 7 words
+Attempt 3/100 with seed 48...
+  Placed first word: NEBULOSITIES
+  Placed 9 words
+Attempt 4/100 with seed 49...
+  Placed first word: BANKROLLER
+  Placed 8 words
+  Found 466 words in 0.01 seconds
+Success! Found 466 words in seed #49
+Attempt completed in 0.01 seconds
+Loading word lists...
+Using all 278950 words for initial placement
+Word lists loaded in 0.31 seconds
+Built prefix set in 0.43 seconds
+Attempt 1/100 with seed 47...
+  Placed first word: GLYCERIDE
+  Placed 7 words
+Attempt 2/100 with seed 48...
+  Placed first word: NEBULOSITIES
+  Placed 9 words
+Attempt 3/100 with seed 49...
+  Placed first word: BANKROLLER
+  Placed 8 words
+  Found 466 words in 0.01 seconds
+Success! Found 466 words in seed #49
+Attempt completed in 0.01 seconds
+Loading word lists...
+Using all 278950 words for initial placement
+Word lists loaded in 0.32 seconds
+Built prefix set in 0.41 seconds
+Attempt 1/100 with seed 48...
+  Placed first word: NEBULOSITIES
+  Placed 9 words
+Attempt 2/100 with seed 49...
+  Placed first word: BANKROLLER
+  Placed 8 words
+  Found 466 words in 0.01 seconds
+Success! Found 466 words in seed #49
+Attempt completed in 0.01 seconds
+Loading word lists...
+Using all 278950 words for initial placement
+Word lists loaded in 0.29 seconds
+Built prefix set in 0.47 seconds
+Attempt 1/100 with seed 49...
+  Placed first word: BANKROLLER
+  Placed 8 words
+  Found 466 words in 0.01 seconds
+Success! Found 466 words in seed #49
+Attempt completed in 0.09 seconds
+Loading word lists...
+Using all 278950 words for initial placement
+Word lists loaded in 0.31 seconds
+Built prefix set in 0.45 seconds
+Attempt 1/100 with seed 50...
+  Placed first word: MARIMBAPHONE
+  Placed 6 words
+Attempt 2/100 with seed 51...
+  Placed first word: DOCETIC
+  Placed 6 words
+Attempt 3/100 with seed 52...
+  Placed first word: YOKELISH
+  Placed 10 words
+Attempt 4/100 with seed 53...
+  Placed first word: PEBBLEDASH
+  Placed 7 words
+Attempt 5/100 with seed 54...
+  Placed first word: UNDOUBLE
+  Placed 8 words
+Attempt 6/100 with seed 55...
+  Placed first word: BLOWDART
+  Placed 7 words
+Attempt 7/100 with seed 56...
+  Placed first word: WHIMMIER
+  Placed 7 words
+Attempt 8/100 with seed 57...
+  Placed first word: APPETENT
+  Placed 8 words
+Attempt 9/100 with seed 58...
+  Placed first word: OPTOPHONE
+  Placed 10 words
+  Found 553 words in 0.02 seconds
+  Insufficient difficult words percentage: 37.1% < 50.0%
+Attempt 10/100 with seed 59...
+  Placed first word: DIAMAGNETIC
+  Placed 8 words
+Attempt 11/100 with seed 60...
+  Placed first word: FESTALLY
+  Placed 7 words
+  Found 703 words in 0.01 seconds
+  Insufficient difficult words percentage: 44.5% < 50.0%
+Attempt 12/100 with seed 61...
+  Placed first word: MAMMON
+  Placed 7 words
+Attempt 13/100 with seed 62...
+  Placed first word: UNROMANTICISED
+  Placed 7 words
+  Found 1482 words in 0.03 seconds
+  Insufficient difficult words percentage: 33.9% < 50.0%
+Attempt 14/100 with seed 63...
+  Placed first word: IXODID
+  Placed 8 words
+Attempt 15/100 with seed 64...
+  Placed first word: LIGNEOUS
+  Placed 9 words
+Attempt 16/100 with seed 65...
+  Placed first word: IMPROPRIATOR
+  Placed 7 words
+Attempt 17/100 with seed 66...
+  Placed first word: BATHYMETRICALLY
+  Placed 7 words
+Attempt 18/100 with seed 67...
+  Placed first word: BEGIFT
+  Placed 8 words
+Attempt 19/100 with seed 68...
+  Placed first word: SACCHAROMETER
+  Placed 7 words
+Attempt 20/100 with seed 69...
+  Placed first word: PSEUDOMEMBRANE
+  Placed 7 words
+  Found 1295 words in 0.02 seconds
+  Insufficient difficult words percentage: 37.3% < 50.0%
+Attempt 21/100 with seed 70...
+  Placed first word: UNDAUNTEDLY
+  Placed 8 words
+  Found 634 words in 0.01 seconds
+  Insufficient difficult words percentage: 32.1% < 50.0%
+Attempt 22/100 with seed 71...
+  Placed first word: FORETOLD
+  Placed 7 words
+Attempt 23/100 with seed 72...
+  Placed first word: BEDELLSHIP
+  Placed 8 words
+  Found 926 words in 0.02 seconds
+  Insufficient difficult words percentage: 29.7% < 50.0%
+Attempt 24/100 with seed 73...
+  Placed first word: EPILOG
+  Placed 10 words
+Attempt 25/100 with seed 74...
+  Placed first word: TELEJOURNALIST
+  Placed 7 words
+Attempt 26/100 with seed 75...
+  Placed first word: JUDDER
+  Placed 7 words
+Attempt 27/100 with seed 76...
+  Placed first word: HAMMERLOCK
+  Placed 10 words
+Attempt 28/100 with seed 77...
+  Placed first word: SOUNDINGLY
+  Placed 9 words
+Attempt 29/100 with seed 78...
+  Placed first word: STATIONAL
+  Placed 7 words
+  Found 1145 words in 0.02 seconds
+  Insufficient difficult words percentage: 39.4% < 50.0%
+Attempt 30/100 with seed 79...
+  Placed first word: CIRCULATABLE
+  Placed 5 words
+Attempt 31/100 with seed 80...
+  Placed first word: ENDOCARDIAL
+  Placed 7 words
+  Found 745 words in 0.01 seconds
+Success! Found 745 words in seed #80
+Attempt completed in 0.02 seconds
+Loading word lists...
+Using all 278950 words for initial placement
+Word lists loaded in 0.30 seconds
+Built prefix set in 0.45 seconds
+Attempt 1/100 with seed 51...
+  Placed first word: DOCETIC
+  Placed 6 words
+Attempt 2/100 with seed 52...
+  Placed first word: YOKELISH
+  Placed 10 words
+Attempt 3/100 with seed 53...
+  Placed first word: PEBBLEDASH
+  Placed 7 words
+Attempt 4/100 with seed 54...
+  Placed first word: UNDOUBLE
+  Placed 8 words
+Attempt 5/100 with seed 55...
+  Placed first word: BLOWDART
+  Placed 7 words
+Attempt 6/100 with seed 56...
+  Placed first word: WHIMMIER
+  Placed 7 words
+Attempt 7/100 with seed 57...
+  Placed first word: APPETENT
+  Placed 8 words
+Attempt 8/100 with seed 58...
+  Placed first word: OPTOPHONE
+  Placed 10 words
+  Found 553 words in 0.02 seconds
+  Insufficient difficult words percentage: 37.1% < 50.0%
+Attempt 9/100 with seed 59...
+  Placed first word: DIAMAGNETIC
+  Placed 8 words
+Attempt 10/100 with seed 60...
+  Placed first word: FESTALLY
+  Placed 7 words
+  Found 703 words in 0.01 seconds
+  Insufficient difficult words percentage: 44.5% < 50.0%
+Attempt 11/100 with seed 61...
+  Placed first word: MAMMON
+  Placed 7 words
+Attempt 12/100 with seed 62...
+  Placed first word: UNROMANTICISED
+  Placed 7 words
+  Found 1482 words in 0.03 seconds
+  Insufficient difficult words percentage: 33.9% < 50.0%
+Attempt 13/100 with seed 63...
+  Placed first word: IXODID
+  Placed 8 words
+Attempt 14/100 with seed 64...
+  Placed first word: LIGNEOUS
+  Placed 9 words
+Attempt 15/100 with seed 65...
+  Placed first word: IMPROPRIATOR
+  Placed 7 words
+Attempt 16/100 with seed 66...
+  Placed first word: BATHYMETRICALLY
+  Placed 7 words
+Attempt 17/100 with seed 67...
+  Placed first word: BEGIFT
+  Placed 8 words
+Attempt 18/100 with seed 68...
+  Placed first word: SACCHAROMETER
+  Placed 7 words
+Attempt 19/100 with seed 69...
+  Placed first word: PSEUDOMEMBRANE
+  Placed 7 words
+  Found 1295 words in 0.02 seconds
+  Insufficient difficult words percentage: 37.3% < 50.0%
+Attempt 20/100 with seed 70...
+  Placed first word: UNDAUNTEDLY
+  Placed 8 words
+  Found 634 words in 0.01 seconds
+  Insufficient difficult words percentage: 32.1% < 50.0%
+Attempt 21/100 with seed 71...
+  Placed first word: FORETOLD
+  Placed 7 words
+Attempt 22/100 with seed 72...
+  Placed first word: BEDELLSHIP
+  Placed 8 words
+  Found 926 words in 0.01 seconds
+  Insufficient difficult words percentage: 29.7% < 50.0%
+Attempt 23/100 with seed 73...
+  Placed first word: EPILOG
+  Placed 10 words
+Attempt 24/100 with seed 74...
+  Placed first word: TELEJOURNALIST
+  Placed 7 words
+Attempt 25/100 with seed 75...
+  Placed first word: JUDDER
+  Placed 7 words
+Attempt 26/100 with seed 76...
+  Placed first word: HAMMERLOCK
+  Placed 10 words
+Attempt 27/100 with seed 77...
+  Placed first word: SOUNDINGLY
+  Placed 9 words
+Attempt 28/100 with seed 78...
+  Placed first word: STATIONAL
+  Placed 7 words
+  Found 1145 words in 0.02 seconds
+  Insufficient difficult words percentage: 39.4% < 50.0%
+Attempt 29/100 with seed 79...
+  Placed first word: CIRCULATABLE
+  Placed 5 words
+Attempt 30/100 with seed 80...
+  Placed first word: ENDOCARDIAL
+  Placed 7 words
+  Found 745 words in 0.02 seconds
+Success! Found 745 words in seed #80
+Attempt completed in 0.02 seconds
+Optimized (Legacy)   | 1.1231     | 537.0      | 59.9       | 85         | 1136.0    
+Hybrid Beam          | 30.8945    | 759.0      | 82.2       | 117        | 1581.0    
+--------------------------------------------------------------------------------

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morpheme - Word Puzzle Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Morpheme</h1>
+            <nav>
+                <button class="nav-btn active" data-tab="sandbox">Sandbox</button>
+                <button class="nav-btn" data-tab="play">Play Mode</button>
+            </nav>
+        </header>
+
+        <main>
+            <!-- SANDBOX MODE -->
+            <section id="sandbox" class="tab-content active">
+                <div class="controls-panel">
+                    <div class="control-group">
+                        <label>Algorithm</label>
+                        <select id="algo-select"></select>
+                        <p id="algo-desc" class="helper-text"></p>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Grid Size</label>
+                        <div class="row">
+                            <input type="number" id="grid-width" value="6" min="3" max="10">
+                            <span>x</span>
+                            <input type="number" id="grid-height" value="6" min="3" max="10">
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Seed (Optional)</label>
+                        <input type="number" id="seed-input" placeholder="Random">
+                    </div>
+
+                    <div id="algo-params" class="control-group"></div>
+
+                    <button id="generate-btn" class="primary-btn">Generate Puzzle</button>
+                </div>
+
+                <div class="results-panel">
+                    <div class="metrics-bar">
+                        <div class="metric">
+                            <span class="label">Total</span>
+                            <span class="value" id="metric-total">0</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Difficult</span>
+                            <span class="value" id="metric-difficult">0</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">6+ Words</span>
+                            <span class="value" id="metric-6plus">0</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Diff 6+</span>
+                            <span class="value" id="metric-diff-6plus">0</span>
+                        </div>
+                        <div class="metric highlight">
+                            <span class="label">6+ Ratio</span>
+                            <span class="value" id="metric-ratio">0%</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Long 7+</span>
+                            <span class="value" id="metric-long">0</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Seed</span>
+                            <span class="value" id="metric-seed">-</span>
+                        </div>
+                    </div>
+
+                    <div class="game-layout">
+                        <div id="sandbox-grid" class="boggle-grid"></div>
+                        <div class="word-list-container">
+                            <h3>Found Words</h3>
+                            <div id="sandbox-words" class="word-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PLAY MODE -->
+            <section id="play" class="tab-content">
+                <div id="play-setup" class="setup-screen">
+                    <h2>Select Difficulty</h2>
+                    <div class="difficulty-cards">
+                        <div class="card" data-difficulty="easy">
+                            <h3>Easy</h3>
+                            <p>Standard grid, classic feel.</p>
+                        </div>
+                        <div class="card" data-difficulty="medium">
+                            <h3>Medium</h3>
+                            <p>Denser letter distribution.</p>
+                        </div>
+                        <div class="card" data-difficulty="hard">
+                            <h3>Hard</h3>
+                            <p>Challenging vocabulary.</p>
+                        </div>
+                    </div>
+                    <button id="start-game-btn" class="primary-btn" disabled>Start Game</button>
+                </div>
+
+                <div id="play-area" class="game-screen hidden">
+                    <div class="game-header">
+                        <div class="timer">00:00</div>
+                        <button id="end-game-btn" class="secondary-btn">End Game</button>
+                    </div>
+
+                    <div class="game-layout">
+                        <div class="left-col">
+                            <div id="play-grid" class="boggle-grid interactive"></div>
+                            <div class="input-area">
+                                <input type="text" id="word-input" placeholder="Type word and hit Enter"
+                                    autocomplete="off">
+                                <div id="message-area"></div>
+                            </div>
+                        </div>
+
+                        <div class="right-col">
+                            <div class="score-board">
+                                <div class="score-item">
+                                    <span class="label">Score</span>
+                                    <span class="value" id="current-score">0</span>
+                                </div>
+                                <div class="score-item">
+                                    <span class="label">Found</span>
+                                    <span class="value" id="words-found-count">0</span>
+                                </div>
+                            </div>
+                            <div class="found-words-list" id="player-words"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="play-summary" class="summary-screen hidden">
+                    <h2>Game Over!</h2>
+                    <div class="summary-stats">
+                        <div class="stat">
+                            <span class="label">Your Score</span>
+                            <span class="value" id="final-score">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="label">Possible Score</span>
+                            <span class="value" id="possible-score">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="label">Percentage</span>
+                            <span class="value" id="score-percentage">0%</span>
+                        </div>
+                    </div>
+                    <div class="missed-words">
+                        <h3>Missed Difficult Words</h3>
+                        <div id="missed-words-list" class="word-list"></div>
+                    </div>
+                    <button id="play-again-btn" class="primary-btn">Play Again</button>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+
+</html>

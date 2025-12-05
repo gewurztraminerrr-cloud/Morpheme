@@ -1,0 +1,50 @@
+Benchmarking 4 generators (2 iterations each)...
+Grid Size: 6x6
+--------------------------------------------------------------------------------
+Generator            | Avg Time   | Avg Words  | Avg Diff   | Max Diff   | Score     
+--------------------------------------------------------------------------------
+Adaptive (Radial)    | 1.0082     | 712.5      | 76.0       | 81         | 1472.5    
+Checkerboard         | 0.6859     | 617.0      | 38.0       | 44         | 160.0     
+Loading word lists...
+Using all 278950 words for initial placement
+Word lists loaded in 0.22 seconds
+Built prefix set in 0.36 seconds
+Attempt 1/100 with seed 42...
+  Placed first word: PIGGIE
+  Placed 8 words
+  Found 618 words in 0.01 seconds
+Success! Found 618 words in seed #42
+Attempt completed in 0.21 seconds
+Loading word lists...
+Using all 278950 words for initial placement
+Word lists loaded in 0.22 seconds
+Built prefix set in 0.37 seconds
+Attempt 1/100 with seed 43...
+  Placed first word: ANTISTATIC
+  Placed 11 words
+  Found 670 words in 0.02 seconds
+  Insufficient difficult words percentage: 46.9% < 50.0%
+Attempt 2/100 with seed 44...
+  Placed first word: ILLIBERALIZE
+  Placed 9 words
+Attempt 3/100 with seed 45...
+  Placed first word: ENDOLYMPH
+  Placed 7 words
+Attempt 4/100 with seed 46...
+  Placed first word: TRIAXIALITY
+  Placed 5 words
+Attempt 5/100 with seed 47...
+  Placed first word: GLYCERIDE
+  Placed 7 words
+Attempt 6/100 with seed 48...
+  Placed first word: NEBULOSITIES
+  Placed 9 words
+Attempt 7/100 with seed 49...
+  Placed first word: BANKROLLER
+  Placed 8 words
+  Found 466 words in 0.01 seconds
+Success! Found 466 words in seed #49
+Attempt completed in 0.01 seconds
+Optimized (Legacy)   | 0.8825     | 542.0      | 46.5       | 56         | 1007.0    
+Hybrid Beam          | 24.2498    | 733.0      | 90.5       | 111        | 1638.0    
+--------------------------------------------------------------------------------
