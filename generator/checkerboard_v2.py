@@ -4,6 +4,9 @@ from collections import Counter
 from enum import Enum
 import string
 import time
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import multiprocessing
+import copy
 
 class OptimizeStrategy(Enum):
     """Strategy for optimizing IO cells."""
@@ -72,6 +75,91 @@ def find_all_word_occurrences(grid: List[List[str]], word_set: Set[str], prefixe
             dfs(i, j, grid[i][j], {(i, j)})
     return word_counts
 
+def find_words_through_cell(grid: List[List[str]], target_row: int, target_col: int, 
+                            word_set: Set[str], prefixes: Set[str]) -> Counter:
+    """
+    Find all words that pass through a specific cell.
+    Much faster than full grid search when only one cell changed.
+    """
+    height = len(grid)
+    width = len(grid[0]) if height > 0 else 0
+    word_counts = Counter()
+    target = (target_row, target_col)
+    
+    def dfs(i: int, j: int, current_word: str, path: List[Tuple[int, int]], has_target: bool):
+        """DFS that tracks whether path includes target cell."""
+        if current_word and current_word not in prefixes and current_word not in word_set:
+            return
+        
+        path_set = set(path)
+        
+        # Only count words that pass through target cell
+        if len(current_word) >= 3 and current_word in word_set and has_target:
+            word_counts[current_word] += 1
+        
+        if len(current_word) >= 16:
+            return
+            
+        for di in [-1, 0, 1]:
+            for dj in [-1, 0, 1]:
+                if di == 0 and dj == 0:
+                    continue
+                ni, nj = i + di, j + dj
+                if 0 <= ni < height and 0 <= nj < width and (ni, nj) not in path_set:
+                    next_has_target = has_target or (ni, nj) == target
+                    dfs(ni, nj, current_word + grid[ni][nj], path + [(ni, nj)], next_has_target)
+    
+    # Only start from cells that could reach the target (within path length)
+    # For a 6x6 grid, max path is 16, so all cells could potentially reach target
+    for i in range(height):
+        for j in range(width):
+            starts_at_target = (i, j) == target
+            dfs(i, j, grid[i][j], [(i, j)], starts_at_target)
+    
+    return word_counts
+
+def evaluate_cell_fast(grid: List[List[str]], r: int, c: int, 
+                       base_counts: Counter, word_set: Set[str], 
+                       difficult_set: Set[str], prefixes: Set[str],
+                       scorer) -> Tuple[str, float]:
+    """
+    Evaluate all letters for a cell using differential updates.
+    Instead of full grid search, only recompute words through the changed cell.
+    """
+    original_letter = grid[r][c]
+    
+    # Get words that pass through this cell with original letter
+    original_cell_words = find_words_through_cell(grid, r, c, word_set, prefixes)
+    
+    best_letter = original_letter
+    best_score = -1.0
+    
+    for letter in string.ascii_uppercase:
+        grid[r][c] = letter
+        
+        if letter == original_letter:
+            # Use cached counts
+            score, _ = scorer(base_counts, difficult_set)
+        else:
+            # Get words with new letter
+            new_cell_words = find_words_through_cell(grid, r, c, word_set, prefixes)
+            
+            # Compute new total: base - old_cell_words + new_cell_words
+            new_counts = base_counts.copy()
+            new_counts.subtract(original_cell_words)
+            new_counts.update(new_cell_words)
+            # Remove zero/negative counts
+            new_counts = Counter({k: v for k, v in new_counts.items() if v > 0})
+            
+            score, _ = scorer(new_counts, difficult_set)
+        
+        if score > best_score:
+            best_score = score
+            best_letter = letter
+    
+    grid[r][c] = original_letter  # Restore
+    return best_letter, best_score
+
 # ============ SCORING FUNCTIONS ============
 
 def score_total_difficult(word_counts: Counter, difficult_set: Set[str]) -> Tuple[float, Dict]:
@@ -119,6 +207,62 @@ def get_scorer(strategy: OptimizeStrategy):
 
 # ============ OPTIMIZATION ============
 
+# Worker process globals - loaded once per process via initializer
+_worker_word_set = None
+_worker_difficult_set = None
+_worker_prefixes = None
+
+def _init_worker(word_set, difficult_set, prefixes):
+    """Initialize worker process with shared data."""
+    global _worker_word_set, _worker_difficult_set, _worker_prefixes
+    _worker_word_set = word_set
+    _worker_difficult_set = difficult_set
+    _worker_prefixes = prefixes
+
+def _evaluate_cell_letters(args):
+    """Worker function to evaluate all letters for a single cell using fast differential updates."""
+    grid_copy, r, c, strategy_value, base_counts = args
+    
+    # Use pre-loaded global data
+    global _worker_word_set, _worker_difficult_set, _worker_prefixes
+    
+    # Recreate strategy enum from value
+    strategy = OptimizeStrategy(strategy_value)
+    scorer = get_scorer(strategy)
+    
+    original_letter = grid_copy[r][c]
+    
+    # Get words that pass through this cell with original letter
+    original_cell_words = find_words_through_cell(grid_copy, r, c, _worker_word_set, _worker_prefixes)
+    
+    best_letter = original_letter
+    best_score = -1.0
+    
+    for letter in string.ascii_uppercase:
+        grid_copy[r][c] = letter
+        
+        if letter == original_letter:
+            # Use base counts directly
+            score, _ = scorer(base_counts, _worker_difficult_set)
+        else:
+            # Get words with new letter
+            new_cell_words = find_words_through_cell(grid_copy, r, c, _worker_word_set, _worker_prefixes)
+            
+            # Compute new total: base - old_cell_words + new_cell_words
+            new_counts = Counter(base_counts)
+            new_counts.subtract(original_cell_words)
+            new_counts.update(new_cell_words)
+            # Remove zero/negative counts
+            new_counts = Counter({k: v for k, v in new_counts.items() if v > 0})
+            
+            score, _ = scorer(new_counts, _worker_difficult_set)
+        
+        if score > best_score:
+            best_score = score
+            best_letter = letter
+    
+    return r, c, best_letter, best_score
+
 def optimize_grid_iterative(
     grid: List[List[str]], 
     word_set: Set[str], 
@@ -126,14 +270,18 @@ def optimize_grid_iterative(
     prefixes: Set[str], 
     strategy: OptimizeStrategy,
     invert_checkerboard: bool = False, 
-    verbose: bool = True
+    verbose: bool = True,
+    parallel: bool = True,
+    num_workers: int = None
 ) -> Tuple[List[List[str]], int, Dict]:
     """
     Optimize the grid using the checkerboard pattern.
     Returns (grid, improvements_count, final_stats).
+    
+    With parallel=True, uses multiple CPU cores to evaluate cells faster.
     """
     if verbose:
-        print(f"  Optimization pass ({strategy.value}, invert={invert_checkerboard})...")
+        print(f"  Optimization pass ({strategy.value}, invert={invert_checkerboard}, parallel={parallel})...")
     start = time.time()
     
     height = len(grid)
@@ -145,7 +293,6 @@ def optimize_grid_iterative(
                          if is_optimizable_cell(i, j) != invert_checkerboard]
     random.shuffle(optimizable_cells)
     
-    alphabet = string.ascii_uppercase
     improvements = 0
     
     # Get baseline
@@ -155,23 +302,59 @@ def optimize_grid_iterative(
     if verbose:
         print(f"    Baseline: {baseline_stats}")
     
-    for r, c in optimizable_cells:
-        original_letter = grid[r][c]
-        best_letter = original_letter
-        best_score = -1.0
+    if parallel and len(optimizable_cells) > 4:
+        # Parallel optimization - process all cells at once
+        if num_workers is None:
+            num_workers = min(multiprocessing.cpu_count(), 32)
         
-        for letter in alphabet:
-            grid[r][c] = letter
-            word_counts = find_all_word_occurrences(grid, word_set, prefixes)
-            score, _ = scorer(word_counts, difficult_set)
+        if verbose:
+            print(f"    Using {num_workers} workers for {len(optimizable_cells)} cells (differential mode)...")
+        
+        # Prepare work items with base counts for differential updates
+        work_items = []
+        for r, c in optimizable_cells:
+            grid_copy = [row[:] for row in grid]
+            work_items.append((grid_copy, r, c, strategy.value, dict(baseline_counts)))
+        
+        # Process all cells in parallel - initializer loads word sets once per worker
+        with ProcessPoolExecutor(
+            max_workers=num_workers,
+            initializer=_init_worker,
+            initargs=(word_set, difficult_set, prefixes)
+        ) as executor:
+            results = list(executor.map(_evaluate_cell_letters, work_items))
+        
+        # Apply all results to the grid
+        for r, c, best_letter, best_score in results:
+            if grid[r][c] != best_letter:
+                grid[r][c] = best_letter
+                improvements += 1
+        
+        if verbose:
+            elapsed = time.time() - start
+            cells_per_sec = len(optimizable_cells) / elapsed if elapsed > 0 else 0
+            print(f"    Parallel: {len(optimizable_cells)} cells, {cells_per_sec:.1f} cells/sec")
+    else:
+        # Sequential fallback
+        alphabet = string.ascii_uppercase
+        
+        for r, c in optimizable_cells:
+            original_letter = grid[r][c]
+            best_letter = original_letter
+            best_score = -1.0
             
-            if score > best_score:
-                best_score = score
-                best_letter = letter
-        
-        grid[r][c] = best_letter
-        if best_letter != original_letter:
-            improvements += 1
+            for letter in alphabet:
+                grid[r][c] = letter
+                word_counts = find_all_word_occurrences(grid, word_set, prefixes)
+                score, _ = scorer(word_counts, difficult_set)
+                
+                if score > best_score:
+                    best_score = score
+                    best_letter = letter
+            
+            grid[r][c] = best_letter
+            if best_letter != original_letter:
+                improvements += 1
     
     # Final stats
     final_counts = find_all_word_occurrences(grid, word_set, prefixes)
