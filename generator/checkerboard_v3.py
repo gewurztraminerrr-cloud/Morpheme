@@ -453,7 +453,6 @@ def optimize_grid_iterative(
     difficult_set: Set[str], 
     prefixes: Set[str], 
     strategy: OptimizeStrategy,
-    invert_checkerboard: bool = False, 
     verbose: bool = True,
     parallel: bool = True,
     num_workers: int = None
@@ -465,7 +464,7 @@ def optimize_grid_iterative(
     With parallel=True, uses multiple CPU cores to evaluate cells faster.
     """
     if verbose:
-        print(f"  Optimization pass ({strategy.value}, invert={invert_checkerboard}, parallel={parallel})...")
+        print(f"  Optimization pass ({strategy.value}, parallel={parallel})...")
     start = time.time()
     
     height = len(grid)
@@ -474,7 +473,7 @@ def optimize_grid_iterative(
 
     # Identify IO cells (Checkerboard)
     optimizable_cells = [(i, j) for i in range(height) for j in range(width) 
-                         if is_optimizable_cell(i, j) != invert_checkerboard]
+                         if is_optimizable_cell(i, j)]
     random.shuffle(optimizable_cells)
     
     improvements = 0
@@ -571,7 +570,6 @@ def optimize_until_target(
         grid, improvements, stats = optimize_grid_iterative(
             grid, word_set, difficult_set, prefixes,
             strategy=OptimizeStrategy.TOTAL_DIFFICULT,
-            invert_checkerboard=(i % 2 == 1),
             verbose=verbose
         )
         if improvements == 0:
@@ -586,7 +584,6 @@ def optimize_until_target(
         grid, improvements, stats = optimize_grid_iterative(
             grid, word_set, difficult_set, prefixes,
             strategy=OptimizeStrategy.DIFFICULT_RATIO_6PLUS,
-            invert_checkerboard=(i % 2 == 1),
             verbose=verbose
         )
         
@@ -662,7 +659,6 @@ def generate_single_puzzle(
             grid, _, final_stats = optimize_grid_iterative(
                 grid, word_set, difficult_set, prefixes,
                 strategy=strategy,
-                invert_checkerboard=(i % 2 == 1),
                 verbose=verbose
             )
     
@@ -728,7 +724,7 @@ if __name__ == "__main__":
     print("=== Testing DISTINCT_DIFFICULT strategy ===")
     result = generate_puzzle(
         width=6, height=6,
-        word_list_path="generator/CSW22.txt",
+        word_list_path="generator/TWL.txt",
         difficult_list_path="generator/difficult.txt",
         params={'strategy': 'distinct_difficult', 'iterations': 2, 'verbose': True}
     )
@@ -744,7 +740,7 @@ if __name__ == "__main__":
     
     result = generate_puzzle(
         width=6, height=6,
-        word_list_path="generator/CSW22.txt",
+        word_list_path="generator/TWL.txt",
         difficult_list_path="generator/difficult.txt",
         params={'adaptive': True, 'target_ratio': 0.80, 'verbose': True}
     )

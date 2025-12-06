@@ -86,7 +86,7 @@ def main():
     # Configuration
     WIDTH = 6
     HEIGHT = 6
-    WORD_LIST = "generator/CSW22.txt"
+    WORD_LIST = "generator/TWL.txt"
     DIFFICULT_LIST = "generator/difficult.txt"
     ITERATIONS = 2
     

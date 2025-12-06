@@ -704,7 +704,7 @@ if __name__ == "__main__":
     # Example usage
     WIDTH = 6
     HEIGHT = 6
-    WORD_LIST = "generator/CSW22.txt"
+    WORD_LIST = "generator/TWL.txt"
     DIFFICULT_LIST = "generator/difficult.txt"
     
     result = generate_puzzle(

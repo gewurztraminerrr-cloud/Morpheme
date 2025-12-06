@@ -384,7 +384,7 @@ if __name__ == "__main__":
         result = generate_puzzle(
             width=6,
             height=6,
-            word_list_path="generator/CSW22.txt",
+            word_list_path="generator/TWL.txt",
             difficult_list_path="generator/difficult.txt",
             seed=25364461,
             params={
