@@ -94,7 +94,7 @@ def optimize_grid_iterative(grid: List[List[str]], word_set: Set[str], difficult
 
     # Identify IO cells (Checkerboard)
     optimizable_cells = [(i, j) for i in range(height) for j in range(width) if is_optimizable_cell(i, j) == invert_checkerboard]
-    random.shuffle(optimizable_cells)
+    #random.shuffle(optimizable_cells)
     
     alphabet = string.ascii_uppercase
     
