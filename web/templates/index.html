@@ -24,78 +24,79 @@
         <main>
             <!-- SANDBOX MODE -->
             <section id="sandbox" class="tab-content active">
-                <div class="controls-panel">
-                    <div class="control-group">
-                        <label>Algorithm</label>
-                        <select id="algo-select"></select>
-                        <p id="algo-desc" class="helper-text"></p>
+                <div class="metrics-bar">
+                    <div class="metric">
+                        <span class="label">Total</span>
+                        <span class="value" id="metric-total">0</span>
                     </div>
-
-                    <div class="control-group">
-                        <label>Grid Size</label>
-                        <div class="row">
-                            <input type="number" id="grid-width" value="6" min="3" max="10">
-                            <span>x</span>
-                            <input type="number" id="grid-height" value="6" min="3" max="10">
-                        </div>
+                    <div class="metric">
+                        <span class="label">Difficult</span>
+                        <span class="value" id="metric-difficult">0</span>
                     </div>
-
-                    <div class="control-group">
-                        <label>Seed (Optional)</label>
-                        <input type="number" id="seed-input" placeholder="Random">
+                    <div class="metric">
+                        <span class="label">6+ Words</span>
+                        <span class="value" id="metric-6plus">0</span>
                     </div>
-
-                    <div id="algo-params" class="control-group"></div>
-
-                    <button id="generate-btn" class="primary-btn">Generate Puzzle</button>
+                    <div class="metric">
+                        <span class="label">Diff 6+</span>
+                        <span class="value" id="metric-diff-6plus">0</span>
+                    </div>
+                    <div class="metric highlight">
+                        <span class="label">6+ Ratio</span>
+                        <span class="value" id="metric-ratio">0%</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">Long 7+</span>
+                        <span class="value" id="metric-long">0</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">Seed</span>
+                        <span class="value" id="metric-seed">-</span>
+                    </div>
                 </div>
 
-                <div class="results-panel">
-                    <div class="metrics-bar">
-                        <div class="metric">
-                            <span class="label">Total</span>
-                            <span class="value" id="metric-total">0</span>
+                <div class="sandbox-body">
+                    <div class="controls-panel">
+                        <div class="control-group">
+                            <label>Algorithm</label>
+                            <select id="algo-select"></select>
+                            <p id="algo-desc" class="helper-text"></p>
                         </div>
-                        <div class="metric">
-                            <span class="label">Difficult</span>
-                            <span class="value" id="metric-difficult">0</span>
+
+                        <div class="control-group">
+                            <label>Grid Size</label>
+                            <div class="row">
+                                <input type="number" id="grid-width" value="6" min="3" max="10">
+                                <span>x</span>
+                                <input type="number" id="grid-height" value="6" min="3" max="10">
+                            </div>
                         </div>
-                        <div class="metric">
-                            <span class="label">6+ Words</span>
-                            <span class="value" id="metric-6plus">0</span>
+
+                        <div class="control-group">
+                            <label>Seed (Optional)</label>
+                            <input type="number" id="seed-input" placeholder="Random">
                         </div>
-                        <div class="metric">
-                            <span class="label">Diff 6+</span>
-                            <span class="value" id="metric-diff-6plus">0</span>
-                        </div>
-                        <div class="metric highlight">
-                            <span class="label">6+ Ratio</span>
-                            <span class="value" id="metric-ratio">0%</span>
-                        </div>
-                        <div class="metric">
-                            <span class="label">Long 7+</span>
-                            <span class="value" id="metric-long">0</span>
-                        </div>
-                        <div class="metric">
-                            <span class="label">Seed</span>
-                            <span class="value" id="metric-seed">-</span>
-                        </div>
+
+                        <div id="algo-params" class="control-group"></div>
+
+                        <button id="generate-btn" class="primary-btn">Generate Puzzle</button>
                     </div>
 
-                    <div class="game-layout">
+                    <div class="puzzle-container">
                         <div id="sandbox-grid" class="boggle-grid"></div>
-                        <div class="word-list-container">
-                            <div class="word-list-header">
-                                <h3>Words</h3>
-                                <select id="word-filter">
-                                    <option value="all">All Words</option>
-                                    <option value="difficult">Difficult Only</option>
-                                    <option value="6plus">6+ Letters</option>
-                                    <option value="diff6plus">Difficult 6+</option>
-                                </select>
-                            </div>
-                            <div id="sandbox-words" class="word-list"></div>
+                    </div>
+
+                    <div class="word-list-container">
+                        <div class="word-list-header">
+                            <h3>Words</h3>
+                            <select id="word-filter">
+                                <option value="all">All Words</option>
+                                <option value="difficult">Difficult Only</option>
+                                <option value="6plus">6+ Letters</option>
+                                <option value="diff6plus">Difficult 6+</option>
+                            </select>
                         </div>
+                        <div id="sandbox-words" class="word-list"></div>
                     </div>
                 </div>
             </section>

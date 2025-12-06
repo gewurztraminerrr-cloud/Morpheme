@@ -34,7 +34,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
-    max-width: 1200px;
+    max-width: 100%;
     margin: 0 auto;
     padding: 1rem;
 }
@@ -96,15 +96,27 @@ main {
     display: flex;
 }
 
-/* CONTROLS */
+.sandbox-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    padding: 1rem;
+    gap: 2rem;
+}
+
+/* CONTROLS (LEFT COL) */
 .controls-panel {
     display: flex;
-    gap: 2rem;
+    flex-direction: column;
+    gap: 1.5rem;
     padding: 1rem;
     background-color: var(--surface-color);
     border-radius: 0.5rem;
-    margin-bottom: 1rem;
-    align-items: flex-end;
+    width: 300px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    align-items: stretch;
+    height: 100%;
 }
 
 .control-group {
@@ -194,6 +206,8 @@ input {
     background-color: var(--surface-color);
     border-radius: 0.5rem;
     flex-wrap: wrap;
+    margin-bottom: 1rem;
+    /* Added margin since it's now top-level */
 }
 
 .metric {
@@ -229,7 +243,27 @@ input {
     display: flex;
     gap: 2rem;
     flex: 1;
-    overflow: hidden;
+    background-color: var(--surface-color);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    align-content: center;
+    justify-content: center;
+}
+
+/* Specific sandbox grid positioning */
+.puzzle-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    overflow: auto;
+    /* Prevent overflow if grid is huge */
+}
+
+#sandbox-grid {
+    /* No specific layout properties needed, inherits .boggle-grid */
+    margin: 0;
 }
 
 .boggle-grid {
@@ -272,7 +306,8 @@ input {
 }
 
 .word-list-container {
-    flex: 1;
+    width: 350px;
+    flex-shrink: 0;
     background-color: var(--surface-color);
     border-radius: 0.5rem;
     padding: 1rem;
