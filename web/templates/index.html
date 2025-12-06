@@ -77,6 +77,28 @@
                             <input type="number" id="seed-input" placeholder="Random">
                         </div>
 
+                        <div class="control-group">
+                            <label>Constraints & Retries</label>
+                            <div class="grid-2-col">
+                                <div>
+                                    <label class="sub-label">Min Diff.</label>
+                                    <input type="number" id="min-difficult" value="0" min="0">
+                                </div>
+                                <div>
+                                    <label class="sub-label">Min Total</label>
+                                    <input type="number" id="min-total" value="0" min="0">
+                                </div>
+                                <div>
+                                    <label class="sub-label">Min Ratio %</label>
+                                    <input type="number" id="min-ratio" value="0" min="0" max="100">
+                                </div>
+                                <div>
+                                    <label class="sub-label">Max Attempts</label>
+                                    <input type="number" id="max-attempts" value="10" min="1" max="50">
+                                </div>
+                            </div>
+                        </div>
+
                         <div id="algo-params" class="control-group"></div>
 
                         <button id="generate-btn" class="primary-btn">Generate Puzzle</button>

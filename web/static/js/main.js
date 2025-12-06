@@ -160,6 +160,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const seed = document.getElementById('seed-input').value;
             const algoId = algoSelect.value;
 
+            // New constraints
+            const minDifficult = parseInt(document.getElementById('min-difficult').value) || 0;
+            const minTotal = parseInt(document.getElementById('min-total').value) || 0;
+            const minRatio = parseInt(document.getElementById('min-ratio').value) || 0;
+            const maxAttempts = parseInt(document.getElementById('max-attempts').value) || 10;
+
             const params = {};
             if (algoId === 'hybrid') {
                 params.beam_width = parseInt(document.getElementById('param-beam-width').value);
@@ -188,6 +194,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     width,
                     height,
                     seed: seed ? parseInt(seed) : null,
+                    min_difficult: minDifficult,
+                    min_total: minTotal,
+                    min_ratio: minRatio,
+                    max_attempts: maxAttempts,
                     params
                 })
             });
