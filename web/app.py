@@ -12,7 +12,7 @@ app = Flask(__name__)
 
 # Configuration
 WORD_LIST_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "generator", "TWL.txt")
-DIFFICULT_LIST_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "generator", "difficult.txt")
+DIFFICULT_LIST_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "generator", "randomTWLunique.txt")
 
 ALGORITHMS = {
     'adaptive': adaptive_puzzle,

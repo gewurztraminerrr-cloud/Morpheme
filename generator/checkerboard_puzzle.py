@@ -319,7 +319,7 @@ if __name__ == "__main__":
         width=6,
         height=6,
         word_list_path="generator/TWL.txt",
-        difficult_list_path="generator/difficult.txt",
+        difficult_list_path="generator/randomTWLunique.txt",
         params={'iterations': 1, 'verbose': True}
     )
     print("\nFinal Grid:")

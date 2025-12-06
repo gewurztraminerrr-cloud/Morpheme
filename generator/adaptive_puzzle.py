@@ -705,7 +705,7 @@ if __name__ == "__main__":
     WIDTH = 6
     HEIGHT = 6
     WORD_LIST = "generator/TWL.txt"
-    DIFFICULT_LIST = "generator/difficult.txt"
+    DIFFICULT_LIST = "generator/randomTWLunique.txt"
     
     result = generate_puzzle(
         WIDTH, HEIGHT, WORD_LIST, DIFFICULT_LIST, 

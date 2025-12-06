@@ -87,7 +87,7 @@ def main():
     WIDTH = 6
     HEIGHT = 6
     WORD_LIST = "generator/TWL.txt"
-    DIFFICULT_LIST = "generator/difficult.txt"
+    DIFFICULT_LIST = "generator/randomTWLunique.txt"
     ITERATIONS = 2
     
     # Define generators to test

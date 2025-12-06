@@ -385,7 +385,7 @@ if __name__ == "__main__":
             width=6,
             height=6,
             word_list_path="generator/TWL.txt",
-            difficult_list_path="generator/difficult.txt",
+            difficult_list_path="generator/randomTWLunique.txt",
             seed=25364461,
             params={
                 'min_word_count': 800,

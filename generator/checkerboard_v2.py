@@ -548,7 +548,7 @@ if __name__ == "__main__":
     result = generate_puzzle(
         width=6, height=6,
         word_list_path="generator/TWL.txt",
-        difficult_list_path="generator/difficult.txt",
+        difficult_list_path="generator/randomTWLunique.txt",
         params={'strategy': 'distinct_difficult', 'iterations': 2, 'verbose': True}
     )
     for row in result['grid']:
@@ -564,7 +564,7 @@ if __name__ == "__main__":
     result = generate_puzzle(
         width=6, height=6,
         word_list_path="generator/TWL.txt",
-        difficult_list_path="generator/difficult.txt",
+        difficult_list_path="generator/randomTWLunique.txt",
         params={'adaptive': True, 'target_ratio': 0.80, 'verbose': True}
     )
     for row in result['grid']:
