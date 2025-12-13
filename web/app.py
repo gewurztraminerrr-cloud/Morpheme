@@ -1,14 +1,31 @@
 import os
 import sys
 import json
-from flask import Flask, render_template, request, jsonify
+from datetime import datetime
+from flask import Flask, render_template, request, jsonify, session
+from flask_bcrypt import Bcrypt
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 
 # Add parent directory to path to allow imports from generator
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from generator import adaptive_puzzle, checkerboard_puzzle, checkerboard_v2, checkerboard_v3, generate_optimized, hybrid_puzzle
+from models import db, User
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'morpheme-secret-key-change-in-production'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///morpheme.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize extensions
+db.init_app(app)
+bcrypt = Bcrypt(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'index'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 # Configuration
 WORD_LIST_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "generator", "TWL.txt")
@@ -133,5 +150,100 @@ def generate():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
+# Authentication Endpoints
+@app.route('/api/auth/register', methods=['POST'])
+def register():
+    try:
+        data = request.json
+        username = data.get('username', '').strip()
+        email = data.get('email', '').strip()
+        password = data.get('password', '')
+        
+        # Validation
+        if not username or len(username) < 3:
+            return jsonify({'error': 'Username must be at least 3 characters'}), 400
+        if not email or '@' not in email:
+            return jsonify({'error': 'Invalid email address'}), 400
+        if not password or len(password) < 8:
+            return jsonify({'error': 'Password must be at least 8 characters'}), 400
+        
+        # Check if user exists
+        if User.query.filter_by(username=username).first():
+            return jsonify({'error': 'Username already exists'}), 400
+        if User.query.filter_by(email=email).first():
+            return jsonify({'error': 'Email already registered'}), 400
+        
+        # Create user
+        password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+        new_user = User(
+            username=username,
+            email=email,
+            password_hash=password_hash
+        )
+        
+        db.session.add(new_user)
+        db.session.commit()
+        
+        # Auto-login after registration
+        login_user(new_user)
+        
+        return jsonify({
+            'success': True,
+            'user': new_user.to_dict()
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Registration failed'}), 500
+
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    try:
+        data = request.json
+        username = data.get('username', '').strip()
+        password = data.get('password', '')
+        
+        if not username or not password:
+            return jsonify({'error': 'Username and password required'}), 400
+        
+        # Find user
+        user = User.query.filter_by(username=username).first()
+        
+        if not user or not bcrypt.check_password_hash(user.password_hash, password):
+            return jsonify({'error': 'Invalid username or password'}), 401
+        
+        # Update last login
+        user.last_login = datetime.utcnow()
+        db.session.commit()
+        
+        # Login user
+        login_user(user)
+        
+        return jsonify({
+            'success': True,
+            'user': user.to_dict()
+        }), 200
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Login failed'}), 500
+
+@app.route('/api/auth/logout', methods=['POST'])
+@login_required
+def logout():
+    logout_user()
+    return jsonify({'success': True}), 200
+
+@app.route('/api/auth/user', methods=['GET'])
+@login_required
+def get_current_user():
+    return jsonify(current_user.to_dict()), 200
+
 if __name__ == '__main__':
+    # Create database tables if they don't exist
+    with app.app_context():
+        db.create_all()
     app.run(debug=True, port=5000)

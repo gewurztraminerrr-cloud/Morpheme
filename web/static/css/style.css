@@ -486,3 +486,851 @@ input {
     display: block;
     margin-bottom: 0.25rem;
 }
+/* Login Page Styles */
+.login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    gap: 2rem;
+}
+
+.login-container h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1rem;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    width: 100%;
+    max-width: 400px;
+    padding: 2.5rem;
+    background: var(--surface-color);
+    border-radius: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+}
+
+.login-form input[type="text"],
+.login-form input[type="password"] {
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+    background: var(--bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.login-form input[type="text"]:focus,
+.login-form input[type="password"]:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.login-form input::placeholder {
+    color: var(--text-muted);
+}
+
+.login-form button {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    margin-top: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.login-form .primary-btn {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.login-form .primary-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.login-form .secondary-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+}
+
+.login-form .secondary-btn:hover {
+    background: var(--bg-color);
+    border-color: var(--primary-color);
+}
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    gap: 1.5rem;
+    text-align: center;
+}
+
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+    font-size: 1.125rem;
+    color: var(--text-muted);
+}
+
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 1.5rem;
+    height: calc(100vh - 120px);
+    overflow: hidden;
+}
+
+/* Left Panel */
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: var(--surface-color);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    overflow: hidden;
+}
+
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-color);
+}
+
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-color);
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--text-color);
+}
+
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+    flex: 1;
+    overflow-y: auto;
+    background: var(--bg-color);
+    border-radius: 0.25rem;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    min-height: 150px;
+}
+
+    display: flex;
+    gap: 0.5rem;
+}
+
+    flex: 1;
+    padding: 0.5rem;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    color: var(--text-color);
+    font-size: 0.875rem;
+}
+
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+/* Game Panel */
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+    background: var(--surface-color);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: var(--text-color);
+}
+
+    display: grid;
+    grid-template-columns: 80px repeat(4, 1fr);
+    gap: 0.5rem;
+}
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+    background: transparent;
+}
+
+    background: var(--bg-color);
+    border-radius: 0.25rem;
+    color: var(--text-muted);
+}
+
+    padding: 0.75rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+    transform: translateY(0);
+}
+
+/* Enhanced Lobby Styles */
+.lobby-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 2rem;
+    height: calc(100vh - 120px);
+    overflow: hidden;
+    padding: 1rem;
+}
+
+/* Left Panel - Enhanced */
+.lobby-left-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    background: linear-gradient(135deg, var(--surface-color), #1a2332);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.lobby-users {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.lobby-users h3,
+.lobby-chat h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.lobby-users h3::before {
+    content: "👥";
+    font-size: 1.25rem;
+}
+
+.lobby-chat h3::before {
+    content: "💬";
+    font-size: 1.25rem;
+}
+
+.users-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+.users-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.users-list::-webkit-scrollbar-track {
+    background: var(--bg-color);
+    border-radius: 3px;
+}
+
+.users-list::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 3px;
+}
+
+.user-item {
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, var(--bg-color), #0a0f1a);
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+    cursor: default;
+}
+
+.user-item:hover {
+    border-color: var(--primary-color);
+    transform: translateX(4px);
+}
+
+.lobby-chat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    min-height: 180px;
+    border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.chat-input-area {
+    display: flex;
+    gap: 0.75rem;
+}
+
+#chat-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+#chat-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+
+#chat-send-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+#chat-send-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+/* Game Panel - Enhanced */
+
+.lobby-game-panel::-webkit-scrollbar {
+    width: 8px;
+}
+
+.lobby-game-panel::-webkit-scrollbar-track {
+    background: var(--bg-color);
+    border-radius: 4px;
+}
+
+.lobby-game-panel::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+
+.game-type-section {
+    background: linear-gradient(135deg, var(--surface-color), #1a2332);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(59, 130, 246, 0.1);
+    transition: all 0.3s ease;
+}
+
+.game-type-section:hover {
+    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.game-type-section h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.game-matrix {
+    display: grid;
+    grid-template-columns: 90px repeat(4, 1fr);
+    gap: 0.75rem;
+}
+
+.matrix-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.matrix-cell.empty {
+    background: transparent;
+}
+
+.matrix-cell.header {
+    background: linear-gradient(135deg, var(--bg-color), #0a0f1a);
+    border-radius: 0.5rem;
+    color: var(--primary-color);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    font-weight: 700;
+}
+
+.matrix-btn.start-btn {
+    padding: 1rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.matrix-btn.start-btn::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.matrix-btn.start-btn:hover::before {
+    left: 100%;
+}
+
+.matrix-btn.start-btn:hover {
+    background: linear-gradient(135deg, var(--primary-hover), #1d4ed8);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.5);
+}
+
+.matrix-btn.start-btn:active {
+    transform: translateY(-1px) scale(1);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Right Panel - Active Rooms */
+.lobby-layout {
+    grid-template-columns: 320px 1fr 350px !important;
+}
+
+
+.lobby-right-panel h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+
+.rating-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 0.5rem;
+    border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.rating-filter label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+#rating-filter-input {
+    padding: 0.75rem;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+#rating-filter-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+
+#clear-rating-filter {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.active-rooms-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.active-rooms-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.active-rooms-list::-webkit-scrollbar-track {
+    background: var(--bg-color);
+    border-radius: 3px;
+}
+
+.active-rooms-list::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 3px;
+}
+
+.no-rooms-message {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.room-card {
+    background: linear-gradient(135deg, var(--bg-color), #0a0f1a);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.room-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+    transform: translateY(-2px);
+}
+
+.room-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.room-params {
+    font-size: 0.875rem;
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.room-total-rating {
+    font-size: 0.875rem;
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+.room-players {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.room-player {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    padding: 0.5rem;
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 0.25rem;
+}
+
+.room-player-name {
+    color: var(--text-color);
+}
+
+.room-player-rating {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.join-room-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: linear-gradient(135deg, var(--accent-color), #7c3aed);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.join-room-btn:hover {
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+}
+
+/* Browse Button Styling */
+    background: linear-gradient(135deg, var(--accent-color), #7c3aed);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.5);
+}
+
+/* Reorder panels - middle is now active rooms */
+.lobby-middle-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    background: linear-gradient(135deg, var(--surface-color), #1a2332);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.lobby-middle-panel h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.lobby-middle-panel h3::before {
+    content: "🎮";
+    font-size: 1.5rem;
+}
+
+/* Hide old right panel styles, use middle panel */
+
+/* 2-column layout - game types center, rooms right */
+.lobby-layout-2col {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 2rem;
+    height: calc(100vh - 120px);
+    overflow: hidden;
+    padding: 1rem;
+}
+
+/* Make game panel scrollable */
+.lobby-layout-2col .lobby-game-panel {
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+/* Right panel active rooms */
+.lobby-layout-2col .lobby-right-panel {
+    display: flex !important;
+    flex-direction: column;
+    gap: 1.5rem;
+    background: linear-gradient(135deg, var(--surface-color), #1a2332);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+/* Hide old 3-column layout */
+.lobby-layout {
+    display: none;
+}
+
+.lobby-left-panel {
+    display: none;
+}
+
+.lobby-middle-panel {
+    display: none;
+}
+
+/* Browse Button Styling - Blue instead of Purple */
+.matrix-btn.browse-btn {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.matrix-btn.browse-btn:hover {
+    background: linear-gradient(135deg, var(--primary-hover), #1d4ed8);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.5);
+}
+
+/* Selected Game Type Display */
+.selected-game-type {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 0.5rem;
+    padding: 0.875rem 1rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.game-type-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+    background: linear-gradient(135deg, #0d9488, #0f766e);
+    box-shadow: 0 8px 24px rgba(20, 184, 166, 0.5);
+}
+
+/* Uniform Button Styling - All buttons same appearance */
+.matrix-btn.start-btn,
+.matrix-btn.browse-btn {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.matrix-btn.start-btn:hover,
+.matrix-btn.browse-btn:hover {
+    background: linear-gradient(135deg, var(--primary-hover), #1d4ed8);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.5);
+}
+
+    display: none;
+}
+
+    color: var(--text-color);
+}
+
+/* Restore 2-column layout */
+.lobby-layout-2col {
+    display: grid !important;
+    grid-template-columns: 1fr 380px;
+    gap: 2rem;
+    height: calc(100vh - 120px);
+    overflow: hidden;
+    padding: 1rem;
+}
+
+    color: var(--text-color);
+}
+
+
+
+
+
+/* Adjust layout - bottom panel only on left, active rooms extends down */
+.lobby-layout-2col {
+    display: grid !important;
+    grid-template-columns: 1fr 380px;
+    grid-template-rows: auto auto;
+    gap: 0;
+    height: calc(100vh - 120px);
+    overflow: hidden;
+    padding: 1rem;
+}
+
+.lobby-game-panel {
+    grid-column: 1;
+    grid-row: 1;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.lobby-right-panel {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    margin-left: 1.5rem;
+}
+
+
+
+
+
+
+
+
+/* Make game panel and active rooms panel equal height */
+.lobby-layout-2col {
+    align-items: stretch !important;
+}
+
+.lobby-game-panel,
+.lobby-right-panel {
+    height: 100% !important;
+    min-height: calc(100vh - 140px);
+}
+
+/* Make Show Rooms buttons bold and white text */
+.matrix-btn.browse-btn {
+    color: white !important;
+    font-weight: 700 !important;
+}
+
+/* Remove border and round edges for Show Rooms buttons */
+.matrix-btn.browse-btn {
+    border: none !important;
+    border-radius: 0.5rem !important;
+}
+

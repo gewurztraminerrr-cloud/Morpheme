@@ -45,6 +45,123 @@ document.addEventListener('DOMContentLoaded', () => {
     // INITIALIZATION
     fetchAlgorithms();
 
+    // Authentication Elements
+    const loginBtn = document.getElementById('login-btn');
+    const registerBtn = document.getElementById('register-btn');
+    const usernameInput = document.getElementById('username-input');
+    const passwordInput = document.getElementById('password-input');
+
+    // Registration Handler
+    if (registerBtn) {
+        registerBtn.addEventListener('click', async () => {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!username || !password) {
+                alert('Please enter username and password');
+                return;
+            }
+
+            // Use username as email for now (can add separate email field later)
+            const email = username + '@morpheme.local';
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(`Welcome, ${data.user.username}!`);
+                    // Switch to Lobby tab
+                    switchTab('lobby');
+                } else {
+                    alert(data.error || 'Registration failed');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                alert('Registration failed');
+            }
+        });
+    }
+
+    // Login Handler
+    if (loginBtn) {
+        loginBtn.addEventListener('click', async () => {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!username || !password) {
+                alert('Please enter username and password');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(`Welcome back, ${data.user.username}!`);
+                    // Switch to Lobby tab
+                    switchTab('lobby');
+                } else {
+                    alert(data.error || 'Login failed');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Login failed');
+            }
+        });
+    }
+
+    // Show Rooms Button Handlers
+    const browseButtons = document.querySelectorAll('.browse-btn');
+    const selectedGameTypeDisplay = document.getElementById('selected-game-type');
+
+    browseButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const gameType = btn.dataset.type;
+            const width = btn.dataset.w;
+            const height = btn.dataset.h;
+            const time = btn.dataset.t;
+
+            // Format game type name
+            let gameTypeName;
+            if (gameType === 'fcfs') {
+                gameTypeName = 'First Come First Serve';
+            } else if (gameType === 'split') {
+                gameTypeName = 'Split Points';
+            } else {
+                gameTypeName = gameType.charAt(0).toUpperCase() + gameType.slice(1);
+            }
+
+            // Format time display
+            let timeDisplay;
+            if (time < 60) {
+                timeDisplay = `${time}s`;
+            } else if (time < 3600) {
+                timeDisplay = `${Math.floor(time / 60)}m`;
+            } else {
+                timeDisplay = `${Math.floor(time / 3600)}h`;
+            }
+
+            // Update display
+            const displayText = `${gameTypeName} - ${width}x${height} - ${timeDisplay}`;
+            selectedGameTypeDisplay.innerHTML = `<span class="game-type-label">${displayText}</span>`;
+
+            // TODO: Fetch and display rooms matching these parameters
+            console.log('Showing rooms for:', { gameType, width, height, time });
+        });
+    });
+
     // EVENT LISTENERS
     tabs.forEach(tab => {
         tab.addEventListener('click', () => switchTab(tab.dataset.tab));
@@ -72,6 +189,29 @@ document.addEventListener('DOMContentLoaded', () => {
     function switchTab(tabId) {
         tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
         tabContents.forEach(c => c.classList.toggle('active', c.id === tabId));
+
+        // Handle lobby music
+        const lobbyMusic = document.getElementById('lobby-music');
+        if (lobbyMusic) {
+            if (tabId === 'lobby') {
+                // Start music at 3:25 (205 seconds) and play to 4:55 (295 seconds)
+                lobbyMusic.currentTime = 205;
+                lobbyMusic.play().catch(e => console.log('Audio play failed:', e));
+
+                // Set up time check to loop back to 3:25 when reaching 4:55
+                if (!lobbyMusic.hasAttribute('data-listener-added')) {
+                    lobbyMusic.addEventListener('timeupdate', () => {
+                        if (lobbyMusic.currentTime >= 295) {
+                            lobbyMusic.currentTime = 205;
+                        }
+                    });
+                    lobbyMusic.setAttribute('data-listener-added', 'true');
+                }
+            } else {
+                // Pause music when leaving lobby
+                lobbyMusic.pause();
+            }
+        }
     }
 
     async function fetchAlgorithms() {
