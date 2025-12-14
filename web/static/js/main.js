@@ -162,6 +162,225 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Start Button Handlers (Accumulative mode)
+    const startButtons = document.querySelectorAll('.start-btn[data-type="accumulative"]');
+    const gameRoomContainer = document.getElementById('game-room-container');
+    const playEmptyState = document.getElementById('play-empty-state');
+    const backToLobbyBtn = document.getElementById('back-to-lobby-btn');
+    const gameBoardArea = document.getElementById('game-board-area');
+
+    let currentRoomId = null;
+    let statusPollInterval = null;
+
+    // Poll room status and update timer
+    function pollRoomStatus() {
+        if (!currentRoomId) return;
+
+        fetch(`/api/rooms/${currentRoomId}/status`)
+            .then(res => res.json())
+            .then(data => {
+                // Update timer
+                const minutes = Math.floor(data.time_remaining / 60);
+                const seconds = data.time_remaining % 60;
+                const timerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                document.getElementById('timer-countdown').textContent = timerText;
+
+                // Update phase indicator
+                const phaseIndicator = document.getElementById('phase-indicator');
+                phaseIndicator.textContent = data.phase;
+                phaseIndicator.className = `phase-badge phase-${data.phase.toLowerCase()}`;
+
+                // Update leaderboard
+                if (data.players) {
+                    updateLeaderboard(data.players);
+                }
+
+                // Check if board changed (during intermission ends)
+                const currentBoardIndex = parseInt(document.getElementById('game-board-area').dataset.boardIndex || '0');
+                if (data.board_index !== currentBoardIndex && data.phase === 'PLAYING') {
+                    // Board changed, reload room data
+                    loadRoomData(currentRoomId);
+                }
+
+                // Show/hide intermission state
+                if (data.phase === 'INTERMISSION') {
+                    showIntermissionScreen();
+                } else if (data.phase === 'PLAYING') {
+                    hideIntermissionScreen();
+                }
+            })
+            .catch(err => console.error('Error polling status:', err));
+    }
+
+    function updateLeaderboard(players) {
+        const playersList = document.getElementById('players-list');
+        if (!playersList) return;
+
+        playersList.innerHTML = players.map((player, index) => `
+            <div class="player-item">
+                <span class="player-rank">${index + 1}</span>
+                <span class="player-name">${player.username}</span>
+                <span class="player-score">${player.score || 0}</span>
+            </div>
+        `).join('');
+    }
+
+    function loadRoomData(roomId) {
+        fetch(`/api/rooms/${roomId}`)
+            .then(res => res.json())
+            .then(data => {
+                const room = data.room;
+                const boardIndex = room.board_index;
+                const board = room.boards[boardIndex];
+
+                renderBoard(board.grid, board.words, board.difficult_words);
+                document.getElementById('game-board-area').dataset.boardIndex = boardIndex;
+            })
+            .catch(err => console.error('Error loading room:', err));
+    }
+
+    function showIntermissionScreen() {
+        const boardArea = document.getElementById('game-board-area');
+        if (!boardArea.classList.contains('intermission')) {
+            boardArea.classList.add('intermission');
+        }
+    }
+
+    function hideIntermissionScreen() {
+        const boardArea = document.getElementById('game-board-area');
+        boardArea.classList.remove('intermission');
+    }
+
+    function startRoomPolling(roomId) {
+        // Stop any existing polling
+        if (statusPollInterval) {
+            clearInterval(statusPollInterval);
+        }
+
+        // Poll every second
+        statusPollInterval = setInterval(pollRoomStatus, 1000);
+        // Poll immediately
+        pollRoomStatus();
+    }
+
+    function stopRoomPolling() {
+        if (statusPollInterval) {
+            clearInterval(statusPollInterval);
+            statusPollInterval = null;
+        }
+    }
+
+    startButtons.forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const gameType = btn.dataset.type;
+            const width = parseInt(btn.dataset.w);
+            const height = parseInt(btn.dataset.h);
+            const time = parseInt(btn.dataset.t);
+
+            try {
+                // Create room and get board
+                const response = await fetch('/api/rooms/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: gameType,
+                        width: width,
+                        height: height,
+                        time: time
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create room');
+                }
+
+                const data = await response.json();
+                currentRoomId = data.room_id;
+                const room = data.room;
+                const board = room.boards[0];
+
+                // Format time display
+                let timeDisplay;
+                if (time < 60) {
+                    timeDisplay = `${time} seconds`;
+                } else if (time < 3600) {
+                    timeDisplay = `${Math.floor(time / 60)} minutes`;
+                } else {
+                    timeDisplay = `${Math.floor(time / 3600)} hours`;
+                }
+
+                // Update game info
+                document.getElementById('grid-size').textContent = `${width}x${height}`;
+                document.getElementById('time-limit').textContent = timeDisplay;
+
+                // Render the board
+                renderBoard(board.grid, board.words, board.difficult_words);
+                document.getElementById('game-board-area').dataset.boardIndex = '0';
+
+                // Show game room, hide empty state
+                if (gameRoomContainer && playEmptyState) {
+                    gameRoomContainer.style.display = 'flex';
+                    playEmptyState.style.display = 'none';
+                }
+
+                // Switch to Play tab
+                switchTab('play');
+
+                // Start status polling
+                startRoomPolling(currentRoomId);
+
+                console.log('Room created:', currentRoomId);
+            } catch (error) {
+                console.error('Error creating room:', error);
+                alert('Failed to start game. Please try again.');
+            }
+        });
+    });
+
+    // Function to render the game board
+    function renderBoard(grid, words, difficultWords) {
+        const width = grid[0].length;
+        const height = grid.length;
+
+        gameBoardArea.innerHTML = `
+            <div class="board-container">
+                <div class="grid-display" style="grid-template-columns: repeat(${width}, 55px);">
+                    ${grid.map((row, i) =>
+            row.map((letter, j) =>
+                `<div class="grid-cell" data-row="${i}" data-col="${j}">${letter}</div>`
+            ).join('')
+        ).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    // Go Back to Lobby button
+    if (backToLobbyBtn) {
+        backToLobbyBtn.addEventListener('click', () => {
+            // Reset current room
+            currentRoomId = null;
+
+            // Stop polling
+            stopRoomPolling();
+
+            // Hide game room, show empty state
+            if (gameRoomContainer && playEmptyState) {
+                gameRoomContainer.style.display = 'none';
+                playEmptyState.style.display = 'flex';
+            }
+
+            // Clear board
+            gameBoardArea.innerHTML = '<p class="game-placeholder">Game will start here...</p>';
+            gameBoardArea.classList.remove('intermission');
+
+            // Switch back to Lobby
+            switchTab('lobby');
+
+            console.log('Returned to lobby');
+        });
+    }
+
     // EVENT LISTENERS
     tabs.forEach(tab => {
         tab.addEventListener('click', () => switchTab(tab.dataset.tab));

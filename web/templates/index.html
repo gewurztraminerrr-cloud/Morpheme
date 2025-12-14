@@ -198,9 +198,33 @@
 
             <!-- PLAY TAB -->
             <section id="play" class="tab-content">
-                <div class="play-container">
-                    <h2>Play Mode</h2>
-                    <p>Game content will be displayed here.</p>
+                <div class="game-room-container" id="game-room-container" style="display: none;">
+                    <div class="game-room-header">
+                        <button id="back-to-lobby-btn" class="back-btn">← Go Back to Lobby</button>
+                        <div class="game-info" id="game-info">
+                            <h2 id="game-type-title">Accumulative Game</h2>
+                            <p id="game-params">Grid: <span id="grid-size">--</span> | Time: <span
+                                    id="time-limit">--</span></p>
+                            <div class="timer-display">
+                                <span id="phase-indicator" class="phase-badge">PLAYING</span>
+                                <span id="timer-countdown" class="timer-text">0:00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-content">
+                        <div class="leaderboard-sidebar">
+                            <h3>Players</h3>
+                            <div id="players-list" class="players-list">
+                                <!-- Players will be dynamically added here -->
+                            </div>
+                        </div>
+                        <div class="game-board-area" id="game-board-area">
+                            <p class="game-placeholder">Game will start here...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="play-empty-state" id="play-empty-state">
+                    <p>Select a game from the Lobby to start playing</p>
                 </div>
             </section>
 
