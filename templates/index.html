@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morpheme - Word Game Platform</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <!-- Header Navigation -->
+    <header class="main-header">
+        <div class="header-left">
+            <h1 class="logo">MORPHEME</h1>
+            <span class="phonetic">MORE-FEEM</span>
+        </div>
+        <nav class="header-nav">
+            <button class="nav-btn" id="btn-login">Login</button>
+            <button class="nav-btn" id="btn-how-to-play">How to Play</button>
+            <button class="nav-btn" id="btn-lobby">Lobby</button>
+            <button class="nav-btn" id="btn-play" disabled>Play</button>
+            <button class="nav-btn" id="btn-leaderboards">Leaderboards</button>
+            <button class="nav-btn" id="btn-tools">Tools</button>
+            <button class="nav-btn" id="btn-settings">Settings</button>
+            <button class="nav-btn" id="btn-contact">Contact</button>
+        </nav>
+    </header>
+
+    <div class="separator"></div>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Login Page -->
+        <section id="page-login" class="page active">
+            <div class="login-container">
+                <div class="login-card">
+                    <div class="card-header">
+                        <h2>Welcome to Morpheme</h2>
+                        <p class="subtitle">Sign in to continue your journey</p>
+                    </div>
+
+                    <div class="tab-switcher">
+                        <button class="tab-btn active" data-tab="signin">Sign In</button>
+                        <button class="tab-btn" data-tab="signup">Sign Up</button>
+                    </div>
+
+                    <!-- Sign In Form -->
+                    <form id="signin-form" class="auth-form active">
+                        <div class="form-group">
+                            <label for="signin-username">Username</label>
+                            <input type="text" id="signin-username" placeholder="Enter your username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="signin-password">Password</label>
+                            <input type="password" id="signin-password" placeholder="Enter your password" required>
+                        </div>
+                        <div class="error-message" id="signin-error"></div>
+                        <button type="submit" class="submit-btn">Sign In</button>
+                    </form>
+
+                    <!-- Sign Up Form -->
+                    <form id="signup-form" class="auth-form">
+                        <div class="form-group">
+                            <label for="signup-username">Username</label>
+                            <input type="text" id="signup-username" placeholder="Choose a username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="signup-email">Email (optional)</label>
+                            <input type="email" id="signup-email" placeholder="Enter your email">
+                        </div>
+                        <div class="form-group">
+                            <label for="signup-password">Password</label>
+                            <input type="password" id="signup-password" placeholder="Choose a password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="signup-password-confirm">Confirm Password</label>
+                            <input type="password" id="signup-password-confirm" placeholder="Confirm your password"
+                                required>
+                        </div>
+                        <div class="error-message" id="signup-error"></div>
+                        <button type="submit" class="submit-btn">Create Account</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Lobby Page -->
+        <section id="page-lobby" class="page">
+            <!-- Audio element for lobby music -->
+            <audio id="lobby-music">
+                <source src="/static/audio/lobby-music.mp3" type="audio/mpeg">
+            </audio>
+
+            <div class="lobby-container-full">
+                <div class="welcome-banner">
+                    <h2>Welcome, <span id="username-display">Player</span>!</h2>
+                    <p>Select your game type and preferences</p>
+                </div>
+
+                <div class="lobby-two-panel">
+                    <!-- Left Panel: Game Selection -->
+                    <div class="lobby-left-panel">
+                        <!-- Accumulative Game Type -->
+                        <div class="game-type-section">
+                            <h3 class="game-type-title">Accumulative</h3>
+                            <div class="game-grid">
+                                <div class="grid-header">
+                                    <div class="grid-cell empty"></div>
+                                    <div class="grid-cell dimension">4x4</div>
+                                    <div class="grid-cell dimension">4x6</div>
+                                    <div class="grid-cell dimension">5x7</div>
+                                    <div class="grid-cell dimension">6x8</div>
+                                </div>
+                                <div class="grid-row">
+                                    <div class="grid-cell time-label">45 seconds</div>
+                                    <button class="grid-btn accumulative" data-time="45s" data-dimensions="4x4">Start
+                                        [0]</button>
+                                    <button class="grid-btn accumulative" data-time="45s" data-dimensions="4x6">Start
+                                        [0]</button>
+                                    <button class="grid-btn accumulative" data-time="45s" data-dimensions="5x7">Start
+                                        [0]</button>
+                                    <button class="grid-btn accumulative" data-time="45s" data-dimensions="6x8">Start
+                                        [0]</button>
+                                </div>
+                                <div class="grid-row">
+                                    <div class="grid-cell time-label">3 minutes</div>
+                                    <button class="grid-btn accumulative" data-time="3min" data-dimensions="4x4">Start
+                                        [0]</button>
+                                    <button class="grid-btn accumulative" data-time="3min" data-dimensions="4x6">Start
+                                        [0]</button>
+                                    <button class="grid-btn accumulative" data-time="3min" data-dimensions="5x7">Start
+                                        [0]</button>
+                                    <button class="grid-btn accumulative" data-time="3min" data-dimensions="6x8">Start
+                                        [0]</button>
+                                </div>
+                                <div class="grid-row">
+                                    <div class="grid-cell time-label">10 minutes</div>
+                                    <button class="grid-btn accumulative" data-time="10min" data-dimensions="4x4">Start
+                                        [0]</button>
+                                    <button class="grid-btn accumulative" data-time="10min" data-dimensions="4x6">Start
+                                        [0]</button>
+                                    <button class="grid-btn accumulative" data-time="10min" data-dimensions="5x7">Start
+                                        [0]</button>
+                                    <button class="grid-btn accumulative" data-time="10min" data-dimensions="6x8">Start
+                                        [0]</button>
+                                </div>
+                                <div class="grid-row">
+                                    <div class="grid-cell time-label">24 hours</div>
+                                    <button class="grid-btn accumulative" data-time="24hr" data-dimensions="4x4">Start
+                                        [0]</button>
+                                    <button class="grid-btn accumulative" data-time="24hr" data-dimensions="4x6">Start
+                                        [0]</button>
+                                    <button class="grid-btn accumulative" data-time="24hr" data-dimensions="5x7">Start
+                                        [0]</button>
+                                    <button class="grid-btn accumulative" data-time="24hr" data-dimensions="6x8">Start
+                                        [0]</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- First Come First Serve Game Type -->
+                        <div class="game-type-section">
+                            <h3 class="game-type-title">First Come First Serve</h3>
+                            <div class="game-grid">
+                                <div class="grid-header">
+                                    <div class="grid-cell empty"></div>
+                                    <div class="grid-cell dimension">4x4</div>
+                                    <div class="grid-cell dimension">4x6</div>
+                                    <div class="grid-cell dimension">5x7</div>
+                                    <div class="grid-cell dimension">6x8</div>
+                                </div>
+                                <div class="grid-row">
+                                    <div class="grid-cell time-label">45 seconds</div>
+                                    <button class="grid-btn fcfs" data-time="45s" data-dimensions="4x4">Show Rooms
+                                        [0]</button>
+                                    <button class="grid-btn fcfs" data-time="45s" data-dimensions="4x6">Show Rooms
+                                        [0]</button>
+                                    <button class="grid-btn fcfs" data-time="45s" data-dimensions="5x7">Show Rooms
+                                        [0]</button>
+                                    <button class="grid-btn fcfs" data-time="45s" data-dimensions="6x8">Show Rooms
+                                        [0]</button>
+                                </div>
+                                <div class="grid-row">
+                                    <div class="grid-cell time-label">3 minutes</div>
+                                    <button class="grid-btn fcfs" data-time="3min" data-dimensions="4x4">Show Rooms
+                                        [0]</button>
+                                    <button class="grid-btn fcfs" data-time="3min" data-dimensions="4x6">Show Rooms
+                                        [0]</button>
+                                    <button class="grid-btn fcfs" data-time="3min" data-dimensions="5x7">Show Rooms
+                                        [0]</button>
+                                    <button class="grid-btn fcfs" data-time="3min" data-dimensions="6x8">Show Rooms
+                                        [0]</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Split Points Game Type -->
+                        <div class="game-type-section">
+                            <h3 class="game-type-title">Split Points</h3>
+                            <div class="game-grid">
+                                <div class="grid-header">
+                                    <div class="grid-cell empty"></div>
+                                    <div class="grid-cell dimension">4x4</div>
+                                    <div class="grid-cell dimension">4x6</div>
+                                    <div class="grid-cell dimension">5x7</div>
+                                    <div class="grid-cell dimension">6x8</div>
+                                </div>
+                                <div class="grid-row">
+                                    <div class="grid-cell time-label">45 seconds</div>
+                                    <button class="grid-btn split" data-time="45s" data-dimensions="4x4">Show Rooms
+                                        [0]</button>
+                                    <button class="grid-btn split" data-time="45s" data-dimensions="4x6">Show Rooms
+                                        [0]</button>
+                                    <button class="grid-btn split" data-time="45s" data-dimensions="5x7">Show Rooms
+                                        [0]</button>
+                                    <button class="grid-btn split" data-time="45s" data-dimensions="6x8">Show Rooms
+                                        [0]</button>
+                                </div>
+                                <div class="grid-row">
+                                    <div class="grid-cell time-label">3 minutes</div>
+                                    <button class="grid-btn split" data-time="3min" data-dimensions="4x4">Show Rooms
+                                        [0]</button>
+                                    <button class="grid-btn split" data-time="3min" data-dimensions="4x6">Show Rooms
+                                        [0]</button>
+                                    <button class="grid-btn split" data-time="3min" data-dimensions="5x7">Show Rooms
+                                        [0]</button>
+                                    <button class="grid-btn split" data-time="3min" data-dimensions="6x8">Show Rooms
+                                        [0]</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: Active Rooms -->
+                    <div class="lobby-right-panel">
+                        <h3 class="active-rooms-title">Active Rooms</h3>
+
+                        <div class="rating-filter">
+                            <label for="rating-input">Filter by rating:</label>
+                            <input type="number" id="rating-input" placeholder="Enter rating">
+                        </div>
+
+                        <div id="selected-game-info" class="selected-game-info">
+                            <p>Select a game type to view available rooms</p>
+                        </div>
+
+                        <div id="rooms-list" class="rooms-list">
+                            <!-- Rooms will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Other Pages (Placeholders) -->
+        <section id="page-how-to-play" class="page">
+            <h2>How to Play</h2>
+            <p>Instructions coming soon...</p>
+        </section>
+
+        <section id="page-play" class="page">
+            <h2>Play</h2>
+            <p>Select a room from the lobby first!</p>
+        </section>
+
+        <section id="page-leaderboards" class="page">
+            <h2>Leaderboards</h2>
+            <p>Top players will be displayed here...</p>
+        </section>
+
+        <section id="page-tools" class="page">
+            <h2>Tools</h2>
+            <p>Game tools and utilities...</p>
+        </section>
+
+        <section id="page-settings" class="page">
+            <h2>Settings</h2>
+            <p>Customize your experience...</p>
+        </section>
+
+        <section id="page-contact" class="page">
+            <h2>Contact</h2>
+            <p>Get in touch with us...</p>
+        </section>
+    </main>
+
+    <script src="/static/js/app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MORPHEME</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/lobby.css">
+    <link rel="stylesheet" href="/css/play.css">
+</head>
+
+<body>
+    <!-- Header - Always visible -->
+    <header class="header">
+        <div class="logo">
+            <span class="logo-text">MORPHEME</span>
+            <span class="pronunciation">MORE-FEEM</span>
+        </div>
+        <nav class="nav">
+            <button class="nav-btn" data-page="login">Login</button>
+            <button class="nav-btn" data-page="howtoplay">How to Play</button>
+            <button class="nav-btn" data-page="lobby">Lobby</button>
+            <button class="nav-btn" id="play-btn" data-page="play" disabled>Play</button>
+            <button class="nav-btn" data-page="leaderboards">Leaderboards</button>
+            <button class="nav-btn" data-page="tools">Tools</button>
+            <button class="nav-btn" data-page="settings">Settings</button>
+            <button class="nav-btn" data-page="contact">Contact</button>
+        </nav>
+    </header>
+
+    <div class="separator"></div>
+
+    <!-- Pages Container -->
+    <main class="pages">
+        <!-- Login Page -->
+        <div id="page-login" class="page active">
+            <div class="auth-container">
+                <h2>Welcome to Morpheme</h2>
+
+                <div class="auth-tabs">
+                    <button class="tab-btn active" id="login-tab" data-tab="signin">Login</button>
+                    <button class="tab-btn" id="register-tab" data-tab="signup">Register</button>
+                </div>
+
+                <form id="signin-form" class="auth-form active">
+                    <input type="text" id="signin-username" placeholder="Username" required>
+                    <input type="password" id="signin-password" placeholder="Password" required>
+                    <div id="signin-error" class="error-message"></div>
+                    <button type="submit">Login</button>
+                    <button type="button" id="guest-login-btn" style="background: #555; margin-top: 10px;">Play as
+                        Guest</button>
+                </form>
+
+                <form id="signup-form" class="auth-form">
+                    <input type="text" id="signup-username" placeholder="Username (3+ characters)" required>
+                    <input type="email" id="signup-email" placeholder="Email" required>
+                    <input type="password" id="signup-password" placeholder="Password (6+ characters)" required>
+                    <input type="password" id="signup-password-confirm" placeholder="Confirm Password" required>
+                    <div id="signup-error" class="error-message"></div>
+                    <button type="submit">Create Account</button>
+                </form>
+
+                <div id="auth-message" class="message"></div>
+            </div>
+        </div>
+
+        <!-- How to Play Page -->
+        <div id="page-howtoplay" class="page">
+            <h2>How to Play</h2>
+            <p>Instructions coming soon...</p>
+        </div>
+
+        <!-- Lobby Page -->
+        <div id="page-lobby" class="page">
+            <audio id="lobby-music" src="/music/lobby.mp3" preload="auto"></audio>
+
+            <div class="lobby-grid">
+                <!-- Left Panel: Game Types -->
+                <div class="game-types-panel">
+
+                    <!-- Accumulative -->
+                    <div class="game-section">
+                        <h3 class="game-title">Accumulative</h3>
+                        <div class="game-matrix">
+                            <div class="matrix-header">
+                                <div class="corner-cell"></div>
+                                <div class="dim-label">4x4</div>
+                                <div class="dim-label">4x6</div>
+                                <div class="dim-label">5x7</div>
+                                <div class="dim-label">6x8</div>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">45s</div>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
+                                    data-board="4x4">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
+                                    data-board="4x6">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
+                                    data-board="5x7">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
+                                    data-board="6x8">Start [0]</button>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">3m</div>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
+                                    data-board="4x4">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
+                                    data-board="4x6">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
+                                    data-board="5x7">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
+                                    data-board="6x8">Start [0]</button>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">10m</div>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="600"
+                                    data-board="4x4">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="600"
+                                    data-board="4x6">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="600"
+                                    data-board="5x7">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="600"
+                                    data-board="6x8">Start [0]</button>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">24h</div>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
+                                    data-board="4x4">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
+                                    data-board="4x6">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
+                                    data-board="5x7">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
+                                    data-board="6x8">Start [0]</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- First Come First Serve -->
+                    <div class="game-section">
+                        <h3 class="game-title">First Come First Serve</h3>
+                        <div class="game-matrix">
+                            <div class="matrix-header">
+                                <div class="corner-cell"></div>
+                                <div class="dim-label">4x4</div>
+                                <div class="dim-label">4x6</div>
+                                <div class="dim-label">5x7</div>
+                                <div class="dim-label">6x8</div>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">45s</div>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="4x4">Show
+                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="4x6">Show
+                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="5x7">Show
+                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="6x8">Show
+                                    Rooms [0]</button>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">3m</div>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="4x4">Show
+                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="4x6">Show
+                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="5x7">Show
+                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="6x8">Show
+                                    Rooms [0]</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Split Points -->
+                    <div class="game-section">
+                        <h3 class="game-title">Split Points</h3>
+                        <div class="game-matrix">
+                            <div class="matrix-header">
+                                <div class="corner-cell"></div>
+                                <div class="dim-label">4x4</div>
+                                <div class="dim-label">4x6</div>
+                                <div class="dim-label">5x7</div>
+                                <div class="dim-label">6x8</div>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">45s</div>
+                                <button class="game-btn split-btn" data-game="split" data-time="45"
+                                    data-board="4x4">Show Rooms [0]</button>
+                                <button class="game-btn split-btn" data-game="split" data-time="45"
+                                    data-board="4x6">Show Rooms [0]</button>
+                                <button class="game-btn split-btn" data-game="split" data-time="45"
+                                    data-board="5x7">Show Rooms [0]</button>
+                                <button class="game-btn split-btn" data-game="split" data-time="45"
+                                    data-board="6x8">Show Rooms [0]</button>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">3m</div>
+                                <button class="game-btn split-btn" data-game="split" data-time="180"
+                                    data-board="4x4">Show Rooms [0]</button>
+                                <button class="game-btn split-btn" data-game="split" data-time="180"
+                                    data-board="4x6">Show Rooms [0]</button>
+                                <button class="game-btn split-btn" data-game="split" data-time="180"
+                                    data-board="5x7">Show Rooms [0]</button>
+                                <button class="game-btn split-btn" data-game="split" data-time="180"
+                                    data-board="6x8">Show Rooms [0]</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Active Rooms -->
+                <div class="active-rooms-panel">
+                    <h3>Active Rooms</h3>
+                    <input type="number" id="rating-filter" placeholder="Filter by combined rating" min="0" step="100">
+                    <div id="selected-game-info">Select a game type</div>
+                    <div id="rooms-list">
+                        <p class="placeholder">No rooms selected</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Play Page -->
+        <div id="page-play" class="page">
+            <div class="play-header">
+                <h2>Accumulative</h2>
+                <div class="game-params">
+                    <span id="param-board">-</span> |
+                    <span id="param-time">-</span> |
+                    Bonus: <span id="param-bonus">-</span> |
+                    Min: <span id="param-min">-</span> |
+                    Dict: <span id="param-dict">-</span> |
+                    Words: <span id="param-words">-</span> |
+                    Format: <span id="param-format">-</span>
+                </div>
+                <button class="return-btn" id="return-lobby-btn">Return to Lobby</button>
+            </div>
+
+            <div class="play-grid">
+                <!-- Left Panel: Players -->
+                <div class="players-panel">
+                    <h3>Players</h3>
+                    <div id="players-list">
+                        <p class="placeholder">Loading...</p>
+                    </div>
+                </div>
+
+                <!-- Center Panel: Board -->
+                <div class="board-panel">
+                    <div class="timer-display">
+                        <div class="timer-label">Time:</div>
+                        <div class="timer-value" id="timer-value">0:00</div>
+                    </div>
+                    <div id="game-board" class="game-board"></div>
+                    <div class="word-input-section">
+                        <input type="text" id="word-input" placeholder="Enter word" autocomplete="off">
+                        <button id="submit-word-btn">Submit</button>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Submitted Words -->
+                <div class="words-panel">
+                    <h3>Your Words</h3>
+                    <p class="words-stats" id="words-stats"></p>
+                    <div id="submitted-words-list">
+                        <p class="placeholder">No words yet</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Spinner Set Overlay -->
+            <div id="spinner-overlay" class="spinner-overlay hidden">
+                <div class="spinner-content">
+                    <h2>Next Round Parameters</h2>
+                    <div class="spinner-params">
+                        <div class="param-item">
+                            <span class="param-label">Bonus Word Length:</span>
+                            <span class="param-value" id="spinner-bonus-length">-</span>
+                        </div>
+                        <div class="param-item">
+                            <span class="param-label">Minimum Word Length:</span>
+                            <span class="param-value" id="spinner-min-length">-</span>
+                        </div>
+                        <div class="param-item">
+                            <span class="param-label">Difficulty:</span>
+                            <span class="param-value" id="spinner-difficulty">-</span>
+                        </div>
+                        <div class="param-item">
+                            <span class="param-label">Word Count Range:</span>
+                            <span class="param-value" id="spinner-word-count">-</span>
+                        </div>
+                        <div class="param-item">
+                            <span class="param-label">Dictionary:</span>
+                            <span class="param-value" id="spinner-dictionary">-</span>
+                        </div>
+                        <div class="param-item">
+                            <span class="param-label">Board Format:</span>
+                            <span class="param-value" id="spinner-format">-</span>
+                        </div>
+                    </div>
+                    <button id="close-spinner-btn" class="close-spinner-btn">×</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboards Page -->
+        <div id="page-leaderboards" class="page">
+            <h2>Leaderboards</h2>
+            <p>Rankings coming soon...</p>
+        </div>
+
+        <!-- Tools Page -->
+        <div id="page-tools" class="page">
+            <h2>Tools</h2>
+            <p>Tools coming soon...</p>
+        </div>
+
+        <!-- Settings Page -->
+        <div id="page-settings" class="page">
+            <h2>Settings</h2>
+            <p>Settings coming soon...</p>
+        </div>
+
+        <!-- Contact Page -->
+        <div id="page-contact" class="page">
+            <h2>Contact</h2>
+            <p>Contact information coming soon...</p>
+        </div>
+    </main>
+
+    <script src="/js/app.js"></script>
+    <script src="/js/lobby.js"></script>
+    <script src="/js/play.js"></script>
+</body>
+
+</html>
