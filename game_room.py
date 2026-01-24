@@ -60,6 +60,9 @@ class GameRoom:
     
     def add_player(self, user_id, username, rating):
         """Add player to room"""
+        # Ensure player is not already in the room (prevent duplicates)
+        self.remove_player(user_id)
+        
         player = Player(user_id, username, rating)
         self.players.append(player)
         self.players.sort(key=lambda p: p.rating, reverse=True)

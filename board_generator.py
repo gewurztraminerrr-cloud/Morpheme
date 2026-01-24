@@ -153,15 +153,21 @@ class BoardGenerator:
         return board
     
     def _create_checkerboard(self, rows, cols):
-        """Create checkerboard pattern (vowels/consonants)"""
+        """Create checkerboard pattern (consonants/vowels)
+        Pattern starts with CONSONANT in top-left (0,0):
+        C V C V
+        V C V C
+        C V C V
+        V C V C
+        """
         board = []
         for r in range(rows):
             row = []
             for c in range(cols):
                 if (r + c) % 2 == 0:
-                    row.append(random.choice(VOWELS))
-                else:
                     row.append(random.choice(CONSONANTS))
+                else:
+                    row.append(random.choice(VOWELS))
             board.append(row)
         return board
     

@@ -160,11 +160,33 @@
     font-size: 1.8rem;
     font-weight: 700;
     border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .board-cell.grayed {
     background: #999;
     color: #555;
+    cursor: not-allowed;
+}
+
+/* Mouse selection visual feedback */
+.board-cell.selected {
+    background: rgba(64, 156, 255, 0.5);
+    border: 3px solid #409cff;
+    box-shadow: 0 0 15px rgba(64, 156, 255, 0.6);
+    transform: scale(1.05);
+    z-index: 10;
+}
+
+.board-cell.current {
+    background: rgba(64, 156, 255, 0.7);
+    box-shadow: 0 0 20px rgba(64, 156, 255, 0.8);
 }
 
 .word-input-section {

@@ -5,6 +5,13 @@ let previousState = null;
 let localEndTime = null;  // End time in local clock terms
 let lastServerUpdate = Date.now();  // Track last server response for freeze detection
 
+// Mouse selection state
+let mouseState = {
+    isDown: false,
+    selectedPath: [],       // Array of {row, col, letter}
+    visitedCells: new Set() // Set of "row,col" strings
+};
+
 function getCurrentRoomId() {
     return window.currentRoomId || null;
 }
@@ -287,6 +294,11 @@ function renderBoard(board, grayed) {
             const cell = document.createElement('div');
             cell.className = 'board-cell' + (grayed ? ' grayed' : '');
             cell.textContent = board[r][c];
+
+            // Add data attributes for mouse selection
+            cell.dataset.row = r;
+            cell.dataset.col = c;
+
             boardEl.appendChild(cell);
         }
     }
@@ -408,9 +420,10 @@ if (submitBtn && wordInput) {
     });
 }
 
-async function submitWord() {
+async function submitWord(wordParam = null) {
     const input = document.getElementById('word-input');
-    const word = input.value.trim().toUpperCase();
+    // Use provided word parameter OR read from input field
+    const word = wordParam ? wordParam.toUpperCase() : input.value.trim().toUpperCase();
     const roomId = getCurrentRoomId();
 
     if (!word || !roomId) return;
@@ -446,24 +459,43 @@ async function submitWord() {
     }
 }
 
+// Shared function to leave current room and clean up state
+async function leaveCurrentRoom() {
+    const roomId = getCurrentRoomId();
+    if (!roomId) return;
+
+    try {
+        await fetch(`/api/room/${roomId}/leave`, { method: 'POST' });
+    } catch (error) {
+        console.error('Error leaving room:', error);
+    }
+
+    // Clear room ID and stop polling
+    window.currentRoomId = null;
+    stopPolling();
+
+    // Clear UI state
+    const wordsList = document.getElementById('submitted-words-list');
+    if (wordsList) {
+        wordsList.innerHTML = '<div class="placeholder">No words submitted yet</div>';
+    }
+
+    // Clear word input
+    const wordInput = document.getElementById('word-input');
+    if (wordInput) {
+        wordInput.value = '';
+    }
+
+    // Disable play button
+    const playBtn = document.getElementById('play-btn');
+    if (playBtn) playBtn.disabled = true;
+}
+
 // Return to lobby (add only if element exists)
 const returnBtn = document.getElementById('return-lobby-btn');
 if (returnBtn) {
     returnBtn.addEventListener('click', async () => {
-        const roomId = getCurrentRoomId();
-        if (roomId) {
-            try {
-                await fetch(`/api/room/${roomId}/leave`, { method: 'POST' });
-            } catch (error) {
-                console.error('Error leaving room:', error);
-            }
-
-            window.currentRoomId = null;
-            stopPolling();
-        }
-
-        const playBtn = document.getElementById('play-btn');
-        if (playBtn) playBtn.disabled = true;
-        showPage('lobby');
+        await leaveCurrentRoom();
+        showPage('page-lobby');
     });
 }

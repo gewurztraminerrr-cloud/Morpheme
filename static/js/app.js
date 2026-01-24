@@ -40,9 +40,15 @@ async function checkSession() {
 function setupNavigation() {
     const navButtons = document.querySelectorAll('.nav-btn');
     navButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
             if (!btn.disabled) {
                 const pageId = 'page-' + btn.getAttribute('data-page');
+
+                // If navigating to lobby, clean up room state
+                if (pageId === 'page-lobby') {
+                    await leaveCurrentRoom();
+                }
+
                 showPage(pageId);
                 updateActiveNav(btn);
             }
