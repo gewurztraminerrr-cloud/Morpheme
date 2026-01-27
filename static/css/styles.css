@@ -31,11 +31,12 @@ body {
 }
 
 /* Header */
+/* Header */
 .main-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.5rem 3rem;
+    padding: 0.4rem 1.5rem;
     background: linear-gradient(135deg,
             hsla(260, 90%, 20%, 0.4) 0%,
             hsla(230, 25%, 15%, 0.8) 100%);
@@ -46,11 +47,11 @@ body {
 .header-left {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.8rem;
 }
 
 .logo {
-    font-size: 2rem;
+    font-size: 1.1rem;
     font-weight: 800;
     letter-spacing: 0.05em;
     background: linear-gradient(135deg, var(--primary-light), var(--secondary));
@@ -61,7 +62,7 @@ body {
 }
 
 .phonetic {
-    font-size: 0.9rem;
+    font-size: 0.65rem;
     color: var(--text-secondary);
     font-weight: 300;
     font-style: italic;
@@ -74,13 +75,13 @@ body {
 }
 
 .nav-btn {
-    padding: 0.65rem 1.25rem;
+    padding: 0.3rem 0.7rem;
     background: linear-gradient(135deg,
             hsla(260, 90%, 30%, 0.3),
             hsla(260, 90%, 25%, 0.3));
     border: 1px solid hsla(260, 90%, 60%, 0.3);
     color: var(--text-primary);
-    font-size: 0.9rem;
+    font-size: 0.75rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

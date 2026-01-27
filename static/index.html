@@ -5,9 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MORPHEME</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/lobby.css">
-    <link rel="stylesheet" href="/css/play.css">
+    <link rel="stylesheet" href="/css/style.css?v=4">
+    <link rel="stylesheet" href="/css/lobby.css?v=4">
+    <link rel="stylesheet" href="/css/play.css?v=4">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=4">
 </head>
 
 <body>
@@ -23,6 +24,8 @@
             <button class="nav-btn" data-page="lobby">Lobby</button>
             <button class="nav-btn" id="play-btn" data-page="play" disabled>Play</button>
             <button class="nav-btn" data-page="leaderboards">Leaderboards</button>
+            <button class="nav-btn" data-page="tournaments">Tournaments</button>
+            <button class="nav-btn" data-page="forums">Forums</button>
             <button class="nav-btn" data-page="tools">Tools</button>
             <button class="nav-btn" data-page="settings">Settings</button>
             <button class="nav-btn" data-page="contact">Contact</button>
@@ -37,6 +40,7 @@
         <div id="page-login" class="page active">
             <div class="auth-container">
                 <h2>Welcome to Morpheme</h2>
+                <p style="text-align: center; margin-bottom: 25px; opacity: 0.8;">Sign in to continue your journey.</p>
 
                 <div class="auth-tabs">
                     <button class="tab-btn active" id="login-tab" data-tab="signin">Login</button>
@@ -66,10 +70,7 @@
         </div>
 
         <!-- How to Play Page -->
-        <div id="page-howtoplay" class="page">
-            <h2>How to Play</h2>
-            <p>Instructions coming soon...</p>
-        </div>
+
 
         <!-- Lobby Page -->
         <div id="page-lobby" class="page">
@@ -78,6 +79,10 @@
             <div class="lobby-grid">
                 <!-- Left Panel: Game Types -->
                 <div class="game-types-panel">
+                    <!-- Global Filters/Settings -->
+
+
+
 
                     <!-- Accumulative -->
                     <div class="game-section">
@@ -225,11 +230,12 @@
         <!-- Play Page -->
         <div id="page-play" class="page">
             <div class="play-header">
-                <h2>Accumulative</h2>
+                <h2 id="game-title">Accumulative</h2>
                 <div class="game-params">
                     <span id="param-board">-</span> |
                     <span id="param-time">-</span> |
                     Bonus: <span id="param-bonus">-</span> |
+                    Diff: <span id="param-diff">-</span> |
                     Min: <span id="param-min">-</span> |
                     Dict: <span id="param-dict">-</span> |
                     Words: <span id="param-words">-</span> |
@@ -238,12 +244,28 @@
                 <button class="return-btn" id="return-lobby-btn">Return to Lobby</button>
             </div>
 
+            <!-- Color Bar -->
+            <div id="game-color-bar"></div>
+
             <div class="play-grid">
                 <!-- Left Panel: Players -->
-                <div class="players-panel">
-                    <h3>Players</h3>
-                    <div id="players-list">
-                        <p class="placeholder">Loading...</p>
+                <div class="left-panel-container">
+                    <div class="players-panel">
+                        <h3>Players</h3>
+                        <div id="players-list">
+                            <p class="placeholder">Loading...</p>
+                        </div>
+                    </div>
+
+                    <!-- Chat Panel -->
+                    <div class="chat-panel">
+                        <div id="chat-history">
+                            <p class="placeholder">No messages yet</p>
+                        </div>
+                        <div class="chat-input-section">
+                            <input type="text" id="chat-input" placeholder="Say something..." autocomplete="off">
+                            <button id="chat-send-btn">Send</button>
+                        </div>
                     </div>
                 </div>
 
@@ -260,12 +282,20 @@
                     </div>
                 </div>
 
-                <!-- Right Panel: Submitted Words -->
+                <!-- Right Panel: Submitted Words and Definitions -->
                 <div class="words-panel">
-                    <h3>Your Words</h3>
-                    <p class="words-stats" id="words-stats"></p>
+                    <div class="words-header-group">
+                        <h3>Your Words</h3>
+                        <p class="words-stats" id="words-stats"></p>
+                    </div>
                     <div id="submitted-words-list">
                         <p class="placeholder">No words yet</p>
+                    </div>
+
+                    <div class="definitions-panel">
+                        <div id="definition-content">
+                            <p class="placeholder">Select a word to see its definition</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -311,6 +341,12 @@
             <p>Rankings coming soon...</p>
         </div>
 
+        <!-- Tournaments Page -->
+        <div id="page-tournaments" class="page">
+            <h2>Tournaments</h2>
+            <p>Tournaments coming soon...</p>
+        </div>
+
         <!-- Tools Page -->
         <div id="page-tools" class="page">
             <h2>Tools</h2>
@@ -329,6 +365,52 @@
             <p>Contact information coming soon...</p>
         </div>
     </main>
+
+    <!-- How to Play Modal (Independent Window) -->
+    <div id="modal-howtoplay" class="modal-window hidden">
+        <div class="modal-content-wrapper">
+            <button id="close-howtoplay" class="close-modal-btn">×</button>
+            <div class="instructions-container">
+                <!-- Card 1: Connect -->
+                <div class="instruction-card">
+                    <div class="card-image-container">
+                        <!-- CSS Animation Demo Board -->
+                        <div class="demo-board">
+                            <div class="demo-cursor"></div>
+                            <div class="demo-tile tile-1">P</div>
+                            <div class="demo-tile tile-2">L</div>
+                            <div class="demo-tile tile-3">A</div>
+                            <div class="demo-tile tile-4">Y</div>
+                        </div>
+                    </div>
+                    <h3>Connect & Create</h3>
+                    <p>Drag your cursor across the grid, or swipe across your mobile device, or type in words. Link
+                        letters horizontally, vertically, or diagonally to forge your words. <strong>Letters cannot be
+                            reused within the same word.</strong></p>
+                </div>
+
+                <!-- Card 2: Strategy -->
+                <div class="instruction-card">
+                    <div class="card-image-container">
+                        <img src="/brain/03e22400-5367-4b19-8d15-40b39b1e595c/instruction_submit_1769388490012.png"
+                            alt="Score Points" class="card-image">
+                    </div>
+                    <h3>Length Matters</h3>
+                    <p>Longer words grant exponential points. Look for prefixes and suffixes to maximize your score.</p>
+                </div>
+
+                <!-- Card 3: Win -->
+                <div class="instruction-card">
+                    <div class="card-image-container">
+                        <img src="/brain/03e22400-5367-4b19-8d15-40b39b1e595c/instruction_win_1769388503200.png"
+                            alt="Win Trophies" class="card-image">
+                    </div>
+                    <h3>Rise to Logic</h3>
+                    <p>Compete in real-time. Outscore opponents in the room or climb the global leaderboards.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="/js/app.js"></script>
     <script src="/js/lobby.js"></script>

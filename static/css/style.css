@@ -16,7 +16,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 40px;
+    padding: 10px 20px;
+    /* Reduced padding */
     background: rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
 }
@@ -28,31 +29,36 @@ body {
 }
 
 .logo-text {
-    font-size: 2rem;
+    font-size: 1.8rem;
+    /* Slightly reduced */
     font-weight: 800;
     letter-spacing: 2px;
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .pronunciation {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: rgba(255, 255, 255, 0.7);
     font-style: italic;
 }
 
 .nav {
     display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+    gap: 4px;
+    /* Reduced gap */
+    flex-wrap: nowrap;
+    /* Prevent wrapping */
 }
 
 .nav-btn {
-    padding: 10px 20px;
+    padding: 6px 12px;
+    /* Reduced padding */
     background: rgba(255, 255, 255, 0.2);
     border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
+    border-radius: 6px;
     color: #fff;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
+    /* Reduced font size */
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -119,7 +125,7 @@ body {
 /* Auth Container */
 .auth-container {
     max-width: 450px;
-    margin: 60px auto;
+    margin: 20px auto;
     background: rgba(30, 30, 50, 0.8);
     backdrop-filter: blur(15px);
     border-radius: 20px;
@@ -227,4 +233,91 @@ body {
     display: block;
     background: rgba(72, 187, 120, 0.3);
     border: 1px solid rgba(72, 187, 120, 0.5);
+}
+
+/* Split Points Notepads */
+.split-notepads-container {
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+}
+
+.user-notepad {
+    background: #fdf6e3;
+    /* Yellowish notepad color */
+    color: #333;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    height: 300px;
+    /* Fixed height or max-height */
+    border: 2px solid transparent;
+    transition: transform 0.2s, border-color 0.2s;
+    cursor: pointer;
+}
+
+.user-notepad:hover {
+    transform: translateY(-2px);
+}
+
+.user-notepad.selected {
+    border-color: #007bff;
+    /* Highlight selected user */
+    box-shadow: 0 0 15px rgba(0, 123, 255, 0.5);
+}
+
+.notepad-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+}
+
+.notepad-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.notepad-tab {
+    flex: 1;
+    padding: 4px;
+    font-size: 0.8rem;
+    border: 1px solid #ccc;
+    background: #eee;
+    cursor: pointer;
+    border-radius: 4px 4px 0 0;
+    color: #555;
+}
+
+.notepad-tab.active {
+    background: #fff;
+    border-bottom-color: #fff;
+    font-weight: bold;
+    color: #000;
+}
+
+.notepad-list {
+    flex: 1;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    padding: 5px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.95rem;
+}
+
+.notepad-item {
+    padding: 2px 4px;
+    border-bottom: 1px dashed #eee;
+}
+
+.notepad-item:last-child {
+    border-bottom: none;
 }

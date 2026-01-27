@@ -7,22 +7,32 @@ import random
 from word_validator import word_validator
 
 # Letter frequency (A-Z)
-LETTER_FREQ = [343, 100, 157, 161, 455, 64, 106, 108, 326, 11, 64, 236,
-               131, 232, 266, 123, 8, 272, 283, 224, 168, 40, 49, 15, 92, 22]
+# Letter frequency (A-Z)
+# Medium/Hard weights
+LETTER_FREQ_MH = [343, 100, 157, 161, 455, 64, 106, 108, 326, 11, 64, 236,
+                  131, 232, 266, 123, 8, 272, 283, 224, 168, 40, 49, 15, 92, 22]
 
-VOWELS = 'AEIOUY'
-CONSONANTS = 'BCDFGHJKLMNPQRSTVWXZ'
+# Default/Easy weights
+LETTER_FREQ_DEFAULT = [190, 45, 99, 82, 278, 29, 69, 61, 222, 4, 23, 129,
+                       71, 165, 163, 74, 4, 172, 237, 161, 81, 23, 19, 7, 40, 12]
+
+VOWELS = 'AEIOU'
+CONSONANTS = 'BCDFGHJKLMNPQRSTVWXYZ'
 
 class BoardGenerator:
     # Class-level cache for optimal board generation method per parameter set
     method_cache = {}
     
     def __init__(self):
-        # Store letters and their weights for weighted random selection
+        # Store letters
         self.letters = [chr(65 + i) for i in range(26)]  # A-Z
-        self.weights = LETTER_FREQ
+        
+    def _get_weights(self, difficulty):
+        if difficulty in ['Medium', 'Hard']:
+            return LETTER_FREQ_MH
+        return LETTER_FREQ_DEFAULT
     
-    def generate_board(self, dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length=3):
+    def generate_board(self, dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length=3, difficulty='Normal'):
         """
         Generate a valid board that meets word count requirements.
         Uses cached optimal method or tests both formats on first use.
@@ -31,21 +41,13 @@ class BoardGenerator:
         """
         print(f"[BoardGen] generate_board called: {dimensions}, bonus={bonus_word}, range={word_count_range}, format={board_format}, dict={dictionary}")
         
+        
         # Parse word count requirements
         min_words, max_words = self._parse_word_count_range(word_count_range)
         print(f"[BoardGen] Target word count: {min_words}-{max_words if max_words != float('inf') else '∞'}")
-        # Check cache for optimal method
-        cache_key = (dimensions, word_count_range, dictionary)
-        if cache_key in BoardGenerator.method_cache:
-            optimal_format = BoardGenerator.method_cache[cache_key]
-            print(f"[BoardGen] Using cached optimal method: {optimal_format}")
-            board_format = optimal_format
-        elif board_format == 'Checkerboard':
-            # First time with these params - test both methods
-            print(f"[BoardGen] First time - testing both formats...")
-            board_format = self._test_board_formats(dimensions, bonus_word, word_count_range, dictionary, min_words, max_words)
-            BoardGenerator.method_cache[cache_key] = board_format
-            print(f"[BoardGen] Cached {board_format} as optimal method")
+        
+        # REMOVED: Cache lookup that overrode user format preference
+        # We now strictly respect the board_format passed in arguments
         
         # Try to generate valid board (max 10 attempts)
         max_attempts = 10
@@ -54,18 +56,23 @@ class BoardGenerator:
             
             rows, cols = map(int, dimensions.split('x'))
             
+            # Get weights for this attempt
+            weights = self._get_weights(difficulty)
+            
             # Create board
             if board_format == 'Checkerboard':
-                board = self._create_checkerboard(rows, cols)
+                board = self._create_checkerboard(rows, cols, weights)
             else:
-                board = self._create_normal_board(rows, cols)
+                board = self._create_normal_board(rows, cols, weights)
             
             # IMPORTANT: Embed bonus word before solving
-            if not self._embed_bonus_word(board, bonus_word):
-                print(f"[BoardGen] ✗ Failed to embed bonus word, retrying...")
-                continue  # Try again with new board
-            
-            print(f"[BoardGen] ✓ Bonus word '{bonus_word}' embedded successfully")
+            if bonus_word:
+                if not self._embed_bonus_word(board, bonus_word):
+                    print(f"[BoardGen] ✗ Failed to embed bonus word, retrying...")
+                    continue  # Try again with new board
+                print(f"[BoardGen] ✓ Bonus word '{bonus_word}' embedded successfully")
+            else:
+                 print(f"[BoardGen] - Skipping bonus word embedding (bonus word not provided)")
             
             # Solve board to find words (filtered by min length)
             all_words = self._solve_board(board, dictionary, word_count_range, min_word_length)
@@ -141,78 +148,85 @@ class BoardGenerator:
             # Neither is valid, return faster one
             return 'Checkerboard' if time_cb < time_normal else 'Normal'
     
-    def _create_normal_board(self, rows, cols):
+    def _create_normal_board(self, rows, cols, weights):
         """Create board with weighted random letters"""
         board = []
         for r in range(rows):
             row = []
             for c in range(cols):
                 # Draw a random letter using frequency weights
-                row.append(random.choices(self.letters, weights=self.weights, k=1)[0])
+                row.append(random.choices(self.letters, weights=weights, k=1)[0])
             board.append(row)
         return board
     
-    def _create_checkerboard(self, rows, cols):
-        """Create checkerboard pattern (consonants/vowels)
-        Pattern starts with CONSONANT in top-left (0,0):
-        C V C V
-        V C V C
-        C V C V
-        V C V C
-        """
+    def _create_checkerboard(self, rows, cols, weights):
+        """Create checkerboard pattern (consonants/vowels) with weighted letters"""
+        # separate weights for consonants and vowels
+        # VOWELS = 'AEIOU'
+        # CONSONANTS = 'BCDFGHJKLMNPQRSTVWXYZ'
+        
+        vowel_indices = [self.letters.index(c) for c in VOWELS]
+        consonant_indices = [self.letters.index(c) for c in CONSONANTS]
+        
+        vowel_weights = [weights[i] for i in vowel_indices]
+        consonant_weights = [weights[i] for i in consonant_indices]
+        
         board = []
         for r in range(rows):
             row = []
             for c in range(cols):
                 if (r + c) % 2 == 0:
-                    row.append(random.choice(CONSONANTS))
+                    # Consonant
+                    row.append(random.choices(CONSONANTS, weights=consonant_weights, k=1)[0])
                 else:
-                    row.append(random.choice(VOWELS))
+                    # Vowel
+                    row.append(random.choices(VOWELS, weights=vowel_weights, k=1)[0])
             board.append(row)
         return board
     
     def _embed_bonus_word(self, board, bonus_word):
-        """Try to embed bonus word along a valid Boggle path"""
+        """Embed bonus word using backtracking to find a valid path"""
         rows, cols = len(board), len(board[0])
         word_len = len(bonus_word)
         
-        # Try to find a snake path
-        for _ in range(50):
-            # Pick random starting position
-            r, c = random.randint(0, rows - 1), random.randint(0, cols - 1)
+        # Create list of all cells and shuffle for randomness
+        start_cells = [(r, c) for r in range(rows) for c in range(cols)]
+        random.shuffle(start_cells)
+        
+        def get_valid_neighbors(r, c, visited):
+            neighbors = []
+            for dr in [-1, 0, 1]:
+                for dc in [-1, 0, 1]:
+                    if dr == 0 and dc == 0:
+                        continue
+                    nr, nc = r + dr, c + dc
+                    if (0 <= nr < rows and 0 <= nc < cols and (nr, nc) not in visited):
+                        neighbors.append((nr, nc))
+            random.shuffle(neighbors) # Randomize direction
+            return neighbors
+
+        def backtrack(current_path):
+            if len(current_path) == word_len:
+                return current_path
             
-            path = [(r, c)]
-            visited = {(r, c)}
+            r, c = current_path[-1]
+            visited = set(current_path)
             
-            # Build path using DFS
-            while len(path) < word_len:
-                last_r, last_c = path[-1]
-                
-                # Get unvisited neighbors
-                neighbors = []
-                for dr in [-1, 0, 1]:
-                    for dc in [-1, 0, 1]:
-                        if dr == 0 and dc == 0:
-                            continue
-                        nr, nc = last_r + dr, last_c + dc
-                        if (0 <= nr < rows and 0 <= nc < cols and 
-                            (nr, nc) not in visited):
-                            neighbors.append((nr, nc))
-                
-                if not neighbors:
-                    break  # Dead end
-                
-                # Pick random neighbor
-                next_cell = random.choice(neighbors)
-                path.append(next_cell)
-                visited.add(next_cell)
-            
-            # If we found a complete path, embed the word
-            if len(path) == word_len:
+            for nr, nc in get_valid_neighbors(r, c, visited):
+                result = backtrack(current_path + [(nr, nc)])
+                if result:
+                    return result
+            return None
+
+        # Try to find a path from any random starting cell
+        for start_r, start_c in start_cells:
+            path = backtrack([(start_r, start_c)])
+            if path:
+                # Embed the word
                 for i, (r, c) in enumerate(path):
                     board[r][c] = bonus_word[i]
                 return True
-        
+                
         return False
     
     def _solve_board(self, board, dictionary, word_count_range, min_word_length=3):
@@ -255,21 +269,37 @@ class BoardGenerator:
                     if (0 <= nr < rows and 0 <= nc < cols and 
                         (nr, nc) not in visited):
                         
-                        next_word = word + board[nr][nc]
-                        
-                        # OPTIMIZATION: Skip if prefix can't lead to valid word
-                        if not word_validator.has_valid_prefix(next_word, dictionary):
-                            continue
-                        
                         visited.add((nr, nc))
-                        dfs(nr, nc, path + [(nr, nc)], visited, next_word)
+                        
+                        # Handle Q/QU branching
+                        cell_letter = board[nr][nc]
+                        
+                        # Branch 1: Treat as regular letter (includes Q as just Q)
+                        next_word_1 = word + cell_letter
+                        if word_validator.has_valid_prefix(next_word_1, dictionary):
+                            dfs(nr, nc, path + [(nr, nc)], visited, next_word_1)
+                            
+                        # Branch 2: Specific QU logic
+                        if cell_letter == 'Q':
+                            next_word_2 = word + 'QU'
+                            if word_validator.has_valid_prefix(next_word_2, dictionary):
+                                dfs(nr, nc, path + [(nr, nc)], visited, next_word_2)
+                                
                         visited.remove((nr, nc))
         
         # Start from every cell - search exhaustively
         for r in range(rows):
             for c in range(cols):
                 visited = {(r, c)}
-                dfs(r, c, [(r, c)], visited, board[r][c])
+                # Initial cell can also be Q or QU
+                start_letter = board[r][c]
+                
+                # Branch 1: Regular
+                dfs(r, c, [(r, c)], visited, start_letter)
+                
+                # Branch 2: Q -> QU
+                if start_letter == 'Q':
+                    dfs(r, c, [(r, c)], visited, 'QU')
         
         return sorted(list(found_words))
     
@@ -304,14 +334,31 @@ class BoardGenerator:
                         (nr, nc) not in visited):
                         
                         visited.add((nr, nc))
-                        dfs(nr, nc, path + [(nr, nc)], visited, word + board[nr][nc])
+                        
+                        # Handle Q/QU branching
+                        cell_letter = board[nr][nc]
+                        
+                        # Branch 1: Treat as regular letter
+                        dfs(nr, nc, path + [(nr, nc)], visited, word + cell_letter)
+                        
+                        # Branch 2: Specific QU logic
+                        if cell_letter == 'Q':
+                            dfs(nr, nc, path + [(nr, nc)], visited, word + 'QU')
+                        
                         visited.remove((nr, nc))
         
         # Start from every cell - no early termination
         for r in range(rows):
             for c in range(cols):
                 visited = {(r, c)}
-                dfs(r, c, [(r, c)], visited, board[r][c])
+                start_letter = board[r][c]
+                
+                # Branch 1
+                dfs(r, c, [(r, c)], visited, start_letter)
+                
+                # Branch 2
+                if start_letter == 'Q':
+                     dfs(r, c, [(r, c)], visited, 'QU')
         
         print(f"[BoardGen] Complete solver finished: found {len(found_words)} total words")
         return sorted(list(found_words))
@@ -325,7 +372,7 @@ if __name__ == '__main__':
         print("Board generated!")
         for row in board:
             print(' '.join(row))
-        print(f"\nFound {len(words)} words")
+        print(f"\\nFound {len(words)} words")
         print(f"Bonus word: BACKWARD")
     else:
         print("Failed to generate board")

@@ -1,0 +1,375 @@
+/* How to Play Modal Styles */
+
+.modal-window {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    /* Top level */
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.modal-window.hidden {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+.modal-content-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 1200px;
+    padding: 40px;
+}
+
+/* Close Button */
+.close-modal-btn {
+    position: absolute;
+    top: -30px;
+    right: 20px;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 3rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+    line-height: 1;
+    z-index: 10001;
+}
+
+.close-modal-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Container for the cards */
+.instructions-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    width: 100%;
+    perspective: 1000px;
+    /* For 3D effects */
+}
+
+/* Individual Card */
+.instruction-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 30px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Card Hover Effect */
+.instruction-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(66, 220, 219, 0.2);
+}
+
+/* Image Container */
+.card-image-container {
+    width: 140px;
+    height: 140px;
+    margin-bottom: 25px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+    transition: transform 0.3s ease;
+}
+
+.instruction-card:hover .card-image {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));
+}
+
+/* Typography */
+.instruction-card h3 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    background: linear-gradient(to right, #fff, #a5b4fc);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+}
+
+.instruction-card p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+}
+
+/* ------------------- */
+/* ANIMATION DEMO CSS */
+/* ------------------- */
+
+.demo-board {
+    width: 120px;
+    height: 120px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    position: relative;
+}
+
+.demo-tile {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* Cursor Glow Dot */
+.demo-cursor {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: #00ffff;
+    border-radius: 50%;
+    box-shadow: 0 0 15px #00ffff, 0 0 30px #00ffff;
+    z-index: 10;
+    top: 25px;
+    /* Center of (0,0) approx */
+    left: 25px;
+    animation: moveCursor 4s infinite ease-in-out;
+}
+
+/* Animation Keyframes for Cursor (F -> A -> C -> E) */
+/* Grid: 2x2. Tile size ~56px + gap. Centers:
+   (0,0): 28, 28
+   (0,1): 92, 28
+   (1,0): 28, 92
+   (1,1): 92, 92
+*/
+@keyframes moveCursor {
+    0% {
+        top: 28px;
+        left: 28px;
+    }
+
+    /* Start F */
+    10% {
+        top: 28px;
+        left: 28px;
+    }
+
+    /* Hold F */
+    30% {
+        top: 28px;
+        left: 92px;
+    }
+
+    /* Move to A */
+    50% {
+        top: 92px;
+        left: 28px;
+    }
+
+    /* Diagonal to C */
+    70% {
+        top: 92px;
+        left: 92px;
+    }
+
+    /* Move to E */
+    85% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 0;
+    }
+
+    /* Hide */
+    100% {
+        top: 28px;
+        left: 28px;
+        opacity: 0;
+    }
+
+    /* Reset */
+}
+
+/* Tile Highlighting Animations */
+.demo-tile.tile-1 {
+    animation: highlight-1 4s infinite;
+}
+
+/* F */
+.demo-tile.tile-2 {
+    animation: highlight-2 4s infinite;
+}
+
+/* A */
+.demo-tile.tile-3 {
+    animation: highlight-3 4s infinite;
+}
+
+/* C */
+.demo-tile.tile-4 {
+    animation: highlight-4 4s infinite;
+}
+
+/* E */
+
+@keyframes highlight-1 {
+
+    0%,
+    90% {
+        color: #fff;
+        text-shadow: 0 0 10px #00ffff;
+        border-color: #00ffff;
+        background: rgba(0, 255, 255, 0.2);
+    }
+
+    95%,
+    100% {
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+        border-color: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+    }
+}
+
+@keyframes highlight-2 {
+
+    0%,
+    20% {
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+        border-color: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    25%,
+    90% {
+        color: #fff;
+        text-shadow: 0 0 10px #00ffff;
+        border-color: #00ffff;
+        background: rgba(0, 255, 255, 0.2);
+    }
+
+    95%,
+    100% {
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+        border-color: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+    }
+}
+
+@keyframes highlight-3 {
+
+    0%,
+    40% {
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+        border-color: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    45%,
+    90% {
+        color: #fff;
+        text-shadow: 0 0 10px #00ffff;
+        border-color: #00ffff;
+        background: rgba(0, 255, 255, 0.2);
+    }
+
+    95%,
+    100% {
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+        border-color: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+    }
+}
+
+@keyframes highlight-4 {
+
+    0%,
+    65% {
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+        border-color: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    70%,
+    90% {
+        color: #fff;
+        text-shadow: 0 0 10px #00ffff;
+        border-color: #00ffff;
+        background: rgba(0, 255, 255, 0.2);
+    }
+
+    95%,
+    100% {
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+        border-color: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+    }
+}
+
+
+/* Responsive */
+@media (max-width: 900px) {
+    .instructions-container {
+        flex-direction: column;
+        align-items: center;
+        overflow-y: auto;
+        padding-bottom: 40px;
+        max-height: 80vh;
+        /* Contain scroll within modal */
+    }
+
+    .instruction-card {
+        width: 100%;
+        max-width: 500px;
+        flex: none;
+    }
+
+    .close-modal-btn {
+        top: 0;
+        right: 10px;
+    }
+}

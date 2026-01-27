@@ -5,16 +5,21 @@ Generates randomized parameters for each round
 
 import random
 
+from word_validator import word_validator
+
 class SpinnerSet:
     @staticmethod
     def generate_params(board_dimensions):
         """Generate all spinner parameters for a round"""
+        # Generate dictionary FIRST so we can use its size for word count
+        dictionary = SpinnerSet._spin_dictionary()
+        
         return {
             'bonus_word_length': SpinnerSet._spin_bonus_word_length(),
             'min_word_length': SpinnerSet._spin_min_word_length(board_dimensions),
             'difficulty': SpinnerSet._spin_difficulty(),
-            'word_count_range': SpinnerSet._spin_word_count(),
-            'dictionary': SpinnerSet._spin_dictionary(),
+            'word_count_range': SpinnerSet._spin_word_count(dictionary),
+            'dictionary': dictionary,
             'board_format': SpinnerSet._spin_board_format()
         }
     
@@ -45,12 +50,18 @@ class SpinnerSet:
         return random.choices(['Easy', 'Medium', 'Hard'], weights=[25, 50, 25])[0]
     
     @staticmethod
-    def _spin_word_count():
-        """25% 50-100, 50% 100-200, 25% 200+"""
+    def _spin_word_count(dictionary_name='NWL'):
+        """25% 50-100, 50% 100-200, 25% 200+ (max dict size)"""
+        # Get actual size of selected dictionary
+        if dictionary_name == 'CSW':
+            max_words = len(word_validator.csw_words)
+        else:
+            max_words = len(word_validator.nwl_words)
+            
         ranges = [
             (50, 100),
             (100, 200),
-            (200, 999999)
+            (200, max_words)
         ]
         return random.choices(ranges, weights=[25, 50, 25])[0]
     
