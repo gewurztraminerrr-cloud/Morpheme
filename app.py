@@ -134,6 +134,11 @@ def create_room():
     min_rating = data.get('min_rating', 0)
     max_rating = data.get('max_rating', 9999)
     
+    # Guest Restriction: Guests cannot create rooms with rating limits
+    if session.get('is_guest', False):
+        if int(min_rating) > 0 or int(max_rating) < 9999:
+            return jsonify({'error': 'Guests can only create/join rooms with no rating limits (0-∞).'}), 403
+    
     # Create room
     room_id = str(uuid.uuid4())
     room = room_manager.create_room(room_id, game_type, time_limit, board_dimensions)
@@ -144,7 +149,9 @@ def create_room():
     config_key = f"{game_type}|{board_dimensions}|{time_limit}"
     rating = 1200  # Default
     
-    if not session.get('is_guest', False):
+    if session.get('is_guest', False):
+        rating = 0
+    else:
         conn = sqlite3.connect('morpheme.db')
         cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
                             (session['user_id'], config_key))
@@ -179,7 +186,9 @@ def join_room(room_id):
     config_key = f"{room.game_type}|{room.board_dimensions}|{room.time_limit}"
     rating = 1200
     
-    if not session.get('is_guest', False):
+    if session.get('is_guest', False):
+        rating = 0
+    else:
         conn = sqlite3.connect('morpheme.db')
         cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
                             (session['user_id'], config_key))
@@ -206,6 +215,11 @@ def join_room(room_id):
     if as_spectator:
         room.add_spectator(user_id, session['username'], rating)
         return jsonify({'success': True, 'role': 'spectator'})
+
+    # Guest Restriction: Guests can only join rooms with NO rating limits
+    if session.get('is_guest', False):
+        if room.min_rating > 0 or room.max_rating < 9999:
+            return jsonify({'error': 'Guests can only join rooms with no rating limits (0-∞).'}), 403
 
     # Validate Rating Range
     if rating < room.min_rating:

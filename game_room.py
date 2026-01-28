@@ -388,16 +388,22 @@ def calculate_pairwise_elo(players):
     
     Final Elo Change for A = Sum of Deltas vs all opponents
     """
+
     K = 32
-    changes = {p.user_id: 0 for p in players}
     
-    if len(players) < 2:
-        return changes # No changes if solo
+    # Filter out guests (negative user_ids)
+    # They don't have ratings and shouldn't affect others
+    real_players = [p for p in players if p.user_id > 0]
+    
+    changes = {p.user_id: 0 for p in players} # Initialize for all, though guests stay 0
+    
+    if len(real_players) < 2:
+        return changes # No changes if solo or only against guests
         
-    for i in range(len(players)):
-        for j in range(i + 1, len(players)):
-            pA = players[i]
-            pB = players[j]
+    for i in range(len(real_players)):
+        for j in range(i + 1, len(real_players)):
+            pA = real_players[i]
+            pB = real_players[j]
             
             # Expected score for A
             # Ra = pA.rating, Rb = pB.rating
@@ -421,6 +427,13 @@ def calculate_pairwise_elo(players):
             
             changes[pA.user_id] += deltaA
             changes[pB.user_id] += deltaB
+            
+    # Cap changes at +/- 16
+    for uid in changes:
+        if changes[uid] > 16:
+            changes[uid] = 16
+        elif changes[uid] < -16:
+            changes[uid] = -16
             
     return changes
 
@@ -481,8 +494,8 @@ class RoomManager:
             else:
                 print(f"[RoomManager] delete_room called for {room_id} but not found")
     
-    def cleanup_rooms(self, timeout=1200):
-        """Clean up empty or inactive rooms"""
+    def cleanup_rooms(self, timeout=420):
+        """Clean up empty or inactive rooms (defaults to 7 mins)"""
         rooms_to_delete = []
         
         # Iterate over a copy of keys to avoid modification issues

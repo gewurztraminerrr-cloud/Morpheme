@@ -130,38 +130,80 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Handle "Create Room" button click (inside the panel)
+        // Handle "Create Room" button click (inside the panel)
         const createBtn = target.closest('.confirm-create-room-btn');
-        if (createBtn && currentLobbyConfig) {
-            // Prompt for Rating limits
+        if (createBtn) {
+            console.log('Create Room clicked. Config:', currentLobbyConfig);
+
+            if (!currentLobbyConfig) {
+                console.error('Create Room failed: Missing lobby config');
+                alert('Error: Game configuration not found. Please select a game type again.');
+                return;
+            }
+
+            // Read from embedded inputs
+            const panel = createBtn.closest('.create-room-panel');
+            const minInput = panel.querySelector('.min-rating-input');
+            const maxInput = panel.querySelector('.max-rating-input');
+
             let minRating = 0;
             let maxRating = 9999;
 
-            const rangeStr = prompt("Enter Rating Range (Min-Max)\nExample: 1000-1500\nLeave empty for no limit", "");
-            if (rangeStr) {
-                const parts = rangeStr.split('-');
-                if (parts.length === 2) {
-                    minRating = parseInt(parts[0].trim()) || 0;
-                    maxRating = parseInt(parts[1].trim()) || 9999;
-                } else if (parts.length === 1 && parts[0].trim() !== '') {
-                    // Assume single number is MIN rating
-                    minRating = parseInt(parts[0].trim()) || 0;
-                }
+            if (minInput && minInput.value.trim() !== '') {
+                minRating = parseInt(minInput.value);
+            }
+            if (maxInput && maxInput.value.trim() !== '') {
+                maxRating = parseInt(maxInput.value);
             }
 
-            // Trigger creation via fetchAndRenderRooms
-            const roomsList = document.getElementById('rooms-list');
-            roomsList.innerHTML = '<p class="placeholder">Creating room...</p>';
+            if (isNaN(minRating)) minRating = 0;
+            if (isNaN(maxRating)) maxRating = 9999;
 
-            await fetchAndRenderRooms(
-                currentLobbyConfig.gameType,
-                currentLobbyConfig.timeLimit,
-                currentLobbyConfig.boardDimensions,
-                true, // ALLOW auto-create now
-                minRating,
-                maxRating
-            );
+            createRoom(minRating, maxRating);
             return;
         }
+
+        async function createRoom(minRating, maxRating) {
+            try {
+                const createResp = await fetch('/api/room/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        game_type: currentLobbyConfig.gameType,
+                        time_limit: currentLobbyConfig.timeLimit,
+                        board_dimensions: currentLobbyConfig.boardDimensions,
+                        min_rating: minRating,
+                        max_rating: maxRating
+                    })
+                });
+                const data = await createResp.json();
+
+                if (data.success) {
+                    console.log('Room Created, Joining:', data.room_id);
+                    // Join and go to play page
+                    window.currentRoomId = data.room_id;
+                    stopLobbyPolling();
+                    showPage('page-play');
+
+                    // Force focus
+                    setTimeout(() => {
+                        const input = document.getElementById('word-input');
+                        if (input) {
+                            input.disabled = false;
+                            input.focus();
+                        }
+                    }, 100);
+
+                    if (window.startGamePolling) window.startGamePolling();
+                } else {
+                    alert('Failed to create room: ' + data.error);
+                }
+            } catch (e) {
+                console.error('Creation error', e);
+                alert('Error creating room');
+            }
+        }
+
 
         // Handle Join Room logic (dynamic button inside rooms-list)
         const joinBtn = target.closest('.join-room-btn');
@@ -241,6 +283,26 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
         return;
     }
 
+    // Ensure persistent structure for inputs so they aren't wiped on poll
+    let roomsContainer = document.getElementById('dynamic-rooms-container');
+    if (!roomsContainer) {
+        const createButtonHtml = `
+            <div class="create-room-panel">
+                <div style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-bottom: 8px; text-align: center;">Set Rating Limits (Optional)</div>
+                <div class="rating-inputs-row">
+                    <input type="number" class="rating-input min-rating-input" placeholder="Min Rating">
+                    <input type="number" class="rating-input max-rating-input" placeholder="Max Rating">
+                </div>
+                <button class="confirm-create-room-btn">+ Create Room</button>
+            </div>
+            <div id="dynamic-rooms-container" style="display: flex; flex-direction: column; gap: 12px;">
+                <p class="placeholder">Loading rooms...</p>
+            </div>
+        `;
+        roomsList.innerHTML = createButtonHtml;
+        roomsContainer = document.getElementById('dynamic-rooms-container');
+    }
+
     try {
         // Fetch active rooms for this configuration
         const url = `/api/rooms?game_type=${gameType}&board_dimensions=${boardDimensions}&time_limit=${timeLimit}`;
@@ -279,40 +341,49 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                     current_round: 0,
                     players: [{
                         username: window.currentUser || 'You',
-                        rating: 1000
+                        rating: (window.currentUser && window.currentUser.startsWith('Guest_')) ? 0 : 1000
                     }]
                 });
             } else {
-                roomsList.innerHTML = '<p class="placeholder">Error creating room</p>';
+                roomsContainer.innerHTML = '<p class="placeholder">Error creating room</p>';
                 return;
             }
         }
 
-        // Render rooms list logic with Create Button always available
-        const createButtonHtml = `
-            <div style="margin-bottom: 15px; text-align: center;">
-                <button class="confirm-create-room-btn" style="
-                    background: #2ecc71; 
-                    color: white; 
-                    border: none; 
-                    padding: 8px 16px; 
-                    border-radius: 4px; 
-                    cursor: pointer; 
-                    font-weight: bold;
-                    width: 100%;
-                ">+ Create Room</button>
-            </div>
-        `;
+        // Recalculate combined ratings and Apply Filter
+        const ratingFilterInput = document.getElementById('rating-filter');
+        const minCombinedRating = ratingFilterInput ? (parseInt(ratingFilterInput.value) || 0) : 0;
 
-        if (rooms.length === 0) {
-            roomsList.innerHTML = createButtonHtml + '<p class="placeholder">No active rooms found</p>';
+        const filteredRooms = rooms.filter(room => {
+            // Recalculate combined rating: Guests = 0
+            let calculatedCombined = 0;
+            if (room.players && Array.isArray(room.players)) {
+                calculatedCombined = room.players.reduce((sum, p) => {
+                    const isGuest = p.username.startsWith('Guest_');
+                    const rating = isGuest ? 0 : (p.rating || 0);
+                    return sum + rating;
+                }, 0);
+            }
+            // Store it for display
+            room.display_combined_rating = calculatedCombined;
+
+            // Filter
+            return calculatedCombined >= minCombinedRating;
+        });
+
+        if (filteredRooms.length === 0) {
+            roomsContainer.innerHTML = '<p class="placeholder">No active rooms found matching criteria</p>';
         } else {
-            const html = rooms.map(room => {
+            const html = filteredRooms.map(room => {
                 const playersHtml = room.players.map(p => {
-                    const ratingColor = window.getRatingColor ? window.getRatingColor(p.rating) : '#fff';
-                    return `<span class="room-player-pill" title="Rating: ${p.rating}" style="display:inline-flex; align-items:center;">
-                        <span style="background-color: ${ratingColor}; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; display:inline-block;"></span>    
-                        ${p.username} (${p.rating})
+                    // Override rating for Guest users
+                    const isGuest = p.username.startsWith('Guest_');
+                    const displayRating = isGuest ? 0 : p.rating;
+                    const ratingColor = window.getRatingColor ? window.getRatingColor(displayRating) : '#fff';
+
+                    return `<span class="room-player-pill" title="Rating: ${displayRating}" style="display:inline-flex; align-items:center;">
+                        <span style="background-color: ${ratingColor}; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; display:inline-block;"></span>    
+                        ${p.username} (${displayRating})
                     </span>`;
                 }).join('');
 
@@ -320,6 +391,11 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                 const isFull = room.player_count >= (room.max_players || 8);
                 const roomMin = room.min_rating || 0;
                 const roomMax = room.max_rating || 9999;
+
+                const currentUser = window.currentUser || '';
+                const isCurrentUserGuest = currentUser.startsWith('Guest_');
+                // Restriction: Guests cannot join if ANY rating limits exist
+                const isRestrictedForGuest = isCurrentUserGuest && (roomMin > 0 || roomMax < 9999);
 
                 let actionButtons = '';
 
@@ -334,7 +410,9 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                         ratingText = `(${roomMin}-${roomMax < 9999 ? roomMax : '∞'})`;
                     }
 
-                    if (!isFull) {
+                    if (isRestrictedForGuest) {
+                        actionButtons += `<button class="join-room-btn disabled" disabled style="opacity:0.5; cursor:not-allowed;" title="Guests can only join open rooms">Registered Only</button>`;
+                    } else if (!isFull) {
                         actionButtons += `<button class="join-room-btn" data-room="${room.room_id}" data-min-rating="${roomMin}">
                             Join ${ratingText}
                         </button>`;
@@ -348,7 +426,7 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                     <div class="room-header-row">
                         <div class="room-status ${room.state}">${room.state.toUpperCase()}</div>
                         <div class="room-meta">
-                            Rating: ${room.combined_rating} 
+                            Rating: ${room.display_combined_rating} 
                             ${(roomMin > 0 || roomMax < 9999) ? `<span style="color:#e74c3c; margin-left:5px; font-size:0.9em;">Req: ${roomMin}-${roomMax < 9999 ? roomMax : '∞'}</span>` : ''}
                         </div>
                     </div>
@@ -360,13 +438,16 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                 `;
             }).join('');
 
-            // Put Create button at the top
-            roomsList.innerHTML = createButtonHtml + html;
+            roomsContainer.innerHTML = html;
         }
 
     } catch (error) {
         console.error('Error fetching rooms:', error);
-        roomsList.innerHTML = '<p class="placeholder">Error loading rooms</p>';
+        if (roomsContainer) {
+            roomsContainer.innerHTML = '<p class="placeholder">Error loading rooms</p>';
+        } else if (roomsList) {
+            roomsList.innerHTML = '<p class="placeholder">Error loading rooms</p>';
+        }
     }
 }
 
@@ -510,3 +591,4 @@ function isOnLobby() {
 }
 
 console.log('lobby.js fully loaded - version with polling');
+

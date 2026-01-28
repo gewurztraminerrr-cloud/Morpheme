@@ -426,7 +426,7 @@ function selectRoom(roomName) {
 
 // Helper to get color for any rating
 window.getRatingColor = function (rating) {
-    if (rating === undefined || rating === null) return '#ffffff';
+    if (rating === undefined || rating === null || rating === 0) return '#ffffff';
     // Find matching range
     const match = RATING_RANGES.find(r => rating >= r.min && rating <= r.max);
     if (match) return match.color;

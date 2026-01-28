@@ -80,74 +80,83 @@ async function updateGameState() {
 
         const boardPanel = document.querySelector('.board-panel');
         const wordInputSection = document.querySelector('.word-input-section');
-        const spectatorStatus = document.getElementById('spectator-status-overlay') || createSpectatorOverlay(); // Use existing or create
-
-        // Check if I am a spectator (currentUser is already defined globally or we get it from window)
-        const currentUsername = window.currentUser;
-
-        // Better logic: calculate if I am in players list
-        const amIPlayer = state.players.some(p => p.username === currentUsername);
-        console.log(`[play.js] amIPlayer: ${amIPlayer}, currentUser: ${currentUsername}`);
+        const currentUsername = window.currentUser || localStorage.getItem('morpheme_username');
+        const amIPlayer = state.players.some(p =>
+            p.username.toLowerCase() === (currentUsername ? currentUsername.toLowerCase() : '')
+        );
 
         if (!amIPlayer) {
             // I am a spectator
             if (wordInputSection) wordInputSection.style.display = 'none';
-            if (spectatorStatus) {
-                spectatorStatus.style.display = 'flex';
-                // Check if there is space to join
-                const playerCount = (state.players && Array.isArray(state.players)) ? state.players.length : 0;
-                const maxPlayers = state.max_players || 8;
-                const canJoin = playerCount < maxPlayers;
 
-                spectatorStatus.innerHTML = `
-                    <div style="background:rgba(0,0,0,0.8); padding:20px; border-radius:10px; text-align:center;">
-                        <h2 style="color: #409cff;">SPECTATING</h2>
-                        <p style="color: #ccc;">Relax and watch the game.</p>
-                        ${canJoin ? `<button id="spec-join-btn" style="padding:10px 20px; background:#2ecc71; color:white; border:none; border-radius:5px; cursor:pointer; margin-top:10px; font-weight:bold;">Join Game</button>` : '<p style="color:#e74c3c;">Room Full</p>'}
+            // Ensure spectator panel exists
+            let spectatorPanel = document.getElementById('spectator-status-panel');
+            if (!spectatorPanel) {
+                spectatorPanel = createSpectatorPanel();
+            }
+
+            spectatorPanel.style.display = 'flex';
+
+            // Check if there is space to join
+            const playerCount = (state.players && Array.isArray(state.players)) ? state.players.length : 0;
+            const maxPlayers = state.max_players || 8;
+            const canJoin = playerCount < maxPlayers;
+
+            // Render Content
+            spectatorPanel.innerHTML = `
+                <div class="spectator-content-wrapper">
+                    <div class="spectator-header">
+                        <span class="spec-icon">👁️</span>
+                        <h2 class="spectator-title">Spectating Mode</h2>
                     </div>
-                `;
+                    <p class="spectator-text">You are watching the game live.</p>
+                    ${canJoin ?
+                    `<button id="spec-join-btn" class="spectator-join-btn">Join Game</button>` :
+                    `<div class="spectator-full-badge">Full Room</div>`
+                }
+                </div>
+            `;
 
-                // Re-attach event listener
-                setTimeout(() => {
-                    const joinBtn = document.getElementById('spec-join-btn');
-                    if (joinBtn) {
-                        joinBtn.onclick = async () => {
-                            console.log('[SpecJoin] Join clicked');
-                            joinBtn.textContent = 'Joining...';
-                            joinBtn.disabled = true;
+            // Re-attach event listener
+            setTimeout(() => {
+                const joinBtn = document.getElementById('spec-join-btn');
+                if (joinBtn) {
+                    joinBtn.onclick = async () => {
+                        console.log('[SpecJoin] Join clicked');
+                        joinBtn.textContent = 'Joining...';
+                        joinBtn.disabled = true;
 
-                            try {
-                                const resp = await fetch(`/api/room/${window.currentRoomId}/join`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ as_spectator: false })
-                                });
-                                const data = await resp.json();
-                                console.log('[SpecJoin] Response:', data);
+                        try {
+                            const resp = await fetch(`/api/room/${window.currentRoomId}/join`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ as_spectator: false })
+                            });
+                            const data = await resp.json();
 
-                                if (data.success) {
-                                    console.log('[SpecJoin] Success! Switching mode...');
-                                    window.isSpectatorMode = false;
-                                    // Force immediate UI refresh if possible, or wait for poll
-                                    setTimeout(updateGameState, 100);
-                                } else {
-                                    alert(data.error);
-                                    joinBtn.textContent = 'Join Game'; // Reset on error
-                                    joinBtn.disabled = false;
-                                }
-                            } catch (e) {
-                                console.error('[SpecJoin] Error:', e);
-                                alert('Network error');
+                            if (data.success) {
+                                window.isSpectatorMode = false;
+                                setTimeout(updateGameState, 100);
+                            } else {
+                                alert(data.error);
                                 joinBtn.textContent = 'Join Game';
                                 joinBtn.disabled = false;
                             }
-                        };
-                    }
-                }, 0);
-            }
+                        } catch (e) {
+                            console.error(e);
+                            alert('Network error');
+                            joinBtn.textContent = 'Join Game';
+                            joinBtn.disabled = false;
+                        }
+                    };
+                }
+            }, 0);
+
         } else {
-            if (wordInputSection) wordInputSection.style.display = 'flex';
-            if (spectatorStatus) spectatorStatus.style.display = 'none';
+            // I am a player
+            if (wordInputSection) wordInputSection.style.display = ''; // Restore flex/block
+            const specPanel = document.getElementById('spectator-status-panel');
+            if (specPanel) specPanel.style.display = 'none';
         }
 
         if (state.error) {
@@ -169,9 +178,12 @@ async function updateGameState() {
         // Render board
         console.log('[play.js] Rendering board...');
         const isSplitIntermission = (state.game_type === 'split' && state.state === 'intermission');
+        const isFCFSIntermission = (state.game_type === 'fcfs' && state.state === 'intermission');
 
         if (isSplitIntermission && !showBoardInSplitIntermission) {
             renderSplitNotepads(state.players);
+        } else if (isFCFSIntermission && !showBoardInSplitIntermission) {
+            renderFCFSNotepads(state.players);
         } else {
             renderBoard(state.board, state.state === 'intermission');
         }
@@ -283,19 +295,18 @@ async function updateGameState() {
             // Also collect ALL found words (strings) for styling
             const allFoundStrs = allPlayerWords.map(w => w.toUpperCase());
 
-            if (state.game_type === 'fcfs') {
-                wordsPanelHeader.textContent = 'Missed Words';
-                // Filter to show only MISSED words
-                // all_words contains strings? Yes, usually.
-                const missedWords = state.all_words.filter(w => !allFoundStrs.includes(w.toUpperCase()));
-                displayAllWords(missedWords, state.bonus_word, [], []);
-            } else {
-                wordsPanelHeader.textContent = 'All Words';
-                displayAllWords(state.all_words, state.bonus_word, targetWords, allFoundStrs);
-            }
+            // For FCFS and others, show All Words
+            wordsPanelHeader.textContent = 'All Words';
 
-            // For Split Points: Add "View Board" toggle button if needed
-            if (state.game_type === 'split') {
+            // FCFS or Standard Intermission:
+            // Highlighting "targetWords" covers user-found words.
+            // Highlighting "allFoundStrs" covers words found by ANYONE (if we want that).
+            // User request: "highlights all words the user found under All Words"
+
+            displayAllWords(state.all_words, state.bonus_word, targetWords, allFoundStrs);
+
+            // For Split Points OR FCFS: Add "View Board" toggle button if needed
+            if (state.game_type === 'split' || state.game_type === 'fcfs') {
                 addSplitViewBoardToggle();
             }
 
@@ -351,83 +362,66 @@ async function updateGameState() {
                 }
 
             } else {
-                // FCFS / Other: Show LIVE FEED
-                wordsPanelHeader.textContent = 'Live Feed';
+                // FCFS / Other: ALSO Show "Your Words", but sorted differently
+                // Originally this was a live feed, but user requested: "simply lists the words one got"
 
-                // Collect ALL submitted words from ALL players with metadata
-                let feedItems = [];
-                state.players.forEach(p => {
-                    if (p.submitted_words) {
-                        p.submitted_words.forEach(w => {
-                            if (typeof w === 'object') {
-                                feedItems.push({
-                                    word: w.word,
-                                    points: w.points,
-                                    time: w.time,
-                                    user: p.username,
-                                    is_me: p.username === currentUser
-                                });
-                            } else {
-                                // Legacy fallback
-                                feedItems.push({
-                                    word: w,
-                                    points: '?',
-                                    time: 0,
-                                    user: p.username,
-                                    is_me: p.username === currentUser
-                                });
-                            }
-                        });
-                    }
-                });
+                wordsPanelHeader.textContent = 'Your Words';
 
-                // Sort by time (OLDEST first, so new onest appear at bottom for feed)
-                feedItems.sort((a, b) => a.time - b.time);
+                // Find my words
+                const myPlayer = state.players.find(p => p.username === currentUser);
+                const myWords = myPlayer ? myPlayer.submitted_words : [];
 
-                // Calculate stats (global found count)
+                // Calculate stats
                 const totalWords = state.all_words ? state.all_words.length : 0;
-                const uniqueFound = new Set(feedItems.map(i => i.word.toUpperCase())).size;
+                const uniqueFound = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase())).size;
                 const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
                 wordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}%`;
 
-                // Render Feed (Append Only)
+                // Render list
                 const listEl = document.getElementById('submitted-words-list');
 
-                // Handle empty state
-                if (feedItems.length === 0) {
-                    if (!listEl.querySelector('.placeholder')) {
-                        listEl.innerHTML = '<p class="placeholder">No words found yet</p>';
-                    }
+                // FCFS Sort: Time Ascending (Newest at Bottom)
+                const sortedWords = [...myWords].sort((a, b) => {
+                    const tA = a.time || 0;
+                    const tB = b.time || 0;
+                    return tA - tB; // Ascending
+                });
+
+                // Capture scroll state BEFORE render (if we are appending, though here we rebuild)
+                // Relaxed threshold to 150px to prevent "halting" if user is mostly at bottom
+                const threshold = 150;
+                const isAtBottom = (listEl.scrollTop + listEl.clientHeight >= listEl.scrollHeight - threshold);
+                const wasEmpty = listEl.innerHTML.includes('placeholder') || listEl.children.length === 0;
+
+                if (sortedWords.length === 0) {
+                    listEl.innerHTML = '<p class="placeholder">Find words!</p>';
                 } else {
-                    // Remove placeholder if present
-                    const placeholder = listEl.querySelector('.placeholder');
-                    if (placeholder) placeholder.remove();
+                    // Check if content changed to avoid flicker? 
+                    // For now, full rebuild is safer for consistency
+                    const html = sortedWords.map(wObj => {
+                        const word = typeof wObj === 'string' ? wObj : wObj.word;
+                        const points = typeof wObj === 'object' ? wObj.points : '?';
+                        const isBonus = word === state.bonus_word;
 
-                    // If list was previously cleared/overwritten by Accumulative switch, might need full rebuild
-                    // Check if we have any feed items rendered
-                    if (!listEl.querySelector('.feed-item') && listEl.innerHTML !== '') {
-                        listEl.innerHTML = ''; // Clear non-feed content
-                    }
+                        let className = 'word-item player-word';
+                        if (isBonus) className += ' bonus-word';
 
-                    // Append new items
-                    feedItems.forEach(item => {
-                        const itemId = `feed-${item.user}-${item.word}`.replace(/\s+/g, '');
-                        if (!document.getElementById(itemId)) {
-                            const userClass = item.is_me ? ' myself' : '';
-                            const html = `
-                            <div id="${itemId}" class="feed-item${userClass}">
-                                <span class="feed-word">${item.word}</span>
-                                <span class="feed-info">${item.user} • ${item.points}pts</span>
-                            </div>`;
-                            listEl.insertAdjacentHTML('beforeend', html);
+                        return `<div class="${className}" style="display:flex; justify-content:space-between;">
+                        <span>${word}</span>
+                        <span style="opacity:0.8">${points}</span>
+                    </div>`;
+                    }).join('');
 
-                            // Scroll to bottom
-                            const panelEl = listEl.parentElement;
+                    if (listEl.innerHTML !== html) {
+                        listEl.innerHTML = html;
+                        // Smart Scroll:
+                        // If we were at bottom, OR if it's the first render (wasEmpty), scroll to bottom
+                        if (isAtBottom || wasEmpty) {
                             requestAnimationFrame(() => {
-                                if (panelEl) panelEl.scrollTop = panelEl.scrollHeight;
+                                listEl.scrollTop = listEl.scrollHeight;
                             });
                         }
-                    });
+                    }
                 }
             }
         }
@@ -477,8 +471,12 @@ function renderPlayers(players) {
         // Highlight if selected
         const selectedClass = (p.username === selectedPlayerUsername) ? ' selected-player' : '';
 
+        // Override rating for Guest users
+        const isGuest = p.username.startsWith('Guest_');
+        const displayRating = isGuest ? 0 : p.rating;
+
         // Calculate rating color
-        const ratingColor = window.getRatingColor ? window.getRatingColor(p.rating) : '#fff';
+        const ratingColor = window.getRatingColor ? window.getRatingColor(displayRating) : '#fff';
 
         return `
         <div class="player-item${bonusClass}${userClass}${selectedClass}" data-username="${p.username}">
@@ -487,7 +485,7 @@ function renderPlayers(players) {
                 <span class="rating-indicator" style="background-color: ${ratingColor}; margin-left: 5px;"></span>
                 ${p.username}
             </div>
-            <div class="player-rating">(${p.rating}${ratingChange})</div>
+            <div class="player-rating">(${displayRating}${ratingChange})</div>
             <div class="player-stats">${p.words_count} words • ${p.score} pts</div>
         </div>
         `;
@@ -921,6 +919,103 @@ function renderSplitNotepads(players) {
     });
 }
 
+function renderFCFSNotepads(players) {
+    const boardEl = document.getElementById('game-board');
+    if (!boardEl) return;
+
+    // Capture scroll positions
+    const scrollMap = {};
+    document.querySelectorAll('.user-notepad').forEach(el => {
+        const username = el.dataset.username;
+        const list = el.querySelector('.notepad-list');
+        if (username && list) {
+            scrollMap[username] = list.scrollTop;
+        }
+    });
+
+    // Sort players by score
+    const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+
+    // Reuse Split Points container styles
+    boardEl.className = 'split-notepads-container';
+    boardEl.style.display = 'grid';
+    boardEl.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
+    boardEl.style.gridTemplateRows = 'auto';
+    boardEl.style.gap = '1rem';
+    boardEl.style.overflowY = 'auto';
+    boardEl.style.alignItems = 'start';
+    boardEl.innerHTML = '';
+
+    sortedPlayers.forEach(p => {
+        const notepad = document.createElement('div');
+        notepad.className = 'user-notepad';
+        notepad.dataset.username = p.username;
+
+        if (p.username === selectedPlayerUsername) {
+            notepad.classList.add('selected');
+        }
+
+        notepad.onclick = (e) => {
+            if (selectedPlayerUsername === p.username) {
+                selectedPlayerUsername = null;
+            } else {
+                selectedPlayerUsername = p.username;
+            }
+            updateGameState();
+        };
+
+        // Header
+        const header = document.createElement('div');
+        header.className = 'notepad-header';
+        header.innerHTML = `<strong>${p.username}</strong> <span>${p.score} pts</span>`;
+        notepad.appendChild(header);
+
+        // No Tabs for FCFS
+
+        // List
+        const list = document.createElement('div');
+        list.className = 'notepad-list';
+        // Add extra padding since no tabs
+        list.style.marginTop = '10px';
+        // Adjust height to fill space better without tabs
+        list.style.height = 'calc(100% - 40px)';
+
+        if (!p.submitted_words || p.submitted_words.length === 0) {
+            list.innerHTML = '<div style="color:#000;font-style:italic;padding:10px;text-align:center;">None</div>';
+        } else {
+            // Sort words: Longest first, then alphabetical
+            const wordsToShow = [...p.submitted_words];
+            wordsToShow.sort((a, b) => {
+                // Handle objects vs strings
+                const wordA = (typeof a === 'string' ? a : a.word) || '';
+                const wordB = (typeof b === 'string' ? b : b.word) || '';
+                if (wordB.length !== wordA.length) {
+                    return wordB.length - wordA.length;
+                }
+                return wordA.localeCompare(wordB);
+            });
+
+            wordsToShow.forEach(wObj => {
+                const w = (typeof wObj === 'string' ? wObj : wObj.word);
+                const pts = (typeof wObj === 'string' ? '?' : wObj.points);
+
+                const row = document.createElement('div');
+                row.className = 'notepad-item';
+                row.innerHTML = `<span>${w}</span> <span>${pts}</span>`;
+                list.appendChild(row);
+            });
+        }
+
+        notepad.appendChild(list);
+        boardEl.appendChild(notepad);
+
+        // Restore scroll
+        if (scrollMap[p.username]) {
+            list.scrollTop = scrollMap[p.username];
+        }
+    });
+}
+
 
 function addSplitViewBoardToggle() {
     const panelHeader = document.querySelector('.words-panel h3');
@@ -1159,44 +1254,22 @@ window.addEventListener('beforeunload', () => {
     }
 });
 
-function createSpectatorOverlay() {
-    const overlay = document.createElement('div');
-    overlay.id = 'spectator-status-overlay';
-    overlay.style.position = 'absolute';
-    overlay.style.top = '0';
-    overlay.style.left = '0';
-    overlay.style.width = '100%';
-    overlay.style.height = '100%';
-    // overlay.style.pointerEvents = 'none'; // We want it to be blocking if needed, or clickable for buttons
-    overlay.style.display = 'none';
-    overlay.style.flexDirection = 'column';
-    overlay.style.justifyContent = 'center';
-    overlay.style.alignItems = 'center';
-    overlay.style.zIndex = '50';
-    overlay.style.backgroundColor = 'rgba(23, 28, 38, 0.95)'; // Matches dark theme
+function createSpectatorPanel() {
+    const panel = document.createElement('div');
+    panel.id = 'spectator-status-panel';
+    panel.className = 'spectator-status-panel';
 
-    // Append to definitions-panel to sit on top of it
-    const container = document.querySelector('.definitions-panel');
-    if (container) {
-        // Ensure container is relative so absolute child is scoped
-        if (getComputedStyle(container).position === 'static') {
-            container.style.position = 'relative';
-        }
-        container.appendChild(overlay);
-        // Hide the actual definition content logic? 
-        // No, the overlay sits on TOP, essentially hiding it visually.
+    // Append to BOARD PANEL (Center)
+    // It should replace the word-input-section area visually
+    const boardPanel = document.querySelector('.board-panel');
+    if (boardPanel) {
+        boardPanel.appendChild(panel);
     } else {
         // Fallback
-        const fallback = document.querySelector('.play-grid') || document.body;
-        fallback.appendChild(overlay);
+        document.body.appendChild(panel);
     }
 
-    // Make children clickable
-    // const style = document.createElement('style');
-    // style.innerHTML = '#spectator-status-overlay * { pointer-events: auto; }';
-    // document.head.appendChild(style);
-
-    return overlay;
+    return panel;
 }
 
 // Interaction Handlers (Override)

@@ -4,8 +4,8 @@
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 20px;
-    height: calc(100vh - 180px);
-    margin-top: 20px;
+    height: calc(100vh - 100px);
+    margin-top: 0;
 }
 
 .game-types-panel {
@@ -265,4 +265,61 @@
 
 .join-room-btn:hover {
     background: #2ecc71;
+}
+/* Inline Rating Inputs for Create Room */
+.create-room-panel {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rating-inputs-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.rating-input {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    padding: 8px;
+    color: white;
+    font-size: 14px;
+    text-align: center;
+}
+
+.rating-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.rating-input:focus {
+    outline: none;
+    border-color: rgba(46, 204, 113, 0.5);
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.confirm-create-room-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-size: 1em;
+}
+
+.confirm-create-room-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+}
+
+.confirm-create-room-btn:active {
+    transform: translateY(0);
 }
