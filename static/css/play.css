@@ -67,8 +67,8 @@
 
 .play-grid {
     display: grid;
-    grid-template-columns: 340px 1fr 300px;
-    /* Reduced from 380px */
+    grid-template-columns: 340px 1fr 320px;
+    /* Reduced panels to ensure Split Points notepads fit */
     gap: 20px;
     flex: 1;
     min-height: 0;
@@ -366,7 +366,7 @@
 .definitions-panel {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    padding: 20px;
+    padding: 10px 15px;
     height: 100px;
     /* Reduced from 110px */
     flex-shrink: 0;
@@ -375,6 +375,7 @@
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    justify-content: center;
 }
 
 #definition-content {
@@ -405,6 +406,15 @@
     gap: 20px;
     align-items: center;
     transition: background-color 0.5s ease;
+    min-width: 0;
+    min-height: 0;
+    /* Allow shrinking */
+    max-width: 640px;
+    /* Constrain width on wide screens */
+    width: 100%;
+    box-sizing: border-box;
+    justify-self: center;
+    /* Center in grid column */
 }
 
 .board-panel.low-time-warning {
@@ -691,8 +701,10 @@
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     border: 3px solid #e94560;
     border-radius: 16px;
-    padding: 40px;
-    min-width: 450px;
+    padding: 25px;
+    /* Reduced from 40px */
+    min-width: 400px;
+    /* Reduced from 450px */
     max-width: 600px;
     position: relative;
     box-shadow: 0 10px 40px rgba(233, 69, 96, 0.4);
@@ -712,9 +724,11 @@
 }
 
 .spinner-content h2 {
-    margin: 0 0 30px 0;
+    margin: 0 0 20px 0;
+    /* Reduced from 30px */
     text-align: center;
-    font-size: 2rem;
+    font-size: 1.5rem;
+    /* Reduced from 2rem */
     color: #e94560;
     text-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
 }
@@ -722,14 +736,16 @@
 .spinner-params {
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 12px;
+    /* Reduced from 18px */
 }
 
 .param-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 20px;
+    padding: 8px 15px;
+    /* Reduced from 12px 20px */
     background: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -759,15 +775,18 @@
 
 .close-spinner-btn {
     position: absolute;
-    top: 15px;
-    right: 15px;
-    width: 40px;
-    height: 40px;
+    top: 10px;
+    /* Reduced from 15px */
+    right: 10px;
+    width: 32px;
+    /* Reduced from 40px */
+    height: 32px;
     background: rgba(233, 69, 96, 0.2);
     border: 2px solid #e94560;
     border-radius: 50%;
     color: #e94560;
-    font-size: 2rem;
+    font-size: 1.5rem;
+    /* Reduced from 2rem */
     font-weight: 700;
     cursor: pointer;
     display: flex;
@@ -888,13 +907,19 @@
     padding: 10px;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 12px;
-    width: 600px;
-    height: 480px;
+    width: 100%;
+    max-width: 600px;
+    height: 100%;
+    max-height: 480px;
     /* Match board height approx */
     overflow-y: auto;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-rows: auto;
+    align-items: start;
     gap: 10px;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Individual User Notepad */
@@ -908,6 +933,9 @@
     height: 250px;
     transition: all 0.2s ease;
     cursor: pointer;
+    min-width: 0;
+    min-height: 0;
+    max-width: 100%;
 }
 
 .user-notepad:hover {
@@ -934,6 +962,10 @@
 .notepad-header strong {
     color: #fff;
     font-size: 0.95rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 120px;
 }
 
 .notepad-header span {
@@ -1139,33 +1171,21 @@
 /* Spectator Panel Styles */
 #spectator-status-panel {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     width: 100%;
-    max-width: 500px;
-    margin-top: 20px;
-    animation: fadeIn 0.5s ease;
+    height: 100%;
+    animation: fadeIn 0.4s ease-out;
+    gap: 12px;
 }
 
-.spectator-content-wrapper {
-    background: rgba(23, 33, 48, 0.8);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    border-radius: 16px;
-    padding: 20px 30px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-}
+/* Removed spectator-content-wrapper to avoid panel-in-panel look */
 
 .spectator-header {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 5px;
 }
 
 .spec-icon {
@@ -1175,15 +1195,66 @@
 
 .spectator-title {
     margin: 0;
-    font-size: 1.4rem;
+    font-size: 1.1rem;
     font-weight: 700;
-    background: linear-gradient(90deg, #a8d5ff, #e94560);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: #FFFFFF;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    line-height: 1;
 }
+
+/* Removed text shine */
+
+.spectator-actions {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.premium-btn {
+    position: relative;
+    background: #0070f3;
+    border: none;
+    box-shadow: 0 4px 10px rgba(0, 112, 243, 0.3);
+    border-radius: 100px;
+    /* Pill shape */
+    font-family: inherit;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.premium-btn:hover {
+    background: #0081ff;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(0, 112, 243, 0.4);
+}
+
+.premium-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: all 0.6s;
+}
+
+.premium-btn:hover::before {
+    left: 100%;
+}
+
+.premium-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(0, 112, 243, 0.6);
+    background: linear-gradient(135deg, #0080ff 0%, #20b0ff 100%);
+}
+
+.spec-icon-pulse {
+    opacity: 0.8;
+}
+
+/* Removed busy animations from play.css */
 
 .spectator-text {
     color: rgba(255, 255, 255, 0.7);
@@ -1193,9 +1264,9 @@
 }
 
 .spectator-join-btn {
-    margin-top: 10px;
-    padding: 10px 24px;
-    font-size: 1rem;
+    margin-top: 5px;
+    padding: 8px 20px;
+    font-size: 0.9rem;
     font-weight: 600;
     color: #fff;
     background: linear-gradient(135deg, #409cff 0%, #0070f3 100%);
@@ -1205,7 +1276,6 @@
     transition: all 0.3s ease;
     box-shadow: 0 4px 10px rgba(0, 112, 243, 0.3);
     width: 100%;
-    max-width: 200px;
 }
 
 .spectator-join-btn:hover {

@@ -20,6 +20,9 @@ let showBoardInSplitIntermission = false;
 // Input Method Tracking
 let currentInputMethod = 'mouse';
 function updateInputMethod(method) {
+    // Only apply/track input method changes DURING an active round
+    if (window.lastGameState && window.lastGameState.state !== 'active') return;
+
     if (currentInputMethod === method) return;
     currentInputMethod = method;
     const roomId = getCurrentRoomId();
@@ -55,6 +58,9 @@ function startPolling() {
     if (pollInterval) {
         clearInterval(pollInterval);
     }
+
+    // Reset Chat for new room
+    resetChat();
 
     console.log('[play.js] Setting up interval to call updateGameState');
     pollInterval = setInterval(updateGameState, 1000); // 1 second polling
@@ -101,9 +107,15 @@ async function updateGameState() {
         const boardPanel = document.querySelector('.board-panel');
         const wordInputSection = document.querySelector('.word-input-section');
         const currentUsername = window.currentUser || localStorage.getItem('morpheme_username');
-        const amIPlayer = state.players.some(p =>
-            p.username.toLowerCase() === (currentUsername ? currentUsername.toLowerCase() : '')
-        );
+        const amIPlayer = state.players.some(p => {
+            const match = p.username.toLowerCase() === (currentUsername ? currentUsername.toLowerCase().trim() : '');
+            return match;
+        });
+
+        if (window.isSpectatorMode !== !amIPlayer) {
+            console.log(`[play.js] Role Sync: amIPlayer=${amIPlayer}, currentUsername=${currentUsername}`);
+            window.isSpectatorMode = !amIPlayer;
+        }
 
         if (!amIPlayer) {
             // I am a spectator
@@ -115,6 +127,8 @@ async function updateGameState() {
                 spectatorPanel = createSpectatorPanel();
             }
 
+            const defContent = document.getElementById('definition-content');
+            if (defContent) defContent.style.display = 'none';
             spectatorPanel.style.display = 'flex';
 
             // Check if there is space to join
@@ -125,14 +139,13 @@ async function updateGameState() {
 
             // Render Content
             spectatorPanel.innerHTML = `
-                <div class="spectator-content-wrapper">
-                    <div class="spectator-header">
-                        <span class="spec-icon">👁️</span>
-                        <h2 class="spectator-title">Spectating Mode</h2>
-                    </div>
-                    <p class="spectator-text">You are watching the game live.</p>
+                <div class="spectator-header">
+                    <span class="spec-icon">👁️</span>
+                    <h2 class="spectator-title">Watching</h2>
+                </div>
+                <div class="spectator-actions">
                     ${canJoin ?
-                    `<button id="spec-join-btn" class="spectator-join-btn">Join Game</button>` :
+                    `<button id="spec-join-btn" class="spectator-join-btn premium-btn">Join Game</button>` :
                     `<div class="spectator-full-badge">Full Room</div>`
                 }
                 </div>
@@ -178,6 +191,8 @@ async function updateGameState() {
             if (wordInputSection) wordInputSection.style.display = ''; // Restore flex/block
             const specPanel = document.getElementById('spectator-status-panel');
             if (specPanel) specPanel.style.display = 'none';
+            const defContent = document.getElementById('definition-content');
+            if (defContent) defContent.style.display = '';
         }
 
         if (state.error) {
@@ -324,7 +339,7 @@ async function updateGameState() {
             // Highlighting "allFoundStrs" covers words found by ANYONE (if we want that).
             // User request: "highlights all words the user found under All Words"
 
-            displayAllWords(state.all_words, state.bonus_word, targetWords, allFoundStrs);
+            displayAllWords(state.all_words, state.bonus_word, targetWords, allFoundStrs, state.all_word_scores);
 
             // For Split Points OR FCFS: Add "View Board" toggle button if needed
             if (state.game_type === 'split' || state.game_type === 'fcfs') {
@@ -538,7 +553,7 @@ async function updateGameState() {
                         // Check if we have space, might need to truncate user?
                         // Using flex to separate word/user from points
 
-                        const displayName = isMe ? 'You' : finder;
+                        const displayName = finder;
 
                         return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
                         <div>
@@ -660,6 +675,15 @@ function renderPlayers(players) {
 // Chat Logic
 let lastChatCount = 0;
 
+function resetChat() {
+    console.log('[play.js] resetting chat state');
+    lastChatCount = 0;
+    const listEl = document.getElementById('chat-history');
+    if (listEl) {
+        listEl.innerHTML = '<p class="placeholder">No messages yet</p>';
+    }
+}
+
 function renderChat(messages) {
     const listEl = document.getElementById('chat-history');
     if (!listEl) return;
@@ -707,7 +731,7 @@ async function sendChatMessage() {
     if (!message || !roomId) return;
 
     try {
-        await fetch(`/room/${roomId}/chat`, {
+        await fetch(`/api/room/${roomId}/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message })
@@ -736,7 +760,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWords = []) {
+function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWords = [], allWordScores = {}) {
     const listEl = document.getElementById('submitted-words-list');
     if (!allWords || allWords.length === 0) {
         listEl.innerHTML = '<p class="placeholder">No words found</p>';
@@ -755,6 +779,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     listEl.innerHTML = sortedWords.map(word => {
         const wordUpper = word.toUpperCase();
         const isBonus = wordUpper === bonusWord.toUpperCase();
+        const points = allWordScores[word] || allWordScores[wordUpper] || 0;
 
         let className = 'word-item';
         // Logic for highlighting:
@@ -778,7 +803,10 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             className += ' unfound';
         }
 
-        return `<div class="${className}" data-word="${word}" style="cursor:pointer;">${word}</div>`;
+        return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; cursor:pointer;">
+            <span>${word}</span>
+            <span style="opacity:0.8">${points}</span>
+        </div>`;
     }).join('');
 }
 
@@ -957,12 +985,9 @@ function renderSplitNotepads(players) {
 
     // Set container style for notepads
     boardEl.className = 'split-notepads-container';
-    boardEl.style.display = 'grid';
-    boardEl.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
-    boardEl.style.gridTemplateRows = 'auto'; // allow expansion
-    boardEl.style.gap = '1rem';
-    boardEl.style.overflowY = 'auto';
-    boardEl.style.alignItems = 'start'; // Align items to top
+    // Clear inline grid styles from renderBoard
+    boardEl.style.gridTemplateColumns = '';
+    boardEl.style.gridTemplateRows = '';
     boardEl.innerHTML = '';
 
     sortedPlayers.forEach(p => {
@@ -1104,12 +1129,9 @@ function renderFCFSNotepads(players) {
 
     // Reuse Split Points container styles
     boardEl.className = 'split-notepads-container';
-    boardEl.style.display = 'grid';
-    boardEl.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
-    boardEl.style.gridTemplateRows = 'auto';
-    boardEl.style.gap = '1rem';
-    boardEl.style.overflowY = 'auto';
-    boardEl.style.alignItems = 'start';
+    // Clear inline grid styles from renderBoard
+    boardEl.style.gridTemplateColumns = '';
+    boardEl.style.gridTemplateRows = '';
     boardEl.innerHTML = '';
 
     sortedPlayers.forEach(p => {
@@ -1446,14 +1468,15 @@ function createSpectatorPanel() {
     panel.id = 'spectator-status-panel';
     panel.className = 'spectator-status-panel';
 
-    // Append to BOARD PANEL (Center)
-    // It should replace the word-input-section area visually
-    const boardPanel = document.querySelector('.board-panel');
-    if (boardPanel) {
-        boardPanel.appendChild(panel);
+    // Append to DEFINITIONS PANEL (Right Column)
+    // Sacrifice definition space for spectator info
+    const defPanel = document.querySelector('.definitions-panel');
+    if (defPanel) {
+        defPanel.appendChild(panel);
     } else {
-        // Fallback
-        document.body.appendChild(panel);
+        // Fallback to board panel if definitions panel missing
+        const boardPanel = document.querySelector('.board-panel');
+        if (boardPanel) boardPanel.appendChild(panel);
     }
 
     return panel;

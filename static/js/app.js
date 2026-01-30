@@ -80,10 +80,11 @@ async function checkSession() {
         const response = await fetch('/api/session');
         const data = await response.json();
 
-        if (data.logged_in) {
+        if (data.authenticated) {
             currentUser = data.username;
             window.currentUser = currentUser;  // Expose globally
-            navigateToLobby();
+            localStorage.setItem('morpheme_username', currentUser);
+            // navigateToLobby(); // Removed: User requested to land on login page
         }
     } catch (error) {
         console.error('Session check failed:', error);

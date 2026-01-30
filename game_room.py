@@ -285,6 +285,15 @@ class GameRoom:
         # Update player score immediately
         player.score = sum(w['points'] for w in player.submitted_words)
         
+        # Real-time Split Points Recalculation
+        if self.game_type == 'split':
+            self.calculate_split_scores()
+            # After recalculation, re-fetch the points for the currently submitted word to return it correctly
+            for w_obj in player.submitted_words:
+                if w_obj['word'] == final_word:
+                    points = w_obj['points']
+                    break
+
         return True, "Word accepted", points, final_word
     
     def get_intermission_milestone(self):
@@ -340,50 +349,50 @@ class GameRoom:
         """
         Calculate scores for Split Points mode.
         - Unique word: Full points
-        - Shared word: Points / Count (rounded down)
+        - Shared word: Points split among finders.
+        - Remainders given to earlier finders to ensure point pool is constant (Gain == Total Loss).
         """
         print(f"[GameRoom] Calculating Split Points for room {self.room_id}")
         
-        # 1. Count occurrences of each word (VALID words only)
-        word_counts = {}
+        # 1. Group players (and their word objects) by word
+        word_finders = {} # {word: [(player, time, w_obj), ...]}
         
         for p in self.players:
             for w_obj in p.submitted_words:
                 w = w_obj['word']
-                # Only count valid words (which they should be if in submitted_words)
-                word_counts[w] = word_counts.get(w, 0) + 1
+                if w not in word_finders:
+                    word_finders[w] = []
+                word_finders[w].append((p, w_obj.get('time', 0), w_obj))
                 
-        # 2. Update scores for each player
-        for p in self.players:
-            new_total_score = 0
-            for w_obj in p.submitted_words:
-                w = w_obj['word']
-                count = word_counts.get(w, 1)
-                
-                # Base points were calculated on submission
-                base_points = calculate_word_score(w, self.bonus_word)
-                
-                # Split points
-                final_points = base_points // count
+        # 2. For each word, distribute points fairly
+        for word, finders in word_finders.items():
+            # Sort finders by submission time to break ties in remainder distribution
+            finders.sort(key=lambda x: x[1])
+            
+            count = len(finders)
+            base_points = calculate_word_score(word, self.bonus_word)
+            
+            # Divide points
+            share = base_points // count
+            remainder = base_points % count
+            
+            for i, (player, timestamp, w_obj) in enumerate(finders):
+                # Distribute remainder to the first N finders
+                # This ensures SUM(final_points) == base_points
+                final_points = share + (1 if i < remainder else 0)
                 
                 # Update word object with split metadata for frontend
                 w_obj['split_points'] = final_points
                 w_obj['shared_count'] = count
                 w_obj['is_unique'] = (count == 1)
-                w_obj['points'] = final_points # Update the main points field to the split value
-                w_obj['base_points'] = base_points # Keep track of what it was worth
+                w_obj['points'] = final_points
+                w_obj['base_points'] = base_points
                 
-                new_total_score += final_points
-            
-            # Update player total score
+        # 3. Update scores for each player
+        for p in self.players:
+            new_total_score = sum(w['points'] for w in p.submitted_words)
             print(f"[GameRoom] Player {p.username}: Old Score={p.score}, New Split Score={new_total_score}")
             p.score = new_total_score
-            
-            # Update player total score
-            print(f"[GameRoom] Player {p.username}: Old Score={p.score}, New Split Score={new_total_score}")
-            p.score = new_total_score
-            for w in p.submitted_words:
-                 print(f"  Word: {w.get('word')} Unique: {w.get('is_unique')} Points: {w.get('points')}")
             
             # Also calculate invalid words points (0, but we might want to track count)
 

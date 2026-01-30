@@ -124,6 +124,19 @@ def get_session():
 from game_room import room_manager
 import uuid
 
+def cleanup_user_rooms(user_id, exclude_room_id=None):
+    """Remove user from all rooms except exclude_room_id"""
+    for rid in list(room_manager.rooms.keys()):
+        if rid == exclude_room_id:
+            continue
+        room = room_manager.rooms[rid]
+        # Remove from players
+        room.remove_player(user_id)
+        # Note: we don't return 24h exception here because the user 
+        # specifically requested "only appear in one room at a time"
+        if len(room.players) == 0 and room.time_limit < 86400:
+            room_manager.delete_room(rid)
+
 @app.route('/api/room/create', methods=['POST'])
 def create_room():
     if 'user_id' not in session:
@@ -146,6 +159,9 @@ def create_room():
     room = room_manager.create_room(generated_id, game_type, time_limit, board_dimensions)
     room.min_rating = int(min_rating)
     room.max_rating = int(max_rating)
+    
+    # Ensure user is not in any other room
+    cleanup_user_rooms(session['user_id'], exclude_room_id=room.room_id)
     
     # Use the actual ID (could be existing one if singleton)
     room_id = room.room_id
@@ -184,6 +200,7 @@ def join_room(room_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
+    user_id = session['user_id']
     room = room_manager.get_room(room_id)
     if not room:
         return jsonify({'error': 'Room not found'}), 404
@@ -203,20 +220,8 @@ def join_room(room_id):
             rating = row[0]
         conn.close()
         
-    # Remove player from any OTHER rooms they might be in
-    user_id = session['user_id']
-    for other_room_id in list(room_manager.rooms.keys()):
-        if other_room_id != room_id:
-            other_room = room_manager.rooms[other_room_id]
-            # Skip removal if the OTHER room is a 24h room (Persistence)
-            if other_room.time_limit >= 86400:
-                continue
-                
-            if any(p.user_id == user_id for p in other_room.players):
-                # Clean up old room
-                other_room.remove_player(user_id)
-                if len(other_room.players) == 0:
-                    room_manager.delete_room(other_room_id)
+    # Ensure user is not in any other room
+    cleanup_user_rooms(session['user_id'], exclude_room_id=room_id)
 
     # Check for spectator request
     data = request.get_json() or {}
@@ -261,13 +266,11 @@ def leave_room(room_id):
     
     room = room_manager.get_room(room_id)
     if room:
-        # Skip removal for 24h rooms (Persistence until midnight)
-        if room.time_limit < 86400:
-            room.remove_player(session['user_id'])
-            
-            # Delete room if empty
-            if len(room.players) == 0:
-                room_manager.delete_room(room_id)
+        room.remove_player(session['user_id'])
+        
+        # Delete room if empty (except for 24h rooms which persist)
+        if len(room.players) == 0 and room.time_limit < 86400:
+            room_manager.delete_room(room_id)
     
     return jsonify({'success': True})
 
@@ -436,6 +439,7 @@ def get_room_state(room_id):
             'board_dimensions': room.board_dimensions,
             'time_limit': room.time_limit,
             'all_words': words_to_return,
+            'all_word_scores': room.solved_words_with_scores,
             'bonus_word': room.bonus_word,
             'spinner_params': room.spinner_params,
             'solving_complete': room.solving_complete,  # Let frontend know if still solving
