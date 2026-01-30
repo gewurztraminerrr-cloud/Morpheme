@@ -4,6 +4,7 @@ Handles room state, players, timers, and game logic
 """
 
 import time
+import datetime
 import threading
 from dataclasses import dataclass, field
 from typing import List, Dict
@@ -20,8 +21,10 @@ class Player:
     score: int = 0
     previous_round_score: int = 0
     rating_change: int = 0
+    previous_submitted_words: List[Dict] = field(default_factory=list)
     found_bonus_word: bool = False
     last_active: float = field(default_factory=time.time)
+    input_method: str = "mouse"  # 'keyboard', 'mouse', or 'touch'
 
 @dataclass
 class GameRoom:
@@ -38,7 +41,6 @@ class GameRoom:
     spectators: List[Player] = field(default_factory=list)
     max_players: int = 8
     
-
     
     # Game state
     creation_time: float = field(default_factory=time.time)
@@ -49,10 +51,12 @@ class GameRoom:
     # Timer
     round_start_time: float = 0
     intermission_start_time: float = 0
+    custom_end_time: float = 0 # For fixed-end-time rooms (e.g. daily at midnight)
     
     # Current board data
     board: List[List[str]] = field(default_factory=list)
     all_words: List[str] = field(default_factory=list)  # Fast initial word list
+    previous_all_words: List[str] = field(default_factory=list) # Previous round words
     complete_words: List[str] = field(default_factory=list)  # Complete word list from background solving
     solved_words_with_scores: Dict[str, int] = field(default_factory=dict)  # Pre-computed word scores
     bonus_word: str = ''
@@ -145,7 +149,8 @@ class GameRoom:
         removed = False
         
         for p in self.players:
-            if now - p.last_active < timeout:
+            # Keep active players OR keep all players if 24h room (daily persistence)
+            if now - p.last_active < timeout or self.time_limit >= 86400:
                 active_players.append(p)
             else:
                 print(f"[GameRoom] Removing inactive player {p.username} (last active {now - p.last_active:.1f}s ago)")
@@ -179,6 +184,9 @@ class GameRoom:
     def time_remaining(self):
         """Calculate time remaining in current state"""
         if self.state == 'active':
+            if self.custom_end_time > 0:
+                return max(0, int(self.custom_end_time - time.time()))
+            
             elapsed = time.time() - self.round_start_time
             return max(0, self.time_limit - int(elapsed))
         elif self.state == 'intermission':
@@ -190,6 +198,8 @@ class GameRoom:
     def round_end_time(self):
         """Get timestamp when current round ends (for client sync)"""
         if self.state == 'active':
+            if self.custom_end_time > 0:
+                return self.custom_end_time
             return self.round_start_time + self.time_limit
         return 0
     
@@ -472,12 +482,29 @@ class RoomManager:
     def create_room(self, room_id, game_type, time_limit, board_dimensions):
         """Create a new game room"""
         with self.lock:
+            # Singleton Logic for ALL Accumulative Rooms
+            # Ensures all players join the same room for a given configuration (Unlimited Multiplayer)
+            if game_type == 'accumulative':
+                for existing_room in self.rooms.values():
+                    if (existing_room.game_type == game_type and 
+                        existing_room.board_dimensions == board_dimensions and
+                        existing_room.time_limit == time_limit):
+                        print(f"[RoomManager] Singleton: Returning existing Accumulative room {existing_room.room_id}")
+                        return existing_room
+
             room = GameRoom(
                 room_id=room_id,
                 game_type=game_type,
                 time_limit=time_limit,
                 board_dimensions=board_dimensions
             )
+            
+            # Unlimited players for Accumulative, 8 for others
+            if game_type == 'accumulative':
+                room.max_players = 9999
+            else:
+                room.max_players = 8
+                
             self.rooms[room_id] = room
             return room
     
@@ -505,8 +532,10 @@ class RoomManager:
             
             # If room is empty, mark for deletion
             if len(room.players) == 0:
-                print(f"[RoomManager] Room {room_id} is empty (after cleanup), marking for deletion")
-                rooms_to_delete.append(room_id)
+                # SKIP deleting daily rooms (>= 86400s)
+                if room.time_limit < 86400:
+                    print(f"[RoomManager] Room {room_id} is empty (after cleanup), marking for deletion")
+                    rooms_to_delete.append(room_id)
         
         # Delete marked rooms
         for room_id in rooms_to_delete:
@@ -571,6 +600,20 @@ class RoomManager:
             room.current_round += 1
             room.state = 'active'
             room.round_start_time = time.time()
+            
+            # Daily Room Logic (>= 24h) - Reset at Midnight
+            if room.time_limit >= 86400:
+                # HARD RESET: Erase all users for the new day
+                print(f"[RoomManager] Daily Reset: Wiping all players from room {room_id}")
+                room.players = []
+                room.spectators = []
+                
+                now = datetime.datetime.now()
+                midnight = (now + datetime.timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+                room.custom_end_time = midnight.timestamp()
+                print(f"[RoomManager] Daily room: aligned to midnight {midnight}")
+            else:
+                room.custom_end_time = 0
             
             # SPLIT POINTS RANDOMIATION
             if room.game_type == 'split':
@@ -727,8 +770,8 @@ class RoomManager:
                 
             print(f"[RoomManager] Round {room.current_round} started with pre-generated board!")
             
-            # Clear previous words and scores
-            # Clear previous words and scores
+            # SAVE PREVIOUS ROUND DATA (Persistence for "Previous Day" tab)
+            room.previous_all_words = list(room.complete_words) if room.complete_words else list(room.all_words)
             
             # 1. Calculate ELO changes based on FINAL scores of previous round
             # Do this BEFORE resetting scores
@@ -742,6 +785,9 @@ class RoomManager:
                 
                 # Store current score for next round's comparison
                 player.previous_round_score = player.score
+                
+                # SAVE PREVIOUS WORDS
+                player.previous_submitted_words = list(player.submitted_words)
                 
                 # Clear for new round
                 player.submitted_words = []

@@ -7,6 +7,8 @@ import os
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'morpheme-secret-key-2024'
 
+DEFINITIONS_CACHE = None
+
 # Initialize database
 def init_db():
     conn = sqlite3.connect('morpheme.db')
@@ -140,10 +142,13 @@ def create_room():
             return jsonify({'error': 'Guests can only create/join rooms with no rating limits (0-∞).'}), 403
     
     # Create room
-    room_id = str(uuid.uuid4())
-    room = room_manager.create_room(room_id, game_type, time_limit, board_dimensions)
+    generated_id = str(uuid.uuid4())
+    room = room_manager.create_room(generated_id, game_type, time_limit, board_dimensions)
     room.min_rating = int(min_rating)
     room.max_rating = int(max_rating)
+    
+    # Use the actual ID (could be existing one if singleton)
+    room_id = room.room_id
     
     # Get configuration-specific rating
     config_key = f"{game_type}|{board_dimensions}|{time_limit}"
@@ -167,6 +172,7 @@ def create_room():
     room.add_player(session['user_id'], session['username'], rating)
     
     # Start first round immediately in background for faster loading
+    # Only if NOT already running/active (check logic inside start_round already handles this)
     import threading
     thread = threading.Thread(target=room_manager.start_round, args=(room_id,), daemon=True)
     thread.start()
@@ -202,6 +208,10 @@ def join_room(room_id):
     for other_room_id in list(room_manager.rooms.keys()):
         if other_room_id != room_id:
             other_room = room_manager.rooms[other_room_id]
+            # Skip removal if the OTHER room is a 24h room (Persistence)
+            if other_room.time_limit >= 86400:
+                continue
+                
             if any(p.user_id == user_id for p in other_room.players):
                 # Clean up old room
                 other_room.remove_player(user_id)
@@ -211,6 +221,10 @@ def join_room(room_id):
     # Check for spectator request
     data = request.get_json() or {}
     as_spectator = data.get('as_spectator', False)
+
+    # Force player mode for Accumulative
+    if room.game_type == 'accumulative':
+        as_spectator = False
 
     if as_spectator:
         room.add_spectator(user_id, session['username'], rating)
@@ -233,9 +247,12 @@ def join_room(room_id):
     success = room.add_player(user_id, session['username'], rating)
     if not success:
         # Room full
-        return jsonify({'error': 'Room is full (Max 8 players). You can watch instead.'}), 409
+        msg = f"Room is full (Max {room.max_players} players). You can watch instead."
+        if room.game_type == 'accumulative':
+             msg = "Could not join Accumulative room. Please try again."
+        return jsonify({'error': msg}), 409
     
-    return jsonify({'success': True, 'role': 'player'})
+    return jsonify({'success': True, 'role': 'player', 'max_players': room.max_players})
 
 @app.route('/api/room/<room_id>/leave', methods=['POST'])
 def leave_room(room_id):
@@ -244,11 +261,13 @@ def leave_room(room_id):
     
     room = room_manager.get_room(room_id)
     if room:
-        room.remove_player(session['user_id'])
-        
-        # Delete room if empty
-        if len(room.players) == 0:
-            room_manager.delete_room(room_id)
+        # Skip removal for 24h rooms (Persistence until midnight)
+        if room.time_limit < 86400:
+            room.remove_player(session['user_id'])
+            
+            # Delete room if empty
+            if len(room.players) == 0:
+                room_manager.delete_room(room_id)
     
     return jsonify({'success': True})
 
@@ -275,6 +294,7 @@ def list_rooms():
             active_rooms.append({
                 'room_id': room.room_id,
                 'player_count': len(room.players),
+                'max_players': room.max_players,
                 'combined_rating': combined_rating,
                 'state': room.state,
                 'current_round': room.current_round,
@@ -329,7 +349,11 @@ def get_room_state(room_id):
         # Strict Check: If room is empty of players (even if spectators exist), delete it
         # BUT allow a grace period (e.g. 15s) for new rooms where creator hasn't joined yet
         time_alive = time.time() - room.creation_time
-        if len(room.players) == 0 and time_alive > 15:
+        
+        # Skip deletion for daily rooms (>= 24h) so they persist
+        is_daily_room = room.time_limit >= 86400
+        
+        if not is_daily_room and len(room.players) == 0 and time_alive > 15:
             print(f"Room {room_id} empty (0 players) and old enough ({time_alive:.1f}s) - deleting")
             room_manager.delete_room(room_id)
             return jsonify({'error': 'Room deleted due to inactivity'}), 404
@@ -418,6 +442,7 @@ def get_room_state(room_id):
             'max_players': room.max_players,
             'min_rating': room.min_rating,
             'max_rating': room.max_rating,
+            'previous_all_words': room.previous_all_words,
             'players': [
                 {
                     'username': p.username,
@@ -427,8 +452,10 @@ def get_room_state(room_id):
                     'rating_change': p.rating_change,
                     'found_bonus_word': p.found_bonus_word,
                     'submitted_words': p.submitted_words,
-                    'invalid_words': p.invalid_words
-                } for p in room.players
+                    'previous_submitted_words': p.previous_submitted_words,
+                    'invalid_words': p.invalid_words,
+                    'input_method': p.input_method
+                } for p in sorted(room.players, key=lambda p: p.score, reverse=True)
             ],
             'spectators': [
                 {'username': s.username, 'rating': s.rating} for s in room.spectators
@@ -467,22 +494,27 @@ def submit_chat_message(room_id):
     
     return jsonify({'success': True})
 
-@app.route('/api/room/<room_id>/submit', methods=['POST'])
+@app.route('/room/<room_id>/submit_word', methods=['POST'])
 def submit_word(room_id):
-    if 'user_id' not in session:
+    user_id = session.get('user_id')
+    if not user_id:
         return jsonify({'error': 'Not authenticated'}), 401
     
     room = room_manager.get_room(room_id)
     if not room:
         return jsonify({'error': 'Room not found'}), 404
-    
-    # Update activity
-    room.update_player_activity(session['user_id'])
-    
+        
     data = request.get_json()
     word = data.get('word', '').strip()
-    
-    success, message, points, final_word = room.submit_word(session['user_id'], word)
+    input_method = data.get('input_method')
+
+    # Update input method if provided
+    if input_method:
+        player = room.get_player(user_id)
+        if player:
+            player.input_method = input_method
+            
+    success, message, points, final_word = room.submit_word(user_id, word)
     
     return jsonify({
         'success': success, 
@@ -490,6 +522,26 @@ def submit_word(room_id):
         'points': points,
         'word': final_word
     })
+
+@app.route('/room/<room_id>/update_input_method', methods=['POST'])
+def update_input_method(room_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+        
+    data = request.get_json()
+    input_method = data.get('input_method')
+    
+    room = room_manager.get_room(room_id)
+    if not room:
+        return jsonify({'error': 'Room not found'}), 404
+        
+    player = room.get_player(user_id)
+    if player:
+        player.input_method = input_method
+        return jsonify({'success': True})
+        
+    return jsonify({'error': 'Player not found'}), 404
 
 # Definitions Cache
 DEFINITIONS_CACHE = None
@@ -537,4 +589,4 @@ def get_definition():
 
 if __name__ == '__main__':
     print('Morpheme server running on http://localhost:3000')
-    app.run(host='0.0.0.0', port=3000, debug=False)
+    app.run(host='0.0.0.0', port=3000, debug=True)

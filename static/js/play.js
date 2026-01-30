@@ -17,6 +17,26 @@ let mouseState = {
 let splitNotepadState = {}; // { username: 'unique' | 'split' | 'invalid' }
 let showBoardInSplitIntermission = false;
 
+// Input Method Tracking
+let currentInputMethod = 'mouse';
+function updateInputMethod(method) {
+    if (currentInputMethod === method) return;
+    currentInputMethod = method;
+    const roomId = getCurrentRoomId();
+    if (roomId) {
+        fetch(`/room/${roomId}/update_input_method`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ input_method: method })
+        }).catch(err => console.error('Failed to update input method:', err));
+    }
+}
+
+// Add global listeners for input detection
+document.addEventListener('keydown', () => updateInputMethod('keyboard'), true);
+document.addEventListener('mousedown', () => updateInputMethod('mouse'), true);
+document.addEventListener('touchstart', () => updateInputMethod('touch'), true);
+
 function getCurrentRoomId() {
     return window.currentRoomId || null;
 }
@@ -100,7 +120,8 @@ async function updateGameState() {
             // Check if there is space to join
             const playerCount = (state.players && Array.isArray(state.players)) ? state.players.length : 0;
             const maxPlayers = state.max_players || 8;
-            const canJoin = playerCount < maxPlayers;
+            const isAccumulative = state.game_type === 'accumulative';
+            const canJoin = isAccumulative || (playerCount < maxPlayers);
 
             // Render Content
             spectatorPanel.innerHTML = `
@@ -313,67 +334,172 @@ async function updateGameState() {
         } else {
             // ACTIVE STATE
             // ACTIVE STATE
-            if (state.game_type === 'accumulative' || state.game_type === 'split') {
-                // ACCUMULATIVE / SPLIT: Show only MY words
-                wordsPanelHeader.textContent = 'Your Words';
+            if (state.game_type === 'accumulative' && state.time_limit >= 86400) {
+                // ACCUMULATIVE: TABS (Found, Clues, Previous)
 
-                // Find my words
-                // console.log('[play.js] CurrentUser:', currentUser);
+                // 1. Setup Tabs UI if needed
+                let tabsContainer = document.getElementById('words-tabs-container');
+                if (!tabsContainer) {
+                    wordsPanelHeader.style.display = 'none'; // Hide default header
+
+                    tabsContainer = document.createElement('div');
+                    tabsContainer.id = 'words-tabs-container';
+                    tabsContainer.className = 'tabs-container';
+                    tabsContainer.innerHTML = `
+                        <button class="tab-btn active" onclick="window.switchWordTab('found')">Found</button>
+                        <button class="tab-btn" onclick="window.switchWordTab('clues')">Clues</button>
+                        <button class="tab-btn" onclick="window.switchWordTab('previous')">Previous</button>
+                    `;
+                    // Insert before stats
+                    const stats = document.getElementById('words-stats');
+                    stats.parentNode.insertBefore(tabsContainer, stats);
+
+                    // Initialize state
+                    window.activeWordsTab = 'found';
+                    window.switchWordTab = (tab) => {
+                        window.activeWordsTab = tab;
+                        // Update buttons
+                        document.querySelectorAll('#words-tabs-container .tab-btn').forEach(btn => {
+                            btn.classList.toggle('active', btn.textContent.toLowerCase() === tab);
+                        });
+                        // Trigger render update immediate or wait for poll
+                        updateGameState();
+                    };
+                }
+
+                // 2. Render Content based on Tab
+                const listEl = document.getElementById('submitted-words-list');
                 const myPlayer = state.players.find(p => p.username === currentUser);
-                // console.log('[play.js] MyPlayer:', myPlayer);
                 const myWords = myPlayer ? myPlayer.submitted_words : [];
-                // console.log('[play.js] MyWords:', myWords);
+                const activeTab = window.activeWordsTab || 'found';
 
-                // Calculate stats
+                if (activeTab === 'found') {
+                    // SHOW FOUND WORDS (Standard)
+                    wordsStats.style.display = 'block';
+                    const totalWords = state.all_words ? state.all_words.length : 0;
+                    const uniqueFound = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase())).size;
+                    const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
+                    wordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}%`;
+
+                    // Sort newest first
+                    const sortedWords = [...myWords].sort((a, b) => (b.time || 0) - (a.time || 0));
+
+                    if (sortedWords.length === 0) listEl.innerHTML = '<p class="placeholder">Find words!</p>';
+                    else {
+                        const html = sortedWords.map(wObj => {
+                            const word = typeof wObj === 'string' ? wObj : wObj.word;
+                            const points = typeof wObj === 'object' ? wObj.points : '?';
+                            const isBonus = word === state.bonus_word;
+                            let className = 'word-item player-word';
+                            if (isBonus) className += ' bonus-word';
+                            return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; cursor:pointer;"><span>${word}</span><span style="opacity:0.8">${points}</span></div>`;
+                        }).join('');
+                        listEl.innerHTML = html;
+                    }
+                }
+                else if (activeTab === 'clues') {
+                    // SHOW CLUES (Unfound words masked)
+                    wordsStats.style.display = 'none'; // Hide stats to save space or show different stats
+
+                    const allWords = state.all_words || [];
+                    const foundSet = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase()));
+                    const unfoundWords = allWords.filter(w => !foundSet.has(w.toUpperCase()));
+
+                    if (unfoundWords.length === 0) {
+                        listEl.innerHTML = '<p class="placeholder">All words found! Amazing!</p>';
+                    } else {
+                        // Sort by length then alpha
+                        unfoundWords.sort((a, b) => a.length - b.length || a.localeCompare(b));
+
+                        const html = unfoundWords.map(w => {
+                            const len = w.length;
+                            const prefix = w.substring(0, 2);
+                            return `<div class="clue-item">${prefix}.. (${len})</div>`;
+                        }).join('');
+
+                        // Use grid layout for clues
+                        listEl.innerHTML = `<div class="clues-grid">${html}</div>`;
+                    }
+                }
+                else if (activeTab === 'previous') {
+                    // SHOW PREVIOUS DAY
+                    wordsStats.style.display = 'none';
+
+                    const prevAll = state.previous_all_words;
+                    if (!prevAll || prevAll.length === 0) {
+                        listEl.innerHTML = '<p class="placeholder">No previous day data yet.</p>';
+                    } else {
+                        // Check which ones user found
+                        const prevMyWords = myPlayer ? (myPlayer.previous_submitted_words || []) : [];
+                        const prevFoundSet = new Set(prevMyWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase()));
+
+                        // Combine and sort
+                        const html = prevAll.sort().map(w => {
+                            const found = prevFoundSet.has(w.toUpperCase());
+                            const statusClass = found ? 'prev-found' : 'prev-missed';
+                            const icon = found ? '✓' : '✗';
+                            return `<div class="word-item ${statusClass}" data-word="${w}" style="display:flex; justify-content:space-between; cursor:pointer;">
+                                <span>${w}</span>
+                                <span style="opacity:0.6">${icon}</span>
+                            </div>`;
+                        }).join('');
+                        listEl.innerHTML = html;
+                    }
+                }
+
+            } else if (state.game_type === 'accumulative' || state.game_type === 'split') {
+                // SPLIT / STANDARD ACCUMULATIVE LOGIC
+                wordsPanelHeader.textContent = 'Your Words';
+                wordsPanelHeader.style.display = 'block';
+                wordsStats.style.display = 'block';
+                // Remove tabs if present (cleanup when switching modes)
+                const tabs = document.getElementById('words-tabs-container');
+                if (tabs) tabs.remove();
+
+                const myPlayer = state.players.find(p => p.username === currentUser);
+                const myWords = myPlayer ? myPlayer.submitted_words : [];
+
+                // Stats
                 const totalWords = state.all_words ? state.all_words.length : 0;
                 const uniqueFound = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase())).size;
                 const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
                 wordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}%`;
 
-                // Render list (Simple Rebuild)
+                // List
                 const listEl = document.getElementById('submitted-words-list');
-
-                // Sort by time descending (newest first)
-                // Handle legacy string format just in case
-                const sortedWords = [...myWords].sort((a, b) => {
-                    const tA = a.time || 0;
-                    const tB = b.time || 0;
-                    return tB - tA;
-                });
-
+                const sortedWords = [...myWords].sort((a, b) => (b.time || 0) - (a.time || 0));
                 if (sortedWords.length === 0) {
                     listEl.innerHTML = '<p class="placeholder">Find words!</p>';
                 } else {
                     const html = sortedWords.map(wObj => {
                         const word = typeof wObj === 'string' ? wObj : wObj.word;
                         const points = typeof wObj === 'object' ? wObj.points : '?';
-                        // Check bonus
                         const isBonus = word === state.bonus_word;
-
                         let className = 'word-item player-word';
                         if (isBonus) className += ' bonus-word';
-
-                        return `<div class="${className}" style="display:flex; justify-content:space-between;">
-                <span>${word}</span>
-                <span style="opacity:0.8">${points}</span>
-            </div>`;
+                        return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; cursor:pointer;"><span>${word}</span><span style="opacity:0.8">${points}</span></div>`;
                     }).join('');
                     listEl.innerHTML = html;
                 }
-
             } else {
-                // FCFS / Other: ALSO Show "Your Words", but sorted differently
-                // Originally this was a live feed, but user requested: "simply lists the words one got"
+                // FCFS: Shared Live Feed
+                wordsPanelHeader.textContent = 'Live Feed';
 
-                wordsPanelHeader.textContent = 'Your Words';
+                // Aggregate ALL words from ALL players
+                let allFoundWords = [];
+                state.players.forEach(p => {
+                    if (p.submitted_words) {
+                        p.submitted_words.forEach(w => {
+                            let wObj = (typeof w === 'string') ? { word: w, points: '?', time: 0 } : { ...w };
+                            wObj.finder = p.username;
+                            allFoundWords.push(wObj);
+                        });
+                    }
+                });
 
-                // Find my words
-                const myPlayer = state.players.find(p => p.username === currentUser);
-                const myWords = myPlayer ? myPlayer.submitted_words : [];
-
-                // Calculate stats
+                // Calculate stats (Community Progress)
                 const totalWords = state.all_words ? state.all_words.length : 0;
-                const uniqueFound = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase())).size;
+                const uniqueFound = new Set(allFoundWords.map(w => w.word.toUpperCase())).size;
                 const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
                 wordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}%`;
 
@@ -381,14 +507,13 @@ async function updateGameState() {
                 const listEl = document.getElementById('submitted-words-list');
 
                 // FCFS Sort: Time Ascending (Newest at Bottom)
-                const sortedWords = [...myWords].sort((a, b) => {
+                const sortedWords = allFoundWords.sort((a, b) => {
                     const tA = a.time || 0;
                     const tB = b.time || 0;
                     return tA - tB; // Ascending
                 });
 
-                // Capture scroll state BEFORE render (if we are appending, though here we rebuild)
-                // Relaxed threshold to 150px to prevent "halting" if user is mostly at bottom
+                // Capture scroll state
                 const threshold = 150;
                 const isAtBottom = (listEl.scrollTop + listEl.clientHeight >= listEl.scrollHeight - threshold);
                 const wasEmpty = listEl.innerHTML.includes('placeholder') || listEl.children.length === 0;
@@ -396,26 +521,37 @@ async function updateGameState() {
                 if (sortedWords.length === 0) {
                     listEl.innerHTML = '<p class="placeholder">Find words!</p>';
                 } else {
-                    // Check if content changed to avoid flicker? 
-                    // For now, full rebuild is safer for consistency
                     const html = sortedWords.map(wObj => {
-                        const word = typeof wObj === 'string' ? wObj : wObj.word;
-                        const points = typeof wObj === 'object' ? wObj.points : '?';
+                        const word = wObj.word;
+                        const points = wObj.points;
+                        const finder = wObj.finder;
+                        const isMe = finder === currentUser;
                         const isBonus = word === state.bonus_word;
 
-                        let className = 'word-item player-word';
+                        let className = 'word-item';
+                        if (isMe) className += ' player-word'; // Highlight my words
+                        else className += ' opponent-word';   // Style for others
+
                         if (isBonus) className += ' bonus-word';
 
-                        return `<div class="${className}" style="display:flex; justify-content:space-between;">
-                        <span>${word}</span>
+                        // Display format: WORD (User)  [Pts]
+                        // Check if we have space, might need to truncate user?
+                        // Using flex to separate word/user from points
+
+                        const displayName = isMe ? 'You' : finder;
+
+                        return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+                        <div>
+                            <span style="font-weight:bold;">${word}</span>
+                            <span style="font-size:0.8em; opacity:0.7; margin-left:6px;">(${displayName})</span>
+                        </div>
                         <span style="opacity:0.8">${points}</span>
                     </div>`;
                     }).join('');
 
                     if (listEl.innerHTML !== html) {
                         listEl.innerHTML = html;
-                        // Smart Scroll:
-                        // If we were at bottom, OR if it's the first render (wasEmpty), scroll to bottom
+                        // Smart Scroll
                         if (isAtBottom || wasEmpty) {
                             requestAnimationFrame(() => {
                                 listEl.scrollTop = listEl.scrollHeight;
@@ -459,11 +595,16 @@ function renderPlayers(players) {
     // Recreating list is fine here
 
     // Top 3 + Nearby Logic (simplified for brevity: show top 20)
-    // For now, just render top 20 to keep it simple and scrollable
-    const itemsToRender = sortedPlayers.slice(0, 20);
+    // For now, render ALL players (scrollable if > 8)
+    const itemsToRender = sortedPlayers;
 
     const html = itemsToRender.map((p, index) => {
-        const ratingChange = p.rating_change ? ` ${p.rating_change > 0 ? '+' : ''}${p.rating_change}` : '';
+        // Override rating for Guest users
+        const isGuest = p.username.startsWith('Guest_');
+        const displayRating = isGuest ? 0 : p.rating;
+
+        const ratingChange = p.rating_change ? `${p.rating_change > 0 ? ' +' : ' '}${p.rating_change}` : '';
+        const ratingDisplay = `${displayRating} (${ratingChange.trim() || '0'})`;
         const bonusClass = p.found_bonus_word ? ' bonus-finder' : '';
         const userClass = (p.username === currentUser) ? ' current-user' : '';
         const rank = index + 1;
@@ -471,22 +612,27 @@ function renderPlayers(players) {
         // Highlight if selected
         const selectedClass = (p.username === selectedPlayerUsername) ? ' selected-player' : '';
 
-        // Override rating for Guest users
-        const isGuest = p.username.startsWith('Guest_');
-        const displayRating = isGuest ? 0 : p.rating;
-
         // Calculate rating color
         const ratingColor = window.getRatingColor ? window.getRatingColor(displayRating) : '#fff';
 
+        // Input Method Icon
+        let inputIcon = '🖱️'; // Default
+        if (p.input_method === 'keyboard') inputIcon = '⌨️';
+        if (p.input_method === 'touch') inputIcon = '📱';
+
         return `
         <div class="player-item${bonusClass}${userClass}${selectedClass}" data-username="${p.username}">
-            <div class="player-name">
-                #${rank} 
-                <span class="rating-indicator" style="background-color: ${ratingColor}; margin-left: 5px;"></span>
-                ${p.username}
+            <div class="player-row-top">
+                <span class="player-rank">#${rank}</span>
+                <span class="rating-square" style="background-color: ${ratingColor};"></span>
+                <span class="player-username">${p.username}</span>
+                <span class="player-rating-val">${ratingDisplay}</span>
             </div>
-            <div class="player-rating">(${displayRating}${ratingChange})</div>
-            <div class="player-stats">${p.words_count} words • ${p.score} pts</div>
+            <div class="player-row-bottom">
+                <span class="player-input-icon">${inputIcon}</span>
+                <span class="player-words-count">${p.words_count} words</span>
+                <span class="player-score-val">${p.score} pts</span>
+            </div>
         </div>
         `;
     }).join('');
@@ -561,7 +707,7 @@ async function sendChatMessage() {
     if (!message || !roomId) return;
 
     try {
-        await fetch(`/api/room/${roomId}/chat`, {
+        await fetch(`/room/${roomId}/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message })
@@ -632,7 +778,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             className += ' unfound';
         }
 
-        return `<div class="${className}">${word}</div>`;
+        return `<div class="${className}" data-word="${word}" style="cursor:pointer;">${word}</div>`;
     }).join('');
 }
 
@@ -709,9 +855,24 @@ function updateLocalTimer() {
     const remaining = Math.max(0, localEndTime - now);
     const seconds = Math.ceil(remaining);
 
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    const display = `${mins}:${secs.toString().padStart(2, '0')}`;
+    // Format determination
+    let is24h = false;
+    if (window.lastGameState && window.lastGameState.time_limit >= 86400) {
+        is24h = true;
+    }
+
+    let display;
+    if (is24h) {
+        const hours = Math.floor(seconds / 3600);
+        const mins = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        display = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        display = `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
     document.getElementById('timer-value').textContent = display;
 
     // Freeze detection
@@ -904,6 +1065,11 @@ function renderSplitNotepads(players) {
                 row.className = 'notepad-item';
                 if (w.is_invalid) row.classList.add('invalid');
 
+                // Definition handler
+                row.dataset.word = w.word;
+                row.style.cursor = 'pointer';
+                row.onclick = () => window.fetchDefinition(w.word);
+
                 row.innerHTML = `<span>${w.word}</span> <span>${w.points}</span>`;
                 list.appendChild(row);
             });
@@ -1001,6 +1167,9 @@ function renderFCFSNotepads(players) {
 
                 const row = document.createElement('div');
                 row.className = 'notepad-item';
+                row.dataset.word = w;
+                row.style.cursor = 'pointer';
+                row.onclick = () => window.fetchDefinition(w); // Direct handler
                 row.innerHTML = `<span>${w}</span> <span>${pts}</span>`;
                 list.appendChild(row);
             });
@@ -1089,10 +1258,10 @@ async function submitWord(wordParam = null) {
     if (!word || !roomId) return;
 
     try {
-        const response = await fetch(`/api/room/${roomId}/submit`, {
+        const response = await fetch(`/room/${roomId}/submit_word`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ word })
+            body: JSON.stringify({ word: word, input_method: currentInputMethod })
         });
         const data = await response.json();
 
@@ -1229,20 +1398,38 @@ async function fetchDefinition(word) {
         } else {
             defContent.innerHTML = `<p class="placeholder">Definition not found.</p>`;
         }
-    } catch (e) { defContent.innerHTML = '<p class="placeholder">Error loading.</p>'; }
+    } catch (e) {
+        console.error('Definition error:', e);
+        defContent.innerHTML = `<p class="placeholder">Error: ${e.message}</p>`;
+    }
 }
 
 const submittedWordsListEl = document.getElementById('submitted-words-list');
 if (submittedWordsListEl) {
     submittedWordsListEl.addEventListener('click', (e) => {
-        // Handle clicks on feed items too
-        // Check for word-item or feed-word
-        if (e.target.classList.contains('word-item') || e.target.classList.contains('feed-word')) {
-            const word = e.target.textContent.trim();
-            fetchDefinition(word);
-        } else if (e.target.closest('.feed-item')) {
-            const word = e.target.closest('.feed-item').querySelector('.feed-word').textContent.trim();
-            fetchDefinition(word);
+        // Handle clicks on feed items, notepads, etc.
+        const item = e.target.closest('.word-item') ||
+            e.target.closest('.feed-item') ||
+            e.target.closest('.clue-item') ||
+            e.target.closest('.notepad-item'); // Added intermission items
+        if (item) {
+            let word = item.dataset.word;
+
+            // Fallback parsing if data-word is missing (Legacy or dynamic)
+            if (!word) {
+                if (item.classList.contains('feed-item')) {
+                    const wEl = item.querySelector('.feed-word');
+                    if (wEl) word = wEl.textContent.trim();
+                } else {
+                    // Try first span or bold text
+                    const bold = item.querySelector('span[style*="bold"]');
+                    const firstSpan = item.querySelector('span');
+                    if (bold) word = bold.textContent.trim();
+                    else if (firstSpan) word = firstSpan.textContent.trim();
+                }
+            }
+
+            if (word) fetchDefinition(word);
         }
     });
 }

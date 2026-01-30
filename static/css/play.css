@@ -58,6 +58,8 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
+    height: 100dvh;
+    /* Better mobile support */
     padding: 20px;
     box-sizing: border-box;
     overflow: hidden;
@@ -65,7 +67,8 @@
 
 .play-grid {
     display: grid;
-    grid-template-columns: 250px 1fr 300px;
+    grid-template-columns: 340px 1fr 300px;
+    /* Reduced from 380px */
     gap: 20px;
     flex: 1;
     min-height: 0;
@@ -75,13 +78,15 @@
 .words-panel {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    height: 100%;
+    gap: 15px;
+    /* Slightly reduced gap */
+    flex: 1;
+    /* Take remaining space */
     min-height: 0;
-    /* Crucial for scrolling inside flex items */
     background: rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    padding: 20px;
+    padding: 15px;
+    /* Slightly reduced padding */
     box-sizing: border-box;
 }
 
@@ -106,21 +111,26 @@
 }
 
 .players-panel {
+    display: flex;
+    flex-direction: column;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    padding: 20px;
-    overflow-y: auto;
+    padding: 15px;
+    overflow: hidden;
     flex: 1;
-    /* Sharing space with chat */
-    min-height: 150px;
+    /* Restore to take up remaining vertical space */
+    min-height: 0;
+    min-width: 0;
 }
 
 .chat-panel {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     padding: 10px;
-    height: 180px;
-    /* Reduced fixed height */
+    height: 160px;
+    /* Reduced from 180px */
+    flex-shrink: 0;
+    /* Protect chat */
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -203,33 +213,108 @@
     text-align: center;
 }
 
+/* Remove table header styles */
+.player-header-row {
+    display: none;
+}
+
 #players-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
+    /* Slightly more gap for two-line rows */
+    overflow-y: auto;
+    max-height: 420px;
+    /* (6 * 65px) + (5 * 6px) approx 420px */
+    min-height: 0;
+    padding-right: 5px;
 }
 
 .player-item {
     background: rgba(255, 255, 255, 0.1);
-    padding: 10px 12px;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-}
-
-.player-name {
-    font-weight: 600;
+    padding: 8px 15px;
+    height: 65px;
+    /* Reduced from 85px */
     flex-shrink: 0;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    display: flex;
+    flex-direction: column;
+    /* Two lines */
+    justify-content: center;
+    gap: 4px;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    cursor: pointer;
+    box-sizing: border-box;
 }
 
-.player-rating,
-.player-stats {
-    font-size: 0.85rem;
+.player-row-top,
+.player-row-bottom {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+}
+
+.player-row-bottom {
+    justify-content: space-between;
+    opacity: 0.8;
+}
+
+.player-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.player-rank {
+    font-weight: 700;
+    opacity: 0.6;
+    width: 25px;
+}
+
+.rating-square {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.player-username {
+    font-weight: 600;
+    flex: 1;
+    min-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.player-rating-val {
+    font-size: 0.8rem;
+    opacity: 0.9;
+    white-space: nowrap;
+    margin-left: auto;
+    /* Align to right of top row */
+}
+
+.player-words-count {
+    font-size: 0.8rem;
     opacity: 0.8;
     white-space: nowrap;
+    text-align: center;
+}
+
+.player-score-val {
+    font-weight: 700;
+    color: #ffd700;
+    text-align: right;
+    white-space: nowrap;
+    font-size: 1rem;
+}
+
+.player-input-icon {
+    font-size: 1.1rem;
+    opacity: 0.9;
 }
 
 .player-item.bonus-finder {
@@ -282,7 +367,10 @@
     background: rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     padding: 20px;
-    height: 110px;
+    height: 100px;
+    /* Reduced from 110px */
+    flex-shrink: 0;
+    /* Prevent collapsing */
     /* Reduced fixed height */
     display: flex;
     flex-direction: column;
@@ -476,6 +564,13 @@
     /* Blue glow */
     font-weight: 700;
     /* Make it stand out */
+}
+
+.word-item.opponent-word {
+    background: rgba(255, 99, 71, 0.25);
+    /* Tomato Red, transparent */
+    border: 1px solid rgba(255, 99, 71, 0.5);
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .word-item.bonus-word {
@@ -1134,4 +1229,68 @@
     border-radius: 8px;
     font-weight: 600;
     font-size: 0.9rem;
+}
+
+/* Words Panel Tabs */
+.tabs-container {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+}
+
+.tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 6px 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-btn.active {
+    color: #fff;
+    background: rgba(64, 156, 255, 0.3);
+    font-weight: 600;
+}
+
+/* Clues Grid */
+.clues-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 8px;
+}
+
+.clue-item {
+    background: rgba(255, 255, 255, 0.08);
+    /* Darker pill */
+    padding: 6px;
+    border-radius: 6px;
+    text-align: center;
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Previous Day List */
+.word-item.prev-found {
+    background: rgba(72, 187, 120, 0.25);
+    border: 1px solid rgba(72, 187, 120, 0.4);
+    color: #fff;
+}
+
+.word-item.prev-missed {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.5);
 }

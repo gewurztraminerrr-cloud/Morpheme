@@ -38,28 +38,55 @@ document.addEventListener('DOMContentLoaded', () => {
             const timeLimit = parseInt(accBtn.dataset.time);
             const boardDimensions = accBtn.dataset.board;
 
-            console.log('Accumulative button clicked! Creating room:', { gameType, timeLimit, boardDimensions });
+            console.log('Accumulative button clicked!', { gameType, timeLimit, boardDimensions });
 
             try {
-                console.log('Sending fetch to /api/room/create...');
-                const response = await fetch('/api/room/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        game_type: gameType,
-                        time_limit: timeLimit,
-                        board_dimensions: boardDimensions
-                    })
-                });
+                let data = null;
 
-                console.log('Response received, status:', response.status);
-                const data = await response.json();
-                console.log('Room creation response data:', data);
+                // For 24h rooms, check if one already exists and JOIN it
+                if (timeLimit >= 86400) {
+                    try {
+                        const listResp = await fetch(`/api/rooms?game_type=${gameType}&board_dimensions=${boardDimensions}&time_limit=${timeLimit}`);
+                        const listData = await listResp.json();
+                        if (listData.rooms && listData.rooms.length > 0) {
+                            const existingId = listData.rooms[0].room_id;
+                            console.log('Found existing 24h room, joining:', existingId);
+                            const joinResp = await fetch(`/api/room/${existingId}/join`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({})
+                            });
+                            const joinData = await joinResp.json();
+                            if (joinData.success) {
+                                data = joinData;
+                                data.room_id = existingId; // Manually add ID since join endpoint doesn't return it usually
+                            }
+                        }
+                    } catch (err) { console.error('Error checking for existing room:', err); }
+                }
+
+                // If not joined (or not 24h), Create new
+                if (!data) {
+                    console.log('Creating new room...');
+                    const response = await fetch('/api/room/create', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            game_type: gameType,
+                            time_limit: timeLimit,
+                            board_dimensions: boardDimensions
+                        })
+                    });
+                    data = await response.json();
+                }
+
+                console.log('Room action response:', data);
 
                 if (data.success) {
                     console.log('SUCCESS! Room ID:', data.room_id);
                     // Store room ID globally for play.js
                     window.currentRoomId = data.room_id;
+                    window.isSpectatorMode = false; // Creator is always player
 
                     // Enable Play button
                     document.getElementById('play-btn').disabled = false;
@@ -182,6 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('Room Created, Joining:', data.room_id);
                     // Join and go to play page
                     window.currentRoomId = data.room_id;
+                    window.isSpectatorMode = false; // Creator is always player
                     stopLobbyPolling();
                     showPage('page-play');
 
@@ -402,8 +430,10 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                 if (room.room_id === window.currentRoomId) {
                     actionButtons = `<button class="join-room-btn return-mode" data-room="${room.room_id}" style="background: #e67e22;">Return to Game</button>`;
                 } else {
-                    // Spectate Button
-                    actionButtons += `<button class="join-room-btn watch-mode" data-room="${room.room_id}" data-spectator="true" style="background: #34495e; margin-right: 5px;">Spectate</button>`;
+                    // Spectate Button (Only for FCFS/Split)
+                    if (room.game_type !== 'accumulative') {
+                        actionButtons += `<button class="join-room-btn watch-mode" data-room="${room.room_id}" data-spectator="true" style="background: #34495e; margin-right: 5px;">Spectate</button>`;
+                    }
 
                     let ratingText = '';
                     if (roomMin > 0 || roomMax < 9999) {
