@@ -8,3 +8,6 @@ instance/
 .pytest_cache/
 .coverage
 htmlcov/
+morpheme.db
+developer_messages.db
+*.db
