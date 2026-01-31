@@ -74,16 +74,21 @@ class BoardGenerator:
             else:
                  print(f"[BoardGen] - Skipping bonus word embedding (bonus word not provided)")
             
-            # Solve board to find words (filtered by min length)
-            all_words = self._solve_board(board, dictionary, word_count_range, min_word_length)
-            word_count = len(all_words)
+            # Solve board to find ALL valid dictionary words (min length 2 for validation feedback)
+            # We use 2 here so that if a player types a 2-letter word, we know it's on the board
+            # and can say "too short" instead of "INVALID".
+            all_words = self._solve_board(board, dictionary, word_count_range, 2)
             
-            # Validate word count
+            # For board acceptance (the min_words/max_words check), only count words meeting the ACTUAL min_word_length
+            scorable_words = [w for w in all_words if len(w) >= min_word_length]
+            word_count = len(scorable_words)
+            
+            # Validate word count based on scorable words
             if self._validate_word_count(word_count, min_words, max_words):
-                print(f"[BoardGen] ✓ Board valid: {word_count} words")
+                print(f"[BoardGen] ✓ Board valid: {word_count} scorable words (of {len(all_words)} total)")
                 return board, all_words
             else:
-                print(f"[BoardGen] ✗ Rejected: {word_count} words")
+                print(f"[BoardGen] ✗ Rejected: {word_count} scorable words")
         
         # Max attempts reached - use last board as fallback
         print(f"[BoardGen] ⚠ Max attempts reached: {word_count} words")

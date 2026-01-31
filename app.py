@@ -450,13 +450,17 @@ def get_room_state(room_id):
         # Determine which word list to return
         # During intermission: use complete_words if available and solving is done, otherwise all_words
         # During active: use all_words (fast initial list for validation)
-        words_to_return = room.all_words
+        # IMPORTANT: We filter by min_word_length here so that validation-only words (length 2)
+        # don't appear as "Missed Words" in the UI.
+        min_len = room.spinner_params.get('min_word_length', 3)
+        
+        words_to_return = [w for w in room.all_words if len(w) >= min_len]
         if room.state == 'intermission':
             # Use complete words if solving is done, otherwise show initial words while solving
             if room.solving_complete and room.complete_words:
-                words_to_return = room.complete_words
+                words_to_return = [w for w in room.complete_words if len(w) >= min_len]
             else:
-                words_to_return = room.all_words
+                words_to_return = [w for w in room.all_words if len(w) >= min_len]
         
         # Create response with Cache-Control headers
         resp = jsonify({
@@ -676,6 +680,212 @@ def submit_contact():
     except Exception as e:
         print(f"[Contact] Error saving message: {e}")
         return jsonify({'error': 'Failed to send message'}), 500
+
+# --- TOOLS ENDPOINTS ---
+TOOLS_DICT_CACHE = {}
+
+def load_tools_dictionary(dict_name):
+    """Load dictionary for tools into memory cache"""
+    if dict_name in TOOLS_DICT_CACHE:
+        return TOOLS_DICT_CACHE[dict_name]
+    
+    dict_path = os.path.join(os.path.dirname(__file__), 'dictionaries', f'{dict_name}.txt')
+    try:
+        print(f"[Tools] Loading dictionary: {dict_path}")
+        with open(dict_path, 'r') as f:
+            words = set(word.strip().upper() for word in f)
+        TOOLS_DICT_CACHE[dict_name] = words
+        print(f"[Tools] Loaded {len(words)} words from {dict_name}")
+        return words
+    except FileNotFoundError:
+        print(f"[Tools] Dictionary file not found: {dict_path}")
+        return set()
+
+def get_lis(nums):
+    """Calculates Longest Increasing Subsequence length."""
+    if not nums:
+        return 0
+    # Standard O(n log n) or O(n^2) approach. Words are short, O(n^2) is negligible.
+    # Using DP (O(n^2)) for simplicity and correctness with small N.
+    dp = [1] * len(nums)
+    for i in range(len(nums)):
+        for j in range(i):
+            if nums[i] > nums[j]:
+                dp[i] = max(dp[i], dp[j] + 1)
+    return max(dp) if dp else 0
+
+def calculate_mp_pass(source, target, source_len, target_len):
+    """Calculates MP score for a specific alignment pass."""
+    # 1. Map Positions
+    position = [-1] * target_len
+    for s_idx, s_char in enumerate(source):
+        for t_idx, t_char in enumerate(target):
+            if s_char == t_char and position[t_idx] == -1:
+                position[t_idx] = s_idx
+                break
+    
+    # 2. Stats
+    matched_indices = [p for p in position if p != -1]
+    count = len(matched_indices)
+    
+    # 3. LIS
+    count2 = get_lis(matched_indices)
+    
+    # 4. Calculation
+    # Moves = count - count2
+    # Inserts = target_len - count (Asterisks)
+    # Deletes = source_len - count
+    micro_procedures = (count - count2) + (target_len - count) + (source_len - count)
+    
+    # 5. Hamming Optimization (Java 'count3' check)
+    if source_len == target_len:
+        count3 = sum(1 for a, b in zip(source, target) if a != b)
+        if micro_procedures > count3:
+            micro_procedures = count3
+            
+    return micro_procedures, count
+
+def check_and_add_mp(mp_groups, source_len, target_len, mp, word):
+    """Applies strict filtering logic from combos.java."""
+    # Check if word is already in this specific MP group
+    if word in mp_groups[mp]: 
+        return
+
+    added = False
+    
+    if source_len == 5:
+        if target_len >= 5 and mp <= 3:
+            if mp >= 3:
+                if target_len >= 6: added = True
+            else:
+                added = True
+                
+    elif source_len == 6:
+        if target_len >= 5 and mp <= 3:
+            if mp >= 3:
+                if target_len >= 6: added = True
+            else:
+                added = True
+
+    elif source_len == 7:
+        if target_len >= 5 and mp <= 4:
+            if mp >= 4:
+                if target_len >= 8: added = True
+            else:
+                added = True
+                
+    elif source_len == 8:
+        if target_len >= 5 and mp <= 4:
+            added = True
+            
+    elif source_len == 9:
+        if target_len >= 6 and mp <= 5:
+             if mp >= 5:
+                 if target_len >= 8: added = True
+             else:
+                 added = True
+                 
+    elif source_len == 10:
+        if target_len >= 6 and mp <= 5:
+            if mp == 5:
+                if target_len >= 8: added = True
+            else:
+                added = True
+    
+    if added:
+        mp_groups[mp].append(word)
+
+@app.route('/api/tools/combo', methods=['POST'])
+def tools_combo_check():
+    data = request.json
+    search_term = data.get('search_term', '').upper().strip()
+    dict_name = data.get('dictionary', 'NWL')
+    
+    if not search_term or len(search_term) < 5 or len(search_term) > 10:
+        # Java code only handles 5-10 length inputs explicitly
+        if not search_term:
+             return jsonify({'error': 'No search term provided'}), 400
+        # For lengths outside 5-10, we could either error or use loose logic. 
+        # Assuming user stays within bounds, or we treat others as valid.
+        pass 
+        
+    dictionary = load_tools_dictionary(dict_name)
+    if not dictionary:
+        return jsonify({'error': f'Dictionary {dict_name} not found'}), 404
+
+    from collections import Counter
+    source_counter = Counter(search_term)
+    source_len = len(search_term)
+    
+    # Initialize Groups
+    mp_groups = {i: [] for i in range(6)}
+    lic_groups = {}
+    
+    search_term_rev = search_term[::-1]
+    
+    for word in dictionary:
+        target_len = len(word)
+        
+        # Optimization: Bounds overlap
+        # Check if words are even remotely related before 4 passes.
+        # This is optional but good for perf.
+        # Strict logic: Just checking length overlap might be safe.
+        if abs(source_len - target_len) > 5: continue
+        
+        # 4 Passes
+        # Pass 1: Fwd / Fwd
+        mp1, count1 = calculate_mp_pass(search_term, word, source_len, target_len)
+        if mp1 <= 5: check_and_add_mp(mp_groups, source_len, target_len, mp1, word)
+        
+        # Pass 2: Fwd / Rev (Target Reversed) -> Same as Input vs RevTarget
+        mp2, count2 = calculate_mp_pass(search_term, word[::-1], source_len, target_len)
+        if mp2 <= 5: check_and_add_mp(mp_groups, source_len, target_len, mp2, word)
+        
+        # Pass 3: Rev / Fwd (Input Reversed vs Target)
+        mp3, count3 = calculate_mp_pass(search_term_rev, word, source_len, target_len)
+        if mp3 <= 5: check_and_add_mp(mp_groups, source_len, target_len, mp3, word)
+        
+        # Pass 4: Rev / Rev (Input Reversed vs Target Reversed)
+        mp4, count4 = calculate_mp_pass(search_term_rev, word[::-1], source_len, target_len)
+        if mp4 <= 5: check_and_add_mp(mp_groups, source_len, target_len, mp4, word)
+
+        # LIC Logic
+        # It's independent of order, so any 'count' (intersection) works.
+        # Java uses the count from each pass, but basic intersection is same.
+        # We'll valid LIC conditions from Java (lines 101-120):
+        # 5 Matches: target < 7
+        # 6 Matches: target < 8
+        # 7 Matches: target < 10
+        # 8,9,10 Matches: target < 9
+        
+        # Using counter intersection for true 'Letters In Common' count
+        word_counter = Counter(word)
+        intersection = source_counter & word_counter
+        true_count = sum(intersection.values())
+        
+        if true_count not in lic_groups:
+             lic_groups[true_count] = []
+        
+        if word not in lic_groups[true_count]:
+            lic_added = False
+            if true_count == 5 and target_len < 7: lic_added = True
+            elif true_count == 6 and target_len < 8: lic_added = True
+            elif true_count == 7 and target_len < 10: lic_added = True
+            elif true_count in [8, 9, 10] and target_len < 9: lic_added = True
+            
+            if lic_added:
+                lic_groups[true_count].append(word)
+
+    # Sort Groups
+    for k in mp_groups:
+        mp_groups[k].sort(key=lambda x: (-len(x), x))
+    for k in lic_groups:
+        lic_groups[k].sort()
+    
+    return jsonify({
+        'mp_groups': mp_groups, 
+        'lic_groups': lic_groups
+    })
 
 if __name__ == '__main__':
     print('Morpheme server running on http://localhost:3000')

@@ -17,6 +17,11 @@ let mouseState = {
 let splitNotepadState = {}; // { username: 'unique' | 'split' | 'invalid' }
 let showBoardInSplitIntermission = false;
 
+// Board Rotation State
+let isBoardRotated = false;
+let activeWordsTab = 'found'; // 'found' or 'remaining'
+let validationTimeout = null;
+
 // Input Method Tracking
 let currentInputMethod = 'mouse';
 function updateInputMethod(method) {
@@ -282,8 +287,24 @@ async function updateGameState() {
         }
 
         // Update words panel based on state
-        const wordsPanelHeader = document.querySelector('.words-panel h3');
+        const wordsPanelHeader = document.getElementById('words-panel-title');
         const wordsStats = document.getElementById('words-stats');
+        const tabsContainer = document.getElementById('words-tabs-container');
+
+        // Show tabs in ALL rooms
+        if (tabsContainer) {
+            tabsContainer.style.display = 'flex';
+        }
+
+        // words-panel-title
+        if (wordsPanelHeader) {
+            let headerText = 'Words';
+            if (activeWordsTab === 'remaining') headerText = 'Remaining';
+            if (activeWordsTab === 'clues') headerText = 'Clues';
+            if (activeWordsTab === 'previous') headerText = 'Previous Day';
+            if (state.state === 'intermission' && activeWordsTab === 'found') headerText = 'All Words';
+            wordsPanelHeader.textContent = headerText;
+        }
 
         // Identify current user
         let currentUser = null;
@@ -291,194 +312,111 @@ async function updateGameState() {
             currentUser = state.your_username || window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
         } catch (e) { console.warn('No currentUser', e); }
 
-        if (state.state === 'intermission') {
-            // INTERMISSION: Show ALL words, highlight selected player's words
-            wordsPanelHeader.textContent = 'All Words';
+        // 1. Configure Tab Buttons Visibility & Labels
+        const is24H = (state.game_type === 'accumulative' && state.time_limit >= 86400);
+        const tabBtns = document.querySelectorAll('.word-tab');
 
-            // Collect all player words to calculate stats
-            let allPlayerWords = [];
-            state.players.forEach(p => {
-                if (p.submitted_words) {
-                    // Handle both object and legacy string format
-                    p.submitted_words.forEach(w => {
-                        const str = typeof w === 'string' ? w : w.word;
-                        allPlayerWords.push(str);
-                    });
+        tabBtns.forEach(btn => {
+            const tab = btn.dataset.tab;
+            if (is24H) {
+                // 24H: Found, Clues, Previous
+                if (tab === 'found') {
+                    btn.textContent = 'Found';
+                    btn.style.display = 'block';
+                } else if (tab === 'clues' || tab === 'previous') {
+                    btn.style.display = 'block';
+                } else {
+                    btn.style.display = 'none'; // Hide Remaining
                 }
-            });
-
-            const totalWords = state.all_words ? state.all_words.length : 0;
-            const uniqueFound = new Set(allPlayerWords.map(w => w.toUpperCase())).size;
-            const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
-            wordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}%`;
-
-            // Determine which player to highlight
-            // Default to current user if no manual selection, or stick to manual selection
-            const targetUsername = selectedPlayerUsername || currentUser;
-
-            // Get target player's words
-            let targetWords = [];
-            if (targetUsername) {
-                const targetPlayer = state.players.find(p => p.username === targetUsername);
-                if (targetPlayer && targetPlayer.submitted_words) {
-                    targetWords = targetPlayer.submitted_words.map(w => typeof w === 'string' ? w : w.word);
+            } else {
+                // Standard/FCFS: Words, Remaining
+                if (tab === 'found') {
+                    btn.textContent = 'Words';
+                    btn.style.display = 'block';
+                } else if (tab === 'remaining') {
+                    btn.style.display = 'block';
+                } else {
+                    btn.style.display = 'none'; // Hide Clues/Previous
                 }
             }
+        });
 
-            // Also collect ALL found words (strings) for styling
-            const allFoundStrs = allPlayerWords.map(w => w.toUpperCase());
+        // Ensure activeWordsTab is valid for current room type
+        if (is24H && activeWordsTab === 'remaining') activeWordsTab = 'found';
+        if (!is24H && (activeWordsTab === 'clues' || activeWordsTab === 'previous')) activeWordsTab = 'found';
 
-            // For FCFS and others, show All Words
-            wordsPanelHeader.textContent = 'All Words';
+        // Apply Tab Visibility logic
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabContents.forEach(content => {
+            const tabId = content.id.replace('tab-content-', '');
+            content.classList.toggle('active', activeWordsTab === tabId);
+        });
 
-            // FCFS or Standard Intermission:
-            // Highlighting "targetWords" covers user-found words.
-            // Highlighting "allFoundStrs" covers words found by ANYONE (if we want that).
-            // User request: "highlights all words the user found under All Words"
+        tabBtns.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === activeWordsTab);
+        });
 
-            displayAllWords(state.all_words, state.bonus_word, targetWords, allFoundStrs, state.all_word_scores, state.csw_only_words);
+        // Toggle Stats Visibility (Only in Found/Words tab)
+        if (wordsStats) {
+            wordsStats.style.display = activeWordsTab === 'found' ? 'block' : 'none';
+        }
 
-            // For Split Points OR FCFS: Add "View Board" toggle button if needed
-            if (state.game_type === 'split' || state.game_type === 'fcfs') {
-                addSplitViewBoardToggle();
+        // 2. Render Tab Contents
+
+        // --- Shared Found Words strings (for counting and highlighting) ---
+        let allPlayerFoundStrs = [];
+        state.players.forEach(p => {
+            if (p.submitted_words) {
+                p.submitted_words.forEach(w => {
+                    const str = typeof w === 'string' ? w : w.word;
+                    allPlayerFoundStrs.push(str.toUpperCase());
+                });
             }
+        });
 
-        } else {
-            // ACTIVE STATE
-            // ACTIVE STATE
-            if (state.game_type === 'accumulative' && state.time_limit >= 86400) {
-                // ACCUMULATIVE: TABS (Found, Clues, Previous)
+        const allWords = state.all_words || [];
 
-                // 1. Setup Tabs UI if needed
-                let tabsContainer = document.getElementById('words-tabs-container');
-                if (!tabsContainer) {
-                    wordsPanelHeader.style.display = 'none'; // Hide default header
-
-                    tabsContainer = document.createElement('div');
-                    tabsContainer.id = 'words-tabs-container';
-                    tabsContainer.className = 'tabs-container';
-                    tabsContainer.innerHTML = `
-                        <button class="tab-btn active" data-tab="found" onclick="window.switchWordTab('found')">Found</button>
-                        <button class="tab-btn" data-tab="clues" onclick="window.switchWordTab('clues')">Clues</button>
-                        <button class="tab-btn" data-tab="previous" onclick="window.switchWordTab('previous')">Previous</button>
-                    `;
-                    // Insert before stats
-                    const stats = document.getElementById('words-stats');
-                    stats.parentNode.insertBefore(tabsContainer, stats);
-
-                    // Initialize state
-                    window.activeWordsTab = 'found';
-                    window.switchWordTab = (tab) => {
-                        window.activeWordsTab = tab;
-                        // Update buttons
-                        document.querySelectorAll('#words-tabs-container .tab-btn').forEach(btn => {
-                            btn.classList.toggle('active', btn.dataset.tab === tab);
+        // --- SUBMITTED WORDS LIST (Standard/Found tab) ---
+        const listEl = document.getElementById('submitted-words-list');
+        if (listEl && activeWordsTab === 'found') {
+            if (state.state === 'intermission') {
+                // INTERMISSION: Show ALL words
+                let allPlayerWords = [];
+                state.players.forEach(p => {
+                    if (p.submitted_words) {
+                        p.submitted_words.forEach(w => {
+                            const str = typeof w === 'string' ? w : w.word;
+                            allPlayerWords.push(str);
                         });
-                        // Trigger render update immediate or wait for poll
-                        updateGameState();
-                    };
-                }
+                    }
+                });
 
-                // 2. Render Content based on Tab
-                const listEl = document.getElementById('submitted-words-list');
-                const myPlayer = state.players.find(p => p.username === currentUser);
-                const myWords = myPlayer ? myPlayer.submitted_words : [];
-                const activeTab = window.activeWordsTab || 'found';
+                const totalWords = allWords.length;
+                const uniqueFound = new Set(allPlayerWords.map(w => w.toUpperCase())).size;
+                const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
+                wordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}%`;
 
-                if (activeTab === 'found') {
-                    // SHOW FOUND WORDS (Standard)
-                    wordsStats.style.display = 'block';
-                    const totalWords = state.all_words ? state.all_words.length : 0;
-                    const uniqueFound = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase())).size;
-                    const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
-                    wordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}%`;
-
-                    // Sort newest first
-                    const sortedWords = [...myWords].sort((a, b) => (b.time || 0) - (a.time || 0));
-
-                    if (sortedWords.length === 0) listEl.innerHTML = '<p class="placeholder">Find words!</p>';
-                    else {
-                        const html = sortedWords.map(wObj => {
-                            const word = typeof wObj === 'string' ? wObj : wObj.word;
-                            const points = typeof wObj === 'object' ? wObj.points : '?';
-                            const isBonus = word === state.bonus_word;
-                            let className = 'word-item player-word';
-                            if (isBonus) className += ' bonus-word';
-                            return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; cursor:pointer;"><span>${word}</span><span style="opacity:0.8">${points}</span></div>`;
-                        }).join('');
-                        listEl.innerHTML = html;
+                const targetUsername = selectedPlayerUsername || currentUser;
+                let targetWords = [];
+                if (targetUsername) {
+                    const targetPlayer = state.players.find(p => p.username === targetUsername);
+                    if (targetPlayer && targetPlayer.submitted_words) {
+                        targetWords = targetPlayer.submitted_words.map(w => typeof w === 'string' ? w : w.word);
                     }
                 }
-                else if (activeTab === 'clues') {
-                    // SHOW CLUES (Unfound words masked)
-                    wordsStats.style.display = 'none'; // Hide stats to save space or show different stats
-
-                    const allWords = state.all_words || [];
-                    const foundSet = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase()));
-                    const unfoundWords = allWords.filter(w => !foundSet.has(w.toUpperCase()));
-
-                    if (unfoundWords.length === 0) {
-                        listEl.innerHTML = '<p class="placeholder">All words found! Amazing!</p>';
-                    } else {
-                        // Sort by length then alpha
-                        unfoundWords.sort((a, b) => a.length - b.length || a.localeCompare(b));
-
-                        const html = unfoundWords.map(w => {
-                            const len = w.length;
-                            const prefix = w.substring(0, 2);
-                            return `<div class="clue-item">${prefix}.. (${len})</div>`;
-                        }).join('');
-
-                        // Use grid layout for clues
-                        listEl.innerHTML = `<div class="clues-grid">${html}</div>`;
-                    }
-                }
-                else if (activeTab === 'previous') {
-                    // SHOW PREVIOUS DAY
-                    wordsStats.style.display = 'none';
-
-                    const prevAll = state.previous_all_words;
-                    if (!prevAll || prevAll.length === 0) {
-                        listEl.innerHTML = '<p class="placeholder">No previous day data yet.</p>';
-                    } else {
-                        // Check which ones user found
-                        const prevMyWords = myPlayer ? (myPlayer.previous_submitted_words || []) : [];
-                        const prevFoundSet = new Set(prevMyWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase()));
-
-                        // Combine and sort
-                        const html = prevAll.sort().map(w => {
-                            const found = prevFoundSet.has(w.toUpperCase());
-                            const statusClass = found ? 'prev-found' : 'prev-missed';
-                            const icon = found ? '✓' : '✗';
-                            return `<div class="word-item ${statusClass}" data-word="${w}" style="display:flex; justify-content:space-between; cursor:pointer;">
-                                <span>${w}</span>
-                                <span style="opacity:0.6">${icon}</span>
-                            </div>`;
-                        }).join('');
-                        listEl.innerHTML = html;
-                    }
-                }
+                displayAllWords(allWords, state.bonus_word, targetWords, allPlayerWords.map(w => w.toUpperCase()), state.all_word_scores, state.csw_only_words);
+                if (state.game_type === 'split' || state.game_type === 'fcfs') addSplitViewBoardToggle();
 
             } else if (state.game_type === 'accumulative' || state.game_type === 'split') {
-                // SPLIT / STANDARD ACCUMULATIVE LOGIC
-                wordsPanelHeader.textContent = 'Your Words';
-                wordsPanelHeader.style.display = 'block';
-                wordsStats.style.display = 'block';
-                // Remove tabs if present (cleanup when switching modes)
-                const tabs = document.getElementById('words-tabs-container');
-                if (tabs) tabs.remove();
-
+                // MY WORDS
                 const myPlayer = state.players.find(p => p.username === currentUser);
                 const myWords = myPlayer ? myPlayer.submitted_words : [];
 
-                // Stats
-                const totalWords = state.all_words ? state.all_words.length : 0;
+                const totalWords = allWords.length;
                 const uniqueFound = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase())).size;
                 const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
                 wordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}%`;
 
-                // List
-                const listEl = document.getElementById('submitted-words-list');
                 const sortedWords = [...myWords].sort((a, b) => (b.time || 0) - (a.time || 0));
                 if (sortedWords.length === 0) {
                     listEl.innerHTML = '<p class="placeholder">Find words!</p>';
@@ -495,9 +433,6 @@ async function updateGameState() {
                 }
             } else {
                 // FCFS: Shared Live Feed
-                wordsPanelHeader.textContent = 'Live Feed';
-
-                // Aggregate ALL words from ALL players
                 let allFoundWords = [];
                 state.players.forEach(p => {
                     if (p.submitted_words) {
@@ -509,23 +444,12 @@ async function updateGameState() {
                     }
                 });
 
-                // Calculate stats (Community Progress)
-                const totalWords = state.all_words ? state.all_words.length : 0;
+                const totalWords = allWords.length;
                 const uniqueFound = new Set(allFoundWords.map(w => w.word.toUpperCase())).size;
                 const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
                 wordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}%`;
 
-                // Render list
-                const listEl = document.getElementById('submitted-words-list');
-
-                // FCFS Sort: Time Ascending (Newest at Bottom)
-                const sortedWords = allFoundWords.sort((a, b) => {
-                    const tA = a.time || 0;
-                    const tB = b.time || 0;
-                    return tA - tB; // Ascending
-                });
-
-                // Capture scroll state
+                const sortedWords = allFoundWords.sort((a, b) => (a.time || 0) - (b.time || 0));
                 const threshold = 150;
                 const isAtBottom = (listEl.scrollTop + listEl.clientHeight >= listEl.scrollHeight - threshold);
                 const wasEmpty = listEl.innerHTML.includes('placeholder') || listEl.children.length === 0;
@@ -539,38 +463,92 @@ async function updateGameState() {
                         const finder = wObj.finder;
                         const isMe = finder === currentUser;
                         const isBonus = word === state.bonus_word;
-
-                        let className = 'word-item';
-                        if (isMe) className += ' player-word'; // Highlight my words
-                        else className += ' opponent-word';   // Style for others
-
-                        if (isBonus) className += ' bonus-word';
-
-                        // Display format: WORD (User)  [Pts]
-                        // Check if we have space, might need to truncate user?
-                        // Using flex to separate word/user from points
-
-                        const displayName = finder;
-
+                        let className = 'word-item' + (isMe ? ' player-word' : ' opponent-word') + (isBonus ? ' bonus-word' : '');
                         return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
-                        <div>
-                            <span style="font-weight:bold;">${word}</span>
-                            <span style="font-size:0.8em; opacity:0.7; margin-left:6px;">(${displayName})</span>
-                        </div>
-                        <span style="opacity:0.8">${points}</span>
-                    </div>`;
+                            <div><span style="font-weight:bold;">${word}</span><span style="font-size:0.8em; opacity:0.7; margin-left:6px;">(${finder})</span></div>
+                            <span style="opacity:0.8">${points}</span>
+                        </div>`;
                     }).join('');
-
                     if (listEl.innerHTML !== html) {
                         listEl.innerHTML = html;
-                        // Smart Scroll
                         if (isAtBottom || wasEmpty) {
-                            requestAnimationFrame(() => {
-                                listEl.scrollTop = listEl.scrollHeight;
-                            });
+                            requestAnimationFrame(() => { listEl.scrollTop = listEl.scrollHeight; });
                         }
                     }
                 }
+            }
+        }
+
+        // --- REMAINING TAB ---
+        const remainingListEl = document.getElementById('remaining-words-list');
+        if (remainingListEl && activeWordsTab === 'remaining') {
+            let myFoundStrs = [];
+            if (state.game_type === 'fcfs' || state.state === 'intermission') {
+                myFoundStrs = allPlayerFoundStrs;
+            } else if (currentUser) {
+                const me = state.players.find(p => p.username === currentUser);
+                if (me && me.submitted_words) {
+                    myFoundStrs = me.submitted_words.map(w => (typeof w === 'string' ? w : w.word).toUpperCase());
+                }
+            }
+
+            const remainingWords = allWords.filter(w => !myFoundStrs.includes(w.toUpperCase()));
+            const countsByLen = {};
+            for (let i = 3; i <= 20; i++) countsByLen[i] = 0;
+            remainingWords.forEach(w => {
+                const len = w.length;
+                if (len >= 3 && len <= 20) countsByLen[len]++;
+            });
+
+            let html = '<table id="remaining-words-table">';
+            for (let i = 3; i <= 20; i++) {
+                // Show all lengths from 3 to 20 as requested for scrollability
+                html += `<tr><td class="len-cell">${i}LW</td><td class="count-cell">${countsByLen[i] || 0}</td></tr>`;
+            }
+            html += '</table>';
+            remainingListEl.innerHTML = html;
+        }
+
+        // --- CLUES TAB (24H Only) ---
+        const cluesListEl = document.getElementById('clues-list');
+        if (cluesListEl && activeWordsTab === 'clues') {
+            const myPlayer = state.players.find(p => p.username === currentUser);
+            const myWords = myPlayer ? myPlayer.submitted_words : [];
+            const foundSet = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase()));
+            const unfoundWords = allWords.filter(w => !foundSet.has(w.toUpperCase()));
+
+            if (unfoundWords.length === 0) {
+                cluesListEl.innerHTML = '<p class="placeholder">All words found!</p>';
+            } else {
+                unfoundWords.sort((a, b) => a.length - b.length || a.localeCompare(b));
+                const html = unfoundWords.map(w => {
+                    const prefix = w.substring(0, 2);
+                    return `<div class="clue-item">${prefix}.. (${w.length})</div>`;
+                }).join('');
+                cluesListEl.innerHTML = html;
+            }
+        }
+
+        // --- PREVIOUS DAY TAB (24H Only) ---
+        const prevListEl = document.getElementById('previous-words-list');
+        if (prevListEl && activeWordsTab === 'previous') {
+            const prevAll = state.previous_all_words || [];
+            if (prevAll.length === 0) {
+                prevListEl.innerHTML = '<p class="placeholder">No previous data.</p>';
+            } else {
+                const myPlayer = state.players.find(p => p.username === currentUser);
+                const prevMyWords = myPlayer ? (myPlayer.previous_submitted_words || []) : [];
+                const prevFoundSet = new Set(prevMyWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase()));
+
+                const html = prevAll.sort().map(w => {
+                    const found = prevFoundSet.has(w.toUpperCase());
+                    const statusClass = found ? 'prev-found' : 'prev-missed';
+                    return `<div class="word-item ${statusClass}" data-word="${w}" style="display:flex; justify-content:space-between; cursor:pointer;">
+                        <span>${w}</span>
+                        <span style="opacity:0.6">${found ? '✓' : '✗'}</span>
+                    </div>`;
+                }).join('');
+                prevListEl.innerHTML = html;
             }
         }
 
@@ -624,7 +602,7 @@ function renderPlayers(players, currentUser = null) {
         // Input Method Icon
         let inputIcon = '🖱️'; // Default
         if (p.input_method === 'keyboard') inputIcon = '⌨️';
-        if (p.input_method === 'touch') inputIcon = '📱';
+        if (p.input_method === 'touch') inputIcon = '👆';
 
         return `
         <div class="player-item${bonusClass}${userClass}${selectedClass}" data-username="${p.username}">
@@ -698,8 +676,17 @@ function renderChat(messages) {
     const html = messages.map(msg => {
         const username = msg.username;
         const text = msg.message;
+        const isSystem = msg.is_system;
+
         // Escape HTML to prevent XSS
         const safeText = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+        if (isSystem) {
+            return `
+            <div class="chat-message chat-sys">
+                <span class="chat-text">${safeText}</span>
+            </div>`;
+        }
 
         return `
         <div class="chat-message">
@@ -777,27 +764,25 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
 
         let className = 'word-item';
 
-        // Priority 1: Bonus Word (Green)
+        // Priority 1: Bonus Word (Green) - Top Priority
         if (isBonus) {
             className += ' bonus-word';
         }
-        // Priority 2: Word Found by Selected Player (Blue)
+        // Priority 2: Word Found by Me/Selected Player (Blue)
         else if (isTargetFound) {
             className += ' player-word';
         }
-        // Priority 3: CSW-Only Word (Yellow)
+        // Priority 3: CSW-Only Word (Yellow/Gold)
         else if (isCSWOnly) {
             className += ' csw-only';
         }
-        // Priority 4: Found by others but not me
+        // Priority 4: Found by others but not me (Neutral/Missed)
         else if (allFoundUpper.includes(wordUpper)) {
-            // Keep default word-item style (usually greenish in active, but here maybe just white?)
-            // We want it to look "found" but not "claimed" by me.
-            className += ' found-by-other';
+            className += ' found-by-other missed';
         }
-        // Priority 5: Not found by anyone (Gray)
+        // Priority 5: Not found by anyone (Gray/Missed)
         else {
-            className += ' unfound';
+            className += ' unfound missed';
         }
 
         return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; cursor:pointer;">
@@ -948,8 +933,6 @@ function renderBoard(board, grayed) {
     boardEl.style.gap = '';
     boardEl.style.overflowY = '';
     boardEl.style.alignItems = '';
-    // Ensure grid is active (class has it, but just in case of overrides)
-    // boardEl.style.display = 'inline-grid'; 
 
     const rows = board.length;
     const cols = board[0].length;
@@ -958,17 +941,34 @@ function renderBoard(board, grayed) {
     boardEl.style.gridTemplateRows = `repeat(${rows}, 60px)`;
     boardEl.innerHTML = '';
 
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-            const cell = document.createElement('div');
-            cell.className = 'board-cell' + (grayed ? ' grayed' : '');
-            const letter = board[r][c];
-            cell.textContent = letter === 'Q' ? 'QU' : letter;
-            cell.dataset.row = r;
-            cell.dataset.col = c;
-            boardEl.appendChild(cell);
+    // Handle Rotation: 180 degrees flip
+    if (isBoardRotated) {
+        // Bottom-up, Right-to-left
+        for (let r = rows - 1; r >= 0; r--) {
+            for (let c = cols - 1; c >= 0; c--) {
+                const cell = createBoardCell(r, c, board[r][c], grayed);
+                boardEl.appendChild(cell);
+            }
+        }
+    } else {
+        // Normal: Top-down, Left-to-right
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const cell = createBoardCell(r, c, board[r][c], grayed);
+                boardEl.appendChild(cell);
+            }
         }
     }
+}
+
+// Helper to create a board cell
+function createBoardCell(r, c, letter, grayed) {
+    const cell = document.createElement('div');
+    cell.className = 'board-cell' + (grayed ? ' grayed' : '');
+    cell.textContent = letter === 'Q' ? 'QU' : letter;
+    cell.dataset.row = r;
+    cell.dataset.col = c;
+    return cell;
 }
 
 function renderSplitNotepads(players) {
@@ -1314,6 +1314,9 @@ async function submitWord(wordParam = null) {
         });
         const data = await response.json();
 
+        // Show validation feedback
+        showValidationFeedback(data.message || (data.success ? 'Valid Word' : 'Invalid Word'), data.success);
+
         if (data.success) {
             // Optimistic Update for Accumulative Mode
             const currentState = window.lastGameState;
@@ -1408,11 +1411,30 @@ async function submitWord(wordParam = null) {
             // Still trigger poll to sync everything else (User list scores, etc)
             // But immediate feedback is done
         }
-        input.value = '';
     } catch (error) {
         console.error('Error submitting word:', error);
-        input.value = '';
+        showValidationFeedback('Submission Error', false);
     }
+    input.value = '';
+}
+
+function showValidationFeedback(message, isValid) {
+    const statusEl = document.getElementById('word-validation-status');
+    if (!statusEl) return;
+
+    // Clear existing timeout
+    if (validationTimeout) clearTimeout(validationTimeout);
+
+    // Set text and class
+    statusEl.textContent = message;
+    statusEl.className = 'validation-status ' + (isValid ? 'status-valid' : 'status-invalid');
+
+    // Reset after 3 seconds
+    validationTimeout = setTimeout(() => {
+        statusEl.textContent = '';
+        statusEl.className = 'validation-status';
+        validationTimeout = null;
+    }, 3000);
 }
 
 async function leaveCurrentRoom() {
@@ -1430,6 +1452,18 @@ if (returnBtnEl) {
     returnBtnEl.addEventListener('click', async () => {
         await leaveCurrentRoom();
         showPage('page-lobby');
+    });
+}
+
+const rotateBtnEl = document.getElementById('rotate-board-btn');
+if (rotateBtnEl) {
+    rotateBtnEl.addEventListener('click', () => {
+        isBoardRotated = !isBoardRotated;
+        console.log('[play.js] Board rotation toggled. Rotated:', isBoardRotated);
+        // Force re-render if we have state
+        if (window.lastGameState && window.lastGameState.board) {
+            renderBoard(window.lastGameState.board, window.lastGameState.state !== 'active');
+        }
     });
 }
 
@@ -1546,3 +1580,22 @@ function handleCellTouchStart(e) {
         selectCell(row, col, letter, target);
     }
 }
+
+// Word Tabs Switching
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('word-tab')) {
+        activeWordsTab = e.target.dataset.tab;
+
+        // Update UI immediately for responsiveness
+        document.querySelectorAll('.word-tab').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === activeWordsTab);
+        });
+        document.getElementById('tab-content-found').classList.toggle('active', activeWordsTab === 'found');
+        document.getElementById('tab-content-remaining').classList.toggle('active', activeWordsTab === 'remaining');
+
+        // Refresh state visualization
+        if (window.lastGameState) {
+            updateGameState();
+        }
+    }
+});

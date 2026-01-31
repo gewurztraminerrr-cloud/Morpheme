@@ -95,15 +95,16 @@ class GameRoom:
         else:
             self.max_players = 8
             
-    def add_chat_message(self, username, message):
+    def add_chat_message(self, username, message, is_system=False):
         """Add chat message to room"""
         self.chat_messages.append({
             'username': username,
             'message': message,
+            'is_system': is_system,
             'time': time.time()
         })
-        # Keep only last 50 messages
-        if len(self.chat_messages) > 50:
+        # Keep only last 30 messages
+        if len(self.chat_messages) > 30:
             self.chat_messages.pop(0)
     
     def add_player(self, user_id, username, rating):
@@ -127,15 +128,24 @@ class GameRoom:
         player = Player(user_id, username, rating)
         self.players.append(player)
         self.players.sort(key=lambda p: p.rating, reverse=True)
+        
+        # System Notice
+        self.add_chat_message("System", f"{username} has entered the room.", is_system=True)
+        
         return True # Success
 
     def add_spectator(self, user_id, username, rating):
         """Add spectator to room"""
-        # Ensure user is not already a player or spectator
-        self.remove_player(user_id)
+        # Ensure not already a spectator
+        for s in self.spectators:
+            if str(s.user_id) == str(user_id):
+                return
         
-        player = Player(user_id, username, rating)
-        self.spectators.append(player)
+        spec = Player(user_id, username, rating)
+        self.spectators.append(spec)
+        
+        # System Notice
+        self.add_chat_message("System", f"{username} has entered the room.", is_system=True)
         return True
     
     def remove_player(self, user_id):
@@ -149,15 +159,24 @@ class GameRoom:
 
         # Remove from players - Use string comparison to be safe against type mismatches
         initial_players = len(self.players)
+        # Find player to get username for notice
+        leaving_player = next((p for p in self.players if str(p.user_id) == str(user_id)), None)
+        username = leaving_player.username if leaving_player else "Someone"
+        
         self.players = [p for p in self.players if str(p.user_id) != str(user_id)]
         if len(self.players) < initial_players:
-            print(f"[GameRoom] Removed player {user_id} from room {self.room_id}")
+            print(f"[GameRoom] Removed player {user_id} ({username}) from room {self.room_id}")
+            self.add_chat_message("System", f"{username} has left the room.", is_system=True)
 
         # Remove from spectators (just in case)
         initial_specs = len(self.spectators)
+        leaving_spec = next((s for s in self.spectators if str(s.user_id) == str(user_id)), None)
+        spec_username = leaving_spec.username if leaving_spec else "Someone"
+        
         self.spectators = [p for p in self.spectators if str(p.user_id) != str(user_id)]
         if len(self.spectators) < initial_specs:
-            print(f"[GameRoom] Removed spectator {user_id} from room {self.room_id}")
+            print(f"[GameRoom] Removed spectator {user_id} ({spec_username}) from room {self.room_id}")
+            self.add_chat_message("System", f"{spec_username} has left the room.", is_system=True)
 
     def update_player_activity(self, user_id):
         """Update last_active timestamp for a player or spectator"""
@@ -290,7 +309,7 @@ class GameRoom:
         if not matched_word:
             # Handle invalid word tracking for Split Points (or general reference)
             player.invalid_words.append(word)
-            return False, "Word not on board", 0, None
+            return False, f"{word} INVALID", 0, None
         
         # Use the matched word (which might be the QU variant) for scoring/display
         final_word = matched_word
@@ -298,18 +317,18 @@ class GameRoom:
         # Check minimum length (use the final word length, e.g., QUATE is 5, QATE is 4)
         min_len = self.spinner_params.get('min_word_length', 3)
         if len(final_word) < min_len:
-            return False, f"Word must be at least {min_len} letters", 0, None
+            return False, f"{final_word} is too short", 0, None
         
         # Check if already submitted (by this player)
         # Extract existing words from the list of dicts
         existing_words = {w['word'] for w in player.submitted_words}
         if final_word in existing_words:
-            return False, "Word already submitted", 0, None
-            
+            return False, f"{final_word} ALREADY FOUND", 0, None
+        
         # FCFS Mode: Check if word found by ANYONE
         if self.game_type == 'fcfs':
             if final_word in self.fcfs_found_words:
-                return False, "Word already found by another player", 0, None
+                return False, f"{final_word} FOUND BY ANOTHER", 0, None
             self.fcfs_found_words.add(final_word)
         
         # Calculate score for this word
@@ -339,7 +358,7 @@ class GameRoom:
                     points = w_obj['points']
                     break
 
-        return True, "Word accepted", points, final_word
+        return True, f"{final_word} ACCEPTED", points, final_word
     
     def get_intermission_milestone(self):
         """Returns which milestone we're at during intermission.

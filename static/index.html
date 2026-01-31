@@ -276,25 +276,62 @@
                         <div class="timer-value" id="timer-value">0:00</div>
                     </div>
                     <div id="game-board" class="game-board"></div>
+                    <div id="word-validation-status" class="validation-status"></div>
                     <div class="word-input-section">
                         <input type="text" id="word-input" placeholder="Enter word" autocomplete="off">
                         <button id="submit-word-btn">Submit</button>
+                        <button id="rotate-board-btn" class="rotate-btn">Rotate</button>
                     </div>
                 </div>
 
                 <!-- Right Panel: Submitted Words and Definitions -->
                 <div class="words-panel">
-                    <div class="words-header-group">
-                        <h3>Your Words</h3>
-                        <p class="words-stats" id="words-stats"></p>
-                    </div>
-                    <div id="submitted-words-list">
-                        <p class="placeholder">No words yet</p>
+                    <div class="words-tabs" id="words-tabs-container">
+                        <button class="word-tab active" data-tab="found">Words</button>
+                        <button class="word-tab" data-tab="remaining" style="display: none;">Remaining</button>
+                        <button class="word-tab" data-tab="clues" style="display: none;">Clues</button>
+                        <button class="word-tab" data-tab="previous" style="display: none;">Previous</button>
                     </div>
 
-                    <div class="definitions-panel">
-                        <div id="definition-content">
-                            <p class="placeholder">Select a word to see its definition</p>
+                    <div id="tab-content-found" class="tab-content active">
+                        <div class="words-header-group">
+                            <h3 id="words-panel-title">Your Words</h3>
+                            <p class="words-stats" id="words-stats"></p>
+                        </div>
+                        <div id="submitted-words-list">
+                            <p class="placeholder">No words yet</p>
+                        </div>
+                        <div class="definitions-panel">
+                            <div id="definition-content">
+                                <p class="placeholder">Select a word to see its definition</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tab-content-remaining" class="tab-content">
+                        <div class="words-header-group">
+                            <h3>Remaining</h3>
+                        </div>
+                        <div id="remaining-words-list">
+                            <p class="placeholder">Calculating counts...</p>
+                        </div>
+                    </div>
+
+                    <div id="tab-content-clues" class="tab-content">
+                        <div class="words-header-group">
+                            <h3>Clues</h3>
+                        </div>
+                        <div id="clues-list" class="clues-grid">
+                            <p class="placeholder">Loading clues...</p>
+                        </div>
+                    </div>
+
+                    <div id="tab-content-previous" class="tab-content">
+                        <div class="words-header-group">
+                            <h3>Previous Day</h3>
+                        </div>
+                        <div id="previous-words-list">
+                            <p class="placeholder">No previous data</p>
                         </div>
                     </div>
                 </div>
@@ -349,8 +386,57 @@
 
         <!-- Tools Page -->
         <div id="page-tools" class="page">
-            <h2>Tools</h2>
-            <p>Tools coming soon...</p>
+            <div class="tools-split-layout">
+                <!-- Sidebar (1/3) -->
+                <div class="tools-sidebar">
+                    <button class="tool-nav-btn active" data-tool="combo">Combo Checker</button>
+                    <!-- Future tools go here -->
+                </div>
+
+                <!-- Content (2/3) -->
+                <div class="tools-content">
+                    <!-- Combo Checker Interface -->
+                    <div id="tool-combo" class="tool-pane active">
+                        <div class="tool-header">
+                            <h2>Combo Checker</h2>
+                            <p>Find connected words via MP and LIC.</p>
+                        </div>
+
+                        <div class="combo-control-panel">
+                            <div class="input-row">
+                                <input type="text" id="combo-input" placeholder="Enter letters to check..."
+                                    autocomplete="off">
+                                <select id="combo-dict">
+                                    <option value="NWL">NWL (US)</option>
+                                    <option value="CSW">CSW (Intl)</option>
+                                </select>
+                                <button id="combo-search-btn">Check</button>
+                            </div>
+                        </div>
+
+                        <div id="combo-results" class="combo-results-container hidden">
+                            <!-- MP Section: Horizontal Groups (0MP to 5MP) -->
+                            <div class="result-section">
+                                <h3>MP (Microprocedures)</h3>
+                                <div class="chart-desc">Sorted by Length (Biggest First). 0MP = Anagram, 1MP = 1 Letter
+                                    Drop.</div>
+                                <div class="horizontal-scroll-container" id="mp-container">
+                                    <!-- Dynamic Columns (0MP, 1MP, 2MP...) will be injected here -->
+                                </div>
+                            </div>
+
+                            <!-- LIC Section: Horizontal Groups (Sorted by Shared Count) -->
+                            <div class="result-section">
+                                <h3>LIC (Letters In Common)</h3>
+                                <div class="chart-desc">Sorted by Shared Count (Fewest First).</div>
+                                <div class="horizontal-scroll-container" id="lic-container">
+                                    <!-- Dynamic Columns (Shared=3, Shared=4...) will be injected here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Settings Page -->
@@ -448,6 +534,7 @@
     <script src="/js/app.js"></script>
     <script src="/js/lobby.js"></script>
     <script src="/js/play.js"></script>
+    <script src="/js/tools.js?v=2"></script>
     <script src="/js/mouse_selection.js"></script>
 </body>
 
