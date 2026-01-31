@@ -1,0 +1,10 @@
+__pycache__/
+*.log
+.backups/
+.DS_Store
+*.pyc
+*.pyo
+instance/
+.pytest_cache/
+.coverage
+htmlcov/
