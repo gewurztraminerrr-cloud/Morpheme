@@ -633,6 +633,50 @@ def get_definition():
         return jsonify({'error': 'Definition not found'}), 404
 
 
+
+# Initialize developer messages database
+def init_contact_db():
+    conn = sqlite3.connect('developer_messages.db')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            username TEXT,
+            email TEXT,
+            message TEXT,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+init_contact_db()
+
+@app.route('/api/contact', methods=['POST'])
+def submit_contact():
+    data = request.get_json()
+    email = data.get('email')
+    message = data.get('message')
+    
+    if not email or not message:
+        return jsonify({'error': 'Email and message are required'}), 400
+        
+    user_id = session.get('user_id', 0)
+    username = session.get('username', 'Guest')
+    
+    try:
+        conn = sqlite3.connect('developer_messages.db')
+        conn.execute('INSERT INTO messages (user_id, username, email, message) VALUES (?, ?, ?, ?)',
+                    (user_id, username, email, message))
+        conn.commit()
+        conn.close()
+        
+        print(f"[Contact] Message from {username} ({email}): {message[:50]}...")
+        return jsonify({'success': True, 'message': 'Message sent successfully!'})
+    except Exception as e:
+        print(f"[Contact] Error saving message: {e}")
+        return jsonify({'error': 'Failed to send message'}), 500
+
 if __name__ == '__main__':
     print('Morpheme server running on http://localhost:3000')
     app.run(host='0.0.0.0', port=3000, debug=True)

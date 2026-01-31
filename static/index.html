@@ -361,8 +361,39 @@
 
         <!-- Contact Page -->
         <div id="page-contact" class="page">
-            <h2>Contact</h2>
-            <p>Contact information coming soon...</p>
+            <div class="contact-container">
+                <div class="contact-card">
+                    <h2>Contact the Developer</h2>
+                    <p class="contact-desc">Have a suggestion, found a bug, or just want to say hello? Send a message
+                        directly to the creator of Morpheme.</p>
+
+                    <form id="contact-form" class="contact-form">
+                        <div class="form-group">
+                            <label for="contact-user-email">Your Email</label>
+                            <input type="email" id="contact-user-email" placeholder="example@email.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contact-dev-email">Developer Email</label>
+                            <input type="email" id="contact-dev-email" value="developer@morpheme.game" readonly>
+                            <small class="field-hint">This email is fixed for messages sent through this form.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contact-message">Message</label>
+                            <textarea id="contact-message" rows="5" placeholder="Write your message here..."
+                                required></textarea>
+                        </div>
+
+                        <div id="contact-status" class="contact-status"></div>
+
+                        <button type="submit" class="submit-contact-btn">
+                            <span class="btn-text">Send Message</span>
+                            <span class="btn-icon">✈</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </main>
 

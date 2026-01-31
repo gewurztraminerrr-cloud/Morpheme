@@ -70,9 +70,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupNavigation();
     setupModalListeners();
     setupAuth(); // Initialize auth listeners
+    setupContactForm(); // Initialize contact form listeners
     // handleGuestLogin(); // Don't auto-login guest, wait for button click
     checkSession();
 });
+
+// Setup contact form submission
+function setupContactForm() {
+    const contactForm = document.getElementById('contact-form');
+    if (!contactForm) return;
+
+    contactForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById('contact-user-email').value;
+        const message = document.getElementById('contact-message').value;
+        const statusEl = document.getElementById('contact-status');
+        const submitBtn = contactForm.querySelector('.submit-contact-btn');
+
+        // Reset status
+        statusEl.textContent = 'Sending...';
+        statusEl.className = 'contact-status';
+        submitBtn.disabled = true;
+
+        try {
+            const response = await fetch('/api/contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, message })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                statusEl.textContent = 'Message sent! We\'ll get back to you soon.';
+                statusEl.className = 'contact-status success';
+                contactForm.reset();
+            } else {
+                statusEl.textContent = data.error || 'Failed to send message.';
+                statusEl.className = 'contact-status error';
+            }
+        } catch (error) {
+            console.error('Contact error:', error);
+            statusEl.textContent = 'An error occurred. Please try again later.';
+            statusEl.className = 'contact-status error';
+        } finally {
+            submitBtn.disabled = false;
+        }
+    });
+}
 
 // Check if user is already logged in
 async function checkSession() {
