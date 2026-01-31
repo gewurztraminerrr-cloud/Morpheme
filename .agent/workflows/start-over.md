@@ -10,7 +10,7 @@ To revert the application to the stable state saved on January 31st, 2026 (which
 1. Kill any running server processes:
    `lsof -ti:3000 | xargs kill -9`
 
-2. Reset the local repository to match the GitHub stable state:
+2. Reset the local repository to match the GitHub stable state (tagged as `v1.0.0-stable`):
    `git fetch origin && git reset --hard origin/main`
 
 3. Your application is now restored to its stable state.
