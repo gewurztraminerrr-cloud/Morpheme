@@ -299,6 +299,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     console.log('Lobby event delegation setup complete');
+
+    // Start stats polling if we land on lobby
+    if (isOnLobby()) {
+        startStatsPolling();
+    }
 });
 
 // Helper function to fetch and render rooms
@@ -318,8 +323,8 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
             <div class="create-room-panel">
                 <div style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-bottom: 8px; text-align: center;">Set Rating Limits (Optional)</div>
                 <div class="rating-inputs-row">
-                    <input type="number" class="rating-input min-rating-input" placeholder="Min Rating">
-                    <input type="number" class="rating-input max-rating-input" placeholder="Max Rating">
+                    <input type="number" class="rating-input min-rating-input" placeholder="Min Rating" min="0" step="100">
+                    <input type="number" class="rating-input max-rating-input" placeholder="Max Rating" min="0" step="100">
                 </div>
                 <button class="confirm-create-room-btn">+ Create Room</button>
             </div>

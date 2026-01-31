@@ -122,19 +122,24 @@ def get_session():
 
 # Game Room APIs
 from game_room import room_manager
+from word_validator import word_validator
 import uuid
 
 def cleanup_user_rooms(user_id, exclude_room_id=None):
-    """Remove user from all rooms except exclude_room_id"""
+    """Remove user from all rooms except exclude_room_id and 24h persistent rooms"""
     for rid in list(room_manager.rooms.keys()):
-        if rid == exclude_room_id:
+        if str(rid) == str(exclude_room_id):
             continue
         room = room_manager.rooms[rid]
+        
+        # PERSISTENCE RULE: Keep users in 24h rooms even if they join another
+        if room.time_limit >= 86400:
+            continue
+            
         # Remove from players
         room.remove_player(user_id)
-        # Note: we don't return 24h exception here because the user 
-        # specifically requested "only appear in one room at a time"
-        if len(room.players) == 0 and room.time_limit < 86400:
+        
+        if len(room.players) == 0:
             room_manager.delete_room(rid)
 
 @app.route('/api/room/create', methods=['POST'])
@@ -156,7 +161,7 @@ def create_room():
     
     # Create room
     generated_id = str(uuid.uuid4())
-    room = room_manager.create_room(generated_id, game_type, time_limit, board_dimensions)
+    room = room_manager.create_room(generated_id, game_type, int(time_limit), board_dimensions)
     room.min_rating = int(min_rating)
     room.max_rating = int(max_rating)
     
@@ -233,6 +238,7 @@ def join_room(room_id):
 
     if as_spectator:
         room.add_spectator(user_id, session['username'], rating)
+        room.update_player_activity(user_id)
         return jsonify({'success': True, 'role': 'spectator'})
 
     # Guest Restriction: Guests can only join rooms with NO rating limits
@@ -257,6 +263,7 @@ def join_room(room_id):
              msg = "Could not join Accumulative room. Please try again."
         return jsonify({'error': msg}), 409
     
+    room.update_player_activity(user_id)
     return jsonify({'success': True, 'role': 'player', 'max_players': room.max_players})
 
 @app.route('/api/room/<room_id>/leave', methods=['POST'])
@@ -281,7 +288,7 @@ def list_rooms():
     time_limit = request.args.get('time_limit', type=int)
     
     # Clean up rooms before listing (ensures zombie rooms are removed)
-    room_manager.cleanup_rooms()
+    room_manager.cleanup_rooms(timeout=420)
     
     active_rooms = []
     
@@ -301,7 +308,7 @@ def list_rooms():
                 'combined_rating': combined_rating,
                 'state': room.state,
                 'current_round': room.current_round,
-                'players': [{'username': p.username, 'rating': p.rating} for p in room.players]
+                'players': [{'username': p.username, 'rating': p.rating, 'user_id': p.user_id} for p in room.players]
             })
             
     return jsonify({'rooms': active_rooms})
@@ -310,7 +317,7 @@ def list_rooms():
 def get_lobby_stats():
     """Get aggregated player counts for all game configurations"""
     # Clean up first
-    room_manager.cleanup_rooms()
+    room_manager.cleanup_rooms(timeout=420)
     
     stats = {}
     
@@ -338,10 +345,6 @@ def get_room_state(room_id):
     try:
         print(f"Room found - game_type: {room.game_type}, current_round: {room.current_round}, state: {room.state}")
 
-        
-        # Update current user's activity
-        if 'user_id' in session:
-            room.update_player_activity(session['user_id'])
         
         # Check for inactive players (zombies)
         # Use 7 minutes (420s) globally for all game modes
@@ -440,6 +443,7 @@ def get_room_state(room_id):
             'time_limit': room.time_limit,
             'all_words': words_to_return,
             'all_word_scores': room.solved_words_with_scores,
+            'csw_only_words': [w for w in words_to_return if word_validator.is_csw_only(w)],
             'bonus_word': room.bonus_word,
             'spinner_params': room.spinner_params,
             'solving_complete': room.solving_complete,  # Let frontend know if still solving
@@ -447,8 +451,10 @@ def get_room_state(room_id):
             'min_rating': room.min_rating,
             'max_rating': room.max_rating,
             'previous_all_words': room.previous_all_words,
+            'your_username': session.get('username'),
             'players': [
                 {
+                    'user_id': p.user_id,
                     'username': p.username,
                     'rating': p.rating,
                     'words_count': len(p.submitted_words),
@@ -458,11 +464,12 @@ def get_room_state(room_id):
                     'submitted_words': p.submitted_words,
                     'previous_submitted_words': p.previous_submitted_words,
                     'invalid_words': p.invalid_words,
-                    'input_method': p.input_method
+                    'input_method': p.input_method,
+                    'last_active_age': time.time() - p.last_active
                 } for p in sorted(room.players, key=lambda p: p.score, reverse=True)
             ],
             'spectators': [
-                {'username': s.username, 'rating': s.rating} for s in room.spectators
+                {'username': s.username, 'rating': s.rating, 'user_id': s.user_id} for s in room.spectators
             ] if hasattr(room, 'spectators') else [],
             'chat_messages': room.chat_messages
         })
@@ -495,6 +502,7 @@ def submit_chat_message(room_id):
         message = message[:200]
         
     room.add_chat_message(session['username'], message)
+    room.update_player_activity(session['user_id'])
     
     return jsonify({'success': True})
 
@@ -520,6 +528,9 @@ def submit_word(room_id):
             
     success, message, points, final_word = room.submit_word(user_id, word)
     
+    # Refresh activity on any submission attempt (valid or not)
+    room.update_player_activity(user_id)
+    
     return jsonify({
         'success': success, 
         'message': message,
@@ -543,6 +554,7 @@ def update_input_method(room_id):
     player = room.get_player(user_id)
     if player:
         player.input_method = input_method
+        room.update_player_activity(user_id)
         return jsonify({'success': True})
         
     return jsonify({'error': 'Player not found'}), 404

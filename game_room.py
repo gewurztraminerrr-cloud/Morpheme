@@ -81,6 +81,20 @@ class GameRoom:
     # Chat
     chat_messages: List[Dict] = field(default_factory=list)
     
+    def __post_init__(self):
+        # Force integer types for comparisons
+        self.time_limit = int(self.time_limit)
+        if self.min_rating is not None: self.min_rating = int(self.min_rating)
+        if self.max_rating is not None: self.max_rating = int(self.max_rating)
+        
+        # Configuration-specific max players
+        if self.game_type == 'accumulative':
+            self.max_players = 9999 # Effectively unlimited
+        elif self.game_type == 'fcfs':
+            self.max_players = 16
+        else:
+            self.max_players = 8
+            
     def add_chat_message(self, username, message):
         """Add chat message to room"""
         self.chat_messages.append({
@@ -94,6 +108,15 @@ class GameRoom:
     
     def add_player(self, user_id, username, rating):
         """Add player to room"""
+        is_daily = self.time_limit >= 86400
+        
+        # Check if player already exists (PERSISTENCE)
+        existing_player = self.get_player(user_id)
+        if existing_player and is_daily:
+            print(f"[GameRoom] Persistence: Reusing existing player {username} in 24h room {self.room_id}")
+            existing_player.last_active = time.time()
+            return True
+
         # Ensure player is not already in the room (prevent duplicates)
         self.remove_player(user_id)
         
@@ -117,6 +140,13 @@ class GameRoom:
     
     def remove_player(self, user_id):
         """Remove player or spectator from room"""
+        # PERSISTENCE: Never remove players from 24h rooms (they only reset at midnight)
+        if self.time_limit >= 86400:
+            # We still allow removing from spectators if they were accidentally added there
+            initial_specs = len(self.spectators)
+            self.spectators = [p for p in self.spectators if str(p.user_id) != str(user_id)]
+            return
+
         # Remove from players - Use string comparison to be safe against type mismatches
         initial_players = len(self.players)
         self.players = [p for p in self.players if str(p.user_id) != str(user_id)]
@@ -131,52 +161,67 @@ class GameRoom:
 
     def update_player_activity(self, user_id):
         """Update last_active timestamp for a player or spectator"""
+        uid_str = str(user_id)
         player = self.get_player(user_id)
         if player:
             player.last_active = time.time()
             return
-            
+
         # Check spectators too
         for p in self.spectators:
-            if p.user_id == user_id:
+            if str(p.user_id) == uid_str:
                 p.last_active = time.time()
                 break
 
-    def check_inactivity(self, timeout=60): # 1 minute default for aggressive cleanup
+    def check_inactivity(self, timeout=420): # Default to 7 minutes
         """Remove players and spectators who haven't been active for 'timeout' seconds"""
         now = time.time()
         active_players = []
-        removed = False
+        players_removed = False
+        is_daily = self.time_limit >= 86400
         
         for p in self.players:
+            age = now - p.last_active
+            # Log all checks for debugging
+            # print(f"[Debug-Activity] Checking player {p.username} (ID={p.user_id}) in room {self.room_id}: age={age:.1f}s, timeout={timeout}")
+            
             # Keep active players OR keep all players if 24h room (daily persistence)
-            if now - p.last_active < timeout or self.time_limit >= 86400:
+            if is_daily or (age < timeout):
                 active_players.append(p)
             else:
-                print(f"[GameRoom] Removing inactive player {p.username} (last active {now - p.last_active:.1f}s ago)")
-                removed = True
+                log_msg = f"[GameRoom] Removing inactive player {p.username} (ID={p.user_id}) in room {self.room_id} (inactive for {age:.1f}s)\n"
+                print(log_msg.strip())
+                with open('inactivity_debug.log', 'a') as f:
+                    f.write(f"{datetime.datetime.now()} {log_msg}")
+                players_removed = True
         
-        if removed:
+        if players_removed:
             self.players = active_players
 
         # Check spectators
         active_spectators = []
+        specs_removed = False
         for p in self.spectators:
-            if now - p.last_active < timeout:
+            age = now - p.last_active
+            if is_daily or (age < timeout):
                 active_spectators.append(p)
             else:
-                print(f"[GameRoom] Removing inactive spectator {p.username}")
-                removed = True
+                log_msg = f"[GameRoom] Removing inactive spectator {p.username} (ID={p.user_id}) in room {self.room_id} (inactive for {age:.1f}s)\n"
+                print(log_msg.strip())
+                with open('inactivity_debug.log', 'a') as f:
+                    f.write(f"{datetime.datetime.now()} {log_msg}")
+                specs_removed = True
                 
-        if len(active_spectators) != len(self.spectators):
+        if specs_removed:
             self.spectators = active_spectators
             
-        return removed
+        return players_removed or specs_removed
     
     def get_player(self, user_id):
         """Get player by ID"""
+        uid_str = str(user_id)
         for p in self.players:
-            if p.user_id == user_id:
+            if str(p.user_id) == uid_str:
                 return p
         return None
     
@@ -487,6 +532,22 @@ class RoomManager:
         self.rooms: Dict[str, GameRoom] = {}
         self.lock = threading.Lock()
         self.board_generator = BoardGenerator()
+        
+        # Start background cleanup thread
+        self.cleanup_thread = threading.Thread(target=self._bg_cleanup_loop, daemon=True)
+        self.cleanup_thread.start()
+        print("[RoomManager] Background cleanup thread started")
+    
+    def _bg_cleanup_loop(self):
+        """Periodically clean up inactive rooms and players"""
+        while True:
+            try:
+                time.sleep(60) # Run every minute
+                # Routine 7-minute inactivity cleanup
+                self.cleanup_rooms(timeout=420) 
+            except Exception as e:
+                import traceback
+                print(f"[RoomManager] Error in background cleanup loop: {e}\n{traceback.format_exc()}")
     
     def create_room(self, room_id, game_type, time_limit, board_dimensions):
         """Create a new game room"""
@@ -536,15 +597,18 @@ class RoomManager:
         
         # Iterate over a copy of keys to avoid modification issues
         for room_id, room in list(self.rooms.items()):
-            # Check for inactive players
-            room.check_inactivity(timeout)
-            
-            # If room is empty, mark for deletion
-            if len(room.players) == 0:
-                # SKIP deleting daily rooms (>= 86400s)
-                if room.time_limit < 86400:
-                    print(f"[RoomManager] Room {room_id} is empty (after cleanup), marking for deletion")
-                    rooms_to_delete.append(room_id)
+            try:
+                # Check for inactive players
+                room.check_inactivity(timeout)
+                
+                # If room is empty, mark for deletion
+                if len(room.players) == 0:
+                    # SKIP deleting daily rooms (>= 86400s)
+                    if room.time_limit < 86400:
+                        print(f"[RoomManager] Room {room_id} is empty, marking for deletion")
+                        rooms_to_delete.append(room_id)
+            except Exception as e:
+                print(f"[RoomManager] Error cleaning up room {room_id}: {e}")
         
         # Delete marked rooms
         for room_id in rooms_to_delete:
@@ -612,10 +676,13 @@ class RoomManager:
             
             # Daily Room Logic (>= 24h) - Reset at Midnight
             if room.time_limit >= 86400:
-                # HARD RESET: Erase all users for the new day
-                print(f"[RoomManager] Daily Reset: Wiping all players from room {room_id}")
-                room.players = []
-                room.spectators = []
+                # HARD RESET: Erase all users for the new day, BUT ONLY IF NOT THE FIRST ROUND
+                if room.current_round > 1:
+                    print(f"[RoomManager] Daily Reset: Wiping all players from room {room_id}")
+                    room.players = []
+                    room.spectators = []
+                else:
+                    print(f"[RoomManager] Daily Room Initial Start: Keeping players in room {room_id}")
                 
                 now = datetime.datetime.now()
                 midnight = (now + datetime.timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
@@ -651,7 +718,6 @@ class RoomManager:
                 # Clear for new round
                 player.submitted_words = []
                 player.invalid_words = []
-                player.score = 0
                 player.score = 0
                 player.found_bonus_word = False
                 
@@ -803,6 +869,12 @@ class RoomManager:
                 player.invalid_words = []
                 player.score = 0
                 player.found_bonus_word = False
+                
+            # PERSISTENCE: If this is a 24h room, clear the player list for the new day
+            # (Users who enter will be added fresh)
+            if room.time_limit >= 86400:
+                print(f"[RoomManager] Daily Reset: Clearing player list for 24h room {room_id}")
+                room.players = []
                 
             # Clear FCFS global list
             if hasattr(room, 'fcfs_found_words'):

@@ -106,7 +106,7 @@ async function updateGameState() {
 
         const boardPanel = document.querySelector('.board-panel');
         const wordInputSection = document.querySelector('.word-input-section');
-        const currentUsername = window.currentUser || localStorage.getItem('morpheme_username');
+        const currentUsername = state.your_username || window.currentUser || localStorage.getItem('morpheme_username');
         const amIPlayer = state.players.some(p => {
             const match = p.username.toLowerCase() === (currentUsername ? currentUsername.toLowerCase().trim() : '');
             return match;
@@ -225,7 +225,7 @@ async function updateGameState() {
         }
 
         // Update players (pass full state for context if needed)
-        renderPlayers(state.players);
+        renderPlayers(state.players, currentUsername);
 
         // Update chat
         if (state.chat_messages) {
@@ -291,7 +291,7 @@ async function updateGameState() {
         // Identify current user
         let currentUser = null;
         try {
-            currentUser = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
+            currentUser = state.your_username || window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
         } catch (e) { console.warn('No currentUser', e); }
 
         if (state.state === 'intermission') {
@@ -339,7 +339,7 @@ async function updateGameState() {
             // Highlighting "allFoundStrs" covers words found by ANYONE (if we want that).
             // User request: "highlights all words the user found under All Words"
 
-            displayAllWords(state.all_words, state.bonus_word, targetWords, allFoundStrs, state.all_word_scores);
+            displayAllWords(state.all_words, state.bonus_word, targetWords, allFoundStrs, state.all_word_scores, state.csw_only_words);
 
             // For Split Points OR FCFS: Add "View Board" toggle button if needed
             if (state.game_type === 'split' || state.game_type === 'fcfs') {
@@ -361,9 +361,9 @@ async function updateGameState() {
                     tabsContainer.id = 'words-tabs-container';
                     tabsContainer.className = 'tabs-container';
                     tabsContainer.innerHTML = `
-                        <button class="tab-btn active" onclick="window.switchWordTab('found')">Found</button>
-                        <button class="tab-btn" onclick="window.switchWordTab('clues')">Clues</button>
-                        <button class="tab-btn" onclick="window.switchWordTab('previous')">Previous</button>
+                        <button class="tab-btn active" data-tab="found" onclick="window.switchWordTab('found')">Found</button>
+                        <button class="tab-btn" data-tab="clues" onclick="window.switchWordTab('clues')">Clues</button>
+                        <button class="tab-btn" data-tab="previous" onclick="window.switchWordTab('previous')">Previous</button>
                     `;
                     // Insert before stats
                     const stats = document.getElementById('words-stats');
@@ -375,7 +375,7 @@ async function updateGameState() {
                         window.activeWordsTab = tab;
                         // Update buttons
                         document.querySelectorAll('#words-tabs-container .tab-btn').forEach(btn => {
-                            btn.classList.toggle('active', btn.textContent.toLowerCase() === tab);
+                            btn.classList.toggle('active', btn.dataset.tab === tab);
                         });
                         // Trigger render update immediate or wait for poll
                         updateGameState();
@@ -590,7 +590,7 @@ async function updateGameState() {
     }
 }
 
-function renderPlayers(players) {
+function renderPlayers(players, currentUser = null) {
     const listEl = document.getElementById('players-list');
     if (!players || players.length === 0) {
         listEl.innerHTML = '<p class="placeholder">No players</p>';
@@ -599,12 +599,6 @@ function renderPlayers(players) {
 
     // Sort players by score (Highest First), break ties with Rating
     const sortedPlayers = [...players].sort((a, b) => (b.score - a.score) || (b.rating - a.rating));
-
-    // Get current user
-    let currentUser = null;
-    try {
-        currentUser = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
-    } catch (e) { }
 
     // Attach click handler via event delegation parent or recreate list
     // Recreating list is fine here
@@ -760,7 +754,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWords = [], allWordScores = {}) {
+function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWords = [], allWordScores = {}, cswOnlyWords = []) {
     const listEl = document.getElementById('submitted-words-list');
     if (!allWords || allWords.length === 0) {
         listEl.innerHTML = '<p class="placeholder">No words found</p>';
@@ -769,6 +763,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
 
     const targetWordsUpper = targetUserWords.map(w => w.toUpperCase());
     const allFoundUpper = allFoundWords.map(w => w.toUpperCase());
+    const cswOnlyUpper = (cswOnlyWords || []).map(w => w.toUpperCase());
 
     // Sort: Length desc, then Alpha
     const sortedWords = [...allWords].sort((a, b) => {
@@ -779,27 +774,32 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     listEl.innerHTML = sortedWords.map(word => {
         const wordUpper = word.toUpperCase();
         const isBonus = wordUpper === bonusWord.toUpperCase();
+        const isCSWOnly = cswOnlyUpper.includes(wordUpper);
+        const isTargetFound = targetWordsUpper.includes(wordUpper);
         const points = allWordScores[word] || allWordScores[wordUpper] || 0;
 
         let className = 'word-item';
-        // Logic for highlighting:
-        // User requested: "bluish color on the list highlighting each word the user that was selected... found"
-        // So check if targetUserWords has it.
-        const isTargetFound = targetWordsUpper.includes(wordUpper);
 
+        // Priority 1: Bonus Word (Green)
         if (isBonus) {
             className += ' bonus-word';
         }
-
-        // If selected user found it -> Blue
-        if (isTargetFound) {
-            className += ' player-word'; // This class is styled blue/green usually
-        } else if (allFoundUpper.includes(wordUpper)) {
-            // Found by someone else -> maybe white?
-            // className += ' found-by-other';
-            // Default styling is white for found?
-        } else {
-            // Not found by anyone -> Gray
+        // Priority 2: Word Found by Selected Player (Blue)
+        else if (isTargetFound) {
+            className += ' player-word';
+        }
+        // Priority 3: CSW-Only Word (Yellow)
+        else if (isCSWOnly) {
+            className += ' csw-only';
+        }
+        // Priority 4: Found by others but not me
+        else if (allFoundUpper.includes(wordUpper)) {
+            // Keep default word-item style (usually greenish in active, but here maybe just white?)
+            // We want it to look "found" but not "claimed" by me.
+            className += ' found-by-other';
+        }
+        // Priority 5: Not found by anyone (Gray)
+        else {
             className += ' unfound';
         }
 
@@ -837,15 +837,27 @@ function updateParameters(state) {
     document.getElementById('param-time').textContent = state.time_limit + 's';
 
     const sp = state.spinner_params;
-    if (sp) {
-        document.getElementById('param-bonus').textContent = sp.bonus_word_length + ' letters';
-        document.getElementById('param-diff').textContent = sp.difficulty;
-        document.getElementById('param-min').textContent = sp.min_word_length;
-        document.getElementById('param-dict').textContent = sp.dictionary;
+    if (sp && sp.word_count_range) {
+        const bonusLen = document.getElementById('param-bonus');
+        if (bonusLen) bonusLen.textContent = (sp.bonus_word_length || '?') + ' letters';
+
+        const diff = document.getElementById('param-diff');
+        if (diff) diff.textContent = sp.difficulty || '?';
+
+        const minL = document.getElementById('param-min');
+        if (minL) minL.textContent = sp.min_word_length || '?';
+
+        const dict = document.getElementById('param-dict');
+        if (dict) dict.textContent = sp.dictionary || '?';
 
         const wr = sp.word_count_range;
-        document.getElementById('param-words').textContent = `${wr[0]}-${wr[1]}`;
-        document.getElementById('param-format').textContent = sp.board_format;
+        const words = document.getElementById('param-words');
+        if (words && Array.isArray(wr) && wr.length >= 2) {
+            words.textContent = `${wr[0]}-${wr[1]}`;
+        }
+
+        const format = document.getElementById('param-format');
+        if (format) format.textContent = sp.board_format || '?';
     }
 }
 
@@ -1233,16 +1245,34 @@ function addSplitViewBoardToggle() {
 
 // Spinner Logic
 function showSpinnerOverlay(spinnerParams) {
-    if (!spinnerParams) return;
-    document.getElementById('spinner-bonus-length').textContent = spinnerParams.bonus_word_length + ' letters';
-    document.getElementById('spinner-min-length').textContent = spinnerParams.min_word_length;
-    document.getElementById('spinner-difficulty').textContent = spinnerParams.difficulty;
-    const [minWords, maxWords] = spinnerParams.word_count_range;
-    document.getElementById('spinner-word-count').textContent = `${minWords}-${maxWords}`;
-    document.getElementById('spinner-dictionary').textContent = spinnerParams.dictionary;
-    document.getElementById('spinner-format').textContent = spinnerParams.board_format;
+    if (!spinnerParams || !spinnerParams.word_count_range) {
+        console.warn('[play.js] showSpinnerOverlay called with incomplete spinnerParams:', spinnerParams);
+        // Show overlay anyway if possible, or just return to avoid crash
+        if (!spinnerParams) return;
+    }
 
-    document.getElementById('spinner-overlay').classList.remove('hidden');
+    // Defensive updates
+    const safeSetText = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    };
+
+    safeSetText('spinner-bonus-length', (spinnerParams.bonus_word_length || '?') + ' letters');
+    safeSetText('spinner-min-length', spinnerParams.min_word_length || '?');
+    safeSetText('spinner-difficulty', spinnerParams.difficulty || '?');
+
+    const wr = spinnerParams.word_count_range;
+    if (wr && Array.isArray(wr) && wr.length >= 2) {
+        safeSetText('spinner-word-count', `${wr[0]}-${wr[1]}`);
+    } else {
+        safeSetText('spinner-word-count', '?-?');
+    }
+
+    safeSetText('spinner-dictionary', spinnerParams.dictionary || 'Unknown');
+    safeSetText('spinner-format', spinnerParams.board_format || 'Standard');
+
+    const overlay = document.getElementById('spinner-overlay');
+    if (overlay) overlay.classList.remove('hidden');
 }
 
 function hideSpinnerOverlay() {
