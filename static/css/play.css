@@ -1185,7 +1185,7 @@
     border: 1px solid rgba(231, 76, 60, 0.3);
 }
 
-/* Spectator Panel Styles */
+/* Spectator Panel Styles - Integrated Single Panel */
 #spectator-status-panel {
     display: flex;
     flex-direction: column;
@@ -1193,34 +1193,26 @@
     align-items: center;
     width: 100%;
     height: 100%;
+    background: transparent;
+    backdrop-filter: none;
+    border: none;
+    box-shadow: none;
     animation: fadeIn 0.4s ease-out;
     gap: 12px;
-}
-
-/* Removed spectator-content-wrapper to avoid panel-in-panel look */
-
-.spectator-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.spec-icon {
-    font-size: 1.5rem;
-    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+    padding: 0;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .spectator-title {
     margin: 0;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #FFFFFF;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #38bdf8;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    line-height: 1;
+    letter-spacing: 0.2em;
+    opacity: 0.9;
 }
-
-/* Removed text shine */
 
 .spectator-actions {
     width: 100%;
@@ -1229,179 +1221,88 @@
 }
 
 .premium-btn {
-    position: relative;
-    background: #0070f3;
+    background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+    color: white;
     border: none;
-    box-shadow: 0 4px 10px rgba(0, 112, 243, 0.3);
-    border-radius: 100px;
-    /* Pill shape */
-    font-family: inherit;
-    font-weight: 600;
-    transition: all 0.2s ease;
-}
-
-.premium-btn:hover {
-    background: #0081ff;
-    transform: translateY(-1px);
-    box-shadow: 0 6px 15px rgba(0, 112, 243, 0.4);
-}
-
-.premium-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    transition: all 0.6s;
-}
-
-.premium-btn:hover::before {
-    left: 100%;
-}
-
-.premium-btn:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 6px 20px rgba(0, 112, 243, 0.6);
-    background: linear-gradient(135deg, #0080ff 0%, #20b0ff 100%);
-}
-
-.spec-icon-pulse {
-    opacity: 0.8;
-}
-
-/* Removed busy animations from play.css */
-
-.spectator-text {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.95rem;
-    text-align: center;
-    margin: 0;
-}
-
-.spectator-join-btn {
-    margin-top: 5px;
-    padding: 8px 20px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #fff;
-    background: linear-gradient(135deg, #409cff 0%, #0070f3 100%);
-    border: none;
+    padding: 8px 18px;
+    font-size: 0.85rem;
+    font-weight: 700;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba(0, 112, 243, 0.3);
-    width: 100%;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    transition: all 0.2s ease;
+    letter-spacing: 0.01em;
 }
 
-.spectator-join-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0, 112, 243, 0.5);
-    background: linear-gradient(135deg, #5ab0ff 0%, #2080f5 100%);
+.premium-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(37, 99, 235, 0.4);
+    filter: brightness(1.1);
 }
 
-.spectator-join-btn:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none;
+.premium-btn:active {
+    transform: translateY(0);
 }
 
 .spectator-full-badge {
-    margin-top: 10px;
-    padding: 8px 16px;
-    background: rgba(233, 69, 96, 0.2);
-    border: 1px solid rgba(233, 69, 96, 0.5);
-    color: #e94560;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-/* Words Panel Tabs */
-.tabs-container {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 8px;
-}
-
-.tab-btn {
-    flex: 1;
-    background: transparent;
-    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: rgba(255, 255, 255, 0.6);
-    padding: 6px 4px;
-    font-size: 0.85rem;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: all 0.2s;
-}
-
-.tab-btn:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.tab-btn.active {
-    color: #fff;
-    background: rgba(64, 156, 255, 0.3);
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 0.8rem;
     font-weight: 600;
 }
 
-/* Clues Grid */
-.clues-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-    gap: 8px;
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.clue-item {
-    background: rgba(255, 255, 255, 0.08);
-    /* Darker pill */
-    padding: 6px;
-    border-radius: 6px;
-    text-align: center;
-    font-family: monospace;
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+@keyframes pulseIconSimple {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
 }
 
-/* Previous Day List */
-.word-item.prev-found {
-    background: rgba(72, 187, 120, 0.25);
-    border: 1px solid rgba(72, 187, 120, 0.4);
-    color: #fff;
-}
-
-.word-item.prev-missed {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.5);
-}
-/* Words Panel Tabs for 24h Rooms */
+/* Modern Tabs for 24h Rooms */
 .tabs-container {
     display: flex;
-    gap: 5px;
-    margin-bottom: 10px;
+    gap: 8px;
+    margin-bottom: 15px;
     background: rgba(0, 0, 0, 0.2);
-    padding: 4px;
-    border-radius: 8px;
+    padding: 5px;
+    border-radius: 10px;
 }
 
 .tab-btn {
     flex: 1;
-    padding: 6px;
+    padding: 8px 4px;
     background: transparent;
     border: none;
     border-radius: 6px;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .tab-btn:hover {
@@ -1410,31 +1311,46 @@
 }
 
 .tab-btn.active {
-    background: #409cff;
+    background: #2563eb;
     color: #fff;
-    box-shadow: 0 2px 6px rgba(64, 156, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
-/* Clues Grid */
+/* Clues Grid & Items */
 .clues-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 8px;
-    padding: 10px 5px;
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    gap: 10px;
+    padding: 5px;
 }
 
 .clue-item {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
-    padding: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 10px;
     text-align: center;
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.8);
-    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    transition: all 0.2s;
 }
 
 .clue-item:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+/* Previous Day Data Styling */
+.word-item.prev-found {
+    background: rgba(16, 185, 129, 0.15) !important;
+    border: 1px solid rgba(16, 185, 129, 0.3) !important;
+    color: #34d399 !important;
+}
+
+.word-item.prev-missed {
+    background: rgba(244, 63, 94, 0.1) !important;
+    border: 1px solid rgba(244, 63, 94, 0.2) !important;
+    color: rgba(251, 113, 133, 0.6) !important;
 }

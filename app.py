@@ -125,6 +125,30 @@ from game_room import room_manager
 from word_validator import word_validator
 import uuid
 
+def apply_leave_penalty(user_id, room):
+    """Apply -16 rating penalty if user leaves a non-24h room with score > 0"""
+    if room.time_limit >= 86400:
+        return # No penalty for 24h rooms
+    
+    player = room.get_player(user_id)
+    if player and player.score > 0 and player.user_id > 0:
+        print(f"[Penalty] Player {player.username} left room {room.room_id} with score {player.score}. Applying -16 rating penalty.")
+        player.rating = max(0, player.rating - 16)
+        
+        # Persist to database immediately
+        try:
+            conn = sqlite3.connect('morpheme.db')
+            config_key = f"{room.game_type}|{room.board_dimensions}|{room.time_limit}"
+            conn.execute('''
+                INSERT OR REPLACE INTO user_ratings (user_id, config_key, rating)
+                VALUES (?, ?, ?)
+            ''', (player.user_id, config_key, player.rating))
+            conn.commit()
+            conn.close()
+            print(f"[Penalty] Rating updated in DB for {player.username} ({config_key})")
+        except Exception as e:
+            print(f"[Penalty] ERROR updating rating in DB: {e}")
+
 def cleanup_user_rooms(user_id, exclude_room_id=None):
     """Remove user from all rooms except exclude_room_id and 24h persistent rooms"""
     for rid in list(room_manager.rooms.keys()):
@@ -136,6 +160,9 @@ def cleanup_user_rooms(user_id, exclude_room_id=None):
         if room.time_limit >= 86400:
             continue
             
+        # Apply leave penalty if applicable
+        apply_leave_penalty(user_id, room)
+
         # Remove from players
         room.remove_player(user_id)
         
@@ -273,6 +300,9 @@ def leave_room(room_id):
     
     room = room_manager.get_room(room_id)
     if room:
+        # Apply leave penalty if applicable
+        apply_leave_penalty(session['user_id'], room)
+        
         room.remove_player(session['user_id'])
         
         # Delete room if empty (except for 24h rooms which persist)

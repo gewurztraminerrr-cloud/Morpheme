@@ -139,10 +139,7 @@ async function updateGameState() {
 
             // Render Content
             spectatorPanel.innerHTML = `
-                <div class="spectator-header">
-                    <span class="spec-icon">👁️</span>
-                    <h2 class="spectator-title">Watching</h2>
-                </div>
+                <div class="spectator-title">SPECTATING</div>
                 <div class="spectator-actions">
                     ${canJoin ?
                     `<button id="spec-join-btn" class="spectator-join-btn premium-btn">Join Game</button>` :
