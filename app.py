@@ -753,7 +753,15 @@ def check_and_add_mp(mp_groups, source_len, target_len, mp, word):
 
     added = False
     
-    if source_len == 5:
+    if source_len == 3:
+        # User requested 3-letter support. Loose logic inferred.
+        if target_len >= 3: added = True
+        
+    elif source_len == 4:
+        # User requested 4-letter support. Loose logic inferred.
+        if target_len >= 4: added = True
+
+    elif source_len == 5:
         if target_len >= 5 and mp <= 3:
             if mp >= 3:
                 if target_len >= 6: added = True
@@ -795,18 +803,45 @@ def check_and_add_mp(mp_groups, source_len, target_len, mp, word):
     if added:
         mp_groups[mp].append(word)
 
+def check_and_add_lic(lic_groups, count, target_len, word):
+    """Applies strict LIC filtering from combos.java."""
+    # Logic: 
+    # 3 Matches: target < 5 (Inferred)
+    # 4 Matches: target < 6 (Inferred)
+    # 5 Matches: target < 7
+    # 6 Matches: target < 8
+    # 7 Matches: target < 10
+    # 8,9,10 Matches: target < 9
+    
+    if count not in lic_groups:
+        lic_groups[count] = []
+        
+    # Validations from Java
+    valid = False
+    
+    if count == 3 and target_len < 5: valid = True # New for 3-letter inputs
+    elif count == 4 and target_len < 6: valid = True # New for 4-letter inputs
+    elif count == 5 and target_len < 7: valid = True
+    elif count == 6 and target_len < 8: valid = True
+    elif count == 7 and target_len < 10: valid = True
+    elif count == 8 and target_len < 9: valid = True # Java groups 8,9,10 together for <9 constraint
+    elif count == 9 and target_len < 9: valid = True
+    elif count == 10 and target_len < 9: valid = True
+    
+    if valid:
+        if word not in lic_groups[count]:
+            lic_groups[count].append(word)
+
 @app.route('/api/tools/combo', methods=['POST'])
 def tools_combo_check():
     data = request.json
     search_term = data.get('search_term', '').upper().strip()
     dict_name = data.get('dictionary', 'NWL')
     
-    if not search_term or len(search_term) < 5 or len(search_term) > 10:
-        # Java code only handles 5-10 length inputs explicitly
+    # Relaxed validation for 3/4 letter words
+    if not search_term or len(search_term) < 3 or len(search_term) > 10:
         if not search_term:
              return jsonify({'error': 'No search term provided'}), 400
-        # For lengths outside 5-10, we could either error or use loose logic. 
-        # Assuming user stays within bounds, or we treat others as valid.
         pass 
         
     dictionary = load_tools_dictionary(dict_name)
@@ -814,7 +849,6 @@ def tools_combo_check():
         return jsonify({'error': f'Dictionary {dict_name} not found'}), 404
 
     from collections import Counter
-    source_counter = Counter(search_term)
     source_len = len(search_term)
     
     # Initialize Groups
@@ -826,55 +860,28 @@ def tools_combo_check():
     for word in dictionary:
         target_len = len(word)
         
-        # Optimization: Bounds overlap
-        # Check if words are even remotely related before 4 passes.
-        # This is optional but good for perf.
-        # Strict logic: Just checking length overlap might be safe.
         if abs(source_len - target_len) > 5: continue
         
         # 4 Passes
         # Pass 1: Fwd / Fwd
         mp1, count1 = calculate_mp_pass(search_term, word, source_len, target_len)
         if mp1 <= 5: check_and_add_mp(mp_groups, source_len, target_len, mp1, word)
+        check_and_add_lic(lic_groups, count1, target_len, word)
         
-        # Pass 2: Fwd / Rev (Target Reversed) -> Same as Input vs RevTarget
+        # Pass 2: Fwd / Rev 
         mp2, count2 = calculate_mp_pass(search_term, word[::-1], source_len, target_len)
         if mp2 <= 5: check_and_add_mp(mp_groups, source_len, target_len, mp2, word)
-        
-        # Pass 3: Rev / Fwd (Input Reversed vs Target)
+        check_and_add_lic(lic_groups, count2, target_len, word)
+
+        # Pass 3: Rev / Fwd 
         mp3, count3 = calculate_mp_pass(search_term_rev, word, source_len, target_len)
         if mp3 <= 5: check_and_add_mp(mp_groups, source_len, target_len, mp3, word)
-        
-        # Pass 4: Rev / Rev (Input Reversed vs Target Reversed)
+        check_and_add_lic(lic_groups, count3, target_len, word)
+
+        # Pass 4: Rev / Rev 
         mp4, count4 = calculate_mp_pass(search_term_rev, word[::-1], source_len, target_len)
         if mp4 <= 5: check_and_add_mp(mp_groups, source_len, target_len, mp4, word)
-
-        # LIC Logic
-        # It's independent of order, so any 'count' (intersection) works.
-        # Java uses the count from each pass, but basic intersection is same.
-        # We'll valid LIC conditions from Java (lines 101-120):
-        # 5 Matches: target < 7
-        # 6 Matches: target < 8
-        # 7 Matches: target < 10
-        # 8,9,10 Matches: target < 9
-        
-        # Using counter intersection for true 'Letters In Common' count
-        word_counter = Counter(word)
-        intersection = source_counter & word_counter
-        true_count = sum(intersection.values())
-        
-        if true_count not in lic_groups:
-             lic_groups[true_count] = []
-        
-        if word not in lic_groups[true_count]:
-            lic_added = False
-            if true_count == 5 and target_len < 7: lic_added = True
-            elif true_count == 6 and target_len < 8: lic_added = True
-            elif true_count == 7 and target_len < 10: lic_added = True
-            elif true_count in [8, 9, 10] and target_len < 9: lic_added = True
-            
-            if lic_added:
-                lic_groups[true_count].append(word)
+        check_and_add_lic(lic_groups, count4, target_len, word)
 
     # Sort Groups
     for k in mp_groups:
@@ -886,6 +893,109 @@ def tools_combo_check():
         'mp_groups': mp_groups, 
         'lic_groups': lic_groups
     })
+
+@app.route('/api/tools/lists', methods=['GET'])
+def tools_get_lists():
+    """Returns the 5 specific word lists for the Lists tool with optional filtering."""
+    try:
+        # Get Filter Params
+        length_filter = request.args.get('length')
+        start_filter = request.args.get('starts_with')
+        
+        # Convert length to int if provided and not "all"
+        target_len = None
+        if length_filter and length_filter.lower() != 'all':
+            try:
+                target_len = int(length_filter)
+            except ValueError:
+                pass # Ignore invalid format
+        
+        # Normalize start letter
+        start_char = None
+        if start_filter and start_filter.lower() != 'all':
+            start_char = start_filter.upper().strip()
+            if not start_char: start_char = None
+
+        base_dir = os.path.dirname(__file__)
+        dict_dir = os.path.join(base_dir, 'dictionaries')
+        
+        # Helper to load AND filter list
+        def load_filtered_list(filename):
+            path = os.path.join(dict_dir, filename)
+            if not os.path.exists(path):
+                return [] # Return empty list, not set, for consistency
+            
+            words = []
+            with open(path, 'r') as f:
+                for line in f:
+                    w = line.strip().upper()
+                    if not w: continue
+                    
+                    # Apply Filters
+                    if target_len is not None and len(w) != target_len:
+                        continue
+                    if start_char is not None and not w.startswith(start_char):
+                        continue
+                        
+                    words.append(w)
+            return words # Already a list
+
+        # 1. NWL
+        nwl_list = load_filtered_list('NWL.txt')
+        
+        # 2. CSW
+        csw_list = load_filtered_list('CSW.txt')
+        
+        # 3. CSW Only
+        # We need the full sets to compute difference first if filtering logic is complex,
+        # BUT since filtering is simple (length/start), we can filter the resulting set.
+        # However, it's faster to verify validity against pre-loaded sets if we had them in memory.
+        # Given no global memory cache, let's load full sets for diff logic then filter.
+        # Actually, simpler: Load full CSW and NWL sets, diff them, then apply filters to result.
+        
+        def load_set(filename):
+            path = os.path.join(dict_dir, filename)
+            if not os.path.exists(path): return set()
+            with open(path, 'r') as f:
+                return {line.strip().upper() for line in f if line.strip()}
+                
+        nwl_set_full = load_set('NWL.txt')
+        csw_set_full = load_set('CSW.txt')
+        csw_only_full = csw_set_full - nwl_set_full
+        
+        def filter_iterable(iterable):
+            filtered = []
+            for w in iterable:
+                if target_len is not None and len(w) != target_len: continue
+                if start_char is not None and not w.startswith(start_char): continue
+                filtered.append(w)
+            return sorted(filtered)
+
+        # Re-apply filtering to loaded lists (optimization: could merge logic but this is safe)
+        # We already loaded filtered NWL/CSW above? 
+        # Actually, load_filtered_list reads file line by line. 
+        # Let's stick to the set logic for CSW Only to be correct.
+        
+        # Re-doing clean logic:
+        
+        # 1. NWL (Filtered)
+        # Optimization: If no filters, load full. If filters, stream filter.
+        # Since we need sets for CSW-Only, we must load full sets anyway unless we optimize diffing.
+        # Let's use the sets we just loaded.
+        
+        response_data = {
+            'nwl': filter_iterable(nwl_set_full),
+            'csw': filter_iterable(csw_set_full),
+            'csw_only': filter_iterable(csw_only_full),
+            'added': [],
+            'uniques': load_filtered_list('randomTWLunique.txt')
+        }
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        print(f"Error fetching lists: {e}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     print('Morpheme server running on http://localhost:3000')
