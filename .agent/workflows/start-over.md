@@ -1,8 +1,8 @@
 ---
-description: How to revert the application to the stable state saved on 2026-01-30
+description: How to revert the application to the stable state (Spectator UI + Leave Penalty) saved on 2026-01-30
 ---
 
-To revert the application to the state saved on January 30th, 2026, follow these steps:
+To revert the application to the stable state saved on January 30th, 2026 (which includes Spectator UI refinements and the Leave Penalty logic), follow these steps:
 
 ### Method 1: Restore from GitHub (Recommended)
 
