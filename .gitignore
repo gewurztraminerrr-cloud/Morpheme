@@ -11,3 +11,5 @@ htmlcov/
 morpheme.db
 developer_messages.db
 *.db
+room_state.json
+investigate_rooms.py
