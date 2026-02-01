@@ -887,7 +887,7 @@ def tools_combo_check():
     for k in mp_groups:
         mp_groups[k].sort(key=lambda x: (-len(x), x))
     for k in lic_groups:
-        lic_groups[k].sort()
+        lic_groups[k].sort(key=lambda x: (len(x), x))
     
     return jsonify({
         'mp_groups': mp_groups, 
@@ -983,10 +983,33 @@ def tools_get_lists():
         # Since we need sets for CSW-Only, we must load full sets anyway unless we optimize diffing.
         # Let's use the sets we just loaded.
         
+        # 4. Likelihood List (Frequency Based)
+        # Custom freq: A=190, B=45, C=99, D=82, E=278, F=29, G=69, H=61, I=222, J=4, K=23, L=129, M=71,
+        # N=165, O=163, P=74, Q=4, R=172, S=237, T=161, U=81, V=23, W=19, X=7, Y=40, Z=12
+        freq = {
+            'A': 190, 'B': 45, 'C': 99, 'D': 82, 'E': 278, 'F': 29, 'G': 69, 'H': 61, 'I': 222,
+            'J': 4, 'K': 23, 'L': 129, 'M': 71, 'N': 165, 'O': 163, 'P': 74, 'Q': 4, 'R': 172,
+            'S': 237, 'T': 161, 'U': 81, 'V': 23, 'W': 19, 'X': 7, 'Y': 40, 'Z': 12
+        }
+        
+        def calculate_likelihood(word):
+            return sum(freq.get(c, 0) for c in word)
+
+        # We take NWL as the base for Likelihood
+        likelihood_eligible = []
+        for w in nwl_set_full:
+            if target_len is not None and len(w) != target_len: continue
+            if start_char is not None and not w.startswith(start_char): continue
+            likelihood_eligible.append(w)
+            
+        # Sort by Length ASC, then score DESC, then Alpha ASC
+        likelihood_eligible.sort(key=lambda x: (len(x), -calculate_likelihood(x), x))
+        
         response_data = {
             'nwl': filter_iterable(nwl_set_full),
             'csw': filter_iterable(csw_set_full),
             'csw_only': filter_iterable(csw_only_full),
+            'likelihood': likelihood_eligible[:1000], # Expanded to 1000 words
             'added': [],
             'uniques': load_filtered_list('randomTWLunique.txt')
         }
@@ -996,6 +1019,151 @@ def tools_get_lists():
     except Exception as e:
         print(f"Error fetching lists: {e}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/tools/sequence', methods=['POST'])
+def tools_sequence_search():
+    """Handles Sequence Search: Starts/Ends With, Contains (Fwd/Rev)."""
+    data = request.json
+    sequence = data.get('sequence', '').upper().strip()
+    mode = data.get('mode', 'contains') # starts, ends, contains
+    length_filter = data.get('length', 'all')
+    dict_name = data.get('dictionary', 'NWL')
+    
+    if not sequence:
+        return jsonify({'error': 'No sequence provided'}), 400
+        
+    # Parse Length
+    target_len = None
+    if length_filter and str(length_filter).lower() != 'all':
+        try:
+            target_len = int(length_filter)
+        except ValueError:
+            pass
+            
+    dictionary = load_tools_dictionary(dict_name)
+    if not dictionary:
+        return jsonify({'error': f'Dictionary {dict_name} not found'}), 404
+        
+    results = []
+    seq_rev = sequence[::-1]
+    
+    for word in dictionary:
+        # 1. Length Filter
+        if target_len is not None and len(word) != target_len:
+            continue
+            
+        # 2. Mode Filter
+        matched = False
+        if mode == 'starts':
+            if word.startswith(sequence): matched = True
+        elif mode == 'ends':
+            if word.endswith(sequence): matched = True
+        elif mode == 'contains':
+            # "Contains Sequence (Forwards or Backwards)"
+            if sequence in word or seq_rev in word: matched = True
+            
+        if matched:
+            results.append(word)
+            
+    # Sort results: Length ASC, then Alphabetical (User preference from LIC applied here too for consistency? 
+    # Or just Alphabetical? Usually lists are Alpha. Let's do Length then Alpha as it's cleaner for lists)
+    results.sort(key=lambda x: (len(x), x))
+    
+    return jsonify({
+        'results': results,
+        'count': len(results)
+    })
+
+@app.route('/api/tools/manual_solve', methods=['POST'])
+def tools_manual_solve():
+    """Solves a custom board provided by the user."""
+    data = request.json
+    board = data.get('board') # 2D list of letters
+    dictionary = data.get('dictionary', 'NWL')
+    
+    if not board or not isinstance(board, list):
+        return jsonify({'error': 'No board provided or invalid format'}), 400
+        
+    try:
+        # We use the board_generator from the global room_manager instance
+        # _solve_board(self, board, dictionary, word_count_range, min_word_length=3)
+        # For manual solve, we don't care about word_count_range, so pass (0, float('inf'))
+        all_words = room_manager.board_generator._solve_board(board, dictionary, (0, float('inf')), 3)
+        
+        # Sort by largest first (Length DESC, then Alpha ASC)
+        all_words.sort(key=lambda x: (-len(x), x))
+        
+        return jsonify({
+            'results': all_words,
+            'count': len(all_words)
+        })
+    except Exception as e:
+        print(f"Error solving manual board: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/tools/random_word', methods=['GET'])
+def tools_random_word():
+    """Returns a random word based on length and dictionary."""
+    dict_name = request.args.get('dictionary', 'NWL')
+    length_filter = request.args.get('length', 'all')
+    
+    dictionary = load_tools_dictionary(dict_name)
+    if not dictionary:
+        return jsonify({'error': f'Dictionary {dict_name} not found'}), 404
+        
+    # Filter by length
+    target_len = None
+    if length_filter and length_filter.lower() != 'all':
+        try:
+            target_len = int(length_filter)
+        except ValueError:
+            pass
+            
+    filtered_words = list(dictionary)
+    if target_len:
+        filtered_words = [w for w in filtered_words if len(w) == target_len]
+        
+    if not filtered_words:
+        return jsonify({'error': 'No words found for the specified criteria'}), 404
+        
+    import random
+    random_word = random.choice(filtered_words)
+    
+    return jsonify({
+        'word': random_word
+    })
+
+@app.route('/api/tools/wotd', methods=['GET'])
+def tools_wotd():
+    """Returns a deterministic Word of the Day based on the current date."""
+    from datetime import datetime
+    import hashlib
+    
+    # Use UTC date string as seed for consistency across timezones if needed, 
+    # but local server date is standard for most apps.
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    
+    # Load NWL dictionary (default for WOTD)
+    dictionary = load_tools_dictionary('NWL')
+    if not dictionary:
+        return jsonify({'error': 'Dictionary not available'}), 500
+        
+    # Filter 6-10 letters
+    eligible_words = sorted([w for w in dictionary if 6 <= len(w) <= 10])
+    
+    if not eligible_words:
+        return jsonify({'error': 'No eligible words found'}), 500
+        
+    # Use hash of date string to get a stable random index
+    # (Since we want to avoid changing random.seed() global state if possible)
+    seed_hash = int(hashlib.md5(today_str.encode()).hexdigest(), 16)
+    idx = seed_hash % len(eligible_words)
+    wotd = eligible_words[idx]
+    
+    return jsonify({
+        'word': wotd,
+        'date': today_str
+    })
 
 if __name__ == '__main__':
     print('Morpheme server running on http://localhost:3000')
