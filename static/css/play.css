@@ -67,13 +67,17 @@
 
 .play-grid {
     display: grid;
-    grid-template-columns: 340px 1fr 320px;
+    grid-template-columns: var(--left-panel-w, 340px) 1fr var(--right-panel-w, 320px);
     /* Reduced panels to ensure Split Points notepads fit */
     gap: 20px;
     flex: 1;
     min-height: 0;
     /* Important for scrolling children */
 }
+
+
+
+
 
 .words-panel {
     display: flex;
@@ -414,12 +418,16 @@
     min-width: 0;
     min-height: 0;
     /* Allow shrinking */
-    max-width: 640px;
-    /* Constrain width on wide screens */
+    /* max-width removed to allow Board-First internal expansion */
     width: 100%;
+    /* Fill the 1fr grid column */
     box-sizing: border-box;
     justify-self: center;
     /* Center in grid column */
+    overflow-y: auto;
+    /* Allow vertical scrolling for huge boards */
+    max-height: 100%;
+    /* Constrain to grid area height */
 }
 
 /* ... existing styles ... */
@@ -471,17 +479,21 @@
     border-radius: 12px;
 }
 
+:root {
+    --cell-size: 60px;
+}
+
 .board-cell {
-    width: 60px;
-    height: 60px;
+    width: var(--cell-size);
+    height: var(--cell-size);
     background: #fff;
     color: #000;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.2rem;
+    font-size: calc(var(--cell-size) * 0.6);
     font-weight: 700;
-    border-radius: 6px;
+    border-radius: calc(var(--cell-size) * 0.1);
     cursor: pointer;
     position: relative;
     transition: transform 0.1s ease, box-shadow 0.1s ease;
@@ -2019,4 +2031,148 @@
     background: rgba(244, 63, 94, 0.1) !important;
     border: 1px solid rgba(244, 63, 94, 0.2) !important;
     color: rgba(251, 113, 133, 0.6) !important;
+}
+
+/* --- SETTINGS PAGE --- */
+#page-settings {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px;
+    color: #fff;
+    overflow-y: auto;
+    height: calc(100vh - 80px);
+    box-sizing: border-box;
+}
+
+#page-settings.active {
+    display: flex;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 30px;
+    width: 100%;
+    max-width: 1000px;
+}
+
+.setting-panel {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    /* Highly rounded as requested */
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.setting-panel:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.setting-header {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 15px;
+}
+
+.setting-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #e94560;
+    letter-spacing: 0.5px;
+}
+
+.setting-desc {
+    font-size: 0.95rem;
+    opacity: 0.7;
+    font-weight: 300;
+}
+
+/* Slider Style */
+.setting-slider-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 10px 0;
+}
+
+.slider-label-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    opacity: 0.6;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    background: transparent;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 28px;
+    width: 28px;
+    border-radius: 50%;
+    background: #e94560;
+    cursor: grab;
+    margin-top: -10px;
+    box-shadow: 0 0 15px rgba(233, 69, 96, 0.6);
+    border: 2px solid #fff;
+    transition: transform 0.1s;
+}
+
+input[type=range]::-webkit-slider-thumb:active {
+    cursor: grabbing;
+    transform: scale(1.1);
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 8px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+
+/* Preview Board Meter */
+.preview-board-container {
+    background: rgba(0, 0, 0, 0.25);
+    padding: 30px;
+    border-radius: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 250px;
+    margin-top: 10px;
+    overflow: hidden;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.preview-board {
+    display: inline-grid;
+    /* Match game-board */
+    gap: 4px;
+    grid-template-columns: repeat(4, 1fr);
+    background: rgba(0, 0, 0, 0.2);
+    padding: 12px;
+    border-radius: 12px;
+}
+
+.preview-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.3rem;
+    color: #a8d5ff;
+    font-weight: 700;
 }

@@ -937,8 +937,8 @@ function renderBoard(board, grayed) {
     const rows = board.length;
     const cols = board[0].length;
 
-    boardEl.style.gridTemplateColumns = `repeat(${cols}, 60px)`;
-    boardEl.style.gridTemplateRows = `repeat(${rows}, 60px)`;
+    boardEl.style.gridTemplateColumns = `repeat(${cols}, var(--cell-size, 60px))`;
+    boardEl.style.gridTemplateRows = `repeat(${rows}, var(--cell-size, 60px))`;
     boardEl.innerHTML = '';
 
     // Handle Rotation: 180 degrees flip
@@ -959,6 +959,205 @@ function renderBoard(board, grayed) {
             }
         }
     }
+
+    // Check for overflow after render
+    setTimeout(checkBoardOverflow, 50);
+}
+
+// Helper: Check if board panel needs vertical scrolling
+// Continuous Adaptive Layout Engine (formerly checkBoardOverflow)
+// Emergency Shim: Replaced older logic with confirmed strict capped logic
+// Helper: Check if board panel needs vertical scrolling
+// Continuous Adaptive Layout Engine (Board-First + Capped)
+// Emergency Shim: Replaced older logic with confirmed strict capped logic
+function checkBoardOverflow() {
+    const playPage = document.getElementById('page-play');
+    const boardPanel = document.querySelector('.board-panel');
+    const boardEl = document.getElementById('game-board');
+    if (!playPage || !boardPanel || !boardEl) return;
+
+    // 1. Get Board Dimensions (Rows & Cols)
+    let cols = 0;
+    let rows = 0;
+    if (window.lastGameState && window.lastGameState.board && window.lastGameState.board[0]) {
+        cols = window.lastGameState.board[0].length;
+        rows = window.lastGameState.board.length;
+    } else {
+        const gridCols = boardEl.style.gridTemplateColumns;
+        if (gridCols && gridCols.includes('repeat')) {
+            const match = gridCols.match(/repeat\((\d+)/);
+            if (match) cols = parseInt(match[1]);
+        }
+        const gridRows = boardEl.style.gridTemplateRows;
+        if (gridRows && gridRows.includes('repeat')) {
+            const match = gridRows.match(/repeat\((\d+)/);
+            if (match) rows = parseInt(match[1]);
+        }
+    }
+    // Fallbacks
+    if (!cols) cols = 8;
+    if (!rows) rows = 8; // Default is usually square-ish if unknown
+
+    // Condition: Is this strictly a 6x8 board? (Or 8x6)
+    // User requested changes ONLY for 6x8.
+    const isSixByEight = (cols === 6 && rows === 8) || (cols === 8 && rows === 6);
+    console.log(`[Layout] Board: ${cols}x${rows}. Is 6x8 target? ${isSixByEight}`);
+
+    // Get Cell Size
+    const computedStyle = getComputedStyle(document.documentElement);
+    const cellSizeVar = computedStyle.getPropertyValue('--cell-size').trim();
+    const cellSize = parseInt(cellSizeVar) || 60;
+
+    // 2. Calculate Required Width for Board
+    // Width = (Cols * Size) + Gap + Padding + Scrollbar
+    const boardGap = 4 * (cols - 1);
+    const boardPadding = 40; // 20px * 2 (CSS matches this)
+    let requiredBoardWidth = (cols * cellSize) + boardGap + boardPadding;
+
+    // Add Scrollbar Width if present
+    const scrollbarWidth = boardPanel.offsetWidth - boardPanel.clientWidth;
+    requiredBoardWidth += scrollbarWidth;
+
+    // 3. Calculate Available Space
+    const windowWidth = window.innerWidth;
+    // Safety Margin: 40px padding + 40px gaps + 40px buffer = 120px Total.
+    const safetyMargin = 120;
+
+    // The key difference: We start with Window and subtract Board
+    const availableForPanels = windowWidth - requiredBoardWidth - safetyMargin;
+
+    // 4. Distribute Remaining Space
+    let newLeft = 0;
+    let newRight = 0;
+
+    if (availableForPanels > 0) {
+        // Calculate proportional shares
+        const calculatedLeft = Math.floor(availableForPanels * 0.52);
+        const calculatedRight = Math.floor(availableForPanels * 0.48);
+
+        // CONDITIONAL CAPS
+        let maxLeft, maxRight;
+
+        if (isSixByEight) {
+            // "Apply the size changes" -> Smaller
+            maxLeft = 260;
+            maxRight = 240;
+        } else {
+            // "Keep what they previously were" -> Standard/Larger
+            // Default CSS implies 340/320 base.
+            maxLeft = 340;
+            maxRight = 320;
+        }
+
+        newLeft = Math.min(calculatedLeft, maxLeft);
+        newRight = Math.min(calculatedRight, maxRight);
+    } else {
+        newLeft = 0;
+        newRight = 0;
+    }
+
+    // 5. Apply
+    playPage.style.setProperty('--left-panel-w', `${newLeft}px`);
+    playPage.style.setProperty('--right-panel-w', `${newRight}px`);
+
+    // Maintain vertical scroll class
+    if (boardPanel.scrollHeight > boardPanel.clientHeight) {
+        playPage.classList.add('has-vertical-scroll');
+    } else {
+        playPage.classList.remove('has-vertical-scroll');
+    }
+}
+
+// Deprecated old function (renamed to avoid conflict)
+function checkBoardOverflow_OLD() {
+    const playPage = document.getElementById('page-play');
+    const boardPanel = document.querySelector('.board-panel');
+    const boardEl = document.getElementById('game-board');
+    if (!playPage || !boardPanel || !boardEl) return;
+
+    // 1. Get Board Dimensions
+    let cols = 0;
+    if (window.lastGameState && window.lastGameState.board && window.lastGameState.board[0]) {
+        cols = window.lastGameState.board[0].length;
+    } else {
+        const gridCols = boardEl.style.gridTemplateColumns;
+        if (gridCols && gridCols.includes('repeat')) {
+            const match = gridCols.match(/repeat\((\d+)/);
+            if (match) cols = parseInt(match[1]);
+        }
+    }
+    if (!cols) cols = 8;
+
+    // Get Cell Size
+    const computedStyle = getComputedStyle(document.documentElement);
+    const cellSizeVar = computedStyle.getPropertyValue('--cell-size').trim();
+    const cellSize = parseInt(cellSizeVar) || 60;
+
+    // 2. Calculate Required Width
+    const boardGap = 4 * (cols - 1);
+    const boardPadding = 24;
+    let requiredBoardWidth = (cols * cellSize) + boardGap + boardPadding;
+
+    // Add Scrollbar Width if present
+    const scrollbarWidth = boardPanel.offsetWidth - boardPanel.clientWidth;
+    requiredBoardWidth += scrollbarWidth;
+
+    // 3. Calculate Available Space
+    const windowWidth = window.innerWidth;
+    // 80px base + 80px safety buffer to prevent scrolling and add breathability
+    const layoutGaps = 160;
+    const availableForPanels = windowWidth - requiredBoardWidth - layoutGaps;
+
+    // 4. Calculate Panel Widths
+    // "Fit the size" -> Fill available space
+    // Base proportions
+    const baseLeft = 330;
+    const baseRight = 310;
+    const totalBase = baseLeft + baseRight;
+
+    // Distribute ALL available space proportionally
+    // We can cap it if it gets absurdly large, but "no empty space" implies filling.
+    // Let's cap strictly to ensure it doesn't break UI internals (e.g. > 600px might be ugly)
+    const scale = availableForPanels / totalBase;
+
+    // Allow expansion up to a reasonable limit (e.g. 1.5x) or full fill?
+    // User said "horizontal length ... fit the size of the board ... no empty unused space"
+    // I will let it fill completely.
+
+    let newLeft = Math.floor(baseLeft * scale);
+    let newRight = Math.floor(baseRight * scale);
+
+    // Safety check: don't go below 0
+    newLeft = Math.max(0, newLeft);
+    newRight = Math.max(0, newRight);
+
+    // 5. Apply
+    playPage.style.setProperty('--left-panel-w', `${newLeft}px`);
+    playPage.style.setProperty('--right-panel-w', `${newRight}px`);
+
+    // Maintain vertical scroll class for potential other uses
+    if (boardPanel.scrollHeight > boardPanel.clientHeight) {
+        playPage.classList.add('has-vertical-scroll');
+    } else {
+        playPage.classList.remove('has-vertical-scroll');
+    }
+}
+
+// Initial Listener for Resize
+window.addEventListener('resize', () => {
+    if (window.checkBoardOverflow) checkBoardOverflow();
+});
+
+// Also observe panel resize
+if (window.ResizeObserver) {
+    const resizeObserver = new ResizeObserver(entries => {
+        if (window.checkBoardOverflow) checkBoardOverflow();
+    });
+    // Wait for DOM
+    setTimeout(() => {
+        const bp = document.querySelector('.board-panel');
+        if (bp) resizeObserver.observe(bp);
+    }, 1000);
 }
 
 // Helper to create a board cell

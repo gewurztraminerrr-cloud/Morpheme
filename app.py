@@ -26,11 +26,62 @@ def init_db():
             PRIMARY KEY (user_id, config_key),
             FOREIGN KEY(user_id) REFERENCES users(id)
         );
+        CREATE TABLE IF NOT EXISTS user_settings (
+            user_id INTEGER,
+            setting_key TEXT,
+            setting_value TEXT,
+            PRIMARY KEY (user_id, setting_key),
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        );
     ''')
     conn.commit()
     conn.close()
 
 init_db()
+
+# ... (rest of file) ...
+
+# Settings Endpoints
+@app.route('/api/settings/update', methods=['POST'])
+def update_setting():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    data = request.get_json()
+    key = data.get('key')
+    value = data.get('value')
+    
+    if not key or value is None:
+        return jsonify({'error': 'Missing key or value'}), 400
+        
+    conn = sqlite3.connect('morpheme.db')
+    try:
+        conn.execute('''
+            INSERT INTO user_settings (user_id, setting_key, setting_value)
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_id, setting_key) 
+            DO UPDATE SET setting_value=excluded.setting_value
+        ''', (session['user_id'], key, str(value)))
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/settings', methods=['GET'])
+def get_settings():
+    if 'user_id' not in session:
+        return jsonify({'settings': {}}) # Return empty for guests/unauthed
+    
+    conn = sqlite3.connect('morpheme.db')
+    cursor = conn.execute('SELECT setting_key, setting_value FROM user_settings WHERE user_id = ?', (session['user_id'],))
+    rows = cursor.fetchall()
+    conn.close()
+    
+    settings = {row[0]: row[1] for row in rows}
+    return jsonify({'settings': settings})
+
 
 # Serve static files
 @app.route('/')
