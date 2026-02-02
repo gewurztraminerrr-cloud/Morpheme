@@ -104,6 +104,10 @@ async function updateGameState() {
 
         const state = await response.json();
         console.log('[play.js] State received:', state); // DEBUG LOG
+
+        // Capture previous state for transition logic (e.g. daily reset kick)
+        const previousState = window.lastGameState;
+
         window.lastGameState = state;  // Store for optimistic updates
 
         // update global room id if needed
@@ -112,6 +116,12 @@ async function updateGameState() {
         const boardPanel = document.querySelector('.board-panel');
         const wordInputSection = document.querySelector('.word-input-section');
         const currentUsername = state.your_username || window.currentUser || localStorage.getItem('morpheme_username');
+
+        // Cache for recovery after reset
+        if (currentUsername) {
+            localStorage.setItem('last_morpheme_user', currentUsername);
+        }
+
         const amIPlayer = state.players.some(p => {
             const match = p.username.toLowerCase() === (currentUsername ? currentUsername.toLowerCase().trim() : '');
             return match;
@@ -257,8 +267,9 @@ async function updateGameState() {
         }
 
         // Check for state transitions
-        if (previousState !== state.state) {
-            if (state.state === 'intermission' && previousState === 'active') {
+        const lastStateStr = previousState ? previousState.state : null;
+        if (lastStateStr !== state.state) {
+            if (state.state === 'intermission' && lastStateStr === 'active') {
                 showSpinnerOverlay(state.spinner_params);
 
                 // Focus Chat on Intermission
@@ -272,10 +283,17 @@ async function updateGameState() {
                 if (listEl && listEl.parentElement) {
                     listEl.parentElement.scrollTop = 0;
                 }
-            } else if (state.state === 'active' && previousState !== 'active') {
+            } else if (state.state === 'active' && lastStateStr !== 'active') {
                 hideSpinnerOverlay();
                 const wordsList = document.getElementById('submitted-words-list');
-                wordsList.innerHTML = '<p class="placeholder">Game active - Waiting for words...</p>';
+                // Only reset if we actually transitioned FROM something else (avoid initial reset if page load)
+                if (lastStateStr) {
+                    wordsList.innerHTML = '<p class="placeholder">Game active - Waiting for words...</p>';
+                }
+
+                // DATA SYNC FIX: Explicitly clear Remaining list to prevent crossover
+                const remainingList = document.getElementById('remaining-words-list');
+                if (remainingList) remainingList.innerHTML = '';
 
                 // Focus Word Input on Game Start
                 setTimeout(() => {
@@ -283,7 +301,7 @@ async function updateGameState() {
                     if (wordInput) wordInput.focus();
                 }, 100);
             }
-            previousState = state.state;
+            // NO assignment to previousState constant. window.lastGameState update at top handles tracking.
         }
 
         // Update words panel based on state
@@ -299,11 +317,19 @@ async function updateGameState() {
         // words-panel-title
         if (wordsPanelHeader) {
             let headerText = 'Words';
+            if (state.game_type === 'fcfs') headerText = 'Live Feed';
+
             if (activeWordsTab === 'remaining') headerText = 'Remaining';
             if (activeWordsTab === 'clues') headerText = 'Clues';
             if (activeWordsTab === 'previous') headerText = 'Previous Day';
             if (state.state === 'intermission' && activeWordsTab === 'found') headerText = 'All Words';
             wordsPanelHeader.textContent = headerText;
+        }
+
+        // Update Tab Text dynamically
+        const foundTabBtn = document.querySelector('.word-tab[data-tab="found"]');
+        if (foundTabBtn) {
+            foundTabBtn.textContent = (state.game_type === 'fcfs') ? 'Live Feed' : 'Words';
         }
 
         // Identify current user
@@ -312,8 +338,55 @@ async function updateGameState() {
             currentUser = state.your_username || window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
         } catch (e) { console.warn('No currentUser', e); }
 
+        // KICK LOGIC FOR 24H RESET
+        // If we were in the room in the previous state, but are gone now (and it's a 24h room),
+        // it means the daily reset wiped us. Redirect to lobby.
+        const is24H = (state.game_type === 'accumulative' && state.time_limit >= 7200);
+
+        if (is24H && previousState && previousState.players && currentUser) {
+            const prevState = previousState;
+
+            // Was I in the room before?
+            const wasIn = prevState.players.some(p => p.username === currentUser) ||
+                (prevState.spectators || []).some(s => s.username === currentUser);
+
+            // Am I in the room now?
+            const isIn = state.players.some(p => p.username === currentUser) ||
+                (state.spectators || []).some(s => s.username === currentUser);
+
+            if (wasIn && !isIn) {
+                // Only kick if round changed or time jumped (Reset likely)
+                // Actually, in 24h room, removal ONLY happens on reset.
+                console.log("User removed from 24H room - Attempting Auto-Rejoin");
+
+                // Attempt to join immediately
+                fetch(`/api/room/${roomId}/join`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ as_spectator: false })
+                })
+                    .then(resp => resp.json())
+                    .then(data => {
+                        if (data.success) {
+                            console.log("Auto-rejoin successful!");
+                            // Toast or small notification could go here
+                        } else {
+                            console.error("Auto-rejoin failed:", data.error);
+                            alert("Daily Reset! You have been moved to the lobby.");
+                            window.location.href = '/';
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Auto-rejoin error:", err);
+                        window.location.href = '/';
+                    });
+
+                return; // Wait for join response
+            }
+        }
+
         // 1. Configure Tab Buttons Visibility & Labels
-        const is24H = (state.game_type === 'accumulative' && state.time_limit >= 86400);
+        // const is24H = ... (already declared above)
         const tabBtns = document.querySelectorAll('.word-tab');
 
         tabBtns.forEach(btn => {
@@ -407,10 +480,12 @@ async function updateGameState() {
                 displayAllWords(allWords, state.bonus_word, targetWords, allPlayerWords.map(w => w.toUpperCase()), state.all_word_scores, state.csw_only_words);
                 if (state.game_type === 'split' || state.game_type === 'fcfs') addSplitViewBoardToggle();
 
-            } else if (state.game_type === 'accumulative' || state.game_type === 'split') {
-                // MY WORDS
+            } else if (state.game_type !== 'fcfs') {
+                // ACTIVE STATE (Not Intermission) & Not FCFS
+                // Personal List for Standard, Split, AND Accumulative
                 const myPlayer = state.players.find(p => p.username === currentUser);
-                const myWords = myPlayer ? myPlayer.submitted_words : [];
+                const myWords = myPlayer ? (myPlayer.submitted_words || []) : [];
+
 
                 const totalWords = allWords.length;
                 const uniqueFound = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase())).size;
@@ -483,7 +558,7 @@ async function updateGameState() {
         const remainingListEl = document.getElementById('remaining-words-list');
         if (remainingListEl && activeWordsTab === 'remaining') {
             let myFoundStrs = [];
-            if (state.game_type === 'fcfs' || state.state === 'intermission') {
+            if (state.game_type === 'fcfs') {
                 myFoundStrs = allPlayerFoundStrs;
             } else if (currentUser) {
                 const me = state.players.find(p => p.username === currentUser);
@@ -533,24 +608,94 @@ async function updateGameState() {
         const prevListEl = document.getElementById('previous-words-list');
         if (prevListEl && activeWordsTab === 'previous') {
             const prevAll = state.previous_all_words || [];
+
             if (prevAll.length === 0) {
                 prevListEl.innerHTML = '<p class="placeholder">No previous data.</p>';
             } else {
-                const myPlayer = state.players.find(p => p.username === currentUser);
-                const prevMyWords = myPlayer ? (myPlayer.previous_submitted_words || []) : [];
-                const prevFoundSet = new Set(prevMyWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase()));
+                // PERSONAL HISTORY: Use my restored player's previous words OR persisted history
+                // Note: state.players might be empty if wiped by 24h reset!
+                const myPlayer = (state.players || []).find(p => p.username === currentUser);
+                let myPrevWords = myPlayer ? (myPlayer.previous_submitted_words || []) : [];
 
-                const html = prevAll.sort().map(w => {
-                    const found = prevFoundSet.has(w.toUpperCase());
-                    const statusClass = found ? 'prev-found' : 'prev-missed';
+                // BACKUP: If player was wiped (24h daily reset), check history
+                console.log('[PreviousTab] Checking history. MyPrev:', myPrevWords.length, 'Hist:', !!state.previous_day_history);
+                if (myPrevWords.length === 0 && state.previous_day_history) {
+                    const normalizedCurrent = currentUser ? currentUser.trim().toLowerCase() : '';
+                    // retrieve locally saved username as fallback (for Guests who get reset)
+                    const localUser = localStorage.getItem('last_morpheme_user');
+                    const normalizedLocal = localUser ? localUser.trim().toLowerCase() : '';
+
+                    console.log('[PreviousTab] Searching for:', normalizedCurrent, 'or Local:', normalizedLocal);
+
+                    Object.values(state.previous_day_history).forEach(record => {
+                        if (record.username) {
+                            const recName = record.username.trim().toLowerCase();
+                            // Match either current session name OR locally saved name
+                            if ((normalizedCurrent && recName === normalizedCurrent) ||
+                                (normalizedLocal && recName === normalizedLocal)) {
+                                myPrevWords = record.found_words || [];
+                                console.log('[PreviousTab] Restored from HISTORY (Match found for:', record.username, ') Words:', myPrevWords.length);
+                            }
+                        }
+                    });
+                }
+
+                console.log('[PreviousTab] Rendering. PrevAll:', prevAll.length, 'MyPrev:', myPrevWords.length);
+
+                const foundSet = new Set(myPrevWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase()));
+
+                const foundList = [];
+                const missedList = [];
+
+                prevAll.forEach(w => {
+                    if (foundSet.has(w.toUpperCase())) {
+                        foundList.push(w);
+                    } else {
+                        missedList.push(w);
+                    }
+                });
+
+                // Sort function: Length desc, then Alpha
+                const sortFn = (a, b) => {
+                    if (a.length !== b.length) return b.length - a.length;
+                    return a.toUpperCase().localeCompare(b.toUpperCase());
+                };
+
+                foundList.sort(sortFn);
+                missedList.sort(sortFn);
+
+                // Render Helper
+                const renderRow = (w, isFound) => {
+                    const statusClass = isFound ? 'player-word' : 'missed';
+                    const icon = isFound ? '✓' : '✗';
                     return `<div class="word-item ${statusClass}" data-word="${w}" style="display:flex; justify-content:space-between; cursor:pointer;">
                         <span>${w}</span>
-                        <span style="opacity:0.6">${found ? '✓' : '✗'}</span>
+                        <span style="opacity:0.6">${icon}</span>
                     </div>`;
-                }).join('');
+                };
+
+                let html = '';
+
+                // Found Section
+                html += `<div style="padding:10px; background:rgba(0,0,0,0.1); font-weight:bold; color:#4a90e2;">FOUND (${foundList.length})</div>`;
+                if (foundList.length > 0) {
+                    html += foundList.map(w => renderRow(w, true)).join('');
+                } else {
+                    html += `<div style="padding:15px; text-align:center; font-style:italic; opacity:0.6;">None</div>`;
+                }
+
+                // Missed Section
+                html += `<div style="padding:10px; background:rgba(0,0,0,0.1); font-weight:bold; margin-top:10px; color:#888;">MISSED (${missedList.length})</div>`;
+                if (missedList.length > 0) {
+                    html += missedList.map(w => renderRow(w, false)).join('');
+                } else {
+                    html += `<div style="padding:15px; text-align:center; font-style:italic; opacity:0.6;">None</div>`;
+                }
+
                 prevListEl.innerHTML = html;
             }
         }
+
 
         // Auto-focus check
         if (isActive && !previousState) {
@@ -566,6 +711,7 @@ async function updateGameState() {
 }
 
 function renderPlayers(players, currentUser = null) {
+    console.log('[RenderPlayers] Players:', players && players.length);
     const listEl = document.getElementById('players-list');
     if (!players || players.length === 0) {
         listEl.innerHTML = '<p class="placeholder">No players</p>';
@@ -597,7 +743,13 @@ function renderPlayers(players, currentUser = null) {
         const selectedClass = (p.username === selectedPlayerUsername) ? ' selected-player' : '';
 
         // Calculate rating color
-        const ratingColor = window.getRatingColor ? window.getRatingColor(displayRating) : '#fff';
+        let ratingColor = window.getRatingColor ? window.getRatingColor(displayRating) : '#fff';
+
+        // New User Indicator (Blueish Square)
+        // Check strict equality to 0, ensuring we don't catch undefined or null
+        if (!isGuest && p.games_played === 0) {
+            ratingColor = '#0044ff'; // 1200 range Blue for new users
+        }
 
         // Input Method Icon
         let inputIcon = '🖱️'; // Default
@@ -750,10 +902,25 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     const cswOnlyUpper = (cswOnlyWords || []).map(w => w.toUpperCase());
 
     // Sort: Length desc, then Alpha
+    // Sort: Color Priority, then Length desc, then Alpha
+    // Priority: Green (Bonus) > Blue (Found) > Gold (CSW) > Black/Gray (Missed/Unfound)
     const sortedWords = [...allWords].sort((a, b) => {
+        const wordA = a.toUpperCase();
+        const wordB = b.toUpperCase();
+
+        // 1. Length (Desc)
         if (a.length !== b.length) return b.length - a.length;
-        return a.toUpperCase().localeCompare(b.toUpperCase());
+
+        // 2. Score (Desc)
+        const scoreA = allWordScores[wordA] || 0;
+        const scoreB = allWordScores[wordB] || 0;
+        if (scoreA !== scoreB) return scoreB - scoreA;
+
+        // 3. Alpha
+        return wordA.localeCompare(wordB);
     });
+
+    console.log('[renderWordsList] Rendering words:', sortedWords.length);
 
     listEl.innerHTML = sortedWords.map(word => {
         const wordUpper = word.toUpperCase();
@@ -785,6 +952,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             className += ' unfound missed';
         }
 
+        // Add display:flex inline just in case
         return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; cursor:pointer;">
             <span>${word}</span>
             <span style="opacity:0.8">${points}</span>
@@ -879,7 +1047,7 @@ function updateLocalTimer() {
 
     // Format determination
     let is24h = false;
-    if (window.lastGameState && window.lastGameState.time_limit >= 86400) {
+    if (window.lastGameState && window.lastGameState.time_limit >= 7200) {
         is24h = true;
     }
 

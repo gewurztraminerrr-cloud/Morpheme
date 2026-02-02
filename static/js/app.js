@@ -340,7 +340,7 @@ async function handleSignIn() {
             window.currentUser = currentUser;
             navigateToLobby();
         } else {
-            errorEl.textContent = data.message;
+            errorEl.textContent = data.error || data.message;
         }
     } catch (error) {
         errorEl.textContent = 'An error occurred. Please try again.';
@@ -382,7 +382,7 @@ async function handleSignUp() {
             window.currentUser = currentUser;
             navigateToLobby();
         } else {
-            errorEl.textContent = data.message;
+            errorEl.textContent = data.error || data.message;
         }
     } catch (error) {
         errorEl.textContent = 'An error occurred. Please try again.';

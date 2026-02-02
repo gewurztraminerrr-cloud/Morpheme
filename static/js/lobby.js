@@ -43,14 +43,16 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 let data = null;
 
-                // For 24h rooms, check if one already exists and JOIN it
-                if (timeLimit >= 86400) {
+                // For ALL Accumulative rooms, check if one already exists and JOIN it
+                // This ensures all users share the same board/timer (Multiplayer)
+                if (true) {
                     try {
                         const listResp = await fetch(`/api/rooms?game_type=${gameType}&board_dimensions=${boardDimensions}&time_limit=${timeLimit}`);
                         const listData = await listResp.json();
                         if (listData.rooms && listData.rooms.length > 0) {
+                            // Join the first available room
                             const existingId = listData.rooms[0].room_id;
-                            console.log('Found existing 24h room, joining:', existingId);
+                            console.log('Found existing Accumulative room, joining:', existingId);
                             const joinResp = await fetch(`/api/room/${existingId}/join`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
@@ -59,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             const joinData = await joinResp.json();
                             if (joinData.success) {
                                 data = joinData;
-                                data.room_id = existingId; // Manually add ID since join endpoint doesn't return it usually
+                                data.room_id = existingId;
                             }
                         }
                     } catch (err) { console.error('Error checking for existing room:', err); }

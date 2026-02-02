@@ -21,6 +21,7 @@ class Player:
     score: int = 0
     previous_round_score: int = 0
     rating_change: int = 0
+    games_played: int = 0
     previous_submitted_words: List[Dict] = field(default_factory=list)
     found_bonus_word: bool = False
     last_active: float = field(default_factory=time.time)
@@ -57,6 +58,7 @@ class GameRoom:
     board: List[List[str]] = field(default_factory=list)
     all_words: List[str] = field(default_factory=list)  # Fast initial word list
     previous_all_words: List[str] = field(default_factory=list) # Previous round words
+    previous_day_history: Dict = field(default_factory=dict) # Snapshot of yesterday's game (Found/Missed)
     complete_words: List[str] = field(default_factory=list)  # Complete word list from background solving
     solved_words_with_scores: Dict[str, int] = field(default_factory=dict)  # Pre-computed word scores
     bonus_word: str = ''
@@ -67,6 +69,7 @@ class GameRoom:
     
     # Spinner parameters
     spinner_params: Dict = field(default_factory=dict)
+    current_min_length: int = 3  # Stores active round's min length (decoupled from spinner_params which updates early)
     
     # Next round pre-generation (for Accumulative timing)
     spinner_params_generated: bool = False  # Track if spinner set generated for next round
@@ -77,6 +80,7 @@ class GameRoom:
     
     # Players
     players: List[Player] = field(default_factory=list)
+    past_players: Dict[str, Player] = field(default_factory=dict) # Archive of players for persistence
     
     # Chat
     chat_messages: List[Dict] = field(default_factory=list)
@@ -107,15 +111,27 @@ class GameRoom:
         if len(self.chat_messages) > 30:
             self.chat_messages.pop(0)
     
-    def add_player(self, user_id, username, rating):
+    def add_player(self, user_id, username, rating, games_played=0):
         """Add player to room"""
-        is_daily = self.time_limit >= 86400
+        is_daily = self.time_limit >= 7200
         
         # Check if player already exists (PERSISTENCE)
         existing_player = self.get_player(user_id)
         if existing_player and is_daily:
             print(f"[GameRoom] Persistence: Reusing existing player {username} in 24h room {self.room_id}")
             existing_player.last_active = time.time()
+            return True
+            
+        # Check if player exists in past_players
+        # print(f"DEBUG: Checking past_players for {user_id}. Past players count: {len(self.past_players)}")
+        existing_player = next((p for p in self.past_players.values() if str(p.user_id) == str(user_id)), None)
+        
+        if existing_player:
+            print(f"DEBUG: RESTORING player {user_id} from past_players. History len: {len(existing_player.previous_submitted_words)}")
+            print(f"DEBUG: Restored words: {[w['word'] for w in existing_player.previous_submitted_words]}")
+            existing_player.last_active = time.time()
+            existing_player.games_played = games_played # Update games played (if changed)
+            self.players.append(existing_player)
             return True
 
         # Ensure player is not already in the room (prevent duplicates)
@@ -125,7 +141,7 @@ class GameRoom:
         if len(self.players) >= self.max_players:
             return False # Room full
             
-        player = Player(user_id, username, rating)
+        player = Player(user_id, username, rating, games_played=games_played)
         self.players.append(player)
         self.players.sort(key=lambda p: p.rating, reverse=True)
         
@@ -136,12 +152,17 @@ class GameRoom:
 
     def add_spectator(self, user_id, username, rating):
         """Add spectator to room"""
+        # Disable spectating for 24h rooms (>= 240s)
+        if self.time_limit >= 120:
+             return False
+
         # Ensure not already a spectator
         for s in self.spectators:
             if str(s.user_id) == str(user_id):
                 return
         
-        spec = Player(user_id, username, rating)
+        
+        spec = Player(user_id, username, rating, games_played=0) # Spectators don't really use this, but Player needs it
         self.spectators.append(spec)
         
         # System Notice
@@ -151,7 +172,7 @@ class GameRoom:
     def remove_player(self, user_id):
         """Remove player or spectator from room"""
         # PERSISTENCE: Never remove players from 24h rooms (they only reset at midnight)
-        if self.time_limit >= 86400:
+        if self.time_limit >= 120:
             # We still allow removing from spectators if they were accidentally added there
             initial_specs = len(self.spectators)
             self.spectators = [p for p in self.spectators if str(p.user_id) != str(user_id)]
@@ -197,7 +218,7 @@ class GameRoom:
         now = time.time()
         active_players = []
         players_removed = False
-        is_daily = self.time_limit >= 86400
+        is_daily = self.time_limit >= 7200
         
         for p in self.players:
             age = now - p.last_active
@@ -280,8 +301,9 @@ class GameRoom:
         for s in self.spectators:
             if str(s.user_id) == str(user_id):
                 return False, "Spectators cannot submit words", 0, None
-
+        
         player = self.get_player(user_id)
+
         if not player:
             return False, "Player not in room", 0, None
         
@@ -389,12 +411,37 @@ class GameRoom:
         # Check if active round has expired
         if self.state == 'active' and self.time_remaining == 0:
             self.state = 'intermission'
+            self.state = 'intermission'
             self.intermission_start_time = time.time()
+            
+            # IMMEDIATE SNAPSHOT (24h Rooms): Save history now so it is available during intermission
+            if self.time_limit >= 120:
+                print(f"[GameRoom] Snapshotting history at start of intermission for room {self.room_id}")
+                # Filter previous_all_words by min_word_length to avoid showing short words as "Missed"
+                min_len = self.spinner_params.get('min_word_length', 3)
+                self.previous_all_words = [w for w in self.all_words if len(w) >= min_len]
+                self.previous_day_history = {}
+                for p in self.players:
+                    self.previous_day_history[str(p.user_id)] = {
+                        'username': p.username,
+                        'found_words': [w['word'] for w in p.submitted_words]
+                    }
             
             # SPLIT POINTS LOGIC
             if self.game_type == 'split':
                 self.calculate_split_scores()
+
+            # UPDATE RATINGS (Immediately at round end)
+            # Calculate Proportional Rating changes based on FINAL scores
+            print(f"[GameRoom] Calculating Proportional ratings at end of Round {self.current_round}")
+            rating_changes = calculate_proportional_rating_change(self.players)
             
+            for player in self.players:
+                change = int(rating_changes.get(player.user_id, 0))
+                player.rating += change
+                player.rating_change = change
+                print(f"[GameRoom] Player {player.username} rating adjustment: {change} -> {player.rating}")
+
             # Reset timing flags for next intermission
             self.spinner_params_generated = False
             self.board_search_started = False
@@ -436,14 +483,15 @@ class GameRoom:
             count = len(finders)
             base_points = calculate_word_score(word, self.bonus_word)
             
-            # Divide points
-            share = base_points // count
-            remainder = base_points % count
+            # Divide points EQUALLY (User Request: "ensure they both get the same point value")
+            # Strategy: Round Up (User left choice to me)
+            # Formula: ceil(a/b) = (a + b - 1) // b
+            final_points = (base_points + count - 1) // count
             
             for i, (player, timestamp, w_obj) in enumerate(finders):
-                # Distribute remainder to the first N finders
-                # This ensures SUM(final_points) == base_points
-                final_points = share + (1 if i < remainder else 0)
+                # No remainder distribution - everyone gets the same rounded-up value
+                
+                # Update word object with split metadata for frontend
                 
                 # Update word object with split metadata for frontend
                 w_obj['split_points'] = final_points
@@ -461,63 +509,76 @@ class GameRoom:
             # Also calculate invalid words points (0, but we might want to track count)
 
 
-def calculate_pairwise_elo(players):
+def calculate_proportional_rating_change(players):
     """
-    Calculate rating changes based on pairwise comparisons.
-    For each pair of players (A, B):
-        Calculate expected score for A vs B
-        Calculate actual score (1=win, 0.5=draw, 0=loss)
-        Delta = K * (Actual - Expected)
-    
-    Final Elo Change for A = Sum of Deltas vs all opponents
+    Calculate rating changes based on Proportional Share system (from rating.java).
+    Expected Score = (TotalScore / TotalRating) * PlayerRating
+    Change based on deviation from Expected Score relative to a 75% baseline.
     """
-
-    K = 32
     
-    # Filter out guests (negative user_ids)
-    # They don't have ratings and shouldn't affect others
-    real_players = [p for p in players if p.user_id > 0]
+    # 1. Identify active registered players (score >= 1, user_id > 0)
+    # The Java code iterates rows and checks score >= 1
+    active_players = [p for p in players if p.score >= 1 and p.user_id > 0]
     
-    changes = {p.user_id: 0 for p in players} # Initialize for all, though guests stay 0
+    changes = {p.user_id: 0 for p in players}
     
-    if len(real_players) < 2:
-        return changes # No changes if solo or only against guests
+    if not active_players:
+        return changes
         
-    for i in range(len(real_players)):
-        for j in range(i + 1, len(real_players)):
-            pA = real_players[i]
-            pB = real_players[j]
-            
-            # Expected score for A
-            # Ra = pA.rating, Rb = pB.rating
-            expA = 1 / (1 + 10 ** ((pB.rating - pA.rating) / 400))
-            expB = 1 / (1 + 10 ** ((pA.rating - pB.rating) / 400))
-            
-            # Actual score based on points
-            if pA.score > pB.score:
-                actA = 1.0
-                actB = 0.0
-            elif pA.score < pB.score:
-                actA = 0.0
-                actB = 1.0
-            else:
-                actA = 0.5
-                actB = 0.5
-            
-            # Calculate Delta
-            deltaA = K * (actA - expA)
-            deltaB = K * (actB - expB)
-            
-            changes[pA.user_id] += deltaA
-            changes[pB.user_id] += deltaB
-            
-    # Cap changes at +/- 16
-    for uid in changes:
-        if changes[uid] > 16:
-            changes[uid] = 16
-        elif changes[uid] < -16:
-            changes[uid] = -16
-            
+    # 2. Sum Totals
+    score_sum = sum(p.score for p in active_players)
+    rating_sum = sum(p.rating for p in active_players)
+    
+    if rating_sum == 0:
+        return changes # Prevent division by zero
+        
+    print(f"[Rating] Proportional Calc: ScoreSum={score_sum}, RatingSum={rating_sum}, Players={len(active_players)}")
+    
+    # 3. Calculate Changes
+    for p in active_players:
+        # Expected score: logic from Java line 33: ((double)scoreSum/ratingSum) * theRatingInt
+        expected_score = (score_sum / rating_sum) * p.rating
+        
+        # Sixteen Value: logic from Java line 36: expectedScore * ((double) 75/100)
+        sixteen_score_value = expected_score * 0.75
+        
+        # Increment unit: logic from Java line 41: sixteenScoreValue / 16
+        increment = sixteen_score_value / 16.0
+        
+        change = 0
+        
+        if increment > 0:
+            if p.score < expected_score:
+                difference = expected_score - p.score
+                # Logic loop lines 44-57
+                # Basically: find d such that increment * d >= difference
+                # Mathematical equivalent: ceil(difference / increment)
+                # But let's follow the loop logic to be precise to the Java implementation
+                # The loop breaks at the first match.
+                d = 1
+                while d <= 16:
+                    if increment * d >= difference:
+                        change = -d
+                        break
+                    d += 1
+                if d > 16:
+                    change = -16
+                    
+            elif p.score > expected_score:
+                difference = p.score - expected_score
+                # Logic loop lines 64-77
+                f = 1
+                while f <= 16:
+                    if increment * f >= difference:
+                        change = f
+                        break
+                    f += 1
+                if f > 16:
+                    change = 16
+        
+        changes[p.user_id] = change
+        print(f"[Rating] Player {p.username} (R:{p.rating}, S:{p.score}): Exp={expected_score:.2f}, Diff={p.score-expected_score:.2f}, Change={change}")
+        
     return changes
 
 def calculate_word_score(word, bonus_word):
@@ -622,8 +683,8 @@ class RoomManager:
                 
                 # If room is empty, mark for deletion
                 if len(room.players) == 0:
-                    # SKIP deleting daily rooms (>= 86400s)
-                    if room.time_limit < 86400:
+                    # SKIP deleting daily rooms (>= 120s)
+                    if room.time_limit < 120:
                         print(f"[RoomManager] Room {room_id} is empty, marking for deletion")
                         rooms_to_delete.append(room_id)
             except Exception as e:
@@ -650,6 +711,19 @@ class RoomManager:
             return False
         
         room.starting_round = True
+        
+        # Save previous round data before generating new one
+        # Save previous round data before generating new one
+        # SAFEGUARD: If intermission already snapped it, keep it!
+        if not getattr(room, 'previous_all_words', None) and room.all_words:
+            # Filter by min_word_length if available (fallback)
+            min_len = room.spinner_params.get('min_word_length', 3)
+            room.previous_all_words = [w for w in room.all_words if len(w) >= min_len]
+            print(f"[RoomManager] Saved {len(room.previous_all_words)} words to history (Fallback/Round {room.current_round})")
+        elif getattr(room, 'previous_all_words', None):
+            print(f"[RoomManager] Using existing history snapshot (intermission) for Round {room.current_round}")
+        else:
+             print(f"[RoomManager] WARNING: No words to save to history (Round {room.current_round})")
         
         try:
             print(f"[RoomManager] Generating spinner parameters for {room.board_dimensions}")
@@ -685,30 +759,25 @@ class RoomManager:
                 print(f"[RoomManager] ERROR: Board generation failed!")
                 return False
             
+            # ATOMICITY FIX: Do not assign to room.all_words yet
+            # room.board = board (Safe to assign)
             room.board = board
-            room.all_words = all_words
+            
+            # Store in temp var
+            new_all_words = all_words
+            print(f"DEBUG: Valid words sample (hidden): {new_all_words[:10]}")
             
             # Start the round immediately with timer
             room.current_round += 1
+            
+            # Update data atomically with state change
+            room.all_words = new_all_words
+            room.current_min_length = room.spinner_params.get('min_word_length', 3)
             room.state = 'active'
             room.round_start_time = time.time()
             
-            # Daily Room Logic (>= 24h) - Reset at Midnight
-            if room.time_limit >= 86400:
-                # HARD RESET: Erase all users for the new day, BUT ONLY IF NOT THE FIRST ROUND
-                if room.current_round > 1:
-                    print(f"[RoomManager] Daily Reset: Wiping all players from room {room_id}")
-                    room.players = []
-                    room.spectators = []
-                else:
-                    print(f"[RoomManager] Daily Room Initial Start: Keeping players in room {room_id}")
-                
-                now = datetime.datetime.now()
-                midnight = (now + datetime.timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-                room.custom_end_time = midnight.timestamp()
-                print(f"[RoomManager] Daily room: aligned to midnight {midnight}")
-            else:
-                room.custom_end_time = 0
+            # Default custom end time
+            room.custom_end_time = 0
             
             # SPLIT POINTS RANDOMIATION
             if room.game_type == 'split':
@@ -719,26 +788,56 @@ class RoomManager:
             print(f"[RoomManager] Round {room.current_round} started - timer active!")
             
             # Clear previous words and scores
-            
-            # Calculate ELO only after first round
-            elo_changes = {}
-            if room.current_round > 1:
-                elo_changes = calculate_pairwise_elo(room.players)
-
             for player in room.players:
-                if room.current_round > 1:
-                     change = int(elo_changes.get(player.user_id, 0))
-                     player.rating += change
-                     player.rating_change = change
-                else:
-                     player.rating_change = 0
+                player.rating_change = 0 # Reset change display for new round start
                 # Store current score for next round's comparison
                 player.previous_round_score = player.score
+                
+                # Save submitted words to history
+                player.previous_submitted_words = list(player.submitted_words)
+                
                 # Clear for new round
                 player.submitted_words = []
                 player.invalid_words = []
                 player.score = 0
                 player.found_bonus_word = False
+                
+            # Daily Room Logic (>= 24h) - Reset at Midnight
+            # LOGIC FIX: We must process persistence BEFORE clearing data
+            if room.time_limit >= 7200 and room.current_round > 1:
+                print(f"[RoomManager] Daily Reset: Archiving & Wiping players in room {room_id}")
+                
+                # NOTE: room.previous_all_words is ALREADY saved at the top of start_round.
+                # Do NOT overwrite it here with the new room.all_words!
+                
+                # 2. Archive Player Data for 'Found/Missed' checks
+                # We need to know what each player found to show blue/gray checks
+                for p in room.players:
+                    room.past_players[str(p.user_id)] = p
+                    # Snapshot for Previous Tab
+                    # We store a lightweight map of {username: [words]}
+                    if str(p.user_id) not in room.previous_day_history:
+                        # USE previous_submitted_words because submitted_words was cleared in the standard loop above!
+                        room.previous_day_history[str(p.user_id)] = {
+                            'username': p.username,
+                            'found_words': [w['word'] for w in p.previous_submitted_words]
+                        }
+
+                # 3. Wipe current players
+                room.players = []
+                room.spectators = []
+            
+            # Clear FCFS global list
+            room.fcfs_found_words.clear()
+            
+            if room.time_limit >= 7200:
+                now = datetime.datetime.now()
+                now_dt = datetime.datetime.now()
+                # Next midnight
+                midnight = (now_dt + datetime.timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+                delta = (midnight - now_dt).total_seconds()
+                room.custom_end_time = time.time() + delta
+                print(f"[RoomManager] Daily room: aligned to next midnight ({midnight})")
                 
             # Clear FCFS global list
             room.fcfs_found_words.clear()
@@ -846,6 +945,37 @@ class RoomManager:
                 print(f"[RoomManager] WARNING: Board not ready, falling back to start_round")
                 return self.start_round(room_id)
             
+            # SAVE PREVIOUS ROUND DATA (Persistence for "Previous Day" tab)
+            # CHECK if we already snapshotted during intermission. If so, KEEP IT!
+            # Use getattr with explicit check for None to avoid "empty list evaluates to False" issue
+            has_prev_all = getattr(room, 'previous_all_words', None) is not None
+            has_prev_hist = getattr(room, 'previous_day_history', None) is not None
+            
+            print(f"DEBUG: start_next_round persistence check. HasHist={has_prev_hist}, HasAll={has_prev_all}")
+            if has_prev_hist:
+                 print(f"DEBUG: History keys: {list(room.previous_day_history.keys())}")
+
+            if not has_prev_all or not has_prev_hist:
+                print("DEBUG: Snapshot IS missing. Creating new snapshot now.")
+                
+                # Filter by min_word_length (fallback)
+                min_len = room.spinner_params.get('min_word_length', 3)
+                source_words = list(room.complete_words) if room.complete_words else list(room.all_words)
+                room.previous_all_words = [w for w in source_words if len(w) >= min_len]
+                
+                # SNAPSHOT HISTORY BEFORE OVERWRITING BOARD
+                if room.time_limit >= 120:
+                    print(f"[RoomManager] Daily Reset: Snapshotting history (fallback) before new round")
+                    room.previous_day_history = {}
+                    for p in room.players:
+                        room.previous_day_history[str(p.user_id)] = {
+                            'username': p.username,
+                            'found_words': [w['word'] for w in p.submitted_words]
+                        }
+                    print(f"[RoomManager] Saved daily history for {len(room.players)} players")
+            else:
+                print(f"[RoomManager] SKIPPING snapshot - Using existing history from intermission")
+
             # Use pre-generated board and words
             room.board = room.next_round_board
             room.all_words = room.next_round_words
@@ -854,6 +984,7 @@ class RoomManager:
             # Start the round
             room.current_round += 1
             room.state = 'active'
+            room.current_min_length = room.spinner_params.get('min_word_length', 3)
             room.round_start_time = time.time()
             
             # SPLIT POINTS RANDOMIATION
@@ -864,18 +995,19 @@ class RoomManager:
                 
             print(f"[RoomManager] Round {room.current_round} started with pre-generated board!")
             
-            # SAVE PREVIOUS ROUND DATA (Persistence for "Previous Day" tab)
-            room.previous_all_words = list(room.complete_words) if room.complete_words else list(room.all_words)
+            print(f"[RoomManager] Round {room.current_round} started with pre-generated board!")
             
             # 1. Calculate ELO changes based on FINAL scores of previous round
-            # Do this BEFORE resetting scores
-            elo_changes = calculate_pairwise_elo(room.players)
+            # MOVED TO check_and_update_state (Start of Intermission)
             
             for player in room.players:
-                # Update Rating
-                change = int(elo_changes.get(player.user_id, 0))
-                player.rating += change
-                player.rating_change = change
+                # Reset Rating Change (so it doesn't persist forever)
+                # But we want to show it during intermission...
+                # Actually, strictly speaking, start_next_round is AFTER intermission.
+                # So we should probably reset it here so it doesn't show during the *next* active round?
+                # The user said "Change ratings as soon as round is over".
+                # If we reset it here, it clears the green/red indicators for the new round.
+                player.rating_change = 0
                 
                 # Store current score for next round's comparison
                 player.previous_round_score = player.score
@@ -891,9 +1023,17 @@ class RoomManager:
                 
             # PERSISTENCE: If this is a 24h room, clear the player list for the new day
             # (Users who enter will be added fresh)
-            if room.time_limit >= 86400:
-                print(f"[RoomManager] Daily Reset: Clearing player list for 24h room {room_id}")
+            if room.time_limit >= 120:
+                print(f"[RoomManager] Daily Reset: Archiving player list for 24h room {room_id}")
+                
+                 # HISTORY ALREADY SNAPSHOTTED AT START OF FUNCTION
+                
+                # Move current players to past_players archive
+                for p in room.players:
+                    room.past_players[str(p.user_id)] = p
+                
                 room.players = []
+                room.spectators = []
                 
             # Clear FCFS global list
             if hasattr(room, 'fcfs_found_words'):
@@ -943,9 +1083,13 @@ class RoomManager:
             return
         
         print(f"[RoomManager] Words already found, marking as complete")
+        room.complete_words = list(room.all_words)
         room.solving_complete = True
 
 
 
 # Global instance
 room_manager = RoomManager()
+
+# DEBUG PATCH for submit_word
+# Appending print statement to verify persistence

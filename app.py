@@ -17,7 +17,8 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
-            rating INTEGER DEFAULT 1200
+            rating INTEGER DEFAULT 1200,
+            games_played INTEGER DEFAULT 0
         );
         CREATE TABLE IF NOT EXISTS user_ratings (
             user_id INTEGER,
@@ -35,6 +36,32 @@ def init_db():
         );
     ''')
     conn.commit()
+    conn.commit()
+    
+    # MIGRATION: Ensure games_played column exists
+    try:
+        conn.execute('ALTER TABLE users ADD COLUMN games_played INTEGER DEFAULT 0')
+        conn.commit()
+        print("Migrated DB: Added games_played column to users")
+    except sqlite3.OperationalError:
+        pass # Column likely exists
+        
+    except sqlite3.OperationalError:
+        pass # Column likely exists
+    
+    # MIGRATION: Fix any existing 0 ratings for registered users
+    # Users who previously joined might have 0 rating due to bug
+    # We update them to 1200 (Default)
+    try:
+        # Update user_ratings where rating is 0 and user is registered (user_id > 0)
+        conn.execute('UPDATE user_ratings SET rating = 1200 WHERE rating = 0 AND user_id > 0')
+        changes = conn.total_changes
+        if changes > 0:
+            print(f"Migrated DB: Updated {changes} user ratings from 0 to 1200")
+            conn.commit()
+    except Exception as e:
+        print(f"Migration Error (Rating Fix): {e}")
+
     conn.close()
 
 init_db()
@@ -117,6 +144,7 @@ def register():
         
         session['user_id'] = user[0]
         session['username'] = username
+        session.pop('is_guest', None) # Clear guest flag if present
         
         return jsonify({'success': True, 'username': username})
     except sqlite3.IntegrityError:
@@ -140,6 +168,7 @@ def login():
     
     session['user_id'] = user[0]
     session['username'] = username
+    session.pop('is_guest', None) # Clear guest flag if present
     
     return jsonify({'success': True, 'username': username})
 
@@ -178,7 +207,7 @@ import uuid
 
 def apply_leave_penalty(user_id, room):
     """Apply -16 rating penalty if user leaves a non-24h room with score > 0"""
-    if room.time_limit >= 86400:
+    if room.time_limit >= 7200:
         return # No penalty for 24h rooms
     
     player = room.get_player(user_id)
@@ -208,7 +237,7 @@ def cleanup_user_rooms(user_id, exclude_room_id=None):
         room = room_manager.rooms[rid]
         
         # PERSISTENCE RULE: Keep users in 24h rooms even if they join another
-        if room.time_limit >= 86400:
+        if room.time_limit >= 7200:
             continue
             
         # Apply leave penalty if applicable
@@ -267,8 +296,19 @@ def create_room():
             # For now, start fresh at 1200 for each new mode
             rating = 1200
         conn.close()
+
+    # Get games played
+    games_played = 0
+    if not session.get('is_guest', False):
+        conn = sqlite3.connect('morpheme.db')
+        try:
+             cur = conn.execute('SELECT games_played FROM users WHERE id = ?', (session['user_id'],))
+             row = cur.fetchone()
+             if row: games_played = row[0]
+        except: pass
+        conn.close()
     
-    room.add_player(session['user_id'], session['username'], rating)
+    room.add_player(session['user_id'], session['username'], rating, games_played=games_played)
     
     # Start first round immediately in background for faster loading
     # Only if NOT already running/active (check logic inside start_round already handles this)
@@ -331,9 +371,20 @@ def join_room(room_id):
     if rating > room.max_rating:
          return jsonify({'error': f'Rating {rating} too high (Max: {room.max_rating})'}), 403
 
+    # Get games played
+    games_played = 0
+    if not session.get('is_guest', False):
+        conn = sqlite3.connect('morpheme.db')
+        try:
+             cur = conn.execute('SELECT games_played FROM users WHERE id = ?', (session['user_id'],))
+             row = cur.fetchone()
+             if row: games_played = row[0]
+        except: pass
+        conn.close()
+
     # Try to join as player
     # Guests are welcome unless rating check failed (Guest rating is usually 1200)
-    success = room.add_player(user_id, session['username'], rating)
+    success = room.add_player(user_id, session['username'], rating, games_played=games_played)
     if not success:
         # Room full
         msg = f"Room is full (Max {room.max_players} players). You can watch instead."
@@ -357,7 +408,7 @@ def leave_room(room_id):
         room.remove_player(session['user_id'])
         
         # Delete room if empty (except for 24h rooms which persist)
-        if len(room.players) == 0 and room.time_limit < 86400:
+        if len(room.players) == 0 and room.time_limit < 240:
             room_manager.delete_room(room_id)
     
     return jsonify({'success': True})
@@ -438,7 +489,7 @@ def get_room_state(room_id):
         time_alive = time.time() - room.creation_time
         
         # Skip deletion for daily rooms (>= 24h) so they persist
-        is_daily_room = room.time_limit >= 86400
+        is_daily_room = room.time_limit >= 7200
         
         if not is_daily_room and len(room.players) == 0 and time_alive > 15:
             print(f"Room {room_id} empty (0 players) and old enough ({time_alive:.1f}s) - deleting")
@@ -452,10 +503,11 @@ def get_room_state(room_id):
         
         # If just transitioned to intermission, start complete solving in background
         if state_changed and room.state == 'intermission' and prev_state == 'active':
-            print(f"Transitioned to intermission, starting complete solving...")
-            room.solving_complete = False  # Reset flag
-            room.complete_words = []  # Clear previous complete words
-            room_manager.start_complete_solving(room_id)
+            print(f"Transitioned to intermission, using fast solve words immediately.")
+            # Ensure solving_complete is True so frontend proceeds
+            room.solving_complete = True
+            if not room.complete_words and room.all_words:
+                 room.complete_words = list(room.all_words)
         
         # If intermission just ended, check for timing milestones (Accumulative & FCFS)
         # If intermission just ended, check for timing milestones (Accumulative & FCFS)
@@ -491,6 +543,12 @@ def get_room_state(room_id):
                                     VALUES (?, ?, ?)
                                 ''', (p.user_id, config_key, p.rating))
                                 
+                                # Increment games_played
+                                if p.games_played is None: p.games_played = 0
+                                p.games_played += 1
+                                conn.execute('UPDATE users SET games_played = games_played + 1 WHERE id = ?', (p.user_id,))
+                               
+                                
                         conn.commit()
                         conn.close()
                         print(f"[Persistence] Ratings updated successfully for key: {config_key}")
@@ -503,7 +561,8 @@ def get_room_state(room_id):
         # During active: use all_words (fast initial list for validation)
         # IMPORTANT: We filter by min_word_length here so that validation-only words (length 2)
         # don't appear as "Missed Words" in the UI.
-        min_len = room.spinner_params.get('min_word_length', 3)
+        # FIX: Use room.current_min_length instead of spinner_params to avoid leak when next round params generated
+        min_len = getattr(room, 'current_min_length', room.spinner_params.get('min_word_length', 3))
         
         words_to_return = [w for w in room.all_words if len(w) >= min_len]
         if room.state == 'intermission':
@@ -535,22 +594,29 @@ def get_room_state(room_id):
             'max_players': room.max_players,
             'min_rating': room.min_rating,
             'max_rating': room.max_rating,
+            'max_rating': room.max_rating,
             'previous_all_words': room.previous_all_words,
+            'previous_day_history': room.previous_day_history,
+            'fcfs_found_words': list(room.fcfs_found_words) if hasattr(room, 'fcfs_found_words') else [],
             'your_username': session.get('username'),
+            'previous_day_history': room.previous_day_history,
             'players': [
                 {
                     'user_id': p.user_id,
                     'username': p.username,
                     'rating': p.rating,
                     'words_count': len(p.submitted_words),
+                    'debug_trace': print(f"STATE: {p.username} has {[w['word'] for w in p.submitted_words]}") if p.submitted_words else None,
                     'score': p.score,
                     'rating_change': p.rating_change,
                     'found_bonus_word': p.found_bonus_word,
                     'submitted_words': p.submitted_words,
                     'previous_submitted_words': p.previous_submitted_words,
                     'invalid_words': p.invalid_words,
+                    'invalid_words': p.invalid_words,
                     'input_method': p.input_method,
-                    'last_active_age': time.time() - p.last_active
+                    'last_active_age': time.time() - p.last_active,
+                    'games_played': p.games_played
                 } for p in sorted(room.players, key=lambda p: p.score, reverse=True)
             ],
             'spectators': [
@@ -1043,7 +1109,9 @@ def tools_get_lists():
             'S': 237, 'T': 161, 'U': 81, 'V': 23, 'W': 19, 'X': 7, 'Y': 40, 'Z': 12
         }
         
+        
         def calculate_likelihood(word):
+            # User requested Simple Summation (e.g. A+E = 190+278)
             return sum(freq.get(c, 0) for c in word)
 
         # We take NWL as the base for Likelihood
@@ -1053,14 +1121,15 @@ def tools_get_lists():
             if start_char is not None and not w.startswith(start_char): continue
             likelihood_eligible.append(w)
             
-        # Sort by Length ASC, then score DESC, then Alpha ASC
-        likelihood_eligible.sort(key=lambda x: (len(x), -calculate_likelihood(x), x))
+        # Sort by Likelihood Score (DESC), then Alpha (ASC)
+        # We REMOVE the intermediate alphabetic re-sort to preserve Likelihood ranking
+        likelihood_eligible.sort(key=lambda x: (-calculate_likelihood(x), x))
         
         response_data = {
             'nwl': filter_iterable(nwl_set_full),
             'csw': filter_iterable(csw_set_full),
             'csw_only': filter_iterable(csw_only_full),
-            'likelihood': likelihood_eligible[:1000], # Expanded to 1000 words
+            'likelihood': likelihood_eligible[:5000], # Top 5000 Most Likely
             'added': [],
             'uniques': load_filtered_list('randomTWLunique.txt')
         }
