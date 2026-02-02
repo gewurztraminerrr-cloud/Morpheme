@@ -78,6 +78,10 @@ def update_setting():
     key = data.get('key')
     value = data.get('value')
     
+    # GUESTS: Do not save to DB (Settings are session-only)
+    if session.get('is_guest'):
+        return jsonify({'success': True})
+    
     if not key or value is None:
         return jsonify({'error': 'Missing key or value'}), 400
         
@@ -489,7 +493,7 @@ def get_room_state(room_id):
         time_alive = time.time() - room.creation_time
         
         # Skip deletion for daily rooms (>= 24h) so they persist
-        is_daily_room = room.time_limit >= 7200
+        is_daily_room = room.time_limit >= 120
         
         if not is_daily_room and len(room.players) == 0 and time_alive > 15:
             print(f"Room {room_id} empty (0 players) and old enough ({time_alive:.1f}s) - deleting")

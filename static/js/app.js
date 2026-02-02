@@ -71,9 +71,76 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupModalListeners();
     setupAuth(); // Initialize auth listeners
     setupContactForm(); // Initialize contact form listeners
+    setupContactForm(); // Initialize contact form listeners
     // handleGuestLogin(); // Don't auto-login guest, wait for button click
+    initSettings(); // Initialize settings logic
     checkSession();
 });
+
+// Global Settings State
+window.userSettings = {
+    lobby_music: true // Default ON
+};
+
+function initSettings() {
+    const musicToggle = document.getElementById('setting-lobby-music');
+
+    // 1. Toggle Event Listener
+    if (musicToggle) {
+        musicToggle.addEventListener('change', async (e) => {
+            const isEnabled = e.target.checked;
+            window.userSettings.lobby_music = isEnabled;
+
+            // Apply immediately
+            handleLobbyMusicState();
+
+            // Save to DB (Backend handles Guest check)
+            if (currentUser) {
+                try {
+                    await fetch('/api/settings/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ key: 'lobby_music', value: isEnabled })
+                    });
+                } catch (err) {
+                    console.error('Failed to save setting:', err);
+                }
+            }
+        });
+    }
+}
+
+// Helper to start/stop music based on Page AND Setting
+function handleLobbyMusicState() {
+    const lobbyMusic = document.getElementById('lobby-music');
+    if (!lobbyMusic) return;
+
+    // Only play if: 1) On Lobby Page AND 2) Setting is TRUE
+    const onLobby = document.getElementById('page-lobby').classList.contains('active');
+    const shouldPlay = onLobby && window.userSettings.lobby_music;
+
+    if (shouldPlay) {
+        // If already playing, do nothing. If paused, play.
+        if (lobbyMusic.paused) {
+            // Set to start of loop section (3:25 = 205 seconds) if at 0
+            if (lobbyMusic.currentTime < 1) lobbyMusic.currentTime = 205;
+
+            lobbyMusic.play().catch(e => console.log('Autoplay blocked:', e));
+
+            // Ensure loop logic is attached
+            lobbyMusic.ontimeupdate = function () {
+                if (lobbyMusic.currentTime >= 295) { // 4:55 = 295 seconds
+                    lobbyMusic.currentTime = 205; // Loop back to 3:25
+                }
+            };
+        }
+    } else {
+        // Stop
+        if (!lobbyMusic.paused) {
+            lobbyMusic.pause();
+        }
+    }
+}
 
 // Setup contact form submission
 function setupContactForm() {
@@ -132,7 +199,32 @@ async function checkSession() {
             currentUser = data.username;
             window.currentUser = currentUser;  // Expose globally
             localStorage.setItem('morpheme_username', currentUser);
-            // navigateToLobby(); // Removed: User requested to land on login page
+
+            updateAuthUI(); // Update UI for logged in state
+
+            // FETCH SETTINGS
+            try {
+                const sRes = await fetch('/api/settings');
+                const sData = await sRes.json();
+                if (sData.settings) {
+                    // Apply Lobby Music
+                    if (sData.settings.lobby_music !== undefined) {
+                        let val = sData.settings.lobby_music;
+                        // Handle potential string types from DB
+                        if (val === 'true' || val === 'True' || val === true) val = true;
+                        else if (val === 'false' || val === 'False' || val === false) val = false;
+
+                        window.userSettings.lobby_music = val;
+
+                        // Update Checkbox
+                        const cb = document.getElementById('setting-lobby-music');
+                        if (cb) cb.checked = val;
+
+                        // Apply state (if we are landning on lobby)
+                        handleLobbyMusicState();
+                    }
+                }
+            } catch (e) { console.warn('Error fetching settings', e); }
         }
     } catch (error) {
         console.error('Session check failed:', error);
@@ -200,7 +292,16 @@ function setupModalListeners() {
 }
 
 function showPage(pageId) {
-    // Handle Game Polling
+    // 1. Update Page Visibility
+    document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+    });
+    const targetPage = document.getElementById(pageId);
+    if (targetPage) {
+        targetPage.classList.add('active');
+    }
+
+    // 2. Handle Game Polling
     if (pageId === 'page-play') {
         renderGameColorBar(); // Render the rating color bar
         if (window.startGamePolling) {
@@ -213,7 +314,6 @@ function showPage(pageId) {
             const input = document.getElementById('word-input');
             if (input && !input.disabled) {
                 input.focus();
-                // console.log('Focused word input on page switch');
             }
         }, 100);
     } else {
@@ -223,38 +323,8 @@ function showPage(pageId) {
         }
     }
 
-    // Handle lobby music
-    const lobbyMusic = document.getElementById('lobby-music');
-    if (lobbyMusic) {
-        if (pageId === 'page-lobby') {
-            // Set to start of loop section (3:25 = 205 seconds)
-            lobbyMusic.currentTime = 205;
-            lobbyMusic.play().catch(e => {
-                console.log('Audio autoplay blocked, waiting for interaction:', e);
-                const resumeAudio = () => {
-                    lobbyMusic.play().catch(err => console.log('Retry play failed', err));
-                    document.removeEventListener('click', resumeAudio);
-                };
-                document.addEventListener('click', resumeAudio);
-            });
-
-            // Add event listener to loop between 3:25 and 4:55
-            lobbyMusic.ontimeupdate = function () {
-                if (lobbyMusic.currentTime >= 295) { // 4:55 = 295 seconds
-                    lobbyMusic.currentTime = 205; // Loop back to 3:25
-                }
-            };
-        } else {
-            lobbyMusic.pause();
-            lobbyMusic.currentTime = 0;
-            lobbyMusic.ontimeupdate = null; // Remove event listener
-        }
-    }
-
-    document.querySelectorAll('.page').forEach(page => {
-        page.classList.remove('active');
-    });
-    document.getElementById(pageId).classList.add('active');
+    // 3. Handle Lobby Music via Helper
+    handleLobbyMusicState();
 }
 
 function updateActiveNav(activeBtn) {

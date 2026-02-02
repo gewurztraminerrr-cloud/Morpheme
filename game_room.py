@@ -218,7 +218,7 @@ class GameRoom:
         now = time.time()
         active_players = []
         players_removed = False
-        is_daily = self.time_limit >= 7200
+        is_daily = self.time_limit >= 120
         
         for p in self.players:
             age = now - p.last_active
@@ -770,11 +770,11 @@ class RoomManager:
             # Start the round immediately with timer
             room.current_round += 1
             
-            # Update data atomically with state change
+            # Update data atomically (words first)
             room.all_words = new_all_words
             room.current_min_length = room.spinner_params.get('min_word_length', 3)
-            room.state = 'active'
-            room.round_start_time = time.time()
+            # room.state = 'active'  <-- MOVED TO END
+            # room.round_start_time = time.time() <-- MOVED TO END
             
             # Default custom end time
             room.custom_end_time = 0
@@ -830,6 +830,7 @@ class RoomManager:
             # Clear FCFS global list
             room.fcfs_found_words.clear()
             
+            # Only align to midnight if it's genuinely a long-duration room
             if room.time_limit >= 7200:
                 now = datetime.datetime.now()
                 now_dt = datetime.datetime.now()
@@ -853,6 +854,12 @@ class RoomManager:
             room.complete_words = all_words
             room.solving_complete = True
             print(f"[RoomManager] Scored {len(all_words)} words")
+            
+            # FINAL STEP: Activate the room
+            # We do this LAST to avoid race conditions where state='active' but custom_end_time isn't set yet.
+            room.state = 'active'
+            room.round_start_time = time.time()
+            print(f"[RoomManager] Round {room.current_round} ACTIVATED at {room.round_start_time}. Custom End: {room.custom_end_time}")
             
             return True
             

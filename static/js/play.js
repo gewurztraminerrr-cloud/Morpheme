@@ -1047,7 +1047,7 @@ function updateLocalTimer() {
 
     // Format determination
     let is24h = false;
-    if (window.lastGameState && window.lastGameState.time_limit >= 7200) {
+    if (window.lastGameState && window.lastGameState.time_limit >= 120) {
         is24h = true;
     }
 
