@@ -1,7 +1,7 @@
 /* Play Page CSS */
 
 .play-header {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg-panel);
     padding: 4px 15px;
     border-radius: 12px;
     margin-bottom: 10px;
@@ -14,7 +14,7 @@
     flex-shrink: 0;
     /* Prevent squashing */
     z-index: 10;
-    color: #fff;
+    color: var(--text-primary);
     position: relative;
 }
 
@@ -39,7 +39,7 @@
     background: rgba(255, 255, 255, 0.2);
     border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 8px;
-    color: #fff;
+    color: var(--text-primary);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -87,7 +87,7 @@
     flex: 1;
     /* Take remaining space */
     min-height: 0;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg-panel);
     border-radius: 12px;
     padding: 15px;
     /* Slightly reduced padding */
@@ -117,7 +117,7 @@
 .players-panel {
     display: flex;
     flex-direction: column;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg-panel);
     border-radius: 12px;
     padding: 15px;
     overflow: hidden;
@@ -128,7 +128,7 @@
 }
 
 .chat-panel {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg-panel);
     border-radius: 12px;
     padding: 10px;
     height: 160px;
@@ -152,7 +152,7 @@
 }
 
 .chat-message {
-    font-size: 0.8rem;
+    font-size: var(--chat-font-size);
     line-height: 1.2;
     word-break: break-word;
 }
@@ -164,13 +164,13 @@
 }
 
 .chat-text {
-    color: #eee;
+    color: var(--text-primary);
 }
 
 .chat-sys {
     font-style: italic;
     opacity: 0.8;
-    color: #aaa;
+    color: var(--text-primary);
     font-size: 0.8rem;
     padding: 2px 0;
 }
@@ -182,11 +182,11 @@
 
 #chat-input {
     flex: 1;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
     border-radius: 4px;
     padding: 4px 6px;
-    color: #fff;
+    color: var(--text-primary);
     font-size: 0.8rem;
     height: 28px;
 }
@@ -194,7 +194,8 @@
 #chat-input:focus {
     outline: none;
     border-color: #a8d5ff;
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--input-bg);
+    filter: brightness(1.1);
 }
 
 #chat-send-btn {
@@ -202,7 +203,7 @@
     background: rgba(255, 255, 255, 0.2);
     border: none;
     border-radius: 4px;
-    color: #fff;
+    color: var(--text-primary);
     font-size: 0.8rem;
     cursor: pointer;
     transition: background 0.2s;
@@ -253,6 +254,7 @@
     transition: all 0.2s;
     cursor: pointer;
     box-sizing: border-box;
+    color: var(--text-primary);
 }
 
 .player-row-top,
@@ -370,7 +372,7 @@
 }
 
 .definitions-panel {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg-panel);
     border-radius: 12px;
     padding: 10px 15px;
     height: 100px;
@@ -387,9 +389,9 @@
 }
 
 #definition-content {
-    font-size: 0.95rem;
+    font-size: var(--def-font-size);
     line-height: 1.5;
-    color: #eee;
+    color: var(--text-primary);
 }
 
 .definition-word {
@@ -406,7 +408,7 @@
 
 /* Board Panel */
 .board-panel {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg-panel);
     border-radius: 12px;
     padding: 20px;
     display: flex;
@@ -481,6 +483,10 @@
 
 :root {
     --cell-size: 60px;
+    --chat-font-size: 13px;
+    /* Approx 0.8rem */
+    --def-font-size: 15px;
+    /* Approx 0.95rem */
 }
 
 .board-cell {
@@ -559,15 +565,15 @@
     min-width: 60px;
     /* Allow shrinking but keep usable */
     padding: 12px;
-    background: rgba(255, 255, 255, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: var(--input-bg);
+    border: 2px solid var(--input-border);
     border-radius: 8px;
-    color: #fff;
+    color: var(--text-primary);
     font-size: 1rem;
 }
 
 #word-input::placeholder {
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--muted-text);
 }
 
 #word-input:disabled {
@@ -628,11 +634,11 @@
 
 .words-tabs {
     display: flex;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--tab-container-bg);
     border-radius: 12px;
     padding: 4px;
     margin-bottom: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--input-border);
 }
 
 .word-tab {
@@ -640,7 +646,7 @@
     padding: 8px;
     border: none;
     background: transparent;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--muted-text);
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
@@ -649,9 +655,9 @@
 }
 
 .word-tab.active {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    background: var(--tab-active-bg);
+    color: var(--text-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .tab-content {
@@ -768,7 +774,7 @@
     background: rgba(255, 99, 71, 0.25);
     /* Tomato Red, transparent */
     border: 1px solid rgba(255, 99, 71, 0.5);
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--text-primary);
 }
 
 .word-item.bonus-word {
@@ -784,12 +790,12 @@
 .word-item.unfound {
     display: flex !important;
     /* Ensure visibility */
-    background: rgba(128, 128, 128, 0.2);
+    background: rgba(128, 128, 128, 0.1);
     /* Grayish with transparency */
-    border: 1px solid rgba(128, 128, 128, 0.3);
+    border: 1px solid rgba(128, 128, 128, 0.2);
     /* Gray border */
-    color: rgba(255, 255, 255, 0.5);
-    /* Dimmed text */
+    color: var(--muted-text);
+    /* Dimmed text but readable */
     opacity: 1;
     /* Remove opacity to ensure readable */
 }

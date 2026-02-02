@@ -9,7 +9,7 @@
 }
 
 .game-types-panel {
-    background: rgba(30, 30, 50, 0.6);
+    background: var(--bg-panel);
     border-radius: 12px;
     padding: 20px;
     overflow-y: auto;
@@ -119,7 +119,7 @@
 }
 
 .active-rooms-panel {
-    background: rgba(30, 30, 50, 0.6);
+    background: var(--bg-panel);
     border-radius: 12px;
     padding: 20px;
     backdrop-filter: blur(10px);

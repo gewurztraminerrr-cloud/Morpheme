@@ -4,11 +4,104 @@
     box-sizing: border-box;
 }
 
+:root {
+    --bg-primary: #1a1a2e;
+    --bg-panel: rgba(30, 30, 50, 0.6);
+    --text-primary: #fff;
+    --muted-text: rgba(255, 255, 255, 0.6);
+    --accent-color: #e94560;
+    --input-bg: rgba(255, 255, 255, 0.1);
+    --input-border: rgba(255, 255, 255, 0.2);
+}
+
+/* Themes */
+body.theme-black {
+    --bg-primary: #000000;
+    --bg-panel: rgba(20, 20, 20, 0.8);
+}
+
+body.theme-white {
+    --bg-primary: #f0f2f5;
+    --bg-panel: rgba(255, 255, 255, 0.9);
+    /* More opaque */
+    --text-primary: #333;
+    --muted-text: rgba(0, 0, 0, 0.6);
+    --input-bg: rgba(0, 0, 0, 0.05);
+    /* Darken inputs on light bg */
+    --input-border: rgba(0, 0, 0, 0.2);
+}
+
+body.theme-pink {
+    --bg-primary: #380e25;
+    --bg-panel: rgba(80, 20, 50, 0.6);
+    --accent-color: #ff69b4;
+}
+
+body.theme-orange {
+    --bg-primary: #2e1a05;
+    --bg-panel: rgba(60, 30, 10, 0.6);
+    --accent-color: #ffa500;
+}
+
+body.theme-red {
+    --bg-primary: #2e0505;
+    --bg-panel: rgba(60, 10, 10, 0.6);
+    --accent-color: #ff4545;
+}
+
+body.theme-yellow {
+    --bg-primary: #2e2e05;
+    --bg-panel: rgba(60, 60, 10, 0.6);
+    --accent-color: #ffff00;
+}
+
+body.theme-green {
+    --bg-primary: #052e16;
+    --bg-panel: rgba(10, 60, 30, 0.6);
+    --accent-color: #00ff00;
+}
+
+body.theme-blue {
+    --bg-primary: #05162e;
+    --bg-panel: rgba(10, 30, 60, 0.6);
+    --accent-color: #409cff;
+}
+
+body.theme-indigo {
+    --bg-primary: #1a052e;
+    --bg-panel: rgba(30, 10, 60, 0.6);
+    --accent-color: #4b0082;
+}
+
+body.theme-purple {
+    --bg-primary: #25052e;
+    --bg-panel: rgba(50, 10, 60, 0.6);
+    --accent-color: #9370db;
+}
+
+/* White Theme Text Overrides */
+body.theme-white .logo-text,
+body.theme-white .page h2,
+body.theme-white .setting-title,
+body.theme-white .setting-desc {
+    color: #333 !important;
+}
+
+body.theme-white .nav-btn {
+    color: #333;
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+body.theme-white .nav-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #1a1a2e;
+    background: var(--bg-primary);
     min-height: 100vh;
-    color: #fff;
+    color: var(--text-primary);
+    transition: background 0.5s ease, color 0.5s ease;
 }
 
 /* Header */
@@ -320,6 +413,32 @@ body {
 
 .notepad-item:last-child {
     border-bottom: none;
+}
+
+/* Variable Usage for Settings */
+.setting-title,
+.setting-desc,
+.preview-value,
+.slider-label-row span,
+.slider-label-row {
+    color: var(--text-primary) !important;
+}
+
+.setting-desc {
+    color: var(--muted-text) !important;
+}
+
+.settings-preview-box {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.settings-preview-text {
+    color: var(--text-primary);
+    line-height: 1.5;
 }
 
 /* Create Room Modal removed */

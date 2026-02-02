@@ -79,34 +79,72 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Global Settings State
 window.userSettings = {
-    lobby_music: true // Default ON
+    lobby_music: true, // Default ON
+    chat_font_size: 13,
+    def_font_size: 15
 };
+
+// Initialize Defaults immediately
+document.documentElement.style.setProperty('--chat-font-size', '13px');
+document.documentElement.style.setProperty('--def-font-size', '15px');
 
 function initSettings() {
     const musicToggle = document.getElementById('setting-lobby-music');
 
-    // 1. Toggle Event Listener
+    // 1. Lobby Music
     if (musicToggle) {
         musicToggle.addEventListener('change', async (e) => {
             const isEnabled = e.target.checked;
             window.userSettings.lobby_music = isEnabled;
-
-            // Apply immediately
             handleLobbyMusicState();
-
-            // Save to DB (Backend handles Guest check)
-            if (currentUser) {
-                try {
-                    await fetch('/api/settings/update', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ key: 'lobby_music', value: isEnabled })
-                    });
-                } catch (err) {
-                    console.error('Failed to save setting:', err);
-                }
-            }
+            saveSetting('lobby_music', isEnabled);
         });
+    }
+
+    // 2. Font Size Controls
+    setupFontSizeControl('setting-chat-size', 'setting-chat-size-val', 'preview-chat-text', '--chat-font-size', 'chat_font_size');
+    setupFontSizeControl('setting-def-size', 'setting-def-size-val', 'preview-def-text', '--def-font-size', 'def_font_size');
+}
+
+function setupFontSizeControl(sliderId, labelId, previewId, cssVar, dbKey) {
+    const slider = document.getElementById(sliderId);
+    const label = document.getElementById(labelId);
+    const preview = document.getElementById(previewId);
+
+    if (!slider) return;
+
+    // Helper to apply visual changes
+    const applyVisuals = (val) => {
+        if (label) label.textContent = val + 'px';
+        if (preview) preview.style.fontSize = val + 'px';
+        document.documentElement.style.setProperty(cssVar, val + 'px');
+    };
+
+    // Live Preview (Input event)
+    slider.addEventListener('input', (e) => {
+        applyVisuals(e.target.value);
+    });
+
+    // Save on release (Change event)
+    slider.addEventListener('change', (e) => {
+        const val = e.target.value;
+        window.userSettings[dbKey] = val;
+        applyVisuals(val); // Ensure consistency
+        saveSetting(dbKey, val);
+    });
+}
+
+async function saveSetting(key, value) {
+    if (currentUser) {
+        try {
+            await fetch('/api/settings/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key, value })
+            });
+        } catch (err) {
+            console.error('Failed to save setting:', err);
+        }
     }
 }
 
@@ -220,11 +258,38 @@ async function checkSession() {
                         const cb = document.getElementById('setting-lobby-music');
                         if (cb) cb.checked = val;
 
-                        // Apply state (if we are landning on lobby)
+                        // Apply state
                         handleLobbyMusicState();
                     }
+
+                    // Apply Font Sizes
+                    applySavedFontSize(sData.settings.chat_font_size, 'setting-chat-size', 'setting-chat-size-val', 'preview-chat-text', '--chat-font-size', 'chat_font_size');
+                    applySavedFontSize(sData.settings.def_font_size, 'setting-def-size', 'setting-def-size-val', 'preview-def-text', '--def-font-size', 'def_font_size');
                 }
             } catch (e) { console.warn('Error fetching settings', e); }
+
+            function applySavedFontSize(val, sliderId, labelId, previewId, cssVar, settingsKey) {
+                console.log(`Applying saved font size: ${settingsKey} = ${val}`);
+                if (val !== undefined && val !== null) {
+                    const numVal = parseInt(val);
+                    if (!isNaN(numVal)) {
+                        window.userSettings[settingsKey] = numVal;
+
+                        // DEBUG: confirm we are setting the property
+                        console.log(`Setting ${cssVar} to ${numVal}px`);
+                        document.documentElement.style.setProperty(cssVar, numVal + 'px');
+
+                        const slider = document.getElementById(sliderId);
+                        if (slider) slider.value = numVal;
+
+                        const label = document.getElementById(labelId);
+                        if (label) label.textContent = numVal + 'px';
+
+                        const preview = document.getElementById(previewId);
+                        if (preview) preview.style.fontSize = numVal + 'px';
+                    }
+                }
+            }
         }
     } catch (error) {
         console.error('Session check failed:', error);

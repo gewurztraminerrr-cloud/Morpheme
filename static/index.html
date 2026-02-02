@@ -7,7 +7,7 @@
     <title>MORPHEME</title>
     <link rel="stylesheet" href="/css/style.css?v=4">
     <link rel="stylesheet" href="/css/lobby.css?v=4">
-    <link rel="stylesheet" href="/css/play.css?v=26">
+    <link rel="stylesheet" href="/css/play.css?v=27">
     <link rel="stylesheet" href="/css/howtoplay.css?v=4">
 </head>
 
@@ -718,6 +718,59 @@
         <h2 style="font-size: 2.5rem; color: #fff; margin-bottom: 30px; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">User
             Settings</h2>
         <div class="settings-grid">
+            <!-- App Theme -->
+            <div class="setting-panel" style="grid-column: 1 / -1;">
+                <div class="setting-header">
+                    <div>
+                        <div class="setting-title">App Theme</div>
+                        <div class="setting-desc">Choose your preferred color scheme.</div>
+                    </div>
+                </div>
+                <div class="theme-selector-grid" style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 15px;">
+                    <button class="theme-btn" data-theme="default" style="background: #1a1a2e; border: 2px solid #fff;"
+                        title="Default"></button>
+                    <button class="theme-btn" data-theme="black" style="background: #000; border: 1px solid #333;"
+                        title="Black"></button>
+                    <button class="theme-btn" data-theme="white" style="background: #f0f2f5; border: 1px solid #ccc;"
+                        title="White"></button>
+                    <button class="theme-btn" data-theme="pink" style="background: #380e25; border: 1px solid #ff69b4;"
+                        title="Pink"></button>
+                    <button class="theme-btn" data-theme="orange"
+                        style="background: #2e1a05; border: 1px solid #ffa500;" title="Orange"></button>
+                    <button class="theme-btn" data-theme="red" style="background: #2e0505; border: 1px solid #ff4545;"
+                        title="Red"></button>
+                    <button class="theme-btn" data-theme="yellow"
+                        style="background: #2e2e05; border: 1px solid #ffff00;" title="Yellow"></button>
+                    <button class="theme-btn" data-theme="green" style="background: #052e16; border: 1px solid #00ff00;"
+                        title="Green"></button>
+                    <button class="theme-btn" data-theme="blue" style="background: #05162e; border: 1px solid #409cff;"
+                        title="Blue"></button>
+                    <button class="theme-btn" data-theme="indigo"
+                        style="background: #1a052e; border: 1px solid #4b0082;" title="Indigo"></button>
+                    <button class="theme-btn" data-theme="purple"
+                        style="background: #25052e; border: 1px solid #9370db;" title="Purple"></button>
+                </div>
+                <style>
+                    .theme-btn {
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 50%;
+                        cursor: pointer;
+                        transition: transform 0.2s;
+                    }
+
+                    .theme-btn:hover {
+                        transform: scale(1.1);
+                        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+                    }
+
+                    .theme-btn.active {
+                        transform: scale(1.2);
+                        box-shadow: 0 0 15px #fff;
+                        border-width: 3px !important;
+                    }
+                </style>
+            </div>
             <div class="setting-panel">
                 <div class="setting-header">
                     <div>
@@ -735,6 +788,28 @@
                     <!-- Range: 40px to 80px -->
                     <input type="range" id="setting-board-size" min="40" max="80" value="60">
                 </div>
+
+                <div class="preview-board-container" style="margin-top: 15px;">
+                    <div class="preview-board" id="preview-board">
+                        <!-- 4x4 grid of cells -->
+                        <div class="board-cell">A</div>
+                        <div class="board-cell">B</div>
+                        <div class="board-cell">C</div>
+                        <div class="board-cell">D</div>
+                        <div class="board-cell">E</div>
+                        <div class="board-cell">F</div>
+                        <div class="board-cell">G</div>
+                        <div class="board-cell">H</div>
+                        <div class="board-cell">I</div>
+                        <div class="board-cell">J</div>
+                        <div class="board-cell">K</div>
+                        <div class="board-cell">L</div>
+                        <div class="board-cell">M</div>
+                        <div class="board-cell">N</div>
+                        <div class="board-cell">O</div>
+                        <div class="board-cell">P</div>
+                    </div>
+                </div>
             </div>
 
             <!-- Lobby Music Setting -->
@@ -751,27 +826,57 @@
                 </div>
             </div>
 
-            <div class="preview-board-container">
-                <div class="preview-board" id="preview-board">
-                    <!-- 4x4 grid of cells -->
-                    <div class="board-cell">A</div>
-                    <div class="board-cell">B</div>
-                    <div class="board-cell">C</div>
-                    <div class="board-cell">D</div>
-                    <div class="board-cell">E</div>
-                    <div class="board-cell">F</div>
-                    <div class="board-cell">G</div>
-                    <div class="board-cell">H</div>
-                    <div class="board-cell">I</div>
-                    <div class="board-cell">J</div>
-                    <div class="board-cell">K</div>
-                    <div class="board-cell">L</div>
-                    <div class="board-cell">M</div>
-                    <div class="board-cell">N</div>
-                    <div class="board-cell">O</div>
-                    <div class="board-cell">P</div>
+            <!-- Chat Text Size -->
+            <div class="setting-panel">
+                <div class="setting-header">
+                    <div>
+                        <div class="setting-title">Chat Text Size</div>
+                        <div class="setting-desc">Adjust the font size of chat messages.</div>
+                    </div>
+                    <div id="setting-chat-size-val" class="preview-value">13px</div>
+                </div>
+                <div class="setting-slider-container">
+                    <div class="slider-label-row">
+                        <span>Small (10px)</span>
+                        <span>Large (24px)</span>
+                    </div>
+                    <input type="range" id="setting-chat-size" min="10" max="24" value="13">
+                </div>
+                <!-- Chat Preview -->
+                <div class="settings-preview-box">
+                    <div id="preview-chat-text" class="settings-preview-text" style="font-size: 13px;">
+                        <span style="font-weight: 700; color: #ffd700;">Player:</span> This is a sample chat message.
+                    </div>
                 </div>
             </div>
+
+            <!-- Definition Text Size -->
+            <div class="setting-panel">
+                <div class="setting-header">
+                    <div>
+                        <div class="setting-title">Definition Text Size</div>
+                        <div class="setting-desc">Adjust the font size of word definitions.</div>
+                    </div>
+                    <div id="setting-def-size-val" class="preview-value">15px</div>
+                </div>
+                <div class="setting-slider-container">
+                    <div class="slider-label-row">
+                        <span>Small (11px)</span>
+                        <span>Large (26px)</span>
+                    </div>
+                    <input type="range" id="setting-def-size" min="11" max="26" value="15">
+                </div>
+                <!-- Definition Preview -->
+                <div class="settings-preview-box">
+                    <div style="color: var(--accent-color); font-weight: 700; font-size: 1.1em; margin-bottom: 4px;">
+                        Example</div>
+                    <div id="preview-def-text" class="settings-preview-text" style="font-size: 15px; line-height: 1.5;">
+                        (n.) A representative form or pattern.
+                    </div>
+                </div>
+            </div>
+
+
         </div>
 
         <!-- Future panels placeholder -->
