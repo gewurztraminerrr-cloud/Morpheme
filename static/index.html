@@ -389,7 +389,8 @@
             <div class="tools-split-layout">
                 <!-- Sidebar (1/3) -->
                 <div class="tools-sidebar">
-                    <button class="tool-nav-btn active" data-tool="combo">Combo Checker</button>
+                    <button class="tool-nav-btn active" data-tool="profile">Profile</button>
+                    <button class="tool-nav-btn" data-tool="combo">Combo Checker</button>
                     <button class="tool-nav-btn" data-tool="lists">Lists</button>
                     <button class="tool-nav-btn" data-tool="sequence">Sequence</button>
                     <button class="tool-nav-btn" data-tool="manual">Manual</button>
@@ -400,6 +401,119 @@
 
                 <!-- Content (2/3) -->
                 <div class="tools-content">
+                    <!-- Profile Interface -->
+                    <div id="tool-profile" class="tool-pane active">
+                        <div class="tool-header">
+                            <h2>User Profile</h2>
+                            <p>View player stats and rankings.</p>
+                        </div>
+
+                        <div class="combo-control-panel">
+                            <div class="input-row">
+                                <input type="text" id="profile-search-input" placeholder="Enter username..."
+                                    autocomplete="off">
+                                <button id="profile-search-btn">Search</button>
+                            </div>
+                        </div>
+
+                        <div id="profile-display-container" class="profile-container hidden">
+                            <div class="profile-card premium">
+                                <div class="profile-layout">
+                                    <!-- Left Column: Avatar -->
+                                    <div class="profile-left-column">
+                                        <div class="profile-avatar-container">
+                                            <div class="profile-avatar large" id="profile-avatar-trigger"
+                                                title="Click to upload photo" style="cursor: pointer;">?</div>
+                                            <input type="file" id="profile-avatar-input" accept="image/*"
+                                                style="display: none;">
+                                        </div>
+                                    </div>
+
+                                    <!-- Right Column: Details -->
+                                    <div class="profile-right-column">
+                                        <div class="profile-identity">
+                                            <div class="profile-title-row">
+                                                <h1 id="profile-username" class="profile-username-large">Player</h1>
+                                                <div id="profile-status-indicator" class="status-indicator offline"
+                                                    title="Offline"></div>
+                                                <button id="profile-follow-btn"
+                                                    class="follow-btn hidden">Follow</button>
+                                                <input type="hidden" id="profile-current-room" value="">
+                                            </div>
+                                            <div class="profile-metadata-row">
+                                                <div class="meta-item" title="Real Name">
+                                                    <span class="meta-icon">🆔</span>
+                                                    <span class="meta-label">Name</span>
+                                                    <span id="profile-full-name" class="meta-text">-</span>
+                                                </div>
+                                                <div class="meta-item" title="Age">
+                                                    <span class="meta-icon">🎂</span>
+                                                    <span class="meta-label">Age</span>
+                                                    <span id="profile-age-val" class="meta-text">-</span>
+                                                </div>
+                                                <div class="meta-item" title="Gender">
+                                                    <span class="meta-icon">👤</span>
+                                                    <span class="meta-label">Gender</span>
+                                                    <span id="profile-gender-val" class="meta-text">-</span>
+                                                </div>
+                                                <div class="meta-item" title="Location">
+                                                    <div class="custom-dropdown-container">
+                                                        <span class="profile-flag" id="profile-flag"
+                                                            style="cursor: pointer;">🏳️</span>
+                                                        <div id="flag-dropdown" class="dropdown-menu">
+                                                            <div class="dropdown-header">
+                                                                <input type="text" id="flag-dropdown-search"
+                                                                    class="dropdown-search"
+                                                                    placeholder="Search countries...">
+                                                            </div>
+                                                            <div id="flag-dropdown-list" class="dropdown-list">
+                                                                <!-- Flags injected here -->
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <span id="profile-flag-name" class="flag-name-label"></span>
+                                                    <span class="meta-label">Location</span>
+                                                    <span id="profile-location-val" class="meta-text">-</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="profile-quote-minimal">
+                                                <p id="profile-quote-val">Welcome to Morpheme.</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="profile-stats-grid">
+                                            <div class="stat-box">
+                                                <span class="stat-num" id="profile-games">0</span>
+                                                <span class="stat-desc">GAMES</span>
+                                            </div>
+                                            <div class="stat-box">
+                                                <span class="stat-num">0%</span>
+                                                <span class="stat-desc">WIN RATE</span>
+                                            </div>
+                                            <div class="stat-box">
+                                                <span class="stat-num">-</span>
+                                                <span class="stat-desc">BEST</span>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                                <div class="profile-ratings-section">
+                                    <h2 class="section-title">Skill Rankings</h2>
+                                    <div id="profile-ratings-grid" class="ratings-grid">
+                                        <!-- Populated by JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+
+                    </div>
+
                     <!-- Word of the Day Interface -->
                     <div id="tool-wotd" class="tool-pane">
                         <div class="tool-header">
@@ -495,7 +609,7 @@
                     <!-- ... omitted combo/list content to match target ... -->
 
                     <!-- Combo Checker Interface -->
-                    <div id="tool-combo" class="tool-pane active">
+                    <div id="tool-combo" class="tool-pane">
                         <div class="tool-header">
                             <h2>Combo Checker</h2>
                             <p>Find connected words via MP and LIC.</p>

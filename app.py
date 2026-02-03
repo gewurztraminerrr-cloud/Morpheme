@@ -62,9 +62,52 @@ def init_db():
     except Exception as e:
         print(f"Migration Error (Rating Fix): {e}")
 
+    # MIGRATION: Add avatar_url column
+    try:
+        conn.execute('ALTER TABLE users ADD COLUMN avatar_url TEXT')
+        conn.commit()
+        print("Migrated DB: Added avatar_url column to users")
+    except sqlite3.OperationalError:
+        pass # Column likely exists
+    # MIGRATION: Add country_flag column
+    try:
+        conn.execute('ALTER TABLE users ADD COLUMN country_flag TEXT')
+        conn.commit()
+        print("Migrated DB: Added country_flag column to users")
+    except sqlite3.OperationalError:
+        pass # Column likely exists
+
+    # MIGRATION: Add profile detail columns
+    columns = [
+        ('full_name', 'TEXT'),
+        ('age', 'TEXT'),
+        ('gender', 'TEXT'),
+        ('location', 'TEXT'),
+        ('quote', 'TEXT')
+    ]
+    for col_name, col_type in columns:
+        try:
+            conn.execute(f'ALTER TABLE users ADD COLUMN {col_name} {col_type}')
+            conn.commit()
+            print(f"Migrated DB: Added {col_name} column to users")
+        except sqlite3.OperationalError:
+            pass # Column likely exists
+
     conn.close()
 
 init_db()
+
+# Configuration for Uploads
+UPLOAD_FOLDER = os.path.join(app.root_path, 'static/uploads/avatars')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB Limit
+
+# Ensure upload directory exists
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # ... (rest of file) ...
 
@@ -178,8 +221,17 @@ def login():
 
 @app.route('/api/logout', methods=['POST'])
 def logout():
+    if 'user_id' in session:
+        room_manager.remove_presence(session['user_id'])
     session.clear()
     return jsonify({'success': True})
+
+@app.route('/api/presence/leave', methods=['POST'])
+def presence_leave():
+    """Beacon endpoint for browser close"""
+    if 'user_id' in session:
+        room_manager.remove_presence(session['user_id'])
+    return '', 204
 
 @app.route('/api/guest-login', methods=['POST'])
 def guest_login():
@@ -198,11 +250,158 @@ def guest_login():
 @app.route('/api/session', methods=['GET'])
 def get_session():
     if 'user_id' in session:
+        room_manager.update_presence(session['user_id'])
         return jsonify({
             'authenticated': True,
             'username': session['username']
         })
     return jsonify({'authenticated': False})
+
+@app.route('/api/profile/update_flag', methods=['POST'])
+def update_flag():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    if session.get('is_guest'):
+        return jsonify({'error': 'Guest accounts cannot update profile'}), 403
+        
+    data = request.get_json()
+    flag = data.get('flag')
+    
+    if not flag:
+        return jsonify({'error': 'No flag provided'}), 400
+        
+    try:
+        conn = sqlite3.connect('morpheme.db')
+        conn.execute('UPDATE users SET country_flag = ? WHERE id = ?', (flag, session['user_id']))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"Flag update error: {e}")
+        return jsonify({'error': 'Update failed'}), 500
+
+@app.route('/api/profile/update', methods=['POST'])
+def update_profile():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    if session.get('is_guest'):
+        return jsonify({'error': 'Guest accounts cannot update profile'}), 403
+        
+    data = request.get_json()
+    fields = ['full_name', 'age', 'gender', 'location', 'quote']
+    updates = {k: v for k, v in data.items() if k in fields}
+    
+    if not updates:
+        return jsonify({'error': 'No valid fields provided'}), 400
+        
+    try:
+        conn = sqlite3.connect('morpheme.db')
+        set_clause = ", ".join([f"{k} = ?" for k in updates.keys()])
+        values = list(updates.values())
+        values.append(session['user_id'])
+        
+        conn.execute(f'UPDATE users SET {set_clause} WHERE id = ?', values)
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"Profile update error: {e}")
+        return jsonify({'error': 'Update failed'}), 500
+        
+@app.route('/api/profile/<username>', methods=['GET'])
+def get_public_profile(username):
+    if username.startswith('Guest_'):
+        return jsonify({'error': 'Guests do not have profiles'}), 404
+        
+    if 'user_id' in session:
+        room_manager.update_presence(session['user_id'])
+    conn = sqlite3.connect('morpheme.db')
+    cursor = conn.execute('''
+        SELECT id, username, rating, games_played, avatar_url, country_flag, 
+               full_name, age, gender, location, quote 
+        FROM users WHERE username = ? COLLATE NOCASE
+    ''', (username,))
+    user = cursor.fetchone()
+    
+    if not user:
+        conn.close()
+        return jsonify({'error': 'User not found'}), 404
+
+    # Get config-specific ratings
+    cursor = conn.execute('SELECT config_key, rating FROM user_ratings WHERE user_id = ?', (user[0],))
+    config_ratings = {row[0]: row[1] for row in cursor.fetchall()}
+    conn.close()
+    
+    # Get online status and current room info
+    session_info = room_manager.find_user_session(user[0])
+        
+    return jsonify({
+        'username': user[1],
+        'rating': user[2],
+        'games_played': user[3],
+        'avatar_url': user[4] if user[4] else None,
+        'country_flag': user[5] if user[5] else '🏳️',
+        'full_name': user[6] if user[6] else '-',
+        'age': user[7] if user[7] else '-',
+        'gender': user[8] if user[8] else '-',
+        'location': user[9] if user[9] else '-',
+        'quote': user[10] if user[10] else 'Welcome to Morpheme.',
+        'config_ratings': config_ratings,
+        'status': {
+            'is_online': session_info['is_online'] if session_info else False,
+            'current_room': session_info['room_id'] if session_info else None,
+            'session': session_info
+        }
+    })
+
+@app.route('/api/profile/upload_avatar', methods=['POST'])
+def upload_avatar():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    if session.get('is_guest'):
+        return jsonify({'error': 'Guest accounts cannot upload avatars'}), 403
+        
+    if 'avatar' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+        
+    file = request.files['avatar']
+    
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+        
+    if file and allowed_file(file.filename):
+        try:
+            from werkzeug.utils import secure_filename
+            import time
+            
+            # Generate safe filename: user_id_timestamp.ext
+            ext = file.filename.rsplit('.', 1)[1].lower()
+            new_filename = f"user_{session['user_id']}_{int(time.time())}.{ext}"
+            
+            # Save file
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
+            
+            # Construct URL
+            avatar_url = f"/static/uploads/avatars/{new_filename}"
+            
+            # Update DB
+            conn = sqlite3.connect('morpheme.db')
+            # First, get old avatar to delete if exists? (Optional cleanup)
+            # For now just update
+            conn.execute('UPDATE users SET avatar_url = ? WHERE id = ?', (avatar_url, session['user_id']))
+            conn.commit()
+            conn.close()
+            
+            return jsonify({'success': True, 'avatar_url': avatar_url})
+            
+        except Exception as e:
+            print(f"Upload error: {e}")
+            return jsonify({'error': 'Upload failed'}), 500
+            
+    return jsonify({'error': 'Invalid file type'}), 400
 
 # Game Room APIs
 from game_room import room_manager
@@ -301,18 +500,21 @@ def create_room():
             rating = 1200
         conn.close()
 
-    # Get games played
+    # Get extra stats (games_played, country_flag)
     games_played = 0
+    country_flag = '🏳️'
     if not session.get('is_guest', False):
         conn = sqlite3.connect('morpheme.db')
         try:
-             cur = conn.execute('SELECT games_played FROM users WHERE id = ?', (session['user_id'],))
+             cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (session['user_id'],))
              row = cur.fetchone()
-             if row: games_played = row[0]
+             if row:
+                 games_played = row[0]
+                 if row[1]: country_flag = row[1]
         except: pass
         conn.close()
     
-    room.add_player(session['user_id'], session['username'], rating, games_played=games_played)
+    room.add_player(session['user_id'], session['username'], rating, games_played=games_played, country_flag=country_flag)
     
     # Start first round immediately in background for faster loading
     # Only if NOT already running/active (check logic inside start_round already handles this)
@@ -375,20 +577,23 @@ def join_room(room_id):
     if rating > room.max_rating:
          return jsonify({'error': f'Rating {rating} too high (Max: {room.max_rating})'}), 403
 
-    # Get games played
+    # Get extra stats (games_played, country_flag)
     games_played = 0
+    country_flag = '🏳️'
     if not session.get('is_guest', False):
         conn = sqlite3.connect('morpheme.db')
         try:
-             cur = conn.execute('SELECT games_played FROM users WHERE id = ?', (session['user_id'],))
+             cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (user_id,))
              row = cur.fetchone()
-             if row: games_played = row[0]
+             if row:
+                 games_played = row[0]
+                 if row[1]: country_flag = row[1]
         except: pass
         conn.close()
 
     # Try to join as player
     # Guests are welcome unless rating check failed (Guest rating is usually 1200)
-    success = room.add_player(user_id, session['username'], rating, games_played=games_played)
+    success = room.add_player(user_id, session['username'], rating, games_played=games_played, country_flag=country_flag)
     if not success:
         # Room full
         msg = f"Room is full (Max {room.max_players} players). You can watch instead."
@@ -419,6 +624,8 @@ def leave_room(room_id):
 
 @app.route('/api/rooms', methods=['GET'])
 def list_rooms():
+    if 'user_id' in session:
+        room_manager.update_presence(session['user_id'])
     game_type = request.args.get('game_type')
     board_dimensions = request.args.get('board_dimensions')
     time_limit = request.args.get('time_limit', type=int)
@@ -471,6 +678,8 @@ def get_lobby_stats():
 
 @app.route('/api/room/<room_id>/state', methods=['GET'])
 def get_room_state(room_id):
+    if 'user_id' in session:
+        room_manager.update_presence(session['user_id'])
     print(f"\n=== GET STATE REQUEST for room {room_id} ===")
     room = room_manager.get_room(room_id)
     if not room:
@@ -547,10 +756,11 @@ def get_room_state(room_id):
                                     VALUES (?, ?, ?)
                                 ''', (p.user_id, config_key, p.rating))
                                 
-                                # Increment games_played
-                                if p.games_played is None: p.games_played = 0
-                                p.games_played += 1
-                                conn.execute('UPDATE users SET games_played = games_played + 1 WHERE id = ?', (p.user_id,))
+                                # Increment games_played ONLY if they played the round (score > 0)
+                                if p.previous_round_score > 0:
+                                    if p.games_played is None: p.games_played = 0
+                                    p.games_played += 1
+                                    conn.execute('UPDATE users SET games_played = games_played + 1 WHERE id = ?', (p.user_id,))
                                
                                 
                         conn.commit()
@@ -620,7 +830,8 @@ def get_room_state(room_id):
                     'invalid_words': p.invalid_words,
                     'input_method': p.input_method,
                     'last_active_age': time.time() - p.last_active,
-                    'games_played': p.games_played
+                    'games_played': p.games_played,
+                    'country_flag': p.country_flag
                 } for p in sorted(room.players, key=lambda p: p.score, reverse=True)
             ],
             'spectators': [

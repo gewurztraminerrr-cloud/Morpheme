@@ -71,7 +71,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupModalListeners();
     setupAuth(); // Initialize auth listeners
     setupContactForm(); // Initialize contact form listeners
-    setupContactForm(); // Initialize contact form listeners
     // handleGuestLogin(); // Don't auto-login guest, wait for button click
     initSettings(); // Initialize settings logic
     checkSession();
@@ -381,6 +380,10 @@ function showPage(pageId) {
                 input.focus();
             }
         }, 100);
+    } else if (pageId === 'page-tools') {
+        if (typeof window.refreshProfileTool === 'function') {
+            window.refreshProfileTool(true); // Force refresh to current user
+        }
     } else {
         if (window.stopGamePolling) {
             console.log('Leaving Play page - stopping polling');
@@ -638,3 +641,21 @@ function renderGameColorBar() {
         bar.appendChild(segment);
     });
 }
+
+// Presence Beacon: Notify server when browser tab is closed
+// pagehide is more reliable than beforeunload in Safari and mobile browsers
+window.addEventListener('pagehide', (e) => {
+    if (window.currentUser) {
+        // Note: pagehide fires on both navigation and closing
+        // We use sendBeacon for reliable delivery
+        navigator.sendBeacon('/api/presence/leave');
+    }
+});
+
+// Optional: Also notify on visibility hidden (but keep short timeout on server to be safe)
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && window.currentUser) {
+        // We don't necessarily want to mark offline just by switching tabs, 
+        // but it's a good time to ensure the last_active is updated or beaconed if needed.
+    }
+});

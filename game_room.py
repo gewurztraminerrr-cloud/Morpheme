@@ -26,6 +26,7 @@ class Player:
     found_bonus_word: bool = False
     last_active: float = field(default_factory=time.time)
     input_method: str = "mouse"  # 'keyboard', 'mouse', or 'touch'
+    country_flag: str = '🏳️'
 
 @dataclass
 class GameRoom:
@@ -111,7 +112,7 @@ class GameRoom:
         if len(self.chat_messages) > 30:
             self.chat_messages.pop(0)
     
-    def add_player(self, user_id, username, rating, games_played=0):
+    def add_player(self, user_id, username, rating, games_played=0, country_flag='🏳️'):
         """Add player to room"""
         is_daily = self.time_limit >= 7200
         
@@ -120,6 +121,7 @@ class GameRoom:
         if existing_player and is_daily:
             print(f"[GameRoom] Persistence: Reusing existing player {username} in 24h room {self.room_id}")
             existing_player.last_active = time.time()
+            existing_player.country_flag = country_flag # Update flag
             return True
             
         # Check if player exists in past_players
@@ -130,6 +132,7 @@ class GameRoom:
             print(f"DEBUG: RESTORING player {user_id} from past_players. History len: {len(existing_player.previous_submitted_words)}")
             print(f"DEBUG: Restored words: {[w['word'] for w in existing_player.previous_submitted_words]}")
             existing_player.last_active = time.time()
+            existing_player.country_flag = country_flag # Update flag
             existing_player.games_played = games_played # Update games played (if changed)
             self.players.append(existing_player)
             return True
@@ -141,7 +144,7 @@ class GameRoom:
         if len(self.players) >= self.max_players:
             return False # Room full
             
-        player = Player(user_id, username, rating, games_played=games_played)
+        player = Player(user_id, username, rating, games_played=games_played, country_flag=country_flag)
         self.players.append(player)
         self.players.sort(key=lambda p: p.rating, reverse=True)
         
@@ -610,6 +613,7 @@ def calculate_word_score(word, bonus_word):
 class RoomManager:
     def __init__(self):
         self.rooms: Dict[str, GameRoom] = {}
+        self.user_presence: Dict[str, float] = {} # {user_id_str: last_active_timestamp}
         self.lock = threading.Lock()
         self.board_generator = BoardGenerator()
         
@@ -625,6 +629,11 @@ class RoomManager:
                 time.sleep(60) # Run every minute
                 # Routine 7-minute inactivity cleanup
                 self.cleanup_rooms(timeout=420) 
+                
+                # Cleanup presence map
+                with self.lock:
+                    now = time.time()
+                    self.user_presence = {uid: ts for uid, ts in self.user_presence.items() if (now - ts) < 600} # 10 min
             except Exception as e:
                 import traceback
                 print(f"[RoomManager] Error in background cleanup loop: {e}\n{traceback.format_exc()}")
@@ -662,6 +671,65 @@ class RoomManager:
         """Get room by ID"""
         return self.rooms.get(room_id)
     
+    def update_presence(self, user_id):
+        """Update global heartbeat for any user interaction"""
+        if user_id:
+            with self.lock:
+                self.user_presence[str(user_id)] = time.time()
+
+    def remove_presence(self, user_id):
+        """Immediately mark user as offline (for logout/beacon)"""
+        if user_id:
+            with self.lock:
+                uid = str(user_id)
+                if uid in self.user_presence:
+                    del self.user_presence[uid]
+
+    def find_user_session(self, user_id):
+        """Find user's current room and online status"""
+        uid_str = str(user_id)
+        now = time.time()
+        
+        # Check global presence first
+        last_seen = self.user_presence.get(uid_str, 0)
+        is_online = (now - last_seen) < 75 # 75 seconds (reduced for better accuracy)
+        
+        # Search for active room
+        for room in self.rooms.values():
+            # Check players
+            for p in room.players:
+                if str(p.user_id) == uid_str:
+                    # If in a room, they are definitely online
+                    return {
+                        'room_id': room.room_id,
+                        'is_online': True,
+                        'is_spectator': False,
+                        'game_type': room.game_type,
+                        'board_dimensions': room.board_dimensions,
+                        'time_limit': room.time_limit
+                    }
+            # Check spectators
+            for s in room.spectators:
+                if str(s.user_id) == uid_str:
+                    return {
+                        'room_id': room.room_id,
+                        'is_online': True,
+                        'is_spectator': True,
+                        'game_type': room.game_type,
+                        'board_dimensions': room.board_dimensions,
+                        'time_limit': room.time_limit
+                    }
+        
+        # Not in a room, but might still be online (Lobby/Profile)
+        if is_online:
+            return {
+                'room_id': None,
+                'is_online': True,
+                'is_spectator': False
+            }
+            
+        return None
+
     def delete_room(self, room_id):
         """Delete room"""
         with self.lock:

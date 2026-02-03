@@ -765,6 +765,7 @@ function renderPlayers(players, currentUser = null) {
                 <span class="player-rating-val">${ratingDisplay}</span>
             </div>
             <div class="player-row-bottom">
+                <span class="player-flag">${p.country_flag || '🏳️'}</span>
                 <span class="player-input-icon">${inputIcon}</span>
                 <span class="player-words-count">${p.words_count} words</span>
                 <span class="player-score-val">${p.score} pts</span>

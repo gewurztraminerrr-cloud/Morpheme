@@ -305,7 +305,24 @@
     /* Align to right of top row */
 }
 
+.player-row-bottom {
+    justify-content: flex-start;
+    gap: 10px;
+    opacity: 0.8;
+}
+
+.player-flag {
+    font-size: 1.1rem;
+    margin-right: 2px;
+}
+
+.player-input-icon {
+    font-size: 1rem;
+    opacity: 0.8;
+}
+
 .player-words-count {
+    flex: 1;
     font-size: 0.8rem;
     opacity: 0.8;
     white-space: nowrap;
@@ -318,11 +335,6 @@
     text-align: right;
     white-space: nowrap;
     font-size: 1rem;
-}
-
-.player-input-icon {
-    font-size: 1.1rem;
-    opacity: 0.9;
 }
 
 .player-item.bonus-finder {
@@ -1165,6 +1177,41 @@
     text-transform: uppercase;
     font-weight: 600;
     letter-spacing: 1px;
+}
+
+#profile-search-input {
+    flex: 1;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--text-primary);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+#profile-search-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+#profile-search-btn {
+    padding: 0 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#profile-search-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
 #combo-dict {
