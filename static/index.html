@@ -19,7 +19,7 @@
             <span class="pronunciation">MORE-FEEM</span>
         </div>
         <nav class="nav">
-            <button class="nav-btn" data-page="login">Login</button>
+            <button class="nav-btn" data-page="login" id="nav-login-btn">Login</button>
             <button class="nav-btn" data-page="howtoplay">How to Play</button>
             <button class="nav-btn" data-page="lobby">Lobby</button>
             <button class="nav-btn" id="play-btn" data-page="play" disabled>Play</button>
@@ -29,6 +29,10 @@
             <button class="nav-btn" data-page="tools">Tools</button>
             <button class="nav-btn" data-page="settings">Settings</button>
             <button class="nav-btn" data-page="contact">Contact</button>
+            <div id="user-display" class="user-display hidden">
+                <span id="username-display"></span>
+                <button id="logout-btn" class="logout-btn">Logout</button>
+            </div>
         </nav>
     </header>
 
@@ -292,7 +296,8 @@
                         <button class="word-tab active" data-tab="found">Words</button>
                         <button class="word-tab" data-tab="remaining" style="display: none;">Remaining</button>
                         <button class="word-tab" data-tab="clues" style="display: none;">Clues</button>
-                        <button class="word-tab" data-tab="previous" style="display: none;">Previous</button>
+                        <button class="word-tab" data-tab="previous" style="display: none;">Previous Day</button>
+                        <button class="word-tab" data-tab="history">History</button>
                     </div>
 
                     <div id="tab-content-found" class="tab-content active">
@@ -334,6 +339,21 @@
                         </div>
                         <div id="previous-words-list">
                             <p class="placeholder">No previous data</p>
+                        </div>
+                    </div>
+
+                    <div id="tab-content-history" class="tab-content">
+                        <div class="words-header-group">
+                            <h3>Past Winners</h3>
+                        </div>
+                        <div id="history-content">
+                            <p class="history-intro"
+                                style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 15px; padding: 0 5px;">
+                                The following are the past 50 winners.
+                            </p>
+                            <div id="winners-list" class="winners-list-container">
+                                <p class="placeholder">No history available yet</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1218,7 +1238,103 @@
                     </div>
                 </div>
             </div>
+            <!-- Next Round Notification -->
+            <div class="setting-panel">
+                <div class="setting-header">
+                    <div>
+                        <div class="setting-title">Next Round Notification</div>
+                        <div class="setting-desc">Sound a bell 10 seconds before a new round starts.</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="setting-next-round-bell">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div id="bell-selection-container"
+                    style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%; display: none;">
+                    <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Select Bell Sound
+                    </div>
+                    <div
+                        style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
+                        <button class="bell-btn" data-bell="bell1">Bell 1 <span class="play-icon">▶</span></button>
+                        <button class="bell-btn" data-bell="bell2">Bell 2 <span class="play-icon">▶</span></button>
+                        <button class="bell-btn" data-bell="bell3">Bell 3 <span class="play-icon">▶</span></button>
+                    </div>
+                </div>
+                <style>
+                    .bell-btn {
+                        background: rgba(255, 255, 255, 0.05);
+                        border: 1px solid rgba(255, 255, 255, 0.15);
+                        color: #fff;
+                        padding: 8px 16px;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        font-size: 0.9rem;
+                        font-weight: 500;
+                    }
 
+                    .bell-btn:hover {
+                        background: rgba(255, 255, 255, 0.15);
+                        transform: translateY(-1px);
+                    }
+
+                    .bell-btn.active {
+                        background: #409cff;
+                        border-color: #fff;
+                        box-shadow: 0 0 15px rgba(64, 156, 255, 0.4);
+                    }
+
+                    .play-icon {
+                        font-size: 0.7rem;
+                        background: rgba(255, 255, 255, 0.2);
+                        width: 18px;
+                        height: 18px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 50%;
+                    }
+
+                    /* White Theme Overrides */
+                    body.theme-white .bell-btn {
+                        background: rgba(0, 0, 0, 0.05);
+                        border-color: rgba(0, 0, 0, 0.1);
+                        color: #333;
+                    }
+
+                    body.theme-white .bell-btn:hover {
+                        background: rgba(0, 0, 0, 0.1);
+                    }
+
+                    body.theme-white .bell-btn.active {
+                        background: #409cff;
+                        color: #fff;
+                        border-color: #2a7fd1;
+                    }
+
+                    body.theme-white .play-icon {
+                        background: rgba(0, 0, 0, 0.1);
+                        color: #333;
+                    }
+
+                    body.theme-white .bell-btn.active .play-icon {
+                        background: rgba(255, 255, 255, 0.3);
+                        color: #fff;
+                    }
+
+                    body.theme-white .meta-label {
+                        color: #555 !important;
+                    }
+
+                    body.theme-white #bell-selection-container {
+                        border-top-color: rgba(0, 0, 0, 0.1) !important;
+                    }
+                </style>
+            </div>
 
         </div>
 
@@ -1370,6 +1486,61 @@
             <div class="chat-modal-input-area">
                 <input type="text" id="pm-input" placeholder="Type a message..." autocomplete="off">
                 <button id="pm-send-btn">Send</button>
+            </div>
+        </div>
+    </div>
+    <!-- Mini Profile Modal -->
+    <div id="mini-profile-modal" class="mini-profile-overlay hidden">
+        <div class="mini-profile-card">
+            <button class="mini-profile-close" id="mini-profile-close">&times;</button>
+            <div class="mini-profile-header">
+                <div id="mini-profile-avatar" class="mini-avatar"></div>
+                <div class="mini-profile-identity">
+                    <div id="mini-profile-username" class="mini-username">Username</div>
+                    <div id="mini-profile-fullname" class="mini-fullname">Full Name</div>
+                </div>
+                <div id="mini-profile-rating-badge" class="mini-rating-badge">1200</div>
+            </div>
+
+            <div class="mini-profile-stats">
+                <div class="mini-stat-item">
+                    <span class="mini-stat-label">Games</span>
+                    <span id="mini-profile-games" class="mini-stat-value">0</span>
+                </div>
+                <div class="mini-stat-item">
+                    <span class="mini-stat-label">Age</span>
+                    <span id="mini-profile-age" class="mini-stat-value">-</span>
+                </div>
+                <div class="mini-stat-item">
+                    <span class="mini-stat-label">Gender</span>
+                    <span id="mini-profile-gender" class="mini-stat-value">-</span>
+                </div>
+            </div>
+
+            <div class="mini-profile-metadata">
+                <div class="mini-meta-item">
+                    <span class="mini-meta-icon">🌐</span>
+                    <span id="mini-profile-flag" class="mini-meta-flag">🏳️</span>
+                    <span id="mini-profile-country-name" class="mini-meta-text">International</span>
+                </div>
+                <div class="mini-meta-item">
+                    <span class="mini-meta-icon" id="mini-profile-status-icon">⚪</span>
+                    <span id="mini-profile-status" class="mini-meta-text">Offline</span>
+                </div>
+            </div>
+
+            <div class="mini-profile-quote" id="mini-profile-quote">
+                "No quote provided."
+            </div>
+
+            <div class="mini-profile-description" id="mini-profile-description">
+                No description provided.
+            </div>
+
+            <div class="mini-profile-actions">
+                <button id="mini-profile-view-full" class="mini-action-btn secondary">Full Profile</button>
+                <button id="mini-profile-message" class="mini-action-btn primary">Message</button>
+                <button id="mini-profile-friend" class="mini-action-btn secondary hidden">Add Friend</button>
             </div>
         </div>
     </div>

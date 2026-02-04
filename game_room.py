@@ -89,6 +89,9 @@ class GameRoom:
     # Chat
     chat_messages: List[Dict] = field(default_factory=list)
     
+    # History of winners
+    winners_history: List[Dict] = field(default_factory=list) # [{'round': N, 'winners': [names], 'score': S}]
+
     def __post_init__(self):
         # Force integer types for comparisons
         self.time_limit = int(self.time_limit)
@@ -440,6 +443,21 @@ class GameRoom:
             # UPDATE RATINGS (Immediately at round end)
             # Calculate Proportional Rating changes based on FINAL scores
             print(f"[GameRoom] Calculating Proportional ratings at end of Round {self.current_round}")
+            
+            # Record winners for History tab before rating change (using score before rating adjustment)
+            active_competitors = [p for p in self.players if p.score > 0]
+            if active_competitors:
+                max_score = max(p.score for p in active_competitors)
+                round_winners = [p.username for p in active_competitors if p.score == max_score]
+                self.winners_history.insert(0, {
+                    'round': self.current_round,
+                    'winners': round_winners,
+                    'score': max_score
+                })
+                # Keep last 50
+                if len(self.winners_history) > 50:
+                    self.winners_history = self.winners_history[:50]
+
             rating_changes = calculate_proportional_rating_change(self.players)
             
             for player in self.players:

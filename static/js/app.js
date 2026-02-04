@@ -289,9 +289,12 @@ async function checkSession() {
                     }
                 }
             }
+        } else {
+            updateAuthUI();
         }
     } catch (error) {
         console.error('Session check failed:', error);
+        updateAuthUI();
     }
 }
 
@@ -553,11 +556,8 @@ async function handleGuestLogin() {
 }
 
 function navigateToLobby() {
-    // Update username display if it exists
-    const usernameDisplay = document.getElementById('username-display');
-    if (usernameDisplay) {
-        usernameDisplay.textContent = currentUser;
-    }
+    // Update UI for logged in state
+    updateAuthUI();
 
     // Show lobby page
     showPage('page-lobby');
@@ -567,45 +567,117 @@ function navigateToLobby() {
     }
 }
 
-// Lobby game grid button handlers
-// These are handled by lobby.js to create/join rooms via API
-// Removing the duplicate listeners here to prevent conflicts/double-actions
-/*
-document.addEventListener('DOMContentLoaded', () => {
-   // Handlers removed to avoid conflict with lobby.js
-});
-*/
+function updateAuthUI() {
+    const loginNavBtn = document.getElementById('nav-login-btn');
+    const userDisplay = document.getElementById('user-display');
+    const usernameEl = document.getElementById('username-display');
+
+    if (currentUser) {
+        if (loginNavBtn) loginNavBtn.classList.add('hidden');
+        if (userDisplay) userDisplay.classList.remove('hidden');
+        if (usernameEl) {
+            usernameEl.textContent = currentUser;
+            const color = window.getRatingColor ? window.getRatingColor(0) : '#fff'; // Default or fetch actual rating
+            usernameEl.style.color = 'var(--accent-color)';
+        }
+    } else {
+        if (loginNavBtn) loginNavBtn.classList.remove('hidden');
+        if (userDisplay) userDisplay.classList.add('hidden');
+    }
+}
+
+async function handleLogout() {
+    try {
+        const response = await fetch('/api/logout', { method: 'POST' });
+        const data = await response.json();
+        if (data.success) {
+            currentUser = null;
+            window.currentUser = null;
+            localStorage.removeItem('morpheme_username');
+            updateAuthUI();
+            showPage('page-login');
+
+            // Reset Play button
+            const playBtn = document.getElementById('play-btn');
+            if (playBtn) {
+                playBtn.disabled = true;
+                playBtn.classList.remove('active');
+            }
+        }
+    } catch (error) {
+        console.error('Logout error:', error);
+    }
+}
+
+// Setup authentication
+function setupAuth() {
+    // Tab switching
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.getAttribute('data-tab');
+            switchAuthTab(tab);
+        });
+    });
+
+    // Logout button
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
+
+    // Sign in form
+    const signinForm = document.getElementById('signin-form');
+    if (signinForm) {
+        signinForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await handleSignIn();
+        });
+    }
+
+    // Sign up form
+    const signupForm = document.getElementById('signup-form');
+    if (signupForm) {
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await handleSignUp();
+        });
+    }
+
+    // Guest login button
+    const guestBtn = document.getElementById('guest-login-btn');
+    if (guestBtn) {
+        guestBtn.addEventListener('click', async () => {
+            await handleGuestLogin();
+        });
+    }
+}
 
 function updateActiveRoomsPanel(gameType, time, dimensions) {
     const infoDiv = document.getElementById('selected-game-info');
     const roomsList = document.getElementById('rooms-list');
 
-    infoDiv.innerHTML = `
-        <p><strong>Game Type:</strong> ${gameType}</p>
-        <p><strong>Board Dimensions:</strong> ${dimensions}</p>
-        <p><strong>Time:</strong> ${time}</p>
-    `;
+    if (infoDiv) {
+        infoDiv.innerHTML = `
+            <p><strong>Game Type:</strong> ${gameType}</p>
+            <p><strong>Board Dimensions:</strong> ${dimensions}</p>
+            <p><strong>Time:</strong> ${time}</p>
+        `;
+    }
 
-    // Placeholder for actual rooms (would come from backend)
-    roomsList.innerHTML = `
-        <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">
-            No active rooms found. Create a new room to get started!
-        </p>
-    `;
+    if (roomsList) {
+        roomsList.innerHTML = `
+            <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">
+                No active rooms found. Create a new room to get started!
+            </p>
+        `;
+    }
 }
 
 function selectRoom(roomName) {
     selectedRoom = roomName;
-
-    // Enable Play button
-    document.getElementById('play-btn').disabled = false;
-
-    // Visual feedback
-    document.querySelectorAll('.room-card').forEach(card => {
-        card.style.borderColor = 'var(--border)';
-    });
-
-    event.target.closest('.room-card').style.borderColor = 'var(--primary)';
+    const playBtn = document.getElementById('play-btn');
+    if (playBtn) playBtn.disabled = false;
 }
 
 // Define standardized rating ranges globaly for reuse

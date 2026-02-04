@@ -137,6 +137,9 @@ def init_db():
         ''')
         conn.commit()
         print("Migrated DB: Added private_messages table")
+    except Exception as e:
+        print(f"Migration Error (PM table): {e}")
+
     # MIGRATION: Add friends table
     try:
         conn.execute('''
@@ -937,7 +940,8 @@ def get_room_state(room_id):
             'spectators': [
                 {'username': s.username, 'rating': s.rating, 'user_id': s.user_id} for s in room.spectators
             ] if hasattr(room, 'spectators') else [],
-            'chat_messages': room.chat_messages
+            'chat_messages': room.chat_messages,
+            'winners_history': room.winners_history
         })
         
         return resp
@@ -1851,15 +1855,25 @@ def get_friends_list():
     try:
         user = conn.execute('SELECT id FROM users WHERE username = ?', (session['username'],)).fetchone()
         # Join with users to get usernames and avatars
-        friends = conn.execute('''
-            SELECT u.username, u.avatar_url, u.rating, u.country_flag
+        friends_rows = conn.execute('''
+            SELECT u.id, u.username, u.avatar_url, u.rating, u.country_flag
             FROM friends f
             JOIN users u ON f.friend_id = u.id
             WHERE f.user_id = ?
-            ORDER BY u.username ASC
         ''', (user['id'],)).fetchall()
         
-        return jsonify({'friends': [dict(f) for f in friends]})
+        friends_data = []
+        for row in friends_rows:
+            f_dict = dict(row)
+            # Get online status
+            presence = room_manager.find_user_session(row['id'])
+            f_dict['is_online'] = presence['is_online'] if presence else False
+            friends_data.append(f_dict)
+            
+        # Sort by online (True first) then username
+        friends_data.sort(key=lambda x: (not x['is_online'], x['username'].lower()))
+        
+        return jsonify({'friends': friends_data})
     finally:
         conn.close()
 

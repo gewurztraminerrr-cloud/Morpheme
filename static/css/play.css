@@ -796,6 +796,24 @@
     /* Space for scrollbar */
     margin-bottom: 10px;
 }
+#winners-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.history-item {
+    transition: background-color 0.2s;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.history-item:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
 
 .word-item {
     background: rgba(72, 187, 120, 0.3);

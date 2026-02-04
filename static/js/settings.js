@@ -126,6 +126,35 @@ function debounce(func, wait) {
                 else dot.classList.remove('active');
             });
         }
+
+        // Next Round Bell Enabled
+        if (settings.next_round_bell_enabled !== undefined) {
+            let val = settings.next_round_bell_enabled;
+            if (val === 'true' || val === 'True' || val === true) val = true;
+            else if (val === 'false' || val === 'False' || val === false) val = false;
+
+            const bellToggle = document.getElementById('setting-next-round-bell');
+            if (bellToggle) bellToggle.checked = val;
+
+            const container = document.getElementById('bell-selection-container');
+            if (container) container.style.display = val ? 'flex' : 'none';
+
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.next_round_bell_enabled = val;
+        }
+
+        // Next Round Bell Type
+        if (settings.next_round_bell_type) {
+            const type = settings.next_round_bell_type;
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.next_round_bell_type = type;
+
+            const bellBtns = document.querySelectorAll('.bell-btn');
+            bellBtns.forEach(btn => {
+                if (btn.getAttribute('data-bell') === type) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+        }
     }
 
     // 3. Handle Updates
@@ -230,6 +259,43 @@ function debounce(func, wait) {
             saveSettingDebounced('app_theme', theme);
         });
     });
+
+    // Next Round Bell Listener
+    const bellToggle = document.getElementById('setting-next-round-bell');
+    if (bellToggle) {
+        bellToggle.addEventListener('change', (e) => {
+            const val = e.target.checked;
+            const container = document.getElementById('bell-selection-container');
+            if (container) container.style.display = val ? 'flex' : 'none';
+
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.next_round_bell_enabled = val;
+            saveSettingDebounced('next_round_bell_enabled', val);
+        });
+    }
+
+    // Bell Selection Listeners
+    const bellBtns = document.querySelectorAll('.bell-btn');
+    bellBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const bell = btn.getAttribute('data-bell');
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.next_round_bell_type = bell;
+
+            bellBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Play preview
+            playPreviewBell(bell);
+
+            saveSettingDebounced('next_round_bell_type', bell);
+        });
+    });
+
+    function playPreviewBell(type) {
+        const audio = new Audio(`/static/audio/${type}.wav`);
+        audio.play().catch(e => console.log('Audio play failed:', e));
+    }
 
     function applyTheme(theme) {
         // Remove existing theme classes

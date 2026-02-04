@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupSubanagramsTool();
     setupIsValidTool();
     setupPrivateMessaging();
+    setupMiniProfileModal();
 });
 
 function setupToolsNavigation() {
@@ -136,6 +137,122 @@ function renderGroups(groupsData, containerId, type) {
         container.appendChild(colDiv);
     });
 }
+
+// --- Mini Profile Logic ---
+
+function setupMiniProfileModal() {
+    const modal = document.getElementById('mini-profile-modal');
+    const closeBtn = document.getElementById('mini-profile-close');
+
+    if (modal && closeBtn) {
+        closeBtn.onclick = () => modal.classList.add('hidden');
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.classList.add('hidden');
+        };
+    }
+}
+
+async function showMiniProfile(username) {
+    if (!username || username.startsWith('Guest_')) return;
+
+    const modal = document.getElementById('mini-profile-modal');
+    if (!modal) return;
+
+    try {
+        const response = await fetch(`/api/profile/${encodeURIComponent(username)}`);
+        const data = await response.json();
+
+        if (data.error) return;
+
+        // Populate Modal
+        document.getElementById('mini-profile-username').innerText = data.username;
+        document.getElementById('mini-profile-fullname').innerText = data.full_name || '-';
+        document.getElementById('mini-profile-games').innerText = data.games_played || 0;
+        document.getElementById('mini-profile-age').innerText = data.age || '-';
+        document.getElementById('mini-profile-gender').innerText = data.gender || '-';
+        document.getElementById('mini-profile-flag').innerText = data.country_flag || '🏳️';
+        document.getElementById('mini-profile-quote').innerText = data.quote ? `"${data.quote}"` : '"No quote provided."';
+        document.getElementById('mini-profile-description').innerText = data.description || 'No description provided.';
+
+        // Country Name Lookup
+        const flagEmoji = data.country_flag || '🏳️';
+        const country = typeof ALL_FLAGS !== 'undefined' ? ALL_FLAGS.find(f => f.flag === flagEmoji) : null;
+        document.getElementById('mini-profile-country-name').innerText = country ? country.name : 'International';
+
+        const statusEl = document.getElementById('mini-profile-status');
+        const statusIcon = document.getElementById('mini-profile-status-icon');
+        const isOnline = data.status && data.status.is_online;
+
+        statusEl.innerText = isOnline ? 'Online' : 'Offline';
+        statusEl.style.color = isOnline ? '#4ade80' : 'rgba(255,255,255,0.5)';
+
+        if (statusIcon) {
+            statusIcon.innerText = isOnline ? '🟢' : '⚪';
+            statusIcon.style.filter = isOnline ? 'drop-shadow(0 0 5px #4ade80)' : 'none';
+        }
+        const rating = data.rating || 0;
+        const ratingBadge = document.getElementById('mini-profile-rating-badge');
+        ratingBadge.innerText = rating;
+        const ratingColor = window.getRatingColor ? window.getRatingColor(rating) : '#fff';
+        ratingBadge.style.color = ratingColor;
+        ratingBadge.style.borderColor = `${ratingColor}44`;
+
+        const avatar = document.getElementById('mini-profile-avatar');
+        if (data.avatar_url) {
+            avatar.style.backgroundImage = `url('${data.avatar_url}')`;
+            avatar.style.background = ''; // Clear gradient
+            avatar.style.backgroundColor = 'rgba(0,0,0,0.3)';
+            avatar.innerText = '';
+        } else {
+            avatar.style.backgroundImage = 'none';
+            avatar.style.background = `linear-gradient(135deg, ${ratingColor}, #444)`;
+            avatar.innerText = data.username.charAt(0).toUpperCase();
+        }
+
+        // Setup Buttons
+        const viewFullBtn = document.getElementById('mini-profile-view-full');
+        viewFullBtn.onclick = () => {
+            modal.classList.add('hidden');
+            // Navigate to tools page and search
+            const toolsBtn = document.querySelector('.nav-btn[data-page="tools"]');
+            if (toolsBtn) toolsBtn.click();
+
+            const profileToolBtn = document.querySelector('.tool-nav-btn[data-tool="profile"]');
+            if (profileToolBtn) profileToolBtn.click();
+
+            window.performProfileSearch(data.username);
+        };
+
+        const msgBtn = document.getElementById('mini-profile-message');
+        const globalUser = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
+        const currentName = (typeof globalUser === 'object') ? globalUser.username : globalUser;
+
+        if (currentName && currentName.toLowerCase() !== data.username.toLowerCase()) {
+            msgBtn.classList.remove('hidden');
+            msgBtn.onclick = () => {
+                modal.classList.add('hidden');
+                window.openPrivateChat(data.username);
+            };
+
+            const friendBtn = document.getElementById('mini-profile-friend');
+            if (friendBtn) {
+                friendBtn.classList.remove('hidden');
+                updateFriendButtonStatus(data.username, friendBtn);
+                friendBtn.onclick = () => handleFriendAction(data.username, friendBtn);
+            }
+        } else {
+            msgBtn.classList.add('hidden');
+            const friendBtn = document.getElementById('mini-profile-friend');
+            if (friendBtn) friendBtn.classList.add('hidden');
+        }
+
+        modal.classList.remove('hidden');
+
+    } catch (err) {
+        console.error("Mini profile fetch error:", err);
+    }
+}
+window.showMiniProfile = showMiniProfile;
 
 // --- Profile Tool Logic ---
 
@@ -653,6 +770,8 @@ async function performProfileSearch(username) {
 
     username = username.trim();
     const container = document.getElementById('profile-display-container');
+    const input = document.getElementById('profile-search-input');
+    if (input) input.value = username;
 
     // Guests do not have profiles
     if (username.startsWith('Guest_')) {
@@ -678,6 +797,7 @@ async function performProfileSearch(username) {
         console.error("Profile search error:", err);
     }
 }
+window.performProfileSearch = performProfileSearch;
 
 function renderProfile(user) {
     const usernameEl = document.getElementById('profile-username');
@@ -2026,6 +2146,8 @@ async function handleFriendAction(username, btn) {
     }
 }
 
+window.fetchAndRenderFriends = fetchAndRenderFriends;
+
 async function fetchAndRenderFriends() {
     const friendsList = document.getElementById('profile-friends-list');
     if (!friendsList) return;
@@ -2043,14 +2165,18 @@ async function fetchAndRenderFriends() {
 
         friendsList.innerHTML = data.friends.map(friend => {
             const ratingColor = getRatingColor(friend.rating);
+            const isOnline = friend.is_online;
             const avatarHtml = friend.avatar_url
                 ? `<div class="friend-avatar-mini" style="background-image: url('${friend.avatar_url}')"></div>`
                 : `<div class="friend-avatar-mini" style="background-color: ${ratingColor}">${friend.username[0].toUpperCase()}</div>`;
 
             return `
-                <div class="friend-card" onclick="performProfileSearch('${friend.username}')">
+                <div class="friend-card ${isOnline ? 'online' : ''}" onclick="window.performProfileSearch('${friend.username}')">
                     ${avatarHtml}
-                    <div class="friend-name-mini">${friend.username}</div>
+                    <div class="friend-name-mini">
+                        ${friend.username}
+                        ${isOnline ? '<span class="status-indicator-mini online" style="display:inline-block; margin-left:5px; width:8px; height:8px;"></span>' : ''}
+                    </div>
                     <div class="friend-rating-mini">${friend.country_flag || '🏳️'} • Rating: ${friend.rating}</div>
                 </div>
             `;

@@ -26,6 +26,7 @@ let highlightedFoundWord = null; // Track word from All Words list to highlight 
 let lastRenderedBoardJSON = null;
 let lastRenderedGrayed = null;
 let lastRenderedRotation = null;
+let hasPlayedIntermissionBell = false; // Flag for next round notification
 
 // Input Method Tracking
 let currentInputMethod = 'mouse';
@@ -331,6 +332,7 @@ async function updateGameState() {
             if (activeWordsTab === 'remaining') headerText = 'Remaining';
             if (activeWordsTab === 'clues') headerText = 'Clues';
             if (activeWordsTab === 'previous') headerText = 'Previous Day';
+            if (activeWordsTab === 'history') headerText = 'Past Winners';
             if (state.state === 'intermission' && activeWordsTab === 'found') headerText = 'All Words';
             wordsPanelHeader.textContent = headerText;
         }
@@ -415,17 +417,20 @@ async function updateGameState() {
                 if (tab === 'found') {
                     btn.textContent = 'Words';
                     btn.style.display = 'block';
-                } else if (tab === 'remaining') {
+                } else if (tab === 'remaining' || tab === 'history') {
                     btn.style.display = 'block';
                 } else {
                     btn.style.display = 'none'; // Hide Clues/Previous
                 }
             }
+            if (tab === 'history') btn.style.display = 'block';
         });
 
         // Ensure activeWordsTab is valid for current room type
         if (is24H && activeWordsTab === 'remaining') activeWordsTab = 'found';
-        if (!is24H && (activeWordsTab === 'clues' || activeWordsTab === 'previous')) activeWordsTab = 'found';
+        if (!is24H && (activeWordsTab === 'clues' || activeWordsTab === 'previous')) {
+            // No reset for history, anyone can see past winners
+        }
 
         // Apply Tab Visibility logic
         const tabContents = document.querySelectorAll('.tab-content');
@@ -743,6 +748,30 @@ async function updateGameState() {
             }
         }
 
+        // --- ROOM HISTORY TAB ---
+        const historyListEl = document.getElementById('winners-list');
+        if (historyListEl && activeWordsTab === 'history') {
+            const history = state.winners_history || [];
+            if (history.length === 0) {
+                historyListEl.innerHTML = '<p class="placeholder" style="text-align:center; margin-top:20px;">No winners recorded yet.</p>';
+            } else {
+                historyListEl.innerHTML = history.map(h => {
+                    const winnerText = h.winners.join(' & '); // Handle ties with &
+                    return `
+                        <div class="history-item" style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; flex-direction: column;">
+                                <span style="font-weight: bold; color: var(--accent-color);">${winnerText}</span>
+                                <span style="font-size: 0.75rem; opacity: 0.6;">Round ${h.round}</span>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; font-weight: bold;">
+                                ${h.score} pts
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
 
         // Auto-focus check
         if (isActive && !previousState) {
@@ -828,7 +857,7 @@ function renderPlayers(players, currentUser = null, state = null) {
         <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}" data-username="${p.username}">
             <div class="player-row-top">
                 <span class="player-rank">#${rank}</span>
-                <span class="rating-square" style="background-color: ${ratingColor};"></span>
+                <span class="rating-square" onclick="window.showMiniProfile('${p.username}'); event.stopPropagation();" style="background-color: ${ratingColor}; cursor: pointer;"></span>
                 <span class="player-username">${p.username}</span>
                 <span class="player-rating-val">${ratingDisplay}</span>
             </div>
@@ -1194,7 +1223,8 @@ function updateLocalTimer() {
     // Low time visual
     const boardPanel = document.querySelector('.board-panel');
     if (boardPanel) {
-        if (remaining <= 10 && remaining > 0 && previousState === 'active') {
+        const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
+        if (remaining <= 10 && remaining > 0 && currentState === 'active') {
             boardPanel.classList.add('low-time-warning');
         } else {
             boardPanel.classList.remove('low-time-warning');
@@ -1205,6 +1235,22 @@ function updateLocalTimer() {
         clearInterval(timerInterval);
         timerInterval = null;
         if (boardPanel) boardPanel.classList.remove('low-time-warning');
+    }
+
+    // -- Next Round Bell Logic --
+    if (window.lastGameState && window.lastGameState.state === 'intermission') {
+        const isEnabled = window.userSettings && (window.userSettings.next_round_bell_enabled === true || window.userSettings.next_round_bell_enabled === 'true');
+        const bellType = (window.userSettings && window.userSettings.next_round_bell_type) || 'bell1';
+
+        if (isEnabled && seconds === 10 && !hasPlayedIntermissionBell) {
+            console.log(`[play.js] Playing intermission bell: ${bellType}`);
+            const audio = new Audio(`/static/audio/${bellType}.wav`);
+            audio.play().catch(e => console.warn('Bell audio failed:', e));
+            hasPlayedIntermissionBell = true;
+        }
+    } else {
+        // Reset flag when not in intermission
+        hasPlayedIntermissionBell = false;
     }
 }
 
@@ -2276,8 +2322,11 @@ document.addEventListener('click', (e) => {
         document.querySelectorAll('.word-tab').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tab === activeWordsTab);
         });
-        document.getElementById('tab-content-found').classList.toggle('active', activeWordsTab === 'found');
-        document.getElementById('tab-content-remaining').classList.toggle('active', activeWordsTab === 'remaining');
+        // Update visibility of ALL tab contents
+        document.querySelectorAll('.tab-content').forEach(content => {
+            const tabId = content.id.replace('tab-content-', '');
+            content.classList.toggle('active', activeWordsTab === tabId);
+        });
 
         // Refresh state visualization
         if (window.lastGameState) {
