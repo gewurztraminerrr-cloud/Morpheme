@@ -66,7 +66,7 @@ new_html = """                            <div class="profile-card">
                                             <span id="profile-gender-val">-</span> <span class="meta-label">SEX</span>
                                         </div>
                                         <div class="profile-quote">
-                                            "<span id="profile-quote-val">Welcome to Morpheme.</span>"
+                                            "<span id="profile-quote-val">Enter a personal quote</span>"
                                         </div>
                                     </div>
                                 </div>

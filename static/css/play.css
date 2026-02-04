@@ -216,8 +216,32 @@
 }
 
 .players-panel h3 {
-    margin: 0 0 15px 0;
+    margin: 0 0 10px 0;
     text-align: center;
+}
+
+.find-me-btn {
+    width: 100%;
+    background: #ffffff;
+    border: 2px solid #000000;
+    border-radius: 8px;
+    color: #000000;
+    padding: 8px 0;
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    margin-bottom: 15px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.find-me-btn:hover {
+    background: #e2e2e2;
+    border-color: #e2e2e2;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* Remove table header styles */
@@ -718,6 +742,15 @@
 
 #remaining-words-table tr {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background-color 0.2s ease;
+}
+
+#remaining-words-table tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+#remaining-words-table tr:hover {
+    background: rgba(255, 255, 255, 0.07);
 }
 
 #remaining-words-table td {
@@ -790,13 +823,14 @@
 }
 
 .word-item.bonus-word {
-    background: rgba(50, 205, 50, 0.5) !important;
-    /* LimeGreen */
-    border: 2px solid #32cd32 !important;
-    box-shadow: 0 0 15px rgba(50, 205, 50, 0.6) !important;
+    background: rgba(50, 255, 50, 0.4) !important;
+    /* Vibrant Lime Green */
+    border: 3px solid #32ff32 !important;
+    box-shadow: 0 0 20px rgba(50, 255, 50, 0.7) !important;
     color: #fff;
-    text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-    animation: bonusPulse 2s infinite;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.8), 0 0 4px #000;
+    animation: bonusPulse 1.5s infinite;
+    z-index: 5;
 }
 
 .word-item.unfound {
@@ -815,11 +849,52 @@
 /* CSW-Only Word (Third Priority: Yellow/Gold) */
 .word-item.csw-only {
     background: rgba(255, 215, 0, 0.4) !important;
-    /* Rich Gold */
-    border: 1px solid #ffcc00 !important;
-    box-shadow: 0 0 12px rgba(255, 204, 0, 0.4);
+    border: 2px solid #ffd700 !important;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3) !important;
     color: #fff;
-    font-weight: 600;
+    font-weight: 700;
+}
+
+/* Active Highlight for Finding Finders */
+.word-item.finder-active {
+    outline: 3px solid #ffd700;
+    outline-offset: 2px;
+    z-index: 10;
+    transform: scale(1.02);
+}
+
+.found-indicator {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 16px;
+    font-size: 10px;
+    margin-right: 8px;
+    font-weight: 900;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+.found-indicator.present {
+    background: #2ecc71;
+    color: white;
+    box-shadow: 0 0 5px rgba(46, 204, 113, 0.4);
+}
+
+.found-indicator.empty {
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    background: transparent;
+}
+
+/* Golden Highlight for Players who found a word */
+.player-item.finder-highlight {
+    border-color: #ffd700 !important;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 215, 0, 0.05) 100%) !important;
+    transform: scale(1.02);
+    z-index: 5;
 }
 
 /* Missed by User (Red) */
@@ -1713,6 +1788,12 @@
     background: rgba(64, 156, 255, 0.1);
 }
 
+.user-notepad.highlight-shared {
+    border-color: #ffd700 !important;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.45) !important;
+    background: rgba(255, 215, 0, 0.08) !important;
+}
+
 /* Notepad Header */
 .notepad-header {
     padding: 10px 15px;
@@ -1810,6 +1891,14 @@
     color: #ff6b6b;
     text-decoration: line-through;
     opacity: 0.7;
+}
+
+.notepad-item.active {
+    background: #ffd700 !important;
+    color: #000 !important;
+    font-weight: 800;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    border: 1px solid #000;
 }
 
 /* Toggle Link/Button styling */

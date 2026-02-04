@@ -21,6 +21,8 @@ let showBoardInSplitIntermission = false;
 let isBoardRotated = false;
 let activeWordsTab = 'found'; // 'found' or 'remaining'
 let validationTimeout = null;
+let highlightedSplitWord = null; // Track word for shared highlighting in Split Points
+let highlightedFoundWord = null; // Track word from All Words list to highlight finders
 
 // Input Method Tracking
 let currentInputMethod = 'mouse';
@@ -237,7 +239,7 @@ async function updateGameState() {
         }
 
         // Update players (pass full state for context if needed)
-        renderPlayers(state.players, currentUsername);
+        renderPlayers(state.players, currentUsername, state);
 
         // Update chat
         if (state.chat_messages) {
@@ -270,7 +272,7 @@ async function updateGameState() {
         const lastStateStr = previousState ? previousState.state : null;
         if (lastStateStr !== state.state) {
             if (state.state === 'intermission' && lastStateStr === 'active') {
-                showSpinnerOverlay(state.spinner_params);
+                showSpinnerOverlay(state.spinner_params, state.players);
 
                 // Focus Chat on Intermission
                 setTimeout(() => {
@@ -290,6 +292,10 @@ async function updateGameState() {
                 if (lastStateStr) {
                     wordsList.innerHTML = '<p class="placeholder">Game active - Waiting for words...</p>';
                 }
+
+                // Reset Highlighting
+                highlightedSplitWord = null;
+                highlightedFoundWord = null;
 
                 // DATA SYNC FIX: Explicitly clear Remaining list to prevent crossover
                 const remainingList = document.getElementById('remaining-words-list');
@@ -494,17 +500,38 @@ async function updateGameState() {
 
                 const sortedWords = [...myWords].sort((a, b) => (b.time || 0) - (a.time || 0));
                 if (sortedWords.length === 0) {
-                    listEl.innerHTML = '<p class="placeholder">Find words!</p>';
+                    listEl.innerHTML = '<p class="placeholder">Find words on the board!</p>';
                 } else {
-                    const html = sortedWords.map(wObj => {
-                        const word = typeof wObj === 'string' ? wObj : wObj.word;
-                        const points = typeof wObj === 'object' ? wObj.points : '?';
-                        const isBonus = word === state.bonus_word;
+                    listEl.innerHTML = sortedWords.map(w => {
+                        const word = typeof w === 'string' ? w : w.word;
+                        const wordUpper = word.toUpperCase();
+                        const points = typeof w === 'string' ? (state.all_word_scores[wordUpper] || 0) : (w.points || 0);
+                        const isBonus = state.bonus_word && wordUpper === state.bonus_word.toUpperCase();
+                        const isCSWOnly = state.csw_only_words && state.csw_only_words.some(csw => csw.toUpperCase() === wordUpper);
+
                         let className = 'word-item player-word';
                         if (isBonus) className += ' bonus-word';
-                        return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; cursor:pointer;"><span>${word}</span><span style="opacity:0.8">${points}</span></div>`;
+                        if (isCSWOnly) className += ' csw-only';
+                        if (highlightedFoundWord === wordUpper) className += ' finder-active';
+
+                        // All words in this list ARE found by user
+                        const indicator = '<span class="found-indicator present">✓</span>';
+
+                        return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; cursor:pointer;">
+                            <span>${indicator}${word}</span>
+                            <span style="opacity:0.8">${points}</span>
+                        </div>`;
                     }).join('');
-                    listEl.innerHTML = html;
+
+                    // Add click listeners
+                    listEl.querySelectorAll('.word-item').forEach(item => {
+                        item.onclick = () => {
+                            const word = item.dataset.word.toUpperCase();
+                            highlightedFoundWord = (highlightedFoundWord === word) ? null : word;
+                            updateGameState();
+                            window.fetchDefinition(item.dataset.word);
+                        };
+                    });
                 }
             } else {
                 // FCFS: Shared Live Feed
@@ -534,18 +561,35 @@ async function updateGameState() {
                 } else {
                     const html = sortedWords.map(wObj => {
                         const word = wObj.word;
+                        const wordUpper = word.toUpperCase();
                         const points = wObj.points;
                         const finder = wObj.finder;
                         const isMe = finder === currentUser;
-                        const isBonus = word === state.bonus_word;
+                        const isBonus = state.bonus_word && wordUpper === state.bonus_word.toUpperCase();
+
                         let className = 'word-item' + (isMe ? ' player-word' : ' opponent-word') + (isBonus ? ' bonus-word' : '');
+                        if (highlightedFoundWord === wordUpper) className += ' finder-active';
+
+                        const indicator = '<span class="found-indicator present">✓</span>';
+
                         return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
-                            <div><span style="font-weight:bold;">${word}</span><span style="font-size:0.8em; opacity:0.7; margin-left:6px;">(${finder})</span></div>
+                            <div>${indicator}<span style="font-weight:bold;">${word}</span><span style="font-size:0.8em; opacity:0.7; margin-left:6px;">(${finder})</span></div>
                             <span style="opacity:0.8">${points}</span>
                         </div>`;
                     }).join('');
+
                     if (listEl.innerHTML !== html) {
                         listEl.innerHTML = html;
+                        // Add click listeners
+                        listEl.querySelectorAll('.word-item').forEach(item => {
+                            item.onclick = () => {
+                                const word = item.dataset.word.toUpperCase();
+                                highlightedFoundWord = (highlightedFoundWord === word) ? null : word;
+                                updateGameState();
+                                window.fetchDefinition(item.dataset.word);
+                            };
+                        });
+
                         if (isAtBottom || wasEmpty) {
                             requestAnimationFrame(() => { listEl.scrollTop = listEl.scrollHeight; });
                         }
@@ -710,9 +754,21 @@ async function updateGameState() {
     }
 }
 
-function renderPlayers(players, currentUser = null) {
+function renderPlayers(players, currentUser = null, state = null) {
     console.log('[RenderPlayers] Players:', players && players.length);
     const listEl = document.getElementById('players-list');
+    const headingEl = document.getElementById('players-heading');
+    const findMeBtn = document.getElementById('find-me-btn');
+
+    if (state && state.game_type === 'accumulative') {
+        const totalPeople = (players ? players.length : 0) + (state.spectators ? state.spectators.length : 0);
+        if (headingEl) headingEl.textContent = `Players [${totalPeople}]`;
+        if (findMeBtn) findMeBtn.style.display = 'block';
+    } else {
+        if (headingEl) headingEl.textContent = `Players`;
+        if (findMeBtn) findMeBtn.style.display = 'none';
+    }
+
     if (!players || players.length === 0) {
         listEl.innerHTML = '<p class="placeholder">No players</p>';
         return;
@@ -742,22 +798,31 @@ function renderPlayers(players, currentUser = null) {
         // Highlight if selected
         const selectedClass = (p.username === selectedPlayerUsername) ? ' selected-player' : '';
 
+        // Highlight if found selected word (Golden Highlight)
+        let finderClass = '';
+        if (highlightedFoundWord) {
+            const hasChosenWord = p.submitted_words && p.submitted_words.some(sw => {
+                const w = (typeof sw === 'object' ? sw.word : sw) || '';
+                return w.toUpperCase() === highlightedFoundWord;
+            });
+            if (hasChosenWord) {
+                finderClass = ' finder-highlight';
+            }
+        }
+
         // Calculate rating color
         let ratingColor = window.getRatingColor ? window.getRatingColor(displayRating) : '#fff';
-
-        // New User Indicator (Blueish Square)
-        // Check strict equality to 0, ensuring we don't catch undefined or null
         if (!isGuest && p.games_played === 0) {
-            ratingColor = '#0044ff'; // 1200 range Blue for new users
+            ratingColor = '#0044ff';
         }
 
         // Input Method Icon
-        let inputIcon = '🖱️'; // Default
+        let inputIcon = '🖱️';
         if (p.input_method === 'keyboard') inputIcon = '⌨️';
         if (p.input_method === 'touch') inputIcon = '👆';
 
         return `
-        <div class="player-item${bonusClass}${userClass}${selectedClass}" data-username="${p.username}">
+        <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}" data-username="${p.username}">
             <div class="player-row-top">
                 <span class="player-rank">#${rank}</span>
                 <span class="rating-square" style="background-color: ${ratingColor};"></span>
@@ -889,6 +954,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (chatSend) {
         chatSend.addEventListener('click', sendChatMessage);
     }
+
+    // Find Me button logic
+    const findMeBtn = document.getElementById('find-me-btn');
+    if (findMeBtn) {
+        findMeBtn.addEventListener('click', () => {
+            const listEl = document.getElementById('players-list');
+            const myCard = listEl.querySelector('.current-user');
+            if (myCard) {
+                myCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Subtle highlight animation
+                myCard.style.transition = 'background 0.3s ease';
+                const originalBg = myCard.style.background;
+                myCard.style.background = 'rgba(64, 156, 255, 0.6)';
+                setTimeout(() => {
+                    myCard.style.background = originalBg;
+                }, 800);
+            }
+        });
+    }
 });
 
 function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWords = [], allWordScores = {}, cswOnlyWords = []) {
@@ -908,6 +992,13 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     const sortedWords = [...allWords].sort((a, b) => {
         const wordA = a.toUpperCase();
         const wordB = b.toUpperCase();
+        const bonusUpper = bonusWord ? bonusWord.toUpperCase() : null;
+
+        // 0. Bonus Word (Absolute Top Priority)
+        if (bonusUpper) {
+            if (wordA === bonusUpper) return -1;
+            if (wordB === bonusUpper) return 1;
+        }
 
         // 1. Length (Desc)
         if (a.length !== b.length) return b.length - a.length;
@@ -925,12 +1016,18 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
 
     listEl.innerHTML = sortedWords.map(word => {
         const wordUpper = word.toUpperCase();
-        const isBonus = wordUpper === bonusWord.toUpperCase();
+        const isBonus = bonusWord && wordUpper === bonusWord.toUpperCase();
         const isCSWOnly = cswOnlyUpper.includes(wordUpper);
         const isTargetFound = targetWordsUpper.includes(wordUpper);
+        const isFoundByAny = allFoundUpper.includes(wordUpper);
         const points = allWordScores[word] || allWordScores[wordUpper] || 0;
 
         let className = 'word-item';
+
+        // Highlighting for finder feature
+        if (highlightedFoundWord === wordUpper) {
+            className += ' finder-active';
+        }
 
         // Priority 1: Bonus Word (Green) - Top Priority
         if (isBonus) {
@@ -945,7 +1042,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             className += ' csw-only';
         }
         // Priority 4: Found by others but not me (Neutral/Missed)
-        else if (allFoundUpper.includes(wordUpper)) {
+        else if (isFoundByAny) {
             className += ' found-by-other missed';
         }
         // Priority 5: Not found by anyone (Gray/Missed)
@@ -953,12 +1050,30 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             className += ' unfound missed';
         }
 
-        // Add display:flex inline just in case
+        const indicatorClass = isFoundByAny ? 'found-indicator present' : 'found-indicator empty';
+        const indicatorIcon = isFoundByAny ? '✓' : '';
+        const indicator = `<span class="${indicatorClass}">${indicatorIcon}</span>`;
+
         return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; cursor:pointer;">
-            <span>${word}</span>
+            <span>${indicator}${word}</span>
             <span style="opacity:0.8">${points}</span>
         </div>`;
     }).join('');
+
+    // Add click listeners for finder highlighting
+    const wordItems = listEl.querySelectorAll('.word-item');
+    wordItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const word = item.dataset.word.toUpperCase();
+            if (highlightedFoundWord === word) {
+                highlightedFoundWord = null;
+            } else {
+                highlightedFoundWord = word;
+            }
+            updateGameState();
+            window.fetchDefinition(item.dataset.word);
+        });
+    });
 }
 
 // ... existing functions (updateParameters, renderBoard, etc) ...
@@ -1382,10 +1497,24 @@ function renderSplitNotepads(players) {
         if (p.username === selectedPlayerUsername) {
             notepad.classList.add('selected');
         }
+
+        // Shared word highlighting logic
+        if (highlightedSplitWord) {
+            const hWord = highlightedSplitWord.trim().toUpperCase();
+            const hasHighlightedWord = p.submitted_words && p.submitted_words.some(sw => {
+                const wStr = (typeof sw === 'object' ? sw.word : sw) || '';
+                return wStr.trim().toUpperCase() === hWord;
+            });
+
+            if (hasHighlightedWord) {
+                notepad.classList.add('highlight-shared');
+            }
+        }
+
         // Add click to select user (for highlighting words on right panel)
         notepad.onclick = (e) => {
-            // Avoid triggering if clicking tabs
-            if (e.target.classList.contains('notepad-tab')) return;
+            // Avoid triggering if clicking tabs or items
+            if (e.target.classList.contains('notepad-tab') || e.target.closest('.notepad-item')) return;
 
             if (selectedPlayerUsername === p.username) {
                 selectedPlayerUsername = null;
@@ -1435,10 +1564,7 @@ function renderSplitNotepads(players) {
             // Process valid words
             if (p.submitted_words) {
                 p.submitted_words.forEach(w => {
-                    // Metadata added by backend: is_unique, split_points
-                    console.log('Split Word Obj:', w);
                     const isUnique = w.is_unique;
-
                     if (currentTab === 'unique' && isUnique) {
                         wordsToShow.push(w);
                     } else if (currentTab === 'split' && !isUnique) {
@@ -1467,10 +1593,30 @@ function renderSplitNotepads(players) {
                 row.className = 'notepad-item';
                 if (w.is_invalid) row.classList.add('invalid');
 
+                // Active highlighting for the word itself
+                if (highlightedSplitWord) {
+                    if (w.word.trim().toUpperCase() === highlightedSplitWord.trim().toUpperCase()) {
+                        row.classList.add('active');
+                    }
+                }
+
                 // Definition handler
                 row.dataset.word = w.word;
                 row.style.cursor = 'pointer';
-                row.onclick = () => window.fetchDefinition(w.word);
+                row.onclick = (e) => {
+                    e.stopPropagation();
+                    // Split highlighting logic
+                    if (currentTab === 'split') {
+                        const clickedWord = w.word.trim().toUpperCase();
+                        if (highlightedSplitWord && highlightedSplitWord.trim().toUpperCase() === clickedWord) {
+                            highlightedSplitWord = null;
+                        } else {
+                            highlightedSplitWord = clickedWord;
+                        }
+                        updateGameState();
+                    }
+                    window.fetchDefinition(w.word);
+                };
 
                 row.innerHTML = `<span>${w.word}</span> <span>${w.points}</span>`;
                 list.appendChild(row);
@@ -1609,11 +1755,37 @@ function addSplitViewBoardToggle() {
 }
 
 // Spinner Logic
-function showSpinnerOverlay(spinnerParams) {
+function showSpinnerOverlay(spinnerParams, players = []) {
     if (!spinnerParams || !spinnerParams.word_count_range) {
         console.warn('[play.js] showSpinnerOverlay called with incomplete spinnerParams:', spinnerParams);
-        // Show overlay anyway if possible, or just return to avoid crash
         if (!spinnerParams) return;
+    }
+
+    // WINNER LOGIC
+    const winnerAnnounceEl = document.getElementById('spinner-winner-announcement');
+    const winnerTextEl = document.getElementById('spinner-winner-text');
+
+    if (winnerAnnounceEl && winnerTextEl) {
+        // Find players with score > 0
+        const activePlayers = (players || []).filter(p => p.score > 0);
+
+        if (activePlayers.length === 0) {
+            winnerAnnounceEl.classList.add('hidden');
+        } else {
+            // Find max score
+            const maxScore = Math.max(...activePlayers.map(p => p.score));
+            const winners = activePlayers.filter(p => p.score === maxScore).map(p => p.username);
+
+            if (winners.length === 1) {
+                winnerTextEl.textContent = `CONGRATULATIONS to ${winners[0]} for scoring 1st place with ${maxScore} points!`;
+            } else {
+                // Formatting for multiple winners: "User1, User2 and User3"
+                let winnerStr = winners.slice(0, -1).join(', ') + ' and ' + winners.slice(-1);
+                winnerTextEl.textContent = `CONGRATULATIONS to ${winnerStr} for scoring 1st place with ${maxScore} points!`;
+            }
+
+            winnerAnnounceEl.classList.remove('hidden');
+        }
     }
 
     // Defensive updates

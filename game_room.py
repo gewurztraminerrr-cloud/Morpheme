@@ -8,6 +8,8 @@ import datetime
 import threading
 from dataclasses import dataclass, field
 from typing import List, Dict
+import sqlite3
+import json
 from spinner_set import SpinnerSet
 from board_generator import BoardGenerator
 
@@ -49,6 +51,7 @@ class GameRoom:
     state: str = 'waiting'  # 'waiting', 'active', 'intermission', 'finished'
     current_round: int = 0
     starting_round: bool = False  # Prevents concurrent round starts
+    last_saved_round: int = -1    # tracks which round was last saved to DB
     
     # Timer
     round_start_time: float = 0
@@ -1149,6 +1152,49 @@ class RoomManager:
         import random
         return random.choice(words) if words else 'A' * length
     
+    
+    def save_round_history(self, room):
+        """Save the results of the JUST COMPLETED round to the database"""
+        import sqlite3
+        import json
+        
+        # Guard against double saving
+        if room.last_saved_round >= room.current_round:
+            return
+        
+        try:
+            conn = sqlite3.connect('morpheme.db')
+            board_json = json.dumps(room.board)
+            timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            
+            # Statistics Rule: Only count rounds where 2+ players actually played (score > 0)
+            playing_players = [p for p in room.players if p.score > 0]
+            if len(playing_players) <= 1:
+                print(f"[RoomManager] SKIPPING history save for room {room.room_id} - only {len(playing_players)} players played")
+                conn.close()
+                return
+
+            for p in playing_players:
+                # Use current submitted_words because we call this BEFORE clearing
+                    
+                words_data = [{
+                    'word': w['word'],
+                    'points': w.get('points', 0),
+                    'timestamp': w.get('time', timestamp)
+                } for w in p.submitted_words]
+                
+                conn.execute('''
+                    INSERT INTO round_history (user_id, room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, timestamp)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (p.user_id, room.room_id, room.game_type, room.current_round, board_json, json.dumps(words_data), p.score, room.round_start_time, room.time_limit, timestamp))
+            
+            room.last_saved_round = room.current_round
+            conn.commit()
+            conn.close()
+            print(f"[RoomManager] Saved round history for room {room.room_id} (Round {room.current_round})")
+        except Exception as e:
+            print(f"[RoomManager] Error saving round history: {e}")
+
     def start_complete_solving(self, room_id):
         """
         Mark solving as complete immediately - words already found during generation.

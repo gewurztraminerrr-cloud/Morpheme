@@ -57,7 +57,8 @@
                 </form>
 
                 <form id="signup-form" class="auth-form">
-                    <input type="text" id="signup-username" placeholder="Username (3+ characters)" required>
+                    <input type="text" id="signup-username"
+                        placeholder="Username (1-16 characters, letters/numbers/underscores)" required>
                     <input type="email" id="signup-email" placeholder="Email" required>
                     <input type="password" id="signup-password" placeholder="Password (6+ characters)" required>
                     <input type="password" id="signup-password-confirm" placeholder="Confirm Password" required>
@@ -251,7 +252,8 @@
                 <!-- Left Panel: Players -->
                 <div class="left-panel-container">
                     <div class="players-panel">
-                        <h3>Players</h3>
+                        <h3 id="players-heading">Players</h3>
+                        <button id="find-me-btn" class="find-me-btn" style="display:none;">Find Me</button>
                         <div id="players-list">
                             <p class="placeholder">Loading...</p>
                         </div>
@@ -340,6 +342,9 @@
             <!-- Spinner Set Overlay -->
             <div id="spinner-overlay" class="spinner-overlay hidden">
                 <div class="spinner-content">
+                    <div id="spinner-winner-announcement" class="winner-announcement hidden">
+                        <p id="spinner-winner-text" class="winner-text"></p>
+                    </div>
                     <h2>Next Round Parameters</h2>
                     <div class="spinner-params">
                         <div class="param-item">
@@ -440,6 +445,11 @@
                                                     class="follow-btn hidden">Follow</button>
                                                 <input type="hidden" id="profile-current-room" value="">
                                             </div>
+
+                                            <div class="profile-quote-minimal">
+                                                <p id="profile-quote-val">Enter a personal quote</p>
+                                            </div>
+
                                             <div class="profile-metadata-row">
                                                 <div class="meta-item" title="Real Name">
                                                     <span class="meta-icon">🆔</span>
@@ -475,315 +485,401 @@
                                                     <span class="meta-label">Location</span>
                                                     <span id="profile-location-val" class="meta-text">-</span>
                                                 </div>
+                                                <div class="meta-item" id="profile-proof-container"
+                                                    title="Proof of Legitimacy">
+                                                    <span class="meta-icon">🎥</span>
+                                                    <span class="meta-label">Proof</span>
+                                                    <a id="profile-proof-link" href="#" target="_blank"
+                                                        class="proof-link hidden">View Legitimacy Video</a>
+                                                    <span id="profile-proof-placeholder" class="meta-text">No proof
+                                                        provided</span>
+                                                    <input type="text" id="profile-proof-input"
+                                                        class="proof-edit-input hidden"
+                                                        placeholder="Enter YouTube URL...">
+                                                </div>
                                             </div>
+                                        </div> <!-- End profile-identity -->
+                                    </div> <!-- End Right Column -->
+                                </div> <!-- End Layout Row -->
 
-                                            <div class="profile-quote-minimal">
-                                                <p id="profile-quote-val">Welcome to Morpheme.</p>
-                                            </div>
-                                        </div>
+                                <div class="profile-description-minimal">
+                                    <span class="meta-label">About Me</span>
+                                    <div id="profile-description-val" class="description-text">Add a
+                                        detailed description about yourself...</div>
+                                </div>
 
-                                        <div class="profile-stats-grid">
-                                            <div class="stat-box">
-                                                <span class="stat-num" id="profile-games">0</span>
-                                                <span class="stat-desc">GAMES</span>
-                                            </div>
-                                            <div class="stat-box">
-                                                <span class="stat-num">0%</span>
-                                                <span class="stat-desc">WIN RATE</span>
-                                            </div>
-                                            <div class="stat-box">
-                                                <span class="stat-num">-</span>
-                                                <span class="stat-desc">BEST</span>
-                                            </div>
-                                        </div>
-
+                                <div class="profile-stats-grid">
+                                    <div class="stat-box">
+                                        <span class="stat-num" id="profile-games">0</span>
+                                        <span class="stat-desc">GAMES</span>
+                                    </div>
+                                    <div class="stat-box">
+                                        <span class="stat-num">0%</span>
+                                        <span class="stat-desc">WIN RATE</span>
+                                    </div>
+                                    <div class="stat-box">
+                                        <span class="stat-num">-</span>
+                                        <span class="stat-desc">BEST</span>
                                     </div>
                                 </div>
 
+                            </div>
+                        </div>
+
+                        <div class="profile-content-tabs">
+                            <div class="profile-tabs-header">
+                                <button class="profile-tab-toggle active" data-tab="rankings">Skill
+                                    Rankings</button>
+                                <button class="profile-tab-toggle" data-tab="history">Round Reviews</button>
+                            </div>
+
+                            <div id="profile-tab-rankings" class="profile-tab-pane active">
                                 <div class="profile-ratings-section">
-                                    <h2 class="section-title">Skill Rankings</h2>
                                     <div id="profile-ratings-grid" class="ratings-grid">
                                         <!-- Populated by JS -->
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-
-
-
-                    </div>
-
-                    <!-- Word of the Day Interface -->
-                    <div id="tool-wotd" class="tool-pane">
-                        <div class="tool-header">
-                            <h2>Word of the Day</h2>
-                            <p>A new word to learn and master every 24 hours.</p>
-                        </div>
-
-                        <div class="wotd-container">
-                            <p class="wotd-intro">The word of the day is...</p>
-                            <div id="wotd-display" class="wotd-gold-showy">
-                                <!-- Word injected via JS -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Random Word Interface -->
-                    <div id="tool-random" class="tool-pane">
-                        <div class="tool-header">
-                            <h2>Random Word Generator</h2>
-                            <p>Discover new words based on length and dictionary criteria.</p>
-                        </div>
-
-                        <div class="combo-control-panel">
-                            <div class="input-row">
-                                <label>Length:</label>
-                                <select id="random-length" style="width: 100px;">
-                                    <option value="all">All</option>
-                                    <option value="3">3</option>
-                                    <option value="4">4</option>
-                                    <option value="5">5</option>
-                                    <option value="6">6</option>
-                                    <option value="7">7</option>
-                                    <option value="8">8</option>
-                                    <option value="9">9</option>
-                                    <option value="10">10</option>
-                                    <option value="11">11</option>
-                                    <option value="12">12</option>
-                                    <option value="13">13</option>
-                                    <option value="14">14</option>
-                                    <option value="15">15</option>
-                                </select>
-                                <label>Dict:</label>
-                                <select id="random-dict" style="width: 120px;">
-                                    <option value="NWL">NWL (US)</option>
-                                    <option value="CSW">CSW (Intl)</option>
-                                </select>
-                                <button id="random-gen-btn">Generate Random Word</button>
-                            </div>
-                        </div>
-
-                        <div class="random-word-container">
-                            <div id="random-word-display" class="random-word-large">
-                                <!-- Generated word appears here -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Manual Tool Interface -->
-                    <div id="tool-manual" class="tool-pane">
-                        <div class="tool-header">
-                            <h2>Manual Solver</h2>
-                            <p>Enter a custom board and solve it independently.</p>
-                        </div>
-
-                        <div class="combo-control-panel">
-                            <div class="input-row">
-                                <select id="manual-dim" style="width: 140px;">
-                                    <option value="4x4">4x4</option>
-                                    <option value="4x6">4x6</option>
-                                    <option value="5x7">5x7</option>
-                                    <option value="6x8" selected>6x8</option>
-                                </select>
-                                <select id="manual-dict" style="width: 140px;">
-                                    <option value="NWL">NWL (US)</option>
-                                    <option value="CSW">CSW (Intl)</option>
-                                </select>
-                                <button id="manual-solve-btn">Solve</button>
-                                <button id="manual-reveal-btn" style="display: none;">Reveal Words</button>
-                            </div>
-                        </div>
-
-                        <div class="manual-grid-scroll">
-                            <div id="manual-grid" class="manual-grid">
-                                <!-- Grid inputs injected via JS -->
-                            </div>
-                        </div>
-
-                        <div id="manual-results-container" class="seq-results-container" style="display: none;">
-                            <!-- Results injected via JS -->
-                        </div>
-                    </div>
-
-                    <!-- ... omitted combo/list content to match target ... -->
-
-                    <!-- Combo Checker Interface -->
-                    <div id="tool-combo" class="tool-pane">
-                        <div class="tool-header">
-                            <h2>Combo Checker</h2>
-                            <p>Find connected words via MP and LIC.</p>
-                        </div>
-
-                        <div class="combo-control-panel">
-                            <div class="input-row">
-                                <input type="text" id="combo-input" placeholder="Enter letters to check..."
-                                    autocomplete="off">
-                                <select id="combo-dict">
-                                    <option value="NWL">NWL (US)</option>
-                                    <option value="CSW">CSW (Intl)</option>
-                                </select>
-                                <button id="combo-search-btn">Check</button>
-                            </div>
-                        </div>
-
-                        <div id="combo-results" class="combo-results-container hidden">
-                            <!-- MP Section: Horizontal Groups (0MP to 5MP) -->
-                            <div class="result-section">
-                                <h3>MP (Microprocedures)</h3>
-                                <div class="chart-desc">Determining the distance away from one word to another and
-                                    keeping the ones that are the closest.</div>
-                                <div class="horizontal-scroll-container" id="mp-container">
-                                    <!-- Dynamic Columns (0MP, 1MP, 2MP...) will be injected here -->
+                            <div id="profile-tab-history" class="profile-tab-pane">
+                                <div class="profile-history-section">
+                                    <div id="profile-history-list" class="history-list">
+                                        <!-- Populated by JS -->
+                                        <p class="placeholder">No recently tracked rounds.</p>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <!-- LIC Section: Horizontal Groups (Sorted by Shared Count) -->
-                            <div class="result-section">
-                                <h3>LIC (Letters In Common)</h3>
-                                <div class="chart-desc">The letters are there, but are they arranged in such a way so as
-                                    to both be present?</div>
-                                <div class="horizontal-scroll-container" id="lic-container">
-                                    <!-- Dynamic Columns (Shared=3, Shared=4...) will be injected here -->
+                                <!-- Integrated Replay Panel -->
+                                <div id="integrated-replay-panel" class="integrated-replay-container hidden">
+                                    <div class="integrated-replay-header">
+                                        <div class="header-main">
+                                            <h3>Round Replay</h3>
+                                            <span class="header-subtitle">Verifiable Walkthrough</span>
+                                        </div>
+                                    </div>
+                                    <div class="integrated-replay-layout">
+                                        <div class="replay-main">
+                                            <div class="replay-summary-row">
+                                                <div class="summary-mini-card">
+                                                    <span class="label">Room</span>
+                                                    <span id="integrated-room-id" class="value">-</span>
+                                                </div>
+                                                <div class="summary-mini-card">
+                                                    <span class="label">Mode</span>
+                                                    <span id="integrated-game-mode" class="value">-</span>
+                                                </div>
+                                                <div class="summary-mini-card">
+                                                    <span class="label">Score</span>
+                                                    <span id="integrated-total-score" class="value primary">-</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="replay-controls-row">
+                                                <button id="integrated-start-btn" class="replay-action-btn primary">▶
+                                                    Watch</button>
+                                                <button id="integrated-skip-btn"
+                                                    class="replay-action-btn secondary hidden">Show All</button>
+
+                                                <div id="integrated-progress-ui" class="integrated-progress-ui hidden">
+                                                    <span id="integrated-current-time">0:00.0</span>
+                                                    <div class="mini-progress-bg">
+                                                        <div id="integrated-progress-bar" class="mini-progress-fill">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div id="integrated-walkthrough-list" class="integrated-walkthrough-list">
+                                                <!-- Populated by JS -->
+                                            </div>
+                                        </div>
+
+                                        <div class="replay-sidebar">
+                                            <div id="integrated-board-container" class="integrated-review-board">
+                                                <!-- Populated by JS -->
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Sequence Tool Interface (New) -->
-                <div id="tool-sequence" class="tool-pane">
-                    <div class="tool-header">
-                        <h2>Sequence Search</h2>
-                        <p>Find words starting with, ending with, or containing a sequence.</p>
+
+
+
+            </div>
+
+            <!-- Word of the Day Interface -->
+            <div id="tool-wotd" class="tool-pane">
+                <div class="tool-header">
+                    <h2>Word of the Day</h2>
+                    <p>A new word to learn and master every 24 hours.</p>
+                </div>
+
+                <div class="wotd-container">
+                    <p class="wotd-intro">The word of the day is...</p>
+                    <div id="wotd-display" class="wotd-gold-showy">
+                        <!-- Word injected via JS -->
                     </div>
+                </div>
+            </div>
 
-                    <div class="combo-control-panel">
-                        <div class="input-row">
-                            <input type="text" id="seq-input" placeholder="Sequence (e.g. STR)..." autocomplete="off"
-                                style="width: 160px;">
+            <!-- Random Word Interface -->
+            <div id="tool-random" class="tool-pane">
+                <div class="tool-header">
+                    <h2>Random Word Generator</h2>
+                    <p>Discover new words based on length and dictionary criteria.</p>
+                </div>
 
-                            <select id="seq-mode" style="width: 200px;">
-                                <option value="starts">Starts With</option>
-                                <option value="ends">Ends With</option>
-                                <option value="contains" selected>Contains (Fwd/Rev)</option>
-                            </select>
-
-                            <select id="seq-length" style="width: 120px;">
-                                <option value="all">Len: All</option>
-                                <option value="3">3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                                <option value="6">6</option>
-                                <option value="7">7</option>
-                                <option value="8">8</option>
-                                <option value="9">9</option>
-                                <option value="10">10</option>
-                                <option value="11">11</option>
-                                <option value="12">12</option>
-                                <option value="13">13</option>
-                                <option value="14">14</option>
-                                <option value="15">15</option>
-                            </select>
-
-                            <button id="seq-search-btn">Search</button>
-                        </div>
-                    </div>
-
-                    <div id="seq-results-container" class="seq-results-container">
-                        <div class="seq-results-placeholder">Enter a sequence to search.</div>
-                        <!-- Results Table will be injected here -->
+                <div class="combo-control-panel">
+                    <div class="input-row">
+                        <label>Length:</label>
+                        <select id="random-length" style="width: 100px;">
+                            <option value="all">All</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                            <option value="13">13</option>
+                            <option value="14">14</option>
+                            <option value="15">15</option>
+                        </select>
+                        <label>Dict:</label>
+                        <select id="random-dict" style="width: 120px;">
+                            <option value="NWL">NWL (US)</option>
+                            <option value="CSW">CSW (Intl)</option>
+                        </select>
+                        <button id="random-gen-btn">Generate Random Word</button>
                     </div>
                 </div>
 
-                <!-- Lists Tool Interface (New) -->
-                <div id="tool-lists" class="tool-pane">
-                    <div class="tool-header">
-                        <h2>Word Lists</h2>
-                        <p>Browse official dictionaries and unique collections.</p>
+                <div class="random-word-container">
+                    <div id="random-word-display" class="random-word-large">
+                        <!-- Generated word appears here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual Tool Interface -->
+            <div id="tool-manual" class="tool-pane">
+                <div class="tool-header">
+                    <h2>Manual Solver</h2>
+                    <p>Enter a custom board and solve it independently.</p>
+                </div>
+
+                <div class="combo-control-panel">
+                    <div class="input-row">
+                        <select id="manual-dim" style="width: 140px;">
+                            <option value="4x4">4x4</option>
+                            <option value="4x6">4x6</option>
+                            <option value="5x7">5x7</option>
+                            <option value="6x8" selected>6x8</option>
+                        </select>
+                        <select id="manual-dict" style="width: 140px;">
+                            <option value="NWL">NWL (US)</option>
+                            <option value="CSW">CSW (Intl)</option>
+                        </select>
+                        <button id="manual-solve-btn">Solve</button>
+                        <button id="manual-reveal-btn" style="display: none;">Reveal Words</button>
+                    </div>
+                </div>
+
+                <div class="manual-grid-scroll">
+                    <div id="manual-grid" class="manual-grid">
+                        <!-- Grid inputs injected via JS -->
+                    </div>
+                </div>
+
+                <div id="manual-results-container" class="seq-results-container" style="display: none;">
+                    <!-- Results injected via JS -->
+                </div>
+            </div>
+
+            <!-- ... omitted combo/list content to match target ... -->
+
+            <!-- Combo Checker Interface -->
+            <div id="tool-combo" class="tool-pane">
+                <div class="tool-header">
+                    <h2>Combo Checker</h2>
+                    <p>Find connected words via MP and LIC.</p>
+                </div>
+
+                <div class="combo-control-panel">
+                    <div class="input-row">
+                        <input type="text" id="combo-input" placeholder="Enter letters to check..." autocomplete="off">
+                        <select id="combo-dict">
+                            <option value="NWL">NWL (US)</option>
+                            <option value="CSW">CSW (Intl)</option>
+                        </select>
+                        <button id="combo-search-btn">Check</button>
+                    </div>
+                </div>
+
+                <div id="combo-results" class="combo-results-container hidden">
+                    <!-- MP Section: Horizontal Groups (0MP to 5MP) -->
+                    <div class="result-section">
+                        <h3>MP (Microprocedures)</h3>
+                        <div class="chart-desc">Determining the distance away from one word to another and
+                            keeping the ones that are the closest.</div>
+                        <div class="horizontal-scroll-container" id="mp-container">
+                            <!-- Dynamic Columns (0MP, 1MP, 2MP...) will be injected here -->
+                        </div>
                     </div>
 
-                    <!-- Filter Controls -->
-                    <div class="combo-control-panel" style="margin-bottom: 0px;">
-                        <div class="input-row">
-                            <select id="list-length-filter" style="width: 140px;">
-                                <option value="all">Length: All</option>
-                                <option value="3">3 Letters</option>
-                                <option value="4">4 Letters</option>
-                                <option value="5">5 Letters</option>
-                                <option value="6">6 Letters</option>
-                                <option value="7">7 Letters</option>
-                                <option value="8">8 Letters</option>
-                                <option value="9">9 Letters</option>
-                                <option value="10">10 Letters</option>
-                                <option value="11">11 Letters</option>
-                                <option value="12">12 Letters</option>
-                                <option value="13">13 Letters</option>
-                                <option value="14">14 Letters</option>
-                                <option value="15">15 Letters</option>
-                            </select>
-                            <select id="list-start-filter" style="width: 140px;">
-                                <option value="all">Starts With: All</option>
-                                <option value="A">A</option>
-                                <option value="B">B</option>
-                                <option value="C">C</option>
-                                <option value="D">D</option>
-                                <option value="E">E</option>
-                                <option value="F">F</option>
-                                <option value="G">G</option>
-                                <option value="H">H</option>
-                                <option value="I">I</option>
-                                <option value="J">J</option>
-                                <option value="K">K</option>
-                                <option value="L">L</option>
-                                <option value="M">M</option>
-                                <option value="N">N</option>
-                                <option value="O">O</option>
-                                <option value="P">P</option>
-                                <option value="Q">Q</option>
-                                <option value="R">R</option>
-                                <option value="S">S</option>
-                                <option value="T">T</option>
-                                <option value="U">U</option>
-                                <option value="V">V</option>
-                                <option value="W">W</option>
-                                <option value="X">X</option>
-                                <option value="Y">Y</option>
-                                <option value="Z">Z</option>
-                            </select>
-                            <button id="list-update-btn">Update</button>
-                        </div>
-                    </div>
-
-                    <div class="lists-container" id="lists-container">
-                        <!-- Columns will be injected by JS or hardcoded structure -->
-                        <div class="list-column" id="col-nwl">
-                            <h3>NWL</h3>
-                            <div class="list-scroll-area">Loading...</div>
-                        </div>
-                        <div class="list-column" id="col-csw">
-                            <h3>CSW</h3>
-                            <div class="list-scroll-area">Loading...</div>
-                        </div>
-                        <div class="list-column" id="col-csw-only">
-                            <h3>CSW Only</h3>
-                            <div class="list-scroll-area">Loading...</div>
-                        </div>
-                        <div class="list-column" id="col-likelihood">
-                            <h3>Likelihood</h3>
-                            <div class="list-scroll-area">Loading...</div>
-                        </div>
-                        <div class="list-column" id="col-uniques">
-                            <h3>Uniques</h3>
-                            <div class="list-scroll-area">Loading...</div>
-                        </div>
-                        <div class="list-column" id="col-added">
-                            <h3>Added Words</h3>
-                            <div class="list-scroll-area">Loading...</div>
+                    <!-- LIC Section: Horizontal Groups (Sorted by Shared Count) -->
+                    <div class="result-section">
+                        <h3>LIC (Letters In Common)</h3>
+                        <div class="chart-desc">The letters are there, but are they arranged in such a way so as
+                            to both be present?</div>
+                        <div class="horizontal-scroll-container" id="lic-container">
+                            <!-- Dynamic Columns (Shared=3, Shared=4...) will be injected here -->
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Sequence Tool Interface (New) -->
+        <div id="tool-sequence" class="tool-pane">
+            <div class="tool-header">
+                <h2>Sequence Search</h2>
+                <p>Find words starting with, ending with, or containing a sequence.</p>
+            </div>
+
+            <div class="combo-control-panel">
+                <div class="input-row">
+                    <input type="text" id="seq-input" placeholder="Sequence (e.g. STR)..." autocomplete="off"
+                        style="width: 160px;">
+
+                    <select id="seq-mode" style="width: 200px;">
+                        <option value="starts">Starts With</option>
+                        <option value="ends">Ends With</option>
+                        <option value="contains" selected>Contains (Fwd/Rev)</option>
+                    </select>
+
+                    <select id="seq-length" style="width: 120px;">
+                        <option value="all">Len: All</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                        <option value="13">13</option>
+                        <option value="14">14</option>
+                        <option value="15">15</option>
+                    </select>
+
+                    <button id="seq-search-btn">Search</button>
+                </div>
+            </div>
+
+            <div id="seq-results-container" class="seq-results-container">
+                <div class="seq-results-placeholder">Enter a sequence to search.</div>
+                <!-- Results Table will be injected here -->
+            </div>
+        </div>
+
+        <!-- Lists Tool Interface (New) -->
+        <div id="tool-lists" class="tool-pane">
+            <div class="tool-header">
+                <h2>Word Lists</h2>
+                <p>Browse official dictionaries and unique collections.</p>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="combo-control-panel" style="margin-bottom: 0px;">
+                <div class="input-row">
+                    <select id="list-length-filter" style="width: 140px;">
+                        <option value="all">Length: All</option>
+                        <option value="3">3 Letters</option>
+                        <option value="4">4 Letters</option>
+                        <option value="5">5 Letters</option>
+                        <option value="6">6 Letters</option>
+                        <option value="7">7 Letters</option>
+                        <option value="8">8 Letters</option>
+                        <option value="9">9 Letters</option>
+                        <option value="10">10 Letters</option>
+                        <option value="11">11 Letters</option>
+                        <option value="12">12 Letters</option>
+                        <option value="13">13 Letters</option>
+                        <option value="14">14 Letters</option>
+                        <option value="15">15 Letters</option>
+                    </select>
+                    <select id="list-start-filter" style="width: 140px;">
+                        <option value="all">Starts With: All</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                        <option value="E">E</option>
+                        <option value="F">F</option>
+                        <option value="G">G</option>
+                        <option value="H">H</option>
+                        <option value="I">I</option>
+                        <option value="J">J</option>
+                        <option value="K">K</option>
+                        <option value="L">L</option>
+                        <option value="M">M</option>
+                        <option value="N">N</option>
+                        <option value="O">O</option>
+                        <option value="P">P</option>
+                        <option value="Q">Q</option>
+                        <option value="R">R</option>
+                        <option value="S">S</option>
+                        <option value="T">T</option>
+                        <option value="U">U</option>
+                        <option value="V">V</option>
+                        <option value="W">W</option>
+                        <option value="X">X</option>
+                        <option value="Y">Y</option>
+                        <option value="Z">Z</option>
+                    </select>
+                    <button id="list-update-btn">Update</button>
+                </div>
+            </div>
+
+            <div class="lists-container" id="lists-container">
+                <!-- Columns will be injected by JS or hardcoded structure -->
+                <div class="list-column" id="col-nwl">
+                    <h3>NWL</h3>
+                    <div class="list-scroll-area">Loading...</div>
+                </div>
+                <div class="list-column" id="col-csw">
+                    <h3>CSW</h3>
+                    <div class="list-scroll-area">Loading...</div>
+                </div>
+                <div class="list-column" id="col-csw-only">
+                    <h3>CSW Only</h3>
+                    <div class="list-scroll-area">Loading...</div>
+                </div>
+                <div class="list-column" id="col-likelihood">
+                    <h3>Likelihood</h3>
+                    <div class="list-scroll-area">Loading...</div>
+                </div>
+                <div class="list-column" id="col-uniques">
+                    <h3>Uniques</h3>
+                    <div class="list-scroll-area">Loading...</div>
+                </div>
+                <div class="list-column" id="col-added">
+                    <h3>Added Words</h3>
+                    <div class="list-scroll-area">Loading...</div>
+                </div>
+            </div>
+        </div>
+        </div>
         </div>
         </div>
 
@@ -1048,6 +1144,80 @@
     <script src="/js/app.js"></script>
     <script src="/js/lobby.js"></script>
     <script src="/js/play.js"></script>
+
+    <!-- History Review Overlay -->
+    <div id="history-review-overlay" class="overlay hidden">
+        <div class="overlay-content history-review-modal">
+            <div class="overlay-header">
+                <div class="header-main">
+                    <h2>Round Replay</h2>
+                    <span class="header-subtitle">Verifiable Legitimacy Walkthrough</span>
+                </div>
+                <button class="close-overlay" id="close-history-review">&times;</button>
+            </div>
+            <div class="history-review-layout">
+                <div class="history-review-main">
+                    <div class="history-review-summary">
+                        <div class="summary-card">
+                            <span class="label">Room ID</span>
+                            <span id="review-room-id" class="value">-</span>
+                        </div>
+                        <div class="summary-card">
+                            <span class="label">Mode</span>
+                            <span id="review-game-mode" class="value">-</span>
+                        </div>
+                        <div class="summary-card">
+                            <span class="label">Total Score</span>
+                            <span id="review-total-score" class="value primary">-</span>
+                        </div>
+                    </div>
+
+                    <div class="history-walkthrough-section">
+                        <div class="section-header">
+                            <div class="header-titles">
+                                <h3>Timeline of Discovery</h3>
+                                <span class="section-hint">Words recorded with millisecond precision</span>
+                            </div>
+                            <div class="replay-controls">
+                                <button id="start-replay-btn" class="replay-btn primary">
+                                    <span class="btn-icon">▶</span> Watch Replay
+                                </button>
+                                <button id="skip-replay-btn" class="replay-btn secondary hidden">
+                                    Show All
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar for Replay -->
+                        <div id="replay-progress-container" class="replay-progress-container hidden">
+                            <div class="progress-info">
+                                <span id="replay-current-time">0:00.0</span>
+                                <span id="replay-current-score">0 pts</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div id="replay-progress-bar" class="progress-bar-fill"></div>
+                            </div>
+                        </div>
+
+                        <div id="review-walkthrough-list" class="walkthrough-list">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="history-review-sidebar">
+                    <div class="board-panel">
+                        <div class="panel-header">
+                            <h3>Round Board</h3>
+                        </div>
+                        <div id="review-board-container" class="review-board">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="/js/tools.js?v=2"></script>
     <script src="/js/settings.js"></script>
     <script src="/js/mouse_selection.js"></script>

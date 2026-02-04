@@ -251,6 +251,26 @@ function setupProfileTool() {
             flagDropdown.classList.remove('active');
         });
     }
+
+    // Profile Tab Logic
+    const tabToggles = document.querySelectorAll('.profile-tab-toggle');
+    const tabPanes = document.querySelectorAll('.profile-tab-pane');
+
+    tabToggles.forEach(toggle => {
+        toggle.addEventListener('click', () => {
+            const targetTab = toggle.dataset.tab;
+
+            tabToggles.forEach(t => t.classList.remove('active'));
+            tabPanes.forEach(p => p.classList.remove('active'));
+
+            toggle.classList.add('active');
+            const targetPane = document.getElementById(`profile-tab-${targetTab}`);
+            if (targetPane) targetPane.classList.add('active');
+
+            // If switching AWAY from history, maybe hide the replay panel?
+            // Actually, keep it if they want to review later.
+        });
+    });
 }
 
 // Full Country Flag List (ISO 3166-1)
@@ -719,12 +739,30 @@ function renderProfile(user) {
     const ageEl = document.getElementById('profile-age-val');
     const genderEl = document.getElementById('profile-gender-val');
     const quoteEl = document.getElementById('profile-quote-val');
+    const descriptionEl = document.getElementById('profile-description-val');
     const locationEl = document.getElementById('profile-location-val');
 
     if (ageEl) ageEl.innerText = user.age || '-';
     if (genderEl) genderEl.innerText = user.gender || '-';
     if (locationEl) locationEl.innerText = user.location || '-';
-    if (quoteEl) quoteEl.innerText = user.quote || 'Welcome to Morpheme.';
+    if (quoteEl) quoteEl.innerText = user.quote || 'Enter a personal quote';
+    if (descriptionEl) descriptionEl.innerText = user.description || 'Add a detailed description about yourself...';
+
+    // Proof of Legitimacy Rendering
+    const proofLink = document.getElementById('profile-proof-link');
+    const proofPlaceholder = document.getElementById('profile-proof-placeholder');
+    const proofInput = document.getElementById('profile-proof-input');
+
+    if (user.proof_url) {
+        if (proofLink) {
+            proofLink.href = user.proof_url;
+            proofLink.classList.remove('hidden');
+        }
+        if (proofPlaceholder) proofPlaceholder.classList.add('hidden');
+    } else {
+        if (proofLink) proofLink.classList.add('hidden');
+        if (proofPlaceholder) proofPlaceholder.classList.remove('hidden');
+    }
 
     // Online Status & Follow Button
     const statusDot = document.getElementById('profile-status-indicator');
@@ -735,6 +773,24 @@ function renderProfile(user) {
     const globalUser = window.currentUser || currentUser;
     const currentName = (typeof globalUser === 'object') ? globalUser.username : globalUser;
     const isOwner = currentName && currentName.toLowerCase() === user.username.toLowerCase();
+
+    // Proof Editing
+    if (isOwner && proofInput) {
+        proofInput.classList.remove('hidden');
+        proofInput.value = user.proof_url || '';
+        // Add save listener
+        const newProofInput = proofInput.cloneNode(true);
+        proofInput.parentNode.replaceChild(newProofInput, proofInput);
+        newProofInput.addEventListener('blur', () => saveProfileField('proof_url', newProofInput.value.trim()));
+        newProofInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                newProofInput.blur();
+            }
+        });
+    } else if (proofInput) {
+        proofInput.classList.add('hidden');
+    }
 
     if (statusDot) {
         if (user.status && user.status.is_online) {
@@ -758,11 +814,255 @@ function renderProfile(user) {
         }
     }
 
+    // --- Render Round History ---
+    const historyList = document.getElementById('profile-history-list');
+    if (historyList) {
+        if (!user.recent_rounds || user.recent_rounds.length === 0) {
+            historyList.innerHTML = '<p class="placeholder">No recently tracked rounds.</p>';
+        } else {
+            historyList.innerHTML = user.recent_rounds.map(round => {
+                const gameTypeLabel = round.game_type === 'split' ? 'Split Points' :
+                    round.game_type === 'fcfs' ? 'FCFS' : 'Accumulative';
+                const typeClass = `history-type-${round.game_type}`;
+
+                return `
+                <div class="history-item">
+                    <div class="history-info">
+                        <span class="history-mode">${round.game_mode}</span>
+                        <span class="history-room">${round.room_id}</span>
+                        <span class="history-date">${new Date(round.timestamp).toLocaleDateString()}</span>
+                    </div>
+                    <div class="history-score">${round.score} pts</div>
+                    <button class="history-review-btn" onclick="watchRoundHistory('${round.room_id}', ${round.round_number})">Review</button>
+                </div>
+                `;
+            }).join('');
+        }
+    }
+
     // Render Ratings Grid (32 setups)
     renderRatingsGrid(user.config_ratings || {});
 
+    // Cache rounds for review
+    window.lastRenderedRounds = user.recent_rounds || [];
+
     setupProfileEditing(isOwner);
 }
+
+// Helper: Find a valid Boggle path for a word on the current board
+function findWordPath(board, word) {
+    if (!board || !word) return null;
+    const rows = board.length;
+    const cols = board[0].length;
+    const targetWord = word.toUpperCase();
+
+    function dfs(r, c, index, visited) {
+        if (index >= targetWord.length) return [];
+
+        const letter = board[r][c].toUpperCase();
+        let matchLen = 0;
+
+        // Boggle Logic: Q tile usually represents 'QU'
+        if (targetWord[index] === letter) {
+            matchLen = 1;
+        } else if (letter === 'Q' && targetWord.substring(index, index + 2) === 'QU') {
+            matchLen = 2;
+        }
+
+        if (matchLen === 0) return null;
+
+        // Final letter check
+        if (index + matchLen === targetWord.length) {
+            return [{ row: r, col: c }];
+        }
+
+        visited.add(`${r},${c}`);
+
+        // 8 directions
+        for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+                if (dr === 0 && dc === 0) continue;
+                const nr = r + dr;
+                const nc = c + dc;
+
+                if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !visited.has(`${nr},${nc}`)) {
+                    const result = dfs(nr, nc, index + matchLen, visited);
+                    if (result) {
+                        return [{ row: r, col: c }, ...result];
+                    }
+                }
+            }
+        }
+
+        visited.delete(`${r},${c}`);
+        return null;
+    }
+
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const path = dfs(r, c, 0, new Set());
+            if (path) return path;
+        }
+    }
+    return null;
+}
+
+// Global function to review a round (Legitimacy Walkthrough)
+window.watchRoundHistory = function (roomId, roundNum) {
+    console.log(`Reviewing Round ${roundNum} from Room ${roomId}`);
+
+    const rounds = window.lastRenderedRounds || [];
+    const round = rounds.find(r => r.room_id == roomId && r.round_number == roundNum);
+
+    if (!round) {
+        alert("Round details not available in cache. Try refreshing the profile.");
+        return;
+    }
+
+    const panel = document.getElementById('integrated-replay-panel');
+    if (!panel) return;
+
+    // Show the panel
+    panel.classList.remove('hidden');
+    panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // --- Cleanup any existing playback ---
+    if (window.replayInterval) {
+        clearInterval(window.replayInterval);
+        window.replayInterval = null;
+    }
+
+    // 1. Reset & Populate Summary
+    document.getElementById('integrated-room-id').innerText = round.room_id;
+    document.getElementById('integrated-game-mode').innerText = (round.game_type || 'Standard').toUpperCase();
+    document.getElementById('integrated-total-score').innerText = `${round.total_score} PTS`;
+
+    // Reset Replay UI
+    const startBtn = document.getElementById('integrated-start-btn');
+    const skipBtn = document.getElementById('integrated-skip-btn');
+    const progressUI = document.getElementById('integrated-progress-ui');
+    const walkthroughList = document.getElementById('integrated-walkthrough-list');
+
+    startBtn.classList.remove('hidden');
+    skipBtn.classList.add('hidden');
+    progressUI.classList.add('hidden');
+    walkthroughList.innerHTML = '<p class="placeholder" style="color:var(--muted-text); text-align:center; padding:20px;">Ready to watch the walkthrough...</p>';
+
+    // 2. Render Board
+    const boardContainer = document.getElementById('integrated-board-container');
+    if (boardContainer && round.board) {
+        const dimensions = round.board.length;
+        boardContainer.style.gridTemplateColumns = `repeat(${dimensions}, 1fr)`;
+        boardContainer.innerHTML = round.board.flat().map(letter => `
+            <div class="review-cell">${letter}</div>
+        `).join('');
+    }
+
+    // 3. Playback Logic
+    // Fix: the data structure might have 'total_score' or 'score'
+    const words = round.words || [];
+    const sortedWords = [...words].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+    const roundDuration = round.round_duration || 60;
+    const startTime = round.round_start_time || (sortedWords[0] ? sortedWords[0].timestamp - 5 : 0);
+
+    const renderWord = (word) => {
+        const relTimeSec = Math.max(0, (word.timestamp || 0) - startTime);
+        const min = Math.floor(relTimeSec / 60);
+        const sec = (relTimeSec % 60).toFixed(1);
+        const timeStr = `${min}:${sec.padStart(4, '0')}`;
+
+        return `
+        <div class="walkthrough-item reveal" style="padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-family:monospace; color:var(--accent-color); font-weight:700;">${timeStr}</div>
+            <div style="font-weight:800; text-transform:uppercase; letter-spacing:1px; flex:1; margin-left:15px;">${word.word}</div>
+            <div style="color:#ffd700; font-weight:700;">${word.points} pts</div>
+        </div>
+        `;
+    };
+
+    const showAllWords = () => {
+        walkthroughList.innerHTML = sortedWords.map(w => renderWord(w)).join('');
+        if (sortedWords.length === 0) walkthroughList.innerHTML = '<p class="placeholder" style="color:var(--muted-text); text-align:center; padding:20px;">No words discovered in this round.</p>';
+        skipBtn.classList.add('hidden');
+        progressUI.classList.add('hidden');
+    };
+
+    startBtn.onclick = () => {
+        startBtn.classList.add('hidden');
+        skipBtn.classList.remove('hidden');
+        progressUI.classList.remove('hidden');
+        walkthroughList.innerHTML = '';
+
+        let elapsed = 0;
+        let wordIndex = 0;
+        let localScore = 0;
+        const tick = 100; // 0.1s increments
+
+        // Clear any existing highlights
+        document.querySelectorAll('.review-cell').forEach(c => c.className = 'review-cell');
+
+        window.replayInterval = setInterval(() => {
+            elapsed += tick / 1000;
+
+            // Update Progress Bar
+            const progress = (elapsed / roundDuration) * 100;
+            document.getElementById('integrated-progress-bar').style.width = `${Math.min(100, progress)}%`;
+
+            // Update Timer
+            const m = Math.floor(elapsed / 60);
+            const s = (elapsed % 60).toFixed(1);
+            document.getElementById('integrated-current-time').innerText = `${m}:${s.padStart(4, '0')}`;
+
+            // Check for newly discovered words
+            while (wordIndex < sortedWords.length) {
+                const word = sortedWords[wordIndex];
+                const relWordTime = (word.timestamp || 0) - startTime;
+
+                if (elapsed >= relWordTime) {
+                    walkthroughList.insertAdjacentHTML('afterbegin', renderWord(word));
+                    localScore += word.points;
+                    document.getElementById('integrated-total-score').innerText = `${localScore} PTS`;
+
+                    // --- SYNCHRONIZED BOARD HIGHLIGHT ---
+                    const path = findWordPath(round.board, word.word);
+                    if (path) {
+                        const cells = boardContainer.querySelectorAll('.review-cell');
+                        const dimensions = round.board.length;
+
+                        // Clear previous highlight
+                        cells.forEach(c => c.classList.remove('highlight', 'highlight-bonus'));
+
+                        // Apply new highlight
+                        path.forEach((p, i) => {
+                            const cellIdx = p.row * dimensions + p.col;
+                            setTimeout(() => {
+                                if (cells[cellIdx]) {
+                                    cells[cellIdx].classList.add('highlight');
+                                }
+                            }, i * 50);
+                        });
+                    }
+
+                    wordIndex++;
+                } else {
+                    break;
+                }
+            }
+
+            if (elapsed >= roundDuration) {
+                clearInterval(window.replayInterval);
+                skipBtn.classList.add('hidden');
+                startBtn.classList.remove('hidden');
+                startBtn.innerText = "Replay";
+            }
+        }, tick);
+    };
+
+    skipBtn.onclick = () => {
+        if (window.replayInterval) clearInterval(window.replayInterval);
+        showAllWords();
+    };
+};
 
 // Global initialization for follow button
 document.addEventListener('DOMContentLoaded', () => {
@@ -883,7 +1183,8 @@ function setupProfileEditing(isOwner) {
         { id: 'profile-age-val', key: 'age', placeholder: 'Age' },
         { id: 'profile-gender-val', key: 'gender', placeholder: 'Gender' },
         { id: 'profile-location-val', key: 'location', placeholder: 'Location' },
-        { id: 'profile-quote-val', key: 'quote', placeholder: 'Enter a personal quote' }
+        { id: 'profile-quote-val', key: 'quote', placeholder: 'Enter a personal quote' },
+        { id: 'profile-description-val', key: 'description', placeholder: 'Add a detailed description about yourself...' }
     ];
 
     editableFields.forEach(field => {
@@ -901,7 +1202,7 @@ function setupProfileEditing(isOwner) {
 
             newEl.addEventListener('blur', () => saveProfileField(field.key, newEl.innerText.trim()));
             newEl.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
+                if (e.key === 'Enter' && field.key !== 'description') {
                     e.preventDefault();
                     newEl.blur();
                 }

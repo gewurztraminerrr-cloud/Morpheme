@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import time
 import os
+import json
 
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'morpheme-secret-key-2024'
@@ -83,7 +84,9 @@ def init_db():
         ('age', 'TEXT'),
         ('gender', 'TEXT'),
         ('location', 'TEXT'),
-        ('quote', 'TEXT')
+        ('quote', 'TEXT'),
+        ('description', 'TEXT'),
+        ('proof_url', 'TEXT')
     ]
     for col_name, col_type in columns:
         try:
@@ -92,6 +95,35 @@ def init_db():
             print(f"Migrated DB: Added {col_name} column to users")
         except sqlite3.OperationalError:
             pass # Column likely exists
+
+    # MIGRATION: Add round_history table
+    try:
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS round_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                room_id TEXT NOT NULL,
+                game_type TEXT NOT NULL,
+                round_number INTEGER NOT NULL,
+                board_json TEXT NOT NULL,
+                words_json TEXT NOT NULL,
+                total_score INTEGER NOT NULL,
+                round_start_time REAL,
+                round_duration INTEGER,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+        ''')
+        conn.commit()
+        print("Migrated DB: Added round_history table")
+    except Exception as e:
+        print(f"Migration Error (round_history): {e}")
+
+    # MIGRATION: Clean up legacy default quotes
+    try:
+        conn.execute("UPDATE users SET quote = NULL WHERE quote = 'Welcome to Morpheme.'")
+        conn.commit()
+    except: pass
 
     conn.close()
 
@@ -173,11 +205,13 @@ def register():
     username = data.get('username')
     password = data.get('password')
     
-    if not username or not password:
-        return jsonify({'error': 'Username and password required'}), 400
-    
-    if len(username) < 3 or len(password) < 6:
-        return jsonify({'error': 'Username 3+ chars, password 6+ chars'}), 400
+    # Username validation: 1-16 chars, letters, numbers, underscores
+    import re
+    if not re.match(r'^[a-zA-Z0-9_]{1,16}$', username):
+        return jsonify({'error': 'Username must be 1-16 characters (letters, numbers, underscores only)'}), 400
+
+    if len(password) < 6:
+        return jsonify({'error': 'Password must be 6+ characters'}), 400
     
     conn = sqlite3.connect('morpheme.db')
     try:
@@ -290,7 +324,7 @@ def update_profile():
         return jsonify({'error': 'Guest accounts cannot update profile'}), 403
         
     data = request.get_json()
-    fields = ['full_name', 'age', 'gender', 'location', 'quote']
+    fields = ['full_name', 'age', 'gender', 'location', 'quote', 'description', 'proof_url']
     updates = {k: v for k, v in data.items() if k in fields}
     
     if not updates:
@@ -320,7 +354,7 @@ def get_public_profile(username):
     conn = sqlite3.connect('morpheme.db')
     cursor = conn.execute('''
         SELECT id, username, rating, games_played, avatar_url, country_flag, 
-               full_name, age, gender, location, quote 
+               full_name, age, gender, location, quote, description, proof_url
         FROM users WHERE username = ? COLLATE NOCASE
     ''', (username,))
     user = cursor.fetchone()
@@ -332,6 +366,28 @@ def get_public_profile(username):
     # Get config-specific ratings
     cursor = conn.execute('SELECT config_key, rating FROM user_ratings WHERE user_id = ?', (user[0],))
     config_ratings = {row[0]: row[1] for row in cursor.fetchall()}
+
+    # Get last 5 rounds
+    cursor = conn.execute('''
+        SELECT room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, timestamp
+        FROM round_history
+        WHERE user_id = ?
+        ORDER BY timestamp DESC
+        LIMIT 5
+    ''', (user[0],))
+    recent_rounds = []
+    for row in cursor.fetchall():
+        recent_rounds.append({
+            'room_id': row[0],
+            'game_type': row[1],
+            'round_number': row[2],
+            'board': json.loads(row[3]),
+            'words': json.loads(row[4]),
+            'total_score': row[5],
+            'round_start_time': row[6],
+            'round_duration': row[7],
+            'timestamp': row[8]
+        })
     conn.close()
     
     # Get online status and current room info
@@ -347,7 +403,10 @@ def get_public_profile(username):
         'age': user[7] if user[7] else '-',
         'gender': user[8] if user[8] else '-',
         'location': user[9] if user[9] else '-',
-        'quote': user[10] if user[10] else 'Welcome to Morpheme.',
+        'quote': user[10] if user[10] else 'Enter a personal quote',
+        'description': user[11] if user[11] else 'Add a detailed description about yourself...',
+        'proof_url': user[12] if user[12] else None,
+        'recent_rounds': recent_rounds,
         'config_ratings': config_ratings,
         'status': {
             'is_online': session_info['is_online'] if session_info else False,
@@ -717,6 +776,10 @@ def get_room_state(room_id):
         # If just transitioned to intermission, start complete solving in background
         if state_changed and room.state == 'intermission' and prev_state == 'active':
             print(f"Transitioned to intermission, using fast solve words immediately.")
+            
+            # SAVE ROUND HISTORY
+            room_manager.save_round_history(room)
+            
             # Ensure solving_complete is True so frontend proceeds
             room.solving_complete = True
             if not room.complete_words and room.all_words:
@@ -740,34 +803,41 @@ def get_room_state(room_id):
             elif milestone == 'start':
                 # At 0s: Start next round with pre-generated board
                 print(f"[Milestone] 0s remaining - Starting next round")
+                
+                # PERSISTENCE: Capture players before they are potentially cleared (for 24h rooms)
+                finished_players = list(room.players)
+                
                 if room_manager.start_next_round(room_id):
-                    # PERSISTENCE: Update metrics in database
-                    print(f"[Persistence] Updating player ratings to DB...")
-                    try:
-                        conn = sqlite3.connect('morpheme.db')
-                        config_key = f"{room.game_type}|{room.board_dimensions}|{room.time_limit}"
-                        
-                        for p in room.players:
-                            # Only update registered users (positive IDs)
-                            if p.user_id > 0:
-                                # Use INSERT OR REPLACE to handle upsert
-                                conn.execute('''
-                                    INSERT OR REPLACE INTO user_ratings (user_id, config_key, rating)
-                                    VALUES (?, ?, ?)
-                                ''', (p.user_id, config_key, p.rating))
-                                
-                                # Increment games_played ONLY if they played the round (score > 0)
-                                if p.previous_round_score > 0:
-                                    if p.games_played is None: p.games_played = 0
-                                    p.games_played += 1
-                                    conn.execute('UPDATE users SET games_played = games_played + 1 WHERE id = ?', (p.user_id,))
-                               
-                                
-                        conn.commit()
-                        conn.close()
-                        print(f"[Persistence] Ratings updated successfully for key: {config_key}")
-                    except Exception as e:
-                        print(f"[Persistence] ERROR updating ratings: {e}")
+                    # Only update stats if 2+ players actually played (score > 0)
+                    playing_count = sum(1 for p in finished_players if getattr(p, 'previous_round_score', 0) > 0)
+                    
+                    if playing_count > 1:
+                        print(f"[Persistence] Updating player ratings to DB ({playing_count} active players)...")
+                        try:
+                            conn = sqlite3.connect('morpheme.db')
+                            config_key = f"{room.game_type}|{room.board_dimensions}|{room.time_limit}"
+                            
+                            for p in finished_players:
+                                # Only update registered users (positive IDs)
+                                if p.user_id > 0:
+                                    # Use INSERT OR REPLACE to handle upsert
+                                    conn.execute('''
+                                        INSERT OR REPLACE INTO user_ratings (user_id, config_key, rating)
+                                        VALUES (?, ?, ?)
+                                    ''', (p.user_id, config_key, p.rating))
+                                    
+                                    # Increment games_played ONLY if they played the round (score > 0)
+                                    if p.previous_round_score > 0:
+                                        if p.games_played is None: p.games_played = 0
+                                        p.games_played += 1
+                                        conn.execute('UPDATE users SET games_played = games_played + 1 WHERE id = ?', (p.user_id,))
+                            
+                            conn.commit()
+                            conn.close()
+                        except Exception as e:
+                            print(f"[Persistence] ERROR updating ratings: {e}")
+                    else:
+                        print(f"[Persistence] SKIPPING stats update - only {playing_count} players played.")
 
         
         # Determine which word list to return
