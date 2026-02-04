@@ -527,80 +527,85 @@
                                     </div>
                                 </div>
 
-                            </div>
-                        </div>
-
-                        <div class="profile-content-tabs">
-                            <div class="profile-tabs-header">
-                                <button class="profile-tab-toggle active" data-tab="rankings">Skill
-                                    Rankings</button>
-                                <button class="profile-tab-toggle" data-tab="history">Round Reviews</button>
-                            </div>
-
-                            <div id="profile-tab-rankings" class="profile-tab-pane active">
-                                <div class="profile-ratings-section">
-                                    <div id="profile-ratings-grid" class="ratings-grid">
-                                        <!-- Populated by JS -->
+                                <div class="profile-content-tabs">
+                                    <div class="profile-tabs-header">
+                                        <button class="profile-tab-toggle active" data-tab="rankings">Skill
+                                            Rankings</button>
+                                        <button class="profile-tab-toggle" data-tab="history">Round Reviews</button>
                                     </div>
-                                </div>
-                            </div>
 
-                            <div id="profile-tab-history" class="profile-tab-pane">
-                                <div class="profile-history-section">
-                                    <div id="profile-history-list" class="history-list">
-                                        <!-- Populated by JS -->
-                                        <p class="placeholder">No recently tracked rounds.</p>
-                                    </div>
-                                </div>
-
-                                <!-- Integrated Replay Panel -->
-                                <div id="integrated-replay-panel" class="integrated-replay-container hidden">
-                                    <div class="integrated-replay-header">
-                                        <div class="header-main">
-                                            <h3>Round Replay</h3>
-                                            <span class="header-subtitle">Verifiable Walkthrough</span>
+                                    <div id="profile-tab-rankings" class="profile-tab-pane active">
+                                        <div class="profile-ratings-section">
+                                            <div id="profile-ratings-grid" class="ratings-grid">
+                                                <!-- Populated by JS -->
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="integrated-replay-layout">
-                                        <div class="replay-main">
-                                            <div class="replay-summary-row">
-                                                <div class="summary-mini-card">
-                                                    <span class="label">Room</span>
-                                                    <span id="integrated-room-id" class="value">-</span>
-                                                </div>
-                                                <div class="summary-mini-card">
-                                                    <span class="label">Mode</span>
-                                                    <span id="integrated-game-mode" class="value">-</span>
-                                                </div>
-                                                <div class="summary-mini-card">
-                                                    <span class="label">Score</span>
-                                                    <span id="integrated-total-score" class="value primary">-</span>
+
+                                    <div id="profile-tab-history" class="profile-tab-pane">
+                                        <div class="profile-history-section">
+                                            <div id="profile-history-list" class="history-list">
+                                                <!-- Populated by JS -->
+                                                <p class="placeholder">No recently tracked rounds.</p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Integrated Replay Panel -->
+                                        <div id="integrated-replay-panel" class="integrated-replay-container hidden">
+                                            <div class="integrated-replay-header">
+                                                <div class="header-main">
+                                                    <h3>Round Replay</h3>
+                                                    <span class="header-subtitle">Verifiable Walkthrough</span>
                                                 </div>
                                             </div>
-
-                                            <div class="replay-controls-row">
-                                                <button id="integrated-start-btn" class="replay-action-btn primary">▶
-                                                    Watch</button>
-                                                <button id="integrated-skip-btn"
-                                                    class="replay-action-btn secondary hidden">Show All</button>
-
-                                                <div id="integrated-progress-ui" class="integrated-progress-ui hidden">
-                                                    <span id="integrated-current-time">0:00.0</span>
-                                                    <div class="mini-progress-bg">
-                                                        <div id="integrated-progress-bar" class="mini-progress-fill">
+                                            <div class="integrated-replay-layout">
+                                                <div class="replay-main">
+                                                    <div class="replay-summary-row">
+                                                        <div class="summary-mini-card">
+                                                            <span class="label">Room</span>
+                                                            <span id="integrated-room-id" class="value">-</span>
+                                                        </div>
+                                                        <div class="summary-mini-card">
+                                                            <span class="label">Mode</span>
+                                                            <span id="integrated-game-mode" class="value">-</span>
+                                                        </div>
+                                                        <div class="summary-mini-card">
+                                                            <span class="label">Score</span>
+                                                            <span id="integrated-total-score"
+                                                                class="value primary">-</span>
                                                         </div>
                                                     </div>
+
+                                                    <div class="replay-controls-row">
+                                                        <button id="integrated-start-btn"
+                                                            class="replay-action-btn primary">▶
+                                                            Watch</button>
+                                                        <button id="integrated-skip-btn"
+                                                            class="replay-action-btn secondary hidden">Show All</button>
+
+                                                        <div id="integrated-progress-ui"
+                                                            class="integrated-progress-ui hidden">
+                                                            <span id="integrated-current-time">0:00.0</span>
+                                                            <div class="mini-progress-bg">
+                                                                <div id="integrated-progress-bar"
+                                                                    class="mini-progress-fill">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div id="integrated-walkthrough-list"
+                                                        class="integrated-walkthrough-list">
+                                                        <!-- Populated by JS -->
+                                                    </div>
                                                 </div>
-                                            </div>
 
-                                            <div id="integrated-walkthrough-list" class="integrated-walkthrough-list">
-                                                <!-- Populated by JS -->
-                                            </div>
-                                        </div>
-
-                                        <div class="replay-sidebar">
-                                            <div id="integrated-board-container" class="integrated-review-board">
-                                                <!-- Populated by JS -->
+                                                <div class="replay-sidebar">
+                                                    <div id="integrated-board-container"
+                                                        class="integrated-review-board">
+                                                        <!-- Populated by JS -->
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

@@ -886,9 +886,7 @@ body {
 
 /* Ratings Grid Section */
 .profile-ratings-section {
-    margin-top: 40px;
-    padding-top: 30px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 10px;
 }
 
 .section-title {
@@ -983,8 +981,8 @@ body {
 
 /* History List Styles */
 .profile-history-section {
-    margin-top: 20px;
-    margin-bottom: 50px;
+    margin-top: 10px;
+    margin-bottom: 30px;
 }
 
 .history-list {
@@ -1844,17 +1842,17 @@ body {
 
 /* Profile Content Tabs */
 .profile-content-tabs {
-    margin-top: 20px;
-    background: rgba(0, 0, 0, 0.2);
+    margin-top: 30px;
+    background: rgba(0, 0, 0, 0.15);
     border-radius: 20px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .profile-tabs-header {
     display: flex;
-    background: rgba(255, 255, 255, 0.03);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .profile-tab-toggle {
@@ -1878,13 +1876,13 @@ body {
 
 .profile-tab-toggle.active {
     color: var(--accent-color);
-    background: rgba(255, 255, 255, 0.05);
-    box-shadow: inset 0 -2px 0 var(--accent-color);
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: inset 0 -3px 0 var(--accent-color);
 }
 
 .profile-tab-pane {
     display: none;
-    padding: 30px;
+    padding: 25px;
 }
 
 .profile-tab-pane.active {
