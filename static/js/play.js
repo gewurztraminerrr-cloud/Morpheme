@@ -23,6 +23,9 @@ let activeWordsTab = 'found'; // 'found' or 'remaining'
 let validationTimeout = null;
 let highlightedSplitWord = null; // Track word for shared highlighting in Split Points
 let highlightedFoundWord = null; // Track word from All Words list to highlight finders
+let lastRenderedBoardJSON = null;
+let lastRenderedGrayed = null;
+let lastRenderedRotation = null;
 
 // Input Method Tracking
 let currentInputMethod = 'mouse';
@@ -1211,6 +1214,15 @@ function renderBoard(board, grayed) {
     if (!boardEl) return; // play page might not be active
 
     // Reset container style
+    const boardJSON = JSON.stringify(board);
+    if (boardJSON === lastRenderedBoardJSON && grayed === lastRenderedGrayed && isBoardRotated === lastRenderedRotation && boardEl.classList.contains('game-board')) {
+        return; // Skip identical re-render to preserve highlights
+    }
+
+    lastRenderedBoardJSON = boardJSON;
+    lastRenderedGrayed = grayed;
+    lastRenderedRotation = isBoardRotated;
+
     boardEl.className = 'game-board';
     // Clear styles set by renderSplitNotepads
     boardEl.style.display = '';
@@ -1246,6 +1258,9 @@ function renderBoard(board, grayed) {
 
     // Check for overflow after render
     setTimeout(checkBoardOverflow, 50);
+
+    // Reapply Highlights that were wiped by innerHTML = ''
+    reapplyBoardHighlights();
 }
 
 // Helper: Check if board panel needs vertical scrolling
@@ -1451,7 +1466,110 @@ function createBoardCell(r, c, letter, grayed) {
     cell.textContent = letter === 'Q' ? 'QU' : letter;
     cell.dataset.row = r;
     cell.dataset.col = c;
+    cell.dataset.letter = letter; // Original letter
     return cell;
+}
+
+/**
+ * Finds if a word can be formed on the board and returns the path of coordinates.
+ * Supports the "Q" tile representing "QU".
+ */
+function findWordPathOnBoard(word, board) {
+    if (!word || !board) return null;
+    const rows = board.length;
+    if (rows === 0) return null;
+    const cols = board[0].length;
+    const upperWord = word.toUpperCase();
+
+    function dfs(r, c, index, currentPath, visited) {
+        if (index >= upperWord.length) return currentPath;
+
+        if (r < 0 || r >= rows || c < 0 || c >= cols) return null;
+        if (visited.has(`${r},${c}`)) return null;
+
+        const cellChar = board[r][c].toUpperCase();
+        let matchLength = 0;
+
+        if (cellChar === 'Q') {
+            // "Q" tile matches "QU" in the word, or just "Q" if it's the only thing typed
+            if (upperWord.substring(index, index + 2) === 'QU') {
+                matchLength = 2;
+            } else if (upperWord[index] === 'Q') {
+                matchLength = 1;
+            } else {
+                return null;
+            }
+        } else {
+            if (upperWord[index] === cellChar) {
+                matchLength = 1;
+            } else {
+                return null;
+            }
+        }
+
+        const newVisited = new Set(visited);
+        newVisited.add(`${r},${c}`);
+        const newPath = [...currentPath, { r, c }];
+
+        const nextIndex = index + matchLength;
+        if (nextIndex >= upperWord.length) return newPath;
+
+        // Try directions
+        for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+                if (dr === 0 && dc === 0) continue;
+                const result = dfs(r + dr, c + dc, nextIndex, newPath, newVisited);
+                if (result) return result;
+            }
+        }
+        return null;
+    }
+
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const path = dfs(r, c, 0, [], new Set());
+            if (path) return path;
+        }
+    }
+    return null;
+}
+
+/**
+ * Reapplies visual highlights (typing and mouse selection) to the board.
+ * Useful after the board DOM has been rebuilt.
+ */
+function reapplyBoardHighlights() {
+    const board = window.lastGameState ? window.lastGameState.board : null;
+    if (!board) return;
+
+    // 1. Reapply mouse selection highlights (drag)
+    if (mouseState && mouseState.selectedPath && mouseState.selectedPath.length > 0) {
+        mouseState.selectedPath.forEach((p, index) => {
+            const cell = document.querySelector(`.board-cell[data-row="${p.row}"][data-col="${p.col}"]`);
+            if (cell) {
+                cell.classList.add('selected');
+                if (index === mouseState.selectedPath.length - 1) {
+                    cell.classList.add('current');
+                }
+            }
+        });
+    }
+
+    // 2. Reapply typing highlights (input box)
+    const wordInputEl = document.getElementById('word-input');
+    if (wordInputEl && wordInputEl.value.trim()) {
+        const isEnabled = window.userSettings && window.userSettings.highlight_typing !== false;
+        if (isEnabled) {
+            const word = wordInputEl.value.trim();
+            const path = findWordPathOnBoard(word, board);
+            if (path) {
+                path.forEach(coord => {
+                    const cell = document.querySelector(`.board-cell[data-row="${coord.r}"][data-col="${coord.c}"]`);
+                    if (cell) cell.classList.add('typing-highlight');
+                });
+            }
+        }
+    }
 }
 
 function renderSplitNotepads(players) {
@@ -1837,6 +1955,32 @@ if (submitBtn && wordInputEl) {
     wordInputEl.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') submitWord();
     });
+
+    // Real-time highlighting while typing
+    wordInputEl.addEventListener('input', () => {
+        const isEnabled = window.userSettings && window.userSettings.highlight_typing !== false;
+        if (!isEnabled) {
+            // Ensure any existing highlights are cleared if feature is disabled mid-type
+            document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
+            return;
+        }
+
+        const word = wordInputEl.value.trim();
+        const board = window.lastGameState ? window.lastGameState.board : null;
+
+        // Clear previous highlights
+        document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
+
+        if (!word || !board) return;
+
+        const path = findWordPathOnBoard(word, board);
+        if (path) {
+            path.forEach(coord => {
+                const cell = document.querySelector(`.board-cell[data-row="${coord.r}"][data-col="${coord.c}"]`);
+                if (cell) cell.classList.add('typing-highlight');
+            });
+        }
+    });
 }
 
 async function submitWord(wordParam = null) {
@@ -1956,6 +2100,8 @@ async function submitWord(wordParam = null) {
         showValidationFeedback('Submission Error', false);
     }
     input.value = '';
+    // Clear typing highlights after submission
+    document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
 }
 
 function showValidationFeedback(message, isValid) {

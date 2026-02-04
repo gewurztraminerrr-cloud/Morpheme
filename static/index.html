@@ -25,7 +25,7 @@
             <button class="nav-btn" id="play-btn" data-page="play" disabled>Play</button>
             <button class="nav-btn" data-page="leaderboards">Leaderboards</button>
             <button class="nav-btn" data-page="tournaments">Tournaments</button>
-            <button class="nav-btn" data-page="forums">Forums</button>
+            <button class="nav-btn" data-page="forums">Forum</button>
             <button class="nav-btn" data-page="tools">Tools</button>
             <button class="nav-btn" data-page="settings">Settings</button>
             <button class="nav-btn" data-page="contact">Contact</button>
@@ -396,8 +396,10 @@
                 <div class="tools-sidebar">
                     <button class="tool-nav-btn active" data-tool="profile">Profile</button>
                     <button class="tool-nav-btn" data-tool="combo">Combo Checker</button>
+                    <button class="tool-nav-btn" data-tool="is-valid">Is Valid</button>
                     <button class="tool-nav-btn" data-tool="lists">Lists</button>
                     <button class="tool-nav-btn" data-tool="sequence">Sequence</button>
+                    <button class="tool-nav-btn" data-tool="subanagrams">Subanagrams</button>
                     <button class="tool-nav-btn" data-tool="manual">Manual</button>
                     <button class="tool-nav-btn" data-tool="random">Random Word</button>
                     <button class="tool-nav-btn" data-tool="wotd">Word of the Day</button>
@@ -441,6 +443,8 @@
                                                 <h1 id="profile-username" class="profile-username-large">Player</h1>
                                                 <div id="profile-status-indicator" class="status-indicator offline"
                                                     title="Offline"></div>
+                                                <button id="profile-message-btn"
+                                                    class="message-btn hidden">Message</button>
                                                 <button id="profile-follow-btn"
                                                     class="follow-btn hidden">Follow</button>
                                                 <input type="hidden" id="profile-current-room" value="">
@@ -604,282 +608,329 @@
                             </div>
                         </div>
                     </div>
-                </div>
 
 
+                    <!-- Word of the Day Interface -->
+                    <div id="tool-wotd" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Word of the Day</h2>
+                            <p>A new word to learn and master every 24 hours.</p>
+                        </div>
 
-
-            </div>
-
-            <!-- Word of the Day Interface -->
-            <div id="tool-wotd" class="tool-pane">
-                <div class="tool-header">
-                    <h2>Word of the Day</h2>
-                    <p>A new word to learn and master every 24 hours.</p>
-                </div>
-
-                <div class="wotd-container">
-                    <p class="wotd-intro">The word of the day is...</p>
-                    <div id="wotd-display" class="wotd-gold-showy">
-                        <!-- Word injected via JS -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Random Word Interface -->
-            <div id="tool-random" class="tool-pane">
-                <div class="tool-header">
-                    <h2>Random Word Generator</h2>
-                    <p>Discover new words based on length and dictionary criteria.</p>
-                </div>
-
-                <div class="combo-control-panel">
-                    <div class="input-row">
-                        <label>Length:</label>
-                        <select id="random-length" style="width: 100px;">
-                            <option value="all">All</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="9">9</option>
-                            <option value="10">10</option>
-                            <option value="11">11</option>
-                            <option value="12">12</option>
-                            <option value="13">13</option>
-                            <option value="14">14</option>
-                            <option value="15">15</option>
-                        </select>
-                        <label>Dict:</label>
-                        <select id="random-dict" style="width: 120px;">
-                            <option value="NWL">NWL (US)</option>
-                            <option value="CSW">CSW (Intl)</option>
-                        </select>
-                        <button id="random-gen-btn">Generate Random Word</button>
-                    </div>
-                </div>
-
-                <div class="random-word-container">
-                    <div id="random-word-display" class="random-word-large">
-                        <!-- Generated word appears here -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Manual Tool Interface -->
-            <div id="tool-manual" class="tool-pane">
-                <div class="tool-header">
-                    <h2>Manual Solver</h2>
-                    <p>Enter a custom board and solve it independently.</p>
-                </div>
-
-                <div class="combo-control-panel">
-                    <div class="input-row">
-                        <select id="manual-dim" style="width: 140px;">
-                            <option value="4x4">4x4</option>
-                            <option value="4x6">4x6</option>
-                            <option value="5x7">5x7</option>
-                            <option value="6x8" selected>6x8</option>
-                        </select>
-                        <select id="manual-dict" style="width: 140px;">
-                            <option value="NWL">NWL (US)</option>
-                            <option value="CSW">CSW (Intl)</option>
-                        </select>
-                        <button id="manual-solve-btn">Solve</button>
-                        <button id="manual-reveal-btn" style="display: none;">Reveal Words</button>
-                    </div>
-                </div>
-
-                <div class="manual-grid-scroll">
-                    <div id="manual-grid" class="manual-grid">
-                        <!-- Grid inputs injected via JS -->
-                    </div>
-                </div>
-
-                <div id="manual-results-container" class="seq-results-container" style="display: none;">
-                    <!-- Results injected via JS -->
-                </div>
-            </div>
-
-            <!-- ... omitted combo/list content to match target ... -->
-
-            <!-- Combo Checker Interface -->
-            <div id="tool-combo" class="tool-pane">
-                <div class="tool-header">
-                    <h2>Combo Checker</h2>
-                    <p>Find connected words via MP and LIC.</p>
-                </div>
-
-                <div class="combo-control-panel">
-                    <div class="input-row">
-                        <input type="text" id="combo-input" placeholder="Enter letters to check..." autocomplete="off">
-                        <select id="combo-dict">
-                            <option value="NWL">NWL (US)</option>
-                            <option value="CSW">CSW (Intl)</option>
-                        </select>
-                        <button id="combo-search-btn">Check</button>
-                    </div>
-                </div>
-
-                <div id="combo-results" class="combo-results-container hidden">
-                    <!-- MP Section: Horizontal Groups (0MP to 5MP) -->
-                    <div class="result-section">
-                        <h3>MP (Microprocedures)</h3>
-                        <div class="chart-desc">Determining the distance away from one word to another and
-                            keeping the ones that are the closest.</div>
-                        <div class="horizontal-scroll-container" id="mp-container">
-                            <!-- Dynamic Columns (0MP, 1MP, 2MP...) will be injected here -->
+                        <div class="wotd-container">
+                            <p class="wotd-intro">The word of the day is...</p>
+                            <div id="wotd-display" class="wotd-gold-showy">
+                                <!-- Word injected via JS -->
+                            </div>
                         </div>
                     </div>
 
-                    <!-- LIC Section: Horizontal Groups (Sorted by Shared Count) -->
-                    <div class="result-section">
-                        <h3>LIC (Letters In Common)</h3>
-                        <div class="chart-desc">The letters are there, but are they arranged in such a way so as
-                            to both be present?</div>
-                        <div class="horizontal-scroll-container" id="lic-container">
-                            <!-- Dynamic Columns (Shared=3, Shared=4...) will be injected here -->
+                    <!-- Random Word Interface -->
+                    <div id="tool-random" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Random Word Generator</h2>
+                            <p>Discover new words based on length and dictionary criteria.</p>
+                        </div>
+
+                        <div class="combo-control-panel">
+                            <div class="input-row">
+                                <label>Length:</label>
+                                <select id="random-length" style="width: 100px;">
+                                    <option value="all">All</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                    <option value="11">11</option>
+                                    <option value="12">12</option>
+                                    <option value="13">13</option>
+                                    <option value="14">14</option>
+                                    <option value="15">15</option>
+                                </select>
+                                <label>Dict:</label>
+                                <select id="random-dict" style="width: 120px;">
+                                    <option value="NWL">NWL (US)</option>
+                                    <option value="CSW">CSW (Intl)</option>
+                                </select>
+                                <button id="random-gen-btn">Generate Random Word</button>
+                            </div>
+                        </div>
+
+                        <div class="random-word-container">
+                            <div id="random-word-display" class="random-word-large">
+                                <!-- Generated word appears here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manual Tool Interface -->
+                    <div id="tool-manual" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Manual Solver</h2>
+                            <p>Enter a custom board and solve it independently.</p>
+                        </div>
+
+                        <div class="combo-control-panel">
+                            <div class="input-row">
+                                <select id="manual-dim" style="width: 140px;">
+                                    <option value="4x4">4x4</option>
+                                    <option value="4x6">4x6</option>
+                                    <option value="5x7">5x7</option>
+                                    <option value="6x8" selected>6x8</option>
+                                </select>
+                                <select id="manual-dict" style="width: 140px;">
+                                    <option value="NWL">NWL (US)</option>
+                                    <option value="CSW">CSW (Intl)</option>
+                                </select>
+                                <button id="manual-solve-btn">Solve</button>
+                                <button id="manual-reveal-btn" style="display: none;">Reveal Words</button>
+                            </div>
+                        </div>
+
+                        <div class="manual-grid-scroll">
+                            <div id="manual-grid" class="manual-grid">
+                                <!-- Grid inputs injected via JS -->
+                            </div>
+                        </div>
+
+                        <div id="manual-results-container" class="seq-results-container" style="display: none;">
+                            <!-- Results injected via JS -->
+                        </div>
+                    </div>
+
+                    <!-- ... omitted combo/list content to match target ... -->
+
+                    <!-- Combo Checker Interface -->
+                    <div id="tool-combo" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Combo Checker</h2>
+                            <p>Find connected words via MP and LIC.</p>
+                        </div>
+
+                        <div class="combo-control-panel">
+                            <div class="input-row">
+                                <input type="text" id="combo-input" placeholder="Enter letters to check..."
+                                    autocomplete="off">
+                                <select id="combo-dict">
+                                    <option value="NWL">NWL (US)</option>
+                                    <option value="CSW">CSW (Intl)</option>
+                                </select>
+                                <button id="combo-search-btn">Check</button>
+                            </div>
+                        </div>
+
+                        <div id="combo-results" class="combo-results-container hidden">
+                            <!-- MP Section: Horizontal Groups (0MP to 5MP) -->
+                            <div class="result-section">
+                                <h3>MP (Microprocedures)</h3>
+                                <div class="chart-desc">Determining the distance away from one word to another and
+                                    keeping the ones that are the closest.</div>
+                                <div class="horizontal-scroll-container" id="mp-container">
+                                    <!-- Dynamic Columns (0MP, 1MP, 2MP...) will be injected here -->
+                                </div>
+                            </div>
+
+                            <!-- LIC Section: Horizontal Groups (Sorted by Shared Count) -->
+                            <div class="result-section">
+                                <h3>LIC (Letters In Common)</h3>
+                                <div class="chart-desc">The letters are there, but are they arranged in such a way so as
+                                    to have both be present?</div>
+                                <div class="horizontal-scroll-container" id="lic-container">
+                                    <!-- Dynamic Columns (Shared=3, Shared=4...) will be injected here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Is Valid Tool Interface -->
+                    <div id="tool-is-valid" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Word Validator</h2>
+                            <p>Check if a word exists in the official dictionaries.</p>
+                        </div>
+
+                        <div class="combo-control-panel">
+                            <div class="input-row">
+                                <input type="text" id="valid-input" placeholder="Enter word to check..."
+                                    autocomplete="off" style="width: 250px;">
+                                <select id="valid-dict" style="width: 140px;">
+                                    <option value="NWL">NWL (US)</option>
+                                    <option value="CSW">CSW (Intl)</option>
+                                </select>
+                                <button id="valid-check-btn">Validate</button>
+                            </div>
+                        </div>
+
+                        <div id="valid-results-container" class="random-word-container">
+                            <div id="valid-result-display" class="random-word-large">
+                                <!-- Validation result appears here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subanagrams Tool Interface -->
+                <div id="tool-subanagrams" class="tool-pane">
+                    <div class="tool-header">
+                        <h2>Subanagrams</h2>
+                        <p>Find all words that can be formed using letters from your input.</p>
+                    </div>
+
+                    <div class="combo-control-panel">
+                        <div class="input-row">
+                            <input type="text" id="sub-input" placeholder="Enter letters (e.g. HELLO)..."
+                                autocomplete="off" style="width: 250px;">
+                            <select id="sub-dict" style="width: 140px;">
+                                <option value="NWL">NWL (US)</option>
+                                <option value="CSW">CSW (Intl)</option>
+                            </select>
+                            <button id="sub-search-btn">Find Subanagrams</button>
+                        </div>
+                    </div>
+
+                    <div id="sub-results-container" class="seq-results-container">
+                        <div class="seq-results-placeholder">Enter letters to find subanagrams.</div>
+                        <!-- Results table injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Sequence Tool Interface (New) -->
+                <div id="tool-sequence" class="tool-pane">
+                    <div class="tool-header">
+                        <h2>Sequence Search</h2>
+                        <p>Find words starting with, ending with, or containing a sequence.</p>
+                    </div>
+
+                    <div class="combo-control-panel">
+                        <div class="input-row">
+                            <input type="text" id="seq-input" placeholder="Sequence (e.g. STR)..." autocomplete="off"
+                                style="width: 160px;">
+
+                            <select id="seq-mode" style="width: 200px;">
+                                <option value="starts">Starts With</option>
+                                <option value="ends">Ends With</option>
+                                <option value="contains" selected>Contains (Fwd/Rev)</option>
+                            </select>
+
+                            <select id="seq-length" style="width: 120px;">
+                                <option value="all">Len: All</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                                <option value="13">13</option>
+                                <option value="14">14</option>
+                                <option value="15">15</option>
+                            </select>
+
+                            <button id="seq-search-btn">Search</button>
+                        </div>
+                    </div>
+
+                    <div id="seq-results-container" class="seq-results-container">
+                        <div class="seq-results-placeholder">Enter a sequence to search.</div>
+                        <!-- Results Table will be injected here -->
+                    </div>
+                </div>
+
+                <!-- Lists Tool Interface (New) -->
+                <div id="tool-lists" class="tool-pane">
+                    <div class="tool-header">
+                        <h2>Word Lists</h2>
+                        <p>Browse official dictionaries and unique collections.</p>
+                    </div>
+
+                    <!-- Filter Controls -->
+                    <div class="combo-control-panel" style="margin-bottom: 0px;">
+                        <div class="input-row">
+                            <select id="list-length-filter" style="width: 140px;">
+                                <option value="all">Length: All</option>
+                                <option value="3">3 Letters</option>
+                                <option value="4">4 Letters</option>
+                                <option value="5">5 Letters</option>
+                                <option value="6">6 Letters</option>
+                                <option value="7">7 Letters</option>
+                                <option value="8">8 Letters</option>
+                                <option value="9">9 Letters</option>
+                                <option value="10">10 Letters</option>
+                                <option value="11">11 Letters</option>
+                                <option value="12">12 Letters</option>
+                                <option value="13">13 Letters</option>
+                                <option value="14">14 Letters</option>
+                                <option value="15">15 Letters</option>
+                            </select>
+                            <select id="list-start-filter" style="width: 140px;">
+                                <option value="all">Starts With: All</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                                <option value="E">E</option>
+                                <option value="F">F</option>
+                                <option value="G">G</option>
+                                <option value="H">H</option>
+                                <option value="I">I</option>
+                                <option value="J">J</option>
+                                <option value="K">K</option>
+                                <option value="L">L</option>
+                                <option value="M">M</option>
+                                <option value="N">N</option>
+                                <option value="O">O</option>
+                                <option value="P">P</option>
+                                <option value="Q">Q</option>
+                                <option value="R">R</option>
+                                <option value="S">S</option>
+                                <option value="T">T</option>
+                                <option value="U">U</option>
+                                <option value="V">V</option>
+                                <option value="W">W</option>
+                                <option value="X">X</option>
+                                <option value="Y">Y</option>
+                                <option value="Z">Z</option>
+                            </select>
+                            <button id="list-update-btn">Update</button>
+                        </div>
+                    </div>
+
+                    <div class="lists-container" id="lists-container">
+                        <!-- Columns will be injected by JS or hardcoded structure -->
+                        <div class="list-column" id="col-nwl">
+                            <h3>NWL</h3>
+                            <div class="list-scroll-area">Loading...</div>
+                        </div>
+                        <div class="list-column" id="col-csw">
+                            <h3>CSW</h3>
+                            <div class="list-scroll-area">Loading...</div>
+                        </div>
+                        <div class="list-column" id="col-csw-only">
+                            <h3>CSW Only</h3>
+                            <div class="list-scroll-area">Loading...</div>
+                        </div>
+                        <div class="list-column" id="col-likelihood">
+                            <h3>Likelihood</h3>
+                            <div class="list-scroll-area">Loading...</div>
+                        </div>
+                        <div class="list-column" id="col-uniques">
+                            <h3>Uniques</h3>
+                            <div class="list-scroll-area">Loading...</div>
+                        </div>
+                        <div class="list-column" id="col-added">
+                            <h3>Added Words</h3>
+                            <div class="list-scroll-area">Loading...</div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Sequence Tool Interface (New) -->
-        <div id="tool-sequence" class="tool-pane">
-            <div class="tool-header">
-                <h2>Sequence Search</h2>
-                <p>Find words starting with, ending with, or containing a sequence.</p>
-            </div>
-
-            <div class="combo-control-panel">
-                <div class="input-row">
-                    <input type="text" id="seq-input" placeholder="Sequence (e.g. STR)..." autocomplete="off"
-                        style="width: 160px;">
-
-                    <select id="seq-mode" style="width: 200px;">
-                        <option value="starts">Starts With</option>
-                        <option value="ends">Ends With</option>
-                        <option value="contains" selected>Contains (Fwd/Rev)</option>
-                    </select>
-
-                    <select id="seq-length" style="width: 120px;">
-                        <option value="all">Len: All</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                        <option value="7">7</option>
-                        <option value="8">8</option>
-                        <option value="9">9</option>
-                        <option value="10">10</option>
-                        <option value="11">11</option>
-                        <option value="12">12</option>
-                        <option value="13">13</option>
-                        <option value="14">14</option>
-                        <option value="15">15</option>
-                    </select>
-
-                    <button id="seq-search-btn">Search</button>
-                </div>
-            </div>
-
-            <div id="seq-results-container" class="seq-results-container">
-                <div class="seq-results-placeholder">Enter a sequence to search.</div>
-                <!-- Results Table will be injected here -->
-            </div>
-        </div>
-
-        <!-- Lists Tool Interface (New) -->
-        <div id="tool-lists" class="tool-pane">
-            <div class="tool-header">
-                <h2>Word Lists</h2>
-                <p>Browse official dictionaries and unique collections.</p>
-            </div>
-
-            <!-- Filter Controls -->
-            <div class="combo-control-panel" style="margin-bottom: 0px;">
-                <div class="input-row">
-                    <select id="list-length-filter" style="width: 140px;">
-                        <option value="all">Length: All</option>
-                        <option value="3">3 Letters</option>
-                        <option value="4">4 Letters</option>
-                        <option value="5">5 Letters</option>
-                        <option value="6">6 Letters</option>
-                        <option value="7">7 Letters</option>
-                        <option value="8">8 Letters</option>
-                        <option value="9">9 Letters</option>
-                        <option value="10">10 Letters</option>
-                        <option value="11">11 Letters</option>
-                        <option value="12">12 Letters</option>
-                        <option value="13">13 Letters</option>
-                        <option value="14">14 Letters</option>
-                        <option value="15">15 Letters</option>
-                    </select>
-                    <select id="list-start-filter" style="width: 140px;">
-                        <option value="all">Starts With: All</option>
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                        <option value="C">C</option>
-                        <option value="D">D</option>
-                        <option value="E">E</option>
-                        <option value="F">F</option>
-                        <option value="G">G</option>
-                        <option value="H">H</option>
-                        <option value="I">I</option>
-                        <option value="J">J</option>
-                        <option value="K">K</option>
-                        <option value="L">L</option>
-                        <option value="M">M</option>
-                        <option value="N">N</option>
-                        <option value="O">O</option>
-                        <option value="P">P</option>
-                        <option value="Q">Q</option>
-                        <option value="R">R</option>
-                        <option value="S">S</option>
-                        <option value="T">T</option>
-                        <option value="U">U</option>
-                        <option value="V">V</option>
-                        <option value="W">W</option>
-                        <option value="X">X</option>
-                        <option value="Y">Y</option>
-                        <option value="Z">Z</option>
-                    </select>
-                    <button id="list-update-btn">Update</button>
-                </div>
-            </div>
-
-            <div class="lists-container" id="lists-container">
-                <!-- Columns will be injected by JS or hardcoded structure -->
-                <div class="list-column" id="col-nwl">
-                    <h3>NWL</h3>
-                    <div class="list-scroll-area">Loading...</div>
-                </div>
-                <div class="list-column" id="col-csw">
-                    <h3>CSW</h3>
-                    <div class="list-scroll-area">Loading...</div>
-                </div>
-                <div class="list-column" id="col-csw-only">
-                    <h3>CSW Only</h3>
-                    <div class="list-scroll-area">Loading...</div>
-                </div>
-                <div class="list-column" id="col-likelihood">
-                    <h3>Likelihood</h3>
-                    <div class="list-scroll-area">Loading...</div>
-                </div>
-                <div class="list-column" id="col-uniques">
-                    <h3>Uniques</h3>
-                    <div class="list-scroll-area">Loading...</div>
-                </div>
-                <div class="list-column" id="col-added">
-                    <h3>Added Words</h3>
-                    <div class="list-scroll-area">Loading...</div>
-                </div>
-            </div>
-        </div>
-        </div>
         </div>
         </div>
 
@@ -1034,6 +1085,70 @@
                         <span class="slider round"></span>
                     </label>
                 </div>
+            </div>
+
+            <!-- Highlight board while typing -->
+            <div class="setting-panel">
+                <div class="setting-header">
+                    <div>
+                        <div class="setting-title">Highlight as you type</div>
+                        <div class="setting-desc">Highlight letters on the board as you type in the input box.</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="setting-highlight-typing" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div id="highlight-color-picker"
+                    style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%;">
+                    <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Highlight Color
+                    </div>
+                    <div
+                        style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
+                        <button class="color-dot active" data-color="#ffcc00" style="background: #ffcc00;"
+                            title="Yellow"></button>
+                        <button class="color-dot" data-color="#00ffff" style="background: #00ffff;"
+                            title="Cyan"></button>
+                        <button class="color-dot" data-color="#00ff00" style="background: #00ff00;"
+                            title="Lime"></button>
+                        <button class="color-dot" data-color="#ff66cc" style="background: #ff66cc;"
+                            title="Pink"></button>
+                        <button class="color-dot" data-color="#ff9900" style="background: #ff9900;"
+                            title="Orange"></button>
+                        <button class="color-dot" data-color="#ff4d4d" style="background: #ff4d4d;"
+                            title="Red"></button>
+                        <button class="color-dot" data-color="#b366ff" style="background: #b366ff;"
+                            title="Purple"></button>
+                        <button class="color-dot" data-color="#3399ff" style="background: #3399ff;"
+                            title="Blue"></button>
+                        <button class="color-dot" data-color="#00ff99" style="background: #00ff99;"
+                            title="Mint"></button>
+                        <button class="color-dot" data-color="#ffd700" style="background: #ffd700;"
+                            title="Gold"></button>
+                        <button class="color-dot" data-color="#ffffff" style="background: #ffffff;"
+                            title="White"></button>
+                    </div>
+                </div>
+                <style>
+                    .color-dot {
+                        width: 24px;
+                        height: 24px;
+                        border-radius: 50%;
+                        cursor: pointer;
+                        border: 2px solid rgba(0, 0, 0, 0.3);
+                        transition: transform 0.2s, box-shadow 0.2s;
+                    }
+
+                    .color-dot:hover {
+                        transform: scale(1.2);
+                    }
+
+                    .color-dot.active {
+                        transform: scale(1.3);
+                        border-color: #fff;
+                        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+                    }
+                </style>
             </div>
 
             <!-- Chat Text Size -->
@@ -1221,6 +1336,25 @@
     <script src="/js/tools.js?v=2"></script>
     <script src="/js/settings.js"></script>
     <script src="/js/mouse_selection.js"></script>
+    <!-- Private Chat Modal -->
+    <div id="private-chat-modal" class="chat-modal hidden">
+        <div class="chat-modal-content">
+            <div class="chat-modal-header">
+                <div class="chat-modal-user">
+                    <span id="pm-target-status" class="status-indicator-mini offline"></span>
+                    <span id="pm-target-name">Chat</span>
+                </div>
+                <button class="chat-modal-close" id="pm-close-btn">&times;</button>
+            </div>
+            <div id="pm-history" class="chat-modal-history">
+                <!-- Messages injected here -->
+            </div>
+            <div class="chat-modal-input-area">
+                <input type="text" id="pm-input" placeholder="Type a message..." autocomplete="off">
+                <button id="pm-send-btn">Send</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

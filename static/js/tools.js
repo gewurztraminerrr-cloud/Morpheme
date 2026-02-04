@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setupManualTool();
     setupRandomWordTool();
     setupWotdTool();
+    setupSubanagramsTool();
+    setupIsValidTool();
+    setupPrivateMessaging();
 });
 
 function setupToolsNavigation() {
@@ -814,6 +817,22 @@ function renderProfile(user) {
         }
     }
 
+    const messageBtn = document.getElementById('profile-message-btn');
+    if (messageBtn) {
+        // Show message button if viewing another user
+        if (currentName && !isOwner) {
+            messageBtn.classList.remove('hidden');
+            // Set up click listener
+            const newMsgBtn = messageBtn.cloneNode(true);
+            messageBtn.parentNode.replaceChild(newMsgBtn, messageBtn);
+            newMsgBtn.addEventListener('click', () => {
+                openPrivateChat(user.username);
+            });
+        } else {
+            messageBtn.classList.add('hidden');
+        }
+    }
+
     // --- Render Round History ---
     const historyList = document.getElementById('profile-history-list');
     if (historyList) {
@@ -825,14 +844,16 @@ function renderProfile(user) {
                     round.game_type === 'fcfs' ? 'FCFS' : 'Accumulative';
                 const typeClass = `history-type-${round.game_type}`;
 
+                const dimensions = `${round.board.length}x${round.board[0].length}`;
                 return `
                 <div class="history-item">
                     <div class="history-info">
-                        <span class="history-mode">${round.game_mode}</span>
+                        <span class="history-mode ${typeClass}">${gameTypeLabel}</span>
+                        <span class="history-config">${dimensions}</span>
                         <span class="history-room">${round.room_id}</span>
                         <span class="history-date">${new Date(round.timestamp).toLocaleDateString()}</span>
                     </div>
-                    <div class="history-score">${round.score} pts</div>
+                    <div class="history-score">${round.total_score} pts</div>
                     <button class="history-review-btn" onclick="watchRoundHistory('${round.room_id}', ${round.round_number})">Review</button>
                 </div>
                 `;
@@ -1660,3 +1681,340 @@ async function updateWotd() {
         displayEl.innerText = 'Offline';
     }
 }
+
+// --- Subanagrams Tool Logic ---
+
+function setupSubanagramsTool() {
+    const searchBtn = document.getElementById('sub-search-btn');
+    const input = document.getElementById('sub-input');
+
+    if (searchBtn) {
+        searchBtn.addEventListener('click', runSubanagramSearch);
+    }
+
+    if (input) {
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') runSubanagramSearch();
+        });
+    }
+}
+
+async function runSubanagramSearch() {
+    const inputEl = document.getElementById('sub-input');
+    const dictEl = document.getElementById('sub-dict');
+    const resultsContainer = document.getElementById('sub-results-container');
+
+    const input = inputEl.value.trim();
+    const dictionary = dictEl.value;
+
+    if (!input) {
+        resultsContainer.innerHTML = '<div class="seq-results-placeholder">Please enter letters to search.</div>';
+        return;
+    }
+
+    resultsContainer.innerHTML = '<div style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Finding subanagrams...</div>';
+
+    try {
+        const response = await fetch('/api/tools/subanagrams', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                input: input,
+                dictionary: dictionary
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            resultsContainer.innerHTML = `<div style="padding:20px; color:#f43f5e;">Error: ${data.error}</div>`;
+            return;
+        }
+
+        const words = data.results;
+        const count = data.count;
+
+        if (words.length === 0) {
+            resultsContainer.innerHTML = '<div class="seq-results-placeholder">No subanagrams found.</div>';
+            return;
+        }
+
+        // Render Results Table
+        let html = `
+            <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); text-align: center;">
+                Found ${count} subanagrams
+            </div>
+            <div style="flex: 1; overflow-y: auto; padding: 10px;">
+                <table class="group-table" style="width: 100%;">
+                    <tbody>
+        `;
+
+        html += words.map(w => `
+            <tr><td style="padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.9); font-family: monospace;">${w}</td></tr>
+        `).join('');
+
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        resultsContainer.innerHTML = html;
+
+    } catch (err) {
+        console.error("Subanagram search failed:", err);
+        resultsContainer.innerHTML = '<div style="padding:20px; color:#f43f5e;">Search failed.</div>';
+    }
+}
+
+// --- Is Valid Tool Logic ---
+
+function setupIsValidTool() {
+    const checkBtn = document.getElementById('valid-check-btn');
+    const input = document.getElementById('valid-input');
+
+    if (checkBtn) {
+        checkBtn.addEventListener('click', runValidationCheck);
+    }
+
+    if (input) {
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') runValidationCheck();
+        });
+    }
+}
+
+async function runValidationCheck() {
+    const inputEl = document.getElementById('valid-input');
+    const dictEl = document.getElementById('valid-dict');
+    const displayEl = document.getElementById('valid-result-display');
+    const checkBtn = document.getElementById('valid-check-btn');
+
+    const word = inputEl.value.trim();
+    const dictionary = dictEl.value;
+
+    if (!word) return;
+
+    checkBtn.innerText = "Checking...";
+    checkBtn.disabled = true;
+
+    try {
+        const response = await fetch('/api/tools/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ word: word, dictionary: dictionary })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            displayEl.innerHTML = `<span style="font-size: 1.5rem; color: #f43f5e;">${data.error}</span>`;
+            return;
+        }
+
+        const color = data.is_valid ? '#4ade80' : '#f43f5e';
+        const statusText = data.is_valid ? 'IS VALID' : 'IS NOT VALID';
+
+        displayEl.style.color = color;
+        displayEl.innerText = `${data.word} ${statusText}`;
+
+        // Re-trigger animation
+        displayEl.classList.remove('random-word-large');
+        void displayEl.offsetWidth;
+        displayEl.classList.add('random-word-large');
+
+    } catch (err) {
+        console.error("Validation check failed:", err);
+        displayEl.innerHTML = `<span style="font-size: 1.5rem; color: #f43f5e;">Error checking word.</span>`;
+    } finally {
+        checkBtn.innerText = "Validate";
+        checkBtn.disabled = false;
+    }
+}
+
+// --- Private Messaging Logic ---
+
+let pmPollingInterval = null;
+let currentChatTarget = null;
+let lastNotifiedContext = null;
+
+function setupPrivateMessaging() {
+    const closeBtn = document.getElementById('pm-close-btn');
+    const sendBtn = document.getElementById('pm-send-btn');
+    const input = document.getElementById('pm-input');
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            document.getElementById('private-chat-modal').classList.add('hidden');
+            stopPMPolling();
+            currentChatTarget = null;
+        });
+    }
+
+    if (sendBtn) sendBtn.addEventListener('click', sendPM);
+    if (input) {
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendPM();
+        });
+    }
+
+    // Polling for new messages globally
+    setInterval(checkForUnreadPMs, 10000);
+}
+
+async function openPrivateChat(username) {
+    currentChatTarget = username;
+    document.getElementById('pm-target-name').innerText = username;
+    document.getElementById('private-chat-modal').classList.remove('hidden');
+
+    // Clear history initially or show loading
+    document.getElementById('pm-history').innerHTML = '<div style="text-align:center; opacity:0.5; padding:20px;">Loading conversation...</div>';
+
+    await refreshConversation();
+    startPMPolling();
+
+    // Auto-focus input
+    document.getElementById('pm-input').focus();
+}
+
+async function refreshConversation() {
+    if (!currentChatTarget) return;
+
+    try {
+        const response = await fetch(`/api/pm/conversation/${currentChatTarget}`);
+        const data = await response.json();
+
+        if (data.messages) {
+            renderPMHistory(data.messages);
+        }
+    } catch (err) {
+        console.error("Failed to fetch conversation:", err);
+    }
+}
+
+function renderPMHistory(messages) {
+    const historyEl = document.getElementById('pm-history');
+    if (!historyEl) return;
+
+    if (messages.length === 0) {
+        historyEl.innerHTML = '<div style="text-align:center; opacity:0.3; padding:20px;">No messages yet. Say hello!</div>';
+        return;
+    }
+
+    const html = messages.map(m => {
+        const typeClass = m.is_me ? 'me' : 'them';
+        const timeStr = new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        return `
+            <div class="pm-entry ${typeClass}">
+                <div class="pm-bubble">${m.message}</div>
+                <div class="pm-time">${timeStr}</div>
+            </div>
+        `;
+    }).join('');
+
+    historyEl.innerHTML = html;
+    historyEl.scrollTop = historyEl.scrollHeight;
+}
+
+async function sendPM() {
+    const input = document.getElementById('pm-input');
+    const msg = input.value.trim();
+    if (!msg || !currentChatTarget) return;
+
+    try {
+        const response = await fetch('/api/pm/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                recipient: currentChatTarget,
+                message: msg
+            })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            input.value = '';
+            await refreshConversation();
+        } else {
+            alert(data.error || "Failed to send message");
+        }
+    } catch (err) {
+        console.error("PM send error:", err);
+    }
+}
+
+function startPMPolling() {
+    stopPMPolling();
+    pmPollingInterval = setInterval(refreshConversation, 3000);
+}
+
+function stopPMPolling() {
+    if (pmPollingInterval) {
+        clearInterval(pmPollingInterval);
+        pmPollingInterval = null;
+    }
+}
+
+async function checkForUnreadPMs() {
+    try {
+        const response = await fetch('/api/pm/unread_count');
+        const data = await response.json();
+
+        if (data.count > 0 && data.senders && data.senders.length > 0) {
+            // Show notification toast for the most recent sender
+            const latestSender = data.senders[data.senders.length - 1];
+            const contextKey = `${latestSender}:${data.count}`;
+
+            // Only show if this is a NEW context (different sender or count)
+            if (lastNotifiedContext === contextKey) return;
+
+            // Only show toast if chat isn't already open with this person or is hidden
+            const chatModal = document.getElementById('private-chat-modal');
+            const isChatHidden = !chatModal || chatModal.classList.contains('hidden');
+
+            if (currentChatTarget !== latestSender || isChatHidden) {
+                lastNotifiedContext = contextKey;
+                showPMNotification(latestSender, data.count);
+            }
+        } else {
+            // If no messages at all, clear context so any future message triggers a show
+            lastNotifiedContext = null;
+        }
+    } catch (err) {
+        // Silent
+    }
+}
+
+function showPMNotification(sender, count) {
+    if (document.getElementById('pm-toast')) return;
+
+    const toast = document.createElement('div');
+    toast.id = 'pm-toast';
+    toast.className = 'pm-toast-notification';
+    toast.innerHTML = `
+        <div class="pm-toast-content">
+            <div class="pm-toast-icon">✉️</div>
+            <div class="pm-toast-details">
+                <div class="pm-toast-title">New Private Message</div>
+                <div class="pm-toast-text"><strong>${sender}</strong> sent you a message</div>
+            </div>
+            <div class="pm-toast-actions">
+                <button class="pm-toast-btn respond" onclick="handleToastRespond('${sender}')">Respond</button>
+                <button class="pm-toast-btn close" onclick="this.closest('.pm-toast-notification').remove()">Dismiss</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(toast);
+
+    setTimeout(() => { if (toast.parentElement) toast.remove(); }, 8000);
+}
+
+window.handleToastRespond = (sender) => {
+    document.getElementById('pm-toast')?.remove();
+    openPrivateChat(sender);
+};
+
+// Make openPrivateChat global for potential use elsewhere
+window.openPrivateChat = openPrivateChat;
+

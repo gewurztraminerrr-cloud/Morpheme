@@ -98,6 +98,34 @@ function debounce(func, wait) {
         if (settings.app_theme) {
             applyTheme(settings.app_theme);
         }
+
+        // Highlight as you type
+        if (settings.highlight_typing !== undefined) {
+            let val = settings.highlight_typing;
+            if (val === 'true' || val === 'True' || val === true) val = true;
+            else if (val === 'false' || val === 'False' || val === false) val = false;
+
+            const highlightToggle = document.getElementById('setting-highlight-typing');
+            if (highlightToggle) highlightToggle.checked = val;
+
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.highlight_typing = val;
+        }
+
+        // Highlight typing color
+        if (settings.highlight_typing_color) {
+            const color = settings.highlight_typing_color;
+            document.documentElement.style.setProperty('--highlight-typing-color', color);
+
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.highlight_typing_color = color;
+
+            const dots = document.querySelectorAll('.color-dot');
+            dots.forEach(dot => {
+                if (dot.getAttribute('data-color') === color) dot.classList.add('active');
+                else dot.classList.remove('active');
+            });
+        }
     }
 
     // 3. Handle Updates
@@ -158,11 +186,40 @@ function debounce(func, wait) {
     if (musicToggle) {
         musicToggle.addEventListener('change', (e) => {
             const val = e.target.checked;
-            if (window.userSettings) window.userSettings.lobby_music = val;
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.lobby_music = val;
             if (typeof handleLobbyMusicState === 'function') handleLobbyMusicState();
             saveSettingDebounced('lobby_music', val);
         });
     }
+
+    // Highlight as you type Listener
+    const highlightToggle = document.getElementById('setting-highlight-typing');
+    if (highlightToggle) {
+        highlightToggle.addEventListener('change', (e) => {
+            const val = e.target.checked;
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.highlight_typing = val;
+            saveSettingDebounced('highlight_typing', val);
+        });
+    }
+
+    // Highlight typing color Dots
+    const colorDots = document.querySelectorAll('.color-dot');
+    colorDots.forEach(dot => {
+        dot.addEventListener('click', () => {
+            const color = dot.getAttribute('data-color');
+            document.documentElement.style.setProperty('--highlight-typing-color', color);
+
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.highlight_typing_color = color;
+
+            colorDots.forEach(d => d.classList.remove('active'));
+            dot.classList.add('active');
+
+            saveSettingDebounced('highlight_typing_color', color);
+        });
+    });
 
     // Theme Selection Listeners
     const themeBtns = document.querySelectorAll('.theme-btn');

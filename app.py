@@ -4,6 +4,7 @@ import sqlite3
 import time
 import os
 import json
+from collections import Counter
 
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'morpheme-secret-key-2024'
@@ -119,11 +120,25 @@ def init_db():
     except Exception as e:
         print(f"Migration Error (round_history): {e}")
 
-    # MIGRATION: Clean up legacy default quotes
+    # MIGRATION: Add private_messages table
     try:
-        conn.execute("UPDATE users SET quote = NULL WHERE quote = 'Welcome to Morpheme.'")
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS private_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sender_id INTEGER NOT NULL,
+                receiver_id INTEGER NOT NULL,
+                sender_username TEXT NOT NULL,
+                message TEXT NOT NULL,
+                is_read INTEGER DEFAULT 0,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(sender_id) REFERENCES users(id),
+                FOREIGN KEY(receiver_id) REFERENCES users(id)
+            )
+        ''')
         conn.commit()
-    except: pass
+        print("Migrated DB: Added private_messages table")
+    except Exception as e:
+        print(f"Migration Error (PM table): {e}")
 
     conn.close()
 
@@ -760,8 +775,8 @@ def get_room_state(room_id):
         # BUT allow a grace period (e.g. 15s) for new rooms where creator hasn't joined yet
         time_alive = time.time() - room.creation_time
         
-        # Skip deletion for daily rooms (>= 24h) so they persist
-        is_daily_room = room.time_limit >= 120
+        # Skip deletion for daily rooms (>= 2h) so they persist
+        is_daily_room = room.time_limit >= 7200
         
         if not is_daily_room and len(room.players) == 0 and time_alive > 15:
             print(f"Room {room_id} empty (0 players) and old enough ({time_alive:.1f}s) - deleting")
@@ -1478,6 +1493,162 @@ def tools_sequence_search():
         'results': results,
         'count': len(results)
     })
+
+@app.route('/api/tools/subanagrams', methods=['POST'])
+def tools_subanagrams():
+    data = request.json
+    input_text = data.get('input', '').upper().strip()
+    dict_name = data.get('dictionary', 'NWL')
+    
+    if not input_text:
+        return jsonify({'error': 'No input provided'}), 400
+        
+    dictionary = load_tools_dictionary(dict_name)
+    if not dictionary:
+        return jsonify({'error': f'Dictionary {dict_name} not found'}), 404
+        
+    from collections import Counter
+    input_counter = Counter(input_text)
+    
+    results = []
+    for word in dictionary:
+        if len(word) > len(input_text):
+            continue
+            
+        word_counter = Counter(word)
+        is_subanagram = True
+        for char, count in word_counter.items():
+            if input_counter[char] < count:
+                is_subanagram = False
+                break
+        
+        if is_subanagram:
+            results.append(word)
+            
+    # Sort by length (descending) then alphabetically
+    results.sort(key=lambda x: (-len(x), x))
+    
+    return jsonify({
+        'results': results,
+        'count': len(results)
+    })
+
+@app.route('/api/tools/validate', methods=['POST'])
+def tools_validate_word():
+    data = request.json
+    word = data.get('word', '').upper().strip()
+    dict_name = data.get('dictionary', 'NWL')
+    
+    if not word:
+        return jsonify({'error': 'No word provided'}), 400
+        
+    dictionary = load_tools_dictionary(dict_name)
+    if not dictionary:
+        return jsonify({'error': f'Dictionary {dict_name} not found'}), 404
+        
+    is_valid = word in dictionary
+    
+    return jsonify({
+        'word': word,
+        'is_valid': is_valid
+    })
+
+# --- Private Messaging Routes ---
+
+@app.route('/api/pm/send', methods=['POST'])
+def send_private_message():
+    if 'username' not in session:
+        return jsonify({'error': 'Login required'}), 401
+    
+    data = request.json
+    target_username = data.get('recipient')
+    message_text = data.get('message', '').strip()
+    
+    if not target_username or not message_text:
+        return jsonify({'error': 'Recipient and message required'}), 400
+    if len(message_text) > 500:
+        message_text = message_text[:500]
+        
+    conn = sqlite3.connect('morpheme.db')
+    try:
+        # Get IDs
+        sender = conn.execute('SELECT id, username FROM users WHERE username = ?', (session['username'],)).fetchone()
+        receiver = conn.execute('SELECT id FROM users WHERE username = ?', (target_username,)).fetchone()
+        
+        if not sender or not receiver:
+            return jsonify({'error': 'User not found'}), 404
+            
+        conn.execute('''
+            INSERT INTO private_messages (sender_id, receiver_id, sender_username, message)
+            VALUES (?, ?, ?, ?)
+        ''', (sender[0], receiver[0], sender[1], message_text))
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/pm/conversation/<target_username>', methods=['GET'])
+def get_conversation(target_username):
+    if 'username' not in session:
+        return jsonify({'error': 'Login required'}), 401
+        
+    conn = sqlite3.connect('morpheme.db')
+    try:
+        # Get IDs
+        me = conn.execute('SELECT id FROM users WHERE username = ?', (session['username'],)).fetchone()
+        them = conn.execute('SELECT id FROM users WHERE username = ?', (target_username,)).fetchone()
+        
+        if not me or not them:
+            return jsonify({'error': 'User not found'}), 404
+            
+        # Get messages in both directions
+        messages = conn.execute('''
+            SELECT sender_username, message, timestamp, is_read, sender_id
+            FROM private_messages
+            WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
+            ORDER BY timestamp ASC
+        ''', (me[0], them[0], them[0], me[0])).fetchall()
+        
+        # Mark as read
+        conn.execute('''
+            UPDATE private_messages SET is_read = 1
+            WHERE sender_id = ? AND receiver_id = ? AND is_read = 0
+        ''', (them[0], me[0]))
+        conn.commit()
+        
+        result = []
+        for msg in messages:
+            result.append({
+                'sender': msg[0],
+                'message': msg[1],
+                'timestamp': msg[2],
+                'is_read': msg[3],
+                'is_me': msg[4] == me[0]
+            })
+        return jsonify({'messages': result})
+    finally:
+        conn.close()
+
+@app.route('/api/pm/unread_count', methods=['GET'])
+def get_unread_count():
+    if 'username' not in session:
+        return jsonify({'count': 0})
+        
+    conn = sqlite3.connect('morpheme.db')
+    try:
+        user = conn.execute('SELECT id FROM users WHERE username = ?', (session['username'],)).fetchone()
+        if not user: return jsonify({'count': 0})
+        
+        count = conn.execute('SELECT COUNT(*) FROM private_messages WHERE receiver_id = ? AND is_read = 0', (user[0],)).fetchone()[0]
+        
+        # Also return who sent them for optional notification
+        senders = conn.execute('SELECT DISTINCT sender_username FROM private_messages WHERE receiver_id = ? AND is_read = 0', (user[0],)).fetchall()
+        
+        return jsonify({'count': count, 'senders': [s[0] for s in senders]})
+    finally:
+        conn.close()
 
 @app.route('/api/tools/manual_solve', methods=['POST'])
 def tools_manual_solve():

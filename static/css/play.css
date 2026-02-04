@@ -989,6 +989,11 @@
     margin-top: 20px;
 }
 
+/* --- SUBANAGRAMS TOOL STYLING --- */
+#tool-subanagrams .group-table td {
+    text-align: center;
+}
+
 .manual-grid {
     display: grid;
     gap: 8px;
@@ -1161,7 +1166,7 @@
     border: 1px solid transparent;
     color: rgba(255, 255, 255, 0.6);
     padding: 12px 16px;
-    text-align: left;
+    text-align: center;
     border-radius: 8px;
     cursor: pointer;
     font-size: 1rem;
@@ -1200,6 +1205,7 @@
 
 .tool-header {
     margin-bottom: 20px;
+    text-align: center;
 }
 
 .tool-pane {
@@ -1210,6 +1216,22 @@
 
 .tool-pane.active {
     display: flex;
+    align-items: center;
+}
+
+.tool-header,
+.combo-control-panel,
+.profile-container,
+.profile-content-tabs,
+.seq-results-container,
+.combo-results-container,
+.lists-container,
+.random-word-container,
+.wotd-container,
+.manual-grid-scroll,
+.manual-grid {
+    width: 100%;
+    max-width: 900px;
 }
 
 .tool-header h2 {
@@ -1239,6 +1261,7 @@
 .input-row {
     display: flex;
     gap: 12px;
+    justify-content: center;
 }
 
 #combo-input {
@@ -1640,6 +1663,25 @@
     color: #fff;
     transform: rotate(90deg);
     box-shadow: 0 0 20px rgba(233, 69, 96, 0.6);
+}
+
+.board-cell.selected {
+    background: var(--accent-color);
+    color: #fff;
+    transform: scale(1.1);
+    box-shadow: 0 0 15px var(--accent-color);
+    z-index: 2;
+}
+
+.board-cell.typing-highlight {
+    background: var(--highlight-typing-color, #ffcc00) !important;
+    /* User selected highlight for typing */
+    color: #000 !important;
+    transform: scale(1.1);
+    box-shadow: 0 0 20px var(--highlight-typing-color, #ffcc00);
+    z-index: 3;
+    transition: all 0.1s ease;
+    border-color: #fff !important;
 }
 
 /* Color Bar Container */
@@ -2300,7 +2342,15 @@ input[type=range]::-webkit-slider-runnable-track {
     width: 100%;
     height: 8px;
     cursor: pointer;
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--slider-track, rgba(255, 255, 255, 0.15));
+    border-radius: 4px;
+}
+
+input[type=range]::-moz-range-track {
+    width: 100%;
+    height: 8px;
+    cursor: pointer;
+    background: var(--slider-track, rgba(255, 255, 255, 0.15));
     border-radius: 4px;
 }
 

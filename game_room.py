@@ -158,8 +158,8 @@ class GameRoom:
 
     def add_spectator(self, user_id, username, rating):
         """Add spectator to room"""
-        # Disable spectating for 24h rooms (>= 240s)
-        if self.time_limit >= 120:
+        # Disable spectating for 24h rooms (>= 2h)
+        if self.time_limit >= 7200:
              return False
 
         # Ensure not already a spectator
@@ -178,7 +178,7 @@ class GameRoom:
     def remove_player(self, user_id):
         """Remove player or spectator from room"""
         # PERSISTENCE: Never remove players from 24h rooms (they only reset at midnight)
-        if self.time_limit >= 120:
+        if self.time_limit >= 7200:
             # We still allow removing from spectators if they were accidentally added there
             initial_specs = len(self.spectators)
             self.spectators = [p for p in self.spectators if str(p.user_id) != str(user_id)]
@@ -224,7 +224,7 @@ class GameRoom:
         now = time.time()
         active_players = []
         players_removed = False
-        is_daily = self.time_limit >= 120
+        is_daily = self.time_limit >= 7200
         
         for p in self.players:
             age = now - p.last_active
@@ -421,7 +421,7 @@ class GameRoom:
             self.intermission_start_time = time.time()
             
             # IMMEDIATE SNAPSHOT (24h Rooms): Save history now so it is available during intermission
-            if self.time_limit >= 120:
+            if self.time_limit >= 7200:
                 print(f"[GameRoom] Snapshotting history at start of intermission for room {self.room_id}")
                 # Filter previous_all_words by min_word_length to avoid showing short words as "Missed"
                 min_len = self.spinner_params.get('min_word_length', 3)
@@ -754,8 +754,8 @@ class RoomManager:
                 
                 # If room is empty, mark for deletion
                 if len(room.players) == 0:
-                    # SKIP deleting daily rooms (>= 120s)
-                    if room.time_limit < 120:
+                    # SKIP deleting daily rooms (>= 2h)
+                    if room.time_limit < 7200:
                         print(f"[RoomManager] Room {room_id} is empty, marking for deletion")
                         rooms_to_delete.append(room_id)
             except Exception as e:
@@ -1042,7 +1042,7 @@ class RoomManager:
                 room.previous_all_words = [w for w in source_words if len(w) >= min_len]
                 
                 # SNAPSHOT HISTORY BEFORE OVERWRITING BOARD
-                if room.time_limit >= 120:
+                if room.time_limit >= 7200:
                     print(f"[RoomManager] Daily Reset: Snapshotting history (fallback) before new round")
                     room.previous_day_history = {}
                     for p in room.players:
@@ -1101,7 +1101,7 @@ class RoomManager:
                 
             # PERSISTENCE: If this is a 24h room, clear the player list for the new day
             # (Users who enter will be added fresh)
-            if room.time_limit >= 120:
+            if room.time_limit >= 7200:
                 print(f"[RoomManager] Daily Reset: Archiving player list for 24h room {room_id}")
                 
                  # HISTORY ALREADY SNAPSHOTTED AT START OF FUNCTION
