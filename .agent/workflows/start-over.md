@@ -1,16 +1,10 @@
-description: Revert to the stable state with Finder Highlighting and Bonus Word Priority
 ---
+description: Revert the application to the state saved on 2026-02-04 (Commit da27513)
+---
+If the user asks to "Start Over" or revert to the saved state, follow these steps:
 
-To revert the application to the state saved on February 3rd, 2026 (including Finder Highlighting, Word Checkmarks, and Bonus Word Prioritization), follow these steps:
-
-### Revert Workflow
-
-// turbo
-1. Commit or stash any current experimental changes:
-   `git add . && git stash`
-
-// turbo
-2. Reset the repository to the saved 'latest-stable-state' tag:
-   `git reset --hard latest-stable-state`
-
-3. Refresh your browser to see the restored state.
+1. Stop any running server processes.
+2. Run `git reset --hard da27513` to revert all files to the saved state.
+3. Run `git clean -fd` to remove any untracked files.
+4. Restart the server using `./run_morpheme.sh`.
+5. Inform the user that the application has been successfully reverted to the state from Feb 4, 2026.

@@ -137,8 +137,23 @@ def init_db():
         ''')
         conn.commit()
         print("Migrated DB: Added private_messages table")
+    # MIGRATION: Add friends table
+    try:
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS friends (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                friend_id INTEGER NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, friend_id),
+                FOREIGN KEY(user_id) REFERENCES users(id),
+                FOREIGN KEY(friend_id) REFERENCES users(id)
+            )
+        ''')
+        conn.commit()
+        print("Migrated DB: Added friends table")
     except Exception as e:
-        print(f"Migration Error (PM table): {e}")
+        print(f"Migration Error (Friends table): {e}")
 
     conn.close()
 
@@ -1740,6 +1755,113 @@ def tools_wotd():
         'word': wotd,
         'date': today_str
     })
+
+
+# --- Friends Management Routes ---
+
+@app.route('/api/friends/add', methods=['POST'])
+def add_friend():
+    if 'username' not in session:
+        return jsonify({'error': 'Login required'}), 401
+    
+    data = request.json
+    friend_username = data.get('username')
+    
+    if not friend_username:
+        return jsonify({'error': 'Username required'}), 400
+    if friend_username == session['username']:
+        return jsonify({'error': 'Cannot add yourself as a friend'}), 400
+        
+    conn = sqlite3.connect('morpheme.db')
+    try:
+        user = conn.execute('SELECT id FROM users WHERE username = ?', (session['username'],)).fetchone()
+        friend = conn.execute('SELECT id FROM users WHERE username = ?', (friend_username,)).fetchone()
+        
+        if not friend:
+            return jsonify({'error': 'User not found'}), 404
+            
+        # Check if already friends
+        existing = conn.execute('SELECT 1 FROM friends WHERE user_id = ? AND friend_id = ?', 
+                               (user[0], friend[0])).fetchone()
+        if existing:
+            return jsonify({'success': True, 'msg': 'Already friends'})
+            
+        conn.execute('INSERT INTO friends (user_id, friend_id) VALUES (?, ?)', (user[0], friend[0]))
+        # Also add the reverse for mutual friendship? 
+        # User said "populates the list of all the friends a user has"
+        # Usually friendship is mutual. Let's make it mutual for simplicity in this app context.
+        conn.execute('INSERT OR IGNORE INTO friends (user_id, friend_id) VALUES (?, ?)', (friend[0], user[0]))
+        
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/friends/remove', methods=['POST'])
+def remove_friend():
+    if 'username' not in session:
+        return jsonify({'error': 'Login required'}), 401
+    
+    data = request.json
+    friend_username = data.get('username')
+    
+    conn = sqlite3.connect('morpheme.db')
+    try:
+        user = conn.execute('SELECT id FROM users WHERE username = ?', (session['username'],)).fetchone()
+        friend = conn.execute('SELECT id FROM users WHERE username = ?', (friend_username,)).fetchone()
+        
+        if user and friend:
+            conn.execute('DELETE FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)', 
+                           (user[0], friend[0], friend[0], user[0]))
+            conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/friends/status/<username>', methods=['GET'])
+def get_friend_status(username):
+    if 'username' not in session:
+        return jsonify({'is_friend': False})
+        
+    conn = sqlite3.connect('morpheme.db')
+    try:
+        user = conn.execute('SELECT id FROM users WHERE username = ?', (session['username'],)).fetchone()
+        friend = conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
+        
+        if not user or not friend:
+            return jsonify({'is_friend': False})
+            
+        existing = conn.execute('SELECT 1 FROM friends WHERE user_id = ? AND friend_id = ?', 
+                               (user[0], friend[0])).fetchone()
+        return jsonify({'is_friend': existing is not None})
+    finally:
+        conn.close()
+
+@app.route('/api/friends/list', methods=['GET'])
+def get_friends_list():
+    if 'username' not in session:
+        return jsonify({'error': 'Login required'}), 401
+        
+    conn = sqlite3.connect('morpheme.db')
+    conn.row_factory = sqlite3.Row
+    try:
+        user = conn.execute('SELECT id FROM users WHERE username = ?', (session['username'],)).fetchone()
+        # Join with users to get usernames and avatars
+        friends = conn.execute('''
+            SELECT u.username, u.avatar_url, u.rating, u.country_flag
+            FROM friends f
+            JOIN users u ON f.friend_id = u.id
+            WHERE f.user_id = ?
+            ORDER BY u.username ASC
+        ''', (user['id'],)).fetchall()
+        
+        return jsonify({'friends': [dict(f) for f in friends]})
+    finally:
+        conn.close()
 
 if __name__ == '__main__':
     print('Morpheme server running on http://localhost:3000')

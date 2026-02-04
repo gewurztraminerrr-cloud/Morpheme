@@ -1149,6 +1149,97 @@ body {
     display: none;
 }
 
+.friend-action-btn {
+    background: #8b5cf6;
+    color: white;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 5px;
+}
+
+.friend-action-btn:hover {
+    background: #7c3aed;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.friend-action-btn.hidden {
+    display: none;
+}
+
+.friend-action-btn.is-friend {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.friend-action-btn.is-friend:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+}
+
+/* Friends Grid */
+.friends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.friend-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.friend-card:hover {
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateY(-3px);
+    border-color: var(--accent-color);
+}
+
+.friend-avatar-mini {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: #2a2a3a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    background-size: cover;
+    background-position: center;
+}
+
+.friend-name-mini {
+    font-weight: 700;
+    color: white;
+    font-size: 0.95rem;
+}
+
+.friend-rating-mini {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 600;
+}
+
 /* Private Chat Modal */
 .chat-modal {
     position: fixed;

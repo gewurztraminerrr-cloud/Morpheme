@@ -818,11 +818,11 @@ function renderProfile(user) {
     }
 
     const messageBtn = document.getElementById('profile-message-btn');
+    const friendBtn = document.getElementById('profile-friend-btn');
+
     if (messageBtn) {
-        // Show message button if viewing another user
         if (currentName && !isOwner) {
             messageBtn.classList.remove('hidden');
-            // Set up click listener
             const newMsgBtn = messageBtn.cloneNode(true);
             messageBtn.parentNode.replaceChild(newMsgBtn, messageBtn);
             newMsgBtn.addEventListener('click', () => {
@@ -830,6 +830,35 @@ function renderProfile(user) {
             });
         } else {
             messageBtn.classList.add('hidden');
+        }
+    }
+
+    if (friendBtn) {
+        if (currentName && !isOwner) {
+            friendBtn.classList.remove('hidden');
+            updateFriendButtonStatus(user.username, friendBtn);
+            const newFriendBtn = friendBtn.cloneNode(true);
+            friendBtn.parentNode.replaceChild(newFriendBtn, friendBtn);
+            newFriendBtn.addEventListener('click', () => {
+                handleFriendAction(user.username, newFriendBtn);
+            });
+        } else {
+            friendBtn.classList.add('hidden');
+        }
+    }
+
+    // --- Friends Tab (Only for Owner) ---
+    const friendsTabToggle = document.getElementById('profile-tab-toggle-friends');
+    if (friendsTabToggle) {
+        if (isOwner) {
+            friendsTabToggle.classList.remove('hidden');
+            fetchAndRenderFriends();
+        } else {
+            friendsTabToggle.classList.add('hidden');
+            // If friends tab was active, switch back to rankings
+            if (friendsTabToggle.classList.contains('active')) {
+                document.querySelector('[data-tab="rankings"]').click();
+            }
         }
     }
 
@@ -1954,6 +1983,88 @@ function stopPMPolling() {
         clearInterval(pmPollingInterval);
         pmPollingInterval = null;
     }
+}
+
+// --- Friends Management ---
+
+async function updateFriendButtonStatus(username, btn) {
+    try {
+        const response = await fetch(`/api/friends/status/${encodeURIComponent(username)}`);
+        const data = await response.json();
+
+        if (data.is_friend) {
+            btn.innerText = 'Friends';
+            btn.classList.add('is-friend');
+        } else {
+            btn.innerText = 'Add Friend';
+            btn.classList.remove('is-friend');
+        }
+    } catch (err) {
+        console.error("Error updating friend button:", err);
+    }
+}
+
+async function handleFriendAction(username, btn) {
+    const isFriend = btn.classList.contains('is-friend');
+    const endpoint = isFriend ? '/api/friends/remove' : '/api/friends/add';
+
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            updateFriendButtonStatus(username, btn);
+        } else if (data.error) {
+            alert(data.error);
+        }
+    } catch (err) {
+        console.error("Friend action error:", err);
+    }
+}
+
+async function fetchAndRenderFriends() {
+    const friendsList = document.getElementById('profile-friends-list');
+    if (!friendsList) return;
+
+    try {
+        const response = await fetch('/api/friends/list');
+        const data = await response.json();
+
+        if (data.error) return;
+
+        if (data.friends.length === 0) {
+            friendsList.innerHTML = '<p class="placeholder">You haven\'t added any friends yet.</p>';
+            return;
+        }
+
+        friendsList.innerHTML = data.friends.map(friend => {
+            const ratingColor = getRatingColor(friend.rating);
+            const avatarHtml = friend.avatar_url
+                ? `<div class="friend-avatar-mini" style="background-image: url('${friend.avatar_url}')"></div>`
+                : `<div class="friend-avatar-mini" style="background-color: ${ratingColor}">${friend.username[0].toUpperCase()}</div>`;
+
+            return `
+                <div class="friend-card" onclick="performProfileSearch('${friend.username}')">
+                    ${avatarHtml}
+                    <div class="friend-name-mini">${friend.username}</div>
+                    <div class="friend-rating-mini">${friend.country_flag || '🏳️'} • Rating: ${friend.rating}</div>
+                </div>
+            `;
+        }).join('');
+    } catch (err) {
+        console.error("Error fetching friends:", err);
+    }
+}
+
+function getRatingColor(r) {
+    if (r < 700) return '#66ff66';
+    if (r < 1400) return '#0088ff';
+    if (r < 2000) return '#ffd700';
+    return '#e60000';
 }
 
 async function checkForUnreadPMs() {

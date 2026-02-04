@@ -445,6 +445,8 @@
                                                     title="Offline"></div>
                                                 <button id="profile-message-btn"
                                                     class="message-btn hidden">Message</button>
+                                                <button id="profile-friend-btn" class="friend-action-btn hidden">Add
+                                                    Friend</button>
                                                 <button id="profile-follow-btn"
                                                     class="follow-btn hidden">Follow</button>
                                                 <input type="hidden" id="profile-current-room" value="">
@@ -532,6 +534,8 @@
                                         <button class="profile-tab-toggle active" data-tab="rankings">Skill
                                             Rankings</button>
                                         <button class="profile-tab-toggle" data-tab="history">Round Reviews</button>
+                                        <button id="profile-tab-toggle-friends" class="profile-tab-toggle hidden"
+                                            data-tab="friends">Friends</button>
                                     </div>
 
                                     <div id="profile-tab-rankings" class="profile-tab-pane active">
@@ -606,6 +610,15 @@
                                                         <!-- Populated by JS -->
                                                     </div>
                                                 </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="profile-tab-friends" class="profile-tab-pane">
+                                        <div class="profile-friends-section">
+                                            <div id="profile-friends-list" class="friends-grid">
+                                                <!-- Populated by JS -->
+                                                <p class="placeholder">You haven't added any friends yet.</p>
                                             </div>
                                         </div>
                                     </div>
