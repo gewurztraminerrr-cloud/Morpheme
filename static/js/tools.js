@@ -248,7 +248,7 @@ async function showMiniProfile(username) {
             msgBtn.classList.remove('hidden');
             msgBtn.onclick = () => {
                 modal.classList.add('hidden');
-                window.openPrivateChat(data.username);
+                window.openPrivateChat(data.username, true);
             };
 
             const friendBtn = document.getElementById('mini-profile-friend');
@@ -981,7 +981,7 @@ async function renderProfile(user) {
             const newMsgBtn = messageBtn.cloneNode(true);
             messageBtn.parentNode.replaceChild(newMsgBtn, messageBtn);
             newMsgBtn.addEventListener('click', () => {
-                openPrivateChat(user.username);
+                openPrivateChat(user.username, true);
             });
         } else {
             messageBtn.classList.add('hidden');
@@ -2150,8 +2150,18 @@ function closePrivateChat() {
     setPMState(pmState);
 }
 
-async function openPrivateChat(username) {
+async function openPrivateChat(username, clearHistory = false) {
     currentChatTarget = username;
+
+    if (clearHistory) {
+        // Aggressively clear messages before loading to ensure a fresh session
+        try {
+            await fetch(`/api/pm/clear/${encodeURIComponent(username)}`, { method: 'POST' });
+        } catch (err) {
+            console.error("Failed to clear PMs on open:", err);
+        }
+    }
+
     const history = document.getElementById('pm-history');
     if (history) {
         history.dataset.chatTarget = username;
