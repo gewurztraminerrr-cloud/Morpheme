@@ -164,18 +164,71 @@ def init_db():
     except Exception as e:
         print(f"Migration Error (Friends table): {e}")
 
+    # FORUM: Add tables
+    try:
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS forum_categories (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL,
+                description TEXT
+            )
+        ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS forum_posts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                category_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                image_url TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(category_id) REFERENCES forum_categories(id),
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+        ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS forum_comments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                post_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                content TEXT NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(post_id) REFERENCES forum_posts(id),
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+        ''')
+        
+        # Initialize categories if they don't exist
+        categories = [
+            ("General", "General discussion about Morpheme."),
+            ("Tips, Tricks, and Strategies", "Share your best gameplay advice."),
+            ("Screenshots", "Show off your high scores and cool boards."),
+            ("Introduce Yourself", "New here? Say hello!")
+        ]
+        for name, desc in categories:
+            conn.execute('INSERT OR IGNORE INTO forum_categories (name, description) VALUES (?, ?)', (name, desc))
+        
+        conn.commit()
+        print("Migrated DB: Added Forum tables and categories")
+    except Exception as e:
+        print(f"Migration Error (Forum tables): {e}")
+
     conn.close()
 
 init_db()
 
 # Configuration for Uploads
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static/uploads/avatars')
+FORUM_UPLOAD_FOLDER = os.path.join(app.root_path, 'static/uploads/forum')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['FORUM_UPLOAD_FOLDER'] = FORUM_UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB Limit
 
-# Ensure upload directory exists
+# Ensure upload directories exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(FORUM_UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -344,7 +397,8 @@ def get_session():
         room_manager.update_presence(session['user_id'])
         return jsonify({
             'authenticated': True,
-            'username': session['username']
+            'username': session['username'],
+            'is_guest': session.get('is_guest', False)
         })
     return jsonify({'authenticated': False})
 
@@ -1961,6 +2015,126 @@ def get_friends_list():
         friends_data.sort(key=lambda x: (not x['is_online'], x['username'].lower()))
         
         return jsonify({'friends': friends_data})
+    finally:
+        conn.close()
+
+# --- FORUM ENDPOINTS ---
+
+@app.route('/api/forum/categories', methods=['GET'])
+def get_forum_categories():
+    conn = sqlite3.connect('morpheme.db')
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = conn.execute('SELECT * FROM forum_categories').fetchall()
+        return jsonify({'categories': [dict(row) for row in rows]})
+    finally:
+        conn.close()
+
+@app.route('/api/forum/posts/<int:category_id>', methods=['GET'])
+def get_forum_posts(category_id):
+    conn = sqlite3.connect('morpheme.db')
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = conn.execute('''
+            SELECT p.*, u.username, u.avatar_url, u.country_flag,
+            (SELECT COUNT(*) FROM forum_comments WHERE post_id = p.id) as comment_count
+            FROM forum_posts p
+            JOIN users u ON p.user_id = u.id
+            WHERE p.category_id = ?
+            ORDER BY p.timestamp DESC
+        ''', (category_id,)).fetchall()
+        return jsonify({'posts': [dict(row) for row in rows]})
+    finally:
+        conn.close()
+
+@app.route('/api/forum/post/<int:post_id>', methods=['GET'])
+def get_forum_post_detail(post_id):
+    conn = sqlite3.connect('morpheme.db')
+    conn.row_factory = sqlite3.Row
+    try:
+        post = conn.execute('''
+            SELECT p.*, u.username, u.avatar_url, u.country_flag
+            FROM forum_posts p
+            JOIN users u ON p.user_id = u.id
+            WHERE p.id = ?
+        ''', (post_id,)).fetchone()
+        
+        if not post:
+            return jsonify({'error': 'Post not found'}), 404
+            
+        comments = conn.execute('''
+            SELECT c.*, u.username, u.avatar_url, u.country_flag
+            FROM forum_comments c
+            JOIN users u ON c.user_id = u.id
+            WHERE c.post_id = ?
+            ORDER BY c.timestamp ASC
+        ''', (post_id,)).fetchall()
+        
+        return jsonify({
+            'post': dict(post),
+            'comments': [dict(c) for c in comments]
+        })
+    finally:
+        conn.close()
+
+@app.route('/api/forum/posts', methods=['POST'])
+def create_forum_post():
+    if 'user_id' not in session or session.get('is_guest'):
+        return jsonify({'error': 'Forum access is restricted to registered members only. Please sign up or login to participate!'}), 403
+        
+    data = request.form
+    category_id = data.get('category_id')
+    title = data.get('title')
+    content = data.get('content')
+    
+    if not category_id or not title or not content:
+        return jsonify({'error': 'Missing fields'}), 400
+        
+    image_url = None
+    if 'image' in request.files:
+        file = request.files['image']
+        if file and file.filename != '' and allowed_file(file.filename):
+            import uuid
+            ext = file.filename.rsplit('.', 1)[1].lower()
+            filename = f"{uuid.uuid4()}.{ext}"
+            file.save(os.path.join(app.config['FORUM_UPLOAD_FOLDER'], filename))
+            image_url = f"/static/uploads/forum/{filename}"
+            
+    conn = sqlite3.connect('morpheme.db')
+    try:
+        cursor = conn.execute('''
+            INSERT INTO forum_posts (category_id, user_id, title, content, image_url)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (category_id, session['user_id'], title, content, image_url))
+        conn.commit()
+        return jsonify({'success': True, 'post_id': cursor.lastrowid})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/forum/comments', methods=['POST'])
+def create_forum_comment():
+    if 'user_id' not in session or session.get('is_guest'):
+        return jsonify({'error': 'Registered users only'}), 403
+        
+    data = request.get_json()
+    post_id = data.get('post_id')
+    content = data.get('content')
+    
+    if not post_id or not content:
+        return jsonify({'error': 'Missing fields'}), 400
+        
+    conn = sqlite3.connect('morpheme.db')
+    try:
+        conn.execute('''
+            INSERT INTO forum_comments (post_id, user_id, content)
+            VALUES (?, ?, ?)
+        ''', (post_id, session['user_id'], content))
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
     finally:
         conn.close()
 

@@ -235,6 +235,7 @@ async function checkSession() {
         if (data.authenticated) {
             currentUser = data.username;
             window.currentUser = currentUser;  // Expose globally
+            window.currentUserIsGuest = data.is_guest; // Store guest status
             localStorage.setItem('morpheme_username', currentUser);
 
             updateAuthUI(); // Update UI for logged in state
@@ -387,6 +388,14 @@ function showPage(pageId) {
         if (typeof window.refreshProfileTool === 'function') {
             window.refreshProfileTool(true); // Force refresh to current user
         }
+    } else if (pageId === 'page-forums') {
+        if (!currentUser) {
+            navigateToPage('login');
+            return;
+        }
+        if (typeof window.initForum === 'function') {
+            window.initForum();
+        }
     } else {
         if (window.stopGamePolling) {
             console.log('Leaving Play page - stopping polling');
@@ -396,6 +405,12 @@ function showPage(pageId) {
 
     // 3. Handle Lobby Music via Helper
     handleLobbyMusicState();
+}
+
+function navigateToPage(pageName) {
+    const btn = document.querySelector(`.nav-btn[data-page="${pageName}"]`);
+    showPage('page-' + pageName);
+    if (btn) updateActiveNav(btn);
 }
 
 function updateActiveNav(activeBtn) {
@@ -479,6 +494,7 @@ async function handleSignIn() {
         if (data.success) {
             currentUser = data.username;
             window.currentUser = currentUser;
+            window.currentUserIsGuest = data.is_guest || false;
             navigateToLobby();
         } else {
             errorEl.textContent = data.error || data.message;
@@ -521,6 +537,7 @@ async function handleSignUp() {
         if (data.success) {
             currentUser = data.username;
             window.currentUser = currentUser;
+            window.currentUserIsGuest = false;
             navigateToLobby();
         } else {
             errorEl.textContent = data.error || data.message;
@@ -545,6 +562,7 @@ async function handleGuestLogin() {
         if (data.success) {
             currentUser = data.username;
             window.currentUser = currentUser;
+            window.currentUserIsGuest = true;
             navigateToLobby();
         } else {
             alert('Failed to login as guest. Please try again.');
@@ -593,6 +611,7 @@ async function handleLogout() {
         if (data.success) {
             currentUser = null;
             window.currentUser = null;
+            window.currentUserIsGuest = false;
             localStorage.removeItem('morpheme_username');
             localStorage.removeItem('morpheme_pm_state');
             updateAuthUI();

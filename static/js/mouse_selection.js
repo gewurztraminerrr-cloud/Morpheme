@@ -1,6 +1,8 @@
 // ========================================
-// MOUSE SELECTION SYSTEM
+// MOUSE SELECTION SYSTEM (OPTIMIZED)
 // ========================================
+
+let cachedCellRects = [];
 
 // Initialize mouse selection handlers
 function initializeMouseSelection() {
@@ -11,13 +13,16 @@ function initializeMouseSelection() {
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
 
-    console.log('[Mouse] Selection system initialized');
+    console.log('[Mouse] Optimized selection system initialized');
 }
 
 // Start selection on mousedown
 function handleMouseDown(e) {
     const cell = e.target.closest('.board-cell');
     if (!cell || cell.classList.contains('grayed')) return;
+
+    // Cache cell boundaries to avoid getBoundingClientRect during mousemove (expensive)
+    cacheCellRects();
 
     // Start new selection
     mouseState.isDown = true;
@@ -26,10 +31,26 @@ function handleMouseDown(e) {
 
     const row = parseInt(cell.dataset.row);
     const col = parseInt(cell.dataset.col);
-    const letter = cell.textContent.trim();
+    const letter = cell.dataset.letter || cell.textContent.trim();
 
     addToPath(row, col, letter, cell);
-    console.log('[Mouse] Started selection:', letter);
+}
+
+// Cache all cell positions once at the start of a drag
+function cacheCellRects() {
+    const cells = document.querySelectorAll('.board-cell');
+    cachedCellRects = Array.from(cells).map(cell => {
+        const rect = cell.getBoundingClientRect();
+        return {
+            element: cell,
+            centerX: rect.left + rect.width / 2,
+            centerY: rect.top + rect.height / 2,
+            row: parseInt(cell.dataset.row),
+            col: parseInt(cell.dataset.col),
+            letter: cell.dataset.letter || cell.textContent.trim(),
+            isGrayed: cell.classList.contains('grayed')
+        };
+    });
 }
 
 // Track drag movement
@@ -37,17 +58,18 @@ function handleMouseMove(e) {
     if (!mouseState.isDown) return;
 
     const point = { x: e.clientX, y: e.clientY };
-    const cell = findCellAtPoint(point);
+    const cellData = findCellAtPointOptimized(point);
 
-    if (!cell || cell.classList.contains('grayed')) return;
+    if (!cellData || cellData.isGrayed) return;
 
-    const row = parseInt(cell.dataset.row);
-    const col = parseInt(cell.dataset.col);
+    const { row, col, letter, element } = cellData;
     const cellKey = `${row},${col}`;
 
     // BACKTRACKING: Check if cell is already in path - if so, truncate
     const existingIndex = mouseState.selectedPath.findIndex(p => p.row === row && p.col === col);
     if (existingIndex !== -1) {
+        if (existingIndex === mouseState.selectedPath.length - 1) return; // Already on last cell
+
         // Remove all cells after this position
         mouseState.selectedPath = mouseState.selectedPath.slice(0, existingIndex + 1);
         mouseState.visitedCells = new Set(mouseState.selectedPath.map(p => `${p.row},${p.col}`));
@@ -64,8 +86,7 @@ function handleMouseMove(e) {
         if (!isAdjacent(last.row, last.col, row, col)) return;
     }
 
-    const letter = cell.textContent.trim();
-    addToPath(row, col, letter, cell);
+    addToPath(row, col, letter, element);
 }
 
 // Submit word on mouseup
@@ -73,11 +94,10 @@ function handleMouseUp(e) {
     if (!mouseState.isDown) return;
 
     mouseState.isDown = false;
+    cachedCellRects = []; // Clear cache
 
     // Build word from path
     const word = mouseState.selectedPath.map(cell => cell.letter).join('');
-
-    console.log('[Mouse] Selection ended:', word);
 
     // Clear visual feedback
     clearSelection();
@@ -97,58 +117,63 @@ function addToPath(row, col, letter, cellElement) {
 
     const isHighlightEnabled = window.userSettings && window.userSettings.highlight_mouse !== false;
     if (isHighlightEnabled) {
-        // Ensure ALL cells in the path have the 'selected' class
-        const allCells = document.querySelectorAll('.board-cell');
-        mouseState.selectedPath.forEach(pathCell => {
-            allCells.forEach(cell => {
-                if (cell.dataset.row == pathCell.row && cell.dataset.col == pathCell.col) {
-                    cell.classList.add('selected');
-                }
-            });
-        });
+        // Optimally highlight just the new cell
+        cellElement.classList.add('selected');
 
-        // Remove 'current' from all cells, then mark only the newest one as current
-        document.querySelectorAll('.board-cell.current').forEach(c => {
-            c.classList.remove('current');
-        });
+        // Update current marker
+        document.querySelectorAll('.board-cell.current').forEach(c => c.classList.remove('current'));
         cellElement.classList.add('current');
     }
-
-    console.log('[Mouse] Path:', mouseState.selectedPath.map(c => c.letter).join(''));
 }
 
 // Helper: Refresh visual display of entire path (used for backtracking)
 function refreshPathDisplay() {
-    const allCells = document.querySelectorAll('.board-cell');
-
-    // Clear ALL selected and current markers from all cells
-    allCells.forEach(cell => cell.classList.remove('selected', 'current'));
-
     const isHighlightEnabled = window.userSettings && window.userSettings.highlight_mouse !== false;
-    if (isHighlightEnabled) {
-        // Reapply selected class to all cells in path
-        mouseState.selectedPath.forEach((pathCell, index) => {
-            allCells.forEach(cell => {
-                if (cell.dataset.row == pathCell.row && cell.dataset.col == pathCell.col) {
-                    cell.classList.add('selected');
-                    // Mark the last one as current
-                    if (index === mouseState.selectedPath.length - 1) {
-                        cell.classList.add('current');
-                    }
-                }
-            });
-        });
+    if (!isHighlightEnabled) {
+        clearSelection();
+        return;
     }
 
-    console.log('[Mouse] Path refreshed:', mouseState.selectedPath.map(c => c.letter).join(''));
+    const pathSet = mouseState.visitedCells;
+    const lastCell = mouseState.selectedPath[mouseState.selectedPath.length - 1];
+
+    document.querySelectorAll('.board-cell').forEach(cell => {
+        const row = cell.dataset.row;
+        const col = cell.dataset.col;
+        const key = `${row},${col}`;
+
+        if (pathSet.has(key)) {
+            cell.classList.add('selected');
+            if (lastCell && lastCell.row == row && lastCell.col == col) {
+                cell.classList.add('current');
+            } else {
+                cell.classList.remove('current');
+            }
+        } else {
+            cell.classList.remove('selected', 'current');
+        }
+    });
 }
 
-// Helper: Find cell at mouse position using octagonal hit detection
-function findCellAtPoint(point) {
-    const cells = document.querySelectorAll('.board-cell');
+// Helper: Optimized find cell at point using cached rects
+function findCellAtPointOptimized(point) {
+    const radiusSq = 35 * 35; // Use squared distance for faster comparison
 
-    for (const cell of cells) {
-        if (isPointInOctagon(point, cell)) {
+    for (const cell of cachedCellRects) {
+        const dx = point.x - cell.centerX;
+        const dy = point.y - cell.centerY;
+
+        // Fast circular coarse check
+        const distSq = dx * dx + dy * dy;
+        if (distSq > radiusSq) continue;
+
+        // Precise octagonal check
+        const absDx = Math.abs(dx);
+        const absDy = Math.abs(dy);
+        const maxDist = Math.max(absDx, absDy);
+        const minDist = Math.min(absDx, absDy);
+
+        if (maxDist + 0.414 * minDist <= 35) {
             return cell;
         }
     }
@@ -156,43 +181,10 @@ function findCellAtPoint(point) {
     return null;
 }
 
-// Helper: Octagonal hit test
-function isPointInOctagon(point, cell) {
-    const rect = cell.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-
-    // Octagon radius - sized to bridge 4px gaps without overlapping adjacent cells
-    // Cells are 60x60px with 4px gaps (64px center-to-center)
-    // Using 35px radius = 70px diameter (extends 5px beyond cell edge, bridges gap)
-    const radius = 35;
-
-    // Distance from center
-    const dx = point.x - centerX;
-    const dy = point.y - centerY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-
-    // Circular boundary check
-    if (distance > radius) return false;
-
-    // Octagonal bounds - proper 8-sided shape
-    const absDx = Math.abs(dx);
-    const absDy = Math.abs(dy);
-
-    // Octagon constraint: diamond shape with clipped corners
-    // For a true octagon: max(|dx|, |dy|) + 0.414*(min(|dx|, |dy|)) <= radius
-    const maxDist = Math.max(absDx, absDy);
-    const minDist = Math.min(absDx, absDy);
-
-    return maxDist + 0.414 * minDist <= radius;
-}
-
 // Helper: Check if two cells are adjacent (Boggle rules - 8 directions)
 function isAdjacent(row1, col1, row2, col2) {
     const dRow = Math.abs(row1 - row2);
     const dCol = Math.abs(col1 - col2);
-
-    // Adjacent if within 1 step in any direction (but not same cell)
     return dRow <= 1 && dCol <= 1 && (dRow !== 0 || dCol !== 0);
 }
 

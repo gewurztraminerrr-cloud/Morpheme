@@ -1,4 +1,4 @@
-description: Revert to the stable state saved on Feb 5, 2026 (Commit 35a9f1d)
+description: Revert to the stable state saved on Feb 5, 2026 (Commit afdcf53)
 ---
 
 To revert the application to the state saved on February 5th, 2026, follow these steps:

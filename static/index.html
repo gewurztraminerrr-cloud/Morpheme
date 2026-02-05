@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/css/lobby.css?v=4">
     <link rel="stylesheet" href="/css/play.css?v=27">
     <link rel="stylesheet" href="/css/howtoplay.css?v=4">
+    <link rel="stylesheet" href="/css/forum.css?v=1">
 </head>
 
 <body>
@@ -407,6 +408,118 @@
         <div id="page-tournaments" class="page">
             <h2>Tournaments</h2>
             <p>Tournaments coming soon...</p>
+        </div>
+
+        <!-- Forum Page -->
+        <div id="page-forums" class="page">
+            <div class="forum-container">
+                <div class="forum-sidebar">
+                    <div class="forum-sidebar-header">
+                        <h3>Forums</h3>
+                    </div>
+                    <div id="forum-categories-list" class="forum-nav-list">
+                        <!-- Categories injected via JS -->
+                        <div class="forum-cat-loading">Loading categories...</div>
+                    </div>
+                </div>
+                <div class="forum-main">
+                    <!-- List View -->
+                    <div id="forum-view-list" class="forum-view active">
+                        <div class="forum-header">
+                            <div class="header-titles">
+                                <h2 id="forum-category-title">Community Board</h2>
+                                <p id="forum-category-desc">Connect with other players.</p>
+                            </div>
+                            <button id="forum-new-post-btn" class="forum-action-btn hidden">+ New Thread</button>
+                        </div>
+                        <div id="forum-posts-list" class="forum-posts-list">
+                            <div class="forum-placeholder">
+                                <div class="placeholder-icon">💬</div>
+                                <h3>Welcome to the Forums</h3>
+                                <p>Select a category from the sidebar to begin exploring the community.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Single Post View -->
+                    <div id="forum-view-post" class="forum-view">
+                        <div class="forum-sub-header">
+                            <button id="forum-back-to-list" class="forum-back-btn">← Back to category</button>
+                        </div>
+                        <div id="forum-post-detail">
+                            <!-- Post content injected via JS -->
+                        </div>
+                        <div class="forum-comments-section">
+                            <div class="comments-header">
+                                <h3>Discussion</h3>
+                                <span id="forum-comment-count" class="comment-badge">0 comments</span>
+                            </div>
+                            <div id="forum-comments-list">
+                                <!-- Comments injected via JS -->
+                            </div>
+                            <div class="forum-comment-form hidden" id="forum-comment-form-container">
+                                <div class="comment-input-wrapper">
+                                    <textarea id="forum-comment-input"
+                                        placeholder="Join the conversation..."></textarea>
+                                    <div class="comment-controls">
+                                        <button id="forum-submit-comment" class="forum-action-btn">Post Comment</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Create Post View -->
+                    <div id="forum-view-create" class="forum-view">
+                        <div class="forum-sub-header">
+                            <button id="forum-cancel-create" class="forum-back-btn">← Cancel</button>
+                        </div>
+                        <div class="forum-create-card">
+                            <h2 id="forum-create-title">Start a New Thread</h2>
+                            <form id="forum-post-form" class="forum-form">
+                                <input type="hidden" id="forum-post-category-id">
+                                <div class="form-group">
+                                    <label>What's on your mind?</label>
+                                    <input type="text" id="forum-post-title"
+                                        placeholder="Give your thread a clear, descriptive title" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Details</label>
+                                    <textarea id="forum-post-content" placeholder="Write your post content here..."
+                                        required></textarea>
+                                </div>
+                                <div id="forum-image-upload-section" class="forum-upload-group hidden">
+                                    <label>Attach Screenshot</label>
+                                    <div class="file-input-wrapper">
+                                        <input type="file" id="forum-post-image" accept="image/*">
+                                        <div class="file-dummy">
+                                            <span class="file-text">Click to choose a file or drag and drop</span>
+                                        </div>
+                                    </div>
+                                    <div id="forum-image-preview" class="image-preview hidden"></div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="forum-action-btn primary">Publish Thread</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Restriction View -->
+                    <div id="forum-view-restricted" class="forum-view">
+                        <div class="forum-restricted-card">
+                            <div class="restricted-icon">🔒</div>
+                            <h2>Members Only</h2>
+                            <p>You must be a registered member to participate in the forums. Guests can browse but
+                                cannot post or comment.</p>
+                            <div class="restricted-actions">
+                                <button class="forum-action-btn primary" onclick="navigateToPage('login')">Sign In /
+                                    Register</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Tools Page -->
@@ -1445,6 +1558,7 @@
 
     <!-- Create Room Modal removed: Reverted to prompt -->
 
+    <script src="/js/forum.js"></script>
     <script src="/js/app.js"></script>
     <script src="/js/lobby.js"></script>
     <script src="/js/play.js"></script>

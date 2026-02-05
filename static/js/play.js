@@ -5,6 +5,9 @@ let previousState = null;
 let localEndTime = null;  // End time in local clock terms
 let lastServerUpdate = Date.now();  // Track last server response for freeze detection
 let selectedPlayerUsername = null; // Track selected player for filtering/highlighting
+let cachedTimerValueEl = null;    // Cache for high-frequency updates
+let cachedBoardPanelEl = null;
+let lastPlayersHtml = null;       // Cache for renderPlayers
 
 // Mouse selection state
 let mouseState = {
@@ -899,6 +902,8 @@ function renderPlayers(players, currentUser = null, state = null) {
         `;
     }).join('');
 
+    if (html === lastPlayersHtml) return;
+    lastPlayersHtml = html;
     listEl.innerHTML = html;
 
     // Add click listeners for selection
@@ -1228,6 +1233,9 @@ function syncTimerWithServer(state) {
 function updateLocalTimer() {
     if (!localEndTime) return;
 
+    if (!cachedTimerValueEl) cachedTimerValueEl = document.getElementById('timer-value');
+    if (!cachedBoardPanelEl) cachedBoardPanelEl = document.querySelector('.board-panel');
+
     const now = Date.now() / 1000;
     const remaining = Math.max(0, localEndTime - now);
     const seconds = Math.ceil(remaining);
@@ -1250,30 +1258,33 @@ function updateLocalTimer() {
         display = `${mins}:${secs.toString().padStart(2, '0')}`;
     }
 
-    document.getElementById('timer-value').textContent = display;
+    if (cachedTimerValueEl) {
+        if (cachedTimerValueEl.textContent !== display) {
+            cachedTimerValueEl.textContent = display;
+        }
 
-    // Freeze detection
-    if (Date.now() - lastServerUpdate > 5000) {
-        document.getElementById('timer-value').style.color = '#ff6b6b';
-    } else {
-        document.getElementById('timer-value').style.color = '';
+        // Freeze detection
+        if (Date.now() - lastServerUpdate > 5000) {
+            cachedTimerValueEl.style.color = '#ff6b6b';
+        } else {
+            cachedTimerValueEl.style.color = '';
+        }
     }
 
     // Low time visual
-    const boardPanel = document.querySelector('.board-panel');
-    if (boardPanel) {
+    if (cachedBoardPanelEl) {
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
         if (remaining <= 10 && remaining > 0 && currentState === 'active') {
-            boardPanel.classList.add('low-time-warning');
+            cachedBoardPanelEl.classList.add('low-time-warning');
         } else {
-            boardPanel.classList.remove('low-time-warning');
+            cachedBoardPanelEl.classList.remove('low-time-warning');
         }
     }
 
     if (remaining <= 0 && timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
-        if (boardPanel) boardPanel.classList.remove('low-time-warning');
+        if (cachedBoardPanelEl) cachedBoardPanelEl.classList.remove('low-time-warning');
     }
 
     // -- Next Round Bell Logic --
@@ -1387,10 +1398,14 @@ function checkBoardOverflow() {
     const isSixByEight = (cols === 6 && rows === 8) || (cols === 8 && rows === 6);
     console.log(`[Layout] Board: ${cols}x${rows}. Is 6x8 target? ${isSixByEight}`);
 
-    // Get Cell Size
-    const computedStyle = getComputedStyle(document.documentElement);
-    const cellSizeVar = computedStyle.getPropertyValue('--cell-size').trim();
-    const cellSize = parseInt(cellSizeVar) || 60;
+    // Get Cell Size (Cache this based on window size to avoid repeated getComputedStyle)
+    if (!window.cachedCellSize || window.lastW !== window.innerWidth) {
+        const computedStyle = getComputedStyle(document.documentElement);
+        const cellSizeVar = computedStyle.getPropertyValue('--cell-size').trim();
+        window.cachedCellSize = parseInt(cellSizeVar) || 60;
+        window.lastW = window.innerWidth;
+    }
+    const cellSize = window.cachedCellSize;
 
     // 2. Calculate Required Width for Board
     // Width = (Cols * Size) + Gap + Padding + Scrollbar
