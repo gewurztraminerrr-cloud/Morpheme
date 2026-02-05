@@ -306,9 +306,9 @@
 
 .rating-square {
     display: inline-block;
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
+    width: 15px;
+    height: 15px;
+    border-radius: 3px;
     border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
@@ -551,16 +551,18 @@
 
 /* Mouse selection visual feedback */
 .board-cell.selected {
-    background: rgba(64, 156, 255, 0.5);
-    border: 3px solid #409cff;
-    box-shadow: 0 0 15px rgba(64, 156, 255, 0.6);
+    background: var(--highlight-mouse-color, rgba(64, 156, 255, 0.5)) !important;
+    border: 3px solid #fff;
+    box-shadow: 0 0 15px var(--highlight-mouse-color, rgba(64, 156, 255, 0.6));
     transform: scale(1.05);
     z-index: 10;
+    color: #000 !important;
 }
 
 .board-cell.current {
-    background: rgba(64, 156, 255, 0.7);
-    box-shadow: 0 0 20px rgba(64, 156, 255, 0.8);
+    background: var(--highlight-mouse-color, rgba(64, 156, 255, 0.7)) !important;
+    filter: brightness(1.2);
+    box-shadow: 0 0 20px var(--highlight-mouse-color, rgba(64, 156, 255, 0.8));
 }
 
 .word-input-section {
@@ -796,6 +798,7 @@
     /* Space for scrollbar */
     margin-bottom: 10px;
 }
+
 #winners-list {
     display: flex;
     flex-direction: column;
@@ -1249,7 +1252,7 @@
 .manual-grid-scroll,
 .manual-grid {
     width: 100%;
-    max-width: 900px;
+    max-width: 1200px;
 }
 
 .tool-header h2 {

@@ -1276,10 +1276,11 @@ body {
     font-size: 0.95rem;
 }
 
-.friend-rating-mini {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.4);
-    font-weight: 600;
+.friend-flag-mini {
+    font-size: 1.5rem;
+    margin-top: 2px;
+    line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 /* Private Chat Modal */
@@ -1468,6 +1469,7 @@ body {
 
 .mini-meta-flag {
     font-family: serif;
+    font-size: 1.4rem;
 }
 
 .mini-meta-text {
@@ -2267,11 +2269,18 @@ body {
 /* Integrated Replay Panel */
 .integrated-replay-container {
     margin-top: 40px;
-    background: rgba(10, 10, 20, 0.4);
+    margin-bottom: 40px;
+    background: rgba(10, 10, 20, 0.6);
     border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    overflow: visible;
+    /* Allow container to grow with content */
     animation: slideUp 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    width: 100%;
+    max-width: 1200px;
+    /* Stretch out further if needed */
+    display: flex;
+    flex-direction: column;
 }
 
 @keyframes slideUp {
@@ -2292,16 +2301,46 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.integrated-replay-header .header-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
 .integrated-replay-header h3 {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
+    font-weight: 800;
     margin: 0;
+    color: #fff;
+}
+
+.header-score {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #ffd700;
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+    letter-spacing: 1px;
 }
 
 .integrated-replay-layout {
-    display: grid;
-    grid-template-columns: 1fr 280px;
+    display: flex;
+    flex-direction: row;
+    /* Ensure sidebar and main content stay side-by-side */
     gap: 30px;
     padding: 30px;
+    align-items: flex-start;
+    flex: 1;
+}
+
+.replay-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.replay-sidebar {
+    width: 350px;
+    flex-shrink: 0;
 }
 
 .replay-summary-row {
@@ -2363,19 +2402,132 @@ body {
 }
 
 .integrated-walkthrough-list {
-    max-height: 400px;
+    max-height: 500px;
     overflow-y: auto;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.3);
     border-radius: 12px;
     padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .integrated-review-board {
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 16px;
-    aspect-ratio: 1;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
     display: grid;
-    gap: 8px;
-    padding: 10px;
+    gap: 4px;
+    padding: 8px;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.integrated-review-board .review-cell {
+    font-size: 1.1rem;
+    border-radius: 6px;
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, #2c2c3e, #1c1c2e);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    transition: all 0.2s ease;
+}
+
+.integrated-review-board .review-cell.highlight {
+    background: linear-gradient(135deg, #409cff, #0072ff);
+    border-color: #409cff;
+    box-shadow: 0 0 15px rgba(64, 156, 255, 0.6);
+    transform: scale(1.05);
+}
+
+/* Image Lightbox */
+.image-lightbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100000;
+    backdrop-filter: blur(10px);
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.image-lightbox-overlay.hidden {
+    display: none;
+    opacity: 0;
+}
+
+.image-lightbox-content {
+    position: relative;
+    max-width: 90%;
+    max-height: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes zoomIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.image-lightbox-content img {
+    max-width: 100%;
+    max-height: 80vh;
+    border-radius: 12px;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.image-lightbox-close {
+    position: absolute;
+    top: -50px;
+    right: 0;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 2.5rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: transform 0.2s;
+}
+
+.image-lightbox-close:hover {
+    transform: scale(1.2);
+    color: var(--accent-color);
+}
+
+.image-lightbox-caption {
+    margin-top: 20px;
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.rating-box-swatch {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rating-box-swatch:hover {
+    transform: scale(1.1);
+    filter: brightness(1.2);
 }

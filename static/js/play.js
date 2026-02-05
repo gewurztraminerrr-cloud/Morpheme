@@ -113,8 +113,21 @@ async function updateGameState() {
 
         // Capture previous state for transition logic (e.g. daily reset kick)
         const previousState = window.lastGameState;
-
         window.lastGameState = state;  // Store for optimistic updates
+
+        // Detect transition to intermission (round end)
+        if (previousState && previousState.state === 'active' && state.state === 'intermission') {
+            const wordInput = document.getElementById('word-input');
+            if (wordInput) {
+                wordInput.value = '';
+                wordInput.blur();
+            }
+            if (typeof mouseState !== 'undefined') {
+                mouseState.isDown = false;
+                mouseState.selectedPath = [];
+                if (mouseState.visitedCells) mouseState.visitedCells.clear();
+            }
+        }
 
         // update global room id if needed
         window.currentRoomId = state.room_id || roomId;
@@ -410,10 +423,10 @@ async function updateGameState() {
                 } else if (tab === 'clues' || tab === 'previous') {
                     btn.style.display = 'block';
                 } else {
-                    btn.style.display = 'none'; // Hide Remaining
+                    btn.style.display = 'none'; // Hide Remaining, History
                 }
             } else {
-                // Standard/FCFS: Words, Remaining
+                // Standard/FCFS: Words, Remaining, History
                 if (tab === 'found') {
                     btn.textContent = 'Words';
                     btn.style.display = 'block';
@@ -423,13 +436,14 @@ async function updateGameState() {
                     btn.style.display = 'none'; // Hide Clues/Previous
                 }
             }
-            if (tab === 'history') btn.style.display = 'block';
         });
 
         // Ensure activeWordsTab is valid for current room type
-        if (is24H && activeWordsTab === 'remaining') activeWordsTab = 'found';
+        if (is24H && (activeWordsTab === 'remaining' || activeWordsTab === 'history')) {
+            activeWordsTab = 'found';
+        }
         if (!is24H && (activeWordsTab === 'clues' || activeWordsTab === 'previous')) {
-            // No reset for history, anyone can see past winners
+            activeWordsTab = 'found';
         }
 
         // Apply Tab Visibility logic
@@ -756,15 +770,28 @@ async function updateGameState() {
                 historyListEl.innerHTML = '<p class="placeholder" style="text-align:center; margin-top:20px;">No winners recorded yet.</p>';
             } else {
                 historyListEl.innerHTML = history.map(h => {
-                    const winnerText = h.winners.join(' & '); // Handle ties with &
-                    return `
-                        <div class="history-item" style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-                            <div style="display: flex; flex-direction: column;">
-                                <span style="font-weight: bold; color: var(--accent-color);">${winnerText}</span>
-                                <span style="font-size: 0.75rem; opacity: 0.6;">Round ${h.round}</span>
+                    const winnersHtml = h.winners.map(w => {
+                        const name = typeof w === 'string' ? w : w.username;
+                        const rating = typeof w === 'string' ? 0 : (w.rating || 0);
+                        const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#f1f1f1';
+
+                        return `
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="width: 12px; height: 12px; background: ${rColor}; border-radius: 2px; box-shadow: 0 0 5px ${rColor}44;"></div>
+                                <span style="font-weight: 700; color: #fff; font-size: 0.95rem;">${name}</span>
+                                <span style="font-size: 0.8rem; opacity: 0.5; font-weight: 600;">(${rating})</span>
                             </div>
-                            <div style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; font-weight: bold;">
-                                ${h.score} pts
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="history-item" style="padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;">
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                ${winnersHtml}
+                                <span style="font-size: 0.7rem; opacity: 0.4; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">Round ${h.round}</span>
+                            </div>
+                            <div style="background: rgba(255,215, 0, 0.1); border: 1px solid rgba(255,215, 0, 0.2); padding: 5px 10px; border-radius: 8px; font-weight: 900; color: #ffd700; font-size: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+                                ${h.score}<span style="font-size: 0.65rem; opacity: 0.8; font-weight: 800; margin-left: 3px;">PTS</span>
                             </div>
                         </div>
                     `;
@@ -821,8 +848,9 @@ function renderPlayers(players, currentUser = null, state = null) {
         const isGuest = p.username.startsWith('Guest_');
         const displayRating = isGuest ? 0 : p.rating;
 
-        const ratingChange = p.rating_change ? `${p.rating_change > 0 ? ' +' : ' '}${p.rating_change}` : '';
-        const ratingDisplay = `${displayRating} (${ratingChange.trim() || '0'})`;
+        let ratingChange = p.rating_change ? `${p.rating_change > 0 ? ' +' : ' '}${p.rating_change}` : '0';
+        if (p.joined_mid_round) ratingChange = '🛡️';
+        const ratingDisplay = `${displayRating} (${ratingChange.trim()})`;
         const bonusClass = p.found_bonus_word ? ' bonus-finder' : '';
         const userClass = (p.username === currentUser) ? ' current-user' : '';
         const rank = index + 1;
@@ -946,6 +974,17 @@ function renderChat(messages) {
     }).join('');
 
     listEl.innerHTML = html;
+
+    // Add click listeners to usernames
+    listEl.querySelectorAll('.chat-user').forEach(userEl => {
+        userEl.style.cursor = 'pointer';
+        userEl.title = "View profile";
+        userEl.onclick = () => {
+            const rawName = userEl.innerText.trim();
+            const cleanName = rawName.endsWith(':') ? rawName.slice(0, -1) : rawName;
+            if (window.showMiniProfile) window.showMiniProfile(cleanName);
+        };
+    });
 
     // Scroll to bottom
     listEl.scrollTop = listEl.scrollHeight;
@@ -1590,15 +1629,18 @@ function reapplyBoardHighlights() {
 
     // 1. Reapply mouse selection highlights (drag)
     if (mouseState && mouseState.selectedPath && mouseState.selectedPath.length > 0) {
-        mouseState.selectedPath.forEach((p, index) => {
-            const cell = document.querySelector(`.board-cell[data-row="${p.row}"][data-col="${p.col}"]`);
-            if (cell) {
-                cell.classList.add('selected');
-                if (index === mouseState.selectedPath.length - 1) {
-                    cell.classList.add('current');
+        const isEnabled = window.userSettings && window.userSettings.highlight_mouse !== false;
+        if (isEnabled) {
+            mouseState.selectedPath.forEach((p, index) => {
+                const cell = document.querySelector(`.board-cell[data-row="${p.row}"][data-col="${p.col}"]`);
+                if (cell) {
+                    cell.classList.add('selected');
+                    if (index === mouseState.selectedPath.length - 1) {
+                        cell.classList.add('current');
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     // 2. Reapply typing highlights (input box)

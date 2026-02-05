@@ -540,11 +540,11 @@
                                         <span class="stat-desc">GAMES</span>
                                     </div>
                                     <div class="stat-box">
-                                        <span class="stat-num">0%</span>
+                                        <span class="stat-num" id="profile-win-rate">0%</span>
                                         <span class="stat-desc">WIN RATE</span>
                                     </div>
                                     <div class="stat-box">
-                                        <span class="stat-num">-</span>
+                                        <span class="stat-num" id="profile-best-score">-</span>
                                         <span class="stat-desc">BEST</span>
                                     </div>
                                 </div>
@@ -579,26 +579,11 @@
                                             <div class="integrated-replay-header">
                                                 <div class="header-main">
                                                     <h3>Round Replay</h3>
-                                                    <span class="header-subtitle">Verifiable Walkthrough</span>
+                                                    <span id="integrated-total-score" class="header-score">0 PTS</span>
                                                 </div>
                                             </div>
                                             <div class="integrated-replay-layout">
                                                 <div class="replay-main">
-                                                    <div class="replay-summary-row">
-                                                        <div class="summary-mini-card">
-                                                            <span class="label">Room</span>
-                                                            <span id="integrated-room-id" class="value">-</span>
-                                                        </div>
-                                                        <div class="summary-mini-card">
-                                                            <span class="label">Mode</span>
-                                                            <span id="integrated-game-mode" class="value">-</span>
-                                                        </div>
-                                                        <div class="summary-mini-card">
-                                                            <span class="label">Score</span>
-                                                            <span id="integrated-total-score"
-                                                                class="value primary">-</span>
-                                                        </div>
-                                                    </div>
 
                                                     <div class="replay-controls-row">
                                                         <button id="integrated-start-btn"
@@ -659,6 +644,10 @@
                             <p class="wotd-intro">The word of the day is...</p>
                             <div id="wotd-display" class="wotd-gold-showy">
                                 <!-- Word injected via JS -->
+                            </div>
+                            <div id="wotd-definition" class="wotd-definition"
+                                style="margin-top: 30px; text-align: center; font-size: 1.3rem; max-width: 700px; margin-left: auto; margin-right: auto; opacity: 0.9; line-height: 1.5; color: #ddd; font-style: italic;">
+                                <!-- Definition injected via JS -->
                             </div>
                         </div>
                     </div>
@@ -1125,7 +1114,7 @@
                 </div>
             </div>
 
-            <!-- Highlight board while typing -->
+            <!-- Toggle: Highlight While Typing -->
             <div class="setting-panel">
                 <div class="setting-header">
                     <div>
@@ -1137,11 +1126,12 @@
                         <span class="slider round"></span>
                     </label>
                 </div>
+                <!-- Color Picker: Typing -->
                 <div id="highlight-color-picker"
                     style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%;">
-                    <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Highlight Color
+                    <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Typing Color
                     </div>
-                    <div
+                    <div class="color-dot-grid"
                         style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
                         <button class="color-dot active" data-color="#ffcc00" style="background: #ffcc00;"
                             title="Yellow"></button>
@@ -1167,27 +1157,73 @@
                             title="White"></button>
                     </div>
                 </div>
-                <style>
-                    .color-dot {
-                        width: 24px;
-                        height: 24px;
-                        border-radius: 50%;
-                        cursor: pointer;
-                        border: 2px solid rgba(0, 0, 0, 0.3);
-                        transition: transform 0.2s, box-shadow 0.2s;
-                    }
-
-                    .color-dot:hover {
-                        transform: scale(1.2);
-                    }
-
-                    .color-dot.active {
-                        transform: scale(1.3);
-                        border-color: #fff;
-                        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-                    }
-                </style>
             </div>
+
+            <!-- Toggle: Highlight While Mousing -->
+            <div class="setting-panel">
+                <div class="setting-header">
+                    <div>
+                        <div class="setting-title">Highlight while mousing</div>
+                        <div class="setting-desc">Highlight letters on the board as you drag or swipe over them.</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="setting-highlight-mouse" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <!-- Color Picker: Mousing -->
+                <div id="highlight-mouse-color-picker"
+                    style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%;">
+                    <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Mousing Color
+                    </div>
+                    <div class="color-dot-grid"
+                        style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
+                        <button class="color-dot active" data-color="#409cff" style="background: #409cff;"
+                            title="Blue"></button>
+                        <button class="color-dot" data-color="#ffcc00" style="background: #ffcc00;"
+                            title="Yellow"></button>
+                        <button class="color-dot" data-color="#00ffff" style="background: #00ffff;"
+                            title="Cyan"></button>
+                        <button class="color-dot" data-color="#00ff00" style="background: #00ff00;"
+                            title="Lime"></button>
+                        <button class="color-dot" data-color="#ff66cc" style="background: #ff66cc;"
+                            title="Pink"></button>
+                        <button class="color-dot" data-color="#ff9900" style="background: #ff9900;"
+                            title="Orange"></button>
+                        <button class="color-dot" data-color="#ff4d4d" style="background: #ff4d4d;"
+                            title="Red"></button>
+                        <button class="color-dot" data-color="#b366ff" style="background: #b366ff;"
+                            title="Purple"></button>
+                        <button class="color-dot" data-color="#00ff99" style="background: #00ff99;"
+                            title="Mint"></button>
+                        <button class="color-dot" data-color="#ffd700" style="background: #ffd700;"
+                            title="Gold"></button>
+                        <button class="color-dot" data-color="#ffffff" style="background: #ffffff;"
+                            title="White"></button>
+                    </div>
+                </div>
+            </div>
+
+            <style>
+                .color-dot {
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    cursor: pointer;
+                    border: 2px solid rgba(0, 0, 0, 0.3);
+                    transition: transform 0.2s, box-shadow 0.2s;
+                }
+
+                .color-dot:hover {
+                    transform: scale(1.2);
+                }
+
+                .color-dot.active {
+                    transform: scale(1.3);
+                    border-color: #fff;
+                    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+                }
+            </style>
 
             <!-- Chat Text Size -->
             <div class="setting-panel">
@@ -1243,7 +1279,8 @@
                 <div class="setting-header">
                     <div>
                         <div class="setting-title">Next Round Notification</div>
-                        <div class="setting-desc">Sound a bell 10 seconds before a new round starts.</div>
+                        <div class="setting-desc">Play a bell or a set of beeps 10 seconds before a new round starts.
+                        </div>
                     </div>
                     <label class="toggle-switch">
                         <input type="checkbox" id="setting-next-round-bell">
@@ -1251,14 +1288,32 @@
                     </label>
                 </div>
                 <div id="bell-selection-container"
-                    style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%; display: none;">
-                    <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Select Bell Sound
+                    style="display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%; display: none;">
+
+                    <!-- Row 1: Bells -->
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
+                        <div class="meta-label"
+                            style="font-size: 0.85rem; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                            Select Bell Sound</div>
+                        <div
+                            style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
+                            <button class="bell-btn" data-bell="bell1">Bell 1 <span class="play-icon">▶</span></button>
+                            <button class="bell-btn" data-bell="bell2">Bell 2 <span class="play-icon">▶</span></button>
+                            <button class="bell-btn" data-bell="bell3">Bell 3 <span class="play-icon">▶</span></button>
+                        </div>
                     </div>
-                    <div
-                        style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
-                        <button class="bell-btn" data-bell="bell1">Bell 1 <span class="play-icon">▶</span></button>
-                        <button class="bell-btn" data-bell="bell2">Bell 2 <span class="play-icon">▶</span></button>
-                        <button class="bell-btn" data-bell="bell3">Bell 3 <span class="play-icon">▶</span></button>
+
+                    <!-- Row 2: Beeps -->
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
+                        <div class="meta-label"
+                            style="font-size: 0.85rem; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                            Select Beep Sound</div>
+                        <div
+                            style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
+                            <button class="bell-btn" data-bell="beep1">Beep 1 <span class="play-icon">▶</span></button>
+                            <button class="bell-btn" data-bell="beep2">Beep 2 <span class="play-icon">▶</span></button>
+                            <button class="bell-btn" data-bell="beep3">Beep 3 <span class="play-icon">▶</span></button>
+                        </div>
                     </div>
                 </div>
                 <style>
@@ -1542,6 +1597,14 @@
                 <button id="mini-profile-message" class="mini-action-btn primary">Message</button>
                 <button id="mini-profile-friend" class="mini-action-btn secondary hidden">Add Friend</button>
             </div>
+        </div>
+    </div>
+    <!-- Image Lightbox Modal -->
+    <div id="image-lightbox-modal" class="image-lightbox-overlay hidden">
+        <div class="image-lightbox-content">
+            <button id="image-lightbox-close" class="image-lightbox-close">&times;</button>
+            <img id="image-lightbox-img" src="" alt="User Avatar Large">
+            <div id="image-lightbox-caption" class="image-lightbox-caption"></div>
         </div>
     </div>
 </body>

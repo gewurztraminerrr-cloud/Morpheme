@@ -29,6 +29,7 @@ class Player:
     last_active: float = field(default_factory=time.time)
     input_method: str = "mouse"  # 'keyboard', 'mouse', or 'touch'
     country_flag: str = '🏳️'
+    joined_mid_round: bool = False
 
 @dataclass
 class GameRoom:
@@ -52,6 +53,7 @@ class GameRoom:
     current_round: int = 0
     starting_round: bool = False  # Prevents concurrent round starts
     last_saved_round: int = -1    # tracks which round was last saved to DB
+    stats_recorded_round: int = -1 # tracks if stats were updated for this round
     
     # Timer
     round_start_time: float = 0
@@ -129,6 +131,9 @@ class GameRoom:
             existing_player.last_active = time.time()
             existing_player.country_flag = country_flag # Update flag
             return True
+        
+        # Track if they were already in the room (to avoid mid-round flag on refresh)
+        was_already_in_room = existing_player is not None
             
         # Check if player exists in past_players
         # print(f"DEBUG: Checking past_players for {user_id}. Past players count: {len(self.past_players)}")
@@ -151,6 +156,8 @@ class GameRoom:
             return False # Room full
             
         player = Player(user_id, username, rating, games_played=games_played, country_flag=country_flag)
+        if self.state == 'active' and not is_daily and not was_already_in_room:
+            player.joined_mid_round = True
         self.players.append(player)
         self.players.sort(key=lambda p: p.rating, reverse=True)
         
@@ -178,10 +185,10 @@ class GameRoom:
         self.add_chat_message("System", f"{username} has entered the room.", is_system=True)
         return True
     
-    def remove_player(self, user_id):
+    def remove_player(self, user_id, force=False):
         """Remove player or spectator from room"""
-        # PERSISTENCE: Never remove players from 24h rooms (they only reset at midnight)
-        if self.time_limit >= 7200:
+        # PERSISTENCE: Never remove players from 24h rooms unless forced (e.g. logout)
+        if self.time_limit >= 7200 and not force:
             # We still allow removing from spectators if they were accidentally added there
             initial_specs = len(self.spectators)
             self.spectators = [p for p in self.spectators if str(p.user_id) != str(user_id)]
@@ -195,8 +202,15 @@ class GameRoom:
         
         self.players = [p for p in self.players if str(p.user_id) != str(user_id)]
         if len(self.players) < initial_players:
-            print(f"[GameRoom] Removed player {user_id} ({username}) from room {self.room_id}")
+            print(f"[GameRoom] Removed player {user_id} ({username}) from room {self.room_id} (force={force})")
             self.add_chat_message("System", f"{username} has left the room.", is_system=True)
+
+        # If forced (logout), also clear from past_players archive so they don't auto-restore if they rejoin
+        if force:
+            uid_str = str(user_id)
+            if uid_str in self.past_players:
+                del self.past_players[uid_str]
+                print(f"[GameRoom] Cleared {username} from past_players in room {self.room_id}")
 
         # Remove from spectators (just in case)
         initial_specs = len(self.spectators)
@@ -446,12 +460,12 @@ class GameRoom:
             
             # Record winners for History tab before rating change (using score before rating adjustment)
             active_competitors = [p for p in self.players if p.score > 0]
-            if active_competitors:
+            if len(active_competitors) > 1:
                 max_score = max(p.score for p in active_competitors)
-                round_winners = [p.username for p in active_competitors if p.score == max_score]
+                winners_data = [{'username': p.username, 'rating': p.rating} for p in active_competitors if p.score == max_score]
                 self.winners_history.insert(0, {
                     'round': self.current_round,
-                    'winners': round_winners,
+                    'winners': winners_data,
                     'score': max_score
                 })
                 # Keep last 50
@@ -542,7 +556,8 @@ def calculate_proportional_rating_change(players):
     
     # 1. Identify active registered players (score >= 1, user_id > 0)
     # The Java code iterates rows and checks score >= 1
-    active_players = [p for p in players if p.score >= 1 and p.user_id > 0]
+    # Skip players who joined mid-round (User Request)
+    active_players = [p for p in players if p.score >= 1 and p.user_id > 0 and not getattr(p, 'joined_mid_round', False)]
     
     changes = {p.user_id: 0 for p in players}
     
@@ -659,24 +674,28 @@ class RoomManager:
                 import traceback
                 print(f"[RoomManager] Error in background cleanup loop: {e}\n{traceback.format_exc()}")
     
-    def create_room(self, room_id, game_type, time_limit, board_dimensions):
-        """Create a new game room"""
+    def create_room(self, room_id, game_type, time_limit, board_dimensions, min_rating=0, max_rating=9999):
+        """Create a new game room or return an existing singleton for the configuration"""
         with self.lock:
-            # Singleton Logic for ALL Accumulative Rooms
-            # Ensures all players join the same room for a given configuration (Unlimited Multiplayer)
-            if game_type == 'accumulative':
-                for existing_room in self.rooms.values():
-                    if (existing_room.game_type == game_type and 
-                        existing_room.board_dimensions == board_dimensions and
-                        existing_room.time_limit == time_limit):
-                        print(f"[RoomManager] Singleton: Returning existing Accumulative room {existing_room.room_id}")
-                        return existing_room
+            # Singleton Logic for ALL Rooms
+            # Ensures all players join the same room for a given configuration (Multiplayer Hubs)
+            for existing_room in self.rooms.values():
+                if (existing_room.game_type == game_type and 
+                    existing_room.board_dimensions == board_dimensions and
+                    existing_room.time_limit == time_limit and
+                    existing_room.min_rating == min_rating and
+                    existing_room.max_rating == max_rating):
+                    print(f"[RoomManager] Singleton: Returning existing {game_type} room {existing_room.room_id}")
+                    return existing_room
 
+            print(f"[RoomManager] Creating NEW room {room_id} for {game_type} ({board_dimensions})")
             room = GameRoom(
                 room_id=room_id,
                 game_type=game_type,
                 time_limit=time_limit,
-                board_dimensions=board_dimensions
+                board_dimensions=board_dimensions,
+                min_rating=min_rating,
+                max_rating=max_rating
             )
             
             # Unlimited players for Accumulative, 8 for others
@@ -770,12 +789,9 @@ class RoomManager:
                 # Check for inactive players
                 room.check_inactivity(timeout)
                 
-                # If room is empty, mark for deletion
-                if len(room.players) == 0:
-                    # SKIP deleting daily rooms (>= 2h)
-                    if room.time_limit < 7200:
-                        print(f"[RoomManager] Room {room_id} is empty, marking for deletion")
-                        rooms_to_delete.append(room_id)
+                # PERSISTENCE: We NO LONGER delete empty rooms to preserve History and State
+                # Rooms stay in memory as persistent hubs for their configurations.
+                pass
             except Exception as e:
                 print(f"[RoomManager] Error cleaning up room {room_id}: {e}")
         
@@ -890,6 +906,7 @@ class RoomManager:
                 player.invalid_words = []
                 player.score = 0
                 player.found_bonus_word = False
+                player.joined_mid_round = False
                 
             # Daily Room Logic (>= 24h) - Reset at Midnight
             # LOGIC FIX: We must process persistence BEFORE clearing data
@@ -1116,6 +1133,7 @@ class RoomManager:
                 player.invalid_words = []
                 player.score = 0
                 player.found_bonus_word = False
+                player.joined_mid_round = False
                 
             # PERSISTENCE: If this is a 24h room, clear the player list for the new day
             # (Users who enter will be added fresh)

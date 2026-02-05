@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupIsValidTool();
     setupPrivateMessaging();
     setupMiniProfileModal();
+    setupImageLightbox();
 });
 
 function setupToolsNavigation() {
@@ -153,7 +154,7 @@ function setupMiniProfileModal() {
 }
 
 async function showMiniProfile(username) {
-    if (!username || username.startsWith('Guest_')) return;
+    if (!username) return;
 
     const modal = document.getElementById('mini-profile-modal');
     if (!modal) return;
@@ -197,13 +198,29 @@ async function showMiniProfile(username) {
         ratingBadge.style.color = ratingColor;
         ratingBadge.style.borderColor = `${ratingColor}44`;
 
+        if (data.avatar_url) {
+            ratingBadge.style.cursor = 'pointer';
+            ratingBadge.title = "View user image";
+            ratingBadge.onclick = () => showImageLightbox(data.avatar_url, `${data.username}'s Profile Image`);
+        } else {
+            ratingBadge.style.cursor = 'default';
+            ratingBadge.title = "";
+            ratingBadge.onclick = null;
+        }
+
         const avatar = document.getElementById('mini-profile-avatar');
         if (data.avatar_url) {
+            avatar.style.background = 'none'; // Clear any previous gradient
             avatar.style.backgroundImage = `url('${data.avatar_url}')`;
-            avatar.style.background = ''; // Clear gradient
+            avatar.style.backgroundSize = 'cover';
+            avatar.style.backgroundPosition = 'center';
             avatar.style.backgroundColor = 'rgba(0,0,0,0.3)';
             avatar.innerText = '';
+            avatar.style.cursor = 'pointer';
+            avatar.onclick = () => showImageLightbox(data.avatar_url, `${data.username}'s Profile Image`);
         } else {
+            avatar.style.cursor = 'default';
+            avatar.onclick = null;
             avatar.style.backgroundImage = 'none';
             avatar.style.background = `linear-gradient(135deg, ${ratingColor}, #444)`;
             avatar.innerText = data.username.charAt(0).toUpperCase();
@@ -237,7 +254,7 @@ async function showMiniProfile(username) {
             const friendBtn = document.getElementById('mini-profile-friend');
             if (friendBtn) {
                 friendBtn.classList.remove('hidden');
-                updateFriendButtonStatus(data.username, friendBtn);
+                await updateFriendButtonStatus(data.username, friendBtn);
                 friendBtn.onclick = () => handleFriendAction(data.username, friendBtn);
             }
         } else {
@@ -790,7 +807,7 @@ async function performProfileSearch(username) {
             return;
         }
 
-        renderProfile(data);
+        await renderProfile(data);
         container.classList.remove('hidden');
 
     } catch (err) {
@@ -799,7 +816,7 @@ async function performProfileSearch(username) {
 }
 window.performProfileSearch = performProfileSearch;
 
-function renderProfile(user) {
+async function renderProfile(user) {
     const usernameEl = document.getElementById('profile-username');
     if (usernameEl) usernameEl.innerText = user.username;
 
@@ -811,13 +828,8 @@ function renderProfile(user) {
     const avatar = document.querySelector('.profile-avatar.large');
 
     // Determine Color based on global rating
-    let color = '#b3b3b3';
     const r = user.rating || 0;
-
-    if (r < 700) color = '#66ff66';
-    else if (r < 1400) color = '#0088ff';
-    else if (r < 2000) color = '#ffd700';
-    else color = '#e60000';
+    const color = window.getRatingColor ? window.getRatingColor(r) : '#b3b3b3';
 
     // Avatar Handling
     if (avatar) {
@@ -828,7 +840,11 @@ function renderProfile(user) {
             avatar.style.backgroundRepeat = 'no-repeat';
             avatar.style.backgroundPosition = 'center';
             avatar.innerText = '';
+            avatar.style.cursor = 'pointer';
+            avatar.onclick = () => showImageLightbox(user.avatar_url, `${user.username}'s Profile Image`);
         } else {
+            avatar.style.cursor = 'default';
+            avatar.onclick = null;
             avatar.style.backgroundImage = 'none';
             avatar.style.background = `linear-gradient(135deg, ${color}, #444)`;
             avatar.innerText = user.username ? user.username.charAt(0).toUpperCase() : '?';
@@ -857,6 +873,25 @@ function renderProfile(user) {
     // Stats
     const gamesEl = document.getElementById('profile-games');
     if (gamesEl) gamesEl.innerText = user.games_played || 0;
+
+    const winRateEl = document.getElementById('profile-win-rate');
+    if (winRateEl) {
+        if (user.games_played > 0) {
+            const wins = user.wins || 0;
+            const rate = ((wins / user.games_played) * 100).toFixed(1);
+            winRateEl.innerText = `${rate}%`;
+        } else {
+            winRateEl.innerText = '0%';
+        }
+    }
+
+    const bestScoreEl = document.getElementById('profile-best-score');
+    if (bestScoreEl && user.recent_rounds && user.recent_rounds.length > 0) {
+        const best = Math.max(...user.recent_rounds.map(r => r.total_score || 0));
+        bestScoreEl.innerText = best;
+    } else if (bestScoreEl) {
+        bestScoreEl.innerText = '-';
+    }
 
     // Profile Details
     const ageEl = document.getElementById('profile-age-val');
@@ -956,9 +991,13 @@ function renderProfile(user) {
     if (friendBtn) {
         if (currentName && !isOwner) {
             friendBtn.classList.remove('hidden');
-            updateFriendButtonStatus(user.username, friendBtn);
+
+            // WE MUST CLONE FIRST to clear old listeners, THEN update status on the NEW element
             const newFriendBtn = friendBtn.cloneNode(true);
             friendBtn.parentNode.replaceChild(newFriendBtn, friendBtn);
+
+            await updateFriendButtonStatus(user.username, newFriendBtn);
+
             newFriendBtn.addEventListener('click', () => {
                 handleFriendAction(user.username, newFriendBtn);
             });
@@ -1011,7 +1050,7 @@ function renderProfile(user) {
     }
 
     // Render Ratings Grid (32 setups)
-    renderRatingsGrid(user.config_ratings || {});
+    renderRatingsGrid(user.config_ratings || {}, user);
 
     // Cache rounds for review
     window.lastRenderedRounds = user.recent_rounds || [];
@@ -1103,8 +1142,6 @@ window.watchRoundHistory = function (roomId, roundNum) {
     }
 
     // 1. Reset & Populate Summary
-    document.getElementById('integrated-room-id').innerText = round.room_id;
-    document.getElementById('integrated-game-mode').innerText = (round.game_type || 'Standard').toUpperCase();
     document.getElementById('integrated-total-score').innerText = `${round.total_score} PTS`;
 
     // Reset Replay UI
@@ -1120,9 +1157,12 @@ window.watchRoundHistory = function (roomId, roundNum) {
 
     // 2. Render Board
     const boardContainer = document.getElementById('integrated-board-container');
-    if (boardContainer && round.board) {
-        const dimensions = round.board.length;
-        boardContainer.style.gridTemplateColumns = `repeat(${dimensions}, 1fr)`;
+    if (boardContainer && round.board && round.board.length > 0) {
+        boardContainer.innerHTML = ''; // Clear prior content
+        boardContainer.style.gridTemplateColumns = ''; // Reset CSS
+        const rows = round.board.length;
+        const cols = round.board[0].length;
+        boardContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
         boardContainer.innerHTML = round.board.flat().map(letter => `
             <div class="review-cell">${letter}</div>
         `).join('');
@@ -1197,14 +1237,14 @@ window.watchRoundHistory = function (roomId, roundNum) {
                     const path = findWordPath(round.board, word.word);
                     if (path) {
                         const cells = boardContainer.querySelectorAll('.review-cell');
-                        const dimensions = round.board.length;
+                        const cols = round.board[0].length;
 
                         // Clear previous highlight
                         cells.forEach(c => c.classList.remove('highlight', 'highlight-bonus'));
 
                         // Apply new highlight
                         path.forEach((p, i) => {
-                            const cellIdx = p.row * dimensions + p.col;
+                            const cellIdx = p.row * cols + p.col;
                             setTimeout(() => {
                                 if (cells[cellIdx]) {
                                     cells[cellIdx].classList.add('highlight');
@@ -1300,7 +1340,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function renderRatingsGrid(configRatings) {
+function renderRatingsGrid(configRatings, user = null) {
     const grid = document.getElementById('profile-ratings-grid');
     if (!grid) return;
 
@@ -1326,12 +1366,8 @@ function renderRatingsGrid(configRatings) {
                 const configKey = `${mode}|${board}|${time}`;
                 const rating = configRatings[configKey] || 1200;
 
-                // Color for this specific rating
-                let rColor = '#b3b3b3';
-                if (rating < 700) rColor = '#66ff66';
-                else if (rating < 1400) rColor = '#0088ff';
-                else if (rating < 2000) rColor = '#ffd700';
-                else rColor = '#e60000';
+                // Color for this specific rating using central helper
+                const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#b3b3b3';
 
                 const box = document.createElement('div');
                 box.className = 'rating-box';
@@ -1341,11 +1377,53 @@ function renderRatingsGrid(configRatings) {
                     <div class="rating-box-config">${board} | ${formatTimeShort(time)}</div>
                     <div class="rating-box-value" style="color: ${rColor}">${rating}</div>
                 `;
+
+                // Setup Click on Swatch to show image
+                const swatch = box.querySelector('.rating-box-swatch');
+                if (swatch && user && user.avatar_url) {
+                    swatch.title = "View user image";
+                    swatch.onclick = (e) => {
+                        e.stopPropagation();
+                        showImageLightbox(user.avatar_url, `${user.username}'s Profile Image`);
+                    };
+                }
+
                 grid.appendChild(box);
             });
         });
     });
 }
+
+function setupImageLightbox() {
+    const modal = document.getElementById('image-lightbox-modal');
+    const closeBtn = document.getElementById('image-lightbox-close');
+
+    if (modal && closeBtn) {
+        closeBtn.onclick = () => modal.classList.add('hidden');
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.classList.add('hidden');
+        };
+
+        // ESC key to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') modal.classList.add('hidden');
+        });
+    }
+}
+
+function showImageLightbox(url, caption = "") {
+    const modal = document.getElementById('image-lightbox-modal');
+    const img = document.getElementById('image-lightbox-img');
+    const captionEl = document.getElementById('image-lightbox-caption');
+
+    if (!modal || !img) return;
+
+    img.src = url;
+    if (captionEl) captionEl.innerText = caption;
+
+    modal.classList.remove('hidden');
+}
+window.showImageLightbox = showImageLightbox;
 
 function setupProfileEditing(isOwner) {
     const editableFields = [
@@ -1825,6 +1903,10 @@ async function updateWotd() {
         }
 
         displayEl.innerText = data.word;
+        const defEl = document.getElementById('wotd-definition');
+        if (defEl) {
+            defEl.innerText = data.definition || "No definition available.";
+        }
     } catch (err) {
         console.error("WOTD fetch failed:", err);
         displayEl.innerText = 'Offline';
@@ -1985,7 +2067,19 @@ async function runValidationCheck() {
 
 let pmPollingInterval = null;
 let currentChatTarget = null;
-let lastNotifiedContext = null;
+// Use localStorage to sync notification state across multiple tabs
+const getPMState = () => {
+    try {
+        const defaults = { lastNotifiedContext: null, lastUnreadCount: 0, activeChat: null, lastTimestamp: null };
+        const saved = JSON.parse(localStorage.getItem('morpheme_pm_state') || '{}');
+        return { ...defaults, ...saved };
+    } catch (e) {
+        return { lastNotifiedContext: null, lastUnreadCount: 0, activeChat: null, lastTimestamp: null };
+    }
+};
+const setPMState = (state) => {
+    localStorage.setItem('morpheme_pm_state', JSON.stringify(state));
+};
 
 function setupPrivateMessaging() {
     const closeBtn = document.getElementById('pm-close-btn');
@@ -1993,11 +2087,7 @@ function setupPrivateMessaging() {
     const input = document.getElementById('pm-input');
 
     if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            document.getElementById('private-chat-modal').classList.add('hidden');
-            stopPMPolling();
-            currentChatTarget = null;
-        });
+        closeBtn.addEventListener('click', closePrivateChat);
     }
 
     if (sendBtn) sendBtn.addEventListener('click', sendPM);
@@ -2007,17 +2097,77 @@ function setupPrivateMessaging() {
         });
     }
 
+    // ON INIT: Clear stale activeChat from localStorage to prevent stuck notifications
+    const initialState = getPMState();
+    initialState.activeChat = null;
+    setPMState(initialState);
+
+    // Escape key listener for PM box
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('private-chat-modal');
+            if (modal && !modal.classList.contains('hidden')) {
+                closePrivateChat();
+            }
+        }
+    });
+
     // Polling for new messages globally
-    setInterval(checkForUnreadPMs, 10000);
+    setInterval(checkForUnreadPMs, 5000);
+}
+
+function closePrivateChat() {
+    const modal = document.getElementById('private-chat-modal');
+    if (!modal) return;
+
+    // Aggressively delete history from server
+    if (currentChatTarget) {
+        fetch(`/api/pm/clear/${encodeURIComponent(currentChatTarget)}`, { method: 'POST' })
+            .catch(err => console.error("Failed to clear PMs on server:", err));
+    }
+
+    modal.classList.add('hidden');
+
+    // Clear ALL UI elements immediately
+    const history = document.getElementById('pm-history');
+    if (history) {
+        history.innerHTML = '';
+        history.dataset.chatTarget = '';
+    }
+
+    const input = document.getElementById('pm-input');
+    if (input) input.value = '';
+
+    const nameEl = document.getElementById('pm-target-name');
+    if (nameEl) nameEl.innerText = 'Chat';
+
+    stopPMPolling();
+    currentChatTarget = null;
+
+    // Update shared state
+    const pmState = getPMState();
+    pmState.activeChat = null;
+    setPMState(pmState);
 }
 
 async function openPrivateChat(username) {
     currentChatTarget = username;
+    const history = document.getElementById('pm-history');
+    if (history) {
+        history.dataset.chatTarget = username;
+        history.innerHTML = '<div style="text-align:center; opacity:0.5; padding:20px;">Loading conversation...</div>';
+    }
+
     document.getElementById('pm-target-name').innerText = username;
     document.getElementById('private-chat-modal').classList.remove('hidden');
 
-    // Clear history initially or show loading
-    document.getElementById('pm-history').innerHTML = '<div style="text-align:center; opacity:0.5; padding:20px;">Loading conversation...</div>';
+    // Update synchronized state to reflect we've interacted with this
+    const pmState = getPMState();
+    // We don't know the exact count yet, but we've seen the "latest" notification for this person
+    // Incrementing or just setting context to something that won't trigger a re-notify
+    pmState.lastNotifiedContext = `OPEN:${username}`;
+    pmState.activeChat = username;
+    setPMState(pmState);
 
     await refreshConversation();
     startPMPolling();
@@ -2027,14 +2177,33 @@ async function openPrivateChat(username) {
 }
 
 async function refreshConversation() {
-    if (!currentChatTarget) return;
+    const targetAtStart = currentChatTarget;
+    if (!targetAtStart) return;
 
     try {
-        const response = await fetch(`/api/pm/conversation/${currentChatTarget}`);
+        const response = await fetch(`/api/pm/conversation/${encodeURIComponent(targetAtStart)}?t=${Date.now()}`);
         const data = await response.json();
 
-        if (data.messages) {
+        // CHECK RACING CONDITION: 
+        // 1. If global target changed
+        // 2. If the UI element itself was repurposed or cleared
+        const history = document.getElementById('pm-history');
+        if (currentChatTarget !== targetAtStart || !history || history.dataset.chatTarget !== targetAtStart) {
+            return;
+        }
+
+        if (data.messages && data.messages.length > 0) {
             renderPMHistory(data.messages);
+
+            // Update high-water mark for notifications
+            const latest = data.messages[data.messages.length - 1];
+            if (latest && latest.timestamp) {
+                const pmState = getPMState();
+                if (!pmState.lastTimestamp || latest.timestamp > pmState.lastTimestamp) {
+                    pmState.lastTimestamp = latest.timestamp;
+                    setPMState(pmState);
+                }
+            }
         }
     } catch (err) {
         console.error("Failed to fetch conversation:", err);
@@ -2043,7 +2212,7 @@ async function refreshConversation() {
 
 function renderPMHistory(messages) {
     const historyEl = document.getElementById('pm-history');
-    if (!historyEl) return;
+    if (!historyEl || !currentChatTarget || historyEl.dataset.chatTarget !== currentChatTarget) return;
 
     if (messages.length === 0) {
         historyEl.innerHTML = '<div style="text-align:center; opacity:0.3; padding:20px;">No messages yet. Say hello!</div>';
@@ -2177,7 +2346,7 @@ async function fetchAndRenderFriends() {
                         ${friend.username}
                         ${isOnline ? '<span class="status-indicator-mini online" style="display:inline-block; margin-left:5px; width:8px; height:8px;"></span>' : ''}
                     </div>
-                    <div class="friend-rating-mini">${friend.country_flag || '🏳️'} • Rating: ${friend.rating}</div>
+                    <div class="friend-flag-mini">${friend.country_flag || '🏳️'}</div>
                 </div>
             `;
         }).join('');
@@ -2186,45 +2355,70 @@ async function fetchAndRenderFriends() {
     }
 }
 
-function getRatingColor(r) {
-    if (r < 700) return '#66ff66';
-    if (r < 1400) return '#0088ff';
-    if (r < 2000) return '#ffd700';
-    return '#e60000';
-}
+// Redundant local getRatingColor removed to use central definition in app.js
 
 async function checkForUnreadPMs() {
     try {
-        const response = await fetch('/api/pm/unread_count');
+        const response = await fetch('/api/pm/unread_count', { cache: 'no-store' });
         const data = await response.json();
 
-        if (data.count > 0 && data.senders && data.senders.length > 0) {
-            // Show notification toast for the most recent sender
-            const latestSender = data.senders[data.senders.length - 1];
-            const contextKey = `${latestSender}:${data.count}`;
+        const count = data.count || 0;
+        const senders = data.senders || [];
+        const latestTimestamp = data.latest_timestamp;
+        const pmState = getPMState();
 
-            // Only show if this is a NEW context (different sender or count)
-            if (lastNotifiedContext === contextKey) return;
+        if (count > 0 && senders.length > 0 && latestTimestamp) {
+            const latestSender = senders[senders.length - 1];
 
-            // Only show toast if chat isn't already open with this person or is hidden
-            const chatModal = document.getElementById('private-chat-modal');
-            const isChatHidden = !chatModal || chatModal.classList.contains('hidden');
+            // A message is "new" if its timestamp is strictly greater than what we last notified about.
+            const lastSeen = pmState.lastTimestamp || "";
+            const isNewer = String(latestTimestamp) > String(lastSeen);
 
-            if (currentChatTarget !== latestSender || isChatHidden) {
-                lastNotifiedContext = contextKey;
-                showPMNotification(latestSender, data.count);
+            if (isNewer) {
+                const chatModal = document.getElementById('private-chat-modal');
+                const isChatHidden = !chatModal || chatModal.classList.contains('hidden');
+
+                // We are "already chatting" ONLY if the chat is actually open in THIS tab
+                // OR if another tab is actively heart-beating? (For now, let's stick to local visibility + activeChat)
+                const isAlreadyChatting = (currentChatTarget === latestSender && !isChatHidden);
+
+                if (isAlreadyChatting) {
+                    pmState.lastTimestamp = latestTimestamp;
+                } else {
+                    const delay = Math.random() * 500;
+                    setTimeout(() => {
+                        const finalCheck = getPMState();
+                        // Double check against shared lastTimestamp to prevent multi-tab noise
+                        if (String(latestTimestamp) > String(finalCheck.lastTimestamp || "")) {
+                            showPMNotification(latestSender, count);
+                            finalCheck.lastTimestamp = latestTimestamp;
+                            finalCheck.lastUnreadCount = count;
+                            setPMState(finalCheck);
+                        }
+                    }, delay);
+                    return;
+                }
             }
-        } else {
-            // If no messages at all, clear context so any future message triggers a show
-            lastNotifiedContext = null;
         }
+
+        // Always sync the unread count
+        pmState.lastUnreadCount = count;
+        setPMState(pmState);
     } catch (err) {
         // Silent
     }
 }
 
 function showPMNotification(sender, count) {
-    if (document.getElementById('pm-toast')) return;
+    const existing = document.getElementById('pm-toast');
+    if (existing) {
+        // Update existing toast content instead of ignoring
+        const title = existing.querySelector('.pm-toast-title');
+        const text = existing.querySelector('.pm-toast-text');
+        if (title) title.innerText = `New Messages (${count})`;
+        if (text) text.innerHTML = `<strong>${sender}</strong> and others sent messages`;
+        return;
+    }
 
     const toast = document.createElement('div');
     toast.id = 'pm-toast';
@@ -2243,8 +2437,6 @@ function showPMNotification(sender, count) {
         </div>
     `;
     document.body.appendChild(toast);
-
-    setTimeout(() => { if (toast.parentElement) toast.remove(); }, 8000);
 }
 
 window.handleToastRespond = (sender) => {

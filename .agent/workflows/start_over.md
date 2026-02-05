@@ -1,7 +1,7 @@
-description: Revert to the stable state with Finder Highlighting and Bonus Word Priority
+description: Revert to the stable state with Bell Notification and Winners History (Commit 7983794)
 ---
 
-To revert the application to the state saved on February 3rd, 2026 (including Finder Highlighting, Word Checkmarks, and Bonus Word Prioritization), follow these steps:
+To revert the application to the state saved on February 4th, 2026 (including Bell Notification and Winners History), follow these steps:
 
 ### Revert Workflow
 

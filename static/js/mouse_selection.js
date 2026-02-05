@@ -95,21 +95,24 @@ function addToPath(row, col, letter, cellElement) {
     mouseState.selectedPath.push({ row, col, letter });
     mouseState.visitedCells.add(cellKey);
 
-    // Ensure ALL cells in the path have the 'selected' class
-    const allCells = document.querySelectorAll('.board-cell');
-    mouseState.selectedPath.forEach(pathCell => {
-        allCells.forEach(cell => {
-            if (cell.dataset.row == pathCell.row && cell.dataset.col == pathCell.col) {
-                cell.classList.add('selected');
-            }
+    const isHighlightEnabled = window.userSettings && window.userSettings.highlight_mouse !== false;
+    if (isHighlightEnabled) {
+        // Ensure ALL cells in the path have the 'selected' class
+        const allCells = document.querySelectorAll('.board-cell');
+        mouseState.selectedPath.forEach(pathCell => {
+            allCells.forEach(cell => {
+                if (cell.dataset.row == pathCell.row && cell.dataset.col == pathCell.col) {
+                    cell.classList.add('selected');
+                }
+            });
         });
-    });
 
-    // Remove 'current' from all cells, then mark only the newest one as current
-    document.querySelectorAll('.board-cell.current').forEach(c => {
-        c.classList.remove('current');
-    });
-    cellElement.classList.add('current');
+        // Remove 'current' from all cells, then mark only the newest one as current
+        document.querySelectorAll('.board-cell.current').forEach(c => {
+            c.classList.remove('current');
+        });
+        cellElement.classList.add('current');
+    }
 
     console.log('[Mouse] Path:', mouseState.selectedPath.map(c => c.letter).join(''));
 }
@@ -121,18 +124,21 @@ function refreshPathDisplay() {
     // Clear ALL selected and current markers from all cells
     allCells.forEach(cell => cell.classList.remove('selected', 'current'));
 
-    // Reapply selected class to all cells in path
-    mouseState.selectedPath.forEach((pathCell, index) => {
-        allCells.forEach(cell => {
-            if (cell.dataset.row == pathCell.row && cell.dataset.col == pathCell.col) {
-                cell.classList.add('selected');
-                // Mark the last one as current
-                if (index === mouseState.selectedPath.length - 1) {
-                    cell.classList.add('current');
+    const isHighlightEnabled = window.userSettings && window.userSettings.highlight_mouse !== false;
+    if (isHighlightEnabled) {
+        // Reapply selected class to all cells in path
+        mouseState.selectedPath.forEach((pathCell, index) => {
+            allCells.forEach(cell => {
+                if (cell.dataset.row == pathCell.row && cell.dataset.col == pathCell.col) {
+                    cell.classList.add('selected');
+                    // Mark the last one as current
+                    if (index === mouseState.selectedPath.length - 1) {
+                        cell.classList.add('current');
+                    }
                 }
-            }
+            });
         });
-    });
+    }
 
     console.log('[Mouse] Path refreshed:', mouseState.selectedPath.map(c => c.letter).join(''));
 }

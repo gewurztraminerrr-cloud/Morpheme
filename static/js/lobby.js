@@ -417,7 +417,7 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                     const ratingColor = window.getRatingColor ? window.getRatingColor(displayRating) : '#fff';
 
                     return `<span class="room-player-pill" title="Rating: ${displayRating}" style="display:inline-flex; align-items:center;">
-                        <span onclick="window.showMiniProfile('${p.username}')" style="background-color: ${ratingColor}; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; display:inline-block; cursor: pointer;"></span>    
+                        <span onclick="window.showMiniProfile('${p.username}')" style="background-color: ${ratingColor}; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; display:inline-block; cursor: pointer;"></span>    
                         ${p.username} (${displayRating})
                     </span>`;
                 }).join('');

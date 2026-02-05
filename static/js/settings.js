@@ -120,7 +120,35 @@ function debounce(func, wait) {
             if (!window.userSettings) window.userSettings = {};
             window.userSettings.highlight_typing_color = color;
 
-            const dots = document.querySelectorAll('.color-dot');
+            const dots = document.querySelectorAll('#highlight-color-picker .color-dot');
+            dots.forEach(dot => {
+                if (dot.getAttribute('data-color') === color) dot.classList.add('active');
+                else dot.classList.remove('active');
+            });
+        }
+
+        // Highlight as you mouse
+        if (settings.highlight_mouse !== undefined) {
+            let val = settings.highlight_mouse;
+            if (val === 'true' || val === 'True' || val === true) val = true;
+            else if (val === 'false' || val === 'False' || val === false) val = false;
+
+            const highlightToggle = document.getElementById('setting-highlight-mouse');
+            if (highlightToggle) highlightToggle.checked = val;
+
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.highlight_mouse = val;
+        }
+
+        // Highlight mouse color
+        if (settings.highlight_mouse_color) {
+            const color = settings.highlight_mouse_color;
+            document.documentElement.style.setProperty('--highlight-mouse-color', color);
+
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.highlight_mouse_color = color;
+
+            const dots = document.querySelectorAll('#highlight-mouse-color-picker .color-dot');
             dots.forEach(dot => {
                 if (dot.getAttribute('data-color') === color) dot.classList.add('active');
                 else dot.classList.remove('active');
@@ -234,8 +262,8 @@ function debounce(func, wait) {
     }
 
     // Highlight typing color Dots
-    const colorDots = document.querySelectorAll('.color-dot');
-    colorDots.forEach(dot => {
+    const typingColorDots = document.querySelectorAll('#highlight-color-picker .color-dot');
+    typingColorDots.forEach(dot => {
         dot.addEventListener('click', () => {
             const color = dot.getAttribute('data-color');
             document.documentElement.style.setProperty('--highlight-typing-color', color);
@@ -243,10 +271,38 @@ function debounce(func, wait) {
             if (!window.userSettings) window.userSettings = {};
             window.userSettings.highlight_typing_color = color;
 
-            colorDots.forEach(d => d.classList.remove('active'));
+            typingColorDots.forEach(d => d.classList.remove('active'));
             dot.classList.add('active');
 
             saveSettingDebounced('highlight_typing_color', color);
+        });
+    });
+
+    // Highlight as you mouse Listener
+    const mouseHighlightToggle = document.getElementById('setting-highlight-mouse');
+    if (mouseHighlightToggle) {
+        mouseHighlightToggle.addEventListener('change', (e) => {
+            const val = e.target.checked;
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.highlight_mouse = val;
+            saveSettingDebounced('highlight_mouse', val);
+        });
+    }
+
+    // Highlight mouse color Dots
+    const mouseColorDots = document.querySelectorAll('#highlight-mouse-color-picker .color-dot');
+    mouseColorDots.forEach(dot => {
+        dot.addEventListener('click', () => {
+            const color = dot.getAttribute('data-color');
+            document.documentElement.style.setProperty('--highlight-mouse-color', color);
+
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.highlight_mouse_color = color;
+
+            mouseColorDots.forEach(d => d.classList.remove('active'));
+            dot.classList.add('active');
+
+            saveSettingDebounced('highlight_mouse_color', color);
         });
     });
 

@@ -594,6 +594,7 @@ async function handleLogout() {
             currentUser = null;
             window.currentUser = null;
             localStorage.removeItem('morpheme_username');
+            localStorage.removeItem('morpheme_pm_state');
             updateAuthUI();
             showPage('page-login');
 

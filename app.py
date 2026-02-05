@@ -20,7 +20,8 @@ def init_db():
             username TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             rating INTEGER DEFAULT 1200,
-            games_played INTEGER DEFAULT 0
+            games_played INTEGER DEFAULT 0,
+            wins INTEGER DEFAULT 0
         );
         CREATE TABLE IF NOT EXISTS user_ratings (
             user_id INTEGER,
@@ -48,9 +49,14 @@ def init_db():
     except sqlite3.OperationalError:
         pass # Column likely exists
         
+    # MIGRATION: Ensure wins column exists
+    try:
+        conn.execute('ALTER TABLE users ADD COLUMN wins INTEGER DEFAULT 0')
+        conn.commit()
+        print("Migrated DB: Added wins column to users")
     except sqlite3.OperationalError:
         pass # Column likely exists
-    
+
     # MIGRATION: Fix any existing 0 ratings for registered users
     # Users who previously joined might have 0 rating due to bug
     # We update them to 1200 (Default)
@@ -289,6 +295,8 @@ def login():
 @app.route('/api/logout', methods=['POST'])
 def logout():
     if 'user_id' in session:
+        # USER REQUEST: When logging out, remove them from ANY room entirely (including 24h)
+        cleanup_user_rooms_entirely(session['user_id'])
         room_manager.remove_presence(session['user_id'])
     session.clear()
     return jsonify({'success': True})
@@ -303,16 +311,32 @@ def presence_leave():
 @app.route('/api/guest-login', methods=['POST'])
 def guest_login():
     import random
+    import string
     # Generate unique guest username
     guest_id = random.randint(10000, 99999)
     guest_username = f'Guest_{guest_id}'
     
-    # Create guest session (no database entry needed)
-    session['user_id'] = -guest_id  # Negative ID to distinguish from real users
-    session['username'] = guest_username
-    session['is_guest'] = True
+    # Create DB entry for guest so PMs work (they need a real ID in the users table)
+    # Give them a random password hash that they'll never know/need
+    dummy_password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+    password_hash = generate_password_hash(dummy_password, method='pbkdf2:sha256')
     
-    return jsonify({'success': True, 'username': guest_username})
+    conn = sqlite3.connect('morpheme.db')
+    try:
+        cursor = conn.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)',
+                             (guest_username, password_hash))
+        new_user_id = cursor.lastrowid
+        conn.commit()
+        
+        session['user_id'] = new_user_id
+        session['username'] = guest_username
+        session['is_guest'] = True
+        
+        return jsonify({'success': True, 'username': guest_username})
+    except Exception as e:
+        return jsonify({'error': f'Guest login failed: {str(e)}'}), 500
+    finally:
+        conn.close()
 
 @app.route('/api/session', methods=['GET'])
 def get_session():
@@ -379,15 +403,12 @@ def update_profile():
         
 @app.route('/api/profile/<username>', methods=['GET'])
 def get_public_profile(username):
-    if username.startswith('Guest_'):
-        return jsonify({'error': 'Guests do not have profiles'}), 404
-        
     if 'user_id' in session:
         room_manager.update_presence(session['user_id'])
     conn = sqlite3.connect('morpheme.db')
     cursor = conn.execute('''
         SELECT id, username, rating, games_played, avatar_url, country_flag, 
-               full_name, age, gender, location, quote, description, proof_url
+               full_name, age, gender, location, quote, description, proof_url, wins
         FROM users WHERE username = ? COLLATE NOCASE
     ''', (username,))
     user = cursor.fetchone()
@@ -439,6 +460,7 @@ def get_public_profile(username):
         'quote': user[10] if user[10] else 'Enter a personal quote',
         'description': user[11] if user[11] else 'Add a detailed description about yourself...',
         'proof_url': user[12] if user[12] else None,
+        'wins': user[13] if user[13] else 0,
         'recent_rounds': recent_rounds,
         'config_ratings': config_ratings,
         'status': {
@@ -538,11 +560,19 @@ def cleanup_user_rooms(user_id, exclude_room_id=None):
         # Apply leave penalty if applicable
         apply_leave_penalty(user_id, room)
 
-        # Remove from players
+        # Remove from players (Standard removal, respects 24h persistence)
         room.remove_player(user_id)
+
+def cleanup_user_rooms_entirely(user_id):
+    """FORCED removal from ALL rooms (including 24h) - used for Logout"""
+    for rid in list(room_manager.rooms.keys()):
+        room = room_manager.rooms[rid]
         
-        if len(room.players) == 0:
-            room_manager.delete_room(rid)
+        # Apply leave penalty if applicable (non-24h only)
+        apply_leave_penalty(user_id, room)
+
+        # Force removal from players (Bypasses 24h persistence)
+        room.remove_player(user_id, force=True)
 
 @app.route('/api/room/create', methods=['POST'])
 def create_room():
@@ -563,9 +593,7 @@ def create_room():
     
     # Create room
     generated_id = str(uuid.uuid4())
-    room = room_manager.create_room(generated_id, game_type, int(time_limit), board_dimensions)
-    room.min_rating = int(min_rating)
-    room.max_rating = int(max_rating)
+    room = room_manager.create_room(generated_id, game_type, int(time_limit), board_dimensions, int(min_rating), int(max_rating))
     
     # Ensure user is not in any other room
     cleanup_user_rooms(session['user_id'], exclude_room_id=room.room_id)
@@ -789,17 +817,9 @@ def get_room_state(room_id):
         
         players_removed = room.check_inactivity(timeout=timeout)
         
-        # Strict Check: If room is empty of players (even if spectators exist), delete it
-        # BUT allow a grace period (e.g. 15s) for new rooms where creator hasn't joined yet
-        time_alive = time.time() - room.creation_time
-        
-        # Skip deletion for daily rooms (>= 2h) so they persist
-        is_daily_room = room.time_limit >= 7200
-        
-        if not is_daily_room and len(room.players) == 0 and time_alive > 15:
-            print(f"Room {room_id} empty (0 players) and old enough ({time_alive:.1f}s) - deleting")
-            room_manager.delete_room(room_id)
-            return jsonify({'error': 'Room deleted due to inactivity'}), 404
+        # PERSISTENCE: We NO LONGER delete empty rooms during state checks.
+        # This ensures rooms act as persistent hubs for History.
+        pass
 
         # Check and update state based on timers
         prev_state = room.state
@@ -813,6 +833,40 @@ def get_room_state(room_id):
             # SAVE ROUND HISTORY
             room_manager.save_round_history(room)
             
+            # PERSISTENCE: Save ratings, games_played, and wins immediately at round end
+            if room.stats_recorded_round < room.current_round:
+                playing_count = sum(1 for p in room.players if p.score > 0)
+                if playing_count > 1:
+                    print(f"[Persistence] Saving stats for Round {room.current_round} ({playing_count} players)...")
+                    try:
+                        registered_scores = [p.score for p in room.players if p.user_id > 0]
+                        max_score = max(registered_scores) if registered_scores else 0
+                        conn = sqlite3.connect('morpheme.db')
+                        config_key = f"{room.game_type}|{room.board_dimensions}|{room.time_limit}"
+                        
+                        for p in room.players:
+                            if p.user_id > 0:
+                                # Update Rating in DB
+                                conn.execute('''
+                                    INSERT OR REPLACE INTO user_ratings (user_id, config_key, rating)
+                                    VALUES (?, ?, ?)
+                                ''', (p.user_id, config_key, p.rating))
+                                
+                                # Update Games Played & Wins
+                                if p.score > 0:
+                                    if p.games_played is None: p.games_played = 0
+                                    p.games_played += 1
+                                    conn.execute('UPDATE users SET games_played = games_played + 1 WHERE id = ?', (p.user_id,))
+                                    
+                                    if p.score == max_score and max_score > 0:
+                                        conn.execute('UPDATE users SET wins = wins + 1 WHERE id = ?', (p.user_id,))
+                        
+                        conn.commit()
+                        conn.close()
+                        room.stats_recorded_round = room.current_round
+                    except Exception as e:
+                        print(f"[Persistence] ERROR saving stats: {e}")
+
             # Ensure solving_complete is True so frontend proceeds
             room.solving_complete = True
             if not room.complete_words and room.all_words:
@@ -837,40 +891,8 @@ def get_room_state(room_id):
                 # At 0s: Start next round with pre-generated board
                 print(f"[Milestone] 0s remaining - Starting next round")
                 
-                # PERSISTENCE: Capture players before they are potentially cleared (for 24h rooms)
-                finished_players = list(room.players)
-                
-                if room_manager.start_next_round(room_id):
-                    # Only update stats if 2+ players actually played (score > 0)
-                    playing_count = sum(1 for p in finished_players if getattr(p, 'previous_round_score', 0) > 0)
-                    
-                    if playing_count > 1:
-                        print(f"[Persistence] Updating player ratings to DB ({playing_count} active players)...")
-                        try:
-                            conn = sqlite3.connect('morpheme.db')
-                            config_key = f"{room.game_type}|{room.board_dimensions}|{room.time_limit}"
-                            
-                            for p in finished_players:
-                                # Only update registered users (positive IDs)
-                                if p.user_id > 0:
-                                    # Use INSERT OR REPLACE to handle upsert
-                                    conn.execute('''
-                                        INSERT OR REPLACE INTO user_ratings (user_id, config_key, rating)
-                                        VALUES (?, ?, ?)
-                                    ''', (p.user_id, config_key, p.rating))
-                                    
-                                    # Increment games_played ONLY if they played the round (score > 0)
-                                    if p.previous_round_score > 0:
-                                        if p.games_played is None: p.games_played = 0
-                                        p.games_played += 1
-                                        conn.execute('UPDATE users SET games_played = games_played + 1 WHERE id = ?', (p.user_id,))
-                            
-                            conn.commit()
-                            conn.close()
-                        except Exception as e:
-                            print(f"[Persistence] ERROR updating ratings: {e}")
-                    else:
-                        print(f"[Persistence] SKIPPING stats update - only {playing_count} players played.")
+                # Reset flags and state for new round
+                room_manager.start_next_round(room_id)
 
         
         # Determine which word list to return
@@ -934,7 +956,8 @@ def get_room_state(room_id):
                     'input_method': p.input_method,
                     'last_active_age': time.time() - p.last_active,
                     'games_played': p.games_played,
-                    'country_flag': p.country_flag
+                    'country_flag': p.country_flag,
+                    'joined_mid_round': getattr(p, 'joined_mid_round', False)
                 } for p in sorted(room.players, key=lambda p: p.score, reverse=True)
             ],
             'spectators': [
@@ -1590,9 +1613,23 @@ def send_private_message():
         
     conn = sqlite3.connect('morpheme.db')
     try:
-        # Get IDs
-        sender = conn.execute('SELECT id, username FROM users WHERE username = ?', (session['username'],)).fetchone()
-        receiver = conn.execute('SELECT id FROM users WHERE username = ?', (target_username,)).fetchone()
+        # Get IDs (Case-insensitive)
+        sender = conn.execute('SELECT id, username FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
+        
+        # If sender is a guest and not in DB, auto-create (Legacy session support)
+        if not sender and session['username'].startswith('Guest_'):
+            import random, string
+            dummy_password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+            password_hash = generate_password_hash(dummy_password, method='pbkdf2:sha256')
+            cursor = conn.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)', (session['username'], password_hash))
+            sender = (cursor.lastrowid, session['username'])
+            conn.commit()
+
+        receiver = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (target_username,)).fetchone()
+        
+        # If receiver is a guest and not in DB, we can't easily auto-create without more info,
+        # but usually guests who receive PMs have already logged in and should have been created.
+        # Fallback: if receiver is Guest_ and not found, they likely aren't online/existent anymore.
         
         if not sender or not receiver:
             return jsonify({'error': 'User not found'}), 404
@@ -1615,9 +1652,17 @@ def get_conversation(target_username):
         
     conn = sqlite3.connect('morpheme.db')
     try:
-        # Get IDs
-        me = conn.execute('SELECT id FROM users WHERE username = ?', (session['username'],)).fetchone()
-        them = conn.execute('SELECT id FROM users WHERE username = ?', (target_username,)).fetchone()
+        # Get IDs (Case-insensitive)
+        me = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
+        if not me and session['username'].startswith('Guest_'):
+            import random, string
+            dummy_password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+            password_hash = generate_password_hash(dummy_password, method='pbkdf2:sha256')
+            cursor = conn.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)', (session['username'], password_hash))
+            me = (cursor.lastrowid,)
+            conn.commit()
+
+        them = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (target_username,)).fetchone()
         
         if not me or not them:
             return jsonify({'error': 'User not found'}), 404
@@ -1650,6 +1695,30 @@ def get_conversation(target_username):
     finally:
         conn.close()
 
+@app.route('/api/pm/clear/<target_username>', methods=['POST'])
+def clear_private_messages(target_username):
+    if 'username' not in session:
+        return jsonify({'error': 'Login required'}), 401
+    
+    conn = sqlite3.connect('morpheme.db')
+    try:
+        me = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
+        them = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (target_username,)).fetchone()
+        
+        if not me or not them:
+            return jsonify({'error': 'User not found'}), 404
+            
+        conn.execute('''
+            DELETE FROM private_messages 
+            WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
+        ''', (me[0], them[0], them[0], me[0]))
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
 @app.route('/api/pm/unread_count', methods=['GET'])
 def get_unread_count():
     if 'username' not in session:
@@ -1657,15 +1726,27 @@ def get_unread_count():
         
     conn = sqlite3.connect('morpheme.db')
     try:
-        user = conn.execute('SELECT id FROM users WHERE username = ?', (session['username'],)).fetchone()
+        user = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
         if not user: return jsonify({'count': 0})
         
         count = conn.execute('SELECT COUNT(*) FROM private_messages WHERE receiver_id = ? AND is_read = 0', (user[0],)).fetchone()[0]
         
-        # Also return who sent them for optional notification
-        senders = conn.execute('SELECT DISTINCT sender_username FROM private_messages WHERE receiver_id = ? AND is_read = 0', (user[0],)).fetchall()
+        # Also return who sent them, ordered by the latest message first
+        senders_rows = conn.execute('''
+            SELECT sender_username, MAX(timestamp) as latest
+            FROM private_messages 
+            WHERE receiver_id = ? AND is_read = 0 
+            GROUP BY sender_username 
+            ORDER BY latest ASC
+        ''', (user[0],)).fetchall()
         
-        return jsonify({'count': count, 'senders': [s[0] for s in senders]})
+        latest_timestamp = conn.execute('SELECT MAX(timestamp) FROM private_messages WHERE receiver_id = ? AND is_read = 0', (user[0],)).fetchone()[0]
+        
+        return jsonify({
+            'count': count, 
+            'senders': [s[0] for s in senders_rows],
+            'latest_timestamp': latest_timestamp
+        })
     finally:
         conn.close()
 
@@ -1749,15 +1830,20 @@ def tools_wotd():
     if not eligible_words:
         return jsonify({'error': 'No eligible words found'}), 500
         
-    # Use hash of date string to get a stable random index
-    # (Since we want to avoid changing random.seed() global state if possible)
     seed_hash = int(hashlib.md5(today_str.encode()).hexdigest(), 16)
     idx = seed_hash % len(eligible_words)
     wotd = eligible_words[idx]
     
+    # Get definition
+    global DEFINITIONS_CACHE
+    if DEFINITIONS_CACHE is None:
+        load_definitions()
+    definition = DEFINITIONS_CACHE.get(wotd, "No definition available for this word.")
+    
     return jsonify({
         'word': wotd,
-        'date': today_str
+        'date': today_str,
+        'definition': definition
     })
 
 
@@ -1778,8 +1864,8 @@ def add_friend():
         
     conn = sqlite3.connect('morpheme.db')
     try:
-        user = conn.execute('SELECT id FROM users WHERE username = ?', (session['username'],)).fetchone()
-        friend = conn.execute('SELECT id FROM users WHERE username = ?', (friend_username,)).fetchone()
+        user = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
+        friend = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (friend_username,)).fetchone()
         
         if not friend:
             return jsonify({'error': 'User not found'}), 404
@@ -1813,8 +1899,8 @@ def remove_friend():
     
     conn = sqlite3.connect('morpheme.db')
     try:
-        user = conn.execute('SELECT id FROM users WHERE username = ?', (session['username'],)).fetchone()
-        friend = conn.execute('SELECT id FROM users WHERE username = ?', (friend_username,)).fetchone()
+        user = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
+        friend = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (friend_username,)).fetchone()
         
         if user and friend:
             conn.execute('DELETE FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)', 
@@ -1833,14 +1919,15 @@ def get_friend_status(username):
         
     conn = sqlite3.connect('morpheme.db')
     try:
-        user = conn.execute('SELECT id FROM users WHERE username = ?', (session['username'],)).fetchone()
-        friend = conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
+        user = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
+        friend = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (username,)).fetchone()
         
         if not user or not friend:
             return jsonify({'is_friend': False})
             
-        existing = conn.execute('SELECT 1 FROM friends WHERE user_id = ? AND friend_id = ?', 
-                               (user[0], friend[0])).fetchone()
+        # Check both directions just in case of asymmetric legacy data
+        existing = conn.execute('SELECT 1 FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)', 
+                               (user[0], friend[0], friend[0], user[0])).fetchone()
         return jsonify({'is_friend': existing is not None})
     finally:
         conn.close()
@@ -1853,7 +1940,7 @@ def get_friends_list():
     conn = sqlite3.connect('morpheme.db')
     conn.row_factory = sqlite3.Row
     try:
-        user = conn.execute('SELECT id FROM users WHERE username = ?', (session['username'],)).fetchone()
+        user = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
         # Join with users to get usernames and avatars
         friends_rows = conn.execute('''
             SELECT u.id, u.username, u.avatar_url, u.rating, u.country_flag
