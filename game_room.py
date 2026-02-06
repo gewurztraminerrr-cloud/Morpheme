@@ -211,6 +211,11 @@ class GameRoom:
             if uid_str in self.past_players:
                 del self.past_players[uid_str]
                 print(f"[GameRoom] Cleared {username} from past_players in room {self.room_id}")
+            
+            # USER REQUEST: "Removes them from any trace" - also clear from previous round/day history
+            if uid_str in self.previous_day_history:
+                del self.previous_day_history[uid_str]
+                print(f"[GameRoom] Cleared {username} from previous_day_history in room {self.room_id}")
 
         # Remove from spectators (just in case)
         initial_specs = len(self.spectators)
@@ -545,6 +550,31 @@ class GameRoom:
             p.score = new_total_score
             
             # Also calculate invalid words points (0, but we might want to track count)
+
+    def calculate_performance_efficiencies(self):
+        """
+        Calculate how much each player over-performed relative to their rating expectation.
+        Formula: (Score Share) / (Rating Share)
+        """
+        active_players = [p for p in self.players if p.score > 0]
+        if not active_players or len(active_players) < 2:
+            return {}
+
+        total_score = sum(p.score for p in active_players)
+        # Use 1000 as floor for rating to avoid division issues / guests
+        total_rating = sum(max(100, p.rating) for p in active_players)
+
+        efficiencies = {}
+        for p in active_players:
+            score_share = p.score / total_score
+            rating_share = max(100, p.rating) / total_rating
+            
+            if rating_share > 0:
+                efficiencies[p.user_id] = score_share / rating_share
+            else:
+                efficiencies[p.user_id] = 1.0
+        
+        return efficiencies
 
 
 def calculate_proportional_rating_change(players):
@@ -1199,6 +1229,8 @@ class RoomManager:
             return
         
         try:
+            efficiencies = room.calculate_performance_efficiencies()
+            
             conn = sqlite3.connect('morpheme.db')
             board_json = json.dumps(room.board)
             timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -1219,15 +1251,17 @@ class RoomManager:
                     'timestamp': w.get('time', timestamp)
                 } for w in p.submitted_words]
                 
+                efficiency = efficiencies.get(p.user_id, 1.0)
+                
                 conn.execute('''
-                    INSERT INTO round_history (user_id, room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, timestamp)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (p.user_id, room.room_id, room.game_type, room.current_round, board_json, json.dumps(words_data), p.score, room.round_start_time, room.time_limit, timestamp))
+                    INSERT INTO round_history (user_id, room_id, game_type, board_dimensions, round_number, board_json, words_json, total_score, performance_efficiency, round_start_time, round_duration, timestamp)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (p.user_id, room.room_id, room.game_type, room.board_dimensions, room.current_round, board_json, json.dumps(words_data), p.score, efficiency, room.round_start_time, room.time_limit, timestamp))
             
             room.last_saved_round = room.current_round
             conn.commit()
             conn.close()
-            print(f"[RoomManager] Saved round history for room {room.room_id} (Round {room.current_round})")
+            print(f"[RoomManager] Saved round history for room {room.room_id} (Round {room.current_round}) with efficiencies")
         except Exception as e:
             print(f"[RoomManager] Error saving round history: {e}")
 

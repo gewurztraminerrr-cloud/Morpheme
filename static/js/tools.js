@@ -192,38 +192,32 @@ async function showMiniProfile(username) {
             statusIcon.style.filter = isOnline ? 'drop-shadow(0 0 5px #4ade80)' : 'none';
         }
         const rating = data.rating || 0;
-        const ratingBadge = document.getElementById('mini-profile-rating-badge');
-        ratingBadge.innerText = rating;
         const ratingColor = window.getRatingColor ? window.getRatingColor(rating) : '#fff';
-        ratingBadge.style.color = ratingColor;
-        ratingBadge.style.borderColor = `${ratingColor}44`;
-
-        if (data.avatar_url) {
-            ratingBadge.style.cursor = 'pointer';
-            ratingBadge.title = "View user image";
-            ratingBadge.onclick = () => showImageLightbox(data.avatar_url, `${data.username}'s Profile Image`);
-        } else {
-            ratingBadge.style.cursor = 'default';
-            ratingBadge.title = "";
-            ratingBadge.onclick = null;
+        const ratingBadge = document.getElementById('mini-profile-rating-badge');
+        if (ratingBadge) {
+            ratingBadge.remove(); // Force remove if it somehow exists
         }
 
         const avatar = document.getElementById('mini-profile-avatar');
-        if (data.avatar_url) {
-            avatar.style.background = 'none'; // Clear any previous gradient
-            avatar.style.backgroundImage = `url('${data.avatar_url}')`;
-            avatar.style.backgroundSize = 'cover';
-            avatar.style.backgroundPosition = 'center';
-            avatar.style.backgroundColor = 'rgba(0,0,0,0.3)';
-            avatar.innerText = '';
-            avatar.style.cursor = 'pointer';
-            avatar.onclick = () => showImageLightbox(data.avatar_url, `${data.username}'s Profile Image`);
-        } else {
-            avatar.style.cursor = 'default';
-            avatar.onclick = null;
-            avatar.style.backgroundImage = 'none';
-            avatar.style.background = `linear-gradient(135deg, ${ratingColor}, #444)`;
-            avatar.innerText = data.username.charAt(0).toUpperCase();
+        if (avatar) {
+            if (data.avatar_url) {
+                avatar.style.background = 'none';
+                avatar.style.backgroundImage = `url('${data.avatar_url}')`;
+                avatar.style.backgroundSize = 'cover';
+                avatar.style.backgroundPosition = 'center';
+                avatar.style.backgroundColor = 'rgba(0,0,0,0.3)';
+                avatar.innerText = '';
+                avatar.style.cursor = 'pointer';
+                avatar.title = "View user image";
+                avatar.onclick = () => showImageLightbox(data.avatar_url, `${data.username}'s Profile Image`);
+            } else {
+                avatar.style.cursor = 'default';
+                avatar.title = "";
+                avatar.onclick = null;
+                avatar.style.backgroundImage = 'none';
+                avatar.style.background = `linear-gradient(135deg, ${ratingColor}, #444)`;
+                avatar.innerText = data.username.charAt(0).toUpperCase();
+            }
         }
 
         // Setup Buttons
@@ -1031,17 +1025,31 @@ async function renderProfile(user) {
                 const gameTypeLabel = round.game_type === 'split' ? 'Split Points' :
                     round.game_type === 'fcfs' ? 'FCFS' : 'Accumulative';
                 const typeClass = `history-type-${round.game_type}`;
-
                 const dimensions = `${round.board.length}x${round.board[0].length}`;
+
+                const efficiency = round.performance_efficiency || 1.0;
+                const isOutstanding = efficiency >= 1.25;
+                const perfClass = isOutstanding ? 'outstanding' : '';
+
                 return `
-                <div class="history-item">
+                <div class="history-item ${perfClass}" style="position: relative;">
+                    ${isOutstanding ? '<div class="outstanding-tag">Outstanding Performance</div>' : ''}
+                    <div class="history-board-col">
+                        ${renderMiniBoard(round.board)}
+                    </div>
                     <div class="history-info">
                         <span class="history-mode ${typeClass}">${gameTypeLabel}</span>
                         <span class="history-config">${dimensions}</span>
                         <span class="history-room">${round.room_id}</span>
                         <span class="history-date">${new Date(round.timestamp).toLocaleDateString()}</span>
                     </div>
-                    <div class="history-score">${round.total_score} pts</div>
+                    <div class="history-perf-badge">
+                        <span class="history-perf-val">${efficiency.toFixed(2)}x</span>
+                        <span class="history-perf-label">Efficiency</span>
+                    </div>
+                    <div class="history-score-col">
+                        <div class="history-score">${round.total_score} pts</div>
+                    </div>
                     <button class="history-review-btn" onclick="watchRoundHistory('${round.room_id}', ${round.round_number})">Review</button>
                 </div>
                 `;
@@ -1371,11 +1379,26 @@ function renderRatingsGrid(configRatings, user = null) {
 
                 const box = document.createElement('div');
                 box.className = 'rating-box';
+
+                const stats = (user && user.config_stats) ? user.config_stats[configKey] || {} : {};
+                const avgEff = stats.avg_efficiency || '1.0';
+                const peakEff = stats.peak_efficiency || '1.0';
+
                 box.innerHTML = `
                     <div class="rating-box-swatch" style="background: ${rColor}; box-shadow: 0 0 15px ${rColor}55"></div>
                     <div class="rating-box-mode">${mode}</div>
                     <div class="rating-box-config">${board} | ${formatTimeShort(time)}</div>
                     <div class="rating-box-value" style="color: ${rColor}">${rating}</div>
+                    <div class="perf-stats-row">
+                        <div class="perf-stat">
+                            <span class="perf-stat-label">Avg</span>
+                            <span class="perf-stat-value">${avgEff}x</span>
+                        </div>
+                        <div class="perf-stat">
+                            <span class="perf-stat-label">Peak</span>
+                            <span class="perf-stat-value">${peakEff}x</span>
+                        </div>
+                    </div>
                 `;
 
                 // Setup Click on Swatch to show image
@@ -1424,6 +1447,17 @@ function showImageLightbox(url, caption = "") {
     modal.classList.remove('hidden');
 }
 window.showImageLightbox = showImageLightbox;
+
+function renderMiniBoard(board) {
+    if (!board || !board.length) return '';
+    const rows = board.length;
+    const cols = board[0].length;
+    return `
+        <div class="history-board-mini" style="grid-template-columns: repeat(${cols}, 1fr);">
+            ${Array(rows * cols).fill('<div class="mini-cell"></div>').join('')}
+        </div>
+    `;
+}
 
 function setupProfileEditing(isOwner) {
     const editableFields = [

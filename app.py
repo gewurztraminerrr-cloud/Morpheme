@@ -111,10 +111,12 @@ def init_db():
                 user_id INTEGER NOT NULL,
                 room_id TEXT NOT NULL,
                 game_type TEXT NOT NULL,
+                board_dimensions TEXT,
                 round_number INTEGER NOT NULL,
                 board_json TEXT NOT NULL,
                 words_json TEXT NOT NULL,
                 total_score INTEGER NOT NULL,
+                performance_efficiency REAL,
                 round_start_time REAL,
                 round_duration INTEGER,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -348,9 +350,31 @@ def login():
 @app.route('/api/logout', methods=['POST'])
 def logout():
     if 'user_id' in session:
+        user_id = session['user_id']
+        is_guest = session.get('is_guest', False)
+        
+        # 1. Immediate removal from all active presence caches
         # USER REQUEST: When logging out, remove them from ANY room entirely (including 24h)
-        cleanup_user_rooms_entirely(session['user_id'])
-        room_manager.remove_presence(session['user_id'])
+        # This will also clear 'past_players' and 'previous_day_history' in those rooms.
+        cleanup_user_rooms_entirely(user_id)
+        room_manager.remove_presence(user_id)
+        
+        # 2. If guest, purge all database traces
+        if is_guest:
+            try:
+                conn = sqlite3.connect('morpheme.db')
+                # Wipe any DB traces for this temporary account
+                conn.execute('DELETE FROM user_ratings WHERE user_id = ?', (user_id,))
+                conn.execute('DELETE FROM round_history WHERE user_id = ?', (user_id,))
+                conn.execute('DELETE FROM friends WHERE user_id = ? OR friend_id = ?', (user_id, user_id))
+                conn.execute('DELETE FROM private_messages WHERE sender_id = ? OR receiver_id = ?', (user_id, user_id))
+                conn.execute('DELETE FROM users WHERE id = ?', (user_id,))
+                conn.commit()
+                conn.close()
+                print(f"[Logout] Guest trace purged: {user_id}")
+            except Exception as e:
+                print(f"[Logout] Guest purge failed: {e}")
+                
     session.clear()
     return jsonify({'success': True})
 
@@ -471,17 +495,35 @@ def get_public_profile(username):
         conn.close()
         return jsonify({'error': 'User not found'}), 404
 
-    # Get config-specific ratings
-    cursor = conn.execute('SELECT config_key, rating FROM user_ratings WHERE user_id = ?', (user[0],))
+    # Get config-specific ratings and stats
+    cursor = conn.execute('''
+        SELECT config_key, rating FROM user_ratings WHERE user_id = ?
+    ''', (user[0],))
     config_ratings = {row[0]: row[1] for row in cursor.fetchall()}
 
-    # Get last 5 rounds
+    # Get performance stats per config
     cursor = conn.execute('''
-        SELECT room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, timestamp
+        SELECT game_type || '|' || board_dimensions || '|' || round_duration as config_key,
+               AVG(performance_efficiency), MAX(performance_efficiency)
+        FROM round_history
+        WHERE user_id = ?
+        GROUP BY game_type, board_dimensions, round_duration
+    ''', (user[0],))
+    
+    config_stats = {}
+    for row in cursor.fetchall():
+        config_stats[row[0]] = {
+            'avg_efficiency': round(row[1], 2) if row[1] else 1.0,
+            'peak_efficiency': round(row[2], 2) if row[2] else 1.0
+        }
+
+    # Get last 50 rounds
+    cursor = conn.execute('''
+        SELECT room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, timestamp, performance_efficiency
         FROM round_history
         WHERE user_id = ?
         ORDER BY timestamp DESC
-        LIMIT 5
+        LIMIT 50
     ''', (user[0],))
     recent_rounds = []
     for row in cursor.fetchall():
@@ -494,7 +536,8 @@ def get_public_profile(username):
             'total_score': row[5],
             'round_start_time': row[6],
             'round_duration': row[7],
-            'timestamp': row[8]
+            'timestamp': row[8],
+            'performance_efficiency': row[9] if row[9] is not None else 1.0
         })
     conn.close()
     
@@ -517,6 +560,7 @@ def get_public_profile(username):
         'wins': user[13] if user[13] else 0,
         'recent_rounds': recent_rounds,
         'config_ratings': config_ratings,
+        'config_stats': config_stats,
         'status': {
             'is_online': session_info['is_online'] if session_info else False,
             'current_room': session_info['room_id'] if session_info else None,

@@ -1406,13 +1406,23 @@ body {
 }
 
 .mini-rating-badge {
-    padding: 6px 12px;
+    width: 32px;
+    height: 32px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 800;
-    color: var(--accent-color);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s;
+    background-color: currentColor;
+    /* Use the color set via JS */
+    opacity: 0.8;
+}
+
+.mini-rating-badge:hover {
+    transform: scale(1.1);
+    opacity: 1;
 }
 
 .mini-profile-stats {
@@ -2530,4 +2540,107 @@ body {
 .rating-box-swatch:hover {
     transform: scale(1.1);
     filter: brightness(1.2);
+}
+
+/* Performance Metrics Enhancements */
+.perf-stats-row {
+    margin-top: 8px;
+    display: flex;
+    gap: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.perf-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.perf-stat-label {
+    opacity: 0.5;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+}
+
+.perf-stat-value {
+    color: #ffd700;
+}
+
+/* History Item Mini Board */
+.history-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 24px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    padding: 12px 24px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+}
+
+.history-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.history-board-mini {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    gap: 1px;
+    padding: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.mini-cell {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 1px;
+}
+
+.history-perf-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(255, 215, 0, 0.05);
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    padding: 4px 12px;
+    border-radius: 10px;
+    min-width: 80px;
+}
+
+.history-perf-val {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #ffd700;
+}
+
+.history-perf-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    color: rgba(255, 215, 0, 0.6);
+    font-weight: 700;
+}
+
+.outstanding-tag {
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    background: linear-gradient(135deg, #ff4d4d, #ff0000);
+    color: white;
+    font-size: 0.6rem;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(255, 0, 0, 0.4);
+}
+
+.history-item.outstanding {
+    border-color: rgba(255, 0, 0, 0.3);
+    background: rgba(255, 0, 0, 0.02);
 }

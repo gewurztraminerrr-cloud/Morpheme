@@ -1514,43 +1514,161 @@
     <div id="modal-howtoplay" class="modal-window hidden">
         <div class="modal-content-wrapper">
             <button id="close-howtoplay" class="close-modal-btn">×</button>
-            <div class="instructions-container">
-                <!-- Card 1: Connect -->
-                <div class="instruction-card">
-                    <div class="card-image-container">
-                        <!-- CSS Animation Demo Board -->
-                        <div class="demo-board">
-                            <div class="demo-cursor"></div>
-                            <div class="demo-tile tile-1">P</div>
-                            <div class="demo-tile tile-2">L</div>
-                            <div class="demo-tile tile-3">A</div>
-                            <div class="demo-tile tile-4">Y</div>
+            <div class="modal-header-section">
+                <h2>How to Play & FAQ</h2>
+            </div>
+            <div class="modal-scroll-area">
+                <div class="instructions-container">
+                    <!-- Card 1: Connect -->
+                    <div class="instruction-card">
+                        <div class="card-image-container">
+                            <div class="demo-board">
+                                <div class="demo-cursor"></div>
+                                <div class="demo-tile tile-1">P</div>
+                                <div class="demo-tile tile-2">L</div>
+                                <div class="demo-tile tile-3">A</div>
+                                <div class="demo-tile tile-4">Y</div>
+                            </div>
+                        </div>
+                        <h3>Connect & Create</h3>
+                        <p>Drag your cursor across the grid, or swipe across your mobile device, or type in words. Link
+                            letters horizontally, vertically, or diagonally to forge your words. <strong>Letters cannot
+                                be
+                                reused within the same word.</strong></p>
+                    </div>
+
+                    <!-- Card 2: Strategy -->
+                    <div class="instruction-card">
+                        <div class="card-image-container">
+                            <img src="/brain/03e22400-5367-4b19-8d15-40b39b1e595c/instruction_submit_1769388490012.png"
+                                alt="Score Points" class="card-image">
+                        </div>
+                        <h3>Length Matters</h3>
+                        <p>Longer words grant exponential points. Look for prefixes and suffixes to maximize your score.
+                        </p>
+                    </div>
+
+                    <!-- Card 3: Win -->
+                    <div class="instruction-card">
+                        <div class="card-image-container">
+                            <img src="/brain/03e22400-5367-4b19-8d15-40b39b1e595c/instruction_win_1769388503200.png"
+                                alt="Win Trophies" class="card-image">
+                        </div>
+                        <h3>Rise to Logic</h3>
+                        <p>Compete in real-time. Outscore opponents in the room or climb the global leaderboards.</p>
+                    </div>
+                </div>
+
+                <!-- FAQ Section -->
+                <div class="faq-section">
+                    <div class="faq-item">
+                        <div class="faq-question">What do the colored words under "All Words" mean?</div>
+                        <div class="faq-answer">
+                            <p><span class="color-word bonus">Green word</span> - <strong>Bonus word:</strong> Awarded 5
+                                extra points if found.</p>
+                            <p><span class="color-word found">Blue word</span> - <strong>Found word:</strong> A word you
+                                have successfully discovered.</p>
+                            <p><span class="color-word csw">Gold word</span> - <strong>CSW-only word:</strong> A word
+                                valid in the CSW dictionary but not in NWL.</p>
+                            <p><span class="color-word missed">Red word</span> - <strong>Missed word:</strong> A word
+                                that was available on the board but you didn't find.</p>
+                            <p><span class="color-word check">Checkmarked word</span> - <strong>Discovered by
+                                    others:</strong> Somebody or multiple people found it. Their name will highlight a
+                                <span style="color: #f1c40f; font-weight: bold;">golden color</span> if you click on the
+                                checkmarked word. Conversely, you can click their name under "Players" and the words
+                                they found will highlight <span style="color: #3498db; font-weight: bold;">blue</span>.
+                            </p>
                         </div>
                     </div>
-                    <h3>Connect & Create</h3>
-                    <p>Drag your cursor across the grid, or swipe across your mobile device, or type in words. Link
-                        letters horizontally, vertically, or diagonally to forge your words. <strong>Letters cannot be
-                            reused within the same word.</strong></p>
-                </div>
 
-                <!-- Card 2: Strategy -->
-                <div class="instruction-card">
-                    <div class="card-image-container">
-                        <img src="/brain/03e22400-5367-4b19-8d15-40b39b1e595c/instruction_submit_1769388490012.png"
-                            alt="Score Points" class="card-image">
+                    <div class="faq-item">
+                        <div class="faq-question">Is there a more convenient way of viewing someone's profile?</div>
+                        <div class="faq-answer">
+                            <p>Yes. Click on the <strong>colored square</strong> indicating the user's approximate
+                                rating. A brief representation of their profile will appear. For more details about the
+                                user, use the <strong>Profile</strong> tool in the Tools menu.</p>
+                        </div>
                     </div>
-                    <h3>Length Matters</h3>
-                    <p>Longer words grant exponential points. Look for prefixes and suffixes to maximize your score.</p>
-                </div>
 
-                <!-- Card 3: Win -->
-                <div class="instruction-card">
-                    <div class="card-image-container">
-                        <img src="/brain/03e22400-5367-4b19-8d15-40b39b1e595c/instruction_win_1769388503200.png"
-                            alt="Win Trophies" class="card-image">
+                    <div class="faq-item">
+                        <div class="faq-question">What do the game modes mean? (Accumulative, First Come First Serve,
+                            Split Points)</div>
+                        <div class="faq-answer">
+                            <p><strong>Accumulative:</strong> A solitary pursuit of vocabulary excellence within a
+                                shared arena. Players compete to discover as many words as possible on the same board,
+                                with their scores building steadily over time. It is a marathon of the mind where
+                                persistence and depth of knowledge are the true hallmarks of a champion.</p>
+                            <p><strong>First Come First Serve (FCFS):</strong> A high-stakes race where the speed of
+                                your eyes is as vital as the depth of your lexicon. Once a word is claimed, it vanishes
+                                from the board for all others. Every second counts as you scramble to snatch words
+                                before your rivals do.</p>
+                            <p><strong>Split Points:</strong> A strategic collaborative challenge. All players hunt for
+                                the same words, but the value of each discovery is divided among those who find it.
+                                Unearthing rare, obscure words that others might overlook is the ultimate key to rising
+                                above the crowd.</p>
+                        </div>
                     </div>
-                    <h3>Rise to Logic</h3>
-                    <p>Compete in real-time. Outscore opponents in the room or climb the global leaderboards.</p>
+
+                    <div class="faq-item">
+                        <div class="faq-question">What do the icons beside the flags mean?</div>
+                        <div class="faq-answer">
+                            <p>The icons represent the method of word entry the user is currently using. These are:</p>
+                            <ul class="icon-list">
+                                <li><strong>⌨️ Typing:</strong> Entering words via keyboard interface.</li>
+                                <li><strong>🖱️ Mouse:</strong> Selecting letters by clicking or dragging with a mouse
+                                    or trackpad.</li>
+                                <li><strong>👆 Swiping:</strong> Connecting letters by swiping on a touch-screen mobile
+                                    device.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">What method is used to determine who gains or loses points and by how
+                            much? How does the rating system work?</div>
+                        <div class="faq-answer">
+                            <p>Our arena utilizes a sophisticated <strong>Proportional Performance system</strong>. Your
+                                rating change is determined by the synergy between three core factors:</p>
+                            <p><strong>1. The Burden of Expectations (Your Rating):</strong> Your current rating
+                                determines your "expected share" of the total points available in the room. A higher
+                                rating carries a heavier burden; to gain points, you must not only play well but exceed
+                                the performance predicted for someone of your skill level.</p>
+                            <p><strong>2. Collective Momentum (Number of Players):</strong> In every round, you are
+                                effectively competing against the entire field simultaneously. As the number of players
+                                increases, the pool of total points and the collective room rating create a more stable
+                                baseline. This rewards those who can consistently rise above the group's average
+                                performance.</p>
+                            <p><strong>3. The Performance Delta (Your Score):</strong> The system calculates an
+                                'Expected Score' by comparing your individual rating to the combined rating of everyone
+                                in the room. Your final rating shift—which is capped at <strong>+/- 16 points</strong>
+                                per round—is precisely determined by how significantly your actual score deviates from
+                                this expectation. Over-performing your prediction leads to a climb, while
+                                under-performing results in a correction.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">What do the different dictionaries mean?</div>
+                        <div class="faq-answer">
+                            <p><strong>NWL</strong> (NASPA Word List) is a refined subset of <strong>CSW</strong>
+                                (Collins Scrabble Words). CSW contains over 80,000 additional words, making it far more
+                                inclusive and offering a significantly broader challenge for serious wordsmiths.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">Why are certain parameters random after each game?</div>
+                        <div class="faq-answer">
+                            <p>To ensure that every descent into the board is a fresh journey, we embrace the
+                                <strong>"Spinner" system</strong>. While the core <strong>dimensions</strong> and the
+                                relentless march of <strong>time</strong> remain constant anchors—ensuring a level
+                                playing field for every round—variables like the dictionary used, the minimum word
+                                length, and the difficulty of the letter pool shift dynamically. This ensures that no
+                                two games are ever truly the same, demanding versatility and adaptability from every
+                                wordsmith.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1668,7 +1786,6 @@
                     <div id="mini-profile-username" class="mini-username">Username</div>
                     <div id="mini-profile-fullname" class="mini-fullname">Full Name</div>
                 </div>
-                <div id="mini-profile-rating-badge" class="mini-rating-badge">1200</div>
             </div>
 
             <div class="mini-profile-stats">

@@ -13,56 +13,48 @@ const pages = {
 let currentUser = null;
 let selectedRoom = null;
 
-// Define standardized rating ranges globaly for reuse
+// Define standardized rating ranges globaly for reuse with prestigious tier names
 const RATING_RANGES = [
-    // --- THE CLIMB (1 - 1399) ---
-    // Greens (1 - 699): The Foundation
-    { min: 1, max: 99, color: '#e6ffe6', label: '1 - 99' },
-    { min: 100, max: 199, color: '#ccffcc', label: '100 - 199' },
-    { min: 200, max: 299, color: '#99ff99', label: '200 - 299' },
-    { min: 300, max: 399, color: '#66ff66', label: '300 - 399' },
-    { min: 400, max: 499, color: '#33ff33', label: '400 - 499' },
-    { min: 500, max: 599, color: '#00ff00', label: '500 - 599' },
-    { min: 600, max: 699, color: '#00cc00', label: '600 - 699' },
+    { min: 1, max: 99, color: '#e6ffe6', label: '1 - 99', name: 'Aspirant' },
+    { min: 100, max: 199, color: '#ccffcc', label: '100 - 199', name: 'Novitiate' },
+    { min: 200, max: 299, color: '#99ff99', label: '200 - 299', name: 'Student' },
+    { min: 300, max: 399, color: '#66ff66', label: '300 - 399', name: 'Academic' },
+    { min: 400, max: 499, color: '#33ff33', label: '400 - 499', name: 'Practitioner' },
+    { min: 500, max: 599, color: '#00ff00', label: '500 - 599', name: 'Adept' },
+    { min: 600, max: 699, color: '#00cc00', label: '600 - 699', name: 'Specialist' },
 
-    // Blues (700 - 1399): The Sky & Ocean
-    { min: 700, max: 799, color: '#66ccff', label: '700 - 799' }, // distinctly blue
-    { min: 800, max: 899, color: '#33bbff', label: '800 - 899' },
-    { min: 900, max: 999, color: '#00aaff', label: '900 - 999' },
-    { min: 1000, max: 1099, color: '#0088ff', label: '1000 - 1099' },
-    { min: 1100, max: 1199, color: '#0066ff', label: '1100 - 1199' },
-    { min: 1200, max: 1299, color: '#0044ff', label: '1200 - 1299' },
-    { min: 1300, max: 1399, color: '#0000ff', label: '1300 - 1399' },
+    { min: 700, max: 799, color: '#66ccff', label: '700 - 799', name: 'Scholar' },
+    { min: 800, max: 899, color: '#33bbff', label: '800 - 899', name: 'Linguist' },
+    { min: 900, max: 999, color: '#00aaff', label: '900 - 999', name: 'Philologist' },
+    { min: 1000, max: 1099, color: '#0088ff', label: '1000 - 1099', name: 'Etymologist' },
+    { min: 1100, max: 1199, color: '#0066ff', label: '1100 - 1199', name: 'Lexicographer' },
+    { min: 1200, max: 1299, color: '#0044ff', label: '1200 - 1299', name: 'Savant' },
+    { min: 1300, max: 1399, color: '#0000ff', label: '1300 - 1399', name: 'Scribe' },
 
-    // --- THE HEAT (1400 - 2499) ---
-    // Yellows
-    { min: 1400, max: 1499, color: '#ffff66', label: '1400 - 1499' },
-    { min: 1500, max: 1599, color: '#ffff00', label: '1500 - 1599' },
-    { min: 1600, max: 1699, color: '#ffcc00', label: '1600 - 1699' },
-    { min: 1700, max: 1799, color: '#ffaa00', label: '1700 - 1799' },
+    { min: 1400, max: 1499, color: '#ffff66', label: '1400 - 1499', name: 'Wordsmith' },
+    { min: 1500, max: 1599, color: '#ffff00', label: '1500 - 1599', name: 'Artisan' },
+    { min: 1600, max: 1699, color: '#ffcc00', label: '1600 - 1699', name: 'Virtuoso' },
+    { min: 1700, max: 1799, color: '#ffaa00', label: '1700 - 1799', name: 'Journeyman' },
 
-    // Oranges
-    { min: 1800, max: 1899, color: '#ff8800', label: '1800 - 1899' },
-    { min: 1900, max: 1999, color: '#ff6600', label: '1900 - 1999' },
-    { min: 2000, max: 2099, color: '#ff4400', label: '2000 - 2099' },
-    { min: 2100, max: 2199, color: '#ff2200', label: '2100 - 2199' },
+    { min: 1800, max: 1899, color: '#ff8800', label: '1800 - 1899', name: 'Master' },
+    { min: 1900, max: 1999, color: '#ff6600', label: '1900 - 1999', name: 'Maven' },
+    { min: 2000, max: 2099, color: '#ff4400', label: '2000 - 2099', name: 'Eminence' },
+    { min: 2100, max: 2199, color: '#ff2200', label: '2100 - 2199', name: 'Grandmaster' },
 
-    // Reds
-    { min: 2200, max: 2299, color: '#ff0000', label: '2200 - 2299' },
-    { min: 2300, max: 2399, color: '#e60000', label: '2300 - 2399' },
-    { min: 2400, max: 2499, color: '#cc0000', label: '2400 - 2499' },
+    { min: 2200, max: 2299, color: '#ff0000', label: '2200 - 2299', name: 'Elite' },
+    { min: 2300, max: 2399, color: '#e60000', label: '2300 - 2399', name: 'Paragon' },
+    { min: 2400, max: 2499, color: '#cc0000', label: '2400 - 2499', name: 'Luminary' },
 
-    // --- THE VOID (2500 - 6000+) ---
-    { min: 2500, max: 2599, color: '#b30000', label: '2500 - 2599' },
-    { min: 2600, max: 2699, color: '#990000', label: '2600 - 2699' },
-    { min: 2700, max: 2799, color: '#800000', label: '2700 - 2799' },
-    { min: 2800, max: 2899, color: '#660000', label: '2800 - 2899' },
-    { min: 2900, max: 2999, color: '#4d0000', label: '2900 - 2999' },
+    { min: 2500, max: 2599, color: '#b30000', label: '2500 - 2599', name: 'Exemplar' },
+    { min: 2600, max: 2699, color: '#990000', label: '2600 - 2699', name: 'Sovereign' },
+    { min: 2700, max: 2799, color: '#800000', label: '2700 - 2799', name: 'Arbiter' },
+    { min: 2800, max: 2899, color: '#660000', label: '2800 - 2899', name: 'Oracle' },
+    { min: 2900, max: 2999, color: '#4d0000', label: '2900 - 2999', name: 'Archon' },
 
-    { min: 3000, max: 3999, color: '#330000', label: '3000 - 3999' },
-    { min: 4000, max: 4999, color: '#220000', label: '4000 - 4999' },
-    { min: 5000, max: 5999, color: '#110000', label: '5000 - 5999' },
-    { min: 6000, max: 99999, color: '#000000', label: '6000+' }
+    { min: 3000, max: 3999, color: '#330000', label: '3000 - 3999', name: 'Titan' },
+    { min: 4000, max: 4999, color: '#220000', label: '4000 - 4999', name: 'Vanguard' },
+    { min: 5000, max: 5999, color: '#110000', label: '5000 - 5999', name: 'Legend' },
+    { min: 6000, max: 99999, color: '#000000', label: '6000+', name: 'Lexiarch' }
 ];
 
 // Initialize app
@@ -728,8 +720,9 @@ function renderGameColorBar() {
         const segment = document.createElement('div');
         segment.className = 'color-bar-segment';
         segment.style.backgroundColor = range.color;
-        // Tooltip text
-        segment.setAttribute('data-label', `${range.label}`);
+        // Set both attributes for the multiline tooltip
+        segment.setAttribute('data-name', range.name);
+        segment.setAttribute('data-range', range.label);
         bar.appendChild(segment);
     });
 }
