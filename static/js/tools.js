@@ -1021,33 +1021,77 @@ async function renderProfile(user) {
         }
     }
 
-    // --- Render Round History ---
+    // Helper for rendering a dense data row for a round
+    window.renderRoundGridItem = (round) => {
+        const gameTypeLabel = round.game_type === 'split' ? 'Split' :
+            round.game_type === 'fcfs' ? 'FCFS' : 'Acc';
+        const typeClass = `history-type-${round.game_type}`;
+        const dims = round.dimensions || (round.board ? `${round.board.length}x${round.board[0].length}` : '4x4');
+
+        return `
+        <div class="history-grid-item" onclick="watchRoundHistory('${round.room_id}', ${round.round_number}, true)" style="display: grid; grid-template-columns: 100px 70px 90px 70px 110px 100px 1fr 100px; gap:10px; padding: 14px 20px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 8px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden;">
+            <div class="history-mode-tag ${typeClass}" style="font-size: 0.65rem; padding: 3px 8px; border-radius: 6px; text-align: center; width: fit-content; font-weight: 800; text-transform: uppercase;">${gameTypeLabel}</div>
+            <div style="font-family: monospace; font-size: 0.8rem; color: rgba(255,255,255,0.7); font-weight: 700;">${dims}</div>
+            <div style="font-weight: 900; color: #fff; font-size: 1rem;">${round.total_score} <small style="font-size: 0.6rem; opacity: 0.5;">PTS</small></div>
+            <div style="font-weight: 900; color: ${round.performance_value >= 140 ? '#60a5fa' : 'rgba(255,255,255,0.2)'}; font-size: 0.9rem;">${round.performance_value || '-'}</div>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+                <span style="color: #fff; font-size: 0.75rem; font-weight: 700;">${round.num_words} words</span>
+                <span style="color: rgba(255,255,255,0.3); font-size: 0.6rem;">Avg: ${round.avg_len}</span>
+            </div>
+            <div style="color: #ffd700; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.5px;" title="${round.top_word}">${round.top_word}</div>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-size: 0.75rem; color: #60a5fa; font-weight: 700; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${round.room_id}</span>
+                <span style="font-size: 0.65rem; color: rgba(255,255,255,0.3); font-weight: 600;">Str: ${round.room_strength || '-'}</span>
+            </div>
+            <div style="text-align: right;">
+                <button class="history-snap-btn" title="View Snapshot"
+                         onclick="event.stopPropagation(); watchRoundHistory('${round.room_id}', ${round.round_number}, true)"
+                         style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 6px 10px; cursor: pointer;">
+                    <span style="font-size: 1.1rem;">📷</span>
+                </button>
+            </div>
+        </div>
+        `;
+    };
+
+    window.roundGridHeader = `
+        <div class="history-grid-header" style="display: grid; grid-template-columns: 100px 70px 90px 70px 110px 100px 1fr 100px; gap:10px; padding: 12px 20px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 12px; font-size: 0.7rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+            <div>Mode</div>
+            <div>Board</div>
+            <div>Score</div>
+            <div>Perf</div>
+            <div>Stats</div>
+            <div>Top Word</div>
+            <div>Room / Str</div>
+            <div style="text-align: right;">Snapshot</div>
+        </div>
+    `;
+
+    // --- Render Round History & Exceptional Rounds ---
     const historyList = document.getElementById('profile-history-list');
+    const exceptionalList = document.getElementById('profile-exceptional-list');
+
     if (historyList) {
         if (!user.recent_rounds || user.recent_rounds.length === 0) {
             historyList.innerHTML = '<p class="placeholder">No recently tracked rounds.</p>';
         } else {
-            historyList.innerHTML = user.recent_rounds.map(round => {
-                const gameTypeLabel = round.game_type === 'split' ? 'Split Points' :
-                    round.game_type === 'fcfs' ? 'FCFS' : 'Accumulative';
-                const typeClass = `history-type-${round.game_type}`;
-
-                const dimensions = `${round.board.length}x${round.board[0].length}`;
-                return `
-                <div class="history-item">
-                    <div class="history-info">
-                        <span class="history-mode ${typeClass}">${gameTypeLabel}</span>
-                        <span class="history-config">${dimensions}</span>
-                        <span class="history-room">${round.room_id}</span>
-                        <span class="history-date">${new Date(round.timestamp).toLocaleDateString()}</span>
-                    </div>
-                    <div class="history-score">${round.total_score} pts</div>
-                    <button class="history-review-btn" onclick="watchRoundHistory('${round.room_id}', ${round.round_number})">Review</button>
-                </div>
-                `;
-            }).join('');
+            const displayRounds = user.recent_rounds.slice(0, 10);
+            historyList.innerHTML = window.roundGridHeader + displayRounds.map(r => window.renderRoundGridItem(r)).join('');
         }
     }
+
+    if (exceptionalList) {
+        if (!user.exceptional_rounds || user.exceptional_rounds.length === 0) {
+            exceptionalList.innerHTML = '<p class="placeholder">No exceptional achievements recorded yet.</p>';
+        } else {
+            // Limits to 50 rows as requested
+            const displayRounds = user.exceptional_rounds.slice(0, 50);
+            exceptionalList.innerHTML = window.roundGridHeader + displayRounds.map(r => window.renderRoundGridItem(r)).join('');
+        }
+    }
+
+    // Cache all rounds for review (both recent and exceptional)
+    window.lastRenderedRounds = [...(user.recent_rounds || []), ...(user.exceptional_rounds || [])];
 
     // Render Ratings Grid (32 setups)
     renderRatingsGrid(user.config_ratings || {}, user);
@@ -1117,14 +1161,28 @@ function findWordPath(board, word) {
 }
 
 // Global function to review a round (Legitimacy Walkthrough)
-window.watchRoundHistory = function (roomId, roundNum) {
+window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false) {
     console.log(`Reviewing Round ${roundNum} from Room ${roomId}`);
 
-    const rounds = window.lastRenderedRounds || [];
-    const round = rounds.find(r => r.room_id == roomId && r.round_number == roundNum);
+    let rounds = window.lastRenderedRounds || [];
+    let round = rounds.find(r => r.room_id == roomId && r.round_number == roundNum);
+
+    // FALLBACK: If not in profile rounds, check the Lobby's winners_history
+    if (!round && window.lastGameState && window.lastGameState.winners_history) {
+        const foundInLobby = window.lastGameState.winners_history.find(h => h.round == roundNum);
+        if (foundInLobby && foundInLobby.board) {
+            console.log(`[Review] Found round ${roundNum} in Lobby winners_history`);
+            round = {
+                ...foundInLobby,
+                room_id: roomId,
+                round_number: foundInLobby.round,
+                total_score: foundInLobby.score
+            };
+        }
+    }
 
     if (!round) {
-        alert("Round details not available in cache. Try refreshing the profile.");
+        alert("Round details not available. This round may have happened before the snapshot system was enabled or you need to refresh.");
         return;
     }
 
@@ -1168,6 +1226,29 @@ window.watchRoundHistory = function (roomId, roundNum) {
         `).join('');
     }
 
+    // 2b. Render Players List (Leaderboard Snapshot)
+    const playersList = document.getElementById('integrated-players-list');
+    const playersBody = document.getElementById('integrated-players-body');
+    if (playersList && playersBody) {
+        if (round.all_players && round.all_players.length > 0) {
+            playersList.classList.remove('hidden');
+            playersBody.innerHTML = round.all_players.map((p, idx) => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; ${idx === 0 ? 'border-bottom: 2px solid rgba(255,215,0,0.3); padding-bottom: 8px;' : ''}">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 0.7rem; color: ${idx === 0 ? '#ffd700' : 'rgba(255,255,255,0.4)'}; font-weight: 800;">#${idx + 1}</span>
+                        <span style="font-weight: 800; color: ${idx === 0 ? '#fff' : 'rgba(255,255,255,0.7)'}; font-size: 0.85rem;">${p.username}</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 900; color: ${idx === 0 ? '#ffd700' : '#fff'}; font-size: 0.9rem;">${p.score}</div>
+                        <div style="font-size: 0.6rem; color: rgba(255,255,255,0.3); font-weight: 700;">${p.rating || 1200}</div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            playersList.classList.add('hidden');
+        }
+    }
+
     // 3. Playback Logic
     // Fix: the data structure might have 'total_score' or 'score'
     const words = round.words || [];
@@ -1196,6 +1277,13 @@ window.watchRoundHistory = function (roomId, roundNum) {
         skipBtn.classList.add('hidden');
         progressUI.classList.add('hidden');
     };
+
+    // IF SNAPSHOT MODE: Jump straight to end
+    if (isSnapshot) {
+        showAllWords();
+        startBtn.classList.add('hidden');
+        return;
+    }
 
     startBtn.onclick = () => {
         startBtn.classList.add('hidden');
@@ -1344,62 +1432,94 @@ function renderRatingsGrid(configRatings, user = null) {
     const grid = document.getElementById('profile-ratings-grid');
     if (!grid) return;
 
+    // Cache the original data and user on the element if not already there
+    if (configRatings) grid._configRatings = configRatings;
+    if (user) grid._user = user;
+
+    const ratings = grid._configRatings || {};
+    const u = grid._user || null;
+
     grid.innerHTML = '';
+
+    const filterMode = document.getElementById('rankings-filter-mode')?.value || 'all';
+    const filterDims = document.getElementById('rankings-filter-dims')?.value || 'all';
+    const filterTime = document.getElementById('rankings-filter-time')?.value || 'all';
 
     const modes = ['accumulative', 'fcfs', 'split'];
     const boards = ['4x4', '4x6', '5x7', '6x8'];
-    const accTimes = [45, 180, 600, 86400];
+    const accTimes = [45, 180, 600]; // Removed 86400 (24h)
     const otherTimes = [45, 180];
 
     const formatTimeShort = (s) => {
         if (s === 45) return '45s';
         if (s === 180) return '3m';
         if (s === 600) return '10m';
-        if (s === 86400) return '24h';
         return s + 's';
     };
 
+    let visibleCount = 0;
+
     modes.forEach(mode => {
+        if (filterMode !== 'all' && mode !== filterMode) return;
+
         const times = (mode === 'accumulative') ? accTimes : otherTimes;
         boards.forEach(board => {
-            times.forEach(time => {
-                const configKey = `${mode}|${board}|${time}`;
-                const rating = configRatings[configKey] || 1200;
+            if (filterDims !== 'all' && board !== filterDims) return;
 
-                // Color for this specific rating using central helper
+            times.forEach(time => {
+                if (filterTime !== 'all' && String(time) !== filterTime) return;
+
+                const configKey = `${mode}|${board}|${time}`;
+                const rating = ratings[configKey] || 1200;
+
                 const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#b3b3b3';
 
                 const box = document.createElement('div');
                 box.className = 'rating-box clickable';
                 box.title = "Click to view achievements for this room type";
                 box.innerHTML = `
-                    <div class="rating-box-swatch" style="background: ${rColor}; box-shadow: 0 0 15px ${rColor}55"></div>
+                    <div class="rating-box-swatch" style="background: ${rColor};"></div>
                     <div class="rating-box-mode">${mode}</div>
                     <div class="rating-box-config">${board} | ${formatTimeShort(time)}</div>
                     <div class="rating-box-value" style="color: ${rColor}">${rating}</div>
+                    <div class="rating-box-snapshot" title="View Best Round Snapshot" 
+                         style="margin-left: auto; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;"
+                         onclick="event.stopPropagation(); if('${u?.username}') { fetch('/api/room_achievements?username=${u.username}&mode=${mode}&board=${board}&time=${time}').then(r => r.json()).then(d => { if(d.stats && d.stats.exceptional_round) { if(!window.lastRenderedRounds) window.lastRenderedRounds=[]; window.lastRenderedRounds.push(d.stats.exceptional_round); window.watchRoundHistory(d.stats.exceptional_round.room_id, d.stats.exceptional_round.round_number, true); } }); }">
+                        <span style="font-size: 1rem;">📷</span>
+                        <span style="font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: rgba(255,255,255,0.5);">Snap</span>
+                    </div>
                 `;
 
-                // Setup Click on Swatch to show image
-                const swatch = box.querySelector('.rating-box-swatch');
-                if (swatch && user && user.avatar_url) {
-                    swatch.title = "View user image";
-                    swatch.onclick = (e) => {
-                        e.stopPropagation();
-                        showImageLightbox(user.avatar_url, `${user.username}'s Profile Image`);
-                    };
-                }
-
-                // Click on box to show achievements
                 box.onclick = () => {
-                    if (user && user.username) {
-                        showRoomAchievements(user.username, mode, board, time);
+                    if (u && u.username) {
+                        showRoomAchievements(u.username, mode, board, time);
                     }
                 };
 
                 grid.appendChild(box);
+                visibleCount++;
             });
         });
     });
+
+    if (visibleCount === 0) {
+        grid.innerHTML = '<p class="placeholder" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: rgba(255,255,255,0.2);">No room types match the selected filters.</p>';
+    }
+
+    // Setup filter listeners once
+    if (!grid._filtersInitialized) {
+        const selects = ['rankings-filter-mode', 'rankings-filter-dims', 'rankings-filter-time'];
+        selects.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.onchange = () => renderRatingsGrid();
+                // Hover effect for select
+                el.onmouseenter = () => el.style.borderColor = 'rgba(255,255,255,0.3)';
+                el.onmouseleave = () => el.style.borderColor = 'rgba(255,255,255,0.1)';
+            }
+        });
+        grid._filtersInitialized = true;
+    }
 }
 
 function setupImageLightbox() {
@@ -1422,9 +1542,14 @@ function setupImageLightbox() {
     const achModal = document.getElementById('room-achievements-modal');
     const achClose = document.getElementById('achievement-modal-close');
     if (achModal && achClose) {
-        achClose.onclick = () => achModal.classList.add('hidden');
+        const close = () => {
+            achModal.classList.add('hidden');
+            achModal.style.display = 'none';
+            achModal.style.opacity = '0';
+        };
+        achClose.onclick = close;
         achModal.onclick = (e) => {
-            if (e.target === achModal) achModal.classList.add('hidden');
+            if (e.target === achModal) close();
         };
     }
 }
@@ -1440,6 +1565,8 @@ async function showRoomAchievements(username, mode, board, time) {
 
     // Show loading state
     modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    modal.style.opacity = '1';
 
     try {
         const response = await fetch(`/api/profile/${username}/achievements/${mode}/${board}/${time}`);
@@ -1453,9 +1580,16 @@ async function showRoomAchievements(username, mode, board, time) {
         if (!data.stats) {
             // No history for this config
             const fields = ['ach-high-score', 'ach-max-words', 'ach-longest-word', 'ach-best-word',
-                'ach-games-played', 'ach-wins', 'ach-win-rate', 'ach-total-words', 'ach-total-points'];
-            fields.forEach(f => document.getElementById(f).textContent = '-');
+                'ach-games-played', 'ach-wins', 'ach-win-rate', 'ach-total-words', 'ach-total-points',
+                'ach-exc-ratio', 'ach-exc-score', 'ach-exc-date'];
+            fields.forEach(f => {
+                const el = document.getElementById(f);
+                if (el) el.textContent = '-';
+            });
             document.getElementById('ach-total-points').textContent = '0';
+
+            document.getElementById('exceptional-round-info')?.classList.add('hidden');
+            document.getElementById('no-exceptional-msg')?.classList.remove('hidden');
             return;
         }
 
@@ -1471,6 +1605,106 @@ async function showRoomAchievements(username, mode, board, time) {
         document.getElementById('ach-win-rate').textContent = stats.win_rate + '%';
         document.getElementById('ach-total-words').textContent = stats.total_words;
         document.getElementById('ach-total-points').textContent = stats.total_score.toLocaleString();
+
+        // Update Averages and Totals
+        document.getElementById('ach-avg-perf').textContent = stats.avg_perf || '-';
+        document.getElementById('ach-avg-winrate').textContent = (stats.win_rate || 0) + '%';
+        document.getElementById('ach-total-games').textContent = stats.games_played || '0';
+        document.getElementById('ach-avg-score').textContent = (stats.avg_score || 0).toLocaleString();
+        document.getElementById('ach-avg-words').textContent = stats.avg_words || '0';
+
+        const renderAchRow = (r, cols) => {
+            // Cache if not present
+            if (!window.lastRenderedRounds) window.lastRenderedRounds = [];
+            if (!window.lastRenderedRounds.find(cr => cr.room_id === r.room_id && cr.round_number === r.round_number)) {
+                window.lastRenderedRounds.push(r);
+            }
+
+            return `
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: background 0.2s;" 
+                onmouseenter="this.style.background='rgba(255,255,255,0.02)'" 
+                onmouseleave="this.style.background='transparent'" 
+                onclick="watchRoundHistory('${r.room_id}', ${r.round_number}, true); document.getElementById('room-achievements-modal').classList.add('hidden');">
+                ${cols.map(c => `<td style="padding: 10px 15px; ${c.style || ''}">${c.val}</td>`).join('')}
+                <td style="padding: 10px 15px; text-align: right;"><div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 8px; display: inline-block;">📷</div></td>
+            </tr>`;
+        };
+
+        // 1. Exceptional Performances
+        const tablePerf = document.getElementById('ach-table-perf');
+        if (tablePerf && stats.exceptional_rounds) {
+            tablePerf.innerHTML = stats.exceptional_rounds.map(r => renderAchRow(r, [
+                { val: r.performance_value, style: 'font-weight: 800; color: #60a5fa;' },
+                { val: r.ratio + 'x', style: 'color: rgba(255,255,255,0.6);' },
+                { val: r.total_score, style: 'font-weight: 700;' },
+                { val: `<div style="font-size: 0.75rem;">${r.num_words} words</div><div style="font-size: 0.6rem; color: rgba(255,255,255,0.3);">${r.top_word}</div>` },
+                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+            ])).join('');
+        }
+
+        // 2. Winning Rounds
+        const tableWins = document.getElementById('ach-table-wins');
+        if (tableWins && stats.winning_rounds) {
+            tableWins.innerHTML = stats.winning_rounds.map(r => renderAchRow(r, [
+                { val: r.total_score, style: 'font-weight: 800; color: #4ade80;' },
+                { val: r.performance_value, style: 'font-weight: 700;' },
+                { val: r.all_players.length, style: 'color: rgba(255,255,255,0.5);' },
+                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+            ])).join('');
+        }
+
+        // 3. Recent Rounds
+        const tableRecent = document.getElementById('ach-table-recent');
+        if (tableRecent && stats.recent_rounds) {
+            tableRecent.innerHTML = stats.recent_rounds.map(r => renderAchRow(r, [
+                { val: r.total_score, style: 'font-weight: 700;' },
+                { val: r.is_win ? '<span style="color:#4ade80">WIN</span>' : '<span style="color:rgba(255,255,255,0.3)">-</span>', style: 'font-weight: 800;' },
+                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+            ])).join('');
+        }
+
+        // 4. Best Scores
+        const tableScores = document.getElementById('ach-table-scores');
+        if (tableScores && stats.best_scores) {
+            tableScores.innerHTML = stats.best_scores.map(r => renderAchRow(r, [
+                { val: r.total_score, style: 'font-weight: 800; color: #ffd700;' },
+                { val: r.performance_value, style: 'font-weight: 700;' },
+                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+            ])).join('');
+        }
+
+        // 5. Best Word Counts
+        const tableWordCounts = document.getElementById('ach-table-wordcounts');
+        if (tableWordCounts && stats.best_word_counts) {
+            tableWordCounts.innerHTML = stats.best_word_counts.map(r => renderAchRow(r, [
+                { val: r.num_words, style: 'font-weight: 800; color: #a5b4fc;' },
+                { val: r.avg_len + ' len', style: 'color: rgba(255,255,255,0.6);' },
+                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+            ])).join('');
+        }
+
+        // 6. Best Words (Individual)
+        const tableWords = document.getElementById('ach-table-words');
+        if (tableWords && stats.best_words) {
+            tableWords.innerHTML = stats.best_words.map(w => {
+                const date = new Date(w.timestamp);
+                return `
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: background 0.2s;" 
+                    onmouseenter="this.style.background='rgba(255,255,255,0.02)'" 
+                    onmouseleave="this.style.background='transparent'" 
+                    onclick="watchRoundHistory('${w.room_id}', ${w.round_number}, true); document.getElementById('room-achievements-modal').classList.add('hidden');">
+                    <td style="padding: 10px 15px; font-weight: 800; color: #fff; text-transform: uppercase;">${w.word}</td>
+                    <td style="padding: 10px 15px; font-weight: 700; color: #ffd700;">${w.points}</td>
+                    <td style="padding: 10px 15px; color: rgba(255,255,255,0.5);">${w.word.length}</td>
+                    <td style="padding: 10px 15px; font-size: 0.75rem; color: rgba(255,255,255,0.4);">${dateToShort(date)}</td>
+                    <td style="padding: 10px 15px; text-align: right;"><div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 8px; display: inline-block;">📷</div></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function dateToShort(d) {
+            return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
+        }
 
     } catch (err) {
         console.error("Failed to fetch achievements:", err);

@@ -463,10 +463,23 @@ class GameRoom:
             if len(active_competitors) > 1:
                 max_score = max(p.score for p in active_competitors)
                 winners_data = [{'username': p.username, 'rating': p.rating} for p in active_competitors if p.score == max_score]
+                
+                # Capture winners' words for the 'Screenshot' view
+                # We take words from the first winner (usually solo, or shared board)
+                winner_words = []
+                for p in active_competitors:
+                    if p.score == max_score:
+                        winner_words = [{'word': w['word'], 'points': w.get('points', 0), 'timestamp': w.get('time', 0)} for w in p.submitted_words]
+                        break
+
                 self.winners_history.insert(0, {
                     'round': self.current_round,
                     'winners': winners_data,
-                    'score': max_score
+                    'all_players': sorted([{'username': p.username, 'score': p.score, 'rating': p.rating} for p in active_competitors], key=lambda x: x['score'], reverse=True),
+                    'score': max_score,
+                    'board': self.board,
+                    'words': winner_words,
+                    'timestamp': int(time.time() * 1000)
                 })
                 # Keep last 50
                 if len(self.winners_history) > 50:
@@ -1220,9 +1233,9 @@ class RoomManager:
                 } for w in p.submitted_words]
                 
                 conn.execute('''
-                    INSERT INTO round_history (user_id, room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, timestamp)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (p.user_id, room.room_id, room.game_type, room.current_round, board_json, json.dumps(words_data), p.score, room.round_start_time, room.time_limit, timestamp))
+                    INSERT INTO round_history (user_id, room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, timestamp, user_rating)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (p.user_id, room.room_id, room.game_type, room.current_round, board_json, json.dumps(words_data), p.score, room.round_start_time, room.time_limit, timestamp, p.rating))
             
             room.last_saved_round = room.current_round
             conn.commit()

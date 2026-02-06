@@ -134,17 +134,6 @@
                                 <button class="game-btn acc-btn" data-game="accumulative" data-time="600"
                                     data-board="6x8">Start [0]</button>
                             </div>
-                            <div class="matrix-row">
-                                <div class="time-label">24h</div>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
-                                    data-board="4x4">Start [0]</button>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
-                                    data-board="4x6">Start [0]</button>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
-                                    data-board="5x7">Start [0]</button>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
-                                    data-board="6x8">Start [0]</button>
-                            </div>
                         </div>
                     </div>
 
@@ -666,6 +655,8 @@
                                     <div class="profile-tabs-header">
                                         <button class="profile-tab-toggle active" data-tab="rankings">Skill
                                             Rankings</button>
+                                        <button class="profile-tab-toggle" data-tab="exceptional">Exceptional
+                                            Rounds</button>
                                         <button class="profile-tab-toggle" data-tab="history">Round Reviews</button>
                                         <button id="profile-tab-toggle-friends" class="profile-tab-toggle hidden"
                                             data-tab="friends">Friends</button>
@@ -673,8 +664,57 @@
 
                                     <div id="profile-tab-rankings" class="profile-tab-pane active">
                                         <div class="profile-ratings-section">
+                                            <div class="ratings-filters"
+                                                style="display: flex; gap: 15px; margin-bottom: 20px; background: rgba(255,255,255,0.03); padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); align-items: center;">
+                                                <div class="filter-group">
+                                                    <label
+                                                        style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Game
+                                                        Mode</label>
+                                                    <select id="rankings-filter-mode"
+                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
+                                                        <option value="all">All Modes</option>
+                                                        <option value="accumulative">Accumulative</option>
+                                                        <option value="fcfs">First Come First Serve</option>
+                                                        <option value="split">Split Points</option>
+                                                    </select>
+                                                </div>
+                                                <div class="filter-group">
+                                                    <label
+                                                        style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Dimensions</label>
+                                                    <select id="rankings-filter-dims"
+                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
+                                                        <option value="all">All Sizes</option>
+                                                        <option value="4x4">4x4</option>
+                                                        <option value="4x6">4x6</option>
+                                                        <option value="5x7">5x7</option>
+                                                        <option value="6x8">6x8</option>
+                                                    </select>
+                                                </div>
+                                                <div class="filter-group">
+                                                    <label
+                                                        style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Time
+                                                        Limit</label>
+                                                    <select id="rankings-filter-time"
+                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
+                                                        <option value="all">All Times</option>
+                                                        <option value="45">45 Seconds</option>
+                                                        <option value="180">3 Minutes</option>
+                                                        <option value="600">10 Minutes</option>
+                                                    </select>
+                                                </div>
+                                            </div>
                                             <div id="profile-ratings-grid" class="ratings-grid">
                                                 <!-- Populated by JS -->
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="profile-tab-exceptional" class="profile-tab-pane">
+                                        <div class="profile-history-section">
+                                            <div id="profile-exceptional-list" class="history-list">
+                                                <!-- Populated by JS -->
+                                                <p class="placeholder">Analyzing your most outstanding achievements...
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
@@ -726,6 +766,16 @@
                                                     <div id="integrated-board-container"
                                                         class="integrated-review-board">
                                                         <!-- Populated by JS -->
+                                                    </div>
+                                                    <div id="integrated-players-list" class="replay-players-list hidden"
+                                                        style="margin-top: 20px; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; border: 1px solid rgba(255,255,255,0.05);">
+                                                        <h4
+                                                            style="font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 12px; letter-spacing: 1.5px; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                                                            Round Participants</h4>
+                                                        <div id="integrated-players-body"
+                                                            style="display: flex; flex-direction: column; gap: 10px;">
+                                                            <!-- Populated by JS -->
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1873,6 +1923,219 @@
                     <div class="stat-item">
                         <span class="stat-label">Total Words</span>
                         <span class="stat-value" id="ach-total-words">-</span>
+                    </div>
+                </div>
+
+                <!-- Exceptional Performances -->
+                <div class="achievement-section" style="grid-column: 1 / -1;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Exceptional Performances</h3>
+                        <span
+                            style="font-size: 0.7rem; font-weight: 800; color: #60a5fa; text-transform: uppercase;">Average
+                            Perf: <span id="ach-avg-perf">-</span></span>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Perf</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Effect</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Score</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Word Stats</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-perf"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Winning Rounds -->
+                <div class="achievement-section" style="grid-column: 1 / -1;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Winning Rounds</h3>
+                        <span
+                            style="font-size: 0.7rem; font-weight: 800; color: #4ade80; text-transform: uppercase;">Win
+                            Rate: <span id="ach-avg-winrate">-</span></span>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Score</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Perf</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Opponents</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-wins"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Games Played (Recent) -->
+                <div class="achievement-section" style="grid-column: 1 / -1;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Games Played</h3>
+                        <span
+                            style="font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase;">Total:
+                            <span id="ach-total-games">-</span></span>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Score</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Result</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-recent"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Best Scores -->
+                <div class="achievement-section" style="grid-column: 1 / -1;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Best Scores</h3>
+                        <span
+                            style="font-size: 0.7rem; font-weight: 800; color: #ffd700; text-transform: uppercase;">Average
+                            Score: <span id="ach-avg-score">-</span></span>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Score</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Perf</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-scores"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Best Word Counts -->
+                <div class="achievement-section" style="grid-column: 1 / -1;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Best Word Counts</h3>
+                        <span
+                            style="font-size: 0.7rem; font-weight: 800; color: #a5b4fc; text-transform: uppercase;">Average
+                            Words: <span id="ach-avg-words">-</span></span>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Words</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Avg Len</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-wordcounts"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Best Words -->
+                <div class="achievement-section" style="grid-column: 1 / -1; margin-bottom: 20px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Best Individual Words</h3>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Word</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Points</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Length</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-words"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>

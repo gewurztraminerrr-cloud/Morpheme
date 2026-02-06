@@ -103,6 +103,14 @@ def init_db():
         except sqlite3.OperationalError:
             pass # Column likely exists
 
+    # MIGRATION: Add user_rating to round_history
+    try:
+        conn.execute('ALTER TABLE round_history ADD COLUMN user_rating INTEGER DEFAULT 1200')
+        conn.commit()
+        print("Migrated DB: Added user_rating column to round_history")
+    except sqlite3.OperationalError:
+        pass # Column likely exists
+
     # MIGRATION: Add round_history table
     try:
         conn.execute('''
@@ -475,27 +483,88 @@ def get_public_profile(username):
     cursor = conn.execute('SELECT config_key, rating FROM user_ratings WHERE user_id = ?', (user[0],))
     config_ratings = {row[0]: row[1] for row in cursor.fetchall()}
 
-    # Get last 5 rounds
+    # Get recent rounds (last 50)
     cursor = conn.execute('''
-        SELECT room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, timestamp
+        SELECT rh.room_id, rh.game_type, rh.round_number, rh.board_json, rh.words_json, rh.total_score, 
+               rh.round_start_time, rh.round_duration, rh.timestamp, rh.user_rating
+        FROM round_history rh
+        WHERE rh.user_id = ?
+        ORDER BY rh.timestamp DESC
+        LIMIT 10
+    ''', (user[0],))
+    rows = cursor.fetchall()
+    
+    # Also fetch ALL rounds to find 'one best per configuration' for Exceptional Rounds
+    cursor_all = conn.execute('''
+        SELECT room_id, game_type, round_number, board_json, words_json, total_score, 
+               round_start_time, round_duration, timestamp, user_rating
         FROM round_history
         WHERE user_id = ?
-        ORDER BY timestamp DESC
-        LIMIT 5
     ''', (user[0],))
-    recent_rounds = []
-    for row in cursor.fetchall():
-        recent_rounds.append({
-            'room_id': row[0],
-            'game_type': row[1],
-            'round_number': row[2],
-            'board': json.loads(row[3]),
-            'words': json.loads(row[4]),
-            'total_score': row[5],
-            'round_start_time': row[6],
-            'round_duration': row[7],
-            'timestamp': row[8]
-        })
+    all_rows = cursor_all.fetchall()
+    
+    # helper to process a row into a rich dict
+    def process_round_row(row, db_conn):
+        room_id, gtype, rnum, bjson, wjson, score, rstart, rdur, ts, urat = row
+        
+        # Get all players in this specific round to calculate performance
+        c_room = db_conn.execute('''
+            SELECT rh.total_score, rh.user_rating, u.username
+            FROM round_history rh
+            JOIN users u ON rh.user_id = u.id
+            WHERE rh.room_id = ? AND rh.round_number = ? AND rh.timestamp = ?
+        ''', (room_id, rnum, ts))
+        r_entries = c_room.fetchall()
+        
+        perf_val = 0
+        if len(r_entries) > 1:
+            tr_score = sum(e[0] for e in r_entries)
+            tr_rating = sum(e[1] for e in r_entries)
+            if tr_rating > 0 and tr_score > 0:
+                ratio = (score * tr_rating) / (tr_score * urat) if urat > 0 else 1.0
+                perf_val = int(ratio * 100)
+
+        words = json.loads(wjson)
+        num_words = len(words)
+        top_word = max(words, key=lambda x: x.get('points', 0))['word'] if words else "-"
+        avg_len = round(sum(len(w['word']) for w in words) / num_words, 1) if num_words > 0 else 0
+        room_strength = sum(e[1] for e in r_entries) if r_entries else urat
+        
+        board = json.loads(bjson)
+        dims = f"{len(board)}x{len(board[0])}" if board else "4x4"
+
+        return {
+            'room_id': room_id,
+            'game_type': gtype,
+            'round_number': rnum,
+            'board': board,
+            'dimensions': dims,
+            'words': words,
+            'num_words': num_words,
+            'top_word': top_word,
+            'avg_len': avg_len,
+            'total_score': score,
+            'performance_value': perf_val,
+            'room_strength': room_strength,
+            'round_start_time': rstart,
+            'round_duration': rdur,
+            'timestamp': ts,
+            'all_players': sorted([{'username': e[2], 'score': e[0], 'rating': e[1]} for e in r_entries], key=lambda x: x['score'], reverse=True)
+        }
+
+    recent_rounds = [process_round_row(r, conn) for r in rows]
+    
+    # Calculate one best per config
+    best_per_config = {} # key: (gtype, dims, dur)
+    for r in all_rows:
+        processed = process_round_row(r, conn)
+        key = (processed['game_type'], processed['dimensions'], processed['round_duration'])
+        if key not in best_per_config or processed['performance_value'] > best_per_config[key]['performance_value']:
+            best_per_config[key] = processed
+            
+    # Sort by most recent on top as requested
+    exceptional_rounds = sorted(best_per_config.values(), key=lambda x: x['timestamp'], reverse=True)
+
     conn.close()
     
     # Get online status and current room info
@@ -516,6 +585,7 @@ def get_public_profile(username):
         'proof_url': user[12] if user[12] else None,
         'wins': user[13] if user[13] else 0,
         'recent_rounds': recent_rounds,
+        'exceptional_rounds': exceptional_rounds,
         'config_ratings': config_ratings,
         'status': {
             'is_online': session_info['is_online'] if session_info else False,
@@ -613,27 +683,106 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             'stats': None
         })
 
-    # 3. Win calculation
+    # 4. Wins and Exceptional Rounds Calculation
     wins = 0
+    best_performance = None
+    performance_list = []
+    
     for row in matching_rounds:
         r_id = row[3]
         r_num = row[4]
         ts = row[2]
+        my_score = row[1]
+        wjson = row[0]
+        bjson = row[5]
         
+        # Get all players in this specific round
         cursor = conn.execute('''
-            SELECT MAX(total_score) FROM round_history 
-            WHERE room_id = ? AND round_number = ? AND timestamp = ?
+            SELECT rh.total_score, rh.user_rating, u.username
+            FROM round_history rh
+            JOIN users u ON rh.user_id = u.id
+            WHERE rh.room_id = ? AND rh.round_number = ? AND rh.timestamp = ?
         ''', (r_id, r_num, ts))
-        max_s_row = cursor.fetchone()
-        max_s = max_s_row[0] if max_s_row else 0
         
-        if row[1] == max_s and max_s > 0:
+        room_entries = cursor.fetchall()
+        
+        # Win calculation
+        max_s = max(e[0] for e in room_entries) if room_entries else 0
+        if my_score == max_s and max_s > 0:
             wins += 1
+
+        # Calculate performance ratio
+        perf_val = 0
+        expected_score = 0
+        ratio = 0
+        if len(room_entries) > 1:
+            total_room_score = sum(e[0] for e in room_entries)
+            total_room_rating = sum(e[1] for e in room_entries)
+            
+            if total_room_rating > 0 and total_room_score > 0:
+                # Refetch my rating in round
+                c_arat = conn.execute('SELECT user_rating FROM round_history WHERE user_id = ? AND room_id = ? AND round_number = ? AND timestamp = ?', (user_id, r_id, r_num, ts))
+                r_arat = c_arat.fetchone()
+                urat = r_arat[0] if r_arat else 1200
+                
+                expected_score = (total_room_score / total_room_rating) * urat
+                if expected_score > 0:
+                    ratio = my_score / expected_score
+                    perf_val = int(ratio * 100)
+
+        words = json.loads(wjson)
+        num_words = len(words)
+        top_word = max(words, key=lambda x: x.get('points', 0))['word'] if words else "-"
+        avg_len = round(sum(len(w['word']) for w in words) / num_words, 1) if num_words > 0 else 0
+        room_strength = sum(e[1] for e in room_entries) if room_entries else rating
+
+        processed = {
+            'ratio': round(ratio, 2),
+            'performance_value': perf_val,
+            'total_score': my_score,
+            'expected': round(expected_score, 1),
+            'timestamp': ts,
+            'room_id': r_id,
+            'round_number': r_num,
+            'num_words': num_words,
+            'top_word': top_word,
+            'avg_len': avg_len,
+            'room_strength': room_strength,
+            'game_type': game_type,
+            'is_win': (my_score == max_s and max_s > 0),
+            'board': json.loads(bjson),
+            'all_players': sorted([{'username': e[2], 'score': e[0], 'rating': e[1]} for e in room_entries], key=lambda x: x['score'], reverse=True)
+        }
+        
+        performance_list.append(processed)
+        if not best_performance or ratio > best_performance['ratio']:
+            best_performance = processed
 
     conn.close()
     
-    games_played = len(matching_rounds)
+    # Calculate Averages
+    avg_score = round(sum(r['total_score'] for r in performance_list) / len(performance_list), 1) if performance_list else 0
+    avg_words = round(sum(r['num_words'] for r in performance_list) / len(performance_list), 1) if performance_list else 0
+    avg_perf = round(sum(r['performance_value'] for r in performance_list) / len(performance_list), 1) if performance_list else 0
+
+    # Prepare Sorted Lists (Limit 50)
+    best_perf_rounds = sorted(sorted(performance_list, key=lambda x: x['performance_value'], reverse=True)[:50], key=lambda x: x['timestamp'], reverse=True)
+    best_score_rounds = sorted(sorted(performance_list, key=lambda x: x['total_score'], reverse=True)[:50], key=lambda x: x['timestamp'], reverse=True)
+    best_word_count_rounds = sorted(sorted(performance_list, key=lambda x: x['num_words'], reverse=True)[:50], key=lambda x: x['timestamp'], reverse=True)
+    winning_rounds = [r for r in sorted(performance_list, key=lambda x: x['timestamp'], reverse=True) if r['is_win']][:50]
+    recent_rounds = sorted(performance_list, key=lambda x: x['timestamp'], reverse=True)[:50]
     
+    # Best Individual Words
+    all_words_list = []
+    for r in matching_rounds:
+        r_words = json.loads(r[0])
+        for w in r_words:
+            w['timestamp'] = r[2]
+            w['room_id'] = r[3]
+            w['round_number'] = r[4]
+            all_words_list.append(w)
+    best_individual_words = sorted(sorted(all_words_list, key=lambda x: x.get('points', 0), reverse=True)[:50], key=lambda x: x['timestamp'], reverse=True)
+
     return jsonify({
         'username': username,
         'config_key': config_key,
@@ -643,11 +792,21 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             'max_words': max_words,
             'longest_word': longest_word,
             'best_word': best_word,
+            'games_played': len(matching_rounds),
+            'wins': wins,
+            'win_rate': round((wins / len(matching_rounds)) * 100, 1) if matching_rounds else 0,
             'total_score': total_score,
             'total_words': total_words,
-            'games_played': games_played,
-            'wins': wins,
-            'win_rate': round((wins / games_played * 100), 1) if games_played > 0 else 0
+            'avg_score': avg_score,
+            'avg_words': avg_words,
+            'avg_perf': avg_perf,
+            'exceptional_round': best_performance,
+            'exceptional_rounds': best_perf_rounds, # User wants to see top perf
+            'best_scores': best_score_rounds,
+            'best_word_counts': best_word_count_rounds,
+            'winning_rounds': winning_rounds,
+            'recent_rounds': recent_rounds,
+            'best_words': best_individual_words
         }
     })
 

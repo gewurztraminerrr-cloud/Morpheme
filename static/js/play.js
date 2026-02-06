@@ -793,8 +793,9 @@ async function updateGameState() {
                                 ${winnersHtml}
                                 <span style="font-size: 0.7rem; opacity: 0.4; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">Round ${h.round}</span>
                             </div>
-                            <div style="background: rgba(255,215, 0, 0.1); border: 1px solid rgba(255,215, 0, 0.2); padding: 5px 10px; border-radius: 8px; font-weight: 900; color: #ffd700; font-size: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
-                                ${h.score}<span style="font-size: 0.65rem; opacity: 0.8; font-weight: 800; margin-left: 3px;">PTS</span>
+                            <div style="background: rgba(255,215, 0, 0.1); border: 1px solid rgba(255,215, 0, 0.2); padding: 5px 10px; border-radius: 8px; font-weight: 900; color: #ffd700; font-size: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 10px;">
+                                <span>${h.score}<span style="font-size: 0.65rem; opacity: 0.8; font-weight: 800; margin-left: 3px;">PTS</span></span>
+                                <button title="View Screenshot" onclick="event.stopPropagation(); watchRoundHistory('${state.room_id}', ${h.round}, true)" style="background:none; border:none; color:#ffd700; cursor:pointer; font-size:1.1rem; padding:0; display:flex; align-items:center;">📷</button>
                             </div>
                         </div>
                     `;
