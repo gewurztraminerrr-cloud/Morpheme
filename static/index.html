@@ -1514,6 +1514,7 @@
     <div id="modal-howtoplay" class="modal-window hidden">
         <div class="modal-content-wrapper">
             <button id="close-howtoplay" class="close-modal-btn">×</button>
+            <h1 class="modal-main-title">How to Play & FAQ</h1>
             <div class="instructions-container">
                 <!-- Card 1: Connect -->
                 <div class="instruction-card">
@@ -1551,6 +1552,109 @@
                     </div>
                     <h3>Rise to Logic</h3>
                     <p>Compete in real-time. Outscore opponents in the room or climb the global leaderboards.</p>
+                </div>
+            </div>
+
+            <!-- FAQ Section -->
+            <div class="faq-section">
+                <div class="faq-container">
+                    <!-- Q1 -->
+                    <div class="faq-item">
+                        <div class="faq-question">What do the coloured rows on the “All Words” table mean?</div>
+                        <div class="faq-answer">
+                            <p><span class="faq-highlight lime">[Lime Green words]</span> - Bonus word. A user who finds
+                                it is awarded 5 extra points.</p>
+                            <p><span class="faq-highlight blue">[Blue words]</span> - Found words</p>
+                            <p><span class="faq-highlight gold">[Gold words]</span> - CSW-Only words. These are the
+                                words found in CSW but not in NWL.</p>
+                            <p><span class="faq-highlight red">[Red words]</span> - You did not find it</p>
+                            <p><span class="faq-highlight check">[Checkmark words]</span> - Either you, someone, or
+                                multiple people found the words.</p>
+                        </div>
+                    </div>
+
+                    <!-- Q2 -->
+                    <div class="faq-item">
+                        <div class="faq-question">What determines who gains or loses points and by how much? How does
+                            the rating system work?</div>
+                        <div class="faq-answer">
+                            <p>Morpheme uses a <strong>Proportional Share</strong> system. Unlike standard systems that
+                                only look at who won or lost, our engine evaluates your <strong>contribution to the
+                                    total room score</strong> relative to your <strong>contribution to the total room
+                                    rating</strong>.</p>
+
+                            <p><strong>1. The Expected Score (Your Goal)</strong><br>
+                                At the end of every round, the server calculates an "Expected Score" specifically for
+                                you. This is based on your current rating compared to the sum of all ratings in the
+                                room.
+                            <ul>
+                                <li>If you have a <strong>high rating</strong>, the system expects you to carry a larger
+                                    share of the points.</li>
+                                <li>If you have a <strong>lower rating</strong>, your expectation is smaller.</li>
+                            </ul>
+                            <em>Calculated as: (Total Room Score ÷ Total Total Rating) × Your Current Rating.</em></p>
+
+                            <p><strong>2. Number of People & Player Strength</strong><br>
+                                The room dynamic is crucial. If you are the highest-rated player in a room of beginners,
+                                your expected score will be very high—you must significantly outscore the room just to
+                                maintain your rating. Conversely, in a room full of experts, even a modest score might
+                                gain you points if you were the lowest-rated participant.</p>
+
+                            <p><strong>3. Gains and Losses (The 0-16 Scale)</strong><br>
+                                Your performance is measured against a 16-step scale:
+                            <ul>
+                                <li>The server establishes a "Performance Baseline" (75% of your Expected Score).</li>
+                                <li>This baseline is divided into 16 equal increments.</li>
+                                <li><strong>To Gain Points:</strong> You must exceed your Expected Score. You gain +1
+                                    rating point for every 'increment' you score above that expectation.</li>
+                                <li><strong>To Lose Points:</strong> If you fall below your expectation, you lose -1
+                                    rating point for every 'increment' you missed.</li>
+                            </ul>
+                            The maximum change is capped at <strong>16 points per round</strong>, ensuring that your
+                            ranking stays stable while rewarding consistent excellence.</p>
+                        </div>
+                    </div>
+
+                    <!-- Q3 -->
+                    <div class="faq-item">
+                        <div class="faq-question">What do the different game types mean? (Accumulative, First Come First
+                            Serve, and Split Points)</div>
+                        <div class="faq-answer">
+                            Each mode offers a unique tactical challenge:
+                            <ul>
+                                <li><strong>Accumulative:</strong> The classic experience. Everyone plays independently
+                                    on the same board. You get full points for every word you find, regardless of what
+                                    others find.</li>
+                                <li><strong>First Come First Serve (FCFS):</strong> A high-stakes race where words are a
+                                    limited resource. As soon as someone finds a word, it's gone for everyone else.
+                                    Speed is your greatest weapon here.</li>
+                                <li><strong>Split Points:</strong> Strategy meets sharing. The points for each word are
+                                    shared among everyone who finds it. Unique words give you full points, shared words
+                                    split the bounty equally.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Q4 -->
+                    <div class="faq-item">
+                        <div class="faq-question">Is there an easier way to view a user’ profile?</div>
+                        <div class="faq-answer">
+                            Yes. Click on the coloured square that indicates the user’s approximate rating. A small
+                            window of a brief version of their profile will appear. For more details, see their Profile
+                            in Tools.
+                        </div>
+                    </div>
+
+                    <!-- Q5 -->
+                    <div class="faq-item">
+                        <div class="faq-question">Why are there parameters that determine the next round?</div>
+                        <div class="faq-answer">
+                            Every round is unique thanks to the "Spinner Set" parameters. These are randomly generated
+                            values (like word density, dictionary choice, and difficulty) that the server uses to build
+                            a fresh board. This ensures that the game remains unpredictable and prevents anyone from
+                            memorizing patterns, keeping the competition fair and exciting every single time.
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1713,6 +1817,75 @@
             </div>
         </div>
     </div>
+
+    <!-- Room Achievements Modal -->
+    <div id="room-achievements-modal" class="modal-overlay hidden">
+        <div class="achievement-card">
+            <button id="achievement-modal-close" class="close-modal-btn">&times;</button>
+            <div class="achievement-header">
+                <div class="achievement-icon-outer">
+                    <div class="achievement-icon-inner">🏆</div>
+                </div>
+                <h2 id="achievement-title">Room Achievements</h2>
+                <p id="achievement-subtitle">Mode | Configuration</p>
+                <div class="achievement-rating-badge">
+                    Rating: <span id="achievement-rating-val">-</span>
+                </div>
+            </div>
+
+            <div class="achievement-grid">
+                <!-- Personal Bests -->
+                <div class="achievement-section">
+                    <h3>Personal Bests</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Highest Score</span>
+                        <span class="stat-value" id="ach-high-score">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Most Words</span>
+                        <span class="stat-value" id="ach-max-words">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Longest Word</span>
+                        <span class="stat-value" id="ach-longest-word">-</span>
+                    </div>
+                    <div class="stat-item" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+                        <span class="stat-label">Best Word</span>
+                        <span class="stat-value" id="ach-best-word" style="font-size: 0.9rem; color: #ffd700;">-</span>
+                    </div>
+                </div>
+
+                <!-- Lifetime Stats -->
+                <div class="achievement-section">
+                    <h3>Lifetime Stats</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Games Played</span>
+                        <span class="stat-value" id="ach-games-played">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Wins</span>
+                        <span class="stat-value" id="ach-wins">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Win Rate</span>
+                        <span class="stat-value" id="ach-win-rate">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Words</span>
+                        <span class="stat-value" id="ach-total-words">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="achievement-footer">
+                <div class="total-points-display">
+                    <span class="total-label">Lifetime Points</span>
+                    <span class="total-val" id="ach-total-points">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Image Lightbox Modal -->
     <div id="image-lightbox-modal" class="image-lightbox-overlay hidden">
         <div class="image-lightbox-content">

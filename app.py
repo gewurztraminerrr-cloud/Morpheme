@@ -524,6 +524,133 @@ def get_public_profile(username):
         }
     })
 
+@app.route('/api/profile/<username>/achievements/<game_type>/<board_dimensions>/<int:time_limit>', methods=['GET'])
+def get_room_achievements(username, game_type, board_dimensions, time_limit):
+    """Fetch personal achievements and stats for a specific user and room configuration"""
+    import json
+    conn = sqlite3.connect('morpheme.db')
+    cursor = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (username,))
+    user = cursor.fetchone()
+    if not user:
+        conn.close()
+        return jsonify({'error': 'User not found'}), 404
+    
+    user_id = user[0]
+    config_key = f"{game_type}|{board_dimensions}|{time_limit}"
+    
+    # 1. Get current rating for this config
+    cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', (user_id, config_key))
+    rating_row = cursor.fetchone()
+    rating = rating_row[0] if rating_row else 1200
+    
+    # 2. Get all rounds for this config
+    # We filter by game_type and round_duration (time_limit)
+    # Since board_dimensions isn't a column, we'll check it from board_json in Python
+    cursor = conn.execute('''
+        SELECT words_json, total_score, timestamp, room_id, round_number, board_json
+        FROM round_history
+        WHERE user_id = ? AND game_type = ? AND round_duration = ?
+        ORDER BY timestamp DESC
+    ''', (user_id, game_type, time_limit))
+    
+    rows = cursor.fetchall()
+    
+    # Process rows to find those matching board_dimensions
+    high_score = 0
+    max_words = 0
+    longest_word = ""
+    best_word = {"word": "", "points": 0}
+    total_score = 0
+    total_words = 0
+    matching_rounds = []
+    
+    for row in rows:
+        try:
+            board = json.loads(row[5])
+            # Determine dimensions: rows x cols
+            rows_count = len(board)
+            cols_count = len(board[0]) if rows_count > 0 else 0
+            dims = f"{rows_count}x{cols_count}"
+            
+            if dims != board_dimensions:
+                continue
+            
+            matching_rounds.append(row)
+            
+            # Aggregate stats
+            words = json.loads(row[0])
+            score = row[1]
+            
+            total_score += score
+            total_words += len(words)
+            
+            if score > high_score:
+                high_score = score
+            
+            if len(words) > max_words:
+                max_words = len(words)
+                
+            for w in words:
+                word_str = w['word']
+                word_pts = w.get('points', 0)
+                
+                if len(word_str) > len(longest_word):
+                    longest_word = word_str
+                    
+                if word_pts > best_word['points']:
+                    best_word = {"word": word_str, "points": word_pts}
+                    
+        except Exception as e:
+            print(f"Error processing round history row: {e}")
+            continue
+
+    if not matching_rounds:
+        conn.close()
+        return jsonify({
+            'username': username,
+            'config_key': config_key,
+            'rating': rating,
+            'stats': None
+        })
+
+    # 3. Win calculation
+    wins = 0
+    for row in matching_rounds:
+        r_id = row[3]
+        r_num = row[4]
+        ts = row[2]
+        
+        cursor = conn.execute('''
+            SELECT MAX(total_score) FROM round_history 
+            WHERE room_id = ? AND round_number = ? AND timestamp = ?
+        ''', (r_id, r_num, ts))
+        max_s_row = cursor.fetchone()
+        max_s = max_s_row[0] if max_s_row else 0
+        
+        if row[1] == max_s and max_s > 0:
+            wins += 1
+
+    conn.close()
+    
+    games_played = len(matching_rounds)
+    
+    return jsonify({
+        'username': username,
+        'config_key': config_key,
+        'rating': rating,
+        'stats': {
+            'high_score': high_score,
+            'max_words': max_words,
+            'longest_word': longest_word,
+            'best_word': best_word,
+            'total_score': total_score,
+            'total_words': total_words,
+            'games_played': games_played,
+            'wins': wins,
+            'win_rate': round((wins / games_played * 100), 1) if games_played > 0 else 0
+        }
+    })
+
 @app.route('/api/profile/upload_avatar', methods=['POST'])
 def upload_avatar():
     if 'user_id' not in session:

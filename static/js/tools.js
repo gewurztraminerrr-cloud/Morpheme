@@ -1370,7 +1370,8 @@ function renderRatingsGrid(configRatings, user = null) {
                 const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#b3b3b3';
 
                 const box = document.createElement('div');
-                box.className = 'rating-box';
+                box.className = 'rating-box clickable';
+                box.title = "Click to view achievements for this room type";
                 box.innerHTML = `
                     <div class="rating-box-swatch" style="background: ${rColor}; box-shadow: 0 0 15px ${rColor}55"></div>
                     <div class="rating-box-mode">${mode}</div>
@@ -1387,6 +1388,13 @@ function renderRatingsGrid(configRatings, user = null) {
                         showImageLightbox(user.avatar_url, `${user.username}'s Profile Image`);
                     };
                 }
+
+                // Click on box to show achievements
+                box.onclick = () => {
+                    if (user && user.username) {
+                        showRoomAchievements(user.username, mode, board, time);
+                    }
+                };
 
                 grid.appendChild(box);
             });
@@ -1408,6 +1416,65 @@ function setupImageLightbox() {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') modal.classList.add('hidden');
         });
+    }
+
+    // Also setup achievement modal
+    const achModal = document.getElementById('room-achievements-modal');
+    const achClose = document.getElementById('achievement-modal-close');
+    if (achModal && achClose) {
+        achClose.onclick = () => achModal.classList.add('hidden');
+        achModal.onclick = (e) => {
+            if (e.target === achModal) achModal.classList.add('hidden');
+        };
+    }
+}
+
+async function showRoomAchievements(username, mode, board, time) {
+    const modal = document.getElementById('room-achievements-modal');
+    if (!modal) return;
+
+    // Set titles
+    document.getElementById('achievement-title').textContent = `${username}'s Achievements`;
+    document.getElementById('achievement-subtitle').textContent =
+        `${mode.charAt(0).toUpperCase() + mode.slice(1)} | ${board} | ${time < 300 ? time + 's' : (time / 60) + 'm'}`;
+
+    // Show loading state
+    modal.classList.remove('hidden');
+
+    try {
+        const response = await fetch(`/api/profile/${username}/achievements/${mode}/${board}/${time}`);
+        const data = await response.json();
+
+        if (data.error) throw new Error(data.error);
+
+        // Update Rating
+        document.getElementById('achievement-rating-val').textContent = data.rating || 1200;
+
+        if (!data.stats) {
+            // No history for this config
+            const fields = ['ach-high-score', 'ach-max-words', 'ach-longest-word', 'ach-best-word',
+                'ach-games-played', 'ach-wins', 'ach-win-rate', 'ach-total-words', 'ach-total-points'];
+            fields.forEach(f => document.getElementById(f).textContent = '-');
+            document.getElementById('ach-total-points').textContent = '0';
+            return;
+        }
+
+        const stats = data.stats;
+        document.getElementById('ach-high-score').textContent = stats.high_score;
+        document.getElementById('ach-max-words').textContent = stats.max_words;
+        document.getElementById('ach-longest-word').textContent = stats.longest_word || 'None';
+        document.getElementById('ach-best-word').textContent = stats.best_word.word ?
+            `${stats.best_word.word} (${stats.best_word.points} pts)` : 'None';
+
+        document.getElementById('ach-games-played').textContent = stats.games_played;
+        document.getElementById('ach-wins').textContent = stats.wins;
+        document.getElementById('ach-win-rate').textContent = stats.win_rate + '%';
+        document.getElementById('ach-total-words').textContent = stats.total_words;
+        document.getElementById('ach-total-points').textContent = stats.total_score.toLocaleString();
+
+    } catch (err) {
+        console.error("Failed to fetch achievements:", err);
+        // showToast?
     }
 }
 

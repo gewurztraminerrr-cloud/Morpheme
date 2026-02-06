@@ -373,3 +373,113 @@
         right: 10px;
     }
 }
+
+
+/* Main Modal Title */
+.modal-main-title {
+    text-align: center;
+    font-size: 2.8rem;
+    margin-bottom: 40px;
+    background: linear-gradient(to right, #fff, #a5b4fc);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* FAQ Styles */
+.faq-section {
+    margin-top: 50px;
+    width: 100%;
+}
+
+.faq-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.faq-item {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.faq-question {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 15px 25px;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: #a5b4fc;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.faq-answer {
+    background: rgba(255, 255, 255, 0.08);
+    /* Lighter background */
+    padding: 20px 25px;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.faq-answer p {
+    margin-bottom: 15px;
+}
+
+.faq-answer p:last-child {
+    margin-bottom: 0;
+}
+
+.faq-answer ul {
+    margin-top: 10px;
+    padding-left: 20px;
+}
+
+.faq-answer li {
+    margin-bottom: 10px;
+}
+
+.faq-highlight {
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.faq-highlight.lime {
+    color: #32cd32;
+}
+
+.faq-highlight.blue {
+    color: #4da6ff;
+}
+
+.faq-highlight.gold {
+    color: #ffd700;
+}
+
+.faq-highlight.red {
+    color: #ff4d4d;
+}
+
+.faq-highlight.check {
+    color: #fff;
+}
+
+/* Ensure modal content can scroll if FAQ is long */
+.modal-window {
+    align-items: flex-start;
+    /* Start from top */
+    padding: 60px 0;
+    overflow-y: auto;
+}
+
+@media (max-width: 900px) {
+    .modal-main-title {
+        font-size: 1.8rem;
+        margin-bottom: 25px;
+    }
+}
