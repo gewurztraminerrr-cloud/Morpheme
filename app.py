@@ -568,6 +568,66 @@ def get_public_profile(username):
         }
     })
 
+@app.route('/api/profile/<username>/performance', methods=['GET'])
+def get_detailed_performance(username):
+    config_key = request.args.get('config_key')
+    if not config_key:
+        return jsonify({'error': 'Missing config_key'}), 400
+        
+    # config_key is "mode|dimensions|duration"
+    try:
+        mode, dimensions, duration = config_key.split('|')
+    except ValueError:
+        return jsonify({'error': 'Invalid config_key format'}), 400
+
+    conn = sqlite3.connect('morpheme.db')
+    # Find user
+    cursor = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (username,))
+    user = cursor.fetchone()
+    if not user:
+        conn.close()
+        return jsonify({'error': 'User not found'}), 404
+        
+    # Get the average and peak efficiency for this config first
+    cursor = conn.execute('''
+        SELECT AVG(performance_efficiency), MAX(performance_efficiency)
+        FROM round_history
+        WHERE user_id = ? AND game_type = ? AND board_dimensions = ? AND round_duration = ?
+    ''', (user[0], mode, dimensions, duration))
+    res_row = cursor.fetchone()
+    avg_eff = res_row[0] if res_row and res_row[0] else 1.0
+    peak_eff = res_row[1] if res_row and res_row[1] else 1.0
+    
+    # Get top 50 rounds exceeding average
+    cursor = conn.execute('''
+        SELECT room_id, round_number, board_json, words_json, total_score, performance_efficiency, timestamp
+        FROM round_history
+        WHERE user_id = ? AND game_type = ? AND board_dimensions = ? AND round_duration = ?
+        AND performance_efficiency >= ?
+        ORDER BY performance_efficiency DESC
+        LIMIT 50
+    ''', (user[0], mode, dimensions, duration, avg_eff))
+    
+    rounds = []
+    for row in cursor.fetchall():
+        rounds.append({
+            'room_id': row[0],
+            'round_number': row[1],
+            'board': json.loads(row[2]),
+            'words': json.loads(row[3]),
+            'total_score': row[4],
+            'performance_efficiency': row[5],
+            'timestamp': row[6]
+        })
+        
+    conn.close()
+    return jsonify({
+        'config_key': config_key,
+        'avg_efficiency': round(avg_eff, 2),
+        'peak_efficiency': round(peak_eff, 2),
+        'rounds': rounds
+    })
+
 @app.route('/api/profile/upload_avatar', methods=['POST'])
 def upload_avatar():
     if 'user_id' not in session:

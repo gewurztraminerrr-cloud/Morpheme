@@ -673,6 +673,36 @@
 
                                     <div id="profile-tab-rankings" class="profile-tab-pane active">
                                         <div class="profile-ratings-section">
+                                            <div class="grid-filters">
+                                                <div class="filter-group">
+                                                    <label>Mode</label>
+                                                    <select id="filter-mode">
+                                                        <option value="all">All Modes</option>
+                                                        <option value="accumulative">Accumulative</option>
+                                                        <option value="fcfs">FCFS</option>
+                                                        <option value="split">Split Points</option>
+                                                    </select>
+                                                </div>
+                                                <div class="filter-group">
+                                                    <label>Size</label>
+                                                    <select id="filter-dimensions">
+                                                        <option value="all">All Sizes</option>
+                                                        <option value="4x4">4x4</option>
+                                                        <option value="4x6">4x6</option>
+                                                        <option value="5x7">5x7</option>
+                                                        <option value="6x8">6x8</option>
+                                                    </select>
+                                                </div>
+                                                <div class="filter-group">
+                                                    <label>Time</label>
+                                                    <select id="filter-time">
+                                                        <option value="all">All Times</option>
+                                                        <option value="45">45s</option>
+                                                        <option value="180">3m</option>
+                                                        <option value="600">10m</option>
+                                                    </select>
+                                                </div>
+                                            </div>
                                             <div id="profile-ratings-grid" class="ratings-grid">
                                                 <!-- Populated by JS -->
                                             </div>
@@ -1836,6 +1866,116 @@
             <button id="image-lightbox-close" class="image-lightbox-close">&times;</button>
             <img id="image-lightbox-img" src="" alt="User Avatar Large">
             <div id="image-lightbox-caption" class="image-lightbox-caption"></div>
+        </div>
+    </div>
+    <!-- Performance Detail Modal -->
+    <div id="perf-detail-modal" class="overlay hidden">
+        <div class="modal-content perf-modal">
+            <div class="perf-modal-header">
+                <div class="header-left">
+                    <h2 id="perf-modal-title">Performance Details</h2>
+                    <p id="perf-modal-config" class="meta-label">4x4 | 45s | Accumulative</p>
+                </div>
+                <div class="header-right">
+                    <div class="avg-efficiency-badge">
+                        <span class="label">Average Efficiency</span>
+                        <span id="perf-modal-avg" class="value">1.00x</span>
+                    </div>
+                </div>
+                <button class="close-overlay" id="perf-detail-close">&times;</button>
+            </div>
+
+            <div class="perf-modal-body">
+                <h3>Exceptional Rounds</h3>
+                <p class="subtitle">History of rounds exceeding average performance expectations.</p>
+
+                <div class="perf-summary-bar">
+                    <div class="summary-stat">
+                        <span class="label">Average Efficiency</span>
+                        <span id="perf-summary-avg" class="value">1.15x</span>
+                    </div>
+                    <div class="summary-stat">
+                        <span class="label">Peak Performance</span>
+                        <span id="perf-summary-peak" class="value">2.42x</span>
+                    </div>
+                    <div class="summary-stat">
+                        <span class="label">Exceptional Rounds</span>
+                        <span id="perf-summary-count" class="value">0</span>
+                    </div>
+                </div>
+
+                <div class="perf-table-container">
+                    <table class="perf-table">
+                        <thead>
+                            <tr>
+                                <th>Round</th>
+                                <th>Date</th>
+                                <th>Score</th>
+                                <th>Efficiency</th>
+                                <th>Screenshot</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="perf-modal-list">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Round Snapshot Modal (The "Screenshot" View) -->
+    <div id="round-snapshot-modal" class="overlay hidden">
+        <div class="snapshot-card" id="snapshot-card-content">
+            <div class="snapshot-header">
+                <div class="user-info">
+                    <div class="snapshot-avatar" id="snapshot-user-avatar">?</div>
+                    <div>
+                        <div class="snapshot-username" id="snapshot-username">Player</div>
+                        <div class="snapshot-user-detail">
+                            <span id="snapshot-user-rating" class="rating-tag">1200</span>
+                            <span id="snapshot-user-tier" class="tier-label">Aspirant</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="snapshot-badge">
+                    <div id="snapshot-efficiency-val" class="eff-value">1.45x</div>
+                    <div class="eff-label">Efficiency</div>
+                </div>
+            </div>
+
+            <div class="snapshot-body">
+                <div class="snapshot-board-container">
+                    <div id="snapshot-board" class="snapshot-board">
+                        <!-- Rendered Board -->
+                    </div>
+                </div>
+                <div class="snapshot-stats">
+                    <div class="stat-group">
+                        <span class="label">Score</span>
+                        <span id="snapshot-score" class="value">0</span>
+                    </div>
+                    <div class="stat-group">
+                        <span class="label">Mode</span>
+                        <span id="snapshot-mode" class="value">Accumulative</span>
+                    </div>
+                    <div class="stat-group">
+                        <span class="label">Config</span>
+                        <span id="snapshot-config" class="value">4x4 | 45s</span>
+                    </div>
+                    <div class="stat-group">
+                        <span class="label">Date</span>
+                        <span id="snapshot-date" class="value">2024-02-01</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="snapshot-footer">
+                <div class="morpheme-logo-small">MORPHEME</div>
+                <div class="snapshot-watermark">Verified Exceptional Performance</div>
+            </div>
+            <button class="close-overlay snapshot-close" id="round-snapshot-close">&times;</button>
         </div>
     </div>
 </body>

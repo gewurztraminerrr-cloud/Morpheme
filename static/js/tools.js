@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setupIsValidTool();
     setupPrivateMessaging();
     setupMiniProfileModal();
+    setupPerformanceDetailModal();
+    setupRoundSnapshotModal();
     setupImageLightbox();
 });
 
@@ -41,6 +43,22 @@ function setupToolsNavigation() {
                 updateWotd();
             }
         });
+    });
+}
+
+
+
+function setupProfileFilters() {
+    ['filter-mode', 'filter-dimensions', 'filter-time'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', () => {
+                // We need to re-render using the cached data
+                if (window.currentProfileConfigRatings) {
+                    renderRatingsGrid(window.currentProfileConfigRatings, window.currentProfileUser);
+                }
+            });
+        }
     });
 }
 
@@ -282,6 +300,8 @@ function setupProfileTool() {
             if (e.key === 'Enter') performProfileSearch(input.value);
         });
     }
+
+    setupProfileFilters();
 
     // Expose refresh function globally so app.js can trigger it
     window.refreshProfileTool = (force = false) => {
@@ -1352,12 +1372,21 @@ function renderRatingsGrid(configRatings, user = null) {
     const grid = document.getElementById('profile-ratings-grid');
     if (!grid) return;
 
+    // Cache for filtering
+    window.currentProfileConfigRatings = configRatings;
+    window.currentProfileUser = user;
+
     grid.innerHTML = '';
 
     const modes = ['accumulative', 'fcfs', 'split'];
     const boards = ['4x4', '4x6', '5x7', '6x8'];
-    const accTimes = [45, 180, 600, 86400];
+    const accTimes = [45, 180, 600];
     const otherTimes = [45, 180];
+
+    // Get current filter values
+    const filterMode = document.getElementById('filter-mode')?.value || 'all';
+    const filterDimensions = document.getElementById('filter-dimensions')?.value || 'all';
+    const filterTime = document.getElementById('filter-time')?.value || 'all';
 
     const formatTimeShort = (s) => {
         if (s === 45) return '45s';
@@ -1367,10 +1396,20 @@ function renderRatingsGrid(configRatings, user = null) {
         return s + 's';
     };
 
+    let visibleCount = 0;
+
     modes.forEach(mode => {
+        if (filterMode !== 'all' && filterMode !== mode) return;
+
         const times = (mode === 'accumulative') ? accTimes : otherTimes;
         boards.forEach(board => {
+            if (filterDimensions !== 'all' && filterDimensions !== board) return;
+
             times.forEach(time => {
+                const timeStr = time.toString();
+                if (filterTime !== 'all' && filterTime !== timeStr) return;
+
+                visibleCount++;
                 const configKey = `${mode}|${board}|${time}`;
                 const rating = configRatings[configKey] || 1200;
 
@@ -1378,30 +1417,24 @@ function renderRatingsGrid(configRatings, user = null) {
                 const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#b3b3b3';
 
                 const box = document.createElement('div');
-                box.className = 'rating-box';
-
-                const stats = (user && user.config_stats) ? user.config_stats[configKey] || {} : {};
-                const avgEff = stats.avg_efficiency || '1.0';
-                const peakEff = stats.peak_efficiency || '1.0';
+                box.className = 'rating-box clickable';
+                box.title = "Click to view performance history";
 
                 box.innerHTML = `
                     <div class="rating-box-swatch" style="background: ${rColor}; box-shadow: 0 0 15px ${rColor}55"></div>
                     <div class="rating-box-mode">${mode}</div>
                     <div class="rating-box-config">${board} | ${formatTimeShort(time)}</div>
                     <div class="rating-box-value" style="color: ${rColor}">${rating}</div>
-                    <div class="perf-stats-row">
-                        <div class="perf-stat">
-                            <span class="perf-stat-label">Avg</span>
-                            <span class="perf-stat-value">${avgEff}x</span>
-                        </div>
-                        <div class="perf-stat">
-                            <span class="perf-stat-label">Peak</span>
-                            <span class="perf-stat-value">${peakEff}x</span>
-                        </div>
-                    </div>
                 `;
 
-                // Setup Click on Swatch to show image
+                // Setup Click on Box to show performance detail
+                box.onclick = () => {
+                    if (user && user.username) {
+                        showPerformanceDetail(user.username, configKey);
+                    }
+                };
+
+                // Setup Click on Swatch to show image (prevent box click)
                 const swatch = box.querySelector('.rating-box-swatch');
                 if (swatch && user && user.avatar_url) {
                     swatch.title = "View user image";
@@ -1415,6 +1448,10 @@ function renderRatingsGrid(configRatings, user = null) {
             });
         });
     });
+
+    if (visibleCount === 0) {
+        grid.innerHTML = '<div class="placeholder" style="grid-column: 1/-1; text-align: center; padding: 40px;">No configurations match your current filter.</div>';
+    }
 }
 
 function setupImageLightbox() {
@@ -1447,6 +1484,142 @@ function showImageLightbox(url, caption = "") {
     modal.classList.remove('hidden');
 }
 window.showImageLightbox = showImageLightbox;
+
+function setupPerformanceDetailModal() {
+    const modal = document.getElementById('perf-detail-modal');
+    const closeBtn = document.getElementById('perf-detail-close');
+    if (modal && closeBtn) {
+        closeBtn.onclick = () => modal.classList.add('hidden');
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.classList.add('hidden');
+        };
+    }
+}
+
+async function showPerformanceDetail(username, configKey) {
+    const modal = document.getElementById('perf-detail-modal');
+    const titleEl = document.getElementById('perf-modal-title');
+    const configEl = document.getElementById('perf-modal-config');
+    const avgEl = document.getElementById('perf-modal-avg');
+    const listEl = document.getElementById('perf-modal-list');
+
+    if (!modal) return;
+
+    // Loading state
+    listEl.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--muted-text);">Loading performance history...</td></tr>';
+    modal.classList.remove('hidden');
+
+    try {
+        const response = await fetch(`/api/profile/${encodeURIComponent(username)}/performance?config_key=${encodeURIComponent(configKey)}`);
+        const data = await response.json();
+
+        if (data.error) {
+            listEl.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--error-color);">${data.error}</td></tr>`;
+            return;
+        }
+
+        // Populate header & summary
+        const parts = configKey.split('|');
+        titleEl.innerText = `${username}'s Performance`;
+        configEl.innerText = `${parts[1]} | ${parts[2]}s | ${parts[0].charAt(0).toUpperCase() + parts[0].slice(1)}`;
+
+        const avgStr = `${data.avg_efficiency.toFixed(2)}x`;
+        avgEl.innerText = avgStr;
+        document.getElementById('perf-summary-avg').innerText = avgStr;
+        document.getElementById('perf-summary-peak').innerText = `${data.peak_efficiency.toFixed(2)}x`;
+        document.getElementById('perf-summary-count').innerText = data.rounds.length;
+
+        if (data.rounds.length === 0) {
+            listEl.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--muted-text);">No rounds found exceeding average expectations.</td></tr>';
+        } else {
+            // Save rounds for lookup
+            window.perfDetailRounds = data.rounds;
+
+            listEl.innerHTML = data.rounds.map((round, idx) => {
+                const date = new Date(round.timestamp).toLocaleDateString();
+                const efficiency = round.performance_efficiency || 1.0;
+                return `
+                <tr>
+                    <td>#${round.round_number}</td>
+                    <td>${date}</td>
+                    <td>${round.total_score} pts</td>
+                    <td class="perf-val-col">${efficiency.toFixed(2)}x</td>
+                    <td>
+                        <button class="screenshot-link-btn" onclick="showRoundSnapshot(${idx})">
+                            📸 View
+                        </button>
+                    </td>
+                    <td>
+                        <button class="history-review-btn" onclick="watchRoundHistory('${round.room_id}', ${round.round_number})">Review</button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        }
+    } catch (error) {
+        console.error('Failed to fetch performance detail:', error);
+        listEl.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--error-color);">Failed to load history.</td></tr>';
+    }
+}
+
+function setupRoundSnapshotModal() {
+    const modal = document.getElementById('round-snapshot-modal');
+    const closeBtn = document.getElementById('round-snapshot-close');
+    if (modal && closeBtn) {
+        closeBtn.onclick = () => modal.classList.add('hidden');
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.classList.add('hidden');
+        };
+    }
+}
+
+function showRoundSnapshot(roundIdx) {
+    const rounds = window.perfDetailRounds || [];
+    const round = rounds[roundIdx];
+    if (!round) return;
+
+    const modal = document.getElementById('round-snapshot-modal');
+    if (!modal) return;
+
+    // Get current profile user info
+    const username = document.getElementById('profile-username')?.innerText || 'Player';
+    const ratingBadge = document.getElementById('profile-rating-badge')?.innerText || '1200';
+    // Remove characters like 'R' or spaces if exist
+    const rating = ratingBadge.replace(/\D/g, '');
+
+    // Populate Modal
+    document.getElementById('snapshot-username').innerText = username;
+    document.getElementById('snapshot-user-avatar').innerText = username.charAt(0).toUpperCase();
+    document.getElementById('snapshot-user-rating').innerText = rating;
+    document.getElementById('snapshot-score').innerText = `${round.total_score} PTS`;
+    document.getElementById('snapshot-efficiency-val').innerText = `${(round.performance_efficiency || 1.0).toFixed(2)}x`;
+
+    const date = new Date(round.timestamp).toLocaleDateString();
+    document.getElementById('snapshot-date').innerText = date;
+
+    const configKey = document.getElementById('perf-modal-config')?.innerText || '4x4 | 45s | Accumulative';
+    const configParts = configKey.split('|');
+    document.getElementById('snapshot-config').innerText = `${configParts[0]} | ${configParts[1]}`;
+    document.getElementById('snapshot-mode').innerText = configParts[2] || 'Accumulative';
+
+    // Tier Label (Approximate from rating)
+    const rVal = parseInt(rating);
+    const tier = rVal >= 4000 ? 'Celestial' : rVal >= 3000 ? 'Legend' : rVal >= 2500 ? 'Master' : rVal >= 2000 ? 'High' : 'Aspirant';
+    document.getElementById('snapshot-user-tier').innerText = tier;
+
+    // Render Board
+    const boardEl = document.getElementById('snapshot-board');
+    if (boardEl && round.board) {
+        const rows = round.board.length;
+        const cols = round.board[0].length;
+        boardEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+        boardEl.innerHTML = round.board.flat().map(letter => `
+            <div class="snapshot-tile">${letter}</div>
+        `).join('');
+    }
+
+    modal.classList.remove('hidden');
+}
 
 function renderMiniBoard(board) {
     if (!board || !board.length) return '';
