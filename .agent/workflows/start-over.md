@@ -9,4 +9,4 @@ If the user asks to "Start over" or revert to the saved state, follow these step
 3. Clean untracked: `git clean -fd`
 4. Restore databases: `cp morpheme.db.snapshot morpheme.db && cp developer_messages.db.snapshot developer_messages.db`
 5. Start server: `python3 app.py`
-6. Inform the user that the application has been successfully reverted to the saved state (from Feb 6, 2026, including Achievements Popup and elaborate FAQ).
+6. Inform the user that the application has been successfully reverted to the saved state (from Feb 6, 2026, including Achievements Popup, 10-row scroll limit, and condensed history).
