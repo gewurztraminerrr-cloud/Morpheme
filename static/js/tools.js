@@ -2072,7 +2072,7 @@ async function runSequenceSearch() {
 
         // Render Results Table
         let html = `
-            <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2);">
+            <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2);">
                 Found ${count} words
             </div>
             <div style="flex: 1; overflow-y: auto; padding: 10px;">
@@ -2442,7 +2442,7 @@ async function runSubanagramSearch() {
 
         // Render Results Table
         let html = `
-            <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); text-align: center;">
+            <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); text-align: left;">
                 Found ${count} subanagrams
             </div>
             <div style="flex: 1; overflow-y: auto; padding: 10px;">

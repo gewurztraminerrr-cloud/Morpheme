@@ -1050,7 +1050,7 @@
 .random-word-container {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     min-height: 180px;
     background: rgba(0, 0, 0, 0.3);
@@ -1089,7 +1089,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     min-height: 250px;
     background: rgba(0, 0, 0, 0.3);
@@ -1230,13 +1230,13 @@
 
 .tool-header,
 .combo-control-panel {
-    padding-left: 15px;
+    padding-left: 0 !important;
     padding-right: 15px;
 }
 
 .tool-header {
     margin-bottom: 20px;
-    text-align: center;
+    text-align: left;
 }
 
 .tool-pane {
@@ -1247,7 +1247,7 @@
 
 .tool-pane.active {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
 }
 
 .tool-header,
@@ -1283,7 +1283,7 @@
 /* Combo Checker Controls */
 .combo-control-panel {
     background: rgba(255, 255, 255, 0.05);
-    padding: 20px;
+    padding: 20px 20px 20px 0;
     border-radius: 10px;
     margin-bottom: 25px;
     border: 1px solid rgba(255, 255, 255, 0.05);
