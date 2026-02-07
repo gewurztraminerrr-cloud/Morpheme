@@ -91,7 +91,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.isSpectatorMode = false; // Creator is always player
 
                     // Enable Play button
-                    document.getElementById('play-btn').disabled = false;
+                    const playBtn = document.getElementById('play-btn');
+                    if (playBtn) {
+                        playBtn.disabled = false;
+                        playBtn.title = "";
+                    }
+                    if (window.updateManualToolState) window.updateManualToolState();
+
+                    if (data.joined_mid_round) {
+                        alert("You recently accessed the Manual tool. To maintain fair play, your score for this round will not count.");
+                    }
 
                     // Navigate to Play
                     console.log('Navigating to Play page...');
@@ -213,6 +222,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.currentRoomId = data.room_id;
                     window.isSpectatorMode = false; // Creator is always player
                     stopLobbyPolling();
+                    const playBtn = document.getElementById('play-btn');
+                    if (playBtn) {
+                        playBtn.disabled = false;
+                        playBtn.title = "";
+                    }
+                    if (window.updateManualToolState) window.updateManualToolState();
                     showPage('page-play');
 
                     // Force focus
@@ -274,6 +289,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.isSpectatorMode = true;
                     } else {
                         window.isSpectatorMode = false;
+                    }
+
+                    const playBtn = document.getElementById('play-btn');
+                    if (playBtn) {
+                        playBtn.disabled = false;
+                        playBtn.title = "";
+                    }
+                    if (window.updateManualToolState) window.updateManualToolState();
+
+                    if (data.joined_mid_round) {
+                        alert("You recently accessed the Manual tool. To maintain fair play, your score for this round will not count.");
                     }
 
                     showPage('page-play');

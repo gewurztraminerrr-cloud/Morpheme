@@ -204,6 +204,12 @@ async function updateGameState() {
 
                             if (data.success) {
                                 window.isSpectatorMode = false;
+                                const playBtn = document.getElementById('play-btn');
+                                if (playBtn) {
+                                    playBtn.disabled = false;
+                                    playBtn.title = "";
+                                }
+                                if (window.updateManualToolState) window.updateManualToolState();
                                 setTimeout(updateGameState, 100);
                             } else {
                                 alert(data.error);
@@ -2232,6 +2238,13 @@ async function leaveCurrentRoom() {
     if (!roomId) return;
     try { await fetch(`/api/room/${roomId}/leave`, { method: 'POST' }); } catch (e) { }
     window.currentRoomId = null;
+    const playBtn = document.getElementById('play-btn');
+    if (playBtn) {
+        playBtn.disabled = true;
+        playBtn.classList.remove('active');
+        playBtn.title = "Join a room to play.";
+    }
+    if (window.updateManualToolState) window.updateManualToolState();
     stopPolling();
     // clear UI
 }

@@ -37,6 +37,10 @@ function setupToolsNavigation() {
             if (toolId === 'lists') {
                 fetchListsData();
             }
+            if (toolId === 'manual') {
+                fetch('/api/tools/flag_manual', { method: 'POST' });
+            }
+
             if (toolId === 'wotd') {
                 updateWotd();
             }
@@ -1470,7 +1474,8 @@ function renderRatingsGrid(configRatings, user = null) {
                 if (filterTime !== 'all' && String(time) !== filterTime) return;
 
                 const configKey = `${mode}|${board}|${time}`;
-                const rating = ratings[configKey] || 1200;
+                const configData = ratings[configKey] || { rating: 1200, avg_score: 0, avg_perf: 0 };
+                const rating = configData.rating;
 
                 const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#b3b3b3';
 
@@ -1479,14 +1484,19 @@ function renderRatingsGrid(configRatings, user = null) {
                 box.title = "Click to view achievements for this room type";
                 box.innerHTML = `
                     <div class="rating-box-swatch" style="background: ${rColor};"></div>
-                    <div class="rating-box-mode">${mode}</div>
-                    <div class="rating-box-config">${board} | ${formatTimeShort(time)}</div>
-                    <div class="rating-box-value" style="color: ${rColor}">${rating}</div>
+                    <div class="rating-box-info" style="flex: 1;">
+                        <div class="rating-box-mode" style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800;">${mode}</div>
+                        <div class="rating-box-config" style="font-weight: 700;">${board} | ${formatTimeShort(time)}</div>
+                        <div style="display: flex; gap: 10px; margin-top: 4px; font-size: 0.65rem; color: rgba(255,255,255,0.3); font-weight: 700;">
+                           <span>AVG S: <span style="color: #fff;">${configData.avg_score}</span></span>
+                           <span>AVG P: <span style="color: #fff;">${configData.avg_perf}</span></span>
+                        </div>
+                    </div>
+                    <div class="rating-box-value" style="color: ${rColor}; font-size: 1.25rem; font-weight: 900; margin: 0 15px;">${rating}</div>
                     <div class="rating-box-snapshot" title="View Best Round Snapshot" 
-                         style="margin-left: auto; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;"
+                         style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;"
                          onclick="event.stopPropagation(); if('${u?.username}') { fetch('/api/room_achievements?username=${u.username}&mode=${mode}&board=${board}&time=${time}').then(r => r.json()).then(d => { if(d.stats && d.stats.exceptional_round) { if(!window.lastRenderedRounds) window.lastRenderedRounds=[]; window.lastRenderedRounds.push(d.stats.exceptional_round); window.watchRoundHistory(d.stats.exceptional_round.room_id, d.stats.exceptional_round.round_number, true); } }); }">
                         <span style="font-size: 1rem;">📷</span>
-                        <span style="font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: rgba(255,255,255,0.5);">Snap</span>
                     </div>
                 `;
 
@@ -1612,6 +1622,7 @@ async function showRoomAchievements(username, mode, board, time) {
         document.getElementById('ach-total-games').textContent = stats.games_played || '0';
         document.getElementById('ach-avg-score').textContent = (stats.avg_score || 0).toLocaleString();
         document.getElementById('ach-avg-words').textContent = stats.avg_words || '0';
+        document.getElementById('ach-avg-word-pts').textContent = stats.avg_word_pts || '0';
 
         const renderAchRow = (r, cols) => {
             // Cache if not present
@@ -2021,6 +2032,10 @@ function renderManualGrid(dims) {
 }
 
 async function runManualSolve() {
+    if (window.currentRoomId) {
+        alert("The manual solver is disabled while you are in a room.");
+        return;
+    }
     const gridEl = document.getElementById('manual-grid');
     const dictEl = document.getElementById('manual-dict');
     const solveBtn = document.getElementById('manual-solve-btn');

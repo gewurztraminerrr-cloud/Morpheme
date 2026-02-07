@@ -552,18 +552,38 @@ def get_public_profile(username):
             'all_players': sorted([{'username': e[2], 'score': e[0], 'rating': e[1]} for e in r_entries], key=lambda x: x['score'], reverse=True)
         }
 
-    recent_rounds = [process_round_row(r, conn) for r in rows]
+    # Process all rows once to get data for both averages and exceptional rounds
+    processed_all = [process_round_row(r, conn) for r in all_rows]
     
-    # Calculate one best per config
-    best_per_config = {} # key: (gtype, dims, dur)
-    for r in all_rows:
-        processed = process_round_row(r, conn)
-        key = (processed['game_type'], processed['dimensions'], processed['round_duration'])
-        if key not in best_per_config or processed['performance_value'] > best_per_config[key]['performance_value']:
-            best_per_config[key] = processed
+    # Calculate Averages and Config Stats
+    config_stats = {}
+    for cfg_key, rating in config_ratings.items():
+        try:
+            gtype, dims, dur = cfg_key.split('|')
+            matching = [p for p in processed_all if p['game_type'] == gtype and p['dimensions'] == dims and p['round_duration'] == int(dur)]
+            
+            config_stats[cfg_key] = {
+                'rating': rating,
+                'avg_score': round(sum(p['total_score'] for p in matching) / len(matching), 1) if matching else 0,
+                'avg_perf': round(sum(p['performance_value'] for p in matching) / len(matching), 1) if matching else 0
+            }
+        except Exception as e:
+            print(f"Error processing config {cfg_key}: {e}")
+            config_stats[cfg_key] = {'rating': rating, 'avg_score': 0, 'avg_perf': 0}
+
+    # Recent rounds (last 10)
+    recent_rounds = sorted(processed_all, key=lambda x: x['timestamp'], reverse=True)[:10]
+
+    # Calculate exceptional rounds: any round where performance exceeds the personal average for that config
+    exceptional_rounds = []
+    for processed in processed_all:
+        config_key = f"{processed['game_type']}|{processed['dimensions']}|{processed['round_duration']}"
+        avg_p = config_stats.get(config_key, {}).get('avg_perf', 0)
+        if processed['performance_value'] > avg_p and processed['performance_value'] > 0:
+            exceptional_rounds.append(processed)
             
     # Sort by most recent on top as requested
-    exceptional_rounds = sorted(best_per_config.values(), key=lambda x: x['timestamp'], reverse=True)
+    exceptional_rounds = sorted(exceptional_rounds, key=lambda x: x['timestamp'], reverse=True)[:50]
 
     conn.close()
     
@@ -586,7 +606,7 @@ def get_public_profile(username):
         'wins': user[13] if user[13] else 0,
         'recent_rounds': recent_rounds,
         'exceptional_rounds': exceptional_rounds,
-        'config_ratings': config_ratings,
+        'config_ratings': config_stats,
         'status': {
             'is_online': session_info['is_online'] if session_info else False,
             'current_room': session_info['room_id'] if session_info else None,
@@ -765,14 +785,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     avg_words = round(sum(r['num_words'] for r in performance_list) / len(performance_list), 1) if performance_list else 0
     avg_perf = round(sum(r['performance_value'] for r in performance_list) / len(performance_list), 1) if performance_list else 0
 
-    # Prepare Sorted Lists (Limit 50)
-    best_perf_rounds = sorted(sorted(performance_list, key=lambda x: x['performance_value'], reverse=True)[:50], key=lambda x: x['timestamp'], reverse=True)
-    best_score_rounds = sorted(sorted(performance_list, key=lambda x: x['total_score'], reverse=True)[:50], key=lambda x: x['timestamp'], reverse=True)
-    best_word_count_rounds = sorted(sorted(performance_list, key=lambda x: x['num_words'], reverse=True)[:50], key=lambda x: x['timestamp'], reverse=True)
-    winning_rounds = [r for r in sorted(performance_list, key=lambda x: x['timestamp'], reverse=True) if r['is_win']][:50]
-    recent_rounds = sorted(performance_list, key=lambda x: x['timestamp'], reverse=True)[:50]
-    
-    # Best Individual Words
+    # Best Individual Words Processing
     all_words_list = []
     for r in matching_rounds:
         r_words = json.loads(r[0])
@@ -781,7 +794,17 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             w['room_id'] = r[3]
             w['round_number'] = r[4]
             all_words_list.append(w)
-    best_individual_words = sorted(sorted(all_words_list, key=lambda x: x.get('points', 0), reverse=True)[:50], key=lambda x: x['timestamp'], reverse=True)
+    
+    avg_word_pts = round(sum(w['points'] for w in all_words_list) / len(all_words_list), 1) if all_words_list else 0
+
+    # Prepare Sorted Lists (Limit 50) - Filtered by expectation (averages)
+    # These become the "Exceptional" lists for each category
+    best_perf_rounds = sorted([r for r in performance_list if r['performance_value'] > avg_perf], key=lambda x: x['timestamp'], reverse=True)[:50]
+    best_score_rounds = sorted([r for r in performance_list if r['total_score'] > avg_score], key=lambda x: x['timestamp'], reverse=True)[:50]
+    best_word_count_rounds = sorted([r for r in performance_list if r['num_words'] > avg_words], key=lambda x: x['timestamp'], reverse=True)[:50]
+    winning_rounds = [r for r in sorted(performance_list, key=lambda x: x['timestamp'], reverse=True) if r['is_win']][:50]
+    recent_rounds = sorted(performance_list, key=lambda x: x['timestamp'], reverse=True)[:50]
+    best_individual_words = sorted([w for w in all_words_list if w['points'] > avg_word_pts], key=lambda x: x['timestamp'], reverse=True)[:50]
 
     return jsonify({
         'username': username,
@@ -800,6 +823,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             'avg_score': avg_score,
             'avg_words': avg_words,
             'avg_perf': avg_perf,
+            'avg_word_pts': avg_word_pts,
             'exceptional_round': best_performance,
             'exceptional_rounds': best_perf_rounds, # User wants to see top perf
             'best_scores': best_score_rounds,
@@ -1052,8 +1076,8 @@ def join_room(room_id):
         conn.close()
 
     # Try to join as player
-    # Guests are welcome unless rating check failed (Guest rating is usually 1200)
-    success = room.add_player(user_id, session['username'], rating, games_played=games_played, country_flag=country_flag)
+    manual_accessed = session.pop('manual_accessed', False)
+    success = room.add_player(user_id, session['username'], rating, games_played=games_played, country_flag=country_flag, manual_accessed=manual_accessed)
     if not success:
         # Room full
         msg = f"Room is full (Max {room.max_players} players). You can watch instead."
@@ -1062,7 +1086,7 @@ def join_room(room_id):
         return jsonify({'error': msg}), 409
     
     room.update_player_activity(user_id)
-    return jsonify({'success': True, 'role': 'player', 'max_players': room.max_players})
+    return jsonify({'success': True, 'role': 'player', 'max_players': room.max_players, 'joined_mid_round': manual_accessed})
 
 @app.route('/api/room/<room_id>/leave', methods=['POST'])
 def leave_room(room_id):
@@ -1185,7 +1209,8 @@ def get_room_state(room_id):
                         config_key = f"{room.game_type}|{room.board_dimensions}|{room.time_limit}"
                         
                         for p in room.players:
-                            if p.user_id > 0:
+                            # Skip guests and mid-round joiners for persistence
+                            if p.user_id > 0 and not getattr(p, 'joined_mid_round', False):
                                 # Update Rating in DB
                                 conn.execute('''
                                     INSERT OR REPLACE INTO user_ratings (user_id, config_key, rating)
@@ -1308,12 +1333,30 @@ def get_room_state(room_id):
         })
         
         return resp
-        
+
     except Exception as e:
         import traceback
         error_msg = f"ERROR in get_room_state: {e}\n{traceback.format_exc()}"
         print(error_msg)
         return jsonify({'error': 'Server error'}), 500
+
+@app.route('/api/user/current-room')
+def get_user_current_room():
+    if 'user_id' not in session:
+        return jsonify({'room_id': None})
+    
+    room_manager.update_presence(session['user_id'])
+    session_info = room_manager.find_user_session(session['user_id'])
+    
+    if session_info and session_info.get('room_id'):
+        return jsonify({
+            'room_id': session_info['room_id'],
+            'game_type': session_info.get('game_type'),
+            'board_dimensions': session_info.get('board_dimensions'),
+            'time_limit': session_info.get('time_limit')
+        })
+    
+    return jsonify({'room_id': None})
 
 @app.route('/api/room/<room_id>/chat', methods=['POST'])
 def submit_chat_message(room_id):
@@ -2090,9 +2133,18 @@ def get_unread_count():
     finally:
         conn.close()
 
+@app.route('/api/tools/flag_manual', methods=['POST'])
+def tools_flag_manual():
+    """Flags the current session as having accessed the Manual tool."""
+    session['manual_accessed'] = True
+    return jsonify({'success': True})
+
 @app.route('/api/tools/manual_solve', methods=['POST'])
 def tools_manual_solve():
     """Solves a custom board provided by the user."""
+    # Set flag just in case they skipped the frontend click trigger
+    session['manual_accessed'] = True
+    
     data = request.json
     board = data.get('board') # 2D list of letters
     dictionary = data.get('dictionary', 'NWL')
@@ -2102,8 +2154,6 @@ def tools_manual_solve():
         
     try:
         # We use the board_generator from the global room_manager instance
-        # _solve_board(self, board, dictionary, word_count_range, min_word_length=3)
-        # For manual solve, we don't care about word_count_range, so pass (0, float('inf'))
         all_words = room_manager.board_generator._solve_board(board, dictionary, (0, float('inf')), 3)
         
         # Sort by largest first (Length DESC, then Alpha ASC)

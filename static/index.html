@@ -134,6 +134,17 @@
                                 <button class="game-btn acc-btn" data-game="accumulative" data-time="600"
                                     data-board="6x8">Start [0]</button>
                             </div>
+                            <div class="matrix-row">
+                                <div class="time-label">24h</div>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
+                                    data-board="4x4">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
+                                    data-board="4x6">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
+                                    data-board="5x7">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
+                                    data-board="6x8">Start [0]</button>
+                            </div>
                         </div>
                     </div>
 
@@ -1610,99 +1621,163 @@
                 <div class="faq-container">
                     <!-- Q1 -->
                     <div class="faq-item">
-                        <div class="faq-question">What do the coloured rows on the “All Words” table mean?</div>
+                        <div class="faq-question">What do the various highlights on the "All Words" table signify?</div>
                         <div class="faq-answer">
-                            <p><span class="faq-highlight lime">[Lime Green words]</span> - Bonus word. A user who finds
-                                it is awarded 5 extra points.</p>
-                            <p><span class="faq-highlight blue">[Blue words]</span> - Found words</p>
-                            <p><span class="faq-highlight gold">[Gold words]</span> - CSW-Only words. These are the
-                                words found in CSW but not in NWL.</p>
-                            <p><span class="faq-highlight red">[Red words]</span> - You did not find it</p>
-                            <p><span class="faq-highlight check">[Checkmark words]</span> - Either you, someone, or
-                                multiple people found the words.</p>
+                            <p>Our "All Words" table employs a sophisticated color-coding system to provide at-a-glance
+                                insights into the round's results:</p>
+                            <ul>
+                                <li><span class="faq-highlight lime">Lime Green</span> - The **Bonus Word**.
+                                    Successfully
+                                    finding this word awards you a 5-point premium.</li>
+                                <li><span class="faq-highlight blue">Vibrant Blue</span> - Words you personally
+                                    discovered
+                                    during the round.</li>
+                                <li><span class="faq-highlight gold">Golden Yellow</span> - **CSW-Only** words. These
+                                    are
+                                    lexical gems found in the Collins Scrabble Words dictionary but absent from the NWL.
+                                </li>
+                                <li><span class="faq-highlight red">Crimson Red</span> - Words that were present on the
+                                    board but eluded your discovery.</li>
+                                <li><span class="faq-highlight check">White Checkmark</span> - Indicates words
+                                    successfully
+                                    identified by you, a competitor, or multiple players in the room.</li>
+                            </ul>
                         </div>
                     </div>
 
                     <!-- Q2 -->
                     <div class="faq-item">
-                        <div class="faq-question">What determines who gains or loses points and by how much? How does
-                            the rating system work?</div>
+                        <div class="faq-question">How does the rating system evaluate my performance and skill?</div>
                         <div class="faq-answer">
-                            <p>Morpheme uses a <strong>Proportional Share</strong> system. Unlike standard systems that
-                                only look at who won or lost, our engine evaluates your <strong>contribution to the
-                                    total room score</strong> relative to your <strong>contribution to the total room
-                                    rating</strong>.</p>
+                            <p>Morpheme utilizes a refined **Proportional Share** engine designed to ensure ultimate
+                                fairness. Unlike traditional win/loss systems, our engine evaluates your individual
+                                contribution relative to the collective strength of the room.</p>
 
-                            <p><strong>1. The Expected Score (Your Goal)</strong><br>
-                                At the end of every round, the server calculates an "Expected Score" specifically for
-                                you. This is based on your current rating compared to the sum of all ratings in the
-                                room.
-                            <ul>
-                                <li>If you have a <strong>high rating</strong>, the system expects you to carry a larger
-                                    share of the points.</li>
-                                <li>If you have a <strong>lower rating</strong>, your expectation is smaller.</li>
-                            </ul>
-                            <em>Calculated as: (Total Room Score ÷ Total Total Rating) × Your Current Rating.</em></p>
+                            <p><strong>1. The Expected Score</strong><br>
+                                At the conclusion of each round, the server calculates a tailored "Expected Score" for
+                                you. This target represents your fair share of the points based on your current rating
+                                relative to your opponents. Masters are naturally expected to achieve higher scores,
+                                while
+                                newcomers have a more accessible performance baseline.</p>
 
-                            <p><strong>2. Number of People & Player Strength</strong><br>
-                                The room dynamic is crucial. If you are the highest-rated player in a room of beginners,
-                                your expected score will be very high—you must significantly outscore the room just to
-                                maintain your rating. Conversely, in a room full of experts, even a modest score might
-                                gain you points if you were the lowest-rated participant.</p>
+                            <p><strong>2. Room Stability & Population</strong><br>
+                                The integrity of your rating is bolstered by the number of participants. A larger
+                                gathering
+                                of players provides a more stable and accurate performance baseline, ensuring that
+                                rating
+                                adjustments are precise and reflective of your true mastery. More people in the room
+                                means
+                                more stability in the rating results.</p>
 
-                            <p><strong>3. Gains and Losses (The 0-16 Scale)</strong><br>
-                                Your performance is measured against a 16-step scale:
-                            <ul>
-                                <li>The server establishes a "Performance Baseline" (75% of your Expected Score).</li>
-                                <li>This baseline is divided into 16 equal increments.</li>
-                                <li><strong>To Gain Points:</strong> You must exceed your Expected Score. You gain +1
-                                    rating point for every 'increment' you score above that expectation.</li>
-                                <li><strong>To Lose Points:</strong> If you fall below your expectation, you lose -1
-                                    rating point for every 'increment' you missed.</li>
-                            </ul>
-                            The maximum change is capped at <strong>16 points per round</strong>, ensuring that your
-                            ranking stays stable while rewarding consistent excellence.</p>
+                            <p><strong>3. Dynamic Gains and Losses</strong><br>
+                                Your final rating change is determined by how significantly you exceed or fall below
+                                your
+                                Expected Score. Adjustments occur on a precise 0-16 scale, rewarding consistent
+                                excellence
+                                while maintaining ranking stability through a capped maximum change per round.</p>
                         </div>
                     </div>
 
                     <!-- Q3 -->
                     <div class="faq-item">
-                        <div class="faq-question">What do the different game types mean? (Accumulative, First Come First
-                            Serve, and Split Points)</div>
+                        <div class="faq-question">What are the distinct strategies for the different game types?</div>
                         <div class="faq-answer">
-                            Each mode offers a unique tactical challenge:
+                            <p>Morpheme offers three unique arenas, each demanding a different tactical approach:</p>
                             <ul>
-                                <li><strong>Accumulative:</strong> The classic experience. Everyone plays independently
-                                    on the same board. You get full points for every word you find, regardless of what
-                                    others find.</li>
+                                <li><strong>Accumulative:</strong> The classic experience of independent discovery.
+                                    Every
+                                    player explores the board at their own pace, receiving full points for every word
+                                    found, regardless of others' performance.</li>
                                 <li><strong>First Come First Serve (FCFS):</strong> A high-stakes race where words are a
-                                    limited resource. As soon as someone finds a word, it's gone for everyone else.
-                                    Speed is your greatest weapon here.</li>
-                                <li><strong>Split Points:</strong> Strategy meets sharing. The points for each word are
-                                    shared among everyone who finds it. Unique words give you full points, shared words
-                                    split the bounty equally.</li>
+                                    finite resource. The moment a word is claimed, it is removed from the board for all
+                                    other players. Speed and decisiveness are your primary weapons.</li>
+                                <li><strong>Split Points:</strong> A strategic blend of discovery and uniqueness. Points
+                                    for
+                                    each word are shared among everyone who finds it. While common words yield split
+                                    rewards, uncovering unique words grants you the full bounty.</li>
                             </ul>
                         </div>
                     </div>
 
                     <!-- Q4 -->
                     <div class="faq-item">
-                        <div class="faq-question">Is there an easier way to view a user’ profile?</div>
+                        <div class="faq-question">What do the different icons next to the flags mean?</div>
                         <div class="faq-answer">
-                            Yes. Click on the coloured square that indicates the user’s approximate rating. A small
-                            window of a brief version of their profile will appear. For more details, see their Profile
-                            in Tools.
+                            <p>These icons provide insight into the method a user is employing to enter words, allowing
+                                you
+                                to understand their playstyle:</p>
+                            <div class="icon-list">
+                                <div class="icon-item">
+                                    <span>⌨️</span>
+                                    <div><strong>Typing Icon:</strong> Indicates the user is entering words via a
+                                        physical
+                                        or virtual keyboard.</div>
+                                </div>
+                                <div class="icon-item">
+                                    <span>🖱️</span>
+                                    <div><strong>Mousing Icon:</strong> Indicates the user is selecting words using a
+                                        mouse
+                                        or trackpad.</div>
+                                </div>
+                                <div class="icon-item">
+                                    <span>📱</span>
+                                    <div><strong>Swiping Icon:</strong> Indicates the user is swiping to connect letters
+                                        on
+                                        a mobile device.</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Q5 -->
                     <div class="faq-item">
-                        <div class="faq-question">Why are there parameters that determine the next round?</div>
+                        <div class="faq-question">What do the Penalty and Checkerboard mechanics signify?</div>
                         <div class="faq-answer">
-                            Every round is unique thanks to the "Spinner Set" parameters. These are randomly generated
-                            values (like word density, dictionary choice, and difficulty) that the server uses to build
-                            a fresh board. This ensures that the game remains unpredictable and prevents anyone from
-                            memorizing patterns, keeping the competition fair and exciting every single time.
+                            <p><strong>Penalty:</strong> Should the Spinner land on Penalty, exercise caution! Any valid
+                                letter sequence found on the board that is NOT in the active dictionary will result in a
+                                **3-point deduction**. Accuracy becomes as vital as speed.</p>
+                            <p><strong>Checkerboard:</strong> This elegant format arranges the board so that consonants
+                                and
+                                vowels alternate along rows and diagonals (e.g., C V C V C). This rhythmic layout
+                                creates
+                                unique patterns and strategic opportunities for word formation.</p>
+                        </div>
+                    </div>
+
+                    <!-- Q6 -->
+                    <div class="faq-item">
+                        <div class="faq-question">What determines the difficulty level of a board?</div>
+                        <div class="faq-answer">
+                            <p>Board difficulty is scientifically determined by the ratio of obscure or complex words to
+                                common vocabulary. If over 75% to 80% of the possible words are statistically difficult
+                                to
+                                uncover, the board is classified as **Difficult**. Conversely, if 80% to 90% of the
+                                words
+                                are common and easily found, the board is considered **Easy**.</p>
+                        </div>
+                    </div>
+
+                    <!-- Q7 -->
+                    <div class="faq-item">
+                        <div class="faq-question">Is there a faster way to view a user’s profile?</div>
+                        <div class="faq-answer">
+                            <p>Indeed. Simply click the colored rating square next to any username to evoke a **Mini
+                                Profile**. This provides a brief overview of their statistics. For a comprehensive view,
+                                visit the full Profile section within the Tools menu.</p>
+                        </div>
+                    </div>
+
+                    <!-- Q8 -->
+                    <div class="faq-item">
+                        <div class="faq-question">Why does the system generate unique parameters for each round?</div>
+                        <div class="faq-answer">
+                            <p>Every round is a fresh challenge governed by the **Spinner Set**. These randomly
+                                generated
+                                parameters—including word density, dictionary selection, and board format—ensure that no
+                                two
+                                games are ever alike. This prevents memorization and maintains a fair, unpredictable,
+                                and
+                                ever-evolving competitive landscape.</p>
                         </div>
                     </div>
                 </div>
@@ -2110,6 +2185,9 @@
                     <div
                         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
                         <h3 style="margin: 0; border: none; padding: 0;">Best Individual Words</h3>
+                        <span
+                            style="font-size: 0.7rem; font-weight: 800; color: #ffd700; text-transform: uppercase;">Average
+                            Points: <span id="ach-avg-word-pts">-</span></span>
                     </div>
                     <div class="ach-table-container"
                         style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">

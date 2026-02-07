@@ -120,7 +120,7 @@ class GameRoom:
         if len(self.chat_messages) > 30:
             self.chat_messages.pop(0)
     
-    def add_player(self, user_id, username, rating, games_played=0, country_flag='🏳️'):
+    def add_player(self, user_id, username, rating, games_played=0, country_flag='🏳️', manual_accessed=False):
         """Add player to room"""
         is_daily = self.time_limit >= 7200
         
@@ -130,6 +130,11 @@ class GameRoom:
             print(f"[GameRoom] Persistence: Reusing existing player {username} in 24h room {self.room_id}")
             existing_player.last_active = time.time()
             existing_player.country_flag = country_flag # Update flag
+            # Note: manual_accessed doesn't force mid-round for persistent daily rooms usually, 
+            # but if it's the rule, we should apply it.
+            # For now, let's stick to the user's rule for ALL rooms.
+            if manual_accessed:
+                existing_player.joined_mid_round = True
             return True
         
         # Track if they were already in the room (to avoid mid-round flag on refresh)
@@ -145,6 +150,8 @@ class GameRoom:
             existing_player.last_active = time.time()
             existing_player.country_flag = country_flag # Update flag
             existing_player.games_played = games_played # Update games played (if changed)
+            if manual_accessed:
+                existing_player.joined_mid_round = True
             self.players.append(existing_player)
             return True
 
@@ -156,8 +163,11 @@ class GameRoom:
             return False # Room full
             
         player = Player(user_id, username, rating, games_played=games_played, country_flag=country_flag)
-        if self.state == 'active' and not is_daily and not was_already_in_room:
+        if manual_accessed:
             player.joined_mid_round = True
+        elif self.state == 'active' and not is_daily and not was_already_in_room:
+            player.joined_mid_round = True
+            
         self.players.append(player)
         self.players.sort(key=lambda p: p.rating, reverse=True)
         
@@ -459,7 +469,7 @@ class GameRoom:
             print(f"[GameRoom] Calculating Proportional ratings at end of Round {self.current_round}")
             
             # Record winners for History tab before rating change (using score before rating adjustment)
-            active_competitors = [p for p in self.players if p.score > 0]
+            active_competitors = [p for p in self.players if p.score > 0 and not getattr(p, 'joined_mid_round', False)]
             if len(active_competitors) > 1:
                 max_score = max(p.score for p in active_competitors)
                 winners_data = [{'username': p.username, 'rating': p.rating} for p in active_competitors if p.score == max_score]
@@ -1217,9 +1227,10 @@ class RoomManager:
             timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             
             # Statistics Rule: Only count rounds where 2+ players actually played (score > 0)
-            playing_players = [p for p in room.players if p.score > 0]
+            # Skip players who joined mid-round (User Request)
+            playing_players = [p for p in room.players if p.score > 0 and not getattr(p, 'joined_mid_round', False)]
             if len(playing_players) <= 1:
-                print(f"[RoomManager] SKIPPING history save for room {room.room_id} - only {len(playing_players)} players played")
+                print(f"[RoomManager] SKIPPING history save for room {room.room_id} - only {len(playing_players)} players played (excluding mid-joiners)")
                 conn.close()
                 return
 
