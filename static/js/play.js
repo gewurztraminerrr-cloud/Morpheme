@@ -1345,7 +1345,8 @@ function renderBoard(board, grayed) {
     // Reset container style
     const boardJSON = JSON.stringify(board);
     if (boardJSON === lastRenderedBoardJSON && grayed === lastRenderedGrayed && isBoardRotated === lastRenderedRotation && boardEl.classList.contains('game-board')) {
-        return; // Skip identical re-render to preserve highlights
+        reapplyBoardHighlights(); // Still update highlights if board didn't change!
+        return;
     }
 
     lastRenderedBoardJSON = boardJSON;
@@ -1675,6 +1676,11 @@ function reapplyBoardHighlights() {
     const board = window.lastGameState ? window.lastGameState.board : null;
     if (!board) return;
 
+    // Clear PREVIOUS highlights of ALL types to avoid stale visuals
+    document.querySelectorAll('.board-cell').forEach(cell => {
+        cell.classList.remove('selected', 'current', 'typing-highlight', 'review-highlight');
+    });
+
     // 1. Reapply mouse selection highlights (drag)
     if (mouseState && mouseState.selectedPath && mouseState.selectedPath.length > 0) {
         const isEnabled = window.userSettings && window.userSettings.highlight_mouse !== false;
@@ -1705,6 +1711,37 @@ function reapplyBoardHighlights() {
                 });
             }
         }
+    }
+
+    // 3. Reapply review highlights (All Words / Finder list)
+    if (typeof highlightedFoundWord !== 'undefined' && highlightedFoundWord) {
+        const path = findWordPathOnBoard(highlightedFoundWord, board);
+        if (path) {
+            // Check if we need to animate (new selection) or just show (board refresh)
+            const isNewSelection = window._lastAnimatedReviewWord !== highlightedFoundWord;
+
+            path.forEach((coord, index) => {
+                const cell = document.querySelector(`.board-cell[data-row="${coord.r}"][data-col="${coord.c}"]`);
+                if (cell) {
+                    if (isNewSelection) {
+                        // Sequential tracing effect (similar to replay)
+                        setTimeout(() => {
+                            // Ensure the word is still the one we want to highlight
+                            if (highlightedFoundWord === window._lastAnimatedReviewWord) {
+                                cell.classList.add('review-highlight');
+                            }
+                        }, index * 60); // 60ms delay per letter
+                    } else {
+                        // Instant display for static refreshes
+                        cell.classList.add('review-highlight');
+                    }
+                }
+            });
+
+            window._lastAnimatedReviewWord = highlightedFoundWord;
+        }
+    } else {
+        window._lastAnimatedReviewWord = null;
     }
 }
 
@@ -2096,21 +2133,39 @@ if (submitBtn && wordInputEl) {
         if (e.key === 'Enter') submitWord();
     });
 
-    // Real-time highlighting while typing
+    // Real-time highlighting and "word declaration" while typing
     wordInputEl.addEventListener('input', () => {
+        const word = wordInputEl.value.trim();
+        const board = window.lastGameState ? window.lastGameState.board : null;
+
+        // Dedicated "Word Declaration" area in bottom right
+        const defWordEl = document.getElementById('definition-word');
+        const defHeaderEl = document.getElementById('definition-header');
+        const defContentEl = document.getElementById('definition-content');
+        if (defWordEl && defHeaderEl) {
+            if (word) {
+                defWordEl.textContent = word.toUpperCase();
+                defHeaderEl.style.display = 'block';
+                // Only show "Typing..." if no existing definition is being looked at
+                if (defContentEl && (defContentEl.querySelector('.placeholder') || !defContentEl.innerHTML.trim())) {
+                    defContentEl.innerHTML = '<p class="placeholder" style="font-size: 0.8rem; margin-top: 5px;">Typing...</p>';
+                }
+            } else {
+                // If input cleared, and show placeholder if no word selected
+                defHeaderEl.style.display = 'none';
+                if (defContentEl) {
+                    defContentEl.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
+                }
+            }
+        }
+
         const isEnabled = window.userSettings && window.userSettings.highlight_typing !== false;
         if (!isEnabled) {
-            // Ensure any existing highlights are cleared if feature is disabled mid-type
             document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
             return;
         }
 
-        const word = wordInputEl.value.trim();
-        const board = window.lastGameState ? window.lastGameState.board : null;
-
-        // Clear previous highlights
         document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
-
         if (!word || !board) return;
 
         const path = findWordPathOnBoard(word, board);
@@ -2250,8 +2305,12 @@ async function submitWord(wordParam = null) {
         showValidationFeedback('Submission Error', false);
     }
     input.value = '';
-    // Clear typing highlights after submission
+    // Clear typing highlights and declaration after submission
     document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
+    const defHeader = document.getElementById('definition-header');
+    if (defHeader) defHeader.style.display = 'none';
+    const defContent = document.getElementById('definition-content');
+    if (defContent) defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
 }
 
 function showValidationFeedback(message, isValid) {
@@ -2314,13 +2373,25 @@ if (rotateBtnEl) {
 async function fetchDefinition(word) {
     if (!word) return;
     const defContent = document.getElementById('definition-content');
+    const defWord = document.getElementById('definition-word');
+    const defHeader = document.getElementById('definition-header');
     if (!defContent) return;
+
+    // Show word immediately in dedicated header
+    if (defWord && defHeader) {
+        defWord.textContent = word.toUpperCase();
+        defHeader.style.display = 'block';
+    }
+
     defContent.innerHTML = '<p class="placeholder">Loading definition...</p>';
+
     try {
         const resp = await fetch(`/api/definition?word=${encodeURIComponent(word)}`);
         const data = await resp.json();
+
         if (data.definition) {
-            defContent.innerHTML = `<span class="definition-word">${data.word}</span><span class="definition-text">${data.definition}</span>`;
+            // No longer injecting word span here as it's in the header
+            defContent.innerHTML = `<span class="definition-text">${data.definition}</span>`;
         } else {
             defContent.innerHTML = `<p class="placeholder">Definition not found.</p>`;
         }

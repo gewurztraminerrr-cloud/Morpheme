@@ -29,9 +29,9 @@
 }
 
 .game-params {
-    font-size: 0.8rem;
-    /* Reduced from 0.9rem */
-    opacity: 0.9;
+    font-size: 1.05rem;
+    opacity: 0.95;
+    font-weight: 500;
 }
 
 .return-btn {
@@ -410,36 +410,45 @@
 .definitions-panel {
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 10px 15px;
-    height: 100px;
-    /* Reduced from 110px */
+    padding: 12px 15px;
+    height: 120px;
     flex-shrink: 0;
-    /* Prevent collapsing */
     margin-top: auto;
-    /* Push to bottom */
-    /* Reduced fixed height */
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
-    justify-content: center;
+    overflow: hidden;
+    justify-content: flex-start;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.definition-header {
+    flex-shrink: 0;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 #definition-content {
+    flex: 1;
+    overflow-y: auto;
     font-size: var(--def-font-size);
     line-height: 1.5;
     color: var(--text-primary);
 }
 
 .definition-word {
-    font-weight: 700;
-    color: #e94560;
-    font-size: 1.1rem;
-    margin-bottom: 5px;
+    font-weight: 800;
+    color: var(--accent-color);
+    font-size: 1.2rem;
     display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .definition-text {
     opacity: 0.9;
+    font-style: italic;
+    font-size: 0.95rem;
 }
 
 /* Board Panel */
@@ -1724,6 +1733,32 @@
     z-index: 3;
     transition: all 0.1s ease;
     border-color: #fff !important;
+}
+
+.board-cell.review-highlight {
+    background: #ffd700 !important;
+    /* Gold */
+    color: #000 !important;
+    transform: scale(1.1);
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.8), 0 0 10px #fff;
+    z-index: 4;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 2px solid #fff !important;
+    animation: reviewPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes reviewPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 0 5px #fff;
+        transform: scale(1.1);
+    }
+
+    50% {
+        box-shadow: 0 0 35px rgba(255, 215, 0, 0.9), 0 0 15px #fff;
+        transform: scale(1.15);
+    }
 }
 
 /* Color Bar Container */

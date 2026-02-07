@@ -45,10 +45,10 @@
         <div id="page-login" class="page active">
             <div class="auth-container">
                 <h2>Welcome to Morpheme</h2>
-                <p style="text-align: center; margin-bottom: 15px; opacity: 0.8;">Sign in to continue your journey.</p>
                 <div id="total-user-count"
-                    style="text-align: center; margin-bottom: 25px; color: var(--accent-color); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem; min-height: 20px;">
+                    style="text-align: center; margin-bottom: 15px; color: var(--accent-color); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem; min-height: 20px;">
                 </div>
+                <p style="text-align: center; margin-bottom: 25px; opacity: 0.8;">Sign in to continue your journey.</p>
 
                 <div class="auth-tabs">
                     <button class="tab-btn active" id="login-tab" data-tab="signin">Login</button>
@@ -274,10 +274,6 @@
                         </div>
                         <div class="chat-input-section">
                             <input type="text" id="chat-input" placeholder="Say something..." autocomplete="off">
-                            <label for="chat-file-input" id="chat-upload-label" class="chat-upload-btn"
-                                title="Upload Image"
-                                style="cursor: pointer; font-size: 1.2rem; padding: 0 5px;">📷</label>
-                            <input type="file" id="chat-file-input" accept="image/*" style="display: none;">
                             <button id="chat-send-btn">Send</button>
                         </div>
                     </div>
@@ -316,12 +312,9 @@
                         <div id="submitted-words-list">
                             <p class="placeholder">No words yet</p>
                         </div>
-                        <div class="definitions-panel">
-                            <div id="definition-content">
-                                <p class="placeholder">Select a word to see its definition</p>
-                            </div>
-                        </div>
                     </div>
+
+
 
                     <div id="tab-content-remaining" class="tab-content">
                         <div class="words-header-group">
@@ -362,6 +355,14 @@
                             <div id="winners-list" class="winners-list-container">
                                 <p class="placeholder">No history available yet</p>
                             </div>
+                        </div>
+                    </div>
+                    <div class="definitions-panel">
+                        <div id="definition-header" class="definition-header" style="display: none;">
+                            <span id="definition-word" class="definition-word"></span>
+                        </div>
+                        <div id="definition-content">
+                            <p class="placeholder">Select a word to see its definition</p>
                         </div>
                     </div>
                 </div>

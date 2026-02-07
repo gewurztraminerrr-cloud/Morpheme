@@ -62,7 +62,7 @@ const RATING_RANGES = [
     { min: 3000, max: 3999, color: '#330000', label: '3000 - 3999', name: 'Ascendant' },
     { min: 4000, max: 4999, color: '#220000', label: '4000 - 4999', name: 'Transcendent' },
     { min: 5000, max: 5999, color: '#110000', label: '5000 - 5999', name: 'Ethereal' },
-    { min: 6000, max: 99999, color: '#000000', label: '6000+', name: 'Infinite' }
+    { min: 6000, max: 99999, color: '#000000', label: '6000+', name: 'ALIEN BEING' }
 ];
 
 // Initialize app

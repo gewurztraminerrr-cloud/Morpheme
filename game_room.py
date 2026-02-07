@@ -392,8 +392,8 @@ class GameRoom:
                     'points': penalty_points
                 })
                 
-                # Update score (Floor at 0)
-                player.score = max(0, sum(w.get('points', 0) for w in player.submitted_words))
+                # Update score (Sequential floor at 0 to avoid negative debt)
+                self._recalculate_player_score(player)
                 return True, f"{word} PENALTY (-3)", penalty_points, word
             else:
                 # Standard invalid word
@@ -435,8 +435,8 @@ class GameRoom:
             player.found_bonus_word = True
             print(f"[GameRoom] Player {player.username} found the BONUS WORD: {final_word}!")
         
-        # Update player score immediately (Floor at 0)
-        player.score = max(0, sum(w['points'] for w in player.submitted_words))
+        # Update player score immediately (Sequential floor at 0 to avoid negative debt)
+        self._recalculate_player_score(player)
         
         # Real-time Split Points Recalculation
         if self.game_type == 'split':
@@ -448,6 +448,21 @@ class GameRoom:
                     break
 
         return True, f"{final_word} ACCEPTED", points, final_word
+    
+    def _recalculate_player_score(self, player):
+        """
+        Recalculate player score from submitted words sequentially.
+        This prevents a 'debt' of negative points in Penalty mode.
+        If the current score is 0, a penalty (-3) keeps it at 0.
+        Subsequent valid words then immediately increase the score.
+        """
+        # Sort by submission time to ensure sequential penalty application
+        sorted_words = sorted(player.submitted_words, key=lambda x: x.get('time', 0))
+        current_score = 0
+        for w in sorted_words:
+            current_score = max(0, current_score + w.get('points', 0))
+        player.score = current_score
+        return current_score
     
     def get_intermission_milestone(self):
         """Returns which milestone we're at during intermission.
@@ -632,9 +647,7 @@ class GameRoom:
                 
         # 3. Update scores for each player
         for p in self.players:
-            new_total_score = sum(w['points'] for w in p.submitted_words)
-            print(f"[GameRoom] Player {p.username}: Old Score={p.score}, New Split Score={new_total_score}")
-            p.score = max(0, new_total_score)
+            self._recalculate_player_score(p)
             
             # Also calculate invalid words points (0, but we might want to track count)
 
