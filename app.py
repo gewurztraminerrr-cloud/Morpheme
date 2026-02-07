@@ -299,7 +299,11 @@ def get_user_count():
         # Guest users are in the users table but we can identify them by 'Guest_' prefix if we stick to that convention
         cursor = conn.execute("SELECT COUNT(*) FROM users WHERE username NOT LIKE 'Guest_%'") 
         count = cursor.fetchone()[0]
-        return jsonify({'count': count})
+        online_count = room_manager.get_online_count() if 'room_manager' in globals() else 0
+        return jsonify({
+            'count': count,
+            'online_count': online_count
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:

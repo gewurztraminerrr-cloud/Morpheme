@@ -812,6 +812,12 @@ class RoomManager:
         """Get room by ID"""
         return self.rooms.get(room_id)
     
+    def get_online_count(self):
+        """Returns the number of users active in the last 60 seconds"""
+        with self.lock:
+            now = time.time()
+            return sum(1 for ts in self.user_presence.values() if (now - ts) < 60)
+
     def update_presence(self, user_id):
         """Update global heartbeat for any user interaction"""
         if user_id:

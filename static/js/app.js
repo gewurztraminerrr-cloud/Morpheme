@@ -83,7 +83,8 @@ async function fetchUserCount() {
         const data = await res.json();
         const el = document.getElementById('total-user-count');
         if (el && data.count !== undefined) {
-            el.textContent = `Join ${data.count} registered players!`;
+            const online = data.online_count || 0;
+            el.textContent = `Join ${data.count} registered and ${online} online players!`;
         }
     } catch (e) {
         console.warn('Failed to fetch user count', e);
