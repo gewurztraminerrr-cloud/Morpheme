@@ -368,6 +368,49 @@ class BoardGenerator:
         print(f"[BoardGen] Complete solver finished: found {len(found_words)} total words")
         return sorted(list(found_words))
 
+    def is_word_on_board(self, word, board):
+        """Check if a specific word exists on the board (ignoring dictionary)"""
+        rows, cols = len(board), len(board[0])
+        word = word.upper()
+        
+        def dfs_find(r, c, remaining_word, visited):
+            if not remaining_word:
+                return True
+            
+            # Check all 8 neighbors
+            for dr in [-1, 0, 1]:
+                for dc in [-1, 0, 1]:
+                    if dr == 0 and dc == 0:
+                        continue
+                    nr, nc = r + dr, c + dc
+                    if (0 <= nr < rows and 0 <= nc < cols and (nr, nc) not in visited):
+                        cell_letter = board[nr][nc]
+                        
+                        # Branch 1: Regular match
+                        if cell_letter == remaining_word[0]:
+                            if dfs_find(nr, nc, remaining_word[1:], visited | {(nr, nc)}):
+                                return True
+                                
+                        # Branch 2: Q -> QU match
+                        if cell_letter == 'Q' and remaining_word.startswith('QU'):
+                            if dfs_find(nr, nc, remaining_word[2:], visited | {(nr, nc)}):
+                                return True
+            return False
+
+        # Start from every cell
+        for r in range(rows):
+            for c in range(cols):
+                start_letter = board[r][c]
+                # Branch 1: Regular
+                if start_letter == word[0]:
+                    if dfs_find(r, c, word[1:], {(r, c)}):
+                        return True
+                # Branch 2: Q -> QU
+                if start_letter == 'Q' and word.startswith('QU'):
+                    if dfs_find(r, c, word[2:], {(r, c)}):
+                        return True
+        return False
+
 
 # Test
 if __name__ == '__main__':

@@ -559,3 +559,478 @@
         margin-bottom: 25px;
     }
 }
+
+/* ------------------- */
+/* MULTI-WORD ANIMATION (Length Matters) */
+/* ------------------- */
+
+.length-matters-board {
+    /* Uses .demo-board base styles */
+}
+
+/* Custom Cursor Animation for Multi-Word */
+.length-matters-cursor {
+    animation: moveCursorMulti 16s infinite ease-in-out;
+}
+
+/* Custom Tile Animations */
+.length-matters-tile.tile-1 {
+    /* P */
+    animation: highlightMulti1 16s infinite;
+}
+
+.length-matters-tile.tile-2 {
+    /* L */
+    animation: highlightMulti2 16s infinite;
+}
+
+.length-matters-tile.tile-3 {
+    /* A */
+    animation: highlightMulti3 16s infinite;
+}
+
+.length-matters-tile.tile-4 {
+    /* Y */
+    animation: highlightMulti4 16s infinite;
+}
+
+/* Keyframes for Multi-Cursor Path 
+   Tiles: 1(28,28), 2(92,28), 3(28,92), 4(92,92)
+*/
+@keyframes moveCursorMulti {
+
+    /* --- WORD 1: PLAY (1->2->3->4) [0-25%] --- */
+    0% {
+        top: 28px;
+        left: 28px;
+        opacity: 0;
+    }
+
+    /* Start P */
+    2% {
+        top: 28px;
+        left: 28px;
+        opacity: 1;
+    }
+
+    6% {
+        top: 28px;
+        left: 92px;
+    }
+
+    /* L */
+    12% {
+        top: 92px;
+        left: 28px;
+    }
+
+    /* A */
+    18% {
+        top: 92px;
+        left: 92px;
+    }
+
+    /* Y */
+    22% {
+        opacity: 1;
+    }
+
+    24% {
+        opacity: 0;
+    }
+
+    /* --- WORD 2: PALY (1->3->2->4) [25-50%] --- */
+    25% {
+        top: 28px;
+        left: 28px;
+        opacity: 0;
+    }
+
+    /* Start P */
+    27% {
+        top: 28px;
+        left: 28px;
+        opacity: 1;
+    }
+
+    33% {
+        top: 92px;
+        left: 28px;
+    }
+
+    /* A */
+    39% {
+        top: 28px;
+        left: 92px;
+    }
+
+    /* L */
+    45% {
+        top: 92px;
+        left: 92px;
+    }
+
+    /* Y */
+    48% {
+        opacity: 1;
+    }
+
+    49% {
+        opacity: 0;
+    }
+
+    /* --- WORD 3: PAY (1->3->4) [50-75%] --- */
+    50% {
+        top: 28px;
+        left: 28px;
+        opacity: 0;
+    }
+
+    /* Start P */
+    52% {
+        top: 28px;
+        left: 28px;
+        opacity: 1;
+    }
+
+    60% {
+        top: 92px;
+        left: 28px;
+    }
+
+    /* A */
+    68% {
+        top: 92px;
+        left: 92px;
+    }
+
+    /* Y */
+    72% {
+        opacity: 1;
+    }
+
+    74% {
+        opacity: 0;
+    }
+
+    /* --- WORD 4: PLY (1->2->4) [75-100%] --- */
+    75% {
+        top: 28px;
+        left: 28px;
+        opacity: 0;
+    }
+
+    /* Start P */
+    77% {
+        top: 28px;
+        left: 28px;
+        opacity: 1;
+    }
+
+    85% {
+        top: 28px;
+        left: 92px;
+    }
+
+    /* L */
+    93% {
+        top: 92px;
+        left: 92px;
+    }
+
+    /* Y */
+    97% {
+        opacity: 1;
+    }
+
+    100% {
+        top: 92px;
+        left: 92px;
+        opacity: 0;
+    }
+}
+
+/* Keyframes for Tile Highlights */
+/* Common Active Style */
+/* We can't use a common mixin in pure CSS, so repeated properties */
+
+@keyframes highlightMulti1 {
+
+    /* P (Active in all 4 coords: Start) */
+    0%,
+    2%,
+    22% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: #fff;
+        text-shadow: 0 0 10px #00ffff;
+    }
+
+    /* PLAY */
+    24%,
+    25% {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+    }
+
+    27%,
+    48% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: #fff;
+        text-shadow: 0 0 10px #00ffff;
+    }
+
+    /* PALY */
+    49%,
+    50% {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+    }
+
+    52%,
+    72% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: #fff;
+        text-shadow: 0 0 10px #00ffff;
+    }
+
+    /* PAY */
+    74%,
+    75% {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+    }
+
+    77%,
+    97% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: #fff;
+        text-shadow: 0 0 10px #00ffff;
+    }
+
+    /* PLY */
+    99%,
+    100% {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+    }
+}
+
+@keyframes highlightMulti2 {
+
+    /* L (2nd in PLAY, 3rd in PALY, Not in PAY, 2nd in PLY) */
+    /* PLAY (2nd) ~6% */
+    0%,
+    5% {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+    }
+
+    6%,
+    22% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: #fff;
+        text-shadow: 0 0 10px #00ffff;
+    }
+
+    24%,
+    38% {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+    }
+
+    /* PALY (3rd) ~39% */
+    39%,
+    48% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: #fff;
+        text-shadow: 0 0 10px #00ffff;
+    }
+
+    49%,
+    84% {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+    }
+
+    /* PAY (Skipped) */
+
+    /* PLY (2nd) ~85% */
+    85%,
+    97% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: #fff;
+        text-shadow: 0 0 10px #00ffff;
+    }
+
+    99%,
+    100% {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+    }
+}
+
+@keyframes highlightMulti3 {
+
+    /* A (3rd in PLAY, 2nd in PALY, 2nd in PAY, Not in PLY) */
+    /* PLAY (3rd) ~12% */
+    0%,
+    11% {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+    }
+
+    12%,
+    22% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: #fff;
+        text-shadow: 0 0 10px #00ffff;
+    }
+
+    24%,
+    32% {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+    }
+
+    /* PALY (2nd) ~33% */
+    33%,
+    48% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: #fff;
+        text-shadow: 0 0 10px #00ffff;
+    }
+
+    49%,
+    59% {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+    }
+
+    /* PAY (2nd) ~60% */
+    60%,
+    72% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: #fff;
+        text-shadow: 0 0 10px #00ffff;
+    }
+
+    74%,
+    100% {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+    }
+}
+
+@keyframes highlightMulti4 {
+
+    /* Y (4th in PLAY, 4th in PALY, 3rd in PAY, 3rd in PLY) -> Always Last */
+    /* PLAY (4th) ~18% */
+    0%,
+    17% {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+    }
+
+    18%,
+    22% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: #fff;
+        text-shadow: 0 0 10px #00ffff;
+    }
+
+    24%,
+    44% {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+    }
+
+    /* PALY (4th) ~45% */
+    45%,
+    48% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: #fff;
+        text-shadow: 0 0 10px #00ffff;
+    }
+
+    49%,
+    67% {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+    }
+
+    /* PAY (3rd) ~68% */
+    68%,
+    72% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: #fff;
+        text-shadow: 0 0 10px #00ffff;
+    }
+
+    74%,
+    92% {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+    }
+
+    /* PLY (3rd) ~93% */
+    93%,
+    97% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: #fff;
+        text-shadow: 0 0 10px #00ffff;
+    }
+
+    99%,
+    100% {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.3);
+        text-shadow: none;
+    }
+}

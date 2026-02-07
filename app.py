@@ -1064,20 +1064,29 @@ def join_room(room_id):
     # Get extra stats (games_played, country_flag)
     games_played = 0
     country_flag = '🏳️'
+    has_exceptional = False # User request: Do not give trophy on join
+    
     if not session.get('is_guest', False):
         conn = sqlite3.connect('morpheme.db')
         try:
+             # Basic Stats
              cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (user_id,))
              row = cur.fetchone()
              if row:
                  games_played = row[0]
                  if row[1]: country_flag = row[1]
-        except: pass
-        conn.close()
-
+        except Exception as e:
+            print(f"Error checking stats: {e}")
+        finally:
+            conn.close()
+    
     # Try to join as player
     manual_accessed = session.pop('manual_accessed', False)
+    # Pass has_exceptional_round
     success = room.add_player(user_id, session['username'], rating, games_played=games_played, country_flag=country_flag, manual_accessed=manual_accessed)
+    if success:
+        p = room.players[-1] # Valid since we just added or updated
+        p.has_exceptional_round = has_exceptional 
     if not success:
         # Room full
         msg = f"Room is full (Max {room.max_players} players). You can watch instead."
@@ -1322,7 +1331,8 @@ def get_room_state(room_id):
                     'last_active_age': time.time() - p.last_active,
                     'games_played': p.games_played,
                     'country_flag': p.country_flag,
-                    'joined_mid_round': getattr(p, 'joined_mid_round', False)
+                    'joined_mid_round': getattr(p, 'joined_mid_round', False),
+                    'has_exceptional_round': getattr(p, 'has_exceptional_round', False)
                 } for p in sorted(room.players, key=lambda p: p.score, reverse=True)
             ],
             'spectators': [
@@ -1369,15 +1379,21 @@ def submit_chat_message(room_id):
         
     data = request.get_json()
     message = data.get('message', '').strip()
+    image = data.get('image')
     
-    if not message:
-        return jsonify({'error': 'Message required'}), 400
+    if not message and not image:
+        return jsonify({'error': 'Message or image required'}), 400
         
     # Optional: Truncate long messages
     if len(message) > 200:
         message = message[:200]
         
-    room.add_chat_message(session['username'], message)
+    # Optional: Basic validation on image size (length of base64 string) if needed
+    # base64 factor is ~1.33. 1MB image is ~1.33MB string. Limit to ~2MB string.
+    if image and len(image) > 2 * 1024 * 1024:
+        return jsonify({'error': 'Image too large (max 1.5MB)'}), 400
+        
+    room.add_chat_message(session['username'], message, image=image)
     room.update_player_activity(session['user_id'])
     
     return jsonify({'success': True})
@@ -1407,11 +1423,15 @@ def submit_word(room_id):
     # Refresh activity on any submission attempt (valid or not)
     room.update_player_activity(user_id)
     
+    player = room.get_player(user_id)
+    new_score = player.score if player else 0
+
     return jsonify({
         'success': success, 
         'message': message,
         'points': points,
-        'word': final_word
+        'word': final_word,
+        'new_score': new_score
     })
 
 @app.route('/room/<room_id>/update_input_method', methods=['POST'])

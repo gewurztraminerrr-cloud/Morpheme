@@ -322,6 +322,15 @@ async function updateGameState() {
                 // Reset Highlighting
                 highlightedSplitWord = null;
                 highlightedFoundWord = null;
+                selectedPlayerUsername = null; // Reset player selection
+
+                // Reset Player List Scroll (Undo "Find Me")
+                const playersListEl = document.getElementById('players-list');
+                if (playersListEl) {
+                    playersListEl.scrollTop = 0;
+                    // And potentially the parent container if needed
+                    if (playersListEl.parentElement) playersListEl.parentElement.scrollTop = 0;
+                }
 
                 // DATA SYNC FIX: Explicitly clear Remaining list to prevent crossover
                 const remainingList = document.getElementById('remaining-words-list');
@@ -491,20 +500,26 @@ async function updateGameState() {
         if (listEl && activeWordsTab === 'found') {
             if (state.state === 'intermission') {
                 // INTERMISSION: Show ALL words
-                let allPlayerWords = [];
-                state.players.forEach(p => {
-                    if (p.submitted_words) {
-                        p.submitted_words.forEach(w => {
-                            const str = typeof w === 'string' ? w : w.word;
-                            allPlayerWords.push(str);
-                        });
-                    }
-                });
 
+                // 1. Calculate Global Stats (All players)
                 const totalWords = allWords.length;
-                const uniqueFound = new Set(allPlayerWords.map(w => w.toUpperCase())).size;
-                const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
-                wordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}%`;
+                const globalUnique = new Set(allPlayerFoundStrs).size;
+                const globalPercentage = totalWords > 0 ? Math.round((globalUnique / totalWords) * 100) : 0;
+
+                // 2. Calculate Personal Stats (Current User)
+                const myPlayer = state.players.find(p => p.username === currentUser);
+                const myWords = myPlayer ? (myPlayer.submitted_words || []) : [];
+                const personalUnique = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase())).size;
+                const personalPercentage = totalWords > 0 ? Math.round((personalUnique / totalWords) * 100) : 0;
+
+                // Display Both
+                wordsStats.innerHTML = `
+                    <div style="line-height: 1.2;">
+                        ${personalUnique}/${totalWords} - ${personalPercentage}%
+                        <div style="font-size: 0.75em; opacity: 0.7; margin-top: 2px;">
+                            Total Found Percentage: ${globalPercentage}%
+                        </div>
+                    </div>`;
 
                 const targetUsername = selectedPlayerUsername || currentUser;
                 let targetWords = [];
@@ -514,7 +529,9 @@ async function updateGameState() {
                         targetWords = targetPlayer.submitted_words.map(w => typeof w === 'string' ? w : w.word);
                     }
                 }
-                displayAllWords(allWords, state.bonus_word, targetWords, allPlayerWords.map(w => w.toUpperCase()), state.all_word_scores, state.csw_only_words);
+
+                const uniqueGlobalFound = [...new Set(allPlayerFoundStrs)];
+                displayAllWords(allWords, state.bonus_word, targetWords, uniqueGlobalFound, state.all_word_scores, state.csw_only_words);
                 if (state.game_type === 'split' || state.game_type === 'fcfs') addSplitViewBoardToggle();
 
             } else if (state.game_type !== 'fcfs') {
@@ -524,9 +541,12 @@ async function updateGameState() {
                 const myWords = myPlayer ? (myPlayer.submitted_words || []) : [];
 
 
+                // 2. Personal Stats Only (Active)
                 const totalWords = allWords.length;
                 const uniqueFound = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase())).size;
                 const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
+
+                // Single line display
                 wordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}%`;
 
                 const sortedWords = [...myWords].sort((a, b) => (b.time || 0) - (a.time || 0));
@@ -543,6 +563,7 @@ async function updateGameState() {
                         let className = 'word-item player-word';
                         if (isBonus) className += ' bonus-word';
                         if (isCSWOnly) className += ' csw-only';
+                        if (points < 0) className += ' penalty-word';
                         if (highlightedFoundWord === wordUpper) className += ' finder-active';
 
                         // All words in this list ARE found by user
@@ -801,7 +822,8 @@ async function updateGameState() {
                             </div>
                             <div style="background: rgba(255,215, 0, 0.1); border: 1px solid rgba(255,215, 0, 0.2); padding: 5px 10px; border-radius: 8px; font-weight: 900; color: #ffd700; font-size: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 10px;">
                                 <span>${h.score}<span style="font-size: 0.65rem; opacity: 0.8; font-weight: 800; margin-left: 3px;">PTS</span></span>
-                                <button title="View Screenshot" onclick="event.stopPropagation(); watchRoundHistory('${state.room_id}', ${h.round}, true)" style="background:none; border:none; color:#ffd700; cursor:pointer; font-size:1.1rem; padding:0; display:flex; align-items:center;">📷</button>
+                                <button title="Watch Replay" onclick="event.stopPropagation(); watchRoundHistory('${state.room_id}', ${h.round}, false)" style="background:none; border:none; color:#ffd700; cursor:pointer; font-size:1.3rem; padding:0; display:flex; align-items:center; margin-right: 5px;">▶</button>
+                                <button title="View Snapshot" onclick="event.stopPropagation(); watchRoundHistory('${state.room_id}', ${h.round}, true)" style="background:none; border:none; color:#ffd700; cursor:pointer; font-size:1.1rem; padding:0; display:flex; align-items:center;">📷</button>
                             </div>
                         </div>
                     `;
@@ -891,6 +913,9 @@ function renderPlayers(players, currentUser = null, state = null) {
         if (p.input_method === 'keyboard') inputIcon = '⌨️';
         if (p.input_method === 'touch') inputIcon = '👆';
 
+        // Trophy Logic
+        const trophyHtml = p.has_exceptional_round ? '<span title="Exceptional Performer" style="font-size: 0.8rem; margin-left: 4px;">🏆</span>' : '';
+
         return `
         <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}" data-username="${p.username}">
             <div class="player-row-top">
@@ -902,6 +927,7 @@ function renderPlayers(players, currentUser = null, state = null) {
             <div class="player-row-bottom">
                 <span class="player-flag">${p.country_flag || '🏳️'}</span>
                 <span class="player-input-icon">${inputIcon}</span>
+                ${trophyHtml}
                 <span class="player-words-count">${p.words_count} words</span>
                 <span class="player-score-val">${p.score} pts</span>
             </div>
@@ -1940,8 +1966,12 @@ function renderFCFSNotepads(players) {
 
                 const row = document.createElement('div');
                 row.className = 'notepad-item';
+                if (pts < 0) {
+                    row.className += ' penalty-word';
+                    row.style.color = '#ff3333';
+                    row.style.fontWeight = 'bold';
+                }
                 row.dataset.word = w;
-                row.style.cursor = 'pointer';
                 row.onclick = () => window.fetchDefinition(w); // Direct handler
                 row.innerHTML = `<span>${w}</span> <span>${pts}</span>`;
                 list.appendChild(row);
@@ -2126,6 +2156,7 @@ async function submitWord(wordParam = null) {
                 const isBonus = data.word === currentState.bonus_word;
                 let className = 'word-item player-word';
                 if (isBonus) className += ' bonus-word';
+                if (data.points < 0) className += ' penalty-word';
 
                 const html = `<div class="${className}" style="display:flex; justify-content:space-between; animation: slideIn 0.3s ease;">
                     <span>${data.word}</span>
@@ -2135,8 +2166,16 @@ async function submitWord(wordParam = null) {
                 // Prepend to top (since we sort by newest)
                 listEl.insertAdjacentHTML('afterbegin', html);
 
-                // Update stats text optimistically
-                if (wordsStats) {
+                // Update total score and re-render players list
+                const me = currentState.players.find(p => p.username === currentUser);
+                if (me) {
+                    me.score = data.new_score;
+                    // Re-render the left panel players list with new score/rank
+                    renderPlayers(currentState.players, currentUser, currentState);
+                }
+
+                // Update stats text optimistically (only for genuine dictionary words)
+                if (wordsStats && data.points > 0) {
                     const parts = wordsStats.textContent.match(/(\d+)\/(\d+) - (\d+)%/);
                     if (parts) {
                         let found = parseInt(parts[1]);
@@ -2144,7 +2183,8 @@ async function submitWord(wordParam = null) {
                         found++;
                         const percent = total > 0 ? Math.round((found / total) * 100) : 0;
                         wordsStats.textContent = `${found}/${total} - ${percent}%`;
-                    } else if (currentState.all_words) {
+                    }
+                    else if (currentState.all_words) {
                         const total = currentState.all_words.length;
                         const found = 1;
                         const percent = total > 0 ? Math.round((found / total) * 100) : 0;

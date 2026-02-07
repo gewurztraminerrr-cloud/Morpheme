@@ -271,6 +271,10 @@
                         </div>
                         <div class="chat-input-section">
                             <input type="text" id="chat-input" placeholder="Say something..." autocomplete="off">
+                            <label for="chat-file-input" id="chat-upload-label" class="chat-upload-btn"
+                                title="Upload Image"
+                                style="cursor: pointer; font-size: 1.2rem; padding: 0 5px;">📷</label>
+                            <input type="file" id="chat-file-input" accept="image/*" style="display: none;">
                             <button id="chat-send-btn">Send</button>
                         </div>
                     </div>
@@ -742,12 +746,19 @@
                                         <div id="integrated-replay-panel" class="integrated-replay-container hidden">
                                             <div class="integrated-replay-header">
                                                 <div class="header-main">
-                                                    <h3>Round Replay</h3>
-                                                    <span id="integrated-total-score" class="header-score">0 PTS</span>
+                                                    <h3
+                                                        style="font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: 1px;">
+                                                        ROUND REPLAY</h3>
                                                 </div>
                                             </div>
                                             <div class="integrated-replay-layout">
                                                 <div class="replay-main">
+                                                    <!-- Board placed at the top as requested -->
+                                                    <div id="integrated-board-container"
+                                                        class="integrated-review-board">
+                                                        <!-- Populated by JS -->
+                                                    </div>
+
 
                                                     <div class="replay-controls-row">
                                                         <button id="integrated-start-btn"
@@ -758,7 +769,15 @@
 
                                                         <div id="integrated-progress-ui"
                                                             class="integrated-progress-ui hidden">
-                                                            <span id="integrated-current-time">0:00.0</span>
+                                                            <div
+                                                                style="display: flex; flex-direction: column; gap: 2px;">
+                                                                <span id="integrated-current-time"
+                                                                    style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #409cff;">0:00.0</span>
+                                                                <span id="integrated-current-score"
+                                                                    style="font-size: 0.7rem; font-weight: 800; color: #ffd700; text-transform: uppercase;">0
+                                                                    pts</span>
+                                                            </div>
+
                                                             <div class="mini-progress-bg">
                                                                 <div id="integrated-progress-bar"
                                                                     class="mini-progress-fill">
@@ -774,12 +793,8 @@
                                                 </div>
 
                                                 <div class="replay-sidebar">
-                                                    <div id="integrated-board-container"
-                                                        class="integrated-review-board">
-                                                        <!-- Populated by JS -->
-                                                    </div>
                                                     <div id="integrated-players-list" class="replay-players-list hidden"
-                                                        style="margin-top: 20px; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; border: 1px solid rgba(255,255,255,0.05);">
+                                                        style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; border: 1px solid rgba(255,255,255,0.05);">
                                                         <h4
                                                             style="font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 12px; letter-spacing: 1.5px; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
                                                             Round Participants</h4>
@@ -1598,11 +1613,22 @@
                 <!-- Card 2: Strategy -->
                 <div class="instruction-card">
                     <div class="card-image-container">
-                        <img src="/brain/03e22400-5367-4b19-8d15-40b39b1e595c/instruction_submit_1769388490012.png"
-                            alt="Score Points" class="card-image">
+                        <!-- Multi-Word Demo Board -->
+                        <div class="demo-board length-matters-board">
+                            <div class="demo-cursor length-matters-cursor"></div>
+                            <div class="demo-tile length-matters-tile tile-1">P</div>
+                            <div class="demo-tile length-matters-tile tile-2">L</div>
+                            <div class="demo-tile length-matters-tile tile-3">A</div>
+                            <div class="demo-tile length-matters-tile tile-4">Y</div>
+                        </div>
                     </div>
                     <h3>Length Matters</h3>
-                    <p>Longer words grant exponential points. Look for prefixes and suffixes to maximize your score.</p>
+                    <p>Longer words grant exponential points. Look for prefixes and suffixes to maximize your score.
+                        Morpheme is more than a mere exercise in appending letters to their neighbors; it is a
+                        discipline of letter manipulation and heightened cognitive resonance. True mastery requires a
+                        subconscious, peripheral awareness—a profound intuition that a specific letter is not just
+                        present, but poised at a precise location, waiting to be woven into the fabric of your strategy.
+                    </p>
                 </div>
 
                 <!-- Card 3: Win -->
@@ -1626,13 +1652,15 @@
                             <p>Our "All Words" table employs a sophisticated color-coding system to provide at-a-glance
                                 insights into the round's results:</p>
                             <ul>
-                                <li><span class="faq-highlight lime">Lime Green</span> - The **Bonus Word**.
+                                <li><span class="faq-highlight lime">Lime Green</span> - The <strong>Bonus
+                                        Word</strong>.
                                     Successfully
                                     finding this word awards you a 5-point premium.</li>
                                 <li><span class="faq-highlight blue">Vibrant Blue</span> - Words you personally
                                     discovered
                                     during the round.</li>
-                                <li><span class="faq-highlight gold">Golden Yellow</span> - **CSW-Only** words. These
+                                <li><span class="faq-highlight gold">Golden Yellow</span> - <strong>CSW-Only</strong>
+                                    words. These
                                     are
                                     lexical gems found in the Collins Scrabble Words dictionary but absent from the NWL.
                                 </li>
@@ -1649,7 +1677,8 @@
                     <div class="faq-item">
                         <div class="faq-question">How does the rating system evaluate my performance and skill?</div>
                         <div class="faq-answer">
-                            <p>Morpheme utilizes a refined **Proportional Share** engine designed to ensure ultimate
+                            <p>Morpheme utilizes a refined <strong>Proportional Share</strong> engine designed to ensure
+                                ultimate
                                 fairness. Unlike traditional win/loss systems, our engine evaluates your individual
                                 contribution relative to the collective strength of the room.</p>
 
@@ -1735,7 +1764,8 @@
                         <div class="faq-answer">
                             <p><strong>Penalty:</strong> Should the Spinner land on Penalty, exercise caution! Any valid
                                 letter sequence found on the board that is NOT in the active dictionary will result in a
-                                **3-point deduction**. Accuracy becomes as vital as speed.</p>
+                                <strong>3-point deduction</strong>. Accuracy becomes as vital as speed.
+                            </p>
                             <p><strong>Checkerboard:</strong> This elegant format arranges the board so that consonants
                                 and
                                 vowels alternate along rows and diagonals (e.g., C V C V C). This rhythmic layout
@@ -1751,9 +1781,10 @@
                             <p>Board difficulty is scientifically determined by the ratio of obscure or complex words to
                                 common vocabulary. If over 75% to 80% of the possible words are statistically difficult
                                 to
-                                uncover, the board is classified as **Difficult**. Conversely, if 80% to 90% of the
+                                uncover, the board is classified as <strong>Difficult</strong>. Conversely, if 80% to
+                                90% of the
                                 words
-                                are common and easily found, the board is considered **Easy**.</p>
+                                are common and easily found, the board is considered <strong>Easy</strong>.</p>
                         </div>
                     </div>
 
@@ -1761,9 +1792,12 @@
                     <div class="faq-item">
                         <div class="faq-question">Is there a faster way to view a user’s profile?</div>
                         <div class="faq-answer">
-                            <p>Indeed. Simply click the colored rating square next to any username to evoke a **Mini
-                                Profile**. This provides a brief overview of their statistics. For a comprehensive view,
-                                visit the full Profile section within the Tools menu.</p>
+                            <p>Indeed. Simply click the colored rating square next to any username to evoke a
+                                <strong>Mini
+                                    Profile</strong>. This provides a brief overview of their statistics. For a
+                                comprehensive view,
+                                visit the full Profile section within the Tools menu.
+                            </p>
                         </div>
                     </div>
 
@@ -1771,7 +1805,8 @@
                     <div class="faq-item">
                         <div class="faq-question">Why does the system generate unique parameters for each round?</div>
                         <div class="faq-answer">
-                            <p>Every round is a fresh challenge governed by the **Spinner Set**. These randomly
+                            <p>Every round is a fresh challenge governed by the <strong>Spinner Set</strong>. These
+                                randomly
                                 generated
                                 parameters—including word density, dictionary selection, and board format—ensure that no
                                 two
@@ -1799,25 +1834,14 @@
                 <div class="header-main">
                     <h2>Round Replay</h2>
                     <span class="header-subtitle">Verifiable Legitimacy Walkthrough</span>
+                    <span id="history-review-date"
+                        style="display: block; font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 4px; font-weight: 600;"></span>
                 </div>
                 <button class="close-overlay" id="close-history-review">&times;</button>
             </div>
             <div class="history-review-layout">
                 <div class="history-review-main">
-                    <div class="history-review-summary">
-                        <div class="summary-card">
-                            <span class="label">Room ID</span>
-                            <span id="review-room-id" class="value">-</span>
-                        </div>
-                        <div class="summary-card">
-                            <span class="label">Mode</span>
-                            <span id="review-game-mode" class="value">-</span>
-                        </div>
-                        <div class="summary-card">
-                            <span class="label">Total Score</span>
-                            <span id="review-total-score" class="value primary">-</span>
-                        </div>
-                    </div>
+
 
                     <div class="history-walkthrough-section">
                         <div class="section-header">
@@ -1850,16 +1874,10 @@
                             <!-- Populated by JS -->
                         </div>
                     </div>
-                </div>
 
-                <div class="history-review-sidebar">
-                    <div class="board-panel">
-                        <div class="panel-header">
-                            <h3>Round Board</h3>
-                        </div>
-                        <div id="review-board-container" class="review-board">
-                            <!-- Populated by JS -->
-                        </div>
+                    <!-- Board moved to right column -->
+                    <div id="review-board-container" class="review-board-main">
+                        <!-- Populated by JS -->
                     </div>
                 </div>
             </div>
@@ -1938,6 +1956,7 @@
             <div class="mini-profile-actions">
                 <button id="mini-profile-view-full" class="mini-action-btn secondary">Full Profile</button>
                 <button id="mini-profile-message" class="mini-action-btn primary">Message</button>
+                <button id="mini-profile-round-reviews" class="mini-action-btn secondary">Round Reviews</button>
                 <button id="mini-profile-friend" class="mini-action-btn secondary hidden">Add Friend</button>
             </div>
         </div>

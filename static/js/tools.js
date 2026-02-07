@@ -244,6 +244,21 @@ async function showMiniProfile(username) {
             window.performProfileSearch(data.username);
         };
 
+        const roundReviewsBtn = document.getElementById('mini-profile-round-reviews');
+        if (roundReviewsBtn) {
+            roundReviewsBtn.onclick = () => {
+                modal.classList.add('hidden');
+                // Navigate to tools page and search
+                const toolsBtn = document.querySelector('.nav-btn[data-page="tools"]');
+                if (toolsBtn) toolsBtn.click();
+
+                const profileToolBtn = document.querySelector('.tool-nav-btn[data-tool="profile"]');
+                if (profileToolBtn) profileToolBtn.click();
+
+                window.performProfileSearch(data.username, 'history');
+            };
+        }
+
         const msgBtn = document.getElementById('mini-profile-message');
         const globalUser = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
         const currentName = (typeof globalUser === 'object') ? globalUser.username : globalUser;
@@ -814,6 +829,12 @@ async function performProfileSearch(username) {
         await renderProfile(data);
         container.classList.remove('hidden');
 
+        // Activate specific tab if requested
+        if (activeTab) {
+            const tabToggle = document.querySelector(`.profile-tab-toggle[data-tab="${activeTab}"]`);
+            if (tabToggle) tabToggle.click();
+        }
+
     } catch (err) {
         console.error("Profile search error:", err);
     }
@@ -1030,28 +1051,71 @@ async function renderProfile(user) {
         const gameTypeLabel = round.game_type === 'split' ? 'Split' :
             round.game_type === 'fcfs' ? 'FCFS' : 'Acc';
         const typeClass = `history-type-${round.game_type}`;
-        const dims = round.dimensions || (round.board ? `${round.board.length}x${round.board[0].length}` : '4x4');
+
+        let miniBoardHTML = '';
+        if (round.board && Array.isArray(round.board)) {
+            const rows = round.board.length;
+            const cols = round.board[0].length;
+            const cellSize = 5; // tiny pixels
+
+            let gridCells = '';
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const letter = round.board[r][c];
+                    // Very tiny representation
+                    gridCells += `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); border-radius: 1px; font-size: 5px; color: rgba(255,255,255,0.5);">${letter}</div>`;
+                }
+            }
+
+            miniBoardHTML = `
+                <div style="display: grid; grid-template-columns: repeat(${cols}, 1fr); gap: 1px; width: 40px; height: 40px; pointer-events: none;">
+                    ${gridCells}
+                </div>
+            `;
+        } else {
+            miniBoardHTML = '<span style="opacity:0.3; font-size: 0.7rem;">No Preview</span>';
+        }
+
+        // Date Formatting
+        let dateStr = '-';
+        if (round.timestamp) {
+            const d = new Date(round.timestamp);
+            try {
+                dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            } catch (e) {
+                dateStr = '-';
+            }
+        }
 
         return `
-        <div class="history-grid-item" onclick="watchRoundHistory('${round.room_id}', ${round.round_number}, true)" style="display: grid; grid-template-columns: 100px 70px 90px 70px 110px 100px 1fr 100px; gap:10px; padding: 14px 20px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 8px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden;">
-            <div class="history-mode-tag ${typeClass}" style="font-size: 0.65rem; padding: 3px 8px; border-radius: 6px; text-align: center; width: fit-content; font-weight: 800; text-transform: uppercase;">${gameTypeLabel}</div>
-            <div style="font-family: monospace; font-size: 0.8rem; color: rgba(255,255,255,0.7); font-weight: 700;">${dims}</div>
-            <div style="font-weight: 900; color: #fff; font-size: 1rem;">${round.total_score} <small style="font-size: 0.6rem; opacity: 0.5;">PTS</small></div>
-            <div style="font-weight: 900; color: ${round.performance_value >= 140 ? '#60a5fa' : 'rgba(255,255,255,0.2)'}; font-size: 0.9rem;">${round.performance_value || '-'}</div>
-            <div style="display: flex; flex-direction: column; gap: 2px;">
-                <span style="color: #fff; font-size: 0.75rem; font-weight: 700;">${round.num_words} words</span>
+        <div class="history-grid-item" onclick="watchRoundHistory('${round.room_id}', ${round.round_number}, true)" style="display: grid; grid-template-columns: 80px 50px 80px 60px 80px 80px 100px 1fr 100px 50px; gap:8px; padding: 10px 15px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 8px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden;">
+            <div class="history-mode-tag ${typeClass}" style="font-size: 0.65rem; padding: 3px 6px; border-radius: 6px; text-align: center; width: fit-content; font-weight: 800; text-transform: uppercase;">${gameTypeLabel}</div>
+            
+            <!-- Mini Board Preview Column -->
+            <div style="display: flex; justify-content: center;">
+                ${miniBoardHTML}
+            </div>
+
+            <div style="font-weight: 900; color: #fff; font-size: 0.95rem;">${round.total_score} <small style="font-size: 0.6rem; opacity: 0.5;">PTS</small></div>
+            <div style="font-weight: 900; color: ${round.performance_value >= 140 ? '#60a5fa' : 'rgba(255,255,255,0.2)'}; font-size: 0.85rem;">${round.performance_value || '-'}</div>
+            <div style="display: flex; flex-direction: column; gap: 1px;">
+                <span style="color: #fff; font-size: 0.7rem; font-weight: 700;">${round.num_words} words</span>
                 <span style="color: rgba(255,255,255,0.3); font-size: 0.6rem;">Avg: ${round.avg_len}</span>
             </div>
-            <div style="color: #ffd700; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.5px;" title="${round.top_word}">${round.top_word}</div>
-            <div style="display: flex; flex-direction: column; gap: 2px;">
-                <span style="font-size: 0.75rem; color: #60a5fa; font-weight: 700; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${round.room_id}</span>
-                <span style="font-size: 0.65rem; color: rgba(255,255,255,0.3); font-weight: 600;">Str: ${round.room_strength || '-'}</span>
+            <div style="color: #ffd700; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.5px;" title="${round.top_word}">${round.top_word}</div>
+            <div style="display: flex; flex-direction: column; gap: 1px;">
+                <span style="font-size: 0.7rem; color: #60a5fa; font-weight: 700; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">${round.room_id}</span>
+                <span style="font-size: 0.6rem; color: rgba(255,255,255,0.3); font-weight: 600;">Str: ${round.room_strength || '-'}</span>
             </div>
+            
+            <!-- Date Column -->
+            <div style="font-size: 0.7rem; color: rgba(255,255,255,0.6); font-weight: 600; text-align: right;">${dateStr}</div>
+
             <div style="text-align: right;">
                 <button class="history-snap-btn" title="View Snapshot"
                          onclick="event.stopPropagation(); watchRoundHistory('${round.room_id}', ${round.round_number}, true)"
-                         style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 6px 10px; cursor: pointer;">
-                    <span style="font-size: 1.1rem;">📷</span>
+                         style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 4px 8px; cursor: pointer;">
+                    <span style="font-size: 1rem;">📷</span>
                 </button>
             </div>
         </div>
@@ -1059,15 +1123,16 @@ async function renderProfile(user) {
     };
 
     window.roundGridHeader = `
-        <div class="history-grid-header" style="display: grid; grid-template-columns: 100px 70px 90px 70px 110px 100px 1fr 100px; gap:10px; padding: 12px 20px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 12px; font-size: 0.7rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+        <div class="history-grid-header" style="display: grid; grid-template-columns: 80px 50px 80px 60px 80px 80px 100px 1fr 100px 50px; gap:8px; padding: 12px 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 12px; font-size: 0.7rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
             <div>Mode</div>
-            <div>Board</div>
+            <div style="text-align: center;">Board</div>
             <div>Score</div>
             <div>Perf</div>
             <div>Stats</div>
             <div>Top Word</div>
-            <div>Room / Str</div>
-            <div style="text-align: right;">Snapshot</div>
+            <div>Room</div>
+            <div style="text-align: right;">Date</div>
+            <div style="text-align: right;">Snap</div>
         </div>
     `;
 
@@ -1168,34 +1233,75 @@ function findWordPath(board, word) {
 window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false) {
     console.log(`Reviewing Round ${roundNum} from Room ${roomId}`);
 
+    // 1. Find Round Data
     let rounds = window.lastRenderedRounds || [];
-    let round = rounds.find(r => r.room_id == roomId && r.round_number == roundNum);
+    let round = null;
 
-    // FALLBACK: If not in profile rounds, check the Lobby's winners_history
-    if (!round && window.lastGameState && window.lastGameState.winners_history) {
+    // A) Try Fallback/Lobby First (More likely for active session)
+    if (window.lastGameState && window.lastGameState.winners_history) {
         const foundInLobby = window.lastGameState.winners_history.find(h => h.round == roundNum);
         if (foundInLobby && foundInLobby.board) {
-            console.log(`[Review] Found round ${roundNum} in Lobby winners_history`);
+            console.log(`[Review] Using Round ${roundNum} from Lobby winners_history`);
             round = {
                 ...foundInLobby,
                 room_id: roomId,
                 round_number: foundInLobby.round,
-                total_score: foundInLobby.score
+                total_score: foundInLobby.score,
+                game_type: foundInLobby.game_type || 'accumulative'
             };
         }
     }
 
+    // B) Fallback to Profile/Recent Rounds
     if (!round) {
-        alert("Round details not available. This round may have happened before the snapshot system was enabled or you need to refresh.");
+        round = rounds.find(r => r.room_id == roomId && r.round_number == roundNum);
+    }
+
+    if (!round) {
+        alert("Round details not available. This round may have happened before the snapshot system was enabled.");
         return;
     }
 
-    const panel = document.getElementById('integrated-replay-panel');
-    if (!panel) return;
+    // Update Date Display
+    const dateEl = document.getElementById('history-review-date');
+    if (dateEl) {
+        if (round.timestamp) {
+            const d = new Date(round.timestamp);
+            try {
+                dateEl.innerText = d.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            } catch (e) {
+                dateEl.innerText = '';
+            }
+        } else {
+            dateEl.innerText = '';
+        }
+    }
 
-    // Show the panel
-    panel.classList.remove('hidden');
-    panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Try to find the Overlay first (preferred for a "window that appears")
+    const overlay = document.getElementById('history-review-overlay');
+    const integratedPanel = document.getElementById('integrated-replay-panel');
+
+    // Choose IDs based on which UI is available
+    const useOverlay = !!overlay;
+    const prefix = useOverlay ? 'review' : 'integrated';
+
+    if (useOverlay) {
+        overlay.classList.remove('hidden');
+        // Setup Close Handler
+        const closeBtn = document.getElementById('close-history-review');
+        if (closeBtn) {
+            closeBtn.onclick = () => {
+                overlay.classList.add('hidden');
+                if (window.replayInterval) {
+                    clearInterval(window.replayInterval);
+                    window.replayInterval = null;
+                }
+            };
+        }
+    } else if (integratedPanel) {
+        integratedPanel.classList.remove('hidden');
+        integratedPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 
     // --- Cleanup any existing playback ---
     if (window.replayInterval) {
@@ -1203,168 +1309,204 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false) {
         window.replayInterval = null;
     }
 
-    // 1. Reset & Populate Summary
-    document.getElementById('integrated-total-score').innerText = `${round.total_score} PTS`;
 
-    // Reset Replay UI
-    const startBtn = document.getElementById('integrated-start-btn');
-    const skipBtn = document.getElementById('integrated-skip-btn');
-    const progressUI = document.getElementById('integrated-progress-ui');
-    const walkthroughList = document.getElementById('integrated-walkthrough-list');
+    // 2. Reset Replay UI
+    const startBtn = document.getElementById(useOverlay ? 'start-replay-btn' : 'integrated-start-btn');
+    const skipBtn = document.getElementById(useOverlay ? 'skip-replay-btn' : 'integrated-skip-btn');
+    const progressUI = document.getElementById(useOverlay ? 'replay-progress-container' : 'integrated-progress-ui');
+    const walkthroughList = document.getElementById(`${prefix}-walkthrough-list`);
+    const currentTimeEl = document.getElementById(useOverlay ? 'replay-current-time' : 'integrated-current-time');
+    const progressBar = document.getElementById(useOverlay ? 'replay-progress-bar' : 'integrated-progress-bar');
 
-    startBtn.classList.remove('hidden');
-    skipBtn.classList.add('hidden');
-    progressUI.classList.add('hidden');
-    walkthroughList.innerHTML = '<p class="placeholder" style="color:var(--muted-text); text-align:center; padding:20px;">Ready to watch the walkthrough...</p>';
+    if (startBtn) {
+        startBtn.classList.remove('hidden');
+        startBtn.innerText = "▶ Watch Replay";
+    }
+    if (skipBtn) skipBtn.classList.add('hidden');
+    if (progressUI) progressUI.classList.add('hidden');
+    if (walkthroughList) walkthroughList.innerHTML = '<p class="placeholder" style="color:rgba(255,255,255,0.3); text-align:center; padding:40px; font-weight:700;">Ready to watch the walkthrough...</p>';
 
-    // 2. Render Board
-    const boardContainer = document.getElementById('integrated-board-container');
+    // 3. Render Board with Dynamic Scaling
+    const boardContainer = document.getElementById(`${prefix}-board-container`);
     if (boardContainer && round.board && round.board.length > 0) {
-        boardContainer.innerHTML = ''; // Clear prior content
-        boardContainer.style.gridTemplateColumns = ''; // Reset CSS
+        boardContainer.innerHTML = '';
         const rows = round.board.length;
         const cols = round.board[0].length;
+        const maxDim = Math.max(rows, cols);
+
+        // Dynamic Font Sizing: 4x4 gets large letters, 6x8 gets standard
+        let fontSize = '2rem';
+        if (maxDim > 4) fontSize = '1.6rem';
+        if (maxDim > 6) fontSize = '1.2rem';
+        if (maxDim > 8) fontSize = '1rem';
+
         boardContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
         boardContainer.innerHTML = round.board.flat().map(letter => `
-            <div class="review-cell">${letter}</div>
+            <div class="review-cell" style="font-size: ${fontSize}">${letter}</div>
         `).join('');
     }
 
-    // 2b. Render Players List (Leaderboard Snapshot)
-    const playersList = document.getElementById('integrated-players-list');
-    const playersBody = document.getElementById('integrated-players-body');
-    if (playersList && playersBody) {
-        if (round.all_players && round.all_players.length > 0) {
-            playersList.classList.remove('hidden');
-            playersBody.innerHTML = round.all_players.map((p, idx) => `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; ${idx === 0 ? 'border-bottom: 2px solid rgba(255,215,0,0.3); padding-bottom: 8px;' : ''}">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 0.7rem; color: ${idx === 0 ? '#ffd700' : 'rgba(255,255,255,0.4)'}; font-weight: 800;">#${idx + 1}</span>
-                        <span style="font-weight: 800; color: ${idx === 0 ? '#fff' : 'rgba(255,255,255,0.7)'}; font-size: 0.85rem;">${p.username}</span>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 900; color: ${idx === 0 ? '#ffd700' : '#fff'}; font-size: 0.9rem;">${p.score}</div>
-                        <div style="font-size: 0.6rem; color: rgba(255,255,255,0.3); font-weight: 700;">${p.rating || 1200}</div>
-                    </div>
-                </div>
-            `).join('');
-        } else {
-            playersList.classList.add('hidden');
-        }
-    }
-
-    // 3. Playback Logic
-    // Fix: the data structure might have 'total_score' or 'score'
+    // 4. Playback Logic
     const words = round.words || [];
-    const sortedWords = [...words].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+    // Ensure numeric timestamps (handle legacy string dates)
+    const processedWords = words.map(w => ({
+        ...w,
+        timestamp: isNaN(parseFloat(w.timestamp)) ? 0 : parseFloat(w.timestamp)
+    }));
+
+    const sortedWords = processedWords.sort((a, b) => a.timestamp - b.timestamp);
     const roundDuration = round.round_duration || 60;
-    const startTime = round.round_start_time || (sortedWords[0] ? sortedWords[0].timestamp - 5 : 0);
+
+    // START TIME LOGIC: 
+    // Preferred: round_start_time (absolute s)
+    // Fallback 1: First word timestamp - 5s
+    // Fallback 2: Entry timestamp (converted to s)
+    let startTime = parseFloat(round.round_start_time) ||
+        (sortedWords[0] ? sortedWords[0].timestamp - 5 : 0) ||
+        (parseFloat(round.timestamp) / 1000 || 0);
+
+    console.log(`[Review] Playback Setup: ${sortedWords.length} words, duration ${roundDuration}s, startTime ${startTime}`);
 
     const renderWord = (word) => {
-        const relTimeSec = Math.max(0, (word.timestamp || 0) - startTime);
+        const wTimestamp = parseFloat(word.timestamp) || 0;
+        const relTimeSec = Math.max(0, wTimestamp - startTime);
         const min = Math.floor(relTimeSec / 60);
         const sec = (relTimeSec % 60).toFixed(1);
         const timeStr = `${min}:${sec.padStart(4, '0')}`;
 
+        // Styling based on points
+        let ptsClass = 'walkthrough-pts';
+        if (word.points < 0) ptsClass += ' penalty';
+        if (word.is_bonus) ptsClass += ' bonus';
+
         return `
-        <div class="walkthrough-item reveal" style="padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;">
-            <div style="font-family:monospace; color:var(--accent-color); font-weight:700;">${timeStr}</div>
-            <div style="font-weight:800; text-transform:uppercase; letter-spacing:1px; flex:1; margin-left:15px;">${word.word}</div>
-            <div style="color:#ffd700; font-weight:700;">${word.points} pts</div>
+        <div class="walkthrough-item reveal">
+            <span class="walkthrough-time">${timeStr}</span>
+            <span class="walkthrough-word">${word.word}</span>
+            <span class="${ptsClass}">${word.points} pts</span>
         </div>
         `;
     };
 
     const showAllWords = () => {
-        walkthroughList.innerHTML = sortedWords.map(w => renderWord(w)).join('');
-        if (sortedWords.length === 0) walkthroughList.innerHTML = '<p class="placeholder" style="color:var(--muted-text); text-align:center; padding:20px;">No words discovered in this round.</p>';
-        skipBtn.classList.add('hidden');
-        progressUI.classList.add('hidden');
+        // Newest words first as requested
+        const reversedWords = [...sortedWords].reverse();
+        walkthroughList.innerHTML = reversedWords.map(w => renderWord(w)).join('');
+        if (sortedWords.length === 0) {
+            walkthroughList.innerHTML = '<p class="placeholder" style="color:rgba(255,255,255,0.2); text-align:center; padding:40px;">No words found in this round.</p>';
+        }
+        if (skipBtn) skipBtn.classList.add('hidden');
+        if (progressUI) progressUI.classList.add('hidden');
+
+        const currentScoreEl = document.getElementById(useOverlay ? 'replay-current-score' : 'integrated-current-score');
+        if (currentScoreEl) currentScoreEl.innerText = `${round.total_score} pts`;
     };
 
-    // IF SNAPSHOT MODE: Jump straight to end
+    // Snapshot Mode
     if (isSnapshot) {
         showAllWords();
-        startBtn.classList.add('hidden');
-        return;
+        if (startBtn) startBtn.classList.remove('hidden'); // allow watching even from snapshot
     }
 
-    startBtn.onclick = () => {
-        startBtn.classList.add('hidden');
-        skipBtn.classList.remove('hidden');
-        progressUI.classList.remove('hidden');
-        walkthroughList.innerHTML = '';
 
-        let elapsed = 0;
-        let wordIndex = 0;
-        let localScore = 0;
-        const tick = 100; // 0.1s increments
+    // Interactive Replay
+    if (startBtn) {
+        startBtn.onclick = () => {
+            console.log(`[Review] Starting Replay...`);
+            startBtn.classList.add('hidden');
+            if (skipBtn) skipBtn.classList.remove('hidden');
+            if (progressUI) progressUI.classList.remove('hidden');
 
-        // Clear any existing highlights
-        document.querySelectorAll('.review-cell').forEach(c => c.className = 'review-cell');
+            // Score tracking (internal + UI updates)
+            let currentScore = 0;
+            const currentScoreEl = document.getElementById(useOverlay ? 'replay-current-score' : 'integrated-current-score');
+            if (currentScoreEl) currentScoreEl.innerText = "0 pts";
 
-        window.replayInterval = setInterval(() => {
-            elapsed += tick / 1000;
+            walkthroughList.innerHTML = '';
 
-            // Update Progress Bar
-            const progress = (elapsed / roundDuration) * 100;
-            document.getElementById('integrated-progress-bar').style.width = `${Math.min(100, progress)}%`;
+            let elapsed = 0;
+            let wordIndex = 0;
+            const tick = 100;
 
-            // Update Timer
-            const m = Math.floor(elapsed / 60);
-            const s = (elapsed % 60).toFixed(1);
-            document.getElementById('integrated-current-time').innerText = `${m}:${s.padStart(4, '0')}`;
 
-            // Check for newly discovered words
-            while (wordIndex < sortedWords.length) {
-                const word = sortedWords[wordIndex];
-                const relWordTime = (word.timestamp || 0) - startTime;
+            // Clear Highlights
+            boardContainer.querySelectorAll('.review-cell').forEach(c => c.classList.remove('highlight'));
 
-                if (elapsed >= relWordTime) {
-                    walkthroughList.insertAdjacentHTML('afterbegin', renderWord(word));
-                    localScore += word.points;
-                    document.getElementById('integrated-total-score').innerText = `${localScore} PTS`;
+            window.replayInterval = setInterval(() => {
+                elapsed += tick / 1000;
 
-                    // --- SYNCHRONIZED BOARD HIGHLIGHT ---
-                    const path = findWordPath(round.board, word.word);
-                    if (path) {
-                        const cells = boardContainer.querySelectorAll('.review-cell');
-                        const cols = round.board[0].length;
-
-                        // Clear previous highlight
-                        cells.forEach(c => c.classList.remove('highlight', 'highlight-bonus'));
-
-                        // Apply new highlight
-                        path.forEach((p, i) => {
-                            const cellIdx = p.row * cols + p.col;
-                            setTimeout(() => {
-                                if (cells[cellIdx]) {
-                                    cells[cellIdx].classList.add('highlight');
-                                }
-                            }, i * 50);
-                        });
-                    }
-
-                    wordIndex++;
-                } else {
-                    break;
+                // Update Progress
+                if (progressBar) progressBar.style.width = `${Math.min(100, (elapsed / roundDuration) * 100)}%`;
+                if (currentTimeEl) {
+                    const m = Math.floor(elapsed / 60);
+                    const s = (elapsed % 60).toFixed(1);
+                    currentTimeEl.innerText = `${m}:${s.padStart(4, '0')}`;
                 }
-            }
 
-            if (elapsed >= roundDuration) {
-                clearInterval(window.replayInterval);
-                skipBtn.classList.add('hidden');
-                startBtn.classList.remove('hidden');
-                startBtn.innerText = "Replay";
-            }
-        }, tick);
-    };
+                // Append new words in order
+                while (wordIndex < sortedWords.length) {
+                    const word = sortedWords[wordIndex];
+                    const wTimestamp = parseFloat(word.timestamp) || 0;
+                    const relWordTime = wTimestamp - startTime;
 
-    skipBtn.onclick = () => {
-        if (window.replayInterval) clearInterval(window.replayInterval);
-        showAllWords();
-    };
+                    if (elapsed >= relWordTime || isNaN(relWordTime)) {
+                        console.log(`[Review] Displaying word: ${word.word} (relative: ${relWordTime ? relWordTime.toFixed(1) : 'NaN'}s)`);
+
+                        // Insert at TOP for newest-first order
+                        walkthroughList.insertAdjacentHTML('afterbegin', renderWord(word));
+
+                        currentScore += word.points;
+                        if (currentScoreEl) currentScoreEl.innerText = `${currentScore} pts`;
+
+
+                        // Highlight Path
+                        const path = findWordPath(round.board, word.word);
+                        if (path) {
+                            const cells = boardContainer.querySelectorAll('.review-cell');
+                            const cols = round.board[0].length;
+
+                            // Clear and apply new highlight
+                            cells.forEach(c => c.classList.remove('highlight'));
+                            path.forEach((p, i) => {
+                                const idx = p.row * cols + p.col;
+                                setTimeout(() => {
+                                    if (cells[idx]) cells[idx].classList.add('highlight');
+                                }, i * 40);
+                            });
+                        }
+
+                        wordIndex++;
+                    } else {
+                        break;
+                    }
+                }
+
+                if (elapsed >= roundDuration) {
+                    clearInterval(window.replayInterval);
+                    if (skipBtn) skipBtn.classList.add('hidden');
+                    if (startBtn) {
+                        startBtn.classList.remove('hidden');
+                        startBtn.innerText = "↺ Replay";
+                    }
+                }
+            }, tick);
+        };
+    }
+
+    if (skipBtn) {
+        skipBtn.onclick = () => {
+            if (window.replayInterval) clearInterval(window.replayInterval);
+            showAllWords();
+        };
+    }
+
+    // Auto-start if not a snapshot
+    if (!isSnapshot && startBtn) {
+        startBtn.click();
+    }
 };
+
+
 
 // Global initialization for follow button
 document.addEventListener('DOMContentLoaded', () => {

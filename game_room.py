@@ -30,6 +30,7 @@ class Player:
     input_method: str = "mouse"  # 'keyboard', 'mouse', or 'touch'
     country_flag: str = '🏳️'
     joined_mid_round: bool = False
+    has_exceptional_round: bool = False
 
 @dataclass
 class GameRoom:
@@ -108,11 +109,12 @@ class GameRoom:
         else:
             self.max_players = 8
             
-    def add_chat_message(self, username, message, is_system=False):
+    def add_chat_message(self, username, message, is_system=False, image=None):
         """Add chat message to room"""
         self.chat_messages.append({
             'username': username,
             'message': message,
+            'image': image,
             'is_system': is_system,
             'time': time.time()
         })
@@ -362,9 +364,41 @@ class GameRoom:
                 matched_word = variant
         
         if not matched_word:
-            # Handle invalid word tracking for Split Points (or general reference)
-            player.invalid_words.append(word)
-            return False, f"{word} INVALID", 0, None
+            # PENALTY CHECK: Any sequence >= min length found on board but NOT in dictionary
+            is_penalty = False
+            # Penalty mode check: must be Penalty format AND NOT a 24h room (just in case)
+            is_24h = self.time_limit >= 7200
+            min_len = self.spinner_params.get('min_word_length', 3)
+            
+            if self.spinner_params.get('board_format') == 'Penalty' and not is_24h and len(word) >= min_len:
+                # Is it on the board?
+                from board_generator import BoardGenerator
+                bg = BoardGenerator()
+                if bg.is_word_on_board(word, self.board):
+                    is_penalty = True
+            
+            if is_penalty:
+                # Apply penalty (-3 points)
+                penalty_points = -3
+                
+                # Prevent spamming the same penalty word
+                existing_words = {w['word'] for w in player.submitted_words}
+                if word in existing_words:
+                    return False, f"{word} ALREADY PENALIZED", 0, None
+                
+                player.submitted_words.append({
+                    'word': word,
+                    'time': time.time(),
+                    'points': penalty_points
+                })
+                
+                # Update score (Floor at 0)
+                player.score = max(0, sum(w.get('points', 0) for w in player.submitted_words))
+                return True, f"{word} PENALTY (-3)", penalty_points, word
+            else:
+                # Standard invalid word
+                player.invalid_words.append(word)
+                return False, f"{word} INVALID", 0, None
         
         # Use the matched word (which might be the QU variant) for scoring/display
         final_word = matched_word
@@ -401,8 +435,8 @@ class GameRoom:
             player.found_bonus_word = True
             print(f"[GameRoom] Player {player.username} found the BONUS WORD: {final_word}!")
         
-        # Update player score immediately
-        player.score = sum(w['points'] for w in player.submitted_words)
+        # Update player score immediately (Floor at 0)
+        player.score = max(0, sum(w['points'] for w in player.submitted_words))
         
         # Real-time Split Points Recalculation
         if self.game_type == 'split':
@@ -479,7 +513,7 @@ class GameRoom:
                 winner_words = []
                 for p in active_competitors:
                     if p.score == max_score:
-                        winner_words = [{'word': w['word'], 'points': w.get('points', 0), 'timestamp': w.get('time', 0)} for w in p.submitted_words]
+                        winner_words = [{'word': w['word'], 'points': w.get('points', 0), 'timestamp': w.get('time', time.time())} for w in p.submitted_words]
                         break
 
                 self.winners_history.insert(0, {
@@ -489,19 +523,54 @@ class GameRoom:
                     'score': max_score,
                     'board': self.board,
                     'words': winner_words,
+                    'bonus_word': self.bonus_word,
+                    'round_duration': self.time_limit,
+                    'round_start_time': self.round_start_time,
+                    'game_type': self.game_type,
                     'timestamp': int(time.time() * 1000)
                 })
+
                 # Keep last 50
                 if len(self.winners_history) > 50:
                     self.winners_history = self.winners_history[:50]
 
             rating_changes = calculate_proportional_rating_change(self.players)
             
+            # Connect for stats check
+            try:
+                conn = sqlite3.connect('morpheme.db')
+            except:
+                conn = None
+
             for player in self.players:
                 change = int(rating_changes.get(player.user_id, 0))
                 player.rating += change
                 player.rating_change = change
                 print(f"[GameRoom] Player {player.username} rating adjustment: {change} -> {player.rating}")
+                
+                # EXCEPTIONAL ROUND CHECK (Intermission)
+                # Check if this just-completed round was exceptional
+                if conn and player.score > 0 and player.user_id > 0:
+                    try:
+                        # Get average score for this config
+                        cur = conn.execute('''
+                            SELECT avg(total_score) 
+                            FROM round_history 
+                            WHERE user_id = ? AND game_type = ? AND round_duration = ?
+                        ''', (player.user_id, self.game_type, self.time_limit))
+                        row = cur.fetchone()
+                        avg_score = row[0] if row and row[0] else 0
+                        
+                        # Logic: > 15% better than average (min avg 10)
+                        if avg_score > 10 and player.score > (avg_score * 1.15):
+                            player.has_exceptional_round = True
+                        else:
+                            player.has_exceptional_round = False
+                    except Exception as e:
+                        print(f"Error checking exceptional status for {player.username}: {e}")
+            
+            if conn:
+                conn.close()
 
             # Reset timing flags for next intermission
             self.spinner_params_generated = False
@@ -565,7 +634,7 @@ class GameRoom:
         for p in self.players:
             new_total_score = sum(w['points'] for w in p.submitted_words)
             print(f"[GameRoom] Player {p.username}: Old Score={p.score}, New Split Score={new_total_score}")
-            p.score = new_total_score
+            p.score = max(0, new_total_score)
             
             # Also calculate invalid words points (0, but we might want to track count)
 
@@ -856,7 +925,8 @@ class RoomManager:
         try:
             print(f"[RoomManager] Generating spinner parameters for {room.board_dimensions}")
             # Generate spinner parameters
-            room.spinner_params = SpinnerSet.generate_params(room.board_dimensions)
+            is_24h = room.time_limit >= 7200
+            room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h)
             print(f"[RoomManager] Spinner params: {room.spinner_params}")
             
             # Get bonus word from dictionary
@@ -1010,7 +1080,8 @@ class RoomManager:
             return False
         
         # Generate spinner parameters for next round
-        room.spinner_params = SpinnerSet.generate_params(room.board_dimensions)
+        is_24h = room.time_limit >= 7200
+        room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h)
         room.spinner_params_generated = True
         print(f"[RoomManager] Spinner params generated: {room.spinner_params}")
         return True
@@ -1236,12 +1307,20 @@ class RoomManager:
 
             for p in playing_players:
                 # Use current submitted_words because we call this BEFORE clearing
+                
+                # NORMALIZE TIMESTAMPS: Ensure numeric s for replay
+                words_data = []
+                for w in p.submitted_words:
+                    # Get raw time or fallback
+                    raw_time = w.get('time')
+                    if not raw_time or isinstance(raw_time, str):
+                        raw_time = room.round_start_time or time.time()
                     
-                words_data = [{
-                    'word': w['word'],
-                    'points': w.get('points', 0),
-                    'timestamp': w.get('time', timestamp)
-                } for w in p.submitted_words]
+                    words_data.append({
+                        'word': w['word'],
+                        'points': w.get('points', 0),
+                        'timestamp': raw_time
+                    })
                 
                 conn.execute('''
                     INSERT INTO round_history (user_id, room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, timestamp, user_rating)

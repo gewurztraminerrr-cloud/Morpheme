@@ -9,7 +9,7 @@ from word_validator import word_validator
 
 class SpinnerSet:
     @staticmethod
-    def generate_params(board_dimensions):
+    def generate_params(board_dimensions, is_24h=False):
         """Generate all spinner parameters for a round"""
         # Generate dictionary FIRST so we can use its size for word count
         dictionary = SpinnerSet._spin_dictionary()
@@ -20,7 +20,7 @@ class SpinnerSet:
             'difficulty': SpinnerSet._spin_difficulty(),
             'word_count_range': SpinnerSet._spin_word_count(dictionary),
             'dictionary': dictionary,
-            'board_format': SpinnerSet._spin_board_format()
+            'board_format': SpinnerSet._spin_board_format(is_24h)
         }
     
     @staticmethod
@@ -71,13 +71,24 @@ class SpinnerSet:
         return random.choice(['NWL', 'CSW'])
     
     @staticmethod
-    def _spin_board_format():
-        """95% Normal, 5% Checkerboard"""
-        return random.choices(['Normal', 'Checkerboard'], weights=[95, 5])[0]
+    def _spin_board_format(is_24h=False):
+        """
+        Normal rooms: 90% Normal, 5% Checkerboard, 5% Penalty
+        24h rooms: 95% Normal, 5% Checkerboard (No Penalty)
+        """
+        if is_24h:
+            return random.choices(['Normal', 'Checkerboard'], weights=[95, 5])[0]
+        else:
+            return random.choices(['Normal', 'Checkerboard', 'Penalty'], weights=[90, 5, 5])[0]
 
 # Test
 if __name__ == '__main__':
-    print("Testing Spinner Set:")
-    for dim in ['4x4', '4x6', '5x7', '6x8']:
-        params = SpinnerSet.generate_params(dim)
-        print(f"\n{dim}: {params}")
+    print("Testing Spinner Set (Normal Rooms):")
+    for dim in ['4x4', '4x6']:
+        params = SpinnerSet.generate_params(dim, is_24h=False)
+        print(f"{dim}: {params['board_format']}")
+    
+    print("\nTesting Spinner Set (24h Rooms):")
+    for dim in ['4x4', '4x6']:
+        params = SpinnerSet.generate_params(dim, is_24h=True)
+        print(f"{dim}: {params['board_format']}")
