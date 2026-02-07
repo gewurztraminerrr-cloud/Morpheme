@@ -323,10 +323,10 @@ const Forum = {
         document.getElementById('forum-view-create').classList.add('active');
         document.getElementById('forum-post-category-id').value = this.currentCategoryId;
 
-        // Show image upload ONLY for Screenshots category
+        // Show image upload for Screenshots AND General categories
         const category = this.categories.find(c => c.id === this.currentCategoryId);
-        const isScreenshots = category.name === "Screenshots";
-        document.getElementById('forum-image-upload-section').classList.toggle('hidden', !isScreenshots);
+        const allowUpload = category.name === "Screenshots" || category.name === "General";
+        document.getElementById('forum-image-upload-section').classList.toggle('hidden', !allowUpload);
     },
 
     showRestrictedView: function () {

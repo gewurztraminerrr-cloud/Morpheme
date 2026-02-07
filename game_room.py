@@ -646,17 +646,26 @@ def calculate_proportional_rating_change(players):
     Change based on deviation from Expected Score relative to a 75% baseline.
     """
     
-    # 1. Identify active registered players (score >= 1, user_id > 0)
-    # The Java code iterates rows and checks score >= 1
-    # Skip players who joined mid-round (User Request)
-    active_players = [p for p in players if p.score >= 1 and p.user_id > 0 and not getattr(p, 'joined_mid_round', False)]
+    # 1. Check for integrity (User Rule: If any late joiner exists mixed with full players, void the round ratings)
+    # Late joiners in Split/FCFS steal points/words, unfairly lowering full players' scores.
+    # Even in Accumulative, the user requested strict invalidation ("don't change any score").
+    has_late_joiner = any(getattr(p, 'joined_mid_round', False) for p in players)
     
     changes = {p.user_id: 0 for p in players}
+
+    if has_late_joiner:
+        print("[Rating] Late joiner detected in room. Voiding rating updates for ALL players to ensure fairness.")
+        return changes
+
+    # 2. Identify active registered players (score >= 1, user_id > 0)
+    # The Java code iterates rows and checks score >= 1
+    # We already filtered late joiners globally above, so we just check score/id here.
+    active_players = [p for p in players if p.score >= 1 and p.user_id > 0]
     
     if not active_players:
         return changes
         
-    # 2. Sum Totals
+    # 3. Sum Totals
     score_sum = sum(p.score for p in active_players)
     rating_sum = sum(p.rating for p in active_players)
     

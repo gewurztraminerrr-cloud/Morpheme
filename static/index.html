@@ -45,7 +45,10 @@
         <div id="page-login" class="page active">
             <div class="auth-container">
                 <h2>Welcome to Morpheme</h2>
-                <p style="text-align: center; margin-bottom: 25px; opacity: 0.8;">Sign in to continue your journey.</p>
+                <p style="text-align: center; margin-bottom: 15px; opacity: 0.8;">Sign in to continue your journey.</p>
+                <div id="total-user-count"
+                    style="text-align: center; margin-bottom: 25px; color: var(--accent-color); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem; min-height: 20px;">
+                </div>
 
                 <div class="auth-tabs">
                     <button class="tab-btn active" id="login-tab" data-tab="signin">Login</button>
@@ -879,6 +882,10 @@
                         <div class="random-word-container">
                             <div id="random-word-display" class="random-word-large">
                                 <!-- Generated word appears here -->
+                            </div>
+                            <div id="random-word-definition"
+                                style="margin-top: 20px; font-size: 1.1rem; color: #ccc; font-style: italic; max-width: 80%; margin-left: auto; margin-right: auto; line-height: 1.4;">
+                                <!-- Definition generated here -->
                             </div>
                         </div>
                     </div>

@@ -288,6 +288,23 @@ def get_settings():
     settings = {row[0]: row[1] for row in rows}
     return jsonify({'settings': settings})
 
+@app.route('/api/stats/user_count', methods=['GET'])
+def get_user_count():
+    conn = sqlite3.connect('morpheme.db')
+    try:
+        # Count all users who are NOT guests (guests have usernames starting with Guest_)
+        # AND check against guests created in guest_login if needed, but existing guest filter by name is good enough strictly speaking
+        # Actually safer to check if password_hash is not the dummy one? 
+        # But for 'signed up', we usually mean registered.
+        # Guest users are in the users table but we can identify them by 'Guest_' prefix if we stick to that convention
+        cursor = conn.execute("SELECT COUNT(*) FROM users WHERE username NOT LIKE 'Guest_%'") 
+        count = cursor.fetchone()[0]
+        return jsonify({'count': count})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
 
 # Serve static files
 @app.route('/')
@@ -2215,8 +2232,15 @@ def tools_random_word():
     import random
     random_word = random.choice(filtered_words)
     
+    # Get definition
+    global DEFINITIONS_CACHE
+    if DEFINITIONS_CACHE is None:
+        load_definitions()
+    definition = DEFINITIONS_CACHE.get(random_word, "No definition available for this word.")
+    
     return jsonify({
-        'word': random_word
+        'word': random_word,
+        'definition': definition
     })
 
 @app.route('/api/tools/wotd', methods=['GET'])

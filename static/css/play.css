@@ -1049,6 +1049,7 @@
 /* --- RANDOM WORD TOOL STYLING --- */
 .random-word-container {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: 180px;
@@ -1291,7 +1292,7 @@
 .input-row {
     display: flex;
     gap: 12px;
-    justify-content: center;
+    justify-content: flex-start;
 }
 
 #combo-input {

@@ -2,8 +2,8 @@
 .forum-container {
     display: flex;
     height: calc(100vh - 120px);
-    max-width: 1400px;
-    margin: 20px auto;
+    max-width: 98%;
+    margin: 10px auto;
     background: var(--bg-panel);
     backdrop-filter: blur(10px);
     border-radius: 15px;
@@ -370,15 +370,25 @@
 
 .comment-input-wrapper textarea {
     width: 100%;
-    min-height: 80px;
-    background: var(--input-bg);
+    min-height: 150px;
+    background: rgba(0, 0, 0, 0.2);
     border: 1px solid var(--input-border);
-    border-radius: 8px;
+    border-radius: 12px;
     color: var(--text-primary);
-    padding: 15px;
+    padding: 20px;
     font-family: inherit;
+    font-size: 1rem;
+    line-height: 1.6;
     resize: vertical;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+
+.comment-input-wrapper textarea:focus {
+    outline: none;
+    background: rgba(0, 0, 0, 0.3);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
 }
 
 .comment-controls {
@@ -388,35 +398,71 @@
 
 /* Create Form */
 .forum-create-card {
-    max-width: 800px;
-    margin: 0 auto;
+    max-width: 100%;
+    margin: 0;
     background: rgba(255, 255, 255, 0.03);
-    padding: 40px;
+    padding: 20px;
     border-radius: 20px;
     border: 1px solid var(--input-border);
 }
 
 .forum-create-card h2 {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    font-weight: 700;
+    opacity: 0.9;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-primary);
+}
+
+.forum-create-card input[type="text"],
+.forum-create-card textarea {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--input-border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    padding: 20px;
+    font-family: inherit;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.forum-create-card input[type="text"] {
+    height: 45px;
     font-weight: 600;
-    opacity: 0.8;
+}
+
+.forum-create-card textarea {
+    min-height: 120px;
+    line-height: 1.6;
+    resize: vertical;
+}
+
+.forum-create-card input[type="text"]:focus,
+.forum-create-card textarea:focus {
+    outline: none;
+    background: rgba(0, 0, 0, 0.3);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
 }
 
 .forum-upload-group {
     background: rgba(255, 255, 255, 0.05);
-    padding: 20px;
+    padding: 15px;
     border-radius: 10px;
     border: 2px dashed var(--input-border);
-    margin-bottom: 25px;
+    margin-bottom: 15px;
     text-align: center;
 }
 

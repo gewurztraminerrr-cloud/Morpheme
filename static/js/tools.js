@@ -2307,6 +2307,8 @@ async function generateRandomWord() {
     genBtn.innerText = "Generating...";
     genBtn.disabled = true;
     displayEl.innerHTML = ''; // Clear while loading
+    const defEl = document.getElementById('random-word-definition');
+    if (defEl) defEl.innerHTML = '';
 
     try {
         const url = `/api/tools/random_word?length=${length}&dictionary=${dictionary}`;
@@ -2319,6 +2321,7 @@ async function generateRandomWord() {
         }
 
         const word = data.word;
+        const definition = data.definition || "No definition available.";
 
         // Add a class to re-trigger animation
         displayEl.classList.remove('random-word-large');
@@ -2326,6 +2329,15 @@ async function generateRandomWord() {
         displayEl.classList.add('random-word-large');
 
         displayEl.innerText = word;
+        if (defEl) {
+            // Animate definition fade in slightly
+            defEl.style.opacity = '0';
+            defEl.innerText = definition;
+            setTimeout(() => {
+                defEl.style.transition = 'opacity 0.5s ease';
+                defEl.style.opacity = '1';
+            }, 100);
+        }
 
     } catch (err) {
         console.error("Random word fetch failed:", err);

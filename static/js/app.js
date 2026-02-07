@@ -74,7 +74,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     // handleGuestLogin(); // Don't auto-login guest, wait for button click
     initSettings(); // Initialize settings logic
     checkSession();
+    fetchUserCount(); // Fetch user count for login page
 });
+
+async function fetchUserCount() {
+    try {
+        const res = await fetch('/api/stats/user_count');
+        const data = await res.json();
+        const el = document.getElementById('total-user-count');
+        if (el && data.count !== undefined) {
+            el.textContent = `Join ${data.count} registered players!`;
+        }
+    } catch (e) {
+        console.warn('Failed to fetch user count', e);
+    }
+}
 
 // Global Settings State
 window.userSettings = {
