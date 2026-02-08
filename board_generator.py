@@ -154,39 +154,64 @@ class BoardGenerator:
             return 'Checkerboard' if time_cb < time_normal else 'Normal'
     
     def _create_normal_board(self, rows, cols, weights):
-        """Create board with weighted random letters"""
-        board = []
+        """Create board with weighted random letters, avoiding redundant U next to Q"""
+        board = [[None for _ in range(cols)] for _ in range(rows)]
         for r in range(rows):
-            row = []
             for c in range(cols):
-                # Draw a random letter using frequency weights
-                row.append(random.choices(self.letters, weights=weights, k=1)[0])
-            board.append(row)
+                # Check neighbors for a 'Q'
+                has_q_neighbor = False
+                for dr in [-1, 0, 1]:
+                    for dc in [-1, 0, 1]:
+                        nr, nc = r + dr, c + dc
+                        if 0 <= nr < rows and 0 <= nc < cols:
+                            if board[nr][nc] == 'Q':
+                                has_q_neighbor = True
+                                break
+                    if has_q_neighbor: break
+                
+                if has_q_neighbor:
+                    # Filter out 'U' (index 20) from weights
+                    safe_weights = list(weights)
+                    safe_weights[20] = 0
+                    board[r][c] = random.choices(self.letters, weights=safe_weights, k=1)[0]
+                else:
+                    board[r][c] = random.choices(self.letters, weights=weights, k=1)[0]
         return board
     
     def _create_checkerboard(self, rows, cols, weights):
-        """Create checkerboard pattern (consonants/vowels) with weighted letters"""
-        # separate weights for consonants and vowels
-        # VOWELS = 'AEIOU'
-        # CONSONANTS = 'BCDFGHJKLMNPQRSTVWXYZ'
-        
+        """Create checkerboard pattern (consonants/vowels) with weighted letters, avoiding redundant U next to Q"""
         vowel_indices = [self.letters.index(c) for c in VOWELS]
         consonant_indices = [self.letters.index(c) for c in CONSONANTS]
         
         vowel_weights = [weights[i] for i in vowel_indices]
         consonant_weights = [weights[i] for i in consonant_indices]
         
-        board = []
+        board = [[None for _ in range(cols)] for _ in range(rows)]
         for r in range(rows):
-            row = []
             for c in range(cols):
+                # Check neighbors for a 'Q'
+                has_q_neighbor = False
+                for dr in [-1, 0, 1]:
+                    for dc in [-1, 0, 1]:
+                        nr, nc = r + dr, c + dc
+                        if 0 <= nr < rows and 0 <= nc < cols:
+                            if board[nr][nc] == 'Q':
+                                has_q_neighbor = True
+                                break
+                    if has_q_neighbor: break
+
                 if (r + c) % 2 == 0:
                     # Consonant
-                    row.append(random.choices(CONSONANTS, weights=consonant_weights, k=1)[0])
+                    board[r][c] = random.choices(CONSONANTS, weights=consonant_weights, k=1)[0]
                 else:
-                    # Vowel
-                    row.append(random.choices(VOWELS, weights=vowel_weights, k=1)[0])
-            board.append(row)
+                    # Vowel - Filter U if Q neighbor
+                    if has_q_neighbor:
+                        safe_vowel_weights = list(vowel_weights)
+                        # VOWELS = 'AEIOU', so 'U' is at index 4
+                        safe_vowel_weights[4] = 0
+                        board[r][c] = random.choices(VOWELS, weights=safe_vowel_weights, k=1)[0]
+                    else:
+                        board[r][c] = random.choices(VOWELS, weights=vowel_weights, k=1)[0]
         return board
     
     def _embed_bonus_word(self, board, bonus_word):

@@ -99,6 +99,10 @@ function handleMouseUp(e) {
     // Build word from path
     const word = mouseState.selectedPath.map(cell => cell.letter).join('');
 
+    // Clear internal path tracking so it doesn't linger
+    mouseState.selectedPath = [];
+    if (mouseState.visitedCells) mouseState.visitedCells.clear();
+
     // Clear visual feedback
     clearSelection();
 
