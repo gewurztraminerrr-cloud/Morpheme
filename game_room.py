@@ -924,9 +924,14 @@ class RoomManager:
                 # Check for inactive players
                 room.check_inactivity(timeout)
                 
-                # PERSISTENCE: We NO LONGER delete empty rooms to preserve History and State
-                # Rooms stay in memory as persistent hubs for their configurations.
-                pass
+                # Close room if empty (except for 24h persistent rooms)
+                is_empty = (len(room.players) == 0 and len(room.spectators) == 0)
+                is_daily = (room.time_limit >= 7200)
+                
+                if is_empty and not is_daily:
+                    print(f"[RoomManager] Marking room {room_id} for deletion (Empty)")
+                    rooms_to_delete.append(room_id)
+                    
             except Exception as e:
                 print(f"[RoomManager] Error cleaning up room {room_id}: {e}")
         

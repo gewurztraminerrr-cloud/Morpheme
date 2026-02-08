@@ -108,6 +108,15 @@ async function updateGameState() {
 
         if (!response.ok) {
             console.error('[play.js] Fetch failed:', response.status, response.statusText);
+            // Handle Room Disappeared (404) or Access Denied (403/401)
+            if (response.status === 404 || response.status === 403 || response.status === 401) {
+                stopPolling();
+                window.currentRoomId = null;
+                if (window.showPage) window.showPage('page-lobby');
+                setTimeout(() => {
+                    alert("The room is no longer available or you have been moved to the lobby for being idle for 7 minutes.");
+                }, 100);
+            }
             return;
         }
 
@@ -148,6 +157,25 @@ async function updateGameState() {
             const match = p.username.toLowerCase() === (currentUsername ? currentUsername.toLowerCase().trim() : '');
             return match;
         });
+
+        const amISpectator = (state.spectators || []).some(p => {
+            const match = p.username.toLowerCase() === (currentUsername ? currentUsername.toLowerCase().trim() : '');
+            return match;
+        });
+
+        // EVICTION LOGIC: If I am neither a player nor a spectator, I've been kicked for inactivity
+        if (!amIPlayer && !amISpectator && currentUsername) {
+            console.warn('[play.js] User not found in room lists. Likely evicted for inactivity. Redirecting to lobby. User:', currentUsername);
+            stopPolling();
+            window.currentRoomId = null;
+            if (window.showPage) window.showPage('page-lobby');
+
+            // Show alert AFTER switching pages
+            setTimeout(() => {
+                alert("You have been kicked out of room for being idle for 7 minutes");
+            }, 100);
+            return;
+        }
 
         if (window.isSpectatorMode !== !amIPlayer) {
             console.log(`[play.js] Role Sync: amIPlayer=${amIPlayer}, currentUsername=${currentUsername}`);
@@ -1840,9 +1868,44 @@ function renderSplitNotepads(players) {
         });
         notepad.appendChild(tabs);
 
+        // Content area with scroll buttons
+        const mainContent = document.createElement('div');
+        mainContent.className = 'notepad-main-content';
+
         // List
         const list = document.createElement('div');
         list.className = 'notepad-list';
+
+        // Scroll Controls
+        const scrollControls = document.createElement('div');
+        scrollControls.className = 'notepad-scroll-controls';
+
+        const btnUp = document.createElement('button');
+        btnUp.className = 'notepad-scroll-btn up';
+        btnUp.innerHTML = '▲';
+        btnUp.onclick = (e) => {
+            e.stopPropagation();
+            const firstItem = list.querySelector('.notepad-item');
+            const rowHeight = firstItem ? firstItem.offsetHeight + 4 : 29; // height + 4px gap
+            list.scrollBy({ top: -rowHeight, behavior: 'smooth' });
+        };
+
+        const btnDown = document.createElement('button');
+        btnDown.className = 'notepad-scroll-btn down';
+        btnDown.innerHTML = '▼';
+        btnDown.onclick = (e) => {
+            e.stopPropagation();
+            const firstItem = list.querySelector('.notepad-item');
+            const rowHeight = firstItem ? firstItem.offsetHeight + 4 : 29; // height + 4px gap
+            list.scrollBy({ top: rowHeight, behavior: 'smooth' });
+        };
+
+        scrollControls.appendChild(btnUp);
+        scrollControls.appendChild(btnDown);
+
+        // ... wordsToShow loop logic follows ...
+        // (I will include the wordsToShow logic in the next chunk or merge)
+
 
         // Filter words based on tab
         let wordsToShow = [];
@@ -1916,7 +1979,9 @@ function renderSplitNotepads(players) {
             });
         }
 
-        notepad.appendChild(list);
+        mainContent.appendChild(list);
+        mainContent.appendChild(scrollControls);
+        notepad.appendChild(mainContent);
         boardEl.appendChild(notepad);
 
         // Restore scroll position
@@ -1976,13 +2041,42 @@ function renderFCFSNotepads(players) {
 
         // No Tabs for FCFS
 
+        // Content area with scroll buttons
+        const mainContent = document.createElement('div');
+        mainContent.className = 'notepad-main-content';
+
         // List
         const list = document.createElement('div');
         list.className = 'notepad-list';
-        // Add extra padding since no tabs
         list.style.marginTop = '10px';
-        // Adjust height to fill space better without tabs
-        list.style.height = 'calc(100% - 40px)';
+        list.style.height = '100%'; // Fill parent
+
+        // Scroll Controls
+        const scrollControls = document.createElement('div');
+        scrollControls.className = 'notepad-scroll-controls';
+
+        const btnUp = document.createElement('button');
+        btnUp.className = 'notepad-scroll-btn up';
+        btnUp.innerHTML = '▲';
+        btnUp.onclick = (e) => {
+            e.stopPropagation();
+            const firstItem = list.querySelector('.notepad-item');
+            const rowHeight = firstItem ? firstItem.offsetHeight + 4 : 29; // height + 4px gap
+            list.scrollBy({ top: -rowHeight, behavior: 'smooth' });
+        };
+
+        const btnDown = document.createElement('button');
+        btnDown.className = 'notepad-scroll-btn down';
+        btnDown.innerHTML = '▼';
+        btnDown.onclick = (e) => {
+            e.stopPropagation();
+            const firstItem = list.querySelector('.notepad-item');
+            const rowHeight = firstItem ? firstItem.offsetHeight + 4 : 29; // height + 4px gap
+            list.scrollBy({ top: rowHeight, behavior: 'smooth' });
+        };
+
+        scrollControls.appendChild(btnUp);
+        scrollControls.appendChild(btnDown);
 
         if (!p.submitted_words || p.submitted_words.length === 0) {
             list.innerHTML = '<div style="color:#000;font-style:italic;padding:10px;text-align:center;">None</div>';
@@ -2017,8 +2111,11 @@ function renderFCFSNotepads(players) {
             });
         }
 
-        notepad.appendChild(list);
+        mainContent.appendChild(list);
+        mainContent.appendChild(scrollControls);
+        notepad.appendChild(mainContent);
         boardEl.appendChild(notepad);
+
 
         // Restore scroll
         if (scrollMap[p.username]) {

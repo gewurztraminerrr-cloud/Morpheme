@@ -2000,6 +2000,50 @@
     gap: 4px;
 }
 
+.notepad-main-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.notepad-scroll-controls {
+    display: flex;
+    flex-direction: column;
+    width: 32px;
+    background: rgba(0, 0, 0, 0.3);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.notepad-scroll-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.notepad-scroll-btn:hover {
+    background: rgba(64, 156, 255, 0.2);
+    color: #fff;
+}
+
+.notepad-scroll-btn:active {
+    background: rgba(64, 156, 255, 0.4);
+    transform: scale(0.9);
+}
+
+.notepad-scroll-btn.up {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 /* List Items */
 .notepad-item {
     display: flex;
