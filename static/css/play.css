@@ -2492,6 +2492,7 @@ input[type=range]::-moz-range-track {
     background-color: rgba(255, 255, 255, 0.3);
     border-radius: 3px;
 }
+
 /* Leaderboard Styles */
 .leaderboard-container {
     width: 100%;
@@ -2507,7 +2508,7 @@ input[type=range]::-moz-range-track {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 25px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding-bottom: 15px;
 }
 
@@ -2517,6 +2518,7 @@ input[type=range]::-moz-range-track {
     letter-spacing: 2px;
     font-weight: 800;
     background: linear-gradient(135deg, #fff 0%, #a8d5ff 100%);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -2524,7 +2526,7 @@ input[type=range]::-moz-range-track {
 .lb-tabs {
     display: flex;
     gap: 10px;
-    background: rgba(0,0,0,0.3);
+    background: rgba(0, 0, 0, 0.3);
     padding: 5px;
     border-radius: 12px;
 }
@@ -2532,7 +2534,7 @@ input[type=range]::-moz-range-track {
 .lb-tab {
     background: transparent;
     border: none;
-    color: rgba(255,255,255,0.6);
+    color: rgba(255, 255, 255, 0.6);
     padding: 8px 16px;
     border-radius: 8px;
     font-weight: 700;
@@ -2543,7 +2545,7 @@ input[type=range]::-moz-range-track {
 
 .lb-tab:hover {
     color: #fff;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .lb-tab.active {
@@ -2566,8 +2568,8 @@ input[type=range]::-moz-range-track {
 }
 
 .lb-filters select {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: #fff;
     padding: 10px 15px;
     border-radius: 8px;
@@ -2577,12 +2579,12 @@ input[type=range]::-moz-range-track {
 }
 
 .lb-filters select:hover {
-    border-color: rgba(255,255,255,0.3);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 .lb-search input {
-    background: rgba(0,0,0,0.2);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 10px 15px;
     border-radius: 8px;
     color: #fff;
@@ -2605,10 +2607,10 @@ input[type=range]::-moz-range-track {
 
 .lb-card {
     background: rgba(26, 26, 46, 0.95);
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     display: flex;
     flex-direction: column;
     max-height: 600px;
@@ -2616,12 +2618,12 @@ input[type=range]::-moz-range-track {
 
 .lb-card-header {
     padding: 15px 20px;
-    background: rgba(255,255,255,0.03);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     font-weight: 800;
     letter-spacing: 1px;
     font-size: 0.9rem;
-    color: rgba(255,255,255,0.8);
+    color: rgba(255, 255, 255, 0.8);
     text-transform: uppercase;
 }
 
@@ -2637,12 +2639,12 @@ input[type=range]::-moz-range-track {
 
 .lb-table td {
     padding: 12px 15px;
-    border-bottom: 1px solid rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     font-size: 0.95rem;
 }
 
 .lb-row:hover {
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .lb-row.highlight-search {
@@ -2653,13 +2655,11 @@ input[type=range]::-moz-range-track {
 .col-rank {
     width: 40px;
     font-family: 'JetBrains Mono', monospace;
-    color: rgba(255,255,255,0.4);
+    color: rgba(255, 255, 255, 0.4);
     font-weight: bold;
 }
 
-.col-user {
-    
-}
+
 
 .col-val {
     text-align: right;
@@ -2674,8 +2674,17 @@ input[type=range]::-moz-range-track {
 .col-meta {
     text-align: right;
     font-size: 0.8rem;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255, 255, 255, 0.5);
     width: 80px;
+}
+
+.col-date {
+    text-align: right;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.35);
+    width: 90px;
+    white-space: nowrap;
+    padding-left: 10px;
 }
 
 .col-action {
@@ -2712,7 +2721,7 @@ input[type=range]::-moz-range-track {
 .lb-loading {
     padding: 50px;
     text-align: center;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255, 255, 255, 0.5);
     font-style: italic;
     grid-column: 1 / -1;
 }
@@ -2720,7 +2729,7 @@ input[type=range]::-moz-range-track {
 .lb-attribution {
     text-align: center;
     font-size: 0.8rem;
-    color: rgba(255,255,255,0.3);
+    color: rgba(255, 255, 255, 0.3);
     margin-top: 20px;
 }
 
@@ -2733,8 +2742,8 @@ input[type=range]::-moz-range-track {
 }
 
 .lb-local-input {
-    background: rgba(0,0,0,0.3);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: #fff;
     padding: 4px 8px;
     border-radius: 4px;
@@ -2764,6 +2773,6 @@ input[type=range]::-moz-range-track {
 
 
 .lb-card.lb-card-tall {
-    max-height: 1200px; /* Vertically larger */
+    max-height: 1200px;
+    /* Vertically larger */
 }
-

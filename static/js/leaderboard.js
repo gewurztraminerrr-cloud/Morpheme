@@ -146,6 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </td>
                 <td class="col-val highlight">${row.total_score} pts</td>
                 <td class="col-meta">${row.round_duration < 60 ? row.round_duration + 's' : (row.round_duration / 60) + 'm'}</td>
+                <td class="col-date">${formatDate(row.timestamp)}</td>
                 <td class="col-action">
                     ${renderReplayBtn(row)}
                 </td>
@@ -160,6 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </td>
                 <td class="col-val highlight">${row.best_word}</td>
                 <td class="col-meta" style="color: #ffd700;">${row.best_word_score} pts</td>
+                <td class="col-date">${formatDate(row.timestamp)}</td>
                  <td class="col-action">
                     ${renderReplayBtn(row)}
                 </td>
@@ -174,6 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  </td>
                  <td class="col-val highlight">${parseFloat(row.performance_ratio).toFixed(2)}x</td>
                  <td class="col-meta">(${row.total_score} pts)</td>
+                 <td class="col-date">${formatDate(row.timestamp)}</td>
                   <td class="col-action">
                     ${renderReplayBtn(row)}
                 </td>
@@ -188,6 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  </td>
                  <td class="col-val highlight">${Math.round(row.avg_score)}</td>
                  <td class="col-meta">${row.games} games</td>
+                 <td class="col-date">${formatDate(row.last_active)}</td>
                  <td class="col-action"></td>
              `;
         });
@@ -200,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  </td>
                  <td class="col-val highlight">${row.max_rating}</td> 
                  <td class="col-meta">ELOKR</td>
+                 <td class="col-date">${formatDate(row.timestamp)}</td>
                  <td class="col-action"></td>
              `;
         }, false, 'lb-card-tall');
@@ -212,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  </td>
                  <td class="col-val highlight">${row.game_count}</td> 
                  <td class="col-meta">Games</td>
+                 <td class="col-date">${formatDate(row.last_active)}</td>
                  <td class="col-action"></td>
              `;
         });
@@ -224,6 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  </td>
                  <td class="col-val highlight">${row.rating}</td>
                  <td class="col-meta">Current</td>
+                 <td class="col-date">${formatDate(row.last_active)}</td>
                  <td class="col-action"></td>
              `;
         }, true, 'lb-card-tall'); // Enable local search + Tall
@@ -311,6 +318,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         container.appendChild(card);
+    }
+
+    function formatDate(isoStr) {
+        if (!isoStr) return '-';
+        // Handle "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DDTHH:MM:SS"
+        const dateStr = isoStr.replace(' ', 'T');
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return isoStr; // Fallback
+
+        // Check if it's today
+        const now = new Date();
+        const isToday = d.getDate() === now.getDate() &&
+            d.getMonth() === now.getMonth() &&
+            d.getFullYear() === now.getFullYear();
+
+        if (isToday) {
+            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Otherwise "Mon DD"
+        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     }
 
     function renderUserLink(row) {

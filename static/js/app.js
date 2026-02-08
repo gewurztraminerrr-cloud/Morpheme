@@ -65,6 +65,47 @@ const RATING_RANGES = [
     { min: 6000, max: 99999, color: '#000000', label: '6000+', name: 'ALIEN BEING' }
 ];
 
+// Single Instance Logic
+(function () {
+    const channel = new BroadcastChannel('morpheme_instance');
+    let isOriginal = true;
+
+    // Check if other tabs exist
+    channel.postMessage('check_if_exists');
+
+    channel.onmessage = (event) => {
+        if (event.data === 'check_if_exists') {
+            // Another tab is asking if we exist. We do.
+            channel.postMessage('i_exist');
+        } else if (event.data === 'i_exist') {
+            // Another tab exists! We are the duplicate.
+            isOriginal = false;
+            document.body.innerHTML = `
+                <div style="
+                    display: flex; 
+                    justify-content: center; 
+                    align-items: center; 
+                    height: 100vh; 
+                    background: #0d1117; 
+                    color: #fff; 
+                    font-family: sans-serif; 
+                    text-align: center;
+                    padding: 20px;
+                ">
+                    <div>
+                        <h1 style="color: #e74c3c;">Morpheme is already open</h1>
+                        <p style="font-size: 1.2rem; color: #aaa;">
+                            Please close this tab and use the existing window.
+                        </p>
+                    </div>
+                </div>
+            `;
+            // Stop further execution
+            throw new Error("Morpheme already running in another tab.");
+        }
+    };
+})();
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', async () => {
     setupNavigation();

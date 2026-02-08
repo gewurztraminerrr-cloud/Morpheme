@@ -2677,7 +2677,7 @@ def get_leaderboard_data():
         
         # 5. Avg Score (Avg per user, Min 3 games)
         avgs = conn.execute(f"""
-            SELECT AVG(rh.total_score) as avg_score, COUNT(*) as games, u.username, u.country_flag, u.avatar_url
+            SELECT AVG(rh.total_score) as avg_score, COUNT(*) as games, MAX(rh.timestamp) as last_active, u.username, u.country_flag, u.avatar_url
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE {base_where}
@@ -2689,7 +2689,7 @@ def get_leaderboard_data():
 
         # 6. Most Games Played (Activity Leaderboard)
         most_games = conn.execute(f"""
-            SELECT COUNT(*) as game_count, u.username, u.country_flag, u.avatar_url, u.rating
+            SELECT COUNT(*) as game_count, MAX(rh.timestamp) as last_active, u.username, u.country_flag, u.avatar_url, u.rating
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE {base_where}
@@ -2700,10 +2700,11 @@ def get_leaderboard_data():
         
         # 7. Current Ratings (Users active in period, sorted by CURRENT rating)
         current_ratings = conn.execute(f"""
-            SELECT DISTINCT u.username, u.rating, u.country_flag, u.avatar_url
+            SELECT u.username, u.rating, u.country_flag, u.avatar_url, MAX(rh.timestamp) as last_active
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE {base_where}
+            GROUP BY u.id
             ORDER BY u.rating DESC
             LIMIT 1000
         """, params).fetchall()
