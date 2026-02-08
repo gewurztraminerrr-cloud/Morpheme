@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  <td class="col-date">${formatDate(row.timestamp)}</td>
                  <td class="col-action"></td>
              `;
-        }, false, 'lb-card-tall');
+        }, false);
 
         createTableCard(contentArea, "Most Games Played", data.most_games, (row, i) => {
             return `
@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  <td class="col-date">${formatDate(row.last_active)}</td>
                  <td class="col-action"></td>
              `;
-        }, true, 'lb-card-tall'); // Enable local search + Tall
+        }, true); // Enable local search
 
         // Re-apply search if it exists
         const searchInput = document.getElementById('lb-search-input');

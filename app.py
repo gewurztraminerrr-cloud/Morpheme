@@ -1263,6 +1263,9 @@ def get_room_state(room_id):
         print(f"ERROR: Room {room_id} not found")
         return jsonify({'error': 'Room not found'}), 404
     
+    # Update activity for the polling user to prevent inactivity timeout
+    if 'user_id' in session:
+        room.update_player_activity(session['user_id'])
 
     try:
         print(f"Room found - game_type: {room.game_type}, current_round: {room.current_round}, state: {room.state}")

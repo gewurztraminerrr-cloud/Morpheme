@@ -343,6 +343,9 @@ class GameRoom:
         if not player:
             return False, "Player not in room", 0, None
         
+        # Update activity on submission
+        self.update_player_activity(user_id)
+        
         word = word.upper()
         
         # Check if word is valid
@@ -686,9 +689,8 @@ def calculate_proportional_rating_change(players):
     # 2. Identify active registered players (score >= 1, user_id > 0)
     # The Java code iterates rows and checks score >= 1
     # We already filtered late joiners globally above, so we just check score/id here.
-    active_players = [p for p in players if p.score >= 1 and p.user_id > 0]
-    
-    if not active_players:
+    # Rating change requires at least two competing players who scored.
+    if len(active_players) < 2:
         return changes
         
     # 3. Sum Totals

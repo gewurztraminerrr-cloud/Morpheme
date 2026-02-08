@@ -2131,8 +2131,11 @@ const submitBtn = document.getElementById('submit-word-btn');
 const wordInputEl = document.getElementById('word-input');
 if (submitBtn && wordInputEl) {
     submitBtn.addEventListener('click', () => submitWord());
-    wordInputEl.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') submitWord();
+    wordInputEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            submitWord();
+        }
     });
 
     // Real-time highlighting and "word declaration" while typing
@@ -2183,8 +2186,13 @@ if (submitBtn && wordInputEl) {
 async function submitWord(wordParam = null) {
     const input = document.getElementById('word-input');
     const word = wordParam ? wordParam.toUpperCase() : input.value.trim().toUpperCase();
-    const roomId = getCurrentRoomId();
 
+    // Clear immediately for maximum responsiveness
+    input.value = '';
+    // Trigger 'input' event to clear board highlights and description synchronously
+    input.dispatchEvent(new Event('input'));
+
+    const roomId = getCurrentRoomId();
     if (!word || !roomId) return;
 
     try {
@@ -2306,7 +2314,7 @@ async function submitWord(wordParam = null) {
         console.error('Error submitting word:', error);
         showValidationFeedback('Submission Error', false);
     }
-    input.value = '';
+    // input.value = ''; // MOVED TO TOP OF FUNCTION
     // Clear typing highlights and declaration after submission
     document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
     const defHeader = document.getElementById('definition-header');
