@@ -1205,30 +1205,11 @@ def list_rooms():
         room_manager.update_presence(session['user_id'])
     game_type = request.args.get('game_type')
     board_dimensions = request.args.get('board_dimensions')
+    time_limit = request.args.get('time_limit', type=int)
+    
     # Clean up rooms before listing (ensures zombie rooms are removed)
-    room_manager.cleanup_rooms(timeout=420)
-
-    # Get user rating for this config to filter rooms they can't join
-    user_rating = 1200
-    is_authenticated = 'user_id' in session
-    is_guest = session.get('is_guest', False)
-
-    if is_authenticated:
-        if is_guest:
-            user_rating = 0
-        else:
-            try:
-                config_key = f"{game_type}|{board_dimensions}|{time_limit}"
-                conn = sqlite3.connect('morpheme.db')
-                cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
-                                    (session['user_id'], config_key))
-                row = cursor.fetchone()
-                if row:
-                    user_rating = row[0]
-                conn.close()
-            except Exception as e:
-                print(f"[list_rooms] Rating fetch error: {e}")
-
+    room_manager.cleanup_rooms(timeout=420, spec_timeout=1800)
+    
     active_rooms = []
     
     for room_id, room in room_manager.rooms.items():
@@ -1236,16 +1217,6 @@ def list_rooms():
             room.board_dimensions == board_dimensions and 
             room.time_limit == time_limit):
             
-            # RATING FILTER
-            # Guest check
-            if is_guest:
-                if room.min_rating > 0 or room.max_rating < 9999:
-                    continue # Guests can only join rooms with NO limits
-            
-            # Range check
-            if user_rating < room.min_rating or user_rating > room.max_rating:
-                continue
-
             # Calculate combined rating (avg or sum?)
             combined_rating = sum(p.rating for p in room.players)
             
@@ -1253,6 +1224,8 @@ def list_rooms():
                 'room_id': room.room_id,
                 'player_count': len(room.players),
                 'max_players': room.max_players,
+                'min_rating': room.min_rating,
+                'max_rating': room.max_rating,
                 'combined_rating': combined_rating,
                 'state': room.state,
                 'current_round': room.current_round,
@@ -1265,7 +1238,7 @@ def list_rooms():
 def get_lobby_stats():
     """Get aggregated player counts for all game configurations"""
     # Clean up first
-    room_manager.cleanup_rooms(timeout=420)
+    room_manager.cleanup_rooms(timeout=420, spec_timeout=1800)
     
     stats = {}
     
@@ -1296,10 +1269,11 @@ def get_room_state(room_id):
 
         
         # Check for inactive players (zombies)
-        # Use 7 minutes (420s) globally for all game modes
+        # Use 7 minutes (420s) globally for players, 30m (1800s) for spectators
         timeout = 420
+        spec_timeout = 1800
         
-        players_removed = room.check_inactivity(timeout=timeout)
+        players_removed = room.check_inactivity(timeout=timeout, spec_timeout=spec_timeout)
         
         # Immediate cleanup: If room is now empty and not a 24h room, delete it
         if len(room.players) == 0 and len(room.spectators) == 0 and room.time_limit < 7200:

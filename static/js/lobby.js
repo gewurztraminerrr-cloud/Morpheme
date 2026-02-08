@@ -484,13 +484,17 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                     }
                 }
 
+                // Display limitations
+                const ratingRangeText = `${roomMin} - ${roomMax < 9999 ? roomMax : '∞'}`;
+                const hasLimits = roomMin > 0 || roomMax < 9999;
+
                 return `
                 <div class="room-item">
                     <div class="room-header-row">
                         <div class="room-status ${room.state}">${room.state.toUpperCase()}</div>
                         <div class="room-meta">
-                            Rating: ${room.display_combined_rating} 
-                            ${(roomMin > 0 || roomMax < 9999) ? `<span style="color:#e74c3c; margin-left:5px; font-size:0.9em;">Req: ${roomMin}-${roomMax < 9999 ? roomMax : '∞'}</span>` : ''}
+                            <span>Rating: ${room.display_combined_rating}</span> 
+                            ${hasLimits ? `<span class="rating-req-badge" style="background: rgba(231, 76, 60, 0.2); color: #e74c3c; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; border: 1px solid rgba(231, 76, 60, 0.3);">Req: ${ratingRangeText}</span>` : ''}
                         </div>
                     </div>
                     <div class="room-players-row">

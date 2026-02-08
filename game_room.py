@@ -249,8 +249,8 @@ class GameRoom:
                 p.last_active = time.time()
                 break
 
-    def check_inactivity(self, timeout=420): # Default to 7 minutes
-        """Remove players and spectators who haven't been active for 'timeout' seconds"""
+    def check_inactivity(self, timeout=420, spec_timeout=1800): 
+        """Remove players and spectators who haven't been active for their respective timeout seconds"""
         now = time.time()
         active_players = []
         players_removed = False
@@ -258,9 +258,6 @@ class GameRoom:
         
         for p in self.players:
             age = now - p.last_active
-            # Log all checks for debugging
-            # print(f"[Debug-Activity] Checking player {p.username} (ID={p.user_id}) in room {self.room_id}: age={age:.1f}s, timeout={timeout}")
-            
             # Keep active players OR keep all players if 24h room (daily persistence)
             if is_daily or (age < timeout):
                 active_players.append(p)
@@ -279,7 +276,8 @@ class GameRoom:
         specs_removed = False
         for p in self.spectators:
             age = now - p.last_active
-            if is_daily or (age < timeout):
+            # Spectators get a longer timeout (default 30 mins)
+            if is_daily or (age < spec_timeout):
                 active_spectators.append(p)
             else:
                 log_msg = f"[GameRoom] Removing inactive spectator {p.username} (ID={p.user_id}) in room {self.room_id} (inactive for {age:.1f}s)\n"
@@ -914,15 +912,15 @@ class RoomManager:
             else:
                 print(f"[RoomManager] delete_room called for {room_id} but not found")
     
-    def cleanup_rooms(self, timeout=420):
-        """Clean up empty or inactive rooms (defaults to 7 mins)"""
+    def cleanup_rooms(self, timeout=420, spec_timeout=1800):
+        """Clean up empty or inactive rooms (defaults: 7m players, 30m spectators)"""
         rooms_to_delete = []
         
         # Iterate over a copy of keys to avoid modification issues
         for room_id, room in list(self.rooms.items()):
             try:
                 # Check for inactive players
-                room.check_inactivity(timeout)
+                room.check_inactivity(timeout, spec_timeout)
                 
                 # Close room if empty (except for 24h persistent rooms)
                 is_empty = (len(room.players) == 0 and len(room.spectators) == 0)
