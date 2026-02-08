@@ -202,6 +202,18 @@ document.addEventListener('DOMContentLoaded', () => {
                  <td class="col-meta">ELOKR</td>
                  <td class="col-action"></td>
              `;
+        }, false, 'lb-card-tall');
+
+        createTableCard(contentArea, "Most Games Played", data.most_games, (row, i) => {
+            return `
+                 <td class="col-rank">#${i + 1}</td>
+                 <td class="col-user">
+                      ${renderUserLink(row)}
+                 </td>
+                 <td class="col-val highlight">${row.game_count}</td> 
+                 <td class="col-meta">Games</td>
+                 <td class="col-action"></td>
+             `;
         });
 
         createTableCard(contentArea, "Current Top Rated Active Players", data.current_ratings, (row, i) => {
@@ -214,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  <td class="col-meta">Current</td>
                  <td class="col-action"></td>
              `;
-        });
+        }, true, 'lb-card-tall'); // Enable local search + Tall
 
         // Re-apply search if it exists
         const searchInput = document.getElementById('lb-search-input');
@@ -223,26 +235,81 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function createTableCard(container, title, rows, rowRenderer) {
+    function createTableCard(container, title, rows, rowRenderer, includeSearch = false, customClass = '') {
         if (!rows || rows.length === 0) return;
 
         const card = document.createElement('div');
-        card.className = 'lb-card';
+        card.className = `lb-card ${customClass}`;
 
+        // Generate Rows
         const tableRows = rows.map((row, index) => {
-            return `<tr class="lb-row" data-username="${(row.username || '').toLowerCase()}">
+            return `<tr class="lb-row lb-row-${index}" data-username="${(row.username || '').toLowerCase()}">
                 ${rowRenderer(row, index)}
             </tr>`;
         }).join('');
 
+        // Header Structure
+        let headerHTML = `<div class="lb-card-header-text">${title}</div>`;
+        if (includeSearch) {
+            headerHTML += `
+                <div class="lb-card-search">
+                    <input type="text" placeholder="Username" class="lb-local-input">
+                    <button class="lb-local-btn">FIND ME</button>
+                    <span class="lb-local-msg"></span>
+                </div>
+             `;
+        }
+
         card.innerHTML = `
-            <div class="lb-card-header">${title}</div>
+            <div class="lb-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                ${headerHTML}
+            </div>
             <div class="lb-table-wrapper">
                 <table class="lb-table">
                     <tbody>${tableRows}</tbody>
                 </table>
             </div>
         `;
+
+        // Attach Search Logic
+        if (includeSearch) {
+            const btn = card.querySelector('.lb-local-btn');
+            const input = card.querySelector('.lb-local-input');
+            const msg = card.querySelector('.lb-local-msg');
+
+            // Pre-fill if logged in (handle cases where window.currentUser is user object or username string)
+            if (window.currentUser) {
+                if (typeof window.currentUser === 'object' && window.currentUser.username) {
+                    input.value = window.currentUser.username;
+                } else if (typeof window.currentUser === 'string') {
+                    input.value = window.currentUser;
+                }
+            }
+
+            const performSearch = () => {
+                const query = input.value.trim().toLowerCase();
+                if (!query) return;
+
+                const targetRow = card.querySelector(`.lb-row[data-username="${query}"]`);
+                if (targetRow) {
+                    // Highlight
+                    card.querySelectorAll('.lb-row').forEach(r => r.classList.remove('highlight-search'));
+                    targetRow.classList.add('highlight-search');
+                    targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    msg.textContent = '';
+                } else {
+                    msg.textContent = 'Not found (in top 1000)';
+                    msg.style.color = '#e74c3c';
+                    setTimeout(() => msg.textContent = '', 2000);
+                }
+            };
+
+            btn.addEventListener('click', performSearch);
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') performSearch();
+            });
+        }
+
         container.appendChild(card);
     }
 

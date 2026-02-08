@@ -129,9 +129,20 @@ def init_db():
         pass
 
     # MIGRATION: Add best_word, best_word_score, board_dimensions to round_history
+    # MIGRATION: Add best_word
     try:
         conn.execute('ALTER TABLE round_history ADD COLUMN best_word TEXT')
+    except sqlite3.OperationalError:
+        pass
+
+    # MIGRATION: Add best_word_score
+    try:
         conn.execute('ALTER TABLE round_history ADD COLUMN best_word_score INTEGER DEFAULT 0')
+    except sqlite3.OperationalError:
+        pass
+
+    # MIGRATION: Add board_dimensions
+    try:
         conn.execute('ALTER TABLE round_history ADD COLUMN board_dimensions TEXT')
         conn.commit()
     except sqlite3.OperationalError:
@@ -2675,15 +2686,26 @@ def get_leaderboard_data():
             ORDER BY avg_score DESC
             LIMIT 50
         """, params).fetchall()
+
+        # 6. Most Games Played (Activity Leaderboard)
+        most_games = conn.execute(f"""
+            SELECT COUNT(*) as game_count, u.username, u.country_flag, u.avatar_url, u.rating
+            FROM round_history rh
+            JOIN users u ON rh.user_id = u.id
+            WHERE {base_where}
+            GROUP BY u.id
+            ORDER BY game_count DESC
+            LIMIT 50
+        """, params).fetchall()
         
-        # 6. Current Ratings (Users active in period, sorted by CURRENT rating)
+        # 7. Current Ratings (Users active in period, sorted by CURRENT rating)
         current_ratings = conn.execute(f"""
             SELECT DISTINCT u.username, u.rating, u.country_flag, u.avatar_url
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE {base_where}
             ORDER BY u.rating DESC
-            LIMIT 50
+            LIMIT 1000
         """, params).fetchall()
         
         # Helper to dict
@@ -2696,7 +2718,8 @@ def get_leaderboard_data():
             'best_pes': to_list(pes),
             'best_ratings': to_list(ratings),
             'avg_scores': to_list(avgs),
-            'current_ratings': to_list(current_ratings)
+            'current_ratings': to_list(current_ratings),
+            'most_games': to_list(most_games)
         })
 
     except Exception as e:

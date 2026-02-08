@@ -2658,6 +2658,35 @@ body {
     animation: achievementPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+.achievement-card .close-modal-btn {
+    top: 15px;
+    right: 15px;
+    font-size: 2rem;
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 4px;
+    /* Center the X visually */
+    color: rgba(255, 255, 255, 0.8);
+    opacity: 0.8;
+    z-index: 10001;
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.achievement-card .close-modal-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    opacity: 1;
+    transform: rotate(90deg);
+    transition: all 0.2s ease;
+}
+
+
 @keyframes achievementPop {
     from {
         transform: scale(0.8);
