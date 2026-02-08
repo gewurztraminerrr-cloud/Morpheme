@@ -192,7 +192,19 @@ class BoardGenerator:
     def _embed_bonus_word(self, board, bonus_word):
         """Embed bonus word using backtracking to find a valid path"""
         rows, cols = len(board), len(board[0])
-        word_len = len(bonus_word)
+        
+        # Pre-process word to treat 'QU' as a single unit
+        processed_word = []
+        i = 0
+        while i < len(bonus_word):
+            if i < len(bonus_word) - 1 and bonus_word[i:i+2].upper() == 'QU':
+                processed_word.append('Q')
+                i += 2
+            else:
+                processed_word.append(bonus_word[i].upper())
+                i += 1
+        
+        word_len = len(processed_word)
         
         # Create list of all cells and shuffle for randomness
         start_cells = [(r, c) for r in range(rows) for c in range(cols)]
@@ -227,9 +239,9 @@ class BoardGenerator:
         for start_r, start_c in start_cells:
             path = backtrack([(start_r, start_c)])
             if path:
-                # Embed the word
+                # Embed the processed letters
                 for i, (r, c) in enumerate(path):
-                    board[r][c] = bonus_word[i]
+                    board[r][c] = processed_word[i]
                 return True
                 
         return False

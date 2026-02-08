@@ -173,8 +173,20 @@ async function showMiniProfile(username) {
         document.getElementById('mini-profile-username').innerText = data.username;
         document.getElementById('mini-profile-fullname').innerText = data.full_name || '-';
         document.getElementById('mini-profile-games').innerText = data.games_played || 0;
+        document.getElementById('mini-profile-wins').innerText = data.wins || 0;
         document.getElementById('mini-profile-age').innerText = data.age || '-';
-        document.getElementById('mini-profile-gender').innerText = data.gender || '-';
+        // document.getElementById('mini-profile-gender').innerText = data.gender || '-';
+
+        const maxPeEl = document.getElementById('mini-profile-max-pe');
+        if (maxPeEl) maxPeEl.innerText = data.max_pe ? `${data.max_pe.toFixed(2)}x` : '-';
+
+        const avgPeEl = document.getElementById('mini-profile-avg-pe');
+        if (avgPeEl) avgPeEl.innerText = data.avg_pe ? `${data.avg_pe.toFixed(2)}x` : '-';
+
+        // Rank placeholder (future feature)
+        const rankEl = document.getElementById('mini-profile-rank-placeholder');
+        if (rankEl) rankEl.innerText = '-';
+
         document.getElementById('mini-profile-flag').innerText = data.country_flag || '🏳️';
         document.getElementById('mini-profile-quote').innerText = data.quote ? `"${data.quote}"` : '"No quote provided."';
         document.getElementById('mini-profile-description').innerText = data.description || 'No description provided.';

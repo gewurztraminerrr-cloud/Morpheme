@@ -31,6 +31,7 @@ class Player:
     country_flag: str = '🏳️'
     joined_mid_round: bool = False
     has_exceptional_round: bool = False
+    performance_efficiency: float = 0.0
 
 @dataclass
 class GameRoom:
@@ -517,14 +518,42 @@ class GameRoom:
             # Calculate Proportional Rating changes based on FINAL scores
             print(f"[GameRoom] Calculating Proportional ratings at end of Round {self.current_round}")
             
-            # Record winners for History tab before rating change (using score before rating adjustment)
+            # Performance Efficiency (PE) & History Logic
             active_competitors = [p for p in self.players if p.score > 0 and not getattr(p, 'joined_mid_round', False)]
-            if len(active_competitors) > 1:
-                max_score = max(p.score for p in active_competitors)
-                winners_data = [{'username': p.username, 'rating': p.rating} for p in active_competitors if p.score == max_score]
+            
+            # Calculate PE for everyone first
+            max_pe = 0.0
+            if active_competitors:
+                score_sum = sum(p.score for p in active_competitors)
+                rating_sum = sum(p.rating for p in active_competitors)
                 
-                # Capture winners' words for the 'Screenshot' view
-                # We take words from the first winner (usually solo, or shared board)
+                if rating_sum > 0:
+                    for p in active_competitors:
+                        # Expected share of total points based on rating share
+                        expected = (p.rating / rating_sum) * score_sum
+                        p.performance_efficiency = p.score / expected if expected > 0 else 0
+                        if p.performance_efficiency > max_pe:
+                            max_pe = p.performance_efficiency
+                        
+                        # Trophy: PE >= 2.0 (Performed 2x better than expected for their rating)
+                        # Plus a min score check to ensure it wasn't a trivial board
+                        if p.performance_efficiency >= 2.0 and p.score >= 10:
+                            p.has_exceptional_round = True
+                        else:
+                            p.has_exceptional_round = False
+                else:
+                    for p in active_competitors:
+                        p.performance_efficiency = 1.0
+                        p.has_exceptional_round = False
+
+            # Determine Notable Winners for Replay Tab
+            # The user wants "enormous wins" to determine replay listing.
+            # We list the round if max_pe >= 1.5 (Significant overperformance)
+            if len(active_competitors) > 1 and max_pe >= 1.5:
+                max_score = max(p.score for p in active_competitors)
+                winners_data = [{'username': p.username, 'rating': p.rating, 'pe': p.performance_efficiency} for p in active_competitors if p.score == max_score]
+                
+                # Capture winners' words
                 winner_words = []
                 for p in active_competitors:
                     if p.score == max_score:
@@ -534,8 +563,9 @@ class GameRoom:
                 self.winners_history.insert(0, {
                     'round': self.current_round,
                     'winners': winners_data,
-                    'all_players': sorted([{'username': p.username, 'score': p.score, 'rating': p.rating} for p in active_competitors], key=lambda x: x['score'], reverse=True),
+                    'all_players': sorted([{'username': p.username, 'score': p.score, 'rating': p.rating, 'pe': p.performance_efficiency} for p in active_competitors], key=lambda x: x['score'], reverse=True),
                     'score': max_score,
+                    'max_pe': max_pe,
                     'board': self.board,
                     'words': winner_words,
                     'bonus_word': self.bonus_word,
@@ -545,9 +575,11 @@ class GameRoom:
                     'timestamp': int(time.time() * 1000)
                 })
 
-                # Keep last 50
                 if len(self.winners_history) > 50:
                     self.winners_history = self.winners_history[:50]
+            else:
+                if len(active_competitors) > 1:
+                    print(f"[GameRoom] Round {self.current_round} skipped for history (Max PE {max_pe:.2f} < 1.5)")
 
             rating_changes = calculate_proportional_rating_change(self.players)
             
@@ -563,26 +595,7 @@ class GameRoom:
                 player.rating_change = change
                 print(f"[GameRoom] Player {player.username} rating adjustment: {change} -> {player.rating}")
                 
-                # EXCEPTIONAL ROUND CHECK (Intermission)
-                # Check if this just-completed round was exceptional
-                if conn and player.score > 0 and player.user_id > 0:
-                    try:
-                        # Get average score for this config
-                        cur = conn.execute('''
-                            SELECT avg(total_score) 
-                            FROM round_history 
-                            WHERE user_id = ? AND game_type = ? AND round_duration = ?
-                        ''', (player.user_id, self.game_type, self.time_limit))
-                        row = cur.fetchone()
-                        avg_score = row[0] if row and row[0] else 0
-                        
-                        # Logic: > 15% better than average (min avg 10)
-                        if avg_score > 10 and player.score > (avg_score * 1.15):
-                            player.has_exceptional_round = True
-                        else:
-                            player.has_exceptional_round = False
-                    except Exception as e:
-                        print(f"Error checking exceptional status for {player.username}: {e}")
+            # PE results already handled above
             
             if conn:
                 conn.close()
@@ -1350,10 +1363,15 @@ class RoomManager:
                         'timestamp': raw_time
                     })
                 
+                # Calculate Best Word
+                best_w_entry = max(p.submitted_words, key=lambda x: x.get('points', 0)) if p.submitted_words else None
+                best_word_text = best_w_entry['word'] if best_w_entry else None
+                best_word_val = best_w_entry.get('points', 0) if best_w_entry else 0
+                
                 conn.execute('''
-                    INSERT INTO round_history (user_id, room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, timestamp, user_rating)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (p.user_id, room.room_id, room.game_type, room.current_round, board_json, json.dumps(words_data), p.score, room.round_start_time, room.time_limit, timestamp, p.rating))
+                    INSERT INTO round_history (user_id, room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, timestamp, user_rating, performance_ratio, best_word, best_word_score, board_dimensions)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (p.user_id, room.room_id, room.game_type, room.current_round, board_json, json.dumps(words_data), p.score, room.round_start_time, room.time_limit, timestamp, p.rating, p.performance_efficiency, best_word_text, best_word_val, room.board_dimensions))
             
             room.last_saved_round = room.current_round
             conn.commit()

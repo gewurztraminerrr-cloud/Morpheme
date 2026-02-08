@@ -103,13 +103,39 @@ def init_db():
         except sqlite3.OperationalError:
             pass # Column likely exists
 
+    # MIGRATION: Add skill metrics to users table
+    try:
+        conn.execute('ALTER TABLE users ADD COLUMN max_pe REAL DEFAULT 0.0')
+        conn.execute('ALTER TABLE users ADD COLUMN avg_pe REAL DEFAULT 0.0')
+        conn.execute('ALTER TABLE users ADD COLUMN pe_count INTEGER DEFAULT 0')
+        conn.commit()
+        print("Migrated DB: Added PE columns to users")
+    except sqlite3.OperationalError:
+        pass
+
     # MIGRATION: Add user_rating to round_history
     try:
         conn.execute('ALTER TABLE round_history ADD COLUMN user_rating INTEGER DEFAULT 1200')
         conn.commit()
-        print("Migrated DB: Added user_rating column to round_history")
     except sqlite3.OperationalError:
-        pass # Column likely exists
+        pass
+
+    # MIGRATION: Add performance_ratio to round_history
+    try:
+        conn.execute('ALTER TABLE round_history ADD COLUMN performance_ratio REAL DEFAULT 0.0')
+        conn.commit()
+        print("Migrated DB: Added performance_ratio column to round_history")
+    except sqlite3.OperationalError:
+        pass
+
+    # MIGRATION: Add best_word, best_word_score, board_dimensions to round_history
+    try:
+        conn.execute('ALTER TABLE round_history ADD COLUMN best_word TEXT')
+        conn.execute('ALTER TABLE round_history ADD COLUMN best_word_score INTEGER DEFAULT 0')
+        conn.execute('ALTER TABLE round_history ADD COLUMN board_dimensions TEXT')
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass
 
     # MIGRATION: Add round_history table
     try:
@@ -125,6 +151,11 @@ def init_db():
                 total_score INTEGER NOT NULL,
                 round_start_time REAL,
                 round_duration INTEGER,
+                user_rating INTEGER DEFAULT 1200,
+                performance_ratio REAL DEFAULT 0.0,
+                best_word TEXT,
+                best_word_score INTEGER DEFAULT 0,
+                board_dimensions TEXT,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(user_id) REFERENCES users(id)
             )
@@ -133,6 +164,29 @@ def init_db():
         print("Migrated DB: Added round_history table")
     except Exception as e:
         print(f"Migration Error (round_history): {e}")
+
+    # BACKFILL: Infer board_dimensions from board_json if missing (For Leaderboards All-Time)
+    try:
+        cursor = conn.execute("SELECT id, board_json FROM round_history WHERE board_dimensions IS NULL")
+        rows = cursor.fetchall()
+        if rows:
+            print(f"Backfilling {len(rows)} round_history records with dimensions...")
+            import json # Ensure json is available
+            for row in rows:
+                try:
+                    rid, bjson = row
+                    board = json.loads(bjson)
+                    if board and len(board) > 0:
+                        dims = f"{len(board)}x{len(board[0])}"
+                        conn.execute("UPDATE round_history SET board_dimensions = ? WHERE id = ?", (dims, rid))
+                except Exception as e:
+                    print(f"Error backfilling round {rid}: {e}")
+            conn.commit()
+            print("Backfill complete.")
+    except Exception as e:
+        # Table might not exist yet or other error
+        pass
+
 
     # MIGRATION: Add private_messages table
     try:
@@ -491,7 +545,8 @@ def get_public_profile(username):
     conn = sqlite3.connect('morpheme.db')
     cursor = conn.execute('''
         SELECT id, username, rating, games_played, avatar_url, country_flag, 
-               full_name, age, gender, location, quote, description, proof_url, wins
+               full_name, age, gender, location, quote, description, proof_url, wins,
+               max_pe, avg_pe, pe_count
         FROM users WHERE username = ? COLLATE NOCASE
     ''', (username,))
     user = cursor.fetchone()
@@ -507,7 +562,7 @@ def get_public_profile(username):
     # Get recent rounds (last 50)
     cursor = conn.execute('''
         SELECT rh.room_id, rh.game_type, rh.round_number, rh.board_json, rh.words_json, rh.total_score, 
-               rh.round_start_time, rh.round_duration, rh.timestamp, rh.user_rating
+               rh.round_start_time, rh.round_duration, rh.timestamp, rh.user_rating, rh.performance_ratio
         FROM round_history rh
         WHERE rh.user_id = ?
         ORDER BY rh.timestamp DESC
@@ -518,7 +573,7 @@ def get_public_profile(username):
     # Also fetch ALL rounds to find 'one best per configuration' for Exceptional Rounds
     cursor_all = conn.execute('''
         SELECT room_id, game_type, round_number, board_json, words_json, total_score, 
-               round_start_time, round_duration, timestamp, user_rating
+               round_start_time, round_duration, timestamp, user_rating, performance_ratio
         FROM round_history
         WHERE user_id = ?
     ''', (user[0],))
@@ -526,9 +581,9 @@ def get_public_profile(username):
     
     # helper to process a row into a rich dict
     def process_round_row(row, db_conn):
-        room_id, gtype, rnum, bjson, wjson, score, rstart, rdur, ts, urat = row
+        room_id, gtype, rnum, bjson, wjson, score, rstart, rdur, ts, urat, pe_ratio = row
         
-        # Get all players in this specific round to calculate performance
+        # Get all players in this specific round
         c_room = db_conn.execute('''
             SELECT rh.total_score, rh.user_rating, u.username
             FROM round_history rh
@@ -537,13 +592,8 @@ def get_public_profile(username):
         ''', (room_id, rnum, ts))
         r_entries = c_room.fetchall()
         
-        perf_val = 0
-        if len(r_entries) > 1:
-            tr_score = sum(e[0] for e in r_entries)
-            tr_rating = sum(e[1] for e in r_entries)
-            if tr_rating > 0 and tr_score > 0:
-                ratio = (score * tr_rating) / (tr_score * urat) if urat > 0 else 1.0
-                perf_val = int(ratio * 100)
+        # Use stored pe_ratio (multiplied by 100 for percentage scale)
+        perf_val = int(pe_ratio * 100) if pe_ratio else 100
 
         words = json.loads(wjson)
         num_words = len(words)
@@ -625,6 +675,8 @@ def get_public_profile(username):
         'description': user[11] if user[11] else 'Add a detailed description about yourself...',
         'proof_url': user[12] if user[12] else None,
         'wins': user[13] if user[13] else 0,
+        'max_pe': round(user[14], 2) if user[14] else 0.0,
+        'avg_pe': round(user[15], 2) if user[15] else 0.0,
         'recent_rounds': recent_rounds,
         'exceptional_rounds': exceptional_rounds,
         'config_ratings': config_stats,
@@ -1255,6 +1307,16 @@ def get_room_state(room_id):
                                     
                                     if p.score == max_score and max_score > 0:
                                         conn.execute('UPDATE users SET wins = wins + 1 WHERE id = ?', (p.user_id,))
+                                    
+                                    # Update Skill Rankings (PE Stats)
+                                    if hasattr(p, 'performance_efficiency') and p.performance_efficiency > 0:
+                                        conn.execute('''
+                                            UPDATE users 
+                                            SET max_pe = MAX(max_pe, ?),
+                                                avg_pe = (avg_pe * pe_count + ?) / (pe_count + 1),
+                                                pe_count = pe_count + 1
+                                            WHERE id = ?
+                                        ''', (p.performance_efficiency, p.performance_efficiency, p.user_id))
                         
                         conn.commit()
                         conn.close()
@@ -2518,6 +2580,129 @@ def create_forum_comment():
         conn.commit()
         return jsonify({'success': True})
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/leaderboard', methods=['GET'])
+def get_leaderboard_data():
+    conn = sqlite3.connect('morpheme.db')
+    conn.row_factory = sqlite3.Row
+    try:
+        # Params
+        period = request.args.get('period', 'day')
+        game_type = request.args.get('game_type', 'all')
+        dims = request.args.get('board_dimensions', 'all') 
+        time_limit = request.args.get('time_limit', 'all')
+
+        # Base filters
+        params = []
+        # Exclude 24h rooms (duration is usually 86400, so < 43200 (12h) is safe)
+        where_clauses = ["rh.round_duration < 43200"] 
+
+        if game_type != 'all':
+            where_clauses.append("rh.game_type = ?")
+            params.append(game_type)
+        if dims != 'all':
+             where_clauses.append("rh.board_dimensions = ?")
+             params.append(dims)
+        if time_limit != 'all':
+             where_clauses.append("rh.round_duration = ?")
+             params.append(time_limit)
+
+        # Time Filter
+        if period == 'day':
+             where_clauses.append("rh.timestamp >= datetime('now', '-1 day', 'localtime')")
+        elif period == 'week':
+             where_clauses.append("rh.timestamp >= datetime('now', '-7 days', 'localtime')")
+        elif period == 'month':
+             where_clauses.append("rh.timestamp >= datetime('now', '-30 days', 'localtime')")
+        elif period == 'year':
+             where_clauses.append("rh.timestamp >= datetime('now', '-365 days', 'localtime')")
+             
+        base_where = " AND ".join(where_clauses)
+        
+        # 1. Best Scores (Highest total score in a round)
+        scores = conn.execute(f"""
+            SELECT rh.total_score, rh.user_rating, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration
+            FROM round_history rh
+            JOIN users u ON rh.user_id = u.id
+            WHERE {base_where}
+            ORDER BY rh.total_score DESC
+            LIMIT 50
+        """, params).fetchall()
+        
+        # 2. Best Words (Highest point single word)
+        words = conn.execute(f"""
+            SELECT rh.best_word, rh.best_word_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration
+            FROM round_history rh
+            JOIN users u ON rh.user_id = u.id
+            WHERE {base_where} AND rh.best_word IS NOT NULL
+            ORDER BY rh.best_word_score DESC
+            LIMIT 50
+        """, params).fetchall()
+        
+        # 3. Best PE (Highest Performance Efficiency)
+        pes = conn.execute(f"""
+            SELECT rh.performance_ratio, rh.total_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration
+            FROM round_history rh
+            JOIN users u ON rh.user_id = u.id
+            WHERE {base_where} AND rh.performance_ratio > 0
+            ORDER BY rh.performance_ratio DESC
+            LIMIT 50
+        """, params).fetchall()
+        
+        # 4. Best Ratings Achieved (Max achieved in period - One per user)
+        # Note: We group by user_id to get one entry per user
+        ratings = conn.execute(f"""
+            SELECT MAX(rh.user_rating) as max_rating, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.timestamp
+            FROM round_history rh
+            JOIN users u ON rh.user_id = u.id
+            WHERE {base_where}
+            GROUP BY u.id
+            ORDER BY max_rating DESC
+            LIMIT 50
+        """, params).fetchall()
+        
+        # 5. Avg Score (Avg per user, Min 3 games)
+        avgs = conn.execute(f"""
+            SELECT AVG(rh.total_score) as avg_score, COUNT(*) as games, u.username, u.country_flag, u.avatar_url
+            FROM round_history rh
+            JOIN users u ON rh.user_id = u.id
+            WHERE {base_where}
+            GROUP BY u.id
+            HAVING games >= 1
+            ORDER BY avg_score DESC
+            LIMIT 50
+        """, params).fetchall()
+        
+        # 6. Current Ratings (Users active in period, sorted by CURRENT rating)
+        current_ratings = conn.execute(f"""
+            SELECT DISTINCT u.username, u.rating, u.country_flag, u.avatar_url
+            FROM round_history rh
+            JOIN users u ON rh.user_id = u.id
+            WHERE {base_where}
+            ORDER BY u.rating DESC
+            LIMIT 50
+        """, params).fetchall()
+        
+        # Helper to dict
+        def to_list(rows):
+            return [dict(r) for r in rows]
+
+        return jsonify({
+            'best_scores': to_list(scores),
+            'best_words': to_list(words),
+            'best_pes': to_list(pes),
+            'best_ratings': to_list(ratings),
+            'avg_scores': to_list(avgs),
+            'current_ratings': to_list(current_ratings)
+        })
+
+    except Exception as e:
+        import traceback
+        print(f"Leaderboard Error: {e}")
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
     finally:
         conn.close()

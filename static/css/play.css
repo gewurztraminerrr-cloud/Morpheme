@@ -2492,3 +2492,235 @@ input[type=range]::-moz-range-track {
     background-color: rgba(255, 255, 255, 0.3);
     border-radius: 3px;
 }
+/* Leaderboard Styles */
+.leaderboard-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+}
+
+.lb-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 15px;
+}
+
+.lb-header h2 {
+    font-size: 2rem;
+    margin: 0;
+    letter-spacing: 2px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff 0%, #a8d5ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.lb-tabs {
+    display: flex;
+    gap: 10px;
+    background: rgba(0,0,0,0.3);
+    padding: 5px;
+    border-radius: 12px;
+}
+
+.lb-tab {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.6);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+.lb-tab:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.05);
+}
+
+.lb-tab.active {
+    background: #409cff;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(64, 156, 255, 0.3);
+}
+
+.lb-controls-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.lb-filters {
+    display: flex;
+    gap: 15px;
+}
+
+.lb-filters select {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+}
+
+.lb-filters select:hover {
+    border-color: rgba(255,255,255,0.3);
+}
+
+.lb-search input {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 10px 15px;
+    border-radius: 8px;
+    color: #fff;
+    width: 250px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.lb-search input:focus {
+    border-color: #409cff;
+    box-shadow: 0 0 0 2px rgba(64, 156, 255, 0.2);
+}
+
+.lb-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.lb-card {
+    background: rgba(26, 26, 46, 0.95);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    max-height: 600px;
+}
+
+.lb-card-header {
+    padding: 15px 20px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-weight: 800;
+    letter-spacing: 1px;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.8);
+    text-transform: uppercase;
+}
+
+.lb-table-wrapper {
+    overflow-y: auto;
+    flex: 1;
+}
+
+.lb-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.lb-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    font-size: 0.95rem;
+}
+
+.lb-row:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.lb-row.highlight-search {
+    background: rgba(64, 156, 255, 0.15);
+    border-left: 3px solid #409cff;
+}
+
+.col-rank {
+    width: 40px;
+    font-family: 'JetBrains Mono', monospace;
+    color: rgba(255,255,255,0.4);
+    font-weight: bold;
+}
+
+.col-user {
+    
+}
+
+.col-val {
+    text-align: right;
+    font-weight: 800;
+    font-size: 1.05rem;
+}
+
+.col-val.highlight {
+    color: #4facfe;
+}
+
+.col-meta {
+    text-align: right;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.5);
+    width: 80px;
+}
+
+.col-action {
+    width: 40px;
+    text-align: center;
+}
+
+.lb-user-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.lb-user-cell:hover .username {
+    text-decoration: underline;
+}
+
+.lb-replay-btn {
+    background: none;
+    border: none;
+    color: #409cff;
+    cursor: pointer;
+    opacity: 0.7;
+    font-size: 1.2rem;
+    padding: 0;
+}
+
+.lb-replay-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.lb-loading {
+    padding: 50px;
+    text-align: center;
+    color: rgba(255,255,255,0.5);
+    font-style: italic;
+    grid-column: 1 / -1;
+}
+
+.lb-attribution {
+    text-align: center;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.3);
+    margin-top: 20px;
+}
+

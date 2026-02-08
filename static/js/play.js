@@ -914,7 +914,9 @@ function renderPlayers(players, currentUser = null, state = null) {
         if (p.input_method === 'touch') inputIcon = '👆';
 
         // Trophy Logic
-        const trophyHtml = p.has_exceptional_round ? '<span title="Exceptional Performer" style="font-size: 0.8rem; margin-left: 4px;">🏆</span>' : '';
+        const peVal = p.performance_efficiency || 1.0;
+        const trophyHtml = p.has_exceptional_round ? `<span title="Exceptional Performer (PE: ${peVal.toFixed(2)}x)" style="font-size: 0.8rem; margin-left: 4px; cursor: help;">🏆</span>` : '';
+        const peDisplay = peVal > 1.05 ? `<span class="player-pe-val" style="font-size: 0.75rem; opacity: 0.6; margin-left: 6px; font-weight: 500;">(${peVal.toFixed(1)}x PE)</span>` : '';
 
         return `
         <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}" data-username="${p.username}">
@@ -929,7 +931,7 @@ function renderPlayers(players, currentUser = null, state = null) {
                 <span class="player-input-icon">${inputIcon}</span>
                 ${trophyHtml}
                 <span class="player-words-count">${p.words_count} words</span>
-                <span class="player-score-val">${p.score} pts</span>
+                <span class="player-score-val">${p.score} pts${peDisplay}</span>
             </div>
         </div>
         `;
