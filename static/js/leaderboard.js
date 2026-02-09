@@ -116,7 +116,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const response = await fetch(`/api/leaderboard?${params}`);
             const data = await response.json();
+
+            // Process JSON strings into objects so Replay tool can read them
+            const processList = (list) => {
+                if (!list) return [];
+                return list.map(row => {
+                    const r = { ...row };
+                    if (r.words_json) {
+                        try { r.words = JSON.parse(r.words_json); } catch (e) { }
+                    }
+                    if (r.board_json) {
+                        try { r.board = JSON.parse(r.board_json); } catch (e) { }
+                    }
+                    // watchRoundHistory expects round_number and game_id
+                    // but DB sometimes says round_num or id
+                    if (!r.round_number && r.round_num) r.round_number = r.round_num;
+                    if (!r.game_id && r.id) r.game_id = r.id;
+                    return r;
+                });
+            };
+
+            data.best_scores = processList(data.best_scores);
+            data.best_words = processList(data.best_words);
+            data.best_pes = processList(data.best_pes);
+            // etc if other replayable lists are added
+
             leaderboardData = data;
+
+            // SYNC with global replay system
+            window.lastRenderedRounds = [
+                ...(data.best_scores || []),
+                ...(data.best_words || []),
+                ...(data.best_pes || [])
+            ];
 
             renderLeaderboard(data);
 
@@ -372,9 +404,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderReplayBtn(row) {
         // Assuming we have window.watchRoundHistory(roomId, roundNum)
         if (!row.room_id || !row.round_number) return '';
+        const gameId = row.game_id || row.id || 'null';
         return `
             <button class="lb-replay-btn" title="Watch Replay" 
-                onclick="window.openReplayModal('${row.room_id}', ${row.round_number})">
+                onclick="window.openReplayModal('${row.room_id}', ${row.round_number}, ${gameId})">
                 ▶
             </button>
         `;
@@ -382,13 +415,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper to open replay modal specifically (linking to existing logic)
     // We attach this to window so button onclick works
-    // Helper to open replay modal specifically (linking to existing logic)
-    // We attach this to window so button onclick works
-    window.openReplayModal = function (roomId, roundNum) {
-        console.log(`Opening replay for ${roomId} - Round ${roundNum}`);
+    window.openReplayModal = function (roomId, roundNum, gameId = null) {
+        console.log(`Opening replay for ${roomId} - Round ${roundNum} (GameID: ${gameId})`);
         if (window.watchRoundHistory) {
             // Default to interactive replay (false)
-            window.watchRoundHistory(roomId, roundNum, false);
+            window.watchRoundHistory(roomId, roundNum, false, gameId);
         } else {
             alert("Replay viewer context not loaded. Please ensure you are logged in.");
         }

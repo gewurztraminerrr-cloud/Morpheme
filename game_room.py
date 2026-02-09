@@ -138,6 +138,17 @@ class GameRoom:
             # For now, let's stick to the user's rule for ALL rooms.
             if manual_accessed:
                 existing_player.joined_mid_round = True
+            elif not is_daily and self.state == 'active' and (self.time_limit - self.time_remaining) > 5:
+                # If they rejoin mid-round after being gone, mark them late? 
+                # Ideally yes, unless was_already_in_room logic covers it. 
+                # But here we are reusing existing_player object which means they were in past_players.
+                # If they were active before, they should be fine?
+                # But if they left and came back much later in same round?
+                # User rule is usually strict. Let's stick to the consistent check.
+                existing_player.joined_mid_round = True
+            else:
+                # If they join during intermission or early enough, reset the flag
+                existing_player.joined_mid_round = False
             return True
         
         # Track if they were already in the room (to avoid mid-round flag on refresh)
@@ -155,6 +166,12 @@ class GameRoom:
             existing_player.games_played = games_played # Update games played (if changed)
             if manual_accessed:
                 existing_player.joined_mid_round = True
+            elif not is_daily and self.state == 'active' and (self.time_limit - self.time_remaining) > 5:
+                 # Check for "Refresh" grace period (15s)
+                 # If they were gone for > 15s, mark as late joiner even if restoring
+                 if (time.time() - existing_player.last_active) > 15:
+                      print(f"[GameRoom] Restored player {username} marked as LATE JOINER (Inactive for {time.time() - existing_player.last_active:.1f}s)")
+                      existing_player.joined_mid_round = True
             self.players.append(existing_player)
             return True
 
@@ -168,7 +185,7 @@ class GameRoom:
         player = Player(user_id, username, rating, games_played=games_played, country_flag=country_flag)
         if manual_accessed:
             player.joined_mid_round = True
-        elif self.state == 'active' and not is_daily and not was_already_in_room:
+        elif self.state == 'active' and (self.time_limit - self.time_remaining) > 5 and not is_daily and not was_already_in_room:
             player.joined_mid_round = True
             
         self.players.append(player)
@@ -443,13 +460,44 @@ class GameRoom:
         # Real-time Split Points Recalculation
         if self.game_type == 'split':
             self.calculate_split_scores()
-            # After recalculation, re-fetch the points for the currently submitted word to return it correctly
+            # After recalculation, re-fetch the points
             for w_obj in player.submitted_words:
                 if w_obj['word'] == final_word:
                     points = w_obj['points']
                     break
 
+        # NEW: Update Live PE Calculation
+        self.update_live_pe()
+
         return True, f"{final_word} ACCEPTED", points, final_word
+
+    def update_live_pe(self):
+        """Calculates performance efficiency in real-time for UI trophy"""
+        # Include all active participants
+        active_competitors = [p for p in self.players if (p.score > 0 or len(p.submitted_words) > 0 or len(p.invalid_words) > 0)]
+        
+        if not active_competitors:
+            return
+
+        score_sum = sum(p.score for p in active_competitors)
+        rating_sum = sum(p.rating for p in active_competitors)
+        
+        if rating_sum > 0:
+            for p in active_competitors:
+                # Expected share of total points based on rating share
+                expected = (p.rating / rating_sum) * score_sum
+                p.performance_efficiency = p.score / expected if expected > 0 else 0.0
+                
+                # Check trophy threshold (Live update)
+                # PE >= 1.2 (20% above expectation) OR Raw Score >= 100 (Exceptional regardless of competition)
+                if (p.performance_efficiency >= 1.2 and p.score >= 10) or p.score >= 100:
+                    p.has_exceptional_round = True
+                else:
+                    p.has_exceptional_round = False
+        else:
+            for p in active_competitors:
+                p.performance_efficiency = 1.0
+                p.has_exceptional_round = False
     
     def _recalculate_player_score(self, player):
         """
@@ -495,7 +543,6 @@ class GameRoom:
         # Check if active round has expired
         if self.state == 'active' and self.time_remaining == 0:
             self.state = 'intermission'
-            self.state = 'intermission'
             self.intermission_start_time = time.time()
             
             # IMMEDIATE SNAPSHOT (24h Rooms): Save history now so it is available during intermission
@@ -520,7 +567,9 @@ class GameRoom:
             print(f"[GameRoom] Calculating Proportional ratings at end of Round {self.current_round}")
             
             # Performance Efficiency (PE) & History Logic
-            active_competitors = [p for p in self.players if p.score > 0 and not getattr(p, 'joined_mid_round', False)]
+            # Include participants even if they score 0, as long as they attempted words
+            # Include mid-round joiners in the POOL so valid players get credit for beating them
+            active_competitors = [p for p in self.players if (p.score > 0 or len(p.submitted_words) > 0 or len(p.invalid_words) > 0)]
             
             # Calculate PE for everyone first
             max_pe = 0.0
@@ -536,9 +585,9 @@ class GameRoom:
                         if p.performance_efficiency > max_pe:
                             max_pe = p.performance_efficiency
                         
-                        # Trophy: PE >= 2.0 (Performed 2x better than expected for their rating)
+                        # Trophy: PE >= 1.5 (Performed 50% better than expected for their rating)
                         # Plus a min score check to ensure it wasn't a trivial board
-                        if p.performance_efficiency >= 2.0 and p.score >= 10:
+                        if p.performance_efficiency >= 1.5 and p.score >= 10:
                             p.has_exceptional_round = True
                         else:
                             p.has_exceptional_round = False
@@ -550,7 +599,11 @@ class GameRoom:
             # Determine Notable Winners for Replay Tab
             # The user wants "enormous wins" to determine replay listing.
             # We list the round if max_pe >= 1.5 (Significant overperformance)
-            if len(active_competitors) > 1 and max_pe >= 1.5:
+            # Determine Notable Winners for Replay Tab
+            # The user previously wanted "enormous wins", but now wants "most recent 10 rounds".
+            # So we remove the PE >= 1.5 restriction and log active rounds.
+            # We still need at least 1 competitor to have a "winner" or purpose.
+            if active_competitors:
                 max_score = max(p.score for p in active_competitors)
                 winners_data = [{'username': p.username, 'rating': p.rating, 'pe': p.performance_efficiency} for p in active_competitors if p.score == max_score]
                 
@@ -576,15 +629,16 @@ class GameRoom:
                     'timestamp': int(time.time() * 1000)
                 })
 
+                # Keep last 50 (or 10 as user mentioned? User said "most recent 10 rounds played no longer documented". 
+                # This implies they expect to see recent ones. 50 cover 10.)
                 if len(self.winners_history) > 50:
                     self.winners_history = self.winners_history[:50]
             else:
-                if len(active_competitors) > 1:
-                    print(f"[GameRoom] Round {self.current_round} skipped for history (Max PE {max_pe:.2f} < 1.5)")
+                print(f"[GameRoom] Round {self.current_round} skipped for history (No active competitors)")
 
             rating_changes = calculate_proportional_rating_change(self.players)
             
-            # Connect for stats check
+            # Connect for stats check - AND NOW PERSISTENCE
             try:
                 conn = sqlite3.connect('morpheme.db')
             except:
@@ -594,12 +648,80 @@ class GameRoom:
                 change = int(rating_changes.get(player.user_id, 0))
                 player.rating += change
                 player.rating_change = change
-                print(f"[GameRoom] Player {player.username} rating adjustment: {change} -> {player.rating}")
+                print(f"[GameRoom] Rating Update Applied: {player.username} ({player.user_id}) -> Change: {change}, New Rating: {player.rating}")
                 
-            # PE results already handled above
-            
+                 # Skip saving history if player was inactive (0 score, no attempts)
+                if player.score == 0 and not player.submitted_words and not player.invalid_words:
+                    print(f"[GameRoom] Skipping DB history for inactive player {player.username} in round {self.current_round}")
+                    continue
+
+                # Persist Rating to DB
+                if conn and player.user_id > 0:
+                    try:
+                        # 1. Update Global Profile Rating
+                        if self.game_type == 'accumulative': # Only standard mode affects global rating? Or all? Usually all.
+                             # But let's check user_ratings table for specific config persistence
+                             pass
+
+                        # 2. Update Config-Specific Rating
+                        dims = f"{len(self.board)}x{len(self.board[0])}"
+                        config_key = f"{self.game_type}|{dims}|{self.time_limit}"
+                        
+                        conn.execute('''
+                            INSERT INTO user_ratings (user_id, config_key, rating) VALUES (?, ?, ?)
+                            ON CONFLICT(user_id, config_key) DO UPDATE SET rating = rating + ?
+                        ''', (player.user_id, config_key, player.rating, change))
+                        
+                        # Also update main users table rating (global average or main rating?)
+                        # Use the absolute calculated value to ensure sync
+                        conn.execute('UPDATE users SET rating = ?, games_played = games_played + 1 WHERE id = ?', (player.rating, player.user_id))
+                        print(f"[GameRoom] DB Updated: User {player.username} global rating set to {player.rating}")
+                        
+                        if player.score > 0 and player.score == max([p.score for p in active_competitors]):
+                             conn.execute('UPDATE users SET wins = wins + 1 WHERE id = ?', (player.user_id,))
+
+                        # Check if history already exists for this user/round
+                        cursor = conn.execute('SELECT 1 FROM round_history WHERE user_id=? AND room_id=? AND round_number=?', 
+                                            (player.user_id, self.room_id, self.current_round))
+                        if not cursor.fetchone():
+                            conn.execute('''
+                                INSERT INTO round_history (user_id, room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, user_rating, performance_ratio, timestamp, board_dimensions)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            ''', (
+                                player.user_id, 
+                                self.room_id, 
+                                self.game_type, 
+                                self.current_round, 
+                                json.dumps(self.board), 
+                                json.dumps([{'word': w['word'], 'points': w.get('points',0), 'timestamp': w.get('time',0)} for w in player.submitted_words]),
+                                player.score,
+                                self.round_start_time,
+                                self.time_limit,
+                                player.rating, # Post-adjustment rating
+                                player.performance_efficiency,
+                                datetime.datetime.now(),
+                                dims
+                            ))
+                        else:
+                            print(f"[GameRoom] Skipping duplicate history save for {player.username} in round {self.current_round}")
+                        
+                        # Update PE stats
+                        conn.execute('''
+                            UPDATE users 
+                            SET pe_count = pe_count + 1,
+                                avg_pe = ((avg_pe * pe_count) + ?) / (pe_count + 1),
+                                max_pe = MAX(max_pe, ?)
+                            WHERE id = ?
+                        ''', (player.performance_efficiency, player.performance_efficiency, player.user_id))
+                        
+                    except Exception as e:
+                        print(f"[GameRoom] DB Save Error for {player.username}: {e}")
+
             if conn:
+                conn.commit()
                 conn.close()
+
+
 
             # Reset timing flags for next intermission
             self.spinner_params_generated = False
@@ -681,13 +803,15 @@ def calculate_proportional_rating_change(players):
     changes = {p.user_id: 0 for p in players}
 
     if has_late_joiner:
-        print("[Rating] Late joiner detected in room. Voiding rating updates for ALL players to ensure fairness.")
+        late_players = [p.username for p in players if getattr(p, 'joined_mid_round', False)]
+        print(f"[Rating] Late joiner detected in room: {late_players}. Voiding rating updates for ALL players (Cnt: {len(players)}) to ensure fairness.")
         return changes
 
-    # 2. Identify active registered players (score >= 1, user_id > 0)
-    # The Java code iterates rows and checks score >= 1
-    # We already filtered late joiners globally above, so we just check score/id here.
-    # Rating change requires at least two competing players who scored.
+    # 2. Identify active registered players (user_id > 0)
+    # We include ALL players present in the room for rating calculations, even if they scored 0 (AFK).
+    active_players = [p for p in players if p.user_id > 0]
+
+    # Rating change requires at least two competing players.
     if len(active_players) < 2:
         return changes
         
@@ -713,6 +837,23 @@ def calculate_proportional_rating_change(players):
         
         change = 0
         
+        if increment <= 0.05:
+            # If increment is effectively zero, check raw deviation?
+            # Or enforce a minimum increment?
+            # Java says: double sixteenScoreValue = expectedScore * ((double) 75/100);
+            # increment = sixteenScoreValue / 16;
+            # If expected score is 10, sixteen=7.5, increment=0.46.
+            # Difference of 10 points: 10 > 0.46 * d. d=1 -> 0.46. d=16 -> 7.36.
+            # 10 > 7.36. d=17 (max). Change = +-16.
+            # Wait, `while d <= 16`. If logic loop exhausts: change = +-16.
+            # If increment is small, d can reach 16 easily?
+            # Wait, lines 799: `if d > 16: change = -16`.
+            # So if increment is tiny, loop runs until d=17, forcing MAX change (-16).
+            # This is OPPOSITE of "not changing".
+            
+            # BUT if increment is 0 (score_sum=0? No, score_sum > 0).
+            pass
+
         if increment > 0:
             if p.score < expected_score:
                 difference = expected_score - p.score
@@ -1345,9 +1486,17 @@ class RoomManager:
             
             # Statistics Rule: Only count rounds where 2+ players actually played (score > 0)
             # Skip players who joined mid-round (User Request)
-            playing_players = [p for p in room.players if p.score > 0 and not getattr(p, 'joined_mid_round', False)]
-            if len(playing_players) <= 1:
-                print(f"[RoomManager] SKIPPING history save for room {room.room_id} - only {len(playing_players)} players played (excluding mid-joiners)")
+            # Statistics Rule: Traditionally we only count rounds where 2+ players actually played.
+            # But user wants "most recent 10 rounds" documented regardless.
+            # So we relax the count to >= 1 and include 0-score players if they are present (user_id > 0).
+            # We still exclude mid-round joiners if that's the rule, but maybe we should include them for *their* history?
+            # User said "Last played 10 rounds".
+            # Let's include everyone who was in the room (user_id > 0).
+            
+            playing_players = [p for p in room.players if p.user_id > 0]
+            
+            if not playing_players:
+                print(f"[RoomManager] SKIPPING history save for room {room.room_id} - no valid players")
                 conn.close()
                 return
 

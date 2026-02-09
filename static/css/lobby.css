@@ -26,8 +26,8 @@
     font-weight: 700;
     margin-bottom: 8px;
     text-align: center;
-    color: #fff;
-    opacity: 0.8;
+    color: var(--text-primary);
+    opacity: 0.9;
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -52,7 +52,9 @@
 
 .dim-label,
 .time-label {
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--text-primary);
     padding: 8px;
     border-radius: 6px;
     text-align: center;
@@ -108,7 +110,7 @@
 
 .game-btn:hover {
     transform: translateY(-3px) scale(1.02);
-    border-color: rgba(255, 255, 255, 0.6);
+    border-color: var(--accent-color);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
     z-index: 1;
 }
@@ -138,36 +140,39 @@
 
 #rating-filter {
     padding: 12px;
-    background: rgba(255, 255, 255, 0.15);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: var(--input-bg);
+    border: 2px solid var(--input-border);
     border-radius: 8px;
-    color: #fff;
+    color: var(--text-primary);
     font-size: 1rem;
 }
 
 #rating-filter::placeholder {
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--muted-text);
 }
 
 #rating-filter:focus {
     outline: none;
-    border-color: rgba(255, 255, 255, 0.6);
-    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--accent-color);
+    background: var(--input-bg);
+    filter: brightness(1.2);
 }
 
 #selected-game-info {
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
     padding: 15px;
     border-radius: 8px;
     text-align: center;
     font-size: 1.1rem;
     font-weight: 500;
+    color: var(--text-primary);
 }
 
 #rooms-list {
     flex: 1;
-    background: rgba(0, 0, 0, 0.2);
-    /* Darker BG for list */
+    background: rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--input-border);
     border-radius: 8px;
     padding: 15px;
     overflow-y: auto;
@@ -178,17 +183,17 @@
 
 #rooms-list .placeholder {
     text-align: center;
-    opacity: 0.7;
+    color: var(--muted-text);
     font-style: italic;
     margin-top: 20px;
 }
 
 /* Room Item Styling - "Pretty" */
 .room-item {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--input-bg);
     border-radius: 10px;
     padding: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--input-border);
     transition: all 0.2s ease;
     display: flex;
     flex-direction: column;
@@ -196,8 +201,9 @@
 }
 
 .room-item:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: var(--input-bg);
+    border-color: var(--accent-color);
+    opacity: 1;
 }
 
 .room-header-row {
@@ -245,14 +251,14 @@
 }
 
 .player-tag {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--input-bg);
     padding: 4px 10px;
     border-radius: 15px;
     font-size: 0.85rem;
-    color: #fff;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--input-border);
 }
 
 .join-room-btn {
@@ -273,11 +279,11 @@
 
 /* Inline Rating Inputs for Create Room */
 .create-room-panel {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-panel);
     border-radius: 8px;
     padding: 15px;
     margin-bottom: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--input-border);
 }
 
 .rating-inputs-row {
@@ -288,23 +294,24 @@
 
 .rating-input {
     flex: 1;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
     border-radius: 4px;
     padding: 8px;
-    color: white;
+    color: var(--text-primary);
     font-size: 14px;
     text-align: center;
 }
 
 .rating-input::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--muted-text);
 }
 
 .rating-input:focus {
     outline: none;
-    border-color: rgba(46, 204, 113, 0.5);
-    background: rgba(0, 0, 0, 0.5);
+    border-color: var(--accent-color);
+    background: var(--input-bg);
+    filter: brightness(1.2);
 }
 
 .confirm-create-room-btn {
@@ -414,12 +421,12 @@
 
 .contact-form input,
 .contact-form textarea {
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
     border-radius: 12px;
     padding: 10px 15px;
     /* Reduced vertical padding from 12px to 10px */
-    color: #fff;
+    color: var(--text-primary);
     font-size: 0.95rem;
     /* Slightly smaller font */
     transition: all 0.3s ease;
@@ -434,15 +441,15 @@
 }
 
 .contact-form input[readonly] {
+    background: var(--input-bg);
     opacity: 0.6;
     cursor: not-allowed;
-    background: rgba(255, 255, 255, 0.05);
 }
 
 .field-hint {
     font-size: 0.7rem;
     /* Smaller hint */
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--muted-text);
     padding-left: 5px;
 }
 

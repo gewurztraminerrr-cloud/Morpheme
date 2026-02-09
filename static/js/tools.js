@@ -813,7 +813,7 @@ async function uploadAvatar(file) {
     }
 }
 
-async function performProfileSearch(username) {
+async function performProfileSearch(username, activeTab = null) {
     if (!username || !username.trim()) return;
 
     username = username.trim();
@@ -823,11 +823,11 @@ async function performProfileSearch(username) {
 
     // Guests do not have profiles
     if (username.startsWith('Guest_')) {
-        container.classList.add('hidden');
+        if (container) container.classList.add('hidden');
         return;
     }
 
-    container.classList.add('hidden');
+    if (container) container.classList.add('hidden');
 
     try {
         const response = await fetch(`/api/profile/${encodeURIComponent(username)}`);
@@ -839,7 +839,7 @@ async function performProfileSearch(username) {
         }
 
         await renderProfile(data);
-        container.classList.remove('hidden');
+        if (container) container.classList.remove('hidden');
 
         // Activate specific tab if requested
         if (activeTab) {
@@ -1100,7 +1100,7 @@ async function renderProfile(user) {
         }
 
         return `
-        <div class="history-grid-item" onclick="watchRoundHistory('${round.room_id}', ${round.round_number}, true)" style="display: grid; grid-template-columns: 80px 50px 80px 60px 80px 80px 100px 1fr 100px 50px; gap:8px; padding: 10px 15px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 8px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden;">
+        <div class="history-grid-item" onclick="watchRoundHistory('${round.room_id}', ${round.round_number}, true, ${round.game_id || 'null'})" style="display: grid; grid-template-columns: 80px 50px 80px 60px 80px 80px 100px 1fr 100px 50px; gap:8px; padding: 10px 15px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 8px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden;">
             <div class="history-mode-tag ${typeClass}" style="font-size: 0.65rem; padding: 3px 6px; border-radius: 6px; text-align: center; width: fit-content; font-weight: 800; text-transform: uppercase;">${gameTypeLabel}</div>
             
             <!-- Mini Board Preview Column -->
@@ -1109,6 +1109,7 @@ async function renderProfile(user) {
             </div>
 
             <div style="font-weight: 900; color: #fff; font-size: 0.95rem;">${round.total_score} <small style="font-size: 0.6rem; opacity: 0.5;">PTS</small></div>
+
             <div style="font-weight: 900; color: ${round.performance_value >= 140 ? '#60a5fa' : 'rgba(255,255,255,0.2)'}; font-size: 0.85rem;">${round.performance_value || '-'}</div>
             <div style="display: flex; flex-direction: column; gap: 1px;">
                 <span style="color: #fff; font-size: 0.7rem; font-weight: 700;">${round.num_words} words</span>
@@ -1122,14 +1123,6 @@ async function renderProfile(user) {
             
             <!-- Date Column -->
             <div style="font-size: 0.7rem; color: rgba(255,255,255,0.6); font-weight: 600; text-align: right;">${dateStr}</div>
-
-            <div style="text-align: right;">
-                <button class="history-snap-btn" title="View Snapshot"
-                         onclick="event.stopPropagation(); watchRoundHistory('${round.room_id}', ${round.round_number}, true)"
-                         style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 4px 8px; cursor: pointer;">
-                    <span style="font-size: 1rem;">📷</span>
-                </button>
-            </div>
         </div>
         `;
     };
@@ -1144,7 +1137,6 @@ async function renderProfile(user) {
             <div>Top Word</div>
             <div>Room</div>
             <div style="text-align: right;">Date</div>
-            <div style="text-align: right;">Snap</div>
         </div>
     `;
 
@@ -1242,15 +1234,17 @@ function findWordPath(board, word) {
 }
 
 // Global function to review a round (Legitimacy Walkthrough)
-window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false) {
-    console.log(`Reviewing Round ${roundNum} from Room ${roomId}`);
+window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameId = null) {
+    console.log(`Reviewing Round ${roundNum} from Room ${roomId} (GameID: ${gameId})`);
 
     // 1. Find Round Data
     let rounds = window.lastRenderedRounds || [];
     let round = null;
 
     // A) Try Fallback/Lobby First (More likely for active session)
-    if (window.lastGameState && window.lastGameState.winners_history) {
+    // IMPORTANT: Only use lobby history if it matches the requested gameId (if provided) or room/round context
+    // Lobby history often comes from "winners_history" which might lack game_id, so be careful.
+    if (!gameId && window.lastGameState && window.lastGameState.winners_history && window.lastGameState.room_id === roomId) {
         const foundInLobby = window.lastGameState.winners_history.find(h => h.round == roundNum);
         if (foundInLobby && foundInLobby.board) {
             console.log(`[Review] Using Round ${roundNum} from Lobby winners_history`);
@@ -1264,9 +1258,15 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false) {
         }
     }
 
-    // B) Fallback to Profile/Recent Rounds
+    // B) Fallback to Profile/Recent Rounds (using GameID if available)
     if (!round) {
-        round = rounds.find(r => r.room_id == roomId && r.round_number == roundNum);
+        if (gameId) {
+            round = rounds.find(r => r.game_id == gameId);
+        }
+        if (!round) {
+            // Fallback to old heuristic
+            round = rounds.find(r => r.room_id == roomId && r.round_number == roundNum);
+        }
     }
 
     if (!round) {
@@ -1359,11 +1359,11 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false) {
     }
 
     // 4. Playback Logic
-    const words = round.words || [];
+    const rawWords = round.words || [];
     // Ensure numeric timestamps (handle legacy string dates)
-    const processedWords = words.map(w => ({
+    const processedWords = rawWords.map(w => ({
         ...w,
-        timestamp: isNaN(parseFloat(w.timestamp)) ? 0 : parseFloat(w.timestamp)
+        timestamp: w.timestamp ? parseFloat(w.timestamp) : 0
     }));
 
     const sortedWords = processedWords.sort((a, b) => a.timestamp - b.timestamp);
@@ -1373,15 +1373,25 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false) {
     // Preferred: round_start_time (absolute s)
     // Fallback 1: First word timestamp - 5s
     // Fallback 2: Entry timestamp (converted to s)
-    let startTime = parseFloat(round.round_start_time) ||
-        (sortedWords[0] ? sortedWords[0].timestamp - 5 : 0) ||
-        (parseFloat(round.timestamp) / 1000 || 0);
+    let startTime = 0;
+    if (round.round_start_time) {
+        startTime = parseFloat(round.round_start_time);
+    } else if (sortedWords.length > 0) {
+        startTime = sortedWords[0].timestamp - 2.0; // Start shortly before first word
+        if (startTime < 0) startTime = 0;
+    } else {
+        startTime = parseFloat(round.timestamp) / 1000 || (Date.now() / 1000);
+    }
 
     console.log(`[Review] Playback Setup: ${sortedWords.length} words, duration ${roundDuration}s, startTime ${startTime}`);
+    if (sortedWords.length > 0) {
+        console.log(`[Review] First Word: ${sortedWords[0].word} @ ${sortedWords[0].timestamp}, Rel: ${sortedWords[0].timestamp - startTime}`);
+    }
 
     const renderWord = (word) => {
         const wTimestamp = parseFloat(word.timestamp) || 0;
-        const relTimeSec = Math.max(0, wTimestamp - startTime);
+        let relTimeSec = Math.max(0, wTimestamp - startTime);
+
         const min = Math.floor(relTimeSec / 60);
         const sec = (relTimeSec % 60).toFixed(1);
         const timeStr = `${min}:${sec.padStart(4, '0')}`;
@@ -1403,23 +1413,29 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false) {
     const showAllWords = () => {
         // Newest words first as requested
         const reversedWords = [...sortedWords].reverse();
-        walkthroughList.innerHTML = reversedWords.map(w => renderWord(w)).join('');
-        if (sortedWords.length === 0) {
-            walkthroughList.innerHTML = '<p class="placeholder" style="color:rgba(255,255,255,0.2); text-align:center; padding:40px;">No words found in this round.</p>';
+        if (walkthroughList) {
+            walkthroughList.innerHTML = reversedWords.map(w => renderWord(w)).join('');
+            if (sortedWords.length === 0) {
+                walkthroughList.innerHTML = '<p class="placeholder" style="color:rgba(255,255,255,0.2); text-align:center; padding:40px;">No words found in this round.</p>';
+            }
         }
+
+        // Ensure "Show All" is hidden, and "Watch" is visible (reset state)
         if (skipBtn) skipBtn.classList.add('hidden');
+        if (startBtn) {
+            startBtn.classList.remove('hidden');
+            startBtn.innerText = "▶ Watch Replay"; // Reset text
+        }
         if (progressUI) progressUI.classList.add('hidden');
 
         const currentScoreEl = document.getElementById(useOverlay ? 'replay-current-score' : 'integrated-current-score');
         if (currentScoreEl) currentScoreEl.innerText = `${round.total_score} pts`;
     };
 
-    // Snapshot Mode
-    if (isSnapshot) {
-        showAllWords();
-        if (startBtn) startBtn.classList.remove('hidden'); // allow watching even from snapshot
-    }
+    // ALWAYS Show All Words initially (User Requirement: "Round Replay does not have any words listed before...")
+    showAllWords();
 
+    // Snapshot Mode logic merged with above (always show initially)
 
     // Interactive Replay
     if (startBtn) {
@@ -1434,7 +1450,7 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false) {
             const currentScoreEl = document.getElementById(useOverlay ? 'replay-current-score' : 'integrated-current-score');
             if (currentScoreEl) currentScoreEl.innerText = "0 pts";
 
-            walkthroughList.innerHTML = '';
+            if (walkthroughList) walkthroughList.innerHTML = ''; // CLEAR LIST FOR ANIMATION
 
             let elapsed = 0;
             let wordIndex = 0;
@@ -1442,7 +1458,9 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false) {
 
 
             // Clear Highlights
-            boardContainer.querySelectorAll('.review-cell').forEach(c => c.classList.remove('highlight'));
+            if (boardContainer) {
+                boardContainer.querySelectorAll('.review-cell').forEach(c => c.classList.remove('highlight'));
+            }
 
             window.replayInterval = setInterval(() => {
                 elapsed += tick / 1000;
@@ -1458,14 +1476,16 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false) {
                 // Append new words in order
                 while (wordIndex < sortedWords.length) {
                     const word = sortedWords[wordIndex];
-                    const wTimestamp = parseFloat(word.timestamp) || 0;
+                    const wTimestamp = floatTimestamp(word.timestamp);
                     const relWordTime = wTimestamp - startTime;
 
                     if (elapsed >= relWordTime || isNaN(relWordTime)) {
                         console.log(`[Review] Displaying word: ${word.word} (relative: ${relWordTime ? relWordTime.toFixed(1) : 'NaN'}s)`);
 
                         // Insert at TOP for newest-first order
-                        walkthroughList.insertAdjacentHTML('afterbegin', renderWord(word));
+                        if (walkthroughList) {
+                            walkthroughList.insertAdjacentHTML('afterbegin', renderWord(word));
+                        }
 
                         currentScore += word.points;
                         if (currentScoreEl) currentScoreEl.innerText = `${currentScore} pts`;
@@ -1473,7 +1493,7 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false) {
 
                         // Highlight Path
                         const path = findWordPath(round.board, word.word);
-                        if (path) {
+                        if (path && boardContainer) {
                             const cells = boardContainer.querySelectorAll('.review-cell');
                             const cols = round.board[0].length;
 
@@ -1493,13 +1513,15 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false) {
                     }
                 }
 
-                if (elapsed >= roundDuration) {
-                    clearInterval(window.replayInterval);
+                if (elapsed >= roundDuration + 2) { // Add buffer
+                    if (window.replayInterval) clearInterval(window.replayInterval);
                     if (skipBtn) skipBtn.classList.add('hidden');
                     if (startBtn) {
                         startBtn.classList.remove('hidden');
                         startBtn.innerText = "↺ Replay";
                     }
+                    // Ensure everything is shown at end just in case
+                    showAllWords();
                 }
             }, tick);
         };
@@ -1512,9 +1534,9 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false) {
         };
     }
 
-    // Auto-start if not a snapshot
-    if (!isSnapshot && startBtn) {
-        startBtn.click();
+    // Helper for timestamp
+    function floatTimestamp(ts) {
+        return ts ? parseFloat(ts) : 0;
     }
 };
 
@@ -1647,11 +1669,6 @@ function renderRatingsGrid(configRatings, user = null) {
                         </div>
                     </div>
                     <div class="rating-box-value" style="color: ${rColor}; font-size: 1.25rem; font-weight: 900; margin: 0 15px;">${rating}</div>
-                    <div class="rating-box-snapshot" title="View Best Round Snapshot" 
-                         style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;"
-                         onclick="event.stopPropagation(); if('${u?.username}') { fetch('/api/room_achievements?username=${u.username}&mode=${mode}&board=${board}&time=${time}').then(r => r.json()).then(d => { if(d.stats && d.stats.exceptional_round) { if(!window.lastRenderedRounds) window.lastRenderedRounds=[]; window.lastRenderedRounds.push(d.stats.exceptional_round); window.watchRoundHistory(d.stats.exceptional_round.room_id, d.stats.exceptional_round.round_number, true); } }); }">
-                        <span style="font-size: 1rem;">📷</span>
-                    </div>
                 `;
 
                 box.onclick = () => {
@@ -1779,9 +1796,17 @@ async function showRoomAchievements(username, mode, board, time) {
         document.getElementById('ach-avg-word-pts').textContent = stats.avg_word_pts || '0';
 
         const renderAchRow = (r, cols) => {
-            // Cache if not present
+            // Cache if not present or upgrade if better data available
             if (!window.lastRenderedRounds) window.lastRenderedRounds = [];
-            if (!window.lastRenderedRounds.find(cr => cr.room_id === r.room_id && cr.round_number === r.round_number)) {
+            const existingIdx = window.lastRenderedRounds.findIndex(cr => cr.room_id === r.room_id && cr.round_number === r.round_number);
+
+            if (existingIdx === -1) {
+                window.lastRenderedRounds.push(r);
+            } else if (r.game_id && !window.lastRenderedRounds[existingIdx].game_id) {
+                // Overwrite with better data (contains game_id)
+                window.lastRenderedRounds[existingIdx] = r;
+            } else if (r.game_id && window.lastRenderedRounds[existingIdx].game_id !== r.game_id) {
+                // If distinct game IDs for what looks like same room/round (collision?), push as new
                 window.lastRenderedRounds.push(r);
             }
 
@@ -1789,7 +1814,7 @@ async function showRoomAchievements(username, mode, board, time) {
             <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: background 0.2s;" 
                 onmouseenter="this.style.background='rgba(255,255,255,0.02)'" 
                 onmouseleave="this.style.background='transparent'" 
-                onclick="watchRoundHistory('${r.room_id}', ${r.round_number}, true); document.getElementById('room-achievements-modal').classList.add('hidden');">
+                onclick="watchRoundHistory('${r.room_id}', ${r.round_number}, true, ${r.game_id || 'null'}); document.getElementById('room-achievements-modal').classList.add('hidden');">
                 ${cols.map(c => `<td style="padding: 10px 15px; ${c.style || ''}">${c.val}</td>`).join('')}
                 <td style="padding: 10px 15px; text-align: right;"><div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 8px; display: inline-block;">📷</div></td>
             </tr>`;
@@ -1857,7 +1882,7 @@ async function showRoomAchievements(username, mode, board, time) {
                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: background 0.2s;" 
                     onmouseenter="this.style.background='rgba(255,255,255,0.02)'" 
                     onmouseleave="this.style.background='transparent'" 
-                    onclick="watchRoundHistory('${w.room_id}', ${w.round_number}, true); document.getElementById('room-achievements-modal').classList.add('hidden');">
+                    onclick="watchRoundHistory('${w.room_id}', ${w.round_number}, true, ${w.game_id || 'null'}); document.getElementById('room-achievements-modal').classList.add('hidden');">
                     <td style="padding: 10px 15px; font-weight: 800; color: #fff; text-transform: uppercase;">${w.word}</td>
                     <td style="padding: 10px 15px; font-weight: 700; color: #ffd700;">${w.points}</td>
                     <td style="padding: 10px 15px; color: rgba(255,255,255,0.5);">${w.word.length}</td>

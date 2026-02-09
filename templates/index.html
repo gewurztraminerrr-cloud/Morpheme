@@ -4,291 +4,2313 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Morpheme - Word Game Platform</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
+    <title>MORPHEME</title>
+    <link rel="stylesheet" href="/css/style.css?v=4">
+    <link rel="stylesheet" href="/css/lobby.css?v=4">
+    <link rel="stylesheet" href="/css/play.css?v=27">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=4">
+    <link rel="stylesheet" href="/css/forum.css?v=1">
 </head>
 
 <body>
-    <!-- Header Navigation -->
-    <header class="main-header">
-        <div class="header-left">
-            <h1 class="logo">MORPHEME</h1>
-            <span class="phonetic">MORE-FEEM</span>
+    <!-- Header - Always visible -->
+    <header class="header">
+        <div class="logo">
+            <span class="logo-text">MORPHEME</span>
+            <span class="pronunciation">MORE-FEEM</span>
         </div>
-        <nav class="header-nav">
-            <button class="nav-btn" id="btn-login">Login</button>
-            <button class="nav-btn" id="btn-how-to-play">How to Play</button>
-            <button class="nav-btn" id="btn-lobby">Lobby</button>
-            <button class="nav-btn" id="btn-play" disabled>Play</button>
-            <button class="nav-btn" id="btn-leaderboards">Leaderboards</button>
-            <button class="nav-btn" id="btn-tools">Tools</button>
-            <button class="nav-btn" id="btn-settings">Settings</button>
-            <button class="nav-btn" id="btn-contact">Contact</button>
+        <nav class="nav">
+            <button class="nav-btn" data-page="store" id="btn-store">Store</button>
+            <button class="nav-btn" data-page="login" id="nav-login-btn">Login</button>
+            <button class="nav-btn" data-page="howtoplay">How to Play</button>
+            <button class="nav-btn" data-page="lobby">Lobby</button>
+            <button class="nav-btn" data-page="tournaments" id="btn-tournaments">Tournaments</button>
+            <button class="nav-btn" id="play-btn" data-page="play" disabled>Play</button>
+            <button class="nav-btn" data-page="leaderboards">Leaderboards</button>
+            <button class="nav-btn" data-page="forums">Forum</button>
+            <button class="nav-btn" data-page="tools">Tools</button>
+            <button class="nav-btn" data-page="settings">Settings</button>
+            <button class="nav-btn" data-page="contact">Contact</button>
+            <div id="user-display" class="user-display hidden">
+                <span id="username-display"></span>
+                <button id="logout-btn" class="logout-btn">Logout</button>
+            </div>
         </nav>
     </header>
 
     <div class="separator"></div>
 
-    <!-- Main Content Area -->
-    <main class="main-content">
+    <!-- Pages Container -->
+    <main class="pages">
         <!-- Login Page -->
-        <section id="page-login" class="page active">
-            <div class="login-container">
-                <div class="login-card">
-                    <div class="card-header">
-                        <h2>Welcome to Morpheme</h2>
-                        <p class="subtitle">Sign in to continue your journey</p>
-                    </div>
-
-                    <div class="tab-switcher">
-                        <button class="tab-btn active" data-tab="signin">Sign In</button>
-                        <button class="tab-btn" data-tab="signup">Sign Up</button>
-                    </div>
-
-                    <!-- Sign In Form -->
-                    <form id="signin-form" class="auth-form active">
-                        <div class="form-group">
-                            <label for="signin-username">Username</label>
-                            <input type="text" id="signin-username" placeholder="Enter your username" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="signin-password">Password</label>
-                            <input type="password" id="signin-password" placeholder="Enter your password" required>
-                        </div>
-                        <div class="error-message" id="signin-error"></div>
-                        <button type="submit" class="submit-btn">Sign In</button>
-                    </form>
-
-                    <!-- Sign Up Form -->
-                    <form id="signup-form" class="auth-form">
-                        <div class="form-group">
-                            <label for="signup-username">Username</label>
-                            <input type="text" id="signup-username" placeholder="Choose a username" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="signup-email">Email (optional)</label>
-                            <input type="email" id="signup-email" placeholder="Enter your email">
-                        </div>
-                        <div class="form-group">
-                            <label for="signup-password">Password</label>
-                            <input type="password" id="signup-password" placeholder="Choose a password" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="signup-password-confirm">Confirm Password</label>
-                            <input type="password" id="signup-password-confirm" placeholder="Confirm your password"
-                                required>
-                        </div>
-                        <div class="error-message" id="signup-error"></div>
-                        <button type="submit" class="submit-btn">Create Account</button>
-                    </form>
+        <div id="page-login" class="page active">
+            <div class="auth-container">
+                <h2>Welcome to Morpheme</h2>
+                <div id="total-user-count"
+                    style="text-align: center; margin-bottom: 15px; color: var(--accent-color); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem; min-height: 20px;">
                 </div>
+                <p style="text-align: center; margin-bottom: 25px; opacity: 0.8;">Sign in to continue your journey.</p>
+
+                <div class="auth-tabs">
+                    <button class="tab-btn active" id="login-tab" data-tab="signin">Login</button>
+                    <button class="tab-btn" id="register-tab" data-tab="signup">Register</button>
+                </div>
+
+                <form id="signin-form" class="auth-form active">
+                    <input type="text" id="signin-username" placeholder="Username" required>
+                    <input type="password" id="signin-password" placeholder="Password" required>
+                    <div id="signin-error" class="error-message"></div>
+                    <button type="submit">Login</button>
+                    <button type="button" id="guest-login-btn" style="background: #555; margin-top: 10px;">Play as
+                        Guest</button>
+                </form>
+
+                <form id="signup-form" class="auth-form">
+                    <input type="text" id="signup-username"
+                        placeholder="Username (1-16 characters, letters/numbers/underscores)" required>
+                    <input type="email" id="signup-email" placeholder="Email" required>
+                    <input type="password" id="signup-password" placeholder="Password (6+ characters)" required>
+                    <input type="password" id="signup-password-confirm" placeholder="Confirm Password" required>
+                    <div id="signup-error" class="error-message"></div>
+                    <button type="submit">Create Account</button>
+                </form>
+
+                <div id="auth-message" class="message"></div>
             </div>
-        </section>
+        </div>
+
+        <!-- How to Play Page -->
+
 
         <!-- Lobby Page -->
-        <section id="page-lobby" class="page">
-            <!-- Audio element for lobby music -->
-            <audio id="lobby-music">
-                <source src="/static/audio/lobby-music.mp3" type="audio/mpeg">
-            </audio>
+        <div id="page-lobby" class="page">
+            <audio id="lobby-music" src="/music/lobby.mp3" preload="auto"></audio>
 
-            <div class="lobby-container-full">
-                <div class="welcome-banner">
-                    <h2>Welcome, <span id="username-display">Player</span>!</h2>
-                    <p>Select your game type and preferences</p>
-                </div>
+            <div class="lobby-grid">
+                <!-- Left Panel: Game Types -->
+                <div class="game-types-panel">
+                    <!-- Global Filters/Settings -->
 
-                <div class="lobby-two-panel">
-                    <!-- Left Panel: Game Selection -->
-                    <div class="lobby-left-panel">
-                        <!-- Accumulative Game Type -->
-                        <div class="game-type-section">
-                            <h3 class="game-type-title">Accumulative</h3>
-                            <div class="game-grid">
-                                <div class="grid-header">
-                                    <div class="grid-cell empty"></div>
-                                    <div class="grid-cell dimension">4x4</div>
-                                    <div class="grid-cell dimension">4x6</div>
-                                    <div class="grid-cell dimension">5x7</div>
-                                    <div class="grid-cell dimension">6x8</div>
-                                </div>
-                                <div class="grid-row">
-                                    <div class="grid-cell time-label">45 seconds</div>
-                                    <button class="grid-btn game-btn acc-btn" data-game="accumulative" data-time="45"
-                                        data-board="4x4">Start [0]</button>
-                                    <button class="grid-btn game-btn acc-btn" data-game="accumulative" data-time="45"
-                                        data-board="4x6">Start [0]</button>
-                                    <button class="grid-btn game-btn acc-btn" data-game="accumulative" data-time="45"
-                                        data-board="5x7">Start [0]</button>
-                                    <button class="grid-btn game-btn acc-btn" data-game="accumulative" data-time="45"
-                                        data-board="6x8">Start [0]</button>
-                                </div>
-                                <div class="grid-row">
-                                    <div class="grid-cell time-label">3 minutes</div>
-                                    <button class="grid-btn game-btn acc-btn" data-game="accumulative" data-time="180"
-                                        data-board="4x4">Start [0]</button>
-                                    <button class="grid-btn game-btn acc-btn" data-game="accumulative" data-time="180"
-                                        data-board="4x6">Start [0]</button>
-                                    <button class="grid-btn game-btn acc-btn" data-game="accumulative" data-time="180"
-                                        data-board="5x7">Start [0]</button>
-                                    <button class="grid-btn game-btn acc-btn" data-game="accumulative" data-time="180"
-                                        data-board="6x8">Start [0]</button>
-                                </div>
-                                <div class="grid-row">
-                                    <div class="grid-cell time-label">10 minutes</div>
-                                    <button class="grid-btn game-btn acc-btn" data-game="accumulative" data-time="600"
-                                        data-board="4x4">Start [0]</button>
-                                    <button class="grid-btn game-btn acc-btn" data-game="accumulative" data-time="600"
-                                        data-board="4x6">Start [0]</button>
-                                    <button class="grid-btn game-btn acc-btn" data-game="accumulative" data-time="600"
-                                        data-board="5x7">Start [0]</button>
-                                    <button class="grid-btn game-btn acc-btn" data-game="accumulative" data-time="600"
-                                        data-board="6x8">Start [0]</button>
-                                </div>
-                                <div class="grid-row">
-                                    <div class="grid-cell time-label">24 hours</div>
-                                    <button class="grid-btn game-btn acc-btn" data-game="accumulative" data-time="120"
-                                        data-board="4x4">Start [0]</button>
-                                    <button class="grid-btn game-btn acc-btn" data-game="accumulative" data-time="120"
-                                        data-board="4x6">Start [0]</button>
-                                    <button class="grid-btn game-btn acc-btn" data-game="accumulative" data-time="120"
-                                        data-board="5x7">Start [0]</button>
-                                    <button class="grid-btn game-btn acc-btn" data-game="accumulative" data-time="120"
-                                        data-board="6x8">Start [0]</button>
-                                </div>
+
+
+
+                    <!-- Accumulative -->
+                    <div class="game-section">
+                        <h3 class="game-title">Accumulative</h3>
+                        <div class="game-matrix">
+                            <div class="matrix-header">
+                                <div class="corner-cell"></div>
+                                <div class="dim-label">4x4</div>
+                                <div class="dim-label">4x6</div>
+                                <div class="dim-label">5x7</div>
+                                <div class="dim-label">6x8</div>
                             </div>
-                        </div>
-
-                        <!-- First Come First Serve Game Type -->
-                        <div class="game-type-section">
-                            <h3 class="game-type-title">First Come First Serve</h3>
-                            <div class="game-grid">
-                                <div class="grid-header">
-                                    <div class="grid-cell empty"></div>
-                                    <div class="grid-cell dimension">4x4</div>
-                                    <div class="grid-cell dimension">4x6</div>
-                                    <div class="grid-cell dimension">5x7</div>
-                                    <div class="grid-cell dimension">6x8</div>
-                                </div>
-                                <div class="grid-row">
-                                    <div class="grid-cell time-label">45 seconds</div>
-                                    <button class="grid-btn game-btn fcfs-btn" data-game="fcfs" data-time="45"
-                                        data-board="4x4">Show Rooms [0]</button>
-                                    <button class="grid-btn game-btn fcfs-btn" data-game="fcfs" data-time="45"
-                                        data-board="4x6">Show Rooms [0]</button>
-                                    <button class="grid-btn game-btn fcfs-btn" data-game="fcfs" data-time="45"
-                                        data-board="5x7">Show Rooms [0]</button>
-                                    <button class="grid-btn game-btn fcfs-btn" data-game="fcfs" data-time="45"
-                                        data-board="6x8">Show Rooms [0]</button>
-                                </div>
-                                <div class="grid-row">
-                                    <div class="grid-cell time-label">3 minutes</div>
-                                    <button class="grid-btn game-btn fcfs-btn" data-game="fcfs" data-time="180"
-                                        data-board="4x4">Show Rooms [0]</button>
-                                    <button class="grid-btn game-btn fcfs-btn" data-game="fcfs" data-time="180"
-                                        data-board="4x6">Show Rooms [0]</button>
-                                    <button class="grid-btn game-btn fcfs-btn" data-game="fcfs" data-time="180"
-                                        data-board="5x7">Show Rooms [0]</button>
-                                    <button class="grid-btn game-btn fcfs-btn" data-game="fcfs" data-time="180"
-                                        data-board="6x8">Show Rooms [0]</button>
-                                </div>
+                            <div class="matrix-row">
+                                <div class="time-label">45s</div>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
+                                    data-board="4x4">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
+                                    data-board="4x6">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
+                                    data-board="5x7">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
+                                    data-board="6x8">Start [0]</button>
                             </div>
-                        </div>
-
-                        <!-- Split Points Game Type -->
-                        <div class="game-type-section">
-                            <h3 class="game-type-title">Split Points</h3>
-                            <div class="game-grid">
-                                <div class="grid-header">
-                                    <div class="grid-cell empty"></div>
-                                    <div class="grid-cell dimension">4x4</div>
-                                    <div class="grid-cell dimension">4x6</div>
-                                    <div class="grid-cell dimension">5x7</div>
-                                    <div class="grid-cell dimension">6x8</div>
-                                </div>
-                                <div class="grid-row">
-                                    <div class="grid-cell time-label">45 seconds</div>
-                                    <button class="grid-btn game-btn split-btn" data-game="split" data-time="45"
-                                        data-board="4x4">Show Rooms [0]</button>
-                                    <button class="grid-btn game-btn split-btn" data-game="split" data-time="45"
-                                        data-board="4x6">Show Rooms [0]</button>
-                                    <button class="grid-btn game-btn split-btn" data-game="split" data-time="45"
-                                        data-board="5x7">Show Rooms [0]</button>
-                                    <button class="grid-btn game-btn split-btn" data-game="split" data-time="45"
-                                        data-board="6x8">Show Rooms [0]</button>
-                                </div>
-                                <div class="grid-row">
-                                    <div class="grid-cell time-label">3 minutes</div>
-                                    <button class="grid-btn game-btn split-btn" data-game="split" data-time="180"
-                                        data-board="4x4">Show Rooms [0]</button>
-                                    <button class="grid-btn game-btn split-btn" data-game="split" data-time="180"
-                                        data-board="4x6">Show Rooms [0]</button>
-                                    <button class="grid-btn game-btn split-btn" data-game="split" data-time="180"
-                                        data-board="5x7">Show Rooms [0]</button>
-                                    <button class="grid-btn game-btn split-btn" data-game="split" data-time="180"
-                                        data-board="6x8">Show Rooms [0]</button>
-                                </div>
+                            <div class="matrix-row">
+                                <div class="time-label">3m</div>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
+                                    data-board="4x4">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
+                                    data-board="4x6">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
+                                    data-board="5x7">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
+                                    data-board="6x8">Start [0]</button>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">10m</div>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="600"
+                                    data-board="4x4">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="600"
+                                    data-board="4x6">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="600"
+                                    data-board="5x7">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="600"
+                                    data-board="6x8">Start [0]</button>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">24h</div>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
+                                    data-board="4x4">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
+                                    data-board="4x6">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
+                                    data-board="5x7">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
+                                    data-board="6x8">Start [0]</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Right Panel: Active Rooms -->
-                    <div class="lobby-right-panel">
-                        <h3 class="active-rooms-title">Active Rooms</h3>
-
-                        <div class="rating-filter">
-                            <label for="rating-input">Filter by rating:</label>
-                            <input type="number" id="rating-input" placeholder="Enter rating" min="0" step="100">
+                    <!-- First Come First Serve -->
+                    <div class="game-section">
+                        <h3 class="game-title">First Come First Serve</h3>
+                        <div class="game-matrix">
+                            <div class="matrix-header">
+                                <div class="corner-cell"></div>
+                                <div class="dim-label">4x4</div>
+                                <div class="dim-label">4x6</div>
+                                <div class="dim-label">5x7</div>
+                                <div class="dim-label">6x8</div>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">45s</div>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="4x4">Show
+                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="4x6">Show
+                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="5x7">Show
+                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="6x8">Show
+                                    Rooms [0]</button>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">3m</div>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="4x4">Show
+                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="4x6">Show
+                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="5x7">Show
+                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="6x8">Show
+                                    Rooms [0]</button>
+                            </div>
                         </div>
+                    </div>
 
-                        <div id="selected-game-info" class="selected-game-info">
-                            <p>Select a game type to view available rooms</p>
+                    <!-- Split Points -->
+                    <div class="game-section">
+                        <h3 class="game-title">Split Points</h3>
+                        <div class="game-matrix">
+                            <div class="matrix-header">
+                                <div class="corner-cell"></div>
+                                <div class="dim-label">4x4</div>
+                                <div class="dim-label">4x6</div>
+                                <div class="dim-label">5x7</div>
+                                <div class="dim-label">6x8</div>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">45s</div>
+                                <button class="game-btn split-btn" data-game="split" data-time="45"
+                                    data-board="4x4">Show Rooms [0]</button>
+                                <button class="game-btn split-btn" data-game="split" data-time="45"
+                                    data-board="4x6">Show Rooms [0]</button>
+                                <button class="game-btn split-btn" data-game="split" data-time="45"
+                                    data-board="5x7">Show Rooms [0]</button>
+                                <button class="game-btn split-btn" data-game="split" data-time="45"
+                                    data-board="6x8">Show Rooms [0]</button>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">3m</div>
+                                <button class="game-btn split-btn" data-game="split" data-time="180"
+                                    data-board="4x4">Show Rooms [0]</button>
+                                <button class="game-btn split-btn" data-game="split" data-time="180"
+                                    data-board="4x6">Show Rooms [0]</button>
+                                <button class="game-btn split-btn" data-game="split" data-time="180"
+                                    data-board="5x7">Show Rooms [0]</button>
+                                <button class="game-btn split-btn" data-game="split" data-time="180"
+                                    data-board="6x8">Show Rooms [0]</button>
+                            </div>
                         </div>
+                    </div>
+                </div>
 
-                        <div id="rooms-list" class="rooms-list">
-                            <!-- Rooms will be populated here -->
+                <!-- Right Panel: Active Rooms -->
+                <div class="active-rooms-panel">
+                    <h3>Active Rooms</h3>
+                    <div id="selected-game-info">Select a game type</div>
+                    <input type="number" id="rating-filter" placeholder="Filter by combined rating" min="0" step="100">
+                    <div id="rooms-list">
+                        <p class="placeholder">No rooms selected</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Play Page -->
+        <div id="page-play" class="page">
+            <div class="play-header">
+                <h2 id="game-title">Accumulative</h2>
+                <div class="game-params">
+                    <span id="param-board">-</span> |
+                    <span id="param-time">-</span> |
+                    Bonus: <span id="param-bonus">-</span> |
+                    Diff: <span id="param-diff">-</span> |
+                    Min: <span id="param-min">-</span> |
+                    Dict: <span id="param-dict">-</span> |
+                    Words: <span id="param-words">-</span> |
+                    Format: <span id="param-format">-</span>
+                </div>
+                <button class="return-btn" id="return-lobby-btn">Return to Lobby</button>
+            </div>
+
+            <!-- Color Bar -->
+            <div id="game-color-bar"></div>
+
+            <div class="play-grid">
+                <!-- Left Panel: Players -->
+                <div class="left-panel-container">
+                    <div class="players-panel">
+                        <h3 id="players-heading">Players</h3>
+                        <button id="find-me-btn" class="find-me-btn" style="display:none;">Find Me</button>
+                        <div id="players-list">
+                            <p class="placeholder">Loading...</p>
+                        </div>
+                    </div>
+
+                    <!-- Chat Panel -->
+                    <div class="chat-panel">
+                        <div id="chat-history">
+                            <p class="placeholder">No messages yet</p>
+                        </div>
+                        <div class="chat-input-section">
+                            <input type="text" id="chat-input" placeholder="Say something..." autocomplete="off">
+                            <button id="chat-send-btn">Send</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Panel: Board -->
+                <div class="board-panel">
+                    <div class="timer-display">
+                        <div class="timer-label">Time:</div>
+                        <div class="timer-value" id="timer-value">0:00</div>
+                    </div>
+                    <div id="game-board" class="game-board"></div>
+                    <div id="word-validation-status" class="validation-status"></div>
+                    <div class="word-input-section">
+                        <input type="text" id="word-input" placeholder="Enter word" autocomplete="off">
+                        <button id="submit-word-btn">Submit</button>
+                        <button id="rotate-board-btn" class="rotate-btn">Rotate</button>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Submitted Words and Definitions -->
+                <div class="words-panel">
+                    <div class="words-tabs" id="words-tabs-container">
+                        <button class="word-tab active" data-tab="found">Words</button>
+                        <button class="word-tab" data-tab="remaining" style="display: none;">Remaining</button>
+                        <button class="word-tab" data-tab="clues" style="display: none;">Clues</button>
+                        <button class="word-tab" data-tab="previous" style="display: none;">Previous Day</button>
+                        <button class="word-tab" data-tab="history">History</button>
+                    </div>
+
+                    <div id="tab-content-found" class="tab-content active">
+                        <div class="words-header-group">
+                            <h3 id="words-panel-title">Your Words</h3>
+                            <p class="words-stats" id="words-stats"></p>
+                        </div>
+                        <div id="submitted-words-list">
+                            <p class="placeholder">No words yet</p>
+                        </div>
+                    </div>
+
+
+
+                    <div id="tab-content-remaining" class="tab-content">
+                        <div class="words-header-group">
+                            <h3>Remaining</h3>
+                        </div>
+                        <div id="remaining-words-list">
+                            <p class="placeholder">Calculating counts...</p>
+                        </div>
+                    </div>
+
+                    <div id="tab-content-clues" class="tab-content">
+                        <div class="words-header-group">
+                            <h3>Clues</h3>
+                        </div>
+                        <div id="clues-list" class="clues-grid">
+                            <p class="placeholder">Loading clues...</p>
+                        </div>
+                    </div>
+
+                    <div id="tab-content-previous" class="tab-content">
+                        <div class="words-header-group">
+                            <h3>Previous Day</h3>
+                        </div>
+                        <div id="previous-words-list">
+                            <p class="placeholder">No previous data</p>
+                        </div>
+                    </div>
+
+                    <div id="tab-content-history" class="tab-content">
+                        <div class="words-header-group">
+                            <h3>Past Winners</h3>
+                        </div>
+                        <div id="history-content">
+                            <p class="history-intro"
+                                style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 15px; padding: 0 5px;">
+                                The following are the past 50 winners.
+                            </p>
+                            <div id="winners-list" class="winners-list-container">
+                                <p class="placeholder">No history available yet</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="definitions-panel">
+                        <div id="definition-header" class="definition-header" style="display: none;">
+                            <span id="definition-word" class="definition-word"></span>
+                        </div>
+                        <div id="definition-content">
+                            <p class="placeholder">Select a word to see its definition</p>
                         </div>
                     </div>
                 </div>
             </div>
-        </section>
 
+            <!-- Spinner Set Overlay -->
+            <div id="spinner-overlay" class="spinner-overlay hidden">
+                <div class="spinner-content">
+                    <div id="spinner-winner-announcement" class="winner-announcement hidden">
+                        <p id="spinner-winner-text" class="winner-text"></p>
+                    </div>
+                    <h2>Next Round Parameters</h2>
+                    <div class="spinner-params">
+                        <div class="param-item">
+                            <span class="param-label">Bonus Word Length:</span>
+                            <span class="param-value" id="spinner-bonus-length">-</span>
+                        </div>
+                        <div class="param-item">
+                            <span class="param-label">Minimum Word Length:</span>
+                            <span class="param-value" id="spinner-min-length">-</span>
+                        </div>
+                        <div class="param-item">
+                            <span class="param-label">Difficulty:</span>
+                            <span class="param-value" id="spinner-difficulty">-</span>
+                        </div>
+                        <div class="param-item">
+                            <span class="param-label">Word Count Range:</span>
+                            <span class="param-value" id="spinner-word-count">-</span>
+                        </div>
+                        <div class="param-item">
+                            <span class="param-label">Dictionary:</span>
+                            <span class="param-value" id="spinner-dictionary">-</span>
+                        </div>
+                        <div class="param-item">
+                            <span class="param-label">Board Format:</span>
+                            <span class="param-value" id="spinner-format">-</span>
+                        </div>
+                    </div>
+                    <button id="close-spinner-btn" class="close-spinner-btn">×</button>
+                </div>
+            </div>
+        </div>
 
-        <!-- Other Pages (Placeholders) -->
-        <section id="page-how-to-play" class="page">
-            <h2>How to Play</h2>
-            <p>Instructions coming soon...</p>
-        </section>
-
-        <section id="page-play" class="page">
-            <h2>Play</h2>
-            <p>Select a room from the lobby first!</p>
-        </section>
-
-        <section id="page-leaderboards" class="page">
+        <!-- Leaderboards Page -->
+        <div id="page-leaderboards" class="page">
             <h2>Leaderboards</h2>
-            <p>Top players will be displayed here...</p>
-        </section>
+            <p>Rankings coming soon...</p>
+        </div>
 
-        <section id="page-tools" class="page">
-            <h2>Tools</h2>
-            <p>Game tools and utilities...</p>
-        </section>
+        <!-- Tournaments Page -->
+        <div id="page-tournaments" class="page">
+            <h2>Tournaments</h2>
+            <p>Compete for the top spot.</p>
+            <div id="tournament-list-container">
+                <p class="placeholder">Loading tournaments...</p>
+            </div>
+        </div>
 
-        <section id="page-settings" class="page">
-            <h2>Settings</h2>
-            <p>Customize your experience...</p>
-        </section>
+        <!-- Store Page -->
+        <div id="page-store" class="page">
+            <h2>Morpheme Store</h2>
+            <p>Customize your experience.</p>
+            <div class="store-tabs">
+                <button class="store-tab active" data-category="themes">Themes</button>
+                <button class="store-tab" data-category="avatars">Avatars</button>
+                <button class="store-tab" data-category="perks">Perks</button>
+            </div>
+            <div class="store-grid" id="store-items-grid">
+                <p class="placeholder">Store items coming soon...</p>
+            </div>
+        </div>
 
-        <section id="page-contact" class="page">
-            <h2>Contact</h2>
-            <p>Get in touch with us...</p>
-        </section>
+        <!-- Forum Page -->
+        <div id="page-forums" class="page">
+            <div class="forum-container">
+                <div class="forum-sidebar">
+                    <div class="forum-sidebar-header">
+                        <h3>Forums</h3>
+                    </div>
+                    <div id="forum-categories-list" class="forum-nav-list">
+                        <!-- Categories injected via JS -->
+                        <div class="forum-cat-loading">Loading categories...</div>
+                    </div>
+                </div>
+                <div class="forum-main">
+                    <!-- List View -->
+                    <div id="forum-view-list" class="forum-view active">
+                        <div class="forum-header">
+                            <div class="header-titles">
+                                <h2 id="forum-category-title">Community Board</h2>
+                                <p id="forum-category-desc">Connect with other players.</p>
+                            </div>
+                            <button id="forum-new-post-btn" class="forum-action-btn hidden">+ New Thread</button>
+                        </div>
+                        <div id="forum-posts-list" class="forum-posts-list">
+                            <div class="forum-placeholder">
+                                <div class="placeholder-icon">💬</div>
+                                <h3>Welcome to the Forums</h3>
+                                <p>Select a category from the sidebar to begin exploring the community.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Single Post View -->
+                    <div id="forum-view-post" class="forum-view">
+                        <div class="forum-sub-header">
+                            <button id="forum-back-to-list" class="forum-back-btn">← Back to category</button>
+                        </div>
+                        <div id="forum-post-detail">
+                            <!-- Post content injected via JS -->
+                        </div>
+                        <div class="forum-comments-section">
+                            <div class="comments-header">
+                                <h3>Discussion</h3>
+                                <span id="forum-comment-count" class="comment-badge">0 comments</span>
+                            </div>
+                            <div id="forum-comments-list">
+                                <!-- Comments injected via JS -->
+                            </div>
+                            <div class="forum-comment-form hidden" id="forum-comment-form-container">
+                                <div class="comment-input-wrapper">
+                                    <textarea id="forum-comment-input"
+                                        placeholder="Join the conversation..."></textarea>
+                                    <div class="comment-controls">
+                                        <button id="forum-submit-comment" class="forum-action-btn">Post Comment</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Create Post View -->
+                    <div id="forum-view-create" class="forum-view">
+                        <div class="forum-sub-header">
+                            <button id="forum-cancel-create" class="forum-back-btn">← Cancel</button>
+                        </div>
+                        <div class="forum-create-card">
+                            <h2 id="forum-create-title">Start a New Thread</h2>
+                            <form id="forum-post-form" class="forum-form">
+                                <input type="hidden" id="forum-post-category-id">
+                                <div class="form-group">
+                                    <label>What's on your mind?</label>
+                                    <input type="text" id="forum-post-title"
+                                        placeholder="Give your thread a clear, descriptive title" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Details</label>
+                                    <textarea id="forum-post-content" placeholder="Write your post content here..."
+                                        required></textarea>
+                                </div>
+                                <div id="forum-image-upload-section" class="forum-upload-group hidden">
+                                    <label>Attach Screenshot</label>
+                                    <div class="file-input-wrapper">
+                                        <input type="file" id="forum-post-image" accept="image/*">
+                                        <div class="file-dummy">
+                                            <span class="file-text">Click to choose a file or drag and drop</span>
+                                        </div>
+                                    </div>
+                                    <div id="forum-image-preview" class="image-preview hidden"></div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="forum-action-btn primary">Publish Thread</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Restriction View -->
+                    <div id="forum-view-restricted" class="forum-view">
+                        <div class="forum-restricted-card">
+                            <div class="restricted-icon">🔒</div>
+                            <h2>Members Only</h2>
+                            <p>You must be a registered member to participate in the forums. Guests can browse but
+                                cannot post or comment.</p>
+                            <div class="restricted-actions">
+                                <button class="forum-action-btn primary" onclick="navigateToPage('login')">Sign In /
+                                    Register</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tools Page -->
+        <div id="page-tools" class="page">
+            <div class="tools-split-layout">
+                <!-- Sidebar (1/3) -->
+                <div class="tools-sidebar">
+                    <button class="tool-nav-btn active" data-tool="profile">Profile</button>
+                    <button class="tool-nav-btn" data-tool="combo">Combo Checker</button>
+                    <button class="tool-nav-btn" data-tool="is-valid">Is Valid</button>
+                    <button class="tool-nav-btn" data-tool="lists">Lists</button>
+                    <button class="tool-nav-btn" data-tool="sequence">Sequence</button>
+                    <button class="tool-nav-btn" data-tool="subanagrams">Subanagrams</button>
+                    <button class="tool-nav-btn" data-tool="manual">Manual</button>
+                    <button class="tool-nav-btn" data-tool="random">Random Word</button>
+                    <button class="tool-nav-btn" data-tool="wotd">Word of the Day</button>
+                    <!-- Future tools go here -->
+                </div>
+
+                <!-- Content (2/3) -->
+                <div class="tools-content">
+                    <!-- Profile Interface -->
+                    <div id="tool-profile" class="tool-pane active">
+                        <div class="tool-header">
+                            <h2>User Profile</h2>
+                            <p>View player stats and rankings.</p>
+                        </div>
+
+                        <div class="combo-control-panel">
+                            <div class="input-row">
+                                <input type="text" id="profile-search-input" placeholder="Enter username..."
+                                    autocomplete="off">
+                                <button id="profile-search-btn">Search</button>
+                            </div>
+                        </div>
+
+                        <div id="profile-display-container" class="profile-container hidden">
+                            <div class="profile-card premium">
+                                <div class="profile-layout">
+                                    <!-- Left Column: Avatar -->
+                                    <div class="profile-left-column">
+                                        <div class="profile-avatar-container">
+                                            <div class="profile-avatar large" id="profile-avatar-trigger"
+                                                title="Click to upload photo" style="cursor: pointer;">?</div>
+                                            <input type="file" id="profile-avatar-input" accept="image/*"
+                                                style="display: none;">
+                                        </div>
+                                    </div>
+
+                                    <!-- Right Column: Details -->
+                                    <div class="profile-right-column">
+                                        <div class="profile-identity">
+                                            <div class="profile-title-row">
+                                                <h1 id="profile-username" class="profile-username-large">Player</h1>
+                                                <div id="profile-status-indicator" class="status-indicator offline"
+                                                    title="Offline"></div>
+                                                <button id="profile-message-btn"
+                                                    class="message-btn hidden">Message</button>
+                                                <button id="profile-friend-btn" class="friend-action-btn hidden">Add
+                                                    Friend</button>
+                                                <button id="profile-follow-btn"
+                                                    class="follow-btn hidden">Follow</button>
+                                                <input type="hidden" id="profile-current-room" value="">
+                                            </div>
+
+                                            <div class="profile-quote-minimal">
+                                                <p id="profile-quote-val">Enter a personal quote</p>
+                                            </div>
+
+                                            <div class="profile-metadata-row">
+                                                <div class="meta-item" title="Real Name">
+                                                    <span class="meta-icon">🆔</span>
+                                                    <span class="meta-label">Name</span>
+                                                    <span id="profile-full-name" class="meta-text">-</span>
+                                                </div>
+                                                <div class="meta-item" title="Age">
+                                                    <span class="meta-icon">🎂</span>
+                                                    <span class="meta-label">Age</span>
+                                                    <span id="profile-age-val" class="meta-text">-</span>
+                                                </div>
+                                                <div class="meta-item" title="Gender">
+                                                    <span class="meta-icon">👤</span>
+                                                    <span class="meta-label">Gender</span>
+                                                    <span id="profile-gender-val" class="meta-text">-</span>
+                                                </div>
+                                                <div class="meta-item" title="Location">
+                                                    <div class="custom-dropdown-container">
+                                                        <span class="profile-flag" id="profile-flag"
+                                                            style="cursor: pointer;">🏳️</span>
+                                                        <div id="flag-dropdown" class="dropdown-menu">
+                                                            <div class="dropdown-header">
+                                                                <input type="text" id="flag-dropdown-search"
+                                                                    class="dropdown-search"
+                                                                    placeholder="Search countries...">
+                                                            </div>
+                                                            <div id="flag-dropdown-list" class="dropdown-list">
+                                                                <!-- Flags injected here -->
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <span id="profile-flag-name" class="flag-name-label"></span>
+                                                    <span class="meta-label">Location</span>
+                                                    <span id="profile-location-val" class="meta-text">-</span>
+                                                </div>
+                                                <div class="meta-item" id="profile-proof-container"
+                                                    title="Proof of Legitimacy">
+                                                    <span class="meta-icon">🎥</span>
+                                                    <span class="meta-label">Proof</span>
+                                                    <a id="profile-proof-link" href="#" target="_blank"
+                                                        class="proof-link hidden">View Legitimacy Video</a>
+                                                    <span id="profile-proof-placeholder" class="meta-text">No proof
+                                                        provided</span>
+                                                    <input type="text" id="profile-proof-input"
+                                                        class="proof-edit-input hidden"
+                                                        placeholder="Enter YouTube URL...">
+                                                </div>
+                                            </div>
+                                        </div> <!-- End profile-identity -->
+                                    </div> <!-- End Right Column -->
+                                </div> <!-- End Layout Row -->
+
+                                <div class="profile-description-minimal">
+                                    <span class="meta-label">About Me</span>
+                                    <div id="profile-description-val" class="description-text">Add a
+                                        detailed description about yourself...</div>
+                                </div>
+
+                                <div class="profile-stats-grid">
+                                    <div class="stat-box">
+                                        <span class="stat-num" id="profile-games">0</span>
+                                        <span class="stat-desc">GAMES</span>
+                                    </div>
+                                    <div class="stat-box">
+                                        <span class="stat-num" id="profile-win-rate">0%</span>
+                                        <span class="stat-desc">WIN RATE</span>
+                                    </div>
+                                    <div class="stat-box">
+                                        <span class="stat-num" id="profile-best-score">-</span>
+                                        <span class="stat-desc">BEST</span>
+                                    </div>
+                                </div>
+
+                                <div class="profile-content-tabs">
+                                    <div class="profile-tabs-header">
+                                        <button class="profile-tab-toggle active" data-tab="rankings">Skill
+                                            Rankings</button>
+                                        <button class="profile-tab-toggle" data-tab="exceptional">Exceptional
+                                            Rounds</button>
+                                        <button class="profile-tab-toggle" data-tab="history">Round Reviews</button>
+                                        <button id="profile-tab-toggle-friends" class="profile-tab-toggle hidden"
+                                            data-tab="friends">Friends</button>
+                                    </div>
+
+                                    <div id="profile-tab-rankings" class="profile-tab-pane active">
+                                        <div class="profile-ratings-section">
+                                            <div class="ratings-filters"
+                                                style="display: flex; gap: 15px; margin-bottom: 20px; background: rgba(255,255,255,0.03); padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); align-items: center;">
+                                                <div class="filter-group">
+                                                    <label
+                                                        style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Game
+                                                        Mode</label>
+                                                    <select id="rankings-filter-mode"
+                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
+                                                        <option value="all">All Modes</option>
+                                                        <option value="accumulative">Accumulative</option>
+                                                        <option value="fcfs">First Come First Serve</option>
+                                                        <option value="split">Split Points</option>
+                                                    </select>
+                                                </div>
+                                                <div class="filter-group">
+                                                    <label
+                                                        style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Dimensions</label>
+                                                    <select id="rankings-filter-dims"
+                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
+                                                        <option value="all">All Sizes</option>
+                                                        <option value="4x4">4x4</option>
+                                                        <option value="4x6">4x6</option>
+                                                        <option value="5x7">5x7</option>
+                                                        <option value="6x8">6x8</option>
+                                                    </select>
+                                                </div>
+                                                <div class="filter-group">
+                                                    <label
+                                                        style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Time
+                                                        Limit</label>
+                                                    <select id="rankings-filter-time"
+                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
+                                                        <option value="all">All Times</option>
+                                                        <option value="45">45 Seconds</option>
+                                                        <option value="180">3 Minutes</option>
+                                                        <option value="600">10 Minutes</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div id="profile-ratings-grid" class="ratings-grid">
+                                                <!-- Populated by JS -->
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="profile-tab-exceptional" class="profile-tab-pane">
+                                        <div class="profile-history-section">
+                                            <div id="profile-exceptional-list" class="history-list">
+                                                <!-- Populated by JS -->
+                                                <p class="placeholder">Analyzing your most outstanding achievements...
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="profile-tab-history" class="profile-tab-pane">
+                                        <div class="profile-history-section">
+                                            <div id="profile-history-list" class="history-list">
+                                                <!-- Populated by JS -->
+                                                <p class="placeholder">No recently tracked rounds.</p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Integrated Replay Panel -->
+                                        <div id="integrated-replay-panel" class="integrated-replay-container hidden">
+                                            <div class="integrated-replay-header">
+                                                <div class="header-main">
+                                                    <h3
+                                                        style="font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: 1px;">
+                                                        ROUND REPLAY</h3>
+                                                </div>
+                                            </div>
+                                            <div class="integrated-replay-layout">
+                                                <div class="replay-main">
+                                                    <!-- Board placed at the top as requested -->
+                                                    <div id="integrated-board-container"
+                                                        class="integrated-review-board">
+                                                        <!-- Populated by JS -->
+                                                    </div>
+
+
+                                                    <div class="replay-controls-row">
+                                                        <button id="integrated-start-btn"
+                                                            class="replay-action-btn primary">▶
+                                                            Watch</button>
+                                                        <button id="integrated-skip-btn"
+                                                            class="replay-action-btn secondary hidden">Show All</button>
+
+                                                        <div id="integrated-progress-ui"
+                                                            class="integrated-progress-ui hidden">
+                                                            <div
+                                                                style="display: flex; flex-direction: column; gap: 2px;">
+                                                                <span id="integrated-current-time"
+                                                                    style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #409cff;">0:00.0</span>
+                                                                <span id="integrated-current-score"
+                                                                    style="font-size: 0.7rem; font-weight: 800; color: #ffd700; text-transform: uppercase;">0
+                                                                    pts</span>
+                                                            </div>
+
+                                                            <div class="mini-progress-bg">
+                                                                <div id="integrated-progress-bar"
+                                                                    class="mini-progress-fill">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div id="integrated-walkthrough-list"
+                                                        class="integrated-walkthrough-list">
+                                                        <!-- Populated by JS -->
+                                                    </div>
+                                                </div>
+
+                                                <div class="replay-sidebar">
+                                                    <div id="integrated-players-list" class="replay-players-list hidden"
+                                                        style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; border: 1px solid rgba(255,255,255,0.05);">
+                                                        <h4
+                                                            style="font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 12px; letter-spacing: 1.5px; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                                                            Round Participants</h4>
+                                                        <div id="integrated-players-body"
+                                                            style="display: flex; flex-direction: column; gap: 10px;">
+                                                            <!-- Populated by JS -->
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="profile-tab-friends" class="profile-tab-pane">
+                                        <div class="profile-friends-section">
+                                            <div id="profile-friends-list" class="friends-grid">
+                                                <!-- Populated by JS -->
+                                                <p class="placeholder">You haven't added any friends yet.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Word of the Day Interface -->
+                    <div id="tool-wotd" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Word of the Day</h2>
+                            <p>A new word to learn and master every 24 hours.</p>
+                        </div>
+
+                        <div class="wotd-container">
+                            <p class="wotd-intro">The word of the day is...</p>
+                            <div id="wotd-display" class="wotd-gold-showy">
+                                <!-- Word injected via JS -->
+                            </div>
+                            <div id="wotd-definition" class="wotd-definition"
+                                style="margin-top: 30px; text-align: left; font-size: 1.3rem; max-width: 700px; margin-left: 0; margin-right: auto; opacity: 0.9; line-height: 1.5; color: #ddd; font-style: italic;">
+                                <!-- Definition injected via JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Random Word Interface -->
+                    <div id="tool-random" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Random Word Generator</h2>
+                            <p>Discover new words based on length and dictionary criteria.</p>
+                        </div>
+
+                        <div class="combo-control-panel">
+                            <div class="input-row">
+                                <label>Length:</label>
+                                <select id="random-length" style="width: 100px;">
+                                    <option value="all">All</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                    <option value="11">11</option>
+                                    <option value="12">12</option>
+                                    <option value="13">13</option>
+                                    <option value="14">14</option>
+                                    <option value="15">15</option>
+                                </select>
+                                <label>Dict:</label>
+                                <select id="random-dict" style="width: 120px;">
+                                    <option value="NWL">NWL (US)</option>
+                                    <option value="CSW">CSW (Intl)</option>
+                                </select>
+                                <button id="random-gen-btn">Generate Random Word</button>
+                            </div>
+                        </div>
+
+                        <div class="random-word-container">
+                            <div id="random-word-display" class="random-word-large">
+                                <!-- Generated word appears here -->
+                            </div>
+                            <div id="random-word-definition"
+                                style="margin-top: 20px; font-size: 1.1rem; color: #ccc; font-style: italic; max-width: 80%; margin-left: 0; margin-right: auto; line-height: 1.4; text-align: left;">
+                                <!-- Definition generated here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manual Tool Interface -->
+                    <div id="tool-manual" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Manual Solver</h2>
+                            <p>Enter a custom board and solve it independently.</p>
+                        </div>
+
+                        <div class="combo-control-panel">
+                            <div class="input-row">
+                                <select id="manual-dim" style="width: 140px;">
+                                    <option value="4x4">4x4</option>
+                                    <option value="4x6">4x6</option>
+                                    <option value="5x7">5x7</option>
+                                    <option value="6x8" selected>6x8</option>
+                                </select>
+                                <select id="manual-dict" style="width: 140px;">
+                                    <option value="NWL">NWL (US)</option>
+                                    <option value="CSW">CSW (Intl)</option>
+                                </select>
+                                <button id="manual-solve-btn">Solve</button>
+                                <button id="manual-reveal-btn" style="display: none;">Reveal Words</button>
+                            </div>
+                        </div>
+
+                        <div class="manual-grid-scroll">
+                            <div id="manual-grid" class="manual-grid">
+                                <!-- Grid inputs injected via JS -->
+                            </div>
+                        </div>
+
+                        <div id="manual-results-container" class="seq-results-container" style="display: none;">
+                            <!-- Results injected via JS -->
+                        </div>
+                    </div>
+
+                    <!-- ... omitted combo/list content to match target ... -->
+
+                    <!-- Combo Checker Interface -->
+                    <div id="tool-combo" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Combo Checker</h2>
+                            <p>Find connected words via MP and LIC.</p>
+                        </div>
+
+                        <div class="combo-control-panel">
+                            <div class="input-row">
+                                <input type="text" id="combo-input" placeholder="Enter letters to check..."
+                                    autocomplete="off">
+                                <select id="combo-dict">
+                                    <option value="NWL">NWL (US)</option>
+                                    <option value="CSW">CSW (Intl)</option>
+                                </select>
+                                <button id="combo-search-btn">Check</button>
+                            </div>
+                        </div>
+
+                        <div id="combo-results" class="combo-results-container hidden">
+                            <!-- MP Section: Horizontal Groups (0MP to 5MP) -->
+                            <div class="result-section">
+                                <h3>MP (Microprocedures)</h3>
+                                <div class="chart-desc">Determining the distance away from one word to another and
+                                    keeping the ones that are the closest.</div>
+                                <div class="horizontal-scroll-container" id="mp-container">
+                                    <!-- Dynamic Columns (0MP, 1MP, 2MP...) will be injected here -->
+                                </div>
+                            </div>
+
+                            <!-- LIC Section: Horizontal Groups (Sorted by Shared Count) -->
+                            <div class="result-section">
+                                <h3>LIC (Letters In Common)</h3>
+                                <div class="chart-desc">The letters are there, but are they arranged in such a way so as
+                                    to have both be present?</div>
+                                <div class="horizontal-scroll-container" id="lic-container">
+                                    <!-- Dynamic Columns (Shared=3, Shared=4...) will be injected here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Is Valid Tool Interface -->
+                    <div id="tool-is-valid" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Word Validator</h2>
+                            <p>Check if a word exists in the official dictionaries.</p>
+                        </div>
+
+                        <div class="combo-control-panel">
+                            <div class="input-row">
+                                <input type="text" id="valid-input" placeholder="Enter word to check..."
+                                    autocomplete="off" style="width: 250px;">
+                                <select id="valid-dict" style="width: 140px;">
+                                    <option value="NWL">NWL (US)</option>
+                                    <option value="CSW">CSW (Intl)</option>
+                                </select>
+                                <button id="valid-check-btn">Validate</button>
+                            </div>
+                        </div>
+
+                        <div id="valid-results-container" class="random-word-container">
+                            <div id="valid-result-display" class="random-word-large">
+                                <!-- Validation result appears here -->
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Subanagrams Tool Interface -->
+                    <div id="tool-subanagrams" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Subanagrams</h2>
+                            <p>Find all words that can be formed using letters from your input.</p>
+                        </div>
+
+                        <div class="combo-control-panel">
+                            <div class="input-row">
+                                <input type="text" id="sub-input" placeholder="Enter letters (e.g. HELLO)..."
+                                    autocomplete="off" style="width: 250px;">
+                                <select id="sub-dict" style="width: 140px;">
+                                    <option value="NWL">NWL (US)</option>
+                                    <option value="CSW">CSW (Intl)</option>
+                                </select>
+                                <button id="sub-search-btn">Find Subanagrams</button>
+                            </div>
+                        </div>
+
+                        <div id="sub-results-container" class="seq-results-container">
+                            <div class="seq-results-placeholder">Enter letters to find subanagrams.</div>
+                            <!-- Results table injected via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Sequence Tool Interface (New) -->
+                    <div id="tool-sequence" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Sequence Search</h2>
+                            <p>Find words starting with, ending with, or containing a sequence.</p>
+                        </div>
+
+                        <div class="combo-control-panel">
+                            <div class="input-row">
+                                <input type="text" id="seq-input" placeholder="Sequence (e.g. STR)..."
+                                    autocomplete="off" style="width: 160px;">
+
+                                <select id="seq-mode" style="width: 200px;">
+                                    <option value="starts">Starts With</option>
+                                    <option value="ends">Ends With</option>
+                                    <option value="contains" selected>Contains (Fwd/Rev)</option>
+                                </select>
+
+                                <select id="seq-length" style="width: 120px;">
+                                    <option value="all">Len: All</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                    <option value="11">11</option>
+                                    <option value="12">12</option>
+                                    <option value="13">13</option>
+                                    <option value="14">14</option>
+                                    <option value="15">15</option>
+                                </select>
+
+                                <button id="seq-search-btn">Search</button>
+                            </div>
+                        </div>
+
+                        <div id="seq-results-container" class="seq-results-container">
+                            <div class="seq-results-placeholder">Enter a sequence to search.</div>
+                            <!-- Results Table will be injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Lists Tool Interface (New) -->
+                    <div id="tool-lists" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Word Lists</h2>
+                            <p>Browse official dictionaries and unique collections.</p>
+                        </div>
+
+                        <!-- Filter Controls -->
+                        <div class="combo-control-panel" style="margin-bottom: 0px;">
+                            <div class="input-row">
+                                <select id="list-length-filter" style="width: 140px;">
+                                    <option value="all">Length: All</option>
+                                    <option value="3">3 Letters</option>
+                                    <option value="4">4 Letters</option>
+                                    <option value="5">5 Letters</option>
+                                    <option value="6">6 Letters</option>
+                                    <option value="7">7 Letters</option>
+                                    <option value="8">8 Letters</option>
+                                    <option value="9">9 Letters</option>
+                                    <option value="10">10 Letters</option>
+                                    <option value="11">11 Letters</option>
+                                    <option value="12">12 Letters</option>
+                                    <option value="13">13 Letters</option>
+                                    <option value="14">14 Letters</option>
+                                    <option value="15">15 Letters</option>
+                                </select>
+                                <select id="list-start-filter" style="width: 140px;">
+                                    <option value="all">Starts With: All</option>
+                                    <option value="A">A</option>
+                                    <option value="B">B</option>
+                                    <option value="C">C</option>
+                                    <option value="D">D</option>
+                                    <option value="E">E</option>
+                                    <option value="F">F</option>
+                                    <option value="G">G</option>
+                                    <option value="H">H</option>
+                                    <option value="I">I</option>
+                                    <option value="J">J</option>
+                                    <option value="K">K</option>
+                                    <option value="L">L</option>
+                                    <option value="M">M</option>
+                                    <option value="N">N</option>
+                                    <option value="O">O</option>
+                                    <option value="P">P</option>
+                                    <option value="Q">Q</option>
+                                    <option value="R">R</option>
+                                    <option value="S">S</option>
+                                    <option value="T">T</option>
+                                    <option value="U">U</option>
+                                    <option value="V">V</option>
+                                    <option value="W">W</option>
+                                    <option value="X">X</option>
+                                    <option value="Y">Y</option>
+                                    <option value="Z">Z</option>
+                                </select>
+                                <button id="list-update-btn">Update</button>
+                            </div>
+                        </div>
+
+                        <div class="lists-container" id="lists-container">
+                            <!-- Columns will be injected by JS or hardcoded structure -->
+                            <div class="list-column" id="col-nwl">
+                                <h3>NWL</h3>
+                                <div class="list-scroll-area">Loading...</div>
+                            </div>
+                            <div class="list-column" id="col-csw">
+                                <h3>CSW</h3>
+                                <div class="list-scroll-area">Loading...</div>
+                            </div>
+                            <div class="list-column" id="col-csw-only">
+                                <h3>CSW Only</h3>
+                                <div class="list-scroll-area">Loading...</div>
+                            </div>
+                            <div class="list-column" id="col-likelihood">
+                                <h3>Likelihood</h3>
+                                <div class="list-scroll-area">Loading...</div>
+                            </div>
+                            <div class="list-column" id="col-uniques">
+                                <h3>Uniques</h3>
+                                <div class="list-scroll-area">Loading...</div>
+                            </div>
+                            <div class="list-column" id="col-added">
+                                <h3>Added Words</h3>
+                                <div class="list-scroll-area">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Contact Page -->
+        <div id="page-contact" class="page">
+            <div class="contact-container">
+                <div class="contact-card">
+                    <h2>Contact the Developer</h2>
+                    <p class="contact-desc">Have a suggestion, found a bug, or just want to say hello? Send a
+                        message
+                        directly to the creator of Morpheme.</p>
+
+                    <form id="contact-form" class="contact-form">
+                        <div class="form-group">
+                            <label for="contact-user-email">From User Email</label>
+                            <input type="email" id="contact-user-email" placeholder="yourname@example.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contact-dev-email">To Developer Email</label>
+                            <input type="email" id="contact-dev-email" value="developer@morpheme.game" readonly>
+                            <small class="field-hint">This is the official destination for support and
+                                feedback.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contact-message">Message</label>
+                            <textarea id="contact-message" rows="10"
+                                placeholder="Type your detailed message to the developer here..." required></textarea>
+                        </div>
+
+                        <div id="contact-status" class="contact-status"></div>
+
+                        <button type="submit" class="submit-contact-btn">
+                            <span class="btn-text">Send Message</span>
+                            <span class="btn-icon">✈</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </main>
 
-    <script src="/static/js/app.js"></script>
+    <!-- Settings Page -->
+    <div id="page-settings" class="page">
+        <h2 style="font-size: 2.5rem; color: #fff; margin-bottom: 30px; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">User
+            Settings</h2>
+        <div class="settings-grid">
+            <!-- App Theme -->
+            <div class="setting-panel" style="grid-column: 1 / -1;">
+                <div class="setting-header">
+                    <div>
+                        <div class="setting-title">Layout / App Theme</div>
+                        <div class="setting-desc">Choose your preferred color scheme.</div>
+                    </div>
+                </div>
+                <!-- Expanded Theme Selector Grid -->
+                <div class="theme-selector-grid"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 15px; margin-top: 15px; max-width: 900px;">
+                    <button class="theme-btn" data-theme="default" style="background: #1a1a2e; border: 2px solid #fff;"
+                        title="Default"></button>
+                    <button class="theme-btn" data-theme="black" style="background: #000000;" title="Black"></button>
+                    <button class="theme-btn" data-theme="white" style="background: #ffffff; border: 1px solid #ccc;"
+                        title="White"></button>
+                    <button class="theme-btn" data-theme="light-gray"
+                        style="background: #f0f0f0; border: 1px solid #ccc;" title="Light Gray"></button>
+                    <button class="theme-btn" data-theme="gray" style="background: #808080;" title="Gray"></button>
+                    <button class="theme-btn" data-theme="dark-gray" style="background: #333333;"
+                        title="Dark Gray"></button>
+                    <button class="theme-btn" data-theme="light-red" style="background: #ffcccc;"
+                        title="Light Red"></button>
+                    <button class="theme-btn" data-theme="red" style="background: #cc0000;" title="Red"></button>
+                    <button class="theme-btn" data-theme="dark-red" style="background: #660000;"
+                        title="Dark Red"></button>
+                    <button class="theme-btn" data-theme="light-orange" style="background: #ffe0b3;"
+                        title="Light Orange"></button>
+                    <button class="theme-btn" data-theme="orange" style="background: #ff8c00;" title="Orange"></button>
+                    <button class="theme-btn" data-theme="dark-orange" style="background: #804000;"
+                        title="Dark Orange"></button>
+                    <button class="theme-btn" data-theme="light-yellow" style="background: #ffffcc;"
+                        title="Light Yellow"></button>
+                    <button class="theme-btn" data-theme="yellow" style="background: #ffff00;" title="Yellow"></button>
+                    <button class="theme-btn" data-theme="dark-yellow" style="background: #808000;"
+                        title="Dark Yellow"></button>
+                    <button class="theme-btn" data-theme="light-green" style="background: #ccffcc;"
+                        title="Light Green"></button>
+                    <button class="theme-btn" data-theme="green" style="background: #008000;" title="Green"></button>
+                    <button class="theme-btn" data-theme="dark-green" style="background: #003300;"
+                        title="Dark Green"></button>
+                    <button class="theme-btn" data-theme="light-blue" style="background: #cceeff;"
+                        title="Light Blue"></button>
+                    <button class="theme-btn" data-theme="blue" style="background: #0000ff;" title="Blue"></button>
+                    <button class="theme-btn" data-theme="dark-blue" style="background: #000066;"
+                        title="Dark Blue"></button>
+                    <button class="theme-btn" data-theme="light-purple" style="background: #f3e5f5;"
+                        title="Light Purple"></button>
+                    <button class="theme-btn" data-theme="purple" style="background: #800080;" title="Purple"></button>
+                    <button class="theme-btn" data-theme="dark-purple" style="background: #330066;"
+                        title="Dark Purple"></button>
+                    <button class="theme-btn" data-theme="light-pink" style="background: #fce4ec;"
+                        title="Light Pink"></button>
+                    <button class="theme-btn" data-theme="pink" style="background: #ffc0cb;" title="Pink"></button>
+                    <button class="theme-btn" data-theme="dark-pink" style="background: #c2185b;"
+                        title="Dark Pink"></button>
+                    <button class="theme-btn" data-theme="light-brown" style="background: #efe0cc;"
+                        title="Light Brown"></button>
+                    <button class="theme-btn" data-theme="brown" style="background: #795548;" title="Brown"></button>
+                    <button class="theme-btn" data-theme="dark-brown" style="background: #3e2723;"
+                        title="Dark Brown"></button>
+                </div>
+            </div>
+            <div class="setting-panel">
+                <div class="setting-header">
+                    <div>
+                        <div class="setting-title">Board Size</div>
+                        <div class="setting-desc">Adjust the visual scale of the game board.</div>
+                    </div>
+                    <div id="setting-board-size-val" class="preview-value">60px</div>
+                </div>
+
+                <div class="setting-slider-container">
+                    <div class="slider-label-row">
+                        <span>Compact (40px)</span>
+                        <span>Large (80px)</span>
+                    </div>
+                    <!-- Range: 40px to 80px -->
+                    <input type="range" id="setting-board-size" min="40" max="80" value="60">
+                </div>
+
+                <div class="preview-board-container" style="margin-top: 15px;">
+                    <div class="preview-board" id="preview-board">
+                        <!-- 4x4 grid of cells -->
+                        <div class="board-cell">A</div>
+                        <div class="board-cell">B</div>
+                        <div class="board-cell">C</div>
+                        <div class="board-cell">D</div>
+                        <div class="board-cell">E</div>
+                        <div class="board-cell">F</div>
+                        <div class="board-cell">G</div>
+                        <div class="board-cell">H</div>
+                        <div class="board-cell">I</div>
+                        <div class="board-cell">J</div>
+                        <div class="board-cell">K</div>
+                        <div class="board-cell">L</div>
+                        <div class="board-cell">M</div>
+                        <div class="board-cell">N</div>
+                        <div class="board-cell">O</div>
+                        <div class="board-cell">P</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lobby Music Setting -->
+            <div class="setting-panel">
+                <div class="setting-header">
+                    <div>
+                        <div class="setting-title">Lobby Music</div>
+                        <div class="setting-desc">Play background music when in the lobby.</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="setting-lobby-music" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Toggle: Highlight While Typing -->
+            <div class="setting-panel">
+                <div class="setting-header">
+                    <div>
+                        <div class="setting-title">Highlight as you type</div>
+                        <div class="setting-desc">Highlight letters on the board as you type in the input box.</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="setting-highlight-typing" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <!-- Color Picker: Typing -->
+                <div id="highlight-color-picker"
+                    style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%;">
+                    <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Typing Color
+                    </div>
+                    <div class="color-dot-grid"
+                        style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
+                        <button class="color-dot active" data-color="#ffcc00" style="background: #ffcc00;"
+                            title="Yellow"></button>
+                        <button class="color-dot" data-color="#00ffff" style="background: #00ffff;"
+                            title="Cyan"></button>
+                        <button class="color-dot" data-color="#00ff00" style="background: #00ff00;"
+                            title="Lime"></button>
+                        <button class="color-dot" data-color="#ff66cc" style="background: #ff66cc;"
+                            title="Pink"></button>
+                        <button class="color-dot" data-color="#ff9900" style="background: #ff9900;"
+                            title="Orange"></button>
+                        <button class="color-dot" data-color="#ff4d4d" style="background: #ff4d4d;"
+                            title="Red"></button>
+                        <button class="color-dot" data-color="#b366ff" style="background: #b366ff;"
+                            title="Purple"></button>
+                        <button class="color-dot" data-color="#3399ff" style="background: #3399ff;"
+                            title="Blue"></button>
+                        <button class="color-dot" data-color="#00ff99" style="background: #00ff99;"
+                            title="Mint"></button>
+                        <button class="color-dot" data-color="#ffd700" style="background: #ffd700;"
+                            title="Gold"></button>
+                        <button class="color-dot" data-color="#ffffff" style="background: #ffffff;"
+                            title="White"></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toggle: Highlight While Mousing -->
+            <div class="setting-panel">
+                <div class="setting-header">
+                    <div>
+                        <div class="setting-title">Highlight while mousing</div>
+                        <div class="setting-desc">Highlight letters on the board as you drag or swipe over them.</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="setting-highlight-mouse" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <!-- Color Picker: Mousing -->
+                <div id="highlight-mouse-color-picker"
+                    style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%;">
+                    <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Mousing Color
+                    </div>
+                    <div class="color-dot-grid"
+                        style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
+                        <button class="color-dot active" data-color="#409cff" style="background: #409cff;"
+                            title="Blue"></button>
+                        <button class="color-dot" data-color="#ffcc00" style="background: #ffcc00;"
+                            title="Yellow"></button>
+                        <button class="color-dot" data-color="#00ffff" style="background: #00ffff;"
+                            title="Cyan"></button>
+                        <button class="color-dot" data-color="#00ff00" style="background: #00ff00;"
+                            title="Lime"></button>
+                        <button class="color-dot" data-color="#ff66cc" style="background: #ff66cc;"
+                            title="Pink"></button>
+                        <button class="color-dot" data-color="#ff9900" style="background: #ff9900;"
+                            title="Orange"></button>
+                        <button class="color-dot" data-color="#ff4d4d" style="background: #ff4d4d;"
+                            title="Red"></button>
+                        <button class="color-dot" data-color="#b366ff" style="background: #b366ff;"
+                            title="Purple"></button>
+                        <button class="color-dot" data-color="#00ff99" style="background: #00ff99;"
+                            title="Mint"></button>
+                        <button class="color-dot" data-color="#ffd700" style="background: #ffd700;"
+                            title="Gold"></button>
+                        <button class="color-dot" data-color="#ffffff" style="background: #ffffff;"
+                            title="White"></button>
+                    </div>
+                </div>
+            </div>
+
+            <style>
+                .color-dot {
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    cursor: pointer;
+                    border: 2px solid rgba(0, 0, 0, 0.3);
+                    transition: transform 0.2s, box-shadow 0.2s;
+                }
+
+                .color-dot:hover {
+                    transform: scale(1.2);
+                }
+
+                .color-dot.active {
+                    transform: scale(1.3);
+                    border-color: #fff;
+                    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+                }
+            </style>
+
+            <!-- Chat Text Size -->
+            <div class="setting-panel">
+                <div class="setting-header">
+                    <div>
+                        <div class="setting-title">Chat Text Size</div>
+                        <div class="setting-desc">Adjust the font size of chat messages.</div>
+                    </div>
+                    <div id="setting-chat-size-val" class="preview-value">13px</div>
+                </div>
+                <div class="setting-slider-container">
+                    <div class="slider-label-row">
+                        <span>Small (10px)</span>
+                        <span>Large (24px)</span>
+                    </div>
+                    <input type="range" id="setting-chat-size" min="10" max="24" value="13">
+                </div>
+                <!-- Chat Preview -->
+                <div class="settings-preview-box">
+                    <div id="preview-chat-text" class="settings-preview-text" style="font-size: 13px;">
+                        <span style="font-weight: 700; color: #ffd700;">Player:</span> This is a sample chat message.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Definition Text Size -->
+            <div class="setting-panel">
+                <div class="setting-header">
+                    <div>
+                        <div class="setting-title">Definition Text Size</div>
+                        <div class="setting-desc">Adjust the font size of word definitions.</div>
+                    </div>
+                    <div id="setting-def-size-val" class="preview-value">15px</div>
+                </div>
+                <div class="setting-slider-container">
+                    <div class="slider-label-row">
+                        <span>Small (11px)</span>
+                        <span>Large (26px)</span>
+                    </div>
+                    <input type="range" id="setting-def-size" min="11" max="26" value="15">
+                </div>
+                <!-- Definition Preview -->
+                <div class="settings-preview-box">
+                    <div style="color: var(--accent-color); font-weight: 700; font-size: 1.1em; margin-bottom: 4px;">
+                        Example</div>
+                    <div id="preview-def-text" class="settings-preview-text" style="font-size: 15px; line-height: 1.5;">
+                        (n.) A representative form or pattern.
+                    </div>
+                </div>
+            </div>
+            <!-- Next Round Notification -->
+            <div class="setting-panel">
+                <div class="setting-header">
+                    <div>
+                        <div class="setting-title">Next Round Notification</div>
+                        <div class="setting-desc">Play a bell or a set of beeps 10 seconds before a new round starts.
+                        </div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="setting-next-round-bell">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div id="bell-selection-container"
+                    style="display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%; display: none;">
+
+                    <!-- Row 1: Bells -->
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
+                        <div class="meta-label"
+                            style="font-size: 0.85rem; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                            Select Bell Sound</div>
+                        <div
+                            style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
+                            <button class="bell-btn" data-bell="bell1">Bell 1 <span class="play-icon">▶</span></button>
+                            <button class="bell-btn" data-bell="bell2">Bell 2 <span class="play-icon">▶</span></button>
+                            <button class="bell-btn" data-bell="bell3">Bell 3 <span class="play-icon">▶</span></button>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Beeps -->
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
+                        <div class="meta-label"
+                            style="font-size: 0.85rem; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                            Select Beep Sound</div>
+                        <div
+                            style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
+                            <button class="bell-btn" data-bell="beep1">Beep 1 <span class="play-icon">▶</span></button>
+                            <button class="bell-btn" data-bell="beep2">Beep 2 <span class="play-icon">▶</span></button>
+                            <button class="bell-btn" data-bell="beep3">Beep 3 <span class="play-icon">▶</span></button>
+                        </div>
+                    </div>
+                </div>
+                <style>
+                    .bell-btn {
+                        background: rgba(255, 255, 255, 0.05);
+                        border: 1px solid rgba(255, 255, 255, 0.15);
+                        color: #fff;
+                        padding: 8px 16px;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        font-size: 0.9rem;
+                        font-weight: 500;
+                    }
+
+                    .bell-btn:hover {
+                        background: rgba(255, 255, 255, 0.15);
+                        transform: translateY(-1px);
+                    }
+
+                    .bell-btn.active {
+                        background: #409cff;
+                        border-color: #fff;
+                        box-shadow: 0 0 15px rgba(64, 156, 255, 0.4);
+                    }
+
+                    .play-icon {
+                        font-size: 0.7rem;
+                        background: rgba(255, 255, 255, 0.2);
+                        width: 18px;
+                        height: 18px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 50%;
+                    }
+
+                    /* White Theme Overrides */
+                    body.theme-white .bell-btn {
+                        background: rgba(0, 0, 0, 0.05);
+                        border-color: rgba(0, 0, 0, 0.1);
+                        color: #333;
+                    }
+
+                    body.theme-white .bell-btn:hover {
+                        background: rgba(0, 0, 0, 0.1);
+                    }
+
+                    body.theme-white .bell-btn.active {
+                        background: #409cff;
+                        color: #fff;
+                        border-color: #2a7fd1;
+                    }
+
+                    body.theme-white .play-icon {
+                        background: rgba(0, 0, 0, 0.1);
+                        color: #333;
+                    }
+
+                    body.theme-white .bell-btn.active .play-icon {
+                        background: rgba(255, 255, 255, 0.3);
+                        color: #fff;
+                    }
+
+                    body.theme-white .meta-label {
+                        color: #555 !important;
+                    }
+
+                    body.theme-white #bell-selection-container {
+                        border-top-color: rgba(0, 0, 0, 0.1) !important;
+                    }
+                </style>
+            </div>
+
+        </div>
+
+        <!-- Future panels placeholder -->
+    </div>
+    </div>
+
+    <!-- How to Play Modal (Independent Window) -->
+    <div id="modal-howtoplay" class="modal-window hidden">
+        <div class="modal-content-wrapper">
+            <button id="close-howtoplay" class="close-modal-btn">×</button>
+            <h1 class="modal-main-title">How to Play & FAQ</h1>
+            <div class="instructions-container">
+                <!-- Card 1: Connect -->
+                <div class="instruction-card">
+                    <div class="card-image-container">
+                        <!-- CSS Animation Demo Board -->
+                        <div class="demo-board">
+                            <div class="demo-cursor"></div>
+                            <div class="demo-tile tile-1">P</div>
+                            <div class="demo-tile tile-2">L</div>
+                            <div class="demo-tile tile-3">A</div>
+                            <div class="demo-tile tile-4">Y</div>
+                        </div>
+                    </div>
+                    <h3>Connect & Create</h3>
+                    <p>Drag your cursor across the grid, or swipe across your mobile device, or type in words. Link
+                        letters horizontally, vertically, or diagonally to forge your words. <strong>Letters cannot be
+                            reused within the same word.</strong></p>
+                </div>
+
+                <!-- Card 2: Strategy -->
+                <div class="instruction-card">
+                    <div class="card-image-container">
+                        <!-- Multi-Word Demo Board -->
+                        <div class="demo-board length-matters-board">
+                            <div class="demo-cursor length-matters-cursor"></div>
+                            <div class="demo-tile length-matters-tile tile-1">P</div>
+                            <div class="demo-tile length-matters-tile tile-2">L</div>
+                            <div class="demo-tile length-matters-tile tile-3">A</div>
+                            <div class="demo-tile length-matters-tile tile-4">Y</div>
+                        </div>
+                    </div>
+                    <h3>Length Matters</h3>
+                    <p>Longer words grant exponential points. Look for prefixes and suffixes to maximize your score.
+                        Morpheme is more than a mere exercise in appending letters to their neighbors; it is a
+                        discipline of letter manipulation and heightened cognitive resonance. True mastery requires a
+                        subconscious, peripheral awareness—a profound intuition that a specific letter is not just
+                        present, but poised at a precise location, waiting to be woven into the fabric of your strategy.
+                    </p>
+                </div>
+
+                <!-- Card 3: Win -->
+                <div class="instruction-card">
+                    <div class="giant-trophy">🏆</div>
+                    <h3>Rise to Logic</h3>
+                    <p>Compete in real-time. Applying well-established or personal strategies can make the difference
+                        between someone rated 1200 to someone rated 2000. The lifelong pursuit of mastering a simple
+                        game to incomprehensible levels and beyond is what makes this game harmonious and everlasting.
+                    </p>
+                </div>
+            </div>
+
+            <!-- FAQ Section -->
+            <div class="faq-section">
+                <div class="faq-container">
+                    <!-- Q1 -->
+                    <div class="faq-item">
+                        <div class="faq-question">What do the various highlights on the "All Words" table signify?</div>
+                        <div class="faq-answer">
+                            <p>Our "All Words" table employs a sophisticated color-coding system to provide at-a-glance
+                                insights into the round's results:</p>
+                            <ul>
+                                <li><span class="faq-highlight lime">Lime Green</span> - The <strong>Bonus
+                                        Word</strong>.
+                                    Successfully
+                                    finding this word awards you a 5-point premium.</li>
+                                <li><span class="faq-highlight blue">Vibrant Blue</span> - Words you personally
+                                    discovered
+                                    during the round.</li>
+                                <li><span class="faq-highlight gold">Golden Yellow</span> - <strong>CSW-Only</strong>
+                                    words. These
+                                    are
+                                    lexical gems found in the Collins Scrabble Words dictionary but absent from the NWL.
+                                </li>
+                                <li><span class="faq-highlight red">Crimson Red</span> - Words that were present on the
+                                    board but eluded your discovery.</li>
+                                <li><span class="found-indicator present">✓</span> <span
+                                        class="faq-highlight check">Checkmark</span> - Indicates words
+                                    successfully
+                                    identified by you, a competitor, or multiple players in the room.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Q2 -->
+                    <div class="faq-item">
+                        <div class="faq-question">How does the rating system evaluate my performance and skill?</div>
+                        <div class="faq-answer">
+                            <p>Morpheme utilizes a refined <strong>Proportional Share</strong> engine designed to ensure
+                                ultimate
+                                fairness. Unlike traditional win/loss systems, our engine evaluates your individual
+                                contribution relative to the collective strength of the room.</p>
+
+                            <p><strong>1. The Expected Score</strong><br>
+                                At the conclusion of each round, the server calculates a tailored "Expected Score" for
+                                you. This target represents your fair share of the points based on your current rating
+                                relative to your opponents. Masters are naturally expected to achieve higher scores,
+                                while
+                                newcomers have a more accessible performance baseline.</p>
+
+                            <p><strong>2. Room Stability & Population</strong><br>
+                                The integrity of your rating is bolstered by the number of participants. A larger
+                                gathering
+                                of players provides a more stable and accurate performance baseline, ensuring that
+                                rating
+                                adjustments are precise and reflective of your true mastery. More people in the room
+                                means
+                                more stability in the rating results.</p>
+
+                            <p><strong>3. Dynamic Gains and Losses</strong><br>
+                                Your final rating change is determined by how significantly you exceed or fall below
+                                your
+                                Expected Score. Adjustments occur on a precise 0-16 scale, rewarding consistent
+                                excellence
+                                while maintaining ranking stability through a capped maximum change per round.</p>
+                        </div>
+                    </div>
+
+                    <!-- Q3 -->
+                    <div class="faq-item">
+                        <div class="faq-question">What are the distinct strategies for the different game types?</div>
+                        <div class="faq-answer">
+                            <p>Morpheme offers three unique arenas, each demanding a different tactical approach:</p>
+                            <ul>
+                                <li><strong>Accumulative:</strong> The classic experience of independent discovery.
+                                    Every
+                                    player explores the board at their own pace, receiving full points for every word
+                                    found, regardless of others' performance.</li>
+                                <li><strong>First Come First Serve (FCFS):</strong> A high-stakes race where words are a
+                                    finite resource. The moment a word is claimed, it is removed from the board for all
+                                    other players. Speed and decisiveness are your primary weapons.</li>
+                                <li><strong>Split Points:</strong> A strategic blend of discovery and uniqueness. Points
+                                    for
+                                    each word are shared among everyone who finds it. While common words yield split
+                                    rewards, uncovering unique words grants you the full bounty.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Q4 -->
+                    <div class="faq-item">
+                        <div class="faq-question">What do the different icons next to the flags mean?</div>
+                        <div class="faq-answer">
+                            <p>These icons provide insight into the method a user is employing to enter words, allowing
+                                you
+                                to understand their playstyle:</p>
+                            <div class="icon-list">
+                                <div class="icon-item">
+                                    <span>⌨️</span>
+                                    <div><strong>Typing Icon:</strong> Indicates the user is entering words via a
+                                        physical
+                                        or virtual keyboard.</div>
+                                </div>
+                                <div class="icon-item">
+                                    <span>🖱️</span>
+                                    <div><strong>Mousing Icon:</strong> Indicates the user is selecting words using a
+                                        mouse
+                                        or trackpad.</div>
+                                </div>
+                                <div class="icon-item">
+                                    <span>📱</span>
+                                    <div><strong>Swiping Icon:</strong> Indicates the user is swiping to connect letters
+                                        on
+                                        a mobile device.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Q5 -->
+                    <div class="faq-item">
+                        <div class="faq-question">What do the Penalty and Checkerboard mechanics signify?</div>
+                        <div class="faq-answer">
+                            <p><strong>Penalty:</strong> Should the Spinner land on Penalty, exercise caution! Any valid
+                                letter sequence found on the board that is NOT in the active dictionary will result in a
+                                <strong>3-point deduction</strong>. Accuracy becomes as vital as speed.
+                            </p>
+                            <p><strong>Checkerboard:</strong> This elegant format arranges the board so that consonants
+                                and
+                                vowels alternate along rows and diagonals (e.g., C V C V C). This rhythmic layout
+                                creates
+                                unique patterns and strategic opportunities for word formation.</p>
+                        </div>
+                    </div>
+
+                    <!-- Q6 -->
+                    <div class="faq-item">
+                        <div class="faq-question">What determines the difficulty level of a board?</div>
+                        <div class="faq-answer">
+                            <p>Board difficulty is scientifically determined by the ratio of obscure or complex words to
+                                common vocabulary. If over 75% to 80% of the possible words are statistically difficult
+                                to
+                                uncover, the board is classified as <strong>Difficult</strong>. Conversely, if 80% to
+                                90% of the
+                                words
+                                are common and easily found, the board is considered <strong>Easy</strong>.</p>
+                        </div>
+                    </div>
+
+                    <!-- Q7 -->
+                    <div class="faq-item">
+                        <div class="faq-question">Is there a faster way to view a user’s profile?</div>
+                        <div class="faq-answer">
+                            <p>Indeed. Simply click the colored rating square next to any username to evoke a
+                                <strong>Mini
+                                    Profile</strong>. This provides a brief overview of their statistics. For a
+                                comprehensive view,
+                                visit the full Profile section within the Tools menu.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Q8 -->
+                    <div class="faq-item">
+                        <div class="faq-question">Why does the system generate unique parameters for each round?</div>
+                        <div class="faq-answer">
+                            <p>Every round is a fresh challenge governed by the <strong>Spinner Set</strong>. These
+                                randomly
+                                generated
+                                parameters—including word density, dictionary selection, and board format—ensure that no
+                                two
+                                games are ever alike. This prevents memorization and maintains a fair, unpredictable,
+                                and
+                                ever-evolving competitive landscape.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Room Modal removed: Reverted to prompt -->
+
+    <script src="/js/forum.js"></script>
+    <script src="/js/app.js"></script>
+    <script src="/js/lobby.js"></script>
+    <script src="/js/play.js"></script>
+    <script src="/js/leaderboard.js"></script>
+
+    <!-- History Review Overlay -->
+    <div id="history-review-overlay" class="overlay hidden">
+        <div class="overlay-content history-review-modal">
+            <div class="overlay-header">
+                <div class="header-main">
+                    <h2>Round Replay</h2>
+                    <span class="header-subtitle">Verifiable Legitimacy Walkthrough</span>
+                    <span id="history-review-date"
+                        style="display: block; font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 4px; font-weight: 600;"></span>
+                </div>
+                <button class="close-overlay" id="close-history-review">&times;</button>
+            </div>
+            <div class="history-review-layout">
+                <div class="history-review-main">
+
+
+                    <div class="history-walkthrough-section">
+                        <div class="section-header">
+                            <div class="header-titles">
+                                <h3>Timeline of Discovery</h3>
+                                <span class="section-hint">Words recorded with millisecond precision</span>
+                            </div>
+                            <div class="replay-controls">
+                                <button id="start-replay-btn" class="replay-btn primary">
+                                    <span class="btn-icon">▶</span> Watch Replay
+                                </button>
+                                <button id="skip-replay-btn" class="replay-btn secondary hidden">
+                                    Show All
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar for Replay -->
+                        <div id="replay-progress-container" class="replay-progress-container hidden">
+                            <div class="progress-info">
+                                <span id="replay-current-time">0:00.0</span>
+                                <span id="replay-current-score">0 pts</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div id="replay-progress-bar" class="progress-bar-fill"></div>
+                            </div>
+                        </div>
+
+                        <div id="review-walkthrough-list" class="walkthrough-list">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Board moved to right column -->
+                    <div id="review-board-container" class="review-board-main">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/js/tools.js?v=2"></script>
+    <script src="/js/settings.js"></script>
+    <script src="/js/mouse_selection.js"></script>
+    <!-- Private Chat Modal -->
+    <div id="private-chat-modal" class="chat-modal hidden">
+        <div class="chat-modal-content">
+            <div class="chat-modal-header">
+                <div class="chat-modal-user">
+                    <span id="pm-target-status" class="status-indicator-mini offline"></span>
+                    <span id="pm-target-name">Chat</span>
+                </div>
+                <button class="chat-modal-close" id="pm-close-btn">&times;</button>
+            </div>
+            <div id="pm-history" class="chat-modal-history">
+                <!-- Messages injected here -->
+            </div>
+            <div class="chat-modal-input-area">
+                <input type="text" id="pm-input" placeholder="Type a message..." autocomplete="off">
+                <button id="pm-send-btn">Send</button>
+            </div>
+        </div>
+    </div>
+    <!-- Mini Profile Modal -->
+    <div id="mini-profile-modal" class="mini-profile-overlay hidden">
+        <div class="mini-profile-card">
+            <button class="mini-profile-close" id="mini-profile-close">&times;</button>
+            <div class="mini-profile-header">
+                <div id="mini-profile-avatar" class="mini-avatar"></div>
+                <div class="mini-profile-identity">
+                    <div id="mini-profile-username" class="mini-username">Username</div>
+                    <div id="mini-profile-fullname" class="mini-fullname">Full Name</div>
+                </div>
+                <div id="mini-profile-rating-badge" class="mini-rating-badge">1200</div>
+            </div>
+
+            <div class="mini-profile-stats">
+                <div class="mini-stat-item">
+                    <span class="mini-stat-label">Games</span>
+                    <span id="mini-profile-games" class="mini-stat-value">0</span>
+                </div>
+                <div class="mini-stat-item">
+                    <span class="mini-stat-label">Wins</span>
+                    <span id="mini-profile-wins" class="mini-stat-value">0</span>
+                </div>
+                <div class="mini-stat-item">
+                    <span class="mini-stat-label">Age</span>
+                    <span id="mini-profile-age" class="mini-stat-value">-</span>
+                </div>
+                <!-- Optional: Use display:none if not needed -->
+                <!-- <div class="mini-stat-item">
+                    <span class="mini-stat-label">Gender</span>
+                    <span id="mini-profile-gender" class="mini-stat-value">-</span>
+                </div> -->
+            </div>
+            <div class="mini-profile-stats" style="margin-top: 8px;">
+                <div class="mini-stat-item">
+                    <span class="mini-stat-label">Max PE</span>
+                    <span id="mini-profile-max-pe" class="mini-stat-value" title="Max Performance Efficiency">0.0</span>
+                </div>
+                <div class="mini-stat-item">
+                    <span class="mini-stat-label">Avg PE</span>
+                    <span id="mini-profile-avg-pe" class="mini-stat-value"
+                        title="Average Performance Efficiency">0.0</span>
+                </div>
+                <div class="mini-stat-item">
+                    <span class="mini-stat-label">Rank</span>
+                    <span id="mini-profile-rank-placeholder" class="mini-stat-value">-</span>
+                </div>
+            </div>
+
+            <div class="mini-profile-metadata">
+                <div class="mini-meta-item">
+                    <span class="mini-meta-icon">🌐</span>
+                    <span id="mini-profile-flag" class="mini-meta-flag">🏳️</span>
+                    <span id="mini-profile-country-name" class="mini-meta-text">International</span>
+                </div>
+                <div class="mini-meta-item">
+                    <span class="mini-meta-icon" id="mini-profile-status-icon">⚪</span>
+                    <span id="mini-profile-status" class="mini-meta-text">Offline</span>
+                </div>
+            </div>
+
+            <div class="mini-profile-quote" id="mini-profile-quote">
+                "No quote provided."
+            </div>
+
+            <div class="mini-profile-description" id="mini-profile-description">
+                No description provided.
+            </div>
+
+            <div class="mini-profile-actions">
+                <button id="mini-profile-view-full" class="mini-action-btn secondary">Full Profile</button>
+                <button id="mini-profile-message" class="mini-action-btn primary">Message</button>
+                <button id="mini-profile-round-reviews" class="mini-action-btn secondary">Round Reviews</button>
+                <button id="mini-profile-friend" class="mini-action-btn secondary hidden">Add Friend</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Achievements Modal -->
+    <div id="room-achievements-modal" class="modal-overlay hidden">
+        <div class="achievement-card">
+            <button id="achievement-modal-close" class="close-modal-btn">&times;</button>
+            <div class="achievement-header">
+                <div class="achievement-icon-outer">
+                    <div class="achievement-icon-inner">🏆</div>
+                </div>
+                <h2 id="achievement-title">Room Achievements</h2>
+                <p id="achievement-subtitle">Mode | Configuration</p>
+                <div class="achievement-rating-badge">
+                    Rating: <span id="achievement-rating-val">-</span>
+                </div>
+            </div>
+
+            <div class="achievement-grid">
+                <!-- Personal Bests -->
+                <div class="achievement-section">
+                    <h3>Personal Bests</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Highest Score</span>
+                        <span class="stat-value" id="ach-high-score">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Most Words</span>
+                        <span class="stat-value" id="ach-max-words">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Longest Word</span>
+                        <span class="stat-value" id="ach-longest-word">-</span>
+                    </div>
+                    <div class="stat-item" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+                        <span class="stat-label">Best Word</span>
+                        <span class="stat-value" id="ach-best-word" style="font-size: 0.9rem; color: #ffd700;">-</span>
+                    </div>
+                </div>
+
+                <!-- Lifetime Stats -->
+                <div class="achievement-section">
+                    <h3>Lifetime Stats</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Games Played</span>
+                        <span class="stat-value" id="ach-games-played">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Wins</span>
+                        <span class="stat-value" id="ach-wins">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Win Rate</span>
+                        <span class="stat-value" id="ach-win-rate">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Words</span>
+                        <span class="stat-value" id="ach-total-words">-</span>
+                    </div>
+                </div>
+
+                <!-- Exceptional Performances -->
+                <div class="achievement-section" style="grid-column: 1 / -1;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Exceptional Performances</h3>
+                        <span
+                            style="font-size: 0.7rem; font-weight: 800; color: #60a5fa; text-transform: uppercase;">Average
+                            Perf: <span id="ach-avg-perf">-</span></span>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Perf</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Effect</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Score</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Word Stats</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-perf"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Winning Rounds -->
+                <div class="achievement-section" style="grid-column: 1 / -1;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Winning Rounds</h3>
+                        <span
+                            style="font-size: 0.7rem; font-weight: 800; color: #4ade80; text-transform: uppercase;">Win
+                            Rate: <span id="ach-avg-winrate">-</span></span>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Score</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Perf</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Opponents</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-wins"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Games Played (Recent) -->
+                <div class="achievement-section" style="grid-column: 1 / -1;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Games Played</h3>
+                        <span
+                            style="font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase;">Total:
+                            <span id="ach-total-games">-</span></span>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Score</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Result</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-recent"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Best Scores -->
+                <div class="achievement-section" style="grid-column: 1 / -1;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Best Scores</h3>
+                        <span
+                            style="font-size: 0.7rem; font-weight: 800; color: #ffd700; text-transform: uppercase;">Average
+                            Score: <span id="ach-avg-score">-</span></span>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Score</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Perf</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-scores"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Best Word Counts -->
+                <div class="achievement-section" style="grid-column: 1 / -1;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Best Word Counts</h3>
+                        <span
+                            style="font-size: 0.7rem; font-weight: 800; color: #a5b4fc; text-transform: uppercase;">Average
+                            Words: <span id="ach-avg-words">-</span></span>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Words</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Avg Len</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-wordcounts"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Best Words -->
+                <div class="achievement-section" style="grid-column: 1 / -1; margin-bottom: 20px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Best Individual Words</h3>
+                        <span
+                            style="font-size: 0.7rem; font-weight: 800; color: #ffd700; text-transform: uppercase;">Average
+                            Points: <span id="ach-avg-word-pts">-</span></span>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Word</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Points</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Length</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-words"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="achievement-footer">
+                <div class="total-points-display">
+                    <span class="total-label">Lifetime Points</span>
+                    <span class="total-val" id="ach-total-points">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Lightbox Modal -->
+    <div id="image-lightbox-modal" class="image-lightbox-overlay hidden">
+        <div class="image-lightbox-content">
+            <button id="image-lightbox-close" class="image-lightbox-close">&times;</button>
+            <img id="image-lightbox-img" src="" alt="User Avatar Large">
+            <div id="image-lightbox-caption" class="image-lightbox-caption"></div>
+        </div>
+    </div>
 </body>
 
 </html>

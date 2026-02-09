@@ -524,6 +524,30 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* Giant Trophy Style */
+.giant-trophy {
+    font-size: 6rem;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.6));
+    animation: trophyFloat 3s infinite ease-in-out;
+    display: block;
+}
+
+@keyframes trophyFloat {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-20px) rotate(5deg);
+    }
+}
+
+/* Found Indicator Example Style */
+/* Found Indicator Example Style (Replaced by .found-indicator) */
+
 .icon-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));

@@ -8,6 +8,7 @@ let selectedPlayerUsername = null; // Track selected player for filtering/highli
 let cachedTimerValueEl = null;    // Cache for high-frequency updates
 let cachedBoardPanelEl = null;
 let lastPlayersHtml = null;       // Cache for renderPlayers
+const playerRatingCache = new Map(); // Cache for Chat Colors
 
 // Mouse selection state
 let mouseState = {
@@ -542,10 +543,10 @@ async function updateGameState() {
 
                 // Display Both
                 wordsStats.innerHTML = `
-                    <div style="line-height: 1.2;">
+                    <div style="line-height: 1.2;" class="stats-text-primary">
                         ${personalUnique}/${totalWords} - ${personalPercentage}%
-                        <div style="font-size: 0.75em; opacity: 0.7; margin-top: 2px;">
-                            Total Found Percentage: ${globalPercentage}%
+                        <div class="stats-text-secondary" style="font-size: 0.75em; opacity: 0.7; margin-top: 2px;">
+                            Collective Percentage: ${globalPercentage}%
                         </div>
                     </div>`;
 
@@ -941,10 +942,9 @@ function renderPlayers(players, currentUser = null, state = null) {
         if (p.input_method === 'keyboard') inputIcon = '⌨️';
         if (p.input_method === 'touch') inputIcon = '👆';
 
-        // Trophy Logic
+        // Trophy Logic (Exceptional Performance)
         const peVal = p.performance_efficiency || 1.0;
-        const trophyHtml = p.has_exceptional_round ? `<span title="Exceptional Performer (PE: ${peVal.toFixed(2)}x)" style="font-size: 0.8rem; margin-left: 4px; cursor: help;">🏆</span>` : '';
-        const peDisplay = peVal > 1.05 ? `<span class="player-pe-val" style="font-size: 0.75rem; opacity: 0.6; margin-left: 6px; font-weight: 500;">(${peVal.toFixed(1)}x PE)</span>` : '';
+        const trophyHtml = (peVal >= 1.2 || p.score >= 100) ? `<span title="Exceptional Performance (PE: ${peVal.toFixed(2)}x)" class="trophy-icon">🏆</span>` : '';
 
         return `
         <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}" data-username="${p.username}">
@@ -958,8 +958,9 @@ function renderPlayers(players, currentUser = null, state = null) {
                 <span class="player-flag">${p.country_flag || '🏳️'}</span>
                 <span class="player-input-icon">${inputIcon}</span>
                 ${trophyHtml}
+                <div style="flex:1;"></div>
                 <span class="player-words-count">${p.words_count} words</span>
-                <span class="player-score-val">${p.score} pts${peDisplay}</span>
+                <span class="player-score-val">${p.score} pts</span>
             </div>
         </div>
         `;
@@ -1018,6 +1019,20 @@ function renderChat(messages) {
     const placeholder = listEl.querySelector('.placeholder');
     if (placeholder) placeholder.remove();
 
+    // Populate rating cache from current state
+    if (window.lastGameState) {
+        if (window.lastGameState.players) {
+            window.lastGameState.players.forEach(p => {
+                if (p.username && p.rating !== undefined) playerRatingCache.set(p.username, p.rating);
+            });
+        }
+        if (window.lastGameState.spectators) {
+            window.lastGameState.spectators.forEach(s => {
+                if (s.username && s.rating !== undefined) playerRatingCache.set(s.username, s.rating);
+            });
+        }
+    }
+
     // Render all messages (simple rebuild for now to ensure order)
     const html = messages.map(msg => {
         const username = msg.username;
@@ -1034,9 +1049,18 @@ function renderChat(messages) {
             </div>`;
         }
 
+        // Determine User Color from Rating Cache
+        let userColor = '#a8d5ff'; // Default blue-ish
+        if (window.getRatingColor) {
+            const rating = playerRatingCache.get(username);
+            if (rating !== undefined) {
+                userColor = window.getRatingColor(rating);
+            }
+        }
+
         return `
         <div class="chat-message">
-            <span class="chat-user">${username}:</span>
+            <span class="chat-user" style="color: ${userColor};">${username}:</span>
             <span class="chat-text">${safeText}</span>
         </div>`;
     }).join('');

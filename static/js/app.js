@@ -5,6 +5,9 @@ const pages = {
     'btn-lobby': 'page-lobby',
     'btn-play': 'page-play',
     'btn-leaderboards': 'page-leaderboards',
+    'btn-tournaments': 'page-tournaments',
+    'btn-store': 'page-store',
+    'btn-forums': 'page-forums',
     'btn-tools': 'page-tools',
     'btn-settings': 'page-settings',
     'btn-contact': 'page-contact'
@@ -376,7 +379,46 @@ async function checkSession() {
 
 // Setup navigation
 function setupNavigation() {
+    // Tournament Button Logic
+    const tournBtn = document.getElementById('btn-tournaments');
+    if (tournBtn) {
+        tournBtn.addEventListener('click', () => {
+            if (!currentUser || window.currentUserIsGuest) {
+                alert('Tournaments are for registered users only.');
+                return; // Block access
+            }
+            showPage('page-tournaments');
+            updateActiveNav(tournBtn);
+
+            // Initialize/Refresh Tournament Data
+            if (window.initTournamentsPage) {
+                window.initTournamentsPage();
+            }
+        });
+    }
+
+    // Poll Tournament Status for Green Light
+    async function checkTournamentStatus() {
+        if (!currentUser || window.currentUserIsGuest) return;
+        try {
+            const res = await fetch('/api/tournament/status');
+            const data = await res.json();
+            const btn = document.getElementById('btn-tournaments');
+
+            if (btn && data.user_status && data.user_status.has_turn) {
+                btn.classList.add('tournaments-active');
+            } else if (btn) {
+                btn.classList.remove('tournaments-active');
+            }
+        } catch (e) { }
+    }
+
+    // Check initially and periodically
+    setTimeout(checkTournamentStatus, 2000); // Small delay to ensure login state
+    setInterval(checkTournamentStatus, 60000);
+
     const navButtons = document.querySelectorAll('.nav-btn');
+    // ... existing loop ...
     navButtons.forEach(btn => {
         btn.addEventListener('click', async () => {
             if (!btn.disabled) {
@@ -393,14 +435,10 @@ function setupNavigation() {
 
                 const pageId = 'page-' + pageTarget;
 
-                // If navigating to lobby, clean up room state
-                /* 
-                   DISABLED: Keep user directly in room to persist stats count [1].
-                   User only leaves if they join another room or explicitly quit.
-                if (pageId === 'page-lobby') {
-                    await leaveCurrentRoom();
+                // Store Tab Logic
+                if (pageTarget === 'store') {
+                    setupStoreTabs();
                 }
-                */
 
                 showPage(pageId);
                 updateActiveNav(btn);
@@ -408,6 +446,26 @@ function setupNavigation() {
         });
     });
 }
+
+function setupStoreTabs() {
+    const tabs = document.querySelectorAll('.store-tab');
+    if (tabs.length === 0) return;
+
+    tabs.forEach(tab => {
+        // Remove old listeners to avoid duplicates
+        const newTab = tab.cloneNode(true);
+        tab.parentNode.replaceChild(newTab, tab);
+
+        newTab.addEventListener('click', () => {
+            document.querySelectorAll('.store-tab').forEach(t => t.classList.remove('active'));
+            newTab.classList.add('active');
+            const category = newTab.getAttribute('data-category');
+            console.log('Switching store category to:', category);
+            // In a real app we'd filter items here
+        });
+    });
+}
+
 
 function setupModalListeners() {
     const modal = document.getElementById('modal-howtoplay');

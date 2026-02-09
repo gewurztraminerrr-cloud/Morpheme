@@ -9,8 +9,23 @@ from word_validator import word_validator
 
 class SpinnerSet:
     @staticmethod
+    def generate_tournament_params():
+        """Generate ALL tournament parameters including broad ones"""
+        # 1. Broad Parameters (formerly external)
+        board_dims = random.choice(['4x4', '5x5', '6x6'])
+        time_limit = random.choice([60, 90, 120, 180, 240, 300])
+        
+        # 2. Granular Parameters
+        params = SpinnerSet.generate_params(board_dims, is_24h=False)
+        
+        # Merge
+        params['board_dimensions'] = board_dims
+        params['time_limit'] = time_limit
+        return params
+
+    @staticmethod
     def generate_params(board_dimensions, is_24h=False):
-        """Generate all spinner parameters for a round"""
+        """Generate granular spinner parameters given dimensions"""
         # Generate dictionary FIRST so we can use its size for word count
         dictionary = SpinnerSet._spin_dictionary()
         

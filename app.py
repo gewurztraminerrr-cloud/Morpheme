@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify, session, send_from_directory
+from flask import Flask, request, jsonify, session, send_from_directory, g, redirect, url_for, render_template
+from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import time
@@ -8,6 +9,34 @@ from collections import Counter
 
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'morpheme-secret-key-2024'
+
+# Auth Helpers
+class User:
+    def __init__(self, id, username):
+        self.id = id
+        self.username = username
+        self.is_authenticated = True
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            if request.path.startswith('/api/'):
+                return jsonify({'error': 'Authentication required'}), 401
+            return redirect('/')
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.before_request
+def load_user():
+    if 'user_id' in session:
+        g.user = User(session['user_id'], session['username'])
+    else:
+        g.user = None
+
+# Auth Helpers
+
+
 
 DEFINITIONS_CACHE = None
 
@@ -99,9 +128,51 @@ def init_db():
         try:
             conn.execute(f'ALTER TABLE users ADD COLUMN {col_name} {col_type}')
             conn.commit()
-            print(f"Migrated DB: Added {col_name} column to users")
         except sqlite3.OperationalError:
-            pass # Column likely exists
+            pass
+
+    # TOURNAMENTS TABLES
+    conn.executescript('''
+        CREATE TABLE IF NOT EXISTS tournaments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            status TEXT DEFAULT 'signup', -- signup, active, completed
+            start_date REAL, -- timestamp
+            parameters TEXT, -- JSON spinner params
+            current_round INTEGER DEFAULT 0,
+            created_at REAL,
+            completed_at REAL
+        );
+        
+        CREATE TABLE IF NOT EXISTS tournament_participants (
+            tournament_id INTEGER,
+            user_id INTEGER,
+            status TEXT DEFAULT 'active', -- active, eliminated
+            final_rank INTEGER,
+            joined_at REAL,
+            PRIMARY KEY (tournament_id, user_id),
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        );
+        
+        CREATE TABLE IF NOT EXISTS tournament_rounds (
+            tournament_id INTEGER,
+            round_number INTEGER,
+            start_time REAL,
+            end_time REAL,
+            board_data TEXT, -- JSON of board
+            PRIMARY KEY (tournament_id, round_number)
+        );
+
+        CREATE TABLE IF NOT EXISTS tournament_scores (
+            tournament_id INTEGER,
+            round_number INTEGER,
+            user_id INTEGER,
+            score INTEGER DEFAULT 0,
+            submitted_words TEXT, -- JSON
+            submitted_at REAL,
+            PRIMARY KEY (tournament_id, round_number, user_id)
+        );
+    ''')
+    conn.commit()
 
     # MIGRATION: Add skill metrics to users table
     try:
@@ -378,7 +449,7 @@ def get_user_count():
 # Serve static files
 @app.route('/')
 def index():
-    return send_from_directory('static', 'index.html')
+    return render_template('index.html')
 
 @app.route('/<path:path>')
 def static_files(path):
@@ -571,28 +642,54 @@ def get_public_profile(username):
     config_ratings = {row[0]: row[1] for row in cursor.fetchall()}
 
     # Get recent rounds (last 50)
-    cursor = conn.execute('''
-        SELECT rh.room_id, rh.game_type, rh.round_number, rh.board_json, rh.words_json, rh.total_score, 
-               rh.round_start_time, rh.round_duration, rh.timestamp, rh.user_rating, rh.performance_ratio
-        FROM round_history rh
-        WHERE rh.user_id = ?
-        ORDER BY rh.timestamp DESC
-        LIMIT 10
-    ''', (user[0],))
-    rows = cursor.fetchall()
-    
-    # Also fetch ALL rounds to find 'one best per configuration' for Exceptional Rounds
+    # Fetch ALL rounds, ordered by most recent first
+    # We fetch everything to:
+    # 1. Calculate stats (averages)
+    # 2. Find exceptional rounds
+    # 3. Get recent history
     cursor_all = conn.execute('''
         SELECT room_id, game_type, round_number, board_json, words_json, total_score, 
-               round_start_time, round_duration, timestamp, user_rating, performance_ratio
+               round_start_time, round_duration, timestamp, user_rating, performance_ratio, id
         FROM round_history
         WHERE user_id = ?
+        ORDER BY timestamp DESC
     ''', (user[0],))
     all_rows = cursor_all.fetchall()
     
+    # Filter and Deduplicate BEFORE processing (for performance and correctness)
+    # 1. Deduplicate by (room_id, round_number) - Keep most recent (already sorted by DESC)
+    # 2. Filter out rounds where user "did not play" (0 words found)
+    seen_rounds = set()
+    clean_rows = []
+    
+    for r in all_rows:
+        room_id = r[0]
+        round_val = r[2]
+        wjson = r[4]
+        
+        # Dedup Check
+        round_key = (room_id, round_val)
+        if round_key in seen_rounds:
+            continue
+            
+        # "Did not play" check (Empty words list)
+        try:
+            # If wjson is exactly '[]', skip
+            if wjson == '[]':
+                continue
+            # Double check with load if unsure
+            w_list = json.loads(wjson)
+            if not w_list:
+                continue
+        except:
+            continue
+            
+        seen_rounds.add(round_key)
+        clean_rows.append(r)
+
     # helper to process a row into a rich dict
     def process_round_row(row, db_conn):
-        room_id, gtype, rnum, bjson, wjson, score, rstart, rdur, ts, urat, pe_ratio = row
+        room_id, gtype, rnum, bjson, wjson, score, rstart, rdur, ts, urat, pe_ratio, g_id = row
         
         # Get all players in this specific round
         c_room = db_conn.execute('''
@@ -616,6 +713,7 @@ def get_public_profile(username):
         dims = f"{len(board)}x{len(board[0])}" if board else "4x4"
 
         return {
+            'game_id': g_id,
             'room_id': room_id,
             'game_type': gtype,
             'round_number': rnum,
@@ -635,7 +733,7 @@ def get_public_profile(username):
         }
 
     # Process all rows once to get data for both averages and exceptional rounds
-    processed_all = [process_round_row(r, conn) for r in all_rows]
+    processed_all = [process_round_row(r, conn) for r in clean_rows]
     
     # Calculate Averages and Config Stats
     config_stats = {}
@@ -721,7 +819,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     # We filter by game_type and round_duration (time_limit)
     # Since board_dimensions isn't a column, we'll check it from board_json in Python
     cursor = conn.execute('''
-        SELECT words_json, total_score, timestamp, room_id, round_number, board_json
+        SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id
         FROM round_history
         WHERE user_id = ? AND game_type = ? AND round_duration = ?
         ORDER BY timestamp DESC
@@ -799,6 +897,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         my_score = row[1]
         wjson = row[0]
         bjson = row[5]
+        g_id = row[6] # Unique Game Round ID (Primary Key)
         
         # Get all players in this specific round
         cursor = conn.execute('''
@@ -841,6 +940,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         room_strength = sum(e[1] for e in room_entries) if room_entries else rating
 
         processed = {
+            'game_id': g_id,
             'ratio': round(ratio, 2),
             'performance_value': perf_val,
             'total_score': my_score,
@@ -848,6 +948,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             'timestamp': ts,
             'room_id': r_id,
             'round_number': r_num,
+            'words': words,
             'num_words': num_words,
             'top_word': top_word,
             'avg_len': avg_len,
@@ -857,6 +958,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             'board': json.loads(bjson),
             'all_players': sorted([{'username': e[2], 'score': e[0], 'rating': e[1]} for e in room_entries], key=lambda x: x['score'], reverse=True)
         }
+
         
         performance_list.append(processed)
         if not best_performance or ratio > best_performance['ratio']:
@@ -877,6 +979,8 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             w['timestamp'] = r[2]
             w['room_id'] = r[3]
             w['round_number'] = r[4]
+            # Ensure game_id exists (it's index 6 in the query now)
+            w['game_id'] = r[6] if len(r) > 6 else None
             all_words_list.append(w)
     
     avg_word_pts = round(sum(w['points'] for w in all_words_list) / len(all_words_list), 1) if all_words_list else 0
@@ -1429,7 +1533,8 @@ def get_room_state(room_id):
                     'games_played': p.games_played,
                     'country_flag': p.country_flag,
                     'joined_mid_round': getattr(p, 'joined_mid_round', False),
-                    'has_exceptional_round': getattr(p, 'has_exceptional_round', False)
+                    'has_exceptional_round': getattr(p, 'has_exceptional_round', False),
+                    'performance_efficiency': getattr(p, 'performance_efficiency', 0.0)
                 } for p in sorted(room.players, key=lambda p: p.score, reverse=True)
             ],
             'spectators': [
@@ -2638,7 +2743,7 @@ def get_leaderboard_data():
         
         # 1. Best Scores (Highest total score in a round)
         scores = conn.execute(f"""
-            SELECT rh.total_score, rh.user_rating, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration
+            SELECT rh.total_score, rh.user_rating, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE {base_where}
@@ -2648,7 +2753,7 @@ def get_leaderboard_data():
         
         # 2. Best Words (Highest point single word)
         words = conn.execute(f"""
-            SELECT rh.best_word, rh.best_word_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration
+            SELECT rh.best_word, rh.best_word_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE {base_where} AND rh.best_word IS NOT NULL
@@ -2658,7 +2763,7 @@ def get_leaderboard_data():
         
         # 3. Best PE (Highest Performance Efficiency)
         pes = conn.execute(f"""
-            SELECT rh.performance_ratio, rh.total_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration
+            SELECT rh.performance_ratio, rh.total_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE {base_where} AND rh.performance_ratio > 0
@@ -2734,6 +2839,8 @@ def get_leaderboard_data():
     finally:
         conn.close()
 
+
+
 if __name__ == '__main__':
     print('Morpheme server running on http://localhost:3000')
-    app.run(host='0.0.0.0', port=3000, debug=True)
+    app.run(host='0.0.0.0', port=3000, debug=False, use_reloader=False)
