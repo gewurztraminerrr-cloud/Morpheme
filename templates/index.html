@@ -2031,7 +2031,16 @@
     <div id="room-achievements-modal" class="modal-overlay hidden">
         <div class="achievement-card">
             <button id="achievement-modal-close" class="close-modal-btn">&times;</button>
-            <div class="achievement-header">
+            <!-- Time Segments (Moved to TOP for maximum visibility) -->
+            <div class="achievement-tabs modal-tabs" style="margin-top: 20px;">
+                <button class="ach-tab" data-period="day">Day</button>
+                <button class="ach-tab" data-period="week">Week</button>
+                <button class="ach-tab" data-period="month">Month</button>
+                <button class="ach-tab" data-period="year">Year</button>
+                <button class="ach-tab active" data-period="all">All-Time</button>
+            </div>
+
+            <div class="achievement-header" style="margin-top: 10px;">
                 <div class="achievement-icon-outer">
                     <div class="achievement-icon-inner">🏆</div>
                 </div>
@@ -2041,15 +2050,6 @@
                 <div class="achievement-rating-badge">
                     Rating: <span id="achievement-rating-val">-</span>
                 </div>
-            </div>
-
-            <!-- Time Segments (Outside header for safety) -->
-            <div class="achievement-tabs modal-tabs">
-                <button class="ach-tab" data-period="day">Day</button>
-                <button class="ach-tab" data-period="week">Week</button>
-                <button class="ach-tab" data-period="month">Month</button>
-                <button class="ach-tab" data-period="year">Year</button>
-                <button class="ach-tab active" data-period="all">All-Time</button>
             </div>
 
 
