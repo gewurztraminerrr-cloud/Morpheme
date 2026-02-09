@@ -2031,15 +2031,6 @@
     <div id="room-achievements-modal" class="modal-overlay hidden">
         <div class="achievement-card">
             <button id="achievement-modal-close" class="close-modal-btn">&times;</button>
-            <!-- Time Segments (Moved to TOP for maximum visibility) -->
-            <div class="achievement-tabs modal-tabs" style="margin-top: 20px;">
-                <button class="ach-tab" data-period="day">Day</button>
-                <button class="ach-tab" data-period="week">Week</button>
-                <button class="ach-tab" data-period="month">Month</button>
-                <button class="ach-tab" data-period="year">Year</button>
-                <button class="ach-tab active" data-period="all">All-Time</button>
-            </div>
-
             <div class="achievement-header" style="margin-top: 10px;">
                 <div class="achievement-icon-outer">
                     <div class="achievement-icon-inner">🏆</div>
@@ -2094,6 +2085,16 @@
                         <span class="stat-label">Total Words</span>
                         <span class="stat-value" id="ach-total-words">-</span>
                     </div>
+                </div>
+
+                <!-- Time Segments (Moved under Bests/Stats per user request) -->
+                <div class="achievement-tabs modal-tabs"
+                    style="grid-column: 1 / -1; margin: 10px 0 20px 0; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                    <button class="ach-tab" data-period="day">Day</button>
+                    <button class="ach-tab" data-period="week">Week</button>
+                    <button class="ach-tab" data-period="month">Month</button>
+                    <button class="ach-tab" data-period="year">Year</button>
+                    <button class="ach-tab active" data-period="all">All-Time</button>
                 </div>
 
                 <!-- Exceptional Performances -->
