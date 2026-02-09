@@ -747,6 +747,14 @@
                                     </div>
 
                                     <div id="profile-tab-exceptional" class="profile-tab-pane">
+                                        <!-- Exceptional Period Tabs -->
+                                        <div class="achievement-tabs profile-tabs" style="margin-bottom: 20px;">
+                                            <button class="ach-tab-profile" data-period="day">Day</button>
+                                            <button class="ach-tab-profile" data-period="week">Week</button>
+                                            <button class="ach-tab-profile" data-period="month">Month</button>
+                                            <button class="ach-tab-profile" data-period="year">Year</button>
+                                            <button class="ach-tab-profile active" data-period="all">All-Time</button>
+                                        </div>
                                         <div class="profile-history-section">
                                             <div id="profile-exceptional-list" class="history-list">
                                                 <!-- Populated by JS -->
@@ -2029,6 +2037,16 @@
                 </div>
                 <h2 id="achievement-title">Room Achievements</h2>
                 <p id="achievement-subtitle">Mode | Configuration</p>
+
+                <!-- Time Segments -->
+                <div class="achievement-tabs modal-tabs">
+                    <button class="ach-tab" data-period="day">Day</button>
+                    <button class="ach-tab" data-period="week">Week</button>
+                    <button class="ach-tab" data-period="month">Month</button>
+                    <button class="ach-tab" data-period="year">Year</button>
+                    <button class="ach-tab active" data-period="all">All-Time</button>
+                </div>
+
                 <div class="achievement-rating-badge">
                     Rating: <span id="achievement-rating-val">-</span>
                 </div>
@@ -2300,6 +2318,36 @@
                     <span class="total-val" id="ach-total-points">0</span>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Contact Page -->
+    <div id="page-contact" class="page">
+        <div class="auth-container">
+            <h2>Contact Us</h2>
+            <p style="text-align: center; margin-bottom: 25px; opacity: 0.8;">Have questions or feedback? Send us a
+                message.</p>
+
+            <form id="contact-form" class="auth-form active">
+                <div class="form-group">
+                    <label>From User Email</label>
+                    <input type="email" id="contact-user-email" placeholder="your@email.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label>To Developer Email</label>
+                    <input type="text" value="support@morpheme.com" disabled style="opacity: 0.6; cursor: not-allowed;">
+                </div>
+
+                <div class="form-group">
+                    <label>Message</label>
+                    <textarea id="contact-message" placeholder="Type your message here..." required
+                        style="width: 100%; border-radius: 8px; color: #fff; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255, 255, 255, 0.3); box-sizing: border-box; resize: vertical;"></textarea>
+                </div>
+
+                <button type="submit" class="submit-contact-btn">Send Message</button>
+                <div id="contact-status" class="contact-status" style="text-align: center; margin-top: 10px;"></div>
+            </form>
         </div>
     </div>
 

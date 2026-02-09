@@ -480,24 +480,27 @@ class GameRoom:
             return
 
         score_sum = sum(p.score for p in active_competitors)
-        rating_sum = sum(p.rating for p in active_competitors)
+        # Use a floor rating of 500 for calculations to ensure guests (rating 0) can earn trophies
+        rating_sum = sum(max(p.rating, 500) for p in active_competitors)
         
         if rating_sum > 0:
             for p in active_competitors:
-                # Expected share of total points based on rating share
-                expected = (p.rating / rating_sum) * score_sum
+                # Expected share of total points based on rating share (with floor)
+                effective_rating = max(p.rating, 500)
+                expected = (effective_rating / rating_sum) * score_sum
                 p.performance_efficiency = p.score / expected if expected > 0 else 0.0
                 
                 # Check trophy threshold (Live update)
-                # PE >= 1.2 (20% above expectation) OR Raw Score >= 100 (Exceptional regardless of competition)
-                if (p.performance_efficiency >= 1.2 and p.score >= 10) or p.score >= 100:
+                # PE >= 1.2 (20% above expectation) OR Raw Score >= 20 (Notable milestone)
+                if (p.performance_efficiency >= 1.2 and p.score >= 10) or p.score >= 20:
                     p.has_exceptional_round = True
                 else:
                     p.has_exceptional_round = False
         else:
             for p in active_competitors:
                 p.performance_efficiency = 1.0
-                p.has_exceptional_round = False
+                # If rating_sum is 0 (unlikely with floor), rely on raw score
+                p.has_exceptional_round = (p.score >= 20)
     
     def _recalculate_player_score(self, player):
         """
@@ -575,26 +578,27 @@ class GameRoom:
             max_pe = 0.0
             if active_competitors:
                 score_sum = sum(p.score for p in active_competitors)
-                rating_sum = sum(p.rating for p in active_competitors)
+                # Use floor of 500 for rating sum/share
+                rating_sum = sum(max(p.rating, 500) for p in active_competitors)
                 
                 if rating_sum > 0:
                     for p in active_competitors:
-                        # Expected share of total points based on rating share
-                        expected = (p.rating / rating_sum) * score_sum
+                        # Expected share of total points based on rating share (with floor)
+                        effective_rating = max(p.rating, 500)
+                        expected = (effective_rating / rating_sum) * score_sum
                         p.performance_efficiency = p.score / expected if expected > 0 else 0
                         if p.performance_efficiency > max_pe:
                             max_pe = p.performance_efficiency
                         
-                        # Trophy: PE >= 1.5 (Performed 50% better than expected for their rating)
-                        # Plus a min score check to ensure it wasn't a trivial board
-                        if p.performance_efficiency >= 1.5 and p.score >= 10:
+                        # Trophy: PE >= 1.2 OR Score >= 20
+                        if (p.performance_efficiency >= 1.2 and p.score >= 10) or p.score >= 20:
                             p.has_exceptional_round = True
                         else:
                             p.has_exceptional_round = False
                 else:
                     for p in active_competitors:
                         p.performance_efficiency = 1.0
-                        p.has_exceptional_round = False
+                        p.has_exceptional_round = (p.score >= 20)
 
             # Determine Notable Winners for Replay Tab
             # The user wants "enormous wins" to determine replay listing.
@@ -1187,6 +1191,8 @@ class RoomManager:
                 player.score = 0
                 player.found_bonus_word = False
                 player.joined_mid_round = False
+                player.has_exceptional_round = False
+                player.performance_efficiency = 0.0
                 
             # Daily Room Logic (>= 24h) - Reset at Midnight
             # LOGIC FIX: We must process persistence BEFORE clearing data
@@ -1415,6 +1421,8 @@ class RoomManager:
                 player.score = 0
                 player.found_bonus_word = False
                 player.joined_mid_round = False
+                player.has_exceptional_round = False
+                player.performance_efficiency = 0.0
                 
             # PERSISTENCE: If this is a 24h room, clear the player list for the new day
             # (Users who enter will be added fresh)

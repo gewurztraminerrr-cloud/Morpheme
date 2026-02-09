@@ -538,6 +538,10 @@ body {
     box-sizing: border-box;
 }
 
+.auth-form input:disabled {
+    cursor: default;
+}
+
 .auth-form input::placeholder {
     color: rgba(255, 255, 255, 0.6);
 }
@@ -586,6 +590,51 @@ body {
     background: rgba(72, 187, 120, 0.3);
     border: 1px solid rgba(72, 187, 120, 0.5);
 }
+
+/* Contact Page Compact Adjustments */
+#page-contact .auth-container {
+    padding: 20px 30px;
+    margin-top: 5px;
+    max-width: 420px;
+}
+
+#page-contact h2 {
+    margin-bottom: 5px;
+    font-size: 1.6rem;
+}
+
+#page-contact p {
+    margin-bottom: 15px !important;
+    font-size: 0.85rem;
+}
+
+#page-contact .auth-form {
+    gap: 8px;
+}
+
+#page-contact .form-group label {
+    display: block;
+    margin-bottom: 3px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    text-align: left;
+}
+
+#page-contact input {
+    padding: 10px 12px;
+}
+
+#page-contact textarea {
+    min-height: 100px !important;
+    padding: 10px 12px !important;
+    font-size: 0.95rem;
+}
+
+#page-contact button {
+    padding: 12px;
+    margin-top: 5px;
+}
+
 
 /* Split Points Notepads */
 .split-notepads-container {
@@ -1899,7 +1948,7 @@ body {
 
 /* History Review Modal Styles */
 .history-review-modal {
-    max-width: 1000px;
+    max-width: 1100px;
     width: 95%;
     max-height: 90vh;
     background: linear-gradient(135deg, rgba(30, 30, 45, 0.98), rgba(15, 15, 25, 1));
@@ -2123,23 +2172,23 @@ body {
 
 .review-board-main {
     display: grid;
-    gap: 8px;
+    gap: 12px;
     background: rgba(0, 0, 0, 0.4);
-    padding: 20px;
-    border-radius: 20px;
+    padding: 25px;
+    border-radius: 24px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: inset 0 4px 20px rgba(0, 0, 0, 0.6);
     margin: 0;
-    /* Remove auto margins */
-    width: fit-content;
+    width: auto;
     max-width: 100%;
     min-width: 300px;
     flex-shrink: 0;
-    /* Don't shrink the board */
-    align-self: flex-start;
-    /* Top align */
-    margin-top: 60px;
-    /* Align visually with list content below header */
+    align-self: center;
+    /* Center horizontally/vertically in its share */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .review-board {
@@ -2958,6 +3007,47 @@ body {
 #achievement-rating-val {
     color: #ffd700;
 }
+
+.achievement-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 15px 0;
+    padding: 0 10px;
+    flex-wrap: wrap;
+}
+
+.ach-tab,
+.ach-tab-profile {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ach-tab:hover,
+.ach-tab-profile:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.ach-tab.active,
+.ach-tab-profile.active {
+    background: linear-gradient(135deg, #409cff, #0072ff);
+    color: #fff;
+    border-color: #409cff;
+    box-shadow: 0 4px 12px rgba(0, 114, 255, 0.4);
+}
+
 
 .achievement-grid {
     display: grid;

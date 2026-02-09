@@ -944,7 +944,7 @@ function renderPlayers(players, currentUser = null, state = null) {
 
         // Trophy Logic (Exceptional Performance)
         const peVal = p.performance_efficiency || 1.0;
-        const trophyHtml = (peVal >= 1.2 || p.score >= 100) ? `<span title="Exceptional Performance (PE: ${peVal.toFixed(2)}x)" class="trophy-icon">🏆</span>` : '';
+        const trophyHtml = p.has_exceptional_round ? `<span title="Exceptional Performance (PE: ${peVal.toFixed(2)}x)" class="trophy-icon">🏆</span>` : '';
 
         return `
         <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}" data-username="${p.username}">

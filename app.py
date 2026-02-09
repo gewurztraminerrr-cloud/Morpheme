@@ -641,17 +641,25 @@ def get_public_profile(username):
     cursor = conn.execute('SELECT config_key, rating FROM user_ratings WHERE user_id = ?', (user[0],))
     config_ratings = {row[0]: row[1] for row in cursor.fetchall()}
 
-    # Get recent rounds (last 50)
-    # Fetch ALL rounds, ordered by most recent first
-    # We fetch everything to:
-    # 1. Calculate stats (averages)
-    # 2. Find exceptional rounds
-    # 3. Get recent history
-    cursor_all = conn.execute('''
+    # Get recent rounds (last 50) with optional period filtering
+    from flask import request
+    period = request.args.get('period', 'all').lower()
+    
+    time_filter = ""
+    if period == 'day':
+        time_filter = "AND timestamp >= datetime('now', '-1 day')"
+    elif period == 'week':
+        time_filter = "AND timestamp >= datetime('now', '-7 days')"
+    elif period == 'month':
+        time_filter = "AND timestamp >= datetime('now', '-30 days')"
+    elif period == 'year':
+        time_filter = "AND timestamp >= datetime('now', '-365 days')"
+
+    cursor_all = conn.execute(f'''
         SELECT room_id, game_type, round_number, board_json, words_json, total_score, 
                round_start_time, round_duration, timestamp, user_rating, performance_ratio, id
         FROM round_history
-        WHERE user_id = ?
+        WHERE user_id = ? {time_filter}
         ORDER BY timestamp DESC
     ''', (user[0],))
     all_rows = cursor_all.fetchall()
@@ -800,6 +808,9 @@ def get_public_profile(username):
 def get_room_achievements(username, game_type, board_dimensions, time_limit):
     """Fetch personal achievements and stats for a specific user and room configuration"""
     import json
+    from flask import request
+    period = request.args.get('period', 'all').lower()
+    
     conn = sqlite3.connect('morpheme.db')
     cursor = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (username,))
     user = cursor.fetchone()
@@ -815,15 +826,24 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     rating_row = cursor.fetchone()
     rating = rating_row[0] if rating_row else 1200
     
-    # 2. Get all rounds for this config
-    # We filter by game_type and round_duration (time_limit)
-    # Since board_dimensions isn't a column, we'll check it from board_json in Python
-    cursor = conn.execute('''
+    # 2. Get all rounds for this config with optional period filtering
+    time_filter = ""
+    if period == 'day':
+        time_filter = "AND timestamp >= datetime('now', '-1 day')"
+    elif period == 'week':
+        time_filter = "AND timestamp >= datetime('now', '-7 days')"
+    elif period == 'month':
+        time_filter = "AND timestamp >= datetime('now', '-30 days')"
+    elif period == 'year':
+        time_filter = "AND timestamp >= datetime('now', '-365 days')"
+        
+    query = f'''
         SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id
         FROM round_history
-        WHERE user_id = ? AND game_type = ? AND round_duration = ?
+        WHERE user_id = ? AND game_type = ? AND round_duration = ? {time_filter}
         ORDER BY timestamp DESC
-    ''', (user_id, game_type, time_limit))
+    '''
+    cursor = conn.execute(query, (user_id, game_type, time_limit))
     
     rows = cursor.fetchall()
     

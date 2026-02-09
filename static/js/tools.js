@@ -813,7 +813,7 @@ async function uploadAvatar(file) {
     }
 }
 
-async function performProfileSearch(username, activeTab = null) {
+async function performProfileSearch(username, activeTab = null, period = 'all') {
     if (!username || !username.trim()) return;
 
     username = username.trim();
@@ -830,7 +830,7 @@ async function performProfileSearch(username, activeTab = null) {
     if (container) container.classList.add('hidden');
 
     try {
-        const response = await fetch(`/api/profile/${encodeURIComponent(username)}`);
+        const response = await fetch(`/api/profile/${encodeURIComponent(username)}?period=${period}`);
         const data = await response.json();
 
         if (data.error) {
@@ -1341,21 +1341,37 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     // 3. Render Board with Dynamic Scaling
     const boardContainer = document.getElementById(`${prefix}-board-container`);
     if (boardContainer && round.board && round.board.length > 0) {
-        boardContainer.innerHTML = '';
         const rows = round.board.length;
         const cols = round.board[0].length;
-        const maxDim = Math.max(rows, cols);
 
-        // Dynamic Font Sizing: 4x4 gets large letters, 6x8 gets standard
-        let fontSize = '2rem';
-        if (maxDim > 4) fontSize = '1.6rem';
-        if (maxDim > 6) fontSize = '1.2rem';
-        if (maxDim > 8) fontSize = '1rem';
+        // Use a small delay to ensure modal layout is stable
+        setTimeout(() => {
+            const layoutMain = document.querySelector('.history-review-layout') || document.getElementById('integrated-replay-panel');
+            if (!layoutMain) return;
 
-        boardContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-        boardContainer.innerHTML = round.board.flat().map(letter => `
-            <div class="review-cell" style="font-size: ${fontSize}">${letter}</div>
-        `).join('');
+            const availWidth = boardContainer.parentElement.clientWidth * 0.6; // Board area usually gets ~60%
+            const availHeight = layoutMain.clientHeight - 80; // Minus header/padding padding
+
+            // Calculate max cell size to fit width and height constraints
+            const gap = 12;
+            const maxCellW = (availWidth - (cols - 1) * gap - 50) / cols;
+            const maxCellH = (availHeight - (rows - 1) * gap - 50) / rows;
+
+            // Optimal cell size (capped for aesthetics on 4x4)
+            const cellSize = Math.floor(Math.min(maxCellW, maxCellH, 120));
+            const fontSize = Math.floor(cellSize * 0.5) + 'px';
+
+            boardContainer.style.display = 'grid';
+            boardContainer.style.gridTemplateColumns = `repeat(${cols}, ${cellSize}px)`;
+            boardContainer.style.gridTemplateRows = `repeat(${rows}, ${cellSize}px)`;
+            boardContainer.style.gap = `${gap}px`;
+
+            boardContainer.innerHTML = round.board.flat().map(letter => `
+                <div class="review-cell" style="width: ${cellSize}px; height: ${cellSize}px; font-size: ${fontSize}">${letter}</div>
+            `).join('');
+
+            console.log(`[Replay] Scaled ${cols}x${rows} board to ${cellSize}px cells`);
+        }, 50);
     }
 
     // 4. Playback Logic
@@ -1606,6 +1622,40 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Modal Achievement Tab Listeners
+    document.querySelectorAll('.modal-tabs .ach-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            if (!currentAchConfig) return;
+            const period = tab.dataset.period;
+            showRoomAchievements(
+                currentAchConfig.username,
+                currentAchConfig.mode,
+                currentAchConfig.board,
+                currentAchConfig.time,
+                period
+            );
+        });
+    });
+
+    // Profile Page Period Tab Listeners (Exceptional Rounds)
+    document.querySelectorAll('.ach-tab-profile').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const period = tab.dataset.period;
+
+            // Update UI immediately
+            document.querySelectorAll('.ach-tab-profile').forEach(t => {
+                if (t === tab) t.classList.add('active');
+                else t.classList.remove('active');
+            });
+
+            // Refresh profile with new period
+            const displayedName = document.getElementById('profile-username')?.innerText;
+            if (displayedName && displayedName !== 'Player') {
+                performProfileSearch(displayedName, 'exceptional', period);
+            }
+        });
+    });
 });
 
 function renderRatingsGrid(configRatings, user = null) {
@@ -1735,9 +1785,22 @@ function setupImageLightbox() {
     }
 }
 
-async function showRoomAchievements(username, mode, board, time) {
+// Achievement state tracking for period switching
+let currentAchConfig = null;
+
+async function showRoomAchievements(username, mode, board, time, period = 'all') {
     const modal = document.getElementById('room-achievements-modal');
     if (!modal) return;
+
+    // Track state for period switching
+    currentAchConfig = { username, mode, board, time };
+
+    // Update tab UI
+    const tabs = document.querySelectorAll('.modal-tabs .ach-tab');
+    tabs.forEach(tab => {
+        if (tab.dataset.period === period) tab.classList.add('active');
+        else tab.classList.remove('active');
+    });
 
     // Set titles
     document.getElementById('achievement-title').textContent = `${username}'s Achievements`;
@@ -1750,7 +1813,7 @@ async function showRoomAchievements(username, mode, board, time) {
     modal.style.opacity = '1';
 
     try {
-        const response = await fetch(`/api/profile/${username}/achievements/${mode}/${board}/${time}`);
+        const response = await fetch(`/api/profile/${username}/achievements/${mode}/${board}/${time}?period=${period}`);
         const data = await response.json();
 
         if (data.error) throw new Error(data.error);
@@ -1758,19 +1821,20 @@ async function showRoomAchievements(username, mode, board, time) {
         // Update Rating
         document.getElementById('achievement-rating-val').textContent = data.rating || 1200;
 
+        // Reset fields if no data
+        const fields = ['ach-high-score', 'ach-max-words', 'ach-longest-word', 'ach-best-word',
+            'ach-games-played', 'ach-wins', 'ach-win-rate', 'ach-total-words', 'ach-total-points',
+            'ach-exc-ratio', 'ach-exc-score', 'ach-exc-date', 'ach-avg-perf', 'ach-avg-winrate',
+            'ach-total-games', 'ach-avg-score', 'ach-avg-words', 'ach-avg-word-pts'];
+
         if (!data.stats) {
-            // No history for this config
-            const fields = ['ach-high-score', 'ach-max-words', 'ach-longest-word', 'ach-best-word',
-                'ach-games-played', 'ach-wins', 'ach-win-rate', 'ach-total-words', 'ach-total-points',
-                'ach-exc-ratio', 'ach-exc-score', 'ach-exc-date'];
             fields.forEach(f => {
                 const el = document.getElementById(f);
                 if (el) el.textContent = '-';
             });
             document.getElementById('ach-total-points').textContent = '0';
-
-            document.getElementById('exceptional-round-info')?.classList.add('hidden');
-            document.getElementById('no-exceptional-msg')?.classList.remove('hidden');
+            document.getElementById('ach-table-perf').innerHTML = '';
+            document.getElementById('ach-table-wins').innerHTML = '';
             return;
         }
 
