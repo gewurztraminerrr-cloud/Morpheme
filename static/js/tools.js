@@ -1638,21 +1638,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Profile Page Period Tab Listeners (Exceptional Rounds)
+    // Profile Page Period Tab Listeners (Rankings & Exceptional)
     document.querySelectorAll('.ach-tab-profile').forEach(tab => {
         tab.addEventListener('click', () => {
             const period = tab.dataset.period;
 
-            // Update UI immediately
-            document.querySelectorAll('.ach-tab-profile').forEach(t => {
-                if (t === tab) t.classList.add('active');
-                else t.classList.remove('active');
-            });
+            // Sync all profile timeframe tabs
+            document.querySelectorAll(`.ach-tab-profile[data-period="${period}"]`).forEach(t => t.classList.add('active'));
+            document.querySelectorAll(`.ach-tab-profile:not([data-period="${period}"])`).forEach(t => t.classList.remove('active'));
 
             // Refresh profile with new period
             const displayedName = document.getElementById('profile-username')?.innerText;
             if (displayedName && displayedName !== 'Player') {
-                performProfileSearch(displayedName, 'exceptional', period);
+                const activeTabEl = document.querySelector('.profile-tab-toggle.active');
+                const activeTab = activeTabEl ? activeTabEl.dataset.tab : 'rankings';
+                performProfileSearch(displayedName, activeTab, period);
             }
         });
     });
@@ -1821,37 +1821,53 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         // Update Rating
         document.getElementById('achievement-rating-val').textContent = data.rating || 1200;
 
-        // Reset fields if no data
-        const fields = ['ach-high-score', 'ach-max-words', 'ach-longest-word', 'ach-best-word',
-            'ach-games-played', 'ach-wins', 'ach-win-rate', 'ach-total-words', 'ach-total-points',
-            'ach-exc-ratio', 'ach-exc-score', 'ach-exc-date', 'ach-avg-perf', 'ach-avg-winrate',
-            'ach-total-games', 'ach-avg-score', 'ach-avg-words', 'ach-avg-word-pts'];
+        // Reset fields helpers
+        const setFields = (obj, mapping) => {
+            for (const [key, id] of Object.entries(mapping)) {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (key.includes('word') && typeof obj[key] === 'object') {
+                        el.textContent = obj[key].word ? `${obj[key].word} (${obj[key].points} pts)` : 'None';
+                    } else {
+                        el.textContent = obj[key] || (typeof obj[key] === 'number' ? '0' : '-');
+                    }
+                }
+            }
+        };
 
-        if (!data.stats) {
-            fields.forEach(f => {
-                const el = document.getElementById(f);
-                if (el) el.textContent = '-';
+        // 1. Populate Global Stats (Top Sections) - Always All-Time
+        if (data.global_stats) {
+            setFields(data.global_stats, {
+                'high_score': 'ach-high-score',
+                'max_words': 'ach-max-words',
+                'longest_word': 'ach-longest-word',
+                'best_word': 'ach-best-word',
+                'games_played': 'ach-games-played',
+                'wins': 'ach-wins'
             });
-            document.getElementById('ach-total-points').textContent = '0';
+            // Ensure labels are static
+            document.getElementById('ach-label-bests').textContent = 'Personal Bests';
+            document.getElementById('ach-label-stats').textContent = 'Lifetime Stats';
+
+            // Win rate for global
+            const gwr = (data.global_stats.wins / data.global_stats.games_played * 100).toFixed(1);
+            document.getElementById('ach-win-rate').textContent = (isNaN(gwr) ? '0' : gwr) + '%';
+            document.getElementById('ach-total-words').textContent = data.global_stats.total_words;
+            document.getElementById('ach-total-points').textContent = data.global_stats.total_score.toLocaleString();
+        }
+
+        // 2. Populate Period Stats (Bottom Lists)
+        if (!data.stats) {
+            // Period specific tables
             document.getElementById('ach-table-perf').innerHTML = '';
             document.getElementById('ach-table-wins').innerHTML = '';
+            document.getElementById('ach-table-recent').innerHTML = '';
+            document.getElementById('ach-table-words').innerHTML = '';
             return;
         }
 
         const stats = data.stats;
-        document.getElementById('ach-high-score').textContent = stats.high_score;
-        document.getElementById('ach-max-words').textContent = stats.max_words;
-        document.getElementById('ach-longest-word').textContent = stats.longest_word || 'None';
-        document.getElementById('ach-best-word').textContent = stats.best_word.word ?
-            `${stats.best_word.word} (${stats.best_word.points} pts)` : 'None';
-
-        document.getElementById('ach-games-played').textContent = stats.games_played;
-        document.getElementById('ach-wins').textContent = stats.wins;
-        document.getElementById('ach-win-rate').textContent = stats.win_rate + '%';
-        document.getElementById('ach-total-words').textContent = stats.total_words;
-        document.getElementById('ach-total-points').textContent = stats.total_score.toLocaleString();
-
-        // Update Averages and Totals
+        // Average and Period specific labels
         document.getElementById('ach-avg-perf').textContent = stats.avg_perf || '-';
         document.getElementById('ach-avg-winrate').textContent = (stats.win_rate || 0) + '%';
         document.getElementById('ach-total-games').textContent = stats.games_played || '0';
@@ -1887,7 +1903,8 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         // 1. Exceptional Performances
         const tablePerf = document.getElementById('ach-table-perf');
         if (tablePerf && stats.exceptional_rounds) {
-            tablePerf.innerHTML = stats.exceptional_rounds.map(r => renderAchRow(r, [
+            const sortedByRatio = [...stats.exceptional_rounds].sort((a, b) => b.ratio - a.ratio);
+            tablePerf.innerHTML = sortedByRatio.map(r => renderAchRow(r, [
                 { val: r.performance_value, style: 'font-weight: 800; color: #60a5fa;' },
                 { val: r.ratio + 'x', style: 'color: rgba(255,255,255,0.6);' },
                 { val: r.total_score, style: 'font-weight: 700;' },
@@ -1899,7 +1916,8 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         // 2. Winning Rounds
         const tableWins = document.getElementById('ach-table-wins');
         if (tableWins && stats.winning_rounds) {
-            tableWins.innerHTML = stats.winning_rounds.map(r => renderAchRow(r, [
+            const sortedWins = [...stats.winning_rounds].sort((a, b) => b.ratio - a.ratio);
+            tableWins.innerHTML = sortedWins.map(r => renderAchRow(r, [
                 { val: r.total_score, style: 'font-weight: 800; color: #4ade80;' },
                 { val: r.performance_value, style: 'font-weight: 700;' },
                 { val: r.all_players.length, style: 'color: rgba(255,255,255,0.5);' },
@@ -1907,11 +1925,13 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             ])).join('');
         }
 
-        // 3. Recent Rounds
+        // 3. Games Played (Recent list - actually sorted by ratio now)
         const tableRecent = document.getElementById('ach-table-recent');
         if (tableRecent && stats.recent_rounds) {
-            tableRecent.innerHTML = stats.recent_rounds.map(r => renderAchRow(r, [
+            const sortedRecent = [...stats.recent_rounds].sort((a, b) => b.ratio - a.ratio);
+            tableRecent.innerHTML = sortedRecent.map(r => renderAchRow(r, [
                 { val: r.total_score, style: 'font-weight: 700;' },
+                { val: r.ratio + 'x', style: 'color: rgba(255,255,255,0.4); font-size: 0.75rem;' },
                 { val: r.is_win ? '<span style="color:#4ade80">WIN</span>' : '<span style="color:rgba(255,255,255,0.3)">-</span>', style: 'font-weight: 800;' },
                 { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
             ])).join('');
@@ -1920,7 +1940,8 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         // 4. Best Scores
         const tableScores = document.getElementById('ach-table-scores');
         if (tableScores && stats.best_scores) {
-            tableScores.innerHTML = stats.best_scores.map(r => renderAchRow(r, [
+            const sortedByScore = [...stats.best_scores].sort((a, b) => b.total_score - a.total_score);
+            tableScores.innerHTML = sortedByScore.map(r => renderAchRow(r, [
                 { val: r.total_score, style: 'font-weight: 800; color: #ffd700;' },
                 { val: r.performance_value, style: 'font-weight: 700;' },
                 { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
@@ -1930,7 +1951,8 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         // 5. Best Word Counts
         const tableWordCounts = document.getElementById('ach-table-wordcounts');
         if (tableWordCounts && stats.best_word_counts) {
-            tableWordCounts.innerHTML = stats.best_word_counts.map(r => renderAchRow(r, [
+            const sortedByCount = [...stats.best_word_counts].sort((a, b) => b.num_words - a.num_words);
+            tableWordCounts.innerHTML = sortedByCount.map(r => renderAchRow(r, [
                 { val: r.num_words, style: 'font-weight: 800; color: #a5b4fc;' },
                 { val: r.avg_len + ' len', style: 'color: rgba(255,255,255,0.6);' },
                 { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
@@ -1940,7 +1962,8 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         // 6. Best Words (Individual)
         const tableWords = document.getElementById('ach-table-words');
         if (tableWords && stats.best_words) {
-            tableWords.innerHTML = stats.best_words.map(w => {
+            const sortedByPoints = [...stats.best_words].sort((a, b) => b.points - a.points);
+            tableWords.innerHTML = sortedByPoints.map(w => {
                 const date = new Date(w.timestamp);
                 return `
                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: background 0.2s;" 

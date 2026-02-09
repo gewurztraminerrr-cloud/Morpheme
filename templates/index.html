@@ -314,97 +314,95 @@
                             <p class="placeholder">No words yet</p>
                         </div>
                     </div>
-
-
-
-                    <div id="tab-content-remaining" class="tab-content">
-                        <div class="words-header-group">
-                            <h3>Remaining</h3>
-                        </div>
-                        <div id="remaining-words-list">
-                            <p class="placeholder">Calculating counts...</p>
-                        </div>
+                </div> <!-- End Summary Grid -->
+                <div id="tab-content-remaining" class="tab-content">
+                    <div class="words-header-group">
+                        <h3>Remaining</h3>
                     </div>
-
-                    <div id="tab-content-clues" class="tab-content">
-                        <div class="words-header-group">
-                            <h3>Clues</h3>
-                        </div>
-                        <div id="clues-list" class="clues-grid">
-                            <p class="placeholder">Loading clues...</p>
-                        </div>
+                    <div id="remaining-words-list">
+                        <p class="placeholder">Calculating counts...</p>
                     </div>
+                </div>
 
-                    <div id="tab-content-previous" class="tab-content">
-                        <div class="words-header-group">
-                            <h3>Previous Day</h3>
-                        </div>
-                        <div id="previous-words-list">
-                            <p class="placeholder">No previous data</p>
-                        </div>
+                <div id="tab-content-clues" class="tab-content">
+                    <div class="words-header-group">
+                        <h3>Clues</h3>
                     </div>
+                    <div id="clues-list" class="clues-grid">
+                        <p class="placeholder">Loading clues...</p>
+                    </div>
+                </div>
 
-                    <div id="tab-content-history" class="tab-content">
-                        <div class="words-header-group">
-                            <h3>Past Winners</h3>
-                        </div>
-                        <div id="history-content">
-                            <p class="history-intro"
-                                style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 15px; padding: 0 5px;">
-                                The following are the past 50 winners.
-                            </p>
-                            <div id="winners-list" class="winners-list-container">
-                                <p class="placeholder">No history available yet</p>
-                            </div>
-                        </div>
+                <div id="tab-content-previous" class="tab-content">
+                    <div class="words-header-group">
+                        <h3>Previous Day</h3>
                     </div>
-                    <div class="definitions-panel">
-                        <div id="definition-header" class="definition-header" style="display: none;">
-                            <span id="definition-word" class="definition-word"></span>
-                        </div>
-                        <div id="definition-content">
-                            <p class="placeholder">Select a word to see its definition</p>
+                    <div id="previous-words-list">
+                        <p class="placeholder">No previous data</p>
+                    </div>
+                </div>
+
+                <div id="tab-content-history" class="tab-content">
+                    <div class="words-header-group">
+                        <h3>Past Winners</h3>
+                    </div>
+                    <div id="history-content">
+                        <p class="history-intro"
+                            style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 15px; padding: 0 5px;">
+                            The following are the past 50 winners.
+                        </p>
+                        <div id="winners-list" class="winners-list-container">
+                            <p class="placeholder">No history available yet</p>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Spinner Set Overlay -->
-            <div id="spinner-overlay" class="spinner-overlay hidden">
-                <div class="spinner-content">
-                    <div id="spinner-winner-announcement" class="winner-announcement hidden">
-                        <p id="spinner-winner-text" class="winner-text"></p>
+                <div class="definitions-panel">
+                    <div id="definition-header" class="definition-header" style="display: none;">
+                        <span id="definition-word" class="definition-word"></span>
                     </div>
-                    <h2>Next Round Parameters</h2>
-                    <div class="spinner-params">
-                        <div class="param-item">
-                            <span class="param-label">Bonus Word Length:</span>
-                            <span class="param-value" id="spinner-bonus-length">-</span>
-                        </div>
-                        <div class="param-item">
-                            <span class="param-label">Minimum Word Length:</span>
-                            <span class="param-value" id="spinner-min-length">-</span>
-                        </div>
-                        <div class="param-item">
-                            <span class="param-label">Difficulty:</span>
-                            <span class="param-value" id="spinner-difficulty">-</span>
-                        </div>
-                        <div class="param-item">
-                            <span class="param-label">Word Count Range:</span>
-                            <span class="param-value" id="spinner-word-count">-</span>
-                        </div>
-                        <div class="param-item">
-                            <span class="param-label">Dictionary:</span>
-                            <span class="param-value" id="spinner-dictionary">-</span>
-                        </div>
-                        <div class="param-item">
-                            <span class="param-label">Board Format:</span>
-                            <span class="param-value" id="spinner-format">-</span>
-                        </div>
+                    <div id="definition-content">
+                        <p class="placeholder">Select a word to see its definition</p>
                     </div>
-                    <button id="close-spinner-btn" class="close-spinner-btn">×</button>
                 </div>
             </div>
+        </div>
+
+        <!-- Spinner Set Overlay -->
+        <div id="spinner-overlay" class="spinner-overlay hidden">
+            <div class="spinner-content">
+                <div id="spinner-winner-announcement" class="winner-announcement hidden">
+                    <p id="spinner-winner-text" class="winner-text"></p>
+                </div>
+                <h2>Next Round Parameters</h2>
+                <div class="spinner-params">
+                    <div class="param-item">
+                        <span class="param-label">Bonus Word Length:</span>
+                        <span class="param-value" id="spinner-bonus-length">-</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-label">Minimum Word Length:</span>
+                        <span class="param-value" id="spinner-min-length">-</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-label">Difficulty:</span>
+                        <span class="param-value" id="spinner-difficulty">-</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-label">Word Count Range:</span>
+                        <span class="param-value" id="spinner-word-count">-</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-label">Dictionary:</span>
+                        <span class="param-value" id="spinner-dictionary">-</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-label">Board Format:</span>
+                        <span class="param-value" id="spinner-format">-</span>
+                    </div>
+                </div>
+                <button id="close-spinner-btn" class="close-spinner-btn">×</button>
+            </div>
+        </div>
         </div>
 
         <!-- Leaderboards Page -->
@@ -701,6 +699,20 @@
 
                                     <div id="profile-tab-rankings" class="profile-tab-pane active">
                                         <div class="profile-ratings-section">
+                                            <!-- Global Profile Period Filter (for Skill Rankings) -->
+                                            <div class="achievement-tabs profile-tabs" style="margin-bottom: 25px;">
+                                                <button class="ach-tab-profile rankings-period"
+                                                    data-period="day">Day</button>
+                                                <button class="ach-tab-profile rankings-period"
+                                                    data-period="week">Week</button>
+                                                <button class="ach-tab-profile rankings-period"
+                                                    data-period="month">Month</button>
+                                                <button class="ach-tab-profile rankings-period"
+                                                    data-period="year">Year</button>
+                                                <button class="ach-tab-profile active rankings-period"
+                                                    data-period="all">All-Time</button>
+                                            </div>
+
                                             <div class="ratings-filters"
                                                 style="display: flex; gap: 15px; margin-bottom: 20px; background: rgba(255,255,255,0.03); padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); align-items: center;">
                                                 <div class="filter-group">
@@ -2035,19 +2047,22 @@
                 <div class="achievement-icon-outer">
                     <div class="achievement-icon-inner">🏆</div>
                 </div>
-                <h2 id="achievement-title">Loading Achievements...</h2>
-                <p id="achievement-subtitle">Mode | Configuration</p>
+                <h2 id="achievement-title">Achievements</h2>
+                <p id="achievement-subtitle">Room Configuration</p>
 
-                <div class="achievement-rating-badge">
+                <div class="achievement-rating-badge"
+                    style="background: rgba(255,183,77,0.1); color: #ffb74d; border: 1px solid rgba(255,183,77,0.2); padding: 5px 12px; border-radius: 8px; font-weight: 800; font-size: 0.9rem;">
                     Rating: <span id="achievement-rating-val">-</span>
                 </div>
             </div>
 
 
-            <div class="achievement-grid">
+            <!-- Summary Stats (All-Time Static) -->
+            <div class="achievement-grid"
+                style="margin-bottom: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                 <!-- Personal Bests -->
                 <div class="achievement-section">
-                    <h3>Personal Bests</h3>
+                    <h3 id="ach-label-bests">Personal Bests</h3>
                     <div class="stat-item">
                         <span class="stat-label">Highest Score</span>
                         <span class="stat-value" id="ach-high-score">-</span>
@@ -2065,10 +2080,9 @@
                         <span class="stat-value" id="ach-best-word" style="font-size: 0.9rem; color: #ffd700;">-</span>
                     </div>
                 </div>
-
                 <!-- Lifetime Stats -->
                 <div class="achievement-section">
-                    <h3>Lifetime Stats</h3>
+                    <h3 id="ach-label-stats">Lifetime Stats</h3>
                     <div class="stat-item">
                         <span class="stat-label">Games Played</span>
                         <span class="stat-value" id="ach-games-played">-</span>
@@ -2086,17 +2100,25 @@
                         <span class="stat-value" id="ach-total-words">-</span>
                     </div>
                 </div>
+            </div>
 
-                <!-- Time Segments (Moved under Bests/Stats per user request) -->
-                <div class="achievement-tabs modal-tabs"
-                    style="grid-column: 1 / -1; margin: 10px 0 20px 0; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
-                    <button class="ach-tab" data-period="day">Day</button>
-                    <button class="ach-tab" data-period="week">Week</button>
-                    <button class="ach-tab" data-period="month">Month</button>
-                    <button class="ach-tab" data-period="year">Year</button>
-                    <button class="ach-tab active" data-period="all">All-Time</button>
-                </div>
+            <!-- Time Selection Tabs (Filtered for the lists below) -->
+            <div class="achievement-tabs modal-tabs"
+                style="display: flex; background: rgba(0,0,0,0.4); padding: 6px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 25px; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                <button class="ach-tab" data-period="day"
+                    style="flex:1; border:none; padding: 12px 5px; font-size: 0.75rem;">DAY</button>
+                <button class="ach-tab" data-period="week"
+                    style="flex:1; border:none; padding: 12px 5px; font-size: 0.75rem;">WEEK</button>
+                <button class="ach-tab" data-period="month"
+                    style="flex:1; border:none; padding: 12px 5px; font-size: 0.75rem;">MONTH</button>
+                <button class="ach-tab" data-period="year"
+                    style="flex:1; border:none; padding: 12px 5px; font-size: 0.75rem;">YEAR</button>
+                <button class="ach-tab active" data-period="all"
+                    style="flex:1.2; border:none; padding: 12px 5px; font-size: 0.75rem;">ALL-TIME</button>
+            </div>
 
+            <!-- Detailed Achievement Tables (Filtered by Tabs) -->
+            <div id="achievement-tab-content" style="display: flex; flex-direction: column; gap: 40px; width: 100%;">
                 <!-- Exceptional Performances -->
                 <div class="achievement-section" style="grid-column: 1 / -1;">
                     <div
@@ -2314,20 +2336,24 @@
                 </div>
             </div>
 
-            <div class="achievement-footer">
-                <div class="total-points-display">
-                    <span class="total-label">Lifetime Points</span>
-                    <span class="total-val" id="ach-total-points">0</span>
-                </div>
-            </div>
+        </div> <!-- End Tab Content -->
+    </div> <!-- End Period Panel -->
+
+    <div class="achievement-footer">
+        <div class="total-points-display">
+            <span class="total-label">Lifetime Points</span>
+            <span class="total-val" id="ach-total-points">0</span>
         </div>
+    </div>
+    </div>
     </div>
 
     <!-- Contact Page -->
     <div id="page-contact" class="page">
         <div class="auth-container">
             <h2>Contact Us</h2>
-            <p style="text-align: center; margin-bottom: 25px; opacity: 0.8;">Have questions or feedback? Send us a
+            <p style="text-align: center; margin-bottom: 25px; opacity: 0.8;">Have questions or feedback?
+                Send us a
                 message.</p>
 
             <form id="contact-form" class="auth-form active">

@@ -3051,6 +3051,24 @@ body {
     box-shadow: 0 4px 12px rgba(0, 114, 255, 0.4);
 }
 
+/* Modal specific overrides for high visibility */
+.modal-tabs .ach-tab {
+    padding: 10px 5px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.2s;
+}
+
+.modal-tabs .ach-tab.active {
+    background: #fff;
+    color: #1a1a2e;
+    border-color: #fff;
+    box-shadow: 0 10px 30px rgba(255, 255, 255, 0.25);
+    transform: scale(1.05);
+    font-weight: 900;
+}
+
 
 .achievement-grid {
     display: grid;
