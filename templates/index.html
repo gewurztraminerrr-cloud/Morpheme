@@ -314,56 +314,59 @@
                             <p class="placeholder">No words yet</p>
                         </div>
                     </div>
-                </div> <!-- End Summary Grid -->
-                <div id="tab-content-remaining" class="tab-content">
-                    <div class="words-header-group">
-                        <h3>Remaining</h3>
-                    </div>
-                    <div id="remaining-words-list">
-                        <p class="placeholder">Calculating counts...</p>
-                    </div>
-                </div>
 
-                <div id="tab-content-clues" class="tab-content">
-                    <div class="words-header-group">
-                        <h3>Clues</h3>
-                    </div>
-                    <div id="clues-list" class="clues-grid">
-                        <p class="placeholder">Loading clues...</p>
-                    </div>
-                </div>
-
-                <div id="tab-content-previous" class="tab-content">
-                    <div class="words-header-group">
-                        <h3>Previous Day</h3>
-                    </div>
-                    <div id="previous-words-list">
-                        <p class="placeholder">No previous data</p>
-                    </div>
-                </div>
-
-                <div id="tab-content-history" class="tab-content">
-                    <div class="words-header-group">
-                        <h3>Past Winners</h3>
-                    </div>
-                    <div id="history-content">
-                        <p class="history-intro"
-                            style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 15px; padding: 0 5px;">
-                            The following are the past 50 winners.
-                        </p>
-                        <div id="winners-list" class="winners-list-container">
-                            <p class="placeholder">No history available yet</p>
+                    <div id="tab-content-remaining" class="tab-content">
+                        <div class="words-header-group">
+                            <h3>Remaining</h3>
+                        </div>
+                        <div id="remaining-words-list">
+                            <p class="placeholder">Calculating counts...</p>
                         </div>
                     </div>
-                </div>
-                <div class="definitions-panel">
-                    <div id="definition-header" class="definition-header" style="display: none;">
-                        <span id="definition-word" class="definition-word"></span>
+
+
+                    <div id="tab-content-clues" class="tab-content">
+                        <div class="words-header-group">
+                            <h3>Clues</h3>
+                        </div>
+                        <div id="clues-list" class="clues-grid">
+                            <p class="placeholder">Loading clues...</p>
+                        </div>
                     </div>
-                    <div id="definition-content">
-                        <p class="placeholder">Select a word to see its definition</p>
+
+
+                    <div id="tab-content-previous" class="tab-content">
+                        <div class="words-header-group">
+                            <h3>Previous Day</h3>
+                        </div>
+                        <div id="previous-words-list">
+                            <p class="placeholder">No previous data</p>
+                        </div>
                     </div>
-                </div>
+
+                    <div id="tab-content-history" class="tab-content">
+                        <div class="words-header-group">
+                            <h3>Past Winners</h3>
+                        </div>
+                        <div id="history-content">
+                            <p class="history-intro"
+                                style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 15px; padding: 0 5px;">
+                                The following are the past 50 winners.
+                            </p>
+                            <div id="winners-list" class="winners-list-container">
+                                <p class="placeholder">No history available yet</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="definitions-panel">
+                        <div id="definition-header" class="definition-header" style="display: none;">
+                            <span id="definition-word" class="definition-word"></span>
+                        </div>
+                        <div id="definition-content">
+                            <p class="placeholder">Select a word to see its definition</p>
+                        </div>
+                    </div>
+                </div> <!-- End Words Panel -->
             </div>
         </div>
 
@@ -560,6 +563,7 @@
                     <button class="tool-nav-btn" data-tool="manual">Manual</button>
                     <button class="tool-nav-btn" data-tool="random">Random Word</button>
                     <button class="tool-nav-btn" data-tool="wotd">Word of the Day</button>
+                    <button class="tool-nav-btn" data-tool="unscramble">Unscramble</button>
                     <!-- Future tools go here -->
                 </div>
 
@@ -700,18 +704,7 @@
                                     <div id="profile-tab-rankings" class="profile-tab-pane active">
                                         <div class="profile-ratings-section">
                                             <!-- Global Profile Period Filter (for Skill Rankings) -->
-                                            <div class="achievement-tabs profile-tabs" style="margin-bottom: 25px;">
-                                                <button class="ach-tab-profile rankings-period"
-                                                    data-period="day">Day</button>
-                                                <button class="ach-tab-profile rankings-period"
-                                                    data-period="week">Week</button>
-                                                <button class="ach-tab-profile rankings-period"
-                                                    data-period="month">Month</button>
-                                                <button class="ach-tab-profile rankings-period"
-                                                    data-period="year">Year</button>
-                                                <button class="ach-tab-profile active rankings-period"
-                                                    data-period="all">All-Time</button>
-                                            </div>
+
 
                                             <div class="ratings-filters"
                                                 style="display: flex; gap: 15px; margin-bottom: 20px; background: rgba(255,255,255,0.03); padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); align-items: center;">
@@ -1190,9 +1183,97 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Unscramble Tool Interface -->
+                    <div id="tool-unscramble" class="tool-pane"
+                        style="flex-direction: column; align-items: center; text-align: center; width: 100%;">
+                        <div class="tool-header" style="text-align: center; padding: 0; width: 100%;">
+                            <h2>Unscramble</h2>
+                            <p style="margin-bottom: 25px;">Test your skills: Guess the word from jumbled letters.</p>
+                        </div>
+
+                        <div class="combo-control-panel"
+                            style="padding: 20px; justify-content: center; display: flex; width: 100%; margin: 0 0 25px 0; background: rgba(255, 255, 255, 0.05);">
+                            <div class="input-row"
+                                style="justify-content: center !important; display: flex !important; gap: 12px;">
+                                <select id="unscramble-length" style="width: 120px;">
+                                    <option value="3">Len: 3</option>
+                                    <option value="4">Len: 4</option>
+                                    <option value="5">Len: 5</option>
+                                    <option value="6">Len: 6</option>
+                                    <option value="7" selected>Len: 7</option>
+                                    <option value="8">Len: 8</option>
+                                    <option value="9">Len: 9</option>
+                                    <option value="10">Len: 10</option>
+                                    <option value="11">Len: 11</option>
+                                    <option value="12">Len: 12</option>
+                                    <option value="13">Len: 13</option>
+                                    <option value="14">Len: 14</option>
+                                    <option value="15">Len: 15</option>
+                                </select>
+                                <select id="unscramble-dict" style="width: 140px;">
+                                    <option value="NWL">NWL (US)</option>
+                                    <option value="CSW">CSW (Intl)</option>
+                                    <option value="randomTWLunique">Uniques</option>
+                                </select>
+                                <button id="unscramble-gen-btn">New Game</button>
+                            </div>
+                        </div>
+
+                        <div class="unscramble-container"
+                            style="display: flex; flex-direction: row; align-items: stretch; justify-content: flex-start; gap: 30px; margin-top: 40px; width: 100%; height: 600px;">
+
+                            <!-- Left Area: Results (Now with premium styling) -->
+                            <div id="unscramble-found-container" class="hidden"
+                                style="width: 380px; background: rgba(30,30,50,0.6); backdrop-filter: blur(15px); border-radius: 20px; padding: 25px; border: 1px solid rgba(255,255,255,0.1); text-align: left; flex-direction: column; flex-shrink: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.3); height: 100%;">
+                                <h3
+                                    style="font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; text-align: center; font-weight: 800; letter-spacing: 2px;">
+                                    Status & Results</h3>
+                                <div id="unscramble-found-list"
+                                    style="display: flex; flex-direction: column; gap: 15px; overflow-y: auto; flex: 1; padding: 5px 15px 5px 5px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent;">
+                                    <!-- List of found words -->
+                                </div>
+                            </div>
+
+                            <!-- Right Area: Game Dashboard (Moved inside container) -->
+                            <div class="unscramble-game-area"
+                                style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 25px; flex: 1; background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); padding: 40px; height: 100%;">
+
+                                <div style="display: flex; flex-direction: column; align-items: center;">
+                                    <div id="unscramble-jumbled" class="random-word-large"
+                                        style="letter-spacing: 15px; font-weight: 900; color: #ffd700; text-shadow: 0 0 30px rgba(255,215,0,0.4); font-size: 5rem; margin-bottom: 5px; font-family: 'Outfit', sans-serif;">
+                                        <!-- Jumbled word -->
+                                    </div>
+                                    <div id="unscramble-count-info"
+                                        style="font-size: 1rem; color: rgba(255,255,255,0.4); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                                        <!-- "X words possible" -->
+                                    </div>
+                                </div>
+
+                                <div class="input-dashboard"
+                                    style="display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; max-width: 450px; margin-top: 20px;">
+
+                                    <input type="text" id="unscramble-input" placeholder="Enter word..."
+                                        autocomplete="off"
+                                        style="width: 100%; text-transform: uppercase; text-align: center; font-size: 1.5rem; padding: 15px; letter-spacing: 2px; border: 2px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: #fff; border-radius: 12px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); outline: none;">
+
+                                    <div style="display: flex; gap: 15px; width: 100%;">
+                                        <button id="unscramble-check-btn" class="primary-action"
+                                            style="flex: 2; height: 55px; font-size: 1rem; font-weight: 700; border-radius: 12px; background: linear-gradient(135deg, #2ecc71, #27ae60); border: none; color: #fff; cursor: pointer; transition: all 0.3s ease;">
+                                            Check Word
+                                        </button>
+                                        <button id="unscramble-reveal-btn" class="secondary-action"
+                                            style="flex: 1; height: 55px; font-size: 1rem; font-weight: 700; border-radius: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer; transition: all 0.3s ease;">
+                                            Reveal
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
-        </div>
         </div>
 
         <!-- Contact Page -->
@@ -1223,12 +1304,12 @@
                                 placeholder="Type your detailed message to the developer here..." required></textarea>
                         </div>
 
-                        <div id="contact-status" class="contact-status"></div>
-
-                        <button type="submit" class="submit-contact-btn">
+                        <button type="submit" class="submit-contact-btn" style="margin-top: 25px;">
                             <span class="btn-text">Send Message</span>
                             <span class="btn-icon">✈</span>
                         </button>
+
+                        <div id="contact-status" class="contact-status"></div>
                     </form>
                 </div>
             </div>
@@ -1257,7 +1338,7 @@
                     <button class="theme-btn" data-theme="white" style="background: #ffffff; border: 1px solid #ccc;"
                         title="White"></button>
                     <button class="theme-btn" data-theme="light-gray"
-                        style="background: #f0f0f0; border: 1px solid #ccc;" title="Light Gray"></button>
+                        style="background: #d8d8d8; border: 1px solid #ccc;" title="Light Gray"></button>
                     <button class="theme-btn" data-theme="gray" style="background: #808080;" title="Gray"></button>
                     <button class="theme-btn" data-theme="dark-gray" style="background: #333333;"
                         title="Dark Gray"></button>
@@ -1690,9 +1771,10 @@
                 <div class="instruction-card">
                     <div class="giant-trophy">🏆</div>
                     <h3>Rise to Logic</h3>
-                    <p>Compete in real-time. Applying well-established or personal strategies can make the difference
-                        between someone rated 1200 to someone rated 2000. The lifelong pursuit of mastering a simple
-                        game to incomprehensible levels and beyond is what makes this game harmonious and everlasting.
+                    <p>Climb the ranks and challenge your intellect against a global community of players. Whether
+                        you're a casual optimizer or a grandmaster of lexical theory, every round is a test of speed,
+                        pattern recognition, and strategic foresight. Refine your tactics, outperform the field, and
+                        claim your place among the elite.
                     </p>
                 </div>
             </div>
@@ -1882,7 +1964,7 @@
     <script src="/js/app.js"></script>
     <script src="/js/lobby.js"></script>
     <script src="/js/play.js"></script>
-    <script src="/js/leaderboard.js"></script>
+    <script src="/js/leaderboard.js?v=1"></script>
 
     <!-- History Review Overlay -->
     <div id="history-review-overlay" class="overlay hidden">
@@ -2339,43 +2421,26 @@
         </div> <!-- End Tab Content -->
     </div> <!-- End Period Panel -->
 
-    <div class="achievement-footer">
-        <div class="total-points-display">
-            <span class="total-label">Lifetime Points</span>
-            <span class="total-val" id="ach-total-points">0</span>
-        </div>
-    </div>
+
     </div>
     </div>
 
-    <!-- Contact Page -->
-    <div id="page-contact" class="page">
-        <div class="auth-container">
-            <h2>Contact Us</h2>
-            <p style="text-align: center; margin-bottom: 25px; opacity: 0.8;">Have questions or feedback?
-                Send us a
-                message.</p>
 
-            <form id="contact-form" class="auth-form active">
-                <div class="form-group">
-                    <label>From User Email</label>
-                    <input type="email" id="contact-user-email" placeholder="your@email.com" required>
-                </div>
 
-                <div class="form-group">
-                    <label>To Developer Email</label>
-                    <input type="text" value="support@morpheme.com" disabled style="opacity: 0.6; cursor: not-allowed;">
-                </div>
-
-                <div class="form-group">
-                    <label>Message</label>
-                    <textarea id="contact-message" placeholder="Type your message here..." required
-                        style="width: 100%; border-radius: 8px; color: #fff; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255, 255, 255, 0.3); box-sizing: border-box; resize: vertical;"></textarea>
-                </div>
-
-                <button type="submit" class="submit-contact-btn">Send Message</button>
-                <div id="contact-status" class="contact-status" style="text-align: center; margin-top: 10px;"></div>
-            </form>
+    <!-- Generic Info Modal -->
+    <div id="generic-info-modal" class="modal-overlay hidden">
+        <div class="achievement-card"
+            style="max-width: 400px; padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+            <div class="modal-header"
+                style="padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                <h2 id="generic-modal-title" style="margin: 0; font-size: 1.2rem;">Info</h2>
+                <button class="close-overlay" id="close-generic-modal"
+                    style="position: static; transform: none;">&times;</button>
+            </div>
+            <div id="generic-modal-body"
+                style="max-height: 400px; overflow-y: auto; padding: 10px; flex: 1; scrollbar-width: thin;">
+                <!-- Content injected here -->
+            </div>
         </div>
     </div>
 

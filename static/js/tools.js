@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupPrivateMessaging();
     setupMiniProfileModal();
     setupImageLightbox();
+    setupUnscrambleTool();
 });
 
 function setupToolsNavigation() {
@@ -827,7 +828,13 @@ async function performProfileSearch(username, activeTab = null, period = 'all') 
         return;
     }
 
-    if (container) container.classList.add('hidden');
+    // Check if we are refreshing the current user (e.g. changing tabs/periods)
+    const currentDisplayed = document.getElementById('profile-username')?.innerText || '';
+    const isRefresh = currentDisplayed === username;
+
+    if (container && !isRefresh) {
+        container.classList.add('hidden');
+    }
 
     try {
         const response = await fetch(`/api/profile/${encodeURIComponent(username)}?period=${period}`);
@@ -1110,7 +1117,7 @@ async function renderProfile(user) {
 
             <div style="font-weight: 900; color: #fff; font-size: 0.95rem;">${round.total_score} <small style="font-size: 0.6rem; opacity: 0.5;">PTS</small></div>
 
-            <div style="font-weight: 900; color: ${round.performance_value >= 140 ? '#60a5fa' : 'rgba(255,255,255,0.2)'}; font-size: 0.85rem;">${round.performance_value || '-'}</div>
+            <div style="font-weight: 900; color: ${round.performance_value >= 140 ? '#60a5fa' : 'rgba(255,255,255,0.2)'}; font-size: 0.85rem;">${round.performance_value ? (round.performance_value / 100).toFixed(2) + 'x' : '-'}</div>
             <div style="display: flex; flex-direction: column; gap: 1px;">
                 <span style="color: #fff; font-size: 0.7rem; font-weight: 700;">${round.num_words} words</span>
                 <span style="color: rgba(255,255,255,0.3); font-size: 0.6rem;">Avg: ${round.avg_len}</span>
@@ -1132,7 +1139,7 @@ async function renderProfile(user) {
             <div>Mode</div>
             <div style="text-align: center;">Board</div>
             <div>Score</div>
-            <div>Perf</div>
+            <div>PE</div>
             <div>Stats</div>
             <div>Top Word</div>
             <div>Room</div>
@@ -1169,8 +1176,7 @@ async function renderProfile(user) {
     // Render Ratings Grid (32 setups)
     renderRatingsGrid(user.config_ratings || {}, user);
 
-    // Cache rounds for review
-    window.lastRenderedRounds = user.recent_rounds || [];
+
 
     setupProfileEditing(isOwner);
 }
@@ -1241,10 +1247,18 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     let rounds = window.lastRenderedRounds || [];
     let round = null;
 
-    // A) Try Fallback/Lobby First (More likely for active session)
-    // IMPORTANT: Only use lobby history if it matches the requested gameId (if provided) or room/round context
-    // Lobby history often comes from "winners_history" which might lack game_id, so be careful.
-    if (!gameId && window.lastGameState && window.lastGameState.winners_history && window.lastGameState.room_id === roomId) {
+    // A) Try Profile/Recent Rounds First (Preferred source for own history)
+    if (gameId) {
+        round = rounds.find(r => r.game_id == gameId);
+    }
+    if (!round) {
+        // Fallback to oldheuristic
+        round = rounds.find(r => r.room_id == roomId && r.round_number == roundNum);
+    }
+
+    // B) Fallback to Lobby History (If not found in profile)
+    // Only use if we didn't find it in detailed history
+    if (!round && window.lastGameState && window.lastGameState.winners_history && window.lastGameState.room_id === roomId) {
         const foundInLobby = window.lastGameState.winners_history.find(h => h.round == roundNum);
         if (foundInLobby && foundInLobby.board) {
             console.log(`[Review] Using Round ${roundNum} from Lobby winners_history`);
@@ -1258,16 +1272,7 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
         }
     }
 
-    // B) Fallback to Profile/Recent Rounds (using GameID if available)
-    if (!round) {
-        if (gameId) {
-            round = rounds.find(r => r.game_id == gameId);
-        }
-        if (!round) {
-            // Fallback to old heuristic
-            round = rounds.find(r => r.room_id == roomId && r.round_number == roundNum);
-        }
-    }
+
 
     if (!round) {
         alert("Round details not available. This round may have happened before the snapshot system was enabled.");
@@ -1427,13 +1432,16 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     };
 
     const showAllWords = () => {
-        // Newest words first as requested
-        const reversedWords = [...sortedWords].reverse();
+        // Show in chronological order (Order Found) as requested
+        // Previously reversed (Newest First), now standard (Oldest First)
         if (walkthroughList) {
-            walkthroughList.innerHTML = reversedWords.map(w => renderWord(w)).join('');
+            walkthroughList.innerHTML = sortedWords.map(w => renderWord(w)).join('');
             if (sortedWords.length === 0) {
                 walkthroughList.innerHTML = '<p class="placeholder" style="color:rgba(255,255,255,0.2); text-align:center; padding:40px;">No words found in this round.</p>';
             }
+            // Auto-scroll to bottom to show latest? Or top? 
+            // Usually start at top.
+            walkthroughList.scrollTop = 0;
         }
 
         // Ensure "Show All" is hidden, and "Watch" is visible (reset state)
@@ -1448,7 +1456,7 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
         if (currentScoreEl) currentScoreEl.innerText = `${round.total_score} pts`;
     };
 
-    // ALWAYS Show All Words initially (User Requirement: "Round Replay does not have any words listed before...")
+    // ALWAYS Show All Words initially
     showAllWords();
 
     // Snapshot Mode logic merged with above (always show initially)
@@ -1498,9 +1506,11 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
                     if (elapsed >= relWordTime || isNaN(relWordTime)) {
                         console.log(`[Review] Displaying word: ${word.word} (relative: ${relWordTime ? relWordTime.toFixed(1) : 'NaN'}s)`);
 
-                        // Insert at TOP for newest-first order
+                        // Insert at BOTTOM (Chronological: Order Found)
                         if (walkthroughList) {
-                            walkthroughList.insertAdjacentHTML('afterbegin', renderWord(word));
+                            walkthroughList.insertAdjacentHTML('beforeend', renderWord(word));
+                            // Optional: Scroll to follow?
+                            walkthroughList.scrollTop = walkthroughList.scrollHeight;
                         }
 
                         currentScore += word.points;
@@ -1795,6 +1805,13 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
     // Track state for period switching
     currentAchConfig = { username, mode, board, time };
 
+    // Capture Scroll Position to prevent jumping to top on filter change
+    const card = modal.querySelector('.achievement-card');
+    let previousScroll = 0;
+    if (!modal.classList.contains('hidden') && card) {
+        previousScroll = card.scrollTop;
+    }
+
     // Update tab UI
     const tabs = document.querySelectorAll('.modal-tabs .ach-tab');
     tabs.forEach(tab => {
@@ -1853,7 +1870,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             const gwr = (data.global_stats.wins / data.global_stats.games_played * 100).toFixed(1);
             document.getElementById('ach-win-rate').textContent = (isNaN(gwr) ? '0' : gwr) + '%';
             document.getElementById('ach-total-words').textContent = data.global_stats.total_words;
-            document.getElementById('ach-total-points').textContent = data.global_stats.total_score.toLocaleString();
+
         }
 
         // 2. Populate Period Stats (Bottom Lists)
@@ -1903,7 +1920,11 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         // 1. Exceptional Performances
         const tablePerf = document.getElementById('ach-table-perf');
         if (tablePerf && stats.exceptional_rounds) {
-            const sortedByRatio = [...stats.exceptional_rounds].sort((a, b) => b.ratio - a.ratio);
+            // Sort by Ratio (Impressiveness) DESC, then Timestamp DESC
+            const sortedByRatio = [...stats.exceptional_rounds].sort((a, b) => {
+                if (b.ratio !== a.ratio) return b.ratio - a.ratio;
+                return new Date(b.timestamp) - new Date(a.timestamp);
+            });
             tablePerf.innerHTML = sortedByRatio.map(r => renderAchRow(r, [
                 { val: r.performance_value, style: 'font-weight: 800; color: #60a5fa;' },
                 { val: r.ratio + 'x', style: 'color: rgba(255,255,255,0.6);' },
@@ -1916,7 +1937,11 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         // 2. Winning Rounds
         const tableWins = document.getElementById('ach-table-wins');
         if (tableWins && stats.winning_rounds) {
-            const sortedWins = [...stats.winning_rounds].sort((a, b) => b.ratio - a.ratio);
+            // Sort by Score DESC (Impressiveness), then Timestamp DESC
+            const sortedWins = [...stats.winning_rounds].sort((a, b) => {
+                if (b.total_score !== a.total_score) return b.total_score - a.total_score;
+                return new Date(b.timestamp) - new Date(a.timestamp);
+            });
             tableWins.innerHTML = sortedWins.map(r => renderAchRow(r, [
                 { val: r.total_score, style: 'font-weight: 800; color: #4ade80;' },
                 { val: r.performance_value, style: 'font-weight: 700;' },
@@ -1925,10 +1950,11 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             ])).join('');
         }
 
-        // 3. Games Played (Recent list - actually sorted by ratio now)
+        // 3. Games Played (Recent list - keep as Recency)
         const tableRecent = document.getElementById('ach-table-recent');
         if (tableRecent && stats.recent_rounds) {
-            const sortedRecent = [...stats.recent_rounds].sort((a, b) => b.ratio - a.ratio);
+            // Sort by Timestamp (True Recency for "Recent" list)
+            const sortedRecent = [...stats.recent_rounds].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             tableRecent.innerHTML = sortedRecent.map(r => renderAchRow(r, [
                 { val: r.total_score, style: 'font-weight: 700;' },
                 { val: r.ratio + 'x', style: 'color: rgba(255,255,255,0.4); font-size: 0.75rem;' },
@@ -1981,6 +2007,13 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
 
         function dateToShort(d) {
             return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
+        }
+
+        // Restore Scroll Position
+        if (card && previousScroll > 0) {
+            setTimeout(() => {
+                card.scrollTop = previousScroll;
+            }, 0);
         }
 
     } catch (err) {
@@ -3050,4 +3083,343 @@ window.handleToastRespond = (sender) => {
 
 // Make openPrivateChat global for potential use elsewhere
 window.openPrivateChat = openPrivateChat;
+
+let unscrambleState = {
+    solution: new Set(),
+    found: [],
+    incorrect: [],
+    jumbled: "",
+    isWaiting: false,
+    history: [],
+    nextData: null
+};
+
+function setupUnscrambleTool() {
+    const genBtn = document.getElementById('unscramble-gen-btn');
+    const checkBtn = document.getElementById('unscramble-check-btn');
+    const revealBtn = document.getElementById('unscramble-reveal-btn');
+    const input = document.getElementById('unscramble-input');
+
+    if (genBtn) genBtn.onclick = () => startNewUnscramble();
+    if (checkBtn) checkBtn.onclick = () => checkUnscrambleGuess();
+    if (revealBtn) revealBtn.onclick = () => revealUnscrambleSolutions();
+
+    if (input) {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                checkUnscrambleGuess();
+            }
+        });
+        // Auto-focus the input when the pane might be clicked
+        input.addEventListener('focus', () => {
+            if (!unscrambleState.jumbled) startNewUnscramble();
+        });
+    }
+
+    // Trigger initial load if empty
+    setTimeout(() => {
+        const display = document.getElementById('unscramble-jumbled');
+        if (display && (!display.innerText || display.innerText === "Loading...")) {
+            startNewUnscramble();
+        }
+    }, 500);
+}
+
+async function startNewUnscramble(keepFound = false) {
+    if (unscrambleNextTimeout) {
+        clearTimeout(unscrambleNextTimeout);
+        unscrambleNextTimeout = null;
+    }
+
+    if (!keepFound && unscrambleState.jumbled) {
+        // Save CURRENT round to history
+        unscrambleState.history.unshift({
+            jumbled: unscrambleState.jumbled,
+            found: [...unscrambleState.found],
+            solutions: Array.from(unscrambleState.solution),
+            timestamp: new Date().toLocaleTimeString()
+        });
+        if (unscrambleState.history.length > 50) unscrambleState.history.pop();
+    }
+
+    unscrambleState.isWaiting = false;
+
+    const lenInput = document.getElementById('unscramble-length');
+    const dictInput = document.getElementById('unscramble-dict');
+    const len = lenInput ? lenInput.value : 5;
+    const dict = dictInput ? dictInput.value : 'NWL';
+
+    const display = document.getElementById('unscramble-jumbled');
+    const info = document.getElementById('unscramble-count-info');
+    const foundList = document.getElementById('unscramble-found-list');
+    const input = document.getElementById('unscramble-input');
+    const revealBtn = document.getElementById('unscramble-reveal-btn');
+    const genBtn = document.getElementById('unscramble-gen-btn');
+    const checkBtn = document.getElementById('unscramble-check-btn');
+
+    if (display) display.innerText = "Generating...";
+
+    const resContainer = document.getElementById('unscramble-found-container');
+    if (resContainer) {
+        resContainer.classList.remove('hidden');
+        resContainer.style.display = 'flex';
+    }
+
+    if (revealBtn) {
+        revealBtn.innerText = "Unscramble";
+        revealBtn.disabled = false;
+        revealBtn.style.background = '';
+    }
+    if (genBtn) genBtn.disabled = false;
+    if (checkBtn) checkBtn.disabled = false;
+
+    if (input) {
+        input.value = '';
+        input.placeholder = "Loading...";
+        input.disabled = true;
+    }
+
+    if (!keepFound) {
+        unscrambleState.found = [];
+        unscrambleState.incorrect = [];
+        if (foundList) foundList.innerHTML = '';
+    }
+
+    try {
+        let data;
+        // USE PREFETCHED DATA IF AVAILABLE AND MATCHES SETTINGS
+        if (unscrambleState.nextData && unscrambleState.nextData.len == len && unscrambleState.nextData.dict == dict) {
+            data = unscrambleState.nextData.data;
+            unscrambleState.nextData = null;
+            console.log("Using prefetched unscramble data");
+        } else {
+            const resp = await fetch(`/api/tools/unscramble/random?length=${len}&dictionary=${dict}`);
+            data = await resp.json();
+        }
+
+        if (data.error) {
+            alert(data.error);
+            if (display) display.innerText = "Error";
+            return;
+        }
+
+        unscrambleState.jumbled = data.jumbled;
+        unscrambleState.solution = new Set(data.words.map(w => w.toUpperCase()));
+
+        if (display) display.innerText = data.jumbled.toUpperCase();
+        if (info) info.innerText = `${data.count} word${data.count !== 1 ? 's' : ''} possible`;
+
+        renderUnscrambleFound();
+
+        if (input) {
+            input.placeholder = "Type here...";
+            input.disabled = false;
+            input.focus();
+        }
+
+        // TRIGGER PREFETCH FOR THE NEXT ONE
+        prefetchUnscramble();
+
+    } catch (err) {
+        console.error("Unscramble Fetch Error:", err);
+        if (display) display.innerText = "Network Error";
+        if (input) {
+            input.placeholder = "Error - Retry";
+            input.disabled = false;
+        }
+    }
+}
+
+async function prefetchUnscramble() {
+    const lenInput = document.getElementById('unscramble-length');
+    const dictInput = document.getElementById('unscramble-dict');
+    const len = lenInput ? lenInput.value : 5;
+    const dict = dictInput ? dictInput.value : 'NWL';
+
+    try {
+        const resp = await fetch(`/api/tools/unscramble/random?length=${len}&dictionary=${dict}`);
+        const data = await resp.json();
+        if (!data.error) {
+            unscrambleState.nextData = { data, len, dict };
+            console.log("Next unscramble prefetched");
+        }
+    } catch (e) { }
+}
+
+function renderUnscrambleHistory() {
+    // This is now integrated into renderUnscrambleFound
+    renderUnscrambleFound();
+}
+
+function checkUnscrambleGuess() {
+    const input = document.getElementById('unscramble-input');
+    if (!input || input.disabled) return;
+
+    const guess = input.value.trim().toUpperCase();
+    if (!guess) return;
+
+    if (unscrambleState.solution && unscrambleState.solution.has(guess)) {
+        if (!unscrambleState.found.includes(guess)) {
+            unscrambleState.found.push(guess);
+            renderUnscrambleFound();
+
+            input.style.borderColor = '#4caf50';
+            setTimeout(() => { if (input) input.style.borderColor = ''; }, 300);
+
+            // Only auto-advance if ALL possible words are found
+            if (unscrambleState.found.length === unscrambleState.solution.size) {
+                input.disabled = true;
+                // Faster auto-advance (0.8s instead of 1.5s)
+                setTimeout(() => startNewUnscramble(), 800);
+            }
+        }
+    } else {
+        // Track incorrect guess to show in table
+        if (!unscrambleState.incorrect.includes(guess)) {
+            unscrambleState.incorrect.push(guess);
+            renderUnscrambleFound();
+        }
+        input.style.borderColor = '#ff5252';
+        setTimeout(() => {
+            if (input) input.style.borderColor = '';
+        }, 500);
+    }
+
+    input.value = '';
+    input.focus();
+}
+
+let unscrambleNextTimeout = null;
+
+async function revealUnscrambleSolutions() {
+    // If already waiting/countdown, clicking again SKIPS immediately
+    if (unscrambleState.isWaiting) {
+        startNewUnscramble();
+        return;
+    }
+
+    unscrambleState.isWaiting = true;
+
+    if (unscrambleNextTimeout) clearTimeout(unscrambleNextTimeout);
+
+    if (!unscrambleState.solution || unscrambleState.solution.size === 0) {
+        startNewUnscramble();
+        return;
+    }
+
+    // 1. Show all solutions (Found = Green, Missed = Red)
+    renderUnscrambleFound(true);
+
+    // 2. Lock tools except the reveal button (which now becomes "Next")
+    const input = document.getElementById('unscramble-input');
+    const revealBtn = document.getElementById('unscramble-reveal-btn');
+    const genBtn = document.getElementById('unscramble-gen-btn');
+    const checkBtn = document.getElementById('unscramble-check-btn');
+
+    if (input) {
+        input.value = '';
+        input.disabled = true;
+    }
+    if (genBtn) genBtn.disabled = true;
+    if (checkBtn) checkBtn.disabled = true;
+
+    // 3. Start visible but shorter countdown (2s instead of 4s)
+    let timeLeft = 2;
+    const updateCountdown = () => {
+        if (revealBtn) {
+            revealBtn.innerText = `Next in ${timeLeft}s (Click to Skip)`;
+            revealBtn.disabled = false; // ALLOW CLICK TO SKIP
+            revealBtn.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
+        }
+        if (timeLeft <= 0) {
+            startNewUnscramble();
+        } else {
+            timeLeft--;
+            unscrambleNextTimeout = setTimeout(updateCountdown, 1000);
+        }
+    };
+
+    updateCountdown();
+}
+
+function renderUnscrambleFound(revealMissed = false) {
+    const list = document.getElementById('unscramble-found-list');
+    if (!list) return;
+
+    let html = '';
+
+    // 1. CURRENT ROUND SECTION
+    if (unscrambleState.jumbled) {
+        const solutions = Array.from(unscrambleState.solution).sort();
+
+        html += `<div style="width: 100%; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="font-size: 0.7rem; text-transform: uppercase; color: #ffd700; letter-spacing: 2px; font-weight: 800;">Active: ${unscrambleState.jumbled.toUpperCase()}</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">`;
+
+        solutions.forEach(w => {
+            const isFound = unscrambleState.found.includes(w);
+            let style = "background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.05);";
+            let displayWord = w.replace(/./g, '_');
+
+            if (isFound) {
+                style = "background: rgba(76, 175, 80, 0.2); border: 1px solid #4caf50; color: #81c784;";
+                displayWord = w;
+            } else if (revealMissed) {
+                style = "background: rgba(244, 67, 54, 0.2); border: 1px solid #f44336; color: #e57373;";
+                displayWord = w;
+            }
+
+            html += `<div style="${style} padding: 6px 14px; border-radius: 6px; font-weight: 700; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s ease;">${displayWord}</div>`;
+        });
+
+        // Incorrect Guesses for current round
+        unscrambleState.incorrect.forEach(w => {
+            html += `<div style="background: rgba(0, 0, 0, 0.2); color: #ff5252; padding: 6px 14px; border-radius: 6px; font-weight: 600; border: 1px dotted rgba(255, 82, 82, 0.3); font-size: 0.9rem; text-decoration: line-through; opacity: 0.7;">${w}</div>`;
+        });
+
+        html += `   </div>
+                </div>`;
+    }
+
+    // 2. HISTORY SECTION
+    if (unscrambleState.history.length > 0) {
+        html += `<div style="width: 100%; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                    <div style="font-size: 0.7rem; text-transform: uppercase; color: rgba(255,255,255,0.3); letter-spacing: 2px; font-weight: 800; text-align: center; margin-bottom: 15px;">Session History</div>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">`;
+
+        unscrambleState.history.forEach((h, idx) => {
+            const foundCount = h.found.length;
+            const totalCount = h.solutions.length;
+            const isPerfect = foundCount === totalCount;
+
+            html += `
+                <div style="background: rgba(255,255,255,0.03); border-radius: 10px; padding: 12px 18px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 800; color: #ffd700; font-size: 1rem; letter-spacing: 1px;">${h.jumbled.toUpperCase()}</span>
+                        <span style="font-size: 0.7rem; color: rgba(255,255,255,0.3); font-family: monospace;">${h.timestamp}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px;">
+                        <span style="font-size: 0.75rem; color: ${isPerfect ? '#81c784' : 'rgba(255,255,255,0.5)'}; font-weight: 700; white-space: nowrap;">
+                            ${foundCount}/${totalCount} Words
+                        </span>
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
+                            ${h.solutions.map(s => {
+                const wereFound = h.found.includes(s);
+                const color = wereFound ? '#81c784' : 'rgba(255,255,255,0.2)';
+                const bg = wereFound ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255,255,255,0.02)';
+                return `<span style="font-size: 0.7rem; background: ${bg}; padding: 3px 8px; border-radius: 4px; color: ${color}; border: 1px solid ${wereFound ? 'rgba(76, 175, 80, 0.2)' : 'transparent'}">${s}</span>`;
+            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `   </div>
+                </div>`;
+    }
+
+    list.innerHTML = html;
+}
 

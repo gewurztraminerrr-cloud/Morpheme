@@ -542,13 +542,68 @@ async function updateGameState() {
                 const personalPercentage = totalWords > 0 ? Math.round((personalUnique / totalWords) * 100) : 0;
 
                 // Display Both
+                let finderButtonHtml = '';
+                if (highlightedFoundWord) {
+                    const finders = state.players.filter(p =>
+                        p.submitted_words && p.submitted_words.some(sw =>
+                            (typeof sw === 'object' ? sw.word : sw).toUpperCase() === highlightedFoundWord
+                        )
+                    );
+                    if (finders.length > 0) {
+                        finderButtonHtml = `
+                            <button id="view-finders-btn" class="secondary" onclick="window.showFinderModal('${highlightedFoundWord}')" style="margin-top: 8px; font-size: 0.75rem; padding: 4px 10px; width: 100%; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); cursor: pointer; transition: all 0.2s;">
+                                View all finders [${finders.length}]
+                            </button>
+                        `;
+                    }
+                }
+
                 wordsStats.innerHTML = `
                     <div style="line-height: 1.2;" class="stats-text-primary">
                         ${personalUnique}/${totalWords} - ${personalPercentage}%
-                        <div class="stats-text-secondary" style="font-size: 0.75em; opacity: 0.7; margin-top: 2px;">
+                        <div class="stats-text-secondary" style="font-size: 0.75em; margin-top: 2px;">
                             Collective Percentage: ${globalPercentage}%
                         </div>
+                        ${finderButtonHtml}
                     </div>`;
+
+                // Global function for opening the finders modal
+                window.showFinderModal = function (word) {
+                    const modal = document.getElementById('generic-info-modal');
+                    const title = document.getElementById('generic-modal-title');
+                    const body = document.getElementById('generic-modal-body');
+
+                    if (modal && title && body) {
+                        const wordUpper = word.toUpperCase();
+                        title.textContent = `Who found "${wordUpper}"?`;
+
+                        // Use current game state to find players
+                        if (!window.lastGameState || !window.lastGameState.players) return;
+
+                        const finders = window.lastGameState.players.filter(p =>
+                            p.submitted_words && p.submitted_words.some(sw =>
+                                (typeof sw === 'object' ? sw.word : sw).toUpperCase() === wordUpper
+                            )
+                        );
+
+                        body.innerHTML = finders.map(p => {
+                            const rating = p.rating || 0;
+                            const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#fff';
+                            return `
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); margin-bottom: 4px; border-radius: 6px;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="width: 14px; height: 14px; background: ${rColor}; border-radius: 3px; box-shadow: 0 0 10px ${rColor}22;"></div>
+                                        <span style="font-weight: 700; font-size: 0.95rem;">${p.username}</span>
+                                    </div>
+                                    <span style="opacity: 0.5; font-size: 0.8rem; font-weight: 600;">${rating}</span>
+                                </div>
+                            `;
+                        }).join('');
+
+                        modal.classList.remove('hidden');
+                        modal.style.display = 'flex'; // Ensure it's visible despite any other classes
+                    }
+                };
 
                 const targetUsername = selectedPlayerUsername || currentUser;
                 let targetWords = [];
@@ -837,7 +892,7 @@ async function updateGameState() {
                         return `
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <div style="width: 12px; height: 12px; background: ${rColor}; border-radius: 2px; box-shadow: 0 0 5px ${rColor}44;"></div>
-                                <span style="font-weight: 700; color: #fff; font-size: 0.95rem;">${name}</span>
+                                <span style="font-weight: 700; color: var(--text-primary); font-size: 0.95rem;">${name}</span>
                                 <span style="font-size: 0.8rem; opacity: 0.5; font-weight: 600;">(${rating})</span>
                             </div>
                         `;
@@ -2264,26 +2319,7 @@ if (submitBtn && wordInputEl) {
         const word = wordInputEl.value.trim();
         const board = window.lastGameState ? window.lastGameState.board : null;
 
-        // Dedicated "Word Declaration" area in bottom right
-        const defWordEl = document.getElementById('definition-word');
-        const defHeaderEl = document.getElementById('definition-header');
-        const defContentEl = document.getElementById('definition-content');
-        if (defWordEl && defHeaderEl) {
-            if (word) {
-                defWordEl.textContent = word.toUpperCase();
-                defHeaderEl.style.display = 'block';
-                // Only show "Typing..." if no existing definition is being looked at
-                if (defContentEl && (defContentEl.querySelector('.placeholder') || !defContentEl.innerHTML.trim())) {
-                    defContentEl.innerHTML = '<p class="placeholder" style="font-size: 0.8rem; margin-top: 5px;">Typing...</p>';
-                }
-            } else {
-                // If input cleared, and show placeholder if no word selected
-                defHeaderEl.style.display = 'none';
-                if (defContentEl) {
-                    defContentEl.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
-                }
-            }
-        }
+        // Highlighting logic continues below...
 
         const isEnabled = window.userSettings && window.userSettings.highlight_typing !== false;
         if (!isEnabled) {

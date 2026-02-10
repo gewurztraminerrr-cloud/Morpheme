@@ -32,6 +32,7 @@ class Player:
     joined_mid_round: bool = False
     has_exceptional_round: bool = False
     performance_efficiency: float = 0.0
+    is_guest: bool = False
 
 @dataclass
 class GameRoom:
@@ -123,7 +124,7 @@ class GameRoom:
         if len(self.chat_messages) > 30:
             self.chat_messages.pop(0)
     
-    def add_player(self, user_id, username, rating, games_played=0, country_flag='🏳️', manual_accessed=False):
+    def add_player(self, user_id, username, rating, games_played=0, country_flag='🏳️', manual_accessed=False, is_guest=False):
         """Add player to room"""
         is_daily = self.time_limit >= 7200
         
@@ -133,6 +134,8 @@ class GameRoom:
             print(f"[GameRoom] Persistence: Reusing existing player {username} in 24h room {self.room_id}")
             existing_player.last_active = time.time()
             existing_player.country_flag = country_flag # Update flag
+            # Update guest status if it changed (unlikely but safe)
+            existing_player.is_guest = is_guest
             # Note: manual_accessed doesn't force mid-round for persistent daily rooms usually, 
             # but if it's the rule, we should apply it.
             # For now, let's stick to the user's rule for ALL rooms.
@@ -164,6 +167,7 @@ class GameRoom:
             existing_player.last_active = time.time()
             existing_player.country_flag = country_flag # Update flag
             existing_player.games_played = games_played # Update games played (if changed)
+            existing_player.is_guest = is_guest # Update guest status
             if manual_accessed:
                 existing_player.joined_mid_round = True
             elif not is_daily and self.state == 'active' and (self.time_limit - self.time_remaining) > 5:
@@ -182,7 +186,7 @@ class GameRoom:
         if len(self.players) >= self.max_players:
             return False # Room full
             
-        player = Player(user_id, username, rating, games_played=games_played, country_flag=country_flag)
+        player = Player(user_id, username, rating, games_played=games_played, country_flag=country_flag, is_guest=is_guest)
         if manual_accessed:
             player.joined_mid_round = True
         elif self.state == 'active' and (self.time_limit - self.time_remaining) > 5 and not is_daily and not was_already_in_room:
@@ -473,34 +477,28 @@ class GameRoom:
 
     def update_live_pe(self):
         """Calculates performance efficiency in real-time for UI trophy"""
-        # Include all active participants
-        active_competitors = [p for p in self.players if (p.score > 0 or len(p.submitted_words) > 0 or len(p.invalid_words) > 0)]
+        # Split into Registered and Guest pools to ensure isolation
+        reg_players = [p for p in self.players if p.user_id > 0 and not p.is_guest and (p.score > 0 or len(p.submitted_words) > 0 or len(p.invalid_words) > 0)]
+        guest_players = [p for p in self.players if (p.is_guest or p.user_id <= 0) and (p.score > 0 or len(p.submitted_words) > 0 or len(p.invalid_words) > 0)]
         
-        if not active_competitors:
-            return
-
-        score_sum = sum(p.score for p in active_competitors)
-        # Use a floor rating of 500 for calculations to ensure guests (rating 0) can earn trophies
-        rating_sum = sum(max(p.rating, 500) for p in active_competitors)
+        # 1. Registered Players: Compete only against other registered players
+        reg_score_sum = sum(p.score for p in reg_players)
+        reg_rating_sum = sum(p.rating for p in reg_players)
         
-        if rating_sum > 0:
-            for p in active_competitors:
-                # Expected share of total points based on rating share (with floor)
-                effective_rating = max(p.rating, 500)
-                expected = (effective_rating / rating_sum) * score_sum
+        if reg_rating_sum > 0:
+            for p in reg_players:
+                expected = (p.rating / reg_rating_sum) * reg_score_sum
                 p.performance_efficiency = p.score / expected if expected > 0 else 0.0
-                
-                # Check trophy threshold (Live update)
-                # PE >= 1.2 (20% above expectation) OR Raw Score >= 20 (Notable milestone)
-                if (p.performance_efficiency >= 1.2 and p.score >= 10) or p.score >= 20:
-                    p.has_exceptional_round = True
-                else:
-                    p.has_exceptional_round = False
+                p.has_exceptional_round = (p.performance_efficiency >= 1.2 and p.score >= 10) or p.score >= 20
         else:
-            for p in active_competitors:
+            for p in reg_players:
                 p.performance_efficiency = 1.0
-                # If rating_sum is 0 (unlikely with floor), rely on raw score
                 p.has_exceptional_round = (p.score >= 20)
+
+        # 2. Guests: Use solo baseline (PE=1.0) so they don't affect pool but can still earn trophies on raw score
+        for p in guest_players:
+            p.performance_efficiency = 1.0
+            p.has_exceptional_round = (p.score >= 20)
     
     def _recalculate_player_score(self, player):
         """
@@ -570,35 +568,35 @@ class GameRoom:
             print(f"[GameRoom] Calculating Proportional ratings at end of Round {self.current_round}")
             
             # Performance Efficiency (PE) & History Logic
-            # Include participants even if they score 0, as long as they attempted words
-            # Include mid-round joiners in the POOL so valid players get credit for beating them
+            # Split into Registered and Guest pools to ensure isolation
             active_competitors = [p for p in self.players if (p.score > 0 or len(p.submitted_words) > 0 or len(p.invalid_words) > 0)]
+            reg_players = [p for p in active_competitors if p.user_id > 0 and not p.is_guest]
+            guest_players = [p for p in active_competitors if (p.is_guest or p.user_id <= 0)]
             
-            # Calculate PE for everyone first
+            # Calculate PE for everyone with isolation
             max_pe = 0.0
-            if active_competitors:
-                score_sum = sum(p.score for p in active_competitors)
-                # Use floor of 500 for rating sum/share
-                rating_sum = sum(max(p.rating, 500) for p in active_competitors)
-                
-                if rating_sum > 0:
-                    for p in active_competitors:
-                        # Expected share of total points based on rating share (with floor)
-                        effective_rating = max(p.rating, 500)
-                        expected = (effective_rating / rating_sum) * score_sum
-                        p.performance_efficiency = p.score / expected if expected > 0 else 0
-                        if p.performance_efficiency > max_pe:
-                            max_pe = p.performance_efficiency
-                        
-                        # Trophy: PE >= 1.2 OR Score >= 20
-                        if (p.performance_efficiency >= 1.2 and p.score >= 10) or p.score >= 20:
-                            p.has_exceptional_round = True
-                        else:
-                            p.has_exceptional_round = False
-                else:
-                    for p in active_competitors:
-                        p.performance_efficiency = 1.0
-                        p.has_exceptional_round = (p.score >= 20)
+            
+            # 1. Registered Players Pool
+            reg_score_sum = sum(p.score for p in reg_players)
+            reg_rating_sum = sum(p.rating for p in reg_players)
+            
+            if reg_rating_sum > 0:
+                for p in reg_players:
+                    expected = (p.rating / reg_rating_sum) * reg_score_sum
+                    p.performance_efficiency = p.score / expected if expected > 0 else 0
+                    max_pe = max(max_pe, p.performance_efficiency)
+                    p.has_exceptional_round = (p.performance_efficiency >= 1.2 and p.score >= 10) or p.score >= 20
+            else:
+                for p in reg_players:
+                    p.performance_efficiency = 1.0
+                    max_pe = max(max_pe, 1.0)
+                    p.has_exceptional_round = (p.score >= 20)
+
+            # 2. Guests Pool
+            for p in guest_players:
+                p.performance_efficiency = 1.0
+                max_pe = max(max_pe, 1.0)
+                p.has_exceptional_round = (p.score >= 20)
 
             # Determine Notable Winners for Replay Tab
             # The user wants "enormous wins" to determine replay listing.
@@ -684,30 +682,7 @@ class GameRoom:
                         if player.score > 0 and player.score == max([p.score for p in active_competitors]):
                              conn.execute('UPDATE users SET wins = wins + 1 WHERE id = ?', (player.user_id,))
 
-                        # Check if history already exists for this user/round
-                        cursor = conn.execute('SELECT 1 FROM round_history WHERE user_id=? AND room_id=? AND round_number=?', 
-                                            (player.user_id, self.room_id, self.current_round))
-                        if not cursor.fetchone():
-                            conn.execute('''
-                                INSERT INTO round_history (user_id, room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, user_rating, performance_ratio, timestamp, board_dimensions)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                            ''', (
-                                player.user_id, 
-                                self.room_id, 
-                                self.game_type, 
-                                self.current_round, 
-                                json.dumps(self.board), 
-                                json.dumps([{'word': w['word'], 'points': w.get('points',0), 'timestamp': w.get('time',0)} for w in player.submitted_words]),
-                                player.score,
-                                self.round_start_time,
-                                self.time_limit,
-                                player.rating, # Post-adjustment rating
-                                player.performance_efficiency,
-                                datetime.datetime.now(),
-                                dims
-                            ))
-                        else:
-                            print(f"[GameRoom] Skipping duplicate history save for {player.username} in round {self.current_round}")
+
                         
                         # Update PE stats
                         conn.execute('''
@@ -811,12 +786,27 @@ def calculate_proportional_rating_change(players):
         print(f"[Rating] Late joiner detected in room: {late_players}. Voiding rating updates for ALL players (Cnt: {len(players)}) to ensure fairness.")
         return changes
 
-    # 2. Identify active registered players (user_id > 0)
-    # We include ALL players present in the room for rating calculations, even if they scored 0 (AFK).
-    active_players = [p for p in players if p.user_id > 0]
+    # 2. Check if a Guest is present (User Rule: "My rating should still not go up nor down playing with a guest NO MATTER WHAT")
+    # We check both the is_guest flag AND the username prefix for robustness.
+    def is_player_guest(p):
+        return getattr(p, 'is_guest', False) or (p.username and p.username.startswith('Guest_'))
 
-    # Rating change requires at least two competing players.
+    has_guest = any(is_player_guest(p) for p in players)
+    if has_guest:
+        # Log the specific reason for voiding
+        guests = [p.username for p in players if is_player_guest(p)]
+        print(f"[Rating] Guest(s) {guests} detected in room. Round is UNRANKED for everyone.")
+        return changes
+
+    # 3. Identify active registered players (user_id > 0 AND not a guest)
+    # We include ALL players present in the room for rating calculations, even if they scored 0 (AFK).
+    active_players = [p for p in players if p.user_id > 0 and not is_player_guest(p)]
+
+    # Rating change requires at least two competing registered players.
+    # If it's just one player vs guests, they should not gain or lose anything.
     if len(active_players) < 2:
+        if len(active_players) == 1:
+            print(f"[Rating] Only one registered player ({active_players[0].username}) present. Round is solo/unranked.")
         return changes
         
     # 3. Sum Totals

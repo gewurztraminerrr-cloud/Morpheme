@@ -490,6 +490,13 @@ function setupModalListeners() {
             }
         });
     }
+
+    const genericModal = document.getElementById('generic-info-modal');
+    const closeGenericBtn = document.getElementById('close-generic-modal');
+    if (genericModal && closeGenericBtn) {
+        closeGenericBtn.onclick = () => genericModal.classList.add('hidden');
+        genericModal.onclick = (e) => { if (e.target === genericModal) genericModal.classList.add('hidden'); };
+    }
 }
 
 function showPage(pageId) {

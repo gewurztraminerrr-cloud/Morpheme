@@ -323,9 +323,9 @@ const Forum = {
         document.getElementById('forum-view-create').classList.add('active');
         document.getElementById('forum-post-category-id').value = this.currentCategoryId;
 
-        // Show image upload for Screenshots AND General categories
+        // Show image upload for Screenshots, General, and Tips categories
         const category = this.categories.find(c => c.id === this.currentCategoryId);
-        const allowUpload = category.name === "Screenshots" || category.name === "General";
+        const allowUpload = ["Screenshots", "General", "Tips, Tricks, and Strategies"].includes(category.name);
         document.getElementById('forum-image-upload-section').classList.toggle('hidden', !allowUpload);
     },
 

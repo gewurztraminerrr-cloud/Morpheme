@@ -35,7 +35,7 @@ body.theme-white {
 }
 
 body.theme-light-gray {
-    --bg-primary: #f0f0f0;
+    --bg-primary: #d8d8d8;
     --bg-panel: rgba(0, 0, 0, 0.05);
     --text-primary: #222;
     --muted-text: rgba(0, 0, 0, 0.6);
@@ -4406,11 +4406,4 @@ body {
     transform: scale(1.2);
     box-shadow: 0 0 15px #fff;
     border: 3px solid #fff !important;
-}
-
-/* Stats Text Overrides for White Theme */
-body.theme-white .stats-text-primary,
-body.theme-white .stats-text-secondary {
-    color: #000000 !important;
-    opacity: 1 !important;
 }

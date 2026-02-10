@@ -893,6 +893,8 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     total_period_score = 0
     total_period_words = 0
     
+    seen_rounds = set()
+    
     for row in period_matching:
         words = json.loads(row[0])
         my_score = row[1]
@@ -900,6 +902,15 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         r_id = row[3]
         r_num = row[4]
         g_id = row[6]
+        
+        # User Request: Filter out 0 points or 0 words, AND Deduplicate
+        if my_score <= 0 or len(words) == 0:
+            continue
+            
+        round_key = f"{r_id}_{r_num}_{g_id}"
+        if round_key in seen_rounds:
+            continue
+        seen_rounds.add(round_key)
         
         total_period_score += my_score
         total_period_words += len(words)
@@ -920,8 +931,29 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         is_win = (my_score == max_s and max_s > 0)
         if is_win: period_wins += 1
 
-        avg_room_score = sum(e[0] for e in room_entries) / len(room_entries) if room_entries else 0
-        ratio = round(my_score / avg_room_score, 2) if avg_room_score > 0 else 1.0
+        # Calculate Performance Efficiency (PE) using Rating-Based Expected Share
+        # FAQ: "Expected Score... based on your current rating relative to your opponents"
+        
+        room_total_score = sum(e[0] for e in room_entries)
+        room_total_rating = sum(e[1] for e in room_entries)
+        
+        # Find my rating from the room entries (to ensure we use the rating AT THAT TIME)
+        my_avg_entry = next((e for e in room_entries if e[2] == username), None)
+        # Fallback if username not found (shouldn't happen)
+        my_rating_at_time = my_avg_entry[1] if my_avg_entry else 1200
+        
+        expected_score = 0
+        if room_total_rating > 0:
+            expected_share = my_rating_at_time / room_total_rating
+            expected_score = expected_share * room_total_score
+        else:
+            # Fallback for unrated/guest rooms
+            expected_score = room_total_score / len(room_entries) if room_entries else 0
+
+        # Ratio = Actual / Expected
+        ratio = round(my_score / expected_score, 2) if expected_score > 0 else 1.0
+        
+        avg_room_score = room_total_score / len(room_entries) if room_entries else 0 # Keep for data if needed
         
         perf_val = int(ratio * 100) # Simple metric for UI
 
@@ -930,28 +962,38 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             'total_score': my_score, 'num_words': len(words), 'is_win': is_win,
             'ratio': ratio, 'performance_value': perf_val,
             'top_word': max(words, key=lambda x: x.get('points', 0))['word'] if words else "-",
-            'all_players': room_entries
+            'all_players': room_entries,
+            'words': words,
+            'board': json.loads(row[5])
         }
         performance_list.append(processed)
 
-    # SORTING BY IMPRESSIVENESS (Ratio DESC)
-    # Exceptional: by Ratio DESC, then Score DESC
-    exceptional = sorted([r for r in performance_list if r['ratio'] >= 1.5], key=lambda x: (float(x['ratio']), int(x['total_score'])), reverse=True)[:30]
+    # SORTING BY TIMESTAMP (Recency) as requested
+    # Exceptional: by Timestamp DESC (Ratio >= 1.0 to include solo play/good rounds)
+    exceptional = sorted([r for r in performance_list if r['ratio'] >= 1.0], key=lambda x: x['timestamp'], reverse=True)[:30]
     
-    # Winning: by Ratio DESC (Best wins first)
-    winning = sorted([r for r in performance_list if r['is_win']], key=lambda x: (float(x['ratio']), int(x['total_score'])), reverse=True)[:30]
+    # Winning: by Timestamp DESC
+    winning = sorted([r for r in performance_list if r['is_win']], key=lambda x: x['timestamp'], reverse=True)[:30]
     
-    # Best Scores: Score DESC, then Ratio DESC
-    best_scores = sorted(performance_list, key=lambda x: (int(x['total_score']), float(x['ratio'])), reverse=True)[:30]
+    # Best Scores: Score DESC, then Timestamp DESC
+    best_scores = sorted(performance_list, key=lambda x: (int(x['total_score']), x['timestamp']), reverse=True)[:30]
     
-    # Best Word Counts: Count DESC, then Ratio DESC
-    best_counts = sorted(performance_list, key=lambda x: (int(x['num_words']), float(x['ratio'])), reverse=True)[:30]
+    # Best Word Counts: Count DESC, then Timestamp DESC
+    best_counts = sorted(performance_list, key=lambda x: (int(x['num_words']), x['timestamp']), reverse=True)[:30]
     
-    # Games Played: Best Ratio DESC
-    recent = sorted(performance_list, key=lambda x: (float(x['ratio']), int(x['total_score'])), reverse=True)[:30] 
+    # Games Played: Timestamp DESC (True Recency)
+    recent = sorted(performance_list, key=lambda x: x['timestamp'], reverse=True)[:30] 
     
-    # Best Words: Points DESC
-    best_words = sorted(all_period_words, key=lambda x: int(x.get('points', 0)), reverse=True)[:30]
+    # Best Words: Points DESC (Unique words only)
+    unique_words = {}
+    for w in all_period_words:
+        word_text = w.get('word')
+        points = int(w.get('points', 0))
+        if word_text not in unique_words or points > unique_words[word_text]['points']:
+             unique_words[word_text] = {'word': word_text, 'points': points, 'timestamp': w.get('timestamp'), 'game_id': w.get('game_id')}
+    
+    unique_word_list = list(unique_words.values())
+    best_words = sorted(unique_word_list, key=lambda x: x['points'], reverse=True)[:30]
 
     # Get config rating
     cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', (user_id, config_key))
@@ -1149,7 +1191,9 @@ def create_room():
         except: pass
         conn.close()
     
-    room.add_player(session['user_id'], session['username'], rating, games_played=games_played, country_flag=country_flag)
+    room.add_player(session['user_id'], session['username'], rating, 
+                    games_played=games_played, country_flag=country_flag, 
+                    is_guest=session.get('is_guest', False))
     
     # Start first round immediately in background for faster loading
     # Only if NOT already running/active (check logic inside start_round already handles this)
@@ -1234,7 +1278,9 @@ def join_room(room_id):
     # Try to join as player
     manual_accessed = session.pop('manual_accessed', False)
     # Pass has_exceptional_round
-    success = room.add_player(user_id, session['username'], rating, games_played=games_played, country_flag=country_flag, manual_accessed=manual_accessed)
+    success = room.add_player(user_id, session['username'], rating, 
+                             games_played=games_played, country_flag=country_flag, 
+                             manual_accessed=manual_accessed, is_guest=session.get('is_guest', False))
     if success:
         p = room.players[-1] # Valid since we just added or updated
         p.has_exceptional_round = has_exceptional 
@@ -1360,50 +1406,7 @@ def get_room_state(room_id):
             # SAVE ROUND HISTORY
             room_manager.save_round_history(room)
             
-            # PERSISTENCE: Save ratings, games_played, and wins immediately at round end
-            if room.stats_recorded_round < room.current_round:
-                playing_count = sum(1 for p in room.players if p.score > 0)
-                if playing_count > 1:
-                    print(f"[Persistence] Saving stats for Round {room.current_round} ({playing_count} players)...")
-                    try:
-                        registered_scores = [p.score for p in room.players if p.user_id > 0]
-                        max_score = max(registered_scores) if registered_scores else 0
-                        conn = sqlite3.connect('morpheme.db')
-                        config_key = f"{room.game_type}|{room.board_dimensions}|{room.time_limit}"
-                        
-                        for p in room.players:
-                            # Skip guests and mid-round joiners for persistence
-                            if p.user_id > 0 and not getattr(p, 'joined_mid_round', False):
-                                # Update Rating in DB
-                                conn.execute('''
-                                    INSERT OR REPLACE INTO user_ratings (user_id, config_key, rating)
-                                    VALUES (?, ?, ?)
-                                ''', (p.user_id, config_key, p.rating))
-                                
-                                # Update Games Played & Wins
-                                if p.score > 0:
-                                    if p.games_played is None: p.games_played = 0
-                                    p.games_played += 1
-                                    conn.execute('UPDATE users SET games_played = games_played + 1 WHERE id = ?', (p.user_id,))
-                                    
-                                    if p.score == max_score and max_score > 0:
-                                        conn.execute('UPDATE users SET wins = wins + 1 WHERE id = ?', (p.user_id,))
-                                    
-                                    # Update Skill Rankings (PE Stats)
-                                    if hasattr(p, 'performance_efficiency') and p.performance_efficiency > 0:
-                                        conn.execute('''
-                                            UPDATE users 
-                                            SET max_pe = MAX(max_pe, ?),
-                                                avg_pe = (avg_pe * pe_count + ?) / (pe_count + 1),
-                                                pe_count = pe_count + 1
-                                            WHERE id = ?
-                                        ''', (p.performance_efficiency, p.performance_efficiency, p.user_id))
-                        
-                        conn.commit()
-                        conn.close()
-                        room.stats_recorded_round = room.current_round
-                    except Exception as e:
-                        print(f"[Persistence] ERROR saving stats: {e}")
+
 
             # Ensure solving_complete is True so frontend proceeds
             room.solving_complete = True
@@ -2163,6 +2166,43 @@ def tools_validate_word():
         'is_valid': is_valid
     })
 
+@app.route('/api/tools/unscramble/random', methods=['GET'])
+def tools_unscramble_random():
+    import random
+    length = request.args.get('length', type=int)
+    dict_name = request.args.get('dictionary', 'NWL')
+    
+    if not length:
+        return jsonify({'error': 'Length required'}), 400
+        
+    dictionary = load_tools_dictionary(dict_name)
+    if not dictionary:
+        return jsonify({'error': f'Dictionary {dict_name} not found'}), 404
+        
+    # Filter dictionary for words of exactly this length
+    eligible_words = [w for w in dictionary if len(w) == length]
+    
+    if not eligible_words:
+        return jsonify({'error': 'No words found for this length'}), 404
+        
+    # Pick a random word
+    target_word = random.choice(eligible_words)
+    
+    # Scramble it
+    letters = list(target_word)
+    random.shuffle(letters)
+    jumbled = "".join(letters)
+    
+    # Find all anagrams
+    target_counter = Counter(target_word)
+    anagrams = [w for w in eligible_words if Counter(w) == target_counter]
+    
+    return jsonify({
+        'jumbled': jumbled,
+        'words': anagrams,
+        'count': len(anagrams)
+    })
+
 # --- Private Messaging Routes ---
 
 @app.route('/api/pm/send', methods=['POST'])
@@ -2704,33 +2744,45 @@ def get_leaderboard_data():
              
         base_where = " AND ".join(where_clauses)
         
-        # 1. Best Scores (Highest total score in a round)
+        # 1. Best Scores (Highest total score in a round - Max 1 per user)
         scores = conn.execute(f"""
-            SELECT rh.total_score, rh.user_rating, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id
-            FROM round_history rh
-            JOIN users u ON rh.user_id = u.id
-            WHERE {base_where}
-            ORDER BY rh.total_score DESC
+            SELECT * FROM (
+                SELECT rh.total_score, rh.user_rating, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id,
+                ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.total_score DESC) as rn
+                FROM round_history rh
+                JOIN users u ON rh.user_id = u.id
+                WHERE {base_where}
+            ) sub
+            WHERE rn = 1
+            ORDER BY total_score DESC
             LIMIT 50
         """, params).fetchall()
         
-        # 2. Best Words (Highest point single word)
+        # 2. Best Words (Highest point single word - Max 1 per user)
         words = conn.execute(f"""
-            SELECT rh.best_word, rh.best_word_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id
-            FROM round_history rh
-            JOIN users u ON rh.user_id = u.id
-            WHERE {base_where} AND rh.best_word IS NOT NULL
-            ORDER BY rh.best_word_score DESC
+            SELECT * FROM (
+                SELECT rh.best_word, rh.best_word_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id,
+                ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.best_word_score DESC) as rn
+                FROM round_history rh
+                JOIN users u ON rh.user_id = u.id
+                WHERE {base_where} AND rh.best_word IS NOT NULL
+            ) sub
+            WHERE rn = 1
+            ORDER BY best_word_score DESC
             LIMIT 50
         """, params).fetchall()
         
-        # 3. Best PE (Highest Performance Efficiency)
+        # 3. Best PE (Highest Performance Efficiency - Max 1 per user)
         pes = conn.execute(f"""
-            SELECT rh.performance_ratio, rh.total_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id
-            FROM round_history rh
-            JOIN users u ON rh.user_id = u.id
-            WHERE {base_where} AND rh.performance_ratio > 0
-            ORDER BY rh.performance_ratio DESC
+            SELECT * FROM (
+                SELECT rh.performance_ratio, rh.total_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id,
+                ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.performance_ratio DESC) as rn
+                FROM round_history rh
+                JOIN users u ON rh.user_id = u.id
+                WHERE {base_where} AND rh.performance_ratio > 0
+            ) sub
+            WHERE rn = 1
+            ORDER BY performance_ratio DESC
             LIMIT 50
         """, params).fetchall()
         

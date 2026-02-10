@@ -110,17 +110,22 @@
 .forum-action-btn {
     background: var(--accent-color);
     color: white;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* Subtle default border */
     padding: 10px 20px;
     border-radius: 8px;
     cursor: pointer;
-    font-weight: 600;
-    transition: transform 0.2s, background 0.2s;
+    font-weight: 700;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .forum-action-btn:hover {
     transform: translateY(-2px);
     filter: brightness(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .forum-action-btn.primary {
@@ -537,45 +542,131 @@
     opacity: 0.5;
 }
 
-/* White theme overrides */
-body.theme-white .forum-container {
-    background: white;
+/* White and Light themes overrides */
+[class*="theme-white"] .forum-container,
+[class*="theme-light-"] .forum-container,
+body.theme-yellow .forum-container,
+body.theme-pink .forum-container,
+body.theme-light-brown .forum-container {
+    background: var(--bg-primary);
+    background-color: #fff;
     color: #333;
 }
 
-body.theme-white .forum-sidebar {
-    background: #f8f9fa;
-    border-right-color: #ddd;
+[class*="theme-white"] .forum-sidebar,
+[class*="theme-light-"] .forum-sidebar,
+body.theme-yellow .forum-sidebar,
+body.theme-pink .forum-sidebar,
+body.theme-light-brown .forum-sidebar {
+    background: rgba(0, 0, 0, 0.05);
+    border-right-color: rgba(0, 0, 0, 0.1);
 }
 
-body.theme-white .forum-cat-item.active {
-    background: #e9ecef;
+[class*="theme-white"] .forum-cat-item.active,
+[class*="theme-light-"] .forum-cat-item.active,
+body.theme-yellow .forum-cat-item.active,
+body.theme-pink .forum-cat-item.active,
+body.theme-light-brown .forum-cat-item.active {
+    background: rgba(0, 0, 0, 0.08);
 }
 
-body.theme-white .forum-post-card {
-    background: #fff;
-    border-color: #eee;
+[class*="theme-white"] .forum-post-card,
+[class*="theme-light-"] .forum-post-card,
+body.theme-yellow .forum-post-card,
+body.theme-pink .forum-post-card,
+body.theme-light-brown .forum-post-card {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.08);
 }
 
-body.theme-white .forum-post-card:hover {
-    background: #f8f9fa;
+[class*="theme-white"] .forum-post-card:hover,
+[class*="theme-light-"] .forum-post-card:hover,
+body.theme-yellow .forum-post-card:hover,
+body.theme-pink .forum-post-card:hover,
+body.theme-light-brown .forum-post-card:hover {
+    background: rgba(0, 0, 0, 0.04);
 }
 
-body.theme-white .forum-cat-name,
-body.theme-white .forum-cat-desc,
-body.theme-white .header-titles h2,
-body.theme-white .header-titles p,
-body.theme-white .post-card-title,
-body.theme-white .post-card-meta,
-body.theme-white .post-card-excerpt,
-body.theme-white .post-stats,
-body.theme-white .post-detail-title,
-body.theme-white .author-name,
-body.theme-white .post-date,
-body.theme-white .post-content,
-body.theme-white .comment-badge,
-body.theme-white .comment-header,
-body.theme-white .comment-content,
-body.theme-white .forum-back-btn {
+/* Ensure text visibility in light themes */
+[class*="theme-white"] .forum-cat-name,
+[class*="theme-white"] .forum-cat-desc,
+[class*="theme-white"] .header-titles h2,
+[class*="theme-white"] .header-titles p,
+[class*="theme-white"] .post-card-title,
+[class*="theme-white"] .post-card-meta,
+[class*="theme-white"] .post-card-excerpt,
+[class*="theme-white"] .post-stats,
+[class*="theme-white"] .post-detail-title,
+[class*="theme-white"] .author-name,
+[class*="theme-white"] .post-date,
+[class*="theme-white"] .post-content,
+[class*="theme-white"] .comment-badge,
+[class*="theme-white"] .comment-header,
+[class*="theme-white"] .comment-content,
+[class*="theme-white"] .forum-back-btn,
+[class*="theme-light-"] .forum-cat-name,
+[class*="theme-light-"] .forum-cat-desc,
+[class*="theme-light-"] .header-titles h2,
+[class*="theme-light-"] .header-titles p,
+[class*="theme-light-"] .post-card-title,
+[class*="theme-light-"] .post-card-meta,
+[class*="theme-light-"] .post-card-excerpt,
+[class*="theme-light-"] .post-stats,
+[class*="theme-light-"] .post-detail-title,
+[class*="theme-light-"] .author-name,
+[class*="theme-light-"] .post-date,
+[class*="theme-light-"] .post-content,
+[class*="theme-light-"] .comment-badge,
+[class*="theme-light-"] .comment-header,
+[class*="theme-light-"] .comment-content,
+[class*="theme-light-"] .forum-back-btn,
+body.theme-yellow .forum-back-btn,
+body.theme-pink .forum-back-btn,
+body.theme-light-brown .forum-back-btn {
+    color: var(--text-primary) !important;
+}
+
+/* Specific button readability fixes for themes where the accent color is light */
+/* This ensures "white-on-white" or "white-on-yellow" text doesn't happen */
+body.theme-white .forum-action-btn,
+body.theme-gray .forum-action-btn,
+body.theme-orange .forum-action-btn,
+body.theme-red .forum-action-btn,
+body.theme-green .forum-action-btn,
+body.theme-blue .forum-action-btn,
+body.theme-purple .forum-action-btn,
+body.theme-dark-pink .forum-action-btn,
+body.theme-dark-yellow .forum-action-btn,
+body.theme-light-yellow .forum-action-btn,
+body.theme-yellow .forum-action-btn,
+body.theme-pink .forum-action-btn,
+body.theme-light-gray .forum-action-btn,
+body.theme-light-blue .forum-action-btn,
+body.theme-light-red .forum-action-btn,
+body.theme-light-brown .forum-action-btn,
+[class*="theme-light-"] .forum-action-btn {
+    color: #000 !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Ensure Back button has enough contrast on white backgrounds */
+[class*="theme-white"] .forum-back-btn,
+[class*="theme-light-"] .forum-back-btn,
+body.theme-yellow .forum-back-btn,
+body.theme-pink .forum-back-btn,
+body.theme-light-brown .forum-back-btn {
+    border-color: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.05);
     color: #333 !important;
+}
+
+[class*="theme-white"] .forum-back-btn:hover,
+[class*="theme-light-"] .forum-back-btn:hover,
+body.theme-yellow .forum-back-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* Special fix for Black theme or very dark themes where accent might be white */
+body.theme-black .forum-action-btn {
+    color: #000 !important;
 }
