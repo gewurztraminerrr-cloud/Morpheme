@@ -223,6 +223,101 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Solo and With Friends Section -->
+                    <div class="game-section solo-friends-section">
+                        <h3 class="game-title">Play Solo or With Friends</h3>
+                        <div class="sf-tabs">
+                            <button class="sf-tab-btn active" data-sf-tab="solo">Solo</button>
+                            <button class="sf-tab-btn" data-sf-tab="friends">With Friends</button>
+                        </div>
+
+                        <!-- Solo Tab Content -->
+                        <div id="sf-tab-solo" class="sf-tab-content">
+                            <div class="solo-config-grid">
+                                <div class="config-group">
+                                    <label>Board Size</label>
+                                    <select id="solo-dims">
+                                        <option value="4x4">4x4 Standard</option>
+                                        <option value="4x6">4x6 Extended</option>
+                                        <option value="5x7">5x7 Large</option>
+                                        <option value="6x8">6x8 Massive</option>
+                                    </select>
+                                </div>
+                                <div class="config-group">
+                                    <label>Time Limit</label>
+                                    <select id="solo-time">
+                                        <option value="45">45 Seconds</option>
+                                        <option value="60">1 Minute</option>
+                                        <option value="120">2 Minutes</option>
+                                        <option value="180">3 Minutes</option>
+                                        <option value="300">5 Minutes</option>
+                                    </select>
+                                </div>
+                                <div class="config-group">
+                                    <label>Dictionary</label>
+                                    <select id="solo-dict">
+                                        <option value="CSW">CSW (International)</option>
+                                        <option value="NWL">NWL (North American)</option>
+                                    </select>
+                                </div>
+                                <div class="config-group">
+                                    <label>Min Word Len</label>
+                                    <select id="solo-min-len">
+                                        <option value="3">3 Letters</option>
+                                        <option value="4">4 Letters</option>
+                                        <option value="5">5 Letters</option>
+                                    </select>
+                                </div>
+                                <div class="config-group">
+                                    <label>Bonus Word</label>
+                                    <select id="solo-bonus">
+                                        <option value="0">None</option>
+                                        <option value="6">6 Letters</option>
+                                        <option value="7">7 Letters</option>
+                                        <option value="8">8 Letters</option>
+                                        <option value="9">9+ Letters</option>
+                                    </select>
+                                </div>
+                                <div class="config-group bot-toggle-group">
+                                    <label>AI Bots</label>
+                                    <button id="add-bot-btn" class="sf-action-btn">+ Add Bot</button>
+                                </div>
+                            </div>
+                            <div id="solo-bots-list" class="bots-container">
+                                <!-- Bot entries added here -->
+                            </div>
+                            <button id="start-solo-btn" class="sf-primary-btn">Start Solo Match</button>
+                        </div>
+
+                        <!-- With Friends Tab Content -->
+                        <div id="sf-tab-friends" class="sf-tab-content hidden">
+                            <div class="friends-invite-header">
+                                <input type="text" id="friends-invite-input"
+                                    placeholder="Enter username(s) separated by comma...">
+                                <button id="invite-friends-btn" class="sf-action-btn">Send Invite</button>
+                            </div>
+
+                            <div class="friends-subtabs">
+                                <button class="sf-subtab-btn active" data-friends-subtab="your-turn">Your Turn</button>
+                                <button class="sf-subtab-btn" data-friends-subtab="their-turn">Their Turn</button>
+                                <button class="sf-subtab-btn" data-friends-subtab="history">History</button>
+                            </div>
+
+                            <div id="friends-list-your-turn" class="friends-matches-list">
+                                <!-- List of matches needing your move -->
+                                <p class="placeholder">No active matches needing your turn.</p>
+                            </div>
+                            <div id="friends-list-their-turn" class="friends-matches-list hidden">
+                                <!-- List of matches waiting for them -->
+                                <p class="placeholder">No pending turns from others.</p>
+                            </div>
+                            <div id="friends-list-history" class="friends-matches-list hidden">
+                                <!-- Match history -->
+                                <p class="placeholder">No completed matches yet.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Right Panel: Active Rooms -->

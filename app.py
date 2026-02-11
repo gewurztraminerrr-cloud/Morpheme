@@ -11,6 +11,7 @@ app = Flask(__name__, static_folder='static')
 app.secret_key = 'morpheme-secret-key-2024'
 
 from tournament_logic import tournament_manager
+from private_match_logic import private_match_manager
 
 # Auth Helpers
 class User:
@@ -3088,6 +3089,120 @@ def submit_tournament_score():
         conn.close()
 
 
+
+# --- PRIVATE MATCHES ---
+
+@app.route('/api/private-match/create', methods=['POST'])
+@login_required
+def create_private_match():
+    if session.get('is_guest'):
+        return jsonify({'error': 'Guests cannot use this feature'}), 403
+        
+    data = request.json
+    match_type = data.get('match_type')
+    parameters = data.get('parameters')
+    participants = data.get('participants', [])
+    
+    match_id = private_match_manager.create_match(session['user_id'], match_type, parameters, participants)
+    return jsonify({'success': True, 'match_id': match_id})
+
+@app.route('/api/private-match/list', methods=['GET'])
+@login_required
+def list_private_matches():
+    if session.get('is_guest'):
+        return jsonify({'your_turn': [], 'their_turn': [], 'history': []})
+        
+    matches = private_match_manager.get_matches_for_user(session['user_id'], session['username'])
+    return jsonify(matches)
+
+@app.route('/api/private-match/status/<int:match_id>', methods=['GET'])
+@login_required
+def get_private_match_status(match_id):
+    # Get current round info, board, etc.
+    conn = private_match_manager.get_db()
+    conn.row_factory = sqlite3.Row
+    m = conn.execute('SELECT * FROM private_matches WHERE id = ?', (match_id,)).fetchone()
+    if not m:
+        conn.close()
+        return jsonify({'error': 'Match not found'}), 404
+        
+    round_num = m['current_round']
+    r = conn.execute('SELECT * FROM private_match_rounds WHERE match_id = ? AND round_number = ?', (match_id, round_num)).fetchone()
+    
+    # Check if user is participant
+    p = conn.execute('SELECT 1 FROM private_match_players WHERE match_id = ? AND user_id = ?', (match_id, session['user_id'])).fetchone()
+    if not p:
+        conn.close()
+        return jsonify({'error': 'Not a participant'}), 403
+        
+    conn.close()
+    
+    return jsonify({
+        'match_id': match_id,
+        'current_round': round_num,
+        'parameters': json.loads(m['parameters']),
+        'board': json.loads(r['board_data']) if r else None,
+        'bonus_word': r['bonus_word'] if r else None,
+        'end_time': r['end_time'] if r else None
+    })
+
+@app.route('/api/private-match/submit', methods=['POST'])
+@login_required
+def submit_private_match_turn():
+    data = request.json
+    match_id = data.get('match_id')
+    round_number = data.get('round_number')
+    words_data = data.get('words')
+    score = data.get('score')
+    
+    private_match_manager.submit_turn(match_id, round_number, session['user_id'], words_data, score)
+    return jsonify({'success': True})
+
+@app.route('/api/private-match/invite/accept', methods=['POST'])
+@login_required
+def accept_match_invite():
+    invite_id = request.json.get('invite_id')
+    conn = private_match_manager.get_db()
+    invite = conn.execute('SELECT * FROM match_invites WHERE id = ? AND recipient_username = ?', (invite_id, session['username'])).fetchone()
+    if invite:
+        match_id = invite[1]
+        conn.execute('INSERT OR IGNORE INTO private_match_players (match_id, user_id, username) VALUES (?, ?, ?)',
+                    (match_id, session['user_id'], session['username']))
+        conn.execute('DELETE FROM match_invites WHERE id = ?', (invite_id,))
+        conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+@app.route('/api/private-match/history/<int:match_id>', methods=['GET'])
+@login_required
+def get_private_match_history(match_id):
+    conn = private_match_manager.get_db()
+    conn.row_factory = sqlite3.Row
+    # Fetch turns for all rounds for this match
+    turns = conn.execute('''
+        SELECT t.*, u.username, r.board_data, r.bonus_word, r.round_number
+        FROM private_match_turns t
+        JOIN private_match_rounds r ON t.match_id = r.match_id AND t.round_number = r.round_number
+        LEFT JOIN users u ON t.user_id = u.id
+        WHERE t.match_id = ?
+        ORDER BY t.round_number DESC, t.score DESC
+    ''', (match_id,)).fetchall()
+    
+    # We might have AI bots, their IDs are negative and not in users table
+    # Let's fix usernames for AI
+    results = []
+    players = conn.execute('SELECT user_id, username FROM private_match_players WHERE match_id = ?', (match_id,)).fetchall()
+    p_map = {p['user_id']: p['username'] for p in players}
+    
+    for row in turns:
+        d = dict(row)
+        d['username'] = p_map.get(d['user_id'], d['username'] or "AI Bot")
+        d['submitted_words'] = json.loads(d['submitted_words'])
+        d['board'] = json.loads(d['board_data'])
+        results.append(d)
+        
+    conn.close()
+    return jsonify(results)
 
 if __name__ == '__main__':
     print('Morpheme server running on http://localhost:3000')

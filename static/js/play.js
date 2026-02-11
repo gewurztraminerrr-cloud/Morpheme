@@ -1,7 +1,9 @@
 let isTournamentPlay = false;
+let isPrivateMatchPlay = false;
+let privateMatchWords = [];
+let privateMatchScore = 0;
+let privateMatchParams = null;
 let tournamentWords = [];
-let tournamentScore = 0;
-let tournamentParams = null;
 let lastServerUpdate = Date.now();  // Track last server response for freeze detection
 let selectedPlayerUsername = null; // Track selected player for filtering/highlighting
 let cachedTimerValueEl = null;    // Cache for high-frequency updates
@@ -64,7 +66,12 @@ window.startGamePolling = function () {
         initTournamentPlay();
         return;
     }
+    if (localStorage.getItem('private_match_active')) {
+        initPrivateMatchPlay();
+        return;
+    }
     isTournamentPlay = false;
+    isPrivateMatchPlay = false;
     startPolling();
 };
 
@@ -84,6 +91,17 @@ function startPolling() {
     console.log('[play.js] Setting up interval to call updateGameState');
     pollInterval = setInterval(updateGameState, 1000); // 1 second polling
     console.log('[play.js] Calling updateGameState() immediately');
+
+    // If we are in a special play mode, the intervals might have been cleared, so we check here
+    if (isTournamentPlay) {
+        initTournamentPlay();
+        return;
+    }
+    if (isPrivateMatchPlay) {
+        initPrivateMatchPlay();
+        return;
+    }
+
     updateGameState(); // Initial call
 }
 
@@ -2358,6 +2376,11 @@ async function submitWord(wordParam = null) {
         return;
     }
 
+    if (isPrivateMatchPlay) {
+        handlePrivateMatchWord(word);
+        return;
+    }
+
     const roomId = getCurrentRoomId();
     if (!word || !roomId) return;
 
@@ -2857,3 +2880,122 @@ function exitTournamentPlay() {
     window.location.href = '#page-tournaments';
     location.reload(); // Quickest way to restore all state
 }
+
+// --- PRIVATE MATCH PLAY LOGIC ---
+window.initPrivateMatchPlay = function () {
+    isPrivateMatchPlay = true;
+    isTournamentPlay = false;
+    privateMatchWords = [];
+    privateMatchScore = 0;
+
+    const activeMatch = JSON.parse(localStorage.getItem('private_match_active'));
+    if (!activeMatch) {
+        exitPrivateMatchPlay();
+        return;
+    }
+
+    privateMatchParams = activeMatch.parameters;
+
+    // UI Setup
+    document.getElementById('game-title').textContent = "Private Match";
+    document.getElementById('param-board').textContent = activeMatch.parameters.board_dimensions;
+    document.getElementById('param-time').textContent = activeMatch.parameters.time_limit + "s";
+    document.getElementById('param-bonus').textContent = activeMatch.parameters.bonus_word_length > 0 ? (activeMatch.parameters.bonus_word_length + " letters") : "None";
+    document.getElementById('param-min').textContent = activeMatch.parameters.min_word_length;
+    document.getElementById('param-dict').textContent = activeMatch.parameters.dictionary;
+
+    const list = document.getElementById('words-found-list');
+    if (list) list.innerHTML = '';
+
+    renderBoard(activeMatch.board);
+
+    // Stop random multiplayer polling
+    stopPolling();
+
+    // Start local timer
+    startPrivateMatchTimer(activeMatch.end_time);
+};
+
+function startPrivateMatchTimer(endTime) {
+    if (timerInterval) clearInterval(timerInterval);
+
+    const timerEl = document.getElementById('timer-value');
+
+    timerInterval = setInterval(() => {
+        const remaining = Math.max(0, Math.floor(endTime - Date.now() / 1000));
+        if (timerEl) timerEl.textContent = `Time: ${remaining}s`;
+
+        if (remaining <= 0) {
+            clearInterval(timerInterval);
+            finishPrivateMatchTurn();
+        }
+    }, 1000);
+}
+
+function handlePrivateMatchWord(word) {
+    if (privateMatchWords.find(w => w.word === word)) return;
+
+    // Points calculation (Simplified client side)
+    let pts = word.length;
+    if (word.length === 6) pts = 10;
+    else if (word.length === 7) pts = 15;
+    else if (word.length >= 8) pts = 25;
+
+    const activeMatch = JSON.parse(localStorage.getItem('private_match_active'));
+    if (activeMatch && activeMatch.bonus_word === word) {
+        pts += 10;
+        alert("BONUS WORD FOUND!");
+    }
+
+    privateMatchWords.push({
+        word: word,
+        points: pts,
+        timestamp: Date.now() / 1000
+    });
+    privateMatchScore += pts;
+
+    const scoreEl = document.querySelector('.player-card .score');
+    if (scoreEl) scoreEl.textContent = `Score: ${privateMatchScore}`;
+
+    const list = document.getElementById('words-found-list');
+    if (list) {
+        const item = document.createElement('div');
+        item.className = 'word-row';
+        item.innerHTML = `<span>${word}</span> <span>${pts}</span>`;
+        list.prepend(item);
+    }
+}
+
+async function finishPrivateMatchTurn() {
+    const activeMatch = JSON.parse(localStorage.getItem('private_match_active'));
+    if (!activeMatch) return;
+
+    try {
+        await fetch('/api/private-match/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                match_id: activeMatch.mid,
+                round_number: activeMatch.round,
+                words: privateMatchWords,
+                score: privateMatchScore
+            })
+        });
+        alert("Turn Submitted!");
+    } catch (e) {
+        console.error(e);
+    }
+
+    exitPrivateMatchPlay();
+}
+
+function exitPrivateMatchPlay() {
+    isPrivateMatchPlay = false;
+    localStorage.removeItem('private_match_active');
+    if (window.navigateToPage) window.navigateToPage('lobby');
+    window.startGamePolling();
+}
+
+// Hook into the board selection listener
+const originalSubmitWord = window.submitWord; // if it exists
+// But we want to override the submit button logic in play.js
