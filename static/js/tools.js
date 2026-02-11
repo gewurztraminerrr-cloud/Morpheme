@@ -1247,6 +1247,11 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     let rounds = window.lastRenderedRounds || [];
     let round = null;
 
+    // PRIORITY: Tournament explicitly set replay
+    if (roomId && String(roomId).startsWith('tournament_') && window.lastTournamentReplay && window.lastTournamentReplay.room_id === roomId && window.lastTournamentReplay.round_number == roundNum) {
+        round = window.lastTournamentReplay;
+    }
+
     // A) Try Profile/Recent Rounds First (Preferred source for own history)
     if (gameId) {
         round = rounds.find(r => r.game_id == gameId);

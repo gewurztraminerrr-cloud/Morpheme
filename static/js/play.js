@@ -1,8 +1,7 @@
-// Play Page JavaScript
-let pollInterval = null;
-let timerInterval = null;  // Separate interval for smooth timer updates
-let previousState = null;
-let localEndTime = null;  // End time in local clock terms
+let isTournamentPlay = false;
+let tournamentWords = [];
+let tournamentScore = 0;
+let tournamentParams = null;
 let lastServerUpdate = Date.now();  // Track last server response for freeze detection
 let selectedPlayerUsername = null; // Track selected player for filtering/highlighting
 let cachedTimerValueEl = null;    // Cache for high-frequency updates
@@ -61,6 +60,11 @@ function getCurrentRoomId() {
 
 // Expose for lobby.js to call
 window.startGamePolling = function () {
+    if (localStorage.getItem('tournament_play_active')) {
+        initTournamentPlay();
+        return;
+    }
+    isTournamentPlay = false;
     startPolling();
 };
 
@@ -2349,6 +2353,11 @@ async function submitWord(wordParam = null) {
     // Trigger 'input' event to clear board highlights and description synchronously
     input.dispatchEvent(new Event('input'));
 
+    if (isTournamentPlay) {
+        handleTournamentWord(word);
+        return;
+    }
+
     const roomId = getCurrentRoomId();
     if (!word || !roomId) return;
 
@@ -2683,3 +2692,168 @@ document.addEventListener('click', (e) => {
         }
     }
 });
+
+// --- TOURNAMENT PLAY LOGIC ---
+
+async function initTournamentPlay() {
+    const activeData = JSON.parse(localStorage.getItem('tournament_play_active'));
+    if (!activeData) return;
+
+    console.log('[Tournament] Initializing turn session:', activeData);
+    isTournamentPlay = true;
+    window.isTournamentPlay = true;
+    tournamentWords = []; // Will now store {word, points, timestamp}
+    tournamentScore = 0;
+    tournamentStartTime = Date.now() / 1000;
+
+    // Stop any standard polling
+    stopPolling();
+
+    // Clear UI
+    resetChat();
+    const wordsList = document.getElementById('words-found-list');
+    if (wordsList) wordsList.innerHTML = '';
+
+    try {
+        const response = await fetch('/api/tournament/game-state');
+        const data = await response.json();
+
+        if (data.error) {
+            alert(data.error);
+            exitTournamentPlay();
+            return;
+        }
+
+        tournamentParams = data.params;
+        lastGameState = {
+            board: data.board,
+            state: 'active',
+            timer: data.params.time_limit,
+            game_type: 'tournament',
+            status: 'active'
+        };
+
+        // Render Board
+        renderBoard(data.board, false);
+        updateParameters(lastGameState);
+
+        // Timer Setup: The tournament game has its OWN local timer starting from the moment they click play
+        localEndTime = Date.now() + (data.params.time_limit * 1000);
+
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            const current = Date.now();
+            const diff = Math.max(0, Math.ceil((localEndTime - current) / 1000));
+            updateTimer(diff);
+
+            if (diff <= 0) {
+                clearInterval(timerInterval);
+                finishTournamentTurn();
+            }
+        }, 1000);
+
+        // UI Adjustments
+        const playerList = document.getElementById('player-list');
+        if (playerList) {
+            playerList.innerHTML = `
+                <div class="player-card active" style="border-left: 4px solid #2ecc71;">
+                    <div class="player-info">
+                        <div class="username">TOURNAMENT TURN</div>
+                        <div class="score">Target: Best Possible Score</div>
+                    </div>
+                </div>
+            `;
+        }
+
+    } catch (e) {
+        console.error("Failed to load tournament game:", e);
+        exitTournamentPlay();
+    }
+}
+
+function handleTournamentWord(word) {
+    if (tournamentWords.find(w => w.word === word)) return;
+
+    // Check if word is on board
+    const path = findWordPathOnBoard(word, lastGameState.board);
+    if (!path) return;
+
+    // Check length
+    const minLen = tournamentParams.min_word_length || 3;
+    if (word.length < minLen) return;
+
+    // Use common scoring logic (1=1, 2=2, 3=3, 4=4, 5=5, 6=10, 7=15, 8=25)
+    let pts = word.length;
+    if (word.length === 6) pts = 10;
+    else if (word.length === 7) pts = 15;
+    else if (word.length >= 8) pts = 25;
+
+    // Bonus Word
+    let isBonus = false;
+    if (word.length === tournamentParams.bonus_word_length) {
+        pts += 10; // Simple bonus for now
+        isBonus = true;
+    }
+
+    tournamentWords.push({
+        word: word,
+        points: pts,
+        timestamp: Date.now() / 1000,
+        is_bonus: isBonus
+    });
+    tournamentScore += pts;
+
+    // Update Score UI
+    const scoreEl = document.querySelector('.player-card .score');
+    if (scoreEl) scoreEl.textContent = `Score: ${tournamentScore}`;
+
+    // Update Found List
+    const list = document.getElementById('words-found-list');
+    if (list) {
+        const item = document.createElement('div');
+        item.className = 'word-row';
+        item.innerHTML = `<span>${word}</span> <span>${pts}</span>`;
+        list.prepend(item);
+    }
+
+    // Flash Highlight
+    reapplyBoardHighlights();
+}
+
+async function finishTournamentTurn() {
+    console.log('[Tournament] Finish Turn. Final Score:', tournamentScore);
+    const activeData = JSON.parse(localStorage.getItem('tournament_play_active'));
+
+    try {
+        const response = await fetch('/api/tournament/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tournament_id: activeData.tid,
+                round_number: activeData.round,
+                words: tournamentWords,
+                score: tournamentScore,
+                round_start_time: tournamentStartTime
+            })
+        });
+
+        const res = await response.json();
+        if (res.success) {
+            alert(`Turn Complete! You scored ${tournamentScore} points.`);
+        } else {
+            alert("Error submitting score: " + res.error);
+        }
+    } catch (e) {
+        console.error("Submit error:", e);
+    }
+
+    exitTournamentPlay();
+}
+
+function exitTournamentPlay() {
+    localStorage.removeItem('tournament_play_active');
+    isTournamentPlay = false;
+    window.isTournamentPlay = false;
+    window.location.href = '#page-tournaments';
+    location.reload(); // Quickest way to restore all state
+}

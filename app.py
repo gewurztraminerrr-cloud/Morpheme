@@ -10,6 +10,8 @@ from collections import Counter
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'morpheme-secret-key-2024'
 
+from tournament_logic import tournament_manager
+
 # Auth Helpers
 class User:
     def __init__(self, id, username):
@@ -83,6 +85,14 @@ def init_db():
         conn.execute('ALTER TABLE users ADD COLUMN wins INTEGER DEFAULT 0')
         conn.commit()
         print("Migrated DB: Added wins column to users")
+    except sqlite3.OperationalError:
+        pass # Column likely exists
+
+    # MIGRATION: Ensure email column exists
+    try:
+        conn.execute('ALTER TABLE users ADD COLUMN email TEXT')
+        conn.commit()
+        print("Migrated DB: Added email column to users")
     except sqlite3.OperationalError:
         pass # Column likely exists
 
@@ -173,6 +183,13 @@ def init_db():
         );
     ''')
     conn.commit()
+
+    # MIGRATION: Add round_start_time to tournament_scores
+    try:
+        conn.execute('ALTER TABLE tournament_scores ADD COLUMN round_start_time REAL')
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass
 
     # MIGRATION: Add skill metrics to users table
     try:
@@ -461,11 +478,15 @@ def register():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
+    email = data.get('email')
     
     # Username validation: 1-16 chars, letters, numbers, underscores
     import re
     if not re.match(r'^[a-zA-Z0-9_]{1,16}$', username):
         return jsonify({'error': 'Username must be 1-16 characters (letters, numbers, underscores only)'}), 400
+
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
 
     if len(password) < 6:
         return jsonify({'error': 'Password must be 6+ characters'}), 400
@@ -473,8 +494,8 @@ def register():
     conn = sqlite3.connect('morpheme.db')
     try:
         password_hash = generate_password_hash(password, method='pbkdf2:sha256')
-        conn.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)',
-                    (username, password_hash))
+        conn.execute('INSERT INTO users (username, password_hash, email) VALUES (?, ?, ?)',
+                    (username, password_hash, email))
         conn.commit()
         
         cursor = conn.execute('SELECT id, rating FROM users WHERE username = ?', (username,))
@@ -482,9 +503,10 @@ def register():
         
         session['user_id'] = user[0]
         session['username'] = username
+        session['email'] = email
         session.pop('is_guest', None) # Clear guest flag if present
         
-        return jsonify({'success': True, 'username': username})
+        return jsonify({'success': True, 'username': username, 'email': email})
     except sqlite3.IntegrityError:
         return jsonify({'error': 'Username already exists'}), 400
     finally:
@@ -497,7 +519,7 @@ def login():
     password = data.get('password')
     
     conn = sqlite3.connect('morpheme.db')
-    cursor = conn.execute('SELECT id, password_hash FROM users WHERE username = ?', (username,))
+    cursor = conn.execute('SELECT id, password_hash, email FROM users WHERE username = ?', (username,))
     user = cursor.fetchone()
     conn.close()
     
@@ -506,9 +528,10 @@ def login():
     
     session['user_id'] = user[0]
     session['username'] = username
+    session['email'] = user[2]
     session.pop('is_guest', None) # Clear guest flag if present
     
-    return jsonify({'success': True, 'username': username})
+    return jsonify({'success': True, 'username': username, 'email': user[2]})
 
 @app.route('/api/logout', methods=['POST'])
 def logout():
@@ -563,6 +586,7 @@ def get_session():
         return jsonify({
             'authenticated': True,
             'username': session['username'],
+            'email': session.get('email'),
             'is_guest': session.get('is_guest', False)
         })
     return jsonify({'authenticated': False})
@@ -2850,6 +2874,214 @@ def get_leaderboard_data():
         import traceback
         print(f"Leaderboard Error: {e}")
         traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+# --- TOURNAMENT ENDPOINTS ---
+
+@app.route('/api/tournament/status', methods=['GET'])
+def get_tournament_status():
+    if 'user_id' in session:
+        room_manager.update_presence(session['user_id'])
+    
+    # Update state before returning
+    tournament_manager.update_tournament_status()
+    
+    t = tournament_manager.get_current_tournament()
+    user_status = {'status': 'not_joined', 'has_turn': False}
+    
+    if 'user_id' in session and not session.get('is_guest'):
+        user_id = session['user_id']
+        conn = sqlite3.connect('morpheme.db')
+        conn.row_factory = sqlite3.Row
+        p = conn.execute('SELECT * FROM tournament_participants WHERE tournament_id = ? AND user_id = ?', 
+                        (t['id'], user_id)).fetchone()
+        
+        if p:
+            user_status['status'] = p['status']
+            user_status['final_rank'] = p['final_rank']
+            user_status['has_turn'] = tournament_manager.has_user_turn(t['id'], user_id)
+        conn.close()
+        
+    history = tournament_manager.get_history()
+    
+    # Get round end time if active
+    round_end_time = 0
+    if t['status'] == 'active':
+        conn = sqlite3.connect('morpheme.db')
+        r = conn.execute('SELECT end_time FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?',
+                        (t['id'], t['current_round'])).fetchone()
+        conn.close()
+        if r: round_end_time = r[0]
+
+    round_scores = []
+    if t['status'] == 'active':
+        raw_scores = tournament_manager.get_round_scores(t['id'], t['current_round'])
+        for rs in raw_scores:
+            if rs.get('submitted_words'):
+                rs['submitted_words'] = json.loads(rs['submitted_words'])
+            round_scores.append(rs)
+
+    return jsonify({
+        'status': t['status'],
+        'id': t['id'],
+        'start_date': t['start_date'],
+        'parameters': json.loads(t['parameters']),
+        'current_round': t['current_round'],
+        'completed_at': t['completed_at'],
+        'round_end_time': round_end_time,
+        'user_status': user_status,
+        'history': history,
+        'round_scores': round_scores,
+        'is_guest': session.get('is_guest', False)
+    })
+
+@app.route('/api/tournament/join', methods=['POST'])
+@login_required
+def join_tournament():
+    if session.get('is_guest'):
+        return jsonify({'error': 'Guests cannot participate in tournaments'}), 403
+        
+    t = tournament_manager.get_current_tournament()
+    if t['status'] != 'signup':
+        return jsonify({'error': 'Signup period is over'}), 400
+        
+    user_id = session['user_id']
+    conn = sqlite3.connect('morpheme.db')
+    try:
+        conn.execute('''
+            INSERT OR IGNORE INTO tournament_participants (tournament_id, user_id, joined_at)
+            VALUES (?, ?, ?)
+        ''', (t['id'], user_id, time.time()))
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/tournament/game')
+@login_required
+def tournament_game_page():
+    if session.get('is_guest'):
+        return redirect('/')
+    return render_template('index.html') # The frontend will handle the specific layout via JS
+
+@app.route('/api/tournament/game-state', methods=['GET'])
+@login_required
+def get_tournament_game_state():
+    if session.get('is_guest'):
+        return jsonify({'error': 'Guest access denied'}), 403
+        
+    t = tournament_manager.get_current_tournament()
+    if t['status'] != 'active':
+        return jsonify({'error': 'No active tournament'}), 400
+        
+    user_id = session['user_id']
+    if not tournament_manager.has_user_turn(t['id'], user_id):
+        return jsonify({'error': 'Not your turn or already played'}), 403
+        
+    conn = sqlite3.connect('morpheme.db')
+    conn.row_factory = sqlite3.Row
+    r = conn.execute('SELECT * FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?',
+                    (t['id'], t['current_round'])).fetchone()
+    conn.close()
+    
+    if not r:
+        return jsonify({'error': 'Round data not found'}), 404
+        
+    params = json.loads(t['parameters'])
+    
+    return jsonify({
+        'tournament_id': t['id'],
+        'round_number': t['current_round'],
+        'board': json.loads(r['board_data']),
+        'params': params,
+        'end_time': r['end_time'],
+        'server_time': time.time()
+    })
+
+@app.route('/api/tournament/submit', methods=['POST'])
+@login_required
+def submit_tournament_score():
+    if session.get('is_guest'):
+        return jsonify({'error': 'Guest access denied'}), 403
+        
+    data = request.json
+    tid = data.get('tournament_id')
+    round_num = data.get('round_number')
+    words_data = data.get('words', []) # Now objects with 'word', 'points', 'timestamp'
+    round_start_time = data.get('round_start_time', time.time())
+    
+    user_id = session['user_id']
+    
+    if not tournament_manager.has_user_turn(tid, user_id):
+        return jsonify({'error': 'Invalid turn or already submitted'}), 403
+        
+    # FETCH ROUND DATA for validation
+    conn = sqlite3.connect('morpheme.db')
+    conn.row_factory = sqlite3.Row
+    t = conn.execute('SELECT * FROM tournaments WHERE id = ?', (tid,)).fetchone()
+    r = conn.execute('SELECT * FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?',
+                    (tid, round_num)).fetchone()
+    conn.close()
+    
+    if not t or not r:
+        return jsonify({'error': 'Tournament or round not found'}), 404
+        
+    params = json.loads(t['parameters'])
+    board = json.loads(r['board_data'])
+    dict_name = params.get('dictionary', 'NWL')
+    min_len = params.get('min_word_length', 3)
+    
+    # LOAD DICTIONARY
+    official_dict = word_validator.load_dictionary(dict_name)
+    
+    # VALIDATE WORDS & CALCULATE SCORE
+    valid_words = []
+    total_score = 0
+    
+    for item in words_data:
+        word = item.get('word', '').strip().upper()
+        if not word: continue
+        if len(word) < min_len: continue
+        if word not in official_dict: continue
+        
+        # Verify on board
+        if not word_validator.find_word_on_board(board, word): continue
+        
+        # Check uniqueness in valid_words to avoid double scoring
+        if not any(v['word'] == word for v in valid_words):
+            # Scoring
+            pts = len(word)
+            if len(word) == 6: pts = 10
+            elif len(word) == 7: pts = 15
+            elif len(word) >= 8: pts = 25
+            
+            # Bonus word
+            is_bonus = False
+            if len(word) == params.get('bonus_word_length'):
+                pts += 10
+                is_bonus = True
+                
+            valid_words.append({
+                'word': word,
+                'points': pts,
+                'timestamp': item.get('timestamp', time.time()),
+                'is_bonus': is_bonus
+            })
+            total_score += pts
+            
+    conn = sqlite3.connect('morpheme.db')
+    try:
+        conn.execute('''
+            INSERT INTO tournament_scores (tournament_id, round_number, user_id, score, submitted_words, submitted_at, round_start_time)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (tid, round_num, user_id, total_score, json.dumps(valid_words), time.time(), round_start_time))
+        conn.commit()
+        return jsonify({'success': True, 'score': total_score})
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
         conn.close()

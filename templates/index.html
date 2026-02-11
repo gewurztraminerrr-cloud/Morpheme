@@ -24,7 +24,7 @@
             <button class="nav-btn" data-page="login" id="nav-login-btn">Login</button>
             <button class="nav-btn" data-page="howtoplay">How to Play</button>
             <button class="nav-btn" data-page="lobby">Lobby</button>
-            <button class="nav-btn" data-page="tournaments" id="btn-tournaments">Tournaments</button>
+            <button class="nav-btn" data-page="tournaments" id="nav-tournaments-btn">Tournaments</button>
             <button class="nav-btn" id="play-btn" data-page="play" disabled>Play</button>
             <button class="nav-btn" data-page="leaderboards">Leaderboards</button>
             <button class="nav-btn" data-page="forums">Forum</button>
@@ -416,904 +416,982 @@
 
         <!-- Tournaments Page -->
         <div id="page-tournaments" class="page">
-            <h2>Tournaments</h2>
-            <p>Compete for the top spot.</p>
-            <div id="tournament-list-container">
-                <p class="placeholder">Loading tournaments...</p>
-            </div>
-        </div>
-
-        <!-- Store Page -->
-        <div id="page-store" class="page">
-            <h2>Morpheme Store</h2>
-            <p>Customize your experience.</p>
-            <div class="store-tabs">
-                <button class="store-tab active" data-category="themes">Themes</button>
-                <button class="store-tab" data-category="avatars">Avatars</button>
-                <button class="store-tab" data-category="perks">Perks</button>
-            </div>
-            <div class="store-grid" id="store-items-grid">
-                <p class="placeholder">Store items coming soon...</p>
-            </div>
-        </div>
-
-        <!-- Forum Page -->
-        <div id="page-forums" class="page">
-            <div class="forum-container">
-                <div class="forum-sidebar">
-                    <div class="forum-sidebar-header">
-                        <h3>Forums</h3>
-                    </div>
-                    <div id="forum-categories-list" class="forum-nav-list">
-                        <!-- Categories injected via JS -->
-                        <div class="forum-cat-loading">Loading categories...</div>
+            <div class="tournament-layout">
+                <div class="tournament-header">
+                    <div class="title-group">
+                        <h2>Morpheme Tournaments</h2>
+                        <span id="tournament-status-badge"
+                            class="tournament-status-badge status-signup">REGISTRATION</span>
                     </div>
                 </div>
-                <div class="forum-main">
-                    <!-- List View -->
-                    <div id="forum-view-list" class="forum-view active">
-                        <div class="forum-header">
-                            <div class="header-titles">
-                                <h2 id="forum-category-title">Community Board</h2>
-                                <p id="forum-category-desc">Connect with other players.</p>
+
+                <div id="tournament-guest-block" class="tournament-guest-block hidden">
+                    <div class="guest-msg-card">
+                        <span class="icon">🏆</span>
+                        <h3>Championship Access</h3>
+                        <p>Tournaments are reserved for registered Morpheme members. Sign up now to compete for the
+                            crown!</p>
+                        <button class="nav-btn" data-page="login"
+                            style="background: var(--accent-color); color: #000; padding: 12px 30px; margin-top:20px;">Join
+                            Now</button>
+                    </div>
+                </div>
+
+                <div id="tournament-main-content" class="tournament-main-content">
+                    <div class="tournament-grid">
+                        <!-- Left: Parameters (Spinner Set State) -->
+                        <div class="tournament-card params-panel">
+                            <h3>Tournament Parameters</h3>
+                            <div id="tournament-params-container" class="tournament-params-grid">
+                                <!-- Params injected by JS -->
+                                <p class="placeholder">Refreshing parameters...</p>
                             </div>
-                            <button id="forum-new-post-btn" class="forum-action-btn hidden">+ New Thread</button>
                         </div>
-                        <div id="forum-posts-list" class="forum-posts-list">
-                            <div class="forum-placeholder">
-                                <div class="placeholder-icon">💬</div>
-                                <h3>Welcome to the Forums</h3>
-                                <p>Select a category from the sidebar to begin exploring the community.</p>
+
+                        <!-- Right: Action Area -->
+                        <div class="tournament-card action-panel">
+                            <div class="panel-header">
+                                <h3 id="action-title">Registration Open</h3>
+                                <div id="tournament-countdown" class="countdown-timer">00:00:00</div>
+                            </div>
+
+                            <div id="tournament-action-area" class="tournament-action-content">
+                                <!-- Buttons and info injected by JS -->
+                                <p class="placeholder">Loading status...</p>
+                            </div>
+                        </div>
+
+                        <!-- Bottom: Leaderboard (Active Only) -->
+                        <div id="tournament-leaderboard-card" class="tournament-card leaderboard-panel hidden">
+                            <h3>Round Standings</h3>
+                            <div id="tournament-leaderboard-list" class="t-leaderboard-list">
+                                <!-- Standings injected by JS -->
+                            </div>
+                        </div>
+
+                        <!-- History Section -->
+                        <div class="tournament-card history-panel">
+                            <h3>Tournament Hall of Fame</h3>
+                            <div class="history-table-wrapper">
+                                <table class="history-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Champion</th>
+                                            <th>Event Type</th>
+                                            <th>Placement</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tournament-history-body">
+                                        <!-- History injected by JS -->
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Single Post View -->
-                    <div id="forum-view-post" class="forum-view">
-                        <div class="forum-sub-header">
-                            <button id="forum-back-to-list" class="forum-back-btn">← Back to category</button>
+            <!-- Store Page -->
+            <div id="page-store" class="page">
+                <h2>Morpheme Store</h2>
+                <p>Customize your experience.</p>
+                <div class="store-tabs">
+                    <button class="store-tab active" data-category="themes">Themes</button>
+                    <button class="store-tab" data-category="avatars">Avatars</button>
+                    <button class="store-tab" data-category="perks">Perks</button>
+                </div>
+                <div class="store-grid" id="store-items-grid">
+                    <p class="placeholder">Store items coming soon...</p>
+                </div>
+            </div>
+
+            <!-- Forum Page -->
+            <div id="page-forums" class="page">
+                <div class="forum-container">
+                    <div class="forum-sidebar">
+                        <div class="forum-sidebar-header">
+                            <h3>Forums</h3>
                         </div>
-                        <div id="forum-post-detail">
-                            <!-- Post content injected via JS -->
-                        </div>
-                        <div class="forum-comments-section">
-                            <div class="comments-header">
-                                <h3>Discussion</h3>
-                                <span id="forum-comment-count" class="comment-badge">0 comments</span>
-                            </div>
-                            <div id="forum-comments-list">
-                                <!-- Comments injected via JS -->
-                            </div>
-                            <div class="forum-comment-form hidden" id="forum-comment-form-container">
-                                <div class="comment-input-wrapper">
-                                    <textarea id="forum-comment-input"
-                                        placeholder="Join the conversation..."></textarea>
-                                    <div class="comment-controls">
-                                        <button id="forum-submit-comment" class="forum-action-btn">Post Comment</button>
-                                    </div>
-                                </div>
-                            </div>
+                        <div id="forum-categories-list" class="forum-nav-list">
+                            <!-- Categories injected via JS -->
+                            <div class="forum-cat-loading">Loading categories...</div>
                         </div>
                     </div>
-
-                    <!-- Create Post View -->
-                    <div id="forum-view-create" class="forum-view">
-                        <div class="forum-sub-header">
-                            <button id="forum-cancel-create" class="forum-back-btn">← Cancel</button>
+                    <div class="forum-main">
+                        <!-- List View -->
+                        <div id="forum-view-list" class="forum-view active">
+                            <div class="forum-header">
+                                <div class="header-titles">
+                                    <h2 id="forum-category-title">Community Board</h2>
+                                    <p id="forum-category-desc">Connect with other players.</p>
+                                </div>
+                                <button id="forum-new-post-btn" class="forum-action-btn hidden">+ New Thread</button>
+                            </div>
+                            <div id="forum-posts-list" class="forum-posts-list">
+                                <div class="forum-placeholder">
+                                    <div class="placeholder-icon">💬</div>
+                                    <h3>Welcome to the Forums</h3>
+                                    <p>Select a category from the sidebar to begin exploring the community.</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="forum-create-card">
-                            <h2 id="forum-create-title">Start a New Thread</h2>
-                            <form id="forum-post-form" class="forum-form">
-                                <input type="hidden" id="forum-post-category-id">
-                                <div class="form-group">
-                                    <label>What's on your mind?</label>
-                                    <input type="text" id="forum-post-title"
-                                        placeholder="Give your thread a clear, descriptive title" required>
+
+                        <!-- Single Post View -->
+                        <div id="forum-view-post" class="forum-view">
+                            <div class="forum-sub-header">
+                                <button id="forum-back-to-list" class="forum-back-btn">← Back to category</button>
+                            </div>
+                            <div id="forum-post-detail">
+                                <!-- Post content injected via JS -->
+                            </div>
+                            <div class="forum-comments-section">
+                                <div class="comments-header">
+                                    <h3>Discussion</h3>
+                                    <span id="forum-comment-count" class="comment-badge">0 comments</span>
                                 </div>
-                                <div class="form-group">
-                                    <label>Details</label>
-                                    <textarea id="forum-post-content" placeholder="Write your post content here..."
-                                        required></textarea>
+                                <div id="forum-comments-list">
+                                    <!-- Comments injected via JS -->
                                 </div>
-                                <div id="forum-image-upload-section" class="forum-upload-group hidden">
-                                    <label>Attach Screenshot</label>
-                                    <div class="file-input-wrapper">
-                                        <input type="file" id="forum-post-image" accept="image/*">
-                                        <div class="file-dummy">
-                                            <span class="file-text">Click to choose a file or drag and drop</span>
+                                <div class="forum-comment-form hidden" id="forum-comment-form-container">
+                                    <div class="comment-input-wrapper">
+                                        <textarea id="forum-comment-input"
+                                            placeholder="Join the conversation..."></textarea>
+                                        <div class="comment-controls">
+                                            <button id="forum-submit-comment" class="forum-action-btn">Post
+                                                Comment</button>
                                         </div>
                                     </div>
-                                    <div id="forum-image-preview" class="image-preview hidden"></div>
                                 </div>
-                                <div class="form-actions">
-                                    <button type="submit" class="forum-action-btn primary">Publish Thread</button>
-                                </div>
-                            </form>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Restriction View -->
-                    <div id="forum-view-restricted" class="forum-view">
-                        <div class="forum-restricted-card">
-                            <div class="restricted-icon">🔒</div>
-                            <h2>Members Only</h2>
-                            <p>You must be a registered member to participate in the forums. Guests can browse but
-                                cannot post or comment.</p>
-                            <div class="restricted-actions">
-                                <button class="forum-action-btn primary" onclick="navigateToPage('login')">Sign In /
-                                    Register</button>
+                        <!-- Create Post View -->
+                        <div id="forum-view-create" class="forum-view">
+                            <div class="forum-sub-header">
+                                <button id="forum-cancel-create" class="forum-back-btn">← Cancel</button>
+                            </div>
+                            <div class="forum-create-card">
+                                <h2 id="forum-create-title">Start a New Thread</h2>
+                                <form id="forum-post-form" class="forum-form">
+                                    <input type="hidden" id="forum-post-category-id">
+                                    <div class="form-group">
+                                        <label>What's on your mind?</label>
+                                        <input type="text" id="forum-post-title"
+                                            placeholder="Give your thread a clear, descriptive title" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Details</label>
+                                        <textarea id="forum-post-content" placeholder="Write your post content here..."
+                                            required></textarea>
+                                    </div>
+                                    <div id="forum-image-upload-section" class="forum-upload-group hidden">
+                                        <label>Attach Screenshot</label>
+                                        <div class="file-input-wrapper">
+                                            <input type="file" id="forum-post-image" accept="image/*">
+                                            <div class="file-dummy">
+                                                <span class="file-text">Click to choose a file or drag and drop</span>
+                                            </div>
+                                        </div>
+                                        <div id="forum-image-preview" class="image-preview hidden"></div>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="submit" class="forum-action-btn primary">Publish Thread</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Restriction View -->
+                        <div id="forum-view-restricted" class="forum-view">
+                            <div class="forum-restricted-card">
+                                <div class="restricted-icon">🔒</div>
+                                <h2>Members Only</h2>
+                                <p>You must be a registered member to participate in the forums. Guests can browse but
+                                    cannot post or comment.</p>
+                                <div class="restricted-actions">
+                                    <button class="forum-action-btn primary" onclick="navigateToPage('login')">Sign In /
+                                        Register</button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Tools Page -->
-        <div id="page-tools" class="page">
-            <div class="tools-split-layout">
-                <!-- Sidebar (1/3) -->
-                <div class="tools-sidebar">
-                    <button class="tool-nav-btn active" data-tool="profile">Profile</button>
-                    <button class="tool-nav-btn" data-tool="combo">Combo Checker</button>
-                    <button class="tool-nav-btn" data-tool="is-valid">Is Valid</button>
-                    <button class="tool-nav-btn" data-tool="lists">Lists</button>
-                    <button class="tool-nav-btn" data-tool="sequence">Sequence</button>
-                    <button class="tool-nav-btn" data-tool="subanagrams">Subanagrams</button>
-                    <button class="tool-nav-btn" data-tool="manual">Manual</button>
-                    <button class="tool-nav-btn" data-tool="random">Random Word</button>
-                    <button class="tool-nav-btn" data-tool="wotd">Word of the Day</button>
-                    <button class="tool-nav-btn" data-tool="unscramble">Unscramble</button>
-                    <!-- Future tools go here -->
-                </div>
+            <!-- Tools Page -->
+            <div id="page-tools" class="page">
+                <div class="tools-split-layout">
+                    <!-- Sidebar (1/3) -->
+                    <div class="tools-sidebar">
+                        <button class="tool-nav-btn active" data-tool="profile">Profile</button>
+                        <button class="tool-nav-btn" data-tool="combo">Combo Checker</button>
+                        <button class="tool-nav-btn" data-tool="is-valid">Is Valid</button>
+                        <button class="tool-nav-btn" data-tool="lists">Lists</button>
+                        <button class="tool-nav-btn" data-tool="sequence">Sequence</button>
+                        <button class="tool-nav-btn" data-tool="subanagrams">Subanagrams</button>
+                        <button class="tool-nav-btn" data-tool="manual">Manual</button>
+                        <button class="tool-nav-btn" data-tool="random">Random Word</button>
+                        <button class="tool-nav-btn" data-tool="wotd">Word of the Day</button>
+                        <button class="tool-nav-btn" data-tool="unscramble">Unscramble</button>
+                        <!-- Future tools go here -->
+                    </div>
 
-                <!-- Content (2/3) -->
-                <div class="tools-content">
-                    <!-- Profile Interface -->
-                    <div id="tool-profile" class="tool-pane active">
-                        <div class="tool-header">
-                            <h2>User Profile</h2>
-                            <p>View player stats and rankings.</p>
-                        </div>
-
-                        <div class="combo-control-panel">
-                            <div class="input-row">
-                                <input type="text" id="profile-search-input" placeholder="Enter username..."
-                                    autocomplete="off">
-                                <button id="profile-search-btn">Search</button>
+                    <!-- Content (2/3) -->
+                    <div class="tools-content">
+                        <!-- Profile Interface -->
+                        <div id="tool-profile" class="tool-pane active">
+                            <div class="tool-header">
+                                <h2>User Profile</h2>
+                                <p>View player stats and rankings.</p>
                             </div>
-                        </div>
 
-                        <div id="profile-display-container" class="profile-container hidden">
-                            <div class="profile-card premium">
-                                <div class="profile-layout">
-                                    <!-- Left Column: Avatar -->
-                                    <div class="profile-left-column">
-                                        <div class="profile-avatar-container">
-                                            <div class="profile-avatar large" id="profile-avatar-trigger"
-                                                title="Click to upload photo" style="cursor: pointer;">?</div>
-                                            <input type="file" id="profile-avatar-input" accept="image/*"
-                                                style="display: none;">
+                            <div class="combo-control-panel">
+                                <div class="input-row">
+                                    <input type="text" id="profile-search-input" placeholder="Enter username..."
+                                        autocomplete="off">
+                                    <button id="profile-search-btn">Search</button>
+                                </div>
+                            </div>
+
+                            <div id="profile-display-container" class="profile-container hidden">
+                                <div class="profile-card premium">
+                                    <div class="profile-layout">
+                                        <!-- Left Column: Avatar -->
+                                        <div class="profile-left-column">
+                                            <div class="profile-avatar-container">
+                                                <div class="profile-avatar large" id="profile-avatar-trigger"
+                                                    title="Click to upload photo" style="cursor: pointer;">?</div>
+                                                <input type="file" id="profile-avatar-input" accept="image/*"
+                                                    style="display: none;">
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <!-- Right Column: Details -->
-                                    <div class="profile-right-column">
-                                        <div class="profile-identity">
-                                            <div class="profile-title-row">
-                                                <h1 id="profile-username" class="profile-username-large">Player</h1>
-                                                <div id="profile-status-indicator" class="status-indicator offline"
-                                                    title="Offline"></div>
-                                                <button id="profile-message-btn"
-                                                    class="message-btn hidden">Message</button>
-                                                <button id="profile-friend-btn" class="friend-action-btn hidden">Add
-                                                    Friend</button>
-                                                <button id="profile-follow-btn"
-                                                    class="follow-btn hidden">Follow</button>
-                                                <input type="hidden" id="profile-current-room" value="">
-                                            </div>
+                                        <!-- Right Column: Details -->
+                                        <div class="profile-right-column">
+                                            <div class="profile-identity">
+                                                <div class="profile-title-row">
+                                                    <h1 id="profile-username" class="profile-username-large">Player</h1>
+                                                    <div id="profile-status-indicator" class="status-indicator offline"
+                                                        title="Offline"></div>
+                                                    <button id="profile-message-btn"
+                                                        class="message-btn hidden">Message</button>
+                                                    <button id="profile-friend-btn" class="friend-action-btn hidden">Add
+                                                        Friend</button>
+                                                    <button id="profile-follow-btn"
+                                                        class="follow-btn hidden">Follow</button>
+                                                    <input type="hidden" id="profile-current-room" value="">
+                                                </div>
 
-                                            <div class="profile-quote-minimal">
-                                                <p id="profile-quote-val">Enter a personal quote</p>
-                                            </div>
+                                                <div class="profile-quote-minimal">
+                                                    <p id="profile-quote-val">Enter a personal quote</p>
+                                                </div>
 
-                                            <div class="profile-metadata-row">
-                                                <div class="meta-item" title="Real Name">
-                                                    <span class="meta-icon">🆔</span>
-                                                    <span class="meta-label">Name</span>
-                                                    <span id="profile-full-name" class="meta-text">-</span>
-                                                </div>
-                                                <div class="meta-item" title="Age">
-                                                    <span class="meta-icon">🎂</span>
-                                                    <span class="meta-label">Age</span>
-                                                    <span id="profile-age-val" class="meta-text">-</span>
-                                                </div>
-                                                <div class="meta-item" title="Gender">
-                                                    <span class="meta-icon">👤</span>
-                                                    <span class="meta-label">Gender</span>
-                                                    <span id="profile-gender-val" class="meta-text">-</span>
-                                                </div>
-                                                <div class="meta-item" title="Location">
-                                                    <div class="custom-dropdown-container">
-                                                        <span class="profile-flag" id="profile-flag"
-                                                            style="cursor: pointer;">🏳️</span>
-                                                        <div id="flag-dropdown" class="dropdown-menu">
-                                                            <div class="dropdown-header">
-                                                                <input type="text" id="flag-dropdown-search"
-                                                                    class="dropdown-search"
-                                                                    placeholder="Search countries...">
-                                                            </div>
-                                                            <div id="flag-dropdown-list" class="dropdown-list">
-                                                                <!-- Flags injected here -->
-                                                            </div>
-                                                        </div>
+                                                <div class="profile-metadata-row">
+                                                    <div class="meta-item" title="Real Name">
+                                                        <span class="meta-icon">🆔</span>
+                                                        <span class="meta-label">Name</span>
+                                                        <span id="profile-full-name" class="meta-text">-</span>
                                                     </div>
-                                                    <span id="profile-flag-name" class="flag-name-label"></span>
-                                                    <span class="meta-label">Location</span>
-                                                    <span id="profile-location-val" class="meta-text">-</span>
-                                                </div>
-                                                <div class="meta-item" id="profile-proof-container"
-                                                    title="Proof of Legitimacy">
-                                                    <span class="meta-icon">🎥</span>
-                                                    <span class="meta-label">Proof</span>
-                                                    <a id="profile-proof-link" href="#" target="_blank"
-                                                        class="proof-link hidden">View Legitimacy Video</a>
-                                                    <span id="profile-proof-placeholder" class="meta-text">No proof
-                                                        provided</span>
-                                                    <input type="text" id="profile-proof-input"
-                                                        class="proof-edit-input hidden"
-                                                        placeholder="Enter YouTube URL...">
-                                                </div>
-                                            </div>
-                                        </div> <!-- End profile-identity -->
-                                    </div> <!-- End Right Column -->
-                                </div> <!-- End Layout Row -->
-
-                                <div class="profile-description-minimal">
-                                    <span class="meta-label">About Me</span>
-                                    <div id="profile-description-val" class="description-text">Add a
-                                        detailed description about yourself...</div>
-                                </div>
-
-                                <div class="profile-stats-grid">
-                                    <div class="stat-box">
-                                        <span class="stat-num" id="profile-games">0</span>
-                                        <span class="stat-desc">GAMES</span>
-                                    </div>
-                                    <div class="stat-box">
-                                        <span class="stat-num" id="profile-win-rate">0%</span>
-                                        <span class="stat-desc">WIN RATE</span>
-                                    </div>
-                                    <div class="stat-box">
-                                        <span class="stat-num" id="profile-best-score">-</span>
-                                        <span class="stat-desc">BEST</span>
-                                    </div>
-                                </div>
-
-                                <div class="profile-content-tabs">
-                                    <div class="profile-tabs-header">
-                                        <button class="profile-tab-toggle active" data-tab="rankings">Skill
-                                            Rankings</button>
-                                        <button class="profile-tab-toggle" data-tab="exceptional">Exceptional
-                                            Rounds</button>
-                                        <button class="profile-tab-toggle" data-tab="history">Round Reviews</button>
-                                        <button id="profile-tab-toggle-friends" class="profile-tab-toggle hidden"
-                                            data-tab="friends">Friends</button>
-                                    </div>
-
-                                    <div id="profile-tab-rankings" class="profile-tab-pane active">
-                                        <div class="profile-ratings-section">
-                                            <!-- Global Profile Period Filter (for Skill Rankings) -->
-
-
-                                            <div class="ratings-filters"
-                                                style="display: flex; gap: 15px; margin-bottom: 20px; background: rgba(255,255,255,0.03); padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); align-items: center;">
-                                                <div class="filter-group">
-                                                    <label
-                                                        style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Game
-                                                        Mode</label>
-                                                    <select id="rankings-filter-mode"
-                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
-                                                        <option value="all">All Modes</option>
-                                                        <option value="accumulative">Accumulative</option>
-                                                        <option value="fcfs">First Come First Serve</option>
-                                                        <option value="split">Split Points</option>
-                                                    </select>
-                                                </div>
-                                                <div class="filter-group">
-                                                    <label
-                                                        style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Dimensions</label>
-                                                    <select id="rankings-filter-dims"
-                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
-                                                        <option value="all">All Sizes</option>
-                                                        <option value="4x4">4x4</option>
-                                                        <option value="4x6">4x6</option>
-                                                        <option value="5x7">5x7</option>
-                                                        <option value="6x8">6x8</option>
-                                                    </select>
-                                                </div>
-                                                <div class="filter-group">
-                                                    <label
-                                                        style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Time
-                                                        Limit</label>
-                                                    <select id="rankings-filter-time"
-                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
-                                                        <option value="all">All Times</option>
-                                                        <option value="45">45 Seconds</option>
-                                                        <option value="180">3 Minutes</option>
-                                                        <option value="600">10 Minutes</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div id="profile-ratings-grid" class="ratings-grid">
-                                                <!-- Populated by JS -->
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div id="profile-tab-exceptional" class="profile-tab-pane">
-                                        <!-- Exceptional Period Tabs -->
-                                        <div class="achievement-tabs profile-tabs" style="margin-bottom: 20px;">
-                                            <button class="ach-tab-profile" data-period="day">Day</button>
-                                            <button class="ach-tab-profile" data-period="week">Week</button>
-                                            <button class="ach-tab-profile" data-period="month">Month</button>
-                                            <button class="ach-tab-profile" data-period="year">Year</button>
-                                            <button class="ach-tab-profile active" data-period="all">All-Time</button>
-                                        </div>
-                                        <div class="profile-history-section">
-                                            <div id="profile-exceptional-list" class="history-list">
-                                                <!-- Populated by JS -->
-                                                <p class="placeholder">Analyzing your most outstanding achievements...
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div id="profile-tab-history" class="profile-tab-pane">
-                                        <div class="profile-history-section">
-                                            <div id="profile-history-list" class="history-list">
-                                                <!-- Populated by JS -->
-                                                <p class="placeholder">No recently tracked rounds.</p>
-                                            </div>
-                                        </div>
-
-                                        <!-- Integrated Replay Panel -->
-                                        <div id="integrated-replay-panel" class="integrated-replay-container hidden">
-                                            <div class="integrated-replay-header">
-                                                <div class="header-main">
-                                                    <h3
-                                                        style="font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: 1px;">
-                                                        ROUND REPLAY</h3>
-                                                </div>
-                                            </div>
-                                            <div class="integrated-replay-layout">
-                                                <div class="replay-main">
-                                                    <!-- Board placed at the top as requested -->
-                                                    <div id="integrated-board-container"
-                                                        class="integrated-review-board">
-                                                        <!-- Populated by JS -->
+                                                    <div class="meta-item" title="Age">
+                                                        <span class="meta-icon">🎂</span>
+                                                        <span class="meta-label">Age</span>
+                                                        <span id="profile-age-val" class="meta-text">-</span>
                                                     </div>
-
-
-                                                    <div class="replay-controls-row">
-                                                        <button id="integrated-start-btn"
-                                                            class="replay-action-btn primary">▶
-                                                            Watch</button>
-                                                        <button id="integrated-skip-btn"
-                                                            class="replay-action-btn secondary hidden">Show All</button>
-
-                                                        <div id="integrated-progress-ui"
-                                                            class="integrated-progress-ui hidden">
-                                                            <div
-                                                                style="display: flex; flex-direction: column; gap: 2px;">
-                                                                <span id="integrated-current-time"
-                                                                    style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #409cff;">0:00.0</span>
-                                                                <span id="integrated-current-score"
-                                                                    style="font-size: 0.7rem; font-weight: 800; color: #ffd700; text-transform: uppercase;">0
-                                                                    pts</span>
-                                                            </div>
-
-                                                            <div class="mini-progress-bg">
-                                                                <div id="integrated-progress-bar"
-                                                                    class="mini-progress-fill">
+                                                    <div class="meta-item" title="Gender">
+                                                        <span class="meta-icon">👤</span>
+                                                        <span class="meta-label">Gender</span>
+                                                        <span id="profile-gender-val" class="meta-text">-</span>
+                                                    </div>
+                                                    <div class="meta-item" title="Location">
+                                                        <div class="custom-dropdown-container">
+                                                            <span class="profile-flag" id="profile-flag"
+                                                                style="cursor: pointer;">🏳️</span>
+                                                            <div id="flag-dropdown" class="dropdown-menu">
+                                                                <div class="dropdown-header">
+                                                                    <input type="text" id="flag-dropdown-search"
+                                                                        class="dropdown-search"
+                                                                        placeholder="Search countries...">
+                                                                </div>
+                                                                <div id="flag-dropdown-list" class="dropdown-list">
+                                                                    <!-- Flags injected here -->
                                                                 </div>
                                                             </div>
                                                         </div>
+                                                        <span id="profile-flag-name" class="flag-name-label"></span>
+                                                        <span class="meta-label">Location</span>
+                                                        <span id="profile-location-val" class="meta-text">-</span>
                                                     </div>
-
-                                                    <div id="integrated-walkthrough-list"
-                                                        class="integrated-walkthrough-list">
-                                                        <!-- Populated by JS -->
+                                                    <div class="meta-item" id="profile-proof-container"
+                                                        title="Proof of Legitimacy">
+                                                        <span class="meta-icon">🎥</span>
+                                                        <span class="meta-label">Proof</span>
+                                                        <a id="profile-proof-link" href="#" target="_blank"
+                                                            class="proof-link hidden">View Legitimacy Video</a>
+                                                        <span id="profile-proof-placeholder" class="meta-text">No proof
+                                                            provided</span>
+                                                        <input type="text" id="profile-proof-input"
+                                                            class="proof-edit-input hidden"
+                                                            placeholder="Enter YouTube URL...">
                                                     </div>
                                                 </div>
+                                            </div> <!-- End profile-identity -->
+                                        </div> <!-- End Right Column -->
+                                    </div> <!-- End Layout Row -->
 
-                                                <div class="replay-sidebar">
-                                                    <div id="integrated-players-list" class="replay-players-list hidden"
-                                                        style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; border: 1px solid rgba(255,255,255,0.05);">
-                                                        <h4
-                                                            style="font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 12px; letter-spacing: 1.5px; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
-                                                            Round Participants</h4>
-                                                        <div id="integrated-players-body"
-                                                            style="display: flex; flex-direction: column; gap: 10px;">
+                                    <div class="profile-description-minimal">
+                                        <span class="meta-label">About Me</span>
+                                        <div id="profile-description-val" class="description-text">Add a
+                                            detailed description about yourself...</div>
+                                    </div>
+
+                                    <div class="profile-stats-grid">
+                                        <div class="stat-box">
+                                            <span class="stat-num" id="profile-games">0</span>
+                                            <span class="stat-desc">GAMES</span>
+                                        </div>
+                                        <div class="stat-box">
+                                            <span class="stat-num" id="profile-win-rate">0%</span>
+                                            <span class="stat-desc">WIN RATE</span>
+                                        </div>
+                                        <div class="stat-box">
+                                            <span class="stat-num" id="profile-best-score">-</span>
+                                            <span class="stat-desc">BEST</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="profile-content-tabs">
+                                        <div class="profile-tabs-header">
+                                            <button class="profile-tab-toggle active" data-tab="rankings">Skill
+                                                Rankings</button>
+                                            <button class="profile-tab-toggle" data-tab="exceptional">Exceptional
+                                                Rounds</button>
+                                            <button class="profile-tab-toggle" data-tab="history">Round Reviews</button>
+                                            <button id="profile-tab-toggle-friends" class="profile-tab-toggle hidden"
+                                                data-tab="friends">Friends</button>
+                                        </div>
+
+                                        <div id="profile-tab-rankings" class="profile-tab-pane active">
+                                            <div class="profile-ratings-section">
+                                                <!-- Global Profile Period Filter (for Skill Rankings) -->
+
+
+                                                <div class="ratings-filters"
+                                                    style="display: flex; gap: 15px; margin-bottom: 20px; background: rgba(255,255,255,0.03); padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); align-items: center;">
+                                                    <div class="filter-group">
+                                                        <label
+                                                            style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Game
+                                                            Mode</label>
+                                                        <select id="rankings-filter-mode"
+                                                            style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
+                                                            <option value="all">All Modes</option>
+                                                            <option value="accumulative">Accumulative</option>
+                                                            <option value="fcfs">First Come First Serve</option>
+                                                            <option value="split">Split Points</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="filter-group">
+                                                        <label
+                                                            style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Dimensions</label>
+                                                        <select id="rankings-filter-dims"
+                                                            style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
+                                                            <option value="all">All Sizes</option>
+                                                            <option value="4x4">4x4</option>
+                                                            <option value="4x6">4x6</option>
+                                                            <option value="5x7">5x7</option>
+                                                            <option value="6x8">6x8</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="filter-group">
+                                                        <label
+                                                            style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Time
+                                                            Limit</label>
+                                                        <select id="rankings-filter-time"
+                                                            style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
+                                                            <option value="all">All Times</option>
+                                                            <option value="45">45 Seconds</option>
+                                                            <option value="180">3 Minutes</option>
+                                                            <option value="600">10 Minutes</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div id="profile-ratings-grid" class="ratings-grid">
+                                                    <!-- Populated by JS -->
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div id="profile-tab-exceptional" class="profile-tab-pane">
+                                            <!-- Exceptional Period Tabs -->
+                                            <div class="achievement-tabs profile-tabs" style="margin-bottom: 20px;">
+                                                <button class="ach-tab-profile" data-period="day">Day</button>
+                                                <button class="ach-tab-profile" data-period="week">Week</button>
+                                                <button class="ach-tab-profile" data-period="month">Month</button>
+                                                <button class="ach-tab-profile" data-period="year">Year</button>
+                                                <button class="ach-tab-profile active"
+                                                    data-period="all">All-Time</button>
+                                            </div>
+                                            <div class="profile-history-section">
+                                                <div id="profile-exceptional-list" class="history-list">
+                                                    <!-- Populated by JS -->
+                                                    <p class="placeholder">Analyzing your most outstanding
+                                                        achievements...
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div id="profile-tab-history" class="profile-tab-pane">
+                                            <div class="profile-history-section">
+                                                <div id="profile-history-list" class="history-list">
+                                                    <!-- Populated by JS -->
+                                                    <p class="placeholder">No recently tracked rounds.</p>
+                                                </div>
+                                            </div>
+
+                                            <!-- Integrated Replay Panel -->
+                                            <div id="integrated-replay-panel"
+                                                class="integrated-replay-container hidden">
+                                                <div class="integrated-replay-header">
+                                                    <div class="header-main">
+                                                        <h3
+                                                            style="font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: 1px;">
+                                                            ROUND REPLAY</h3>
+                                                    </div>
+                                                </div>
+                                                <div class="integrated-replay-layout">
+                                                    <div class="replay-main">
+                                                        <!-- Board placed at the top as requested -->
+                                                        <div id="integrated-board-container"
+                                                            class="integrated-review-board">
                                                             <!-- Populated by JS -->
+                                                        </div>
+
+
+                                                        <div class="replay-controls-row">
+                                                            <button id="integrated-start-btn"
+                                                                class="replay-action-btn primary">▶
+                                                                Watch</button>
+                                                            <button id="integrated-skip-btn"
+                                                                class="replay-action-btn secondary hidden">Show
+                                                                All</button>
+
+                                                            <div id="integrated-progress-ui"
+                                                                class="integrated-progress-ui hidden">
+                                                                <div
+                                                                    style="display: flex; flex-direction: column; gap: 2px;">
+                                                                    <span id="integrated-current-time"
+                                                                        style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #409cff;">0:00.0</span>
+                                                                    <span id="integrated-current-score"
+                                                                        style="font-size: 0.7rem; font-weight: 800; color: #ffd700; text-transform: uppercase;">0
+                                                                        pts</span>
+                                                                </div>
+
+                                                                <div class="mini-progress-bg">
+                                                                    <div id="integrated-progress-bar"
+                                                                        class="mini-progress-fill">
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div id="integrated-walkthrough-list"
+                                                            class="integrated-walkthrough-list">
+                                                            <!-- Populated by JS -->
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="replay-sidebar">
+                                                        <div id="integrated-players-list"
+                                                            class="replay-players-list hidden"
+                                                            style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; border: 1px solid rgba(255,255,255,0.05);">
+                                                            <h4
+                                                                style="font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 12px; letter-spacing: 1.5px; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                                                                Round Participants</h4>
+                                                            <div id="integrated-players-body"
+                                                                style="display: flex; flex-direction: column; gap: 10px;">
+                                                                <!-- Populated by JS -->
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <div id="profile-tab-friends" class="profile-tab-pane">
-                                        <div class="profile-friends-section">
-                                            <div id="profile-friends-list" class="friends-grid">
-                                                <!-- Populated by JS -->
-                                                <p class="placeholder">You haven't added any friends yet.</p>
+                                        <div id="profile-tab-friends" class="profile-tab-pane">
+                                            <div class="profile-friends-section">
+                                                <div id="profile-friends-list" class="friends-grid">
+                                                    <!-- Populated by JS -->
+                                                    <p class="placeholder">You haven't added any friends yet.</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
 
-                    <!-- Word of the Day Interface -->
-                    <div id="tool-wotd" class="tool-pane">
-                        <div class="tool-header">
-                            <h2>Word of the Day</h2>
-                            <p>A new word to learn and master every 24 hours.</p>
-                        </div>
-
-                        <div class="wotd-container">
-                            <p class="wotd-intro">The word of the day is...</p>
-                            <div id="wotd-display" class="wotd-gold-showy">
-                                <!-- Word injected via JS -->
+                        <!-- Word of the Day Interface -->
+                        <div id="tool-wotd" class="tool-pane">
+                            <div class="tool-header">
+                                <h2>Word of the Day</h2>
+                                <p>A new word to learn and master every 24 hours.</p>
                             </div>
-                            <div id="wotd-definition" class="wotd-definition"
-                                style="margin-top: 30px; text-align: left; font-size: 1.3rem; max-width: 700px; margin-left: 0; margin-right: auto; opacity: 0.9; line-height: 1.5; color: #ddd; font-style: italic;">
-                                <!-- Definition injected via JS -->
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Random Word Interface -->
-                    <div id="tool-random" class="tool-pane">
-                        <div class="tool-header">
-                            <h2>Random Word Generator</h2>
-                            <p>Discover new words based on length and dictionary criteria.</p>
-                        </div>
-
-                        <div class="combo-control-panel">
-                            <div class="input-row">
-                                <label>Length:</label>
-                                <select id="random-length" style="width: 100px;">
-                                    <option value="all">All</option>
-                                    <option value="3">3</option>
-                                    <option value="4">4</option>
-                                    <option value="5">5</option>
-                                    <option value="6">6</option>
-                                    <option value="7">7</option>
-                                    <option value="8">8</option>
-                                    <option value="9">9</option>
-                                    <option value="10">10</option>
-                                    <option value="11">11</option>
-                                    <option value="12">12</option>
-                                    <option value="13">13</option>
-                                    <option value="14">14</option>
-                                    <option value="15">15</option>
-                                </select>
-                                <label>Dict:</label>
-                                <select id="random-dict" style="width: 120px;">
-                                    <option value="NWL">NWL (US)</option>
-                                    <option value="CSW">CSW (Intl)</option>
-                                </select>
-                                <button id="random-gen-btn">Generate Random Word</button>
-                            </div>
-                        </div>
-
-                        <div class="random-word-container">
-                            <div id="random-word-display" class="random-word-large">
-                                <!-- Generated word appears here -->
-                            </div>
-                            <div id="random-word-definition"
-                                style="margin-top: 20px; font-size: 1.1rem; color: #ccc; font-style: italic; max-width: 80%; margin-left: 0; margin-right: auto; line-height: 1.4; text-align: left;">
-                                <!-- Definition generated here -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Manual Tool Interface -->
-                    <div id="tool-manual" class="tool-pane">
-                        <div class="tool-header">
-                            <h2>Manual Solver</h2>
-                            <p>Enter a custom board and solve it independently.</p>
-                        </div>
-
-                        <div class="combo-control-panel">
-                            <div class="input-row">
-                                <select id="manual-dim" style="width: 140px;">
-                                    <option value="4x4">4x4</option>
-                                    <option value="4x6">4x6</option>
-                                    <option value="5x7">5x7</option>
-                                    <option value="6x8" selected>6x8</option>
-                                </select>
-                                <select id="manual-dict" style="width: 140px;">
-                                    <option value="NWL">NWL (US)</option>
-                                    <option value="CSW">CSW (Intl)</option>
-                                </select>
-                                <button id="manual-solve-btn">Solve</button>
-                                <button id="manual-reveal-btn" style="display: none;">Reveal Words</button>
-                            </div>
-                        </div>
-
-                        <div class="manual-grid-scroll">
-                            <div id="manual-grid" class="manual-grid">
-                                <!-- Grid inputs injected via JS -->
-                            </div>
-                        </div>
-
-                        <div id="manual-results-container" class="seq-results-container" style="display: none;">
-                            <!-- Results injected via JS -->
-                        </div>
-                    </div>
-
-                    <!-- ... omitted combo/list content to match target ... -->
-
-                    <!-- Combo Checker Interface -->
-                    <div id="tool-combo" class="tool-pane">
-                        <div class="tool-header">
-                            <h2>Combo Checker</h2>
-                            <p>Find connected words via MP and LIC.</p>
-                        </div>
-
-                        <div class="combo-control-panel">
-                            <div class="input-row">
-                                <input type="text" id="combo-input" placeholder="Enter letters to check..."
-                                    autocomplete="off">
-                                <select id="combo-dict">
-                                    <option value="NWL">NWL (US)</option>
-                                    <option value="CSW">CSW (Intl)</option>
-                                </select>
-                                <button id="combo-search-btn">Check</button>
-                            </div>
-                        </div>
-
-                        <div id="combo-results" class="combo-results-container hidden">
-                            <!-- MP Section: Horizontal Groups (0MP to 5MP) -->
-                            <div class="result-section">
-                                <h3>MP (Microprocedures)</h3>
-                                <div class="chart-desc">Determining the distance away from one word to another and
-                                    keeping the ones that are the closest.</div>
-                                <div class="horizontal-scroll-container" id="mp-container">
-                                    <!-- Dynamic Columns (0MP, 1MP, 2MP...) will be injected here -->
+                            <div class="wotd-container">
+                                <p class="wotd-intro">The word of the day is...</p>
+                                <div id="wotd-display" class="wotd-gold-showy">
+                                    <!-- Word injected via JS -->
                                 </div>
-                            </div>
-
-                            <!-- LIC Section: Horizontal Groups (Sorted by Shared Count) -->
-                            <div class="result-section">
-                                <h3>LIC (Letters In Common)</h3>
-                                <div class="chart-desc">The letters are there, but are they arranged in such a way so as
-                                    to have both be present?</div>
-                                <div class="horizontal-scroll-container" id="lic-container">
-                                    <!-- Dynamic Columns (Shared=3, Shared=4...) will be injected here -->
+                                <div id="wotd-definition" class="wotd-definition"
+                                    style="margin-top: 30px; text-align: left; font-size: 1.3rem; max-width: 700px; margin-left: 0; margin-right: auto; opacity: 0.9; line-height: 1.5; color: #ddd; font-style: italic;">
+                                    <!-- Definition injected via JS -->
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Is Valid Tool Interface -->
-                    <div id="tool-is-valid" class="tool-pane">
-                        <div class="tool-header">
-                            <h2>Word Validator</h2>
-                            <p>Check if a word exists in the official dictionaries.</p>
-                        </div>
-
-                        <div class="combo-control-panel">
-                            <div class="input-row">
-                                <input type="text" id="valid-input" placeholder="Enter word to check..."
-                                    autocomplete="off" style="width: 250px;">
-                                <select id="valid-dict" style="width: 140px;">
-                                    <option value="NWL">NWL (US)</option>
-                                    <option value="CSW">CSW (Intl)</option>
-                                </select>
-                                <button id="valid-check-btn">Validate</button>
+                        <!-- Random Word Interface -->
+                        <div id="tool-random" class="tool-pane">
+                            <div class="tool-header">
+                                <h2>Random Word Generator</h2>
+                                <p>Discover new words based on length and dictionary criteria.</p>
                             </div>
-                        </div>
 
-                        <div id="valid-results-container" class="random-word-container">
-                            <div id="valid-result-display" class="random-word-large">
-                                <!-- Validation result appears here -->
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Subanagrams Tool Interface -->
-                    <div id="tool-subanagrams" class="tool-pane">
-                        <div class="tool-header">
-                            <h2>Subanagrams</h2>
-                            <p>Find all words that can be formed using letters from your input.</p>
-                        </div>
-
-                        <div class="combo-control-panel">
-                            <div class="input-row">
-                                <input type="text" id="sub-input" placeholder="Enter letters (e.g. HELLO)..."
-                                    autocomplete="off" style="width: 250px;">
-                                <select id="sub-dict" style="width: 140px;">
-                                    <option value="NWL">NWL (US)</option>
-                                    <option value="CSW">CSW (Intl)</option>
-                                </select>
-                                <button id="sub-search-btn">Find Subanagrams</button>
-                            </div>
-                        </div>
-
-                        <div id="sub-results-container" class="seq-results-container">
-                            <div class="seq-results-placeholder">Enter letters to find subanagrams.</div>
-                            <!-- Results table injected via JS -->
-                        </div>
-                    </div>
-
-                    <!-- Sequence Tool Interface (New) -->
-                    <div id="tool-sequence" class="tool-pane">
-                        <div class="tool-header">
-                            <h2>Sequence Search</h2>
-                            <p>Find words starting with, ending with, or containing a sequence.</p>
-                        </div>
-
-                        <div class="combo-control-panel">
-                            <div class="input-row">
-                                <input type="text" id="seq-input" placeholder="Sequence (e.g. STR)..."
-                                    autocomplete="off" style="width: 160px;">
-
-                                <select id="seq-mode" style="width: 200px;">
-                                    <option value="starts">Starts With</option>
-                                    <option value="ends">Ends With</option>
-                                    <option value="contains" selected>Contains (Fwd/Rev)</option>
-                                </select>
-
-                                <select id="seq-length" style="width: 120px;">
-                                    <option value="all">Len: All</option>
-                                    <option value="3">3</option>
-                                    <option value="4">4</option>
-                                    <option value="5">5</option>
-                                    <option value="6">6</option>
-                                    <option value="7">7</option>
-                                    <option value="8">8</option>
-                                    <option value="9">9</option>
-                                    <option value="10">10</option>
-                                    <option value="11">11</option>
-                                    <option value="12">12</option>
-                                    <option value="13">13</option>
-                                    <option value="14">14</option>
-                                    <option value="15">15</option>
-                                </select>
-
-                                <button id="seq-search-btn">Search</button>
-                            </div>
-                        </div>
-
-                        <div id="seq-results-container" class="seq-results-container">
-                            <div class="seq-results-placeholder">Enter a sequence to search.</div>
-                            <!-- Results Table will be injected here -->
-                        </div>
-                    </div>
-
-                    <!-- Lists Tool Interface (New) -->
-                    <div id="tool-lists" class="tool-pane">
-                        <div class="tool-header">
-                            <h2>Word Lists</h2>
-                            <p>Browse official dictionaries and unique collections.</p>
-                        </div>
-
-                        <!-- Filter Controls -->
-                        <div class="combo-control-panel" style="margin-bottom: 0px;">
-                            <div class="input-row">
-                                <select id="list-length-filter" style="width: 140px;">
-                                    <option value="all">Length: All</option>
-                                    <option value="3">3 Letters</option>
-                                    <option value="4">4 Letters</option>
-                                    <option value="5">5 Letters</option>
-                                    <option value="6">6 Letters</option>
-                                    <option value="7">7 Letters</option>
-                                    <option value="8">8 Letters</option>
-                                    <option value="9">9 Letters</option>
-                                    <option value="10">10 Letters</option>
-                                    <option value="11">11 Letters</option>
-                                    <option value="12">12 Letters</option>
-                                    <option value="13">13 Letters</option>
-                                    <option value="14">14 Letters</option>
-                                    <option value="15">15 Letters</option>
-                                </select>
-                                <select id="list-start-filter" style="width: 140px;">
-                                    <option value="all">Starts With: All</option>
-                                    <option value="A">A</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                    <option value="D">D</option>
-                                    <option value="E">E</option>
-                                    <option value="F">F</option>
-                                    <option value="G">G</option>
-                                    <option value="H">H</option>
-                                    <option value="I">I</option>
-                                    <option value="J">J</option>
-                                    <option value="K">K</option>
-                                    <option value="L">L</option>
-                                    <option value="M">M</option>
-                                    <option value="N">N</option>
-                                    <option value="O">O</option>
-                                    <option value="P">P</option>
-                                    <option value="Q">Q</option>
-                                    <option value="R">R</option>
-                                    <option value="S">S</option>
-                                    <option value="T">T</option>
-                                    <option value="U">U</option>
-                                    <option value="V">V</option>
-                                    <option value="W">W</option>
-                                    <option value="X">X</option>
-                                    <option value="Y">Y</option>
-                                    <option value="Z">Z</option>
-                                </select>
-                                <button id="list-update-btn">Update</button>
-                            </div>
-                        </div>
-
-                        <div class="lists-container" id="lists-container">
-                            <!-- Columns will be injected by JS or hardcoded structure -->
-                            <div class="list-column" id="col-nwl">
-                                <h3>NWL</h3>
-                                <div class="list-scroll-area">Loading...</div>
-                            </div>
-                            <div class="list-column" id="col-csw">
-                                <h3>CSW</h3>
-                                <div class="list-scroll-area">Loading...</div>
-                            </div>
-                            <div class="list-column" id="col-csw-only">
-                                <h3>CSW Only</h3>
-                                <div class="list-scroll-area">Loading...</div>
-                            </div>
-                            <div class="list-column" id="col-likelihood">
-                                <h3>Likelihood</h3>
-                                <div class="list-scroll-area">Loading...</div>
-                            </div>
-                            <div class="list-column" id="col-uniques">
-                                <h3>Uniques</h3>
-                                <div class="list-scroll-area">Loading...</div>
-                            </div>
-                            <div class="list-column" id="col-added">
-                                <h3>Added Words</h3>
-                                <div class="list-scroll-area">Loading...</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Unscramble Tool Interface -->
-                    <div id="tool-unscramble" class="tool-pane"
-                        style="flex-direction: column; align-items: center; text-align: center; width: 100%;">
-                        <div class="tool-header" style="text-align: center; padding: 0; width: 100%;">
-                            <h2>Unscramble</h2>
-                            <p style="margin-bottom: 25px;">Test your skills: Guess the word from jumbled letters.</p>
-                        </div>
-
-                        <div class="combo-control-panel"
-                            style="padding: 20px; justify-content: center; display: flex; width: 100%; margin: 0 0 25px 0; background: rgba(255, 255, 255, 0.05);">
-                            <div class="input-row"
-                                style="justify-content: center !important; display: flex !important; gap: 12px;">
-                                <select id="unscramble-length" style="width: 120px;">
-                                    <option value="3">Len: 3</option>
-                                    <option value="4">Len: 4</option>
-                                    <option value="5">Len: 5</option>
-                                    <option value="6">Len: 6</option>
-                                    <option value="7" selected>Len: 7</option>
-                                    <option value="8">Len: 8</option>
-                                    <option value="9">Len: 9</option>
-                                    <option value="10">Len: 10</option>
-                                    <option value="11">Len: 11</option>
-                                    <option value="12">Len: 12</option>
-                                    <option value="13">Len: 13</option>
-                                    <option value="14">Len: 14</option>
-                                    <option value="15">Len: 15</option>
-                                </select>
-                                <select id="unscramble-dict" style="width: 140px;">
-                                    <option value="NWL">NWL (US)</option>
-                                    <option value="CSW">CSW (Intl)</option>
-                                    <option value="randomTWLunique">Uniques</option>
-                                </select>
-                                <button id="unscramble-gen-btn">New Game</button>
-                            </div>
-                        </div>
-
-                        <div class="unscramble-container"
-                            style="display: flex; flex-direction: row; align-items: stretch; justify-content: flex-start; gap: 30px; margin-top: 40px; width: 100%; height: 600px;">
-
-                            <!-- Left Area: Results (Now with premium styling) -->
-                            <div id="unscramble-found-container" class="hidden"
-                                style="width: 380px; background: rgba(30,30,50,0.6); backdrop-filter: blur(15px); border-radius: 20px; padding: 25px; border: 1px solid rgba(255,255,255,0.1); text-align: left; flex-direction: column; flex-shrink: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.3); height: 100%;">
-                                <h3
-                                    style="font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; text-align: center; font-weight: 800; letter-spacing: 2px;">
-                                    Status & Results</h3>
-                                <div id="unscramble-found-list"
-                                    style="display: flex; flex-direction: column; gap: 15px; overflow-y: auto; flex: 1; padding: 5px 15px 5px 5px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent;">
-                                    <!-- List of found words -->
+                            <div class="combo-control-panel">
+                                <div class="input-row">
+                                    <label>Length:</label>
+                                    <select id="random-length" style="width: 100px;">
+                                        <option value="all">All</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                        <option value="6">6</option>
+                                        <option value="7">7</option>
+                                        <option value="8">8</option>
+                                        <option value="9">9</option>
+                                        <option value="10">10</option>
+                                        <option value="11">11</option>
+                                        <option value="12">12</option>
+                                        <option value="13">13</option>
+                                        <option value="14">14</option>
+                                        <option value="15">15</option>
+                                    </select>
+                                    <label>Dict:</label>
+                                    <select id="random-dict" style="width: 120px;">
+                                        <option value="NWL">NWL (US)</option>
+                                        <option value="CSW">CSW (Intl)</option>
+                                    </select>
+                                    <button id="random-gen-btn">Generate Random Word</button>
                                 </div>
                             </div>
 
-                            <!-- Right Area: Game Dashboard (Moved inside container) -->
-                            <div class="unscramble-game-area"
-                                style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 25px; flex: 1; background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); padding: 40px; height: 100%;">
+                            <div class="random-word-container">
+                                <div id="random-word-display" class="random-word-large">
+                                    <!-- Generated word appears here -->
+                                </div>
+                                <div id="random-word-definition"
+                                    style="margin-top: 20px; font-size: 1.1rem; color: #ccc; font-style: italic; max-width: 80%; margin-left: 0; margin-right: auto; line-height: 1.4; text-align: left;">
+                                    <!-- Definition generated here -->
+                                </div>
+                            </div>
+                        </div>
 
-                                <div style="display: flex; flex-direction: column; align-items: center;">
-                                    <div id="unscramble-jumbled" class="random-word-large"
-                                        style="letter-spacing: 15px; font-weight: 900; color: #ffd700; text-shadow: 0 0 30px rgba(255,215,0,0.4); font-size: 5rem; margin-bottom: 5px; font-family: 'Outfit', sans-serif;">
-                                        <!-- Jumbled word -->
-                                    </div>
-                                    <div id="unscramble-count-info"
-                                        style="font-size: 1rem; color: rgba(255,255,255,0.4); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
-                                        <!-- "X words possible" -->
+                        <!-- Manual Tool Interface -->
+                        <div id="tool-manual" class="tool-pane">
+                            <div class="tool-header">
+                                <h2>Manual Solver</h2>
+                                <p>Enter a custom board and solve it independently.</p>
+                            </div>
+
+                            <div class="combo-control-panel">
+                                <div class="input-row">
+                                    <select id="manual-dim" style="width: 140px;">
+                                        <option value="4x4">4x4</option>
+                                        <option value="4x6">4x6</option>
+                                        <option value="5x7">5x7</option>
+                                        <option value="6x8" selected>6x8</option>
+                                    </select>
+                                    <select id="manual-dict" style="width: 140px;">
+                                        <option value="NWL">NWL (US)</option>
+                                        <option value="CSW">CSW (Intl)</option>
+                                    </select>
+                                    <button id="manual-solve-btn">Solve</button>
+                                    <button id="manual-reveal-btn" style="display: none;">Reveal Words</button>
+                                </div>
+                            </div>
+
+                            <div class="manual-grid-scroll">
+                                <div id="manual-grid" class="manual-grid">
+                                    <!-- Grid inputs injected via JS -->
+                                </div>
+                            </div>
+
+                            <div id="manual-results-container" class="seq-results-container" style="display: none;">
+                                <!-- Results injected via JS -->
+                            </div>
+                        </div>
+
+                        <!-- ... omitted combo/list content to match target ... -->
+
+                        <!-- Combo Checker Interface -->
+                        <div id="tool-combo" class="tool-pane">
+                            <div class="tool-header">
+                                <h2>Combo Checker</h2>
+                                <p>Find connected words via MP and LIC.</p>
+                            </div>
+
+                            <div class="combo-control-panel">
+                                <div class="input-row">
+                                    <input type="text" id="combo-input" placeholder="Enter letters to check..."
+                                        autocomplete="off">
+                                    <select id="combo-dict">
+                                        <option value="NWL">NWL (US)</option>
+                                        <option value="CSW">CSW (Intl)</option>
+                                    </select>
+                                    <button id="combo-search-btn">Check</button>
+                                </div>
+                            </div>
+
+                            <div id="combo-results" class="combo-results-container hidden">
+                                <!-- MP Section: Horizontal Groups (0MP to 5MP) -->
+                                <div class="result-section">
+                                    <h3>MP (Microprocedures)</h3>
+                                    <div class="chart-desc">Determining the distance away from one word to another and
+                                        keeping the ones that are the closest.</div>
+                                    <div class="horizontal-scroll-container" id="mp-container">
+                                        <!-- Dynamic Columns (0MP, 1MP, 2MP...) will be injected here -->
                                     </div>
                                 </div>
 
-                                <div class="input-dashboard"
-                                    style="display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; max-width: 450px; margin-top: 20px;">
-
-                                    <input type="text" id="unscramble-input" placeholder="Enter word..."
-                                        autocomplete="off"
-                                        style="width: 100%; text-transform: uppercase; text-align: center; font-size: 1.5rem; padding: 15px; letter-spacing: 2px; border: 2px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: #fff; border-radius: 12px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); outline: none;">
-
-                                    <div style="display: flex; gap: 15px; width: 100%;">
-                                        <button id="unscramble-check-btn" class="primary-action"
-                                            style="flex: 2; height: 55px; font-size: 1rem; font-weight: 700; border-radius: 12px; background: linear-gradient(135deg, #2ecc71, #27ae60); border: none; color: #fff; cursor: pointer; transition: all 0.3s ease;">
-                                            Check Word
-                                        </button>
-                                        <button id="unscramble-reveal-btn" class="secondary-action"
-                                            style="flex: 1; height: 55px; font-size: 1rem; font-weight: 700; border-radius: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer; transition: all 0.3s ease;">
-                                            Reveal
-                                        </button>
+                                <!-- LIC Section: Horizontal Groups (Sorted by Shared Count) -->
+                                <div class="result-section">
+                                    <h3>LIC (Letters In Common)</h3>
+                                    <div class="chart-desc">The letters are there, but are they arranged in such a way
+                                        so as
+                                        to have both be present?</div>
+                                    <div class="horizontal-scroll-container" id="lic-container">
+                                        <!-- Dynamic Columns (Shared=3, Shared=4...) will be injected here -->
                                     </div>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Is Valid Tool Interface -->
+                        <div id="tool-is-valid" class="tool-pane">
+                            <div class="tool-header">
+                                <h2>Word Validator</h2>
+                                <p>Check if a word exists in the official dictionaries.</p>
+                            </div>
+
+                            <div class="combo-control-panel">
+                                <div class="input-row">
+                                    <input type="text" id="valid-input" placeholder="Enter word to check..."
+                                        autocomplete="off" style="width: 250px;">
+                                    <select id="valid-dict" style="width: 140px;">
+                                        <option value="NWL">NWL (US)</option>
+                                        <option value="CSW">CSW (Intl)</option>
+                                    </select>
+                                    <button id="valid-check-btn">Validate</button>
+                                </div>
+                            </div>
+
+                            <div id="valid-results-container" class="random-word-container">
+                                <div id="valid-result-display" class="random-word-large">
+                                    <!-- Validation result appears here -->
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Subanagrams Tool Interface -->
+                        <div id="tool-subanagrams" class="tool-pane">
+                            <div class="tool-header">
+                                <h2>Subanagrams</h2>
+                                <p>Find all words that can be formed using letters from your input.</p>
+                            </div>
+
+                            <div class="combo-control-panel">
+                                <div class="input-row">
+                                    <input type="text" id="sub-input" placeholder="Enter letters (e.g. HELLO)..."
+                                        autocomplete="off" style="width: 250px;">
+                                    <select id="sub-dict" style="width: 140px;">
+                                        <option value="NWL">NWL (US)</option>
+                                        <option value="CSW">CSW (Intl)</option>
+                                    </select>
+                                    <button id="sub-search-btn">Find Subanagrams</button>
+                                </div>
+                            </div>
+
+                            <div id="sub-results-container" class="seq-results-container">
+                                <div class="seq-results-placeholder">Enter letters to find subanagrams.</div>
+                                <!-- Results table injected via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Sequence Tool Interface (New) -->
+                        <div id="tool-sequence" class="tool-pane">
+                            <div class="tool-header">
+                                <h2>Sequence Search</h2>
+                                <p>Find words starting with, ending with, or containing a sequence.</p>
+                            </div>
+
+                            <div class="combo-control-panel">
+                                <div class="input-row">
+                                    <input type="text" id="seq-input" placeholder="Sequence (e.g. STR)..."
+                                        autocomplete="off" style="width: 160px;">
+
+                                    <select id="seq-mode" style="width: 200px;">
+                                        <option value="starts">Starts With</option>
+                                        <option value="ends">Ends With</option>
+                                        <option value="contains" selected>Contains (Fwd/Rev)</option>
+                                    </select>
+
+                                    <select id="seq-length" style="width: 120px;">
+                                        <option value="all">Len: All</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                        <option value="6">6</option>
+                                        <option value="7">7</option>
+                                        <option value="8">8</option>
+                                        <option value="9">9</option>
+                                        <option value="10">10</option>
+                                        <option value="11">11</option>
+                                        <option value="12">12</option>
+                                        <option value="13">13</option>
+                                        <option value="14">14</option>
+                                        <option value="15">15</option>
+                                    </select>
+
+                                    <button id="seq-search-btn">Search</button>
+                                </div>
+                            </div>
+
+                            <div id="seq-results-container" class="seq-results-container">
+                                <div class="seq-results-placeholder">Enter a sequence to search.</div>
+                                <!-- Results Table will be injected here -->
+                            </div>
+                        </div>
+
+                        <!-- Lists Tool Interface (New) -->
+                        <div id="tool-lists" class="tool-pane">
+                            <div class="tool-header">
+                                <h2>Word Lists</h2>
+                                <p>Browse official dictionaries and unique collections.</p>
+                            </div>
+
+                            <!-- Filter Controls -->
+                            <div class="combo-control-panel" style="margin-bottom: 0px;">
+                                <div class="input-row">
+                                    <select id="list-length-filter" style="width: 140px;">
+                                        <option value="all">Length: All</option>
+                                        <option value="3">3 Letters</option>
+                                        <option value="4">4 Letters</option>
+                                        <option value="5">5 Letters</option>
+                                        <option value="6">6 Letters</option>
+                                        <option value="7">7 Letters</option>
+                                        <option value="8">8 Letters</option>
+                                        <option value="9">9 Letters</option>
+                                        <option value="10">10 Letters</option>
+                                        <option value="11">11 Letters</option>
+                                        <option value="12">12 Letters</option>
+                                        <option value="13">13 Letters</option>
+                                        <option value="14">14 Letters</option>
+                                        <option value="15">15 Letters</option>
+                                    </select>
+                                    <select id="list-start-filter" style="width: 140px;">
+                                        <option value="all">Starts With: All</option>
+                                        <option value="A">A</option>
+                                        <option value="B">B</option>
+                                        <option value="C">C</option>
+                                        <option value="D">D</option>
+                                        <option value="E">E</option>
+                                        <option value="F">F</option>
+                                        <option value="G">G</option>
+                                        <option value="H">H</option>
+                                        <option value="I">I</option>
+                                        <option value="J">J</option>
+                                        <option value="K">K</option>
+                                        <option value="L">L</option>
+                                        <option value="M">M</option>
+                                        <option value="N">N</option>
+                                        <option value="O">O</option>
+                                        <option value="P">P</option>
+                                        <option value="Q">Q</option>
+                                        <option value="R">R</option>
+                                        <option value="S">S</option>
+                                        <option value="T">T</option>
+                                        <option value="U">U</option>
+                                        <option value="V">V</option>
+                                        <option value="W">W</option>
+                                        <option value="X">X</option>
+                                        <option value="Y">Y</option>
+                                        <option value="Z">Z</option>
+                                    </select>
+                                    <button id="list-update-btn">Update</button>
+                                </div>
+                            </div>
+
+                            <div class="lists-container" id="lists-container">
+                                <!-- Columns will be injected by JS or hardcoded structure -->
+                                <div class="list-column" id="col-nwl">
+                                    <h3>NWL</h3>
+                                    <div class="list-scroll-area">Loading...</div>
+                                </div>
+                                <div class="list-column" id="col-csw">
+                                    <h3>CSW</h3>
+                                    <div class="list-scroll-area">Loading...</div>
+                                </div>
+                                <div class="list-column" id="col-csw-only">
+                                    <h3>CSW Only</h3>
+                                    <div class="list-scroll-area">Loading...</div>
+                                </div>
+                                <div class="list-column" id="col-likelihood">
+                                    <h3>Likelihood</h3>
+                                    <div class="list-scroll-area">Loading...</div>
+                                </div>
+                                <div class="list-column" id="col-uniques">
+                                    <h3>Uniques</h3>
+                                    <div class="list-scroll-area">Loading...</div>
+                                </div>
+                                <div class="list-column" id="col-added">
+                                    <h3>Added Words</h3>
+                                    <div class="list-scroll-area">Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Unscramble Tool Interface -->
+                        <div id="tool-unscramble" class="tool-pane"
+                            style="flex-direction: column; align-items: center; text-align: center; width: 100%;">
+                            <div class="tool-header" style="text-align: center; padding: 0; width: 100%;">
+                                <h2>Unscramble</h2>
+                                <p style="margin-bottom: 25px;">Test your skills: Guess the word from jumbled letters.
+                                </p>
+                            </div>
+
+                            <div class="combo-control-panel"
+                                style="padding: 20px; justify-content: center; display: flex; width: 100%; margin: 0 0 25px 0; background: rgba(255, 255, 255, 0.05);">
+                                <div class="input-row"
+                                    style="justify-content: center !important; display: flex !important; gap: 12px;">
+                                    <select id="unscramble-length" style="width: 120px;">
+                                        <option value="3">Len: 3</option>
+                                        <option value="4">Len: 4</option>
+                                        <option value="5">Len: 5</option>
+                                        <option value="6">Len: 6</option>
+                                        <option value="7" selected>Len: 7</option>
+                                        <option value="8">Len: 8</option>
+                                        <option value="9">Len: 9</option>
+                                        <option value="10">Len: 10</option>
+                                        <option value="11">Len: 11</option>
+                                        <option value="12">Len: 12</option>
+                                        <option value="13">Len: 13</option>
+                                        <option value="14">Len: 14</option>
+                                        <option value="15">Len: 15</option>
+                                    </select>
+                                    <select id="unscramble-dict" style="width: 140px;">
+                                        <option value="NWL">NWL (US)</option>
+                                        <option value="CSW">CSW (Intl)</option>
+                                        <option value="randomTWLunique">Uniques</option>
+                                    </select>
+                                    <button id="unscramble-gen-btn">New Game</button>
+                                </div>
+                            </div>
+
+                            <div class="unscramble-container"
+                                style="display: flex; flex-direction: row; align-items: stretch; justify-content: flex-start; gap: 30px; margin-top: 40px; width: 100%; height: 600px;">
+
+                                <!-- Left Area: Results (Now with premium styling) -->
+                                <div id="unscramble-found-container" class="hidden"
+                                    style="width: 380px; background: rgba(30,30,50,0.6); backdrop-filter: blur(15px); border-radius: 20px; padding: 25px; border: 1px solid rgba(255,255,255,0.1); text-align: left; flex-direction: column; flex-shrink: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.3); height: 100%;">
+                                    <h3
+                                        style="font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; text-align: center; font-weight: 800; letter-spacing: 2px;">
+                                        Status & Results</h3>
+                                    <div id="unscramble-found-list"
+                                        style="display: flex; flex-direction: column; gap: 15px; overflow-y: auto; flex: 1; padding: 5px 15px 5px 5px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent;">
+                                        <!-- List of found words -->
+                                    </div>
+                                </div>
+
+                                <!-- Right Area: Game Dashboard (Moved inside container) -->
+                                <div class="unscramble-game-area"
+                                    style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 25px; flex: 1; background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); padding: 40px; height: 100%;">
+
+                                    <div style="display: flex; flex-direction: column; align-items: center;">
+                                        <div id="unscramble-jumbled" class="random-word-large"
+                                            style="letter-spacing: 15px; font-weight: 900; color: #ffd700; text-shadow: 0 0 30px rgba(255,215,0,0.4); font-size: 5rem; margin-bottom: 5px; font-family: 'Outfit', sans-serif;">
+                                            <!-- Jumbled word -->
+                                        </div>
+                                        <div id="unscramble-count-info"
+                                            style="font-size: 1rem; color: rgba(255,255,255,0.4); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                                            <!-- "X words possible" -->
+                                        </div>
+                                    </div>
+
+                                    <div class="input-dashboard"
+                                        style="display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; max-width: 450px; margin-top: 20px;">
+
+                                        <input type="text" id="unscramble-input" placeholder="Enter word..."
+                                            autocomplete="off"
+                                            style="width: 100%; text-transform: uppercase; text-align: center; font-size: 1.5rem; padding: 15px; letter-spacing: 2px; border: 2px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: #fff; border-radius: 12px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); outline: none;">
+
+                                        <div style="display: flex; gap: 15px; width: 100%;">
+                                            <button id="unscramble-check-btn" class="primary-action"
+                                                style="flex: 2; height: 55px; font-size: 1rem; font-weight: 700; border-radius: 12px; background: linear-gradient(135deg, #2ecc71, #27ae60); border: none; color: #fff; cursor: pointer; transition: all 0.3s ease;">
+                                                Check Word
+                                            </button>
+                                            <button id="unscramble-reveal-btn" class="secondary-action"
+                                                style="flex: 1; height: 55px; font-size: 1rem; font-weight: 700; border-radius: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer; transition: all 0.3s ease;">
+                                                Reveal
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Contact Page -->
-        <div id="page-contact" class="page">
-            <div class="contact-container">
-                <div class="contact-card">
-                    <h2>Contact the Developer</h2>
-                    <p class="contact-desc">Have a suggestion, found a bug, or just want to say hello? Send a
-                        message
-                        directly to the creator of Morpheme.</p>
+            <!-- Contact Page -->
+            <div id="page-contact" class="page">
+                <div class="contact-container">
+                    <div class="contact-card">
+                        <h2>Contact the Developer</h2>
+                        <p class="contact-desc">Have a suggestion, found a bug, or just want to say hello? Send a
+                            message
+                            directly to the creator of Morpheme.</p>
 
-                    <form id="contact-form" class="contact-form">
-                        <div class="form-group">
-                            <label for="contact-user-email">From User Email</label>
-                            <input type="email" id="contact-user-email" placeholder="yourname@example.com" required>
-                        </div>
+                        <form id="contact-form" class="contact-form">
+                            <div class="form-group">
+                                <label for="contact-user-email">From User Email</label>
+                                <input type="email" id="contact-user-email" placeholder="yourname@example.com" required>
+                            </div>
 
-                        <div class="form-group">
-                            <label for="contact-dev-email">To Developer Email</label>
-                            <input type="email" id="contact-dev-email" value="developer@morpheme.game" readonly>
-                            <small class="field-hint">This is the official destination for support and
-                                feedback.</small>
-                        </div>
+                            <div class="form-group">
+                                <label for="contact-dev-email">To Developer Email</label>
+                                <input type="email" id="contact-dev-email" value="developer@morpheme.game" readonly>
+                                <small class="field-hint">This is the official destination for support and
+                                    feedback.</small>
+                            </div>
 
-                        <div class="form-group">
-                            <label for="contact-message">Message</label>
-                            <textarea id="contact-message" rows="10"
-                                placeholder="Type your detailed message to the developer here..." required></textarea>
-                        </div>
+                            <div class="form-group">
+                                <label for="contact-message">Message</label>
+                                <textarea id="contact-message" rows="10"
+                                    placeholder="Type your detailed message to the developer here..."
+                                    required></textarea>
+                            </div>
 
-                        <button type="submit" class="submit-contact-btn" style="margin-top: 25px;">
-                            <span class="btn-text">Send Message</span>
-                            <span class="btn-icon">✈</span>
-                        </button>
+                            <button type="submit" class="submit-contact-btn" style="margin-top: 25px;">
+                                <span class="btn-text">Send Message</span>
+                                <span class="btn-icon">✈</span>
+                            </button>
 
-                        <div id="contact-status" class="contact-status"></div>
-                    </form>
+                            <div id="contact-status" class="contact-status"></div>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
     </main>
 
     <!-- Settings Page -->
@@ -1964,6 +2042,7 @@
     <script src="/js/app.js"></script>
     <script src="/js/lobby.js"></script>
     <script src="/js/play.js"></script>
+    <script src="/js/tournaments.js"></script>
     <script src="/js/leaderboard.js?v=1"></script>
 
     <!-- History Review Overlay -->

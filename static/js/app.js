@@ -1,11 +1,11 @@
 // Navigation system
 const pages = {
-    'btn-login': 'page-login',
+    'nav-login-btn': 'page-login',
     'btn-how-to-play': 'page-how-to-play',
     'btn-lobby': 'page-lobby',
     'btn-play': 'page-play',
     'btn-leaderboards': 'page-leaderboards',
-    'btn-tournaments': 'page-tournaments',
+    'nav-tournaments-btn': 'page-tournaments',
     'btn-store': 'page-store',
     'btn-forums': 'page-forums',
     'btn-tools': 'page-tools',
@@ -14,6 +14,7 @@ const pages = {
 };
 
 let currentUser = null;
+let currentUserEmail = null;
 let selectedRoom = null;
 
 // Define standardized rating ranges globaly for reuse
@@ -294,6 +295,8 @@ async function checkSession() {
         if (data.authenticated) {
             currentUser = data.username;
             window.currentUser = currentUser;  // Expose globally
+            currentUserEmail = data.email;
+            window.currentUserEmail = currentUserEmail;
             window.currentUserIsGuest = data.is_guest; // Store guest status
             localStorage.setItem('morpheme_username', currentUser);
 
@@ -378,45 +381,26 @@ async function checkSession() {
 }
 
 // Setup navigation
+async function checkTournamentTurn() {
+    if (!currentUser || window.currentUserIsGuest) return;
+    try {
+        const res = await fetch('/api/tournament/status');
+        const data = await res.json();
+        const btn = document.getElementById('nav-tournaments-btn');
+
+        if (btn && data.user_status && data.user_status.has_turn) {
+            btn.classList.add('has-turn');
+        } else if (btn) {
+            btn.classList.remove('has-turn');
+        }
+    } catch (e) { }
+}
+
+// Check initially and periodically (every 60s)
+setTimeout(checkTournamentTurn, 2000);
+setInterval(checkTournamentTurn, 60000);
+
 function setupNavigation() {
-    // Tournament Button Logic
-    const tournBtn = document.getElementById('btn-tournaments');
-    if (tournBtn) {
-        tournBtn.addEventListener('click', () => {
-            if (!currentUser || window.currentUserIsGuest) {
-                alert('Tournaments are for registered users only.');
-                return; // Block access
-            }
-            showPage('page-tournaments');
-            updateActiveNav(tournBtn);
-
-            // Initialize/Refresh Tournament Data
-            if (window.initTournamentsPage) {
-                window.initTournamentsPage();
-            }
-        });
-    }
-
-    // Poll Tournament Status for Green Light
-    async function checkTournamentStatus() {
-        if (!currentUser || window.currentUserIsGuest) return;
-        try {
-            const res = await fetch('/api/tournament/status');
-            const data = await res.json();
-            const btn = document.getElementById('btn-tournaments');
-
-            if (btn && data.user_status && data.user_status.has_turn) {
-                btn.classList.add('tournaments-active');
-            } else if (btn) {
-                btn.classList.remove('tournaments-active');
-            }
-        } catch (e) { }
-    }
-
-    // Check initially and periodically
-    setTimeout(checkTournamentStatus, 2000); // Small delay to ensure login state
-    setInterval(checkTournamentStatus, 60000);
-
     const navButtons = document.querySelectorAll('.nav-btn');
     // ... existing loop ...
     navButtons.forEach(btn => {
@@ -540,6 +524,16 @@ function showPage(pageId) {
         if (typeof window.initForum === 'function') {
             window.initForum();
         }
+    } else if (pageId === 'page-tournaments') {
+        if (typeof window.initTournamentsPage === 'function') {
+            window.initTournamentsPage();
+        }
+    } else if (pageId === 'page-contact') {
+        // Default "FROM USER EMAIL" to theirs if they are signed up
+        const contactEmailInput = document.getElementById('contact-user-email');
+        if (contactEmailInput && currentUserEmail) {
+            contactEmailInput.value = currentUserEmail;
+        }
     } else {
         if (window.stopGamePolling) {
             console.log('Leaving Play page - stopping polling');
@@ -643,6 +637,8 @@ async function handleSignIn() {
         if (data.success) {
             currentUser = data.username;
             window.currentUser = currentUser;
+            currentUserEmail = data.email;
+            window.currentUserEmail = currentUserEmail;
             window.currentUserIsGuest = data.is_guest || false;
             navigateToLobby();
         } else {
@@ -686,6 +682,8 @@ async function handleSignUp() {
         if (data.success) {
             currentUser = data.username;
             window.currentUser = currentUser;
+            currentUserEmail = email; // From the signup form
+            window.currentUserEmail = currentUserEmail;
             window.currentUserIsGuest = false;
             navigateToLobby();
         } else {
@@ -760,6 +758,8 @@ async function handleLogout() {
         if (data.success) {
             currentUser = null;
             window.currentUser = null;
+            currentUserEmail = null;
+            window.currentUserEmail = null;
             window.currentUserIsGuest = false;
             localStorage.removeItem('morpheme_username');
             localStorage.removeItem('morpheme_pm_state');
