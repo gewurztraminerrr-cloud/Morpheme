@@ -1,21 +1,16 @@
 ---
-description: Revert to Scrollable Unscramble Checkpoint (2026-02-10)
+description: Revert the application to the 'snapshot-current' state
 ---
-
-This workflow resets the codebase to the state saved after the Unscramble tool scrollable list fix.
-
-// turbo
-1. Reset the codebase to the checkpoint commit
+// turbo-all
+1. Revert to the tagged snapshot:
+```bash
+git reset --hard snapshot-current
 ```
-git reset --hard f35b9fe1b29d9e8ffd175fe685c9ba4d102ffcac
+2. Force pull from origin just in case:
+```bash
+git pull origin main --force
 ```
-
-2. Clean any untracked files
-```
-git clean -fd
-```
-
-3. Restart the server if necessary
-```
-python3 app.py
+3. Restart the server:
+```bash
+lsof -i :3000 -t | xargs kill && python3 app.py &
 ```

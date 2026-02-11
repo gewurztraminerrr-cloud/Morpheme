@@ -2744,7 +2744,8 @@ def get_leaderboard_data():
         # Base filters
         params = []
         # Exclude 24h rooms (duration is usually 86400, so < 43200 (12h) is safe)
-        where_clauses = ["rh.round_duration < 43200"] 
+        # Exclude Guests from leaderboards
+        where_clauses = ["rh.round_duration < 43200", "u.username NOT LIKE 'Guest_%'"] 
 
         if game_type != 'all':
             where_clauses.append("rh.game_type = ?")
