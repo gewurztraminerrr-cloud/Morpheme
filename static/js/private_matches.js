@@ -1,4 +1,4 @@
-(function() {
+(function () {
     let soloBots = [];
 
     function init() {
@@ -51,6 +51,39 @@
         // Initial Load
         loadPrivateMatches();
         setInterval(loadPrivateMatches, 30000); // Polling for invites/turns
+
+        // Dynamic Min Word Len options
+        const soloDims = document.getElementById('sf-config-dims');
+        if (soloDims) {
+            soloDims.addEventListener('change', updateMinWordLenOptions);
+            updateMinWordLenOptions();
+        }
+    }
+
+    function updateMinWordLenOptions() {
+        const soloDims = document.getElementById('sf-config-dims');
+        const soloMinLen = document.getElementById('sf-config-min-len');
+        if (!soloDims || !soloMinLen) return;
+
+        const dim = soloDims.value;
+        const config = {
+            '4x4': [3, 4, 5],
+            '4x6': [4, 5, 6],
+            '5x7': [5, 6, 7],
+            '6x8': [6, 7, 8]
+        };
+
+        const options = config[dim] || [3, 4, 5];
+        const currentVal = parseInt(soloMinLen.value);
+
+        soloMinLen.innerHTML = options.map(opt =>
+            `<option value="${opt}" ${opt === currentVal ? 'selected' : ''}>${opt} Letters</option>`
+        ).join('');
+
+        // Ensure the selected value is valid for the new options
+        if (!options.includes(parseInt(soloMinLen.value))) {
+            soloMinLen.value = options[0];
+        }
     }
 
     function renderBots() {
@@ -77,24 +110,34 @@
 
     async function startSoloMatch() {
         const params = {
-            board_dimensions: document.getElementById('solo-dims').value,
-            time_limit: parseInt(document.getElementById('solo-time').value),
-            dictionary: document.getElementById('solo-dict').value,
-            min_word_length: parseInt(document.getElementById('solo-min-len').value),
-            bonus_word_length: parseInt(document.getElementById('solo-bonus').value)
+            board_dimensions: document.getElementById('sf-config-dims').value,
+            time_limit: parseInt(document.getElementById('sf-config-time').value),
+            dictionary: document.getElementById('sf-config-dict').value,
+            min_word_length: parseInt(document.getElementById('sf-config-min-len').value),
+            bonus_word_length: parseInt(document.getElementById('sf-config-bonus').value),
+            difficulty: document.getElementById('sf-config-difficulty').value,
+            board_format: document.getElementById('sf-config-format').value,
+            word_count_range: document.getElementById('sf-config-range').value
         };
 
         const participants = soloBots.map(b => ({ username: b.username, is_ai: true, ai_rating: b.rating }));
 
         try {
-            const res = await fetch('/api/private-match/create', {
+            const res = await fetch('/api/solo-match/create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ match_type: 'solo', parameters: params, participants })
+                body: JSON.stringify({ parameters: params, participants })
             });
             const data = await res.json();
             if (data.success) {
-                launchPrivateMatch(data.match_id);
+                // Important: Clear any special play mode tokens so standard polling takes over
+                localStorage.removeItem('private_match_active');
+                localStorage.removeItem('tournament_play_active');
+
+                window.currentRoomId = data.room_id;
+                if (window.navigateToPage) {
+                    window.navigateToPage('play');
+                }
             } else {
                 alert(data.error);
             }
@@ -109,14 +152,21 @@
         if (usernames.length === 0) return;
 
         const params = {
-            board_dimensions: document.getElementById('solo-dims').value, // Use same config as solo for simplicity
-            time_limit: parseInt(document.getElementById('solo-time').value),
-            dictionary: document.getElementById('solo-dict').value,
-            min_word_length: parseInt(document.getElementById('solo-min-len').value),
-            bonus_word_length: parseInt(document.getElementById('solo-bonus').value)
+            board_dimensions: document.getElementById('sf-config-dims').value, // Use same config as solo for simplicity
+            time_limit: parseInt(document.getElementById('sf-config-time').value),
+            dictionary: document.getElementById('sf-config-dict').value,
+            min_word_length: parseInt(document.getElementById('sf-config-min-len').value),
+            bonus_word_length: parseInt(document.getElementById('sf-config-bonus').value),
+            difficulty: document.getElementById('sf-config-difficulty').value,
+            board_format: document.getElementById('sf-config-format').value,
+            word_count_range: document.getElementById('sf-config-range').value
         };
 
         const participants = usernames.map(u => ({ username: u, is_ai: false }));
+        // Include bots if any
+        soloBots.forEach(b => {
+            participants.push({ username: b.username, is_ai: true, ai_rating: b.rating });
+        });
 
         try {
             const res = await fetch('/api/private-match/create', {
@@ -145,32 +195,153 @@
             renderMatchList('your-turn', data.your_turn);
             renderMatchList('their-turn', data.their_turn);
             renderMatchList('history', data.history, true);
-        } catch (e) {}
+
+            // Fetch invites too, to combine badges
+            const invRes = await fetch('/api/private-match/invites');
+            const invData = await invRes.json();
+            renderInvites(invData);
+
+            // --- BADGING LOGIC ---
+            const turnCount = data.your_turn ? data.your_turn.length : 0;
+            const inviteCount = invData ? invData.length : 0;
+            const totalActionCount = turnCount + inviteCount;
+
+            // 1. Friends Tab Badge (inside Lobby - Total turns + invites)
+            const tabBadge = document.getElementById('friends-tab-badge');
+            if (tabBadge) {
+                tabBadge.textContent = totalActionCount > 0 ? totalActionCount : '';
+                tabBadge.classList.toggle('hidden', totalActionCount === 0);
+            }
+
+            // 2. Friends Subtab Badges
+            // Your Turn
+            const turnBadge = document.getElementById('your-turn-badge');
+            if (turnBadge) {
+                turnBadge.textContent = turnCount > 0 ? turnCount : '';
+                turnBadge.classList.toggle('hidden', turnCount === 0);
+            }
+            // Invites
+            const subBadge = document.getElementById('invite-count-badge');
+            if (subBadge) {
+                subBadge.textContent = inviteCount > 0 ? inviteCount : '';
+                subBadge.classList.toggle('hidden', inviteCount === 0);
+            }
+
+            // 3. Global Lobby Badge (Nav)
+            const lobbyBadge = document.getElementById('lobby-badge');
+            if (lobbyBadge) {
+                if (totalActionCount > 0) {
+                    lobbyBadge.textContent = totalActionCount;
+                    lobbyBadge.classList.remove('hidden');
+                } else {
+                    lobbyBadge.classList.add('hidden');
+                    lobbyBadge.textContent = '';
+                }
+            }
+
+        } catch (e) { console.error('Error loading private matches:', e); }
     }
+    window.loadPrivateMatches = loadPrivateMatches;
 
     function renderMatchList(type, matches, isHistory = false) {
         const container = document.getElementById('friends-list-' + type);
         if (!container) return;
         if (matches.length === 0) {
-            container.innerHTML = '<p class="placeholder">No matches in this category.</p>';
+            container.innerHTML = `<p class="placeholder">No matches in this category.</p>`;
             return;
         }
 
         container.innerHTML = matches.map(m => `
             <div class="friends-match-panel">
                 <div class="match-info">
-                    <h4>${m.match_type === 'solo' ? 'Solo Practice' : 'Match vs Friends'}</h4>
-                    <p>${m.parameters.board_dimensions} | ${m.parameters.time_limit}s | Round ${m.current_round}</p>
-                    <p>Players: ${m.players.map(p => p.username).join(', ')}</p>
+                    <h4>With Friends (Round ${m.current_round})</h4>
+                    <p style="font-size:0.85em; opacity:0.85; line-height:1.4;">
+                        <strong>Board:</strong> ${m.parameters.board_dimensions || '4x4'} | <strong>Time:</strong> ${m.parameters.time_limit || 60}s | <strong>Dict:</strong> ${m.parameters.dictionary || 'NWL'}<br>
+                        <strong>Rules:</strong> Min ${m.parameters.min_word_length || 3}L, Bonus ${m.parameters.bonus_word_length || 'None'}<br>
+                        <strong>Style:</strong> ${m.parameters.difficulty || 'Normal'}, ${m.parameters.board_format || 'Normal'}, Range: ${(() => {
+                let wr = m.parameters.word_count_range;
+                if (Array.isArray(wr)) {
+                    if (wr[1] > 900) return wr[0] + '+';
+                    return wr[0] + '-' + wr[1];
+                }
+                return wr === 'random' ? '50-100/100-200/200+' : (wr || '50-100');
+            })()}
+                    </p>
+                    <p style="margin-top:5px;">Players: ${m.players.map(p => `
+                        <span class="player-pill ${p.status}">
+                            ${p.username}${p.status === 'pending' ? ' (Pending)' : ''}
+                        </span>
+                    `).join('')}</p>
                 </div>
                 <div class="match-actions">
                     ${!isHistory ? `<button class="sf-action-btn" onclick="window.launchPrivateMatch(${m.id})">Play Turn</button>` : ''}
                     ${isHistory ? `<button class="rematch-btn" onclick="window.rematchPrivate(${m.id})">Rematch</button>` : ''}
-                    ${isHistory ? `<button class="replay-btn-friends" onclick="window.showPrivateHistory(${m.id})">View History</button>` : ''}
+                    <button class="replay-btn-friends" onclick="window.showPrivateHistory(${m.id})">View History</button>
                 </div>
             </div>
         `).join('');
     }
+
+    function renderInvites(invites) {
+        const container = document.getElementById('friends-list-invites');
+        if (!container) return;
+        if (invites.length === 0) {
+            container.innerHTML = '<p class="placeholder">No pending invitations.</p>';
+            return;
+        }
+
+        container.innerHTML = invites.map(inv => `
+            <div class="friends-match-panel invite-panel">
+                <div class="match-info">
+                    <h4>Invite from ${inv.sender_name}</h4>
+                    <p style="font-size:0.85em; opacity:0.85; line-height:1.4;">
+                        <strong>Board:</strong> ${inv.parameters.board_dimensions || '4x4'} | <strong>Time:</strong> ${inv.parameters.time_limit || 60}s | <strong>Dict:</strong> ${inv.parameters.dictionary || 'NWL'}<br>
+                        <strong>Rules:</strong> Min ${inv.parameters.min_word_length || 3}L, Bonus ${inv.parameters.bonus_word_length || 'None'}<br>
+                        <strong>Style:</strong> ${inv.parameters.difficulty || 'Normal'}, ${inv.parameters.board_format || 'Normal'}, Range: ${(() => {
+                let wr = inv.parameters.word_count_range;
+                if (Array.isArray(wr)) {
+                    if (wr[1] > 900) return wr[0] + '+';
+                    return wr[0] + '-' + wr[1];
+                }
+                return wr === 'random' ? '50-100/100-200/200+' : (wr || '50-100');
+            })()}
+                    </p>
+                </div>
+                <div class="match-actions">
+                    <button class="sf-primary-btn" onclick="window.acceptInvite(${inv.id})">Accept</button>
+                    <button class="sf-action-btn" style="background:#444;" onclick="window.declineInvite(${inv.id})">Decline</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    window.acceptInvite = async (inviteId) => {
+        try {
+            const res = await fetch('/api/private-match/invite/accept', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ invite_id: inviteId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                loadPrivateMatches();
+                // Switch to Your Turn subtab
+                document.querySelector('[data-friends-subtab="your-turn"]').click();
+            }
+        } catch (e) { }
+    };
+
+    window.declineInvite = async (inviteId) => {
+        // Just delete for now, maybe add explicit decline later
+        try {
+            await fetch('/api/private-match/invite/accept', { // We can reuse or add a delete endpoint
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ invite_id: inviteId, action: 'decline' })
+            });
+            loadPrivateMatches();
+        } catch (e) { }
+    };
 
     window.launchPrivateMatch = async (matchId) => {
         try {
@@ -180,7 +351,7 @@
                 alert(data.error);
                 return;
             }
-            
+
             // Setup local state for play.js
             localStorage.setItem('private_match_active', JSON.stringify({
                 mid: matchId,
@@ -193,18 +364,36 @@
 
             // Navigate to play page
             if (window.navigateToPage) window.navigateToPage('play');
-            
+
             // Start game
-            if (window.initPrivateMatchPlay) window.initPrivateMatchPlay();
+            // if (window.initPrivateMatchPlay) window.initPrivateMatchPlay();
         } catch (e) {
             console.error(e);
         }
     };
 
     window.rematchPrivate = async (matchId) => {
-        // Find existing match info to reuse params/players
-        // For now, just alert
-        alert("Rematch feature coming soon (creates new match with same settings)");
+        if (!confirm("Start a new match with the same players and settings?")) return;
+
+        try {
+            const res = await fetch('/api/private-match/rematch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ match_id: matchId })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                alert("New match created! Check 'Your Turn'.");
+                loadPrivateMatches();
+                // Optionally auto-launch: window.launchPrivateMatch(data.new_match_id);
+            } else {
+                alert("Error starting rematch: " + (data.error || 'Unknown'));
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error connecting to server.");
+        }
     };
 
     window.showPrivateHistory = async (matchId) => {
@@ -212,20 +401,59 @@
             const res = await fetch('/api/private-match/history/' + matchId);
             const data = await res.json();
             // Show a simple modal or list with results and replay buttons
-            let html = '<div style="padding:20px; color:#fff;"><h3>Match Results</h3>';
-            data.forEach(t => {
-                html += `
-                    <div style="background:rgba(255,255,255,0.05); padding:10px; margin-bottom:10px; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <strong>${t.username}</strong>: ${t.score} pts (Round ${t.round_number})
+            let html = '<div style="padding:20px; color:#fff; background:var(--bg-panel); border-radius:12px; min-width:400px; max-height:80vh; overflow-y:auto; text-align:center;"><h3>Match Results</h3>';
+
+            if (!data || data.length === 0) {
+                html += '<div style="padding:40px; opacity:0.6; font-style:italic;">No turns recorded for this match yet.</div>';
+            } else {
+                data.slice(0, 25).forEach(t => {
+                    let wordListHtml = '';
+                    try {
+                        let words = t.submitted_words;
+                        if (typeof words === 'string') {
+                            words = JSON.parse(words);
+                        }
+
+                        if (Array.isArray(words) && words.length > 0) {
+                            const wordStrs = words.map(w => `<span style="background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; margin:2px; display:inline-block; font-size:0.8em;">${w.word} (${w.points})</span>`).join('');
+                            wordListHtml = `<div style="margin-top:5px; text-align:left; opacity:0.8;">${wordStrs}</div>`;
+                        } else {
+                            wordListHtml = `<div style="margin-top:5px; text-align:left; font-style:italic; opacity:0.6;">No words found.</div>`;
+                        }
+                    } catch (e) {
+                        console.error("Error parsing words:", e);
+                        wordListHtml = `<div style="margin-top:5px; text-align:left; color:red; font-size:0.8em;">Error loading words</div>`;
+                    }
+
+                    // Prepare a safe subset of turn data for the replay button to avoid huge HTML attributes
+                    const safeTurn = {
+                        match_id: t.match_id,
+                        round_number: t.round_number,
+                        board: t.board,
+                        submitted_words: t.submitted_words,
+                        score: t.score,
+                        submitted_at: t.submitted_at,
+                        username: t.username
+                    };
+
+                    html += `
+                        <div style="background:rgba(255,255,255,0.05); padding:15px; margin-bottom:15px; border-radius:10px; display:flex; flex-direction:column; gap:10px; text-align:left;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <strong style="font-size:1.1em; color:var(--accent-color);">${t.username}</strong>
+                                    <div style="font-size:0.9em; opacity:0.7;">Round ${t.round_number} • ${t.score} pts</div>
+                                </div>
+                                <button class="sf-action-btn" onclick="window.watchPrivateReplay(${JSON.stringify(safeTurn).replace(/"/g, '&quot;')})">Replay</button>
+                            </div>
+                            ${wordListHtml}
                         </div>
-                        <button class="sf-action-btn" onclick="window.watchPrivateReplay(${JSON.stringify(t).replace(/"/g, '&quot;')})">Watch Replay</button>
-                    </div>
-                `;
-            });
-            html += '<button class="sf-primary-btn" onclick="this.parentElement.remove()">Close</button></div>';
-            
+                    `;
+                });
+            }
+            html += '<button class="sf-primary-btn" onclick="document.getElementById(\'private-history-modal\').remove()">Close</button></div>';
+
             const modal = document.createElement('div');
+            modal.id = 'private-history-modal';
             modal.style.position = 'fixed';
             modal.style.inset = '0';
             modal.style.background = 'rgba(0,0,0,0.8)';
@@ -234,8 +462,14 @@
             modal.style.alignItems = 'center';
             modal.style.justifyContent = 'center';
             modal.innerHTML = html;
+
+            // Close on background click
+            modal.onclick = (e) => {
+                if (e.target === modal) modal.remove();
+            };
+
             document.body.appendChild(modal);
-        } catch (e) {}
+        } catch (e) { }
     };
 
     window.watchPrivateReplay = (turnData) => {
@@ -252,8 +486,8 @@
             timestamp: turnData.submitted_at * 1000,
             username: turnData.username
         };
-        
-        window.lastTournamentReplay = mockRound; 
+
+        window.lastTournamentReplay = mockRound;
         if (window.watchRoundHistory) {
             window.watchRoundHistory('private_' + turnData.match_id, turnData.round_number);
         }

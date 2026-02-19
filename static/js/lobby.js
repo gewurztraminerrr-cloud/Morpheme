@@ -40,6 +40,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             console.log('Accumulative button clicked!', { gameType, timeLimit, boardDimensions });
 
+            // CLEAR SPECIAL MODES: We are entering a normal room
+            localStorage.removeItem('tournament_play_active');
+            localStorage.removeItem('private_match_active');
+
             try {
                 let data = null;
 
@@ -202,6 +206,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         async function createRoom(minRating, maxRating) {
+            // CLEAR SPECIAL MODES: We are entering a normal room
+            localStorage.removeItem('tournament_play_active');
+            localStorage.removeItem('private_match_active');
+
             try {
                 const createResp = await fetch('/api/room/create', {
                     method: 'POST',
@@ -274,6 +282,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const isSpectator = joinBtn.dataset.spectator === 'true';
             console.log(`Joining room: ${roomId} (Spectator: ${isSpectator})`);
+
+            // CLEAR SPECIAL MODES: We are entering a normal room
+            localStorage.removeItem('tournament_play_active');
+            localStorage.removeItem('private_match_active');
 
             try {
                 const response = await fetch(`/api/room/${roomId}/join`, {

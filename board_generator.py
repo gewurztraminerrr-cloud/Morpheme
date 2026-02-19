@@ -39,6 +39,11 @@ class BoardGenerator:
         Only counts words >= min_word_length.
         Returns: (board, all_words) or None if unable to generate
         """
+        # FOR UNCONDITIONAL UNIQUENESS: Re-seed random from system randomness
+        # This breaks any process-level determinism from forks/seeds
+        import random
+        random.seed()
+        
         print(f"[BoardGen] generate_board called: {dimensions}, bonus={bonus_word}, range={word_count_range}, format={board_format}, dict={dictionary}")
         
         
@@ -62,6 +67,9 @@ class BoardGenerator:
             # Create board
             if board_format == 'Checkerboard':
                 board = self._create_checkerboard(rows, cols, weights)
+            elif board_format.endswith(' Mania'):
+                mania_letter = board_format.split(' ')[0]  # e.g. 'E' from 'E Mania'
+                board = self._create_mania_board(rows, cols, weights, mania_letter)
             else:
                 board = self._create_normal_board(rows, cols, weights)
             
@@ -212,6 +220,29 @@ class BoardGenerator:
                         board[r][c] = random.choices(VOWELS, weights=safe_vowel_weights, k=1)[0]
                     else:
                         board[r][c] = random.choices(VOWELS, weights=vowel_weights, k=1)[0]
+        return board
+    
+    def _create_mania_board(self, rows, cols, weights, mania_letter):
+        """Create a normal board then flood ~28% of cells with the mania letter.
+        Gives an abundance of the letter without completely taking over the board."""
+        board = self._create_normal_board(rows, cols, weights)
+        
+        total_cells = rows * cols
+        # Aim for roughly 25-35% of cells to be the mania letter
+        mania_count = max(2, round(total_cells * random.uniform(0.25, 0.33)))
+        
+        # Build a shuffled list of all cell positions and pick mania_count of them
+        all_positions = [(r, c) for r in range(rows) for c in range(cols)]
+        random.shuffle(all_positions)
+        
+        filled = 0
+        for r, c in all_positions:
+            if filled >= mania_count:
+                break
+            board[r][c] = mania_letter
+            filled += 1
+        
+        print(f"[BoardGen] Mania '{mania_letter}': placed {filled}/{total_cells} cells ({filled/total_cells*100:.0f}%)")
         return board
     
     def _embed_bonus_word(self, board, bonus_word):
@@ -452,7 +483,7 @@ class BoardGenerator:
 # Test
 if __name__ == '__main__':
     gen = BoardGenerator()
-    board, words = gen.generate_board('4x4', 'BACKWARD', (50, 150), 'NWL', 'Normal')
+    board, words = gen.generate_board('4x4', 'BACKWARD', (50, 150), 'NWL', 'Normal', 3, 'Normal')
     if board:
         print("Board generated!")
         for row in board:

@@ -10,10 +10,10 @@ from word_validator import word_validator
 class SpinnerSet:
     @staticmethod
     def generate_tournament_params():
-        """Generate ALL tournament parameters including broad ones"""
-        # 1. Broad Parameters (formerly external)
-        board_dims = random.choice(['4x4', '5x5', '6x6'])
-        time_limit = random.choice([60, 90, 120, 180, 240, 300])
+        """Generate ALL tournament parameters using lobby-standard dimensions and times"""
+        # 1. Broad Parameters (matching lobby options for mobile compatibility)
+        board_dims = random.choice(['4x4', '4x6']) # Sticking to rectangular mobile-friendly dims
+        time_limit = random.choice([45, 60, 120, 180, 300]) # Standard lobby times
         
         # 2. Granular Parameters
         params = SpinnerSet.generate_params(board_dims, is_24h=False)
@@ -88,13 +88,21 @@ class SpinnerSet:
     @staticmethod
     def _spin_board_format(is_24h=False):
         """
-        Normal rooms: 90% Normal, 5% Checkerboard, 5% Penalty
-        24h rooms: 95% Normal, 5% Checkerboard (No Penalty)
+        Normal rooms: 90% Normal, 5% Checkerboard, 3% Penalty, 2% [letter] Mania
+        24h rooms: 95% Normal, 5% Checkerboard (No Penalty or Mania)
         """
         if is_24h:
             return random.choices(['Normal', 'Checkerboard'], weights=[95, 5])[0]
         else:
-            return random.choices(['Normal', 'Checkerboard', 'Penalty'], weights=[90, 5, 5])[0]
+            result = random.choices(
+                ['Normal', 'Checkerboard', 'Penalty', 'Mania'],
+                weights=[90, 5, 3, 2]
+            )[0]
+            if result == 'Mania':
+                # Pick a random letter for Mania mode
+                mania_letter = random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+                return f'{mania_letter} Mania'
+            return result
 
 # Test
 if __name__ == '__main__':

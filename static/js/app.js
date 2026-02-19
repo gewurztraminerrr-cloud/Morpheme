@@ -116,9 +116,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupModalListeners();
     setupAuth(); // Initialize auth listeners
     setupContactForm(); // Initialize contact form listeners
-    // handleGuestLogin(); // Don't auto-login guest, wait for button click
     initSettings(); // Initialize settings logic
-    checkSession();
+    await checkSession();
+
+    // Handle initial navigation
+    const hash = window.location.hash;
+    const tournamentActive = localStorage.getItem('tournament_play_active');
+    const privateActive = localStorage.getItem('private_match_active');
+
+    if (currentUser) {
+        // AUTHENTICATED: Always stay out of login page
+        if (tournamentActive || privateActive || (hash === '#page-play' && window.currentRoomId)) {
+            showPage('page-play');
+            const playBtn = document.querySelector('.nav-btn[data-page="play"]');
+            if (playBtn) updateActiveNav(playBtn);
+        } else if (hash && hash.startsWith('#page-') && hash !== '#page-play' && hash !== '#page-login') {
+            const pageId = hash.substring(1);
+            showPage(pageId);
+            const pageName = pageId.replace('page-', '');
+            const navBtn = document.querySelector(`.nav-btn[data-page="${pageName}"]`);
+            if (navBtn) updateActiveNav(navBtn);
+        } else {
+            // Default to lobby for authenticated users (even if hash is empty or #page-login)
+            showPage('page-lobby');
+            const lobbyBtn = document.querySelector('.nav-btn[data-page="lobby"]');
+            if (lobbyBtn) updateActiveNav(lobbyBtn);
+            // Clean up URL if it was stuck on #page-login
+            if (hash === '#page-login') {
+                history.replaceState(null, null, '#page-lobby');
+            }
+        }
+    } else {
+        // UNAUTHENTICATED: Always force login unless it's a known public page
+        if (hash === '#page-leaderboards') {
+            showPage('page-leaderboards');
+            const lbBtn = document.querySelector('.nav-btn[data-page="leaderboards"]');
+            if (lbBtn) updateActiveNav(lbBtn);
+        } else {
+            showPage('page-login');
+        }
+
+        // Only clear if we aren't in a special match and reached this fallback
+        if (!tournamentActive && !privateActive) {
+            localStorage.removeItem('tournament_play_active');
+            localStorage.removeItem('private_match_active');
+        }
+    }
+
     fetchUserCount(); // Fetch user count for login page
 });
 
@@ -347,6 +391,11 @@ async function checkSession() {
                 if (typeof window.updateManualToolState === 'function') {
                     window.updateManualToolState();
                 }
+
+                // NEW: Load private matches instantly
+                if (typeof window.loadPrivateMatches === 'function') {
+                    window.loadPrivateMatches();
+                }
             } catch (e) { console.warn('Error checking current room', e); }
 
             function applySavedFontSize(val, sliderId, labelId, previewId, cssVar, settingsKey) {
@@ -399,6 +448,8 @@ async function checkTournamentTurn() {
 // Check initially and periodically (every 60s)
 setTimeout(checkTournamentTurn, 2000);
 setInterval(checkTournamentTurn, 60000);
+
+// Note: Private Match polling is handled via loadPrivateMatches in private_matches.js
 
 function setupNavigation() {
     const navButtons = document.querySelectorAll('.nav-btn');
@@ -484,6 +535,11 @@ function setupModalListeners() {
 }
 
 function showPage(pageId) {
+    // 0. Synchronize URL Hash (for Reload/Navigation consistency)
+    if (window.location.hash !== "#" + pageId) {
+        history.replaceState(null, null, "#" + pageId);
+    }
+
     // 1. Update Page Visibility
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
@@ -491,6 +547,13 @@ function showPage(pageId) {
     const targetPage = document.getElementById(pageId);
     if (targetPage) {
         targetPage.classList.add('active');
+    }
+
+    // NEW: Load Private Matches instantly when entering Lobby
+    if (pageId === 'page-lobby') {
+        if (typeof window.loadPrivateMatches === 'function') {
+            window.loadPrivateMatches();
+        }
     }
 
     // 2. Handle Game Polling
@@ -565,37 +628,7 @@ function updateActiveNav(activeBtn) {
     }
 }
 
-// Setup authentication
-function setupAuth() {
-    // Tab switching
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    tabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tab = btn.getAttribute('data-tab');
-            switchAuthTab(tab);
-        });
-    });
-
-    // Sign in form
-    document.getElementById('signin-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await handleSignIn();
-    });
-
-    // Sign up form
-    document.getElementById('signup-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await handleSignUp();
-    });
-
-    // Guest login button
-    const guestBtn = document.getElementById('guest-login-btn');
-    if (guestBtn) {
-        guestBtn.addEventListener('click', async () => {
-            await handleGuestLogin();
-        });
-    }
-}
+// Setup authentication listeners (Handled by second definition below)
 
 function switchAuthTab(tab) {
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -730,6 +763,11 @@ function navigateToLobby() {
     if (lobbyBtn) {
         updateActiveNav(lobbyBtn);
     }
+
+    // Ensure private matches load instantly
+    if (typeof window.loadPrivateMatches === 'function') {
+        window.loadPrivateMatches();
+    }
 }
 
 function updateAuthUI() {
@@ -763,6 +801,9 @@ async function handleLogout() {
             window.currentUserIsGuest = false;
             localStorage.removeItem('morpheme_username');
             localStorage.removeItem('morpheme_pm_state');
+            localStorage.removeItem('private_match_active');
+            localStorage.removeItem('tournament_play_active');
+
             updateAuthUI();
             showPage('page-login');
 
@@ -771,6 +812,7 @@ async function handleLogout() {
             if (playBtn) {
                 playBtn.disabled = true;
                 playBtn.classList.remove('active');
+                playBtn.title = "Authentication required";
             }
         }
     } catch (error) {
@@ -864,6 +906,20 @@ window.getRatingColor = function (rating) {
     return '#000000'; // Super high
 };
 
+window.showAlertModal = function (title, message) {
+    const modal = document.getElementById('generic-info-modal');
+    const titleEl = document.getElementById('generic-modal-title');
+    const bodyEl = document.getElementById('generic-modal-body');
+    if (modal && titleEl && bodyEl) {
+        titleEl.textContent = title;
+        bodyEl.innerHTML = `<p style="padding: 30px; text-align: center; font-size: 1.2rem; line-height: 1.6; color: var(--text-primary);">${message}</p>`;
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    } else {
+        alert(message);
+    }
+};
+
 function renderGameColorBar() {
     const bar = document.getElementById('game-color-bar');
     if (!bar) return;
@@ -905,18 +961,18 @@ document.addEventListener('visibilitychange', () => {
 // Export utility for other files
 window.updateManualToolState = function () {
     const manualBtn = document.querySelector('.tool-nav-btn[data-tool="manual"]');
-    const playBtn = document.getElementById('play-btn');
-    const inRoom = !!window.currentRoomId;
-    const playEnabled = playBtn && !playBtn.disabled;
-
     if (manualBtn) {
-        // Disable Manual if in a room OR if the Play button is enabled (leads to a room)
-        if (inRoom || playEnabled) {
+        const inRoom = !!window.currentRoomId;
+        // Also check if Play button is active (implies potential room session, though primarily currentRoomId matters)
+        // Restoring strict disable if in room:
+        if (inRoom) {
             manualBtn.disabled = true;
-            manualBtn.title = inRoom ? "Manual tool is disabled while you are in a room." : "Manual tool is disabled while you have an active room session.";
+            manualBtn.title = "Manual tool is disabled while you are in a room.";
+            manualBtn.classList.add('disabled');
         } else {
             manualBtn.disabled = false;
             manualBtn.title = "";
+            manualBtn.classList.remove('disabled');
         }
     }
 };

@@ -4,12 +4,17 @@ let privateMatchWords = [];
 let privateMatchScore = 0;
 let privateMatchParams = null;
 let tournamentWords = [];
+let pollInterval = null;
+let timerInterval = null;
 let lastServerUpdate = Date.now();  // Track last server response for freeze detection
 let selectedPlayerUsername = null; // Track selected player for filtering/highlighting
 let cachedTimerValueEl = null;    // Cache for high-frequency updates
 let cachedBoardPanelEl = null;
 let lastPlayersHtml = null;       // Cache for renderPlayers
 const playerRatingCache = new Map(); // Cache for Chat Colors
+let tournamentScore = 0;
+let tournamentStartTime = 0;
+let localEndTime = 0;
 
 // Mouse selection state
 let mouseState = {
@@ -137,13 +142,24 @@ async function updateGameState() {
                 window.currentRoomId = null;
                 if (window.showPage) window.showPage('page-lobby');
                 setTimeout(() => {
-                    alert("The room is no longer available or you have been moved to the lobby for being idle for 7 minutes.");
+                    if (window.showAlertModal) {
+                        window.showAlertModal("Notice", "The room is no longer available or you have been moved to the lobby for being idle for 7 minutes.");
+                    } else {
+                        alert("The room is no longer available or you have been moved to the lobby for being idle for 7 minutes.");
+                    }
                 }, 100);
             }
             return;
         }
 
         const state = await response.json();
+
+        // RACE CONDITION FIX: If we have switched to a special mode since the fetch started, abort.
+        if (isTournamentPlay || isPrivateMatchPlay) {
+            console.log('[play.js] updateGameState aborted: currently in Tournament/Private match');
+            return;
+        }
+
         console.log('[play.js] State received:', state); // DEBUG LOG
 
         // Capture previous state for transition logic (e.g. daily reset kick)
@@ -195,7 +211,11 @@ async function updateGameState() {
 
             // Show alert AFTER switching pages
             setTimeout(() => {
-                alert("You have been kicked out of room for being idle for 7 minutes");
+                if (window.showAlertModal) {
+                    window.showAlertModal("Notice", "You have been kicked out of the room for being idle for 7 minutes.");
+                } else {
+                    alert("You have been kicked out of the room for being idle for 7 minutes.");
+                }
             }, 100);
             return;
         }
@@ -312,7 +332,9 @@ async function updateGameState() {
         } else if (isFCFSIntermission && !showBoardInSplitIntermission) {
             renderFCFSNotepads(state.players);
         } else {
-            renderBoard(state.board, state.state === 'intermission');
+            // ONLY gray out if we are specifically in intermission
+            const isIntermission = state.state === 'intermission';
+            renderBoard(state.board, isIntermission);
         }
 
         // Update players (pass full state for context if needed)
@@ -1324,8 +1346,19 @@ function updateParameters(state) {
     const typeMap = {
         'accumulative': 'Accumulative',
         'fcfs': 'First Come First Serve',
-        'split': 'Split Points'
+        'split': 'Split Points',
+        'private': 'With Friends',
+        'tournament': 'Tournament'
     };
+
+    // Update Timer Display
+    const timerVal = document.getElementById('timer-value');
+    if (timerVal) {
+        const seconds = state.time_remaining || state.timer || 0;
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        timerVal.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
 
     // Update Title
     const titleEl = document.getElementById('game-title');
@@ -1339,32 +1372,55 @@ function updateParameters(state) {
         headerTitle.textContent = typeMap[state.game_type] || 'Game';
     }
 
-    document.getElementById('param-board').textContent = state.board_dimensions;
-    document.getElementById('param-time').textContent = state.time_limit + 's';
+    const boardEl = document.getElementById('param-board');
+    if (boardEl) boardEl.textContent = state.board_dimensions || '4x4';
 
-    const sp = state.spinner_params;
-    if (sp && sp.word_count_range) {
-        const bonusLen = document.getElementById('param-bonus');
-        if (bonusLen) bonusLen.textContent = (sp.bonus_word_length || '?') + ' letters';
+    const timeEl = document.getElementById('param-time');
+    if (timeEl) timeEl.textContent = (state.time_limit || 60) + 's';
 
-        const diff = document.getElementById('param-diff');
-        if (diff) diff.textContent = sp.difficulty || '?';
+    const sp = state.spinner_params || {};
+    const bonusLen = document.getElementById('param-bonus');
+    if (bonusLen) bonusLen.textContent = (sp.bonus_word_length || state.bonus_word_length || 'None') + (sp.bonus_word_length ? 'L' : '');
 
-        const minL = document.getElementById('param-min');
-        if (minL) minL.textContent = sp.min_word_length || '?';
+    const diff = document.getElementById('param-diff');
+    if (diff) diff.textContent = sp.difficulty || state.difficulty || 'Normal';
 
-        const dict = document.getElementById('param-dict');
-        if (dict) dict.textContent = sp.dictionary || '?';
+    const minL = document.getElementById('param-min');
+    if (minL) minL.textContent = (sp.min_word_length || state.min_word_length || '3') + 'L';
 
-        const wr = sp.word_count_range;
-        const words = document.getElementById('param-words');
-        if (words && Array.isArray(wr) && wr.length >= 2) {
-            words.textContent = `${wr[0]}-${wr[1]}`;
+    const dict = document.getElementById('param-dict');
+    if (dict) dict.textContent = sp.dictionary || state.dictionary || 'NWL';
+
+    const words = document.getElementById('param-words');
+    if (words) {
+        let wr = sp.word_count_range || state.word_count_range;
+        if (Array.isArray(wr) && wr.length >= 2) {
+            // Suffix with + if upper bound is very high
+            if (wr[1] > 900) {
+                words.textContent = `${wr[0]}+`;
+            } else {
+                words.textContent = `${wr[0]}-${wr[1]}`;
+            }
+        } else if (typeof wr === 'string') {
+            if (wr === 'random') {
+                words.textContent = '50-100/100-200/200+';
+            } else if (wr.includes('99999') || wr.includes('500-') || wr.includes('200-')) {
+                const parts = wr.split('-');
+                if (parts.length === 2 && (parseInt(parts[1]) > 900 || isNaN(parseInt(parts[1])))) {
+                    words.textContent = parts[0] + '+';
+                } else {
+                    words.textContent = wr;
+                }
+            } else {
+                words.textContent = wr;
+            }
+        } else {
+            words.textContent = '50-100/100-200/200+';
         }
-
-        const format = document.getElementById('param-format');
-        if (format) format.textContent = sp.board_format || '?';
     }
+
+    const format = document.getElementById('param-format');
+    if (format) format.textContent = sp.board_format || state.board_format || 'Normal';
 }
 
 function updateTimer(seconds) {
@@ -1468,8 +1524,29 @@ function updateLocalTimer() {
     }
 }
 
+// Helper for special match timers (Tournament, Private Match)
+function updateSpecialMatchTimer(seconds) {
+    const timerEl = document.getElementById('timer-value');
+    if (timerEl) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+}
+
 function renderBoard(board, grayed) {
-    if (!board || board.length === 0) return;
+    // 1. Force state-aware graying logic
+    if (isTournamentPlay || isPrivateMatchPlay) {
+        grayed = false; // Special turns are never grayed
+    } else if (window.lastGameState && window.lastGameState.state === 'active') {
+        grayed = false; // Active rounds are never grayed
+    }
+
+    console.log(`[renderBoard] Called with board: ${board ? board.length + ' rows' : 'null'}, grayed: ${grayed}`);
+    if (!board || board.length === 0) {
+        console.warn('[renderBoard] Board is empty or null, skipping render.');
+        return;
+    }
     const boardEl = document.getElementById('game-board');
     if (!boardEl) return; // play page might not be active
 
@@ -2377,7 +2454,7 @@ async function submitWord(wordParam = null) {
     }
 
     if (isPrivateMatchPlay) {
-        handlePrivateMatchWord(word);
+        await handlePrivateMatchWord(word);
         return;
     }
 
@@ -2563,7 +2640,8 @@ if (rotateBtnEl) {
         console.log('[play.js] Board rotation toggled. Rotated:', isBoardRotated);
         // Force re-render if we have state
         if (window.lastGameState && window.lastGameState.board) {
-            renderBoard(window.lastGameState.board, window.lastGameState.state !== 'active');
+            // Consistent with updateGameState: Only gray in intermission
+            renderBoard(window.lastGameState.board, window.lastGameState.state === 'intermission');
         }
     });
 }
@@ -2718,6 +2796,41 @@ document.addEventListener('click', (e) => {
 
 // --- TOURNAMENT PLAY LOGIC ---
 
+// Helper to ensure UI is correctly reset for active play (escapes spectator mode)
+function resetPlayUI() {
+    console.log('[play.js] resetPlayUI() called for active play session');
+    const wordInputSection = document.querySelector('.word-input-section');
+    const wordInput = document.getElementById('word-input');
+    const submitBtn = document.getElementById('submit-word-btn');
+    const defContent = document.getElementById('definition-content');
+    const specPanel = document.getElementById('spectator-status-panel');
+    const boardPanel = document.querySelector('.board-panel');
+
+    if (wordInputSection) wordInputSection.style.display = 'flex';
+    if (wordInput) {
+        wordInput.disabled = false;
+        wordInput.value = '';
+        wordInput.style.display = '';
+        setTimeout(() => wordInput.focus(), 150);
+    }
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.style.display = '';
+    }
+    if (defContent) defContent.style.display = 'block';
+    if (specPanel) specPanel.style.display = 'none';
+    if (boardPanel) {
+        boardPanel.style.pointerEvents = 'auto';
+        boardPanel.style.opacity = '1';
+    }
+
+    // Ensure spectator mode flag is reset
+    window.isSpectatorMode = false;
+
+    // Refresh layout sizing
+    setTimeout(checkBoardOverflow, 100);
+}
+
 async function initTournamentPlay() {
     const activeData = JSON.parse(localStorage.getItem('tournament_play_active'));
     if (!activeData) return;
@@ -2734,8 +2847,10 @@ async function initTournamentPlay() {
 
     // Clear UI
     resetChat();
-    const wordsList = document.getElementById('words-found-list');
+    const wordsList = document.getElementById('submitted-words-list');
     if (wordsList) wordsList.innerHTML = '';
+    const wordsStats = document.getElementById('words-stats');
+    if (wordsStats) wordsStats.textContent = '';
 
     try {
         const response = await fetch('/api/tournament/game-state');
@@ -2747,18 +2862,25 @@ async function initTournamentPlay() {
             return;
         }
 
-        tournamentParams = data.params;
-        lastGameState = {
+        window.tournamentParams = data.params;
+        const tournamentGameState = {
             board: data.board,
             state: 'active',
             timer: data.params.time_limit,
             game_type: 'tournament',
-            status: 'active'
+            status: 'active',
+            board_dimensions: data.params.board_dimensions,
+            time_limit: data.params.time_limit,
+            spinner_params: data.params
         };
+        window.lastGameState = tournamentGameState;
+        lastRenderedBoardJSON = null; // Force re-render
 
         // Render Board
+        console.log('[Tournament] Rendering tournament board. Format:', (data.params.board_format || 'Normal'));
         renderBoard(data.board, false);
-        updateParameters(lastGameState);
+        updateParameters(tournamentGameState);
+        resetPlayUI();
 
         // Timer Setup: The tournament game has its OWN local timer starting from the moment they click play
         localEndTime = Date.now() + (data.params.time_limit * 1000);
@@ -2767,7 +2889,7 @@ async function initTournamentPlay() {
         timerInterval = setInterval(() => {
             const current = Date.now();
             const diff = Math.max(0, Math.ceil((localEndTime - current) / 1000));
-            updateTimer(diff);
+            updateSpecialMatchTimer(diff); // Use the new helper
 
             if (diff <= 0) {
                 clearInterval(timerInterval);
@@ -2776,7 +2898,7 @@ async function initTournamentPlay() {
         }, 1000);
 
         // UI Adjustments
-        const playerList = document.getElementById('player-list');
+        const playerList = document.getElementById('players-list');
         if (playerList) {
             playerList.innerHTML = `
                 <div class="player-card active" style="border-left: 4px solid #2ecc71;">
@@ -2794,16 +2916,53 @@ async function initTournamentPlay() {
     }
 }
 
-function handleTournamentWord(word) {
-    if (tournamentWords.find(w => w.word === word)) return;
+async function handleTournamentWord(word) {
+    if (!word) return;
+
+    if (tournamentWords.find(w => w.word === word)) {
+        showValidationFeedback('Already found!', false);
+        return;
+    }
 
     // Check if word is on board
-    const path = findWordPathOnBoard(word, lastGameState.board);
-    if (!path) return;
+    const board = window.lastGameState ? window.lastGameState.board : null;
+    if (!board) {
+        console.error('[Tournament] No board found in lastGameState');
+        return;
+    }
+
+    const path = findWordPathOnBoard(word, board);
+    if (!path) {
+        alert('Word Invalid: Not on Board');
+        exitTournamentPlay();
+        return;
+    }
+
+    // Check dictionary
+    const dict = window.tournamentParams ? window.tournamentParams.dictionary : 'NWL';
+    try {
+        const resp = await fetch('/api/tools/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ word, dictionary: dict })
+        });
+        const data = await resp.json();
+        if (!data.is_valid) {
+            alert('Word Invalid: Not in Dictionary');
+            exitTournamentPlay();
+            return;
+        }
+    } catch (e) {
+        console.error('Validation error', e);
+    }
 
     // Check length
-    const minLen = tournamentParams.min_word_length || 3;
-    if (word.length < minLen) return;
+    const minLen = window.tournamentParams ? window.tournamentParams.min_word_length : 3;
+    if (word.length < minLen) {
+        alert(`Word Invalid: Too short (min ${minLen})`);
+        exitTournamentPlay();
+        return;
+    }
 
     // Use common scoring logic (1=1, 2=2, 3=3, 4=4, 5=5, 6=10, 7=15, 8=25)
     let pts = word.length;
@@ -2813,7 +2972,7 @@ function handleTournamentWord(word) {
 
     // Bonus Word
     let isBonus = false;
-    if (word.length === tournamentParams.bonus_word_length) {
+    if (window.tournamentParams && word.length === window.tournamentParams.bonus_word_length) {
         pts += 10; // Simple bonus for now
         isBonus = true;
     }
@@ -2826,16 +2985,26 @@ function handleTournamentWord(word) {
     });
     tournamentScore += pts;
 
+    // Show success feedback
+    showValidationFeedback(isBonus ? 'BONUS WORD!' : 'Valid Word', true);
+
     // Update Score UI
     const scoreEl = document.querySelector('.player-card .score');
     if (scoreEl) scoreEl.textContent = `Score: ${tournamentScore}`;
 
     // Update Found List
-    const list = document.getElementById('words-found-list');
+    const list = document.getElementById('submitted-words-list');
     if (list) {
+        // Remove placeholder if it exists
+        const placeholder = list.querySelector('.placeholder');
+        if (placeholder) placeholder.remove();
+
         const item = document.createElement('div');
-        item.className = 'word-row';
-        item.innerHTML = `<span>${word}</span> <span>${pts}</span>`;
+        item.className = 'word-item player-word' + (isBonus ? ' bonus-word' : '');
+        item.style.display = 'flex';
+        item.style.justifyContent = 'space-between';
+        item.style.animation = 'slideIn 0.3s ease';
+        item.innerHTML = `<span>${word}</span> <span style="opacity:0.8">${pts}</span>`;
         list.prepend(item);
     }
 
@@ -2877,8 +3046,11 @@ function exitTournamentPlay() {
     localStorage.removeItem('tournament_play_active');
     isTournamentPlay = false;
     window.isTournamentPlay = false;
-    window.location.href = '#page-tournaments';
-    location.reload(); // Quickest way to restore all state
+    if (window.navigateToPage) {
+        window.navigateToPage('tournaments');
+    } else {
+        window.location.href = '#page-tournaments';
+    }
 }
 
 // --- PRIVATE MATCH PLAY LOGIC ---
@@ -2896,24 +3068,62 @@ window.initPrivateMatchPlay = function () {
 
     privateMatchParams = activeMatch.parameters;
 
-    // UI Setup
-    document.getElementById('game-title').textContent = "Private Match";
-    document.getElementById('param-board').textContent = activeMatch.parameters.board_dimensions;
-    document.getElementById('param-time').textContent = activeMatch.parameters.time_limit + "s";
-    document.getElementById('param-bonus').textContent = activeMatch.parameters.bonus_word_length > 0 ? (activeMatch.parameters.bonus_word_length + " letters") : "None";
-    document.getElementById('param-min').textContent = activeMatch.parameters.min_word_length;
-    document.getElementById('param-dict').textContent = activeMatch.parameters.dictionary;
+    const mockState = {
+        board: activeMatch.board,
+        state: 'active',
+        game_type: 'private',
+        board_dimensions: activeMatch.parameters.board_dimensions,
+        time_limit: activeMatch.parameters.time_limit,
+        spinner_params: activeMatch.parameters
+    };
+    window.lastGameState = mockState;
+    lastRenderedBoardJSON = null; // Force re-render
+    renderBoard(activeMatch.board, false);
+    updateParameters(mockState);
+    resetPlayUI();
 
-    const list = document.getElementById('words-found-list');
-    if (list) list.innerHTML = '';
-
-    renderBoard(activeMatch.board);
+    // Clear UI
+    resetChat();
+    const wordsList = document.getElementById('submitted-words-list');
+    if (wordsList) wordsList.innerHTML = '';
+    const wordsStats = document.getElementById('words-stats');
+    if (wordsStats) wordsStats.textContent = '';
 
     // Stop random multiplayer polling
     stopPolling();
 
     // Start local timer
-    startPrivateMatchTimer(activeMatch.end_time);
+    // Calculate remaining time based on end_time stored in localStorage
+    // If we just launched, end_time was set.
+    // If we reloaded page, it persists.
+    let endTime = activeMatch.end_time;
+
+    // Fix: If endTime is too far in past/future or invalid, reset it? 
+    // Actually server doesn't enforce real-time for private turns as strictly 
+    // unless we validate start_time there. 
+    // For now trust client storage or reset if expired.
+
+    if (endTime < Date.now() / 1000) {
+        // Already expired? Or maybe just started and time offset issue?
+        // Let's assume user just clicked Play if it's super old.
+        // But launchPrivateMatch sets it to now + limit.
+        // So play execution is correct.
+    }
+
+    // UI Adjustments
+    const playerList = document.getElementById('players-list');
+    if (playerList) {
+        playerList.innerHTML = `
+            <div class="player-card active" style="border-left: 4px solid var(--accent-color);">
+                <div class="player-info">
+                    <div class="username">PRIVATE MATCH</div>
+                    <div class="score">Round ${activeMatch.current_round}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    startPrivateMatchTimer(endTime);
 };
 
 function startPrivateMatchTimer(endTime) {
@@ -2923,7 +3133,9 @@ function startPrivateMatchTimer(endTime) {
 
     timerInterval = setInterval(() => {
         const remaining = Math.max(0, Math.floor(endTime - Date.now() / 1000));
-        if (timerEl) timerEl.textContent = `Time: ${remaining}s`;
+        const mins = Math.floor(remaining / 60);
+        const secs = remaining % 60;
+        if (timerEl) timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
 
         if (remaining <= 0) {
             clearInterval(timerInterval);
@@ -2932,8 +3144,50 @@ function startPrivateMatchTimer(endTime) {
     }, 1000);
 }
 
-function handlePrivateMatchWord(word) {
-    if (privateMatchWords.find(w => w.word === word)) return;
+async function handlePrivateMatchWord(word) {
+    if (!word) return;
+
+    if (privateMatchWords.find(w => w.word === word)) {
+        showValidationFeedback('Already found!', false);
+        return;
+    }
+
+    // Check if word is on board
+    const board = window.lastGameState ? window.lastGameState.board : null;
+    if (!board) {
+        console.error('[Private Match] No board found in lastGameState');
+        return;
+    }
+
+    const path = findWordPathOnBoard(word, board);
+    if (!path) {
+        showValidationFeedback('Not on board!', false);
+        return;
+    }
+
+    // Check dictionary
+    const dict = privateMatchParams ? privateMatchParams.dictionary : 'NWL';
+    try {
+        const resp = await fetch('/api/tools/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ word, dictionary: dict })
+        });
+        const data = await resp.json();
+        if (!data.is_valid) {
+            showValidationFeedback('Not in dictionary!', false);
+            return;
+        }
+    } catch (e) {
+        console.error('Validation error', e);
+    }
+
+    // Check min length
+    const minLen = privateMatchParams ? privateMatchParams.min_word_length : 3;
+    if (word.length < minLen) {
+        showValidationFeedback(`Too short (min ${minLen})`, false);
+        return;
+    }
 
     // Points calculation (Simplified client side)
     let pts = word.length;
@@ -2944,7 +3198,9 @@ function handlePrivateMatchWord(word) {
     const activeMatch = JSON.parse(localStorage.getItem('private_match_active'));
     if (activeMatch && activeMatch.bonus_word === word) {
         pts += 10;
-        alert("BONUS WORD FOUND!");
+        showValidationFeedback('BONUS WORD FOUND!', true);
+    } else {
+        showValidationFeedback('Valid Word', true);
     }
 
     privateMatchWords.push({
@@ -2957,21 +3213,34 @@ function handlePrivateMatchWord(word) {
     const scoreEl = document.querySelector('.player-card .score');
     if (scoreEl) scoreEl.textContent = `Score: ${privateMatchScore}`;
 
-    const list = document.getElementById('words-found-list');
+    const list = document.getElementById('submitted-words-list');
     if (list) {
+        // Remove placeholder if it exists
+        const placeholder = list.querySelector('.placeholder');
+        if (placeholder) placeholder.remove();
+
         const item = document.createElement('div');
-        item.className = 'word-row';
-        item.innerHTML = `<span>${word}</span> <span>${pts}</span>`;
+        item.className = 'word-item player-word';
+        item.style.display = 'flex';
+        item.style.justifyContent = 'space-between';
+        item.style.animation = 'slideIn 0.3s ease';
+        item.innerHTML = `<span>${word}</span> <span style="opacity:0.8">${pts}</span>`;
         list.prepend(item);
     }
+
+    // Flash Highlight
+    reapplyBoardHighlights();
 }
 
 async function finishPrivateMatchTurn() {
     const activeMatch = JSON.parse(localStorage.getItem('private_match_active'));
-    if (!activeMatch) return;
+    if (!activeMatch) {
+        exitPrivateMatchPlay();
+        return;
+    }
 
     try {
-        await fetch('/api/private-match/submit', {
+        const resp = await fetch('/api/private-match/submit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -2981,9 +3250,23 @@ async function finishPrivateMatchTurn() {
                 score: privateMatchScore
             })
         });
+
+        if (!resp.ok) {
+            throw new Error('Server returned ' + resp.status);
+        }
+
+        const data = await resp.json();
+        // Assuming success if we got here
+
         alert("Turn Submitted!");
     } catch (e) {
         console.error(e);
+        alert("Error submitting turn: " + e.message);
+        // Do not exit if error, so user can try again?
+        // Or exit anyway to avoid stuck state?
+        // Let's exit for now to avoid state corruption, but user might lose turn data if not saved.
+        // Actually, if it failed, we should probably keep them on screen?
+        // But the user requested "Instant Lobby Loading", so let's retry navigating.
     }
 
     exitPrivateMatchPlay();
@@ -2992,8 +3275,15 @@ async function finishPrivateMatchTurn() {
 function exitPrivateMatchPlay() {
     isPrivateMatchPlay = false;
     localStorage.removeItem('private_match_active');
-    if (window.navigateToPage) window.navigateToPage('lobby');
-    window.startGamePolling();
+
+    // Clean up timers
+    if (window.privateMatchInterval) clearInterval(window.privateMatchInterval);
+
+    if (window.navigateToPage) {
+        window.navigateToPage('lobby');
+        // Force refresh of match lists immediately
+        if (window.loadPrivateMatches) setTimeout(window.loadPrivateMatches, 100);
+    }
 }
 
 // Hook into the board selection listener

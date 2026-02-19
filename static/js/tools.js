@@ -1692,13 +1692,14 @@ function renderRatingsGrid(configRatings, user = null) {
 
     const modes = ['accumulative', 'fcfs', 'split'];
     const boards = ['4x4', '4x6', '5x7', '6x8'];
-    const accTimes = [45, 180, 600]; // Removed 86400 (24h)
+    const accTimes = [45, 180, 600, 86400];
     const otherTimes = [45, 180];
 
     const formatTimeShort = (s) => {
         if (s === 45) return '45s';
         if (s === 180) return '3m';
         if (s === 600) return '10m';
+        if (s === 86400) return '24h';
         return s + 's';
     };
 
@@ -2142,7 +2143,7 @@ async function fetchListsData() {
         renderListColumn('col-nwl', data.nwl);
         renderListColumn('col-csw', data.csw);
         renderListColumn('col-csw-only', data.csw_only);
-        renderListColumn('col-likelihood', data.likelihood);
+        renderLikelihoodColumn('col-likelihood', data.likelihood);
         renderListColumn('col-added', data.added);
         renderListColumn('col-uniques', data.uniques);
 
@@ -2161,6 +2162,17 @@ function renderListColumn(colId, words) {
     const container = document.querySelector(`#${colId} .list-scroll-area`);
     if (!container) return;
 
+    // Update count in header
+    const countMap = {
+        'col-nwl': 'count-nwl',
+        'col-csw': 'count-csw',
+        'col-csw-only': 'count-csw-only',
+        'col-uniques': 'count-uniques',
+        'col-added': 'count-added'
+    };
+    const countEl = document.getElementById(countMap[colId]);
+    if (countEl) countEl.textContent = words && words.length ? `(${words.length.toLocaleString()})` : '(0)';
+
     if (!words || words.length === 0) {
         container.innerHTML = '<div style="padding:10px; opacity:0.6;">(Empty)</div>';
         return;
@@ -2168,6 +2180,28 @@ function renderListColumn(colId, words) {
 
     // Creating a huge string is faster than creating elements one by one.
     const html = words.map(w => `<div class="list-item">${w}</div>`).join('');
+    container.innerHTML = html;
+}
+
+function renderLikelihoodColumn(colId, items) {
+    const container = document.querySelector(`#${colId} .list-scroll-area`);
+    if (!container) return;
+
+    // Update count in header
+    const countEl = document.getElementById('count-likelihood');
+    if (countEl) countEl.textContent = items && items.length ? `(${items.length.toLocaleString()})` : '(0)';
+
+    if (!items || items.length === 0) {
+        container.innerHTML = '<div style="padding:10px; opacity:0.6;">(Empty)</div>';
+        return;
+    }
+
+    // Each item is { score, word }. Display as "score WORD"
+    const html = items.map(item => {
+        const score = item.score;
+        const word = item.word;
+        return `<div class="list-item"><span class="likelihood-score">${score}</span> ${word}</div>`;
+    }).join('');
     container.innerHTML = html;
 }
 
@@ -2336,10 +2370,6 @@ function renderManualGrid(dims) {
 }
 
 async function runManualSolve() {
-    if (window.currentRoomId) {
-        alert("The manual solver is disabled while you are in a room.");
-        return;
-    }
     const gridEl = document.getElementById('manual-grid');
     const dictEl = document.getElementById('manual-dict');
     const solveBtn = document.getElementById('manual-solve-btn');
@@ -2391,6 +2421,20 @@ async function runManualSolve() {
 
         if (data.error) {
             alert("Solve failed: " + data.error);
+            return;
+        }
+
+        // If this board matches a currently live room, block results
+        if (data.board_matches_active_room) {
+            manualSolvedWords = [];
+            resultsContainer.innerHTML = `
+                <div style="padding: 20px; text-align: center; color: #f87171;">
+                    <div style="font-size: 1.5rem; margin-bottom: 8px;">⚠️</div>
+                    <div style="font-weight: 700; font-size: 1rem; margin-bottom: 6px;">Board In Use</div>
+                    <div style="font-size: 0.85rem; opacity: 0.7;">This board is currently being played in a live room.<br>Results are not available while the round is active.</div>
+                </div>`;
+            resultsContainer.style.display = 'flex';
+            revealBtn.style.display = 'none';
             return;
         }
 

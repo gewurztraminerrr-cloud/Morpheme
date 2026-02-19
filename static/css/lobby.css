@@ -64,13 +64,14 @@
 
 .game-btn {
     padding: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--input-border);
     border-radius: 8px;
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     color: #fff;
+    /* Static white for colorful buttons is fine usually, but check contrast */
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     position: relative;
@@ -84,7 +85,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(rgba(255, 255, 255, 0.2), transparent);
+    background: linear-gradient(rgba(var(--text-primary-rgb), 0.2), transparent);
     opacity: 0;
     transition: opacity 0.3s ease;
 }
@@ -188,6 +189,26 @@
     margin-top: 20px;
 }
 
+#rooms-list .placeholder-icon {
+    display: block;
+    width: 120px;
+    height: auto;
+    margin: 30px auto;
+    opacity: 0.15;
+    filter: invert(1) brightness(2);
+    /* Make it look like a watermark on dark themes */
+}
+
+/* Theme adjustment for light themes */
+[class*="theme-white"] #rooms-list .placeholder-icon,
+[class*="theme-light-"] #rooms-list .placeholder-icon,
+body.theme-yellow #rooms-list .placeholder-icon,
+body.theme-pink #rooms-list .placeholder-icon,
+body.theme-orange #rooms-list .placeholder-icon {
+    filter: invert(0);
+    opacity: 0.1;
+}
+
 /* Room Item Styling - "Pretty" */
 .room-item {
     background: var(--input-bg);
@@ -265,7 +286,7 @@
     width: 100%;
     padding: 8px;
     background: #27ae60;
-    color: white;
+    color: var(--text-primary);
     border: none;
     border-radius: 6px;
     cursor: pointer;
@@ -317,7 +338,7 @@
 .confirm-create-room-btn {
     width: 100%;
     background: linear-gradient(135deg, #2ecc71, #27ae60);
-    color: white;
+    color: var(--text-primary);
     border: none;
     padding: 10px;
     border-radius: 4px;
@@ -350,9 +371,9 @@
 }
 
 .contact-card {
-    background: rgba(30, 30, 50, 0.7);
+    background: var(--bg-panel);
     backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--input-border);
     border-radius: 20px;
     padding: 30px 40px;
     /* Reduced vertical padding from 40px to 30px */
@@ -379,15 +400,12 @@
     /* Slightly smaller h2 */
     margin-bottom: 5px;
     text-align: center;
-    background: linear-gradient(135deg, #fff 0%, #aaa 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--text-primary);
 }
 
 .contact-desc {
     text-align: center;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--text-70);
     margin-bottom: 20px;
     /* Reduced from 30px */
     font-size: 0.9rem;
@@ -413,7 +431,7 @@
     font-size: 0.8rem;
     /* Slightly smaller label */
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--muted-text);
     text-transform: uppercase;
     letter-spacing: 1px;
     padding-left: 5px;
@@ -505,4 +523,51 @@
 
 .contact-status.error {
     color: #e74c3c;
+}
+
+/* SF Participant Pills */
+.player-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    margin-right: 4px;
+    background: rgba(var(--text-primary-rgb), 0.1);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.05);
+}
+
+.player-pill.pending {
+    opacity: 0.6;
+    font-style: italic;
+    background: rgba(241, 196, 15, 0.1);
+    color: #f1c40f;
+}
+
+.player-pill.accepted {
+    background: rgba(46, 204, 113, 0.1);
+    color: #2ecc71;
+}
+
+/* Invites Badge */
+/* Invites Badge */
+.sf-subtab-btn,
+.sf-tab-btn {
+    position: relative;
+}
+
+.sf-subtab-btn .badge,
+.sf-tab-btn .badge {
+    background: var(--accent-color);
+    color: #000;
+    font-size: 0.7rem;
+    padding: 1px 5px;
+    border-radius: 10px;
+    font-weight: 800;
+    margin-left: 5px;
+    pointer-events: none;
+}
+
+.invite-panel {
+    border-left: 4px solid var(--accent-color);
+    background: rgba(var(--accent-rgb), 0.05);
 }

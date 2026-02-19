@@ -5,6 +5,9 @@ import sqlite3
 import time
 import os
 import json
+import random
+import threading
+import uuid
 from collections import Counter
 
 app = Flask(__name__, static_folder='static')
@@ -45,7 +48,7 @@ DEFINITIONS_CACHE = None
 
 # Initialize database
 def init_db():
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     conn.executescript('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -414,7 +417,7 @@ def update_setting():
     if not key or value is None:
         return jsonify({'error': 'Missing key or value'}), 400
         
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     try:
         conn.execute('''
             INSERT INTO user_settings (user_id, setting_key, setting_value)
@@ -434,7 +437,7 @@ def get_settings():
     if 'user_id' not in session:
         return jsonify({'settings': {}}) # Return empty for guests/unauthed
     
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     cursor = conn.execute('SELECT setting_key, setting_value FROM user_settings WHERE user_id = ?', (session['user_id'],))
     rows = cursor.fetchall()
     conn.close()
@@ -444,7 +447,7 @@ def get_settings():
 
 @app.route('/api/stats/user_count', methods=['GET'])
 def get_user_count():
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     try:
         # Count all users who are NOT guests (guests have usernames starting with Guest_)
         # AND check against guests created in guest_login if needed, but existing guest filter by name is good enough strictly speaking
@@ -492,7 +495,7 @@ def register():
     if len(password) < 6:
         return jsonify({'error': 'Password must be 6+ characters'}), 400
     
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     try:
         password_hash = generate_password_hash(password, method='pbkdf2:sha256')
         conn.execute('INSERT INTO users (username, password_hash, email) VALUES (?, ?, ?)',
@@ -519,7 +522,7 @@ def login():
     username = data.get('username')
     password = data.get('password')
     
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     cursor = conn.execute('SELECT id, password_hash, email FROM users WHERE username = ?', (username,))
     user = cursor.fetchone()
     conn.close()
@@ -563,7 +566,7 @@ def guest_login():
     dummy_password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
     password_hash = generate_password_hash(dummy_password, method='pbkdf2:sha256')
     
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     try:
         cursor = conn.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)',
                              (guest_username, password_hash))
@@ -607,7 +610,7 @@ def update_flag():
         return jsonify({'error': 'No flag provided'}), 400
         
     try:
-        conn = sqlite3.connect('morpheme.db')
+        conn = sqlite3.connect('morpheme.db', timeout=30)
         conn.execute('UPDATE users SET country_flag = ? WHERE id = ?', (flag, session['user_id']))
         conn.commit()
         conn.close()
@@ -632,7 +635,7 @@ def update_profile():
         return jsonify({'error': 'No valid fields provided'}), 400
         
     try:
-        conn = sqlite3.connect('morpheme.db')
+        conn = sqlite3.connect('morpheme.db', timeout=30)
         set_clause = ", ".join([f"{k} = ?" for k in updates.keys()])
         values = list(updates.values())
         values.append(session['user_id'])
@@ -649,7 +652,7 @@ def update_profile():
 def get_public_profile(username):
     if 'user_id' in session:
         room_manager.update_presence(session['user_id'])
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     cursor = conn.execute('''
         SELECT id, username, rating, games_played, avatar_url, country_flag, 
                full_name, age, gender, location, quote, description, proof_url, wins,
@@ -836,7 +839,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     from flask import request
     period = request.args.get('period', 'all').lower()
     
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     cursor = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (username,))
     user = cursor.fetchone()
     if not user:
@@ -1084,7 +1087,7 @@ def upload_avatar():
             avatar_url = f"/static/uploads/avatars/{new_filename}"
             
             # Update DB
-            conn = sqlite3.connect('morpheme.db')
+            conn = sqlite3.connect('morpheme.db', timeout=30)
             # First, get old avatar to delete if exists? (Optional cleanup)
             # For now just update
             conn.execute('UPDATE users SET avatar_url = ? WHERE id = ?', (avatar_url, session['user_id']))
@@ -1116,7 +1119,7 @@ def apply_leave_penalty(user_id, room):
         
         # Persist to database immediately
         try:
-            conn = sqlite3.connect('morpheme.db')
+            conn = sqlite3.connect('morpheme.db', timeout=30)
             config_key = f"{room.game_type}|{room.board_dimensions}|{room.time_limit}"
             conn.execute('''
                 INSERT OR REPLACE INTO user_ratings (user_id, config_key, rating)
@@ -1190,7 +1193,7 @@ def create_room():
     if session.get('is_guest', False):
         rating = 0
     else:
-        conn = sqlite3.connect('morpheme.db')
+        conn = sqlite3.connect('morpheme.db', timeout=30)
         cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
                             (session['user_id'], config_key))
         row = cursor.fetchone()
@@ -1206,7 +1209,7 @@ def create_room():
     games_played = 0
     country_flag = '🏳️'
     if not session.get('is_guest', False):
-        conn = sqlite3.connect('morpheme.db')
+        conn = sqlite3.connect('morpheme.db', timeout=30)
         try:
              cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (session['user_id'],))
              row = cur.fetchone()
@@ -1245,7 +1248,7 @@ def join_room(room_id):
     if session.get('is_guest', False):
         rating = 0
     else:
-        conn = sqlite3.connect('morpheme.db')
+        conn = sqlite3.connect('morpheme.db', timeout=30)
         cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
                             (session['user_id'], config_key))
         row = cursor.fetchone()
@@ -1258,10 +1261,18 @@ def join_room(room_id):
 
     # Check for spectator request
     data = request.get_json() or {}
+    # Unlimited players for Accumulative, 8 for others
+    if room.game_type in ['accumulative', 'solo_accumulative']:
+        room.max_players = 9999
     as_spectator = data.get('as_spectator', False)
 
+    if as_spectator:
+        room.add_spectator(user_id, session['username'], rating)
+        room.update_player_activity(user_id)
+        return jsonify({'success': True, 'role': 'spectator'})
+
     # Force player mode for Accumulative
-    if room.game_type == 'accumulative':
+    if room.game_type in ['accumulative', 'solo_accumulative']:
         as_spectator = False
 
     if as_spectator:
@@ -1287,7 +1298,7 @@ def join_room(room_id):
     has_exceptional = False # User request: Do not give trophy on join
     
     if not session.get('is_guest', False):
-        conn = sqlite3.connect('morpheme.db')
+        conn = sqlite3.connect('morpheme.db', timeout=30)
         try:
              # Basic Stats
              cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (user_id,))
@@ -1312,7 +1323,7 @@ def join_room(room_id):
     if not success:
         # Room full
         msg = f"Room is full (Max {room.max_players} players). You can watch instead."
-        if room.game_type == 'accumulative':
+        if room.game_type in ['accumulative', 'solo_accumulative']:
              msg = "Could not join Accumulative room. Please try again."
         return jsonify({'error': msg}), 409
     
@@ -1351,6 +1362,10 @@ def list_rooms():
     active_rooms = []
     
     for room_id, room in room_manager.rooms.items():
+        # Exclude solo and private rooms from public listing
+        if room.is_solo or getattr(room, 'is_private', False):
+            continue
+            
         if (room.game_type == game_type and 
             room.board_dimensions == board_dimensions and 
             room.time_limit == time_limit):
@@ -1381,6 +1396,10 @@ def get_lobby_stats():
     stats = {}
     
     for room in room_manager.rooms.values():
+        # Hide solo and private rooms from lobby stats
+        if room.is_solo or getattr(room, 'is_private', False):
+            continue
+            
         # Create a unique key for this configuration
         # Format: game_type|board|time
         key = f"{room.game_type}|{room.board_dimensions}|{room.time_limit}"
@@ -1440,7 +1459,7 @@ def get_room_state(room_id):
         
         # If intermission just ended, check for timing milestones (Accumulative & FCFS)
         # If intermission just ended, check for timing milestones (Accumulative & FCFS)
-        if room.state == 'intermission' and room.game_type in ['accumulative', 'fcfs', 'split']:
+        if room.state == 'intermission' and room.game_type in ['accumulative', 'solo_accumulative', 'fcfs', 'split']:
             milestone = room.get_intermission_milestone()
             
             if milestone == 'spinner':
@@ -2038,36 +2057,43 @@ def tools_get_lists():
         # Since we need sets for CSW-Only, we must load full sets anyway unless we optimize diffing.
         # Let's use the sets we just loaded.
         
-        # 4. Likelihood List (Frequency Based)
-        # Custom freq: A=190, B=45, C=99, D=82, E=278, F=29, G=69, H=61, I=222, J=4, K=23, L=129, M=71,
-        # N=165, O=163, P=74, Q=4, R=172, S=237, T=161, U=81, V=23, W=19, X=7, Y=40, Z=12
-        freq = {
-            'A': 190, 'B': 45, 'C': 99, 'D': 82, 'E': 278, 'F': 29, 'G': 69, 'H': 61, 'I': 222,
-            'J': 4, 'K': 23, 'L': 129, 'M': 71, 'N': 165, 'O': 163, 'P': 74, 'Q': 4, 'R': 172,
-            'S': 237, 'T': 161, 'U': 81, 'V': 23, 'W': 19, 'X': 7, 'Y': 40, 'Z': 12
+        # 4. Likelihood List (Scrabble-style letter frequency)
+        # Base tile counts per letter in Scrabble
+        scrabble_freq = {
+            'A': 9, 'B': 2, 'C': 2, 'D': 4, 'E': 12, 'F': 2, 'G': 3, 'H': 2, 'I': 9,
+            'J': 1, 'K': 1, 'L': 4, 'M': 2, 'N': 6, 'O': 8, 'P': 2, 'Q': 1, 'R': 6,
+            'S': 4, 'T': 6, 'U': 4, 'V': 2, 'W': 2, 'X': 1, 'Y': 2, 'Z': 1
         }
-        
-        
-        def calculate_likelihood(word):
-            # User requested Simple Summation (e.g. A+E = 190+278)
-            return sum(freq.get(c, 0) for c in word)
 
-        # We take NWL as the base for Likelihood
+        def calculate_scrabble_likelihood(word):
+            """Sum letter values, subtracting 1 for each additional occurrence of that letter.
+            e.g. EENSIER: E=12, E=11, N=6, S=4, I=9, E=10, R=6 => 58
+            The letter counts reset for each new word."""
+            letter_counts = {}  # tracks how many times we've seen each letter so far in this word
+            total = 0
+            for ch in word:
+                base = scrabble_freq.get(ch, 0)
+                seen = letter_counts.get(ch, 0)
+                total += max(0, base - seen)
+                letter_counts[ch] = seen + 1
+            return total
+
+        # We take NWL as the base for Likelihood — include ALL matching words, no cap
         likelihood_eligible = []
         for w in nwl_set_full:
             if target_len is not None and len(w) != target_len: continue
             if start_char is not None and not w.startswith(start_char): continue
-            likelihood_eligible.append(w)
-            
-        # Sort by Likelihood Score (DESC), then Alpha (ASC)
-        # We REMOVE the intermediate alphabetic re-sort to preserve Likelihood ranking
-        likelihood_eligible.sort(key=lambda x: (-calculate_likelihood(x), x))
-        
+            score = calculate_scrabble_likelihood(w)
+            likelihood_eligible.append({'score': score, 'word': w})
+
+        # Sort by score DESC, then alphabetically ASC
+        likelihood_eligible.sort(key=lambda x: (-x['score'], x['word']))
+
         response_data = {
             'nwl': filter_iterable(nwl_set_full),
             'csw': filter_iterable(csw_set_full),
             'csw_only': filter_iterable(csw_only_full),
-            'likelihood': likelihood_eligible[:5000], # Top 5000 Most Likely
+            'likelihood': likelihood_eligible,  # ALL matching words, scored
             'added': [],
             'uniques': load_filtered_list('randomTWLunique.txt')
         }
@@ -2244,7 +2270,7 @@ def send_private_message():
     if len(message_text) > 500:
         message_text = message_text[:500]
         
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     try:
         # Get IDs (Case-insensitive)
         sender = conn.execute('SELECT id, username FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
@@ -2283,7 +2309,7 @@ def get_conversation(target_username):
     if 'username' not in session:
         return jsonify({'error': 'Login required'}), 401
         
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     try:
         # Get IDs (Case-insensitive)
         me = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
@@ -2333,7 +2359,7 @@ def clear_private_messages(target_username):
     if 'username' not in session:
         return jsonify({'error': 'Login required'}), 401
     
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     try:
         me = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
         them = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (target_username,)).fetchone()
@@ -2357,7 +2383,7 @@ def get_unread_count():
     if 'username' not in session:
         return jsonify({'count': 0})
         
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     try:
         user = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
         if not user: return jsonify({'count': 0})
@@ -2391,16 +2417,36 @@ def tools_flag_manual():
 
 @app.route('/api/tools/manual_solve', methods=['POST'])
 def tools_manual_solve():
-    """Solves a custom board provided by the user."""
-    # Set flag just in case they skipped the frontend click trigger
-    session['manual_accessed'] = True
-    
+    """Solves a custom board provided by the user.
+    Blocks results if the submitted board matches any currently active live room board.
+    """
     data = request.json
     board = data.get('board') # 2D list of letters
     dictionary = data.get('dictionary', 'NWL')
     
     if not board or not isinstance(board, list):
         return jsonify({'error': 'No board provided or invalid format'}), 400
+    
+    # Flatten submitted board to a comparable string: "A|B|C|D\nE|F|G|H\n..."
+    def flatten_board(b):
+        return '\n'.join('|'.join(row) for row in b)
+    
+    submitted_flat = flatten_board(board)
+    
+    # Check against all active live rooms
+    try:
+        for room in room_manager.rooms.values():
+            if room.state == 'active' and room.board:
+                room_flat = flatten_board(room.board)
+                if submitted_flat == room_flat:
+                    print(f"[ManualSolve] Board matches active room {room.room_id} — blocking results")
+                    return jsonify({
+                        'board_matches_active_room': True,
+                        'results': [],
+                        'count': 0
+                    })
+    except Exception as check_err:
+        print(f"[ManualSolve] Error during room board check (non-fatal): {check_err}")
         
     try:
         # We use the board_generator from the global room_manager instance
@@ -2411,7 +2457,8 @@ def tools_manual_solve():
         
         return jsonify({
             'results': all_words,
-            'count': len(all_words)
+            'count': len(all_words),
+            'board_matches_active_room': False
         })
     except Exception as e:
         print(f"Error solving manual board: {e}")
@@ -2509,7 +2556,7 @@ def add_friend():
     if friend_username == session['username']:
         return jsonify({'error': 'Cannot add yourself as a friend'}), 400
         
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     try:
         user = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
         friend = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (friend_username,)).fetchone()
@@ -2544,7 +2591,7 @@ def remove_friend():
     data = request.json
     friend_username = data.get('username')
     
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     try:
         user = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
         friend = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (friend_username,)).fetchone()
@@ -2564,7 +2611,7 @@ def get_friend_status(username):
     if 'username' not in session:
         return jsonify({'is_friend': False})
         
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     try:
         user = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
         friend = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (username,)).fetchone()
@@ -2584,7 +2631,7 @@ def get_friends_list():
     if 'username' not in session:
         return jsonify({'error': 'Login required'}), 401
         
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     conn.row_factory = sqlite3.Row
     try:
         user = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
@@ -2615,7 +2662,7 @@ def get_friends_list():
 
 @app.route('/api/forum/categories', methods=['GET'])
 def get_forum_categories():
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     conn.row_factory = sqlite3.Row
     try:
         rows = conn.execute('SELECT * FROM forum_categories').fetchall()
@@ -2625,7 +2672,7 @@ def get_forum_categories():
 
 @app.route('/api/forum/posts/<int:category_id>', methods=['GET'])
 def get_forum_posts(category_id):
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     conn.row_factory = sqlite3.Row
     try:
         rows = conn.execute('''
@@ -2642,7 +2689,7 @@ def get_forum_posts(category_id):
 
 @app.route('/api/forum/post/<int:post_id>', methods=['GET'])
 def get_forum_post_detail(post_id):
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     conn.row_factory = sqlite3.Row
     try:
         post = conn.execute('''
@@ -2693,7 +2740,7 @@ def create_forum_post():
             file.save(os.path.join(app.config['FORUM_UPLOAD_FOLDER'], filename))
             image_url = f"/static/uploads/forum/{filename}"
             
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     try:
         cursor = conn.execute('''
             INSERT INTO forum_posts (category_id, user_id, title, content, image_url)
@@ -2718,7 +2765,7 @@ def create_forum_comment():
     if not post_id or not content:
         return jsonify({'error': 'Missing fields'}), 400
         
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     try:
         conn.execute('''
             INSERT INTO forum_comments (post_id, user_id, content)
@@ -2733,7 +2780,7 @@ def create_forum_comment():
 
 @app.route('/api/leaderboard', methods=['GET'])
 def get_leaderboard_data():
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     conn.row_factory = sqlite3.Row
     try:
         # Params
@@ -2744,9 +2791,8 @@ def get_leaderboard_data():
 
         # Base filters
         params = []
-        # Exclude 24h rooms (duration is usually 86400, so < 43200 (12h) is safe)
         # Exclude Guests from leaderboards
-        where_clauses = ["rh.round_duration < 43200", "u.username NOT LIKE 'Guest_%'"] 
+        where_clauses = ["u.username NOT LIKE 'Guest_%'"] 
 
         if game_type != 'all':
             where_clauses.append("rh.game_type = ?")
@@ -2895,7 +2941,7 @@ def get_tournament_status():
     
     if 'user_id' in session and not session.get('is_guest'):
         user_id = session['user_id']
-        conn = sqlite3.connect('morpheme.db')
+        conn = sqlite3.connect('morpheme.db', timeout=30)
         conn.row_factory = sqlite3.Row
         p = conn.execute('SELECT * FROM tournament_participants WHERE tournament_id = ? AND user_id = ?', 
                         (t['id'], user_id)).fetchone()
@@ -2911,7 +2957,7 @@ def get_tournament_status():
     # Get round end time if active
     round_end_time = 0
     if t['status'] == 'active':
-        conn = sqlite3.connect('morpheme.db')
+        conn = sqlite3.connect('morpheme.db', timeout=30)
         r = conn.execute('SELECT end_time FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?',
                         (t['id'], t['current_round'])).fetchone()
         conn.close()
@@ -2936,6 +2982,7 @@ def get_tournament_status():
         'user_status': user_status,
         'history': history,
         'round_scores': round_scores,
+        'standings': tournament_manager.get_tournament_standings(t['id']),
         'is_guest': session.get('is_guest', False)
     })
 
@@ -2950,7 +2997,7 @@ def join_tournament():
         return jsonify({'error': 'Signup period is over'}), 400
         
     user_id = session['user_id']
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     try:
         conn.execute('''
             INSERT OR IGNORE INTO tournament_participants (tournament_id, user_id, joined_at)
@@ -2984,7 +3031,7 @@ def get_tournament_game_state():
     if not tournament_manager.has_user_turn(t['id'], user_id):
         return jsonify({'error': 'Not your turn or already played'}), 403
         
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     conn.row_factory = sqlite3.Row
     r = conn.execute('SELECT * FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?',
                     (t['id'], t['current_round'])).fetchone()
@@ -3004,6 +3051,13 @@ def get_tournament_game_state():
         'server_time': time.time()
     })
 
+@app.route('/api/tournament/winner-turn/<int:tid>/<username>', methods=['GET'])
+def get_tournament_winner_turn(tid, username):
+    data = tournament_manager.get_winner_turn_data(tid, username)
+    if not data:
+        return jsonify({'error': 'Winner turn data not found'}), 404
+    return jsonify(data)
+
 @app.route('/api/tournament/submit', methods=['POST'])
 @login_required
 def submit_tournament_score():
@@ -3022,7 +3076,7 @@ def submit_tournament_score():
         return jsonify({'error': 'Invalid turn or already submitted'}), 403
         
     # FETCH ROUND DATA for validation
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     conn.row_factory = sqlite3.Row
     t = conn.execute('SELECT * FROM tournaments WHERE id = ?', (tid,)).fetchone()
     r = conn.execute('SELECT * FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?',
@@ -3075,7 +3129,7 @@ def submit_tournament_score():
             })
             total_score += pts
             
-    conn = sqlite3.connect('morpheme.db')
+    conn = sqlite3.connect('morpheme.db', timeout=30)
     try:
         conn.execute('''
             INSERT INTO tournament_scores (tournament_id, round_number, user_id, score, submitted_words, submitted_at, round_start_time)
@@ -3090,6 +3144,82 @@ def submit_tournament_score():
 
 
 
+@app.route('/api/solo-match/create', methods=['POST'])
+def create_solo_match():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+        
+    data = request.json
+    parameters = data.get('parameters', {})
+    participants = data.get('participants', [])
+    
+    print(f"[app.py] Creating Solo Match for {session.get('username')} (ID: {session.get('user_id')})")
+    print(f"[app.py] Params: {parameters}")
+    print(f"[app.py] Bots: {participants}")
+    
+    # 1. Create a GameRoom for Solo Practice
+    # Force a unique ID and mark as private to skip singleton logic
+    room_id = f"practice_{session['username']}_{int(time.time())}"
+    game_type = 'solo_accumulative' # Isolated mode for solo play
+    time_limit = int(parameters.get('time_limit', 60))
+    board_dimensions = parameters.get('board_dimensions', '4x4')
+    
+    room = room_manager.create_room(room_id, game_type, time_limit, board_dimensions, is_private=True)
+    room.is_solo = True # Disables history and statistics
+    
+    # 2. Configure Parameters from User Input
+    dict_name = parameters.get('dictionary', 'NWL')
+    from spinner_set import SpinnerSet
+    room.spinner_params = {
+        'dictionary': dict_name,
+        'min_word_length': int(parameters.get('min_word_length', 3)),
+        'bonus_word_length': int(parameters.get('bonus_word_length', 8)),
+        'board_format': 'Normal', # Standard for solo
+        'difficulty': 'Normal',
+        'word_count_range': SpinnerSet._spin_word_count(dict_name)
+    }
+    
+    # Cleanup only if NOT in this room
+    cleanup_user_rooms(session['user_id'], exclude_room_id=room_id)
+    
+    # Add Player
+    rating = 1200
+    if not session.get('is_guest'):
+        try:
+            conn = sqlite3.connect('morpheme.db', timeout=30)
+            cur = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
+            row = cur.fetchone()
+            if row: rating = row[0]
+            conn.close()
+        except Exception as e:
+            print(f"[app.py] DB Error fetching rating for solo: {e}")
+            pass
+        
+    room.add_player(session['user_id'], session['username'], rating, is_guest=session.get('is_guest', False))
+    print(f"[app.py] Added human player {session.get('username')} to room {room_id}")
+    
+    # Add Bots
+    import random
+    for bot in participants:
+        if bot.get('is_ai'):
+            ai_id = -random.randint(10000, 999999)
+            room.add_player(ai_id, bot['username'], bot.get('ai_rating', 1200))
+            p = room.get_player(ai_id)
+            if p:
+                p.is_ai = True
+                p.ai_rating = bot.get('ai_rating', 1200)
+                print(f"[app.py] Added AI bot {bot['username']} to room {room_id}")
+
+    # Start loop
+    # Important: Room is now fully configured, start_round will use these params
+    print(f"[app.py] Starting first round for solo room: {room_id}")
+    import threading
+    thread = threading.Thread(target=room_manager.start_round, args=(room_id,), daemon=True)
+    thread.start()
+    
+    print(f"[app.py] Solo match creation complete. Returning success to client.")
+    return jsonify({'success': True, 'room_id': room_id})
+
 # --- PRIVATE MATCHES ---
 
 @app.route('/api/private-match/create', methods=['POST'])
@@ -3103,8 +3233,13 @@ def create_private_match():
     parameters = data.get('parameters')
     participants = data.get('participants', [])
     
-    match_id = private_match_manager.create_match(session['user_id'], match_type, parameters, participants)
-    return jsonify({'success': True, 'match_id': match_id})
+    try:
+        match_id = private_match_manager.create_match(session['user_id'], match_type, parameters, participants)
+        return jsonify({'success': True, 'match_id': match_id})
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': f"Failed to create match: {str(e)}"}), 500
 
 @app.route('/api/private-match/list', methods=['GET'])
 @login_required
@@ -3114,6 +3249,15 @@ def list_private_matches():
         
     matches = private_match_manager.get_matches_for_user(session['user_id'], session['username'])
     return jsonify(matches)
+
+@app.route('/api/private-match/invites', methods=['GET'])
+@login_required
+def list_private_match_invites():
+    if session.get('is_guest'):
+        return jsonify([])
+    
+    invites = private_match_manager.get_invites_for_user(session['username'])
+    return jsonify(invites)
 
 @app.route('/api/private-match/status/<int:match_id>', methods=['GET'])
 @login_required
@@ -3127,6 +3271,10 @@ def get_private_match_status(match_id):
         return jsonify({'error': 'Match not found'}), 404
         
     round_num = m['current_round']
+    if round_num == 0:
+        conn.close()
+        return jsonify({'error': 'Match is still being initialized. Please wait.'}), 202
+
     r = conn.execute('SELECT * FROM private_match_rounds WHERE match_id = ? AND round_number = ?', (match_id, round_num)).fetchone()
     
     # Check if user is participant
@@ -3135,43 +3283,121 @@ def get_private_match_status(match_id):
         conn.close()
         return jsonify({'error': 'Not a participant'}), 403
         
+    if not r:
+        conn.close()
+        return jsonify({'error': f'Round {round_num} board data not found. It may still be generating.'}), 202
+
     conn.close()
     
+    # Merge round-specific parameters if available
+    params = json.loads(m['parameters'])
+    if r.get('word_count_range'):
+        try:
+            params['word_count_range'] = json.loads(r['word_count_range'])
+        except:
+            pass
+
+    # NEW: Record/Retrieve the persistent turn start time for this user
+    # This prevents them from resetting the timer by leaving and re-entering the match.
+    start_time = private_match_manager.record_start_time(match_id, round_num, session['user_id'])
+    time_limit = params.get('time_limit', 60)
+    calculated_end_time = start_time + time_limit
+
     return jsonify({
         'match_id': match_id,
         'current_round': round_num,
-        'parameters': json.loads(m['parameters']),
-        'board': json.loads(r['board_data']) if r else None,
-        'bonus_word': r['bonus_word'] if r else None,
-        'end_time': r['end_time'] if r else None
+        'parameters': params,
+        'board': json.loads(r['board_data']),
+        'bonus_word': r['bonus_word'],
+        'end_time': calculated_end_time
     })
 
 @app.route('/api/private-match/submit', methods=['POST'])
 @login_required
 def submit_private_match_turn():
-    data = request.json
-    match_id = data.get('match_id')
-    round_number = data.get('round_number')
-    words_data = data.get('words')
-    score = data.get('score')
-    
-    private_match_manager.submit_turn(match_id, round_number, session['user_id'], words_data, score)
-    return jsonify({'success': True})
+    try:
+        data = request.json
+        match_id = data.get('match_id')
+        round_number = data.get('round_number')
+        words_data = data.get('words')
+        score = data.get('score')
+        
+        private_match_manager.submit_turn(match_id, round_number, session['user_id'], words_data, score)
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"Submit Turn Error: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/private-match/invite/accept', methods=['POST'])
 @login_required
 def accept_match_invite():
-    invite_id = request.json.get('invite_id')
+    data = request.json
+    invite_id = data.get('invite_id')
+    action = data.get('action', 'accept')
+    
     conn = private_match_manager.get_db()
     invite = conn.execute('SELECT * FROM match_invites WHERE id = ? AND recipient_username = ?', (invite_id, session['username'])).fetchone()
     if invite:
-        match_id = invite[1]
-        conn.execute('INSERT OR IGNORE INTO private_match_players (match_id, user_id, username) VALUES (?, ?, ?)',
-                    (match_id, session['user_id'], session['username']))
+        if action == 'accept':
+            match_id = invite[1]
+            conn.execute('INSERT OR IGNORE INTO private_match_players (match_id, user_id, username) VALUES (?, ?, ?)',
+                        (match_id, session['user_id'], session['username']))
+        
+        # Always delete invite after action
         conn.execute('DELETE FROM match_invites WHERE id = ?', (invite_id,))
         conn.commit()
     conn.close()
     return jsonify({'success': True})
+
+@app.route('/api/private-match/rematch', methods=['POST'])
+@login_required
+def rematch_private_match():
+    data = request.json
+    old_match_id = data.get('match_id')
+    
+    conn = private_match_manager.get_db()
+    conn.row_factory = sqlite3.Row
+    
+    # 1. Get Old Match Params
+    old_match = conn.execute('SELECT * FROM private_matches WHERE id = ?', (old_match_id,)).fetchone()
+    if not old_match:
+        conn.close()
+        return jsonify({'error': 'Match not found'}), 404
+        
+    parameters = json.loads(old_match['parameters'])
+    
+    # 2. Get Old Participants (excluding creator if they are the one requesting, to avoid dupe, but create_match handles creator separate)
+    # Actually create_match expects a list of OTHER participants.
+    # We need to find everyone who was in the old match EXCEPT the current user (who will be the new creator).
+    
+    old_players = conn.execute('SELECT * FROM private_match_players WHERE match_id = ?', (old_match_id,)).fetchall()
+    
+    participants = []
+    for p in old_players:
+        if p['user_id'] == session['user_id']:
+            continue # Skip self, will be added as creator
+            
+        part = {
+            'username': p['username'],
+            'is_ai': bool(p['is_ai']),
+            'ai_rating': p['ai_rating']
+        }
+        participants.append(part)
+        
+    conn.close()
+    
+    # 3. Create New Match
+    try:
+        new_match_id = private_match_manager.create_match(
+            creator_id=session['user_id'],
+            match_type='with_friends',
+            parameters=parameters,
+            participants=participants
+        )
+        return jsonify({'success': True, 'new_match_id': new_match_id})
+    except Exception as e:
+        print(f"Rematch Error: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/private-match/history/<int:match_id>', methods=['GET'])
 @login_required
@@ -3186,6 +3412,7 @@ def get_private_match_history(match_id):
         LEFT JOIN users u ON t.user_id = u.id
         WHERE t.match_id = ?
         ORDER BY t.round_number DESC, t.score DESC
+        LIMIT 25
     ''', (match_id,)).fetchall()
     
     # We might have AI bots, their IDs are negative and not in users table
@@ -3206,4 +3433,4 @@ def get_private_match_history(match_id):
 
 if __name__ == '__main__':
     print('Morpheme server running on http://localhost:3000')
-    app.run(host='0.0.0.0', port=3000, debug=False, use_reloader=False)
+    app.run(host='0.0.0.0', port=3000, debug=True, use_reloader=True)

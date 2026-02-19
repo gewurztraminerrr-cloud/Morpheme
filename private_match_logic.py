@@ -20,7 +20,7 @@ class PrivateMatchManager:
                 status TEXT DEFAULT 'active', -- 'active', 'completed', 'expired'
                 created_at REAL,
                 last_activity REAL,
-                current_round INTEGER DEFAULT 1,
+                current_round INTEGER DEFAULT 0,
                 FOREIGN KEY(creator_id) REFERENCES users(id)
             );
 
@@ -40,6 +40,7 @@ class PrivateMatchManager:
                 round_number INTEGER,
                 board_data TEXT, -- JSON
                 bonus_word TEXT,
+                word_count_range TEXT, -- NEW: Specifically selected range
                 all_words TEXT, -- JSON of all valid words on board
                 start_time REAL,
                 end_time REAL,
@@ -64,12 +65,59 @@ class PrivateMatchManager:
                 status TEXT DEFAULT 'pending',
                 created_at REAL
             );
+
+            CREATE TABLE IF NOT EXISTS private_match_starts (
+                match_id INTEGER,
+                round_number INTEGER,
+                user_id INTEGER,
+                start_time REAL,
+                PRIMARY KEY(match_id, round_number, user_id)
+            );
         ''')
         conn.commit()
+        
+        # MIGRATION: Add word_count_range column if it doesn't exist
+        try:
+            conn.execute('ALTER TABLE private_match_rounds ADD COLUMN word_count_range TEXT')
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass # Column likely already exists
+            
         conn.close()
 
     def get_db(self):
-        return sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        return conn
+
+    def cleanup_old_data(self):
+        """Delete matches and invites older than 7 days"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            now = time.time()
+            seven_days_ago = now - (7 * 24 * 60 * 60)
+            
+            # 1. Get IDs of matches older than 7 days (based on created_at and last_activity)
+            old_matches = conn.execute("SELECT id FROM private_matches WHERE created_at < ? OR (last_activity IS NOT NULL AND last_activity < ?)", 
+                                       (seven_days_ago, seven_days_ago)).fetchall()
+            match_ids = [m[0] for m in old_matches]
+            
+            if match_ids:
+                placeholders = ','.join(['?'] * len(match_ids))
+                conn.execute(f"DELETE FROM private_match_players WHERE match_id IN ({placeholders})", match_ids)
+                conn.execute(f"DELETE FROM private_match_rounds WHERE match_id IN ({placeholders})", match_ids)
+                conn.execute(f"DELETE FROM private_match_turns WHERE match_id IN ({placeholders})", match_ids)
+                conn.execute(f"DELETE FROM match_invites WHERE match_id IN ({placeholders})", match_ids)
+                conn.execute(f"DELETE FROM private_match_starts WHERE match_id IN ({placeholders})", match_ids) # Added for new table
+                conn.execute(f"DELETE FROM private_matches WHERE id IN ({placeholders})", match_ids)
+                
+            # 2. Cleanup stale standalone invites
+            conn.execute("DELETE FROM match_invites WHERE created_at < ?", (seven_days_ago,))
+            
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"Cleanup Error: {e}")
 
     def create_match(self, creator_id, match_type, parameters, participants=None):
         """
@@ -78,14 +126,23 @@ class PrivateMatchManager:
         conn = self.get_db()
         now = time.time()
         
-        # 1. Create Match Entry
+        # 1. Verify all non-AI participants exist
+        if participants:
+            for p in participants:
+                if not p.get('is_ai'):
+                    user = conn.execute('SELECT id FROM users WHERE username = ?', (p['username'],)).fetchone()
+                    if not user:
+                        conn.close()
+                        raise ValueError(f"User '{p['username']}' does not exist.")
+        
+        # 2. Create Match Entry (Start at round 0 so it's not active until board is ready)
         cur = conn.execute('''
-            INSERT INTO private_matches (creator_id, match_type, parameters, created_at, last_activity)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO private_matches (creator_id, match_type, parameters, created_at, last_activity, current_round)
+            VALUES (?, ?, ?, ?, ?, 0)
         ''', (creator_id, match_type, json.dumps(parameters), now, now))
         match_id = cur.lastrowid
         
-        # 2. Add Participants
+        # 3. Add Participants
         # Creator is always in
         conn.execute('''
             INSERT INTO private_match_players (match_id, user_id, username, status)
@@ -110,29 +167,50 @@ class PrivateMatchManager:
 
         conn.commit()
         
-        # 3. Generate first round board
-        self.generate_round(match_id, 1, parameters)
+        # 4. Generate first round board (Pass existing conn to avoid locks)
+        self.generate_round(match_id, 1, parameters, conn=conn)
+
+        # 5. NOW set current_round to 1 (making it active)
+        conn.execute('UPDATE private_matches SET current_round = 1 WHERE id = ?', (match_id,))
+        conn.commit()
         
         conn.close()
         return match_id
 
-    def generate_round(self, match_id, round_number, parameters):
+    def generate_round(self, match_id, round_number, parameters, conn=None):
         from board_generator import BoardGenerator
         from word_validator import word_validator
         
+        # USE UNIQUE SEEDING TO PREVENT BOARD REUSE ACROSS PROCESSES
+        import random
+        random.seed()
+
         bg = BoardGenerator()
         dims = parameters.get('board_dimensions', '4x4')
-        try:
-            w, h = map(int, dims.lower().split('x'))
-        except:
-            w, h = 4, 4
-            
-        board = bg.generate_board(w, h)
-        
         dict_name = parameters.get('dictionary', 'CSW')
         min_len = parameters.get('min_word_length', 3)
+
+        # Use spinner parameters for defaults if not explicitly provided
+        from spinner_set import SpinnerSet
+        spinner_params = SpinnerSet.generate_params(dims)
         
-        all_words_on_board = bg.find_all_words(board, dictionary_name=dict_name, min_length=min_len)
+        # Priority: parameters > spinner_params defaults
+        target_range = parameters.get('word_count_range')
+        if not target_range or target_range == 'random':
+             target_range = spinner_params['word_count_range']
+             
+        target_format = parameters.get('board_format', spinner_params['board_format'])
+        target_difficulty = parameters.get('difficulty', spinner_params.get('difficulty', 'Normal'))
+
+        board, all_words_on_board = bg.generate_board(
+            dimensions=dims,
+            bonus_word="", # No initial bonus word, will pick from all_words below
+            word_count_range=target_range,
+            dictionary=dict_name,
+            board_format=target_format,
+            min_word_length=min_len,
+            difficulty=target_difficulty
+        )
         
         # Bonus word
         bonus_len = parameters.get('bonus_word_length', 0)
@@ -142,35 +220,39 @@ class PrivateMatchManager:
             if potential_bonuses:
                 bonus_word = random.choice(potential_bonuses)
 
-        conn = self.get_db()
         now = time.time()
-        # 1 week expiry as requested
-        end_time = now + (7 * 24 * 3600) 
+        # Round-start time is when board is generated, but turn-timers start on client when they click Play.
+        # We set end_time to 0 to signal it hasn't started its timed phase yet.
+        end_time = 0
         
+        external_conn = conn is not None
+        if not external_conn:
+            conn = self.get_db()
+
         conn.execute('''
-            INSERT INTO private_match_rounds (match_id, round_number, board_data, bonus_word, all_words, start_time, end_time)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (match_id, round_number, json.dumps(board), bonus_word, json.dumps(all_words_on_board), now, end_time))
-        conn.commit()
-        conn.close()
+            INSERT INTO private_match_rounds (match_id, round_number, board_data, bonus_word, word_count_range, all_words, start_time, end_time)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (match_id, round_number, json.dumps(board), bonus_word, json.dumps(target_range), json.dumps(all_words_on_board), now, end_time))
+        
+        if not external_conn:
+            conn.commit()
+            conn.close()
 
     def get_matches_for_user(self, user_id, username):
         """
         Returns { 'your_turn': [], 'their_turn': [], 'history': [] }
         """
+        self.cleanup_old_data()
+        
         conn = self.get_db()
         conn.row_factory = sqlite3.Row
         
         # Matches where user is a participant
-        # and has not yet submitted for current_round -> Your Turn
-        # and has submitted but others haven't -> Their Turn
-        # and all have submitted -> Next Round Transition (or History if finished)
-        
         all_p_matches = conn.execute('''
             SELECT m.*, mp.status as my_status
             FROM private_matches m
             JOIN private_match_players mp ON m.id = mp.match_id
-            WHERE mp.user_id = ? AND m.status != 'expired'
+            WHERE mp.user_id = ? AND m.status != 'expired' AND m.match_type != 'solo'
         ''', (user_id,)).fetchall()
         
         results = {'your_turn': [], 'their_turn': [], 'history': []}
@@ -187,23 +269,30 @@ class PrivateMatchManager:
                 WHERE match_id = ? AND round_number = ? AND user_id = ?
             ''', (match_id, curr_round, user_id)).fetchone()
             
-            # Check round timing
+            # Check round timing and get round-specific parameters
             round_info = conn.execute('''
-                SELECT end_time FROM private_match_rounds 
+                SELECT end_time, word_count_range FROM private_match_rounds 
                 WHERE match_id = ? AND round_number = ?
             ''', (match_id, curr_round)).fetchone()
             
-            if round_info and round_info['end_time'] < now:
+            if round_info and round_info['end_time'] > 0 and round_info['end_time'] < now:
                 # Expired match
                 conn.execute("UPDATE private_matches SET status = 'expired' WHERE id = ?", (match_id,))
                 continue
 
-            # Participants
+            # Participants (Accepted)
             players = conn.execute('''
-                SELECT user_id, username, is_ai FROM private_match_players 
+                SELECT user_id, username, is_ai, 'accepted' as status FROM private_match_players 
                 WHERE match_id = ?
             ''', (match_id,)).fetchall()
             players_list = [dict(p) for p in players]
+            
+            # Invited (Pending)
+            invites = conn.execute('''
+                SELECT -1 as user_id, recipient_username as username, 0 as is_ai, 'pending' as status 
+                FROM match_invites WHERE match_id = ?
+            ''', (match_id,)).fetchall()
+            players_list.extend([dict(i) for i in invites])
             
             # Submissions for this round
             submissions = conn.execute('''
@@ -212,76 +301,144 @@ class PrivateMatchManager:
             ''', (match_id, curr_round)).fetchall()
             submitted_ids = [s['user_id'] for s in submissions]
             
+            # --- FILTER ABANDONED MATCHES ---
+            # (Fixing 'With Friends' matches in history with only one player)
+            # If no one joined or everyone declined, hide it.
+            if len(players_list) <= 1:
+                continue
+
             match_data = dict(m)
             match_data['parameters'] = json.loads(m['parameters'])
+            
+            # Override with round-specific range if it exists
+            if round_info and round_info['word_count_range']:
+                try:
+                    match_data['parameters']['word_count_range'] = json.loads(round_info['word_count_range'])
+                except:
+                    pass
+                    
             match_data['players'] = players_list
-            match_data['round_info'] = dict(round_info) if round_info else {}
+            match_data['round_info'] = {'end_time': round_info['end_time']} if round_info else {}
             
             if not turn:
                 results['your_turn'].append(match_data)
             else:
-                # Check if anyone else (non-AI) still has to go
+                # Check if anyone else (accepted or pending) still has to go
                 others_pending = False
                 for p in players_list:
-                    if not p['is_ai'] and p['user_id'] != user_id and p['user_id'] not in submitted_ids:
+                    # Status 'pending' means they haven't joined yet, but we're still waiting on them
+                    if p['status'] in ('accepted', 'pending') and not p['is_ai'] and p['user_id'] != user_id and p['user_id'] not in submitted_ids:
                         others_pending = True
                         break
                 
                 if others_pending:
                     results['their_turn'].append(match_data)
                 else:
-                    # All have submitted for current round (AIs submit instantly on first human submission usually, or we can lazy trigger)
-                    # For now, if all humans are done, it's essentially ready for next round or in history
                     results['history'].append(match_data)
                     
+        # Sort history by last activity and limit to 25
+        results['history'].sort(key=lambda x: x.get('last_activity', 0), reverse=True)
+        results['history'] = results['history'][:25]
+
         conn.close()
         return results
 
+    def record_start_time(self, match_id, round_number, user_id):
+        """Records when a user starts their turn, or returns the existing start time"""
+        conn = self.get_db()
+        try:
+            row = conn.execute('''
+                SELECT start_time FROM private_match_starts 
+                WHERE match_id = ? AND round_number = ? AND user_id = ?
+            ''', (match_id, round_number, user_id)).fetchone()
+            
+            if row:
+                return row['start_time']
+            
+            # Record it now
+            now = time.time()
+            conn.execute('''
+                INSERT INTO private_match_starts (match_id, round_number, user_id, start_time)
+                VALUES (?, ?, ?, ?)
+            ''', (match_id, round_number, user_id, now))
+            conn.commit()
+            return now
+        except Exception as e:
+            print(f"Error in record_start_time: {e}")
+            return time.time()
+        finally:
+            conn.close()
+
     def submit_turn(self, match_id, round_number, user_id, words_data, score):
         conn = self.get_db()
-        now = time.time()
-        
-        # Record Turn
-        conn.execute('''
-            INSERT INTO private_match_turns (match_id, round_number, user_id, score, submitted_words, submitted_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (match_id, round_number, user_id, score, json.dumps(words_data), now))
-        
-        # If all humans have submitted, generate AI turns
-        players = conn.execute('SELECT user_id, is_ai, ai_rating FROM private_match_players WHERE match_id = ?', (match_id,)).fetchall()
-        submissions = conn.execute('SELECT user_id FROM private_match_turns WHERE match_id = ? AND round_number = ?', (match_id, round_number)).fetchall()
-        submitted_ids = [s['user_id'] for s in submissions]
-        
-        humans = [p for p in players if not p['is_ai']]
-        ais = [p for p in players if p['is_ai']]
-        
-        all_humans_done = all(h['user_id'] in submitted_ids for h in humans)
-        
-        if all_humans_done:
-            # Generate AI turns
-            round_data = conn.execute('SELECT * FROM private_match_rounds WHERE match_id = ? AND round_number = ?', (match_id, round_number)).fetchone()
-            all_possible_words = json.loads(round_data['all_words'])
-            bonus_word = round_data['bonus_word']
+        try:
+            match_id = int(match_id)
+            round_number = int(round_number)
+            user_id = int(user_id)
+            now = time.time()
             
-            for ai in ais:
-                if ai['user_id'] not in submitted_ids:
-                    ai_words, ai_score = self.generate_ai_submission(ai['ai_rating'], all_possible_words, bonus_word)
-                    conn.execute('''
-                        INSERT INTO private_match_turns (match_id, round_number, user_id, score, submitted_words, submitted_at)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    ''', (match_id, round_number, ai['user_id'], ai_score, json.dumps(ai_words), now))
+            # Check if already submitted
+            existing = conn.execute('SELECT 1 FROM private_match_turns WHERE match_id=? AND round_number=? AND user_id=?',
+                                  (match_id, round_number, user_id)).fetchone()
+            if existing:
+                # Idempotent success (avoid double-submit error)
+                conn.close()
+                return
 
-            # Advance Round? 
-            # User wants "History" to show results. If we advance current_round, the previous one becomes History.
-            # Usually we advance ONLY when someone clicks "Rematch" or starts next. 
-            # Actually, "With Friends" usually has matches that progress.
-            # Let's advance automatically if all are done.
-            # conn.execute('UPDATE private_matches SET current_round = current_round + 1, last_activity = ? WHERE id = ?', (now, match_id))
-            # new_round = round_number + 1
-            # self.generate_round(match_id, new_round, json.loads(conn.execute('SELECT parameters FROM private_matches WHERE id=?', (match_id,)).fetchone()[0]))
+            # Record Turn
+            conn.execute('''
+                INSERT INTO private_match_turns (match_id, round_number, user_id, score, submitted_words, submitted_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (match_id, round_number, user_id, score, json.dumps(words_data), now))
             
-        conn.commit()
-        conn.close()
+            # If all humans have submitted, generate AI turns
+            players = conn.execute('SELECT user_id, is_ai, ai_rating FROM private_match_players WHERE match_id = ?', (match_id,)).fetchall()
+            submissions = conn.execute('SELECT user_id FROM private_match_turns WHERE match_id = ? AND round_number = ?', (match_id, round_number)).fetchall()
+            submitted_ids = [s['user_id'] for s in submissions]
+            
+            print(f"DEBUG: Match {match_id} Round {round_number}. Submitted: {submitted_ids}. Players: {[p['user_id'] for p in players]}")
+
+            humans = [p for p in players if not p['is_ai']]
+            ais = [p for p in players if p['is_ai']]
+            
+            all_humans_done = all(h['user_id'] in submitted_ids for h in humans)
+            
+            if all_humans_done and ais:
+                # Generate AI turns
+                round_data = conn.execute('SELECT * FROM private_match_rounds WHERE match_id = ? AND round_number = ?', (match_id, round_number)).fetchone()
+                if round_data:
+                    all_possible_words = json.loads(round_data['all_words'])
+                    bonus_word = round_data['bonus_word']
+                    
+                    for ai in ais:
+                        if ai['user_id'] not in submitted_ids:
+                            ai_words, ai_score = self.generate_ai_submission(ai['ai_rating'], all_possible_words, bonus_word)
+                            conn.execute('''
+                                INSERT INTO private_match_turns (match_id, round_number, user_id, score, submitted_words, submitted_at)
+                                VALUES (?, ?, ?, ?, ?, ?)
+                            ''', (match_id, round_number, ai['user_id'], ai_score, json.dumps(ai_words), now))
+
+            # --- ROUND ADVANCEMENT ---
+            # Re-fetch submissions to include newly generated AI turns
+            submissions = conn.execute('SELECT user_id FROM private_match_turns WHERE match_id = ? AND round_number = ?', (match_id, round_number)).fetchall()
+            submitted_ids = [s['user_id'] for s in submissions]
+            
+            all_done = all(p['user_id'] in submitted_ids for p in players)
+            
+            if all_done:
+                # Mark match as completed instead of advancing round
+                # This ensures it moves to History correctly.
+                # Rematch can be used to start a fresh match.
+                conn.execute("UPDATE private_matches SET status = 'completed', last_activity = ? WHERE id = ?", (now, match_id))
+                conn.commit()
+            else:
+                conn.commit()
+        except Exception as e:
+            conn.rollback()
+            print(f"ERROR in submit_turn: {e}")
+            raise e
+        finally:
+            conn.close()
 
     def generate_ai_submission(self, rating, possible_words, bonus_word):
         # AI Logic:
@@ -290,6 +447,7 @@ class PrivateMatchManager:
         # Rating 2000+: finds 50-80% of words, includes bonus often.
         
         # Clamp rating for logic
+        if rating is None: rating = 1200
         r = max(400, min(3000, rating))
         
         # Percentage of words to find
@@ -307,6 +465,9 @@ class PrivateMatchManager:
         # For simplicity, let's just shuffle and pick top N after sorting by length?
         # No, better to randomly sample with bias.
         
+        if not possible_words:
+             return [], 0
+            
         # Sort words so we can bias towards shorter/longer
         sorted_words = sorted(possible_words, key=len)
         
@@ -314,7 +475,8 @@ class PrivateMatchManager:
         if r < 1000:
             # Bias toward short
             # Pick from first 40% of sorted list mostly
-            pool = sorted_words[:int(len(sorted_words)*0.5)]
+            limit_idx = max(1, int(len(sorted_words)*0.5))
+            pool = sorted_words[:limit_idx]
             if pool:
                 selected = random.sample(pool, min(count, len(pool)))
         elif r < 1800:
@@ -322,7 +484,8 @@ class PrivateMatchManager:
             selected = random.sample(possible_words, min(count, len(possible_words)))
         else:
             # Bias toward long
-            pool = sorted_words[int(len(sorted_words)*0.3):]
+            start_idx = min(len(sorted_words)-1, int(len(sorted_words)*0.3))
+            pool = sorted_words[start_idx:]
             if pool:
                 selected = random.sample(pool, min(count, len(pool)))
         
@@ -356,5 +519,24 @@ class PrivateMatchManager:
             })
             
         return submission, total_score
+
+    def get_invites_for_user(self, username):
+        conn = self.get_db()
+        conn.row_factory = sqlite3.Row
+        invites = conn.execute('''
+            SELECT i.*, u.username as sender_name, m.parameters
+            FROM match_invites i
+            JOIN users u ON i.sender_id = u.id
+            JOIN private_matches m ON i.match_id = m.id
+            WHERE i.recipient_username = ? AND i.status = 'pending'
+        ''', (username,)).fetchall()
+        conn.close()
+        
+        results = []
+        for inv in invites:
+            d = dict(inv)
+            d['parameters'] = json.loads(inv['parameters'])
+            results.append(d)
+        return results
 
 private_match_manager = PrivateMatchManager()

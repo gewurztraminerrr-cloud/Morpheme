@@ -4,6 +4,7 @@ Handles room state, players, timers, and game logic
 """
 
 import time
+import random
 import datetime
 import threading
 from dataclasses import dataclass, field
@@ -33,6 +34,8 @@ class Player:
     has_exceptional_round: bool = False
     performance_efficiency: float = 0.0
     is_guest: bool = False
+    is_ai: bool = False
+    ai_rating: int = 1200
 
 @dataclass
 class GameRoom:
@@ -44,6 +47,9 @@ class GameRoom:
     # Rating limits
     min_rating: int = 0
     max_rating: int = 9999
+    is_solo: bool = False # Solo practice mode: no history, auto-looping
+    is_private: bool = False # Private match: hidden from lobby
+    current_min_length: int = 3
     
     # Spectators
     spectators: List[Player] = field(default_factory=list)
@@ -104,7 +110,7 @@ class GameRoom:
         if self.max_rating is not None: self.max_rating = int(self.max_rating)
         
         # Configuration-specific max players
-        if self.game_type == 'accumulative':
+        if self.game_type in ['accumulative', 'solo_accumulative']:
             self.max_players = 9999 # Effectively unlimited
         elif self.game_type == 'fcfs':
             self.max_players = 16
@@ -331,7 +337,7 @@ class GameRoom:
             return max(0, self.time_limit - int(elapsed))
         elif self.state == 'intermission':
             elapsed = time.time() - self.intermission_start_time
-            return max(0, 60 - int(elapsed))  # 60 second intermission
+            return max(0, 20 - int(elapsed))  # 20 second intermission
         return 0
     
     @property
@@ -347,7 +353,7 @@ class GameRoom:
     def intermission_end_time(self):
         """Get timestamp when intermission ends (for client sync)"""
         if self.state == 'intermission':
-            return self.intermission_start_time + 60  # 60 second intermission
+            return self.intermission_start_time + 20  # 20 second intermission
         return 0
     
     def submit_word(self, user_id, word):
@@ -543,6 +549,9 @@ class GameRoom:
         """Check timers and update game state accordingly"""
         # Check if active round has expired
         if self.state == 'active' and self.time_remaining == 0:
+            # First, generate AI turns if any bots are present
+            self.generate_ai_turns()
+            
             self.state = 'intermission'
             self.intermission_start_time = time.time()
             
@@ -642,7 +651,7 @@ class GameRoom:
             
             # Connect for stats check - AND NOW PERSISTENCE
             try:
-                conn = sqlite3.connect('morpheme.db')
+                conn = sqlite3.connect('morpheme.db', timeout=30)
             except:
                 conn = None
 
@@ -657,11 +666,11 @@ class GameRoom:
                     print(f"[GameRoom] Skipping DB history for inactive player {player.username} in round {self.current_round}")
                     continue
 
-                # Persist Rating to DB
-                if conn and player.user_id > 0:
+                # Persist Rating to DB - SKIP FOR SOLO
+                if conn and player.user_id > 0 and not self.is_solo:
                     try:
                         # 1. Update Global Profile Rating
-                        if self.game_type == 'accumulative': # Only standard mode affects global rating? Or all? Usually all.
+                        if self.game_type in ['accumulative', 'solo_accumulative']: # Only standard mode affects global rating? Or all? Usually all.
                              # But let's check user_ratings table for specific config persistence
                              pass
 
@@ -709,7 +718,7 @@ class GameRoom:
         
         # Check if intermission has expired
         if self.state == 'intermission' and self.time_remaining == 0:
-            if self.game_type in ['accumulative', 'fcfs', 'split']:
+            if self.game_type in ['accumulative', 'solo_accumulative', 'fcfs', 'split']:
                 # Signal that new round should start
                 # This will be handled by RoomManager
                 return True
@@ -763,6 +772,47 @@ class GameRoom:
         # 3. Update scores for each player
         for p in self.players:
             self._recalculate_player_score(p)
+
+    def generate_ai_turns(self):
+        """Simulate BOT behavior at the end of a round"""
+        ais = [p for p in self.players if p.is_ai]
+        if not ais:
+            return
+            
+        print(f"[GameRoom] Simulating turns for {len(ais)} bots in room {self.room_id}")
+        
+        # Use existing logic from PrivateMatchManager (adapted)
+        from private_match_logic import private_match_manager
+        
+        for ai in ais:
+            # Skip if already submitted something (unlikely in GameRoom)
+            if ai.submitted_words:
+                continue
+                
+            # Filter all_words by min_word_length
+            min_len = self.spinner_params.get('min_word_length', 3)
+            possible_words = [w for w in self.all_words if len(w) >= min_len]
+            
+            words_data, total_score = private_match_manager.generate_ai_submission(
+                ai.ai_rating, 
+                possible_words, 
+                self.bonus_word
+            )
+            
+            # Record words
+            # AI submissions are "instant" at end of round, timestamps randomized within round
+            now = time.time()
+            start = self.round_start_time
+            duration = self.time_limit
+            
+            for wd in words_data:
+                # Randomize timestamp within the round duration
+                wd['time'] = start + (random.random() * duration)
+                ai.submitted_words.append(wd)
+            
+            # Recalculate AI score
+            self._recalculate_player_score(ai)
+            print(f"[GameRoom] Bot {ai.username} finished with score {ai.score}")
             
             # Also calculate invalid words points (0, but we might want to track count)
 
@@ -935,20 +985,23 @@ class RoomManager:
             except Exception as e:
                 import traceback
                 print(f"[RoomManager] Error in background cleanup loop: {e}\n{traceback.format_exc()}")
-    
-    def create_room(self, room_id, game_type, time_limit, board_dimensions, min_rating=0, max_rating=9999):
+                
+    def create_room(self, room_id, game_type, time_limit, board_dimensions, min_rating=0, max_rating=9999, is_private=False):
         """Create a new game room or return an existing singleton for the configuration"""
         with self.lock:
-            # Singleton Logic for ALL Rooms
-            # Ensures all players join the same room for a given configuration (Multiplayer Hubs)
-            for existing_room in self.rooms.values():
-                if (existing_room.game_type == game_type and 
-                    existing_room.board_dimensions == board_dimensions and
-                    existing_room.time_limit == time_limit and
-                    existing_room.min_rating == min_rating and
-                    existing_room.max_rating == max_rating):
-                    print(f"[RoomManager] Singleton: Returning existing {game_type} room {existing_room.room_id}")
-                    return existing_room
+            # Singleton Logic for Multiplayer Hubs (Skip for Private/Solo rooms)
+            if not is_private:
+                for existing_room in self.rooms.values():
+                    if (existing_room.game_type == game_type and 
+                        existing_room.board_dimensions == board_dimensions and
+                        existing_room.time_limit == time_limit and
+                        existing_room.min_rating == min_rating and
+                        existing_room.max_rating == max_rating and
+                        not existing_room.is_solo and
+                        not existing_room.is_private and
+                        not existing_room.room_id.startswith('practice_')):
+                        print(f"[RoomManager] Singleton: Returning existing {game_type} room {existing_room.room_id}")
+                        return existing_room
 
             print(f"[RoomManager] Creating NEW room {room_id} for {game_type} ({board_dimensions})")
             room = GameRoom(
@@ -957,15 +1010,17 @@ class RoomManager:
                 time_limit=time_limit,
                 board_dimensions=board_dimensions,
                 min_rating=min_rating,
-                max_rating=max_rating
+                max_rating=max_rating,
+                is_solo=(game_type == 'practice' or (room_id and room_id.startswith('practice_'))),
+                is_private=is_private
             )
             
             # Unlimited players for Accumulative, 8 for others
-            if game_type == 'accumulative':
+            if game_type in ['accumulative', 'solo_accumulative']:
                 room.max_players = 9999
             else:
                 room.max_players = 8
-                
+
             self.rooms[room_id] = room
             return room
     
@@ -1105,10 +1160,13 @@ class RoomManager:
         
         try:
             print(f"[RoomManager] Generating spinner parameters for {room.board_dimensions}")
-            # Generate spinner parameters
-            is_24h = room.time_limit >= 7200
-            room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h)
-            print(f"[RoomManager] Spinner params: {room.spinner_params}")
+            # Generate spinner parameters (Skip if solo and already configured)
+            if not (room.is_solo and room.spinner_params):
+                is_24h = room.time_limit >= 7200
+                room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h)
+                print(f"[RoomManager] Solo/Practice: Using existing parameters")
+            else:
+                print(f"[RoomManager] Spinner params: {room.spinner_params}")
             
             # Get bonus word from dictionary
             if room.spinner_params['board_format'] == 'Checkerboard':
@@ -1281,7 +1339,8 @@ class RoomManager:
             print(f"[RoomManager] WARNING: Spinner params not generated yet, generating now")
             self.generate_spinner_params(room_id)
         
-        if room.spinner_params['board_format'] == 'Checkerboard':
+        fmt = room.spinner_params['board_format']
+        if fmt == 'Checkerboard':
             print(f"[RoomManager] Checkerboard format selected - disabling bonus word")
             bonus_word = ''
         else:
@@ -1470,6 +1529,10 @@ class RoomManager:
     
     def save_round_history(self, room):
         """Save the results of the JUST COMPLETED round to the database"""
+        if room.is_solo:
+            print(f"[RoomManager] SKIPPING history save for SOLO room {room.room_id}")
+            return
+            
         import sqlite3
         import json
         
@@ -1478,7 +1541,7 @@ class RoomManager:
             return
         
         try:
-            conn = sqlite3.connect('morpheme.db')
+            conn = sqlite3.connect('morpheme.db', timeout=30)
             board_json = json.dumps(room.board)
             timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             

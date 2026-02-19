@@ -172,6 +172,30 @@ function renderTournament(data) {
         }
     }
 
+    // 4.6 Championship Standings (The Bracket / Ladder)
+    const stdCard = document.getElementById('tournament-standings-card');
+    const stdList = document.getElementById('tournament-standings-list');
+    if (stdCard && stdList) {
+        if (data.standings && data.standings.length > 0) {
+            stdCard.classList.remove('hidden');
+            stdList.innerHTML = data.standings.map(s => {
+                const isMe = s.username === window.currentUser;
+                const statusClass = s.status; // 'active', 'eliminated', 'completed'
+                const rankInfo = s.final_rank ? `<small style="margin-left:5px; opacity:0.7">Rank #${s.final_rank}</small>` : '';
+
+                return `
+                    <div class="t-standing-item ${statusClass}" title="${s.status}">
+                        <span class="dot"></span>
+                        ${s.username} ${isMe ? '(You)' : ''}
+                        ${rankInfo}
+                    </div>
+                `;
+            }).join('');
+        } else {
+            stdCard.classList.add('hidden');
+        }
+    }
+
     // 5. History
     const hBody = document.getElementById('tournament-history-body');
     if (hBody) {
@@ -185,7 +209,12 @@ function renderTournament(data) {
                         <td>${date}</td>
                         <td style="font-weight:700; color:var(--accent-color);">${h.username}</td>
                         <td>Championship Edition</td>
-                        <td>Winner (Rank 1)</td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span>${h.winning_score || 0} pts (R${h.current_round})</span>
+                                <button class="replay-btn-small" title="Replay Winning Round" onclick="watchTournamentWinnerReplay(${h.id}, '${h.username}')">▶</button>
+                            </div>
+                        </td>
                     </tr>
                 `;
             }).join('');
@@ -293,15 +322,11 @@ async function joinTournament() {
 }
 
 function launchTournamentGame(tid, round) {
-    // Show a loading overlay or just switch to play page with tournament mode
-    const playBtn = document.getElementById('play-btn');
-    if (playBtn) {
-        // Set a session variable or global flag to denote tournament play
-        localStorage.setItem('tournament_play_active', JSON.stringify({ tid, round }));
+    localStorage.setItem('tournament_play_active', JSON.stringify({ tid, round }));
+    if (window.navigateToPage) {
+        window.navigateToPage('play');
+    } else {
         window.location.href = '#page-play';
-        // In app.js or play.js, we should check this flag and load tournament state
-        // For simplicity, we can trigger a page reload or a specific init function.
-        location.reload();
     }
 }
 
@@ -376,5 +401,37 @@ window.watchTournamentReplay = function (tid, roundNum, targetUsername, isSnapsh
 
     if (window.watchRoundHistory) {
         window.watchRoundHistory(`tournament_${tid}`, roundNum, isSnapshot);
+    }
+};
+window.watchTournamentWinnerReplay = async function (tid, username) {
+    try {
+        const res = await fetch(`/api/tournament/winner-turn/${tid}/${username}`);
+        const data = await res.json();
+
+        if (data.error) {
+            alert("Could not load winner's replay: " + data.error);
+            return;
+        }
+
+        const mockRound = {
+            room_id: `tournament_hist_${tid}`,
+            round_number: data.current_round || 0,
+            board: data.board_data,
+            words: data.submitted_words,
+            total_score: data.score,
+            round_duration: data.parameters?.time_limit || 60,
+            round_start_time: data.round_start_time || (data.submitted_at - 60),
+            timestamp: data.submitted_at * 1000,
+            username: data.username,
+            game_type: 'tournament'
+        };
+
+        window.lastTournamentReplay = mockRound;
+        if (window.watchRoundHistory) {
+            window.watchRoundHistory(`tournament_hist_${tid}`, mockRound.round_number);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Error connecting to server.");
     }
 };

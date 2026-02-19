@@ -13,7 +13,7 @@ class TournamentManager:
         self.turn_duration = 2 * 24 * 60 * 60    # 2 days
 
     def get_db(self):
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path, timeout=30)
         conn.row_factory = sqlite3.Row
         return conn
 
@@ -83,24 +83,32 @@ class TournamentManager:
 
     def start_tournament(self, tid):
         conn = self.get_db()
-        # Initialize Round 1
-        conn.execute('UPDATE tournaments SET status = ?, current_round = 1 WHERE id = ?', ('active', tid))
-        
-        # Filter participants
-        participants = conn.execute('SELECT user_id FROM tournament_participants WHERE tournament_id = ?', (tid,)).fetchall()
-        if not participants:
-            # Handle empty tournament? Just complete it.
-            conn.execute("UPDATE tournaments SET status = 'completed', completed_at = ? WHERE id = ?", (time.time(), tid))
+        try:
+            # 1. Filter participants
+            participants = conn.execute('SELECT user_id FROM tournament_participants WHERE tournament_id = ?', (tid,)).fetchall()
+            if not participants:
+                # Handle empty tournament? Just complete it.
+                conn.execute("UPDATE tournaments SET status = 'completed', completed_at = ? WHERE id = ?", (time.time(), tid))
+                conn.commit()
+                return
+
+            # 2. Generate Round 1 Board FIRST
+            # This ensures when we set current_round=1, the data exists
+            self.start_new_round(tid, 1, conn=conn)
+
+            # 3. NOW activate the tournament and set round pointer
+            conn.execute('UPDATE tournaments SET status = ?, current_round = 1 WHERE id = ?', ('active', tid))
+            
             conn.commit()
+        finally:
             conn.close()
-            return
 
-        self.start_new_round(tid, 1)
-        conn.commit()
-        conn.close()
-
-    def start_new_round(self, tid, round_number):
-        conn = self.get_db()
+    def start_new_round(self, tid, round_number, conn=None):
+        should_close = False
+        if conn is None:
+            conn = self.get_db()
+            should_close = True
+            
         tournament = self.get_tournament_by_id(tid)
         params = json.loads(tournament['parameters'])
         
@@ -114,7 +122,21 @@ class TournamentManager:
             
         from board_generator import BoardGenerator
         bg = BoardGenerator()
-        board = bg.generate_board(rows, cols)
+        
+        # USE UNIQUE SEEDING TO PREVENT BOARD REUSE ACROSS PROCESSES
+        import random
+        random.seed() 
+
+        # Use tournament parameters
+        board, all_words_on_board = bg.generate_board(
+            dimensions=dims,
+            bonus_word="", # Picked later if needed, or non-active in tournament
+            word_count_range=params.get('word_count_range', '50-100'),
+            dictionary=params.get('dictionary', 'CSW'),
+            board_format=params.get('board_format', 'Normal'),
+            min_word_length=params.get('min_word_length', 3),
+            difficulty=params.get('difficulty', 'Normal')
+        )
         
         now = time.time()
         end_time = now + self.turn_duration
@@ -124,8 +146,9 @@ class TournamentManager:
             VALUES (?, ?, ?, ?, ?)
         ''', (tid, round_number, now, end_time, json.dumps(board)))
         
-        conn.commit()
-        conn.close()
+        if should_close:
+            conn.commit()
+            conn.close()
 
     def check_round_advancement(self, tid):
         conn = self.get_db()
@@ -150,67 +173,68 @@ class TournamentManager:
 
     def advance_tournament(self, tid, round_num):
         conn = self.get_db()
-        
-        # 1. Get all active participants
-        active_users = conn.execute('''
-            SELECT user_id FROM tournament_participants 
-            WHERE tournament_id = ? AND status = 'active'
-        ''', (tid,)).fetchall()
-        
-        # 2. Get scores for this round
-        scores = conn.execute('''
-            SELECT user_id, score FROM tournament_scores
-            WHERE tournament_id = ? AND round_number = ?
-        ''', (tid, round_num)).fetchall()
-        
-        score_dict = {row['user_id']: row['score'] for row in scores}
-        
-        # 3. Advancement Logic: Fair comparison
-        # We sort all active users by their score in this round.
-        # Top 50% advance. If score is 0 and they didn't play, they are eliminated.
-        
-        results = []
-        for u in active_users:
-            score = score_dict.get(u['user_id'], 0)
-            results.append({'user_id': u['user_id'], 'score': score})
+        try:
+            # 1. Get all active participants
+            active_users = conn.execute('''
+                SELECT user_id FROM tournament_participants 
+                WHERE tournament_id = ? AND status = 'active'
+            ''', (tid,)).fetchall()
             
-        results.sort(key=lambda x: x['score'], reverse=True)
-        
-        num_participants = len(results)
-        num_to_advance = max(1, num_participants // 2)
-        
-        # If only 1 or 2 people left, the tournament might end.
-        if num_participants <= 1:
-            self.complete_tournament(tid, results)
+            # 2. Get scores for this round
+            scores = conn.execute('''
+                SELECT user_id, score FROM tournament_scores
+                WHERE tournament_id = ? AND round_number = ?
+            ''', (tid, round_num)).fetchall()
+            
+            score_dict = {row['user_id']: row['score'] for row in scores}
+            
+            # 3. Advancement Logic: Fair comparison
+            results = []
+            for u in active_users:
+                score = score_dict.get(u['user_id'], 0)
+                results.append({'user_id': u['user_id'], 'score': score})
+                
+            results.sort(key=lambda x: x['score'], reverse=True)
+            
+            num_participants = len(results)
+            num_to_advance = max(1, num_participants // 2)
+            
+            if num_participants <= 1:
+                self.complete_tournament(tid, results, conn=conn)
+                return
+
+            winners = results[:num_to_advance]
+            losers = results[num_to_advance:]
+            
+            # Eliminate losers
+            for l in losers:
+                conn.execute('''
+                    UPDATE tournament_participants 
+                    SET status = 'eliminated', final_rank = ?
+                    WHERE tournament_id = ? AND user_id = ?
+                ''', (num_participants, tid, l['user_id']))
+                
+            # Check if we have a definitive winner
+            if len(winners) == 1 and num_participants > 1:
+                self.complete_tournament(tid, winners, conn=conn)
+            else:
+                # Next round
+                next_round = round_num + 1
+                # Generate board FIRST
+                self.start_new_round(tid, next_round, conn=conn)
+                # THEN point players to it
+                conn.execute('UPDATE tournaments SET current_round = ? WHERE id = ?', (next_round, tid))
+                
+            conn.commit()
+        finally:
             conn.close()
-            return
 
-        winners = results[:num_to_advance]
-        losers = results[num_to_advance:]
-        
-        # Eliminate losers
-        for l in losers:
-            conn.execute('''
-                UPDATE tournament_participants 
-                SET status = 'eliminated', final_rank = ?
-                WHERE tournament_id = ? AND user_id = ?
-            ''', (num_participants, tid, l['user_id']))
+    def complete_tournament(self, tid, final_results, conn=None):
+        should_close = False
+        if conn is None:
+            conn = self.get_db()
+            should_close = True
             
-        # Check if we have a definitive winner
-        if len(winners) == 1 and num_participants > 1:
-            # We have a winner!
-            self.complete_tournament(tid, winners)
-        else:
-            # Next round
-            next_round = round_num + 1
-            conn.execute('UPDATE tournaments SET current_round = ? WHERE id = ?', (next_round, tid))
-            self.start_new_round(tid, next_round)
-            
-        conn.commit()
-        conn.close()
-
-    def complete_tournament(self, tid, final_results):
-        conn = self.get_db()
         now = time.time()
         
         # Mark final ranks for survivors
@@ -223,15 +247,19 @@ class TournamentManager:
             
         conn.execute('UPDATE tournaments SET status = ?, completed_at = ? WHERE id = ?', 
                     ('completed', now, tid))
-        conn.commit()
-        conn.close()
+        
+        if should_close:
+            conn.commit()
+            conn.close()
 
     def get_history(self):
         conn = self.get_db()
-        # Get winners of past tournaments
-        # Final rank 1 in completed tournaments
+        # Get winners of past tournaments (Final rank 1)
+        # We also need their total score or final round score to display
         rows = conn.execute('''
-            SELECT t.id, t.completed_at, u.username, tp.final_rank
+            SELECT t.id, t.completed_at, t.current_round, u.username, tp.final_rank,
+                   (SELECT score FROM tournament_scores ts 
+                    WHERE ts.tournament_id = t.id AND ts.user_id = u.id AND ts.round_number = t.current_round) as winning_score
             FROM tournaments t
             JOIN tournament_participants tp ON t.id = tp.tournament_id
             JOIN users u ON tp.user_id = u.id
@@ -240,6 +268,39 @@ class TournamentManager:
         ''').fetchall()
         conn.close()
         return [dict(row) for row in rows]
+
+    def get_winner_turn_data(self, tid, username):
+        """Fetches the winner's finalized turn data for replay"""
+        conn = self.get_db()
+        conn.row_factory = sqlite3.Row
+        
+        # Get tournament info
+        t = conn.execute('SELECT current_round, parameters FROM tournaments WHERE id = ?', (tid,)).fetchone()
+        if not t:
+            conn.close()
+            return None
+        
+        # Get user turn for the final round
+        row = conn.execute('''
+            SELECT ts.user_id, u.username, ts.score, ts.submitted_words, ts.submitted_at, ts.round_start_time,
+                   r.board_data
+            FROM tournament_scores ts
+            JOIN users u ON ts.user_id = u.id
+            JOIN tournament_rounds r ON ts.tournament_id = r.tournament_id AND ts.round_number = r.round_number
+            WHERE ts.tournament_id = ? AND u.username = ? AND ts.round_number = ?
+        ''', (tid, username, t['current_round'])).fetchone()
+        
+        conn.close()
+        if not row: return None
+        
+        data = dict(row)
+        data['parameters'] = json.loads(t['parameters'])
+        if data.get('submitted_words'):
+            data['submitted_words'] = json.loads(data['submitted_words'])
+        if data.get('board_data'):
+            data['board_data'] = json.loads(data['board_data'])
+            
+        return data
 
     def has_user_turn(self, tid, user_id):
         """Checks if it's currently the user's turn and they haven't played yet"""
@@ -282,6 +343,22 @@ class TournamentManager:
             WHERE ts.tournament_id = ? AND ts.round_number = ?
             ORDER BY ts.score DESC
         ''', (tid, round_num, tid, round_num)).fetchall()
+        conn.close()
+        return [dict(row) for row in rows]
+
+    def get_tournament_standings(self, tid):
+        """Returns list of all participants and their status"""
+        conn = self.get_db()
+        conn.row_factory = sqlite3.Row
+        
+        rows = conn.execute('''
+            SELECT tp.user_id, u.username, tp.status, tp.final_rank
+            FROM tournament_participants tp
+            JOIN users u ON tp.user_id = u.id
+            WHERE tp.tournament_id = ?
+            ORDER BY CASE WHEN tp.status = 'active' THEN 0 ELSE 1 END, tp.final_rank ASC, u.username ASC
+        ''', (tid,)).fetchall()
+        
         conn.close()
         return [dict(row) for row in rows]
 

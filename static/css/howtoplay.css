@@ -38,7 +38,7 @@
     right: 20px;
     background: none;
     border: none;
-    color: #fff;
+    color: var(--text-primary);
     font-size: 3rem;
     cursor: pointer;
     opacity: 0.7;
@@ -64,10 +64,10 @@
 
 /* Individual Card */
 .instruction-card {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--text-primary-rgb), 0.05);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.1);
     border-radius: 20px;
     padding: 30px;
     flex: 1;
@@ -84,8 +84,8 @@
 /* Card Hover Effect */
 .instruction-card:hover {
     transform: translateY(-10px) scale(1.02);
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(var(--text-primary-rgb), 0.1);
+    border-color: rgba(var(--text-primary-rgb), 0.3);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4),
         0 0 20px rgba(66, 220, 219, 0.2);
 }
@@ -105,30 +105,27 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+    filter: drop-shadow(0 0 10px rgba(var(--text-primary-rgb), 0.3));
     transition: transform 0.3s ease;
 }
 
 .instruction-card:hover .card-image {
     transform: scale(1.1);
-    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));
+    filter: drop-shadow(0 0 15px rgba(var(--text-primary-rgb), 0.5));
 }
 
 /* Typography */
 .instruction-card h3 {
     font-size: 1.8rem;
     margin-bottom: 15px;
-    background: linear-gradient(to right, #fff, #a5b4fc);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--text-primary);
     font-weight: 700;
 }
 
 .instruction-card p {
     font-size: 1.1rem;
     line-height: 1.6;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(var(--text-primary-rgb), 0.8);
     margin: 0;
 }
 
@@ -146,15 +143,15 @@
 }
 
 .demo-tile {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(var(--text-primary-rgb), 0.05);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.1);
     border-radius: 8px;
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 2rem;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(var(--text-primary-rgb), 0.3);
 }
 
 /* Cursor Glow Dot */
@@ -254,7 +251,7 @@
 
     0%,
     90% {
-        color: #fff;
+        color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
         border-color: #00ffff;
         background: rgba(0, 255, 255, 0.2);
@@ -262,10 +259,10 @@
 
     95%,
     100% {
-        color: rgba(255, 255, 255, 0.3);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
-        border-color: rgba(255, 255, 255, 0.1);
-        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        background: rgba(var(--text-primary-rgb), 0.05);
     }
 }
 
@@ -273,15 +270,15 @@
 
     0%,
     20% {
-        color: rgba(255, 255, 255, 0.3);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
-        border-color: rgba(255, 255, 255, 0.1);
-        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        background: rgba(var(--text-primary-rgb), 0.05);
     }
 
     25%,
     90% {
-        color: #fff;
+        color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
         border-color: #00ffff;
         background: rgba(0, 255, 255, 0.2);
@@ -289,10 +286,10 @@
 
     95%,
     100% {
-        color: rgba(255, 255, 255, 0.3);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
-        border-color: rgba(255, 255, 255, 0.1);
-        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        background: rgba(var(--text-primary-rgb), 0.05);
     }
 }
 
@@ -300,15 +297,15 @@
 
     0%,
     40% {
-        color: rgba(255, 255, 255, 0.3);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
-        border-color: rgba(255, 255, 255, 0.1);
-        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        background: rgba(var(--text-primary-rgb), 0.05);
     }
 
     45%,
     90% {
-        color: #fff;
+        color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
         border-color: #00ffff;
         background: rgba(0, 255, 255, 0.2);
@@ -316,10 +313,10 @@
 
     95%,
     100% {
-        color: rgba(255, 255, 255, 0.3);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
-        border-color: rgba(255, 255, 255, 0.1);
-        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        background: rgba(var(--text-primary-rgb), 0.05);
     }
 }
 
@@ -327,15 +324,15 @@
 
     0%,
     65% {
-        color: rgba(255, 255, 255, 0.3);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
-        border-color: rgba(255, 255, 255, 0.1);
-        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        background: rgba(var(--text-primary-rgb), 0.05);
     }
 
     70%,
     90% {
-        color: #fff;
+        color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
         border-color: #00ffff;
         background: rgba(0, 255, 255, 0.2);
@@ -343,10 +340,10 @@
 
     95%,
     100% {
-        color: rgba(255, 255, 255, 0.3);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
-        border-color: rgba(255, 255, 255, 0.1);
-        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        background: rgba(var(--text-primary-rgb), 0.05);
     }
 }
 
@@ -380,10 +377,7 @@
     text-align: center;
     font-size: 2.8rem;
     margin-bottom: 40px;
-    background: linear-gradient(to right, #fff, #a5b4fc);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--text-primary);
     font-weight: 800;
     text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
@@ -419,8 +413,8 @@
 .faq-item {
     border-radius: 16px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.08);
+    background: rgba(var(--text-primary-rgb), 0.03);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -429,18 +423,18 @@
 
 .faq-item:hover {
     transform: translateX(5px);
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--text-primary-rgb), 0.05);
     border-color: rgba(165, 180, 252, 0.3);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
 }
 
 .faq-question {
-    background: linear-gradient(90deg, rgba(0, 0, 0, 0.5) 0%, rgba(255, 255, 255, 0.05) 100%);
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.5) 0%, rgba(var(--text-primary-rgb), 0.05) 100%);
     padding: 18px 25px;
     font-weight: 700;
     font-size: 1.2rem;
     color: #a5b4fc;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05);
     display: flex;
     align-items: center;
     gap: 15px;
@@ -457,11 +451,11 @@
     padding: 25px 30px;
     font-size: 1.05rem;
     line-height: 1.8;
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(var(--text-primary-rgb), 0.85);
 }
 
 .faq-answer strong {
-    color: #fff;
+    color: var(--text-primary);
     font-weight: 700;
 }
 
@@ -520,8 +514,8 @@
 }
 
 .faq-highlight.check {
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-primary);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.2);
 }
 
 /* Giant Trophy Style */
@@ -559,10 +553,10 @@
     display: flex;
     align-items: center;
     gap: 15px;
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(var(--text-primary-rgb), 0.03);
     padding: 12px 18px;
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.05);
 }
 
 .icon-item span {
@@ -786,16 +780,16 @@
     22% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
-        color: #fff;
+        color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
 
     /* PLAY */
     24%,
     25% {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.3);
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
 
@@ -803,16 +797,16 @@
     48% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
-        color: #fff;
+        color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
 
     /* PALY */
     49%,
     50% {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.3);
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
 
@@ -820,16 +814,16 @@
     72% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
-        color: #fff;
+        color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
 
     /* PAY */
     74%,
     75% {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.3);
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
 
@@ -837,16 +831,16 @@
     97% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
-        color: #fff;
+        color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
 
     /* PLY */
     99%,
     100% {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.3);
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
 }
@@ -857,9 +851,9 @@
     /* PLAY (2nd) ~6% */
     0%,
     5% {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.3);
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
 
@@ -867,15 +861,15 @@
     22% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
-        color: #fff;
+        color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
 
     24%,
     38% {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.3);
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
 
@@ -884,15 +878,15 @@
     48% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
-        color: #fff;
+        color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
 
     49%,
     84% {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.3);
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
 
@@ -903,15 +897,15 @@
     97% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
-        color: #fff;
+        color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
 
     99%,
     100% {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.3);
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
 }
@@ -922,9 +916,9 @@
     /* PLAY (3rd) ~12% */
     0%,
     11% {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.3);
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
 
@@ -932,15 +926,15 @@
     22% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
-        color: #fff;
+        color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
 
     24%,
     32% {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.3);
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
 
@@ -949,15 +943,15 @@
     48% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
-        color: #fff;
+        color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
 
     49%,
     59% {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.3);
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
 
@@ -966,15 +960,15 @@
     72% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
-        color: #fff;
+        color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
 
     74%,
     100% {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.3);
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
 }
@@ -985,9 +979,9 @@
     /* PLAY (4th) ~18% */
     0%,
     17% {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.3);
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
 
@@ -995,15 +989,15 @@
     22% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
-        color: #fff;
+        color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
 
     24%,
     44% {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.3);
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
 
@@ -1012,15 +1006,15 @@
     48% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
-        color: #fff;
+        color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
 
     49%,
     67% {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.3);
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
 
@@ -1029,15 +1023,15 @@
     72% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
-        color: #fff;
+        color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
 
     74%,
     92% {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.3);
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
 
@@ -1046,15 +1040,15 @@
     97% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
-        color: #fff;
+        color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
 
     99%,
     100% {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.3);
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
 }
