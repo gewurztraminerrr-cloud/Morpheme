@@ -70,7 +70,7 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    color: #fff;
+    color: var(--text-primary);
     /* Static white for colorful buttons is fine usually, but check contrast */
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -469,7 +469,7 @@
     background: linear-gradient(135deg, #2575fc 0%, #6a11cb 100%);
     border: none;
     border-radius: 12px;
-    color: #fff;
+    color: var(--text-primary);
     font-weight: 700;
     font-size: 0.95rem;
     /* Slightly smaller font */

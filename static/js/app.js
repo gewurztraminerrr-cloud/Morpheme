@@ -91,7 +91,7 @@ const RATING_RANGES = [
                     align-items: center; 
                     height: 100vh; 
                     background: #0d1117; 
-                    color: #fff; 
+                    color: var(--text-primary); 
                     font-family: sans-serif; 
                     text-align: center;
                     padding: 20px;

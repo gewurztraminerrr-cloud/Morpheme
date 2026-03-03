@@ -193,7 +193,7 @@ function flashMessage(msg, type = 'error') {
     input.style.borderColor = type === 'error' ? 'red' : 'lime';
     setTimeout(() => {
         input.placeholder = "TYPE OR DRAG";
-        input.style.borderColor = 'rgba(255,255,255,0.2)';
+        input.style.borderColor = 'rgba(var(--text-primary-rgb),0.2)';
     }, 1500);
 }
 

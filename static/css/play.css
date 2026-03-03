@@ -246,7 +246,7 @@
 
 .find-me-btn.active {
     background: #409cff;
-    color: #ffffff;
+    color: var(--text-primary);
     border-color: #409cff;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
@@ -579,14 +579,14 @@
     transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.2s ease;
     user-select: none;
     -webkit-user-select: none;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25), inset 0 2px 0 rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25), inset 0 2px 0 rgba(var(--text-primary-rgb), 0.8);
     border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .board-cell.grayed {
     background: #c0c0c0;
     /* Distinct grey for intermission */
-    color: #555555;
+    color: rgba(var(--text-primary-rgb), 0.6);
     /* Dimmer text */
     cursor: default;
     /* Not allowed but without the red circle if they are just viewing */
@@ -670,7 +670,7 @@
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border: none;
     border-radius: 8px;
-    color: #ffffff;
+    color: var(--text-primary);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -692,7 +692,7 @@
     background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     border: none;
     border-radius: 8px;
-    color: #ffffff;
+    color: var(--text-primary);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -1787,7 +1787,7 @@
     box-shadow: 0 0 20px var(--highlight-typing-color, #ffcc00);
     z-index: 3;
     transition: all 0.1s ease;
-    border-color: #fff !important;
+    border-color: var(--text-primary) !important;
 }
 
 .board-cell.review-highlight {
@@ -1867,7 +1867,7 @@
     left: 50%;
     transform: translateX(-50%);
     background: #000000 !important;
-    color: #ffffff !important;
+    color: var(--text-primary) !important;
     padding: 6px 12px;
     border-radius: 6px;
     font-size: 0.85rem !important;
@@ -2106,13 +2106,13 @@
     font-size: 0.85rem;
     padding: 4px 8px;
     border-radius: 4px;
-    background: rgba(var(--text-primary-rgb), 0.9);
-    color: #000;
+    background: rgba(var(--text-primary-rgb), 0.05);
+    color: var(--text-primary);
     margin-bottom: 2px;
 }
 
 .notepad-item:nth-child(odd) {
-    background: rgba(240, 240, 240, 0.9);
+    background: rgba(var(--text-primary-rgb), 0.1);
 }
 
 .notepad-item.invalid {
@@ -2875,17 +2875,17 @@ input[type=range]::-moz-range-track {
 @keyframes slowFlashRedWhite {
     0% {
         background-color: #ff0000;
-        color: #ffffff;
+        color: var(--text-primary);
     }
 
     50% {
-        background-color: #ffffff;
+        background-color: var(--text-primary);
         color: #ff0000;
     }
 
     100% {
         background-color: #ff0000;
-        color: #ffffff;
+        color: var(--text-primary);
     }
 }
 

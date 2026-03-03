@@ -224,7 +224,7 @@ async function showMiniProfile(username) {
         const isOnline = data.status && data.status.is_online;
 
         statusEl.innerText = isOnline ? 'Online' : 'Offline';
-        statusEl.style.color = isOnline ? '#4ade80' : 'rgba(255,255,255,0.5)';
+        statusEl.style.color = isOnline ? '#4ade80' : 'rgba(var(--text-primary-rgb),0.5)';
 
         if (statusIcon) {
             statusIcon.innerText = isOnline ? '🟢' : '⚪';
@@ -1126,7 +1126,7 @@ async function renderProfile(user) {
                 for (let c = 0; c < cols; c++) {
                     const letter = round.board[r][c];
                     // Very tiny representation
-                    gridCells += `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); border-radius: 1px; font-size: 5px; color: rgba(255,255,255,0.5);">${letter}</div>`;
+                    gridCells += `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(var(--text-primary-rgb),0.1); border-radius: 1px; font-size: 5px; color: rgba(var(--text-primary-rgb),0.5);">${letter}</div>`;
                 }
             }
 
@@ -1151,7 +1151,7 @@ async function renderProfile(user) {
         }
 
         return `
-        <div class="history-grid-item" onclick="watchRoundHistory('${round.room_id}', ${round.round_number}, true, ${round.game_id || 'null'})" style="display: grid; grid-template-columns: 80px 50px 80px 60px 80px 80px 100px 1fr 100px 50px; gap:8px; padding: 10px 15px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 8px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden;">
+        <div class="history-grid-item" onclick="watchRoundHistory('${round.room_id}', ${round.round_number}, true, ${round.game_id || 'null'})" style="display: grid; grid-template-columns: 80px 50px 80px 60px 80px 80px 100px 1fr 100px 50px; gap:8px; padding: 10px 15px; background: rgba(var(--text-primary-rgb),0.01); border: 1px solid rgba(var(--text-primary-rgb),0.03); border-radius: 10px; margin-bottom: 8px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden;">
             <div class="history-mode-tag ${typeClass}" style="font-size: 0.65rem; padding: 3px 6px; border-radius: 6px; text-align: center; width: fit-content; font-weight: 800; text-transform: uppercase;">${gameTypeLabel}</div>
             
             <!-- Mini Board Preview Column -->
@@ -1159,27 +1159,27 @@ async function renderProfile(user) {
                 ${miniBoardHTML}
             </div>
 
-            <div style="font-weight: 900; color: #fff; font-size: 0.95rem;">${round.total_score} <small style="font-size: 0.6rem; opacity: 0.5;">PTS</small></div>
+            <div style="font-weight: 900; color: var(--text-primary); font-size: 0.95rem;">${round.total_score} <small style="font-size: 0.6rem; opacity: 0.5;">PTS</small></div>
 
-            <div style="font-weight: 900; color: ${round.performance_value >= 140 ? '#60a5fa' : 'rgba(255,255,255,0.2)'}; font-size: 0.85rem;">${round.performance_value ? (round.performance_value / 100).toFixed(2) + 'x' : '-'}</div>
+            <div style="font-weight: 900; color: ${round.performance_value >= 140 ? '#60a5fa' : 'rgba(var(--text-primary-rgb),0.2)'}; font-size: 0.85rem;">${round.performance_value ? (round.performance_value / 100).toFixed(2) + 'x' : '-'}</div>
             <div style="display: flex; flex-direction: column; gap: 1px;">
-                <span style="color: #fff; font-size: 0.7rem; font-weight: 700;">${round.num_words} words</span>
-                <span style="color: rgba(255,255,255,0.3); font-size: 0.6rem;">Avg: ${round.avg_len}</span>
+                <span style="color: var(--text-primary); font-size: 0.7rem; font-weight: 700;">${round.num_words} words</span>
+                <span style="color: rgba(var(--text-primary-rgb),0.3); font-size: 0.6rem;">Avg: ${round.avg_len}</span>
             </div>
             <div style="color: #ffd700; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.5px;" title="${round.top_word}">${round.top_word}</div>
             <div style="display: flex; flex-direction: column; gap: 1px;">
                 <span style="font-size: 0.7rem; color: #60a5fa; font-weight: 700; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">${round.room_id}</span>
-                <span style="font-size: 0.6rem; color: rgba(255,255,255,0.3); font-weight: 600;">Str: ${round.room_strength || '-'}</span>
+                <span style="font-size: 0.6rem; color: rgba(var(--text-primary-rgb),0.3); font-weight: 600;">Str: ${round.room_strength || '-'}</span>
             </div>
             
             <!-- Date Column -->
-            <div style="font-size: 0.7rem; color: rgba(255,255,255,0.6); font-weight: 600; text-align: right;">${dateStr}</div>
+            <div style="font-size: 0.7rem; color: rgba(var(--text-primary-rgb),0.6); font-weight: 600; text-align: right;">${dateStr}</div>
         </div>
         `;
     };
 
     window.roundGridHeader = `
-        <div class="history-grid-header" style="display: grid; grid-template-columns: 80px 50px 80px 60px 80px 80px 100px 1fr 100px 50px; gap:8px; padding: 12px 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 12px; font-size: 0.7rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+        <div class="history-grid-header" style="display: grid; grid-template-columns: 80px 50px 80px 60px 80px 80px 100px 1fr 100px 50px; gap:8px; padding: 12px 15px; background: rgba(var(--text-primary-rgb),0.03); border: 1px solid rgba(var(--text-primary-rgb),0.05); border-radius: 8px; margin-bottom: 12px; font-size: 0.7rem; color: rgba(var(--text-primary-rgb),0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
             <div>Mode</div>
             <div style="text-align: center;">Board</div>
             <div>Score</div>
@@ -1390,7 +1390,7 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     }
     if (skipBtn) skipBtn.classList.add('hidden');
     if (progressUI) progressUI.classList.add('hidden');
-    if (walkthroughList) walkthroughList.innerHTML = '<p class="placeholder" style="color:rgba(255,255,255,0.3); text-align:center; padding:40px; font-weight:700;">Ready to watch the walkthrough...</p>';
+    if (walkthroughList) walkthroughList.innerHTML = '<p class="placeholder" style="color:rgba(var(--text-primary-rgb),0.3); text-align:center; padding:40px; font-weight:700;">Ready to watch the walkthrough...</p>';
 
     // 3. Render Board with Dynamic Scaling
     const boardContainer = document.getElementById(`${prefix}-board-container`);
@@ -1492,7 +1492,7 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
         if (walkthroughList) {
             walkthroughList.innerHTML = displayWords.map(w => renderWord(w)).join('');
             if (sortedWords.length === 0) {
-                walkthroughList.innerHTML = '<p class="placeholder" style="color:rgba(255,255,255,0.2); text-align:center; padding:40px;">No words found in this round.</p>';
+                walkthroughList.innerHTML = '<p class="placeholder" style="color:rgba(var(--text-primary-rgb),0.2); text-align:center; padding:40px;">No words found in this round.</p>';
             }
             // Auto-scroll to bottom to show latest? Or top? 
             // Usually start at top.
@@ -1777,11 +1777,11 @@ function renderRatingsGrid(configRatings, user = null) {
                 box.innerHTML = `
                     <div class="rating-box-swatch" style="background: ${rColor};"></div>
                     <div class="rating-box-info" style="flex: 1;">
-                        <div class="rating-box-mode" style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800;">${mode}</div>
+                        <div class="rating-box-mode" style="font-size: 0.65rem; color: rgba(var(--text-primary-rgb),0.4); text-transform: uppercase; font-weight: 800;">${mode}</div>
                         <div class="rating-box-config" style="font-weight: 700;">${board} | ${formatTimeShort(time)}</div>
-                        <div style="display: flex; gap: 10px; margin-top: 4px; font-size: 0.65rem; color: rgba(255,255,255,0.3); font-weight: 700;">
-                           <span>AVG S: <span style="color: #fff;">${configData.avg_score}</span></span>
-                           <span>AVG P: <span style="color: #fff;">${configData.avg_perf}</span></span>
+                        <div style="display: flex; gap: 10px; margin-top: 4px; font-size: 0.65rem; color: rgba(var(--text-primary-rgb),0.3); font-weight: 700;">
+                           <span>AVG S: <span style="color: var(--text-primary);">${configData.avg_score}</span></span>
+                           <span>AVG P: <span style="color: var(--text-primary);">${configData.avg_perf}</span></span>
                         </div>
                     </div>
                     <div class="rating-box-value" style="color: ${rColor}; font-size: 1.25rem; font-weight: 900; margin: 0 15px;">${rating}</div>
@@ -1800,7 +1800,7 @@ function renderRatingsGrid(configRatings, user = null) {
     });
 
     if (visibleCount === 0) {
-        grid.innerHTML = '<p class="placeholder" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: rgba(255,255,255,0.2);">No room types match the selected filters.</p>';
+        grid.innerHTML = '<p class="placeholder" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: rgba(var(--text-primary-rgb),0.2);">No room types match the selected filters.</p>';
     }
 
     // Setup filter listeners once
@@ -1811,8 +1811,8 @@ function renderRatingsGrid(configRatings, user = null) {
             if (el) {
                 el.onchange = () => renderRatingsGrid();
                 // Hover effect for select
-                el.onmouseenter = () => el.style.borderColor = 'rgba(255,255,255,0.3)';
-                el.onmouseleave = () => el.style.borderColor = 'rgba(255,255,255,0.1)';
+                el.onmouseenter = () => el.style.borderColor = 'rgba(var(--text-primary-rgb),0.3)';
+                el.onmouseleave = () => el.style.borderColor = 'rgba(var(--text-primary-rgb),0.1)';
             }
         });
         grid._filtersInitialized = true;
@@ -1964,12 +1964,12 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             }
 
             return `
-            <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: background 0.2s;" 
-                onmouseenter="this.style.background='rgba(255,255,255,0.02)'" 
+            <tr style="border-bottom: 1px solid rgba(var(--text-primary-rgb),0.03); cursor: pointer; transition: background 0.2s;" 
+                onmouseenter="this.style.background='rgba(var(--text-primary-rgb),0.02)'" 
                 onmouseleave="this.style.background='transparent'" 
                 onclick="watchRoundHistory('${r.room_id}', ${r.round_number}, true, ${r.game_id || 'null'}); document.getElementById('room-achievements-modal').classList.add('hidden');">
                 ${cols.map(c => `<td style="padding: 10px 15px; ${c.style || ''}">${c.val}</td>`).join('')}
-                <td style="padding: 10px 15px; text-align: right;"><div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 8px; display: inline-block;">📷</div></td>
+                <td style="padding: 10px 15px; text-align: right;"><div style="background: rgba(var(--text-primary-rgb),0.05); border: 1px solid rgba(var(--text-primary-rgb),0.1); border-radius: 6px; padding: 4px 8px; display: inline-block;">📷</div></td>
             </tr>`;
         };
 
@@ -1983,10 +1983,10 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             });
             tablePerf.innerHTML = sortedByRatio.map(r => renderAchRow(r, [
                 { val: r.performance_value, style: 'font-weight: 800; color: #60a5fa;' },
-                { val: r.ratio + 'x', style: 'color: rgba(255,255,255,0.6);' },
+                { val: r.ratio + 'x', style: 'color: rgba(var(--text-primary-rgb),0.6);' },
                 { val: r.total_score, style: 'font-weight: 700;' },
-                { val: `<div style="font-size: 0.75rem;">${r.num_words} words</div><div style="font-size: 0.6rem; color: rgba(255,255,255,0.3);">${r.top_word}</div>` },
-                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+                { val: `<div style="font-size: 0.75rem;">${r.num_words} words</div><div style="font-size: 0.6rem; color: rgba(var(--text-primary-rgb),0.3);">${r.top_word}</div>` },
+                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(var(--text-primary-rgb),0.4);' }
             ])).join('');
         }
 
@@ -2001,8 +2001,8 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             tableWins.innerHTML = sortedWins.map(r => renderAchRow(r, [
                 { val: r.total_score, style: 'font-weight: 800; color: #4ade80;' },
                 { val: r.performance_value, style: 'font-weight: 700;' },
-                { val: r.all_players.length, style: 'color: rgba(255,255,255,0.5);' },
-                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+                { val: r.all_players.length, style: 'color: rgba(var(--text-primary-rgb),0.5);' },
+                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(var(--text-primary-rgb),0.4);' }
             ])).join('');
         }
 
@@ -2013,9 +2013,9 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             const sortedRecent = [...stats.recent_rounds].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             tableRecent.innerHTML = sortedRecent.map(r => renderAchRow(r, [
                 { val: r.total_score, style: 'font-weight: 700;' },
-                { val: r.ratio + 'x', style: 'color: rgba(255,255,255,0.4); font-size: 0.75rem;' },
-                { val: r.is_win ? '<span style="color:#4ade80">WIN</span>' : '<span style="color:rgba(255,255,255,0.3)">-</span>', style: 'font-weight: 800;' },
-                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+                { val: r.ratio + 'x', style: 'color: rgba(var(--text-primary-rgb),0.4); font-size: 0.75rem;' },
+                { val: r.is_win ? '<span style="color:#4ade80">WIN</span>' : '<span style="color:rgba(var(--text-primary-rgb),0.3)">-</span>', style: 'font-weight: 800;' },
+                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(var(--text-primary-rgb),0.4);' }
             ])).join('');
         }
 
@@ -2026,7 +2026,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             tableScores.innerHTML = sortedByScore.map(r => renderAchRow(r, [
                 { val: r.total_score, style: 'font-weight: 800; color: #ffd700;' },
                 { val: r.performance_value, style: 'font-weight: 700;' },
-                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(var(--text-primary-rgb),0.4);' }
             ])).join('');
         }
 
@@ -2036,8 +2036,8 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             const sortedByCount = [...stats.best_word_counts].sort((a, b) => b.num_words - a.num_words);
             tableWordCounts.innerHTML = sortedByCount.map(r => renderAchRow(r, [
                 { val: r.num_words, style: 'font-weight: 800; color: #a5b4fc;' },
-                { val: r.avg_len + ' len', style: 'color: rgba(255,255,255,0.6);' },
-                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+                { val: r.avg_len + ' len', style: 'color: rgba(var(--text-primary-rgb),0.6);' },
+                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(var(--text-primary-rgb),0.4);' }
             ])).join('');
         }
 
@@ -2048,15 +2048,15 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             tableWords.innerHTML = sortedByPoints.map(w => {
                 const date = new Date(w.timestamp);
                 return `
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: background 0.2s;" 
-                    onmouseenter="this.style.background='rgba(255,255,255,0.02)'" 
+                <tr style="border-bottom: 1px solid rgba(var(--text-primary-rgb),0.03); cursor: pointer; transition: background 0.2s;" 
+                    onmouseenter="this.style.background='rgba(var(--text-primary-rgb),0.02)'" 
                     onmouseleave="this.style.background='transparent'" 
                     onclick="watchRoundHistory('${w.room_id}', ${w.round_number}, true, ${w.game_id || 'null'}); document.getElementById('room-achievements-modal').classList.add('hidden');">
-                    <td style="padding: 10px 15px; font-weight: 800; color: #fff; text-transform: uppercase;">${w.word}</td>
+                    <td style="padding: 10px 15px; font-weight: 800; color: var(--text-primary); text-transform: uppercase;">${w.word}</td>
                     <td style="padding: 10px 15px; font-weight: 700; color: #ffd700;">${w.points}</td>
-                    <td style="padding: 10px 15px; color: rgba(255,255,255,0.5);">${w.word.length}</td>
-                    <td style="padding: 10px 15px; font-size: 0.75rem; color: rgba(255,255,255,0.4);">${dateToShort(date)}</td>
-                    <td style="padding: 10px 15px; text-align: right;"><div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 8px; display: inline-block;">📷</div></td>
+                    <td style="padding: 10px 15px; color: rgba(var(--text-primary-rgb),0.5);">${w.word.length}</td>
+                    <td style="padding: 10px 15px; font-size: 0.75rem; color: rgba(var(--text-primary-rgb),0.4);">${dateToShort(date)}</td>
+                    <td style="padding: 10px 15px; text-align: right;"><div style="background: rgba(var(--text-primary-rgb),0.05); border: 1px solid rgba(var(--text-primary-rgb),0.1); border-radius: 6px; padding: 4px 8px; display: inline-block;">📷</div></td>
                 </tr>`;
             }).join('');
         }
@@ -2287,7 +2287,7 @@ async function runSequenceSearch() {
         return;
     }
 
-    resultsContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#rgba(255,255,255,0.7);">Searching...</div>';
+    resultsContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#rgba(var(--text-primary-rgb),0.7);">Searching...</div>';
 
     try {
         const response = await fetch('/api/tools/sequence', {
@@ -2318,7 +2318,7 @@ async function runSequenceSearch() {
 
         // Render Results Table
         let html = `
-            <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2);">
+            <div style="padding: 10px 0; border-bottom: 1px solid rgba(var(--text-primary-rgb),0.1); background: rgba(0,0,0,0.2);">
                 Found ${count} words
             </div>
             <div style="flex: 1; overflow-y: auto; padding: 10px;">
@@ -2328,7 +2328,7 @@ async function runSequenceSearch() {
 
         // Use chunks to avoid blocking if list is huge? For now direct map.
         html += words.map(w => `
-            <tr><td style="padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.9); font-family: monospace;">${w}</td></tr>
+            <tr><td style="padding: 4px 8px; border-bottom: 1px solid rgba(var(--text-primary-rgb),0.05); color: rgba(var(--text-primary-rgb),0.9); font-family: monospace;">${w}</td></tr>
         `).join('');
 
         html += `
@@ -2518,7 +2518,7 @@ function revealManualWords() {
         resultsContainer.innerHTML = '<div class="seq-results-placeholder">No words found on this board.</div>';
     } else {
         let html = `
-            <div style="padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); font-weight: 700; color: #4facfe; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem;">
+            <div style="padding: 12px 20px; border-bottom: 1px solid rgba(var(--text-primary-rgb),0.1); background: rgba(0,0,0,0.3); font-weight: 700; color: #4facfe; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem;">
                 Found ${manualSolvedWords.length} words
             </div>
             <div style="flex: 1; overflow-y: auto; padding: 20px;">
@@ -2526,7 +2526,7 @@ function revealManualWords() {
         `;
 
         html += manualSolvedWords.map(w => `
-            <div style="padding: 8px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: rgba(255,255,255,0.9); font-family: 'JetBrains Mono', monospace; text-align: center; font-size: 1rem; transition: background 0.2s; cursor: default;">
+            <div style="padding: 8px 12px; background: rgba(var(--text-primary-rgb),0.05); border: 1px solid rgba(var(--text-primary-rgb),0.1); border-radius: 8px; color: rgba(var(--text-primary-rgb),0.9); font-family: 'JetBrains Mono', monospace; text-align: center; font-size: 1rem; transition: background 0.2s; cursor: default;">
                 ${w}
             </div>
         `).join('');
@@ -2673,7 +2673,7 @@ async function runSubanagramSearch() {
         return;
     }
 
-    resultsContainer.innerHTML = '<div style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Finding subanagrams...</div>';
+    resultsContainer.innerHTML = '<div style="padding:20px; text-align:center; color:rgba(var(--text-primary-rgb),0.7);">Finding subanagrams...</div>';
 
     try {
         const response = await fetch('/api/tools/subanagrams', {
@@ -2702,7 +2702,7 @@ async function runSubanagramSearch() {
 
         // Render Results Table
         let html = `
-            <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); text-align: left;">
+            <div style="padding: 10px 0; border-bottom: 1px solid rgba(var(--text-primary-rgb),0.1); background: rgba(0,0,0,0.2); text-align: left;">
                 Found ${count} subanagrams
             </div>
             <div style="flex: 1; overflow-y: auto; padding: 10px;">
@@ -2711,7 +2711,7 @@ async function runSubanagramSearch() {
         `;
 
         html += words.map(w => `
-            <tr><td style="padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.9); font-family: monospace;">${w}</td></tr>
+            <tr><td style="padding: 4px 8px; border-bottom: 1px solid rgba(var(--text-primary-rgb),0.05); color: rgba(var(--text-primary-rgb),0.9); font-family: monospace;">${w}</td></tr>
         `).join('');
 
         html += `
@@ -3476,13 +3476,13 @@ function renderUnscrambleFound(revealMissed = false) {
     if (unscrambleState.jumbled) {
         const solutions = Array.from(unscrambleState.solution).sort();
 
-        html += `<div style="width: 100%; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px;">
+        html += `<div style="width: 100%; border-bottom: 1px solid rgba(var(--text-primary-rgb),0.05); padding-bottom: 10px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px;">
                     <div style="font-size: 0.7rem; text-transform: uppercase; color: #ffd700; letter-spacing: 2px; font-weight: 800;">Active: ${unscrambleState.jumbled.toUpperCase()}</div>
                     <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">`;
 
         solutions.forEach(w => {
             const isFound = unscrambleState.found.includes(w);
-            let style = "background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.05);";
+            let style = "background: rgba(var(--text-primary-rgb), 0.05); color: rgba(var(--text-primary-rgb), 0.15); border: 1px solid rgba(var(--text-primary-rgb), 0.05);";
             let displayWord = w.replace(/./g, '_');
 
             if (isFound) {
@@ -3507,8 +3507,8 @@ function renderUnscrambleFound(revealMissed = false) {
 
     // 2. HISTORY SECTION
     if (unscrambleState.history.length > 0) {
-        html += `<div style="width: 100%; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-                    <div style="font-size: 0.7rem; text-transform: uppercase; color: rgba(255,255,255,0.3); letter-spacing: 2px; font-weight: 800; text-align: center; margin-bottom: 15px;">Session History</div>
+        html += `<div style="width: 100%; margin-top: 10px; border-top: 1px solid rgba(var(--text-primary-rgb),0.1); padding-top: 20px;">
+                    <div style="font-size: 0.7rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3); letter-spacing: 2px; font-weight: 800; text-align: center; margin-bottom: 15px;">Session History</div>
                     <div style="display: flex; flex-direction: column; gap: 12px;">`;
 
         unscrambleState.history.forEach((h, idx) => {
@@ -3517,20 +3517,20 @@ function renderUnscrambleFound(revealMissed = false) {
             const isPerfect = foundCount === totalCount;
 
             html += `
-                <div style="background: rgba(255,255,255,0.03); border-radius: 10px; padding: 12px 18px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 8px;">
+                <div style="background: rgba(var(--text-primary-rgb),0.03); border-radius: 10px; padding: 12px 18px; border: 1px solid rgba(var(--text-primary-rgb),0.05); display: flex; flex-direction: column; gap: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-weight: 800; color: #ffd700; font-size: 1rem; letter-spacing: 1px;">${h.jumbled.toUpperCase()}</span>
-                        <span style="font-size: 0.7rem; color: rgba(255,255,255,0.3); font-family: monospace;">${h.timestamp}</span>
+                        <span style="font-size: 0.7rem; color: rgba(var(--text-primary-rgb),0.3); font-family: monospace;">${h.timestamp}</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px;">
-                        <span style="font-size: 0.75rem; color: ${isPerfect ? '#81c784' : 'rgba(255,255,255,0.5)'}; font-weight: 700; white-space: nowrap;">
+                        <span style="font-size: 0.75rem; color: ${isPerfect ? '#81c784' : 'rgba(var(--text-primary-rgb),0.5)'}; font-weight: 700; white-space: nowrap;">
                             ${foundCount}/${totalCount} Words
                         </span>
                         <div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
                             ${h.solutions.map(s => {
                 const wereFound = h.found.includes(s);
-                const color = wereFound ? '#81c784' : 'rgba(255,255,255,0.2)';
-                const bg = wereFound ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255,255,255,0.02)';
+                const color = wereFound ? '#81c784' : 'rgba(var(--text-primary-rgb),0.2)';
+                const bg = wereFound ? 'rgba(76, 175, 80, 0.1)' : 'rgba(var(--text-primary-rgb),0.02)';
                 return `<span style="font-size: 0.7rem; background: ${bg}; padding: 3px 8px; border-radius: 4px; color: ${color}; border: 1px solid ${wereFound ? 'rgba(76, 175, 80, 0.2)' : 'transparent'}">${s}</span>`;
             }).join('')}
                         </div>
@@ -3607,7 +3607,7 @@ function setupPersonalTimer() {
                 if (defPanel) {
                     defPanel.classList.add('timer-flash');
                     if (defHeader) defHeader.style.display = 'none';
-                    if (defContent) defContent.innerHTML = `<h2 style="text-align:center; margin-top: 50px; font-size: 2rem; color: #fff;">Time is up!</h2>`;
+                    if (defContent) defContent.innerHTML = `<h2 style="text-align:center; margin-top: 50px; font-size: 2rem;">Time is up!</h2>`;
                 }
             } else {
                 displayLabel.textContent = formatTime(personalTimerSeconds);

@@ -486,7 +486,7 @@
             const res = await fetch('/api/private-match/history/' + matchId);
             const data = await res.json();
             // Show a simple modal or list with results and replay buttons
-            let html = '<div style="padding:20px; color:#fff; background:var(--bg-panel); border-radius:12px; min-width:400px; max-height:80vh; overflow-y:auto; text-align:center;"><h3>Match Results</h3>';
+            let html = '<div style="padding:20px; color: var(--text-primary); background:var(--bg-panel); border-radius:12px; min-width:400px; max-height:80vh; overflow-y:auto; text-align:center;"><h3>Match Results</h3>';
 
             if (!data || data.length === 0) {
                 html += '<div style="padding:40px; opacity:0.6; font-style:italic;">No turns recorded for this match yet.</div>';
@@ -502,7 +502,7 @@
                         if (Array.isArray(words) && words.length > 0) {
                             // Sort by length (desc) then alphabetically (asc)
                             words.sort((a, b) => b.word.length - a.word.length || a.word.localeCompare(b.word));
-                            const wordStrs = words.map(w => `<span style="background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; margin:2px; display:inline-block; font-size:0.8em;">${w.word} (${w.points})</span>`).join('');
+                            const wordStrs = words.map(w => `<span style="background:rgba(var(--text-primary-rgb),0.1); padding:2px 6px; border-radius:4px; margin:2px; display:inline-block; font-size:0.8em;">${w.word} (${w.points})</span>`).join('');
                             wordListHtml = `<div style="margin-top:5px; text-align:left; opacity:0.8;">${wordStrs}</div>`;
                         } else {
                             wordListHtml = `<div style="margin-top:5px; text-align:left; font-style:italic; opacity:0.6;">No words found.</div>`;
@@ -524,7 +524,7 @@
                     };
 
                     html += `
-                        <div style="background:rgba(255,255,255,0.05); padding:15px; margin-bottom:15px; border-radius:10px; display:flex; flex-direction:column; gap:10px; text-align:left;">
+                        <div style="background:rgba(var(--text-primary-rgb),0.05); padding:15px; margin-bottom:15px; border-radius:10px; display:flex; flex-direction:column; gap:10px; text-align:left;">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                 <div>
                                     <strong style="font-size:1.1em; color:var(--accent-color);">${t.username}</strong>

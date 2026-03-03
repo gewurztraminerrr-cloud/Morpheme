@@ -652,7 +652,7 @@ async function updateGameState() {
                             const rating = p.rating || 0;
                             const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#fff';
                             return `
-                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); margin-bottom: 4px; border-radius: 6px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid rgba(var(--text-primary-rgb),0.05); background: rgba(var(--text-primary-rgb),0.02); margin-bottom: 4px; border-radius: 6px;">
                                     <div style="display: flex; align-items: center; gap: 12px;">
                                         <div style="width: 14px; height: 14px; background: ${rColor}; border-radius: 3px; box-shadow: 0 0 10px ${rColor}22;"></div>
                                         <span style="font-weight: 700; font-size: 0.95rem;">${p.username}</span>
@@ -961,7 +961,7 @@ async function updateGameState() {
                     }).join('');
 
                     return `
-                        <div class="history-item" style="padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;">
+                        <div class="history-item" style="padding: 12px 15px; border-bottom: 1px solid rgba(var(--text-primary-rgb),0.05); display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;">
                             <div style="display: flex; flex-direction: column; gap: 4px;">
                                 ${winnersHtml}
                                 <span style="font-size: 0.7rem; opacity: 0.4; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">Round ${h.round}</span>
@@ -2223,7 +2223,7 @@ function renderSplitNotepads(players) {
 
         // Render words
         if (wordsToShow.length === 0) {
-            list.innerHTML = '<div style="color:#000;font-style:italic;padding:10px;text-align:center;">None</div>';
+            list.innerHTML = '<div style="color:var(--text-primary);font-style:italic;padding:10px;text-align:center;">None</div>';
         } else {
             wordsToShow.forEach(w => {
                 const row = document.createElement('div');
@@ -2360,7 +2360,7 @@ function renderFCFSNotepads(players) {
         scrollControls.appendChild(btnDown);
 
         if (!p.submitted_words || p.submitted_words.length === 0) {
-            list.innerHTML = '<div style="color:#000;font-style:italic;padding:10px;text-align:center;">None</div>';
+            list.innerHTML = '<div style="color:var(--text-primary);font-style:italic;padding:10px;text-align:center;">None</div>';
         } else {
             // Sort words: Longest first, then alphabetical
             const wordsToShow = [...p.submitted_words];

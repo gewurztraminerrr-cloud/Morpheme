@@ -589,7 +589,7 @@
                             to compete for the
                             crown!</p>
                         <button class="nav-btn" data-page="login"
-                            style="background: var(--accent-color); color: #000; padding: 12px 30px; margin-top:20px;">Join
+                            style="background: var(--accent-color); color: var(--btn-text); padding: 12px 30px; margin-top:20px;">Join
                             Now</button>
                     </div>
                 </div>
@@ -813,24 +813,24 @@
                             <div class="input-row" style="justify-content: center; align-items: center; gap: 15px;">
                                 <div style="display: flex; flex-direction: column; align-items: center;">
                                     <label for="timer-hours"
-                                        style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 5px;">Hours</label>
+                                        style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 5px; color: var(--text-primary);">Hours</label>
                                     <input type="number" id="timer-hours" placeholder="0" min="0" max="24"
-                                        style="width: 80px; text-align: center;">
+                                        style="width: 80px; text-align: center; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-primary); border-radius: 6px; padding: 6px;">
                                 </div>
                                 <div style="font-size: 1.5rem; font-weight: bold; margin-top: 15px;">:</div>
                                 <div style="display: flex; flex-direction: column; align-items: center;">
                                     <label for="timer-minutes"
-                                        style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 5px;">Minutes</label>
+                                        style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 5px; color: var(--text-primary);">Minutes</label>
                                     <input type="number" id="timer-minutes" placeholder="0" min="0" max="59"
-                                        style="width: 80px; text-align: center;">
+                                        style="width: 80px; text-align: center; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-primary); border-radius: 6px; padding: 6px;">
                                 </div>
                             </div>
                             <div class="input-row" style="margin-top: 20px;">
                                 <button id="timer-start-btn"
-                                    style="flex: 1; min-width: 150px; background: #00d2ff; color: #000;">Start
+                                    style="flex: 1; min-width: 150px; background: #00d2ff; color: #000; font-weight: bold; border: none; border-radius: 8px; padding: 10px; cursor: pointer;">Start
                                     Timer</button>
                                 <button id="timer-stop-btn"
-                                    style="flex: 1; min-width: 150px; background: #ff4d4d; color: #fff; display: none;">Stop
+                                    style="flex: 1; min-width: 150px; background: #ff4d4d; color: var(--text-primary); font-weight: bold; border: none; border-radius: 8px; padding: 10px; cursor: pointer; display: none;">Stop
                                     Timer</button>
                             </div>
                         </div>
@@ -986,13 +986,13 @@
 
 
                                             <div class="ratings-filters"
-                                                style="display: flex; gap: 15px; margin-bottom: 20px; background: rgba(255,255,255,0.03); padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); align-items: center;">
+                                                style="display: flex; gap: 15px; margin-bottom: 20px; background: rgba(var(--text-primary-rgb),0.03); padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(var(--text-primary-rgb),0.05); align-items: center;">
                                                 <div class="filter-group">
                                                     <label
-                                                        style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Game
+                                                        style="font-size: 0.65rem; color: rgba(var(--text-primary-rgb),0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Game
                                                         Mode</label>
                                                     <select id="rankings-filter-mode"
-                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
+                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(var(--text-primary-rgb),0.1); color: var(--text-primary); padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
                                                         <option value="all">All Modes</option>
                                                         <option value="accumulative">
                                                             Accumulative</option>
@@ -1004,9 +1004,9 @@
                                                 </div>
                                                 <div class="filter-group">
                                                     <label
-                                                        style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Dimensions</label>
+                                                        style="font-size: 0.65rem; color: rgba(var(--text-primary-rgb),0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Dimensions</label>
                                                     <select id="rankings-filter-dims"
-                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
+                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(var(--text-primary-rgb),0.1); color: var(--text-primary); padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
                                                         <option value="all">All Sizes</option>
                                                         <option value="4x4">4x4</option>
                                                         <option value="4x6">4x6</option>
@@ -1016,10 +1016,10 @@
                                                 </div>
                                                 <div class="filter-group">
                                                     <label
-                                                        style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Time
+                                                        style="font-size: 0.65rem; color: rgba(var(--text-primary-rgb),0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Time
                                                         Limit</label>
                                                     <select id="rankings-filter-time"
-                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
+                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(var(--text-primary-rgb),0.1); color: var(--text-primary); padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
                                                         <option value="all">All Times</option>
                                                         <option value="45">45 Seconds</option>
                                                         <option value="180">3 Minutes</option>
@@ -1067,7 +1067,7 @@
                                             <div class="integrated-replay-header">
                                                 <div class="header-main">
                                                     <h3
-                                                        style="font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: 1px;">
+                                                        style="font-size: 1.2rem; font-weight: 800; color: var(--text-primary); letter-spacing: 1px;">
                                                         ROUND REPLAY</h3>
                                                 </div>
                                             </div>
@@ -1115,9 +1115,9 @@
 
                                                 <div class="replay-sidebar">
                                                     <div id="integrated-players-list" class="replay-players-list hidden"
-                                                        style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; border: 1px solid rgba(255,255,255,0.05);">
+                                                        style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; border: 1px solid rgba(var(--text-primary-rgb),0.05);">
                                                         <h4
-                                                            style="font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 12px; letter-spacing: 1.5px; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                                                            style="font-size: 0.75rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.4); margin-bottom: 12px; letter-spacing: 1.5px; font-weight: 800; border-bottom: 1px solid rgba(var(--text-primary-rgb),0.05); padding-bottom: 8px;">
                                                             Round Participants</h4>
                                                         <div id="integrated-players-body"
                                                             style="display: flex; flex-direction: column; gap: 10px;">
@@ -1495,7 +1495,7 @@
                         </div>
 
                         <div class="combo-control-panel"
-                            style="padding: 20px; justify-content: center; display: flex; width: 100%; margin: 0 0 25px 0; background: rgba(255, 255, 255, 0.05);">
+                            style="padding: 20px; justify-content: center; display: flex; width: 100%; margin: 0 0 25px 0; background: rgba(var(--text-primary-rgb), 0.05);">
                             <div class="input-row"
                                 style="justify-content: center !important; display: flex !important; gap: 12px;">
                                 <select id="unscramble-length" style="width: 120px;">
@@ -1527,19 +1527,19 @@
 
                             <!-- Left Area: Results (Now with premium styling) -->
                             <div id="unscramble-found-container" class="hidden"
-                                style="width: 380px; background: rgba(30,30,50,0.6); backdrop-filter: blur(15px); border-radius: 20px; padding: 25px; border: 1px solid rgba(255,255,255,0.1); text-align: left; flex-direction: column; flex-shrink: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.3); height: 100%;">
+                                style="width: 380px; background: rgba(30,30,50,0.6); backdrop-filter: blur(15px); border-radius: 20px; padding: 25px; border: 1px solid rgba(var(--text-primary-rgb),0.1); text-align: left; flex-direction: column; flex-shrink: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.3); height: 100%;">
                                 <h3
-                                    style="font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; text-align: center; font-weight: 800; letter-spacing: 2px;">
+                                    style="font-size: 0.75rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.5); margin-bottom: 20px; border-bottom: 1px solid rgba(var(--text-primary-rgb),0.1); padding-bottom: 12px; text-align: center; font-weight: 800; letter-spacing: 2px;">
                                     Status & Results</h3>
                                 <div id="unscramble-found-list"
-                                    style="display: flex; flex-direction: column; gap: 15px; overflow-y: auto; flex: 1; padding: 5px 15px 5px 5px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent;">
+                                    style="display: flex; flex-direction: column; gap: 15px; overflow-y: auto; flex: 1; padding: 5px 15px 5px 5px; scrollbar-width: thin; scrollbar-color: rgba(var(--text-primary-rgb),0.15) transparent;">
                                     <!-- List of found words -->
                                 </div>
                             </div>
 
                             <!-- Right Area: Game Dashboard (Moved inside container) -->
                             <div class="unscramble-game-area"
-                                style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 25px; flex: 1; background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); padding: 40px; height: 100%;">
+                                style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 25px; flex: 1; background: rgba(var(--text-primary-rgb),0.03); border-radius: 20px; border: 1px solid rgba(var(--text-primary-rgb),0.08); padding: 40px; height: 100%;">
 
                                 <div style="display: flex; flex-direction: column; align-items: center;">
                                     <div id="unscramble-jumbled" class="random-word-large"
@@ -1547,7 +1547,7 @@
                                         <!-- Jumbled word -->
                                     </div>
                                     <div id="unscramble-count-info"
-                                        style="font-size: 1rem; color: rgba(255,255,255,0.4); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                                        style="font-size: 1rem; color: rgba(var(--text-primary-rgb),0.4); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
                                         <!-- "X words possible" -->
                                     </div>
                                 </div>
@@ -1557,15 +1557,15 @@
 
                                     <input type="text" id="unscramble-input" placeholder="Enter word..."
                                         autocomplete="off"
-                                        style="width: 100%; text-transform: uppercase; text-align: center; font-size: 1.5rem; padding: 15px; letter-spacing: 2px; border: 2px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: #fff; border-radius: 12px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); outline: none;">
+                                        style="width: 100%; text-transform: uppercase; text-align: center; font-size: 1.5rem; padding: 15px; letter-spacing: 2px; border: 2px solid rgba(var(--text-primary-rgb),0.1); background: rgba(0,0,0,0.3); color: var(--text-primary); border-radius: 12px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); outline: none;">
 
                                     <div style="display: flex; gap: 15px; width: 100%;">
                                         <button id="unscramble-check-btn" class="primary-action"
-                                            style="flex: 2; height: 55px; font-size: 1rem; font-weight: 700; border-radius: 12px; background: linear-gradient(135deg, #2ecc71, #27ae60); border: none; color: #fff; cursor: pointer; transition: all 0.3s ease;">
+                                            style="flex: 2; height: 55px; font-size: 1rem; font-weight: 700; border-radius: 12px; background: linear-gradient(135deg, #2ecc71, #27ae60); border: none; color: var(--text-primary); cursor: pointer; transition: all 0.3s ease;">
                                             Check Word
                                         </button>
                                         <button id="unscramble-reveal-btn" class="secondary-action"
-                                            style="flex: 1; height: 55px; font-size: 1rem; font-weight: 700; border-radius: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer; transition: all 0.3s ease;">
+                                            style="flex: 1; height: 55px; font-size: 1rem; font-weight: 700; border-radius: 12px; background: rgba(var(--text-primary-rgb),0.1); border: 1px solid rgba(var(--text-primary-rgb),0.2); color: var(--text-primary); cursor: pointer; transition: all 0.3s ease;">
                                             Reveal
                                         </button>
                                     </div>
@@ -1621,7 +1621,8 @@
 
         <!-- Settings Page -->
         <div id="page-settings" class="page">
-            <h2 style="font-size: 2.5rem; color: #fff; margin-bottom: 30px; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+            <h2
+                style="font-size: 2.5rem; color: var(--text-primary); margin-bottom: 30px; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">
                 User
                 Settings</h2>
             <div class="settings-grid">
@@ -1766,7 +1767,7 @@
                     </div>
                     <!-- Color Picker: Typing -->
                     <div id="highlight-color-picker"
-                        style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%;">
+                        style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(var(--text-primary-rgb),0.1); width: 100%;">
                         <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Typing
                             Color
                         </div>
@@ -1814,7 +1815,7 @@
                     </div>
                     <!-- Color Picker: Mousing -->
                     <div id="highlight-mouse-color-picker"
-                        style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%;">
+                        style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(var(--text-primary-rgb),0.1); width: 100%;">
                         <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Mousing
                             Color
                         </div>
@@ -1862,8 +1863,8 @@
 
                     .color-dot.active {
                         transform: scale(1.3);
-                        border-color: #fff;
-                        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+                        border-color: var(--text-primary);
+                        box-shadow: 0 0 10px rgba(var(--text-primary-rgb), 0.5);
                     }
                 </style>
 
@@ -1938,7 +1939,7 @@
                         </label>
                     </div>
                     <div id="bell-selection-container"
-                        style="display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%; display: none;">
+                        style="display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(var(--text-primary-rgb),0.1); width: 100%; display: none;">
 
                         <!-- Row 1: Bells -->
                         <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
@@ -1974,9 +1975,9 @@
                     </div>
                     <style>
                         .bell-btn {
-                            background: rgba(255, 255, 255, 0.05);
-                            border: 1px solid rgba(255, 255, 255, 0.15);
-                            color: #fff;
+                            background: rgba(var(--text-primary-rgb), 0.05);
+                            border: 1px solid rgba(var(--text-primary-rgb), 0.15);
+                            color: var(--text-primary);
                             padding: 8px 16px;
                             border-radius: 8px;
                             cursor: pointer;
@@ -1989,19 +1990,19 @@
                         }
 
                         .bell-btn:hover {
-                            background: rgba(255, 255, 255, 0.15);
+                            background: rgba(var(--text-primary-rgb), 0.15);
                             transform: translateY(-1px);
                         }
 
                         .bell-btn.active {
                             background: #409cff;
-                            border-color: #fff;
+                            border-color: var(--text-primary);
                             box-shadow: 0 0 15px rgba(64, 156, 255, 0.4);
                         }
 
                         .play-icon {
                             font-size: 0.7rem;
-                            background: rgba(255, 255, 255, 0.2);
+                            background: rgba(var(--text-primary-rgb), 0.2);
                             width: 18px;
                             height: 18px;
                             display: flex;
@@ -2023,7 +2024,7 @@
 
                         body.theme-white .bell-btn.active {
                             background: #409cff;
-                            color: #fff;
+                            color: var(--text-primary);
                             border-color: #2a7fd1;
                         }
 
@@ -2033,8 +2034,8 @@
                         }
 
                         body.theme-white .bell-btn.active .play-icon {
-                            background: rgba(255, 255, 255, 0.3);
-                            color: #fff;
+                            background: rgba(var(--text-primary-rgb), 0.3);
+                            color: var(--text-primary);
                         }
 
                         body.theme-white .meta-label {
@@ -2405,7 +2406,7 @@
                         <h2>Round Replay</h2>
                         <span class="header-subtitle">Verifiable Legitimacy Walkthrough</span>
                         <span id="history-review-date"
-                            style="display: block; font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 4px; font-weight: 600;"></span>
+                            style="display: block; font-size: 0.8rem; color: rgba(var(--text-primary-rgb),0.5); margin-top: 4px; font-weight: 600;"></span>
                     </div>
                     <button class="close-overlay" id="close-history-review">&times;</button>
                 </div>
@@ -2623,7 +2624,7 @@
 
                 <!-- Time Selection Tabs (Filtered for the lists below) -->
                 <div class="achievement-tabs modal-tabs"
-                    style="display: flex; background: rgba(0,0,0,0.4); padding: 6px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 25px; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                    style="display: flex; background: rgba(0,0,0,0.4); padding: 6px; border-radius: 12px; border: 1px solid rgba(var(--text-primary-rgb),0.08); margin-bottom: 25px; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
                     <button class="ach-tab" data-period="day"
                         style="flex:1; border:none; padding: 12px 5px; font-size: 0.75rem;">DAY</button>
                     <button class="ach-tab" data-period="week"
@@ -2642,7 +2643,7 @@
                     <!-- Exceptional Performances -->
                     <div class="achievement-section" style="grid-column: 1 / -1;">
                         <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(var(--text-primary-rgb),0.05); padding-bottom: 8px;">
                             <h3 style="margin: 0; border: none; padding: 0;">Exceptional
                                 Performances</h3>
                             <span
@@ -2650,28 +2651,28 @@
                                 Perf: <span id="ach-avg-perf">-</span></span>
                         </div>
                         <div class="ach-table-container"
-                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(var(--text-primary-rgb),0.05);">
                             <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
                                 <thead
-                                    style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                    style="background: rgba(var(--text-primary-rgb),0.02); border-bottom: 1px solid rgba(var(--text-primary-rgb),0.1);">
                                     <tr>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Perf</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Effect</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Score</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Word Stats</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Date</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Snap</th>
                                     </tr>
                                 </thead>
@@ -2683,32 +2684,32 @@
                     <!-- Winning Rounds -->
                     <div class="achievement-section" style="grid-column: 1 / -1;">
                         <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(var(--text-primary-rgb),0.05); padding-bottom: 8px;">
                             <h3 style="margin: 0; border: none; padding: 0;">Winning Rounds</h3>
                             <span
                                 style="font-size: 0.7rem; font-weight: 800; color: #4ade80; text-transform: uppercase;">Win
                                 Rate: <span id="ach-avg-winrate">-</span></span>
                         </div>
                         <div class="ach-table-container"
-                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(var(--text-primary-rgb),0.05);">
                             <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
                                 <thead
-                                    style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                    style="background: rgba(var(--text-primary-rgb),0.02); border-bottom: 1px solid rgba(var(--text-primary-rgb),0.1);">
                                     <tr>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Score</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Perf</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Opponents</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Date</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Snap</th>
                                     </tr>
                                 </thead>
@@ -2720,29 +2721,29 @@
                     <!-- Games Played (Recent) -->
                     <div class="achievement-section" style="grid-column: 1 / -1;">
                         <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(var(--text-primary-rgb),0.05); padding-bottom: 8px;">
                             <h3 style="margin: 0; border: none; padding: 0;">Games Played</h3>
                             <span
-                                style="font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase;">Total:
+                                style="font-size: 0.7rem; font-weight: 800; color: rgba(var(--text-primary-rgb),0.4); text-transform: uppercase;">Total:
                                 <span id="ach-total-games">-</span></span>
                         </div>
                         <div class="ach-table-container"
-                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(var(--text-primary-rgb),0.05);">
                             <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
                                 <thead
-                                    style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                    style="background: rgba(var(--text-primary-rgb),0.02); border-bottom: 1px solid rgba(var(--text-primary-rgb),0.1);">
                                     <tr>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Score</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Result</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Date</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Snap</th>
                                     </tr>
                                 </thead>
@@ -2754,29 +2755,29 @@
                     <!-- Best Scores -->
                     <div class="achievement-section" style="grid-column: 1 / -1;">
                         <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(var(--text-primary-rgb),0.05); padding-bottom: 8px;">
                             <h3 style="margin: 0; border: none; padding: 0;">Best Scores</h3>
                             <span
                                 style="font-size: 0.7rem; font-weight: 800; color: #ffd700; text-transform: uppercase;">Average
                                 Score: <span id="ach-avg-score">-</span></span>
                         </div>
                         <div class="ach-table-container"
-                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(var(--text-primary-rgb),0.05);">
                             <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
                                 <thead
-                                    style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                    style="background: rgba(var(--text-primary-rgb),0.02); border-bottom: 1px solid rgba(var(--text-primary-rgb),0.1);">
                                     <tr>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Score</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Perf</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Date</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Snap</th>
                                     </tr>
                                 </thead>
@@ -2788,29 +2789,29 @@
                     <!-- Best Word Counts -->
                     <div class="achievement-section" style="grid-column: 1 / -1;">
                         <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(var(--text-primary-rgb),0.05); padding-bottom: 8px;">
                             <h3 style="margin: 0; border: none; padding: 0;">Best Word Counts</h3>
                             <span
                                 style="font-size: 0.7rem; font-weight: 800; color: #a5b4fc; text-transform: uppercase;">Average
                                 Words: <span id="ach-avg-words">-</span></span>
                         </div>
                         <div class="ach-table-container"
-                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(var(--text-primary-rgb),0.05);">
                             <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
                                 <thead
-                                    style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                    style="background: rgba(var(--text-primary-rgb),0.02); border-bottom: 1px solid rgba(var(--text-primary-rgb),0.1);">
                                     <tr>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Words</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Avg Len</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Date</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Snap</th>
                                     </tr>
                                 </thead>
@@ -2822,7 +2823,7 @@
                     <!-- Best Words -->
                     <div class="achievement-section" style="grid-column: 1 / -1; margin-bottom: 20px;">
                         <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(var(--text-primary-rgb),0.05); padding-bottom: 8px;">
                             <h3 style="margin: 0; border: none; padding: 0;">Best Individual Words
                             </h3>
                             <span
@@ -2830,25 +2831,25 @@
                                 Points: <span id="ach-avg-word-pts">-</span></span>
                         </div>
                         <div class="ach-table-container"
-                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(var(--text-primary-rgb),0.05);">
                             <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
                                 <thead
-                                    style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                    style="background: rgba(var(--text-primary-rgb),0.02); border-bottom: 1px solid rgba(var(--text-primary-rgb),0.1);">
                                     <tr>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Word</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Points</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Length</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Date</th>
                                         <th
-                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(var(--text-primary-rgb),0.3);">
                                             Snap</th>
                                     </tr>
                                 </thead>
