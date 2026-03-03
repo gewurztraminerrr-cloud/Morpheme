@@ -2896,3 +2896,16 @@ input[type=range]::-moz-range-track {
 .timer-flash * {
     color: inherit !important;
 }
+
+/* Phonetic Pronunciation */
+.definition-pronunciation {
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: rgba(var(--text-primary-rgb), 0.55);
+    font-style: italic;
+    font-family: 'Courier New', monospace;
+    padding: 2px 16px 8px;
+    text-transform: uppercase;
+}

@@ -1702,6 +1702,26 @@ def update_input_method(room_id):
 
 # Definitions Cache
 DEFINITIONS_CACHE = None
+PRONUNCIATIONS_CACHE = None
+
+def load_pronunciations():
+    global PRONUNCIATIONS_CACHE
+    if PRONUNCIATIONS_CACHE is not None:
+        return
+    PRONUNCIATIONS_CACHE = {}
+    pron_path = os.path.join(os.path.dirname(__file__), 'dictionaries', 'pronunciations.txt')
+    if not os.path.exists(pron_path):
+        print(f"[Pronunciations] File not found at {pron_path}")
+        return
+    try:
+        with open(pron_path, 'r', encoding='utf-8', errors='ignore') as f:
+            for line in f:
+                parts = line.strip().split(' ', 1)
+                if len(parts) == 2:
+                    PRONUNCIATIONS_CACHE[parts[0].upper()] = parts[1].strip()
+        print(f"[Pronunciations] Loaded {len(PRONUNCIATIONS_CACHE)} entries")
+    except Exception as e:
+        print(f"[Pronunciations] Error loading: {e}")
 
 def load_definitions():
     global DEFINITIONS_CACHE
@@ -1752,9 +1772,13 @@ def get_definition():
     if not DEFINITIONS_CACHE:
         load_definitions()
 
+    if not PRONUNCIATIONS_CACHE:
+        load_pronunciations()
+
     definition = DEFINITIONS_CACHE.get(word)
+    pronunciation = PRONUNCIATIONS_CACHE.get(word) if PRONUNCIATIONS_CACHE else None
     if definition:
-        return jsonify({'word': word, 'definition': definition})
+        return jsonify({'word': word, 'definition': definition, 'pronunciation': pronunciation})
     else:
         return jsonify({'error': 'Definition not found'}), 404
 

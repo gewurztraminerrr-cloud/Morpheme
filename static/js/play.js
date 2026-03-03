@@ -2763,6 +2763,10 @@ async function fetchDefinition(word) {
         defHeader.style.display = 'block';
     }
 
+    // Clear previous pronunciation
+    let defPron = document.getElementById('definition-pronunciation');
+    if (defPron) defPron.textContent = '';
+
     defContent.innerHTML = '<p class="placeholder">Loading definition...</p>';
 
     try {
@@ -2770,9 +2774,23 @@ async function fetchDefinition(word) {
         const data = await resp.json();
 
         if (data.definition) {
-            // No longer injecting word span here as it's in the header
+            // Show pronunciation between word and definition if available
+            if (data.pronunciation) {
+                if (!defPron) {
+                    defPron = document.createElement('div');
+                    defPron.id = 'definition-pronunciation';
+                    defPron.className = 'definition-pronunciation';
+                    if (defHeader && defHeader.parentNode) {
+                        defHeader.parentNode.insertBefore(defPron, defContent);
+                    }
+                }
+                defPron.textContent = data.pronunciation;
+            } else if (defPron) {
+                defPron.textContent = '';
+            }
             defContent.innerHTML = `<span class="definition-text">${data.definition}</span>`;
         } else {
+            if (defPron) defPron.textContent = '';
             defContent.innerHTML = `<p class="placeholder">Definition not found.</p>`;
         }
     } catch (e) {
@@ -2780,6 +2798,7 @@ async function fetchDefinition(word) {
         defContent.innerHTML = `<p class="placeholder">Error: ${e.message}</p>`;
     }
 }
+
 
 const submittedWordsListEl = document.getElementById('submitted-words-list');
 if (submittedWordsListEl) {
