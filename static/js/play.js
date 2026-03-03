@@ -2755,42 +2755,35 @@ async function fetchDefinition(word) {
     const defContent = document.getElementById('definition-content');
     const defWord = document.getElementById('definition-word');
     const defHeader = document.getElementById('definition-header');
+    const defPron = document.getElementById('definition-pronunciation');
     if (!defContent) return;
 
-    // Show word immediately in dedicated header
+    // Show word immediately
     if (defWord && defHeader) {
         defWord.textContent = word.toUpperCase();
         defHeader.style.display = 'block';
     }
 
-    // Clear previous pronunciation
-    let defPron = document.getElementById('definition-pronunciation');
-    if (defPron) defPron.textContent = '';
+    // Reset pronunciation slot
+    if (defPron) {
+        defPron.textContent = '';
+        defPron.style.display = 'none';
+    }
 
-    defContent.innerHTML = '<p class="placeholder">Loading definition...</p>';
+    defContent.innerHTML = '<p class="placeholder">Loading...</p>';
 
     try {
         const resp = await fetch(`/api/definition?word=${encodeURIComponent(word)}`);
         const data = await resp.json();
 
         if (data.definition) {
-            // Show pronunciation between word and definition if available
-            if (data.pronunciation) {
-                if (!defPron) {
-                    defPron = document.createElement('div');
-                    defPron.id = 'definition-pronunciation';
-                    defPron.className = 'definition-pronunciation';
-                    if (defHeader && defHeader.parentNode) {
-                        defHeader.parentNode.insertBefore(defPron, defContent);
-                    }
-                }
+            // Show pronunciation above definition if available
+            if (defPron && data.pronunciation) {
                 defPron.textContent = data.pronunciation;
-            } else if (defPron) {
-                defPron.textContent = '';
+                defPron.style.display = 'block';
             }
             defContent.innerHTML = `<span class="definition-text">${data.definition}</span>`;
         } else {
-            if (defPron) defPron.textContent = '';
             defContent.innerHTML = `<p class="placeholder">Definition not found.</p>`;
         }
     } catch (e) {
@@ -2798,6 +2791,7 @@ async function fetchDefinition(word) {
         defContent.innerHTML = `<p class="placeholder">Error: ${e.message}</p>`;
     }
 }
+
 
 
 const submittedWordsListEl = document.getElementById('submitted-words-list');
