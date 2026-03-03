@@ -200,7 +200,9 @@ class PrivateMatchManager:
              target_range = spinner_params['word_count_range']
              
         target_format = parameters.get('board_format', spinner_params['board_format'])
-        target_difficulty = parameters.get('difficulty', spinner_params.get('difficulty', 'Normal'))
+        target_difficulty = parameters.get('difficulty', spinner_params.get('difficulty', 'Medium'))
+        if target_difficulty == 'Normal' or target_difficulty == 'Expert':
+            target_difficulty = 'Medium' if target_difficulty == 'Normal' else 'Hard'
 
         board, all_words_on_board = bg.generate_board(
             dimensions=dims,
@@ -347,16 +349,32 @@ class PrivateMatchManager:
         """Records when a user starts their turn, or returns the existing start time"""
         conn = self.get_db()
         try:
+            # Check if turn already exists. If it exists, we strictly CANNOT reset it.
+            turn = conn.execute('''
+                SELECT 1 FROM private_match_turns 
+                WHERE match_id = ? AND round_number = ? AND user_id = ?
+            ''', (match_id, round_number, user_id)).fetchone()
+            
             row = conn.execute('''
                 SELECT start_time FROM private_match_starts 
                 WHERE match_id = ? AND round_number = ? AND user_id = ?
             ''', (match_id, round_number, user_id)).fetchone()
             
+            now = time.time()
             if row:
-                return row['start_time']
+                st = row['start_time']
+                # STALE CHECK: If it was recorded more than 30 mins ago AND they haven't submitted yet, 
+                # we'll allow a reset (this handles cases where the browser crashed or they disconnected).
+                if (now - st > 1800) and not turn:
+                    conn.execute('''
+                        DELETE FROM private_match_starts 
+                        WHERE match_id = ? AND round_number = ? AND user_id = ?
+                    ''', (match_id, round_number, user_id))
+                    # Fall through to record a fresh one below
+                else:
+                    return st
             
             # Record it now
-            now = time.time()
             conn.execute('''
                 INSERT INTO private_match_starts (match_id, round_number, user_id, start_time)
                 VALUES (?, ?, ?, ?)
@@ -391,17 +409,20 @@ class PrivateMatchManager:
                 VALUES (?, ?, ?, ?, ?, ?)
             ''', (match_id, round_number, user_id, score, json.dumps(words_data), now))
             
-            # If all humans have submitted, generate AI turns
+            # If all humans have submitted (including invited ones who haven't accepted yet), generate AI turns
             players = conn.execute('SELECT user_id, is_ai, ai_rating FROM private_match_players WHERE match_id = ?', (match_id,)).fetchall()
+            invites = conn.execute('SELECT 1 FROM match_invites WHERE match_id = ? AND status = ?', (match_id, 'pending')).fetchall()
+            
             submissions = conn.execute('SELECT user_id FROM private_match_turns WHERE match_id = ? AND round_number = ?', (match_id, round_number)).fetchall()
             submitted_ids = [s['user_id'] for s in submissions]
             
-            print(f"DEBUG: Match {match_id} Round {round_number}. Submitted: {submitted_ids}. Players: {[p['user_id'] for p in players]}")
+            print(f"DEBUG: Match {match_id} Round {round_number}. Submitted: {submitted_ids}. Players: {[p['user_id'] for p in players]}. Pending Invites: {len(invites)}")
 
             humans = [p for p in players if not p['is_ai']]
             ais = [p for p in players if p['is_ai']]
             
-            all_humans_done = all(h['user_id'] in submitted_ids for h in humans)
+            # Only consider humans done if all accepted humans have submitted AND no pending invites remain
+            all_humans_done = all(h['user_id'] in submitted_ids for h in humans) and len(invites) == 0
             
             if all_humans_done and ais:
                 # Generate AI turns

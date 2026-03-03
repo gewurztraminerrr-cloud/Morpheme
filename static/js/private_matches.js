@@ -258,7 +258,7 @@
                     <p style="font-size:0.85em; opacity:0.85; line-height:1.4;">
                         <strong>Board:</strong> ${m.parameters.board_dimensions || '4x4'} | <strong>Time:</strong> ${m.parameters.time_limit || 60}s | <strong>Dict:</strong> ${m.parameters.dictionary || 'NWL'}<br>
                         <strong>Rules:</strong> Min ${m.parameters.min_word_length || 3}L, Bonus ${m.parameters.bonus_word_length || 'None'}<br>
-                        <strong>Style:</strong> ${m.parameters.difficulty || 'Normal'}, ${m.parameters.board_format || 'Normal'}, Range: ${(() => {
+                        <strong>Style:</strong> ${m.parameters.difficulty === 'Normal' ? 'Medium' : (m.parameters.difficulty || 'Medium')}, ${m.parameters.board_format || 'Normal'}, Range: ${(() => {
                 let wr = m.parameters.word_count_range;
                 if (Array.isArray(wr)) {
                     if (wr[1] > 900) return wr[0] + '+';
@@ -276,7 +276,7 @@
                 <div class="match-actions">
                     ${!isHistory ? `<button class="sf-action-btn" onclick="window.launchPrivateMatch(${m.id})">Play Turn</button>` : ''}
                     ${isHistory ? `<button class="rematch-btn" onclick="window.rematchPrivate(${m.id})">Rematch</button>` : ''}
-                    <button class="replay-btn-friends" onclick="window.showPrivateHistory(${m.id})">View History</button>
+                    ${isHistory ? `<button class="replay-btn-friends" onclick="window.showPrivateHistory(${m.id})">View History</button>` : ''}
                 </div>
             </div>
         `).join('');
@@ -296,8 +296,8 @@
                     <h4>Invite from ${inv.sender_name}</h4>
                     <p style="font-size:0.85em; opacity:0.85; line-height:1.4;">
                         <strong>Board:</strong> ${inv.parameters.board_dimensions || '4x4'} | <strong>Time:</strong> ${inv.parameters.time_limit || 60}s | <strong>Dict:</strong> ${inv.parameters.dictionary || 'NWL'}<br>
-                        <strong>Rules:</strong> Min ${inv.parameters.min_word_length || 3}L, Bonus ${inv.parameters.bonus_word_length || 'None'}<br>
-                        <strong>Style:</strong> ${inv.parameters.difficulty || 'Normal'}, ${inv.parameters.board_format || 'Normal'}, Range: ${(() => {
+                        <strong>Rules:</strong> Min ${inv.parameters.min_word_length || 3}L | Bonus ${inv.parameters.bonus_word_length || 'None'}<br>
+                        <strong>Style:</strong> ${inv.parameters.difficulty === 'Normal' ? 'Medium' : (inv.parameters.difficulty || 'Medium')}, ${inv.parameters.board_format || 'Normal'}, Range: ${(() => {
                 let wr = inv.parameters.word_count_range;
                 if (Array.isArray(wr)) {
                     if (wr[1] > 900) return wr[0] + '+';
@@ -359,22 +359,32 @@
                 parameters: data.parameters,
                 board: data.board,
                 bonus_word: data.bonus_word,
-                end_time: data.end_time || (Date.now() / 1000 + data.parameters.time_limit)
+                end_time: (data.time_remaining !== undefined) ? (Date.now() / 1000 + data.time_remaining) : (data.end_time || (Date.now() / 1000 + data.parameters.time_limit))
             }));
 
             // Navigate to play page
             if (window.navigateToPage) window.navigateToPage('play');
 
             // Start game
-            // if (window.initPrivateMatchPlay) window.initPrivateMatchPlay();
+            if (window.startGamePolling) window.startGamePolling();
         } catch (e) {
             console.error(e);
         }
     };
 
-    window.rematchPrivate = async (matchId) => {
-        if (!confirm("Start a new match with the same players and settings?")) return;
+    window.rematchPrivate = (matchId) => {
+        if (window.showConfirmModal) {
+            window.showConfirmModal("Rematch", "Start a new match with the same players and settings?", async () => {
+                await executeRematch(matchId);
+            });
+        } else {
+            if (confirm("Start a new match with the same players and settings?")) {
+                executeRematch(matchId);
+            }
+        }
+    };
 
+    async function executeRematch(matchId) {
         try {
             const res = await fetch('/api/private-match/rematch', {
                 method: 'POST',
@@ -384,17 +394,23 @@
             const data = await res.json();
 
             if (data.success) {
-                alert("New match created! Check 'Your Turn'.");
+                // Fetch matches again immediately without alerting first so UI updates safely
                 loadPrivateMatches();
-                // Optionally auto-launch: window.launchPrivateMatch(data.new_match_id);
+                if (window.showAlertModal) {
+                    window.showAlertModal("Success", "New match created! Check 'Your Turn'.");
+                } else {
+                    alert("New match created! Check 'Your Turn'.");
+                }
             } else {
-                alert("Error starting rematch: " + (data.error || 'Unknown'));
+                if (window.showAlertModal) window.showAlertModal("Error", "Error starting rematch: " + (data.error || 'Unknown'));
+                else alert("Error starting rematch: " + (data.error || 'Unknown'));
             }
         } catch (e) {
             console.error(e);
-            alert("Error connecting to server.");
+            if (window.showAlertModal) window.showAlertModal("Error", "Error connecting to server.");
+            else alert("Error connecting to server.");
         }
-    };
+    }
 
     window.showPrivateHistory = async (matchId) => {
         try {

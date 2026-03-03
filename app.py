@@ -1149,14 +1149,18 @@ def cleanup_user_rooms(user_id, exclude_room_id=None):
         room.remove_player(user_id)
 
 def cleanup_user_rooms_entirely(user_id):
-    """FORCED removal from ALL rooms (including 24h) - used for Logout"""
+    """FORCED removal from ALL rooms (skipping 24h for persistence) - used for Logout"""
     for rid in list(room_manager.rooms.keys()):
         room = room_manager.rooms[rid]
         
+        # PERSISTENCE: Skip removal for 24h rooms on logout
+        if room.time_limit >= 7200:
+            continue
+            
         # Apply leave penalty if applicable (non-24h only)
         apply_leave_penalty(user_id, room)
 
-        # Force removal from players (Bypasses 24h persistence)
+        # Force removal from players
         room.remove_player(user_id, force=True)
 
 @app.route('/api/room/create', methods=['POST'])
@@ -1672,25 +1676,39 @@ DEFINITIONS_CACHE = None
 
 def load_definitions():
     global DEFINITIONS_CACHE
-    if DEFINITIONS_CACHE is not None:
+    # Skip reload only if cache is already populated
+    if DEFINITIONS_CACHE:
         return
 
     DEFINITIONS_CACHE = {}
+
+    # Search multiple locations for the definitions file
+    search_paths = [
+        os.path.expanduser('~/Desktop/Definitions.txt'),
+        os.path.join(os.path.dirname(__file__), 'dictionaries', 'Definitions.txt'),
+        os.path.join(os.path.dirname(__file__), 'Definitions.txt'),
+    ]
+
+    definitions_path = None
+    for path in search_paths:
+        if os.path.exists(path):
+            definitions_path = path
+            break
+
+    if not definitions_path:
+        print(f"Definitions file not found. Searched: {search_paths}")
+        return
+
     try:
-        definitions_path = os.path.expanduser('~/Desktop/Definitions.txt')
-        if os.path.exists(definitions_path):
-            print(f"Loading definitions from {definitions_path}...")
-            with open(definitions_path, 'r', encoding='utf-8', errors='ignore') as f:
-                for line in f:
-                    parts = line.split(' - ', 1)
-                    if len(parts) == 2:
-                        word = parts[0].strip()
-                        definition = parts[1].strip()
-                        DEFINITIONS_CACHE[word] = definition
-            print(f"Loaded {len(DEFINITIONS_CACHE)} definitions")
-        else:
-            print(f"Definitions file not found at {definitions_path}")
-            DEFINITIONS_CACHE = {}
+        print(f"Loading definitions from {definitions_path}...")
+        with open(definitions_path, 'r', encoding='utf-8', errors='ignore') as f:
+            for line in f:
+                parts = line.split(' - ', 1)
+                if len(parts) == 2:
+                    word = parts[0].strip().upper()
+                    definition = parts[1].strip()
+                    DEFINITIONS_CACHE[word] = definition
+        print(f"Loaded {len(DEFINITIONS_CACHE)} definitions")
     except Exception as e:
         print(f"Error loading definitions: {e}")
         DEFINITIONS_CACHE = {}
@@ -1700,10 +1718,11 @@ def get_definition():
     word = request.args.get('word', '').upper()
     if not word:
         return jsonify({'error': 'Word parameter required'}), 400
-    
-    if DEFINITIONS_CACHE is None:
+
+    # Always try to load if cache is empty (handles late file placement)
+    if not DEFINITIONS_CACHE:
         load_definitions()
-    
+
     definition = DEFINITIONS_CACHE.get(word)
     if definition:
         return jsonify({'word': word, 'definition': definition})
@@ -1759,21 +1778,35 @@ def submit_contact():
 TOOLS_DICT_CACHE = {}
 
 def load_tools_dictionary(dict_name):
-    """Load dictionary for tools into memory cache"""
-    if dict_name in TOOLS_DICT_CACHE:
-        return TOOLS_DICT_CACHE[dict_name]
-    
+    """Load dictionary for tools into memory cache.
+    Always merges the 16+ supplementary word list (16plus.txt) into the result
+    so every tool/API route automatically includes long words."""
+    cache_key = dict_name
+    if cache_key in TOOLS_DICT_CACHE:
+        return TOOLS_DICT_CACHE[cache_key]
+
     dict_path = os.path.join(os.path.dirname(__file__), 'dictionaries', f'{dict_name}.txt')
     try:
         print(f"[Tools] Loading dictionary: {dict_path}")
         with open(dict_path, 'r') as f:
             words = set(word.strip().upper() for word in f)
-        TOOLS_DICT_CACHE[dict_name] = words
         print(f"[Tools] Loaded {len(words)} words from {dict_name}")
-        return words
     except FileNotFoundError:
         print(f"[Tools] Dictionary file not found: {dict_path}")
-        return set()
+        words = set()
+
+    # Merge supplementary 16+ word list
+    long_path = os.path.join(os.path.dirname(__file__), 'dictionaries', '16plus.txt')
+    try:
+        with open(long_path, 'r') as f:
+            long_words = {line.strip().upper() for line in f if line.strip()}
+        words = words | long_words
+        print(f"[Tools] Merged {len(long_words)} supplementary 16+ words into {dict_name}")
+    except FileNotFoundError:
+        print(f"[Tools] 16plus.txt not found – skipping supplementary merge")
+
+    TOOLS_DICT_CACHE[cache_key] = words
+    return words
 
 def get_lis(nums):
     """Calculates Longest Increasing Subsequence length."""
@@ -3291,7 +3324,7 @@ def get_private_match_status(match_id):
     
     # Merge round-specific parameters if available
     params = json.loads(m['parameters'])
-    if r.get('word_count_range'):
+    if r['word_count_range']:
         try:
             params['word_count_range'] = json.loads(r['word_count_range'])
         except:
@@ -3302,6 +3335,8 @@ def get_private_match_status(match_id):
     start_time = private_match_manager.record_start_time(match_id, round_num, session['user_id'])
     time_limit = params.get('time_limit', 60)
     calculated_end_time = start_time + time_limit
+    now = time.time()
+    time_remaining = max(0, calculated_end_time - now)
 
     return jsonify({
         'match_id': match_id,
@@ -3309,7 +3344,8 @@ def get_private_match_status(match_id):
         'parameters': params,
         'board': json.loads(r['board_data']),
         'bonus_word': r['bonus_word'],
-        'end_time': calculated_end_time
+        'end_time': calculated_end_time,
+        'time_remaining': time_remaining
     })
 
 @app.route('/api/private-match/submit', methods=['POST'])

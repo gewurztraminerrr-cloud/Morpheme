@@ -293,10 +293,9 @@
                             <div class="config-group">
                                 <label>Difficulty</label>
                                 <select id="sf-config-difficulty">
-                                    <option value="Normal">Normal</option>
                                     <option value="Easy">Easy</option>
+                                    <option value="Medium" selected>Medium</option>
                                     <option value="Hard">Hard</option>
-                                    <option value="Expert">Expert</option>
                                 </select>
                             </div>
                             <div class="config-group">
@@ -2844,7 +2843,32 @@
             </div>
         </div>
     </div>
+    </div>
 
+    <!-- Generic Confirm Modal -->
+    <div id="generic-confirm-modal" class="modal-overlay hidden"
+        style="z-index: 10000; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none;">
+        <div class="achievement-card"
+            style="max-width: 400px; padding: 0; overflow: hidden; display: flex; flex-direction: column; background: var(--bg-panel); border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <div class="modal-header"
+                style="padding: 20px; border-bottom: 1px solid var(--input-border); display: flex; justify-content: space-between; align-items: center; background: var(--input-bg);">
+                <h2 id="generic-confirm-title" style="margin: 0; font-size: 1.2rem; color: var(--text-primary);">Confirm
+                </h2>
+                <button class="close-overlay" id="close-generic-confirm"
+                    style="position: static; transform: none; background: transparent; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <div id="generic-confirm-body"
+                style="max-height: 400px; overflow-y: auto; padding: 20px; text-align: center; color: var(--text-primary); font-size: 1.1rem; flex: 1; scrollbar-width: thin;">
+                <!-- Content injected here -->
+            </div>
+            <div
+                style="padding: 15px; display: flex; justify-content: flex-end; gap: 10px; background: var(--bg-panel); border-top: 1px solid var(--input-border);">
+                <button id="generic-confirm-cancel" class="sf-action-btn"
+                    style="background: var(--bg-element); border: 1px solid var(--input-border); color: var(--text-secondary);">Cancel</button>
+                <button id="generic-confirm-ok" class="sf-action-btn">Confirm</button>
+            </div>
+        </div>
+    </div>
     <!-- Image Lightbox Modal -->
     <div id="image-lightbox-modal" class="image-lightbox-overlay hidden">
         <div class="image-lightbox-content">

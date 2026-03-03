@@ -90,8 +90,17 @@ function startPolling() {
         clearInterval(pollInterval);
     }
 
-    // Reset Chat for new room
+    // Reset UI and globals for new room
     resetChat();
+    isPrivateMatchPlay = false;
+    isTournamentPlay = false;
+    privateMatchWords = [];
+    privateMatchScore = 0;
+    tournamentWords = [];
+    tournamentScore = 0;
+    lastPlayersHtml = null; // Force player list re-render
+    lastRenderedBoardJSON = null; // Force board re-render
+
 
     console.log('[play.js] Setting up interval to call updateGameState');
     pollInterval = setInterval(updateGameState, 1000); // 1 second polling
@@ -1355,9 +1364,19 @@ function updateParameters(state) {
     const timerVal = document.getElementById('timer-value');
     if (timerVal) {
         const seconds = state.time_remaining || state.timer || 0;
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        timerVal.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+        let display;
+        if (seconds >= 3600) {
+            const hours = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            display = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        } else {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            display = `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+        timerVal.textContent = display;
+        timerVal.style.fontVariantNumeric = 'tabular-nums';
     }
 
     // Update Title
@@ -1383,7 +1402,16 @@ function updateParameters(state) {
     if (bonusLen) bonusLen.textContent = (sp.bonus_word_length || state.bonus_word_length || 'None') + (sp.bonus_word_length ? 'L' : '');
 
     const diff = document.getElementById('param-diff');
-    if (diff) diff.textContent = sp.difficulty || state.difficulty || 'Normal';
+    if (diff) {
+        let val = sp.difficulty || state.difficulty || 'Medium';
+        if (val === 'Normal') {
+            val = 'Medium';
+        } else if (val === 'Expert') {
+            // For consistency with Solo/Friends requests
+            val = 'Hard';
+        }
+        diff.textContent = val;
+    }
 
     const minL = document.getElementById('param-min');
     if (minL) minL.textContent = (sp.min_word_length || state.min_word_length || '3') + 'L';
@@ -1462,7 +1490,7 @@ function updateLocalTimer() {
 
     // Format determination
     let is24h = false;
-    if (window.lastGameState && window.lastGameState.time_limit >= 120) {
+    if (window.lastGameState && window.lastGameState.time_limit >= 3600) {
         is24h = true;
     }
 
@@ -1481,6 +1509,7 @@ function updateLocalTimer() {
     if (cachedTimerValueEl) {
         if (cachedTimerValueEl.textContent !== display) {
             cachedTimerValueEl.textContent = display;
+            cachedTimerValueEl.style.fontVariantNumeric = 'tabular-nums';
         }
 
         // Freeze detection
@@ -1531,6 +1560,7 @@ function updateSpecialMatchTimer(seconds) {
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+        timerEl.style.fontVariantNumeric = 'tabular-nums';
     }
 }
 
@@ -2933,8 +2963,7 @@ async function handleTournamentWord(word) {
 
     const path = findWordPathOnBoard(word, board);
     if (!path) {
-        alert('Word Invalid: Not on Board');
-        exitTournamentPlay();
+        showValidationFeedback(`${word} is invalid.`, false);
         return;
     }
 
@@ -2948,8 +2977,7 @@ async function handleTournamentWord(word) {
         });
         const data = await resp.json();
         if (!data.is_valid) {
-            alert('Word Invalid: Not in Dictionary');
-            exitTournamentPlay();
+            showValidationFeedback(`${word} is invalid.`, false);
             return;
         }
     } catch (e) {
@@ -2959,8 +2987,7 @@ async function handleTournamentWord(word) {
     // Check length
     const minLen = window.tournamentParams ? window.tournamentParams.min_word_length : 3;
     if (word.length < minLen) {
-        alert(`Word Invalid: Too short (min ${minLen})`);
-        exitTournamentPlay();
+        showValidationFeedback(`${word} is invalid.`, false);
         return;
     }
 
@@ -3055,7 +3082,9 @@ function exitTournamentPlay() {
 
 // --- PRIVATE MATCH PLAY LOGIC ---
 window.initPrivateMatchPlay = function () {
+    console.log('[play.js] initPrivateMatchPlay() START');
     isPrivateMatchPlay = true;
+    isBoardRotated = false; // RESET: Ensure board isn't flipped 180 from a previous public game
     isTournamentPlay = false;
     privateMatchWords = [];
     privateMatchScore = 0;
@@ -3071,6 +3100,7 @@ window.initPrivateMatchPlay = function () {
     const mockState = {
         board: activeMatch.board,
         state: 'active',
+        round: activeMatch.round,
         game_type: 'private',
         board_dimensions: activeMatch.parameters.board_dimensions,
         time_limit: activeMatch.parameters.time_limit,
@@ -3078,7 +3108,10 @@ window.initPrivateMatchPlay = function () {
     };
     window.lastGameState = mockState;
     lastRenderedBoardJSON = null; // Force re-render
+
+    console.log('[play.js] Rendering private match board:', activeMatch.board);
     renderBoard(activeMatch.board, false);
+
     updateParameters(mockState);
     resetPlayUI();
 
@@ -3117,7 +3150,7 @@ window.initPrivateMatchPlay = function () {
             <div class="player-card active" style="border-left: 4px solid var(--accent-color);">
                 <div class="player-info">
                     <div class="username">PRIVATE MATCH</div>
-                    <div class="score">Round ${activeMatch.current_round}</div>
+                    <div class="score">Round ${activeMatch.round}</div>
                 </div>
             </div>
         `;
@@ -3130,16 +3163,26 @@ function startPrivateMatchTimer(endTime) {
     if (timerInterval) clearInterval(timerInterval);
 
     const timerEl = document.getElementById('timer-value');
+    console.log('[play.js] Starting private match timer for endTime:', endTime);
 
     timerInterval = setInterval(() => {
-        const remaining = Math.max(0, Math.floor(endTime - Date.now() / 1000));
+        const now = Date.now() / 1000;
+        const remaining = Math.max(0, Math.floor(endTime - now));
         const mins = Math.floor(remaining / 60);
         const secs = remaining % 60;
-        if (timerEl) timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+        if (timerEl) {
+            timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            timerEl.style.fontVariantNumeric = 'tabular-nums';
+        }
 
         if (remaining <= 0) {
+            console.log('[play.js] Private match timer reached 0! Triggering auto-finish.');
             clearInterval(timerInterval);
-            finishPrivateMatchTurn();
+
+            // Tiny delay to ensure user actually sees the 0:00
+            setTimeout(() => {
+                finishPrivateMatchTurn();
+            }, 500);
         }
     }, 1000);
 }
@@ -3233,13 +3276,16 @@ async function handlePrivateMatchWord(word) {
 }
 
 async function finishPrivateMatchTurn() {
+    console.log('[play.js] finishPrivateMatchTurn() called');
     const activeMatch = JSON.parse(localStorage.getItem('private_match_active'));
     if (!activeMatch) {
+        console.warn('[play.js] finishPrivateMatchTurn: No activeMatch found');
         exitPrivateMatchPlay();
         return;
     }
 
     try {
+        console.log('[play.js] Submitting turn for match:', activeMatch.mid, 'Round:', activeMatch.round);
         const resp = await fetch('/api/private-match/submit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

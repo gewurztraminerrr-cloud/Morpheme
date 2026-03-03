@@ -18,7 +18,7 @@ let currentTournamentState = null;
 
 async function fetchTournamentStatus() {
     try {
-        const response = await fetch('/api/tournament/status');
+        const response = await fetch('/api/tournament/status', { cache: 'no-store' });
         if (!response.ok) throw new Error("Failed to fetch status");
 
         const data = await response.json();
@@ -249,8 +249,8 @@ function renderSignupState(container, data, userStatus) {
 function renderActiveState(container, data, userStatus) {
     if (userStatus.status === 'eliminated') {
         container.innerHTML = `
-            <div style="font-size:1.5rem; color:#e74c3c; font-weight:700; margin-bottom:10px;">ELIMINATED</div>
-            <p style="opacity:0.8;">You fought well, but have been eliminated from this tournament. Keep practicing for the next one!</p>
+            <div style="font-size:2.5rem; color:#e74c3c; font-weight:900; margin-bottom:20px; text-shadow: 0 0 20px rgba(231, 76, 60, 0.4);">YOU LOST</div>
+            <p style="font-size:1.2rem; opacity:0.9; line-height:1.6;">You fought well, but have been eliminated from this tournament. Keep practicing for the next one! You can still watch replays in the leaderboard below.</p>
         `;
         return;
     }
@@ -264,7 +264,17 @@ function renderActiveState(container, data, userStatus) {
     }
 
     // Active User
-    container.innerHTML = `<h2 style="margin-bottom:20px; text-align:left;">Round ${data.current_round}</h2>`;
+    if (data.current_round > 1) {
+        container.innerHTML = `
+            <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid #2ecc71; border-radius: 15px; padding: 25px; margin-bottom: 30px; text-align: center; animation: pulse 2s infinite;">
+                <div style="font-size:1.8rem; color:#2ecc71; font-weight:800; margin-bottom:5px;">YOU ARE ADVANCING!</div>
+                <div style="font-size:1.2rem; opacity:0.8;">Congratulations on surviving Round ${data.current_round - 1}</div>
+            </div>
+            <h2 style="margin-bottom:20px; text-align:left;">Round ${data.current_round}</h2>
+        `;
+    } else {
+        container.innerHTML = `<h2 style="margin-bottom:20px; text-align:left;">Round ${data.current_round}</h2>`;
+    }
 
     if (userStatus.has_turn) {
         const btn = document.createElement('button');
@@ -275,7 +285,6 @@ function renderActiveState(container, data, userStatus) {
         btn.style.background = '#2ecc71';
         btn.textContent = 'PLAY YOUR TURN';
         btn.onclick = () => {
-            // We'll use a special flag or route to launch the tournament game
             launchTournamentGame(data.id, data.current_round);
         };
         container.appendChild(btn);
@@ -288,8 +297,10 @@ function renderActiveState(container, data, userStatus) {
         container.appendChild(note);
     } else {
         container.innerHTML += `
-            <div style="font-size:1.2rem; color:#f39c12; font-weight:700; margin-bottom:10px;">SCORE SUBMITTED</div>
-            <p style="opacity:0.8;">You have completed your turn for this round. Stay tuned! Results will be processed when the round ends.</p>
+            <div style="background: rgba(243, 156, 18, 0.1); border: 1px solid #f39c12; border-radius: 12px; padding: 20px; text-align: center;">
+                <div style="font-size:1.5rem; color:#f39c12; font-weight:800; margin-bottom:10px;">WAITING FOR OPPONENT</div>
+                <p style="opacity:0.9;">You have completed your turn for this round. Stay tuned! Results will be processed when the round ends.</p>
+            </div>
         `;
     }
 }

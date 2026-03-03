@@ -628,8 +628,11 @@ body {
 
 .logo-icon {
     height: 36px;
-    width: auto;
+    width: 36px;
     align-self: center;
+    border-radius: 50%;
+    overflow: hidden;
+    object-fit: cover;
 }
 
 .logo-text {

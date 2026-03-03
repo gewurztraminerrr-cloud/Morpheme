@@ -310,8 +310,8 @@ class BoardGenerator:
         # Calculate search limits based on board size
         board_size = rows * cols
         
-        # Exhaustive search - find ALL words (max 15 letters)
-        max_word_length = 15
+        # Exhaustive search - find ALL words (max 25 letters to cover 16+ supplementary list)
+        max_word_length = 25
         
         # Higher targets to find ALL words (not just 30)
         if board_size <= 16:  # 4x4

@@ -191,22 +191,12 @@
 
 #rooms-list .placeholder-icon {
     display: block;
-    width: 120px;
+    width: 200px;
+    max-width: 80%;
     height: auto;
     margin: 30px auto;
-    opacity: 0.15;
-    filter: invert(1) brightness(2);
-    /* Make it look like a watermark on dark themes */
-}
-
-/* Theme adjustment for light themes */
-[class*="theme-white"] #rooms-list .placeholder-icon,
-[class*="theme-light-"] #rooms-list .placeholder-icon,
-body.theme-yellow #rooms-list .placeholder-icon,
-body.theme-pink #rooms-list .placeholder-icon,
-body.theme-orange #rooms-list .placeholder-icon {
-    filter: invert(0);
-    opacity: 0.1;
+    border-radius: 50%;
+    overflow: hidden;
 }
 
 /* Room Item Styling - "Pretty" */

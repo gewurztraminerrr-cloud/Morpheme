@@ -1057,31 +1057,40 @@ class RoomManager:
         last_seen = self.user_presence.get(uid_str, 0)
         is_online = (now - last_seen) < 75 # 75 seconds (reduced for better accuracy)
         
-        # Search for active room
+        # Search for active room - Priority to most recently active
+        best_match = None
+        max_active = -1
+        
         for room in self.rooms.values():
             # Check players
             for p in room.players:
                 if str(p.user_id) == uid_str:
-                    # If in a room, they are definitely online
-                    return {
-                        'room_id': room.room_id,
-                        'is_online': True,
-                        'is_spectator': False,
-                        'game_type': room.game_type,
-                        'board_dimensions': room.board_dimensions,
-                        'time_limit': room.time_limit
-                    }
+                    if p.last_active > max_active:
+                        max_active = p.last_active
+                        best_match = {
+                            'room_id': room.room_id,
+                            'is_online': True,
+                            'is_spectator': False,
+                            'game_type': room.game_type,
+                            'board_dimensions': room.board_dimensions,
+                            'time_limit': room.time_limit
+                        }
             # Check spectators
             for s in room.spectators:
                 if str(s.user_id) == uid_str:
-                    return {
-                        'room_id': room.room_id,
-                        'is_online': True,
-                        'is_spectator': True,
-                        'game_type': room.game_type,
-                        'board_dimensions': room.board_dimensions,
-                        'time_limit': room.time_limit
-                    }
+                    if s.last_active > max_active:
+                        max_active = s.last_active
+                        best_match = {
+                            'room_id': room.room_id,
+                            'is_online': True,
+                            'is_spectator': True,
+                            'game_type': room.game_type,
+                            'board_dimensions': room.board_dimensions,
+                            'time_limit': room.time_limit
+                        }
+        
+        if best_match:
+            return best_match
         
         # Not in a room, but might still be online (Lobby/Profile)
         if is_online:

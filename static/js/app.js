@@ -613,6 +613,7 @@ function navigateToPage(pageName) {
     showPage('page-' + pageName);
     if (btn) updateActiveNav(btn);
 }
+window.navigateToPage = navigateToPage;
 
 function updateActiveNav(activeBtn) {
     // Whenever navigation changes, update states
@@ -917,6 +918,42 @@ window.showAlertModal = function (title, message) {
         modal.style.display = 'flex';
     } else {
         alert(message);
+    }
+};
+
+window.showConfirmModal = function (title, message, onConfirm) {
+    const modal = document.getElementById('generic-confirm-modal');
+    const titleEl = document.getElementById('generic-confirm-title');
+    const bodyEl = document.getElementById('generic-confirm-body');
+    const cancelBtn = document.getElementById('generic-confirm-cancel');
+    const okBtn = document.getElementById('generic-confirm-ok');
+
+    if (modal && titleEl && bodyEl && cancelBtn && okBtn) {
+        titleEl.textContent = title;
+        bodyEl.innerHTML = `<p style="white-space: pre-wrap; margin: 0;">${message}</p>`;
+
+        const cleanup = () => {
+            modal.style.display = 'none';
+            modal.classList.add('hidden');
+            cancelBtn.onclick = null;
+            okBtn.onclick = null;
+        };
+
+        cancelBtn.onclick = () => { cleanup(); };
+        document.getElementById('close-generic-confirm').onclick = () => { cleanup(); };
+
+        okBtn.onclick = () => {
+            cleanup();
+            if (onConfirm) onConfirm();
+        };
+
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    } else {
+        // Fallback to native confirm if modal isn't injected yet
+        if (confirm(message)) {
+            if (onConfirm) onConfirm();
+        }
     }
 };
 
