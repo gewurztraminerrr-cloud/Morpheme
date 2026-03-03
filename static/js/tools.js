@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupMiniProfileModal();
     setupImageLightbox();
     setupUnscrambleTool();
+    setupPersonalTimer();
 });
 
 function setupToolsNavigation() {
@@ -176,7 +177,28 @@ async function showMiniProfile(username) {
         document.getElementById('mini-profile-games').innerText = data.games_played || 0;
         document.getElementById('mini-profile-wins').innerText = data.wins || 0;
         document.getElementById('mini-profile-age').innerText = data.age || '-';
-        // document.getElementById('mini-profile-gender').innerText = data.gender || '-';
+
+        // Render Joined Date
+        const joinedEl = document.getElementById('mini-profile-joined');
+        if (joinedEl && data.created_at) {
+            const joinedDate = new Date(data.created_at);
+            const now = new Date();
+            const years = now.getFullYear() - joinedDate.getFullYear();
+            const months = (now.getMonth() + 1) - (joinedDate.getMonth() + 1) + (years * 12);
+
+            let durationStr = '';
+            if (months >= 12) {
+                const y = Math.floor(months / 12);
+                const m = months % 12;
+                durationStr = `${y}y${m > 0 ? ` ${m}m` : ''}`;
+            } else {
+                durationStr = months > 0 ? `${months}m` : '< 1m';
+            }
+
+            joinedEl.innerText = `${joinedDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} (${durationStr})`;
+        } else if (joinedEl) {
+            joinedEl.innerText = "Joined: -";
+        }
 
         const maxPeEl = document.getElementById('mini-profile-max-pe');
         if (maxPeEl) maxPeEl.innerText = data.max_pe ? `${data.max_pe.toFixed(2)}x` : '-';
@@ -950,6 +972,28 @@ async function renderProfile(user) {
     if (quoteEl) quoteEl.innerText = user.quote || 'Enter a personal quote';
     if (descriptionEl) descriptionEl.innerText = user.description || 'Add a detailed description about yourself...';
 
+    // Registration Date
+    const joinedValEl = document.getElementById('profile-joined-val');
+    if (joinedValEl && user.created_at) {
+        const joinedDate = new Date(user.created_at);
+        const now = new Date();
+        const years = now.getFullYear() - joinedDate.getFullYear();
+        const months = (now.getMonth() + 1) - (joinedDate.getMonth() + 1) + (years * 12);
+
+        let durationStr = '';
+        if (months >= 12) {
+            const y = Math.floor(months / 12);
+            const m = months % 12;
+            durationStr = `${y} year${y > 1 ? 's' : ''}${m > 0 ? ` ${m} month${m > 1 ? 's' : ''}` : ''}`;
+        } else {
+            durationStr = months > 0 ? `${months} month${months > 1 ? 's' : ''}` : 'Less than 1 month';
+        }
+
+        joinedValEl.innerText = `${joinedDate.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })} (${durationStr})`;
+    } else if (joinedValEl) {
+        joinedValEl.innerText = '-';
+    }
+
     // Proof of Legitimacy Rendering
     const proofLink = document.getElementById('profile-proof-link');
     const proofPlaceholder = document.getElementById('profile-proof-placeholder');
@@ -1437,10 +1481,16 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     };
 
     const showAllWords = () => {
-        // Show in chronological order (Order Found) as requested
-        // Previously reversed (Newest First), now standard (Oldest First)
+        // Default: Show in chronological order (Order Found)
+        let displayWords = [...sortedWords];
+
+        // USER REQUEST: For "With Friends" (Private) history, sort by length (Biggest first)
+        if (roomId && String(roomId).startsWith('private_')) {
+            displayWords.sort((a, b) => b.word.length - a.word.length || a.word.localeCompare(b.word));
+        }
+
         if (walkthroughList) {
-            walkthroughList.innerHTML = sortedWords.map(w => renderWord(w)).join('');
+            walkthroughList.innerHTML = displayWords.map(w => renderWord(w)).join('');
             if (sortedWords.length === 0) {
                 walkthroughList.innerHTML = '<p class="placeholder" style="color:rgba(255,255,255,0.2); text-align:center; padding:40px;">No words found in this round.</p>';
             }
@@ -2468,21 +2518,21 @@ function revealManualWords() {
         resultsContainer.innerHTML = '<div class="seq-results-placeholder">No words found on this board.</div>';
     } else {
         let html = `
-            <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2);">
+            <div style="padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); font-weight: 700; color: #4facfe; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem;">
                 Found ${manualSolvedWords.length} words
             </div>
-            <div style="flex: 1; overflow-y: auto; padding: 10px;">
-                <table class="group-table" style="width: 100%;">
-                    <tbody>
+            <div style="flex: 1; overflow-y: auto; padding: 20px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px;">
         `;
 
         html += manualSolvedWords.map(w => `
-            <tr><td style="padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.9); font-family: monospace;">${w}</td></tr>
+            <div style="padding: 8px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: rgba(255,255,255,0.9); font-family: 'JetBrains Mono', monospace; text-align: center; font-size: 1rem; transition: background 0.2s; cursor: default;">
+                ${w}
+            </div>
         `).join('');
 
         html += `
-                    </tbody>
-                </table>
+                </div>
             </div>
         `;
         resultsContainer.innerHTML = html;
@@ -2560,12 +2610,15 @@ function setupWotdTool() {
     // This is mainly for manual navigation/initialization
 }
 
+let lastWotdDate = null;
+
 async function updateWotd() {
     const displayEl = document.getElementById('wotd-display');
     if (!displayEl) return;
 
-    // Only fetch if empty to avoid redundant calls on every toggle
-    if (displayEl.innerText.trim() !== '') return;
+    // Only skip if we already have the word for TODAY
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (displayEl.innerText.trim() !== '' && lastWotdDate === todayStr) return;
 
     displayEl.innerHTML = '<span style="font-size: 1.5rem; opacity: 0.5;">Loading...</span>';
 
@@ -2579,6 +2632,7 @@ async function updateWotd() {
         }
 
         displayEl.innerText = data.word;
+        lastWotdDate = data.date; // Use the date confirmed by the server
         const defEl = document.getElementById('wotd-definition');
         if (defEl) {
             defEl.innerText = data.definition || "No definition available.";
@@ -2702,6 +2756,10 @@ async function runValidationCheck() {
 
     if (!word) return;
 
+    displayEl.innerText = '';
+    const defEl = document.getElementById('valid-definition-display');
+    if (defEl) defEl.style.opacity = '0';
+
     checkBtn.innerText = "Checking...";
     checkBtn.disabled = true;
 
@@ -2713,9 +2771,11 @@ async function runValidationCheck() {
         });
 
         const data = await response.json();
+        const defEl = document.getElementById('valid-definition-display');
 
         if (data.error) {
             displayEl.innerHTML = `<span style="font-size: 1.5rem; color: #f43f5e;">${data.error}</span>`;
+            if (defEl) defEl.style.opacity = '0';
             return;
         }
 
@@ -2729,6 +2789,20 @@ async function runValidationCheck() {
         displayEl.classList.remove('random-word-large');
         void displayEl.offsetWidth;
         displayEl.classList.add('random-word-large');
+
+        // Handle definition
+        if (defEl) {
+            if (data.is_valid && data.definition) {
+                defEl.innerText = data.definition;
+                setTimeout(() => {
+                    defEl.style.transition = 'opacity 0.5s ease';
+                    defEl.style.opacity = '1';
+                }, 100);
+            } else {
+                defEl.style.opacity = '0';
+                setTimeout(() => defEl.innerText = '', 500);
+            }
+        }
 
     } catch (err) {
         console.error("Validation check failed:", err);
@@ -3472,3 +3546,83 @@ function renderUnscrambleFound(revealMissed = false) {
     list.innerHTML = html;
 }
 
+// ==========================================
+// PERSONAL TIMER
+// ==========================================
+let personalTimerInterval = null;
+let personalTimerSeconds = 0;
+
+function setupPersonalTimer() {
+    const startBtn = document.getElementById('timer-start-btn');
+    const stopBtn = document.getElementById('timer-stop-btn');
+    const displayContainer = document.getElementById('timer-display-container');
+    const displayLabel = document.getElementById('timer-countdown-display');
+    const hoursInput = document.getElementById('timer-hours');
+    const minutesInput = document.getElementById('timer-minutes');
+    const defPanel = document.querySelector('.definitions-panel');
+    const defContent = document.getElementById('definition-content');
+    const defHeader = document.getElementById('definition-header');
+
+    if (!startBtn) return;
+
+    function formatTime(totalSeconds) {
+        const h = Math.floor(totalSeconds / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = totalSeconds % 60;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    startBtn.addEventListener('click', () => {
+        const h = parseInt(hoursInput.value) || 0;
+        const m = parseInt(minutesInput.value) || 0;
+        const totalSecs = (h * 3600) + (m * 60);
+
+        if (totalSecs <= 0) {
+            alert('Please set a valid duration.');
+            return;
+        }
+
+        personalTimerSeconds = totalSecs;
+
+        // UI Update
+        startBtn.style.display = 'none';
+        stopBtn.style.display = 'block';
+        displayContainer.style.display = 'block';
+        displayLabel.textContent = formatTime(personalTimerSeconds);
+        hoursInput.disabled = true;
+        minutesInput.disabled = true;
+
+        // Reset any previous flashing
+        if (defPanel) defPanel.classList.remove('timer-flash');
+
+        clearInterval(personalTimerInterval);
+        personalTimerInterval = setInterval(() => {
+            personalTimerSeconds--;
+            if (personalTimerSeconds <= 0) {
+                // Time is up
+                clearInterval(personalTimerInterval);
+                displayLabel.textContent = "00:00:00";
+
+                // Flash definitions panel
+                if (defPanel) {
+                    defPanel.classList.add('timer-flash');
+                    if (defHeader) defHeader.style.display = 'none';
+                    if (defContent) defContent.innerHTML = `<h2 style="text-align:center; margin-top: 50px; font-size: 2rem; color: #fff;">Time is up!</h2>`;
+                }
+            } else {
+                displayLabel.textContent = formatTime(personalTimerSeconds);
+            }
+        }, 1000);
+    });
+
+    stopBtn.addEventListener('click', () => {
+        clearInterval(personalTimerInterval);
+        startBtn.style.display = 'block';
+        stopBtn.style.display = 'none';
+        displayContainer.style.display = 'none';
+        hoursInput.disabled = false;
+        minutesInput.disabled = false;
+
+        if (defPanel) defPanel.classList.remove('timer-flash');
+    });
+}

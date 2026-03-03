@@ -413,8 +413,13 @@
                 <div class="left-panel-container">
                     <div class="players-panel">
                         <h3 id="players-heading">Players</h3>
-                        <button id="find-me-btn" class="find-me-btn" style="display:none;">Find
-                            Me</button>
+                        <div class="player-actions-row">
+                            <button id="find-me-btn" class="find-me-btn" style="display:none;">Find Me</button>
+                            <button id="find-friends-btn" class="find-me-btn" style="display:none;">Find
+                                Friends</button>
+                            <button id="show-everyone-btn" class="find-me-btn" style="display:none;">Show
+                                Everyone</button>
+                        </div>
                         <div id="players-list">
                             <p class="placeholder">Loading...</p>
                         </div>
@@ -791,11 +796,49 @@
                     <button class="tool-nav-btn" data-tool="random">Random Word</button>
                     <button class="tool-nav-btn" data-tool="wotd">Word of the Day</button>
                     <button class="tool-nav-btn" data-tool="unscramble">Unscramble</button>
+                    <button class="tool-nav-btn" data-tool="timer">Personal Timer</button>
                     <!-- Future tools go here -->
                 </div>
 
                 <!-- Content (2/3) -->
                 <div class="tools-content">
+                    <!-- Personal Timer Interface -->
+                    <div id="tool-timer" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Personal Timer</h2>
+                            <p>Set a timer for your play session. When time is up, the definitions panel will flash red
+                                to alert you.</p>
+                        </div>
+                        <div class="combo-control-panel">
+                            <div class="input-row" style="justify-content: center; align-items: center; gap: 15px;">
+                                <div style="display: flex; flex-direction: column; align-items: center;">
+                                    <label for="timer-hours"
+                                        style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 5px;">Hours</label>
+                                    <input type="number" id="timer-hours" placeholder="0" min="0" max="24"
+                                        style="width: 80px; text-align: center;">
+                                </div>
+                                <div style="font-size: 1.5rem; font-weight: bold; margin-top: 15px;">:</div>
+                                <div style="display: flex; flex-direction: column; align-items: center;">
+                                    <label for="timer-minutes"
+                                        style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 5px;">Minutes</label>
+                                    <input type="number" id="timer-minutes" placeholder="0" min="0" max="59"
+                                        style="width: 80px; text-align: center;">
+                                </div>
+                            </div>
+                            <div class="input-row" style="margin-top: 20px;">
+                                <button id="timer-start-btn"
+                                    style="flex: 1; min-width: 150px; background: #00d2ff; color: #000;">Start
+                                    Timer</button>
+                                <button id="timer-stop-btn"
+                                    style="flex: 1; min-width: 150px; background: #ff4d4d; color: #fff; display: none;">Stop
+                                    Timer</button>
+                            </div>
+                        </div>
+                        <div id="timer-display-container" style="text-align: center; margin-top: 30px; display: none;">
+                            <h3 style="font-family: monospace; font-size: 3rem; margin: 0; text-shadow: 0 0 10px rgba(0,210,255,0.5);"
+                                id="timer-countdown-display">00:00:00</h3>
+                        </div>
+                    </div>
                     <!-- Profile Interface -->
                     <div id="tool-profile" class="tool-pane active">
                         <div class="tool-header">
@@ -879,6 +922,12 @@
                                                     <span id="profile-flag-name" class="flag-name-label"></span>
                                                     <span class="meta-label">Location</span>
                                                     <span id="profile-location-val" class="meta-text">-</span>
+                                                </div>
+                                                <div class="meta-item" id="profile-joined-container"
+                                                    title="Joined Morpheme">
+                                                    <span class="meta-icon">🗓️</span>
+                                                    <span class="meta-label">Joined</span>
+                                                    <span id="profile-joined-val" class="meta-text">-</span>
                                                 </div>
                                                 <div class="meta-item" id="profile-proof-container"
                                                     title="Proof of Legitimacy">
@@ -1265,6 +1314,10 @@
                         <div id="valid-results-container" class="random-word-container">
                             <div id="valid-result-display" class="random-word-large">
                                 <!-- Validation result appears here -->
+                            </div>
+                            <div id="valid-definition-display"
+                                style="margin-top: 20px; font-size: 1.1rem; color: #ccc; font-style: italic; max-width: 80%; margin-left: 0; margin-right: auto; line-height: 1.4; text-align: left; opacity: 0;">
+                                <!-- Definition appears here -->
                             </div>
                         </div>
                     </div>
@@ -2475,9 +2528,8 @@
 
                 <div class="mini-profile-metadata">
                     <div class="mini-meta-item">
-                        <span class="mini-meta-icon">🌐</span>
-                        <span id="mini-profile-flag" class="mini-meta-flag">🏳️</span>
-                        <span id="mini-profile-country-name" class="mini-meta-text">International</span>
+                        <span class="mini-meta-icon">🗓️</span>
+                        <span id="mini-profile-joined" class="mini-meta-text">Joined: -</span>
                     </div>
                     <div class="mini-meta-item">
                         <span class="mini-meta-icon" id="mini-profile-status-icon">⚪</span>

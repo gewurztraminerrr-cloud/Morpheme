@@ -3,6 +3,7 @@ import json
 import time
 import random
 from typing import List, Dict
+from scoring import calculate_word_score
 
 class PrivateMatchManager:
     def __init__(self, db_path='morpheme.db'):
@@ -425,7 +426,12 @@ class PrivateMatchManager:
             all_humans_done = all(h['user_id'] in submitted_ids for h in humans) and len(invites) == 0
             
             if all_humans_done and ais:
-                # Generate AI turns
+                match_data = conn.execute('SELECT parameters FROM private_matches WHERE id = ?', (match_id,)).fetchone()
+                duration = 60
+                if match_data:
+                    params = json.loads(match_data['parameters'])
+                    duration = params.get('time_limit', 60)
+
                 round_data = conn.execute('SELECT * FROM private_match_rounds WHERE match_id = ? AND round_number = ?', (match_id, round_number)).fetchone()
                 if round_data:
                     all_possible_words = json.loads(round_data['all_words'])
@@ -433,7 +439,7 @@ class PrivateMatchManager:
                     
                     for ai in ais:
                         if ai['user_id'] not in submitted_ids:
-                            ai_words, ai_score = self.generate_ai_submission(ai['ai_rating'], all_possible_words, bonus_word)
+                            ai_words, ai_score = self.generate_ai_submission(ai['ai_rating'], all_possible_words, bonus_word, duration=duration)
                             conn.execute('''
                                 INSERT INTO private_match_turns (match_id, round_number, user_id, score, submitted_words, submitted_at)
                                 VALUES (?, ?, ?, ?, ?, ?)
@@ -461,82 +467,77 @@ class PrivateMatchManager:
         finally:
             conn.close()
 
-    def generate_ai_submission(self, rating, possible_words, bonus_word):
-        # AI Logic:
-        # Rating 800: finds 10-20% of words, mostly short.
-        # Rating 1200: finds 20-40% of words, mixed.
-        # Rating 2000+: finds 50-80% of words, includes bonus often.
+    def generate_ai_submission(self, rating, possible_words, bonus_word, duration=60):
+        # AI Logic (WPM Model):
+        # Rating 800: ~2.8 WPM (1 word every ~21s)
+        # Rating 1200: ~8.3 WPM (1 word every ~7.2s)
+        # Rating 3000: ~33 WPM (1 word every ~1.8s)
         
         # Clamp rating for logic
         if rating is None: rating = 1200
         r = max(400, min(3000, rating))
         
-        # Percentage of words to find
-        # 400 -> 5%, 3000 -> 90%
-        # Linear interp: percentage = 5 + (r-400) * (85/2600)
-        percentage = 5 + (r - 400) * (85 / 2600)
-        percentage = percentage / 100.0
+        # Calculate WPM based on rating (linear scale, floor at 1 WPM)
+        # WPM = (r - 600) / 72.0
+        wpm = max(1.0, (r - 600) / 72.0)
         
-        count = int(len(possible_words) * percentage)
-        # Avoid 0 if board has words
+        # Total words count based on duration
+        count = int((duration / 60.0) * wpm)
+        
+        # Avoid 0 if board has words and duration is reasonable
         if len(possible_words) > 0 and count == 0: count = 1
-        
-        # Higher rating bot picks longer words more often
-        # Weighted selection: weight = len(word)^2 * factor(rating)
-        # For simplicity, let's just shuffle and pick top N after sorting by length?
-        # No, better to randomly sample with bias.
         
         if not possible_words:
              return [], 0
             
-        # Sort words so we can bias towards shorter/longer
+        # Sort words so we can bias toward shorter/longer based on rating
         sorted_words = sorted(possible_words, key=len)
         
         selected = []
         if r < 1000:
-            # Bias toward short
-            # Pick from first 40% of sorted list mostly
-            limit_idx = max(1, int(len(sorted_words)*0.5))
+            # Low rating: Bias toward shorter words (bottom 40% of length list)
+            limit_idx = max(2, int(len(sorted_words) * 0.4))
             pool = sorted_words[:limit_idx]
-            if pool:
-                selected = random.sample(pool, min(count, len(pool)))
-        elif r < 1800:
-            # Mixed
+            selected = random.sample(pool, min(count, len(pool)))
+        elif r < 1600:
+            # Average rating: Mixed word selection from entire pool
             selected = random.sample(possible_words, min(count, len(possible_words)))
         else:
-            # Bias toward long
-            start_idx = min(len(sorted_words)-1, int(len(sorted_words)*0.3))
+            # High rating: Bias toward longer words (finding top 70%)
+            start_idx = max(0, int(len(sorted_words) * 0.3))
             pool = sorted_words[start_idx:]
-            if pool:
-                selected = random.sample(pool, min(count, len(pool)))
+            selected = random.sample(pool, min(count, len(pool)))
         
-        # Bonus word chance
-        # 400 -> 0%, 3000 -> 100%
-        bonus_chance = (r - 400) / 2600
+        # Bonus word chance (scales with rating)
+        bonus_chance = max(0, min(1.0, (r - 800) / 1600))
         if bonus_word and random.random() < bonus_chance:
             if bonus_word not in selected:
-                selected.append(bonus_word)
+                # Replace a random word with bonus word, or append if count allows
+                if len(selected) > 0:
+                    selected[random.randint(0, len(selected)-1)] = bonus_word
+                else:
+                    selected.append(bonus_word)
         
-        # Construct word objects
+        # Construct word objects with randomized points and timestamps
         submission = []
         total_score = 0
-        now = time.time()
-        # Randomize typing times within a 60s window (or time_limit)
-        # Bot starts submission after 5s
+        
+        # Bot starts submission after 5s and finishes before round ends
+        # Duration is used to spread out the words
+        start_offset = 5
+        effective_duration = max(5, duration - 10)
         
         for w in selected:
-            # Basic scoring
-            pts = len(w)
-            if len(w) == 6: pts = 10
-            elif len(w) == 7: pts = 15
-            elif len(w) >= 8: pts = 25
-            if w == bonus_word: pts += 10
-            
+            pts = calculate_word_score(w, bonus_word)
             total_score += pts
+            
+            # Timestamp randomization relative to a hypothetical 'now' or round start
+            # PrivateMatchManager uses time_offset or similar, but here we just return objects
+            # Calling code will handle absolute timestamps.
             submission.append({
                 'word': w,
                 'points': pts,
-                'timestamp': now - random.randint(5, 55)
+                'time_offset': start_offset + (random.random() * effective_duration)
             })
             
         return submission, total_score

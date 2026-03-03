@@ -201,11 +201,32 @@
             const invData = await invRes.json();
             renderInvites(invData);
 
+            // --- NOTIFICATION LOGIC ---
+            if (invData && invData.length > 0) {
+                const notifiedInvites = JSON.parse(localStorage.getItem('morpheme_notified_invites') || '[]');
+                let hasNew = false;
+                let latestSender = '';
+
+                invData.forEach(inv => {
+                    if (!notifiedInvites.includes(inv.id)) {
+                        hasNew = true;
+                        latestSender = inv.sender_name;
+                        notifiedInvites.push(inv.id);
+                    }
+                });
+
+                if (hasNew) {
+                    localStorage.setItem('morpheme_notified_invites', JSON.stringify(notifiedInvites));
+                    showInviteNotification(latestSender, invData.length);
+                }
+            }
+
             // --- BADGING LOGIC ---
             const turnCount = data.your_turn ? data.your_turn.length : 0;
             const inviteCount = invData ? invData.length : 0;
             const totalActionCount = turnCount + inviteCount;
 
+            // ... rest of badge logic ...
             // 1. Friends Tab Badge (inside Lobby - Total turns + invites)
             const tabBadge = document.getElementById('friends-tab-badge');
             if (tabBadge) {
@@ -243,6 +264,50 @@
     }
     window.loadPrivateMatches = loadPrivateMatches;
 
+    function showInviteNotification(sender, count) {
+        const existing = document.getElementById('invite-toast');
+        if (existing) {
+            existing.remove();
+        }
+
+        const toast = document.createElement('div');
+        toast.id = 'invite-toast';
+        toast.className = 'pm-toast-notification'; // Reuse PM styles for consistency
+        toast.innerHTML = `
+            <div class="pm-toast-content" style="border-left: 4px solid #4ade80;">
+                <div class="pm-toast-icon" style="background: rgba(74, 222, 128, 0.2);">🤝</div>
+                <div class="pm-toast-details">
+                    <div class="pm-toast-title">Game Invitation</div>
+                    <div class="pm-toast-text"><strong>${sender}</strong> invited you to play!</div>
+                </div>
+                <div class="pm-toast-actions">
+                    <button class="pm-toast-btn respond" style="background: #4ade80; color: #000;" onclick="handleInviteToastClick()">View</button>
+                    <button class="pm-toast-btn close" onclick="this.closest('.pm-toast-notification').remove()">Dismiss</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(toast);
+
+        // Auto-remove after 10s
+        setTimeout(() => toast.remove(), 10000);
+    }
+
+    window.handleInviteToastClick = () => {
+        document.getElementById('invite-toast')?.remove();
+        if (window.navigateToPage) {
+            window.navigateToPage('lobby');
+            // Give it a tiny moment to render the lobby, then switch to friends/invites
+            setTimeout(() => {
+                const friendsTab = document.querySelector('[data-page="lobby"] .lobby-tabs .tab[data-tab="friends"]');
+                if (friendsTab) friendsTab.click();
+                setTimeout(() => {
+                    const inviteSubtab = document.querySelector('[data-friends-subtab="invites"]');
+                    if (inviteSubtab) inviteSubtab.click();
+                }, 100);
+            }, 100);
+        }
+    };
+
     function renderMatchList(type, matches, isHistory = false) {
         const container = document.getElementById('friends-list-' + type);
         if (!container) return;
@@ -251,21 +316,24 @@
             return;
         }
 
-        container.innerHTML = matches.map(m => `
+        container.innerHTML = matches.map(m => {
+            const formattedDate = m.last_activity ? new Date(m.last_activity * 1000).toLocaleDateString() : '';
+            return `
             <div class="friends-match-panel">
                 <div class="match-info">
-                    <h4>With Friends (Round ${m.current_round})</h4>
+                    <h4>With Friends ${m.current_round > 1 ? `(Round ${m.current_round})` : ''}</h4>
                     <p style="font-size:0.85em; opacity:0.85; line-height:1.4;">
                         <strong>Board:</strong> ${m.parameters.board_dimensions || '4x4'} | <strong>Time:</strong> ${m.parameters.time_limit || 60}s | <strong>Dict:</strong> ${m.parameters.dictionary || 'NWL'}<br>
-                        <strong>Rules:</strong> Min ${m.parameters.min_word_length || 3}L, Bonus ${m.parameters.bonus_word_length || 'None'}<br>
-                        <strong>Style:</strong> ${m.parameters.difficulty === 'Normal' ? 'Medium' : (m.parameters.difficulty || 'Medium')}, ${m.parameters.board_format || 'Normal'}, Range: ${(() => {
-                let wr = m.parameters.word_count_range;
-                if (Array.isArray(wr)) {
-                    if (wr[1] > 900) return wr[0] + '+';
-                    return wr[0] + '-' + wr[1];
-                }
-                return wr === 'random' ? '50-100/100-200/200+' : (wr || '50-100');
-            })()}
+                        <strong>Rules:</strong> Min ${m.parameters.min_word_length || 3}L | Bonus ${m.parameters.bonus_word_length || 'None'}<br>
+                        <strong>Style:</strong> ${m.parameters.difficulty === 'Normal' ? 'Medium' : (m.parameters.difficulty || 'Medium')} | ${m.parameters.board_format || 'Normal'} | Range: ${(() => {
+                    let wr = m.parameters.word_count_range;
+                    if (Array.isArray(wr)) {
+                        if (wr[1] > 900) return wr[0] + '+';
+                        return wr[0] + '-' + wr[1];
+                    }
+                    return wr === 'random' ? '50-100/100-200/200+' : (wr || '50-100');
+                })()}
+                        ${isHistory && formattedDate ? `<br><strong>Completed:</strong> ${formattedDate}` : ''}
                     </p>
                     <p style="margin-top:5px;">Players: ${m.players.map(p => `
                         <span class="player-pill ${p.status}">
@@ -279,7 +347,8 @@
                     ${isHistory ? `<button class="replay-btn-friends" onclick="window.showPrivateHistory(${m.id})">View History</button>` : ''}
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
     }
 
     function renderInvites(invites) {
@@ -297,7 +366,7 @@
                     <p style="font-size:0.85em; opacity:0.85; line-height:1.4;">
                         <strong>Board:</strong> ${inv.parameters.board_dimensions || '4x4'} | <strong>Time:</strong> ${inv.parameters.time_limit || 60}s | <strong>Dict:</strong> ${inv.parameters.dictionary || 'NWL'}<br>
                         <strong>Rules:</strong> Min ${inv.parameters.min_word_length || 3}L | Bonus ${inv.parameters.bonus_word_length || 'None'}<br>
-                        <strong>Style:</strong> ${inv.parameters.difficulty === 'Normal' ? 'Medium' : (inv.parameters.difficulty || 'Medium')}, ${inv.parameters.board_format || 'Normal'}, Range: ${(() => {
+                        <strong>Style:</strong> ${inv.parameters.difficulty === 'Normal' ? 'Medium' : (inv.parameters.difficulty || 'Medium')} | ${inv.parameters.board_format || 'Normal'} | Range: ${(() => {
                 let wr = inv.parameters.word_count_range;
                 if (Array.isArray(wr)) {
                     if (wr[1] > 900) return wr[0] + '+';
@@ -431,6 +500,8 @@
                         }
 
                         if (Array.isArray(words) && words.length > 0) {
+                            // Sort by length (desc) then alphabetically (asc)
+                            words.sort((a, b) => b.word.length - a.word.length || a.word.localeCompare(b.word));
                             const wordStrs = words.map(w => `<span style="background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; margin:2px; display:inline-block; font-size:0.8em;">${w.word} (${w.points})</span>`).join('');
                             wordListHtml = `<div style="margin-top:5px; text-align:left; opacity:0.8;">${wordStrs}</div>`;
                         } else {

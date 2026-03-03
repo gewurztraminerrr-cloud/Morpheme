@@ -37,6 +37,8 @@ let lastRenderedBoardJSON = null;
 let lastRenderedGrayed = null;
 let lastRenderedRotation = null;
 let hasPlayedIntermissionBell = false; // Flag for next round notification
+let findFriendsMode = false;
+let userFriendsCache = [];
 
 // Input Method Tracking
 let currentInputMethod = 'mouse';
@@ -417,6 +419,13 @@ async function updateGameState() {
                 // DATA SYNC FIX: Explicitly clear Remaining list to prevent crossover
                 const remainingList = document.getElementById('remaining-words-list');
                 if (remainingList) remainingList.innerHTML = '';
+
+                // Reset Find Friends mode
+                findFriendsMode = false;
+                const findFriendsBtn = document.getElementById('find-friends-btn');
+                if (findFriendsBtn) findFriendsBtn.classList.remove('active');
+                const showEveryoneBtn = document.getElementById('show-everyone-btn');
+                if (showEveryoneBtn) showEveryoneBtn.classList.remove('active');
 
                 // Focus Word Input on Game Start
                 setTimeout(() => {
@@ -987,14 +996,20 @@ function renderPlayers(players, currentUser = null, state = null) {
     const listEl = document.getElementById('players-list');
     const headingEl = document.getElementById('players-heading');
     const findMeBtn = document.getElementById('find-me-btn');
+    const findFriendsBtn = document.getElementById('find-friends-btn');
+    const showEveryoneBtn = document.getElementById('show-everyone-btn');
 
     if (state && state.game_type === 'accumulative') {
         const totalPeople = (players ? players.length : 0) + (state.spectators ? state.spectators.length : 0);
         if (headingEl) headingEl.textContent = `Players [${totalPeople}]`;
         if (findMeBtn) findMeBtn.style.display = 'block';
+        if (findFriendsBtn) findFriendsBtn.style.display = 'block';
+        if (showEveryoneBtn) showEveryoneBtn.style.display = 'block';
     } else {
         if (headingEl) headingEl.textContent = `Players`;
         if (findMeBtn) findMeBtn.style.display = 'none';
+        if (findFriendsBtn) findFriendsBtn.style.display = 'none';
+        if (showEveryoneBtn) showEveryoneBtn.style.display = 'none';
     }
 
     if (!players || players.length === 0) {
@@ -1010,9 +1025,19 @@ function renderPlayers(players, currentUser = null, state = null) {
 
     // Top 3 + Nearby Logic (simplified for brevity: show top 20)
     // For now, render ALL players (scrollable if > 8)
-    const itemsToRender = sortedPlayers;
+    let itemsToRender = sortedPlayers.map((p, idx) => ({ ...p, originalRank: idx + 1 }));
 
-    const html = itemsToRender.map((p, index) => {
+    if (findFriendsMode && currentUser) {
+        itemsToRender = itemsToRender.filter(p =>
+            p.username === currentUser ||
+            userFriendsCache.some(f => f.username.toLowerCase() === p.username.toLowerCase())
+        );
+    }
+
+    const html = itemsToRender.map((p) => {
+        const index = p.originalRank - 1; // Use original rank for visuals if needed
+        const rank = p.originalRank;
+
         // Override rating for Guest users
         const isGuest = p.username.startsWith('Guest_');
         const displayRating = isGuest ? 0 : p.rating;
@@ -1022,7 +1047,6 @@ function renderPlayers(players, currentUser = null, state = null) {
         const ratingDisplay = `${displayRating} (${ratingChange.trim()})`;
         const bonusClass = p.found_bonus_word ? ' bonus-finder' : '';
         const userClass = (p.username === currentUser) ? ' current-user' : '';
-        const rank = index + 1;
 
         // Highlight if selected
         const selectedClass = (p.username === selectedPlayerUsername) ? ' selected-player' : '';
@@ -1052,7 +1076,7 @@ function renderPlayers(players, currentUser = null, state = null) {
 
         // Trophy Logic (Exceptional Performance)
         const peVal = p.performance_efficiency || 1.0;
-        const trophyHtml = p.has_exceptional_round ? `<span title="Exceptional Performance (PE: ${peVal.toFixed(2)}x)" class="trophy-icon">🏆</span>` : '';
+        const trophyHtml = (p.has_exceptional_round && players.length > 1) ? `<span title="Exceptional Performance (PE: ${peVal.toFixed(2)}x)" class="trophy-icon">🏆</span>` : '';
 
         return `
         <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}" data-username="${p.username}">
@@ -1241,6 +1265,55 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => {
                     myCard.style.background = originalBg;
                 }, 800);
+            }
+        });
+    }
+
+    const findFriendsBtn = document.getElementById('find-friends-btn');
+    if (findFriendsBtn) {
+        findFriendsBtn.addEventListener('click', async () => {
+            if (!findFriendsMode) {
+                // Fetch friends list
+                try {
+                    const resp = await fetch('/api/friends/list');
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data.friends) {
+                            userFriendsCache = data.friends;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch friends for filtering:', e);
+                }
+            }
+            findFriendsMode = !findFriendsMode;
+            findFriendsBtn.classList.toggle('active', findFriendsMode);
+            // Re-render players immediately
+            if (window.lastGameState) {
+                const currentUsername = window.lastGameState.your_username || window.currentUser || localStorage.getItem('morpheme_username');
+                renderPlayers(window.lastGameState.players, currentUsername, window.lastGameState);
+            }
+        });
+    }
+
+    const showEveryoneBtn = document.getElementById('show-everyone-btn');
+    if (showEveryoneBtn) {
+        showEveryoneBtn.addEventListener('click', () => {
+            // Disable Find Friends Mode
+            findFriendsMode = false;
+            const ffBtn = document.getElementById('find-friends-btn');
+            if (ffBtn) ffBtn.classList.remove('active');
+
+            // Re-render players
+            if (window.lastGameState) {
+                const currentUsername = window.lastGameState.your_username || window.currentUser || localStorage.getItem('morpheme_username');
+                renderPlayers(window.lastGameState.players, currentUsername, window.lastGameState);
+            }
+
+            // Scroll to top
+            const playersListEl = document.getElementById('players-list');
+            if (playersListEl) {
+                playersListEl.scrollTop = 0;
             }
         });
     }

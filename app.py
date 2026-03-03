@@ -34,6 +34,29 @@ def login_required(f):
     return decorated_function
 
 @app.before_request
+def enforce_idle_timeout():
+    # Skip static files, login/register, and presence beacon
+    if request.path.startswith('/static') or request.path in ['/api/login', '/api/register', '/api/presence/leave']:
+        return
+        
+    if 'user_id' in session:
+        now = time.time()
+        # 3600 seconds = 1 Hour
+        last_activity = session.get('_morpheme_last_active', now)
+        if (now - last_activity) > 3600:
+            print(f"[Auth] Idle session expired for user {session.get('username')} ({int(now - last_activity)}s)")
+            # Perform server-side cleanup
+            from game_room import room_manager
+            room_manager.remove_presence(session['user_id'])
+            session.clear()
+            if request.path.startswith('/api/'):
+                 return jsonify({'error': 'Session expired. Please log in again.'}), 401
+            return redirect('/')
+            
+        # Update active timestamp
+        session['_morpheme_last_active'] = now
+
+@app.before_request
 def load_user():
     if 'user_id' in session:
         g.user = User(session['user_id'], session['username'])
@@ -202,6 +225,14 @@ def init_db():
         conn.execute('ALTER TABLE users ADD COLUMN pe_count INTEGER DEFAULT 0')
         conn.commit()
         print("Migrated DB: Added PE columns to users")
+    except sqlite3.OperationalError:
+        pass
+
+    # MIGRATION: Add created_at to users
+    try:
+        conn.execute('ALTER TABLE users ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP')
+        conn.commit()
+        print("Migrated DB: Added created_at column to users")
     except sqlite3.OperationalError:
         pass
 
@@ -656,7 +687,7 @@ def get_public_profile(username):
     cursor = conn.execute('''
         SELECT id, username, rating, games_played, avatar_url, country_flag, 
                full_name, age, gender, location, quote, description, proof_url, wins,
-               max_pe, avg_pe, pe_count
+               max_pe, avg_pe, pe_count, created_at
         FROM users WHERE username = ? COLLATE NOCASE
     ''', (username,))
     user = cursor.fetchone()
@@ -822,6 +853,7 @@ def get_public_profile(username):
         'wins': user[13] if user[13] else 0,
         'max_pe': round(user[14], 2) if user[14] else 0.0,
         'avg_pe': round(user[15], 2) if user[15] else 0.0,
+        'created_at': user[17] if user[17] else None,
         'recent_rounds': recent_rounds,
         'exceptional_rounds': exceptional_rounds,
         'config_ratings': config_stats,
@@ -1522,19 +1554,16 @@ def get_room_state(room_id):
             'max_players': room.max_players,
             'min_rating': room.min_rating,
             'max_rating': room.max_rating,
-            'max_rating': room.max_rating,
             'previous_all_words': room.previous_all_words,
             'previous_day_history': room.previous_day_history,
             'fcfs_found_words': list(room.fcfs_found_words) if hasattr(room, 'fcfs_found_words') else [],
             'your_username': session.get('username'),
-            'previous_day_history': room.previous_day_history,
             'players': [
                 {
                     'user_id': p.user_id,
                     'username': p.username,
                     'rating': p.rating,
                     'words_count': len(p.submitted_words),
-                    'debug_trace': print(f"STATE: {p.username} has {[w['word'] for w in p.submitted_words]}") if p.submitted_words else None,
                     'score': p.score,
                     'rating_change': p.rating_change,
                     'found_bonus_word': p.found_bonus_word,
@@ -2245,9 +2274,18 @@ def tools_validate_word():
         
     is_valid = word in dictionary
     
+    # Try to get definition if valid
+    definition = None
+    if is_valid:
+        global DEFINITIONS_CACHE
+        if DEFINITIONS_CACHE is None:
+            load_definitions()
+        definition = DEFINITIONS_CACHE.get(word)
+        
     return jsonify({
         'word': word,
-        'is_valid': is_valid
+        'is_valid': is_valid,
+        'definition': definition
     })
 
 @app.route('/api/tools/unscramble/random', methods=['GET'])

@@ -67,20 +67,29 @@ class BoardGenerator:
             # Create board
             if board_format == 'Checkerboard':
                 board = self._create_checkerboard(rows, cols, weights)
-            elif board_format.endswith(' Mania'):
-                mania_letter = board_format.split(' ')[0]  # e.g. 'E' from 'E Mania'
-                board = self._create_mania_board(rows, cols, weights, mania_letter)
             else:
                 board = self._create_normal_board(rows, cols, weights)
             
-            # IMPORTANT: Embed bonus word before solving
+            # IMPORTANT: Embed bonus word before solving - this "locks in" the bonus word
+            bonus_cells = set()
             if bonus_word:
-                if not self._embed_bonus_word(board, bonus_word):
+                path = self._embed_bonus_word(board, bonus_word)
+                if not path:
                     print(f"[BoardGen] ✗ Failed to embed bonus word, retrying...")
                     continue  # Try again with new board
+                bonus_cells = set(path)
                 print(f"[BoardGen] ✓ Bonus word '{bonus_word}' embedded successfully")
             else:
-                 print(f"[BoardGen] - Skipping bonus word embedding (bonus word not provided)")
+                print(f"[BoardGen] - Skipping bonus word embedding (bonus word not provided)")
+            
+            # After bonus word is locked in, apply special board formats
+            if board_format.endswith(' Mania'):
+                mania_letter = board_format.split(' ')[0]
+                self._apply_mania_to_board(board, mania_letter, exclude_cells=bonus_cells)
+            elif board_format == 'Checkerboard':
+                # Checkerboard is already handled during creation, but we could 
+                # refine or re-apply here if needed. For now creation is fine.
+                pass
             
             # Solve board to find ALL valid dictionary words (min length 2 for validation feedback)
             # We use 2 here so that if a player types a 2-letter word, we know it's on the board
@@ -222,31 +231,41 @@ class BoardGenerator:
                         board[r][c] = random.choices(VOWELS, weights=vowel_weights, k=1)[0]
         return board
     
-    def _create_mania_board(self, rows, cols, weights, mania_letter):
-        """Create a normal board then flood ~28% of cells with the mania letter.
-        Gives an abundance of the letter without completely taking over the board."""
-        board = self._create_normal_board(rows, cols, weights)
-        
+    def _apply_mania_to_board(self, board, mania_letter, exclude_cells):
+        """Fill a significant percentage of AVAILABLE cells with the mania letter.
+        Ensures the final board has an abundance of the letter without overwriting the bonus word."""
+        rows, cols = len(board), len(board[0])
         total_cells = rows * cols
-        # Aim for roughly 25-35% of cells to be the mania letter
-        mania_count = max(2, round(total_cells * random.uniform(0.25, 0.33)))
         
-        # Build a shuffled list of all cell positions and pick mania_count of them
-        all_positions = [(r, c) for r in range(rows) for c in range(cols)]
+        # Aim for roughly 25-33% of cells to be the mania letter (approx 1/4 to 1/3 of the board)
+        # This matches the user's request for "4 or 5" on a 4x4 (16 cells)
+        target_count = max(4, round(total_cells * random.uniform(0.25, 0.33)))
+        
+        # Check how many we already have (from bonus word or initial board)
+        current_count = sum(1 for r in range(rows) for c in range(cols) if board[r][c] == mania_letter)
+        needed = target_count - current_count
+        
+        if needed <= 0:
+            print(f"[BoardGen] Mania '{mania_letter}': Already have {current_count} letters, target was {target_count}")
+            return
+            
+        # Get list of all positions NOT part of the bonus word
+        all_positions = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in exclude_cells]
         random.shuffle(all_positions)
         
         filled = 0
         for r, c in all_positions:
-            if filled >= mania_count:
+            if filled >= needed:
                 break
             board[r][c] = mania_letter
             filled += 1
         
-        print(f"[BoardGen] Mania '{mania_letter}': placed {filled}/{total_cells} cells ({filled/total_cells*100:.0f}%)")
-        return board
+        final_count = current_count + filled
+        print(f"[BoardGen] Mania '{mania_letter}': placed {filled} more, final {final_count}/{total_cells} cells ({final_count/total_cells*100:.0f}%)")
     
     def _embed_bonus_word(self, board, bonus_word):
-        """Embed bonus word using backtracking to find a valid path"""
+        """Embed bonus word using backtracking to find a valid path.
+        Returns the path (list of cells) if successful, else None."""
         rows, cols = len(board), len(board[0])
         
         # Pre-process word to treat 'QU' as a single unit
@@ -298,9 +317,9 @@ class BoardGenerator:
                 # Embed the processed letters
                 for i, (r, c) in enumerate(path):
                     board[r][c] = processed_word[i]
-                return True
+                return path
                 
-        return False
+        return None
     
     def _solve_board(self, board, dictionary, word_count_range, min_word_length=3):
         """Find all valid words on the board that meet minimum length requirement"""

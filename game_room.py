@@ -13,6 +13,7 @@ import sqlite3
 import json
 from spinner_set import SpinnerSet
 from board_generator import BoardGenerator
+from scoring import calculate_word_score
 
 @dataclass
 class Player:
@@ -337,7 +338,7 @@ class GameRoom:
             return max(0, self.time_limit - int(elapsed))
         elif self.state == 'intermission':
             elapsed = time.time() - self.intermission_start_time
-            return max(0, 20 - int(elapsed))  # 20 second intermission
+            return max(0, 60 - int(elapsed))  # 60 second intermission
         return 0
     
     @property
@@ -353,7 +354,7 @@ class GameRoom:
     def intermission_end_time(self):
         """Get timestamp when intermission ends (for client sync)"""
         if self.state == 'intermission':
-            return self.intermission_start_time + 20  # 20 second intermission
+            return self.intermission_start_time + 60  # 60 second intermission
         return 0
     
     def submit_word(self, user_id, word):
@@ -491,20 +492,23 @@ class GameRoom:
         reg_score_sum = sum(p.score for p in reg_players)
         reg_rating_sum = sum(p.rating for p in reg_players)
         
+        # Room must have more than 1 player to earn a trophy
+        multiple_players = (len(reg_players) + len(guest_players)) > 1
+
         if reg_rating_sum > 0:
             for p in reg_players:
                 expected = (p.rating / reg_rating_sum) * reg_score_sum
                 p.performance_efficiency = p.score / expected if expected > 0 else 0.0
-                p.has_exceptional_round = (p.performance_efficiency >= 1.2 and p.score >= 10) or p.score >= 20
+                p.has_exceptional_round = multiple_players and ((p.performance_efficiency >= 1.2 and p.score >= 10) or p.score >= 20)
         else:
             for p in reg_players:
                 p.performance_efficiency = 1.0
-                p.has_exceptional_round = (p.score >= 20)
+                p.has_exceptional_round = multiple_players and (p.score >= 20)
 
         # 2. Guests: Use solo baseline (PE=1.0) so they don't affect pool but can still earn trophies on raw score
         for p in guest_players:
             p.performance_efficiency = 1.0
-            p.has_exceptional_round = (p.score >= 20)
+            p.has_exceptional_round = multiple_players and (p.score >= 20)
     
     def _recalculate_player_score(self, player):
         """
@@ -558,8 +562,8 @@ class GameRoom:
             # IMMEDIATE SNAPSHOT (24h Rooms): Save history now so it is available during intermission
             if self.time_limit >= 7200:
                 print(f"[GameRoom] Snapshotting history at start of intermission for room {self.room_id}")
-                # Filter previous_all_words by min_word_length to avoid showing short words as "Missed"
-                min_len = self.spinner_params.get('min_word_length', 3)
+                # Filter previous_all_words by the CURRENT round's min length (not next round's!)
+                min_len = getattr(self, 'current_min_length', 3)
                 self.previous_all_words = [w for w in self.all_words if len(w) >= min_len]
                 self.previous_day_history = {}
                 for p in self.players:
@@ -585,6 +589,9 @@ class GameRoom:
             # Calculate PE for everyone with isolation
             max_pe = 0.0
             
+            # Determine if there are at least two active competitors to allow trophies
+            multiple_active = len(active_competitors) > 1
+
             # 1. Registered Players Pool
             reg_score_sum = sum(p.score for p in reg_players)
             reg_rating_sum = sum(p.rating for p in reg_players)
@@ -594,18 +601,19 @@ class GameRoom:
                     expected = (p.rating / reg_rating_sum) * reg_score_sum
                     p.performance_efficiency = p.score / expected if expected > 0 else 0
                     max_pe = max(max_pe, p.performance_efficiency)
-                    p.has_exceptional_round = (p.performance_efficiency >= 1.2 and p.score >= 10) or p.score >= 20
+                    # Trophy only if more than one player is playing
+                    p.has_exceptional_round = multiple_active and ((p.performance_efficiency >= 1.2 and p.score >= 10) or p.score >= 20)
             else:
                 for p in reg_players:
                     p.performance_efficiency = 1.0
                     max_pe = max(max_pe, 1.0)
-                    p.has_exceptional_round = (p.score >= 20)
+                    p.has_exceptional_round = multiple_active and (p.score >= 20)
 
             # 2. Guests Pool
             for p in guest_players:
                 p.performance_efficiency = 1.0
                 max_pe = max(max_pe, 1.0)
-                p.has_exceptional_round = (p.score >= 20)
+                p.has_exceptional_round = multiple_active and (p.score >= 20)
 
             # Determine Notable Winners for Replay Tab
             # The user wants "enormous wins" to determine replay listing.
@@ -683,24 +691,28 @@ class GameRoom:
                             ON CONFLICT(user_id, config_key) DO UPDATE SET rating = rating + ?
                         ''', (player.user_id, config_key, player.rating, change))
                         
-                        # Also update main users table rating (global average or main rating?)
-                        # Use the absolute calculated value to ensure sync
-                        conn.execute('UPDATE users SET rating = ?, games_played = games_played + 1 WHERE id = ?', (player.rating, player.user_id))
-                        print(f"[GameRoom] DB Updated: User {player.username} global rating set to {player.rating}")
+                        active_scorers = [p for p in self.players if p.score > 0 and not p.is_ai]
+                        is_competitive = len(active_scorers) >= 2
+
+                        if is_competitive:
+                            conn.execute('UPDATE users SET rating = ?, games_played = games_played + 1 WHERE id = ?', (player.rating, player.user_id))
+                        else:
+                            conn.execute('UPDATE users SET rating = ? WHERE id = ?', (player.rating, player.user_id))
+                        print(f"[GameRoom] DB Updated: User {player.username} rating/stats (Competitive: {is_competitive})")
                         
-                        if player.score > 0 and player.score == max([p.score for p in active_competitors]):
+                        if is_competitive and player.score > 0 and player.score == max([p.score for p in active_competitors]):
                              conn.execute('UPDATE users SET wins = wins + 1 WHERE id = ?', (player.user_id,))
 
 
                         
-                        # Update PE stats
-                        conn.execute('''
-                            UPDATE users 
-                            SET pe_count = pe_count + 1,
-                                avg_pe = ((avg_pe * pe_count) + ?) / (pe_count + 1),
-                                max_pe = MAX(max_pe, ?)
-                            WHERE id = ?
-                        ''', (player.performance_efficiency, player.performance_efficiency, player.user_id))
+                        if is_competitive:
+                            conn.execute('''
+                                UPDATE users 
+                                SET pe_count = pe_count + 1,
+                                    avg_pe = ((avg_pe * pe_count) + ?) / (pe_count + 1),
+                                    max_pe = MAX(max_pe, ?)
+                                WHERE id = ?
+                            ''', (player.performance_efficiency, player.performance_efficiency, player.user_id))
                         
                     except Exception as e:
                         print(f"[GameRoom] DB Save Error for {player.username}: {e}")
@@ -796,18 +808,17 @@ class GameRoom:
             words_data, total_score = private_match_manager.generate_ai_submission(
                 ai.ai_rating, 
                 possible_words, 
-                self.bonus_word
+                self.bonus_word,
+                duration=self.time_limit
             )
             
             # Record words
             # AI submissions are "instant" at end of round, timestamps randomized within round
-            now = time.time()
             start = self.round_start_time
-            duration = self.time_limit
             
             for wd in words_data:
-                # Randomize timestamp within the round duration
-                wd['time'] = start + (random.random() * duration)
+                # Use randomized time_offset provided by AI logic
+                wd['time'] = start + wd.pop('time_offset', 0)
                 ai.submitted_words.append(wd)
             
             # Recalculate AI score
@@ -848,15 +859,19 @@ def calculate_proportional_rating_change(players):
         print(f"[Rating] Guest(s) {guests} detected in room. Round is UNRANKED for everyone.")
         return changes
 
-    # 3. Identify active registered players (user_id > 0 AND not a guest)
-    # We include ALL players present in the room for rating calculations, even if they scored 0 (AFK).
-    active_players = [p for p in players if p.user_id > 0 and not is_player_guest(p)]
+    # 3. Identify active registered players (user_id > 0 OR is_ai, AND not a guest)
+    # Bots are included to ensure ratings reflect performance relative to ALL competitors.
+    active_players = [p for p in players if (p.user_id > 0 or p.is_ai) and not is_player_guest(p)]
 
-    # Rating change requires at least two competing registered players.
-    # If it's just one player vs guests, they should not gain or lose anything.
-    if len(active_players) < 2:
-        if len(active_players) == 1:
-            print(f"[Rating] Only one registered player ({active_players[0].username}) present. Round is solo/unranked.")
+    # Rating change requires at least two competing registered players WHO SCORED.
+    # If it's just one player scoring vs ghosts/AFK, they should not gain or lose anything.
+    active_scorers = [p for p in active_players if p.score > 0]
+    
+    if len(active_scorers) < 2:
+        if len(active_scorers) == 1:
+            print(f"[Rating] Only one active scorer ({active_scorers[0].username}) present. Round is unranked.")
+        else:
+            print(f"[Rating] No active scorers present. Round is unranked.")
         return changes
         
     # 3. Sum Totals
@@ -936,19 +951,9 @@ def calculate_word_score(word, bonus_word):
     """Calculate points for a word using standard Boggle scoring"""
     length = len(word)
     
-    # Base score by word length
-    if length <= 2:
-        base_score = 0
-    elif length <= 4:
-        base_score = 1
-    elif length == 5:
-        base_score = 2
-    elif length == 6:
-        base_score = 3
-    elif length == 7:
-        base_score = 5
-    else:  # 8+ letters
-        base_score = 11
+    # Redirect to shared utility
+    from scoring import calculate_word_score as shared_calc
+    return shared_calc(word, bonus_word)
     
     # Bonus word gets extra points
     if word == bonus_word:
@@ -1155,17 +1160,19 @@ class RoomManager:
         room.starting_round = True
         
         # Save previous round data before generating new one
-        # Save previous round data before generating new one
         # SAFEGUARD: If intermission already snapped it, keep it!
-        if not getattr(room, 'previous_all_words', None) and room.all_words:
-            # Filter by min_word_length if available (fallback)
-            min_len = room.spinner_params.get('min_word_length', 3)
+        # Check if it's genuinely populated, not just an empty list
+        has_prev = hasattr(room, 'previous_all_words') and room.previous_all_words
+        if not has_prev and room.all_words:
+            # Filter by the CURRENT round's min length (stored in room.current_min_length)
+            # This avoids using tomorrow's min length to filter today's words.
+            min_len = getattr(room, 'current_min_length', 3)
             room.previous_all_words = [w for w in room.all_words if len(w) >= min_len]
             print(f"[RoomManager] Saved {len(room.previous_all_words)} words to history (Fallback/Round {room.current_round})")
-        elif getattr(room, 'previous_all_words', None):
+        elif has_prev:
             print(f"[RoomManager] Using existing history snapshot (intermission) for Round {room.current_round}")
         else:
-             print(f"[RoomManager] WARNING: No words to save to history (Round {room.current_round})")
+            print(f"[RoomManager] WARNING: No words to save to history (Round {room.current_round})")
         
         try:
             print(f"[RoomManager] Generating spinner parameters for {room.board_dimensions}")
@@ -1405,25 +1412,27 @@ class RoomManager:
             
             # SAVE PREVIOUS ROUND DATA (Persistence for "Previous Day" tab)
             # CHECK if we already snapshotted during intermission. If so, KEEP IT!
-            # Use getattr with explicit check for None to avoid "empty list evaluates to False" issue
-            has_prev_all = getattr(room, 'previous_all_words', None) is not None
-            has_prev_hist = getattr(room, 'previous_day_history', None) is not None
+            # Use getattr with explicit check for None and emptiness to avoid bugs
+            has_prev_all = getattr(room, 'previous_all_words', None) is not None and len(room.previous_all_words) > 0
+            has_prev_hist = getattr(room, 'previous_day_history', None) is not None and len(room.previous_day_history) > 0
             
             print(f"DEBUG: start_next_round persistence check. HasHist={has_prev_hist}, HasAll={has_prev_all}")
             if has_prev_hist:
                  print(f"DEBUG: History keys: {list(room.previous_day_history.keys())}")
 
             if not has_prev_all or not has_prev_hist:
-                print("DEBUG: Snapshot IS missing. Creating new snapshot now.")
+                print("DEBUG: Snapshot IS missing or empty. Creating new snapshot now.")
                 
-                # Filter by min_word_length (fallback)
-                min_len = room.spinner_params.get('min_word_length', 3)
-                source_words = list(room.complete_words) if room.complete_words else list(room.all_words)
-                room.previous_all_words = [w for w in source_words if len(w) >= min_len]
+                # Filter by min_word_length (fallback) - Use current active round's min length
+                min_len = getattr(room, 'current_min_length', 3)
+                source_words = list(room.complete_words) if (getattr(room, 'complete_words', None) and len(room.complete_words) > 0) else list(room.all_words)
+                
+                if not has_prev_all:
+                    room.previous_all_words = [w for w in source_words if len(w) >= min_len]
                 
                 # SNAPSHOT HISTORY BEFORE OVERWRITING BOARD
-                if room.time_limit >= 7200:
-                    print(f"[RoomManager] Daily Reset: Snapshotting history (fallback) before new round")
+                if room.time_limit >= 7200 and not has_prev_hist:
+                    print(f"[RoomManager] Daily Reset: Snapshotting history (fallback/start_next) before new round")
                     room.previous_day_history = {}
                     for p in room.players:
                         room.previous_day_history[str(p.user_id)] = {
@@ -1554,21 +1563,18 @@ class RoomManager:
             board_json = json.dumps(room.board)
             timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             
-            # Statistics Rule: Only count rounds where 2+ players actually played (score > 0)
-            # Skip players who joined mid-round (User Request)
-            # Statistics Rule: Traditionally we only count rounds where 2+ players actually played.
-            # But user wants "most recent 10 rounds" documented regardless.
-            # So we relax the count to >= 1 and include 0-score players if they are present (user_id > 0).
-            # We still exclude mid-round joiners if that's the rule, but maybe we should include them for *their* history?
-            # User said "Last played 10 rounds".
-            # Let's include everyone who was in the room (user_id > 0).
+            # Statistics Rule: Only count rounds where at least 2 humans actually played (score > 0)
+            # This prevents padding stats and leaderboard by playing in empty or non-competitive rooms.
+            # We exclude AI bots from this count since they don't count as "another person".
+            active_scorers = [p for p in room.players if p.score > 0 and not p.is_ai]
             
-            playing_players = [p for p in room.players if p.user_id > 0]
-            
-            if not playing_players:
-                print(f"[RoomManager] SKIPPING history save for room {room.room_id} - no valid players")
+            if len(active_scorers) < 2:
+                print(f"[RoomManager] SKIPPING history save for room {room.room_id} - only {len(active_scorers)} human player(s) reached a positive score.")
                 conn.close()
                 return
+
+            playing_players = [p for p in room.players if p.user_id > 0]
+            # No need for another check on playing_players as active_scorers implies human players exists.
 
             for p in playing_players:
                 # Use current submitted_words because we call this BEFORE clearing

@@ -117,7 +117,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupAuth(); // Initialize auth listeners
     setupContactForm(); // Initialize contact form listeners
     initSettings(); // Initialize settings logic
-    await checkSession();
+
+    // USER REQUEST: Log out on Refresh/Reload
+    const entries = performance.getEntriesByType("navigation");
+    const isReload = entries.length > 0 && entries[0].type === "reload";
+
+    if (isReload) {
+        console.log("[Auth] Page reload detected - logging out.");
+        await fetch('/api/logout', { method: 'POST' });
+        // Clean up local state entirely
+        currentUser = null;
+        window.currentUser = null;
+        currentUserEmail = null;
+        window.currentUserEmail = null;
+        window.currentUserIsGuest = false;
+        localStorage.removeItem('morpheme_username');
+        localStorage.removeItem('morpheme_pm_state');
+        localStorage.removeItem('private_match_active');
+        localStorage.removeItem('tournament_play_active');
+    } else {
+        await checkSession();
+    }
 
     // Handle initial navigation
     const hash = window.location.hash;
@@ -792,32 +812,12 @@ function updateAuthUI() {
 
 async function handleLogout() {
     try {
-        const response = await fetch('/api/logout', { method: 'POST' });
-        const data = await response.json();
-        if (data.success) {
-            currentUser = null;
-            window.currentUser = null;
-            currentUserEmail = null;
-            window.currentUserEmail = null;
-            window.currentUserIsGuest = false;
-            localStorage.removeItem('morpheme_username');
-            localStorage.removeItem('morpheme_pm_state');
-            localStorage.removeItem('private_match_active');
-            localStorage.removeItem('tournament_play_active');
-
-            updateAuthUI();
-            showPage('page-login');
-
-            // Reset Play button
-            const playBtn = document.getElementById('play-btn');
-            if (playBtn) {
-                playBtn.disabled = true;
-                playBtn.classList.remove('active');
-                playBtn.title = "Authentication required";
-            }
-        }
+        await fetch('/api/logout', { method: 'POST' });
+        // Completely reset app state by reloading to the root
+        window.location.href = '/';
     } catch (error) {
         console.error('Logout error:', error);
+        window.location.href = '/';
     }
 }
 
@@ -1018,3 +1018,42 @@ window.setCurrentUser = function (user) {
     currentUser = user;
     window.currentUser = user;
 };
+
+// Global Idle Logout (1 Hour)
+(function () {
+    let idleSeconds = 0;
+    const idleLimit = 3600; // 3600s = 1 Hour
+
+    function resetIdle() {
+        idleSeconds = 0;
+    }
+
+    // Interaction resets the timer
+    window.addEventListener('mousemove', resetIdle, { passive: true });
+    window.addEventListener('mousedown', resetIdle, { passive: true });
+    window.addEventListener('keydown', resetIdle, { passive: true });
+    window.addEventListener('touchstart', resetIdle, { passive: true });
+    window.addEventListener('scroll', resetIdle, { passive: true });
+
+    setInterval(() => {
+        // If the tab is hidden, we increment faster or just treat as idle
+        // But the user's rule says "if idle for longer than an hour"
+        idleSeconds++;
+
+        if (idleSeconds >= idleLimit) {
+            // Check if we are actually logged in (currentUser is set in app.js context)
+            if (window.currentUser || localStorage.getItem('morpheme_username')) {
+                console.log("[IdleLogout] User inactive for 1 hour. Logging out.");
+                fetch('/api/logout', { method: 'POST' })
+                    .then(() => {
+                        // Clear locals just in case
+                        localStorage.removeItem('morpheme_username');
+                        window.location.href = '/';
+                    })
+                    .catch(() => {
+                        window.location.href = '/';
+                    });
+            }
+        }
+    }, 1000);
+})();
