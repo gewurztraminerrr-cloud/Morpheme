@@ -27,6 +27,12 @@ const Forum = {
             backToListBtn.addEventListener('click', () => this.showListView());
         }
 
+        // Back from user posts view
+        const backFromUserBtn = document.getElementById('forum-back-from-user');
+        if (backFromUserBtn) {
+            backFromUserBtn.addEventListener('click', () => this.showListView());
+        }
+
         // Cancel create button
         const cancelCreateBtn = document.getElementById('forum-cancel-create');
         if (cancelCreateBtn) {
@@ -49,6 +55,20 @@ const Forum = {
         const imageInput = document.getElementById('forum-post-image');
         if (imageInput) {
             imageInput.addEventListener('change', (e) => this.handleImagePreview(e));
+        }
+
+        // User search: button click
+        const userSearchBtn = document.getElementById('forum-user-search-btn');
+        if (userSearchBtn) {
+            userSearchBtn.addEventListener('click', () => this.searchUserPosts());
+        }
+
+        // User search: Enter key
+        const userSearchInput = document.getElementById('forum-user-search-input');
+        if (userSearchInput) {
+            userSearchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') this.searchUserPosts();
+            });
         }
     },
 
@@ -154,6 +174,77 @@ const Forum = {
 
         // Attach listeners
         postsList.querySelectorAll('.forum-post-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const postId = parseInt(card.getAttribute('data-id'));
+                this.loadPostDetail(postId);
+            });
+        });
+    },
+
+    // ---------- User Search ----------
+    searchUserPosts: async function () {
+        const input = document.getElementById('forum-user-search-input');
+        const username = input ? input.value.trim() : '';
+        if (!username) return;
+
+        const listEl = document.getElementById('forum-user-posts-list');
+        const titleEl = document.getElementById('forum-user-posts-title');
+        if (titleEl) titleEl.textContent = `Posts by "${username}"`;
+        if (listEl) listEl.innerHTML = '<div class="forum-placeholder"><h3>Searching…</h3></div>';
+
+        this.showUserPostsView();
+
+        try {
+            const response = await fetch(`/api/forum/posts/user/${encodeURIComponent(username)}`);
+            const data = await response.json();
+            this.renderUserPosts(data.posts || [], data.username || username);
+        } catch (err) {
+            console.error("[Forum] User post search failed:", err);
+            if (listEl) listEl.innerHTML = '<div class="forum-placeholder"><h3>Error loading posts.</h3></div>';
+        }
+    },
+
+    renderUserPosts: function (posts, username) {
+        const listEl = document.getElementById('forum-user-posts-list');
+        const titleEl = document.getElementById('forum-user-posts-title');
+        if (titleEl) titleEl.textContent = `Posts by "${username}" (${posts.length})`;
+
+        if (!listEl) return;
+
+        if (posts.length === 0) {
+            listEl.innerHTML = `
+                <div class="forum-placeholder">
+                    <div class="placeholder-icon">📭</div>
+                    <h3>No posts found</h3>
+                    <p>The user "<strong>${this.escapeHtml(username)}</strong>" hasn't posted anything yet, or doesn't exist.</p>
+                </div>
+            `;
+            return;
+        }
+
+        listEl.innerHTML = posts.map(post => {
+            const date = new Date(post.timestamp);
+            const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return `
+                <div class="forum-post-card" data-id="${post.id}">
+                    <div class="post-card-header">
+                        <span class="post-card-title">${this.escapeHtml(post.title)}</span>
+                        <span class="post-card-meta">
+                            ${post.category_name ? `<span style="background: rgba(var(--accent-rgb),0.15); padding: 2px 8px; border-radius: 4px; font-size:0.78rem; font-weight:700;">${this.escapeHtml(post.category_name)}</span>` : ''}
+                            <span>${dateStr}</span>
+                        </span>
+                    </div>
+                    <div class="post-card-excerpt">${this.escapeHtml(post.content)}</div>
+                    <div class="post-stats">
+                        <div class="stat-item">💬 ${post.comment_count} comments</div>
+                        ${post.image_url ? '<div class="stat-item">🖼️ Includes image</div>' : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Attach click listeners to open the post
+        listEl.querySelectorAll('.forum-post-card').forEach(card => {
             card.addEventListener('click', () => {
                 const postId = parseInt(card.getAttribute('data-id'));
                 this.loadPostDetail(postId);
@@ -334,6 +425,11 @@ const Forum = {
         document.getElementById('forum-view-restricted').classList.add('active');
     },
 
+    showUserPostsView: function () {
+        document.querySelectorAll('.forum-view').forEach(v => v.classList.remove('active'));
+        document.getElementById('forum-view-user').classList.add('active');
+    },
+
     escapeHtml: function (text) {
         const div = document.createElement('div');
         div.textContent = text;
@@ -344,3 +440,4 @@ const Forum = {
 window.initForum = function () {
     Forum.init();
 };
+

@@ -213,22 +213,31 @@ async function updateGameState() {
             return match;
         });
 
-        // EVICTION LOGIC: If I am neither a player nor a spectator, I've been kicked for inactivity
-        if (!amIPlayer && !amISpectator && currentUsername) {
-            console.warn('[play.js] User not found in room lists. Likely evicted for inactivity. Redirecting to lobby. User:', currentUsername);
-            stopPolling();
-            window.currentRoomId = null;
-            if (window.showPage) window.showPage('page-lobby');
+        const isDaily = state.time_limit >= 7200;
 
-            // Show alert AFTER switching pages
-            setTimeout(() => {
-                if (window.showAlertModal) {
-                    window.showAlertModal("Notice", "You have been kicked out of the room for being idle for 7 minutes.");
-                } else {
-                    alert("You have been kicked out of the room for being idle for 7 minutes.");
-                }
-            }, 100);
-            return;
+        // EVICTION LOGIC: If I am neither a player nor a spectator, I've been kicked for inactivity
+        // SPECIAL CASE: 24h rooms wipe at 12AM. If we find ourselves not in the list but players.length is 0, it's a reset.
+        if (!amIPlayer && !amISpectator && currentUsername) {
+            const isReset = isDaily && state.players.length === 0;
+
+            if (!isReset) {
+                console.warn('[play.js] User not found in room lists. Likely evicted for inactivity. Redirecting to lobby. User:', currentUsername);
+                stopPolling();
+                window.currentRoomId = null;
+                if (window.showPage) window.showPage('page-lobby');
+
+                // Show alert AFTER switching pages
+                setTimeout(() => {
+                    if (window.showAlertModal) {
+                        window.showAlertModal("Notice", "You have been kicked out of the room for being idle for 7 minutes.");
+                    } else {
+                        alert("You have been kicked out of the room for being idle for 7 minutes.");
+                    }
+                }, 100);
+                return;
+            } else {
+                console.log('[play.js] Room appears to have reset at 12AM. Staying in room.');
+            }
         }
 
         if (window.isSpectatorMode !== !amIPlayer) {
@@ -360,6 +369,13 @@ async function updateGameState() {
         const isActive = state.state === 'active';
         const inputEl = document.getElementById('word-input');
         const submitBtn = document.getElementById('submit-word-btn');
+        const rotateBtn = document.getElementById('rotate-board-btn');
+
+        if ((state.game_type === 'split' || state.game_type === 'fcfs') && state.state === 'intermission') {
+            if (rotateBtn) rotateBtn.style.display = 'none';
+        } else {
+            if (rotateBtn) rotateBtn.style.display = '';
+        }
 
         if (state.game_type === 'split' && state.state === 'intermission') {
             // Hide for Split Points intermission
@@ -849,43 +865,34 @@ async function updateGameState() {
         // --- PREVIOUS DAY TAB (24H Only) ---
         const prevListEl = document.getElementById('previous-words-list');
         if (prevListEl && activeWordsTab === 'previous') {
-            const prevAll = state.previous_all_words || [];
+            const hist = state.previous_day_history;
+            const prevAll = (hist && hist.all_words) ? hist.all_words : (state.previous_all_words || []);
+            const prevBoard = (hist && hist.board) ? hist.board : null;
 
             if (prevAll.length === 0) {
                 prevListEl.innerHTML = '<p class="placeholder">No previous data.</p>';
             } else {
-                // PERSONAL HISTORY: Use my restored player's previous words OR persisted history
-                // Note: state.players might be empty if wiped by 24h reset!
+                // PERSONAL HISTORY
                 const myPlayer = (state.players || []).find(p => p.username === currentUser);
                 let myPrevWords = myPlayer ? (myPlayer.previous_submitted_words || []) : [];
 
-                // BACKUP: If player was wiped (24h daily reset), check history
-                console.log('[PreviousTab] Checking history. MyPrev:', myPrevWords.length, 'Hist:', !!state.previous_day_history);
-                if (myPrevWords.length === 0 && state.previous_day_history) {
+                if (myPrevWords.length === 0 && hist && hist.players) {
                     const normalizedCurrent = currentUser ? currentUser.trim().toLowerCase() : '';
-                    // retrieve locally saved username as fallback (for Guests who get reset)
                     const localUser = localStorage.getItem('last_morpheme_user');
                     const normalizedLocal = localUser ? localUser.trim().toLowerCase() : '';
 
-                    console.log('[PreviousTab] Searching for:', normalizedCurrent, 'or Local:', normalizedLocal);
-
-                    Object.values(state.previous_day_history).forEach(record => {
+                    Object.values(hist.players).forEach(record => {
                         if (record.username) {
                             const recName = record.username.trim().toLowerCase();
-                            // Match either current session name OR locally saved name
                             if ((normalizedCurrent && recName === normalizedCurrent) ||
                                 (normalizedLocal && recName === normalizedLocal)) {
                                 myPrevWords = record.found_words || [];
-                                console.log('[PreviousTab] Restored from HISTORY (Match found for:', record.username, ') Words:', myPrevWords.length);
                             }
                         }
                     });
                 }
 
-                console.log('[PreviousTab] Rendering. PrevAll:', prevAll.length, 'MyPrev:', myPrevWords.length);
-
                 const foundSet = new Set(myPrevWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase()));
-
                 const foundList = [];
                 const missedList = [];
 
@@ -897,20 +904,17 @@ async function updateGameState() {
                     }
                 });
 
-                // Sort function: Length desc, then Alpha
                 const sortFn = (a, b) => {
                     if (a.length !== b.length) return b.length - a.length;
                     return a.toUpperCase().localeCompare(b.toUpperCase());
                 };
-
                 foundList.sort(sortFn);
                 missedList.sort(sortFn);
 
-                // Render Helper
                 const renderRow = (w, isFound) => {
                     const statusClass = isFound ? 'player-word' : 'missed';
                     const icon = isFound ? '✓' : '✗';
-                    return `<div class="word-item ${statusClass}" data-word="${w}" style="display:flex; justify-content:space-between; cursor:pointer;">
+                    return `<div class="word-item ${statusClass} prev-day-word" data-word="${w}" style="display:flex; justify-content:space-between; cursor:pointer;">
                         <span>${w}</span>
                         <span style="opacity:0.6">${icon}</span>
                     </div>`;
@@ -918,23 +922,33 @@ async function updateGameState() {
 
                 let html = '';
 
-                // Found Section
-                html += `<div style="padding:10px; background:rgba(0,0,0,0.1); font-weight:bold; color:#4a90e2;">FOUND (${foundList.length})</div>`;
-                if (foundList.length > 0) {
-                    html += foundList.map(w => renderRow(w, true)).join('');
-                } else {
-                    html += `<div style="padding:15px; text-align:center; font-style:italic; opacity:0.6;">None</div>`;
+                // Mini Board Display
+                if (prevBoard) {
+                    const rows = prevBoard.length;
+                    const cols = prevBoard[0].length;
+                    html += `<div style="text-align:center; padding:10px 0;">`;
+                    html += `<div style="font-size:0.7rem; opacity:0.6; text-transform:uppercase; margin-bottom:8px; letter-spacing:1px;">Previous Board</div>`;
+                    html += `<div style="display:grid; grid-template-columns:repeat(${cols}, 1fr); gap:2px; width:100px; margin:0 auto; border: 2px solid var(--input-border); padding: 2px; border-radius: 4px; background: var(--input-border);">`;
+                    prevBoard.forEach(row => {
+                        row.forEach(cell => {
+                            html += `<div style="background:var(--input-bg); aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; font-size:0.5rem; font-weight:900; border-radius:1px;">${cell}</div>`;
+                        });
+                    });
+                    html += `</div></div>`;
                 }
 
-                // Missed Section
+                html += `<div style="padding:10px; background:rgba(0,0,0,0.1); font-weight:bold; color:#4a90e2;">FOUND (${foundList.length})</div>`;
+                html += foundList.length > 0 ? foundList.map(w => renderRow(w, true)).join('') : `<div style="padding:15px; text-align:center; font-style:italic; opacity:0.6;">None</div>`;
+
                 html += `<div style="padding:10px; background:rgba(0,0,0,0.1); font-weight:bold; margin-top:10px; color:#888;">MISSED (${missedList.length})</div>`;
-                if (missedList.length > 0) {
-                    html += missedList.map(w => renderRow(w, false)).join('');
-                } else {
-                    html += `<div style="padding:15px; text-align:center; font-style:italic; opacity:0.6;">None</div>`;
-                }
+                html += missedList.length > 0 ? missedList.map(w => renderRow(w, false)).join('') : `<div style="padding:15px; text-align:center; font-style:italic; opacity:0.6;">None</div>`;
 
                 prevListEl.innerHTML = html;
+
+                // Add listeners
+                prevListEl.querySelectorAll('.prev-day-word').forEach(item => {
+                    item.onclick = () => window.fetchDefinition(item.dataset.word);
+                });
             }
         }
 
@@ -1907,11 +1921,41 @@ if (window.ResizeObserver) {
 // Helper to create a board cell
 function createBoardCell(r, c, letter, grayed) {
     const cell = document.createElement('div');
-    cell.className = 'board-cell' + (grayed ? ' grayed' : '');
-    cell.textContent = letter === 'Q' ? 'QU' : letter;
+    const isBonusCell = state?.bonus_letter_cell && state.bonus_letter_cell[0] === r && state.bonus_letter_cell[1] === c;
+
+    let additionalClasses = '';
+    if (state?.board_format === 'Checkerboard') {
+        if ((r + c) % 2 === 0) additionalClasses += ' checker-alt';
+    }
+
+    cell.className = 'board-cell' + (grayed ? ' grayed' : '') + (isBonusCell ? ' bonus-tile' : '') + additionalClasses;
     cell.dataset.row = r;
     cell.dataset.col = c;
     cell.dataset.letter = letter; // Original letter
+
+    if (letter.includes('/')) {
+        cell.classList.add('either-or');
+        cell.textContent = letter;
+    } else {
+        cell.textContent = letter === 'Q' ? 'QU' : letter;
+    }
+
+    // Add point value in corner for Valued Letters format
+    if (state?.board_format === 'Valued Letters') {
+        const LETTER_VALUES = {
+            'A': 2, 'B': 4, 'C': 4, 'D': 3, 'E': 1, 'F': 5, 'G': 3, 'H': 5, 'I': 2, 'J': 10,
+            'K': 6, 'L': 3, 'M': 4, 'N': 2, 'O': 2, 'P': 4, 'Q': 10, 'R': 2, 'S': 2, 'T': 2,
+            'U': 4, 'V': 5, 'W': 5, 'X': 9, 'Y': 5, 'Z': 9
+        };
+        const val = LETTER_VALUES[letter.toUpperCase()] || 0;
+        if (val > 0) {
+            const valEl = document.createElement('span');
+            valEl.className = 'tile-value';
+            valEl.textContent = val;
+            cell.appendChild(valEl);
+        }
+    }
+
     return cell;
 }
 
@@ -1932,25 +1976,33 @@ function findWordPathOnBoard(word, board) {
         if (r < 0 || r >= rows || c < 0 || c >= cols) return null;
         if (visited.has(`${r},${c}`)) return null;
 
-        const cellChar = board[r][c].toUpperCase();
+        const cellContent = board[r][c].toUpperCase();
         let matchLength = 0;
+        let isMatch = false;
 
-        if (cellChar === 'Q') {
-            // "Q" tile matches "QU" in the word, or just "Q" if it's the only thing typed
-            if (upperWord.substring(index, index + 2) === 'QU') {
-                matchLength = 2;
-            } else if (upperWord[index] === 'Q') {
-                matchLength = 1;
+        const options = cellContent.includes('/') ? cellContent.split('/') : [cellContent];
+
+        for (const cellChar of options) {
+            if (cellChar === 'Q') {
+                if (upperWord.substring(index, index + 2) === 'QU') {
+                    matchLength = 2;
+                    isMatch = true;
+                    break;
+                } else if (upperWord[index] === 'Q') {
+                    matchLength = 1;
+                    isMatch = true;
+                    break;
+                }
             } else {
-                return null;
-            }
-        } else {
-            if (upperWord[index] === cellChar) {
-                matchLength = 1;
-            } else {
-                return null;
+                if (upperWord[index] === cellChar) {
+                    matchLength = 1;
+                    isMatch = true;
+                    break;
+                }
             }
         }
+
+        if (!isMatch) return null;
 
         const newVisited = new Set(visited);
         newVisited.add(`${r},${c}`);
@@ -2731,8 +2783,27 @@ window.leaveCurrentRoom = leaveCurrentRoom;
 const returnBtnEl = document.getElementById('return-lobby-btn');
 if (returnBtnEl) {
     returnBtnEl.addEventListener('click', async () => {
+        if (localStorage.getItem('tournament_play_active')) {
+            const confirmed = confirm("Are you sure you want to leave? This will end your tournament match and count as a forfeit.");
+            if (!confirmed) return;
+
+            // Call forfeit API
+            try {
+                await fetch('/api/tournament/forfeit', { method: 'POST' });
+            } catch (e) {
+                console.error("Forfeit failed:", e);
+            }
+            localStorage.removeItem('tournament_play_active');
+            if (window.navigateToPage) {
+                window.navigateToPage('tournaments');
+            } else {
+                window.location.hash = '#page-tournaments';
+            }
+            return;
+        }
         await leaveCurrentRoom();
-        showPage('page-lobby');
+        if (window.showPage) window.showPage('page-lobby');
+        else window.location.hash = '#page-lobby';
     });
 }
 

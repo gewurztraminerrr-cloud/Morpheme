@@ -20,6 +20,10 @@
             <span class="logo-text">MORPHEME</span>
             <span class="pronunciation">MORE-FEEM</span>
         </div>
+        <div class="header-search">
+            <input type="text" id="global-word-search" placeholder="Search dictionary..." autocomplete="off">
+            <button id="global-search-btn">🔍</button>
+        </div>
         <nav class="nav">
             <button class="nav-btn" data-page="store" id="btn-store">Store</button>
             <button class="nav-btn" data-page="login" id="nav-login-btn">Login</button>
@@ -303,7 +307,12 @@
                                 <select id="sf-config-format">
                                     <option value="Normal">Normal</option>
                                     <option value="Checkerboard">Checkerboard</option>
+                                    <option value="Either/Or">Either/Or</option>
+                                    <option value="Bonus Letter">Bonus Letter</option>
+                                    <option value="Valued Letters">Valued Letters</option>
                                     <option value="Penalty">Penalty</option>
+                                    <option value="Mania">Mania</option>
+                                    <option value="Reorient Letters">Reorient Letters</option>
                                 </select>
                             </div>
                             <div class="config-group">
@@ -414,10 +423,10 @@
                     <div class="players-panel">
                         <h3 id="players-heading">Players</h3>
                         <div class="player-actions-row">
-                            <button id="find-me-btn" class="find-me-btn" style="display:none;">Find Me</button>
-                            <button id="find-friends-btn" class="find-me-btn" style="display:none;">Find
+                            <button id="find-me-btn" class="find-me-btn" style="display:none;">View Me</button>
+                            <button id="find-friends-btn" class="find-me-btn" style="display:none;">View
                                 Friends</button>
-                            <button id="show-everyone-btn" class="find-me-btn" style="display:none;">Show All</button>
+                            <button id="show-everyone-btn" class="find-me-btn" style="display:none;">View All</button>
                         </div>
                         <div id="players-list">
                             <p class="placeholder">Loading...</p>
@@ -668,6 +677,11 @@
                     <div class="forum-sidebar-header">
                         <h3>Forums</h3>
                     </div>
+                    <!-- User Search -->
+                    <div class="forum-user-search">
+                        <input type="text" id="forum-user-search-input" placeholder="Search by user…">
+                        <button id="forum-user-search-btn" class="forum-action-btn">Posts</button>
+                    </div>
                     <div id="forum-categories-list" class="forum-nav-list">
                         <!-- Categories injected via JS -->
                         <div class="forum-cat-loading">Loading categories...</div>
@@ -693,6 +707,17 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- User Posts View -->
+                    <div id="forum-view-user" class="forum-view">
+                        <div class="forum-sub-header">
+                            <button id="forum-back-from-user" class="forum-back-btn">← Back</button>
+                            <h2 id="forum-user-posts-title" style="font-size:1.2rem; margin:0;"></h2>
+                        </div>
+                        <div id="forum-user-posts-list" class="forum-posts-list">
+                        </div>
+                    </div>
+
 
                     <!-- Single Post View -->
                     <div id="forum-view-post" class="forum-view">
@@ -806,37 +831,39 @@
                     <!-- Personal Timer Interface -->
                     <div id="tool-timer" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Personal Timer</h2>
-                            <p>Set a timer for your play session. When time is up, the definitions panel will flash red
+                            <h2 style="font-size: 1.8rem;">Personal Timer</h2>
+                            <p style="font-size: 1.1rem; line-height: 1.5;">Set a timer for your play session. When time
+                                is up, the definitions panel will flash red
                                 to alert you.</p>
                         </div>
                         <div class="combo-control-panel">
-                            <div class="input-row" style="justify-content: center; align-items: center; gap: 15px;">
+                            <div class="input-row" style="justify-content: center; align-items: center; gap: 20px;">
                                 <div style="display: flex; flex-direction: column; align-items: center;">
                                     <label for="timer-hours"
-                                        style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 5px; color: var(--text-primary);">Hours</label>
+                                        style="font-size: 1.1rem; font-weight: 500; opacity: 0.9; margin-bottom: 8px; color: var(--text-primary);">Hours</label>
                                     <input type="number" id="timer-hours" placeholder="0" min="0" max="24"
-                                        style="width: 80px; text-align: center; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-primary); border-radius: 6px; padding: 6px;">
+                                        style="width: 100px; height: 50px; font-size: 1.5rem; text-align: center; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-primary); border-radius: 8px; padding: 5px;">
                                 </div>
-                                <div style="font-size: 1.5rem; font-weight: bold; margin-top: 15px;">:</div>
+                                <div style="font-size: 2rem; font-weight: bold; margin-top: 25px;">:</div>
                                 <div style="display: flex; flex-direction: column; align-items: center;">
                                     <label for="timer-minutes"
-                                        style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 5px; color: var(--text-primary);">Minutes</label>
+                                        style="font-size: 1.1rem; font-weight: 500; opacity: 0.9; margin-bottom: 8px; color: var(--text-primary);">Minutes</label>
                                     <input type="number" id="timer-minutes" placeholder="0" min="0" max="59"
-                                        style="width: 80px; text-align: center; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-primary); border-radius: 6px; padding: 6px;">
+                                        style="width: 100px; height: 50px; font-size: 1.5rem; text-align: center; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-primary); border-radius: 8px; padding: 5px;">
                                 </div>
                             </div>
-                            <div class="input-row" style="margin-top: 20px;">
+                            <div class="input-row" style="margin-top: 30px; gap: 20px;">
                                 <button id="timer-start-btn"
-                                    style="flex: 1; min-width: 150px; background: #00d2ff; color: #000; font-weight: bold; border: none; border-radius: 8px; padding: 10px; cursor: pointer;">Start
+                                    style="flex: 1; min-width: 180px; font-size: 1.2rem; background: #00d2ff; color: #000; font-weight: bold; border: none; border-radius: 12px; padding: 15px; cursor: pointer; transition: transform 0.1s;">Start
                                     Timer</button>
                                 <button id="timer-stop-btn"
-                                    style="flex: 1; min-width: 150px; background: #ff4d4d; color: var(--text-primary); font-weight: bold; border: none; border-radius: 8px; padding: 10px; cursor: pointer; display: none;">Stop
+                                    style="flex: 1; min-width: 180px; font-size: 1.2rem; background: #ff4d4d; color: var(--text-primary); font-weight: bold; border: none; border-radius: 12px; padding: 15px; cursor: pointer; display: none; transition: transform 0.1s;">Stop
                                     Timer</button>
                             </div>
                         </div>
-                        <div id="timer-display-container" style="text-align: center; margin-top: 30px; display: none;">
-                            <h3 style="font-family: monospace; font-size: 3rem; margin: 0; text-shadow: 0 0 10px rgba(0,210,255,0.5);"
+                        <div id="timer-display-container"
+                            style="text-align: center; margin-top: 40px; display: none; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 20px; border: 1px solid var(--input-border);">
+                            <h3 style="font-family: 'JetBrains Mono', monospace; font-size: 5rem; margin: 0; text-shadow: 0 0 20px rgba(0,210,255,0.7); color: #00d2ff;"
                                 id="timer-countdown-display">00:00:00</h3>
                         </div>
                     </div>
@@ -1158,8 +1185,12 @@
                                 <!-- Word injected via JS -->
                             </div>
                             <div id="wotd-definition" class="wotd-definition"
-                                style="margin-top: 30px; text-align: left; font-size: 1.3rem; max-width: 700px; margin-left: 0; margin-right: auto; opacity: 0.9; line-height: 1.5; color: #ddd; font-style: italic;">
+                                style="margin-top: 10px; text-align: left; font-size: 1.3rem; max-width: 700px; margin-left: 0; margin-right: auto; opacity: 0.9; line-height: 1.5; color: #ddd; font-style: italic;">
                                 <!-- Definition injected via JS -->
+                            </div>
+                            <div id="wotd-pronunciation" class="word-pronunciation-tool"
+                                style="margin-top: 15px; text-align: left;">
+                                <!-- Pronunciation injected via JS -->
                             </div>
                         </div>
                     </div>
@@ -1203,8 +1234,12 @@
                             <div id="random-word-display" class="random-word-large">
                                 <!-- Generated word appears here -->
                             </div>
+                            <div id="random-word-pronunciation" class="word-pronunciation-tool"
+                                style="margin-top: 10px;">
+                                <!-- Pronunciation appears here -->
+                            </div>
                             <div id="random-word-definition"
-                                style="margin-top: 20px; font-size: 1.1rem; color: #ccc; font-style: italic; max-width: 80%; margin-left: 0; margin-right: auto; line-height: 1.4; text-align: left;">
+                                style="margin-top: 10px; font-size: 1.1rem; color: #ccc; font-style: italic; max-width: 80%; margin-left: 0; margin-right: auto; line-height: 1.4; text-align: left;">
                                 <!-- Definition generated here -->
                             </div>
                         </div>
@@ -1316,8 +1351,12 @@
                             <div id="valid-result-display" class="random-word-large">
                                 <!-- Validation result appears here -->
                             </div>
+                            <div id="valid-pronunciation-display" class="word-pronunciation-tool"
+                                style="margin-top: 10px; opacity: 0;">
+                                <!-- Pronunciation appears here -->
+                            </div>
                             <div id="valid-definition-display"
-                                style="margin-top: 20px; font-size: 1.1rem; color: #ccc; font-style: italic; max-width: 80%; margin-left: 0; margin-right: auto; line-height: 1.4; text-align: left; opacity: 0;">
+                                style="margin-top: 10px; font-size: 1.1rem; color: #ccc; font-style: italic; max-width: 80%; margin-left: 0; margin-right: auto; line-height: 1.4; text-align: left; opacity: 0;">
                                 <!-- Definition appears here -->
                             </div>
                         </div>
@@ -1768,7 +1807,7 @@
                     </div>
                     <!-- Color Picker: Typing -->
                     <div id="highlight-color-picker"
-                        style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(var(--text-primary-rgb),0.1); width: 100%;">
+                        style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; width: 100%;">
                         <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Typing
                             Color
                         </div>
@@ -1816,7 +1855,7 @@
                     </div>
                     <!-- Color Picker: Mousing -->
                     <div id="highlight-mouse-color-picker"
-                        style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(var(--text-primary-rgb),0.1); width: 100%;">
+                        style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; width: 100%;">
                         <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Mousing
                             Color
                         </div>
@@ -2301,31 +2340,58 @@
 
                         <!-- Q5 -->
                         <div class="faq-item">
-                            <div class="faq-question">What do the Penalty and Checkerboard mechanics
-                                signify?</div>
+                            <div class="faq-question">What are the different game Formats and what do they do?</div>
                             <div class="faq-answer">
-                                <p><strong>Penalty:</strong> Should the Spinner land on Penalty,
-                                    exercise caution! Any
-                                    valid
-                                    letter sequence found on the board that is NOT in the active
-                                    dictionary will result
-                                    in a
-                                    <strong>3-point deduction</strong>. Accuracy becomes as vital as
-                                    speed.
-                                </p>
-                                <p><strong>Checkerboard:</strong> This elegant format arranges the
-                                    board so that
-                                    consonants
-                                    and
-                                    vowels alternate along rows and diagonals (e.g., C V C V C).
-                                    This rhythmic layout
-                                    creates
-                                    unique patterns and strategic opportunities for word formation.
-                                </p>
+                                <p>Morpheme features diverse board formats to keep every round fresh (appearance rates
+                                    in Accumulative mode):</p>
+                                <ul>
+                                    <li><strong>Normal (82%):</strong> Standard Boggle rules with our custom letter
+                                        distribution.</li>
+                                    <li><strong>Checkerboard (8%):</strong> Diagonally alternating vowels and
+                                        consonants. No Bonus Word.</li>
+                                    <li><strong>[Letter] Mania (2%):</strong> Over 30% of the board is a single specific
+                                        letter. No Bonus Word.</li>
+                                    <li><strong>Either/Or (2%):</strong> One tile on the board holds two alternative
+                                        letters (e.g. L/T).</li>
+                                    <li><strong>Bonus Letter (2%):</strong> One letter is highlighted; using it grants
+                                        +5 extra points per word.</li>
+                                    <li><strong>Valued Letters (2%):</strong> Letters have Scrabble-style point values
+                                        (shown on tiles).</li>
+                                    <li><strong>Penalty (2%):</strong> Invalid word submissions deduct -3 points.</li>
+                                    <li><strong>Reorient Letters:</strong> Letters rotate in place throughout the round
+                                        (Manual selection only).</li>
+                                </ul>
                             </div>
                         </div>
 
                         <!-- Q6 -->
+                        <div class="faq-item">
+                            <div class="faq-question">Can I play Solo or With Friends?</div>
+                            <div class="faq-answer">
+                                <p>Yes! Simply scroll down in the Lobby to find the <strong>Solo & With Friends</strong>
+                                    section. You can add AI bots, invite your friends, or practice alone with custom
+                                    board lengths and formats.</p>
+                            </div>
+                        </div>
+
+                        <!-- Q6 -->
+                        <div class="faq-item">
+                            <div class="faq-question">How does the Combo Checker work?</div>
+                            <div class="faq-answer">
+                                <p>The Combo Checker uses two main scores to show how words are related:</p>
+                                <p><strong>MP (Microprocedures)</strong> is like a "Fix-it Score." Imagine you have
+                                    magnetic letters on your fridge. To change one word into another, you might move a
+                                    letter to a new spot, put a new one in, or take one out. Each change is 1 point. We
+                                    only count the fixes <em>inside</em> the word, so if there's an extra letter at the
+                                    very front or back, it doesn't cost anything (0 points)!</p>
+                                <p><strong>LIC (Letters In Common)</strong> is like the "Match-up Club." We look at two
+                                    words and count how many letters they share, like finding matching socks in a big
+                                    pile. It doesn't matter what order they are in—if both words have the same letters,
+                                    they belong together in the club!</p>
+                            </div>
+                        </div>
+
+                        <!-- Q7 -->
                         <div class="faq-item">
                             <div class="faq-question">What determines the difficulty level of a
                                 board?</div>
@@ -2348,7 +2414,7 @@
                             </div>
                         </div>
 
-                        <!-- Q7 -->
+                        <!-- Q8 -->
                         <div class="faq-item">
                             <div class="faq-question">Is there a faster way to view a user’s
                                 profile?</div>
@@ -2364,7 +2430,7 @@
                             </div>
                         </div>
 
-                        <!-- Q8 -->
+                        <!-- Q9 -->
                         <div class="faq-item">
                             <div class="faq-question">Why does the system generate unique parameters
                                 for each round?
@@ -2427,7 +2493,7 @@
                                         <span class="btn-icon">▶</span> Watch Replay
                                     </button>
                                     <button id="skip-replay-btn" class="replay-btn secondary hidden">
-                                        Show All
+                                        View All
                                     </button>
                                 </div>
                             </div>
@@ -2532,6 +2598,10 @@
                     <div class="mini-meta-item">
                         <span class="mini-meta-icon">🗓️</span>
                         <span id="mini-profile-joined" class="mini-meta-text">Joined: -</span>
+                    </div>
+                    <div class="mini-meta-item" title="Country">
+                        <span class="mini-meta-icon" id="mini-profile-flag">🏳️</span>
+                        <span id="mini-profile-country-name" class="mini-meta-text">International</span>
                     </div>
                     <div class="mini-meta-item">
                         <span class="mini-meta-icon" id="mini-profile-status-icon">⚪</span>

@@ -117,6 +117,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupAuth(); // Initialize auth listeners
     setupContactForm(); // Initialize contact form listeners
     initSettings(); // Initialize settings logic
+    setupGlobalSearch(); // Initialize global search
 
     // USER REQUEST: Log out on Refresh/Reload
     const entries = performance.getEntriesByType("navigation");
@@ -202,9 +203,16 @@ async function fetchUserCount() {
 
 // Global Settings State
 window.userSettings = {
-    lobby_music: true, // Default ON
+    lobby_music: true,
     chat_font_size: 13,
-    def_font_size: 15
+    def_font_size: 15,
+    board_size: 60,
+    highlight_typing: true,
+    highlight_typing_color: '#4ade80',
+    highlight_mouse: true,
+    highlight_mouse_color: '#facc15',
+    next_round_bell_enabled: true,
+    next_round_bell_type: 'bell1'
 };
 
 // Initialize Defaults immediately
@@ -367,32 +375,25 @@ async function checkSession() {
             updateAuthUI(); // Update UI for logged in state
 
             // FETCH SETTINGS
-            try {
-                const sRes = await fetch('/api/settings');
-                const sData = await sRes.json();
-                if (sData.settings) {
-                    // Apply Lobby Music
-                    if (sData.settings.lobby_music !== undefined) {
-                        let val = sData.settings.lobby_music;
-                        // Handle potential string types from DB
-                        if (val === 'true' || val === 'True' || val === true) val = true;
-                        else if (val === 'false' || val === 'False' || val === false) val = false;
-
-                        window.userSettings.lobby_music = val;
-
-                        // Update Checkbox
-                        const cb = document.getElementById('setting-lobby-music');
-                        if (cb) cb.checked = val;
-
-                        // Apply state
-                        handleLobbyMusicState();
+            if (typeof window.loadSettings === 'function') {
+                window.loadSettings();
+            } else {
+                // Fallback for redundant settings fetch if settings.js isn't ready
+                try {
+                    const sRes = await fetch('/api/settings');
+                    const sData = await sRes.json();
+                    if (sData.settings) {
+                        // Minimal apply for core app if settings module missed
+                        if (sData.settings.lobby_music !== undefined) {
+                            let val = sData.settings.lobby_music;
+                            if (val === 'true' || val === 'True' || val === true) val = true;
+                            else if (val === 'false' || val === 'False' || val === false) val = false;
+                            window.userSettings.lobby_music = val;
+                            handleLobbyMusicState();
+                        }
                     }
-
-                    // Apply Font Sizes
-                    applySavedFontSize(sData.settings.chat_font_size, 'setting-chat-size', 'setting-chat-size-val', 'preview-chat-text', '--chat-font-size', 'chat_font_size');
-                    applySavedFontSize(sData.settings.def_font_size, 'setting-def-size', 'setting-def-size-val', 'preview-def-text', '--def-font-size', 'def_font_size');
-                }
-            } catch (e) { console.warn('Error fetching settings', e); }
+                } catch (e) { console.warn('Error fetching settings', e); }
+            }
 
             // NEW: Check if user is already in a room
             try {
@@ -478,6 +479,16 @@ function setupNavigation() {
         btn.addEventListener('click', async () => {
             if (!btn.disabled) {
                 const pageTarget = btn.getAttribute('data-page');
+
+                // TOURNAMENT PROTECTION
+                if (localStorage.getItem('tournament_play_active') && pageTarget !== 'play') {
+                    const confirmed = confirm("Leaving now will forfeit your tournament turn and end your run. Continue?");
+                    if (!confirmed) return;
+
+                    // Forfeit on server
+                    fetch('/api/tournament/forfeit', { method: 'POST' });
+                    localStorage.removeItem('tournament_play_active');
+                }
 
                 // Special Case: How to Play is a Modal
                 if (pageTarget === 'howtoplay') {
@@ -785,6 +796,11 @@ function navigateToLobby() {
         updateActiveNav(lobbyBtn);
     }
 
+    // Load user settings upon entering lobby (post-auth)
+    if (typeof window.loadSettings === 'function') {
+        window.loadSettings();
+    }
+
     // Ensure private matches load instantly
     if (typeof window.loadPrivateMatches === 'function') {
         window.loadPrivateMatches();
@@ -1057,3 +1073,59 @@ window.setCurrentUser = function (user) {
         }
     }, 1000);
 })();
+function setupGlobalSearch() {
+    const searchInput = document.getElementById('global-word-search');
+    const searchBtn = document.getElementById('global-search-btn');
+
+    if (!searchInput || !searchBtn) return;
+
+    const performSearch = async () => {
+        const word = searchInput.value.trim().toUpperCase();
+        if (!word) return;
+
+        // Clear input
+        searchInput.value = '';
+
+        if (window.showWordDefinition) {
+            window.showWordDefinition(word);
+        }
+    };
+
+    searchBtn.addEventListener('click', performSearch);
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') performSearch();
+    });
+
+    // Expose a global helper
+    window.showWordDefinition = async (word) => {
+        if (!word) return;
+
+        try {
+            const response = await fetch(`/api/definition?word=${encodeURIComponent(word.toUpperCase())}`);
+            const data = await response.json();
+
+            const modal = document.getElementById('generic-info-modal');
+            const titleEl = document.getElementById('generic-modal-title');
+            const bodyEl = document.getElementById('generic-modal-body');
+
+            if (!modal || !titleEl || !bodyEl) return;
+
+            titleEl.textContent = `Word Info: ${word.toUpperCase()}`;
+
+            let content = '';
+            if (data.definition) {
+                if (data.pronunciation) {
+                    content += `<div class="word-pronunciation-tool" style="margin-top: 0; margin-bottom: 15px; font-size: 1.3rem;">${data.pronunciation}</div>`;
+                }
+                content += `<div style="font-size: 1.2rem; line-height: 1.6; color: rgba(var(--text-primary-rgb), 0.9); font-style: italic;">${data.definition}</div>`;
+            } else {
+                content = `<div style="color: #f43f5e; font-size: 1.1rem;">Word "${word}" not found in dictionary.</div>`;
+            }
+
+            bodyEl.innerHTML = content;
+            modal.classList.remove('hidden');
+        } catch (err) {
+            console.error('Show word definition error:', err);
+        }
+    };
+}

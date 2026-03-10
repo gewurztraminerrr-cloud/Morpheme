@@ -18,6 +18,10 @@ function debounce(func, wait) {
 
     // 1. Load Settings on Startup
     async function loadSettings() {
+        if (!currentUser && !window.currentUser) {
+            console.log('[settings.js] Skip load (no user)');
+            return;
+        }
         try {
             const response = await fetch('/api/settings');
             const data = await response.json();
@@ -30,9 +34,13 @@ function debounce(func, wait) {
             console.error('[settings.js] Failed to load settings:', error);
         }
     }
+    window.loadSettings = loadSettings;
 
     // 2. Apply Settings to UI and State
     function applySettings(settings) {
+        if (!settings) return;
+        if (!window.userSettings) window.userSettings = {};
+
         // Board Size
         if (settings.board_size) {
             const size = parseInt(settings.board_size);
@@ -46,6 +54,7 @@ function debounce(func, wait) {
                     if (size > 65) playPage.classList.add('layout-huge-board');
                     else playPage.classList.remove('layout-huge-board');
                 }
+                window.userSettings.board_size = size;
             }
         }
 
@@ -184,6 +193,7 @@ function debounce(func, wait) {
             });
         }
     }
+    window.applySettings = applySettings;
 
     // 3. Handle Updates
     const saveSettingDebounced = debounce(async (key, value) => {
@@ -370,7 +380,6 @@ function debounce(func, wait) {
     }
 
     // Initialize
-    loadSettings();
     initPreviewInteraction();
 
     // --- Preview Board Interaction ---

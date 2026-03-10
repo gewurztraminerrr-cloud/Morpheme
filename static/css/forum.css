@@ -30,6 +30,37 @@
     letter-spacing: 1px;
 }
 
+/* User search bar */
+.forum-user-search {
+    display: flex;
+    gap: 6px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--input-border);
+}
+
+.forum-user-search input {
+    flex: 1;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    min-width: 0;
+}
+
+.forum-user-search input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.forum-user-search .forum-action-btn {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
 .forum-nav-list {
     flex: 1;
     overflow-y: auto;

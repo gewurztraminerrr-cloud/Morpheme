@@ -208,6 +208,16 @@ def init_db():
             submitted_at REAL,
             PRIMARY KEY (tournament_id, round_number, user_id)
         );
+
+        CREATE TABLE IF NOT EXISTS tournament_matchups (
+            tournament_id INTEGER,
+            round_number INTEGER,
+            user_1_id INTEGER,
+            user_2_id INTEGER, -- Can be NULL for a bye
+            winner_id INTEGER,
+            match_index INTEGER, -- For bracket position
+            PRIMARY KEY (tournament_id, round_number, match_index)
+        );
     ''')
     conn.commit()
 
@@ -920,7 +930,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
 
     # 2. Filter by Period for the lists
     time_filter = ""
-    if period == 'day': time_filter = "AND timestamp >= datetime('now', '-1 day')"
+    if period == 'day': time_filter = "AND timestamp >= datetime('now', 'start of day', 'utc')"
     elif period == 'week': time_filter = "AND timestamp >= datetime('now', '-7 days')"
     elif period == 'month': time_filter = "AND timestamp >= datetime('now', '-30 days')"
     elif period == 'year': time_filter = "AND timestamp >= datetime('now', '-365 days')"
@@ -1022,6 +1032,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             'total_score': my_score, 'num_words': len(words), 'is_win': is_win,
             'ratio': ratio, 'performance_value': perf_val,
             'top_word': max(words, key=lambda x: x.get('points', 0))['word'] if words else "-",
+            'avg_len': round(sum(len(w['word']) for w in words) / len(words), 1) if words else 0,
             'all_players': room_entries,
             'words': words,
             'board': json.loads(row[5])
@@ -1478,6 +1489,37 @@ def get_room_state(room_id):
         prev_state = room.state
         state_changed = room.check_and_update_state()
 
+        # REJOIN LOGIC for Daily Reset: If user was playing but got wiped by 12AM reset, re-add them.
+        if room.time_limit >= 7200 and 'user_id' in session:
+            uid = session['user_id']
+            is_p = any(p.user_id == uid for p in room.players)
+            is_s = any(s.user_id == uid for s in room.spectators)
+            if not is_p and not is_s:
+                # User is missing, check if they were here recently
+                # If they heartbeated in the last 10 minutes, auto-rejoin them
+                last_seen = room_manager.user_presence.get(str(uid), 0)
+                if (time.time() - last_seen) < 600:
+                    print(f"[app.py] Auto-restoring user {session['username']} to daily room {room_id} after reset")
+                    
+                    # Fetch current rating and stats
+                    rating = 1200
+                    games_played = 0
+                    country_flag = '🏳️'
+                    try:
+                        import sqlite3
+                        conn = sqlite3.connect('morpheme.db', timeout=30)
+                        cur = conn.execute('SELECT rating, games_played, country_flag FROM users WHERE id = ?', (uid,))
+                        row = cur.fetchone()
+                        if row:
+                            rating, games_played, country_flag = row
+                        conn.close()
+                    except: pass
+                    
+                    room.add_player(uid, session['username'], rating, 
+                                   games_played=games_played, 
+                                   country_flag=(country_flag or '🏳️'),
+                                   is_guest=session.get('is_guest', False))
+
         
         # If just transitioned to intermission, start complete solving in background
         if state_changed and room.state == 'intermission' and prev_state == 'active':
@@ -1875,7 +1917,7 @@ def get_lis(nums):
     return max(dp) if dp else 0
 
 def calculate_mp_pass(source, target, source_len, target_len):
-    """Calculates MP score for a specific alignment pass."""
+    """Calculates MP score, ignoring prefixes and suffixes (User request)."""
     # 1. Map Positions
     position = [-1] * target_len
     for s_idx, s_char in enumerate(source):
@@ -1886,18 +1928,36 @@ def calculate_mp_pass(source, target, source_len, target_len):
     
     # 2. Stats
     matched_indices = [p for p in position if p != -1]
+    if not matched_indices:
+        return source_len + target_len, 0
+        
     count = len(matched_indices)
-    
-    # 3. LIS
     count2 = get_lis(matched_indices)
+    
+    # 3. Identify internal ranges to ignore prefix/suffix
+    # Target range (indices of first and last match in target)
+    min_t = -1
+    max_t = -1
+    for t_idx, s_val in enumerate(position):
+        if s_val != -1:
+            if min_t == -1: min_t = t_idx
+            max_t = t_idx
+            
+    # Source range (indices of first and last match in source)
+    min_s = min(matched_indices)
+    max_s = max(matched_indices)
+    
+    # Internal Lengths
+    source_internal = max_s - min_s + 1
+    target_internal = max_t - min_t + 1
     
     # 4. Calculation
     # Moves = count - count2
-    # Inserts = target_len - count (Asterisks)
-    # Deletes = source_len - count
-    micro_procedures = (count - count2) + (target_len - count) + (source_len - count)
+    # Internal Inserts = target_internal - count
+    # Internal Deletes = source_internal - count
+    micro_procedures = (count - count2) + (target_internal - count) + (source_internal - count)
     
-    # 5. Hamming Optimization (Java 'count3' check)
+    # 5. Hamming Optimization (Check if direct overlay is cheaper)
     if source_len == target_len:
         count3 = sum(1 for a, b in zip(source, target) if a != b)
         if micro_procedures > count3:
@@ -1976,17 +2036,15 @@ def check_and_add_lic(lic_groups, count, target_len, word):
     if count not in lic_groups:
         lic_groups[count] = []
         
-    # Validations from Java
+    # Validations: Scaled for longer words (User request: count-6 up to length 9)
     valid = False
     
-    if count == 3 and target_len < 5: valid = True # New for 3-letter inputs
-    elif count == 4 and target_len < 6: valid = True # New for 4-letter inputs
-    elif count == 5 and target_len < 7: valid = True
-    elif count == 6 and target_len < 8: valid = True
-    elif count == 7 and target_len < 10: valid = True
-    elif count == 8 and target_len < 9: valid = True # Java groups 8,9,10 together for <9 constraint
-    elif count == 9 and target_len < 9: valid = True
-    elif count == 10 and target_len < 9: valid = True
+    if count == 3 and target_len < 7: valid = True 
+    elif count == 4 and target_len < 8: valid = True 
+    elif count == 5 and target_len < 9: valid = True
+    elif count == 6 and target_len < 10: valid = True  # Allows length 6,7,8,9
+    elif count == 7 and target_len < 11: valid = True  # Allows length 7,8,9,10
+    elif count >= 8 and target_len < (count + 4): valid = True # General scale for long inputs
     
     if valid:
         if word not in lic_groups[count]:
@@ -2298,18 +2356,23 @@ def tools_validate_word():
         
     is_valid = word in dictionary
     
-    # Try to get definition if valid
+    # Try to get definition and pronunciation if valid
     definition = None
+    pronunciation = None
     if is_valid:
-        global DEFINITIONS_CACHE
+        global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
         if DEFINITIONS_CACHE is None:
             load_definitions()
+        if PRONUNCIATIONS_CACHE is None:
+            load_pronunciations()
         definition = DEFINITIONS_CACHE.get(word)
+        pronunciation = PRONUNCIATIONS_CACHE.get(word) if PRONUNCIATIONS_CACHE else None
         
     return jsonify({
         'word': word,
         'is_valid': is_valid,
-        'definition': definition
+        'definition': definition,
+        'pronunciation': pronunciation
     })
 
 @app.route('/api/tools/unscramble/random', methods=['GET'])
@@ -2587,15 +2650,20 @@ def tools_random_word():
     import random
     random_word = random.choice(filtered_words)
     
-    # Get definition
-    global DEFINITIONS_CACHE
+    # Get definition and pronunciation
+    global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
     if DEFINITIONS_CACHE is None:
         load_definitions()
+    if PRONUNCIATIONS_CACHE is None:
+        load_pronunciations()
+        
     definition = DEFINITIONS_CACHE.get(random_word, "No definition available for this word.")
+    pronunciation = PRONUNCIATIONS_CACHE.get(random_word) if PRONUNCIATIONS_CACHE else None
     
     return jsonify({
         'word': random_word,
-        'definition': definition
+        'definition': definition,
+        'pronunciation': pronunciation
     })
 
 @app.route('/api/tools/wotd', methods=['GET'])
@@ -2623,16 +2691,21 @@ def tools_wotd():
     idx = seed_hash % len(eligible_words)
     wotd = eligible_words[idx]
     
-    # Get definition
-    global DEFINITIONS_CACHE
+    # Get definition and pronunciation
+    global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
     if DEFINITIONS_CACHE is None:
         load_definitions()
+    if PRONUNCIATIONS_CACHE is None:
+        load_pronunciations()
+        
     definition = DEFINITIONS_CACHE.get(wotd, "No definition available for this word.")
+    pronunciation = PRONUNCIATIONS_CACHE.get(wotd) if PRONUNCIATIONS_CACHE else None
     
     return jsonify({
         'word': wotd,
         'date': today_str,
-        'definition': definition
+        'definition': definition,
+        'pronunciation': pronunciation
     })
 
 
@@ -2782,6 +2855,25 @@ def get_forum_posts(category_id):
     finally:
         conn.close()
 
+@app.route('/api/forum/posts/user/<username>', methods=['GET'])
+def get_forum_posts_by_user(username):
+    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = conn.execute('''\
+            SELECT p.*, u.username, u.avatar_url, u.country_flag,
+            fc.name as category_name,
+            (SELECT COUNT(*) FROM forum_comments WHERE post_id = p.id) as comment_count
+            FROM forum_posts p
+            JOIN users u ON p.user_id = u.id
+            JOIN forum_categories fc ON p.category_id = fc.id
+            WHERE lower(u.username) = lower(?)
+            ORDER BY p.timestamp DESC
+        ''', (username,)).fetchall()
+        return jsonify({'posts': [dict(row) for row in rows], 'username': username})
+    finally:
+        conn.close()
+
 @app.route('/api/forum/post/<int:post_id>', methods=['GET'])
 def get_forum_post_detail(post_id):
     conn = sqlite3.connect('morpheme.db', timeout=30)
@@ -2901,7 +2993,7 @@ def get_leaderboard_data():
 
         # Time Filter
         if period == 'day':
-             where_clauses.append("rh.timestamp >= datetime('now', '-1 day', 'localtime')")
+             where_clauses.append("rh.timestamp >= datetime('now', 'start of day', 'utc')")
         elif period == 'week':
              where_clauses.append("rh.timestamp >= datetime('now', '-7 days', 'localtime')")
         elif period == 'month':
@@ -3045,18 +3137,43 @@ def get_tournament_status():
             user_status['status'] = p['status']
             user_status['final_rank'] = p['final_rank']
             user_status['has_turn'] = tournament_manager.has_user_turn(t['id'], user_id)
+            
+            # Get opponent for current round
+            opponent = tournament_manager.get_user_opponent(t['id'], t['current_round'], user_id)
+            user_status['opponent'] = opponent['username'] if opponent else ( "BYE" if t['status'] == 'active' else None )
         conn.close()
+        
+    total_players = tournament_manager.get_total_participants(t['id'])
         
     history = tournament_manager.get_history()
     
     # Get round end time if active
     round_end_time = 0
+    # Fetch additional data for active tournament
+    round_end_time = 0
+    matchups = []
     if t['status'] == 'active':
         conn = sqlite3.connect('morpheme.db', timeout=30)
+        conn.row_factory = sqlite3.Row
+        
+        # 1. Round end time
         r = conn.execute('SELECT end_time FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?',
                         (t['id'], t['current_round'])).fetchone()
-        conn.close()
         if r: round_end_time = r[0]
+        
+        # 2. Matchups
+        cur = conn.execute('''
+            SELECT m.*, u1.username as u1_name, u2.username as u2_name, w.username as w_name
+            FROM tournament_matchups m
+            LEFT JOIN users u1 ON u1.id = m.user_1_id
+            LEFT JOIN users u2 ON u2.id = m.user_2_id
+            LEFT JOIN users w ON w.id = m.winner_id
+            WHERE m.tournament_id = ? AND m.round_number = ?
+            ORDER BY m.match_index ASC
+        ''', (t['id'], t['current_round']))
+        matchups = [dict(row) for row in cur.fetchall()]
+        
+        conn.close()
 
     round_scores = []
     if t['status'] == 'active':
@@ -3077,7 +3194,9 @@ def get_tournament_status():
         'user_status': user_status,
         'history': history,
         'round_scores': round_scores,
+        'matchups': matchups,
         'standings': tournament_manager.get_tournament_standings(t['id']),
+        'total_players': total_players,
         'is_guest': session.get('is_guest', False)
     })
 
@@ -3237,6 +3356,24 @@ def submit_tournament_score():
     finally:
         conn.close()
 
+@app.route('/api/tournament/forfeit', methods=['POST'])
+@login_required
+def forfeit_tournament_turn():
+    if session.get('is_guest'):
+        return jsonify({'error': 'Guest access denied'}), 403
+    
+    t = tournament_manager.get_current_tournament()
+    if not t or t['status'] != 'active':
+        return jsonify({'error': 'No active tournament'}), 400
+        
+    user_id = session['user_id']
+    success = tournament_manager.forfeit_user(t['id'], t['current_round'], user_id)
+    
+    if success:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'error': 'Already submitted or not in tournament'}), 400
+
 
 
 @app.route('/api/solo-match/create', methods=['POST'])
@@ -3264,14 +3401,31 @@ def create_solo_match():
     
     # 2. Configure Parameters from User Input
     dict_name = parameters.get('dictionary', 'NWL')
-    from spinner_set import SpinnerSet
+    
+    # Handle word_count_range parsing (string "50-100" -> list [50, 100])
+    raw_range = parameters.get('word_count_range', '50-100')
+    if isinstance(raw_range, str) and '-' in raw_range:
+        try:
+            parts = [int(x.strip()) for x in raw_range.split('-')]
+            if len(parts) == 2:
+                wc_range = parts
+            else:
+                wc_range = [50, 100]
+        except:
+            wc_range = [50, 100]
+    elif raw_range == 'random':
+        from spinner_set import SpinnerSet
+        wc_range = SpinnerSet._spin_word_count(dict_name)
+    else:
+        wc_range = [50, 100]
+
     room.spinner_params = {
         'dictionary': dict_name,
         'min_word_length': int(parameters.get('min_word_length', 3)),
         'bonus_word_length': int(parameters.get('bonus_word_length', 8)),
-        'board_format': 'Normal', # Standard for solo
-        'difficulty': 'Normal',
-        'word_count_range': SpinnerSet._spin_word_count(dict_name)
+        'board_format': parameters.get('board_format', 'Normal'),
+        'difficulty': parameters.get('difficulty', 'Normal'),
+        'word_count_range': wc_range
     }
     
     # Cleanup only if NOT in this room

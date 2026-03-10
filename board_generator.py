@@ -87,8 +87,16 @@ class BoardGenerator:
                 mania_letter = board_format.split(' ')[0]
                 self._apply_mania_to_board(board, mania_letter, exclude_cells=bonus_cells)
             elif board_format == 'Checkerboard':
-                # Checkerboard is already handled during creation, but we could 
-                # refine or re-apply here if needed. For now creation is fine.
+                # Re-apply strict checkerboard if bonus word skewed it
+                self._apply_checkerboard_strict(board, exclude_cells=bonus_cells)
+            elif board_format == 'Either/Or':
+                # Apply Either/Or to one tile
+                self._apply_either_or(board, exclude_cells=bonus_cells)
+            elif board_format == 'Bonus Letter':
+                # Select a bonus letter tile
+                board_bonus_tile = self._apply_bonus_letter(board)
+            elif board_format == 'Valued Letters':
+                # Just a flag for scoring, nothing to change on board letters
                 pass
             
             # Solve board to find ALL valid dictionary words (min length 2 for validation feedback)
@@ -102,8 +110,17 @@ class BoardGenerator:
             
             # Validate word count based on scorable words
             if self._validate_word_count(word_count, min_words, max_words):
+                # SPECIAL CHECK: Either/Or Ambiguity
+                if board_format == 'Either/Or':
+                    if self._check_either_or_ambiguity(scorable_words, board):
+                        print(f"[BoardGen] ✗ Rejected: Either/Or Ambiguity detected")
+                        continue
+
                 print(f"[BoardGen] ✓ Board valid: {word_count} scorable words (of {len(all_words)} total)")
-                return board, all_words
+                # Return potential bonus tile for "Bonus Letter" format
+                if board_format == 'Bonus Letter':
+                    return board, all_words, board_bonus_tile
+                return board, all_words, None
             else:
                 print(f"[BoardGen] ✗ Rejected: {word_count} scorable words")
         
@@ -112,10 +129,10 @@ class BoardGenerator:
         return board, all_words
     
     def _parse_word_count_range(self, word_count_range):
-        """Parse word count range (tuple or string) into (min, max) tuple"""
-        # Handle tuple format from spinner_set: (30, 60)
-        if isinstance(word_count_range, tuple):
-            return word_count_range
+        """Parse word count range (tuple, list, or string) into (min, max) tuple"""
+        # Handle tuple/list format from spinner_set or explicit pass: (30, 60) or [30, 60]
+        if isinstance(word_count_range, (tuple, list)):
+            return tuple(word_count_range)
         
         # Handle string format: "50-100", "100-200", "200+"
         if word_count_range == '50-100':
@@ -196,7 +213,7 @@ class BoardGenerator:
         return board
     
     def _create_checkerboard(self, rows, cols, weights):
-        """Create checkerboard pattern (consonants/vowels) with weighted letters, avoiding redundant U next to Q"""
+        """Create checkerboard pattern (consonants/vowels) with weighted letters"""
         vowel_indices = [self.letters.index(c) for c in VOWELS]
         consonant_indices = [self.letters.index(c) for c in CONSONANTS]
         
@@ -206,40 +223,38 @@ class BoardGenerator:
         board = [[None for _ in range(cols)] for _ in range(rows)]
         for r in range(rows):
             for c in range(cols):
-                # Check neighbors for a 'Q'
-                has_q_neighbor = False
-                for dr in [-1, 0, 1]:
-                    for dc in [-1, 0, 1]:
-                        nr, nc = r + dr, c + dc
-                        if 0 <= nr < rows and 0 <= nc < cols:
-                            if board[nr][nc] == 'Q':
-                                has_q_neighbor = True
-                                break
-                    if has_q_neighbor: break
-
                 if (r + c) % 2 == 0:
                     # Consonant
                     board[r][c] = random.choices(CONSONANTS, weights=consonant_weights, k=1)[0]
                 else:
-                    # Vowel - Filter U if Q neighbor
-                    if has_q_neighbor:
-                        safe_vowel_weights = list(vowel_weights)
-                        # VOWELS = 'AEIOU', so 'U' is at index 4
-                        safe_vowel_weights[4] = 0
-                        board[r][c] = random.choices(VOWELS, weights=safe_vowel_weights, k=1)[0]
-                    else:
-                        board[r][c] = random.choices(VOWELS, weights=vowel_weights, k=1)[0]
+                    # Vowel
+                    board[r][c] = random.choices(VOWELS, weights=vowel_weights, k=1)[0]
         return board
+
+    def _apply_checkerboard_strict(self, board, exclude_cells):
+        """Enforce strict consonant/vowel alternating while preserving bonus word cells if possible"""
+        rows, cols = len(board), len(board[0])
+        for r in range(rows):
+            for c in range(cols):
+                if (r, c) in exclude_cells: continue
+                
+                is_vowel = board[r][c] in VOWELS
+                target_vowel = (r + c) % 2 != 0
+                
+                if is_vowel != target_vowel:
+                    # Replace with appropriate type
+                    if target_vowel:
+                        board[r][c] = random.choice(VOWELS)
+                    else:
+                        board[r][c] = random.choice(CONSONANTS)
     
     def _apply_mania_to_board(self, board, mania_letter, exclude_cells):
-        """Fill a significant percentage of AVAILABLE cells with the mania letter.
-        Ensures the final board has an abundance of the letter without overwriting the bonus word."""
+        """Fill a significant percentage (~31%) of AVAILABLE cells with the mania letter."""
         rows, cols = len(board), len(board[0])
         total_cells = rows * cols
         
-        # Aim for roughly 25-33% of cells to be the mania letter (approx 1/4 to 1/3 of the board)
-        # This matches the user's request for "4 or 5" on a 4x4 (16 cells)
-        target_count = max(4, round(total_cells * random.uniform(0.25, 0.33)))
+        # User requested 5/16 ratio (~31%)
+        target_count = max(4, round(total_cells * (5/16)))
         
         # Check how many we already have (from bonus word or initial board)
         current_count = sum(1 for r in range(rows) for c in range(cols) if board[r][c] == mania_letter)
@@ -262,6 +277,68 @@ class BoardGenerator:
         
         final_count = current_count + filled
         print(f"[BoardGen] Mania '{mania_letter}': placed {filled} more, final {final_count}/{total_cells} cells ({final_count/total_cells*100:.0f}%)")
+
+    def _apply_either_or(self, board, exclude_cells):
+        """Pick one tile to be an 'Either/Or' tile (e.g. 'L/T')"""
+        rows, cols = len(board), len(board[0])
+        # Pick a cell NOT in bonus word
+        candidates = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in exclude_cells]
+        if not candidates: return
+        r, c = random.choice(candidates)
+        
+        # Pick two distinct letters. Use Uniques Frequency roughly (weights).
+        l1 = board[r][c]
+        l2 = random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+        while l2 == l1:
+            l2 = random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+        
+        board[r][c] = f"{l1}/{l2}"
+        print(f"[BoardGen] Either/Or applied at ({r},{c}): {board[r][c]}")
+
+    def _check_either_or_ambiguity(self, words, board):
+        """
+        Check if using the Either/Or tile results in any ambiguity 
+        (e.g. both ETUDE and ELUDE exist using the same tile).
+        """
+        # Find the either/or tile
+        rows, cols = len(board), len(board[0])
+        eo_tile = None
+        for r in range(rows):
+            for c in range(cols):
+                if '/' in board[r][c]:
+                    eo_tile = (r, c, board[r][c].split('/'))
+                    break
+            if eo_tile: break
+        
+        if not eo_tile: return False
+        
+        r_eo, c_eo, options = eo_tile
+        
+        # This is a bit complex as we need physical paths to be 100% sure.
+        # But for 'find one in which there is no confusion', we can check if 
+        # both words exist in the 'words' list and could share the same path.
+        # Minimalist approach: if any two words are identical except for the EO letter at the same index
+        # AND could be formed on this board.
+        
+        # For simplicity, let's just check if both words in the pair (e.g. ELUDE/ETUDE) are found.
+        # This is a safe "scrap it" condition.
+        word_set = set(words)
+        for w in words:
+            if options[0] in w:
+                # Try replacing options[0] with options[1]
+                # Note: this doesn't guarantee they share the same TILE, 
+                # but if they both exist on an EO board, it's risky.
+                alt_w = w.replace(options[0], options[1])
+                if alt_w in word_set:
+                    return True
+        return False
+
+    def _apply_bonus_letter(self, board):
+        """Randomly select ONE cell to be the 'Bonus Letter' for the round."""
+        rows, cols = len(board), len(board[0])
+        r, c = random.randint(0, rows-1), random.randint(0, cols-1)
+        print(f"[BoardGen] Bonus Letter tile selected at ({r},{c})")
+        return (r, c)
     
     def _embed_bonus_word(self, board, bonus_word):
         """Embed bonus word using backtracking to find a valid path.
@@ -364,18 +441,25 @@ class BoardGenerator:
                         visited.add((nr, nc))
                         
                         # Handle Q/QU branching
-                        cell_letter = board[nr][nc]
-                        
-                        # Branch 1: Treat as regular letter (includes Q as just Q)
-                        next_word_1 = word + cell_letter
-                        if word_validator.has_valid_prefix(next_word_1, dictionary):
-                            dfs(nr, nc, path + [(nr, nc)], visited, next_word_1)
-                            
-                        # Branch 2: Specific QU logic
-                        if cell_letter == 'Q':
-                            next_word_2 = word + 'QU'
-                            if word_validator.has_valid_prefix(next_word_2, dictionary):
-                                dfs(nr, nc, path + [(nr, nc)], visited, next_word_2)
+                        cell_content = board[nr][nc]
+                        letters_to_try = []
+                        if '/' in cell_content:
+                            # Either/Or tile
+                            letters_to_try = cell_content.split('/')
+                        else:
+                            letters_to_try = [cell_content]
+
+                        for cell_letter in letters_to_try:
+                            # Branch 1: Treat as regular letter
+                            next_word_1 = word + cell_letter
+                            if word_validator.has_valid_prefix(next_word_1, dictionary):
+                                dfs(nr, nc, path + [(nr, nc)], visited, next_word_1)
+                                
+                            # Branch 2: Specific QU logic
+                            if cell_letter == 'Q':
+                                next_word_2 = word + 'QU'
+                                if word_validator.has_valid_prefix(next_word_2, dictionary):
+                                    dfs(nr, nc, path + [(nr, nc)], visited, next_word_2)
                                 
                         visited.remove((nr, nc))
         
@@ -384,14 +468,17 @@ class BoardGenerator:
             for c in range(cols):
                 visited = {(r, c)}
                 # Initial cell can also be Q or QU
-                start_letter = board[r][c]
+                # Either/Or at start
+                cell_content = board[r][c]
+                letters_to_try = cell_content.split('/') if '/' in cell_content else [cell_content]
                 
-                # Branch 1: Regular
-                dfs(r, c, [(r, c)], visited, start_letter)
-                
-                # Branch 2: Q -> QU
-                if start_letter == 'Q':
-                    dfs(r, c, [(r, c)], visited, 'QU')
+                for start_letter in letters_to_try:
+                    # Branch 1: Regular
+                    dfs(r, c, [(r, c)], visited, start_letter)
+                    
+                    # Branch 2: Q -> QU
+                    if start_letter == 'Q':
+                        dfs(r, c, [(r, c)], visited, 'QU')
         
         return sorted(list(found_words))
     

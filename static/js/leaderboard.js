@@ -293,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
             headerHTML += `
                 <div class="lb-card-search">
                     <input type="text" placeholder="Username" class="lb-local-input">
-                    <button class="lb-local-btn">FIND ME</button>
+                    <button class="lb-local-btn">VIEW ME</button>
                     <span class="lb-local-msg"></span>
                 </div>
              `;

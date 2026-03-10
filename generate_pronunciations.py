@@ -30,14 +30,23 @@ RHOTIC_MAP = {
 # Standard vowel map (non-rhotic)
 VOWEL_MAP = {
     'AA': 'AH', 'AE': 'A', 'AH': 'UH', 'AO': 'AW', 'AW': 'OW', 'AY': 'IGH',
-    'EH': 'E',  'ER': 'UR', 'EY': 'AY', 'IH': 'I',  'IY': 'EE', 'OW': 'OH',
+    'EH': 'E',  'ER': 'UR', 'EY': 'AY', 'IH': 'IH', 'IY': 'EE', 'OW': 'OH',
     'OY': 'OY', 'UH': 'UU', 'UW': 'OO'
 }
 
 VOWEL_MAP_UNSTRESSED = {
     'AA': 'UH', 'AE': 'UH', 'AH': 'UH', 'AO': 'UH', 'AW': 'OW', 'AY': 'IGH',
-    'EH': 'UH', 'ER': 'UR', 'EY': 'AY', 'IH': 'UH', 'IY': 'EE', 'OW': 'OH',
+    'EH': 'UH', 'ER': 'UR', 'EY': 'AY', 'IH': 'IH', 'IY': 'EE', 'OW': 'OH',
     'OY': 'OY', 'UH': 'UU', 'UW': 'OO'
+}
+
+# Manual overrides for problematic g2p/cmudict entries
+CUSTOM_FIXES = {
+    'LINALOOL': 'LIH-NAH-LOW-WOLL',
+    'LINALOOLS': 'LIH-NAH-LOW-WOLLS',
+    'PORTAMENTI': 'POR-TUH-MEN-TEE',
+    'PORTAMENTO': 'POR-TUH-MEN-TOH',
+    'PORTAMENTOS': 'POR-TUH-MEN-TOHS',
 }
 
 CONS_MAP = {
@@ -148,11 +157,15 @@ def phonemes_to_respelling(phonemes):
 
 
 def get_phonetic_respelling(word):
-    wl = word.lower()
-    if wl in cmu:
-        phonemes = cmu[wl][0]
+    wl = word.upper()
+    if wl in CUSTOM_FIXES:
+        return CUSTOM_FIXES[wl]
+    
+    wl_low = wl.lower()
+    if wl_low in cmu:
+        phonemes = cmu[wl_low][0]
     else:
-        phonemes = [p for p in g2p(wl) if p != ' ']
+        phonemes = [p for p in g2p(wl_low) if p != ' ']
     return phonemes_to_respelling(phonemes)
 
 

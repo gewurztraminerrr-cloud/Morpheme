@@ -439,7 +439,7 @@
     background: var(--bg-panel);
     border-radius: 12px;
     padding: 12px 15px;
-    height: 120px;
+    height: 200px;
     flex-shrink: 0;
     margin-top: auto;
     display: flex;
@@ -581,6 +581,10 @@
     -webkit-user-select: none;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25), inset 0 2px 0 rgba(var(--text-primary-rgb), 0.8);
     border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.board-cell.checker-alt {
+    background: rgba(var(--text-primary-rgb), 0.15) !important;
 }
 
 .board-cell.grayed {
@@ -2106,13 +2110,13 @@
     font-size: 0.85rem;
     padding: 4px 8px;
     border-radius: 4px;
-    background: rgba(var(--text-primary-rgb), 0.05);
-    color: var(--text-primary);
+    background: var(--text-primary);
+    color: var(--bg-primary);
     margin-bottom: 2px;
 }
 
 .notepad-item:nth-child(odd) {
-    background: rgba(var(--text-primary-rgb), 0.1);
+    background: rgba(var(--text-primary-rgb), 0.85);
 }
 
 .notepad-item.invalid {

@@ -248,8 +248,11 @@ function renderSignupState(container, data, userStatus) {
 
 function renderActiveState(container, data, userStatus) {
     if (userStatus.status === 'eliminated') {
+        const placement = userStatus.final_rank || 'N/A';
+        const total = data.total_players || '?';
         container.innerHTML = `
-            <div style="font-size:2.5rem; color:#e74c3c; font-weight:900; margin-bottom:20px; text-shadow: 0 0 20px rgba(231, 76, 60, 0.4);">YOU LOST</div>
+            <div style="font-size:2.5rem; color:#e74c3c; font-weight:900; margin-bottom:10px; text-shadow: 0 0 20px rgba(231, 76, 60, 0.4);">YOU LOST</div>
+            <div style="font-size:1.2rem; color: #aaa; margin-bottom:20px; font-weight:700;">PLACEMENT: ${placement} OF ${total}</div>
             <p style="font-size:1.2rem; opacity:0.9; line-height:1.6;">You fought well, but have been eliminated from this tournament. Keep practicing for the next one! You can still watch replays in the leaderboard below.</p>
         `;
         return;
@@ -267,13 +270,21 @@ function renderActiveState(container, data, userStatus) {
     if (data.current_round > 1) {
         container.innerHTML = `
             <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid #2ecc71; border-radius: 15px; padding: 25px; margin-bottom: 30px; text-align: center; animation: pulse 2s infinite;">
-                <div style="font-size:1.8rem; color:#2ecc71; font-weight:800; margin-bottom:5px;">YOU ARE ADVANCING!</div>
+                <div style="font-size:1.8rem; color:#2ecc71; font-weight:800; margin-bottom:5px;">YOU WON! ADVANCING...</div>
                 <div style="font-size:1.2rem; opacity:0.8;">Congratulations on surviving Round ${data.current_round - 1}</div>
             </div>
-            <h2 style="margin-bottom:20px; text-align:left;">Round ${data.current_round}</h2>
+            <div style="margin-bottom:20px; text-align:left;">
+                <h2 style="display:inline-block; margin:0;">Round ${data.current_round}</h2>
+                ${userStatus.opponent ? `<span style="margin-left:15px; font-size:1.1rem; color:var(--accent-color); font-weight:700;">VS ${userStatus.opponent}</span>` : ''}
+            </div>
         `;
     } else {
-        container.innerHTML = `<h2 style="margin-bottom:20px; text-align:left;">Round ${data.current_round}</h2>`;
+        container.innerHTML = `
+            <div style="margin-bottom:20px; text-align:left;">
+                <h2 style="display:inline-block; margin:0;">Round ${data.current_round}</h2>
+                ${userStatus.opponent ? `<span style="margin-left:15px; font-size:1.1rem; color:var(--accent-color); font-weight:700;">VS ${userStatus.opponent}</span>` : ''}
+            </div>
+        `;
     }
 
     if (userStatus.has_turn) {
@@ -300,6 +311,57 @@ function renderActiveState(container, data, userStatus) {
             <div style="background: rgba(243, 156, 18, 0.1); border: 1px solid #f39c12; border-radius: 12px; padding: 20px; text-align: center;">
                 <div style="font-size:1.5rem; color:#f39c12; font-weight:800; margin-bottom:10px;">WAITING FOR OPPONENT</div>
                 <p style="opacity:0.9;">You have completed your turn for this round. Stay tuned! Results will be processed when the round ends.</p>
+            </div>
+        `;
+    }
+
+    // Matchups Section
+    if (data.matchups && data.matchups.length > 0) {
+        container.innerHTML += `
+            <div style="margin-top: 30px; border-top: 1px solid var(--input-border); padding-top: 20px; text-align: left;">
+                <h3 style="margin-bottom: 20px; font-size: 1.1rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;">Current Pairings</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+                    ${data.matchups.map(m => {
+            const isMyMatch = (m.u1_name === window.currentUser || m.u2_name === window.currentUser);
+            const border = isMyMatch ? 'border: 2px solid var(--accent-color)' : 'border: 1px solid var(--input-border)';
+            const bg = isMyMatch ? 'background: rgba(var(--accent-rgb), 0.1)' : 'background: var(--input-bg)';
+
+            return `
+                            <div style="${border}; ${bg}; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between;">
+                                <div style="flex: 1; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; ${m.winner_id === m.user_1_id ? 'color: #2ecc71; font-weight: 800;' : ''}">
+                                    ${m.u1_name || '???'}
+                                </div>
+                                <div style="margin: 0 15px; opacity: 0.4; font-size: 0.8rem; font-weight: 800;">VS</div>
+                                <div style="flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; ${m.winner_id === m.user_2_id ? 'color: #2ecc71; font-weight: 800;' : ''}">
+                                    ${m.u2_name || 'BYE'}
+                                </div>
+                            </div>
+                        `;
+        }).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    // Parameters Section
+    if (data.parameters) {
+        container.innerHTML += `
+            <div style="margin-top: 30px; border-top: 1px solid var(--input-border); padding-top: 20px; text-align: left;">
+                <h3 style="margin-bottom: 15px; font-size: 1.1rem; opacity: 0.8;">Tournament Rules</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;">
+                    <div style="background: var(--input-bg); padding: 12px; border-radius: 10px; border: 1px solid var(--input-border);">
+                        <div style="font-size: 0.75rem; opacity: 0.6; text-transform: uppercase;">Dictionary</div>
+                        <div style="font-weight: 700;">${data.parameters.dictionary || 'NWL'}</div>
+                    </div>
+                    <div style="background: var(--input-bg); padding: 12px; border-radius: 10px; border: 1px solid var(--input-border);">
+                        <div style="font-size: 0.75rem; opacity: 0.6; text-transform: uppercase;">Time Limit</div>
+                        <div style="font-weight: 700;">${data.parameters.time_limit || 60}s</div>
+                    </div>
+                    <div style="background: var(--input-bg); padding: 12px; border-radius: 10px; border: 1px solid var(--input-border);">
+                        <div style="font-size: 0.75rem; opacity: 0.6; text-transform: uppercase;">Min Length</div>
+                        <div style="font-weight: 700;">${data.parameters.min_word_length || 3} letters</div>
+                    </div>
+                </div>
             </div>
         `;
     }

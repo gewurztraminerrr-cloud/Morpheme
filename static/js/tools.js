@@ -135,7 +135,7 @@ function renderGroups(groupsData, containerId, type) {
             <div class="group-table-container">
                 <table class="group-table">
                     <tbody>
-                        ${words.map(w => `<tr><td>${w}</td></tr>`).join('')}
+                        ${words.map(w => `<tr style="cursor: pointer;" onclick="if(window.showWordDefinition) window.showWordDefinition('${w}')"><td>${w}</td></tr>`).join('')}
                     </tbody>
                 </table>
             </div>
@@ -171,12 +171,18 @@ async function showMiniProfile(username) {
 
         if (data.error) return;
 
+        // Helper to safely set text
+        const setText = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = text;
+        };
+
         // Populate Modal
-        document.getElementById('mini-profile-username').innerText = data.username;
-        document.getElementById('mini-profile-fullname').innerText = data.full_name || '-';
-        document.getElementById('mini-profile-games').innerText = data.games_played || 0;
-        document.getElementById('mini-profile-wins').innerText = data.wins || 0;
-        document.getElementById('mini-profile-age').innerText = data.age || '-';
+        setText('mini-profile-username', data.username);
+        setText('mini-profile-fullname', data.full_name || '-');
+        setText('mini-profile-games', data.games_played || 0);
+        setText('mini-profile-wins', data.wins || 0);
+        setText('mini-profile-age', data.age || '-');
 
         // Render Joined Date
         const joinedEl = document.getElementById('mini-profile-joined');
@@ -200,32 +206,27 @@ async function showMiniProfile(username) {
             joinedEl.innerText = "Joined: -";
         }
 
-        const maxPeEl = document.getElementById('mini-profile-max-pe');
-        if (maxPeEl) maxPeEl.innerText = data.max_pe ? `${data.max_pe.toFixed(2)}x` : '-';
+        setText('mini-profile-max-pe', data.max_pe ? `${data.max_pe.toFixed(2)}x` : '-');
+        setText('mini-profile-avg-pe', data.avg_pe ? `${data.avg_pe.toFixed(2)}x` : '-');
+        setText('mini-profile-rank-placeholder', '-');
 
-        const avgPeEl = document.getElementById('mini-profile-avg-pe');
-        if (avgPeEl) avgPeEl.innerText = data.avg_pe ? `${data.avg_pe.toFixed(2)}x` : '-';
-
-        // Rank placeholder (future feature)
-        const rankEl = document.getElementById('mini-profile-rank-placeholder');
-        if (rankEl) rankEl.innerText = '-';
-
-        document.getElementById('mini-profile-flag').innerText = data.country_flag || '🏳️';
-        document.getElementById('mini-profile-quote').innerText = data.quote ? `"${data.quote}"` : '"No quote provided."';
-        document.getElementById('mini-profile-description').innerText = data.description || 'No description provided.';
+        setText('mini-profile-flag', data.country_flag || '🏳️');
+        setText('mini-profile-quote', data.quote ? `"${data.quote}"` : '"No quote provided."');
+        setText('mini-profile-description', data.description || 'No description provided.');
 
         // Country Name Lookup
         const flagEmoji = data.country_flag || '🏳️';
         const country = typeof ALL_FLAGS !== 'undefined' ? ALL_FLAGS.find(f => f.flag === flagEmoji) : null;
-        document.getElementById('mini-profile-country-name').innerText = country ? country.name : 'International';
+        setText('mini-profile-country-name', country ? country.name : 'International');
 
         const statusEl = document.getElementById('mini-profile-status');
         const statusIcon = document.getElementById('mini-profile-status-icon');
         const isOnline = data.status && data.status.is_online;
 
-        statusEl.innerText = isOnline ? 'Online' : 'Offline';
-        statusEl.style.color = isOnline ? '#4ade80' : 'rgba(var(--text-primary-rgb),0.5)';
-
+        if (statusEl) {
+            statusEl.innerText = isOnline ? 'Online' : 'Offline';
+            statusEl.style.color = isOnline ? '#4ade80' : 'rgba(var(--text-primary-rgb),0.5)';
+        }
         if (statusIcon) {
             statusIcon.innerText = isOnline ? '🟢' : '⚪';
             statusIcon.style.filter = isOnline ? 'drop-shadow(0 0 5px #4ade80)' : 'none';
@@ -2564,7 +2565,9 @@ async function generateRandomWord() {
     genBtn.disabled = true;
     displayEl.innerHTML = ''; // Clear while loading
     const defEl = document.getElementById('random-word-definition');
+    const pronEl = document.getElementById('random-word-pronunciation');
     if (defEl) defEl.innerHTML = '';
+    if (pronEl) pronEl.innerHTML = '';
 
     try {
         const url = `/api/tools/random_word?length=${length}&dictionary=${dictionary}`;
@@ -2589,9 +2592,17 @@ async function generateRandomWord() {
             // Animate definition fade in slightly
             defEl.style.opacity = '0';
             defEl.innerText = definition;
+            if (pronEl && data.pronunciation) {
+                pronEl.innerText = data.pronunciation;
+                pronEl.style.opacity = '0';
+            }
             setTimeout(() => {
                 defEl.style.transition = 'opacity 0.5s ease';
                 defEl.style.opacity = '1';
+                if (pronEl && data.pronunciation) {
+                    pronEl.style.transition = 'opacity 0.5s ease';
+                    pronEl.style.opacity = '1';
+                }
             }, 100);
         }
 
@@ -2634,8 +2645,13 @@ async function updateWotd() {
         displayEl.innerText = data.word;
         lastWotdDate = data.date; // Use the date confirmed by the server
         const defEl = document.getElementById('wotd-definition');
+        const pronEl = document.getElementById('wotd-pronunciation');
         if (defEl) {
             defEl.innerText = data.definition || "No definition available.";
+        }
+        if (pronEl) {
+            pronEl.innerText = data.pronunciation || "";
+            pronEl.style.display = data.pronunciation ? 'block' : 'none';
         }
     } catch (err) {
         console.error("WOTD fetch failed:", err);
@@ -2711,7 +2727,9 @@ async function runSubanagramSearch() {
         `;
 
         html += words.map(w => `
-            <tr><td style="padding: 4px 8px; border-bottom: 1px solid rgba(var(--text-primary-rgb),0.05); color: rgba(var(--text-primary-rgb),0.9); font-family: monospace;">${w}</td></tr>
+            <tr style="cursor: pointer;" onclick="if(window.showWordDefinition) window.showWordDefinition('${w}')">
+                <td style="padding: 4px 8px; border-bottom: 1px solid rgba(var(--text-primary-rgb),0.05); color: rgba(var(--text-primary-rgb),0.9); font-family: monospace;">${w}</td>
+            </tr>
         `).join('');
 
         html += `
@@ -2758,7 +2776,9 @@ async function runValidationCheck() {
 
     displayEl.innerText = '';
     const defEl = document.getElementById('valid-definition-display');
+    const pronEl = document.getElementById('valid-pronunciation-display');
     if (defEl) defEl.style.opacity = '0';
+    if (pronEl) pronEl.style.opacity = '0';
 
     checkBtn.innerText = "Checking...";
     checkBtn.disabled = true;
@@ -2790,17 +2810,30 @@ async function runValidationCheck() {
         void displayEl.offsetWidth;
         displayEl.classList.add('random-word-large');
 
-        // Handle definition
-        if (defEl) {
-            if (data.is_valid && data.definition) {
+        // Handle definition and pronunciation
+        if (data.is_valid && (data.definition || data.pronunciation)) {
+            if (defEl && data.definition) {
                 defEl.innerText = data.definition;
                 setTimeout(() => {
                     defEl.style.transition = 'opacity 0.5s ease';
                     defEl.style.opacity = '1';
                 }, 100);
-            } else {
+            }
+            if (pronEl && data.pronunciation) {
+                pronEl.innerText = data.pronunciation;
+                setTimeout(() => {
+                    pronEl.style.transition = 'opacity 0.5s ease';
+                    pronEl.style.opacity = '1';
+                }, 100);
+            }
+        } else {
+            if (defEl) {
                 defEl.style.opacity = '0';
                 setTimeout(() => defEl.innerText = '', 500);
+            }
+            if (pronEl) {
+                pronEl.style.opacity = '0';
+                setTimeout(() => pronEl.innerText = '', 500);
             }
         }
 
@@ -3092,7 +3125,16 @@ async function fetchAndRenderFriends() {
             return;
         }
 
-        friendsList.innerHTML = data.friends.map(friend => {
+        // Sort friends: Online first, then alphabetical among status
+        const sortedFriends = [...data.friends].sort((a, b) => {
+            // Sort by online status (true first)
+            if (a.is_online && !b.is_online) return -1;
+            if (!a.is_online && b.is_online) return 1;
+            // Then alphabetical
+            return a.username.toLowerCase().localeCompare(b.username.toLowerCase());
+        });
+
+        friendsList.innerHTML = sortedFriends.map(friend => {
             const ratingColor = getRatingColor(friend.rating);
             const isOnline = friend.is_online;
             const avatarHtml = friend.avatar_url

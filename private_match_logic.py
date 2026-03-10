@@ -468,18 +468,17 @@ class PrivateMatchManager:
             conn.close()
 
     def generate_ai_submission(self, rating, possible_words, bonus_word, duration=60):
-        # AI Logic (WPM Model):
-        # Rating 800: ~2.8 WPM (1 word every ~21s)
-        # Rating 1200: ~8.3 WPM (1 word every ~7.2s)
-        # Rating 3000: ~33 WPM (1 word every ~1.8s)
+        # AI Logic (WPM Model): Updated for higher performance (User request)
+        # Rating 800: ~8 WPM (1 word every ~7.5s)
+        # Rating 1200: ~16 WPM (1 word every ~3.7s) 
+        # Rating 3000: ~52 WPM (1 word every ~1.1s)
         
         # Clamp rating for logic
         if rating is None: rating = 1200
         r = max(400, min(3000, rating))
         
-        # Calculate WPM based on rating (linear scale, floor at 1 WPM)
-        # WPM = (r - 600) / 72.0
-        wpm = max(1.0, (r - 600) / 72.0)
+        # Calculate WPM based on rating (linear scale, floor at 2 WPM)
+        wpm = max(2.0, (r - 400) / 50.0)
         
         # Total words count based on duration
         count = int((duration / 60.0) * wpm)
@@ -495,18 +494,23 @@ class PrivateMatchManager:
         
         selected = []
         if r < 1000:
-            # Low rating: Bias toward shorter words (bottom 40% of length list)
-            limit_idx = max(2, int(len(sorted_words) * 0.4))
+            # Low rating: Bias toward shorter words (bottom 50% of length list)
+            limit_idx = max(2, int(len(sorted_words) * 0.5))
             pool = sorted_words[:limit_idx]
             selected = random.sample(pool, min(count, len(pool)))
-        elif r < 1600:
-            # Average rating: Mixed word selection from entire pool
-            selected = random.sample(possible_words, min(count, len(possible_words)))
-        else:
-            # High rating: Bias toward longer words (finding top 70%)
-            start_idx = max(0, int(len(sorted_words) * 0.3))
+        elif r < 1800:
+            # Average rating: Mixed word selection but bias toward middle/upper (top 70%)
+            start_idx = max(0, int(len(sorted_words) * 0.2)) # Skip bottom 20%
             pool = sorted_words[start_idx:]
             selected = random.sample(pool, min(count, len(pool)))
+        else:
+            # High rating: Aggressive focus on longest words (top 85%)
+            start_idx = max(0, int(len(sorted_words) * 0.4))
+            pool = sorted_words[start_idx:]
+            # Sample more words than count, then pick the longest ones from that sample
+            sample_size = min(count * 2, len(pool))
+            sample = random.sample(pool, sample_size)
+            selected = sorted(sample, key=len, reverse=True)[:count]
         
         # Bonus word chance (scales with rating)
         bonus_chance = max(0, min(1.0, (r - 800) / 1600))

@@ -88,15 +88,15 @@ class SpinnerSet:
     @staticmethod
     def _spin_board_format(is_24h=False):
         """
-        Normal rooms: 90% Normal, 5% Checkerboard, 3% Penalty, 2% [letter] Mania
+        Normal rooms: 82% Normal, 8% Checkerboard, 2% Mania, 2% Penalty, 2% Either/Or, 2% Bonus Letter, 2% Valued Letters
         24h rooms: 95% Normal, 5% Checkerboard (No Penalty or Mania)
         """
         if is_24h:
             return random.choices(['Normal', 'Checkerboard'], weights=[95, 5])[0]
         else:
             result = random.choices(
-                ['Normal', 'Checkerboard', 'Penalty', 'Mania'],
-                weights=[90, 5, 3, 2]
+                ['Normal', 'Checkerboard', 'Mania', 'Penalty', 'Either/Or', 'Bonus Letter', 'Valued Letters'],
+                weights=[82, 8, 2, 2, 2, 2, 2]
             )[0]
             if result == 'Mania':
                 # Pick a random letter for Mania mode
