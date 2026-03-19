@@ -1976,7 +1976,7 @@ function createBoardCell(r, c, letter, grayed) {
     }
 
     // 3. Handle Valued Letters Points Display
-    if (boardFormat === 'Valued Letters' && !grayed) {
+    if (boardFormat === 'Valued Letters') {
         const valSpan = document.createElement('span');
         valSpan.className = 'tile-value';
         // If dual letter, we skip for now or show average? User didn't specify interaction.
