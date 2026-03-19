@@ -1540,8 +1540,14 @@ def get_room_state(room_id):
             
             if milestone == 'spinner':
                 # At 45s remaining: Generate Spinner Set parameters
-                print(f"[Milestone] 45s remaining - Generating Spinner Set parameters")
-                room_manager.generate_spinner_params(room_id)
+                # Skip for Solo rooms — user already chose parameters; we must not overwrite them.
+                if not room.is_solo:
+                    print(f"[Milestone] 45s remaining - Generating Spinner Set parameters")
+                    room_manager.generate_spinner_params(room_id)
+                else:
+                    # Just mark as generated so the milestone doesn't keep triggering
+                    room.spinner_params_generated = True
+                    print(f"[Milestone] 45s remaining - Solo room: skipping spinner generation, preserving user-selected params")
             
             elif milestone == 'search':
                 # At 15s remaining: Start board search
@@ -3358,14 +3364,30 @@ def create_solo_match():
     
     # 2. Configure Parameters from User Input
     dict_name = parameters.get('dictionary', 'NWL')
+    board_format = parameters.get('board_format', 'Normal')
     from spinner_set import SpinnerSet
+
+    # Point range / word count: allow user to specify, else spin a default
+    custom_word_count_range = parameters.get('word_count_range', None)
+    if custom_word_count_range and custom_word_count_range != 'random':
+        if isinstance(custom_word_count_range, str) and '-' in custom_word_count_range:
+            # Parse "50-100" style string from frontend select
+            parts = custom_word_count_range.split('-')
+            wc_range = (int(parts[0]), int(parts[1]))
+        elif isinstance(custom_word_count_range, (list, tuple)):
+            wc_range = tuple(int(x) for x in custom_word_count_range)
+        else:
+            wc_range = SpinnerSet._spin_word_count(dict_name)
+    else:
+        wc_range = SpinnerSet._spin_word_count(dict_name)
+
     room.spinner_params = {
         'dictionary': dict_name,
         'min_word_length': int(parameters.get('min_word_length', 3)),
         'bonus_word_length': int(parameters.get('bonus_word_length', 8)),
-        'board_format': 'Normal', # Standard for solo
-        'difficulty': 'Normal',
-        'word_count_range': SpinnerSet._spin_word_count(dict_name)
+        'board_format': board_format,
+        'difficulty': parameters.get('difficulty', 'Medium'),
+        'word_count_range': wc_range
     }
     
     # Cleanup only if NOT in this room

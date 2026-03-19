@@ -757,6 +757,9 @@ class GameRoom:
 
             for player in self.players:
                 change = int(rating_changes.get(player.user_id, 0))
+                # Solo rooms: never mutate ratings (not in-memory, not in DB)
+                if self.is_solo:
+                    change = 0
                 player.rating += change
                 player.rating_change = change
                 print(f"[GameRoom] Rating Update Applied: {player.username} ({player.user_id}) -> Change: {change}, New Rating: {player.rating}")
@@ -1580,30 +1583,20 @@ class RoomManager:
                 print(f"[RoomManager] Randomized player order for Split Points round")
                 
             print(f"[RoomManager] Round {room.current_round} started with pre-generated board!")
-            
-            # Generate AI turns at START of round for incremental scoring
-            room.generate_ai_turns()
-            
-            print(f"[RoomManager] Round {room.current_round} started with pre-generated board!")
-            
+
             # 1. Calculate ELO changes based on FINAL scores of previous round
             # MOVED TO check_and_update_state (Start of Intermission)
-            
+
+            # Reset all players FIRST, then generate AI turns so bot words aren't wiped.
             for player in room.players:
-                # Reset Rating Change (so it doesn't persist forever)
-                # But we want to show it during intermission...
-                # Actually, strictly speaking, start_next_round is AFTER intermission.
-                # So we should probably reset it here so it doesn't show during the *next* active round?
-                # The user said "Change ratings as soon as round is over".
-                # If we reset it here, it clears the green/red indicators for the new round.
                 player.rating_change = 0
-                
+
                 # Store current score for next round's comparison
                 player.previous_round_score = player.score
-                
+
                 # SAVE PREVIOUS WORDS
                 player.previous_submitted_words = list(player.submitted_words)
-                
+
                 # Clear for new round
                 player.submitted_words = []
                 player.invalid_words = []
@@ -1612,6 +1605,11 @@ class RoomManager:
                 player.joined_mid_round = False
                 player.has_exceptional_round = False
                 player.performance_efficiency = 0.0
+
+            # Generate AI turns AFTER player reset so bot pre-generated words are not immediately erased.
+            room.generate_ai_turns()
+
+            print(f"[RoomManager] Round {room.current_round} started with pre-generated board!")
                 
             # PERSISTENCE: If this is a 24h room, clear the player list for the new day
             # (Users who enter will be added fresh)
