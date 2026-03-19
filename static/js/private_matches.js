@@ -318,18 +318,50 @@
 
     window.handleInviteToastClick = () => {
         document.getElementById('invite-toast')?.remove();
-        if (window.navigateToPage) {
-            window.navigateToPage('lobby');
-            // Give it a tiny moment to render the lobby, then switch to friends/invites
+        if (!window.navigateToPage) return;
+
+        // 1. Navigate to lobby
+        window.navigateToPage('lobby');
+
+        // 2. Give the lobby time to render, then click through tabs + scroll
+        setTimeout(() => {
+            // Click "With Friends" sf-tab
+            const friendsSfTab = document.querySelector('.sf-tab-btn[data-sf-tab="friends"]');
+            if (friendsSfTab) friendsSfTab.click();
+
             setTimeout(() => {
-                const friendsTab = document.querySelector('[data-page="lobby"] .lobby-tabs .tab[data-tab="friends"]');
-                if (friendsTab) friendsTab.click();
-                setTimeout(() => {
-                    const inviteSubtab = document.querySelector('[data-friends-subtab="invites"]');
-                    if (inviteSubtab) inviteSubtab.click();
-                }, 100);
+                // Click "Invites" subtab
+                const inviteSubtab = document.querySelector('[data-friends-subtab="invites"]');
+                if (inviteSubtab) inviteSubtab.click();
+
+                // Reload invites so they are fresh, then scroll + highlight
+                loadPrivateMatches().then(() => {
+                    setTimeout(() => {
+                        const invitesList = document.getElementById('friends-list-invites');
+                        if (invitesList) {
+                            // Scroll the invite panel into view
+                            invitesList.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+                            // Pulse-highlight each invite card so it's obvious
+                            const panels = invitesList.querySelectorAll('.invite-panel');
+                            panels.forEach(panel => {
+                                panel.style.transition = 'box-shadow 0.3s ease, transform 0.3s ease';
+                                panel.style.boxShadow = '0 0 24px 6px rgba(74, 222, 128, 0.7)';
+                                panel.style.transform = 'scale(1.02)';
+                                setTimeout(() => {
+                                    panel.style.boxShadow = '';
+                                    panel.style.transform = '';
+                                }, 1800);
+                            });
+                        }
+                    }, 150);
+                }).catch(() => {
+                    // Fallback: just scroll without reload
+                    const invitesList = document.getElementById('friends-list-invites');
+                    if (invitesList) invitesList.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                });
             }, 100);
-        }
+        }, 150);
     };
 
     function renderMatchList(type, matches, isHistory = false) {
