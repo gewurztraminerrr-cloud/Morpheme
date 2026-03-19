@@ -2966,9 +2966,13 @@ def get_leaderboard_data():
         if dims != 'all':
              where_clauses.append("rh.board_dimensions = ?")
              params.append(dims)
+             
         if time_limit != 'all':
              where_clauses.append("rh.round_duration = ?")
              params.append(time_limit)
+        else:
+             # Exclude 10m (600) and 24h (86400) from generic aggregated views for Accumulative to prevent them from obfuscating normal fast-paced leaderboards
+             where_clauses.append("(rh.game_type != 'accumulative' OR rh.round_duration NOT IN (600, 86400))")
 
         # Time Filter
         if period == 'day':
