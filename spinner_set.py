@@ -40,8 +40,8 @@ class SpinnerSet:
     
     @staticmethod
     def _spin_bonus_word_length():
-        """33.3% each for 8, 9, 10 letters"""
-        return random.choice([8, 9, 10])
+        """20% each for 6, 7, 8, 9, 10 letters"""
+        return random.choice([6, 7, 8, 9, 10])
     
     @staticmethod
     def _spin_min_word_length(board_dimensions):

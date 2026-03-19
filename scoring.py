@@ -6,7 +6,7 @@ LETTER_VALUES = {
     'U': 4, 'V': 5, 'W': 5, 'X': 9, 'Y': 5, 'Z': 9
 }
 
-def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None, bonus_cell=None, return_details=False):
+def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None, bonus_cell=None, return_details=False, **kwargs):
     """
     Calculate points for a word.
     
@@ -31,13 +31,14 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
         for char in word.upper():
             score += LETTER_VALUES.get(char, 1)
     else:
-        # Standard Boggle scoring
+        # Standard Boggle scoring (with Private Match exception for 5-letter words)
         if length <= 2:
             score = 0
         elif length <= 4:
             score = 1
         elif length == 5:
-            score = 2
+            # USER REQUEST: 5-letter words in Private Matches award 5 points
+            score = 5 if kwargs.get('is_private') else 2
         elif length == 6:
             score = 3
         elif length == 7:

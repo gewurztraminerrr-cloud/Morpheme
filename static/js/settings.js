@@ -12,6 +12,17 @@ function debounce(func, wait) {
 (function () {
     console.log('[settings.js] Loading settings module...');
 
+    // Global Settings State
+    window.userSettings = window.userSettings || {
+        lobby_music: true,
+        chat_font_size: 13,
+        def_font_size: 15,
+        board_size: 60,
+        highlight_typing: true,
+        highlight_mouse: true,
+        next_round_bell_enabled: true
+    };
+
     // DOM Elements
     const boardSizeSlider = document.getElementById('setting-board-size');
     const boardSizeVal = document.getElementById('setting-board-size-val');
@@ -459,5 +470,6 @@ function debounce(func, wait) {
 
         return maxDist + 0.414 * minDist <= r;
     }
-
+    window.loadSettings = loadSettings;
+    window.applySettings = applySettings;
 })();

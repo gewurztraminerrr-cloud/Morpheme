@@ -86,10 +86,8 @@ class BoardGenerator:
             # Note: For 'Bonus Letter', bonus_cell is selected AFTER embedding the bonus word
             # to guarantee no overlap. See below after step 3.
             
-            # 3. Embed bonus word (Strictly Normal/Valued/Penalty/Bonus Letter/Either/Or only)
-            actual_bonus_word = ""
-            if board_format in ['Normal', 'Valued Letters', 'Penalty', 'Bonus Letter', 'Either/Or'] and bonus_word:
-                actual_bonus_word = bonus_word
+            # 3. Embed bonus word (Overlay first)
+            actual_bonus_word = bonus_word if bonus_word else ""
             
             bonus_cells_set = set()
             if actual_bonus_word:
@@ -102,9 +100,10 @@ class BoardGenerator:
             
             # Now pick bonus_cell for 'Bonus Letter' format (AFTER bonus word path is known)
             if board_format == 'Bonus Letter':
-                non_bonus_cells = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in bonus_cells_set]
-                if non_bonus_cells:
-                    bonus_cell = random.choice(non_bonus_cells)
+                # Allow overlap with bonus word (User request: Bonus Word may randomly use Bonus Letter)
+                selectable_cells = [(r, c) for r in range(rows) for c in range(cols)]
+                if selectable_cells:
+                    bonus_cell = random.choice(selectable_cells)
                 else:
                     # Fallback: pick any cell if the bonus word filled the entire board somehow
                     bonus_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
@@ -112,9 +111,10 @@ class BoardGenerator:
             
             # Now set bonus_cell for 'Either/Or' format, creating the tile AFTER bonus word
             if board_format == 'Either/Or':
-                non_bonus_cells = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in bonus_cells_set]
-                if non_bonus_cells:
-                    bonus_cell = random.choice(non_bonus_cells)
+                # Allow overlap with bonus word
+                selectable_cells = [(r, c) for r in range(rows) for c in range(cols)]
+                if selectable_cells:
+                    bonus_cell = random.choice(selectable_cells)
                 else:
                     bonus_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
                 

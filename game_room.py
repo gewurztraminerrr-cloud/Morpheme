@@ -546,18 +546,18 @@ class GameRoom:
             for p in reg_players:
                 expected = (p.rating / reg_rating_sum) * reg_score_sum
                 p.performance_efficiency = p.score / expected if expected > 0 else 0.0
-                # Remarkable: PE >= 1.5 and Score >= 20, or raw score >= 40
-                p.has_exceptional_round = multiple_players and p.score > 0 and ((p.performance_efficiency >= 1.5 and p.score >= 20) or p.score >= 40)
+                # Remarkable: PE >= 2.5 and Score >= 20, or raw score >= 60
+                p.has_exceptional_round = multiple_players and p.score > 0 and ((p.performance_efficiency >= 2.5 and p.score >= 20) or p.score >= 60)
         else:
             for p in reg_players:
                 p.performance_efficiency = 1.0
-                # Raw score Remarkable threshold: 40
-                p.has_exceptional_round = multiple_players and p.score > 0 and (p.score >= 40)
+                # Raw score Remarkable threshold: 60
+                p.has_exceptional_round = multiple_players and p.score > 0 and (p.score >= 60)
 
         # 2. Guests: Use solo baseline (PE=1.0) so they don't affect pool but can still earn trophies on raw score
         for p in guest_players:
             p.performance_efficiency = 1.0
-            p.has_exceptional_round = multiple_players and p.score > 0 and (p.score >= 40)
+            p.has_exceptional_round = multiple_players and p.score > 0 and (p.score >= 60)
     
     def _recalculate_player_score(self, player):
         """
@@ -691,19 +691,19 @@ class GameRoom:
                     expected = (p.rating / reg_rating_sum) * reg_score_sum
                     p.performance_efficiency = p.score / expected if expected > 0 else 0
                     max_pe = max(max_pe, p.performance_efficiency)
-                    # Remarkable threshold: PE >= 1.5 & Score >= 20 OR Raw Score >= 40
-                    p.has_exceptional_round = multiple_active and p.score > 0 and ((p.performance_efficiency >= 1.5 and p.score >= 20) or p.score >= 40)
+                    # Remarkable threshold: PE >= 2.5 & Score >= 20 OR Raw Score >= 60
+                    p.has_exceptional_round = multiple_active and p.score > 0 and ((p.performance_efficiency >= 2.5 and p.score >= 20) or p.score >= 60)
             else:
                 for p in reg_players:
                     p.performance_efficiency = 1.0
                     max_pe = max(max_pe, 1.0)
-                    p.has_exceptional_round = multiple_active and p.score > 0 and (p.score >= 40)
+                    p.has_exceptional_round = multiple_active and p.score > 0 and (p.score >= 60)
 
             # 2. Guests Pool
             for p in guest_players:
                 p.performance_efficiency = 1.0
                 max_pe = max(max_pe, 1.0)
-                p.has_exceptional_round = multiple_active and p.score > 0 and (p.score >= 40)
+                p.has_exceptional_round = multiple_active and p.score > 0 and (p.score >= 60)
 
             # Determine Notable Winners for Replay Tab
             # The user wants "enormous wins" to determine replay listing.
@@ -1475,7 +1475,7 @@ class RoomManager:
         
         fmt = room.spinner_params['board_format']
         # User Request: "Only apply Mania or Checkerboard on their own: Do not apply a bonus word if the Format is one of these."
-        if 'Mania' in fmt or fmt == 'Checkerboard':
+        if 'Mania' in fmt or fmt == 'Checkerboard' or fmt == 'Either/Or':
             print(f"[RoomManager] {fmt} format selected - disabling bonus word")
             bonus_word = ''
         else:
@@ -1753,11 +1753,31 @@ class RoomManager:
                 best_w_entry = max(p.submitted_words, key=lambda x: x.get('points', 0)) if p.submitted_words else None
                 best_word_text = best_w_entry['word'] if best_w_entry else None
                 best_word_val = best_w_entry.get('points', 0) if best_w_entry else 0
+
+                # Calculate Peak Burst WPM (Words Per Minute)
+                # User Objective: Only include the fastest sequence of 20 valid words in a row.
+                peak_wpm = 0.0
+                if len(words_data) >= 20:
+                    # Ensure chronological order
+                    sorted_entries = sorted(words_data, key=lambda x: x['timestamp'])
+                    for i in range(len(sorted_entries) - 19):
+                        # Window of 20 words: from index i to i+19
+                        t_first = sorted_entries[i]['timestamp']
+                        t_last = sorted_entries[i+19]['timestamp']
+                        dt = t_last - t_first
+                        if dt > 0.001:
+                            # 20 words over dt seconds
+                            # (20 words / dt seconds) * 60 seconds/min
+                            current_burst_wpm = (20.0 * 60.0) / dt
+                            if current_burst_wpm > peak_wpm:
+                                peak_wpm = current_burst_wpm
+                
+                final_wpm = peak_wpm
                 
                 conn.execute('''
-                    INSERT INTO round_history (user_id, room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, timestamp, user_rating, performance_ratio, best_word, best_word_score, board_dimensions)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (p.user_id, room.room_id, room.game_type, room.current_round, board_json, json.dumps(words_data), p.score, room.round_start_time, room.time_limit, timestamp, p.rating, p.performance_efficiency, best_word_text, best_word_val, room.board_dimensions))
+                    INSERT INTO round_history (user_id, room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, timestamp, user_rating, performance_ratio, best_word, best_word_score, board_dimensions, wpm, total_words_avail)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (p.user_id, room.room_id, room.game_type, room.current_round, board_json, json.dumps(words_data), p.score, room.round_start_time, room.time_limit, timestamp, p.rating, p.performance_efficiency, best_word_text, best_word_val, room.board_dimensions, final_wpm, len(room.all_words)))
             
             room.last_saved_round = room.current_round
             conn.commit()

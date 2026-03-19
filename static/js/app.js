@@ -116,15 +116,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupModalListeners();
     setupAuth(); // Initialize auth listeners
     setupContactForm(); // Initialize contact form listeners
-    initSettings(); // Initialize settings logic
+    // initSettings is now handled by settings.js
 
-    // USER REQUEST: Log out on Refresh/Reload
+    // USER REQUEST: Log out on entry to URL (Navigate or Reload)
     const entries = performance.getEntriesByType("navigation");
-    const isReload = entries.length > 0 && entries[0].type === "reload";
+    const navType = entries.length > 0 ? entries[0].type : "";
+    const shouldLogout = navType === "reload" || navType === "navigate";
 
-    if (isReload) {
-        console.log("[Auth] Page reload detected - logging out.");
-        await fetch('/api/logout', { method: 'POST' });
+    if (shouldLogout) {
+        console.log(`[Auth] Page entry (${navType}) detected - logging out.`);
+        try {
+            await fetch('/api/logout', { method: 'POST' });
+        } catch (e) {
+            console.warn('Logout request failed', e);
+        }
+
         // Clean up local state entirely
         currentUser = null;
         window.currentUser = null;
@@ -135,6 +141,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         localStorage.removeItem('morpheme_pm_state');
         localStorage.removeItem('private_match_active');
         localStorage.removeItem('tournament_play_active');
+
+        // Ensure UI reflects logged out state
+        updateAuthUI();
+        showPage('page-login');
     } else {
         await checkSession();
     }
@@ -200,76 +210,6 @@ async function fetchUserCount() {
     }
 }
 
-// Global Settings State
-window.userSettings = {
-    lobby_music: true, // Default ON
-    chat_font_size: 13,
-    def_font_size: 15
-};
-
-// Initialize Defaults immediately
-document.documentElement.style.setProperty('--chat-font-size', '13px');
-document.documentElement.style.setProperty('--def-font-size', '15px');
-
-function initSettings() {
-    const musicToggle = document.getElementById('setting-lobby-music');
-
-    // 1. Lobby Music
-    if (musicToggle) {
-        musicToggle.addEventListener('change', async (e) => {
-            const isEnabled = e.target.checked;
-            window.userSettings.lobby_music = isEnabled;
-            handleLobbyMusicState();
-            saveSetting('lobby_music', isEnabled);
-        });
-    }
-
-    // 2. Font Size Controls
-    setupFontSizeControl('setting-chat-size', 'setting-chat-size-val', 'preview-chat-text', '--chat-font-size', 'chat_font_size');
-    setupFontSizeControl('setting-def-size', 'setting-def-size-val', 'preview-def-text', '--def-font-size', 'def_font_size');
-}
-
-function setupFontSizeControl(sliderId, labelId, previewId, cssVar, dbKey) {
-    const slider = document.getElementById(sliderId);
-    const label = document.getElementById(labelId);
-    const preview = document.getElementById(previewId);
-
-    if (!slider) return;
-
-    // Helper to apply visual changes
-    const applyVisuals = (val) => {
-        if (label) label.textContent = val + 'px';
-        if (preview) preview.style.fontSize = val + 'px';
-        document.documentElement.style.setProperty(cssVar, val + 'px');
-    };
-
-    // Live Preview (Input event)
-    slider.addEventListener('input', (e) => {
-        applyVisuals(e.target.value);
-    });
-
-    // Save on release (Change event)
-    slider.addEventListener('change', (e) => {
-        const val = e.target.value;
-        window.userSettings[dbKey] = val;
-        applyVisuals(val); // Ensure consistency
-        saveSetting(dbKey, val);
-    });
-}
-
-async function saveSetting(key, value) {
-    if (currentUser) {
-        try {
-            await fetch('/api/settings/update', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key, value })
-            });
-        } catch (err) {
-            console.error('Failed to save setting:', err);
-        }
-    }
-}
 
 // Helper to start/stop music based on Page AND Setting
 function handleLobbyMusicState() {
@@ -366,33 +306,12 @@ async function checkSession() {
 
             updateAuthUI(); // Update UI for logged in state
 
-            // FETCH SETTINGS
-            try {
-                const sRes = await fetch('/api/settings');
-                const sData = await sRes.json();
-                if (sData.settings) {
-                    // Apply Lobby Music
-                    if (sData.settings.lobby_music !== undefined) {
-                        let val = sData.settings.lobby_music;
-                        // Handle potential string types from DB
-                        if (val === 'true' || val === 'True' || val === true) val = true;
-                        else if (val === 'false' || val === 'False' || val === false) val = false;
-
-                        window.userSettings.lobby_music = val;
-
-                        // Update Checkbox
-                        const cb = document.getElementById('setting-lobby-music');
-                        if (cb) cb.checked = val;
-
-                        // Apply state
-                        handleLobbyMusicState();
-                    }
-
-                    // Apply Font Sizes
-                    applySavedFontSize(sData.settings.chat_font_size, 'setting-chat-size', 'setting-chat-size-val', 'preview-chat-text', '--chat-font-size', 'chat_font_size');
-                    applySavedFontSize(sData.settings.def_font_size, 'setting-def-size', 'setting-def-size-val', 'preview-def-text', '--def-font-size', 'def_font_size');
-                }
-            } catch (e) { console.warn('Error fetching settings', e); }
+            // LOAD ALL SETTINGS
+            if (window.loadSettings) {
+                window.loadSettings();
+            } else {
+                console.warn('[app.js] window.loadSettings not available yet');
+            }
 
             // NEW: Check if user is already in a room
             try {
@@ -418,28 +337,6 @@ async function checkSession() {
                 }
             } catch (e) { console.warn('Error checking current room', e); }
 
-            function applySavedFontSize(val, sliderId, labelId, previewId, cssVar, settingsKey) {
-                console.log(`Applying saved font size: ${settingsKey} = ${val}`);
-                if (val !== undefined && val !== null) {
-                    const numVal = parseInt(val);
-                    if (!isNaN(numVal)) {
-                        window.userSettings[settingsKey] = numVal;
-
-                        // DEBUG: confirm we are setting the property
-                        console.log(`Setting ${cssVar} to ${numVal}px`);
-                        document.documentElement.style.setProperty(cssVar, numVal + 'px');
-
-                        const slider = document.getElementById(sliderId);
-                        if (slider) slider.value = numVal;
-
-                        const label = document.getElementById(labelId);
-                        if (label) label.textContent = numVal + 'px';
-
-                        const preview = document.getElementById(previewId);
-                        if (preview) preview.style.fontSize = numVal + 'px';
-                    }
-                }
-            }
         } else {
             updateAuthUI();
         }
@@ -788,6 +685,11 @@ function navigateToLobby() {
     // Ensure private matches load instantly
     if (typeof window.loadPrivateMatches === 'function') {
         window.loadPrivateMatches();
+    }
+
+    // Load Settings
+    if (window.loadSettings) {
+        window.loadSettings();
     }
 }
 

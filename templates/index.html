@@ -5,9 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MORPHEME</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css?v=4">
     <link rel="stylesheet" href="/css/lobby.css?v=4">
-    <link rel="stylesheet" href="/css/play.css?v=27">
+    <link rel="stylesheet" href="/css/play.css?v=28">
     <link rel="stylesheet" href="/css/howtoplay.css?v=4">
     <link rel="stylesheet" href="/css/forum.css?v=1">
 </head>
@@ -458,67 +463,69 @@
 
                 <!-- Right Panel: Submitted Words and Definitions -->
                 <div class="words-panel">
-                    <div class="words-tabs" id="words-tabs-container">
-                        <button class="word-tab active" data-tab="found">Words</button>
-                        <button class="word-tab" data-tab="remaining" style="display: none;">Remaining</button>
-                        <button class="word-tab" data-tab="clues" style="display: none;">Clues</button>
-                        <button class="word-tab" data-tab="previous" style="display: none;">Previous Day</button>
-                        <button class="word-tab" data-tab="history">History</button>
-                    </div>
+                    <div class="words-table-box">
+                        <div class="words-tabs" id="words-tabs-container">
+                            <button class="word-tab active" data-tab="found">Words</button>
+                            <button class="word-tab" data-tab="remaining" style="display: none;">Remaining</button>
+                            <button class="word-tab" data-tab="clues" style="display: none;">Clues</button>
+                            <button class="word-tab" data-tab="previous" style="display: none;">Previous Day</button>
+                            <button class="word-tab" data-tab="history">History</button>
+                        </div>
 
-                    <div id="tab-content-found" class="tab-content active">
-                        <div class="words-header-group">
-                            <h3 id="words-panel-title">Your Words</h3>
-                            <p class="words-stats" id="words-stats"></p>
-                        </div>
-                        <div id="submitted-words-list">
-                            <p class="placeholder">No words yet</p>
-                        </div>
-                    </div>
-
-                    <div id="tab-content-remaining" class="tab-content">
-                        <div class="words-header-group">
-                            <h3>Remaining</h3>
-                        </div>
-                        <div id="remaining-words-list">
-                            <p class="placeholder">Calculating counts...</p>
-                        </div>
-                    </div>
-
-
-                    <div id="tab-content-clues" class="tab-content">
-                        <div class="words-header-group">
-                            <h3>Clues</h3>
-                        </div>
-                        <div id="clues-list" class="clues-grid">
-                            <p class="placeholder">Loading clues...</p>
-                        </div>
-                    </div>
-
-
-                    <div id="tab-content-previous" class="tab-content">
-                        <div class="words-header-group">
-                            <h3>Previous Day</h3>
-                        </div>
-                        <div id="previous-words-list">
-                            <p class="placeholder">No previous data</p>
-                        </div>
-                    </div>
-
-                    <div id="tab-content-history" class="tab-content">
-                        <div class="words-header-group">
-                            <h3>Past Winners</h3>
-                        </div>
-                        <div id="history-content">
-                            <p class="history-intro"
-                                style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 15px; padding: 0 5px;">
-                                The following are the past 50 winners.
-                            </p>
-                            <div id="winners-list" class="winners-list-container">
-                                <p class="placeholder">No history available yet</p>
+                        <div id="tab-content-found" class="tab-content active">
+                            <div class="words-header-group">
+                                <h3 id="words-panel-title">Your Words</h3>
+                                <p class="words-stats" id="words-stats"></p>
+                            </div>
+                            <div id="submitted-words-list">
+                                <p class="placeholder">No words yet</p>
                             </div>
                         </div>
-                    </div>
+
+                        <div id="tab-content-remaining" class="tab-content">
+                            <div class="words-header-group">
+                                <h3>Remaining</h3>
+                            </div>
+                            <div id="remaining-words-list">
+                                <p class="placeholder">Calculating counts...</p>
+                            </div>
+                        </div>
+
+
+                        <div id="tab-content-clues" class="tab-content">
+                            <div class="words-header-group">
+                                <h3>Clues</h3>
+                            </div>
+                            <div id="clues-list" class="clues-grid">
+                                <p class="placeholder">Loading clues...</p>
+                            </div>
+                        </div>
+
+
+                        <div id="tab-content-previous" class="tab-content">
+                            <div class="words-header-group">
+                                <h3>Previous Day</h3>
+                            </div>
+                            <div id="previous-words-list">
+                                <p class="placeholder">No previous data</p>
+                            </div>
+                        </div>
+
+                        <div id="tab-content-history" class="tab-content">
+                            <div class="words-header-group">
+                                <h3>Past Winners</h3>
+                            </div>
+                            <div id="history-content">
+                                <p class="history-intro"
+                                    style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 15px; padding: 0 5px;">
+                                    The following are the past 50 winners.
+                                </p>
+                                <div id="winners-list" class="winners-list-container">
+                                    <p class="placeholder">No history available yet</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- End words-table-box -->
                     <div class="definitions-panel">
                         <div id="definition-header" class="definition-header" style="display: none;">
                             <span id="definition-word" class="definition-word"></span>
@@ -678,6 +685,11 @@
                 <div class="forum-sidebar">
                     <div class="forum-sidebar-header">
                         <h3>Forums</h3>
+                        <div class="forum-search-box">
+                            <input type="text" id="forum-user-search-input" placeholder="Search user posts..."
+                                autocomplete="off">
+                            <button id="forum-user-search-btn">🔍</button>
+                        </div>
                     </div>
                     <div id="forum-categories-list" class="forum-nav-list">
                         <!-- Categories injected via JS -->
@@ -818,36 +830,38 @@
                     <div id="tool-timer" class="tool-pane">
                         <div class="tool-header">
                             <h2>Personal Timer</h2>
-                            <p>Set a timer for your play session. When time is up, the definitions panel will flash red
-                                to alert you.</p>
+                            <p style="font-size: 1.1rem; opacity: 0.9;">Set a timer for your play session. When time is
+                                up, the definitions panel will flash red to alert you.</p>
                         </div>
-                        <div class="combo-control-panel">
-                            <div class="input-row" style="justify-content: center; align-items: center; gap: 15px;">
+                        <div class="combo-control-panel" style="padding: 40px; border-radius: 20px;">
+                            <div class="input-row" style="justify-content: center; align-items: center; gap: 20px;">
                                 <div style="display: flex; flex-direction: column; align-items: center;">
                                     <label for="timer-hours"
-                                        style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 5px;">Hours</label>
+                                        style="font-size: 1rem; opacity: 0.8; margin-bottom: 8px; font-weight: 600;">Hours</label>
                                     <input type="number" id="timer-hours" placeholder="0" min="0" max="24"
-                                        style="width: 80px; text-align: center;">
+                                        style="width: 120px; height: 80px; text-align: center; font-size: 3rem; border-radius: 12px; background: rgba(0,0,0,0.3); border: 2px solid rgba(0,210,255,0.3); color: #00d2ff;">
                                 </div>
-                                <div style="font-size: 1.5rem; font-weight: bold; margin-top: 15px;">:</div>
+                                <div style="font-size: 3rem; font-weight: bold; margin-top: 30px; color: #00d2ff;">:
+                                </div>
                                 <div style="display: flex; flex-direction: column; align-items: center;">
                                     <label for="timer-minutes"
-                                        style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 5px;">Minutes</label>
+                                        style="font-size: 1rem; opacity: 0.8; margin-bottom: 8px; font-weight: 600;">Minutes</label>
                                     <input type="number" id="timer-minutes" placeholder="0" min="0" max="59"
-                                        style="width: 80px; text-align: center;">
+                                        style="width: 120px; height: 80px; text-align: center; font-size: 3rem; border-radius: 12px; background: rgba(0,0,0,0.3); border: 2px solid rgba(0,210,255,0.3); color: #00d2ff;">
                                 </div>
                             </div>
-                            <div class="input-row" style="margin-top: 20px;">
+                            <div class="input-row" style="margin-top: 40px;">
                                 <button id="timer-start-btn"
-                                    style="flex: 1; min-width: 150px; background: #00d2ff; color: #000;">Start
+                                    style="flex: 1; height: 70px; font-size: 1.5rem; font-weight: 800; border-radius: 15px; background: linear-gradient(135deg, #00d2ff, #3a7bd5); color: #fff; border: none; box-shadow: 0 4px 15px rgba(0,210,255,0.3); cursor: pointer; transition: transform 0.2s;">Start
                                     Timer</button>
                                 <button id="timer-stop-btn"
-                                    style="flex: 1; min-width: 150px; background: #ff4d4d; color: #fff; display: none;">Stop
+                                    style="flex: 1; height: 70px; font-size: 1.5rem; font-weight: 800; border-radius: 15px; background: linear-gradient(135deg, #ff4d4d, #d43f3f); color: #fff; border: none; box-shadow: 0 4px 15px rgba(255,77,77,0.3); cursor: pointer; transition: transform 0.2s; display: none;">Stop
                                     Timer</button>
                             </div>
                         </div>
-                        <div id="timer-display-container" style="text-align: center; margin-top: 30px; display: none;">
-                            <h3 style="font-family: monospace; font-size: 3rem; margin: 0; text-shadow: 0 0 10px rgba(0,210,255,0.5);"
+                        <div id="timer-display-container"
+                            style="text-align: center; margin-top: 50px; display: none; background: rgba(0,210,255,0.1); border-radius: 20px; padding: 40px; border: 2px solid #00d2ff;">
+                            <h3 style="font-family: 'JetBrains Mono', monospace; font-size: 6rem; margin: 0; text-shadow: 0 0 20px rgba(0,210,255,0.6); color: #00d2ff; font-weight: 800;"
                                 id="timer-countdown-display">00:00:00</h3>
                         </div>
                     </div>
@@ -974,6 +988,11 @@
                                     <div class="stat-box">
                                         <span class="stat-num" id="profile-win-rate">0%</span>
                                         <span class="stat-desc">WIN RATE</span>
+                                    </div>
+                                    <div class="stat-box">
+                                        <span class="stat-num" id="profile-avg-wpm"
+                                            title="Fastest sequence of 20 valid words in a row">0</span>
+                                        <span class="stat-desc">AVG WPM</span>
                                     </div>
                                     <div class="stat-box">
                                         <span class="stat-num" id="profile-best-score">-</span>
@@ -1200,6 +1219,12 @@
                                     <option value="13">13</option>
                                     <option value="14">14</option>
                                     <option value="15">15</option>
+                                    <option value="16">16</option>
+                                    <option value="17">17</option>
+                                    <option value="18">18</option>
+                                    <option value="19">19</option>
+                                    <option value="20">20</option>
+                                    <option value="21">21</option>
                                 </select>
                                 <label>Dict:</label>
                                 <select id="random-dict" style="width: 120px;">
@@ -1395,6 +1420,12 @@
                                     <option value="13">13</option>
                                     <option value="14">14</option>
                                     <option value="15">15</option>
+                                    <option value="16">16</option>
+                                    <option value="17">17</option>
+                                    <option value="18">18</option>
+                                    <option value="19">19</option>
+                                    <option value="20">20</option>
+                                    <option value="21">21</option>
                                 </select>
 
                                 <button id="seq-search-btn">Search</button>
@@ -1433,6 +1464,12 @@
                                     <option value="13">13 Letters</option>
                                     <option value="14">14 Letters</option>
                                     <option value="15">15 Letters</option>
+                                    <option value="16">16 Letters</option>
+                                    <option value="17">17 Letters</option>
+                                    <option value="18">18 Letters</option>
+                                    <option value="19">19 Letters</option>
+                                    <option value="20">20 Letters</option>
+                                    <option value="21">21 Letters</option>
                                 </select>
                                 <select id="list-start-filter" style="width: 140px;">
                                     <option value="all">Starts With: All</option>
@@ -1524,6 +1561,12 @@
                                     <option value="13">Len: 13</option>
                                     <option value="14">Len: 14</option>
                                     <option value="15">Len: 15</option>
+                                    <option value="16">Len: 16</option>
+                                    <option value="17">Len: 17</option>
+                                    <option value="18">Len: 18</option>
+                                    <option value="19">Len: 19</option>
+                                    <option value="20">Len: 20</option>
+                                    <option value="21">Len: 21</option>
                                 </select>
                                 <select id="unscramble-dict" style="width: 140px;">
                                     <option value="NWL">NWL (US)</option>
@@ -1778,7 +1821,7 @@
                     </div>
                     <!-- Color Picker: Typing -->
                     <div id="highlight-color-picker"
-                        style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%;">
+                        style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%;">
                         <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Typing
                             Color
                         </div>
@@ -1826,7 +1869,7 @@
                     </div>
                     <!-- Color Picker: Mousing -->
                     <div id="highlight-mouse-color-picker"
-                        style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%;">
+                        style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%;">
                         <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Mousing
                             Color
                         </div>
@@ -1950,7 +1993,7 @@
                         </label>
                     </div>
                     <div id="bell-selection-container"
-                        style="display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%; display: none;">
+                        style="display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; display: none;">
 
                         <!-- Row 1: Bells -->
                         <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
@@ -2316,18 +2359,20 @@
                                     balanced for classic play.</p>
                                 <p><strong>Checkerboard (8%):</strong> Alternate vowels and consonants along rows and
                                     diagonals. This rhythmic layout creates unique patterns for word formation.</p>
-                                <p><strong>[Letter] Mania (2%):</strong> Over 31% of the tiles on the board are assigned
-                                    the same specific letter. This letter changes ogni round.</p>
+                                <p><strong>[Letter] Mania (2%):</strong> Over 30% of the tiles on the board are assigned
+                                    the same specific letter (e.g., "S" Mania). This letter changes every round,
+                                    creating a focused board where words containing that letter are prominent.</p>
                                 <p><strong>Penalty (2%):</strong> Exercise caution! Any sequence found on the board that
                                     is NOT in the dictionary results in a <strong>3-point deduction</strong>.</p>
-                                <p><strong>Either/Or (2%):</strong> Exactly one tile on the board contains two possible letters (e.g., C/H). Words utilizing either of these letters receive a <strong>+3 point bonus</strong>. When playing, the game determines which letter you intended based on where you touch the tile or the word you type.</p>
+                                <p><strong>Either/Or (2%):</strong> Exactly one tile on the board contains two possible
+                                    letters (e.g., C/H). Words utilizing either of these letters receive a <strong>+3
+                                        point bonus</strong>. When playing, the game determines which letter you
+                                    intended based on where you touch the tile or the word you type.</p>
                                 <p><strong>Bonus Letter (2%):</strong> One letter on the board is highlighted in a
                                     vibrant, persisting color. Words containing this letter grant <strong>+3 extra
                                         points</strong>.</p>
                                 <p><strong>Valued Letters (2%):</strong> Each letter has a custom numerical point value
                                     (e.g., Q=10, E=1). Word scores are the sum of their letter values.</p>
-                                <p><strong>Reorient Letters (0%):</strong> An experimental format that may appear in
-                                    future updates to shift board layout.</p>
                             </div>
                         </div>
 
@@ -2406,12 +2451,12 @@
 
         <!-- Create Room Modal removed: Reverted to prompt -->
 
-        <script src="/js/forum.js"></script>
-        <script src="/js/app.js"></script>
-        <script src="/js/lobby.js"></script>
-        <script src="/js/play.js"></script>
-        <script src="/js/tournaments.js"></script>
-        <script src="/js/leaderboard.js?v=1"></script>
+        <script src="/js/forum.js?v=2"></script>
+        <script src="/js/app.js?v=2"></script>
+        <script src="/js/lobby.js?v=2"></script>
+        <script src="/js/play.js?v=3"></script>
+        <script src="/js/tournaments.js?v=2"></script>
+        <script src="/js/leaderboard.js?v=2"></script>
 
         <!-- History Review Overlay -->
         <div id="history-review-overlay" class="overlay hidden">
@@ -2470,10 +2515,10 @@
                 </div>
             </div>
         </div>
-        <script src="/js/tools.js?v=2"></script>
-        <script src="/js/settings.js"></script>
-        <script src="/js/mouse_selection.js"></script>
-        <script src="/js/private_matches.js"></script>
+        <script src="/js/tools.js?v=3"></script>
+        <script src="/js/settings.js?v=2"></script>
+        <script src="/js/mouse_selection.js?v=2"></script>
+        <script src="/js/private_matches.js?v=2"></script>
         <!-- Private Chat Modal -->
         <div id="private-chat-modal" class="chat-modal hidden">
             <div class="chat-modal-content">
@@ -2551,12 +2596,18 @@
                         <span class="mini-meta-icon" id="mini-profile-status-icon">⚪</span>
                         <span id="mini-profile-status" class="mini-meta-text">Offline</span>
                     </div>
+                    <div class="mini-meta-item">
+                        <span id="mini-profile-flag" class="mini-meta-icon" style="font-size: 1.2rem;">🏳️</span>
+                        <span id="mini-profile-country-name" class="mini-meta-text">International</span>
+                    </div>
                 </div>
 
+                <div class="mini-profile-section-label">Personal Quote</div>
                 <div class="mini-profile-quote" id="mini-profile-quote">
                     "No quote provided."
                 </div>
 
+                <div class="mini-profile-section-label">Description</div>
                 <div class="mini-profile-description" id="mini-profile-description">
                     No description provided.
                 </div>

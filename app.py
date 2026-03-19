@@ -12,6 +12,7 @@ from collections import Counter
 
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'morpheme-secret-key-2024'
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 from tournament_logic import tournament_manager
 from private_match_logic import private_match_manager
@@ -417,6 +418,18 @@ def init_db():
     except Exception as e:
         print(f"Migration Error (Forum tables): {e}")
 
+    # MIGRATION: Add wpm and total_words_avail to round_history
+    try:
+        conn.execute('ALTER TABLE round_history ADD COLUMN wpm REAL DEFAULT 0.0')
+        conn.commit()
+    except Exception:
+        pass
+    try:
+        conn.execute('ALTER TABLE round_history ADD COLUMN total_words_avail INTEGER DEFAULT 0')
+        conn.commit()
+    except Exception:
+        pass
+
     conn.close()
 
 init_db()
@@ -509,6 +522,21 @@ def get_user_count():
 # Serve static files
 @app.route('/')
 def index():
+    # Force logout on initial page load / entry to URL
+    if 'user_id' in session:
+        user_id = session.get('user_id')
+        username = session.get('username')
+        print(f"[Auth] Auto-signing out user {username} ({user_id}) on root URL entry")
+        
+        # Cleanup presence in rooms before clearing
+        try:
+            from game_room import room_manager
+            room_manager.remove_presence(user_id)
+        except Exception as e:
+            print(f"[Auth] Error during auto-logout cleanup: {e}")
+            
+        session.clear()
+    
     return render_template('index.html')
 
 @app.route('/<path:path>')
@@ -724,7 +752,8 @@ def get_public_profile(username):
 
     cursor_all = conn.execute(f'''
         SELECT room_id, game_type, round_number, board_json, words_json, total_score, 
-               round_start_time, round_duration, timestamp, user_rating, performance_ratio, id
+               round_start_time, round_duration, timestamp, user_rating, performance_ratio, id,
+               wpm, total_words_avail
         FROM round_history
         WHERE user_id = ? {time_filter}
         ORDER BY timestamp DESC
@@ -764,7 +793,7 @@ def get_public_profile(username):
 
     # helper to process a row into a rich dict
     def process_round_row(row, db_conn):
-        room_id, gtype, rnum, bjson, wjson, score, rstart, rdur, ts, urat, pe_ratio, g_id = row
+        room_id, gtype, rnum, bjson, wjson, score, rstart, rdur, ts, urat, pe_ratio, g_id, wpm, twa = row
         
         # Get all players in this specific round
         c_room = db_conn.execute('''
@@ -804,6 +833,8 @@ def get_public_profile(username):
             'round_start_time': rstart,
             'round_duration': rdur,
             'timestamp': ts,
+            'wpm': wpm or 0,
+            'total_words_avail': twa or 0,
             'all_players': sorted([{'username': e[2], 'score': e[0], 'rating': e[1]} for e in r_entries], key=lambda x: x['score'], reverse=True)
         }
 
@@ -825,6 +856,10 @@ def get_public_profile(username):
         except Exception as e:
             print(f"Error processing config {cfg_key}: {e}")
             config_stats[cfg_key] = {'rating': rating, 'avg_score': 0, 'avg_perf': 0}
+
+    # Calculate overall AVG WPM (only for boards with 300+ words)
+    wpm_games = [p['wpm'] for p in processed_all if p['total_words_avail'] >= 300]
+    avg_wpm = round(sum(wpm_games) / len(wpm_games), 1) if wpm_games else 0
 
     # Recent rounds (last 10)
     recent_rounds = sorted(processed_all, key=lambda x: x['timestamp'], reverse=True)[:10]
@@ -851,6 +886,7 @@ def get_public_profile(username):
         'games_played': user[3],
         'avatar_url': user[4] if user[4] else None,
         'country_flag': user[5] if user[5] else '🏳️',
+        'avg_wpm_300': avg_wpm,
         'full_name': user[6] if user[6] else '-',
         'age': user[7] if user[7] else '-',
         'gender': user[8] if user[8] else '-',
@@ -1597,6 +1633,7 @@ def get_room_state(room_id):
             'bonus_word': room.bonus_word,
             'bonus_cell': getattr(room, 'bonus_cell', None),
             'spinner_params': room.spinner_params,
+            'current_board_format': getattr(room, 'current_board_format', 'Normal'),
             'solving_complete': room.solving_complete,  # Let frontend know if still solving
             'max_players': room.max_players,
             'min_rating': room.min_rating,
@@ -2132,7 +2169,7 @@ def tools_get_lists():
             try:
                 target_len = int(length_filter)
             except ValueError:
-                pass # Ignore invalid format
+                pass
         
         # Normalize start letter
         start_char = None
@@ -2143,72 +2180,44 @@ def tools_get_lists():
         base_dir = os.path.dirname(__file__)
         dict_dir = os.path.join(base_dir, 'dictionaries')
         
-        # Helper to load AND filter list
-        def load_filtered_list(filename):
-            path = os.path.join(dict_dir, filename)
-            if not os.path.exists(path):
-                return [] # Return empty list, not set, for consistency
+        # --- Logic: Unified 16+ Routing ---
+        # If searching for 16+, we use 16plus.txt for BOTH NWL and CSW.
+        # If searching for "All" or < 16, we use standard files AND skip 16+ words.
+        
+        def load_source_set(filename):
+            if target_len is not None and target_len >= 16:
+                path = os.path.join(dict_dir, '16plus.txt')
+            else:
+                path = os.path.join(dict_dir, filename)
             
-            words = []
+            if not os.path.exists(path):
+                return set()
+                
+            words = set()
             with open(path, 'r') as f:
                 for line in f:
                     w = line.strip().upper()
                     if not w: continue
-                    
-                    # Apply Filters
+                    # Apply hard boundary: All/3-15 ignore 16+
+                    if (target_len is None or target_len < 16) and len(w) >= 16:
+                        continue
+                    # Standard filter sync
                     if target_len is not None and len(w) != target_len:
                         continue
                     if start_char is not None and not w.startswith(start_char):
                         continue
-                        
-                    words.append(w)
-            return words # Already a list
+                    words.add(w)
+            return words
 
-        # 1. NWL
-        nwl_list = load_filtered_list('NWL.txt')
+        # 1. & 2. Load Core Sets (Already filtered for length and start letter)
+        nwl_set = load_source_set('NWL.txt')
+        csw_set = load_source_set('CSW.txt')
         
-        # 2. CSW
-        csw_list = load_filtered_list('CSW.txt')
-        
-        # 3. CSW Only
-        # We need the full sets to compute difference first if filtering logic is complex,
-        # BUT since filtering is simple (length/start), we can filter the resulting set.
-        # However, it's faster to verify validity against pre-loaded sets if we had them in memory.
-        # Given no global memory cache, let's load full sets for diff logic then filter.
-        # Actually, simpler: Load full CSW and NWL sets, diff them, then apply filters to result.
-        
-        def load_set(filename):
-            path = os.path.join(dict_dir, filename)
-            if not os.path.exists(path): return set()
-            with open(path, 'r') as f:
-                return {line.strip().upper() for line in f if line.strip()}
-                
-        nwl_set_full = load_set('NWL.txt')
-        csw_set_full = load_set('CSW.txt')
-        csw_only_full = csw_set_full - nwl_set_full
-        
-        def filter_iterable(iterable):
-            filtered = []
-            for w in iterable:
-                if target_len is not None and len(w) != target_len: continue
-                if start_char is not None and not w.startswith(start_char): continue
-                filtered.append(w)
-            return sorted(filtered)
-
-        # Re-apply filtering to loaded lists (optimization: could merge logic but this is safe)
-        # We already loaded filtered NWL/CSW above? 
-        # Actually, load_filtered_list reads file line by line. 
-        # Let's stick to the set logic for CSW Only to be correct.
-        
-        # Re-doing clean logic:
-        
-        # 1. NWL (Filtered)
-        # Optimization: If no filters, load full. If filters, stream filter.
-        # Since we need sets for CSW-Only, we must load full sets anyway unless we optimize diffing.
-        # Let's use the sets we just loaded.
+        # 3. CSW Only (In CSW but not in NWL)
+        # Note: For 16+, these will likely be empty as both pull from 16plus.txt
+        csw_only_set = csw_set - nwl_set
         
         # 4. Likelihood List (Scrabble-style letter frequency)
-        # Base tile counts per letter in Scrabble
         scrabble_freq = {
             'A': 9, 'B': 2, 'C': 2, 'D': 4, 'E': 12, 'F': 2, 'G': 3, 'H': 2, 'I': 9,
             'J': 1, 'K': 1, 'L': 4, 'M': 2, 'N': 6, 'O': 8, 'P': 2, 'Q': 1, 'R': 6,
@@ -2216,10 +2225,7 @@ def tools_get_lists():
         }
 
         def calculate_scrabble_likelihood(word):
-            """Sum letter values, subtracting 1 for each additional occurrence of that letter.
-            e.g. EENSIER: E=12, E=11, N=6, S=4, I=9, E=10, R=6 => 58
-            The letter counts reset for each new word."""
-            letter_counts = {}  # tracks how many times we've seen each letter so far in this word
+            letter_counts = {}
             total = 0
             for ch in word:
                 base = scrabble_freq.get(ch, 0)
@@ -2228,28 +2234,24 @@ def tools_get_lists():
                 letter_counts[ch] = seen + 1
             return total
 
-        # We take NWL as the base for Likelihood — include ALL matching words, no cap
-        likelihood_eligible = []
-        for w in nwl_set_full:
-            if target_len is not None and len(w) != target_len: continue
-            if start_char is not None and not w.startswith(start_char): continue
+        likelihood_list = []
+        for w in nwl_set:
             score = calculate_scrabble_likelihood(w)
-            likelihood_eligible.append({'score': score, 'word': w})
+            likelihood_list.append({'score': score, 'word': w})
+        likelihood_list.sort(key=lambda x: (-x['score'], x['word']))
 
-        # Sort by score DESC, then alphabetically ASC
-        likelihood_eligible.sort(key=lambda x: (-x['score'], x['word']))
+        # 5. Uniques (randomTWLunique.txt)
+        uniques_set = load_source_set('randomTWLunique.txt')
 
-        response_data = {
-            'nwl': filter_iterable(nwl_set_full),
-            'csw': filter_iterable(csw_set_full),
-            'csw_only': filter_iterable(csw_only_full),
-            'likelihood': likelihood_eligible,  # ALL matching words, scored
-            'added': [],
-            'uniques': load_filtered_list('randomTWLunique.txt')
-        }
-        
-        return jsonify(response_data)
-        
+        return jsonify({
+            'nwl': sorted(list(nwl_set)),
+            'csw': sorted(list(csw_set)),
+            'csw_only': sorted(list(csw_only_set)),
+            'likelihood': likelihood_list,
+            'uniques': sorted(list(uniques_set)),
+            'added': []
+        })
+
     except Exception as e:
         print(f"Error fetching lists: {e}")
         return jsonify({'error': str(e)}), 500
@@ -2803,6 +2805,9 @@ def get_friends_list():
     if 'username' not in session:
         return jsonify({'error': 'Login required'}), 401
         
+    # Mark user as online
+    room_manager.update_presence(session.get('user_id'))
+    
     conn = sqlite3.connect('morpheme.db', timeout=30)
     conn.row_factory = sqlite3.Row
     try:
@@ -2823,8 +2828,8 @@ def get_friends_list():
             f_dict['is_online'] = presence['is_online'] if presence else False
             friends_data.append(f_dict)
             
-        # Sort by online (True first) then username
-        friends_data.sort(key=lambda x: (not x['is_online'], x['username'].lower()))
+        # USER REQUEST: Online first, then alphabetical among online, then alphabetical among offline
+        friends_data.sort(key=lambda x: (not x.get('is_online', False), x.get('username', '').lower()))
         
         return jsonify({'friends': friends_data})
     finally:
@@ -2855,6 +2860,23 @@ def get_forum_posts(category_id):
             WHERE p.category_id = ?
             ORDER BY p.timestamp DESC
         ''', (category_id,)).fetchall()
+        return jsonify({'posts': [dict(row) for row in rows]})
+    finally:
+        conn.close()
+
+@app.route('/api/forum/posts/user/<username>', methods=['GET'])
+def get_forum_user_posts(username):
+    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = conn.execute('''
+            SELECT p.*, u.username, u.avatar_url, u.country_flag,
+            (SELECT COUNT(*) FROM forum_comments WHERE post_id = p.id) as comment_count
+            FROM forum_posts p
+            JOIN users u ON p.user_id = u.id
+            WHERE LOWER(u.username) = LOWER(?)
+            ORDER BY p.timestamp DESC
+        ''', (username,)).fetchall()
         return jsonify({'posts': [dict(row) for row in rows]})
     finally:
         conn.close()

@@ -660,6 +660,22 @@ body {
     opacity: 0.9;
 }
 
+.clickable-word-link {
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: rgba(0, 210, 255, 0.3);
+    text-underline-offset: 4px;
+    transition: all 0.2s;
+    display: inline-block;
+}
+
+.clickable-word-link:hover {
+    color: var(--accent-color);
+    text-decoration-color: var(--accent-color);
+    background: rgba(0, 210, 255, 0.1);
+    border-radius: 4px;
+}
+
 .logo .pronunciation {
     font-size: 0.8rem;
     color: var(--text-primary);
@@ -1290,8 +1306,8 @@ body {
 
 .profile-stats-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
     margin-bottom: 25px;
 }
 
@@ -2057,6 +2073,17 @@ body {
 .mini-meta-text {
     font-weight: 500;
     color: rgba(var(--text-primary-rgb), 0.8);
+}
+
+.mini-profile-section-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    opacity: 0.4;
+    padding-left: 2px;
 }
 
 .mini-profile-quote {

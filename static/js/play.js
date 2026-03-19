@@ -153,10 +153,14 @@ async function updateGameState() {
                 window.currentRoomId = null;
                 if (window.showPage) window.showPage('page-lobby');
                 setTimeout(() => {
+                    // Automatically close Spinner Set popup if it exists
+                    if (typeof hideSpinnerOverlay === 'function') {
+                        hideSpinnerOverlay();
+                    }
                     if (window.showAlertModal) {
-                        window.showAlertModal("Notice", "The room is no longer available or you have been moved to the lobby for being idle for 10 minutes.");
+                        window.showAlertModal("Notice", "You have been kicked out of the room because you were idle for 10 minutes.");
                     } else {
-                        alert("The room is no longer available or you have been moved to the lobby for being idle for 10 minutes.");
+                        alert("You have been kicked out of the room because you were idle for 10 minutes.");
                     }
                 }, 100);
             }
@@ -222,10 +226,14 @@ async function updateGameState() {
 
             // Show alert AFTER switching pages
             setTimeout(() => {
+                // Automatically close Spinner Set popup if it exists
+                if (typeof hideSpinnerOverlay === 'function') {
+                    hideSpinnerOverlay();
+                }
                 if (window.showAlertModal) {
-                    window.showAlertModal("Notice", "You have been kicked out of the room for being idle for 10 minutes.");
+                    window.showAlertModal("Notice", "You have been kicked out of the room because you were idle for 10 minutes.");
                 } else {
-                    alert("You have been kicked out of the room for being idle for 10 minutes.");
+                    alert("You have been kicked out of the room because you were idle for 10 minutes.");
                 }
             }, 100);
             return;
@@ -356,24 +364,27 @@ async function updateGameState() {
             renderChat(state.chat_messages);
         }
 
-        // Enable/disable input
+        // Enable/disable input and buttons
         const isActive = state.state === 'active';
         const inputEl = document.getElementById('word-input');
         const submitBtn = document.getElementById('submit-word-btn');
+        const rotateBtn = document.getElementById('rotate-board-btn');
 
-        if (state.game_type === 'split' && state.state === 'intermission') {
-            // Hide for Split Points intermission
-            inputEl.style.display = 'none';
-            submitBtn.style.display = 'none';
+        if ((isSplitIntermission || isFCFSIntermission) && !showBoardInSplitIntermission) {
+            // Hide controls when board is hidden (Split/FCFS intermission)
+            if (inputEl) inputEl.style.display = 'none';
+            if (submitBtn) submitBtn.style.display = 'none';
+            if (rotateBtn) rotateBtn.style.display = 'none';
         } else {
             // Show otherwise
-            inputEl.style.display = ''; // Reset to default (block/flex)
-            submitBtn.style.display = '';
+            if (inputEl) inputEl.style.display = '';
+            if (submitBtn) submitBtn.style.display = '';
+            if (rotateBtn) rotateBtn.style.display = '';
 
-            if (inputEl.disabled === isActive) {
+            if (inputEl && inputEl.disabled !== !isActive) {
                 inputEl.disabled = !isActive;
             }
-            if (submitBtn.disabled === isActive) {
+            if (submitBtn && submitBtn.disabled !== !isActive) {
                 submitBtn.disabled = !isActive;
             }
         }
@@ -1113,7 +1124,7 @@ function renderPlayers(players, currentUser = null, state = null) {
                 ${trophyHtml}
                 <div style="flex:1;"></div>
                 <span class="player-words-count">${p.words_count} words</span>
-                <span class="player-score-val">${p.score} pts</span>
+                <span class="player-score-val">${(p.score === 0 && p.words_count === 0) ? 'DNP' : p.score + ' pts'}</span>
             </div>
         </div>
         `;
@@ -1468,19 +1479,17 @@ function updateParameters(state) {
     const timerVal = document.getElementById('timer-value');
     if (timerVal) {
         const seconds = state.time_remaining || state.timer || 0;
-        let display;
         if (seconds >= 3600) {
             const hours = Math.floor(seconds / 3600);
             const mins = Math.floor((seconds % 3600) / 60);
             const secs = seconds % 60;
-            display = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            timerVal.textContent = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         } else {
             const mins = Math.floor(seconds / 60);
             const secs = seconds % 60;
-            display = `${mins}:${secs.toString().padStart(2, '0')}`;
+            // MM:SS format
+            timerVal.textContent = `${mins.toString().padStart(1, '0')}:${secs.toString().padStart(2, '0')}`;
         }
-        timerVal.textContent = display;
-        timerVal.style.fontVariantNumeric = 'tabular-nums';
     }
 
     // Update Title
@@ -1666,7 +1675,6 @@ function updateSpecialMatchTimer(seconds) {
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
-        timerEl.style.fontVariantNumeric = 'tabular-nums';
     }
 }
 
@@ -1945,7 +1953,10 @@ const LETTER_VALUES = {
 // Helper to create a board cell
 function createBoardCell(r, c, letter, grayed) {
     const cell = document.createElement('div');
-    const boardFormat = (window.lastGameState && window.lastGameState.spinner_params) ? window.lastGameState.spinner_params.board_format : 'Normal';
+    let boardFormat = (window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : 'Normal';
+    if (!boardFormat && window.lastGameState && window.lastGameState.spinner_params) {
+        boardFormat = window.lastGameState.spinner_params.board_format || 'Normal';
+    }
     const bonusCell = (window.lastGameState) ? window.lastGameState.bonus_cell : null;
 
     cell.className = 'board-cell' + (grayed ? ' grayed' : '');
@@ -2212,7 +2223,7 @@ function renderSplitNotepads(players) {
         // Header
         const header = document.createElement('div');
         header.className = 'notepad-header';
-        header.innerHTML = `<strong>${p.username}</strong> <span>${p.score} pts</span>`;
+        header.innerHTML = `<strong>${p.username}</strong> <span>${(p.score === 0 && (!p.submitted_words || p.submitted_words.length === 0)) ? 'DNP' : p.score + ' pts'}</span>`;
         notepad.appendChild(header);
 
         // Tabs
@@ -2406,7 +2417,7 @@ function renderFCFSNotepads(players) {
         // Header
         const header = document.createElement('div');
         header.className = 'notepad-header';
-        header.innerHTML = `<strong>${p.username}</strong> <span>${p.score} pts</span>`;
+        header.innerHTML = `<strong>${p.username}</strong> <span>${(p.score === 0 && (!p.submitted_words || p.submitted_words.length === 0)) ? 'DNP' : p.score + ' pts'}</span>`;
         notepad.appendChild(header);
 
         // No Tabs for FCFS
@@ -3480,7 +3491,6 @@ function startPrivateMatchTimer(endTime) {
         const secs = remaining % 60;
         if (timerEl) {
             timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
-            timerEl.style.fontVariantNumeric = 'tabular-nums';
         }
 
         if (remaining <= 0) {

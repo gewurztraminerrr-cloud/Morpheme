@@ -50,6 +50,16 @@ const Forum = {
         if (imageInput) {
             imageInput.addEventListener('change', (e) => this.handleImagePreview(e));
         }
+
+        // User search
+        const searchBtn = document.getElementById('forum-user-search-btn');
+        const searchInput = document.getElementById('forum-user-search-input');
+        if (searchBtn && searchInput) {
+            searchBtn.addEventListener('click', () => this.handleUserSearch());
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') this.handleUserSearch();
+            });
+        }
     },
 
     loadCategories: async function () {
@@ -115,6 +125,46 @@ const Forum = {
         } catch (err) {
             console.error("[Forum] Failed to load posts:", err);
             postsList.innerHTML = '<div class="forum-placeholder"><h3>Error loading posts.</h3></div>';
+        }
+    },
+
+    handleUserSearch: async function () {
+        const username = document.getElementById('forum-user-search-input').value.trim();
+        if (!username) return;
+
+        console.log(`[Forum] Searching posts for user: ${username}`);
+
+        // Clear active category
+        document.querySelectorAll('.forum-cat-item').forEach(item => item.classList.remove('active'));
+        this.currentCategoryId = null;
+
+        // Update UI Header
+        document.getElementById('forum-category-title').textContent = `Posts by ${username}`;
+        document.getElementById('forum-category-desc').textContent = `Viewing all forum contributions from ${username}.`;
+        document.getElementById('forum-new-post-btn').classList.add('hidden');
+
+        const postsList = document.getElementById('forum-posts-list');
+        postsList.innerHTML = '<div class="forum-placeholder"><h3>Searching...</h3></div>';
+
+        try {
+            const response = await fetch(`/api/forum/posts/user/${encodeURIComponent(username)}`);
+            const data = await response.json();
+
+            if (data.posts && data.posts.length > 0) {
+                this.renderPosts(data.posts);
+            } else {
+                postsList.innerHTML = `
+                    <div class="forum-placeholder">
+                        <div class="placeholder-icon">🔍</div>
+                        <h3>No posts found</h3>
+                        <p>User "${username}" has not posted anything yet.</p>
+                    </div>
+                `;
+            }
+            this.showListView();
+        } catch (err) {
+            console.error("[Forum] User search error:", err);
+            postsList.innerHTML = '<div class="forum-placeholder"><h3>Error performing search.</h3></div>';
         }
     },
 

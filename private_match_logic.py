@@ -191,23 +191,21 @@ class PrivateMatchManager:
         dict_name = parameters.get('dictionary', 'CSW')
         min_len = parameters.get('min_word_length', 3)
 
-        # Use spinner parameters for defaults if not explicitly provided
-        from spinner_set import SpinnerSet
-        spinner_params = SpinnerSet.generate_params(dims)
+        # Bonus word selection BEFORE board generation to allow embedding
+        bonus_len = parameters.get('bonus_word_length', 0)
+        bonus_word = ""
+        # Check if the format allows a bonus word
+        if bonus_len > 0 and 'Mania' not in target_format and target_format != 'Checkerboard' and target_format != 'Either/Or':
+            from word_validator import word_validator
+            dictionary_set = word_validator.csw_words if dict_name == 'CSW' else word_validator.nwl_words
+            potential_dict_words = [w for w in dictionary_set if len(w) == bonus_len]
+            if potential_dict_words:
+                bonus_word = random.choice(potential_dict_words)
         
-        # Priority: parameters > spinner_params defaults
-        target_range = parameters.get('word_count_range')
-        if not target_range or target_range == 'random':
-             target_range = spinner_params['word_count_range']
-             
-        target_format = parameters.get('board_format', spinner_params['board_format'])
-        target_difficulty = parameters.get('difficulty', spinner_params.get('difficulty', 'Medium'))
-        if target_difficulty == 'Normal' or target_difficulty == 'Expert':
-            target_difficulty = 'Medium' if target_difficulty == 'Normal' else 'Hard'
-
+        # Generate board (this will now embed the bonus_word if provided)
         board, all_words_on_board, _bonus_cell = bg.generate_board(
             dimensions=dims,
-            bonus_word="", # No initial bonus word, will pick from all_words below
+            bonus_word=bonus_word,
             word_count_range=target_range,
             dictionary=dict_name,
             board_format=target_format,
@@ -215,13 +213,7 @@ class PrivateMatchManager:
             difficulty=target_difficulty
         )
         
-        # Bonus word
-        bonus_len = parameters.get('bonus_word_length', 0)
-        bonus_word = ""
-        if bonus_len > 0:
-            potential_bonuses = [w for w in all_words_on_board if len(w) == bonus_len]
-            if potential_bonuses:
-                bonus_word = random.choice(potential_bonuses)
+        now = time.time()
 
         now = time.time()
         # Round-start time is when board is generated, but turn-timers start on client when they click Play.
@@ -495,7 +487,7 @@ class PrivateMatchManager:
         # We'll score all possible words first to pick the best ones
         word_scores = []
         for w in possible_words:
-            word_scores.append((w, calculate_word_score(w, bonus_word)))
+            word_scores.append((w, calculate_word_score(w, bonus_word, is_private=True)))
         
         # Sort by points descending
         word_scores.sort(key=lambda x: x[1], reverse=True)
@@ -531,7 +523,7 @@ class PrivateMatchManager:
             # Ensure index 0 doesn't just get it if we can find it
             if not any(w[0] == bonus_word for w in selected_words):
                 # Replace a word or just add it
-                bonus_tuple = (bonus_word, calculate_word_score(bonus_word, bonus_word))
+                bonus_tuple = (bonus_word, calculate_word_score(bonus_word, bonus_word, is_private=True))
                 if len(selected_words) > 0:
                     idx = random.randint(0, len(selected_words) - 1)
                     selected_words[idx] = bonus_tuple

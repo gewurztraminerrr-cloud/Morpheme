@@ -159,7 +159,7 @@ function setupMiniProfileModal() {
     }
 }
 
-async function showMiniProfile(username) {
+window.showMiniProfile = async function (username) {
     if (!username) return;
 
     const modal = document.getElementById('mini-profile-modal');
@@ -171,14 +171,19 @@ async function showMiniProfile(username) {
 
         if (data.error) return;
 
-        // Populate Modal
-        document.getElementById('mini-profile-username').innerText = data.username;
-        document.getElementById('mini-profile-fullname').innerText = data.full_name || '-';
-        document.getElementById('mini-profile-games').innerText = data.games_played || 0;
-        document.getElementById('mini-profile-wins').innerText = data.wins || 0;
-        document.getElementById('mini-profile-age').innerText = data.age || '-';
+        // Populate Modal Basic Info
+        const nameEl = document.getElementById('mini-profile-username');
+        if (nameEl) nameEl.innerText = data.username;
+        const fullNEl = document.getElementById('mini-profile-fullname');
+        if (fullNEl) fullNEl.innerText = data.full_name || '-';
+        const gamesEl = document.getElementById('mini-profile-games');
+        if (gamesEl) gamesEl.innerText = data.games_played || 0;
+        const winsEl = document.getElementById('mini-profile-wins');
+        if (winsEl) winsEl.innerText = data.wins || 0;
+        const ageEl = document.getElementById('mini-profile-age');
+        if (ageEl) ageEl.innerText = data.age || '-';
 
-        // Render Joined Date
+        // Render Joined Date with Duration
         const joinedEl = document.getElementById('mini-profile-joined');
         if (joinedEl && data.created_at) {
             const joinedDate = new Date(data.created_at);
@@ -200,96 +205,108 @@ async function showMiniProfile(username) {
             joinedEl.innerText = "Joined: -";
         }
 
+        // PE and Rank stats
         const maxPeEl = document.getElementById('mini-profile-max-pe');
         if (maxPeEl) maxPeEl.innerText = data.max_pe ? `${data.max_pe.toFixed(2)}x` : '-';
 
         const avgPeEl = document.getElementById('mini-profile-avg-pe');
         if (avgPeEl) avgPeEl.innerText = data.avg_pe ? `${data.avg_pe.toFixed(2)}x` : '-';
 
-        // Rank placeholder (future feature)
         const rankEl = document.getElementById('mini-profile-rank-placeholder');
         if (rankEl) rankEl.innerText = '-';
 
-        document.getElementById('mini-profile-flag').innerText = data.country_flag || '🏳️';
-        document.getElementById('mini-profile-quote').innerText = data.quote ? `"${data.quote}"` : '"No quote provided."';
-        document.getElementById('mini-profile-description').innerText = data.description || 'No description provided.';
+        // Flag and Meta
+        const flagEl = document.getElementById('mini-profile-flag');
+        if (flagEl) flagEl.innerText = data.country_flag || '🏳️';
+
+        // Description and Quote
+        const quoteEl = document.getElementById('mini-profile-quote');
+        const descEl = document.getElementById('mini-profile-description');
+        if (quoteEl) quoteEl.innerText = data.quote ? `"${data.quote}"` : 'No personal quote available.';
+        if (descEl) descEl.innerText = data.description || 'No description provided.';
 
         // Country Name Lookup
         const flagEmoji = data.country_flag || '🏳️';
-        const country = typeof ALL_FLAGS !== 'undefined' ? ALL_FLAGS.find(f => f.flag === flagEmoji) : null;
-        document.getElementById('mini-profile-country-name').innerText = country ? country.name : 'International';
+        const countryLookup = typeof ALL_FLAGS !== 'undefined' ? ALL_FLAGS.find(f => f.flag === flagEmoji) : null;
+        const countryNameEl = document.getElementById('mini-profile-country-name');
+        if (countryNameEl) countryNameEl.innerText = countryLookup ? countryLookup.name : 'International';
 
+        // Online Status
         const statusEl = document.getElementById('mini-profile-status');
         const statusIcon = document.getElementById('mini-profile-status-icon');
         const isOnline = data.status && data.status.is_online;
-
-        statusEl.innerText = isOnline ? 'Online' : 'Offline';
-        statusEl.style.color = isOnline ? '#4ade80' : 'rgba(255,255,255,0.5)';
-
+        if (statusEl) {
+            statusEl.innerText = isOnline ? 'Online' : 'Offline';
+            statusEl.style.color = isOnline ? '#4ade80' : 'rgba(255,255,255,0.5)';
+        }
         if (statusIcon) {
             statusIcon.innerText = isOnline ? '🟢' : '⚪';
             statusIcon.style.filter = isOnline ? 'drop-shadow(0 0 5px #4ade80)' : 'none';
         }
+
+        // Rating Badge Styling
         const rating = data.rating || 0;
         const ratingBadge = document.getElementById('mini-profile-rating-badge');
-        ratingBadge.innerText = rating;
-        const ratingColor = window.getRatingColor ? window.getRatingColor(rating) : '#fff';
-        ratingBadge.style.color = ratingColor;
-        ratingBadge.style.borderColor = `${ratingColor}44`;
+        if (ratingBadge) {
+            ratingBadge.innerText = rating;
+            const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#fff';
+            ratingBadge.style.color = rColor;
+            ratingBadge.style.borderColor = `${rColor}44`;
 
-        if (data.avatar_url) {
-            ratingBadge.style.cursor = 'pointer';
-            ratingBadge.title = "View user image";
-            ratingBadge.onclick = () => showImageLightbox(data.avatar_url, `${data.username}'s Profile Image`);
-        } else {
-            ratingBadge.style.cursor = 'default';
-            ratingBadge.title = "";
-            ratingBadge.onclick = null;
+            if (data.avatar_url) {
+                ratingBadge.style.cursor = 'pointer';
+                ratingBadge.title = "View user image";
+                ratingBadge.onclick = () => showImageLightbox(data.avatar_url, `${data.username}'s Profile Image`);
+            } else {
+                ratingBadge.style.cursor = 'default';
+                ratingBadge.title = "";
+                ratingBadge.onclick = null;
+            }
         }
 
+        // Avatar
         const avatar = document.getElementById('mini-profile-avatar');
-        if (data.avatar_url) {
-            avatar.style.background = 'none'; // Clear any previous gradient
-            avatar.style.backgroundImage = `url('${data.avatar_url}')`;
-            avatar.style.backgroundSize = 'cover';
-            avatar.style.backgroundPosition = 'center';
-            avatar.style.backgroundColor = 'rgba(0,0,0,0.3)';
-            avatar.innerText = '';
-            avatar.style.cursor = 'pointer';
-            avatar.onclick = () => showImageLightbox(data.avatar_url, `${data.username}'s Profile Image`);
-        } else {
-            avatar.style.cursor = 'default';
-            avatar.onclick = null;
-            avatar.style.backgroundImage = 'none';
-            avatar.style.background = `linear-gradient(135deg, ${ratingColor}, #444)`;
-            avatar.innerText = data.username.charAt(0).toUpperCase();
+        if (avatar) {
+            if (data.avatar_url) {
+                avatar.style.background = 'none';
+                avatar.style.backgroundImage = `url('${data.avatar_url}')`;
+                avatar.style.backgroundSize = 'cover';
+                avatar.style.backgroundPosition = 'center';
+                avatar.style.backgroundColor = 'rgba(0,0,0,0.3)';
+                avatar.innerText = '';
+                avatar.style.cursor = 'pointer';
+                avatar.onclick = () => showImageLightbox(data.avatar_url, `${data.username}'s Profile Image`);
+            } else {
+                avatar.style.cursor = 'default';
+                avatar.onclick = null;
+                avatar.style.backgroundImage = 'none';
+                const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#fff';
+                avatar.style.background = `linear-gradient(135deg, ${rColor}, #444)`;
+                avatar.innerText = data.username.charAt(0).toUpperCase();
+            }
         }
 
-        // Setup Buttons
+        // Setup Buttons: Navigation and Search
         const viewFullBtn = document.getElementById('mini-profile-view-full');
-        viewFullBtn.onclick = () => {
-            modal.classList.add('hidden');
-            // Navigate to tools page and search
-            const toolsBtn = document.querySelector('.nav-btn[data-page="tools"]');
-            if (toolsBtn) toolsBtn.click();
-
-            const profileToolBtn = document.querySelector('.tool-nav-btn[data-tool="profile"]');
-            if (profileToolBtn) profileToolBtn.click();
-
-            window.performProfileSearch(data.username);
-        };
+        if (viewFullBtn) {
+            viewFullBtn.onclick = () => {
+                modal.classList.add('hidden');
+                const toolsBtn = document.querySelector('.nav-btn[data-page="tools"]');
+                if (toolsBtn) toolsBtn.click();
+                const profileToolBtn = document.querySelector('.tool-nav-btn[data-tool="profile"]');
+                if (profileToolBtn) profileToolBtn.click();
+                window.performProfileSearch(data.username);
+            };
+        }
 
         const roundReviewsBtn = document.getElementById('mini-profile-round-reviews');
         if (roundReviewsBtn) {
             roundReviewsBtn.onclick = () => {
                 modal.classList.add('hidden');
-                // Navigate to tools page and search
                 const toolsBtn = document.querySelector('.nav-btn[data-page="tools"]');
                 if (toolsBtn) toolsBtn.click();
-
                 const profileToolBtn = document.querySelector('.tool-nav-btn[data-tool="profile"]');
                 if (profileToolBtn) profileToolBtn.click();
-
                 window.performProfileSearch(data.username, 'history');
             };
         }
@@ -298,32 +315,33 @@ async function showMiniProfile(username) {
         const globalUser = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
         const currentName = (typeof globalUser === 'object') ? globalUser.username : globalUser;
 
-        if (currentName && currentName.toLowerCase() !== data.username.toLowerCase()) {
-            msgBtn.classList.remove('hidden');
-            msgBtn.onclick = () => {
-                modal.classList.add('hidden');
-                window.openPrivateChat(data.username, true);
-            };
-
-            const friendBtn = document.getElementById('mini-profile-friend');
-            if (friendBtn) {
-                friendBtn.classList.remove('hidden');
-                await updateFriendButtonStatus(data.username, friendBtn);
-                friendBtn.onclick = () => handleFriendAction(data.username, friendBtn);
+        if (msgBtn) {
+            if (currentName && currentName.toLowerCase() !== data.username.toLowerCase()) {
+                msgBtn.classList.remove('hidden');
+                msgBtn.onclick = () => {
+                    modal.classList.add('hidden');
+                    window.openPrivateChat(data.username, true);
+                };
+                const friendBtn = document.getElementById('mini-profile-friend');
+                if (friendBtn) {
+                    friendBtn.classList.remove('hidden');
+                    await updateFriendButtonStatus(data.username, friendBtn);
+                    friendBtn.onclick = () => handleFriendAction(data.username, friendBtn);
+                }
+            } else {
+                msgBtn.classList.add('hidden');
+                const friendBtn = document.getElementById('mini-profile-friend');
+                if (friendBtn) friendBtn.classList.add('hidden');
             }
-        } else {
-            msgBtn.classList.add('hidden');
-            const friendBtn = document.getElementById('mini-profile-friend');
-            if (friendBtn) friendBtn.classList.add('hidden');
         }
 
+        // Finally Show
         modal.classList.remove('hidden');
 
     } catch (err) {
         console.error("Mini profile fetch error:", err);
     }
-}
-window.showMiniProfile = showMiniProfile;
+};
 
 // --- Profile Tool Logic ---
 
@@ -458,8 +476,12 @@ function setupProfileTool() {
             const targetPane = document.getElementById(`profile-tab-${targetTab}`);
             if (targetPane) targetPane.classList.add('active');
 
-            // If switching AWAY from history, maybe hide the replay panel?
-            // Actually, keep it if they want to review later.
+            // Re-fetch friends if switching to friends tab
+            if (targetTab === 'friends') {
+                if (typeof fetchAndRenderFriends === 'function') {
+                    fetchAndRenderFriends();
+                }
+            }
         });
     });
 }
@@ -949,6 +971,12 @@ async function renderProfile(user) {
         } else {
             winRateEl.innerText = '0%';
         }
+    }
+
+    const wpmEl = document.getElementById('profile-avg-wpm');
+    if (wpmEl) {
+        wpmEl.innerText = user.avg_wpm_300 || 0;
+        wpmEl.title = "Average Words Per Minute in boards with 300+ potential words";
     }
 
     const bestScoreEl = document.getElementById('profile-best-score');
@@ -2326,9 +2354,11 @@ async function runSequenceSearch() {
                     <tbody>
         `;
 
-        // Use chunks to avoid blocking if list is huge? For now direct map.
+        // Clickable words for Sequence search
         html += words.map(w => `
-            <tr><td style="padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.9); font-family: monospace;">${w}</td></tr>
+            <tr><td style="padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <span class="clickable-word-link" onclick="window.lookupWord('${w}')" style="font-family: monospace;">${w}</span>
+            </td></tr>
         `).join('');
 
         html += `
@@ -2586,13 +2616,12 @@ async function generateRandomWord() {
 
         displayEl.innerText = word;
         if (defEl) {
-            // Animate definition fade in slightly
             defEl.style.opacity = '0';
             let html = '';
             if (data.pronunciation) {
-                html += `<div class="pronunciation" style="margin-bottom: 5px;">${data.pronunciation}</div>`;
+                html += `<div class="pronunciation" style="margin-bottom: 8px; font-size: 1.5rem; letter-spacing: 2px;">${data.pronunciation}</div>`;
             }
-            html += `<div class="definition-text">${definition}</div>`;
+            html += `<div class="definition-text" style="font-size: 1.2rem; line-height: 1.5;">${definition}</div>`;
             defEl.innerHTML = html;
             setTimeout(() => {
                 defEl.style.transition = 'opacity 0.5s ease';
@@ -2720,8 +2749,11 @@ async function runSubanagramSearch() {
                     <tbody>
         `;
 
+        // Clickable words for Subanagram search
         html += words.map(w => `
-            <tr><td style="padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.9); font-family: monospace;">${w}</td></tr>
+            <tr><td style="padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <span class="clickable-word-link" onclick="window.lookupWord('${w}')" style="font-family: monospace;">${w}</span>
+            </td></tr>
         `).join('');
 
         html += `
@@ -2800,15 +2832,15 @@ async function runValidationCheck() {
         void displayEl.offsetWidth;
         displayEl.classList.add('random-word-large');
 
-        // Handle definition
+        // Handle definition and pronunciation
         if (defEl) {
             if (data.is_valid && (data.definition || data.pronunciation)) {
                 let html = '';
                 if (data.pronunciation) {
-                    html += `<div class="pronunciation" style="margin-bottom: 5px;">${data.pronunciation}</div>`;
+                    html += `<div class="pronunciation" style="margin-bottom: 10px; font-size: 1.8rem; letter-spacing: 2px;">${data.pronunciation}</div>`;
                 }
                 if (data.definition) {
-                    html += `<div class="definition-text">${data.definition}</div>`;
+                    html += `<div class="definition-text" style="font-size: 1.3rem; line-height: 1.6; color: #fff; font-style: normal;">${data.definition}</div>`;
                 }
                 defEl.innerHTML = html;
                 setTimeout(() => {
@@ -3624,7 +3656,7 @@ function setupPersonalTimer() {
                 if (defPanel) {
                     defPanel.classList.add('timer-flash');
                     if (defHeader) defHeader.style.display = 'none';
-                    if (defContent) defContent.innerHTML = `<h2 style="text-align:center; margin-top: 50px; font-size: 2rem; color: #fff;">Time is up!</h2>`;
+                    if (defContent) defContent.innerHTML = `<h2 style="text-align:center; margin-top: 100px; font-size: 5rem; color: #fff; text-shadow: 0 0 30px #f00; font-weight: 900; text-transform: uppercase; letter-spacing: 5px; animation: pulse 1s infinite;">Time is up!</h2>`;
                 }
             } else {
                 displayLabel.textContent = formatTime(personalTimerSeconds);
@@ -3643,3 +3675,23 @@ function setupPersonalTimer() {
         if (defPanel) defPanel.classList.remove('timer-flash');
     });
 }
+// Global function to lookup word in Tool Validator
+window.lookupWord = function (word) {
+    if (!word) return;
+
+    // 1. Switch tool navigation to "Is Valid"
+    const navBtns = document.querySelectorAll('.tool-nav-btn');
+    const isValidBtn = Array.from(navBtns).find(b => b.dataset.tool === 'is-valid');
+    if (isValidBtn) isValidBtn.click();
+
+    // 2. Set input and run check
+    const input = document.getElementById('valid-input');
+    if (input) {
+        input.value = word;
+        runValidationCheck();
+    }
+
+    // 3. Scroll to results if needed
+    const container = document.getElementById('valid-results-container');
+    if (container) container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+};
