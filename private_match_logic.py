@@ -205,7 +205,7 @@ class PrivateMatchManager:
         if target_difficulty == 'Normal' or target_difficulty == 'Expert':
             target_difficulty = 'Medium' if target_difficulty == 'Normal' else 'Hard'
 
-        board, all_words_on_board = bg.generate_board(
+        board, all_words_on_board, _bonus_cell = bg.generate_board(
             dimensions=dims,
             bonus_word="", # No initial bonus word, will pick from all_words below
             word_count_range=target_range,
