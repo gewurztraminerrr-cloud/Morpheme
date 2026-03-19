@@ -552,6 +552,10 @@
     font-weight: 800;
     color: var(--text-primary);
     font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    min-width: 190px;
+    text-align: center;
+    justify-content: center;
 }
 
 .game-board {
@@ -589,6 +593,25 @@
     -webkit-user-select: none;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25), inset 0 2px 0 rgba(255, 255, 255, 0.8);
     border: 1px solid rgba(0, 0, 0, 0.05);
+    pointer-events: none;
+    /* Let diagonal corners fall through completely */
+}
+
+/* Deactivate events on visual typography elements to prevent hit-testing confusion */
+.board-cell>*:not(.cell-hitbox) {
+    pointer-events: none;
+}
+
+/* The actual interactive surface: A precise octagon overlay */
+.cell-hitbox {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    pointer-events: auto !important;
+    /* Only this layer talks to the JS */
+    /* 30% corner cutoffs create a nearly perfect octagon */
+    clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    cursor: pointer;
 }
 
 .board-cell.grayed {
@@ -603,8 +626,9 @@
     border-color: rgba(0, 0, 0, 0.1);
 }
 
-/* Mouse selection visual feedback */
-.board-cell.selected {
+/* Mouse selection visual feedback — all tiles in path look identical */
+.board-cell.selected,
+.board-cell.current {
     background: var(--highlight-mouse-color, rgba(64, 156, 255, 0.5)) !important;
     border: 3px solid #fff;
     box-shadow: 0 0 15px var(--highlight-mouse-color, rgba(64, 156, 255, 0.6));

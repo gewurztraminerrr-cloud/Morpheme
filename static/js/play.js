@@ -1983,7 +1983,9 @@ function createBoardCell(r, c, letter, grayed) {
         bottomEl.textContent = bottom === 'Q' ? 'QU' : bottom;
         cell.appendChild(bottomEl);
     } else {
-        cell.textContent = letter === 'Q' ? 'QU' : letter;
+        const letterSpan = document.createElement('span');
+        letterSpan.textContent = letter === 'Q' ? 'QU' : letter;
+        cell.appendChild(letterSpan);
     }
 
     // 3. Handle Valued Letters Points Display
@@ -1997,6 +1999,11 @@ function createBoardCell(r, c, letter, grayed) {
             cell.appendChild(valSpan);
         }
     }
+
+    // 4. Inject strict octagonal hitbox overlay
+    const hitbox = document.createElement('div');
+    hitbox.className = 'cell-hitbox';
+    cell.appendChild(hitbox);
 
     cell.dataset.row = r;
     cell.dataset.col = c;
@@ -2970,7 +2977,35 @@ function createSpectatorPanel() {
 
 function selectCell(row, col, letter, cellEl) {
     const key = `${row},${col}`;
-    // Don't revisit a cell already in the path
+    const pathLen = mouseState.selectedPath.length;
+
+    // Check for backtracking: Is this the second-to-last cell in the path?
+    if (pathLen >= 2) {
+        const secondToLast = mouseState.selectedPath[pathLen - 2];
+        if (secondToLast.row === row && secondToLast.col === col) {
+            // BACKTRACKING DETECTED
+            const lastCell = mouseState.selectedPath.pop();
+            const lastKey = `${lastCell.row},${lastCell.col}`;
+            mouseState.visitedCells.delete(lastKey);
+
+            // Remove visual highlight from the cell we just left
+            const oldCellEl = document.querySelector(`.board-cell[data-row="${lastCell.row}"][data-col="${lastCell.col}"]`);
+            if (oldCellEl) {
+                oldCellEl.classList.remove('selected', 'current');
+            }
+
+            // Mark the new tail as 'current'
+            if (cellEl) {
+                document.querySelectorAll('.board-cell.current').forEach(c => c.classList.remove('current'));
+                cellEl.classList.add('current');
+            }
+
+            updateWordInputFromPath();
+            return;
+        }
+    }
+
+    // Don't revisit a cell already in the path (unless backtracking above)
     if (mouseState.visitedCells.has(key)) return;
 
     mouseState.visitedCells.add(key);
@@ -2983,7 +3018,10 @@ function selectCell(row, col, letter, cellEl) {
         cellEl.classList.add('selected', 'current');
     }
 
-    // Live update the word input box
+    updateWordInputFromPath();
+}
+
+function updateWordInputFromPath() {
     const wordInputEl = document.getElementById('word-input');
     if (wordInputEl) {
         wordInputEl.value = mouseState.selectedPath.map(p => {

@@ -1,19 +1,18 @@
 // ========================================
 // MOUSE SELECTION SYSTEM (OPTIMIZED)
+// NOTE: This system is intentionally disabled. The primary mouse selection
+// logic lives in play.js (handleCellMouseDown, handleCellMouseOver, etc.)
+// which uses precise dataset.row/col lookups. Running both systems
+// simultaneously caused duplicate-letter highlighting bugs (e.g. the wrong 'E'
+// getting selected). play.js is the authoritative system.
 // ========================================
 
 let cachedCellRects = [];
 
 // Initialize mouse selection handlers
 function initializeMouseSelection() {
-    const board = document.getElementById('game-board');
-    if (!board) return;
-
-    board.addEventListener('mousedown', handleMouseDown);
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    console.log('[Mouse] Optimized selection system initialized');
+    // DISABLED: play.js handles all mouse selection
+    console.log('[Mouse] mouse_selection.js disabled — play.js is authoritative.');
 }
 
 // Start selection on mousedown
