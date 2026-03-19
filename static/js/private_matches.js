@@ -176,11 +176,12 @@
             });
             const data = await res.json();
             if (data.success) {
-                alert("Invites sent!");
                 input.value = "";
                 loadPrivateMatches();
+                showInviteSentToast();
             } else {
-                alert(data.error);
+                if (window.showAlertModal) window.showAlertModal('Error', data.error || 'Failed to send invitation.');
+                else alert(data.error);
             }
         } catch (e) {
             console.error(e);
@@ -263,6 +264,29 @@
         } catch (e) { console.error('Error loading private matches:', e); }
     }
     window.loadPrivateMatches = loadPrivateMatches;
+
+    function showInviteSentToast() {
+        const existing = document.getElementById('invite-sent-toast');
+        if (existing) existing.remove();
+
+        const toast = document.createElement('div');
+        toast.id = 'invite-sent-toast';
+        toast.className = 'pm-toast-notification';
+        toast.innerHTML = `
+            <div class="pm-toast-content" style="border-left: 4px solid #a78bfa;">
+                <div class="pm-toast-icon" style="background: rgba(167,139,250,0.2); font-size:1.5rem;">✉️</div>
+                <div class="pm-toast-details">
+                    <div class="pm-toast-title" style="color:#a78bfa;">Invitation Sent!</div>
+                    <div class="pm-toast-text">Your friend will see the invite in their lobby.</div>
+                </div>
+                <div class="pm-toast-actions">
+                    <button class="pm-toast-btn close" onclick="this.closest('#invite-sent-toast').remove()">Dismiss</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+    }
 
     function showInviteNotification(sender, count) {
         const existing = document.getElementById('invite-toast');
