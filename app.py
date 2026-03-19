@@ -1495,13 +1495,8 @@ def get_room_state(room_id):
                 if not p.is_ai or not is_active or w.get('time', 0) <= now
             ]
             
-            # Calculate score using room's logic (sequential for penalty mode)
-            if room.game_type == 'penalty':
-                score = 0
-                for w in sorted(visible_words, key=lambda x: x.get('time', 0)):
-                    score = max(0, score + w.get('points', 0))
-            else:
-                score = sum(max(0, w.get('points', 0)) for w in visible_words)
+            # Calculate score safely (allowing negative values from Penalty deductions)
+            score = sum(w.get('points', 0) for w in visible_words)
                 
             found_bonus = any(w['word'] == room.bonus_word for w in visible_words)
             
