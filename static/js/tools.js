@@ -2588,7 +2588,12 @@ async function generateRandomWord() {
         if (defEl) {
             // Animate definition fade in slightly
             defEl.style.opacity = '0';
-            defEl.innerText = definition;
+            let html = '';
+            if (data.pronunciation) {
+                html += `<div class="pronunciation" style="margin-bottom: 5px;">${data.pronunciation}</div>`;
+            }
+            html += `<div class="definition-text">${definition}</div>`;
+            defEl.innerHTML = html;
             setTimeout(() => {
                 defEl.style.transition = 'opacity 0.5s ease';
                 defEl.style.opacity = '1';
@@ -2635,7 +2640,12 @@ async function updateWotd() {
         lastWotdDate = data.date; // Use the date confirmed by the server
         const defEl = document.getElementById('wotd-definition');
         if (defEl) {
-            defEl.innerText = data.definition || "No definition available.";
+            let html = '';
+            if (data.pronunciation) {
+                html += `<div class="pronunciation" style="margin-bottom: 5px;">${data.pronunciation}</div>`;
+            }
+            html += `<div class="definition-text">${data.definition || "No definition available."}</div>`;
+            defEl.innerHTML = html;
         }
     } catch (err) {
         console.error("WOTD fetch failed:", err);
@@ -2792,15 +2802,22 @@ async function runValidationCheck() {
 
         // Handle definition
         if (defEl) {
-            if (data.is_valid && data.definition) {
-                defEl.innerText = data.definition;
+            if (data.is_valid && (data.definition || data.pronunciation)) {
+                let html = '';
+                if (data.pronunciation) {
+                    html += `<div class="pronunciation" style="margin-bottom: 5px;">${data.pronunciation}</div>`;
+                }
+                if (data.definition) {
+                    html += `<div class="definition-text">${data.definition}</div>`;
+                }
+                defEl.innerHTML = html;
                 setTimeout(() => {
                     defEl.style.transition = 'opacity 0.5s ease';
                     defEl.style.opacity = '1';
                 }, 100);
             } else {
                 defEl.style.opacity = '0';
-                setTimeout(() => defEl.innerText = '', 500);
+                setTimeout(() => defEl.innerHTML = '', 500);
             }
         }
 

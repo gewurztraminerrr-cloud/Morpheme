@@ -146,9 +146,35 @@ class TournamentManager:
             VALUES (?, ?, ?, ?, ?)
         ''', (tid, round_number, now, end_time, json.dumps(board)))
         
+        # 4. Generate Matchups for this round
+        self.create_matchups(tid, round_number, conn)
+
         if should_close:
             conn.commit()
             conn.close()
+
+    def create_matchups(self, tid, round_number, conn):
+        # Get all active participants
+        participants = conn.execute('''
+            SELECT user_id FROM tournament_participants 
+            WHERE tournament_id = ? AND status = 'active'
+        ''', (tid,)).fetchall()
+        
+        user_ids = [p['user_id'] for p in participants]
+        random.shuffle(user_ids)
+        
+        now = time.time()
+        
+        matchups = []
+        for i in range(0, len(user_ids), 2):
+            u1 = user_ids[i]
+            u2 = user_ids[i+1] if i+1 < len(user_ids) else -1 # -1 denotes a bye
+            matchups.append((tid, round_number, u1, u2, now))
+            
+        conn.executemany('''
+            INSERT INTO tournament_matchups (tournament_id, round_number, user1_id, user2_id, created_at)
+            VALUES (?, ?, ?, ?, ?)
+        ''', matchups)
 
     def check_round_advancement(self, tid):
         conn = self.get_db()
@@ -174,11 +200,11 @@ class TournamentManager:
     def advance_tournament(self, tid, round_num):
         conn = self.get_db()
         try:
-            # 1. Get all active participants
-            active_users = conn.execute('''
-                SELECT user_id FROM tournament_participants 
-                WHERE tournament_id = ? AND status = 'active'
-            ''', (tid,)).fetchall()
+            # 1. Get all matchups for this round
+            matchups = conn.execute('''
+                SELECT * FROM tournament_matchups 
+                WHERE tournament_id = ? AND round_number = ?
+            ''', (tid, round_num)).fetchall()
             
             # 2. Get scores for this round
             scores = conn.execute('''
@@ -188,44 +214,116 @@ class TournamentManager:
             
             score_dict = {row['user_id']: row['score'] for row in scores}
             
-            # 3. Advancement Logic: Fair comparison
-            results = []
-            for u in active_users:
-                score = score_dict.get(u['user_id'], 0)
-                results.append({'user_id': u['user_id'], 'score': score})
-                
-            results.sort(key=lambda x: x['score'], reverse=True)
+            # 3. Process Matchups
+            winners = []
+            eliminated = []
             
-            num_participants = len(results)
-            num_to_advance = max(1, num_participants // 2)
-            
-            if num_participants <= 1:
-                self.complete_tournament(tid, results, conn=conn)
-                return
+            # Count total participants (active + previously eliminated) for accurate ranking
+            total_participants = conn.execute('SELECT COUNT(*) FROM tournament_participants WHERE tournament_id = ?', (tid,)).fetchone()[0]
 
-            winners = results[:num_to_advance]
-            losers = results[num_to_advance:]
-            
-            # Eliminate losers
-            for l in losers:
+            for m in matchups:
+                u1 = m['user1_id']
+                u2 = m['user2_id']
+                
+                if u2 == -1:
+                    # Bye! u1 advances automatically
+                    winners.append(u1)
+                    continue
+                    
+                s1 = score_dict.get(u1, 0)
+                s2 = score_dict.get(u2, 0)
+                
+                # Determine winner
+                if s1 > s2:
+                    winners.append(u1)
+                    eliminated.append(u2)
+                    conn.execute('UPDATE tournament_matchups SET winner_id = ? WHERE id = ?', (u1, m['id']))
+                elif s2 > s1:
+                    winners.append(u2)
+                    eliminated.append(u1)
+                    conn.execute('UPDATE tournament_matchups SET winner_id = ? WHERE id = ?', (u2, m['id']))
+                else:
+                    # TIE (or both 0)! Random winner
+                    # Check if they both left (forfeited)
+                    w = random.choice([u1, u2])
+                    winners.append(w)
+                    eliminated.append(u2 if w == u1 else u1)
+                    conn.execute('UPDATE tournament_matchups SET winner_id = ? WHERE id = ?', (w, m['id']))
+
+            # Perform eliminations
+            for uid in eliminated:
                 conn.execute('''
                     UPDATE tournament_participants 
                     SET status = 'eliminated', final_rank = ?
                     WHERE tournament_id = ? AND user_id = ?
-                ''', (num_participants, tid, l['user_id']))
+                ''', (total_participants, tid, uid))
                 
-            # Check if we have a definitive winner
-            if len(winners) == 1 and num_participants > 1:
-                self.complete_tournament(tid, winners, conn=conn)
+            # Check if tournament is over
+            if len(winners) <= 1:
+                final_results = []
+                for w in winners:
+                    final_results.append({'user_id': w, 'score': score_dict.get(w, 0)})
+                self.complete_tournament(tid, final_results, conn=conn)
             else:
                 # Next round
                 next_round = round_num + 1
-                # Generate board FIRST
                 self.start_new_round(tid, next_round, conn=conn)
-                # THEN point players to it
                 conn.execute('UPDATE tournaments SET current_round = ? WHERE id = ?', (next_round, tid))
                 
             conn.commit()
+        finally:
+            conn.close()
+
+    def get_user_matchup(self, tid, round_number, user_id):
+        conn = self.get_db()
+        row = conn.execute('''
+            SELECT m.*, 
+                   u1.username as u1_name, u2.username as u2_name,
+                   (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user1_id) as u1_score,
+                   (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user2_id) as u2_score
+            FROM tournament_matchups m
+            LEFT JOIN users u1 ON m.user1_id = u1.id
+            LEFT JOIN users u2 ON m.user2_id = u2.id
+            WHERE m.tournament_id = ? AND m.round_number = ? AND (m.user1_id = ? OR m.user2_id = ?)
+        ''', (tid, round_number, user_id, user_id)).fetchone()
+        conn.close()
+        
+        if not row: return None
+        
+        res = dict(row)
+        # Determine who the opponent is
+        if res['user1_id'] == user_id:
+            res['opponent_id'] = res['user2_id']
+            res['opponent_name'] = res['u2_name'] if res['user2_id'] != -1 else "BYE"
+            res['opponent_score'] = res['u2_score'] if res['user2_id'] != -1 else 0
+            res['my_score'] = res['u1_score']
+        else:
+            res['opponent_id'] = res['user1_id']
+            res['opponent_name'] = res['u1_name']
+            res['opponent_score'] = res['u1_score']
+            res['my_score'] = res['u2_score']
+            
+        return res
+
+    def forfeit_turn(self, tid, round_number, user_id):
+        """Mark user turn as done with 0 score (forfeit)"""
+        # We don't use has_user_turn here because we want to allow forfeiting even if they already played?
+        # Actually no, if they've played, they've played.
+        # But if they haven't, we insert a 0 score.
+        if not self.has_user_turn(tid, user_id):
+            return False
+            
+        conn = self.get_db()
+        try:
+            conn.execute('''
+                INSERT INTO tournament_scores (tournament_id, round_number, user_id, score, submitted_words, submitted_at, round_start_time)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (tid, round_number, user_id, 0, json.dumps([]), time.time(), time.time()))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Forfeit Error: {e}")
+            return False
         finally:
             conn.close()
 
@@ -251,6 +349,22 @@ class TournamentManager:
         if should_close:
             conn.commit()
             conn.close()
+
+    def get_all_matchups(self, tid, round_number):
+        conn = self.get_db()
+        rows = conn.execute('''
+            SELECT m.*, 
+                   u1.username as u1_name, u2.username as u2_name,
+                   (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user1_id) as u1_score,
+                   (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user2_id) as u2_score
+            FROM tournament_matchups m
+            LEFT JOIN users u1 ON m.user1_id = u1.id
+            LEFT JOIN users u2 ON m.user2_id = u2.id
+            WHERE m.tournament_id = ? AND m.round_number = ?
+            ORDER BY m.id ASC
+        ''', (tid, round_number)).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
 
     def get_history(self):
         conn = self.get_db()

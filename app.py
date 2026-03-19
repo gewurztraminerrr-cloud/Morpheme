@@ -41,11 +41,9 @@ def enforce_idle_timeout():
         
     if 'user_id' in session:
         now = time.time()
-        # 3600 seconds = 1 Hour
         last_activity = session.get('_morpheme_last_active', now)
-        if (now - last_activity) > 3600:
+        if (now - last_activity) > 86400:
             print(f"[Auth] Idle session expired for user {session.get('username')} ({int(now - last_activity)}s)")
-            # Perform server-side cleanup
             from game_room import room_manager
             room_manager.remove_presence(session['user_id'])
             session.clear()
@@ -207,6 +205,16 @@ def init_db():
             submitted_words TEXT, -- JSON
             submitted_at REAL,
             PRIMARY KEY (tournament_id, round_number, user_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS tournament_matchups (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tournament_id INTEGER,
+            round_number INTEGER,
+            user1_id INTEGER,
+            user2_id INTEGER,
+            winner_id INTEGER,
+            created_at REAL
         );
     ''')
     conn.commit()
@@ -1146,6 +1154,15 @@ def apply_leave_penalty(user_id, room):
     
     player = room.get_player(user_id)
     if player and player.score > 0 and player.user_id > 0:
+        # Check if anyone else played
+        other_players_played = any(
+            p.user_id != player.user_id and (p.score > 0 or len(p.submitted_words) > 0)
+            for p in room.players
+        )
+        if not other_players_played:
+            print(f"[Penalty] Player {player.username} left room {room.room_id} with score {player.score}, but no one else played. No penalty applied.")
+            return
+            
         print(f"[Penalty] Player {player.username} left room {room.room_id} with score {player.score}. Applying -16 rating penalty.")
         player.rating = max(0, player.rating - 16)
         
@@ -1197,6 +1214,8 @@ def cleanup_user_rooms_entirely(user_id):
 
 @app.route('/api/room/create', methods=['POST'])
 def create_room():
+    with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+        f.write(f"\n[app.py] create_room called at {time.time()}\n")
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
@@ -1393,7 +1412,7 @@ def list_rooms():
     time_limit = request.args.get('time_limit', type=int)
     
     # Clean up rooms before listing (ensures zombie rooms are removed)
-    room_manager.cleanup_rooms(timeout=420, spec_timeout=1800)
+    room_manager.cleanup_rooms(timeout=600, spec_timeout=1800)
     
     active_rooms = []
     
@@ -1427,7 +1446,7 @@ def list_rooms():
 def get_lobby_stats():
     """Get aggregated player counts for all game configurations"""
     # Clean up first
-    room_manager.cleanup_rooms(timeout=420, spec_timeout=1800)
+    room_manager.cleanup_rooms(timeout=600, spec_timeout=1800)
     
     stats = {}
     
@@ -1451,19 +1470,45 @@ def get_lobby_stats():
 def get_room_state(room_id):
     if 'user_id' in session:
         room_manager.update_presence(session['user_id'])
-    print(f"\n=== GET STATE REQUEST for room {room_id} ===")
+    
+    # Use file-based logger for execution flow tracking
+    with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+        f.write(f"[app.py] get_room_state ENTERED for {room_id} at {time.time()}\n")
+    
     room = room_manager.get_room(room_id)
     if not room:
-        print(f"ERROR: Room {room_id} not found")
+        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+            f.write(f"[app.py] get_room_state ERROR: Room {room_id} not found at {time.time()}\n")
         return jsonify({'error': 'Room not found'}), 404
 
     try:
         print(f"Room found - game_type: {room.game_type}, current_round: {room.current_round}, state: {room.state}")
 
-        
+        def get_incremental_data(p):
+            """Helper to filter words and calculate score based on time for incremental bots"""
+            now = time.time()
+            is_active = room.state == 'active'
+            
+            # Filter words: If bot and active, only show words with timestamp <= now
+            visible_words = [
+                w for w in p.submitted_words 
+                if not p.is_ai or not is_active or w.get('time', 0) <= now
+            ]
+            
+            # Calculate score using room's logic (sequential for penalty mode)
+            if room.game_type == 'penalty':
+                score = 0
+                for w in sorted(visible_words, key=lambda x: x.get('time', 0)):
+                    score = max(0, score + w.get('points', 0))
+            else:
+                score = sum(max(0, w.get('points', 0)) for w in visible_words)
+                
+            found_bonus = any(w['word'] == room.bonus_word for w in visible_words)
+            
+            return visible_words, score, found_bonus
         # Check for inactive players (zombies)
-        # Use 7 minutes (420s) globally for players, 30m (1800s) for spectators
-        timeout = 420
+        # Use 10 minutes (600s) globally for players, 30m (1800s) for spectators
+        timeout = 600
         spec_timeout = 1800
         
         players_removed = room.check_inactivity(timeout=timeout, spec_timeout=spec_timeout)
@@ -1549,12 +1594,14 @@ def get_room_state(room_id):
             'all_word_scores': room.solved_words_with_scores,
             'csw_only_words': [w for w in words_to_return if word_validator.is_csw_only(w)],
             'bonus_word': room.bonus_word,
+            'bonus_cell': getattr(room, 'bonus_cell', None),
             'spinner_params': room.spinner_params,
             'solving_complete': room.solving_complete,  # Let frontend know if still solving
             'max_players': room.max_players,
             'min_rating': room.min_rating,
             'max_rating': room.max_rating,
             'previous_all_words': room.previous_all_words,
+            'previous_board': room.previous_board,
             'previous_day_history': room.previous_day_history,
             'fcfs_found_words': list(room.fcfs_found_words) if hasattr(room, 'fcfs_found_words') else [],
             'your_username': session.get('username'),
@@ -1562,14 +1609,14 @@ def get_room_state(room_id):
                 {
                     'user_id': p.user_id,
                     'username': p.username,
+                    'is_ai': p.is_ai,
                     'rating': p.rating,
-                    'words_count': len(p.submitted_words),
-                    'score': p.score,
+                    'words_count': len(data[0]),
+                    'score': data[1],
                     'rating_change': p.rating_change,
-                    'found_bonus_word': p.found_bonus_word,
-                    'submitted_words': p.submitted_words,
+                    'found_bonus_word': data[2],
+                    'submitted_words': data[0],
                     'previous_submitted_words': p.previous_submitted_words,
-                    'invalid_words': p.invalid_words,
                     'invalid_words': p.invalid_words,
                     'input_method': p.input_method,
                     'last_active_age': time.time() - p.last_active,
@@ -1578,7 +1625,11 @@ def get_room_state(room_id):
                     'joined_mid_round': getattr(p, 'joined_mid_round', False),
                     'has_exceptional_round': getattr(p, 'has_exceptional_round', False),
                     'performance_efficiency': getattr(p, 'performance_efficiency', 0.0)
-                } for p in sorted(room.players, key=lambda p: p.score, reverse=True)
+                } for p, data in sorted(
+                    [(p, get_incremental_data(p)) for p in room.players], 
+                    key=lambda x: x[1][1], 
+                    reverse=True
+                )
             ],
             'spectators': [
                 {'username': s.username, 'rating': s.rating, 'user_id': s.user_id} for s in room.spectators
@@ -1656,6 +1707,7 @@ def submit_word(room_id):
     data = request.get_json()
     word = data.get('word', '').strip()
     input_method = data.get('input_method')
+    path = data.get('path') # List of [r, c] pairs from Mouse/Touch
 
     # Update input method if provided
     if input_method:
@@ -1663,7 +1715,7 @@ def submit_word(room_id):
         if player:
             player.input_method = input_method
             
-    success, message, points, final_word = room.submit_word(user_id, word)
+    success, message, points, final_word = room.submit_word(user_id, word, path=path)
     
     # Refresh activity on any submission attempt (valid or not)
     room.update_player_activity(user_id)
@@ -1700,8 +1752,9 @@ def update_input_method(room_id):
         
     return jsonify({'error': 'Player not found'}), 404
 
-# Definitions Cache
+# Definitions and Pronunciations Cache
 DEFINITIONS_CACHE = None
+PRONUNCIATIONS_CACHE = None
 
 def load_definitions():
     global DEFINITIONS_CACHE
@@ -1742,21 +1795,55 @@ def load_definitions():
         print(f"Error loading definitions: {e}")
         DEFINITIONS_CACHE = {}
 
+def load_pronunciations():
+    global PRONUNCIATIONS_CACHE
+    if PRONUNCIATIONS_CACHE is not None:
+        return
+
+    PRONUNCIATIONS_CACHE = {}
+    pron_path = os.path.join(os.path.dirname(__file__), 'dictionaries', 'pronunciations.txt')
+    
+    if not os.path.exists(pron_path):
+        print(f"Pronunciations file not found at {pron_path}")
+        return
+
+    try:
+        print(f"Loading pronunciations from {pron_path}...")
+        with open(pron_path, 'r', encoding='utf-8', errors='ignore') as f:
+            for line in f:
+                parts = line.split(' - ', 1)
+                if len(parts) == 2:
+                    word = parts[0].strip().upper()
+                    pron = parts[1].strip()
+                    PRONUNCIATIONS_CACHE[word] = pron
+        print(f"Loaded {len(PRONUNCIATIONS_CACHE)} pronunciations")
+    except Exception as e:
+        print(f"Error loading pronunciations: {e}")
+        PRONUNCIATIONS_CACHE = {}
+
 @app.route('/api/definition', methods=['GET'])
 def get_definition():
     word = request.args.get('word', '').upper()
     if not word:
         return jsonify({'error': 'Word parameter required'}), 400
 
-    # Always try to load if cache is empty (handles late file placement)
+    # Always try to load if cache is empty
     if not DEFINITIONS_CACHE:
         load_definitions()
+    if PRONUNCIATIONS_CACHE is None:
+        load_pronunciations()
 
     definition = DEFINITIONS_CACHE.get(word)
-    if definition:
-        return jsonify({'word': word, 'definition': definition})
+    pronunciation = PRONUNCIATIONS_CACHE.get(word)
+    
+    if definition or pronunciation:
+        return jsonify({
+            'word': word, 
+            'definition': definition or "No definition available for this word.",
+            'pronunciation': pronunciation
+        })
     else:
-        return jsonify({'error': 'Definition not found'}), 404
+        return jsonify({'error': 'Word not found'}), 404
 
 
 
@@ -2274,18 +2361,23 @@ def tools_validate_word():
         
     is_valid = word in dictionary
     
-    # Try to get definition if valid
+    # Try to get definition and pronunciation if valid
     definition = None
+    pronunciation = None
     if is_valid:
-        global DEFINITIONS_CACHE
+        global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
         if DEFINITIONS_CACHE is None:
             load_definitions()
+        if PRONUNCIATIONS_CACHE is None:
+            load_pronunciations()
         definition = DEFINITIONS_CACHE.get(word)
+        pronunciation = PRONUNCIATIONS_CACHE.get(word)
         
     return jsonify({
         'word': word,
         'is_valid': is_valid,
-        'definition': definition
+        'definition': definition,
+        'pronunciation': pronunciation
     })
 
 @app.route('/api/tools/unscramble/random', methods=['GET'])
@@ -2563,15 +2655,19 @@ def tools_random_word():
     import random
     random_word = random.choice(filtered_words)
     
-    # Get definition
-    global DEFINITIONS_CACHE
+    # Get definition and pronunciation
+    global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
     if DEFINITIONS_CACHE is None:
         load_definitions()
+    if PRONUNCIATIONS_CACHE is None:
+        load_pronunciations()
     definition = DEFINITIONS_CACHE.get(random_word, "No definition available for this word.")
+    pronunciation = PRONUNCIATIONS_CACHE.get(random_word)
     
     return jsonify({
         'word': random_word,
-        'definition': definition
+        'definition': definition,
+        'pronunciation': pronunciation
     })
 
 @app.route('/api/tools/wotd', methods=['GET'])
@@ -2599,16 +2695,20 @@ def tools_wotd():
     idx = seed_hash % len(eligible_words)
     wotd = eligible_words[idx]
     
-    # Get definition
-    global DEFINITIONS_CACHE
+    # Get definition and pronunciation
+    global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
     if DEFINITIONS_CACHE is None:
         load_definitions()
+    if PRONUNCIATIONS_CACHE is None:
+        load_pronunciations()
     definition = DEFINITIONS_CACHE.get(wotd, "No definition available for this word.")
+    pronunciation = PRONUNCIATIONS_CACHE.get(wotd)
     
     return jsonify({
         'word': wotd,
         'date': today_str,
-        'definition': definition
+        'definition': definition,
+        'pronunciation': pronunciation
     })
 
 
@@ -3021,6 +3121,7 @@ def get_tournament_status():
             user_status['status'] = p['status']
             user_status['final_rank'] = p['final_rank']
             user_status['has_turn'] = tournament_manager.has_user_turn(t['id'], user_id)
+            user_status['matchup'] = tournament_manager.get_user_matchup(t['id'], t['current_round'], user_id)
         conn.close()
         
     history = tournament_manager.get_history()
@@ -3042,6 +3143,10 @@ def get_tournament_status():
                 rs['submitted_words'] = json.loads(rs['submitted_words'])
             round_scores.append(rs)
 
+    conn = sqlite3.connect('morpheme.db', timeout=30)
+    total_participants = conn.execute('SELECT COUNT(*) FROM tournament_participants WHERE tournament_id = ?', (t['id'],)).fetchone()[0]
+    conn.close()
+
     return jsonify({
         'status': t['status'],
         'id': t['id'],
@@ -3054,6 +3159,8 @@ def get_tournament_status():
         'history': history,
         'round_scores': round_scores,
         'standings': tournament_manager.get_tournament_standings(t['id']),
+        'all_matchups': tournament_manager.get_all_matchups(t['id'], t['current_round']) if t['status'] == 'active' else [],
+        'total_participants': total_participants,
         'is_guest': session.get('is_guest', False)
     })
 
@@ -3080,6 +3187,18 @@ def join_tournament():
         return jsonify({'error': str(e)}), 500
     finally:
         conn.close()
+
+@app.route('/api/tournament/forfeit', methods=['POST'])
+@login_required
+def forfeit_tournament():
+    if session.get('is_guest'):
+        return jsonify({'error': 'Guest access denied'}), 403
+        
+    t = tournament_manager.get_current_tournament()
+    user_id = session['user_id']
+    
+    success = tournament_manager.forfeit_turn(t['id'], t['current_round'], user_id)
+    return jsonify({'success': success})
 
 @app.route('/tournament/game')
 @login_required

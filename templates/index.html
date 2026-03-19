@@ -304,6 +304,10 @@
                                     <option value="Normal">Normal</option>
                                     <option value="Checkerboard">Checkerboard</option>
                                     <option value="Penalty">Penalty</option>
+                                    <option value="Mania">Mania</option>
+                                    <option value="Either/Or">Either/Or</option>
+                                    <option value="Bonus Letter">Bonus Letter</option>
+                                    <option value="Valued Letters">Valued Letters</option>
                                 </select>
                             </div>
                             <div class="config-group">
@@ -616,6 +620,14 @@
                             <div id="tournament-action-area" class="tournament-action-content">
                                 <!-- Buttons and info injected by JS -->
                                 <p class="placeholder">Loading status...</p>
+                            </div>
+                        </div>
+
+                        <!-- Matchups (Pairings) -->
+                        <div id="tournament-matchups-card" class="tournament-card matchups-panel hidden">
+                            <h3>Current Pairings</h3>
+                            <div id="tournament-matchups-list" class="t-matchups-list">
+                                <!-- Pairings injected by JS -->
                             </div>
                         </div>
 
@@ -2297,29 +2309,33 @@
                             </div>
                         </div>
 
-                        <!-- Q5 -->
                         <div class="faq-item">
-                            <div class="faq-question">What do the Penalty and Checkerboard mechanics
-                                signify?</div>
+                            <div class="faq-question">What are the different game Formats and what do they do?</div>
                             <div class="faq-answer">
-                                <p><strong>Penalty:</strong> Should the Spinner land on Penalty,
-                                    exercise caution! Any
-                                    valid
-                                    letter sequence found on the board that is NOT in the active
-                                    dictionary will result
-                                    in a
-                                    <strong>3-point deduction</strong>. Accuracy becomes as vital as
-                                    speed.
-                                </p>
-                                <p><strong>Checkerboard:</strong> This elegant format arranges the
-                                    board so that
-                                    consonants
-                                    and
-                                    vowels alternate along rows and diagonals (e.g., C V C V C).
-                                    This rhythmic layout
-                                    creates
-                                    unique patterns and strategic opportunities for word formation.
-                                </p>
+                                <p><strong>Normal (82%):</strong> The standard gameplay experience where everything is
+                                    balanced for classic play.</p>
+                                <p><strong>Checkerboard (8%):</strong> Alternate vowels and consonants along rows and
+                                    diagonals. This rhythmic layout creates unique patterns for word formation.</p>
+                                <p><strong>[Letter] Mania (2%):</strong> Over 31% of the tiles on the board are assigned
+                                    the same specific letter. This letter changes ogni round.</p>
+                                <p><strong>Penalty (2%):</strong> Exercise caution! Any sequence found on the board that
+                                    is NOT in the dictionary results in a <strong>3-point deduction</strong>.</p>
+                                <p><strong>Either/Or (2%):</strong> Exactly one tile on the board contains two possible letters (e.g., C/H). Words utilizing either of these letters receive a <strong>+3 point bonus</strong>. When playing, the game determines which letter you intended based on where you touch the tile or the word you type.</p>
+                                <p><strong>Bonus Letter (2%):</strong> One letter on the board is highlighted in a
+                                    vibrant, persisting color. Words containing this letter grant <strong>+3 extra
+                                        points</strong>.</p>
+                                <p><strong>Valued Letters (2%):</strong> Each letter has a custom numerical point value
+                                    (e.g., Q=10, E=1). Word scores are the sum of their letter values.</p>
+                                <p><strong>Reorient Letters (0%):</strong> An experimental format that may appear in
+                                    future updates to shift board layout.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question">Can I play Solo or With Friends?</div>
+                            <div class="faq-answer">
+                                <p>Yes! Scroll down in the lobby to find the "Solo" and "With Friends" match creation
+                                    tabs. You can customize your own rooms and invite others by name.</p>
                             </div>
                         </div>
 

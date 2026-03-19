@@ -95,8 +95,8 @@ class SpinnerSet:
             return random.choices(['Normal', 'Checkerboard'], weights=[95, 5])[0]
         else:
             result = random.choices(
-                ['Normal', 'Checkerboard', 'Penalty', 'Mania'],
-                weights=[90, 5, 3, 2]
+                ['Normal', 'Checkerboard', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters'],
+                weights=[82, 8, 2, 2, 2, 2, 2]
             )[0]
             if result == 'Mania':
                 # Pick a random letter for Mania mode

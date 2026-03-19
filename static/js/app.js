@@ -1019,10 +1019,10 @@ window.setCurrentUser = function (user) {
     window.currentUser = user;
 };
 
-// Global Idle Logout (1 Hour)
+// Global Idle Logout (24 Hours)
 (function () {
     let idleSeconds = 0;
-    const idleLimit = 3600; // 3600s = 1 Hour
+    const idleLimit = 86400; // 86400s = 24 Hours
 
     function resetIdle() {
         idleSeconds = 0;
@@ -1043,7 +1043,7 @@ window.setCurrentUser = function (user) {
         if (idleSeconds >= idleLimit) {
             // Check if we are actually logged in (currentUser is set in app.js context)
             if (window.currentUser || localStorage.getItem('morpheme_username')) {
-                console.log("[IdleLogout] User inactive for 1 hour. Logging out.");
+                console.log("[IdleLogout] User inactive for 24 hours. Logging out.");
                 fetch('/api/logout', { method: 'POST' })
                     .then(() => {
                         // Clear locals just in case

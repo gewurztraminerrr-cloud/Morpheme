@@ -154,9 +154,9 @@ async function updateGameState() {
                 if (window.showPage) window.showPage('page-lobby');
                 setTimeout(() => {
                     if (window.showAlertModal) {
-                        window.showAlertModal("Notice", "The room is no longer available or you have been moved to the lobby for being idle for 7 minutes.");
+                        window.showAlertModal("Notice", "The room is no longer available or you have been moved to the lobby for being idle for 10 minutes.");
                     } else {
-                        alert("The room is no longer available or you have been moved to the lobby for being idle for 7 minutes.");
+                        alert("The room is no longer available or you have been moved to the lobby for being idle for 10 minutes.");
                     }
                 }, 100);
             }
@@ -223,9 +223,9 @@ async function updateGameState() {
             // Show alert AFTER switching pages
             setTimeout(() => {
                 if (window.showAlertModal) {
-                    window.showAlertModal("Notice", "You have been kicked out of the room for being idle for 7 minutes.");
+                    window.showAlertModal("Notice", "You have been kicked out of the room for being idle for 10 minutes.");
                 } else {
-                    alert("You have been kicked out of the room for being idle for 7 minutes.");
+                    alert("You have been kicked out of the room for being idle for 10 minutes.");
                 }
             }, 100);
             return;
@@ -916,7 +916,12 @@ async function updateGameState() {
                     </div>`;
                 };
 
+                // Render Sections
                 let html = '';
+
+                // BOARD DISPLAY
+                const boardHtml = state.previous_board ? `<div id="prev-board-container"></div>` : '';
+                html += boardHtml;
 
                 // Found Section
                 html += `<div style="padding:10px; background:rgba(0,0,0,0.1); font-weight:bold; color:#4a90e2;">FOUND (${foundList.length})</div>`;
@@ -935,6 +940,22 @@ async function updateGameState() {
                 }
 
                 prevListEl.innerHTML = html;
+
+                // Render the board after HTML is injected
+                if (state.previous_board) {
+                    const boardCont = document.getElementById('prev-board-container');
+                    renderPreviousBoard(state.previous_board, boardCont);
+                }
+
+                // Add click listeners for definitions
+                prevListEl.querySelectorAll('.word-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        const word = item.dataset.word;
+                        if (window.fetchDefinition) {
+                            window.fetchDefinition(word);
+                        }
+                    });
+                });
             }
         }
 
@@ -1076,7 +1097,7 @@ function renderPlayers(players, currentUser = null, state = null) {
 
         // Trophy Logic (Exceptional Performance)
         const peVal = p.performance_efficiency || 1.0;
-        const trophyHtml = (p.has_exceptional_round && players.length > 1) ? `<span title="Exceptional Performance (PE: ${peVal.toFixed(2)}x)" class="trophy-icon">🏆</span>` : '';
+        const trophyHtml = (p.has_exceptional_round && players.length > 1 && !p.is_ai) ? `<span title="Exceptional Performance (PE: ${peVal.toFixed(2)}x)" class="trophy-icon">🏆</span>` : '';
 
         return `
         <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}" data-username="${p.username}">
@@ -1364,7 +1385,17 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         const isCSWOnly = cswOnlyUpper.includes(wordUpper);
         const isTargetFound = targetWordsUpper.includes(wordUpper);
         const isFoundByAny = allFoundUpper.includes(wordUpper);
-        const points = allWordScores[word] || allWordScores[wordUpper] || 0;
+        const pointsData = allWordScores[word] || allWordScores[wordUpper] || 0;
+        let pointsText = pointsData;
+
+        if (typeof pointsData === 'object' && pointsData !== null) {
+            if (pointsData.bonus_letter_points > 0) {
+                const originalValue = pointsData.base + (pointsData.bonus_word_points || 0);
+                pointsText = `${originalValue} + ${pointsData.bonus_letter_points} = ${pointsData.total}`;
+            } else {
+                pointsText = pointsData.total;
+            }
+        }
 
         let className = 'word-item';
 
@@ -1400,7 +1431,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
 
         return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; cursor:pointer;">
             <span>${indicator}${word}</span>
-            <span style="opacity:0.8">${points}</span>
+            <span style="opacity:0.8">${pointsText}</span>
         </div>`;
     }).join('');
 
@@ -1479,9 +1510,11 @@ function updateParameters(state) {
         let val = sp.difficulty || state.difficulty || 'Medium';
         if (val === 'Normal') {
             val = 'Medium';
-        } else if (val === 'Expert') {
+        } else if (val === 'Expert' || val === 'Difficult') {
             // For consistency with Solo/Friends requests
             val = 'Hard';
+        } else if (val === 'Beginner') {
+            val = 'Easy';
         }
         diff.textContent = val;
     }
@@ -1904,11 +1937,56 @@ if (window.ResizeObserver) {
     }, 1000);
 }
 
+// Letter values for "Valued Letters" format
+const LETTER_VALUES = {
+    'A': 2, 'B': 4, 'C': 4, 'D': 3, 'E': 1, 'F': 5, 'G': 3, 'H': 5, 'I': 2, 'J': 10, 'K': 6, 'L': 3, 'M': 4, 'N': 2, 'O': 2, 'P': 4, 'Q': 10, 'R': 2, 'S': 2, 'T': 2, 'U': 3, 'V': 5, 'W': 5, 'X': 10, 'Y': 5, 'Z': 10
+};
+
 // Helper to create a board cell
 function createBoardCell(r, c, letter, grayed) {
     const cell = document.createElement('div');
+    const boardFormat = (window.lastGameState && window.lastGameState.spinner_params) ? window.lastGameState.spinner_params.board_format : 'Normal';
+    const bonusCell = (window.lastGameState) ? window.lastGameState.bonus_cell : null;
+
     cell.className = 'board-cell' + (grayed ? ' grayed' : '');
-    cell.textContent = letter === 'Q' ? 'QU' : letter;
+
+    // 1. Handle Bonus Letter Format Highlighting
+    if (bonusCell && bonusCell[0] === r && bonusCell[1] === c) {
+        cell.classList.add('bonus-highlight');
+    }
+
+    // 2. Handle Either/Or Dual Letters
+    if (letter.includes('/')) {
+        cell.classList.add('dual-letter');
+        const [top, bottom] = letter.split('/');
+
+        const topEl = document.createElement('span');
+        topEl.textContent = top === 'Q' ? 'QU' : top;
+        cell.appendChild(topEl);
+
+        const divider = document.createElement('div');
+        divider.className = 'dual-divider';
+        cell.appendChild(divider);
+
+        const bottomEl = document.createElement('span');
+        bottomEl.textContent = bottom === 'Q' ? 'QU' : bottom;
+        cell.appendChild(bottomEl);
+    } else {
+        cell.textContent = letter === 'Q' ? 'QU' : letter;
+    }
+
+    // 3. Handle Valued Letters Points Display
+    if (boardFormat === 'Valued Letters' && !grayed) {
+        const valSpan = document.createElement('span');
+        valSpan.className = 'tile-value';
+        // If dual letter, we skip for now or show average? User didn't specify interaction.
+        // Assuming Valued Letters and Either/Or don't mix often, but let's handle single letter.
+        if (!letter.includes('/')) {
+            valSpan.textContent = LETTER_VALUES[letter.toUpperCase()] || 1;
+            cell.appendChild(valSpan);
+        }
+    }
+
     cell.dataset.row = r;
     cell.dataset.col = c;
     cell.dataset.letter = letter; // Original letter
@@ -1932,25 +2010,30 @@ function findWordPathOnBoard(word, board) {
         if (r < 0 || r >= rows || c < 0 || c >= cols) return null;
         if (visited.has(`${r},${c}`)) return null;
 
-        const cellChar = board[r][c].toUpperCase();
+        const cellValue = board[r][c].toUpperCase();
+        const letters = cellValue.includes('/') ? cellValue.split('/') : [cellValue];
+        let foundMatch = false;
         let matchLength = 0;
 
-        if (cellChar === 'Q') {
-            // "Q" tile matches "QU" in the word, or just "Q" if it's the only thing typed
-            if (upperWord.substring(index, index + 2) === 'QU') {
-                matchLength = 2;
-            } else if (upperWord[index] === 'Q') {
+        for (const char of letters) {
+            if (char === 'Q') {
+                if (upperWord.substring(index, index + 2) === 'QU') {
+                    matchLength = 2;
+                    foundMatch = true;
+                    break;
+                } else if (upperWord[index] === 'Q') {
+                    matchLength = 1;
+                    foundMatch = true;
+                    break;
+                }
+            } else if (upperWord[index] === char) {
                 matchLength = 1;
-            } else {
-                return null;
-            }
-        } else {
-            if (upperWord[index] === cellChar) {
-                matchLength = 1;
-            } else {
-                return null;
+                foundMatch = true;
+                break;
             }
         }
+
+        if (!foundMatch) return null;
 
         const newVisited = new Set(visited);
         newVisited.add(`${r},${c}`);
@@ -2255,7 +2338,13 @@ function renderSplitNotepads(players) {
                     window.fetchDefinition(w.word);
                 };
 
-                row.innerHTML = `<span>${w.word}</span> <span>${w.points}</span>`;
+                let ptsDisplay = w.points;
+                if (w.score_details && w.score_details.bonus_letter_points > 0) {
+                    const originalValue = w.score_details.base + (w.score_details.bonus_word_points || 0);
+                    ptsDisplay = `${originalValue}+${w.score_details.bonus_letter_points}=${w.points}`;
+                }
+
+                row.innerHTML = `<span>${w.word}</span> <span style="font-size:0.85em; opacity:0.9;">${ptsDisplay}</span>`;
                 list.appendChild(row);
             });
         }
@@ -2376,18 +2465,22 @@ function renderFCFSNotepads(players) {
 
             wordsToShow.forEach(wObj => {
                 const w = (typeof wObj === 'string' ? wObj : wObj.word);
-                const pts = (typeof wObj === 'string' ? '?' : wObj.points);
+                let ptsNum = (typeof wObj === 'string' ? 0 : wObj.points);
+                let ptsDisplay = (typeof wObj === 'string' ? '?' : wObj.points);
 
-                const row = document.createElement('div');
-                row.className = 'notepad-item';
-                if (pts < 0) {
+                if (wObj.score_details && wObj.score_details.bonus_letter_points > 0) {
+                    const originalValue = wObj.score_details.base + (wObj.score_details.bonus_word_points || 0);
+                    ptsDisplay = `${originalValue}+${wObj.score_details.bonus_letter_points}=${wObj.points}`;
+                }
+
+                if (ptsNum < 0) {
                     row.className += ' penalty-word';
                     row.style.color = '#ff3333';
                     row.style.fontWeight = 'bold';
                 }
                 row.dataset.word = w;
                 row.onclick = () => window.fetchDefinition(w); // Direct handler
-                row.innerHTML = `<span>${w}</span> <span>${pts}</span>`;
+                row.innerHTML = `<span>${w}</span> <span style="font-size:0.85em; opacity:0.9;">${ptsDisplay}</span>`;
                 list.appendChild(row);
             });
         }
@@ -2542,7 +2635,7 @@ if (submitBtn && wordInputEl) {
     });
 }
 
-async function submitWord(wordParam = null) {
+async function submitWord(wordParam = null, pathParam = null) {
     const input = document.getElementById('word-input');
     const word = wordParam ? wordParam.toUpperCase() : input.value.trim().toUpperCase();
 
@@ -2568,7 +2661,11 @@ async function submitWord(wordParam = null) {
         const response = await fetch(`/room/${roomId}/submit_word`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ word: word, input_method: currentInputMethod })
+            body: JSON.stringify({
+                word: word,
+                input_method: currentInputMethod,
+                path: pathParam
+            })
         });
         const data = await response.json();
 
@@ -2712,6 +2809,13 @@ function showValidationFeedback(message, isValid) {
 }
 
 async function leaveCurrentRoom() {
+    if (isTournamentPlay) {
+        // We don't necessarily want to force forfeit on EVERY leave (e.g. browser refresh handles itself better)
+        // but for the "Leave" button it is handled in the listener. 
+        // This is a backup.
+        exitTournamentPlay();
+        return;
+    }
     const roomId = getCurrentRoomId();
     if (!roomId) return;
     try { await fetch(`/api/room/${roomId}/leave`, { method: 'POST' }); } catch (e) { }
@@ -2731,6 +2835,14 @@ window.leaveCurrentRoom = leaveCurrentRoom;
 const returnBtnEl = document.getElementById('return-lobby-btn');
 if (returnBtnEl) {
     returnBtnEl.addEventListener('click', async () => {
+        if (isTournamentPlay) {
+            // User leaving tournament mid-round = forfeit
+            const confirmLeave = confirm("Leaving mid-round will end your tournament turn and record a score of 0. Are you sure?");
+            if (!confirmLeave) return;
+            try { await fetch('/api/tournament/forfeit', { method: 'POST' }); } catch (e) { }
+            exitTournamentPlay();
+            return;
+        }
         await leaveCurrentRoom();
         showPage('page-lobby');
     });
@@ -2769,9 +2881,15 @@ async function fetchDefinition(word) {
         const resp = await fetch(`/api/definition?word=${encodeURIComponent(word)}`);
         const data = await resp.json();
 
-        if (data.definition) {
-            // No longer injecting word span here as it's in the header
-            defContent.innerHTML = `<span class="definition-text">${data.definition}</span>`;
+        if (data.definition || data.pronunciation) {
+            let html = '';
+            if (data.pronunciation) {
+                html += `<div class="pronunciation">${data.pronunciation}</div>`;
+            }
+            if (data.definition) {
+                html += `<span class="definition-text">${data.definition}</span>`;
+            }
+            defContent.innerHTML = html;
         } else {
             defContent.innerHTML = `<p class="placeholder">Definition not found.</p>`;
         }
@@ -2837,22 +2955,55 @@ function createSpectatorPanel() {
     return panel;
 }
 
-// Interaction Handlers (Override)
+// ─────────── Mouse & Touch Board Interaction ───────────
+
+function selectCell(row, col, letter, cellEl) {
+    const key = `${row},${col}`;
+    // Don't revisit a cell already in the path
+    if (mouseState.visitedCells.has(key)) return;
+
+    mouseState.visitedCells.add(key);
+    mouseState.selectedPath.push({ row, col, letter });
+
+    // Visual feedback
+    if (cellEl) {
+        // Remove 'current' from previous tail
+        document.querySelectorAll('.board-cell.current').forEach(c => c.classList.remove('current'));
+        cellEl.classList.add('selected', 'current');
+    }
+}
+
 function handleCellMouseDown(e) {
     if (e.button !== 0) return; // Only left click
-
-    // Spectator Check
     if (window.isSpectatorMode) return;
 
     const cell = e.target.closest('.board-cell');
-    if (!cell) return;
+    if (!cell || cell.classList.contains('grayed')) return;
 
+    // Reset path
     mouseState.isDown = true;
+    mouseState.selectedPath = [];
+    mouseState.visitedCells = new Set();
+    document.querySelectorAll('.board-cell.selected, .board-cell.current').forEach(c => {
+        c.classList.remove('selected', 'current');
+    });
 
     const row = parseInt(cell.dataset.row);
     const col = parseInt(cell.dataset.col);
     const letter = cell.dataset.letter;
+    selectCell(row, col, letter, cell);
+}
 
+function handleCellMouseOver(e) {
+    if (!mouseState.isDown) return;
+    if (window.isSpectatorMode) return;
+
+    const cell = e.target.closest('.board-cell');
+    if (!cell || cell.classList.contains('grayed')) return;
+
+    const row = parseInt(cell.dataset.row);
+    const col = parseInt(cell.dataset.col);
+    const letter = cell.dataset.letter;
     selectCell(row, col, letter, cell);
 }
 
@@ -2860,20 +3011,82 @@ function handleCellTouchStart(e) {
     if (window.isSpectatorMode) return;
 
     const touch = e.touches[0];
-    const cell = document.elementFromPoint(touch.clientX, touch.clientY);
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    const cell = target && target.closest('.board-cell');
 
-    if (cell && cell.closest('.board-cell')) {
-        e.preventDefault(); // Prevent scrolling
+    if (cell && !cell.classList.contains('grayed')) {
+        e.preventDefault(); // Prevent scrolling while playing
+
         mouseState.isDown = true;
+        mouseState.selectedPath = [];
+        mouseState.visitedCells = new Set();
+        document.querySelectorAll('.board-cell.selected, .board-cell.current').forEach(c => {
+            c.classList.remove('selected', 'current');
+        });
 
-        const target = cell.closest('.board-cell');
-        const row = parseInt(target.dataset.row);
-        const col = parseInt(target.dataset.col);
-        const letter = target.dataset.letter;
-
-        selectCell(row, col, letter, target);
+        const row = parseInt(cell.dataset.row);
+        const col = parseInt(cell.dataset.col);
+        const letter = cell.dataset.letter;
+        selectCell(row, col, letter, cell);
     }
 }
+
+function handleCellTouchMove(e) {
+    if (!mouseState.isDown) return;
+
+    const touch = e.touches[0];
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    const cell = target && target.closest('.board-cell');
+
+    if (cell && !cell.classList.contains('grayed')) {
+        e.preventDefault();
+        const row = parseInt(cell.dataset.row);
+        const col = parseInt(cell.dataset.col);
+        const letter = cell.dataset.letter;
+        selectCell(row, col, letter, cell);
+    }
+}
+
+function finishDragSelection() {
+    if (!mouseState.isDown) return;
+    mouseState.isDown = false;
+
+    const path = mouseState.selectedPath;
+    if (path.length >= 1) {
+        const word = path.map(p => {
+            // Handle dual-letter tiles like L/T — use the letter stored at selection time
+            const L = p.letter.includes('/') ? p.letter.split('/')[0] : p.letter;
+            return L === 'Q' ? 'QU' : L;
+        }).join('');
+        const serverPath = path.map(p => [p.row, p.col]);
+
+        if (word.length >= 3) {
+            submitWord(word, serverPath);
+        }
+    }
+
+    // Clear visual state
+    document.querySelectorAll('.board-cell.selected, .board-cell.current').forEach(c => {
+        c.classList.remove('selected', 'current');
+    });
+    mouseState.selectedPath = [];
+    mouseState.visitedCells = new Set();
+}
+
+// Wire board events via delegation on the static board wrapper
+(function initBoardInteraction() {
+    const boardEl = document.getElementById('game-board');
+    if (!boardEl) return;
+
+    boardEl.addEventListener('mousedown', handleCellMouseDown);
+    boardEl.addEventListener('mouseover', handleCellMouseOver);
+    boardEl.addEventListener('touchstart', handleCellTouchStart, { passive: false });
+    boardEl.addEventListener('touchmove', handleCellTouchMove, { passive: false });
+
+    // Release: commit word
+    document.addEventListener('mouseup', finishDragSelection);
+    document.addEventListener('touchend', finishDragSelection);
+})();
 
 // Word Tabs Switching
 document.addEventListener('click', (e) => {
@@ -3000,14 +3213,23 @@ async function initTournamentPlay() {
             }
         }, 1000);
 
-        // UI Adjustments
+        // UI Adjustments - Show Opponent
         const playerList = document.getElementById('players-list');
         if (playerList) {
+            let oppName = "None (Bye)";
+            try {
+                const statusResp = await fetch('/api/tournament/status');
+                const statusData = await statusResp.json();
+                if (statusData.user_status && statusData.user_status.matchup) {
+                    oppName = statusData.user_status.matchup.opponent_name || oppName;
+                }
+            } catch (e) { console.error("Failed to fetch matchup for display:", e); }
+
             playerList.innerHTML = `
                 <div class="player-card active" style="border-left: 4px solid #2ecc71;">
                     <div class="player-info">
                         <div class="username">TOURNAMENT TURN</div>
-                        <div class="score">Target: Best Possible Score</div>
+                        <div class="score">Versus: <span style="color:#2ecc71">${oppName}</span></div>
                     </div>
                 </div>
             `;
@@ -3405,6 +3627,44 @@ function exitPrivateMatchPlay() {
     }
 }
 
-// Hook into the board selection listener
-const originalSubmitWord = window.submitWord; // if it exists
-// But we want to override the submit button logic in play.js
+// User Request: Render a smaller, static board for history review
+function renderPreviousBoard(board, container) {
+    if (!board || board.length === 0 || !container) return;
+
+    container.innerHTML = '';
+    container.style.display = 'grid';
+    container.style.gap = '4px';
+    container.style.padding = '10px';
+    container.style.background = 'rgba(0,0,0,0.2)';
+    container.style.borderRadius = '12px';
+    container.style.marginBottom = '15px';
+
+    const rows = board.length;
+    const cols = board[0].length;
+
+    // Use smaller cell size for previous board
+    const cellSize = rows > 4 ? '35px' : '45px';
+    container.style.gridTemplateColumns = `repeat(${cols}, ${cellSize})`;
+    container.style.gridTemplateRows = `repeat(${rows}, ${cellSize})`;
+    container.style.justifyContent = 'center';
+
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const cell = document.createElement('div');
+            cell.className = 'board-cell';
+            cell.style.width = cellSize;
+            cell.style.height = cellSize;
+            cell.style.fontSize = rows > 4 ? '0.9rem' : '1.1rem';
+            cell.style.display = 'flex';
+            cell.style.justifyContent = 'center';
+            cell.style.alignItems = 'center';
+            cell.style.fontWeight = '700';
+            cell.style.background = 'var(--input-bg)';
+            cell.style.border = '1px solid var(--input-border)';
+            cell.style.borderRadius = '6px';
+            cell.style.color = 'var(--text-primary)';
+            cell.textContent = board[r][c];
+            container.appendChild(cell);
+        }
+    }
+}

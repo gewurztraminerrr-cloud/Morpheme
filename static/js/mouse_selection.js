@@ -31,7 +31,15 @@ function handleMouseDown(e) {
 
     const row = parseInt(cell.dataset.row);
     const col = parseInt(cell.dataset.col);
-    const letter = cell.dataset.letter || cell.textContent.trim();
+    let letter = cell.dataset.letter || cell.textContent.trim();
+
+    // Handle Either/Or dual letters (Top/Bottom half)
+    if (letter.includes('/')) {
+        const rect = cell.getBoundingClientRect();
+        const centerY = rect.top + rect.height / 2;
+        const [top, bottom] = letter.split('/');
+        letter = (e.clientY < centerY) ? top : bottom;
+    }
 
     addToPath(row, col, letter, cell);
 }
@@ -62,8 +70,16 @@ function handleMouseMove(e) {
 
     if (!cellData || cellData.isGrayed) return;
 
-    const { row, col, letter, element } = cellData;
+    let { row, col, letter, element } = cellData;
     const cellKey = `${row},${col}`;
+
+    // Handle Either/Or dual letters (Top/Bottom half)
+    if (letter.includes('/')) {
+        const rect = element.getBoundingClientRect();
+        const centerY = rect.top + rect.height / 2;
+        const [top, bottom] = letter.split('/');
+        letter = (point.y < centerY) ? top : bottom;
+    }
 
     // BACKTRACKING: Check if cell is already in path - if so, truncate
     const existingIndex = mouseState.selectedPath.findIndex(p => p.row === row && p.col === col);
@@ -104,11 +120,17 @@ function handleMouseUp(e) {
     if (mouseState.visitedCells) mouseState.visitedCells.clear();
 
     // Clear visual feedback
-    clearSelection();
+    // Small delay to let user see final path
+    setTimeout(clearSelection, 50);
 
     // Submit word if long enough
     if (word.length >= 3) {
-        submitWord(word);
+        // Pass the path for specialized scoring (e.g. Bonus Letter)
+        if (typeof submitWord === 'function') {
+            submitWord(word, mouseState.selectedPath.map(p => [p.row, p.col]));
+        } else {
+            console.warn('submitWord not found in global scope');
+        }
     }
 }
 

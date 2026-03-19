@@ -605,6 +605,47 @@
     color: #000 !important;
 }
 
+.board-cell.bonus-highlight {
+    background: #32cd32 !important;
+    /* Lime green */
+    color: #fff !important;
+    box-shadow: 0 0 15px rgba(50, 205, 50, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.8);
+    animation: bonusPulse 2s ease-in-out infinite;
+}
+
+/* Darker green when selected/active in a path */
+.board-cell.selected.bonus-highlight,
+.board-cell.current.bonus-highlight {
+    background: #228b22 !important;
+    /* Darker green (ForestGreen) */
+    box-shadow: 0 0 20px rgba(34, 139, 34, 0.8), inset 0 2px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+.board-cell.dual-letter {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    font-size: calc(var(--cell-size) * 0.45);
+    line-height: 1;
+}
+
+.board-cell .dual-divider {
+    width: 60%;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.2);
+    margin: 2px 0;
+}
+
+.board-cell .tile-value {
+    position: absolute;
+    bottom: 3px;
+    right: 4px;
+    font-size: 11px;
+    opacity: 0.7;
+    font-weight: 700;
+    line-height: 1;
+}
+
 .board-cell.current {
     background: var(--highlight-mouse-color, rgba(64, 156, 255, 0.7)) !important;
     filter: brightness(1.2);

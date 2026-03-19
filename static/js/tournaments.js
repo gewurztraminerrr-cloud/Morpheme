@@ -172,7 +172,48 @@ function renderTournament(data) {
         }
     }
 
-    // 4.6 Championship Standings (The Bracket / Ladder)
+    // 4.6 Matchups (Pairings)
+    const mCard = document.getElementById('tournament-matchups-card');
+    const mList = document.getElementById('tournament-matchups-list');
+    if (mCard && mList) {
+        if (data.all_matchups && data.all_matchups.length > 0) {
+            mCard.classList.remove('hidden');
+            mList.innerHTML = data.all_matchups.map(m => {
+                const u1_isMe = m.u1_name === window.currentUser;
+                const u2_isMe = m.u2_name === window.currentUser;
+                const highlight = (u1_isMe || u2_isMe) ? 'border: 1px solid var(--accent-color); background: rgba(var(--text-primary-rgb), 0.05);' : '';
+
+                const s1 = m.u1_score === null ? '...' : m.u1_score;
+                const s2 = m.u2_score === null ? '...' : m.u2_score;
+
+                let vsLine = "";
+                if (m.user2_id === -1) {
+                    vsLine = `<span style="opacity:0.5">BYE</span>`;
+                } else {
+                    vsLine = `<span class="u2 ${u2_isMe ? 'me' : ''}">${m.u2_name}</span> <span class="pts">${s2}</span>`;
+                }
+
+                return `
+                    <div class="t-matchup-item" style="${highlight}">
+                        <div class="participant">
+                            <span class="username ${u1_isMe ? 'me' : ''}">${m.u1_name}</span> <span class="pts">${s1}</span>
+                        </div>
+                        <div class="vs">vs</div>
+                        <div class="participant">
+                            ${m.user2_id === -1
+                        ? `<span style="opacity:0.5">BYE</span>`
+                        : `<span class="username ${u2_isMe ? 'me' : ''}">${m.u2_name}</span> <span class="pts">${s2}</span>`
+                    }
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            mCard.classList.add('hidden');
+        }
+    }
+
+    // 4.7 Championship Standings (The Bracket / Ladder)
     const stdCard = document.getElementById('tournament-standings-card');
     const stdList = document.getElementById('tournament-standings-list');
     if (stdCard && stdList) {
@@ -247,10 +288,15 @@ function renderSignupState(container, data, userStatus) {
 }
 
 function renderActiveState(container, data, userStatus) {
+    const matchup = userStatus.matchup;
+    const total = data.total_participants || 0;
+
     if (userStatus.status === 'eliminated') {
+        const rank = userStatus.final_rank || total;
         container.innerHTML = `
-            <div style="font-size:2.5rem; color:#e74c3c; font-weight:900; margin-bottom:20px; text-shadow: 0 0 20px rgba(231, 76, 60, 0.4);">YOU LOST</div>
-            <p style="font-size:1.2rem; opacity:0.9; line-height:1.6;">You fought well, but have been eliminated from this tournament. Keep practicing for the next one! You can still watch replays in the leaderboard below.</p>
+            <div style="font-size:3rem; color:#e74c3c; font-weight:900; margin-bottom:10px; text-shadow: 0 0 20px rgba(231, 76, 60, 0.4);">YOU LOST</div>
+            <div style="font-size:1.5rem; opacity:0.8; margin-bottom:20px;">Rank: #${rank} of ${total} players</div>
+            <p style="font-size:1.1rem; opacity:0.7; line-height:1.6;">You fought well, but have been eliminated from this tournament. Keep practicing for the next one!</p>
         `;
         return;
     }
@@ -263,20 +309,73 @@ function renderActiveState(container, data, userStatus) {
         return;
     }
 
-    // Active User
-    if (data.current_round > 1) {
-        container.innerHTML = `
-            <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid #2ecc71; border-radius: 15px; padding: 25px; margin-bottom: 30px; text-align: center; animation: pulse 2s infinite;">
-                <div style="font-size:1.8rem; color:#2ecc71; font-weight:800; margin-bottom:5px;">YOU ARE ADVANCING!</div>
-                <div style="font-size:1.2rem; opacity:0.8;">Congratulations on surviving Round ${data.current_round - 1}</div>
-            </div>
-            <h2 style="margin-bottom:20px; text-align:left;">Round ${data.current_round}</h2>
-        `;
-    } else {
-        container.innerHTML = `<h2 style="margin-bottom:20px; text-align:left;">Round ${data.current_round}</h2>`;
+    // Header with Round and Matchup
+    let matchupHtml = "";
+    if (matchup) {
+        if (matchup.opponent_id === -1) {
+            matchupHtml = `<div style="font-size:1.2rem; color:var(--accent-color); font-weight:600; margin-bottom:20px;">VERSUS: BYE (Auto-advancing)</div>`;
+        } else {
+            matchupHtml = `<div style="font-size:1.2rem; color:var(--accent-color); font-weight:600; margin-bottom:20px;">VERSUS: <span style="color:#fff">${matchup.opponent_name}</span></div>`;
+        }
     }
 
-    if (userStatus.has_turn) {
+    container.innerHTML = `
+        <h2 style="margin-bottom:5px; text-align:left;">Round ${data.current_round}</h2>
+        ${matchupHtml}
+    `;
+
+    // Status / result messaging
+    if (!userStatus.has_turn) {
+        // I have played.
+        if (matchup && matchup.opponent_id !== -1) {
+            const myScore = matchup.my_score || 0;
+            const oppScore = matchup.opponent_score; // null if not played
+
+            if (oppScore === null) {
+                // Opponent hasn't played
+                container.innerHTML += `
+                    <div style="background: rgba(243, 156, 18, 0.1); border: 1px solid #f39c12; border-radius: 12px; padding: 25px; text-align: center;">
+                        <div style="font-size:1.8rem; color:#f39c12; font-weight:800; margin-bottom:10px;">WAITING FOR OPPONENT</div>
+                        <p style="opacity:0.9;">You finished with <strong>${myScore} pts</strong>. We'll show the result once ${matchup.opponent_name} finishes.</p>
+                    </div>
+                `;
+            } else {
+                // Both played!
+                if (myScore > oppScore) {
+                    container.innerHTML += `
+                        <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid #2ecc71; border-radius: 15px; padding: 25px; text-align: center; animation: pulse 2s infinite;">
+                            <div style="font-size:1.8rem; color:#2ecc71; font-weight:800; margin-bottom:5px;">YOU WON! ADVANCING...</div>
+                            <div style="font-size:1.1rem; opacity:0.8;">You: ${myScore} | ${matchup.opponent_name}: ${oppScore}</div>
+                        </div>
+                    `;
+                } else if (oppScore > myScore) {
+                    container.innerHTML += `
+                        <div style="background: rgba(231, 76, 60, 0.1); border: 2px solid #e74c3c; border-radius: 15px; padding: 25px; text-align: center;">
+                            <div style="font-size:1.8rem; color:#e74c3c; font-weight:800; margin-bottom:5px;">YOU LOST</div>
+                            <div style="font-size:1.1rem; opacity:0.8;">You: ${myScore} | ${matchup.opponent_name}: ${oppScore}</div>
+                        </div>
+                    `;
+                } else {
+                    // Tie
+                    container.innerHTML += `
+                        <div style="background: rgba(243, 156, 18, 0.1); border: 2px solid #f39c12; border-radius: 15px; padding: 25px; text-align: center;">
+                            <div style="font-size:1.8rem; color:#f39c12; font-weight:800; margin-bottom:5px;">IT'S A TIE!</div>
+                            <div style="font-size:1.1rem; opacity:0.8;">Both of you got ${myScore} pts. Random winner selection pending round end.</div>
+                        </div>
+                    `;
+                }
+            }
+        } else if (matchup && matchup.opponent_id === -1) {
+            // Bye
+            container.innerHTML += `
+                <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid #2ecc71; border-radius: 15px; padding: 25px; text-align: center; animation: pulse 2s infinite;">
+                    <div style="font-size:1.8rem; color:#2ecc71; font-weight:800; margin-bottom:5px;">YOU WON! ADVANCING...</div>
+                    <div style="font-size:1.1rem; opacity:0.8;">Automatic win this round.</div>
+                </div>
+            `;
+        }
+    } else {
+        // I have NOT played.
         const btn = document.createElement('button');
         btn.className = 'primary-action';
         btn.style.width = '100%';
@@ -295,13 +394,6 @@ function renderActiveState(container, data, userStatus) {
         note.style.fontWeight = '700';
         note.textContent = "CRITICAL: It is your turn! Do not miss the deadline.";
         container.appendChild(note);
-    } else {
-        container.innerHTML += `
-            <div style="background: rgba(243, 156, 18, 0.1); border: 1px solid #f39c12; border-radius: 12px; padding: 20px; text-align: center;">
-                <div style="font-size:1.5rem; color:#f39c12; font-weight:800; margin-bottom:10px;">WAITING FOR OPPONENT</div>
-                <p style="opacity:0.9;">You have completed your turn for this round. Stay tuned! Results will be processed when the round ends.</p>
-            </div>
-        `;
     }
 }
 
