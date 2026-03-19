@@ -150,6 +150,15 @@ function addToPath(row, col, letter, cellElement) {
         document.querySelectorAll('.board-cell.current').forEach(c => c.classList.remove('current'));
         cellElement.classList.add('current');
     }
+
+    // Live update the word input box
+    const wordInputEl = document.getElementById('word-input');
+    if (wordInputEl) {
+        wordInputEl.value = mouseState.selectedPath.map(p => {
+            const L = p.letter.includes('/') ? p.letter.split('/')[0] : p.letter;
+            return L === 'Q' ? 'QU' : L;
+        }).join('');
+    }
 }
 
 // Helper: Refresh visual display of entire path (used for backtracking)
@@ -179,6 +188,15 @@ function refreshPathDisplay() {
             cell.classList.remove('selected', 'current');
         }
     });
+
+    // Live update the word input box during backtracking
+    const wordInputEl = document.getElementById('word-input');
+    if (wordInputEl) {
+        wordInputEl.value = mouseState.selectedPath.map(p => {
+            const L = p.letter.includes('/') ? p.letter.split('/')[0] : p.letter;
+            return L === 'Q' ? 'QU' : L;
+        }).join('');
+    }
 }
 
 // Helper: Optimized find cell at point using cached rects
@@ -220,6 +238,10 @@ function clearSelection() {
         .forEach(cell => {
             cell.classList.remove('selected', 'current');
         });
+
+    // Clear live input display
+    const wordInputEl = document.getElementById('word-input');
+    if (wordInputEl) wordInputEl.value = '';
 }
 
 // Initialize on DOMContentLoaded

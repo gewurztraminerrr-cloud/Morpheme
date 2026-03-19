@@ -2971,6 +2971,15 @@ function selectCell(row, col, letter, cellEl) {
         document.querySelectorAll('.board-cell.current').forEach(c => c.classList.remove('current'));
         cellEl.classList.add('selected', 'current');
     }
+
+    // Live update the word input box
+    const wordInputEl = document.getElementById('word-input');
+    if (wordInputEl) {
+        wordInputEl.value = mouseState.selectedPath.map(p => {
+            const L = p.letter.includes('/') ? p.letter.split('/')[0] : p.letter;
+            return L === 'Q' ? 'QU' : L;
+        }).join('');
+    }
 }
 
 function handleCellMouseDown(e) {
@@ -3071,6 +3080,10 @@ function finishDragSelection() {
     });
     mouseState.selectedPath = [];
     mouseState.visitedCells = new Set();
+
+    // Clear live input display
+    const wordInputEl = document.getElementById('word-input');
+    if (wordInputEl) wordInputEl.value = '';
 }
 
 // Wire board events via delegation on the static board wrapper
