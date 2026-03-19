@@ -281,6 +281,13 @@ body.theme-pink .logo-text,
 body.theme-orange .logo-text,
 body.theme-gray .logo-text,
 body.theme-light-brown .logo-text,
+[class*="theme-white"] .logo .pronunciation,
+[class*="theme-light-"] .logo .pronunciation,
+body.theme-yellow .logo .pronunciation,
+body.theme-pink .logo .pronunciation,
+body.theme-orange .logo .pronunciation,
+body.theme-gray .logo .pronunciation,
+body.theme-light-brown .logo .pronunciation,
 .page h2,
 .setting-title,
 #username-display {
@@ -659,6 +666,7 @@ body {
     font-style: italic;
     margin-right: 20px;
     margin-bottom: 0;
+    opacity: 1;
 }
 
 .user-display {
