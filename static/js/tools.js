@@ -1742,7 +1742,7 @@ function renderRatingsGrid(configRatings, user = null) {
 
     const modes = ['accumulative', 'fcfs', 'split'];
     const boards = ['4x4', '4x6', '5x7', '6x8'];
-    const accTimes = [45, 180, 600, 86400];
+    const accTimes = [45, 180, 600];
     const otherTimes = [45, 180];
 
     const formatTimeShort = (s) => {
