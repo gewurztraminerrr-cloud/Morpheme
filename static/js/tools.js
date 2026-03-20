@@ -2861,6 +2861,12 @@ async function runValidationCheck() {
     } finally {
         checkBtn.innerText = "Validate";
         checkBtn.disabled = false;
+        
+        // Clear input box after submission
+        if (inputEl) {
+            inputEl.value = '';
+            inputEl.focus(); // Keep focus for next check
+        }
     }
 }
 

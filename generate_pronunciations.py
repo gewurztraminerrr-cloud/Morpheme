@@ -18,6 +18,114 @@ def load_cmudict(path):
                 cmudict[word] = phonemes
     return cmudict
 
+def load_moby(path):
+    """Load Moby Pronunciator II format (Word /Phonemes/)."""
+    moby = {}
+    if not os.path.exists(path):
+        return moby
+    
+    # Mapping for Moby ASCII phonemes to our respelled vowels
+    VOWELS = {
+        'A': 'AH', '@': 'UH', 'E': 'EH', 'I': 'IH', 'O': 'AW', 'U': 'UU',
+        'i': 'EE', 'u': 'OO', 'eI': 'AY', 'oU': 'OH', 'aI': 'EYE', 'aU': 'OW', 'OI': 'OY',
+    }
+    CONSONANTS = {
+        'S': 'SH', 'Z': 'ZH', 'T': 'TH', 'D': 'TH', 'C': 'CH', 'J': 'J', 'N': 'NG',
+        'b':'B', 'd':'D', 'f':'F', 'g':'G', 'h':'H', 'k':'K', 'l':'L', 'm':'M', 
+        'n':'N', 'p':'P', 'r':'R', 's':'S', 't':'T', 'v':'V', 'w':'W', 'y':'Y', 'z':'Z'
+    }
+
+    with open(path, 'r', encoding='latin-1') as f:
+        for line in f:
+            line = line.strip()
+            if not line or '/' not in line: continue
+            
+            # Split "Word /Phonemes/"
+            parts = line.split('/', 1)
+            word = re.sub(r'[^a-zA-Z]', '', parts[0]).upper()
+            phones_raw = parts[1].strip('/')
+            
+            # Remove stress and breaks: ' , _
+            phones_raw = re.sub(r"[' ,_]", "", phones_raw)
+            
+            # Tokenize Moby (greedy match double-char eI, oU, etc)
+            res = []
+            it = iter(range(len(phones_raw)))
+            for i in it:
+                if i + 1 < len(phones_raw) and phones_raw[i:i+2] in VOWELS:
+                    res.append(VOWELS[phones_raw[i:i+2]])
+                    next(it, None)
+                elif phones_raw[i] in VOWELS:
+                    res.append(VOWELS[phones_raw[i]])
+                elif phones_raw[i] in CONSONANTS:
+                    res.append(CONSONANTS[phones_raw[i]])
+            
+            if res:
+                vowel_set = set(VOWELS.values()) | {'AH', 'AR', 'AIR', 'ORE'}
+                syllables = []
+                curr = ""
+                for p in res:
+                    if p in vowel_set:
+                        syllables.append(curr + p)
+                        curr = ""
+                    else:
+                        curr += p
+                if curr:
+                    if syllables: syllables[-1] += curr
+                    else: syllables.append(curr)
+                
+                moby[word] = "-".join(syllables)
+    return moby
+
+def load_wiktionary(path):
+    """Load wiktionary.json (Word: [IPA, ...])."""
+    import json
+    wikidict = {}
+    if not os.path.exists(path):
+        return wikidict
+    
+    # Mapping for IPA tokens to Respelled Sounds
+    IPA_MAPPING = {
+        'ɑ': 'AH', 'æ': 'A', 'ʌ': 'UH', 'ɔ': 'AW', 'ə': 'UH', 'aɪ': 'EYE',
+        'ɛ': 'EH', 'ɜ': 'ER', 'eɪ': 'AY', 'ɪ': 'IH', 'i': 'EE', 'oʊ': 'OH',
+        'ʊ': 'UU', 'u': 'OO', 'aʊ': 'OW', 'ɔɪ': 'OY', 'ɒ': 'AW',
+        'ʃ': 'SH', 'ʒ': 'ZH', 'θ': 'TH', 'ð': 'TH', 'tʃ': 'CH', 'dʒ': 'J', 'ŋ': 'NG',
+        'ɹ': 'R', 'j': 'Y', 'w': 'W', 'b': 'B', 'd': 'D', 'f': 'F', 'g': 'G', 
+        'h': 'H', 'k': 'K', 'l': 'L', 'm': 'M', 'n': 'N', 'p': 'P', 's': 'S', 
+        't': 'T', 'v': 'V', 'z': 'Z'
+    }
+
+    with open(path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+        for word, p_list in data.items():
+            if not p_list: continue
+            raw_ipa = p_list[0]
+            tokens = raw_ipa.split()
+            
+            res = []
+            for t in tokens:
+                t = re.sub(r'[ˈˌ.ː]', '', t)
+                if t in IPA_MAPPING:
+                    res.append(IPA_MAPPING[t])
+                elif len(t) > 1: # Try composite
+                    if t in IPA_MAPPING: res.append(IPA_MAPPING[t])
+            
+            if res:
+                vowel_set = {'AH', 'A', 'UH', 'AW', 'EYE', 'EH', 'ER', 'AY', 'IH', 'EE', 'OH', 'UU', 'OO', 'OW', 'OY'}
+                parts = []
+                curr = ""
+                for p in res:
+                    if p in vowel_set:
+                        parts.append(curr + p)
+                        curr = ""
+                    else:
+                        curr += p
+                if curr:
+                    if parts: parts[-1] += curr
+                    else: parts.append(curr)
+                wikidict[word.upper()] = "-".join(parts)
+    return wikidict
+
 def arpa_to_respell(phonemes):
     mapping = {
         'AA': 'AH', 'AE': 'A', 'AH': 'UH', 'AO': 'AW', 'AW': 'OW', 'AY': 'EYE',
@@ -83,89 +191,69 @@ def get_compound_pron(word, cmudict):
     
     return None
 
+OVERRIDES = {
+    "ORCINOL": "ORE-SIN-AWL",
+    "OVERKEEN": "OH-VUR-KEEN",
+    "CHICKPEA": "CHIK-PEE",
+    "CALCANEA": "KAL-KAY-NEE-AH",
+    "BARYE": "BAIR-EE",
+    "PORTAMENTI": "PORE-TAH-MEN-TEE",
+    "LINALOOL": "LIH-NAH-LOW-WOLL",
+    "CARATE": "KAH-RAH-TEE",
+    "PLEIAD": "PLEE-ADD",
+    "MALACHITE": "MAL-UH-KITE",
+    "SECERNENT": "SIH-SUR-NUNT",
+    "AA": "AH-AH",
+    "AAH": "AH",
+    "QI": "CHEE",
+    "ZA": "ZAH",
+    "XU": "SOO",
+    "JO": "JOH",
+    "OE": "OH",
+    "KA": "KAH"
+}
+
 def simple_g2p(word):
-    """Cautious rule-based fallback for words not in CMU or compounds."""
-    word = word.upper().strip()
-    
-    # PRECISE OVERRIDES (Requested by User and Verified)
-    overrides = {
-        "ORCINOL": "ORE-SIN-AWL",
-        "OVERKEEN": "OH-VUR-KEEN",
-        "CHICKPEA": "CHIK-PEE",
-        "CALCANEA": "KAL-KAY-NEE-AH",
-        "BARYE": "BAIR-EE",
-        "PORTAMENTI": "PORE-TAH-MEN-TEE",
-        "LINALOOL": "LIH-NAH-LOW-WOLL",
-        "CARATE": "KAH-RAH-TEE",
-        "PLEIAD": "PLEE-ADD",
-        "MALACHITE": "MAL-UH-KITE",
-        "SECERNENT": "SIH-SUR-NUNT"
-    }
-    if word in overrides: return overrides[word]
+    """Return override if available, else blank."""
+    return OVERRIDES.get(word, "")
 
-    # Don't guess for very long or very rare words not in source
-    if len(word) > 11: return ""
+    # Don't guess if not found in overrides
+    return overrides.get(word, "")
 
-    # Rule-based G2P (Single pass or protected)
-    res = word
+def get_inflected_pron(word, base_dict):
+    """Handle common suffixes for Scrabble inflections."""
+    if len(word) < 4: return None
     
-    # 1. Protect Clues and Phonemes
-    res = res.replace('PH', ' F ')
-    res = res.replace('QU', ' KW ')
-    res = res.replace('TION', ' SHUN ')
-    res = res.replace('CK', ' K ')
-    res = res.replace('CH', ' CH ')
-    res = res.replace('SH', ' SH ')
-    res = res.replace('TH', ' TH ')
-    
-    # Soft C/G (Before vowels)
-    res = re.sub(r'C([EIY])', r' S \1', res)
-    res = re.sub(r'G([EIY])', r' J \1', res)
-    res = res.replace('C', ' K ')
-    res = res.replace('G', ' G ')
-
-    # 2. Vowel Clusters with precise respelling
-    vowel_mappings = [
-        (r'AI|AY', ' AY '), (r'EE|EA|IE|EI', ' EE '),
-        (r'OA|OW|OE', ' OH '), (r'OO', ' OO '),
-        (r'OU|OW', ' OW '), (r'OI|OY', ' OY '),
-        (r'AU|AW', ' AW '), (r'AR', ' AR '), 
-        (r'ER|IR|UR|OR(?=[B-DF-HJ-NP-TV-Z])', ' ER '),
-        (r'OR', ' ORE '),
-        (r'A(?=[B-DF-HJ-NP-TV-Z]E)', ' AY '), # cake
-        (r'I(?=[B-DF-HJ-NP-TV-Z]E)', ' EYE '), # kite
-        (r'O(?=[B-DF-HJ-NP-TV-Z]E)', ' OH '), # note
-        (r'U(?=[B-DF-HJ-NP-TV-Z]E)', ' OO '), # cute
-        # Lone vowels (cautious, avoid H overuse)
-        (r'A$', ' AH '), (r'A', ' A '), 
-        (r'E$', ' EE '), (r'E', ' EH '),
-        (r'I', ' IH '),
-        (r'O', ' OH '),
-        (r'U', ' UH ')
+    # Priority order for suffix stripping
+    suffixes = [
+        ('ING', 'IH-NG'),
+        ('ED', 'T'), # Default past tense (simplified)
+        ('ED', 'D'),
+        ('LY', 'LEE'),
+        ('ER', 'ER'),
+        ('ES', 'EH-Z'),
+        ('S', 'Z'),
+        ('S', 'S')
     ]
     
-    for pat, repl in vowel_mappings:
-        res = re.sub(pat, repl, res)
-    
-    # 3. Syllabification
-    parts = [p.strip() for p in res.split() if p.strip()]
-    
-    vowels = {'AH', 'A', 'AW', 'OW', 'EYE', 'EH', 'ER', 'AY', 'IH', 'EE', 'OH', 'OY', 'UU', 'OO', 'AIR', 'ORE', 'AR', 'UH'}
-    
-    final_parts = []
-    curr = ""
-    for p in parts:
-        if any(v in p for v in vowels):
-            final_parts.append(curr + p)
-            curr = ""
-        else:
-            curr += p
-    if curr:
-        if final_parts: final_parts[-1] += curr
-        else: final_parts.append(curr)
-        
-    if not final_parts: return ""
-    return "-".join(final_parts)
+    for suff, pron_suff in suffixes:
+        if word.endswith(suff):
+            base = word[:-len(suff)]
+            if base in base_dict:
+                base_pron = base_dict[base]
+                if isinstance(base_pron, list): # CMU format
+                    base_pron = arpa_to_respell(base_pron)
+                return f"{base_pron}-{pron_suff}"
+            
+            # Special case for doubled consonants (TRAPPING -> TRAP)
+            if len(base) > 3 and base[-1] == base[-2]:
+                base_s = base[:-1]
+                if base_s in base_dict:
+                    base_pron = base_dict[base_s]
+                    if isinstance(base_pron, list):
+                        base_pron = arpa_to_respell(base_pron)
+                    return f"{base_pron}-{pron_suff}"
+    return None
 
 def main():
     base_dir = "/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme"
@@ -175,6 +263,10 @@ def main():
     print("Loading CMU Dictionary...")
     cmu = load_cmudict(cmu_path)
     
+    moby_path = os.path.join(dict_dir, "moby.txt")
+    print("Loading Moby Dictionary...")
+    moby = load_moby(moby_path)
+    
     words = set()
     for d in ["NWL.txt", "CSW.txt"]:
         path = os.path.join(dict_dir, d)
@@ -182,28 +274,45 @@ def main():
         with open(path, 'r') as f:
             for line in f:
                 w = line.strip().upper()
-                if 3 <= len(w) <= 10:
+                if 2 <= len(w) <= 15:
                     words.add(w)
     
     output_path = os.path.join(dict_dir, "pronunciations.txt")
     
+    wiki_path = os.path.join(dict_dir, "wiktionary.json")
+    print("Loading Wiktionary...")
+    wiki = load_wiktionary(wiki_path)
+    
+    # Pre-combine for suffix lookups
+    combined_base = {**moby}
+    for k, v in cmu.items():
+        if k not in combined_base: combined_base[k] = v
+    for k, v in wiki.items():
+        if k not in combined_base: combined_base[k] = v
+    
     with open(output_path, 'w') as f:
         for word in sorted(words):
             pron = ""
-            if word in cmu:
+            if word in OVERRIDES:
+                pron = OVERRIDES[word]
+            elif word in cmu:
                 pron = arpa_to_respell(cmu[word])
+            elif word in moby:
+                pron = moby[word]
+            elif word in wiki:
+                pron = wiki[word]
             else:
-                # Try common compounds (e.g. CHICKPEA)
-                pron = get_compound_pron(word, cmu)
+                # Try inflections (e.g. AAHED -> AAH + ED)
+                pron = get_inflected_pron(word, combined_base)
                 if not pron:
-                    # Fallback to cautious G2P
-                    pron = simple_g2p(word)
+                    # Try common compounds (e.g. CHICKPEA)
+                    pron = get_compound_pron(word, cmu)
             
             if pron:
                 pron = re.sub(r'-+', '-', pron).strip('-').upper()
                 f.write(f"{word} - {pron}\n")
 
-    print(f"Saved pronunciations to {output_path}")
+    print(f"Saved {len(words)} words, including Moby coverage, to {output_path}")
 
 if __name__ == "__main__":
     main()
