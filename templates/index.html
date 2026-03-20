@@ -1982,19 +1982,17 @@
                     <div class="setting-header">
                         <div>
                             <div class="setting-title">Next Round Notification</div>
-                            <div class="setting-desc">Play a bell or a set of beeps 10 seconds
-                                before a new round
-                                starts.
-                            </div>
+                            <div class="setting-desc">Play a bell or a set of beeps 10 seconds before a new round
+                                starts.</div>
                         </div>
                         <label class="toggle-switch">
                             <input type="checkbox" id="setting-next-round-bell">
                             <span class="slider round"></span>
                         </label>
                     </div>
-                    <div id="bell-selection-container"
-                        style="display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; display: none;">
 
+                    <div id="bell-selection-container"
+                        style="display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 20px; margin-top: 10px;">
                         <!-- Row 1: Bells -->
                         <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
                             <div class="meta-label"
@@ -2027,6 +2025,7 @@
                             </div>
                         </div>
                     </div>
+
                     <style>
                         .bell-btn {
                             background: rgba(255, 255, 255, 0.05);
@@ -2065,7 +2064,6 @@
                             border-radius: 50%;
                         }
 
-                        /* White Theme Overrides */
                         body.theme-white .bell-btn {
                             background: rgba(0, 0, 0, 0.05);
                             border-color: rgba(0, 0, 0, 0.1);
@@ -2100,21 +2098,22 @@
                             border-top-color: rgba(0, 0, 0, 0.1) !important;
                         }
                     </style>
-                    <!-- Synesthesia: Letter Colors -->
-                    <div class="setting-panel" style="grid-column: 1 / -1; margin-top: 10px;">
-                        <div class="setting-header">
-                            <div>
-                                <div class="setting-title">Synesthesia</div>
-                                <div class="setting-desc">Tailor the color of each individual letter on the game board.
-                                </div>
+                </div>
+
+                <!-- Synesthesia Panel -->
+                <div class="setting-panel" style="grid-column: 1 / -1;">
+                    <div class="setting-header">
+                        <div>
+                            <div class="setting-title">Synesthesia</div>
+                            <div class="setting-desc">Tailor the color of each individual letter on the game board.
                             </div>
-                            <button id="setting-synesthesia-reset" class="mini-action-btn secondary"
-                                style="padding: 6px 12px; font-size: 0.75rem;">Reset All to Black</button>
                         </div>
-                        <div id="synesthesia-letters-grid"
-                            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 12px; margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 12px;">
-                            <!-- Letters A-Z injected by settings.js -->
-                        </div>
+                        <button id="setting-synesthesia-reset" class="mini-action-btn secondary"
+                            style="padding: 6px 12px; font-size: 0.75rem;">Reset All to Black</button>
+                    </div>
+                    <div id="synesthesia-letters-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 12px; margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                        <!-- Letters A-Z injected by settings.js -->
                     </div>
 
                     <style>
@@ -2162,7 +2161,6 @@
                             border-radius: 4px;
                         }
 
-                        /* Theme White Adjustments */
                         body.theme-white .synesthesia-unit {
                             background: rgba(0, 0, 0, 0.03);
                             border-color: rgba(0, 0, 0, 0.1);
@@ -2177,8 +2175,6 @@
                         }
                     </style>
                 </div>
-
-                <!-- Future panels placeholder -->
             </div>
         </div>
 
