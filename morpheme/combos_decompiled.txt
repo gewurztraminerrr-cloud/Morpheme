@@ -1,0 +1,2749 @@
+Compiled from "combos.java"
+public class combos.combos extends java.util.ArrayList<java.lang.String> {
+  public int record;
+
+  public java.lang.String[] position;
+
+  public java.util.ArrayList<java.lang.String> linearSequenceRecord;
+
+  public java.util.ArrayList<java.util.ArrayList<java.lang.String>> lettersInCommonARRAYLIST;
+
+  public java.util.ArrayList<java.util.ArrayList<java.lang.String>> numberOfMicroProcedures;
+
+  public java.util.ArrayList<java.lang.String> indices;
+
+  public java.lang.String str;
+
+  public java.lang.String dicionaryFileName;
+
+  public combos.combos(java.lang.String, java.lang.String);
+    Code:
+       0: aload_0
+       1: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+       4: aload_0
+       5: iconst_0
+       6: putfield      #26                 // Field record:I
+       9: aload_0
+      10: iconst_0
+      11: anewarray     #28                 // class java/lang/String
+      14: putfield      #30                 // Field position:[Ljava/lang/String;
+      17: aload_0
+      18: new           #3                  // class java/util/ArrayList
+      21: dup
+      22: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+      25: putfield      #32                 // Field linearSequenceRecord:Ljava/util/ArrayList;
+      28: aload_0
+      29: new           #3                  // class java/util/ArrayList
+      32: dup
+      33: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+      36: putfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+      39: aload_0
+      40: new           #3                  // class java/util/ArrayList
+      43: dup
+      44: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+      47: putfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+      50: aload_0
+      51: new           #3                  // class java/util/ArrayList
+      54: dup
+      55: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+      58: putfield      #38                 // Field indices:Ljava/util/ArrayList;
+      61: aload_0
+      62: aload_1
+      63: putfield      #40                 // Field str:Ljava/lang/String;
+      66: aload_0
+      67: aload_2
+      68: putfield      #42                 // Field dicionaryFileName:Ljava/lang/String;
+      71: iconst_0
+      72: istore_3
+      73: goto          107
+      76: aload_0
+      77: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+      80: iload_3
+      81: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+      84: checkcast     #3                  // class java/util/ArrayList
+      87: invokevirtual #48                 // Method java/util/ArrayList.clear:()V
+      90: aload_0
+      91: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+      94: iload_3
+      95: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+      98: checkcast     #3                  // class java/util/ArrayList
+     101: invokevirtual #48                 // Method java/util/ArrayList.clear:()V
+     104: iinc          3, 1
+     107: iload_3
+     108: aload_0
+     109: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+     112: invokevirtual #51                 // Method java/util/ArrayList.size:()I
+     115: if_icmplt     76
+     118: aload_0
+     119: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+     122: new           #3                  // class java/util/ArrayList
+     125: dup
+     126: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     129: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     132: pop
+     133: aload_0
+     134: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+     137: new           #3                  // class java/util/ArrayList
+     140: dup
+     141: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     144: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     147: pop
+     148: aload_0
+     149: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+     152: new           #3                  // class java/util/ArrayList
+     155: dup
+     156: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     159: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     162: pop
+     163: aload_0
+     164: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+     167: new           #3                  // class java/util/ArrayList
+     170: dup
+     171: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     174: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     177: pop
+     178: aload_0
+     179: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+     182: new           #3                  // class java/util/ArrayList
+     185: dup
+     186: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     189: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     192: pop
+     193: aload_0
+     194: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+     197: new           #3                  // class java/util/ArrayList
+     200: dup
+     201: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     204: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     207: pop
+     208: aload_0
+     209: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+     212: new           #3                  // class java/util/ArrayList
+     215: dup
+     216: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     219: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     222: pop
+     223: aload_0
+     224: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+     227: new           #3                  // class java/util/ArrayList
+     230: dup
+     231: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     234: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     237: pop
+     238: aload_0
+     239: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+     242: new           #3                  // class java/util/ArrayList
+     245: dup
+     246: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     249: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     252: pop
+     253: aload_0
+     254: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+     257: new           #3                  // class java/util/ArrayList
+     260: dup
+     261: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     264: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     267: pop
+     268: aload_0
+     269: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+     272: new           #3                  // class java/util/ArrayList
+     275: dup
+     276: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     279: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     282: pop
+     283: aload_0
+     284: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+     287: new           #3                  // class java/util/ArrayList
+     290: dup
+     291: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     294: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     297: pop
+     298: aload_0
+     299: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+     302: new           #3                  // class java/util/ArrayList
+     305: dup
+     306: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     309: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     312: pop
+     313: aload_0
+     314: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+     317: new           #3                  // class java/util/ArrayList
+     320: dup
+     321: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     324: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     327: pop
+     328: aload_0
+     329: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+     332: new           #3                  // class java/util/ArrayList
+     335: dup
+     336: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     339: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     342: pop
+     343: aload_0
+     344: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+     347: new           #3                  // class java/util/ArrayList
+     350: dup
+     351: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     354: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     357: pop
+     358: aload_0
+     359: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+     362: new           #3                  // class java/util/ArrayList
+     365: dup
+     366: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     369: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     372: pop
+     373: aload_0
+     374: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+     377: new           #3                  // class java/util/ArrayList
+     380: dup
+     381: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     384: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     387: pop
+     388: aload_0
+     389: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+     392: new           #3                  // class java/util/ArrayList
+     395: dup
+     396: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     399: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     402: pop
+     403: aload_0
+     404: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+     407: new           #3                  // class java/util/ArrayList
+     410: dup
+     411: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     414: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     417: pop
+     418: aload_0
+     419: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+     422: new           #3                  // class java/util/ArrayList
+     425: dup
+     426: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     429: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     432: pop
+     433: aload_0
+     434: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+     437: new           #3                  // class java/util/ArrayList
+     440: dup
+     441: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+     444: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     447: pop
+     448: aload_0
+     449: new           #59                 // class java/lang/StringBuilder
+     452: dup
+     453: ldc           #61                 // String >
+     455: invokespecial #63                 // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+     458: aload_1
+     459: invokevirtual #66                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     462: invokevirtual #70                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     465: invokevirtual #74                 // Method add:(Ljava/lang/Object;)Z
+     468: pop
+     469: ldc           #75                 // String
+     471: astore_3
+     472: aload_1
+     473: invokevirtual #77                 // Method java/lang/String.length:()I
+     476: istore        4
+     478: goto          512
+     481: new           #59                 // class java/lang/StringBuilder
+     484: dup
+     485: aload_3
+     486: invokestatic  #80                 // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     489: invokespecial #63                 // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+     492: aload_1
+     493: iload         4
+     495: iconst_1
+     496: isub
+     497: iload         4
+     499: invokevirtual #84                 // Method java/lang/String.substring:(II)Ljava/lang/String;
+     502: invokevirtual #66                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     505: invokevirtual #70                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     508: astore_3
+     509: iinc          4, -1
+     512: iload         4
+     514: ifgt          481
+     517: new           #88                 // class java/io/File
+     520: dup
+     521: new           #59                 // class java/lang/StringBuilder
+     524: dup
+     525: ldc           #90                 // String text/
+     527: invokespecial #63                 // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+     530: aload_2
+     531: invokevirtual #66                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     534: ldc           #92                 // String .txt
+     536: invokevirtual #66                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     539: invokevirtual #70                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     542: invokespecial #94                 // Method java/io/File."<init>":(Ljava/lang/String;)V
+     545: astore        4
+     547: aload         4
+     549: invokevirtual #95                 // Method java/io/File.getAbsolutePath:()Ljava/lang/String;
+     552: astore        5
+     554: aconst_null
+     555: astore        7
+     557: new           #98                 // class java/io/FileReader
+     560: dup
+     561: aload         5
+     563: invokespecial #100                // Method java/io/FileReader."<init>":(Ljava/lang/String;)V
+     566: astore        6
+     568: new           #101                // class java/io/BufferedReader
+     571: dup
+     572: aload         6
+     574: invokespecial #103                // Method java/io/BufferedReader."<init>":(Ljava/io/Reader;)V
+     577: astore        7
+     579: ldc           #75                 // String
+     581: astore        8
+     583: goto          4960
+     586: ldc           #75                 // String
+     588: astore        9
+     590: iconst_0
+     591: istore        10
+     593: aload_0
+     594: aload         8
+     596: invokevirtual #77                 // Method java/lang/String.length:()I
+     599: anewarray     #28                 // class java/lang/String
+     602: putfield      #30                 // Field position:[Ljava/lang/String;
+     605: aload_0
+     606: aload_0
+     607: getfield      #30                 // Field position:[Ljava/lang/String;
+     610: invokevirtual #106                // Method clearArray:([Ljava/lang/String;)V
+     613: ldc           #75                 // String
+     615: astore        11
+     617: aload         8
+     619: invokevirtual #77                 // Method java/lang/String.length:()I
+     622: istore        12
+     624: goto          661
+     627: new           #59                 // class java/lang/StringBuilder
+     630: dup
+     631: aload         11
+     633: invokestatic  #80                 // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     636: invokespecial #63                 // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+     639: aload         8
+     641: iload         12
+     643: iconst_1
+     644: isub
+     645: iload         12
+     647: invokevirtual #84                 // Method java/lang/String.substring:(II)Ljava/lang/String;
+     650: invokevirtual #66                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     653: invokevirtual #70                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     656: astore        11
+     658: iinc          12, -1
+     661: iload         12
+     663: ifgt          627
+     666: aload         8
+     668: invokevirtual #77                 // Method java/lang/String.length:()I
+     671: iconst_5
+     672: if_icmplt     4960
+     675: aload         8
+     677: invokevirtual #77                 // Method java/lang/String.length:()I
+     680: bipush        10
+     682: if_icmpgt     4960
+     685: iconst_1
+     686: istore        12
+     688: goto          777
+     691: iconst_1
+     692: istore        13
+     694: goto          762
+     697: aload_1
+     698: iload         12
+     700: iconst_1
+     701: isub
+     702: iload         12
+     704: invokevirtual #84                 // Method java/lang/String.substring:(II)Ljava/lang/String;
+     707: aload         8
+     709: iload         13
+     711: iconst_1
+     712: isub
+     713: iload         13
+     715: invokevirtual #84                 // Method java/lang/String.substring:(II)Ljava/lang/String;
+     718: invokevirtual #110                // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+     721: ifeq          759
+     724: aload_0
+     725: aload_0
+     726: getfield      #30                 // Field position:[Ljava/lang/String;
+     729: iload         13
+     731: iconst_1
+     732: isub
+     733: aaload
+     734: invokevirtual #113                // Method isNumber:(Ljava/lang/String;)Z
+     737: ifne          759
+     740: aload_0
+     741: getfield      #30                 // Field position:[Ljava/lang/String;
+     744: iload         13
+     746: iconst_1
+     747: isub
+     748: iload         12
+     750: iconst_1
+     751: isub
+     752: invokestatic  #117                // Method java/lang/Integer.toString:(I)Ljava/lang/String;
+     755: aastore
+     756: goto          774
+     759: iinc          13, 1
+     762: iload         13
+     764: aload         8
+     766: invokevirtual #77                 // Method java/lang/String.length:()I
+     769: iconst_1
+     770: iadd
+     771: if_icmplt     697
+     774: iinc          12, 1
+     777: iload         12
+     779: aload_1
+     780: invokevirtual #77                 // Method java/lang/String.length:()I
+     783: iconst_1
+     784: iadd
+     785: if_icmplt     691
+     788: aload_0
+     789: aload_0
+     790: getfield      #30                 // Field position:[Ljava/lang/String;
+     793: invokevirtual #122                // Method lettersInCommon:([Ljava/lang/String;)I
+     796: istore        12
+     798: iload         12
+     800: iconst_5
+     801: if_icmpne     857
+     804: aload_0
+     805: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+     808: iload         12
+     810: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     813: checkcast     #3                  // class java/util/ArrayList
+     816: aload         8
+     818: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+     821: ifne          857
+     824: iload         12
+     826: iconst_5
+     827: if_icmpne     857
+     830: aload         8
+     832: invokevirtual #77                 // Method java/lang/String.length:()I
+     835: bipush        8
+     837: if_icmpgt     857
+     840: aload_0
+     841: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+     844: iconst_5
+     845: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     848: checkcast     #3                  // class java/util/ArrayList
+     851: aload         8
+     853: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     856: pop
+     857: iload         12
+     859: bipush        6
+     861: if_icmpne     919
+     864: aload_0
+     865: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+     868: iload         12
+     870: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     873: checkcast     #3                  // class java/util/ArrayList
+     876: aload         8
+     878: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+     881: ifne          919
+     884: iload         12
+     886: bipush        6
+     888: if_icmpne     919
+     891: aload         8
+     893: invokevirtual #77                 // Method java/lang/String.length:()I
+     896: bipush        8
+     898: if_icmpgt     919
+     901: aload_0
+     902: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+     905: bipush        6
+     907: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     910: checkcast     #3                  // class java/util/ArrayList
+     913: aload         8
+     915: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     918: pop
+     919: iload         12
+     921: bipush        7
+     923: if_icmpne     974
+     926: aload_0
+     927: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+     930: iload         12
+     932: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     935: checkcast     #3                  // class java/util/ArrayList
+     938: aload         8
+     940: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+     943: ifne          974
+     946: aload         8
+     948: invokevirtual #77                 // Method java/lang/String.length:()I
+     951: bipush        10
+     953: if_icmpge     974
+     956: aload_0
+     957: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+     960: iload         12
+     962: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     965: checkcast     #3                  // class java/util/ArrayList
+     968: aload         8
+     970: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     973: pop
+     974: iload         12
+     976: bipush        8
+     978: if_icmpeq     995
+     981: iload         12
+     983: bipush        9
+     985: if_icmpeq     995
+     988: iload         12
+     990: bipush        10
+     992: if_icmpne     1043
+     995: aload_0
+     996: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+     999: iload         12
+    1001: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1004: checkcast     #3                  // class java/util/ArrayList
+    1007: aload         8
+    1009: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    1012: ifne          1043
+    1015: aload         8
+    1017: invokevirtual #77                 // Method java/lang/String.length:()I
+    1020: bipush        9
+    1022: if_icmpge     1043
+    1025: aload_0
+    1026: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    1029: iload         12
+    1031: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1034: checkcast     #3                  // class java/util/ArrayList
+    1037: aload         8
+    1039: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    1042: pop
+    1043: aload_0
+    1044: aload_0
+    1045: getfield      #30                 // Field position:[Ljava/lang/String;
+    1048: invokevirtual #129                // Method linearity:([Ljava/lang/String;)I
+    1051: istore        13
+    1053: iconst_0
+    1054: istore        14
+    1056: iload         14
+    1058: iload         12
+    1060: iload         13
+    1062: isub
+    1063: iadd
+    1064: istore        14
+    1066: iload         14
+    1068: aload_0
+    1069: aload_0
+    1070: getfield      #30                 // Field position:[Ljava/lang/String;
+    1073: invokevirtual #132                // Method numberOfAsterisks:([Ljava/lang/String;)I
+    1076: iadd
+    1077: istore        14
+    1079: iload         14
+    1081: aload_1
+    1082: invokevirtual #77                 // Method java/lang/String.length:()I
+    1085: iload         12
+    1087: isub
+    1088: iadd
+    1089: istore        14
+    1091: iconst_0
+    1092: istore        15
+    1094: aload_1
+    1095: invokevirtual #77                 // Method java/lang/String.length:()I
+    1098: aload         8
+    1100: invokevirtual #77                 // Method java/lang/String.length:()I
+    1103: if_icmpne     1154
+    1106: iconst_0
+    1107: istore        16
+    1109: goto          1145
+    1112: aload_1
+    1113: iload         16
+    1115: iload         16
+    1117: iconst_1
+    1118: iadd
+    1119: invokevirtual #84                 // Method java/lang/String.substring:(II)Ljava/lang/String;
+    1122: aload         8
+    1124: iload         16
+    1126: iload         16
+    1128: iconst_1
+    1129: iadd
+    1130: invokevirtual #84                 // Method java/lang/String.substring:(II)Ljava/lang/String;
+    1133: invokevirtual #110                // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+    1136: ifne          1142
+    1139: iinc          15, 1
+    1142: iinc          16, 1
+    1145: iload         16
+    1147: aload_1
+    1148: invokevirtual #77                 // Method java/lang/String.length:()I
+    1151: if_icmplt     1112
+    1154: iload         14
+    1156: iload         15
+    1158: if_icmple     1177
+    1161: aload_1
+    1162: invokevirtual #77                 // Method java/lang/String.length:()I
+    1165: aload         8
+    1167: invokevirtual #77                 // Method java/lang/String.length:()I
+    1170: if_icmpne     1177
+    1173: iload         15
+    1175: istore        14
+    1177: aload_1
+    1178: invokevirtual #77                 // Method java/lang/String.length:()I
+    1181: iconst_5
+    1182: if_icmpne     1275
+    1185: aload         8
+    1187: invokevirtual #77                 // Method java/lang/String.length:()I
+    1190: iconst_5
+    1191: if_icmplt     1275
+    1194: iload         14
+    1196: iconst_3
+    1197: if_icmpgt     1275
+    1200: aload_0
+    1201: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    1204: iload         14
+    1206: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1209: checkcast     #3                  // class java/util/ArrayList
+    1212: aload         8
+    1214: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    1217: ifne          1275
+    1220: iload         14
+    1222: iconst_3
+    1223: if_icmplt     1257
+    1226: aload         8
+    1228: invokevirtual #77                 // Method java/lang/String.length:()I
+    1231: bipush        6
+    1233: if_icmplt     1275
+    1236: aload_0
+    1237: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    1240: iload         14
+    1242: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1245: checkcast     #3                  // class java/util/ArrayList
+    1248: aload         8
+    1250: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    1253: pop
+    1254: goto          1275
+    1257: aload_0
+    1258: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    1261: iload         14
+    1263: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1266: checkcast     #3                  // class java/util/ArrayList
+    1269: aload         8
+    1271: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    1274: pop
+    1275: aload_1
+    1276: invokevirtual #77                 // Method java/lang/String.length:()I
+    1279: bipush        6
+    1281: if_icmpne     1374
+    1284: aload         8
+    1286: invokevirtual #77                 // Method java/lang/String.length:()I
+    1289: iconst_5
+    1290: if_icmplt     1374
+    1293: iload         14
+    1295: iconst_3
+    1296: if_icmpgt     1374
+    1299: aload_0
+    1300: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    1303: iload         14
+    1305: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1308: checkcast     #3                  // class java/util/ArrayList
+    1311: aload         8
+    1313: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    1316: ifne          1374
+    1319: iload         14
+    1321: iconst_3
+    1322: if_icmplt     1356
+    1325: aload         8
+    1327: invokevirtual #77                 // Method java/lang/String.length:()I
+    1330: bipush        6
+    1332: if_icmplt     1374
+    1335: aload_0
+    1336: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    1339: iload         14
+    1341: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1344: checkcast     #3                  // class java/util/ArrayList
+    1347: aload         8
+    1349: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    1352: pop
+    1353: goto          1374
+    1356: aload_0
+    1357: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    1360: iload         14
+    1362: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1365: checkcast     #3                  // class java/util/ArrayList
+    1368: aload         8
+    1370: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    1373: pop
+    1374: aload_1
+    1375: invokevirtual #77                 // Method java/lang/String.length:()I
+    1378: bipush        7
+    1380: if_icmpne     1473
+    1383: aload         8
+    1385: invokevirtual #77                 // Method java/lang/String.length:()I
+    1388: iconst_5
+    1389: if_icmplt     1473
+    1392: iload         14
+    1394: iconst_4
+    1395: if_icmpgt     1473
+    1398: aload_0
+    1399: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    1402: iload         14
+    1404: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1407: checkcast     #3                  // class java/util/ArrayList
+    1410: aload         8
+    1412: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    1415: ifne          1473
+    1418: iload         14
+    1420: iconst_4
+    1421: if_icmplt     1455
+    1424: aload         8
+    1426: invokevirtual #77                 // Method java/lang/String.length:()I
+    1429: bipush        8
+    1431: if_icmplt     1473
+    1434: aload_0
+    1435: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    1438: iload         14
+    1440: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1443: checkcast     #3                  // class java/util/ArrayList
+    1446: aload         8
+    1448: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    1451: pop
+    1452: goto          1473
+    1455: aload_0
+    1456: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    1459: iload         14
+    1461: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1464: checkcast     #3                  // class java/util/ArrayList
+    1467: aload         8
+    1469: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    1472: pop
+    1473: aload_1
+    1474: invokevirtual #77                 // Method java/lang/String.length:()I
+    1477: bipush        8
+    1479: if_icmpne     1535
+    1482: aload         8
+    1484: invokevirtual #77                 // Method java/lang/String.length:()I
+    1487: iconst_5
+    1488: if_icmplt     1535
+    1491: iload         14
+    1493: iconst_4
+    1494: if_icmpgt     1535
+    1497: aload_0
+    1498: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    1501: iload         14
+    1503: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1506: checkcast     #3                  // class java/util/ArrayList
+    1509: aload         8
+    1511: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    1514: ifne          1535
+    1517: aload_0
+    1518: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    1521: iload         14
+    1523: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1526: checkcast     #3                  // class java/util/ArrayList
+    1529: aload         8
+    1531: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    1534: pop
+    1535: aload_1
+    1536: invokevirtual #77                 // Method java/lang/String.length:()I
+    1539: bipush        9
+    1541: if_icmpne     1635
+    1544: aload         8
+    1546: invokevirtual #77                 // Method java/lang/String.length:()I
+    1549: bipush        6
+    1551: if_icmplt     1635
+    1554: iload         14
+    1556: iconst_5
+    1557: if_icmpgt     1635
+    1560: aload_0
+    1561: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    1564: iload         14
+    1566: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1569: checkcast     #3                  // class java/util/ArrayList
+    1572: aload         8
+    1574: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    1577: ifne          1635
+    1580: iload         14
+    1582: iconst_5
+    1583: if_icmplt     1617
+    1586: aload         8
+    1588: invokevirtual #77                 // Method java/lang/String.length:()I
+    1591: bipush        8
+    1593: if_icmplt     1635
+    1596: aload_0
+    1597: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    1600: iload         14
+    1602: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1605: checkcast     #3                  // class java/util/ArrayList
+    1608: aload         8
+    1610: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    1613: pop
+    1614: goto          1635
+    1617: aload_0
+    1618: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    1621: iload         14
+    1623: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1626: checkcast     #3                  // class java/util/ArrayList
+    1629: aload         8
+    1631: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    1634: pop
+    1635: aload_1
+    1636: invokevirtual #77                 // Method java/lang/String.length:()I
+    1639: bipush        10
+    1641: if_icmpne     1735
+    1644: aload         8
+    1646: invokevirtual #77                 // Method java/lang/String.length:()I
+    1649: bipush        6
+    1651: if_icmplt     1735
+    1654: iload         14
+    1656: iconst_5
+    1657: if_icmpgt     1735
+    1660: aload_0
+    1661: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    1664: iload         14
+    1666: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1669: checkcast     #3                  // class java/util/ArrayList
+    1672: aload         8
+    1674: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    1677: ifne          1735
+    1680: iload         14
+    1682: iconst_5
+    1683: if_icmpne     1717
+    1686: aload         8
+    1688: invokevirtual #77                 // Method java/lang/String.length:()I
+    1691: bipush        8
+    1693: if_icmplt     1735
+    1696: aload_0
+    1697: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    1700: iload         14
+    1702: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1705: checkcast     #3                  // class java/util/ArrayList
+    1708: aload         8
+    1710: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    1713: pop
+    1714: goto          1735
+    1717: aload_0
+    1718: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    1721: iload         14
+    1723: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1726: checkcast     #3                  // class java/util/ArrayList
+    1729: aload         8
+    1731: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    1734: pop
+    1735: iconst_0
+    1736: istore        14
+    1738: aload_0
+    1739: getfield      #38                 // Field indices:Ljava/util/ArrayList;
+    1742: invokevirtual #48                 // Method java/util/ArrayList.clear:()V
+    1745: aload_0
+    1746: aload_0
+    1747: getfield      #30                 // Field position:[Ljava/lang/String;
+    1750: invokevirtual #106                // Method clearArray:([Ljava/lang/String;)V
+    1753: iconst_0
+    1754: istore        12
+    1756: iconst_1
+    1757: istore        16
+    1759: goto          1848
+    1762: iconst_1
+    1763: istore        17
+    1765: goto          1833
+    1768: aload_1
+    1769: iload         16
+    1771: iconst_1
+    1772: isub
+    1773: iload         16
+    1775: invokevirtual #84                 // Method java/lang/String.substring:(II)Ljava/lang/String;
+    1778: aload         11
+    1780: iload         17
+    1782: iconst_1
+    1783: isub
+    1784: iload         17
+    1786: invokevirtual #84                 // Method java/lang/String.substring:(II)Ljava/lang/String;
+    1789: invokevirtual #110                // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+    1792: ifeq          1830
+    1795: aload_0
+    1796: aload_0
+    1797: getfield      #30                 // Field position:[Ljava/lang/String;
+    1800: iload         17
+    1802: iconst_1
+    1803: isub
+    1804: aaload
+    1805: invokevirtual #113                // Method isNumber:(Ljava/lang/String;)Z
+    1808: ifne          1830
+    1811: aload_0
+    1812: getfield      #30                 // Field position:[Ljava/lang/String;
+    1815: iload         17
+    1817: iconst_1
+    1818: isub
+    1819: iload         16
+    1821: iconst_1
+    1822: isub
+    1823: invokestatic  #117                // Method java/lang/Integer.toString:(I)Ljava/lang/String;
+    1826: aastore
+    1827: goto          1845
+    1830: iinc          17, 1
+    1833: iload         17
+    1835: aload         11
+    1837: invokevirtual #77                 // Method java/lang/String.length:()I
+    1840: iconst_1
+    1841: iadd
+    1842: if_icmplt     1768
+    1845: iinc          16, 1
+    1848: iload         16
+    1850: aload_1
+    1851: invokevirtual #77                 // Method java/lang/String.length:()I
+    1854: iconst_1
+    1855: iadd
+    1856: if_icmplt     1762
+    1859: aload_0
+    1860: aload_0
+    1861: getfield      #30                 // Field position:[Ljava/lang/String;
+    1864: invokevirtual #122                // Method lettersInCommon:([Ljava/lang/String;)I
+    1867: istore        12
+    1869: iload         12
+    1871: iconst_5
+    1872: if_icmpne     1928
+    1875: aload_0
+    1876: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    1879: iload         12
+    1881: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1884: checkcast     #3                  // class java/util/ArrayList
+    1887: aload         8
+    1889: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    1892: ifne          1928
+    1895: iload         12
+    1897: iconst_5
+    1898: if_icmpne     1928
+    1901: aload         8
+    1903: invokevirtual #77                 // Method java/lang/String.length:()I
+    1906: bipush        8
+    1908: if_icmpgt     1928
+    1911: aload_0
+    1912: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    1915: iconst_5
+    1916: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1919: checkcast     #3                  // class java/util/ArrayList
+    1922: aload         8
+    1924: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    1927: pop
+    1928: iload         12
+    1930: bipush        6
+    1932: if_icmpne     1990
+    1935: aload_0
+    1936: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    1939: iload         12
+    1941: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1944: checkcast     #3                  // class java/util/ArrayList
+    1947: aload         8
+    1949: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    1952: ifne          1990
+    1955: iload         12
+    1957: bipush        6
+    1959: if_icmpne     1990
+    1962: aload         8
+    1964: invokevirtual #77                 // Method java/lang/String.length:()I
+    1967: bipush        8
+    1969: if_icmpgt     1990
+    1972: aload_0
+    1973: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    1976: bipush        6
+    1978: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1981: checkcast     #3                  // class java/util/ArrayList
+    1984: aload         8
+    1986: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    1989: pop
+    1990: iload         12
+    1992: bipush        7
+    1994: if_icmpne     2045
+    1997: aload_0
+    1998: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    2001: iload         12
+    2003: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2006: checkcast     #3                  // class java/util/ArrayList
+    2009: aload         8
+    2011: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    2014: ifne          2045
+    2017: aload         8
+    2019: invokevirtual #77                 // Method java/lang/String.length:()I
+    2022: bipush        10
+    2024: if_icmpge     2045
+    2027: aload_0
+    2028: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    2031: iload         12
+    2033: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2036: checkcast     #3                  // class java/util/ArrayList
+    2039: aload         8
+    2041: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    2044: pop
+    2045: iload         12
+    2047: bipush        8
+    2049: if_icmpeq     2066
+    2052: iload         12
+    2054: bipush        9
+    2056: if_icmpeq     2066
+    2059: iload         12
+    2061: bipush        10
+    2063: if_icmpne     2114
+    2066: aload_0
+    2067: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    2070: iload         12
+    2072: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2075: checkcast     #3                  // class java/util/ArrayList
+    2078: aload         8
+    2080: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    2083: ifne          2114
+    2086: aload         8
+    2088: invokevirtual #77                 // Method java/lang/String.length:()I
+    2091: bipush        9
+    2093: if_icmpge     2114
+    2096: aload_0
+    2097: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    2100: iload         12
+    2102: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2105: checkcast     #3                  // class java/util/ArrayList
+    2108: aload         8
+    2110: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    2113: pop
+    2114: aload_0
+    2115: aload_0
+    2116: getfield      #30                 // Field position:[Ljava/lang/String;
+    2119: invokevirtual #129                // Method linearity:([Ljava/lang/String;)I
+    2122: istore        13
+    2124: iload         14
+    2126: iload         12
+    2128: iload         13
+    2130: isub
+    2131: iadd
+    2132: istore        14
+    2134: iload         14
+    2136: aload_0
+    2137: aload_0
+    2138: getfield      #30                 // Field position:[Ljava/lang/String;
+    2141: invokevirtual #132                // Method numberOfAsterisks:([Ljava/lang/String;)I
+    2144: iadd
+    2145: istore        14
+    2147: iload         14
+    2149: aload_1
+    2150: invokevirtual #77                 // Method java/lang/String.length:()I
+    2153: iload         12
+    2155: isub
+    2156: iadd
+    2157: istore        14
+    2159: iconst_0
+    2160: istore        15
+    2162: aload_1
+    2163: invokevirtual #77                 // Method java/lang/String.length:()I
+    2166: aload         8
+    2168: invokevirtual #77                 // Method java/lang/String.length:()I
+    2171: if_icmpne     2222
+    2174: iconst_0
+    2175: istore        16
+    2177: goto          2213
+    2180: aload_1
+    2181: iload         16
+    2183: iload         16
+    2185: iconst_1
+    2186: iadd
+    2187: invokevirtual #84                 // Method java/lang/String.substring:(II)Ljava/lang/String;
+    2190: aload         11
+    2192: iload         16
+    2194: iload         16
+    2196: iconst_1
+    2197: iadd
+    2198: invokevirtual #84                 // Method java/lang/String.substring:(II)Ljava/lang/String;
+    2201: invokevirtual #110                // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+    2204: ifne          2210
+    2207: iinc          15, 1
+    2210: iinc          16, 1
+    2213: iload         16
+    2215: aload_1
+    2216: invokevirtual #77                 // Method java/lang/String.length:()I
+    2219: if_icmplt     2180
+    2222: iload         14
+    2224: iload         15
+    2226: if_icmple     2245
+    2229: aload_1
+    2230: invokevirtual #77                 // Method java/lang/String.length:()I
+    2233: aload         8
+    2235: invokevirtual #77                 // Method java/lang/String.length:()I
+    2238: if_icmpne     2245
+    2241: iload         15
+    2243: istore        14
+    2245: aload_1
+    2246: invokevirtual #77                 // Method java/lang/String.length:()I
+    2249: iconst_5
+    2250: if_icmpne     2343
+    2253: aload         8
+    2255: invokevirtual #77                 // Method java/lang/String.length:()I
+    2258: iconst_5
+    2259: if_icmplt     2343
+    2262: iload         14
+    2264: iconst_3
+    2265: if_icmpgt     2343
+    2268: aload_0
+    2269: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    2272: iload         14
+    2274: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2277: checkcast     #3                  // class java/util/ArrayList
+    2280: aload         8
+    2282: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    2285: ifne          2343
+    2288: iload         14
+    2290: iconst_3
+    2291: if_icmplt     2325
+    2294: aload         8
+    2296: invokevirtual #77                 // Method java/lang/String.length:()I
+    2299: bipush        6
+    2301: if_icmplt     2343
+    2304: aload_0
+    2305: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    2308: iload         14
+    2310: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2313: checkcast     #3                  // class java/util/ArrayList
+    2316: aload         8
+    2318: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    2321: pop
+    2322: goto          2343
+    2325: aload_0
+    2326: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    2329: iload         14
+    2331: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2334: checkcast     #3                  // class java/util/ArrayList
+    2337: aload         8
+    2339: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    2342: pop
+    2343: aload_1
+    2344: invokevirtual #77                 // Method java/lang/String.length:()I
+    2347: bipush        6
+    2349: if_icmpne     2442
+    2352: aload         8
+    2354: invokevirtual #77                 // Method java/lang/String.length:()I
+    2357: iconst_5
+    2358: if_icmplt     2442
+    2361: iload         14
+    2363: iconst_3
+    2364: if_icmpgt     2442
+    2367: aload_0
+    2368: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    2371: iload         14
+    2373: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2376: checkcast     #3                  // class java/util/ArrayList
+    2379: aload         8
+    2381: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    2384: ifne          2442
+    2387: iload         14
+    2389: iconst_3
+    2390: if_icmplt     2424
+    2393: aload         8
+    2395: invokevirtual #77                 // Method java/lang/String.length:()I
+    2398: bipush        6
+    2400: if_icmplt     2442
+    2403: aload_0
+    2404: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    2407: iload         14
+    2409: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2412: checkcast     #3                  // class java/util/ArrayList
+    2415: aload         8
+    2417: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    2420: pop
+    2421: goto          2442
+    2424: aload_0
+    2425: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    2428: iload         14
+    2430: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2433: checkcast     #3                  // class java/util/ArrayList
+    2436: aload         8
+    2438: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    2441: pop
+    2442: aload_1
+    2443: invokevirtual #77                 // Method java/lang/String.length:()I
+    2446: bipush        7
+    2448: if_icmpne     2541
+    2451: aload         8
+    2453: invokevirtual #77                 // Method java/lang/String.length:()I
+    2456: iconst_5
+    2457: if_icmplt     2541
+    2460: iload         14
+    2462: iconst_4
+    2463: if_icmpgt     2541
+    2466: aload_0
+    2467: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    2470: iload         14
+    2472: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2475: checkcast     #3                  // class java/util/ArrayList
+    2478: aload         8
+    2480: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    2483: ifne          2541
+    2486: iload         14
+    2488: iconst_4
+    2489: if_icmplt     2523
+    2492: aload         8
+    2494: invokevirtual #77                 // Method java/lang/String.length:()I
+    2497: bipush        8
+    2499: if_icmplt     2541
+    2502: aload_0
+    2503: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    2506: iload         14
+    2508: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2511: checkcast     #3                  // class java/util/ArrayList
+    2514: aload         8
+    2516: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    2519: pop
+    2520: goto          2541
+    2523: aload_0
+    2524: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    2527: iload         14
+    2529: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2532: checkcast     #3                  // class java/util/ArrayList
+    2535: aload         8
+    2537: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    2540: pop
+    2541: aload_1
+    2542: invokevirtual #77                 // Method java/lang/String.length:()I
+    2545: bipush        8
+    2547: if_icmpne     2603
+    2550: aload         8
+    2552: invokevirtual #77                 // Method java/lang/String.length:()I
+    2555: iconst_5
+    2556: if_icmplt     2603
+    2559: iload         14
+    2561: iconst_4
+    2562: if_icmpgt     2603
+    2565: aload_0
+    2566: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    2569: iload         14
+    2571: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2574: checkcast     #3                  // class java/util/ArrayList
+    2577: aload         8
+    2579: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    2582: ifne          2603
+    2585: aload_0
+    2586: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    2589: iload         14
+    2591: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2594: checkcast     #3                  // class java/util/ArrayList
+    2597: aload         8
+    2599: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    2602: pop
+    2603: aload_1
+    2604: invokevirtual #77                 // Method java/lang/String.length:()I
+    2607: bipush        9
+    2609: if_icmpne     2703
+    2612: aload         8
+    2614: invokevirtual #77                 // Method java/lang/String.length:()I
+    2617: bipush        6
+    2619: if_icmplt     2703
+    2622: iload         14
+    2624: iconst_5
+    2625: if_icmpgt     2703
+    2628: aload_0
+    2629: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    2632: iload         14
+    2634: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2637: checkcast     #3                  // class java/util/ArrayList
+    2640: aload         8
+    2642: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    2645: ifne          2703
+    2648: iload         14
+    2650: iconst_5
+    2651: if_icmplt     2685
+    2654: aload         8
+    2656: invokevirtual #77                 // Method java/lang/String.length:()I
+    2659: bipush        8
+    2661: if_icmplt     2703
+    2664: aload_0
+    2665: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    2668: iload         14
+    2670: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2673: checkcast     #3                  // class java/util/ArrayList
+    2676: aload         8
+    2678: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    2681: pop
+    2682: goto          2703
+    2685: aload_0
+    2686: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    2689: iload         14
+    2691: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2694: checkcast     #3                  // class java/util/ArrayList
+    2697: aload         8
+    2699: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    2702: pop
+    2703: aload_1
+    2704: invokevirtual #77                 // Method java/lang/String.length:()I
+    2707: bipush        10
+    2709: if_icmpne     2803
+    2712: aload         8
+    2714: invokevirtual #77                 // Method java/lang/String.length:()I
+    2717: bipush        6
+    2719: if_icmplt     2803
+    2722: iload         14
+    2724: iconst_5
+    2725: if_icmpgt     2803
+    2728: aload_0
+    2729: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    2732: iload         14
+    2734: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2737: checkcast     #3                  // class java/util/ArrayList
+    2740: aload         8
+    2742: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    2745: ifne          2803
+    2748: iload         14
+    2750: iconst_5
+    2751: if_icmpne     2785
+    2754: aload         8
+    2756: invokevirtual #77                 // Method java/lang/String.length:()I
+    2759: bipush        8
+    2761: if_icmplt     2803
+    2764: aload_0
+    2765: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    2768: iload         14
+    2770: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2773: checkcast     #3                  // class java/util/ArrayList
+    2776: aload         8
+    2778: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    2781: pop
+    2782: goto          2803
+    2785: aload_0
+    2786: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    2789: iload         14
+    2791: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2794: checkcast     #3                  // class java/util/ArrayList
+    2797: aload         8
+    2799: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    2802: pop
+    2803: iconst_0
+    2804: istore        14
+    2806: aload_0
+    2807: getfield      #38                 // Field indices:Ljava/util/ArrayList;
+    2810: invokevirtual #48                 // Method java/util/ArrayList.clear:()V
+    2813: aload_0
+    2814: aload_0
+    2815: getfield      #30                 // Field position:[Ljava/lang/String;
+    2818: invokevirtual #106                // Method clearArray:([Ljava/lang/String;)V
+    2821: iconst_0
+    2822: istore        12
+    2824: iconst_1
+    2825: istore        16
+    2827: goto          2916
+    2830: iconst_1
+    2831: istore        17
+    2833: goto          2901
+    2836: aload_3
+    2837: iload         16
+    2839: iconst_1
+    2840: isub
+    2841: iload         16
+    2843: invokevirtual #84                 // Method java/lang/String.substring:(II)Ljava/lang/String;
+    2846: aload         8
+    2848: iload         17
+    2850: iconst_1
+    2851: isub
+    2852: iload         17
+    2854: invokevirtual #84                 // Method java/lang/String.substring:(II)Ljava/lang/String;
+    2857: invokevirtual #110                // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+    2860: ifeq          2898
+    2863: aload_0
+    2864: aload_0
+    2865: getfield      #30                 // Field position:[Ljava/lang/String;
+    2868: iload         17
+    2870: iconst_1
+    2871: isub
+    2872: aaload
+    2873: invokevirtual #113                // Method isNumber:(Ljava/lang/String;)Z
+    2876: ifne          2898
+    2879: aload_0
+    2880: getfield      #30                 // Field position:[Ljava/lang/String;
+    2883: iload         17
+    2885: iconst_1
+    2886: isub
+    2887: iload         16
+    2889: iconst_1
+    2890: isub
+    2891: invokestatic  #117                // Method java/lang/Integer.toString:(I)Ljava/lang/String;
+    2894: aastore
+    2895: goto          2913
+    2898: iinc          17, 1
+    2901: iload         17
+    2903: aload         8
+    2905: invokevirtual #77                 // Method java/lang/String.length:()I
+    2908: iconst_1
+    2909: iadd
+    2910: if_icmplt     2836
+    2913: iinc          16, 1
+    2916: iload         16
+    2918: aload_3
+    2919: invokevirtual #77                 // Method java/lang/String.length:()I
+    2922: iconst_1
+    2923: iadd
+    2924: if_icmplt     2830
+    2927: aload_0
+    2928: aload_0
+    2929: getfield      #30                 // Field position:[Ljava/lang/String;
+    2932: invokevirtual #122                // Method lettersInCommon:([Ljava/lang/String;)I
+    2935: istore        12
+    2937: iload         12
+    2939: iconst_5
+    2940: if_icmpne     2996
+    2943: aload_0
+    2944: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    2947: iload         12
+    2949: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2952: checkcast     #3                  // class java/util/ArrayList
+    2955: aload         8
+    2957: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    2960: ifne          2996
+    2963: iload         12
+    2965: iconst_5
+    2966: if_icmpne     2996
+    2969: aload         8
+    2971: invokevirtual #77                 // Method java/lang/String.length:()I
+    2974: bipush        8
+    2976: if_icmpgt     2996
+    2979: aload_0
+    2980: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    2983: iconst_5
+    2984: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    2987: checkcast     #3                  // class java/util/ArrayList
+    2990: aload         8
+    2992: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    2995: pop
+    2996: iload         12
+    2998: bipush        6
+    3000: if_icmpne     3058
+    3003: aload_0
+    3004: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    3007: iload         12
+    3009: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3012: checkcast     #3                  // class java/util/ArrayList
+    3015: aload         8
+    3017: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    3020: ifne          3058
+    3023: iload         12
+    3025: bipush        6
+    3027: if_icmpne     3058
+    3030: aload         8
+    3032: invokevirtual #77                 // Method java/lang/String.length:()I
+    3035: bipush        8
+    3037: if_icmpgt     3058
+    3040: aload_0
+    3041: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    3044: bipush        6
+    3046: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3049: checkcast     #3                  // class java/util/ArrayList
+    3052: aload         8
+    3054: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    3057: pop
+    3058: iload         12
+    3060: bipush        7
+    3062: if_icmpne     3113
+    3065: aload_0
+    3066: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    3069: iload         12
+    3071: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3074: checkcast     #3                  // class java/util/ArrayList
+    3077: aload         8
+    3079: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    3082: ifne          3113
+    3085: aload         8
+    3087: invokevirtual #77                 // Method java/lang/String.length:()I
+    3090: bipush        10
+    3092: if_icmpge     3113
+    3095: aload_0
+    3096: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    3099: iload         12
+    3101: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3104: checkcast     #3                  // class java/util/ArrayList
+    3107: aload         8
+    3109: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    3112: pop
+    3113: iload         12
+    3115: bipush        8
+    3117: if_icmpeq     3134
+    3120: iload         12
+    3122: bipush        9
+    3124: if_icmpeq     3134
+    3127: iload         12
+    3129: bipush        10
+    3131: if_icmpne     3182
+    3134: aload_0
+    3135: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    3138: iload         12
+    3140: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3143: checkcast     #3                  // class java/util/ArrayList
+    3146: aload         8
+    3148: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    3151: ifne          3182
+    3154: aload         8
+    3156: invokevirtual #77                 // Method java/lang/String.length:()I
+    3159: bipush        9
+    3161: if_icmpge     3182
+    3164: aload_0
+    3165: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    3168: iload         12
+    3170: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3173: checkcast     #3                  // class java/util/ArrayList
+    3176: aload         8
+    3178: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    3181: pop
+    3182: aload_0
+    3183: aload_0
+    3184: getfield      #30                 // Field position:[Ljava/lang/String;
+    3187: invokevirtual #129                // Method linearity:([Ljava/lang/String;)I
+    3190: istore        13
+    3192: iload         14
+    3194: iload         12
+    3196: iload         13
+    3198: isub
+    3199: iadd
+    3200: istore        14
+    3202: iload         14
+    3204: aload_0
+    3205: aload_0
+    3206: getfield      #30                 // Field position:[Ljava/lang/String;
+    3209: invokevirtual #132                // Method numberOfAsterisks:([Ljava/lang/String;)I
+    3212: iadd
+    3213: istore        14
+    3215: iload         14
+    3217: aload_1
+    3218: invokevirtual #77                 // Method java/lang/String.length:()I
+    3221: iload         12
+    3223: isub
+    3224: iadd
+    3225: istore        14
+    3227: iconst_0
+    3228: istore        15
+    3230: aload_1
+    3231: invokevirtual #77                 // Method java/lang/String.length:()I
+    3234: aload         8
+    3236: invokevirtual #77                 // Method java/lang/String.length:()I
+    3239: if_icmpne     3290
+    3242: iconst_0
+    3243: istore        16
+    3245: goto          3281
+    3248: aload_3
+    3249: iload         16
+    3251: iload         16
+    3253: iconst_1
+    3254: iadd
+    3255: invokevirtual #84                 // Method java/lang/String.substring:(II)Ljava/lang/String;
+    3258: aload         8
+    3260: iload         16
+    3262: iload         16
+    3264: iconst_1
+    3265: iadd
+    3266: invokevirtual #84                 // Method java/lang/String.substring:(II)Ljava/lang/String;
+    3269: invokevirtual #110                // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+    3272: ifne          3278
+    3275: iinc          15, 1
+    3278: iinc          16, 1
+    3281: iload         16
+    3283: aload_1
+    3284: invokevirtual #77                 // Method java/lang/String.length:()I
+    3287: if_icmplt     3248
+    3290: iload         14
+    3292: iload         15
+    3294: if_icmple     3313
+    3297: aload_1
+    3298: invokevirtual #77                 // Method java/lang/String.length:()I
+    3301: aload         8
+    3303: invokevirtual #77                 // Method java/lang/String.length:()I
+    3306: if_icmpne     3313
+    3309: iload         15
+    3311: istore        14
+    3313: aload_1
+    3314: invokevirtual #77                 // Method java/lang/String.length:()I
+    3317: iconst_5
+    3318: if_icmpne     3411
+    3321: aload         8
+    3323: invokevirtual #77                 // Method java/lang/String.length:()I
+    3326: iconst_5
+    3327: if_icmplt     3411
+    3330: iload         14
+    3332: iconst_3
+    3333: if_icmpgt     3411
+    3336: aload_0
+    3337: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    3340: iload         14
+    3342: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3345: checkcast     #3                  // class java/util/ArrayList
+    3348: aload         8
+    3350: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    3353: ifne          3411
+    3356: iload         14
+    3358: iconst_3
+    3359: if_icmplt     3393
+    3362: aload         8
+    3364: invokevirtual #77                 // Method java/lang/String.length:()I
+    3367: bipush        6
+    3369: if_icmplt     3411
+    3372: aload_0
+    3373: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    3376: iload         14
+    3378: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3381: checkcast     #3                  // class java/util/ArrayList
+    3384: aload         8
+    3386: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    3389: pop
+    3390: goto          3411
+    3393: aload_0
+    3394: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    3397: iload         14
+    3399: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3402: checkcast     #3                  // class java/util/ArrayList
+    3405: aload         8
+    3407: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    3410: pop
+    3411: aload_1
+    3412: invokevirtual #77                 // Method java/lang/String.length:()I
+    3415: bipush        6
+    3417: if_icmpne     3510
+    3420: aload         8
+    3422: invokevirtual #77                 // Method java/lang/String.length:()I
+    3425: iconst_5
+    3426: if_icmplt     3510
+    3429: iload         14
+    3431: iconst_3
+    3432: if_icmpgt     3510
+    3435: aload_0
+    3436: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    3439: iload         14
+    3441: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3444: checkcast     #3                  // class java/util/ArrayList
+    3447: aload         8
+    3449: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    3452: ifne          3510
+    3455: iload         14
+    3457: iconst_3
+    3458: if_icmplt     3492
+    3461: aload         8
+    3463: invokevirtual #77                 // Method java/lang/String.length:()I
+    3466: bipush        6
+    3468: if_icmplt     3510
+    3471: aload_0
+    3472: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    3475: iload         14
+    3477: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3480: checkcast     #3                  // class java/util/ArrayList
+    3483: aload         8
+    3485: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    3488: pop
+    3489: goto          3510
+    3492: aload_0
+    3493: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    3496: iload         14
+    3498: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3501: checkcast     #3                  // class java/util/ArrayList
+    3504: aload         8
+    3506: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    3509: pop
+    3510: aload_1
+    3511: invokevirtual #77                 // Method java/lang/String.length:()I
+    3514: bipush        7
+    3516: if_icmpne     3609
+    3519: aload         8
+    3521: invokevirtual #77                 // Method java/lang/String.length:()I
+    3524: iconst_5
+    3525: if_icmplt     3609
+    3528: iload         14
+    3530: iconst_4
+    3531: if_icmpgt     3609
+    3534: aload_0
+    3535: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    3538: iload         14
+    3540: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3543: checkcast     #3                  // class java/util/ArrayList
+    3546: aload         8
+    3548: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    3551: ifne          3609
+    3554: iload         14
+    3556: iconst_4
+    3557: if_icmplt     3591
+    3560: aload         8
+    3562: invokevirtual #77                 // Method java/lang/String.length:()I
+    3565: bipush        8
+    3567: if_icmplt     3609
+    3570: aload_0
+    3571: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    3574: iload         14
+    3576: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3579: checkcast     #3                  // class java/util/ArrayList
+    3582: aload         8
+    3584: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    3587: pop
+    3588: goto          3609
+    3591: aload_0
+    3592: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    3595: iload         14
+    3597: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3600: checkcast     #3                  // class java/util/ArrayList
+    3603: aload         8
+    3605: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    3608: pop
+    3609: aload_1
+    3610: invokevirtual #77                 // Method java/lang/String.length:()I
+    3613: bipush        8
+    3615: if_icmpne     3671
+    3618: aload         8
+    3620: invokevirtual #77                 // Method java/lang/String.length:()I
+    3623: iconst_5
+    3624: if_icmplt     3671
+    3627: iload         14
+    3629: iconst_4
+    3630: if_icmpgt     3671
+    3633: aload_0
+    3634: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    3637: iload         14
+    3639: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3642: checkcast     #3                  // class java/util/ArrayList
+    3645: aload         8
+    3647: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    3650: ifne          3671
+    3653: aload_0
+    3654: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    3657: iload         14
+    3659: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3662: checkcast     #3                  // class java/util/ArrayList
+    3665: aload         8
+    3667: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    3670: pop
+    3671: aload_1
+    3672: invokevirtual #77                 // Method java/lang/String.length:()I
+    3675: bipush        9
+    3677: if_icmpne     3771
+    3680: aload         8
+    3682: invokevirtual #77                 // Method java/lang/String.length:()I
+    3685: bipush        6
+    3687: if_icmplt     3771
+    3690: iload         14
+    3692: iconst_5
+    3693: if_icmpgt     3771
+    3696: aload_0
+    3697: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    3700: iload         14
+    3702: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3705: checkcast     #3                  // class java/util/ArrayList
+    3708: aload         8
+    3710: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    3713: ifne          3771
+    3716: iload         14
+    3718: iconst_5
+    3719: if_icmplt     3753
+    3722: aload         8
+    3724: invokevirtual #77                 // Method java/lang/String.length:()I
+    3727: bipush        8
+    3729: if_icmplt     3771
+    3732: aload_0
+    3733: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    3736: iload         14
+    3738: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3741: checkcast     #3                  // class java/util/ArrayList
+    3744: aload         8
+    3746: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    3749: pop
+    3750: goto          3771
+    3753: aload_0
+    3754: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    3757: iload         14
+    3759: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3762: checkcast     #3                  // class java/util/ArrayList
+    3765: aload         8
+    3767: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    3770: pop
+    3771: aload_1
+    3772: invokevirtual #77                 // Method java/lang/String.length:()I
+    3775: bipush        10
+    3777: if_icmpne     3871
+    3780: aload         8
+    3782: invokevirtual #77                 // Method java/lang/String.length:()I
+    3785: bipush        6
+    3787: if_icmplt     3871
+    3790: iload         14
+    3792: iconst_5
+    3793: if_icmpgt     3871
+    3796: aload_0
+    3797: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    3800: iload         14
+    3802: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3805: checkcast     #3                  // class java/util/ArrayList
+    3808: aload         8
+    3810: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    3813: ifne          3871
+    3816: iload         14
+    3818: iconst_5
+    3819: if_icmpne     3853
+    3822: aload         8
+    3824: invokevirtual #77                 // Method java/lang/String.length:()I
+    3827: bipush        8
+    3829: if_icmplt     3871
+    3832: aload_0
+    3833: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    3836: iload         14
+    3838: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3841: checkcast     #3                  // class java/util/ArrayList
+    3844: aload         8
+    3846: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    3849: pop
+    3850: goto          3871
+    3853: aload_0
+    3854: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    3857: iload         14
+    3859: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    3862: checkcast     #3                  // class java/util/ArrayList
+    3865: aload         8
+    3867: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    3870: pop
+    3871: iconst_0
+    3872: istore        14
+    3874: aload_0
+    3875: getfield      #38                 // Field indices:Ljava/util/ArrayList;
+    3878: invokevirtual #48                 // Method java/util/ArrayList.clear:()V
+    3881: aload_0
+    3882: aload_0
+    3883: getfield      #30                 // Field position:[Ljava/lang/String;
+    3886: invokevirtual #106                // Method clearArray:([Ljava/lang/String;)V
+    3889: iconst_0
+    3890: istore        12
+    3892: iconst_1
+    3893: istore        16
+    3895: goto          3984
+    3898: iconst_1
+    3899: istore        17
+    3901: goto          3969
+    3904: aload_3
+    3905: iload         16
+    3907: iconst_1
+    3908: isub
+    3909: iload         16
+    3911: invokevirtual #84                 // Method java/lang/String.substring:(II)Ljava/lang/String;
+    3914: aload         11
+    3916: iload         17
+    3918: iconst_1
+    3919: isub
+    3920: iload         17
+    3922: invokevirtual #84                 // Method java/lang/String.substring:(II)Ljava/lang/String;
+    3925: invokevirtual #110                // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+    3928: ifeq          3966
+    3931: aload_0
+    3932: aload_0
+    3933: getfield      #30                 // Field position:[Ljava/lang/String;
+    3936: iload         17
+    3938: iconst_1
+    3939: isub
+    3940: aaload
+    3941: invokevirtual #113                // Method isNumber:(Ljava/lang/String;)Z
+    3944: ifne          3966
+    3947: aload_0
+    3948: getfield      #30                 // Field position:[Ljava/lang/String;
+    3951: iload         17
+    3953: iconst_1
+    3954: isub
+    3955: iload         16
+    3957: iconst_1
+    3958: isub
+    3959: invokestatic  #117                // Method java/lang/Integer.toString:(I)Ljava/lang/String;
+    3962: aastore
+    3963: goto          3981
+    3966: iinc          17, 1
+    3969: iload         17
+    3971: aload         11
+    3973: invokevirtual #77                 // Method java/lang/String.length:()I
+    3976: iconst_1
+    3977: iadd
+    3978: if_icmplt     3904
+    3981: iinc          16, 1
+    3984: iload         16
+    3986: aload_3
+    3987: invokevirtual #77                 // Method java/lang/String.length:()I
+    3990: iconst_1
+    3991: iadd
+    3992: if_icmplt     3898
+    3995: aload_0
+    3996: aload_0
+    3997: getfield      #30                 // Field position:[Ljava/lang/String;
+    4000: invokevirtual #122                // Method lettersInCommon:([Ljava/lang/String;)I
+    4003: istore        12
+    4005: iload         12
+    4007: iconst_5
+    4008: if_icmpne     4064
+    4011: aload_0
+    4012: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    4015: iload         12
+    4017: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4020: checkcast     #3                  // class java/util/ArrayList
+    4023: aload         8
+    4025: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    4028: ifne          4064
+    4031: iload         12
+    4033: iconst_5
+    4034: if_icmpne     4064
+    4037: aload         8
+    4039: invokevirtual #77                 // Method java/lang/String.length:()I
+    4042: bipush        8
+    4044: if_icmpgt     4064
+    4047: aload_0
+    4048: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    4051: iconst_5
+    4052: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4055: checkcast     #3                  // class java/util/ArrayList
+    4058: aload         8
+    4060: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    4063: pop
+    4064: iload         12
+    4066: bipush        6
+    4068: if_icmpne     4126
+    4071: aload_0
+    4072: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    4075: iload         12
+    4077: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4080: checkcast     #3                  // class java/util/ArrayList
+    4083: aload         8
+    4085: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    4088: ifne          4126
+    4091: iload         12
+    4093: bipush        6
+    4095: if_icmpne     4126
+    4098: aload         8
+    4100: invokevirtual #77                 // Method java/lang/String.length:()I
+    4103: bipush        8
+    4105: if_icmpgt     4126
+    4108: aload_0
+    4109: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    4112: bipush        6
+    4114: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4117: checkcast     #3                  // class java/util/ArrayList
+    4120: aload         8
+    4122: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    4125: pop
+    4126: iload         12
+    4128: bipush        7
+    4130: if_icmpne     4181
+    4133: aload_0
+    4134: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    4137: iload         12
+    4139: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4142: checkcast     #3                  // class java/util/ArrayList
+    4145: aload         8
+    4147: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    4150: ifne          4181
+    4153: aload         8
+    4155: invokevirtual #77                 // Method java/lang/String.length:()I
+    4158: bipush        10
+    4160: if_icmpge     4181
+    4163: aload_0
+    4164: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    4167: iload         12
+    4169: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4172: checkcast     #3                  // class java/util/ArrayList
+    4175: aload         8
+    4177: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    4180: pop
+    4181: iload         12
+    4183: bipush        8
+    4185: if_icmpeq     4202
+    4188: iload         12
+    4190: bipush        9
+    4192: if_icmpeq     4202
+    4195: iload         12
+    4197: bipush        10
+    4199: if_icmpne     4250
+    4202: aload_0
+    4203: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    4206: iload         12
+    4208: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4211: checkcast     #3                  // class java/util/ArrayList
+    4214: aload         8
+    4216: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    4219: ifne          4250
+    4222: aload         8
+    4224: invokevirtual #77                 // Method java/lang/String.length:()I
+    4227: bipush        9
+    4229: if_icmpge     4250
+    4232: aload_0
+    4233: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    4236: iload         12
+    4238: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4241: checkcast     #3                  // class java/util/ArrayList
+    4244: aload         8
+    4246: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    4249: pop
+    4250: aload_0
+    4251: aload_0
+    4252: getfield      #30                 // Field position:[Ljava/lang/String;
+    4255: invokevirtual #129                // Method linearity:([Ljava/lang/String;)I
+    4258: istore        13
+    4260: iload         14
+    4262: iload         12
+    4264: iload         13
+    4266: isub
+    4267: iadd
+    4268: istore        14
+    4270: iload         14
+    4272: aload_0
+    4273: aload_0
+    4274: getfield      #30                 // Field position:[Ljava/lang/String;
+    4277: invokevirtual #132                // Method numberOfAsterisks:([Ljava/lang/String;)I
+    4280: iadd
+    4281: istore        14
+    4283: iload         14
+    4285: aload_1
+    4286: invokevirtual #77                 // Method java/lang/String.length:()I
+    4289: iload         12
+    4291: isub
+    4292: iadd
+    4293: istore        14
+    4295: iconst_0
+    4296: istore        15
+    4298: aload_1
+    4299: invokevirtual #77                 // Method java/lang/String.length:()I
+    4302: aload         8
+    4304: invokevirtual #77                 // Method java/lang/String.length:()I
+    4307: if_icmpne     4358
+    4310: iconst_0
+    4311: istore        16
+    4313: goto          4349
+    4316: aload_3
+    4317: iload         16
+    4319: iload         16
+    4321: iconst_1
+    4322: iadd
+    4323: invokevirtual #84                 // Method java/lang/String.substring:(II)Ljava/lang/String;
+    4326: aload         11
+    4328: iload         16
+    4330: iload         16
+    4332: iconst_1
+    4333: iadd
+    4334: invokevirtual #84                 // Method java/lang/String.substring:(II)Ljava/lang/String;
+    4337: invokevirtual #110                // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+    4340: ifne          4346
+    4343: iinc          15, 1
+    4346: iinc          16, 1
+    4349: iload         16
+    4351: aload_1
+    4352: invokevirtual #77                 // Method java/lang/String.length:()I
+    4355: if_icmplt     4316
+    4358: iload         14
+    4360: iload         15
+    4362: if_icmple     4381
+    4365: aload_1
+    4366: invokevirtual #77                 // Method java/lang/String.length:()I
+    4369: aload         8
+    4371: invokevirtual #77                 // Method java/lang/String.length:()I
+    4374: if_icmpne     4381
+    4377: iload         15
+    4379: istore        14
+    4381: aload_1
+    4382: invokevirtual #77                 // Method java/lang/String.length:()I
+    4385: iconst_5
+    4386: if_icmpne     4479
+    4389: aload         8
+    4391: invokevirtual #77                 // Method java/lang/String.length:()I
+    4394: iconst_5
+    4395: if_icmplt     4479
+    4398: iload         14
+    4400: iconst_3
+    4401: if_icmpgt     4479
+    4404: aload_0
+    4405: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    4408: iload         14
+    4410: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4413: checkcast     #3                  // class java/util/ArrayList
+    4416: aload         8
+    4418: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    4421: ifne          4479
+    4424: iload         14
+    4426: iconst_3
+    4427: if_icmplt     4461
+    4430: aload         8
+    4432: invokevirtual #77                 // Method java/lang/String.length:()I
+    4435: bipush        6
+    4437: if_icmplt     4479
+    4440: aload_0
+    4441: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    4444: iload         14
+    4446: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4449: checkcast     #3                  // class java/util/ArrayList
+    4452: aload         8
+    4454: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    4457: pop
+    4458: goto          4479
+    4461: aload_0
+    4462: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    4465: iload         14
+    4467: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4470: checkcast     #3                  // class java/util/ArrayList
+    4473: aload         8
+    4475: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    4478: pop
+    4479: aload_1
+    4480: invokevirtual #77                 // Method java/lang/String.length:()I
+    4483: bipush        6
+    4485: if_icmpne     4578
+    4488: aload         8
+    4490: invokevirtual #77                 // Method java/lang/String.length:()I
+    4493: iconst_5
+    4494: if_icmplt     4578
+    4497: iload         14
+    4499: iconst_3
+    4500: if_icmpgt     4578
+    4503: aload_0
+    4504: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    4507: iload         14
+    4509: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4512: checkcast     #3                  // class java/util/ArrayList
+    4515: aload         8
+    4517: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    4520: ifne          4578
+    4523: iload         14
+    4525: iconst_3
+    4526: if_icmplt     4560
+    4529: aload         8
+    4531: invokevirtual #77                 // Method java/lang/String.length:()I
+    4534: bipush        6
+    4536: if_icmplt     4578
+    4539: aload_0
+    4540: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    4543: iload         14
+    4545: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4548: checkcast     #3                  // class java/util/ArrayList
+    4551: aload         8
+    4553: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    4556: pop
+    4557: goto          4578
+    4560: aload_0
+    4561: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    4564: iload         14
+    4566: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4569: checkcast     #3                  // class java/util/ArrayList
+    4572: aload         8
+    4574: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    4577: pop
+    4578: aload_1
+    4579: invokevirtual #77                 // Method java/lang/String.length:()I
+    4582: bipush        7
+    4584: if_icmpne     4677
+    4587: aload         8
+    4589: invokevirtual #77                 // Method java/lang/String.length:()I
+    4592: iconst_5
+    4593: if_icmplt     4677
+    4596: iload         14
+    4598: iconst_4
+    4599: if_icmpgt     4677
+    4602: aload_0
+    4603: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    4606: iload         14
+    4608: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4611: checkcast     #3                  // class java/util/ArrayList
+    4614: aload         8
+    4616: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    4619: ifne          4677
+    4622: iload         14
+    4624: iconst_4
+    4625: if_icmplt     4659
+    4628: aload         8
+    4630: invokevirtual #77                 // Method java/lang/String.length:()I
+    4633: bipush        8
+    4635: if_icmplt     4677
+    4638: aload_0
+    4639: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    4642: iload         14
+    4644: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4647: checkcast     #3                  // class java/util/ArrayList
+    4650: aload         8
+    4652: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    4655: pop
+    4656: goto          4677
+    4659: aload_0
+    4660: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    4663: iload         14
+    4665: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4668: checkcast     #3                  // class java/util/ArrayList
+    4671: aload         8
+    4673: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    4676: pop
+    4677: aload_1
+    4678: invokevirtual #77                 // Method java/lang/String.length:()I
+    4681: bipush        8
+    4683: if_icmpne     4739
+    4686: aload         8
+    4688: invokevirtual #77                 // Method java/lang/String.length:()I
+    4691: iconst_5
+    4692: if_icmplt     4739
+    4695: iload         14
+    4697: iconst_4
+    4698: if_icmpgt     4739
+    4701: aload_0
+    4702: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    4705: iload         14
+    4707: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4710: checkcast     #3                  // class java/util/ArrayList
+    4713: aload         8
+    4715: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    4718: ifne          4739
+    4721: aload_0
+    4722: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    4725: iload         14
+    4727: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4730: checkcast     #3                  // class java/util/ArrayList
+    4733: aload         8
+    4735: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    4738: pop
+    4739: aload_1
+    4740: invokevirtual #77                 // Method java/lang/String.length:()I
+    4743: bipush        9
+    4745: if_icmpne     4839
+    4748: aload         8
+    4750: invokevirtual #77                 // Method java/lang/String.length:()I
+    4753: bipush        6
+    4755: if_icmplt     4839
+    4758: iload         14
+    4760: iconst_5
+    4761: if_icmpgt     4839
+    4764: aload_0
+    4765: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    4768: iload         14
+    4770: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4773: checkcast     #3                  // class java/util/ArrayList
+    4776: aload         8
+    4778: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    4781: ifne          4839
+    4784: iload         14
+    4786: iconst_5
+    4787: if_icmplt     4821
+    4790: aload         8
+    4792: invokevirtual #77                 // Method java/lang/String.length:()I
+    4795: bipush        8
+    4797: if_icmplt     4839
+    4800: aload_0
+    4801: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    4804: iload         14
+    4806: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4809: checkcast     #3                  // class java/util/ArrayList
+    4812: aload         8
+    4814: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    4817: pop
+    4818: goto          4839
+    4821: aload_0
+    4822: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    4825: iload         14
+    4827: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4830: checkcast     #3                  // class java/util/ArrayList
+    4833: aload         8
+    4835: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    4838: pop
+    4839: aload_1
+    4840: invokevirtual #77                 // Method java/lang/String.length:()I
+    4843: bipush        10
+    4845: if_icmpne     4939
+    4848: aload         8
+    4850: invokevirtual #77                 // Method java/lang/String.length:()I
+    4853: bipush        6
+    4855: if_icmplt     4939
+    4858: iload         14
+    4860: iconst_5
+    4861: if_icmpgt     4939
+    4864: aload_0
+    4865: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    4868: iload         14
+    4870: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4873: checkcast     #3                  // class java/util/ArrayList
+    4876: aload         8
+    4878: invokevirtual #126                // Method java/util/ArrayList.contains:(Ljava/lang/Object;)Z
+    4881: ifne          4939
+    4884: iload         14
+    4886: iconst_5
+    4887: if_icmpne     4921
+    4890: aload         8
+    4892: invokevirtual #77                 // Method java/lang/String.length:()I
+    4895: bipush        8
+    4897: if_icmplt     4939
+    4900: aload_0
+    4901: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    4904: iload         14
+    4906: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4909: checkcast     #3                  // class java/util/ArrayList
+    4912: aload         8
+    4914: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    4917: pop
+    4918: goto          4939
+    4921: aload_0
+    4922: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    4925: iload         14
+    4927: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    4930: checkcast     #3                  // class java/util/ArrayList
+    4933: aload         8
+    4935: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    4938: pop
+    4939: aload_0
+    4940: aload_0
+    4941: getfield      #30                 // Field position:[Ljava/lang/String;
+    4944: invokevirtual #106                // Method clearArray:([Ljava/lang/String;)V
+    4947: iconst_0
+    4948: istore        12
+    4950: iconst_0
+    4951: istore        14
+    4953: aload_0
+    4954: getfield      #38                 // Field indices:Ljava/util/ArrayList;
+    4957: invokevirtual #48                 // Method java/util/ArrayList.clear:()V
+    4960: aload         7
+    4962: invokevirtual #135                // Method java/io/BufferedReader.readLine:()Ljava/lang/String;
+    4965: dup
+    4966: astore        8
+    4968: ifnonnull     586
+    4971: goto          4976
+    4974: astore        8
+    4976: aload         7
+    4978: invokevirtual #138                // Method java/io/BufferedReader.close:()V
+    4981: goto          4991
+    4984: astore        8
+    4986: aload         8
+    4988: invokevirtual #141                // Method java/io/IOException.printStackTrace:()V
+    4991: iconst_0
+    4992: istore        8
+    4994: goto          5022
+    4997: aload_0
+    4998: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    5001: iload         8
+    5003: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    5006: checkcast     #146                // class java/util/List
+    5009: new           #148                // class combos/OrderingListByLength
+    5012: dup
+    5013: invokespecial #150                // Method combos/OrderingListByLength."<init>":()V
+    5016: invokestatic  #151                // Method java/util/Collections.sort:(Ljava/util/List;Ljava/util/Comparator;)V
+    5019: iinc          8, 1
+    5022: iload         8
+    5024: aload_0
+    5025: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    5028: invokevirtual #51                 // Method java/util/ArrayList.size:()I
+    5031: if_icmplt     4997
+    5034: iconst_0
+    5035: istore        8
+    5037: goto          5065
+    5040: aload_0
+    5041: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    5044: iload         8
+    5046: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    5049: checkcast     #146                // class java/util/List
+    5052: new           #148                // class combos/OrderingListByLength
+    5055: dup
+    5056: invokespecial #150                // Method combos/OrderingListByLength."<init>":()V
+    5059: invokestatic  #151                // Method java/util/Collections.sort:(Ljava/util/List;Ljava/util/Comparator;)V
+    5062: iinc          8, 1
+    5065: iload         8
+    5067: aload_0
+    5068: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    5071: invokevirtual #51                 // Method java/util/ArrayList.size:()I
+    5074: if_icmplt     5040
+    5077: ldc           #75                 // String
+    5079: astore        8
+    5081: iconst_0
+    5082: istore        9
+    5084: goto          5214
+    5087: new           #59                 // class java/lang/StringBuilder
+    5090: dup
+    5091: aload         8
+    5093: invokestatic  #80                 // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+    5096: invokespecial #63                 // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+    5099: aload_1
+    5100: invokevirtual #66                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    5103: ldc           #157                // String  MP
+    5105: invokevirtual #66                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    5108: iload         9
+    5110: invokestatic  #117                // Method java/lang/Integer.toString:(I)Ljava/lang/String;
+    5113: invokevirtual #66                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    5116: ldc           #159                // String :
+    5118: invokevirtual #66                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    5121: invokevirtual #70                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+    5124: astore        8
+    5126: iconst_0
+    5127: istore        10
+    5129: goto          5180
+    5132: new           #59                 // class java/lang/StringBuilder
+    5135: dup
+    5136: aload         8
+    5138: invokestatic  #80                 // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+    5141: invokespecial #63                 // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+    5144: aload_0
+    5145: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    5148: iload         9
+    5150: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    5153: checkcast     #3                  // class java/util/ArrayList
+    5156: iload         10
+    5158: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    5161: checkcast     #28                 // class java/lang/String
+    5164: invokevirtual #66                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    5167: ldc           #161                // String ~
+    5169: invokevirtual #66                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    5172: invokevirtual #70                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+    5175: astore        8
+    5177: iinc          10, 1
+    5180: iload         10
+    5182: aload_0
+    5183: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    5186: iload         9
+    5188: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    5191: checkcast     #3                  // class java/util/ArrayList
+    5194: invokevirtual #51                 // Method java/util/ArrayList.size:()I
+    5197: if_icmplt     5132
+    5200: aload_0
+    5201: aload         8
+    5203: invokevirtual #74                 // Method add:(Ljava/lang/Object;)Z
+    5206: pop
+    5207: ldc           #75                 // String
+    5209: astore        8
+    5211: iinc          9, 1
+    5214: iload         9
+    5216: aload_0
+    5217: getfield      #36                 // Field numberOfMicroProcedures:Ljava/util/ArrayList;
+    5220: invokevirtual #51                 // Method java/util/ArrayList.size:()I
+    5223: if_icmplt     5087
+    5226: iconst_5
+    5227: istore        9
+    5229: goto          5359
+    5232: new           #59                 // class java/lang/StringBuilder
+    5235: dup
+    5236: aload         8
+    5238: invokestatic  #80                 // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+    5241: invokespecial #63                 // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+    5244: aload_1
+    5245: invokevirtual #66                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    5248: ldc           #163                // String  LIC
+    5250: invokevirtual #66                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    5253: iload         9
+    5255: invokestatic  #117                // Method java/lang/Integer.toString:(I)Ljava/lang/String;
+    5258: invokevirtual #66                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    5261: ldc           #159                // String :
+    5263: invokevirtual #66                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    5266: invokevirtual #70                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+    5269: astore        8
+    5271: iconst_0
+    5272: istore        10
+    5274: goto          5325
+    5277: new           #59                 // class java/lang/StringBuilder
+    5280: dup
+    5281: aload         8
+    5283: invokestatic  #80                 // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+    5286: invokespecial #63                 // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+    5289: aload_0
+    5290: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    5293: iload         9
+    5295: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    5298: checkcast     #3                  // class java/util/ArrayList
+    5301: iload         10
+    5303: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    5306: checkcast     #28                 // class java/lang/String
+    5309: invokevirtual #66                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    5312: ldc           #161                // String ~
+    5314: invokevirtual #66                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    5317: invokevirtual #70                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+    5320: astore        8
+    5322: iinc          10, 1
+    5325: iload         10
+    5327: aload_0
+    5328: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    5331: iload         9
+    5333: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    5336: checkcast     #3                  // class java/util/ArrayList
+    5339: invokevirtual #51                 // Method java/util/ArrayList.size:()I
+    5342: if_icmplt     5277
+    5345: aload_0
+    5346: aload         8
+    5348: invokevirtual #74                 // Method add:(Ljava/lang/Object;)Z
+    5351: pop
+    5352: ldc           #75                 // String
+    5354: astore        8
+    5356: iinc          9, 1
+    5359: iload         9
+    5361: aload_0
+    5362: getfield      #34                 // Field lettersInCommonARRAYLIST:Ljava/util/ArrayList;
+    5365: invokevirtual #51                 // Method java/util/ArrayList.size:()I
+    5368: if_icmplt     5232
+    5371: return
+    Exception table:
+       from    to  target type
+         557  4971  4974   Class java/lang/Exception
+        4976  4981  4984   Class java/io/IOException
+
+  public int linearity(java.lang.String[]);
+    Code:
+       0: new           #3                  // class java/util/ArrayList
+       3: dup
+       4: invokespecial #23                 // Method java/util/ArrayList."<init>":()V
+       7: astore_2
+       8: aload_0
+       9: iconst_0
+      10: putfield      #26                 // Field record:I
+      13: aload_0
+      14: getfield      #32                 // Field linearSequenceRecord:Ljava/util/ArrayList;
+      17: invokevirtual #48                 // Method java/util/ArrayList.clear:()V
+      20: iconst_0
+      21: istore_3
+      22: goto          97
+      25: iconst_0
+      26: istore        4
+      28: iconst_0
+      29: istore        5
+      31: goto          87
+      34: aload_0
+      35: aload_1
+      36: iload         5
+      38: aaload
+      39: invokevirtual #113                // Method isNumber:(Ljava/lang/String;)Z
+      42: ifne          48
+      45: goto          84
+      48: iload_3
+      49: aload_1
+      50: iload         5
+      52: aaload
+      53: invokestatic  #199                // Method java/lang/Integer.parseInt:(Ljava/lang/String;)I
+      56: if_icmpne     84
+      59: iconst_1
+      60: istore        4
+      62: aload_2
+      63: invokevirtual #48                 // Method java/util/ArrayList.clear:()V
+      66: aload_2
+      67: aload_1
+      68: iload         5
+      70: aaload
+      71: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+      74: pop
+      75: aload_0
+      76: iload         5
+      78: iload         4
+      80: aload_2
+      81: invokevirtual #203                // Method recursion:(IILjava/util/ArrayList;)V
+      84: iinc          5, 1
+      87: iload         5
+      89: aload_1
+      90: arraylength
+      91: if_icmplt     34
+      94: iinc          3, 1
+      97: iload_3
+      98: aload_1
+      99: arraylength
+     100: if_icmplt     25
+     103: aload_0
+     104: getfield      #26                 // Field record:I
+     107: ireturn
+
+  public void recursion(int, int, java.util.ArrayList<java.lang.String>);
+    Code:
+       0: iload_1
+       1: aload_0
+       2: getfield      #30                 // Field position:[Ljava/lang/String;
+       5: arraylength
+       6: if_icmpge     160
+       9: iload_1
+      10: istore        4
+      12: goto          150
+      15: aload_0
+      16: aload_0
+      17: getfield      #30                 // Field position:[Ljava/lang/String;
+      20: iload         4
+      22: aaload
+      23: invokevirtual #113                // Method isNumber:(Ljava/lang/String;)Z
+      26: ifne          32
+      29: goto          147
+      32: aload_0
+      33: getfield      #30                 // Field position:[Ljava/lang/String;
+      36: iload_1
+      37: aaload
+      38: invokestatic  #199                // Method java/lang/Integer.parseInt:(Ljava/lang/String;)I
+      41: aload_0
+      42: getfield      #30                 // Field position:[Ljava/lang/String;
+      45: iload         4
+      47: aaload
+      48: invokestatic  #199                // Method java/lang/Integer.parseInt:(Ljava/lang/String;)I
+      51: if_icmpge     147
+      54: iinc          2, 1
+      57: aload_3
+      58: aload_0
+      59: getfield      #30                 // Field position:[Ljava/lang/String;
+      62: iload         4
+      64: aaload
+      65: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+      68: pop
+      69: iload_2
+      70: aload_0
+      71: getfield      #26                 // Field record:I
+      74: if_icmple     124
+      77: aload_0
+      78: getfield      #32                 // Field linearSequenceRecord:Ljava/util/ArrayList;
+      81: invokevirtual #48                 // Method java/util/ArrayList.clear:()V
+      84: iconst_0
+      85: istore        5
+      87: goto          110
+      90: aload_0
+      91: getfield      #32                 // Field linearSequenceRecord:Ljava/util/ArrayList;
+      94: aload_3
+      95: iload         5
+      97: invokevirtual #44                 // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     100: checkcast     #28                 // class java/lang/String
+     103: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     106: pop
+     107: iinc          5, 1
+     110: iload         5
+     112: aload_3
+     113: invokevirtual #51                 // Method java/util/ArrayList.size:()I
+     116: if_icmplt     90
+     119: aload_0
+     120: iload_2
+     121: putfield      #26                 // Field record:I
+     124: aload_0
+     125: iload         4
+     127: iload_2
+     128: aload_3
+     129: invokevirtual #203                // Method recursion:(IILjava/util/ArrayList;)V
+     132: iinc          2, -1
+     135: aload_3
+     136: aload_0
+     137: getfield      #30                 // Field position:[Ljava/lang/String;
+     140: iload         4
+     142: aaload
+     143: invokevirtual #210                // Method java/util/ArrayList.remove:(Ljava/lang/Object;)Z
+     146: pop
+     147: iinc          4, 1
+     150: iload         4
+     152: aload_0
+     153: getfield      #30                 // Field position:[Ljava/lang/String;
+     156: arraylength
+     157: if_icmplt     15
+     160: return
+
+  public int lettersInCommon(java.lang.String[]);
+    Code:
+       0: iconst_0
+       1: istore_2
+       2: iconst_0
+       3: istore_3
+       4: goto          23
+       7: aload_0
+       8: aload_1
+       9: iload_3
+      10: aaload
+      11: invokevirtual #113                // Method isNumber:(Ljava/lang/String;)Z
+      14: ifeq          20
+      17: iinc          2, 1
+      20: iinc          3, 1
+      23: iload_3
+      24: aload_1
+      25: arraylength
+      26: if_icmplt     7
+      29: iload_2
+      30: ireturn
+
+  public int numberOfAsterisks(java.lang.String[]);
+    Code:
+       0: iconst_0
+       1: istore_2
+       2: iconst_0
+       3: istore_3
+       4: goto          36
+       7: aload_1
+       8: iload_3
+       9: aaload
+      10: ldc           #213                // String *
+      12: invokevirtual #110                // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+      15: ifeq          33
+      18: iinc          2, 1
+      21: aload_0
+      22: getfield      #38                 // Field indices:Ljava/util/ArrayList;
+      25: iload_3
+      26: invokestatic  #117                // Method java/lang/Integer.toString:(I)Ljava/lang/String;
+      29: invokevirtual #55                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+      32: pop
+      33: iinc          3, 1
+      36: iload_3
+      37: aload_1
+      38: arraylength
+      39: if_icmplt     7
+      42: iload_2
+      43: ireturn
+
+  public int missingNumbers(java.lang.String[]);
+    Code:
+       0: iconst_0
+       1: istore_2
+       2: iconst_0
+       3: istore_3
+       4: goto          50
+       7: aload_0
+       8: aload_1
+       9: iload_3
+      10: aaload
+      11: invokevirtual #113                // Method isNumber:(Ljava/lang/String;)Z
+      14: ifeq          47
+      17: iconst_0
+      18: istore        4
+      20: goto          40
+      23: aload_1
+      24: iload_3
+      25: aaload
+      26: invokestatic  #199                // Method java/lang/Integer.parseInt:(Ljava/lang/String;)I
+      29: iload         4
+      31: if_icmpne     37
+      34: iload         4
+      36: istore_2
+      37: iinc          4, 1
+      40: iload         4
+      42: aload_1
+      43: arraylength
+      44: if_icmplt     23
+      47: iinc          3, 1
+      50: iload_3
+      51: aload_1
+      52: arraylength
+      53: if_icmplt     7
+      56: iconst_0
+      57: istore_3
+      58: iconst_0
+      59: istore        4
+      61: goto          123
+      64: iconst_0
+      65: istore        5
+      67: iconst_0
+      68: istore        6
+      70: goto          105
+      73: aload_0
+      74: aload_1
+      75: iload         6
+      77: aaload
+      78: invokevirtual #113                // Method isNumber:(Ljava/lang/String;)Z
+      81: ifeq          102
+      84: aload_1
+      85: iload         6
+      87: aaload
+      88: invokestatic  #199                // Method java/lang/Integer.parseInt:(Ljava/lang/String;)I
+      91: iload         4
+      93: if_icmpne     102
+      96: iconst_1
+      97: istore        5
+      99: goto          112
+     102: iinc          6, 1
+     105: iload         6
+     107: aload_1
+     108: arraylength
+     109: if_icmplt     73
+     112: iload         5
+     114: ifne          120
+     117: iinc          3, 1
+     120: iinc          4, 1
+     123: iload         4
+     125: iload_2
+     126: if_icmple     64
+     129: iload_3
+     130: ireturn
+
+  public void clearArray(java.lang.String[]);
+    Code:
+       0: iconst_0
+       1: istore_2
+       2: goto          13
+       5: aload_1
+       6: iload_2
+       7: ldc           #213                // String *
+       9: aastore
+      10: iinc          2, 1
+      13: iload_2
+      14: aload_1
+      15: arraylength
+      16: if_icmplt     5
+      19: return
+
+  public boolean isNumber(java.lang.String);
+    Code:
+       0: iconst_0
+       1: istore_2
+       2: goto          21
+       5: aload_1
+       6: iload_2
+       7: invokevirtual #220                // Method java/lang/String.charAt:(I)C
+      10: invokestatic  #224                // Method java/lang/Character.isDigit:(C)Z
+      13: ifne          18
+      16: iconst_0
+      17: ireturn
+      18: iinc          2, 1
+      21: iload_2
+      22: aload_1
+      23: invokevirtual #77                 // Method java/lang/String.length:()I
+      26: if_icmplt     5
+      29: iconst_1
+      30: ireturn
+}

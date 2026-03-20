@@ -1,0 +1,23 @@
+*.db
+*.db.snapshot*
+*.log
+__pycache__/
+*.pyc
+dictionaries/pronunciations.txt
+static/uploads/avatars/*
+!static/uploads/avatars/default.png
+*.jar
+*.txt
+*.snapshot
+*.snapshot_stable
+*.snapshot_archive_prev
+morpheme.db
+developer_messages.db
+inactivity_debug.log
+server_console.log
+server.log
+debug_flow.log
+cookies*.txt
+# Keep specific text files if they are code
+!combos_decompiled.txt
+!checkpoint_features.md
