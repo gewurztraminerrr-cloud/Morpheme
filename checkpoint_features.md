@@ -24,8 +24,9 @@ This document records the state of the "Morpheme" application at the time of the
 - **Achievement System**: Tracking personal bests and room-specific achievements.
 
 ### 4. Interactive Tools
-- **"Is Valid" Tool**: Validates if a word exists in the dictionary.
-- **Pronunciation Lookup**: Integrated phonetic spelling and pronunciation help within the validation tool.
+- **"Is Valid" Tool**: Validates if a word exists in the dictionary. Now features an **auto-clearing input box** for faster continuous lookups.
+- **Massive Pronunciation Dictionary (NEW)**: Integrated **Moby Pronunciator II** and **Wiktionary** sources, increasing coverage from 100k to **over 160,000 words**.
+- **Linguistic Integrity**: Optimized phonetic logic for inflected words (-s, -ed, -ing) and added manual overrides for critical Scrabble terms (AA, QI, ZA, CARATE).
 - **Presence Tracking**: Real-time tracking of users entering/leaving the application.
 
 ### 5. UI Organization & UX Improvements (NEW)
@@ -41,5 +42,5 @@ This document records the state of the "Morpheme" application at the time of the
 - **Database Snapshots**: Mechanism for state persistence and stability backups.
 
 ---
-**Checkpoint Git Tag**: `save_point_final_2026-03-20_v2`
-**Current Commit**: `b6d16119f638dc5462511bc40c11c95ee745e509`
+**Checkpoint Git Tag**: `START_OVER_POINT`
+**Current Commit**: `7d6bb2a` (Latest Pronunciation & Tool Fixes)
