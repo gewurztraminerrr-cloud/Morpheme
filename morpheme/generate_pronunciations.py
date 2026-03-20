@@ -25,8 +25,9 @@ def load_moby(path):
         return moby
     
     # Mapping for Moby ASCII phonemes to our respelled vowels
+    # Refining to use fewer 'H's where possible (e.g. A -> A instead of AH)
     VOWELS = {
-        'A': 'AH', '@': 'UH', 'E': 'EH', 'I': 'IH', 'O': 'AW', 'U': 'UU',
+        'A': 'A', '@': 'UH', 'E': 'EH', 'I': 'IH', 'O': 'AW', 'U': 'UU',
         'i': 'EE', 'u': 'OO', 'eI': 'AY', 'oU': 'OH', 'aI': 'EYE', 'aU': 'OW', 'OI': 'OY',
     }
     CONSONANTS = {
@@ -96,7 +97,11 @@ def load_wiktionary(path):
     }
 
     with open(path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+        try:
+            data = json.load(f)
+        except:
+            return wikidict
+
         for word, p_list in data.items():
             if not p_list: continue
             raw_ipa = p_list[0]
@@ -176,26 +181,13 @@ def arpa_to_respell(phonemes):
         
     return "-".join(parts)
 
-def get_compound_pron(word, cmudict):
-    """Try to find the pronunciation by splitting into common words."""
-    if len(word) < 6: return None
-    
-    # Try every possible split point (e.g. CHICK + PEA)
-    for i in range(3, len(word) - 2):
-        left, right = word[:i], word[i:]
-        if left in cmudict and right in cmudict:
-            left_respell = arpa_to_respell(cmudict[left])
-            right_respell = arpa_to_respell(cmudict[right])
-            if left_respell and right_respell:
-                return f"{left_respell}-{right_respell}"
-    
-    return None
-
 OVERRIDES = {
+    "CHAMOIS": "SHAMMY",
+    "WARISON": "WARE-IH-SUN",
+    "CALCANEA": "KAL-KAY-NEE-AH",
     "ORCINOL": "ORE-SIN-AWL",
     "OVERKEEN": "OH-VUR-KEEN",
     "CHICKPEA": "CHIK-PEE",
-    "CALCANEA": "KAL-KAY-NEE-AH",
     "BARYE": "BAIR-EE",
     "PORTAMENTI": "PORE-TAH-MEN-TEE",
     "LINALOOL": "LIH-NAH-LOW-WOLL",
@@ -213,50 +205,8 @@ OVERRIDES = {
     "KA": "KAH"
 }
 
-def simple_g2p(word):
-    """Return override if available, else blank."""
-    return OVERRIDES.get(word, "")
-
-    # Don't guess if not found in overrides
-    return overrides.get(word, "")
-
-def get_inflected_pron(word, base_dict):
-    """Handle common suffixes for Scrabble inflections."""
-    if len(word) < 4: return None
-    
-    # Priority order for suffix stripping
-    suffixes = [
-        ('ING', 'IH-NG'),
-        ('ED', 'T'), # Default past tense (simplified)
-        ('ED', 'D'),
-        ('LY', 'LEE'),
-        ('ER', 'ER'),
-        ('ES', 'EH-Z'),
-        ('S', 'Z'),
-        ('S', 'S')
-    ]
-    
-    for suff, pron_suff in suffixes:
-        if word.endswith(suff):
-            base = word[:-len(suff)]
-            if base in base_dict:
-                base_pron = base_dict[base]
-                if isinstance(base_pron, list): # CMU format
-                    base_pron = arpa_to_respell(base_pron)
-                return f"{base_pron}-{pron_suff}"
-            
-            # Special case for doubled consonants (TRAPPING -> TRAP)
-            if len(base) > 3 and base[-1] == base[-2]:
-                base_s = base[:-1]
-                if base_s in base_dict:
-                    base_pron = base_dict[base_s]
-                    if isinstance(base_pron, list):
-                        base_pron = arpa_to_respell(base_pron)
-                    return f"{base_pron}-{pron_suff}"
-    return None
-
 def main():
-    base_dir = "/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme"
+    base_dir = "/Users/jeffbabiak/morpheme"
     dict_dir = os.path.join(base_dir, "dictionaries")
     cmu_path = os.path.join(dict_dir, "cmudict.txt")
     
@@ -283,13 +233,6 @@ def main():
     print("Loading Wiktionary...")
     wiki = load_wiktionary(wiki_path)
     
-    # Pre-combine for suffix lookups
-    combined_base = {**moby}
-    for k, v in cmu.items():
-        if k not in combined_base: combined_base[k] = v
-    for k, v in wiki.items():
-        if k not in combined_base: combined_base[k] = v
-    
     with open(output_path, 'w') as f:
         for word in sorted(words):
             pron = ""
@@ -301,12 +244,9 @@ def main():
                 pron = moby[word]
             elif word in wiki:
                 pron = wiki[word]
-            else:
-                # Try inflections (e.g. AAHED -> AAH + ED)
-                pron = get_inflected_pron(word, combined_base)
-                if not pron:
-                    # Try common compounds (e.g. CHICKPEA)
-                    pron = get_compound_pron(word, cmu)
+            
+            # NOTE: Removed inflected and compound guesses per user request:
+            # "DO NOT MAKE UP A PRONUNCIATION IF YOU DON’T KNOW IT. Let it be blank... if you don’t know it."
             
             if pron:
                 pron = re.sub(r'-+', '-', pron).strip('-').upper()
