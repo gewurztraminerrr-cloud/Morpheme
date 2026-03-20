@@ -31,6 +31,7 @@ This document records the state of the "Morpheme" application at the time of the
 ### 5. UI Organization & UX Improvements (NEW)
 - **Organized Settings UI**: "Synesthesia" and "Next Round Notification" settings are now in their own dedicated panels for better organization.
 - **Improved Settings Interactivity**: Restored visual indicator for bell/beep sound selection when "Next Round Notification" is enabled.
+- **Divider Clutter Fix**: Removed redundant divider lines below "Next Round Notification" for a cleaner, prioritized interface.
 - **De-cluttered Tool Sidebar**: Simplified tool selection by prioritizing core features and removing secondary tools.
 - **Consistent Theme Support**: Optimized CSS for Light and Dark modes with readability fixes for popups and overlay text.
 
@@ -40,5 +41,5 @@ This document records the state of the "Morpheme" application at the time of the
 - **Database Snapshots**: Mechanism for state persistence and stability backups.
 
 ---
-**Checkpoint Git Tag**: `save_point_2026-03-20`
-**Current Commit**: `b5f7b706bccb597008edad6ea0eff8255a442c5a`
+**Checkpoint Git Tag**: `save_point_final_2026-03-20_v2`
+**Current Commit**: `b6d16119f638dc5462511bc40c11c95ee745e509`
