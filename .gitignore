@@ -13,3 +13,10 @@ developer_messages.db
 *.db
 room_state.json
 investigate_rooms.py
+boggle-gen/.venv/
+boggle-gen/.venv_test/
+boggle-gen/instance/
+node_modules/
+.vscode/
+*.log
+.DS_Store

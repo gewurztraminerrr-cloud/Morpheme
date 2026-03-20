@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Boggle Gen</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="src/style.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <header>
+        <h1>Boggle Gen</h1>
+        <p>Premium 4x4 Board Generator</p>
+      </header>
+      
+      <main>
+        <div id="board" class="boggle-board">
+          <!-- Cubes will be injected here -->
+        </div>
+        
+        <div class="controls">
+          <button id="shake-btn" class="btn-primary">
+            Shake Board
+          </button>
+        </div>
+      </main>
+
+      <button id="checkpoint-btn" class="checkpoint-btn">
+        <span class="btn-icon">🕒</span>
+        Checkpoints
+      </button>
+
+      <div class="past-saves collapsed" id="past-saves">
+        <div class="past-saves-header" id="past-saves-header">
+          <h3 id="saves-title">Checkpoints</h3>
+          <button id="restart-server-btn" class="btn-restart">Restart Server</button>
+        </div>
+        <div class="saves-list" id="saves-list">
+          <!-- Saves will be injected here -->
+        </div>
+      </div>
+
+      <footer>
+        <p>Ready to play!</p>
+      </footer>
+    </div>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
