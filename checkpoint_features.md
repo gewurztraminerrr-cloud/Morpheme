@@ -1,4 +1,4 @@
-# Morpheme Application Checkpoint - March 19, 2026
+# Morpheme Application Checkpoint - March 20, 2026
 
 This document records the state of the "Morpheme" application at the time of the "Start Over" save point request.
 
@@ -28,11 +28,17 @@ This document records the state of the "Morpheme" application at the time of the
 - **Pronunciation Lookup**: Integrated phonetic spelling and pronunciation help within the validation tool.
 - **Presence Tracking**: Real-time tracking of users entering/leaving the application.
 
-### 5. Platform Integrity & UX
+### 5. UI Organization & UX Improvements (NEW)
+- **Organized Settings UI**: "Synesthesia" and "Next Round Notification" settings are now in their own dedicated panels for better organization.
+- **Improved Settings Interactivity**: Restored visual indicator for bell/beep sound selection when "Next Round Notification" is enabled.
+- **De-cluttered Tool Sidebar**: Simplified tool selection by prioritizing core features and removing secondary tools.
+- **Consistent Theme Support**: Optimized CSS for Light and Dark modes with readability fixes for popups and overlay text.
+
+### 6. Platform Integrity
 - **Inactivity/Idle Timeout**: Automatic removal from rooms after 10 minutes of inactivity to maintain game flow.
-- **Theme Support**: CSS-based Light and Dark modes with readability fixes for popups and overlay text.
 - **Leave Penalty**: Rating penalties for prematurely leaving active matches.
 - **Database Snapshots**: Mechanism for state persistence and stability backups.
 
 ---
-**Checkpoint Git Tag**: `checkpoint_2026-03-19`
+**Checkpoint Git Tag**: `save_point_2026-03-20`
+**Current Commit**: `b5f7b706bccb597008edad6ea0eff8255a442c5a`
