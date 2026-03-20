@@ -1959,11 +1959,13 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
 
         // 2. Populate Period Stats (Bottom Lists)
         if (!data.stats) {
-            // Period specific tables
-            document.getElementById('ach-table-perf').innerHTML = '';
-            document.getElementById('ach-table-wins').innerHTML = '';
-            document.getElementById('ach-table-recent').innerHTML = '';
-            document.getElementById('ach-table-words').innerHTML = '';
+            // Period specific tables - Clear ALL to prevent historical bleed-over
+            if (document.getElementById('ach-table-perf')) document.getElementById('ach-table-perf').innerHTML = '';
+            if (document.getElementById('ach-table-wins')) document.getElementById('ach-table-wins').innerHTML = '';
+            if (document.getElementById('ach-table-recent')) document.getElementById('ach-table-recent').innerHTML = '';
+            if (document.getElementById('ach-table-words')) document.getElementById('ach-table-words').innerHTML = '';
+            if (document.getElementById('ach-table-scores')) document.getElementById('ach-table-scores').innerHTML = '';
+            if (document.getElementById('ach-table-wordcounts')) document.getElementById('ach-table-wordcounts').innerHTML = '';
             return;
         }
 

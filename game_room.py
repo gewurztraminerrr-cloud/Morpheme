@@ -542,22 +542,23 @@ class GameRoom:
         # Room must have more than 1 player to earn a trophy
         multiple_players = (len(reg_players) + len(guest_players)) > 1
 
+        max_score = max(p.score for p in self.players) if self.players else 0
         if reg_rating_sum > 0:
             for p in reg_players:
                 expected = (p.rating / reg_rating_sum) * reg_score_sum
                 p.performance_efficiency = p.score / expected if expected > 0 else 0.0
-                # Remarkable: PE >= 2.5 and Score >= 20, or raw score >= 60
-                p.has_exceptional_round = multiple_players and p.score > 0 and ((p.performance_efficiency >= 2.5 and p.score >= 20) or p.score >= 60)
-        else:
+                # Remarkable: Winner AND (Unusually high PE >= 4 & Score >= 40, or raw excellence Score >= 100)
+                p.has_exceptional_round = multiple_players and p.score > 0 and p.score == max_score and \
+                                         ((p.performance_efficiency >= 4.0 and p.score >= 40) or p.score >= 100)
             for p in reg_players:
                 p.performance_efficiency = 1.0
-                # Raw score Remarkable threshold: 60
-                p.has_exceptional_round = multiple_players and p.score > 0 and (p.score >= 60)
+                # Raw score Remarkable threshold: 100 (Winner only)
+                p.has_exceptional_round = multiple_players and p.score > 0 and p.score == max_score and (p.score >= 100)
 
         # 2. Guests: Use solo baseline (PE=1.0) so they don't affect pool but can still earn trophies on raw score
         for p in guest_players:
             p.performance_efficiency = 1.0
-            p.has_exceptional_round = multiple_players and p.score > 0 and (p.score >= 60)
+            p.has_exceptional_round = multiple_players and p.score > 0 and p.score == max_score and (p.score >= 100)
     
     def _recalculate_player_score(self, player):
         """
@@ -691,19 +692,20 @@ class GameRoom:
                     expected = (p.rating / reg_rating_sum) * reg_score_sum
                     p.performance_efficiency = p.score / expected if expected > 0 else 0
                     max_pe = max(max_pe, p.performance_efficiency)
-                    # Remarkable threshold: PE >= 2.5 & Score >= 20 OR Raw Score >= 60
-                    p.has_exceptional_round = multiple_active and p.score > 0 and ((p.performance_efficiency >= 2.5 and p.score >= 20) or p.score >= 60)
+                    # Remarkable threshold: Winner AND (PE >= 4.0 & Score >= 40 OR Raw Score >= 100)
+                    p.has_exceptional_round = multiple_active and p.score > 0 and p.score == max_score and \
+                                             ((p.performance_efficiency >= 4.0 and p.score >= 40) or p.score >= 100)
             else:
                 for p in reg_players:
                     p.performance_efficiency = 1.0
                     max_pe = max(max_pe, 1.0)
-                    p.has_exceptional_round = multiple_active and p.score > 0 and (p.score >= 60)
+                    p.has_exceptional_round = multiple_active and p.score > 0 and p.score == max_score and (p.score >= 100)
 
             # 2. Guests Pool
             for p in guest_players:
                 p.performance_efficiency = 1.0
                 max_pe = max(max_pe, 1.0)
-                p.has_exceptional_round = multiple_active and p.score > 0 and (p.score >= 60)
+                p.has_exceptional_round = multiple_active and p.score > 0 and p.score == max_score and (p.score >= 100)
 
             # Determine Notable Winners for Replay Tab
             # The user wants "enormous wins" to determine replay listing.

@@ -12,7 +12,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css?v=4">
     <link rel="stylesheet" href="/css/lobby.css?v=4">
-    <link rel="stylesheet" href="/css/play.css?v=32">
+    <link rel="stylesheet" href="/css/play.css?v=35">
     <link rel="stylesheet" href="/css/howtoplay.css?v=4">
     <link rel="stylesheet" href="/css/forum.css?v=1">
 </head>
@@ -338,7 +338,7 @@
                         <div class="sf-tabs">
                             <button class="sf-tab-btn active" data-sf-tab="solo">Solo</button>
                             <button class="sf-tab-btn" data-sf-tab="friends">With Friends <span id="friends-tab-badge"
-                                    class="badge"></span></button>
+                                    class="badge hidden"></span></button>
                         </div>
 
                         <!-- Solo Tab Content -->
@@ -357,10 +357,10 @@
 
                             <div class="friends-subtabs">
                                 <button class="sf-subtab-btn active" data-friends-subtab="your-turn">Your Turn <span
-                                        id="your-turn-badge" class="badge"></span></button>
+                                        id="your-turn-badge" class="badge hidden"></span></button>
                                 <button class="sf-subtab-btn" data-friends-subtab="their-turn">Their Turn</button>
                                 <button class="sf-subtab-btn" data-friends-subtab="invites">Invites <span
-                                        id="invite-count-badge" class="badge"></span></button>
+                                        id="invite-count-badge" class="badge hidden"></span></button>
                                 <button class="sf-subtab-btn" data-friends-subtab="history">History</button>
                             </div>
 
@@ -2100,12 +2100,86 @@
                             border-top-color: rgba(0, 0, 0, 0.1) !important;
                         }
                     </style>
+                    <!-- Synesthesia: Letter Colors -->
+                    <div class="setting-panel" style="grid-column: 1 / -1; margin-top: 10px;">
+                        <div class="setting-header">
+                            <div>
+                                <div class="setting-title">Synesthesia</div>
+                                <div class="setting-desc">Tailor the color of each individual letter on the game board.
+                                </div>
+                            </div>
+                            <button id="setting-synesthesia-reset" class="mini-action-btn secondary"
+                                style="padding: 6px 12px; font-size: 0.75rem;">Reset All to Black</button>
+                        </div>
+                        <div id="synesthesia-letters-grid"
+                            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 12px; margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                            <!-- Letters A-Z injected by settings.js -->
+                        </div>
+                    </div>
+
+                    <style>
+                        .synesthesia-unit {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 6px;
+                            background: rgba(255, 255, 255, 0.03);
+                            padding: 10px 4px;
+                            border-radius: 8px;
+                            border: 1px solid rgba(255, 255, 255, 0.08);
+                            transition: all 0.2s;
+                        }
+
+                        .synesthesia-unit:hover {
+                            background: rgba(255, 255, 255, 0.08);
+                            border-color: rgba(255, 255, 255, 0.2);
+                            transform: translateY(-2px);
+                        }
+
+                        .synesthesia-unit label {
+                            font-size: 0.95rem;
+                            font-weight: 800;
+                            color: #fff;
+                        }
+
+                        .synesthesia-unit input[type="color"] {
+                            width: 32px;
+                            height: 32px;
+                            border: 2px solid rgba(255, 255, 255, 0.2);
+                            background: none;
+                            cursor: pointer;
+                            border-radius: 6px;
+                            padding: 0;
+                            overflow: hidden;
+                        }
+
+                        .synesthesia-unit input[type="color"]::-webkit-color-swatch-wrapper {
+                            padding: 0;
+                        }
+
+                        .synesthesia-unit input[type="color"]::-webkit-color-swatch {
+                            border: none;
+                            border-radius: 4px;
+                        }
+
+                        /* Theme White Adjustments */
+                        body.theme-white .synesthesia-unit {
+                            background: rgba(0, 0, 0, 0.03);
+                            border-color: rgba(0, 0, 0, 0.1);
+                        }
+
+                        body.theme-white .synesthesia-unit label {
+                            color: #333;
+                        }
+
+                        body.theme-white .synesthesia-unit input[type="color"] {
+                            border-color: rgba(0, 0, 0, 0.1);
+                        }
+                    </style>
                 </div>
 
+                <!-- Future panels placeholder -->
             </div>
-
-            <!-- Future panels placeholder -->
-        </div>
         </div>
 
         <!-- How to Play Modal (Independent Window) -->
@@ -2454,7 +2528,7 @@
         <script src="/js/forum.js?v=2"></script>
         <script src="/js/app.js?v=2"></script>
         <script src="/js/lobby.js?v=2"></script>
-        <script src="/js/play.js?v=5"></script>
+        <script src="/js/play.js?v=6"></script>
         <script src="/js/tournaments.js?v=2"></script>
         <script src="/js/leaderboard.js?v=2"></script>
 
@@ -2516,7 +2590,7 @@
             </div>
         </div>
         <script src="/js/tools.js?v=3"></script>
-        <script src="/js/settings.js?v=2"></script>
+        <script src="/js/settings.js?v=4"></script>
         <script src="/js/mouse_selection.js?v=3"></script>
         <script src="/js/private_matches.js?v=2"></script>
         <!-- Private Chat Modal -->

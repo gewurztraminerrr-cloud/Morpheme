@@ -393,6 +393,18 @@
     font-size: 1rem;
 }
 
+/* Theme-aware score color for light themes */
+[class*="theme-white"] .player-score-val,
+[class*="theme-light-"] .player-score-val,
+body.theme-yellow .player-score-val,
+body.theme-pink .player-score-val,
+body.theme-orange .player-score-val,
+body.theme-gray .player-score-val,
+body.theme-light-brown .player-score-val {
+    color: #444 !important;
+    /* Dark gray for better visibility */
+}
+
 .player-item.bonus-finder {
     background: rgba(50, 205, 50, 0.3) !important;
     /* Lime green with transparency */
@@ -548,14 +560,15 @@
 }
 
 .timer-value {
+    font-family: 'Courier New', Courier, monospace;
     font-size: 2.2rem;
     font-weight: 800;
     color: var(--text-primary);
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum" 1;
-    min-width: 190px;
+    min-width: 220px;
     text-align: center;
-    justify-content: center;
+    display: inline-block;
 }
 
 .game-board {
@@ -579,6 +592,123 @@
     height: var(--cell-size);
     background: #ffffff;
     color: #111111;
+    -webkit-text-stroke: 0.1px rgba(0, 0, 0, 0.1);
+    /* Very subtle stroke */
+    /* Sharp multi-directional thin border */
+    text-shadow:
+        -0.5px -0.5px 0 #000,
+        0.5px -0.5px 0 #000,
+        -0.5px 0.5px 0 #000,
+        0.5px 0.5px 0 #000,
+        0px 0px 1px #000;
+}
+
+/* Synesthesia: Custom Letter Colors */
+.board-cell[data-letter*="A"] {
+    color: var(--letter-A-color, #111111) !important;
+}
+
+.board-cell[data-letter*="B"] {
+    color: var(--letter-B-color, #111111) !important;
+}
+
+.board-cell[data-letter*="C"] {
+    color: var(--letter-C-color, #111111) !important;
+}
+
+.board-cell[data-letter*="D"] {
+    color: var(--letter-D-color, #111111) !important;
+}
+
+.board-cell[data-letter*="E"] {
+    color: var(--letter-E-color, #111111) !important;
+}
+
+.board-cell[data-letter*="F"] {
+    color: var(--letter-F-color, #111111) !important;
+}
+
+.board-cell[data-letter*="G"] {
+    color: var(--letter-G-color, #111111) !important;
+}
+
+.board-cell[data-letter*="H"] {
+    color: var(--letter-H-color, #111111) !important;
+}
+
+.board-cell[data-letter*="I"] {
+    color: var(--letter-I-color, #111111) !important;
+}
+
+.board-cell[data-letter*="J"] {
+    color: var(--letter-J-color, #111111) !important;
+}
+
+.board-cell[data-letter*="K"] {
+    color: var(--letter-K-color, #111111) !important;
+}
+
+.board-cell[data-letter*="L"] {
+    color: var(--letter-L-color, #111111) !important;
+}
+
+.board-cell[data-letter*="M"] {
+    color: var(--letter-M-color, #111111) !important;
+}
+
+.board-cell[data-letter*="N"] {
+    color: var(--letter-N-color, #111111) !important;
+}
+
+.board-cell[data-letter*="O"] {
+    color: var(--letter-O-color, #111111) !important;
+}
+
+.board-cell[data-letter*="P"] {
+    color: var(--letter-P-color, #111111) !important;
+}
+
+.board-cell[data-letter*="Q"] {
+    color: var(--letter-Q-color, #111111) !important;
+}
+
+.board-cell[data-letter*="R"] {
+    color: var(--letter-R-color, #111111) !important;
+}
+
+.board-cell[data-letter*="S"] {
+    color: var(--letter-S-color, #111111) !important;
+}
+
+.board-cell[data-letter*="T"] {
+    color: var(--letter-T-color, #111111) !important;
+}
+
+.board-cell[data-letter*="U"] {
+    color: var(--letter-U-color, #111111) !important;
+}
+
+.board-cell[data-letter*="V"] {
+    color: var(--letter-V-color, #111111) !important;
+}
+
+.board-cell[data-letter*="W"] {
+    color: var(--letter-W-color, #111111) !important;
+}
+
+.board-cell[data-letter*="X"] {
+    color: var(--letter-X-color, #111111) !important;
+}
+
+.board-cell[data-letter*="Y"] {
+    color: var(--letter-Y-color, #111111) !important;
+}
+
+.board-cell[data-letter*="Z"] {
+    color: var(--letter-Z-color, #111111) !important;
+}
+
+.board-cell {
     /* Sharp charcoal for readability */
     display: flex;
     align-items: center;
@@ -976,6 +1106,19 @@
     text-shadow: 0 0 8px rgba(0, 0, 0, 0.8), 0 0 4px #000;
     animation: bonusPulse 1.5s infinite;
     z-index: 5;
+}
+
+/* Remove blurriness for bonus word in light themes */
+[class*="theme-white"] .word-item.bonus-word,
+[class*="theme-light-"] .word-item.bonus-word,
+body.theme-yellow .word-item.bonus-word,
+body.theme-pink .word-item.bonus-word,
+body.theme-orange .word-item.bonus-word,
+body.theme-gray .word-item.bonus-word,
+body.theme-light-brown .word-item.bonus-word {
+    text-shadow: none !important;
+    box-shadow: 0 2px 8px rgba(0, 128, 0, 0.3) !important;
+    color: #000 !important;
 }
 
 .word-item.unfound {
@@ -1748,15 +1891,18 @@
 }
 
 .spinner-content {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    border: 3px solid #e94560;
+    background: var(--bg-primary);
+    /* Use theme background */
+    border: 3px solid var(--accent-color);
     border-radius: 16px;
     padding: 20px;
     min-width: 350px;
     max-width: 500px;
     position: relative;
-    box-shadow: 0 10px 40px rgba(233, 69, 96, 0.4);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
     animation: slideDown 0.4s ease;
+    color: var(--text-primary);
+    /* Use theme text */
 }
 
 @keyframes slideDown {
@@ -1804,7 +1950,8 @@
 
 .param-label {
     font-weight: 600;
-    color: #a8d5ff;
+    color: var(--text-primary);
+    opacity: 0.8;
     font-size: 1.05rem;
 }
 

@@ -15,6 +15,8 @@ const playerRatingCache = new Map(); // Cache for Chat Colors
 let tournamentScore = 0;
 let tournamentStartTime = 0;
 let localEndTime = 0;
+let stableServerTimeOffset = null; // Persistent offset to prevent jitter
+let timerFormatIs24h = false;     // Cached format to prevent flashing between HH:MM:SS and M:SS
 
 // Mouse selection state
 let mouseState = {
@@ -1475,22 +1477,8 @@ function updateParameters(state) {
         'tournament': 'Tournament'
     };
 
-    // Update Timer Display
     const timerVal = document.getElementById('timer-value');
-    if (timerVal) {
-        const seconds = state.time_remaining || state.timer || 0;
-        if (seconds >= 3600) {
-            const hours = Math.floor(seconds / 3600);
-            const mins = Math.floor((seconds % 3600) / 60);
-            const secs = seconds % 60;
-            timerVal.textContent = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        } else {
-            const mins = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            // MM:SS format
-            timerVal.textContent = `${mins.toString().padStart(1, '0')}:${secs.toString().padStart(2, '0')}`;
-        }
-    }
+    // Timer display is handled by syncTimerWithServer and updateLocalTimer for smoothness
 
     // Update Title
     const titleEl = document.getElementById('game-title');
@@ -1574,7 +1562,13 @@ function updateTimer(seconds) {
 function syncTimerWithServer(state) {
     const clientTime = Date.now() / 1000;
     const serverTime = state.server_time;
-    const serverTimeOffset = serverTime - clientTime;
+    if (serverTime) {
+        const currentOffset = serverTime - clientTime;
+        // Establish once, then only update if drifting by > 3s
+        if (stableServerTimeOffset === null || Math.abs(currentOffset - stableServerTimeOffset) > 3) {
+            stableServerTimeOffset = currentOffset;
+        }
+    }
 
     let endTime = 0;
     if (state.state === 'active' && state.round_end_time) {
@@ -1583,7 +1577,9 @@ function syncTimerWithServer(state) {
         endTime = state.intermission_end_time;
     }
 
-    localEndTime = endTime - serverTimeOffset;
+    if (endTime && stableServerTimeOffset !== null) {
+        localEndTime = endTime - stableServerTimeOffset;
+    }
 
     if (!timerInterval && localEndTime > 0) {
         timerInterval = setInterval(updateLocalTimer, 100);
@@ -1603,14 +1599,13 @@ function updateLocalTimer() {
     const remaining = Math.max(0, localEndTime - now);
     const seconds = Math.ceil(remaining);
 
-    // Format determination
-    let is24h = false;
+    // Format determination: Stick with it once detected
     if (window.lastGameState && window.lastGameState.time_limit >= 3600) {
-        is24h = true;
+        timerFormatIs24h = true;
     }
 
     let display;
-    if (is24h) {
+    if (timerFormatIs24h) {
         const hours = Math.floor(seconds / 3600);
         const mins = Math.floor((seconds % 3600) / 60);
         const secs = seconds % 60;

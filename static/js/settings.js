@@ -20,7 +20,8 @@ function debounce(func, wait) {
         board_size: 60,
         highlight_typing: true,
         highlight_mouse: true,
-        next_round_bell_enabled: true
+        next_round_bell_enabled: true,
+        letter_colors: {}
     };
 
     // DOM Elements
@@ -44,6 +45,7 @@ function debounce(func, wait) {
 
     // 2. Apply Settings to UI and State
     function applySettings(settings) {
+        // ... (existing code for board size, chat size, def size, music, theme, highlight typing/mouse, etc.)
         // Board Size
         if (settings.board_size) {
             const size = parseInt(settings.board_size);
@@ -99,7 +101,6 @@ function debounce(func, wait) {
 
             if (window.userSettings) window.userSettings.lobby_music = val;
 
-            // Trigger update if function exists (in app.js)
             if (typeof handleLobbyMusicState === 'function') {
                 handleLobbyMusicState();
             }
@@ -128,9 +129,6 @@ function debounce(func, wait) {
             const color = settings.highlight_typing_color;
             document.documentElement.style.setProperty('--highlight-typing-color', color);
 
-            if (!window.userSettings) window.userSettings = {};
-            window.userSettings.highlight_typing_color = color;
-
             const dots = document.querySelectorAll('#highlight-color-picker .color-dot');
             dots.forEach(dot => {
                 if (dot.getAttribute('data-color') === color) dot.classList.add('active');
@@ -156,9 +154,6 @@ function debounce(func, wait) {
             const color = settings.highlight_mouse_color;
             document.documentElement.style.setProperty('--highlight-mouse-color', color);
 
-            if (!window.userSettings) window.userSettings = {};
-            window.userSettings.highlight_mouse_color = color;
-
             const dots = document.querySelectorAll('#highlight-mouse-color-picker .color-dot');
             dots.forEach(dot => {
                 if (dot.getAttribute('data-color') === color) dot.classList.add('active');
@@ -177,40 +172,117 @@ function debounce(func, wait) {
 
             const container = document.getElementById('bell-selection-container');
             if (container) container.style.display = val ? 'flex' : 'none';
-
-            if (!window.userSettings) window.userSettings = {};
-            window.userSettings.next_round_bell_enabled = val;
         }
 
         // Next Round Bell Type
         if (settings.next_round_bell_type) {
             const type = settings.next_round_bell_type;
-            if (!window.userSettings) window.userSettings = {};
-            window.userSettings.next_round_bell_type = type;
-
             const bellBtns = document.querySelectorAll('.bell-btn');
             bellBtns.forEach(btn => {
                 if (btn.getAttribute('data-bell') === type) btn.classList.add('active');
                 else btn.classList.remove('active');
             });
         }
+
+        // Synesthesia: Letter Colors
+        if (settings.letter_colors) {
+            let colors = settings.letter_colors;
+            if (typeof colors === 'string') {
+                try {
+                    colors = JSON.parse(colors);
+                } catch (e) {
+                    console.warn('[settings.js] Failed to parse letter colors:', e);
+                    colors = {};
+                }
+            }
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.letter_colors = colors;
+
+            // Apply all variables
+            Object.keys(colors).forEach(letter => {
+                document.documentElement.style.setProperty(`--letter-${letter}-color`, colors[letter]);
+            });
+
+            // Update UI if grid is built
+            updateSynesthesiaUI();
+        }
     }
 
-    // 3. Handle Updates
+    // 3. Update Helpers
     const saveSettingDebounced = debounce(async (key, value) => {
-        console.log(`[settings.js] Saving ${key}: ${value}`);
+        let saveVal = value;
+        if (key === 'letter_colors') {
+            saveVal = JSON.stringify(value);
+        }
+        console.log(`[settings.js] Saving ${key}: ${saveVal}`);
         try {
             await fetch('/api/settings/update', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key, value })
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    key,
+                    value: saveVal
+                })
             });
         } catch (error) {
             console.error('[settings.js] Failed to save setting:', error);
         }
-    }, 500); // 500ms debounce
+    }, 500);
 
-    // 4. Input Listeners
+    // Initializer for UI
+    function initSynesthesia() {
+        const grid = document.getElementById('synesthesia-letters-grid');
+        if (!grid) return;
+
+        grid.innerHTML = '';
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+        alphabet.forEach(letter => {
+            const unit = document.createElement('div');
+            unit.className = 'synesthesia-unit';
+            unit.innerHTML = `
+                <label>${letter}</label>
+                <input type="color" data-letter="${letter}" value="${window.userSettings.letter_colors[letter] || '#111111'}">
+            `;
+            grid.appendChild(unit);
+
+            const picker = unit.querySelector('input');
+            picker.addEventListener('input', (e) => {
+                const color = e.target.value;
+                document.documentElement.style.setProperty(`--letter-${letter}-color`, color);
+                window.userSettings.letter_colors[letter] = color;
+                saveSettingDebounced('letter_colors', window.userSettings.letter_colors);
+            });
+        });
+
+        const resetBtn = document.getElementById('setting-synesthesia-reset');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+                alphabet.forEach(letter => {
+                    document.documentElement.style.removeProperty(`--letter-${letter}-color`);
+                    delete window.userSettings.letter_colors[letter];
+                });
+                updateSynesthesiaUI();
+                saveSettingDebounced('letter_colors', window.userSettings.letter_colors);
+            });
+        }
+    }
+
+    function updateSynesthesiaUI() {
+        const grid = document.getElementById('synesthesia-letters-grid');
+        if (!grid) return;
+
+        const pickers = grid.querySelectorAll('input[type="color"]');
+        pickers.forEach(p => {
+            const letter = p.getAttribute('data-letter');
+            p.value = window.userSettings.letter_colors[letter] || '#111111';
+        });
+    }
+
+    // 4. Existing Listeners (boardSize, chatSize, defSize, music, highlight typing/mouse, theme, bell)
     if (boardSizeSlider) {
         boardSizeSlider.addEventListener('input', (e) => {
             const val = e.target.value;
@@ -221,7 +293,6 @@ function debounce(func, wait) {
         });
     }
 
-    // Chat Font Size Listener
     const chatSizeSlider = document.getElementById('setting-chat-size');
     if (chatSizeSlider) {
         chatSizeSlider.addEventListener('input', (e) => {
@@ -235,7 +306,6 @@ function debounce(func, wait) {
         });
     }
 
-    // Definition Font Size Listener
     const defSizeSlider = document.getElementById('setting-def-size');
     if (defSizeSlider) {
         defSizeSlider.addEventListener('input', (e) => {
@@ -249,75 +319,58 @@ function debounce(func, wait) {
         });
     }
 
-    // Lobby Music Listener
     const musicToggle = document.getElementById('setting-lobby-music');
     if (musicToggle) {
         musicToggle.addEventListener('change', (e) => {
             const val = e.target.checked;
-            if (!window.userSettings) window.userSettings = {};
             window.userSettings.lobby_music = val;
             if (typeof handleLobbyMusicState === 'function') handleLobbyMusicState();
             saveSettingDebounced('lobby_music', val);
         });
     }
 
-    // Highlight as you type Listener
     const highlightToggle = document.getElementById('setting-highlight-typing');
     if (highlightToggle) {
         highlightToggle.addEventListener('change', (e) => {
             const val = e.target.checked;
-            if (!window.userSettings) window.userSettings = {};
             window.userSettings.highlight_typing = val;
             saveSettingDebounced('highlight_typing', val);
         });
     }
 
-    // Highlight typing color Dots
     const typingColorDots = document.querySelectorAll('#highlight-color-picker .color-dot');
     typingColorDots.forEach(dot => {
         dot.addEventListener('click', () => {
             const color = dot.getAttribute('data-color');
             document.documentElement.style.setProperty('--highlight-typing-color', color);
-
-            if (!window.userSettings) window.userSettings = {};
             window.userSettings.highlight_typing_color = color;
-
             typingColorDots.forEach(d => d.classList.remove('active'));
             dot.classList.add('active');
-
             saveSettingDebounced('highlight_typing_color', color);
         });
     });
 
-    // Highlight as you mouse Listener
     const mouseHighlightToggle = document.getElementById('setting-highlight-mouse');
     if (mouseHighlightToggle) {
         mouseHighlightToggle.addEventListener('change', (e) => {
             const val = e.target.checked;
-            if (!window.userSettings) window.userSettings = {};
             window.userSettings.highlight_mouse = val;
             saveSettingDebounced('highlight_mouse', val);
         });
     }
 
-    // Highlight mouse color Dots
     const mouseColorDots = document.querySelectorAll('#highlight-mouse-color-picker .color-dot');
     mouseColorDots.forEach(dot => {
         dot.addEventListener('click', () => {
             const color = dot.getAttribute('data-color');
             document.documentElement.style.setProperty('--highlight-mouse-color', color);
-
-            if (!window.userSettings) window.userSettings = {};
             window.userSettings.highlight_mouse_color = color;
-
             mouseColorDots.forEach(d => d.classList.remove('active'));
             dot.classList.add('active');
-
             saveSettingDebounced('highlight_mouse_color', color);
         });
     });
 
-    // Theme Selection Listeners
     const themeBtns = document.querySelectorAll('.theme-btn');
     themeBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -327,34 +380,25 @@ function debounce(func, wait) {
         });
     });
 
-    // Next Round Bell Listener
     const bellToggle = document.getElementById('setting-next-round-bell');
     if (bellToggle) {
         bellToggle.addEventListener('change', (e) => {
             const val = e.target.checked;
             const container = document.getElementById('bell-selection-container');
             if (container) container.style.display = val ? 'flex' : 'none';
-
-            if (!window.userSettings) window.userSettings = {};
             window.userSettings.next_round_bell_enabled = val;
             saveSettingDebounced('next_round_bell_enabled', val);
         });
     }
 
-    // Bell Selection Listeners
     const bellBtns = document.querySelectorAll('.bell-btn');
     bellBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const bell = btn.getAttribute('data-bell');
-            if (!window.userSettings) window.userSettings = {};
             window.userSettings.next_round_bell_type = bell;
-
             bellBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-
-            // Play preview
             playPreviewBell(bell);
-
             saveSettingDebounced('next_round_bell_type', bell);
         });
     });
@@ -365,15 +409,8 @@ function debounce(func, wait) {
     }
 
     function applyTheme(theme) {
-        // Remove existing theme classes
         document.body.className = document.body.className.replace(/\btheme-\S+/g, '');
-
-        // Add new theme class (if not default)
-        if (theme && theme !== 'default') {
-            document.body.classList.add(`theme-${theme}`);
-        }
-
-        // Update Active Button State
+        if (theme && theme !== 'default') document.body.classList.add(`theme-${theme}`);
         themeBtns.forEach(b => {
             if (b.getAttribute('data-theme') === theme) b.classList.add('active');
             else b.classList.remove('active');
@@ -381,47 +418,39 @@ function debounce(func, wait) {
     }
 
     // Initialize
+    initSynesthesia();
     loadSettings();
     initPreviewInteraction();
 
-    // --- Preview Board Interaction ---
+    // Board Mouse interaction logic for preview
     function initPreviewInteraction() {
         const previewBoard = document.getElementById('preview-board');
         if (!previewBoard) return;
-
         let isDown = false;
-
-        // Start
         const start = (e) => {
             isDown = true;
             highlightCell(e);
-            e.preventDefault(); // Prevent scroll on touch
+            e.preventDefault();
         };
-
-        // Move
         const move = (e) => {
             if (!isDown) return;
             highlightCell(e);
             e.preventDefault();
         };
-
-        // End
         const end = () => {
             isDown = false;
-            // Clear selection after a delay for effect, or keep it? 
-            // Better to keep it briefly or clear on next interaction.
-            // Let's clear immediately on end for "test" feel.
             setTimeout(() => {
                 previewBoard.querySelectorAll('.board-cell').forEach(c => c.classList.remove('selected'));
             }, 300);
         };
-
         previewBoard.addEventListener('mousedown', start);
-        previewBoard.addEventListener('touchstart', start, { passive: false });
-
+        previewBoard.addEventListener('touchstart', start, {
+            passive: false
+        });
         document.addEventListener('mousemove', move);
-        document.addEventListener('touchmove', move, { passive: false });
-
+        document.addEventListener('touchmove', move, {
+            passive: false
+        });
         document.addEventListener('mouseup', end);
         document.addEventListener('touchend', end);
     }
@@ -429,47 +458,35 @@ function debounce(func, wait) {
     function highlightCell(e) {
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        const point = { x: clientX, y: clientY };
-
-        // Scope to preview board cells only
+        const point = {
+            x: clientX,
+            y: clientY
+        };
         const cells = document.querySelectorAll('#preview-board .board-cell');
-
         for (const cell of cells) {
             if (isPointInOctagon(point, cell)) {
                 cell.classList.add('selected');
-                break; // Found the cell
+                break;
             }
         }
     }
 
-    // Octagonal hit test (Copied from mouse_selection.js for independence)
     function isPointInOctagon(point, cell) {
         const rect = cell.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
-
-        // Dynamic Radius Logic to match visual sizing
-        // cell width is variable now, so we calculate radius relative to it.
-        // Original: 60px cell -> 35px radius (~1.16x half-width) or just slightly larger than half-width (30px).
-        // Let's use 58% of the rendered width to allow bridging gaps.
         const r = rect.width * 0.58;
-
-        // Distance from center
         const dx = point.x - centerX;
         const dy = point.y - centerY;
         const distance = Math.sqrt(dx * dx + dy * dy);
-
-        // Circular boundary check
         if (distance > r) return false;
-
-        // Octagonal bounds
         const absDx = Math.abs(dx);
         const absDy = Math.abs(dy);
         const maxDist = Math.max(absDx, absDy);
         const minDist = Math.min(absDx, absDy);
-
         return maxDist + 0.414 * minDist <= r;
     }
+
     window.loadSettings = loadSettings;
     window.applySettings = applySettings;
 })();

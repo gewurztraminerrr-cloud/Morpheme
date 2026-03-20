@@ -742,13 +742,13 @@ def get_public_profile(username):
     
     time_filter = ""
     if period == 'day':
-        time_filter = "AND timestamp >= datetime('now', '-1 day')"
+        time_filter = "AND date(timestamp, 'localtime') = date('now', 'localtime')"
     elif period == 'week':
-        time_filter = "AND timestamp >= datetime('now', '-7 days')"
+        time_filter = "AND date(timestamp, 'localtime') >= date('now', '-7 days', 'localtime')"
     elif period == 'month':
-        time_filter = "AND timestamp >= datetime('now', '-30 days')"
+        time_filter = "AND date(timestamp, 'localtime') >= date('now', '-30 days', 'localtime')"
     elif period == 'year':
-        time_filter = "AND timestamp >= datetime('now', '-365 days')"
+        time_filter = "AND date(timestamp, 'localtime') >= date('now', '-365 days', 'localtime')"
 
     cursor_all = conn.execute(f'''
         SELECT room_id, game_type, round_number, board_json, words_json, total_score, 
@@ -808,9 +808,16 @@ def get_public_profile(username):
         perf_val = int(pe_ratio * 100) if pe_ratio else 100
 
         words = json.loads(wjson)
-        num_words = len(words)
-        top_word = max(words, key=lambda x: x.get('points', 0))['word'] if words else "-"
-        avg_len = round(sum(len(w['word']) for w in words) / num_words, 1) if num_words > 0 else 0
+        num_words = len(words) if isinstance(words, list) else 0
+        top_word = "-"
+        if num_words > 0:
+            best_w_obj = max(words, key=lambda x: x.get('points', 0)) if words else {}
+            top_word = best_w_obj.get('word', '-') if isinstance(best_w_obj, dict) else "-"
+
+        avg_len = 0
+        if num_words > 0:
+            total_l = sum(len(str(w.get('word', ''))) for w in words if isinstance(w, dict))
+            avg_len = round(total_l / num_words, 1)
         room_strength = sum(e[1] for e in r_entries) if r_entries else urat
         
         board = json.loads(bjson)
@@ -962,12 +969,12 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             if w.get('points', 0) > global_stats["best_word"]["points"]:
                 global_stats["best_word"] = {"word": w['word'], "points": w.get('points',0)}
 
-    # 2. Filter by Period for the lists
+    # 2. Filter by Period for the lists - Enforce Calendar Day logic
     time_filter = ""
-    if period == 'day': time_filter = "AND timestamp >= datetime('now', '-1 day')"
-    elif period == 'week': time_filter = "AND timestamp >= datetime('now', '-7 days')"
-    elif period == 'month': time_filter = "AND timestamp >= datetime('now', '-30 days')"
-    elif period == 'year': time_filter = "AND timestamp >= datetime('now', '-365 days')"
+    if period == 'day': time_filter = "AND date(timestamp, 'localtime') = date('now', 'localtime')"
+    elif period == 'week': time_filter = "AND date(timestamp, 'localtime') >= date('now', '-7 days', 'localtime')"
+    elif period == 'month': time_filter = "AND date(timestamp, 'localtime') >= date('now', '-30 days', 'localtime')"
+    elif period == 'year': time_filter = "AND date(timestamp, 'localtime') >= date('now', '-365 days', 'localtime')"
         
     query = f'''
         SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating
@@ -1061,11 +1068,22 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         
         perf_val = int(ratio * 100) # Simple metric for UI
 
+        num_words = len(words) if isinstance(words, list) else 0
+        top_word = "-"
+        if num_words > 0:
+            best_w_obj = max(words, key=lambda x: x.get('points', 0)) if words else {}
+            top_word = best_w_obj.get('word', '-') if isinstance(best_w_obj, dict) else "-"
+        
+        avg_l = 0
+        if num_words > 0:
+            total_l = sum(len(str(w.get('word', ''))) for w in words if isinstance(w, dict))
+            avg_l = round(total_l / num_words, 1)
         processed = {
             'game_id': g_id, 'room_id': r_id, 'round_number': r_num, 'timestamp': ts,
             'total_score': my_score, 'num_words': len(words), 'is_win': is_win,
+            'avg_len': avg_l,
             'ratio': ratio, 'performance_value': perf_val,
-            'top_word': max(words, key=lambda x: x.get('points', 0))['word'] if words else "-",
+            'top_word': top_word,
             'all_players': room_entries,
             'words': words,
             'board': json.loads(row[5])
@@ -3002,9 +3020,9 @@ def get_leaderboard_data():
              # Exclude 10m (600) and 24h (86400) from generic aggregated views for Accumulative to prevent them from obfuscating normal fast-paced leaderboards
              where_clauses.append("(rh.game_type != 'accumulative' OR rh.round_duration NOT IN (600, 86400))")
 
-        # Time Filter
+        # Time Filter - Calendar Day logic
         if period == 'day':
-             where_clauses.append("rh.timestamp >= datetime('now', '-1 day', 'localtime')")
+             where_clauses.append("date(rh.timestamp, 'localtime') = date('now', 'localtime')")
         elif period == 'week':
              where_clauses.append("rh.timestamp >= datetime('now', '-7 days', 'localtime')")
         elif period == 'month':

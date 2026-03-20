@@ -387,20 +387,18 @@
 
 .contact-card h2 {
     font-size: 1.8rem;
-    /* Slightly smaller h2 */
     margin-bottom: 5px;
     text-align: center;
     color: var(--text-primary);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .contact-desc {
     text-align: center;
     color: var(--text-70);
     margin-bottom: 20px;
-    /* Reduced from 30px */
-    font-size: 0.9rem;
-    /* Slightly smaller font */
-    line-height: 1.4;
+    font-size: 0.95rem;
+    line-height: 1.5;
 }
 
 .contact-form {
@@ -419,12 +417,12 @@
 
 .form-group label {
     font-size: 0.8rem;
-    /* Slightly smaller label */
-    font-weight: 600;
+    font-weight: 700;
     color: var(--muted-text);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.2px;
     padding-left: 5px;
+    margin-bottom: 2px;
 }
 
 .contact-form input,
@@ -456,9 +454,9 @@
 
 .field-hint {
     font-size: 0.7rem;
-    /* Smaller hint */
-    color: var(--muted-text);
+    color: var(--text-muted-fixed, var(--muted-text));
     padding-left: 5px;
+    opacity: 0.85;
 }
 
 .submit-contact-btn {
@@ -548,13 +546,69 @@
 .sf-subtab-btn .badge,
 .sf-tab-btn .badge {
     background: var(--accent-color);
-    color: #000;
+    color: var(--btn-text, #000);
+    /* Use theme-aware button text color */
     font-size: 0.7rem;
-    padding: 1px 5px;
+    padding: 1px 6px;
     border-radius: 10px;
     font-weight: 800;
     margin-left: 5px;
     pointer-events: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+}
+
+/* Ensure badges are highly visible in dark themes by making them white/light if needed */
+/* This targets the default theme (no class) and all dark-mode classes */
+body:not([class*="theme-white"]):not([class*="theme-light-"]):not(.theme-yellow):not(.theme-pink):not(.theme-orange):not(.theme-gray):not(.theme-light-brown) .badge {
+    background: #ffffff !important;
+    color: #000000 !important;
+}
+
+/* Specific theme overrides */
+body.theme-white .badge,
+body[class*="theme-light-"] .badge,
+body.theme-yellow .badge,
+body.theme-pink .badge,
+body.theme-orange .badge,
+body.theme-gray .badge,
+body.theme-light-brown .badge {
+    background: #333333 !important;
+    color: #ffffff !important;
+}
+
+/* Specific Overrides for White/Light Themes on Contact Page Readability */
+body[class*="theme-white"] .contact-desc,
+body[class*="theme-light-"] .contact-desc,
+body.theme-yellow .contact-desc,
+body.theme-pink .contact-desc,
+body.theme-orange .contact-desc,
+body.theme-light-brown .contact-desc {
+    color: #444 !important;
+}
+
+body[class*="theme-white"] .form-group label,
+body[class*="theme-light-"] .form-group label,
+body.theme-yellow .form-group label,
+body.theme-pink .form-group label,
+body.theme-orange .form-group label,
+body.theme-light-brown .form-group label {
+    color: #333 !important;
+    opacity: 1 !important;
+}
+
+body[class*="theme-white"] .field-hint,
+body[class*="theme-light-"] .field-hint,
+body.theme-yellow .field-hint,
+body.theme-pink .field-hint,
+body.theme-orange .field-hint,
+body.theme-light-brown .field-hint {
+    color: #555 !important;
+    opacity: 1 !important;
 }
 
 .invite-panel {

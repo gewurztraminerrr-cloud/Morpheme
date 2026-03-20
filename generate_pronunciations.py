@@ -68,11 +68,31 @@ def arpa_to_respell(phonemes):
         
     return "-".join(parts)
 
+def get_compound_pron(word, cmudict):
+    """Try to find the pronunciation by splitting into common words."""
+    if len(word) < 6: return None
+    
+    # Try every possible split point (e.g. CHICK + PEA)
+    for i in range(3, len(word) - 2):
+        left, right = word[:i], word[i:]
+        if left in cmudict and right in cmudict:
+            left_respell = arpa_to_respell(cmudict[left])
+            right_respell = arpa_to_respell(cmudict[right])
+            if left_respell and right_respell:
+                return f"{left_respell}-{right_respell}"
+    
+    return None
+
 def simple_g2p(word):
+    """Cautious rule-based fallback for words not in CMU or compounds."""
     word = word.upper().strip()
     
-    # DEFINITIVE OVERRIDES (Reliable Sources)
+    # PRECISE OVERRIDES (Requested by User and Verified)
     overrides = {
+        "ORCINOL": "ORE-SIN-AWL",
+        "OVERKEEN": "OH-VUR-KEEN",
+        "CHICKPEA": "CHIK-PEE",
+        "CALCANEA": "KAL-KAY-NEE-AH",
         "BARYE": "BAIR-EE",
         "PORTAMENTI": "PORE-TAH-MEN-TEE",
         "LINALOOL": "LIH-NAH-LOW-WOLL",
@@ -83,81 +103,59 @@ def simple_g2p(word):
     }
     if word in overrides: return overrides[word]
 
-    # Rule-based G2P Refinement
+    # Don't guess for very long or very rare words not in source
+    if len(word) > 11: return ""
+
+    # Rule-based G2P (Single pass or protected)
     res = word
     
-    # Pre-processing Clusters
-    res = res.replace('TION', 'SHUN-')
-    res = res.replace('PH', 'F')
-    res = res.replace('QU', 'KW')
-    res = res.replace('CK', 'K')
+    # 1. Protect Clues and Phonemes
+    res = res.replace('PH', ' F ')
+    res = res.replace('QU', ' KW ')
+    res = res.replace('TION', ' SHUN ')
+    res = res.replace('CK', ' K ')
+    res = res.replace('CH', ' CH ')
+    res = res.replace('SH', ' SH ')
+    res = res.replace('TH', ' TH ')
     
-    # Common Scrabble word patterns
-    if res.endswith('ITE'): res = res[:-3] + 'EYET'
-    if res.endswith('ATE'): res = res[:-3] + 'AYT'
-    if res.endswith('OUS'): res = res[:-3] + 'UHS'
-    if res.endswith('ISM'): res = res[:-3] + 'IH-ZUM'
-    if res.endswith('OLOGY'): res = res[:-5] + 'OL-UH-JEE'
+    # Soft C/G (Before vowels)
+    res = re.sub(r'C([EIY])', r' S \1', res)
+    res = re.sub(r'G([EIY])', r' J \1', res)
+    res = res.replace('C', ' K ')
+    res = res.replace('G', ' G ')
 
-    # Handle C and G
-    res = re.sub(r'C([EIY])', r'S\1', res)
-    res = re.sub(r'G([EIY])', r'J\1', res)
-    res = res.replace('CH', 'CH') # Default
-    # Specific Greek-root CH as K (very common in minerals/science)
-    if 'CH' in res:
-        if any(x in res for x in ["MALACH", "ARCHI", "MECHAN", "CHLOR", "CHRON", "ECH"]):
-            res = res.replace('CH', 'K')
-
-    res = res.replace('C', 'K')
-    
-    # Silent E (very basic)
-    if res.endswith('E') and len(res) > 3:
-        # Check if preceded by V-C
-        if re.search(r'[AEIOUY][B-DF-HJ-NP-TV-Z]E$', word):
-            # This logic is usually better handled by cluster detection
-            pass
-
-    # Vowel Mappings (English sounds)
-    mapping = [
-        (r'EE', 'EE'), (r'EA', 'EE'), (r'IE', 'EE'), (r'EI', 'EE'),
-        (r'AI', 'AY'), (r'AY', 'AY'), (r'OA', 'OH'), (r'OO', 'OO'),
-        (r'OU', 'OW'), (r'OW', 'OW'), (r'OI', 'OY'), (r'OY', 'OY'),
-        (r'AU', 'AW'), (r'AW', 'AW'),
-        (r'AR', 'AR'), (r'OR', 'ORE'), (r'ER', 'ER'), (r'IR', 'ER'), (r'UR', 'ER'),
-        # Lone vowels
-        (r'A(?=[B-DF-HJ-NP-TV-Z]E$)', 'AY'), # cake
-        (r'A', 'AH'),
-        (r'E(?=[B-DF-HJ-NP-TV-Z]E$)', 'EE'), # mete
-        (r'E', 'EH'),
-        (r'I(?=[B-DF-HJ-NP-TV-Z]E$)', 'EYE'), # kite
-        (r'I', 'IH'),
-        (r'O(?=[B-DF-HJ-NP-TV-Z]E$)', 'OH'), # note
-        (r'O', 'OH'),
-        (r'U(?=[B-DF-HJ-NP-TV-Z]E$)', 'OO'), # cute
-        (r'U', 'UH')
+    # 2. Vowel Clusters with precise respelling
+    vowel_mappings = [
+        (r'AI|AY', ' AY '), (r'EE|EA|IE|EI', ' EE '),
+        (r'OA|OW|OE', ' OH '), (r'OO', ' OO '),
+        (r'OU|OW', ' OW '), (r'OI|OY', ' OY '),
+        (r'AU|AW', ' AW '), (r'AR', ' AR '), 
+        (r'ER|IR|UR|OR(?=[B-DF-HJ-NP-TV-Z])', ' ER '),
+        (r'OR', ' ORE '),
+        (r'A(?=[B-DF-HJ-NP-TV-Z]E)', ' AY '), # cake
+        (r'I(?=[B-DF-HJ-NP-TV-Z]E)', ' EYE '), # kite
+        (r'O(?=[B-DF-HJ-NP-TV-Z]E)', ' OH '), # note
+        (r'U(?=[B-DF-HJ-NP-TV-Z]E)', ' OO '), # cute
+        # Lone vowels (cautious, avoid H overuse)
+        (r'A$', ' AH '), (r'A', ' A '), 
+        (r'E$', ' EE '), (r'E', ' EH '),
+        (r'I', ' IH '),
+        (r'O', ' OH '),
+        (r'U', ' UH ')
     ]
     
-    # Protected tokens to avoid double-processing
-    tokens = []
+    for pat, repl in vowel_mappings:
+        res = re.sub(pat, repl, res)
     
-    # Syllable splitting (crude but better)
-    # 1. Identify vowels
-    v_regex = r'(EE|EA|IE|EI|AY|AI|OH|OA|OO|OW|OU|OY|OI|AW|AU|AR|ORE|ER|IR|UR|EYE|AY|AH|EH|IH|OH|UH|EH)'
+    # 3. Syllabification
+    parts = [p.strip() for p in res.split() if p.strip()]
     
-    # We'll just apply the core vowel mappings and then hyphenate
-    for pat, repl in mapping:
-        # Use a placeholder to protect
-        res = re.sub(pat, " " + repl + " ", res)
+    vowels = {'AH', 'A', 'AW', 'OW', 'EYE', 'EH', 'ER', 'AY', 'IH', 'EE', 'OH', 'OY', 'UU', 'OO', 'AIR', 'ORE', 'AR', 'UH'}
     
-    res = res.replace("  ", " ").strip()
-    parts = res.split(" ")
-    
-    # Join consonants into the previous or next syllable
     final_parts = []
     curr = ""
     for p in parts:
-        if not p: continue
-        if any(v in p for v in ['AH', 'EH', 'IH', 'OH', 'UH', 'EE', 'AY', 'OW', 'OY', 'AW', 'AR', 'ER', 'ORE', 'EYE', 'OO']):
+        if any(v in p for v in vowels):
             final_parts.append(curr + p)
             curr = ""
         else:
@@ -166,13 +164,7 @@ def simple_g2p(word):
         if final_parts: final_parts[-1] += curr
         else: final_parts.append(curr)
         
-    # Schwa logic: Unstressed AH often becomes UH
-    # If more than 2 syllables, change internal AH to UH
-    if len(final_parts) > 2:
-        for i in range(1, len(final_parts) - 1):
-             if final_parts[i] == "AH": final_parts[i] = "UH"
-             # If part is like LAH, change to LUH? No, too risky.
-             
+    if not final_parts: return ""
     return "-".join(final_parts)
 
 def main():
@@ -197,12 +189,21 @@ def main():
     
     with open(output_path, 'w') as f:
         for word in sorted(words):
-            pron = arpa_to_respell(cmu[word]) if word in cmu else simple_g2p(word)
+            pron = ""
+            if word in cmu:
+                pron = arpa_to_respell(cmu[word])
+            else:
+                # Try common compounds (e.g. CHICKPEA)
+                pron = get_compound_pron(word, cmu)
+                if not pron:
+                    # Fallback to cautious G2P
+                    pron = simple_g2p(word)
+            
             if pron:
                 pron = re.sub(r'-+', '-', pron).strip('-').upper()
                 f.write(f"{word} - {pron}\n")
 
-    print(f"Saved {len(words)} pronunciations to {output_path}")
+    print(f"Saved pronunciations to {output_path}")
 
 if __name__ == "__main__":
     main()
