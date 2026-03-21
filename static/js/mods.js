@@ -3,17 +3,21 @@ async function checkModStatus() {
     try {
         const response = await fetch('/api/mods/status');
         const data = await response.json();
-        const modsBtn = document.getElementById('nav-mods-btn');
+        
+        window.currentUserIsMod = data.is_mod;
+        
+        if (typeof updateAuthUI === 'function') {
+            updateAuthUI();
+        }
+        
         if (data.is_mod) {
-            if (modsBtn) modsBtn.classList.remove('hidden');
             loadModList();
-        } else {
-            if (modsBtn) modsBtn.classList.add('hidden');
         }
     } catch (err) {
         console.error("Error checking mod status:", err);
     }
 }
+
 
 async function loadModList() {
     const listEl = document.getElementById('mod-list-container');

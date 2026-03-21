@@ -21,14 +21,19 @@ from private_match_logic import private_match_manager
 MODS_FILE = os.path.join(os.path.dirname(__file__), 'dictionaries', 'mods.txt')
 
 def get_moderators():
+    print(f"[Mods] Reading mods from: {MODS_FILE}")
     if not os.path.exists(MODS_FILE):
+        print(f"[Mods] MODS_FILE does not exist at {MODS_FILE}")
         return set()
     try:
         with open(MODS_FILE, 'r') as f:
-            return {line.strip().lower() for line in f if line.strip()}
+            lines = [line.strip().lower() for line in f if line.strip()]
+            print(f"[Mods] Loaded moderators: {lines}")
+            return set(lines)
     except Exception as e:
         print(f"[Mods] Error reading {MODS_FILE}: {e}")
         return set()
+
 
 def save_moderator(username):
     mods = get_moderators()
@@ -700,7 +705,13 @@ def login():
     session['email'] = user[2]
     session.pop('is_guest', None) # Clear guest flag if present
     
-    return jsonify({'success': True, 'username': username, 'email': user[2]})
+    return jsonify({
+        'success': True, 
+        'username': username, 
+        'email': user[2],
+        'is_mod': is_mod(username)
+    })
+
 
 @app.route('/api/logout', methods=['POST'])
 def logout():

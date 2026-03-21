@@ -118,36 +118,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupContactForm(); // Initialize contact form listeners
     // initSettings is now handled by settings.js
 
-    // USER REQUEST: Log out on entry to URL (Navigate or Reload)
-    const entries = performance.getEntriesByType("navigation");
-    const navType = entries.length > 0 ? entries[0].type : "";
-    const shouldLogout = navType === "reload" || navType === "navigate";
 
-    if (shouldLogout) {
-        console.log(`[Auth] Page entry (${navType}) detected - logging out.`);
-        try {
-            await fetch('/api/logout', { method: 'POST' });
-        } catch (e) {
-            console.warn('Logout request failed', e);
-        }
+    await checkSession();
 
-        // Clean up local state entirely
-        currentUser = null;
-        window.currentUser = null;
-        currentUserEmail = null;
-        window.currentUserEmail = null;
-        window.currentUserIsGuest = false;
-        localStorage.removeItem('morpheme_username');
-        localStorage.removeItem('morpheme_pm_state');
-        localStorage.removeItem('private_match_active');
-        localStorage.removeItem('tournament_play_active');
-
-        // Ensure UI reflects logged out state
-        updateAuthUI();
-        showPage('page-login');
-    } else {
-        await checkSession();
-    }
 
     // Handle initial navigation
     const hash = window.location.hash;
@@ -593,8 +566,16 @@ async function handleSignIn() {
             currentUserEmail = data.email;
             window.currentUserEmail = currentUserEmail;
             window.currentUserIsGuest = data.is_guest || false;
+            window.currentUserIsMod = data.is_mod || false; // Set here too
+            
+            // Critical: Re-check mod status immediately after successful login
+            if (typeof checkModStatus === 'function') {
+                checkModStatus();
+            }
+            
             navigateToLobby();
         } else {
+
             errorEl.textContent = data.error || data.message;
         }
     } catch (error) {
@@ -693,7 +674,13 @@ function navigateToLobby() {
     if (window.loadSettings) {
         window.loadSettings();
     }
+
+    // New: Re-check moderator status on lobby navigation
+    if (typeof checkModStatus === 'function') {
+        checkModStatus();
+    }
 }
+
 
 function updateAuthUI() {
     const loginNavBtn = document.getElementById('nav-login-btn');
