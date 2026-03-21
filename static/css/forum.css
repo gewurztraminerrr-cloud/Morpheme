@@ -32,14 +32,17 @@
 
 #forum-user-search-input {
     flex: 1;
+    min-width: 0; /* Allow it to shrink */
+    max-width: 150px; /* Prevent spilling */
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid var(--input-border);
     border-radius: 6px;
     padding: 8px 12px;
     color: var(--text-primary);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     transition: all 0.3s ease;
 }
+
 
 #forum-user-search-input:focus {
     outline: none;
