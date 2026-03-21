@@ -37,7 +37,9 @@
             <button class="nav-btn" data-page="forums">Forum</button>
             <button class="nav-btn" data-page="tools">Tools</button>
             <button class="nav-btn" data-page="settings">Settings</button>
+            <button class="nav-btn hidden" data-page="mods" id="nav-mods-btn">Mods</button>
             <button class="nav-btn" data-page="contact">Contact</button>
+
             <div id="user-display" class="user-display hidden">
                 <span id="username-display"></span>
                 <button id="logout-btn" class="logout-btn">Logout</button>
@@ -1675,6 +1677,25 @@
             </div>
         </div>
 
+        <div id="page-mods" class="page">
+            <div class="mods-container">
+                <div class="mods-header">
+                    <h2>Moderator Management</h2>
+                    <p>Users in the list below have access to site moderation tools.</p>
+                </div>
+
+                <div class="mod-add-section">
+                    <input type="text" id="new-mod-username" placeholder="Enter username to add...">
+                    <button id="add-mod-btn" class="add-mod-btn">Add Moderator</button>
+                </div>
+
+                <div class="mod-list-title">Current Moderators</div>
+                <div id="mod-list-container" class="mod-list">
+                    <!-- Loaded by JS -->
+                </div>
+            </div>
+        </div>
+
         <!-- Settings Page -->
         <div id="page-settings" class="page">
             <h2 style="font-size: 2.5rem; color: #fff; margin-bottom: 30px; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">
@@ -2598,6 +2619,9 @@
         <script src="/js/tools.js?v=3"></script>
         <script src="/js/settings.js?v=4"></script>
         <script src="/js/mouse_selection.js?v=3"></script>
+        <script src="/js/mods.js?v=1"></script>
+
+
         <script src="/js/private_matches.js?v=2"></script>
         <!-- Private Chat Modal -->
         <div id="private-chat-modal" class="chat-modal hidden">

@@ -17,12 +17,42 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 from tournament_logic import tournament_manager
 from private_match_logic import private_match_manager
 
+# MODERATOR SYSTEM
+MODS_FILE = os.path.join(os.path.dirname(__file__), 'dictionaries', 'mods.txt')
+
+def get_moderators():
+    if not os.path.exists(MODS_FILE):
+        return set()
+    try:
+        with open(MODS_FILE, 'r') as f:
+            return {line.strip().lower() for line in f if line.strip()}
+    except Exception as e:
+        print(f"[Mods] Error reading {MODS_FILE}: {e}")
+        return set()
+
+def save_moderator(username):
+    mods = get_moderators()
+    mods.add(username.strip().lower())
+    try:
+        with open(MODS_FILE, 'w') as f:
+            for mod in sorted(mods):
+                f.write(f"{mod}\n")
+        return True
+    except Exception as e:
+        print(f"[Mods] Error saving to {MODS_FILE}: {e}")
+        return False
+
+def is_mod(username):
+    if not username: return False
+    return username.lower() in get_moderators()
+
 # Auth Helpers
 class User:
     def __init__(self, id, username):
         self.id = id
         self.username = username
         self.is_authenticated = True
+        self.is_mod = is_mod(username)
 
 def login_required(f):
     @wraps(f)
@@ -64,7 +94,36 @@ def load_user():
 
 # Auth Helpers
 
+@app.route('/api/mods/status')
+def get_mod_status():
+    if 'username' not in session:
+        return jsonify({'is_mod': False})
+    return jsonify({'is_mod': is_mod(session['username'])})
 
+@app.route('/api/mods/list', methods=['GET'])
+@login_required
+def list_mods():
+    if not is_mod(session['username']):
+        return jsonify({'error': 'Unauthorized'}), 403
+    return jsonify({'mods': sorted(list(get_moderators()))})
+
+@app.route('/api/mods/add', methods=['POST'])
+@login_required
+def add_mod():
+    # USER REQUEST: "any user that jeffy allow to be a mod ... gets added"
+    # This implies jeffy (and existing mods) can add others.
+    if not is_mod(session['username']):
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.json
+    new_mod = data.get('username')
+    if not new_mod:
+        return jsonify({'error': 'Username required'}), 400
+    
+    if save_moderator(new_mod):
+        print(f"[Mods] User {session['username']} added {new_mod} as moderator")
+        return jsonify({'success': True})
+    return jsonify({'error': 'Failed to save mod'}), 500
 
 DEFINITIONS_CACHE = None
 
