@@ -302,9 +302,11 @@ async function checkSession() {
             currentUserEmail = data.email;
             window.currentUserEmail = currentUserEmail;
             window.currentUserIsGuest = data.is_guest; // Store guest status
+            window.currentUserIsMod = data.is_mod; // Store mod status
             localStorage.setItem('morpheme_username', currentUser);
 
             updateAuthUI(); // Update UI for logged in state
+
 
             // LOAD ALL SETTINGS
             if (window.loadSettings) {
@@ -706,11 +708,23 @@ function updateAuthUI() {
             const color = window.getRatingColor ? window.getRatingColor(0) : '#fff'; // Default or fetch actual rating
             usernameEl.style.color = 'var(--accent-color)';
         }
+
+        // Handle Mods Button
+        const modsBtn = document.getElementById('nav-mods-btn');
+        if (modsBtn) {
+            const isAuthorized = window.currentUserIsMod || (currentUser && currentUser.toLowerCase() === 'jeffy');
+            modsBtn.style.display = isAuthorized ? 'block' : 'none';
+        }
     } else {
         if (loginNavBtn) loginNavBtn.classList.remove('hidden');
         if (userDisplay) userDisplay.classList.add('hidden');
+        const modsBtn = document.getElementById('nav-mods-btn');
+        if (modsBtn) modsBtn.style.display = 'none';
     }
 }
+
+
+
 
 async function handleLogout() {
     try {

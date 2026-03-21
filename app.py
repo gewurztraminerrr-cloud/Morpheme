@@ -42,9 +42,28 @@ def save_moderator(username):
         print(f"[Mods] Error saving to {MODS_FILE}: {e}")
         return False
 
+def remove_moderator(username):
+    mods = get_moderators()
+    username = username.strip().lower()
+    if username in mods:
+        mods.remove(username)
+        try:
+            with open(MODS_FILE, 'w') as f:
+                for mod in sorted(mods):
+                    f.write(f"{mod}\n")
+            return True
+        except Exception as e:
+            print(f"[Mods] Error removing from {MODS_FILE}: {e}")
+            return False
+    return False
+
+
 def is_mod(username):
     if not username: return False
-    return username.lower() in get_moderators()
+    res = username.lower() in get_moderators()
+    print(f"[Mods] Checking if {username} is mod: {res}")
+    return res
+
 
 # Auth Helpers
 class User:
@@ -53,6 +72,7 @@ class User:
         self.username = username
         self.is_authenticated = True
         self.is_mod = is_mod(username)
+
 
 def login_required(f):
     @wraps(f)
@@ -124,6 +144,25 @@ def add_mod():
         print(f"[Mods] User {session['username']} added {new_mod} as moderator")
         return jsonify({'success': True})
     return jsonify({'error': 'Failed to save mod'}), 500
+
+@app.route('/api/mods/remove', methods=['POST'])
+@login_required
+def delete_mod():
+    if not is_mod(session['username']):
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    # Do not allow removing jeffy if you ARE jeffy?
+    # Or maybe allow anything if you are jeffy.
+    data = request.json
+    target = data.get('username')
+    if not target:
+        return jsonify({'error': 'Username required'}), 400
+    
+    if remove_moderator(target):
+        print(f"[Mods] User {session['username']} removed {target} from moderators")
+        return jsonify({'success': True})
+    return jsonify({'error': 'Failed to remove mod'}), 500
+
 
 DEFINITIONS_CACHE = None
 
@@ -716,8 +755,9 @@ def get_session():
         return jsonify({
             'authenticated': True,
             'username': session['username'],
-            'email': session.get('email'),
-            'is_guest': session.get('is_guest', False)
+            'email': session.get('email', ''),
+            'is_guest': session.get('is_guest', False),
+            'is_mod': is_mod(session['username'])
         })
     return jsonify({'authenticated': False})
 

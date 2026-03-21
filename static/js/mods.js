@@ -26,8 +26,10 @@ async function loadModList() {
             listEl.innerHTML = data.mods.map(m => `
                 <div class="mod-item">
                     <span class="mod-name">${m}</span>
+                    <button class="remove-mod-btn" onclick="removeModerator('${m}')" title="Remove Moderator">&times;</button>
                 </div>
             `).join('');
+
         }
     } catch (err) {
         console.error("Error loading mod list:", err);
@@ -57,6 +59,28 @@ async function addModerator() {
         console.error("Error adding mod:", err);
     }
 }
+
+async function removeModerator(username) {
+    if (!confirm(`Are you sure you want to remove ${username} as moderator?`)) return;
+
+    try {
+        const response = await fetch('/api/mods/remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+        const data = await response.json();
+        if (data.success) {
+            alert(`User ${username} removed from moderators.`);
+            loadModList();
+        } else {
+            alert(data.error || "Failed to remove moderator.");
+        }
+    } catch (err) {
+        console.error("Error removing mod:", err);
+    }
+}
+
 
 // Global initialization
 document.addEventListener('DOMContentLoaded', () => {
