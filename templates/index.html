@@ -1688,20 +1688,40 @@
             <div class="mods-container">
                 <div class="mods-header">
                     <h2>Moderator Management</h2>
-                    <p>Users in the list below have access to site moderation tools.</p>
+                    <p>Manage site moderators and word pronunciations.</p>
                 </div>
 
-                <div class="mod-add-section">
-                    <input type="text" id="new-mod-username" placeholder="Enter username to add...">
-                    <button id="add-mod-btn" class="add-mod-btn">Add Moderator</button>
+                <!-- Pronunciation Management -->
+                <div class="mod-section">
+                    <div class="mod-list-title">Pronunciation Dictionary</div>
+                    <div class="mod-add-section">
+                        <input type="text" id="pron-word-input" placeholder="Word (e.g. MORPHEME)">
+                        <input type="text" id="pron-value-input" placeholder="Pronunciation (e.g. MORE-FEEM)">
+                        <div class="mod-action-buttons">
+                            <button id="add-pron-btn" class="add-mod-btn">Add Pronunciation</button>
+                            <button id="remove-pron-btn" class="remove-mod-btn" style="padding: 12px 20px;">Remove
+                                Pronunciation</button>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="mod-list-title">Current Moderators</div>
-                <div id="mod-list-container" class="mod-list">
-                    <!-- Loaded by JS -->
+                <hr style="opacity: 0.1; margin: 30px 0;">
+
+                <!-- Moderator Management -->
+                <div class="mod-section">
+                    <div class="mod-list-title">Moderator Access</div>
+                    <div class="mod-add-section">
+                        <input type="text" id="new-mod-username" placeholder="Enter username to add...">
+                        <button id="add-mod-btn" class="add-mod-btn">Add Moderator</button>
+                    </div>
+                    <div class="mod-list-title">Current Moderators</div>
+                    <div id="mod-list-container" class="mod-list">
+                        <!-- Loaded by JS -->
+                    </div>
                 </div>
             </div>
         </div>
+
 
         <!-- Settings Page -->
         <div id="page-settings" class="page">

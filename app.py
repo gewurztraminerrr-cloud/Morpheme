@@ -168,6 +168,80 @@ def delete_mod():
         return jsonify({'success': True})
     return jsonify({'error': 'Failed to remove mod'}), 500
 
+@app.route('/api/pronunciations/add', methods=['POST'])
+@login_required
+def add_pronunciation():
+    if not is_mod(session['username']):
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.json
+    word = data.get('word', '').strip().upper()
+    pronunciation = data.get('pronunciation', '').strip().upper()
+    
+    if not word or not pronunciation:
+        return jsonify({'error': 'Word and pronunciation required'}), 400
+        
+    pron_path = os.path.join(os.path.dirname(__file__), 'dictionaries', 'pronunciations.txt')
+    
+    try:
+        # Update Cache
+        global PRONUNCIATIONS_CACHE
+        if 'PRONUNCIATIONS_CACHE' not in globals():
+            PRONUNCIATIONS_CACHE = {}
+        PRONUNCIATIONS_CACHE[word] = pronunciation
+        
+        # Check if already exists in mapping or file to avoid duplicates.
+        # Simple append for now.
+        with open(pron_path, 'a') as f:
+            f.write(f"{word} - {pronunciation}\n")
+        
+        print(f"[Mods] {session['username']} added pronunciation for {word}")
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"Error adding pronunciation: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/pronunciations/remove', methods=['POST'])
+@login_required
+def remove_pronunciation():
+    if not is_mod(session['username']):
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.json
+    word = data.get('word', '').strip().upper()
+    
+    if not word:
+        return jsonify({'error': 'Word required'}), 400
+        
+    pron_path = os.path.join(os.path.dirname(__file__), 'dictionaries', 'pronunciations.txt')
+    
+    try:
+        # Update Cache
+        global PRONUNCIATIONS_CACHE
+        if 'PRONUNCIATIONS_CACHE' not in globals():
+            PRONUNCIATIONS_CACHE = {}
+            
+        if word in PRONUNCIATIONS_CACHE:
+            del PRONUNCIATIONS_CACHE[word]
+            
+        # Rewrite file without that word
+        if os.path.exists(pron_path):
+            lines = []
+            with open(pron_path, 'r') as f:
+                for line in f:
+                    if not line.strip().startswith(word + " - "):
+                        lines.append(line)
+            
+            with open(pron_path, 'w') as f:
+                f.writelines(lines)
+                
+        print(f"[Mods] {session['username']} removed pronunciation for {word}")
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"Error removing pronunciation: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 
 DEFINITIONS_CACHE = None
 

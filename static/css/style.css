@@ -5625,8 +5625,19 @@ body {
     padding: 0;
 }
 
+.mod-action-buttons {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.mod-action-buttons button {
+    flex: 1;
+}
+
 .remove-mod-btn:hover {
     background: #ff4757;
     color: #fff;
-    transform: scale(1.1);
+    transform: scale(1.05);
 }
