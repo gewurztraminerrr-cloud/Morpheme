@@ -1441,7 +1441,8 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
 
             // Optimal cell size (capped for aesthetics on 4x4)
             const cellSize = Math.floor(Math.min(maxCellW, maxCellH, 120));
-            const fontSize = Math.floor(cellSize * 0.5) + 'px';
+            const fontSize = Math.floor(cellSize * 0.6) + 'px';
+
 
             boardContainer.style.display = 'grid';
             boardContainer.style.gridTemplateColumns = `repeat(${cols}, ${cellSize}px)`;

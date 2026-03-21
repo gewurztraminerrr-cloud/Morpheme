@@ -349,9 +349,9 @@ async function updateGameState() {
         const isFCFSIntermission = (state.game_type === 'fcfs' && state.state === 'intermission');
 
         if (isSplitIntermission && !showBoardInSplitIntermission) {
-            renderSplitNotepads(state.players);
+            renderSplitNotepads(state.players, state);
         } else if (isFCFSIntermission && !showBoardInSplitIntermission) {
-            renderFCFSNotepads(state.players);
+            renderFCFSNotepads(state.players, state);
         } else {
             // ONLY gray out if we are specifically in intermission
             const isIntermission = state.state === 'intermission';
@@ -1076,9 +1076,20 @@ function renderPlayers(players, currentUser = null, state = null) {
         const isGuest = p.username.startsWith('Guest_');
         const displayRating = isGuest ? 0 : p.rating;
 
-        let ratingChange = p.rating_change ? `${p.rating_change > 0 ? ' +' : ' '}${p.rating_change}` : '0';
-        if (p.joined_mid_round) ratingChange = '🛡️';
-        const ratingDisplay = `${displayRating} (${ratingChange.trim()})`;
+        let changeTxt = '0';
+        let changeClass = 'change-neutral';
+        if (p.rating_change > 0) {
+            changeTxt = `+${p.rating_change}`;
+            changeClass = 'change-positive';
+        } else if (p.rating_change < 0) {
+            changeTxt = `${p.rating_change}`;
+            changeClass = 'change-negative';
+        }
+        
+        // Final display string (User request: in brackets next to rating)
+        const ratingDisplayStr = `${displayRating} <span class="${changeClass}">(${changeTxt})</span>`;
+        const ratingDisplay = (isGuest && displayRating === 0 && p.rating_change === 0) ? 'Guest' : ratingDisplayStr;
+
         const bonusClass = p.found_bonus_word ? ' bonus-finder' : '';
         const userClass = (p.username === currentUser) ? ' current-user' : '';
 
@@ -1126,7 +1137,7 @@ function renderPlayers(players, currentUser = null, state = null) {
                 ${trophyHtml}
                 <div style="flex:1;"></div>
                 <span class="player-words-count">${p.words_count} words</span>
-                <span class="player-score-val">${(p.score === 0 && p.words_count === 0) ? 'DNP' : p.score + ' pts'}</span>
+                <span class="player-score-val">${(p.score === 0 && p.words_count === 0 && (!p.invalid_words || p.invalid_words.length === 0) && (state && state.state === 'intermission')) ? 'DNP' : p.score + ' pts'}</span>
             </div>
         </div>
         `;
@@ -2104,9 +2115,9 @@ function reapplyBoardHighlights() {
         }
     }
 
-    // 2. Reapply typing highlights (input box)
+    // 2. Reapply typing highlights (input box) - SKIP IF MOUSING to avoid "double-highlighting" the board
     const wordInputEl = document.getElementById('word-input');
-    if (wordInputEl && wordInputEl.value.trim()) {
+    if (wordInputEl && wordInputEl.value.trim() && !(mouseState && mouseState.isDragging)) {
         const isEnabled = window.userSettings && window.userSettings.highlight_typing !== false;
         if (isEnabled) {
             const word = wordInputEl.value.trim();
@@ -2152,7 +2163,7 @@ function reapplyBoardHighlights() {
     }
 }
 
-function renderSplitNotepads(players) {
+function renderSplitNotepads(players, state) {
     const boardEl = document.getElementById('game-board');
     if (!boardEl) return;
 
@@ -2225,7 +2236,7 @@ function renderSplitNotepads(players) {
         // Header
         const header = document.createElement('div');
         header.className = 'notepad-header';
-        header.innerHTML = `<strong>${p.username}</strong> <span>${(p.score === 0 && (!p.submitted_words || p.submitted_words.length === 0)) ? 'DNP' : p.score + ' pts'}</span>`;
+        header.innerHTML = `<strong>${p.username}</strong> <span>${(p.score === 0 && (!p.submitted_words || p.submitted_words.length === 0) && (state && state.state === 'intermission')) ? 'DNP' : p.score + ' pts'}</span>`;
         notepad.appendChild(header);
 
         // Tabs
@@ -2374,7 +2385,7 @@ function renderSplitNotepads(players) {
     });
 }
 
-function renderFCFSNotepads(players) {
+function renderFCFSNotepads(players, state) {
     const boardEl = document.getElementById('game-board');
     if (!boardEl) return;
 
@@ -2419,7 +2430,7 @@ function renderFCFSNotepads(players) {
         // Header
         const header = document.createElement('div');
         header.className = 'notepad-header';
-        header.innerHTML = `<strong>${p.username}</strong> <span>${(p.score === 0 && (!p.submitted_words || p.submitted_words.length === 0)) ? 'DNP' : p.score + ' pts'}</span>`;
+        header.innerHTML = `<strong>${p.username}</strong> <span>${(p.score === 0 && (!p.submitted_words || p.submitted_words.length === 0) && (state && state.state === 'intermission')) ? 'DNP' : p.score + ' pts'}</span>`;
         notepad.appendChild(header);
 
         // No Tabs for FCFS
@@ -2636,7 +2647,7 @@ if (submitBtn && wordInputEl) {
         }
 
         document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
-        if (!word || !board) return;
+        if (!word || !board || (mouseState && mouseState.isDragging)) return;
 
         const path = findWordPathOnBoard(word, board);
         if (path) {

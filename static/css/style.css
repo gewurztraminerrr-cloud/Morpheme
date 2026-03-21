@@ -2335,41 +2335,46 @@ body {
     max-width: 1100px;
     width: 95%;
     max-height: 90vh;
-    background: linear-gradient(135deg, rgba(30, 30, 45, 0.98), rgba(15, 15, 25, 1));
-    border: 1px solid rgba(var(--text-primary-rgb), 0.1);
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+    background: linear-gradient(135deg, #1e1e2d, #0f0f19);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.9);
     display: flex;
     flex-direction: column;
     padding: 0;
     overflow: hidden;
     position: relative;
-    color: var(--text-primary);
+    color: #ffffff;
     border-radius: 24px;
 }
 
+
 .history-review-modal .overlay-header {
-    background: rgba(var(--text-primary-rgb), 0.03);
+    background: rgba(255, 255, 255, 0.03);
     padding: 25px 40px;
-    border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
+
 .header-main h2 {
     font-size: 1.8rem;
     margin: 0;
-    color: var(--text-primary);
+    color: #ffffff;
     font-weight: 800;
 }
 
+
 .header-subtitle {
-    font-size: 0.8rem;
-    color: #409cff;
+    font-size: 0.9rem;
+    color: #60afff;
     text-transform: uppercase;
     font-weight: 800;
     letter-spacing: 2px;
+    opacity: 0.9;
 }
+
 
 .history-review-layout {
     display: flex;
@@ -2405,18 +2410,21 @@ body {
 
 .summary-card .label {
     display: block;
-    font-size: 0.7rem;
+    font-size: 0.8rem;
     text-transform: uppercase;
-    color: var(--text-40);
+    color: rgba(255, 255, 255, 0.6);
     font-weight: 800;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
+
+
 
 .summary-card .value {
     font-size: 1.1rem;
     font-weight: 700;
-    color: var(--text-primary);
+    color: #ffffff;
 }
+
 
 .summary-card .value.primary {
     color: #ffd700;
@@ -2501,30 +2509,35 @@ body {
 
 .walkthrough-time {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.9rem;
-    color: #409cff;
-    font-weight: 700;
-    min-width: 60px;
+    font-size: 0.95rem;
+    color: #60afff;
+    font-weight: 800;
+    min-width: 70px;
 }
+
 
 .walkthrough-word {
     font-weight: 800;
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     letter-spacing: 0.5px;
-    color: var(--text-primary);
+    color: #ffffff;
     flex: 1;
     text-transform: uppercase;
 }
 
+
+
 .walkthrough-pts {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-weight: 800;
-    color: var(--text-70);
-    background: rgba(var(--text-primary-rgb), 0.08);
-    padding: 4px 12px;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.12);
+    padding: 6px 14px;
     border-radius: 8px;
     transition: all 0.3s ease;
 }
+
+
 
 .walkthrough-pts.bonus {
     color: #ffd700;
@@ -2587,17 +2600,19 @@ body {
 
 .review-cell {
     aspect-ratio: 1;
-    background: #ffffff;
-    /* Consistent high contrast */
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
     display: flex;
     justify-content: center;
     align-items: center;
     font-weight: 800;
     font-size: 1.4rem;
-    color: #1a1a2e;
-    /* Match main board cell */
+    color: #ffffff;
+    /* High contrast white text */
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+
+
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }

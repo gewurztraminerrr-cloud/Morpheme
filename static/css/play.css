@@ -1899,10 +1899,10 @@ body.theme-light-brown .word-item.bonus-word {
     min-width: 350px;
     max-width: 500px;
     position: relative;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-    animation: slideDown 0.4s ease;
-    color: var(--text-primary);
-    /* Use theme text */
+    box-shadow: 0 0 50px rgba(0, 0, 0, 1), 0 0 100px rgba(var(--accent-rgb), 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
 @keyframes slideDown {
@@ -1916,6 +1916,10 @@ body.theme-light-brown .word-item.bonus-word {
         opacity: 1;
     }
 }
+
+.change-positive { color: #2ecc71; font-weight: 800; text-shadow: 0 0 5px rgba(46, 204, 113, 0.4); }
+.change-negative { color: #f43f5e; font-weight: 800; text-shadow: 0 0 5px rgba(244, 63, 94, 0.4); }
+.change-neutral { opacity: 0.5; color: var(--muted-text); }
 
 .spinner-content h2 {
     color: var(--text-primary);

@@ -1202,7 +1202,11 @@ from word_validator import word_validator
 import uuid
 
 def apply_leave_penalty(user_id, room):
-    """Apply -16 rating penalty if user leaves a non-24h room with score > 0"""
+    """
+    Apply rating penalty if user leaves a non-24h room with score > 0.
+    REDUCED: The -16 penalty was too aggressive and confusing.
+    Now we just log it or apply a minimal penalty (0 for now to stop the frustration).
+    """
     if room.time_limit >= 7200:
         return # No penalty for 24h rooms
     
@@ -1217,22 +1221,11 @@ def apply_leave_penalty(user_id, room):
             print(f"[Penalty] Player {player.username} left room {room.room_id} with score {player.score}, but no one else played. No penalty applied.")
             return
             
-        print(f"[Penalty] Player {player.username} left room {room.room_id} with score {player.score}. Applying -16 rating penalty.")
-        player.rating = max(0, player.rating - 16)
+        print(f"[Penalty] Player {player.username} left room {room.room_id} with score {player.score}. Logic for -16 is currently DISABLED.")
+        # player.rating = max(0, player.rating - 16)
         
-        # Persist to database immediately
-        try:
-            conn = sqlite3.connect('morpheme.db', timeout=30)
-            config_key = f"{room.game_type}|{room.board_dimensions}|{room.time_limit}"
-            conn.execute('''
-                INSERT OR REPLACE INTO user_ratings (user_id, config_key, rating)
-                VALUES (?, ?, ?)
-            ''', (player.user_id, config_key, player.rating))
-            conn.commit()
-            conn.close()
-            print(f"[Penalty] Rating updated in DB for {player.username} ({config_key})")
-        except Exception as e:
-            print(f"[Penalty] ERROR updating rating in DB: {e}")
+        # We still might want to track that they left, but avoid the heavy penalty
+        # player.rating_change = -16  # For UI (though unlikely to be seen if they leave)
 
 def cleanup_user_rooms(user_id, exclude_room_id=None):
     """Remove user from all rooms except exclude_room_id and 24h persistent rooms"""
@@ -1595,18 +1588,22 @@ def get_room_state(room_id):
             if milestone == 'spinner':
                 # At 45s remaining: Generate Spinner Set parameters
                 # Skip for Solo rooms — user already chose parameters; we must not overwrite them.
-                if not room.is_solo:
+                # NEW GUARD: Only generate ONCE per round to avoid re-rolling format/dictionary every second
+                if not room.is_solo and not getattr(room, 'spinner_params_generated', False):
                     print(f"[Milestone] 45s remaining - Generating Spinner Set parameters")
                     room_manager.generate_spinner_params(room_id)
-                else:
+                elif room.is_solo:
                     # Just mark as generated so the milestone doesn't keep triggering
                     room.spinner_params_generated = True
                     print(f"[Milestone] 45s remaining - Solo room: skipping spinner generation, preserving user-selected params")
             
             elif milestone == 'search':
                 # At 15s remaining: Start board search
-                print(f"[Milestone] 15s remaining - Starting board search")
-                room_manager.start_board_search(room_id)
+                # NEW GUARD: Only start search ONCE to avoid spawning multiple generation threads
+                if not getattr(room, 'board_search_started', False):
+                    print(f"[Milestone] 15s remaining - Starting board search")
+                    room_manager.start_board_search(room_id)
+
             
             elif milestone == 'start':
                 # At 0s: Start next round with pre-generated board
@@ -3687,4 +3684,4 @@ def get_private_match_history(match_id):
 
 if __name__ == '__main__':
     print('Morpheme server running on http://localhost:3000')
-    app.run(host='0.0.0.0', port=3000, debug=True, use_reloader=True)
+    app.run(host='0.0.0.0', port=3000, debug=True, use_reloader=False)

@@ -14,6 +14,7 @@ import json
 from spinner_set import SpinnerSet
 from board_generator import BoardGenerator
 from scoring import calculate_word_score
+from rating_logic import calculate_proportional_rating_change, is_player_guest
 
 @dataclass
 class Player:
@@ -550,10 +551,6 @@ class GameRoom:
                 # Remarkable: Winner AND (Unusually high PE >= 4 & Score >= 40, or raw excellence Score >= 100)
                 p.has_exceptional_round = multiple_players and p.score > 0 and p.score == max_score and \
                                          ((p.performance_efficiency >= 4.0 and p.score >= 40) or p.score >= 100)
-            for p in reg_players:
-                p.performance_efficiency = 1.0
-                # Raw score Remarkable threshold: 100 (Winner only)
-                p.has_exceptional_round = multiple_players and p.score > 0 and p.score == max_score and (p.score >= 100)
 
         # 2. Guests: Use solo baseline (PE=1.0) so they don't affect pool but can still earn trophies on raw score
         for p in guest_players:
@@ -643,6 +640,7 @@ class GameRoom:
             
             self.state = 'intermission'
             self.intermission_start_time = time.time()
+            board_format = self.current_board_format
             
             # IMMEDIATE SNAPSHOT (24h Rooms): Save history now so it is available during intermission
             if self.time_limit >= 7200:
@@ -682,6 +680,7 @@ class GameRoom:
             
             # Determine if there are at least two active competitors to allow trophies
             multiple_active = len(active_competitors) > 1
+            max_score = max(p.score for p in active_competitors) if active_competitors else 0
 
             # 1. Registered Players Pool
             reg_score_sum = sum(p.score for p in reg_players)
@@ -715,7 +714,6 @@ class GameRoom:
             # So we remove the PE >= 1.5 restriction and log active rounds.
             # We still need at least 1 competitor to have a "winner" or purpose.
             if active_competitors:
-                max_score = max(p.score for p in active_competitors)
                 winners_data = [{'username': p.username, 'rating': p.rating, 'pe': p.performance_efficiency} for p in active_competitors if p.score == max_score]
                 
                 # Capture winners' words
@@ -744,12 +742,11 @@ class GameRoom:
                 # This implies they expect to see recent ones. 50 cover 10.)
                 if len(self.winners_history) > 50:
                     self.winners_history = self.winners_history[:50]
-            board_format = self.current_board_format
             if board_format != 'Normal':
                 print(f"[GameRoom] Round {self.current_round} is UNRANKED (Format: {board_format}). Skipping rating updates.")
                 rating_changes = {p.user_id: 0 for p in self.players}
             else:
-                rating_changes = calculate_proportional_rating_change(self.players)
+                rating_changes = calculate_proportional_rating_change(self.players, is_private=self.is_private)
             
             # Connect for stats check - AND NOW PERSISTENCE
             try:
@@ -759,9 +756,6 @@ class GameRoom:
 
             for player in self.players:
                 change = int(rating_changes.get(player.user_id, 0))
-                # Solo rooms: never mutate ratings (not in-memory, not in DB)
-                if self.is_solo:
-                    change = 0
                 player.rating += change
                 player.rating_change = change
                 print(f"[GameRoom] Rating Update Applied: {player.username} ({player.user_id}) -> Change: {change}, New Rating: {player.rating}")
@@ -786,9 +780,10 @@ class GameRoom:
                             ON CONFLICT(user_id, config_key) DO UPDATE SET rating = rating + ?
                         ''', (player.user_id, config_key, player.rating, change))
                         
-                        active_scorers = [p for p in self.players if p.score > 0 and not p.is_ai]
-                        is_competitive = len(active_scorers) >= 2
-
+                        # Competitive if at least 2 registered humans participated (EXCLUDE BOTS as human equivalents)
+                        human_participants = [p for p in self.players if (not getattr(p, 'is_ai', False) and (p.score > 0 or p.submitted_words or p.invalid_words))]
+                        is_competitive = len(human_participants) >= 2
+                        
                         if is_competitive and board_format == 'Normal':
                             conn.execute('UPDATE users SET rating = ?, games_played = games_played + 1 WHERE id = ?', (player.rating, player.user_id))
                             print(f"[GameRoom] DB Updated: User {player.username} rating/stats (Competitive: {is_competitive})")
@@ -797,9 +792,9 @@ class GameRoom:
                             print(f"[GameRoom] DB SKIP: User {player.username} global rating update (Competitive: {is_competitive}, Format: {board_format})")
                         
                         if is_competitive and player.score > 0 and board_format == 'Normal':
-                             # Find max score among human players
-                             max_human_score = max([p.score for p in active_scorers]) if active_scorers else 0
-                             if player.score == max_human_score:
+                             # Find max score among ALL participants (even bots) to see if this human actually won
+                             max_all_score = max([p.score for p in self.players]) if self.players else 0
+                             if player.score == max_all_score:
                                  conn.execute('UPDATE users SET wins = wins + 1 WHERE id = ?', (player.user_id,))
 
 
@@ -920,129 +915,7 @@ class GameRoom:
                 wd['time'] = start + wd.pop('time_offset', 0)
                 ai.submitted_words.append(wd)
             
-            # Note: We do NOT update score here. 
-            # Score will be calculated on-the-fly in API or at intermission end.
             print(f"[GameRoom] Bot {ai.username} pre-generated {len(ai.submitted_words)} words")
-
-
-def calculate_proportional_rating_change(players):
-    """
-    Calculate rating changes based on Proportional Share system (from rating.java).
-    Expected Score = (TotalScore / TotalRating) * PlayerRating
-    Change based on deviation from Expected Score relative to a 75% baseline.
-    """
-    
-    # 1. Check for integrity (User Rule: If any late joiner exists mixed with full players, void the round ratings)
-    # Late joiners in Split/FCFS steal points/words, unfairly lowering full players' scores.
-    # Even in Accumulative, the user requested strict invalidation ("don't change any score").
-    has_late_joiner = any(getattr(p, 'joined_mid_round', False) for p in players)
-    
-    changes = {p.user_id: 0 for p in players}
-
-    if has_late_joiner:
-        late_players = [p.username for p in players if getattr(p, 'joined_mid_round', False)]
-        print(f"[Rating] Late joiner detected in room: {late_players}. Voiding rating updates for ALL players (Cnt: {len(players)}) to ensure fairness.")
-        return changes
-
-    # 2. Check if a Guest is present (User Rule: "My rating should still not go up nor down playing with a guest NO MATTER WHAT")
-    # We check both the is_guest flag AND the username prefix for robustness.
-    def is_player_guest(p):
-        return getattr(p, 'is_guest', False) or (p.username and p.username.startswith('Guest_'))
-
-    has_guest = any(is_player_guest(p) for p in players)
-    if has_guest:
-        # Log the specific reason for voiding
-        guests = [p.username for p in players if is_player_guest(p)]
-        print(f"[Rating] Guest(s) {guests} detected in room. Round is UNRANKED for everyone.")
-        return changes
-
-    # 3. Identify active registered players (user_id > 0 OR is_ai, AND not a guest)
-    # Bots are included to ensure ratings reflect performance relative to ALL competitors.
-    active_players = [p for p in players if (p.user_id > 0 or p.is_ai) and not is_player_guest(p)]
-
-    # Rating change requires at least two competing registered players WHO SCORED.
-    # If it's just one player scoring vs ghosts/AFK, they should not gain or lose anything.
-    active_scorers = [p for p in active_players if p.score > 0]
-    
-    if len(active_scorers) < 2:
-        if len(active_scorers) == 1:
-            print(f"[Rating] Only one active scorer ({active_scorers[0].username}) present. Round is unranked.")
-        else:
-            print(f"[Rating] No active scorers present. Round is unranked.")
-        return changes
-        
-    # 3. Sum Totals
-    score_sum = sum(p.score for p in active_players)
-    rating_sum = sum(p.rating for p in active_players)
-    
-    if rating_sum == 0:
-        return changes # Prevent division by zero
-        
-    print(f"[Rating] Proportional Calc: ScoreSum={score_sum}, RatingSum={rating_sum}, Players={len(active_players)}")
-    
-    # 3. Calculate Changes
-    for p in active_players:
-        # Expected score: logic from Java line 33: ((double)scoreSum/ratingSum) * theRatingInt
-        expected_score = (score_sum / rating_sum) * p.rating
-        
-        # Sixteen Value: logic from Java line 36: expectedScore * ((double) 75/100)
-        sixteen_score_value = expected_score * 0.75
-        
-        # Increment unit: logic from Java line 41: sixteenScoreValue / 16
-        increment = sixteen_score_value / 16.0
-        
-        change = 0
-        
-        if increment <= 0.05:
-            # If increment is effectively zero, check raw deviation?
-            # Or enforce a minimum increment?
-            # Java says: double sixteenScoreValue = expectedScore * ((double) 75/100);
-            # increment = sixteenScoreValue / 16;
-            # If expected score is 10, sixteen=7.5, increment=0.46.
-            # Difference of 10 points: 10 > 0.46 * d. d=1 -> 0.46. d=16 -> 7.36.
-            # 10 > 7.36. d=17 (max). Change = +-16.
-            # Wait, `while d <= 16`. If logic loop exhausts: change = +-16.
-            # If increment is small, d can reach 16 easily?
-            # Wait, lines 799: `if d > 16: change = -16`.
-            # So if increment is tiny, loop runs until d=17, forcing MAX change (-16).
-            # This is OPPOSITE of "not changing".
-            
-            # BUT if increment is 0 (score_sum=0? No, score_sum > 0).
-            pass
-
-        if increment > 0:
-            if p.score < expected_score:
-                difference = expected_score - p.score
-                # Logic loop lines 44-57
-                # Basically: find d such that increment * d >= difference
-                # Mathematical equivalent: ceil(difference / increment)
-                # But let's follow the loop logic to be precise to the Java implementation
-                # The loop breaks at the first match.
-                d = 1
-                while d <= 16:
-                    if increment * d >= difference:
-                        change = -d
-                        break
-                    d += 1
-                if d > 16:
-                    change = -16
-                    
-            elif p.score > expected_score:
-                difference = p.score - expected_score
-                # Logic loop lines 64-77
-                f = 1
-                while f <= 16:
-                    if increment * f >= difference:
-                        change = f
-                        break
-                    f += 1
-                if f > 16:
-                    change = 16
-        
-        changes[p.user_id] = change
-        print(f"[Rating] Player {p.username} (R:{p.rating}, S:{p.score}): Exp={expected_score:.2f}, Diff={p.score-expected_score:.2f}, Change={change}")
-        
-    return changes
 
 def calculate_word_score(word, bonus_word, board_format='Normal', path=None, bonus_cell=None, **kwargs):
     """Calculate points for a word using shared utility"""

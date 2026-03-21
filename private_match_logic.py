@@ -4,6 +4,7 @@ import time
 import random
 from typing import List, Dict
 from scoring import calculate_word_score
+from rating_logic import calculate_proportional_rating_change
 
 class PrivateMatchManager:
     def __init__(self, db_path='morpheme.db'):
@@ -445,6 +446,12 @@ class PrivateMatchManager:
             all_done = all(p['user_id'] in submitted_ids for p in players)
             
             if all_done:
+                # Apply Rating Changes
+                try:
+                    self._apply_match_ratings(match_id, round_number, conn)
+                except Exception as re:
+                    print(f"Rating Error in Private Match {match_id}: {re}")
+
                 # Mark match as completed instead of advancing round
                 # This ensures it moves to History correctly.
                 # Rematch can be used to start a fresh match.
@@ -552,6 +559,92 @@ class PrivateMatchManager:
             })
             
         return submission, total_score
+
+    def _apply_match_ratings(self, match_id, round_number, conn):
+        """Calculates and persists rating changes for a completed private match round."""
+        m = conn.execute('SELECT creator_id, match_type, parameters FROM private_matches WHERE id = ?', (match_id,)).fetchone()
+        if not m: return
+        
+        params = json.loads(m['parameters'])
+        # Config key for user_ratings table
+        board_dims = params.get('board_dimensions', '4x4')
+        time_limit = params.get('time_limit', 60)
+        match_type_raw = m['match_type']
+        
+        # We use a similar config key to GameRoom for cross-compatibility
+        # Format: game_type|dims|time
+        config_key = f"{match_type_raw}|{board_dims}|{time_limit}"
+        
+        # Participants and turns
+        players_rows = conn.execute('SELECT user_id, username, is_ai, ai_rating FROM private_match_players WHERE match_id = ?', (match_id,)).fetchall()
+        turns_rows = conn.execute('SELECT user_id, score, submitted_words FROM private_match_turns WHERE match_id = ? AND round_number = ?', (match_id, round_number)).fetchall()
+        
+        turns_map = {t['user_id']: {'score': t['score'], 'words': json.loads(t['submitted_words'] or '[]')} for t in turns_rows}
+        
+        # Build Player objects for the rating logic
+        class MockPlayer:
+            def __init__(self, user_id, username, rating, score, words, is_ai):
+                self.user_id = user_id
+                self.username = username
+                self.rating = rating
+                self.score = score
+                self.submitted_words = words
+                self.invalid_words = [] # Private turns only store successful submissions usually
+                self.is_ai = is_ai
+                self.is_guest = False # Private match participants are never guests
+                self.joined_mid_round = False
+        
+        players = []
+        for pr in players_rows:
+            uid = pr['user_id']
+            turn_data = turns_map.get(uid, {'score': 0, 'words': []})
+            score = turn_data['score']
+            words = turn_data['words']
+            
+            rating = 1200
+            if pr['is_ai']:
+                rating = pr['ai_rating']
+            else:
+                # Resolve human rating (Global)
+                # First check config-specific, then global
+                r_row = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', (uid, config_key)).fetchone()
+                if r_row:
+                    rating = r_row[0]
+                else:
+                    g_row = conn.execute('SELECT rating FROM users WHERE id = ?', (uid,)).fetchone()
+                    if g_row: rating = g_row[0]
+            
+            players.append(MockPlayer(uid, pr['username'], rating, score, words, bool(pr['is_ai'])))
+            
+        # Calculate changes (Private matches always follow the DNP score >= 1 rule)
+        changes = calculate_proportional_rating_change(players, is_private=True)
+        
+        # Persist changes
+        for p in players:
+            change = changes.get(p.user_id, 0)
+            if change == 0: continue
+            
+            new_rating = p.rating + change
+            
+            if not p.is_ai:
+                # 1. Update Config-Specific Rating
+                conn.execute('''
+                    INSERT INTO user_ratings (user_id, config_key, rating) VALUES (?, ?, ?)
+                    ON CONFLICT(user_id, config_key) DO UPDATE SET rating = rating + ?
+                ''', (p.user_id, config_key, new_rating, change))
+                
+                # 2. Update Global Rating (If competitive)
+                # Competitive if more than one human OR one human + bot?
+                # The user requested Bots to count as competition.
+                conn.execute('UPDATE users SET rating = ?, games_played = games_played + 1 WHERE id = ?', (new_rating, p.user_id))
+                
+                # Update Wins
+                max_score = max(p.score for p in players)
+                if p.score == max_score and p.score > 0:
+                    conn.execute('UPDATE users SET wins = wins + 1 WHERE id = ?', (p.user_id,))
+            else:
+                # Update AI bot rating in this match (so rematch is harder/easier)
+                conn.execute('UPDATE private_match_players SET ai_rating = ? WHERE match_id = ? AND user_id = ?', (new_rating, match_id, p.user_id))
 
     def get_invites_for_user(self, username):
         conn = self.get_db()
