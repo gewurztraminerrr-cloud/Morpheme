@@ -19,6 +19,8 @@ from private_match_logic import private_match_manager
 
 # MODERATOR SYSTEM
 MODS_FILE = os.path.join(os.path.dirname(__file__), 'dictionaries', 'mods.txt')
+ADDED_WORDS_FILE = os.path.join(os.path.dirname(__file__), 'dictionaries', 'added_words.txt')
+
 
 def get_moderators():
     print(f"[Mods] Reading mods from: {MODS_FILE}")
@@ -243,7 +245,188 @@ def remove_pronunciation():
 
 
 
+@app.route('/api/added_words/list', methods=['GET'])
+def list_added_words_api():
+    if not os.path.exists(ADDED_WORDS_FILE):
+        return jsonify({'words': []})
+    try:
+        with open(ADDED_WORDS_FILE, 'r') as f:
+            words = sorted(list(set([line.strip().upper() for line in f if line.strip()])))
+            return jsonify({'words': words})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/mods/added_words/add', methods=['POST'])
+@login_required
+def add_added_word_api():
+    print(f"[Mods] add_added_word_api called by {session.get('username')}")
+    if not is_mod(session.get('username')):
+        print(f"[Mods] {session.get('username')} is NOT a mod - Rejecting")
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.json
+    print(f"[Mods] Received request data: {data}")
+    word = data.get('word', '').strip().upper()
+    if not word:
+        return jsonify({'error': 'Word required'}), 400
+        
+    try:
+        existing = set()
+        if os.path.exists(ADDED_WORDS_FILE):
+            with open(ADDED_WORDS_FILE, 'r') as f:
+                existing = {line.strip().upper() for line in f if line.strip()}
+        
+        if word not in existing:
+            with open(ADDED_WORDS_FILE, 'a') as f:
+                f.write(f"{word}\n")
+            
+            word_validator.reload_added_words()
+            
+            print(f"[Mods] {session['username']} added word to Added Words: {word}")
+            return jsonify({'success': True})
+        return jsonify({'error': 'Word already exists'}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/mods/added_words/remove', methods=['POST'])
+@login_required
+def remove_added_word_api():
+    print(f"[Mods] remove_added_word_api called by {session.get('username')}")
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.json
+    word = data.get('word', '').strip().upper()
+    if not word:
+        return jsonify({'error': 'Word required'}), 400
+        
+    try:
+        if not os.path.exists(ADDED_WORDS_FILE):
+            print(f"[Mods] ADDED_WORDS_FILE not found at {ADDED_WORDS_FILE}")
+            return jsonify({'success': True})
+            
+        lines = []
+        found = False
+        with open(ADDED_WORDS_FILE, 'r') as f:
+            for line in f:
+                clean_line = line.strip().upper()
+                if clean_line != word:
+                    lines.append(line)
+                else:
+                    print(f"[Mods] Found word '{word}' in file - removing it.")
+                    found = True
+        
+        if found:
+            with open(ADDED_WORDS_FILE, 'w') as f:
+                f.writelines(lines)
+            
+            word_validator.reload_added_words()
+            print(f"[Mods] {session['username']} successfully removed word: {word}")
+            return jsonify({'success': True, 'message': f'Word "{word}" removed.'})
+        
+        print(f"[Mods] Word '{word}' NOT found in file.")
+        return jsonify({'error': 'Word not found in the list.'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/mods/definitions/add', methods=['POST'])
+@login_required
+def add_definition_api():
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.json
+    word = data.get('word', '').strip().upper()
+    definition = data.get('definition', '').strip()
+    
+    if not word or not definition:
+        return jsonify({'error': 'Word and definition required'}), 400
+        
+    try:
+        # Load all to memory to rewrite (needed for update/append logic)
+        defs = {}
+        if DEFINITIONS_PATH and os.path.exists(DEFINITIONS_PATH):
+            with open(DEFINITIONS_PATH, 'r', encoding='utf-8', errors='ignore') as f:
+                for line in f:
+                    parts = line.split(' - ', 1)
+                    if len(parts) == 2:
+                        defs[parts[0].strip().upper()] = parts[1].strip()
+        
+        # Add or Replace
+        defs[word] = definition
+        
+        # Sort by key before writing (best practice for dictionaries)
+        sorted_keys = sorted(defs.keys())
+        
+        # Use a temporary file to avoid corruption
+        temp_path = DEFINITIONS_PATH + '.tmp'
+        with open(temp_path, 'w', encoding='utf-8') as f:
+            for k in sorted_keys:
+                f.write(f"{k} - {defs[k]}\n")
+        
+        # Move back
+        os.replace(temp_path, DEFINITIONS_PATH)
+        
+        # Flush and Reload
+        global DEFINITIONS_CACHE
+        DEFINITIONS_CACHE = {} # Force reload
+        load_definitions()
+        
+        return jsonify({'success': True, 'message': f'Definition for {word} set.'})
+    except Exception as e:
+        print(f"Error updating definitions: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/mods/definitions/remove', methods=['POST'])
+@login_required
+def remove_definition_api():
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.json
+    word = data.get('word', '').strip().upper()
+    if not word:
+        return jsonify({'error': 'Word required'}), 400
+        
+    try:
+        defs = {}
+        found = False
+        if DEFINITIONS_PATH and os.path.exists(DEFINITIONS_PATH):
+            with open(DEFINITIONS_PATH, 'r', encoding='utf-8', errors='ignore') as f:
+                for line in f:
+                    parts = line.split(' - ', 1)
+                    if len(parts) == 2:
+                        k = parts[0].strip().upper()
+                        if k == word:
+                            found = True
+                            continue
+                        defs[k] = parts[1].strip()
+        
+        if not found:
+            return jsonify({'error': 'Definition not found for this word.'}), 404
+            
+        sorted_keys = sorted(defs.keys())
+        temp_path = DEFINITIONS_PATH + '.tmp'
+        with open(temp_path, 'w', encoding='utf-8') as f:
+            for k in sorted_keys:
+                f.write(f"{k} - {defs[k]}\n")
+        
+        os.replace(temp_path, DEFINITIONS_PATH)
+        
+        global DEFINITIONS_CACHE
+        DEFINITIONS_CACHE = {} # Force reload
+        load_definitions()
+        
+        return jsonify({'success': True, 'message': f'Definition for {word} removed.'})
+    except Exception as e:
+        print(f"Error removing definition: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 DEFINITIONS_CACHE = None
+PRONUNCIATIONS_CACHE = None
+ADDED_WORDS_CACHE = None
+
 
 # Initialize database
 def init_db():
@@ -1829,6 +2012,7 @@ def get_room_state(room_id):
             'all_words': words_to_return,
             'all_word_scores': room.solved_words_with_scores,
             'csw_only_words': [w for w in words_to_return if word_validator.is_csw_only(w)],
+            'added_words': [w for w in words_to_return if word_validator.is_added_word(w)],
             'bonus_word': room.bonus_word,
             'bonus_cell': getattr(room, 'bonus_cell', None),
             'spinner_params': room.spinner_params,
@@ -1991,10 +2175,11 @@ def update_input_method(room_id):
 
 # Definitions and Pronunciations Cache
 DEFINITIONS_CACHE = None
+DEFINITIONS_PATH = None
 PRONUNCIATIONS_CACHE = None
 
 def load_definitions():
-    global DEFINITIONS_CACHE
+    global DEFINITIONS_CACHE, DEFINITIONS_PATH
     # Skip reload only if cache is already populated
     if DEFINITIONS_CACHE:
         return
@@ -2012,6 +2197,7 @@ def load_definitions():
     for path in search_paths:
         if os.path.exists(path):
             definitions_path = path
+            DEFINITIONS_PATH = path
             break
 
     if not definitions_path:
@@ -2376,13 +2562,12 @@ def tools_get_lists():
             start_char = start_filter.upper().strip()
             if not start_char: start_char = None
 
+        list_type = request.args.get('list_type', 'all').lower()
+
         base_dir = os.path.dirname(__file__)
         dict_dir = os.path.join(base_dir, 'dictionaries')
         
         # --- Logic: Unified 16+ Routing ---
-        # If searching for 16+, we use 16plus.txt for BOTH NWL and CSW.
-        # If searching for "All" or < 16, we use standard files AND skip 16+ words.
-        
         def load_source_set(filename):
             if target_len is not None and target_len >= 16:
                 path = os.path.join(dict_dir, '16plus.txt')
@@ -2397,10 +2582,8 @@ def tools_get_lists():
                 for line in f:
                     w = line.strip().upper()
                     if not w: continue
-                    # Apply hard boundary: All/3-15 ignore 16+
                     if (target_len is None or target_len < 16) and len(w) >= 16:
                         continue
-                    # Standard filter sync
                     if target_len is not None and len(w) != target_len:
                         continue
                     if start_char is not None and not w.startswith(start_char):
@@ -2408,48 +2591,56 @@ def tools_get_lists():
                     words.add(w)
             return words
 
-        # 1. & 2. Load Core Sets (Already filtered for length and start letter)
-        nwl_set = load_source_set('NWL.txt')
-        csw_set = load_source_set('CSW.txt')
-        
-        # 3. CSW Only (In CSW but not in NWL)
-        # Note: For 16+, these will likely be empty as both pull from 16plus.txt
-        csw_only_set = csw_set - nwl_set
-        
-        # 4. Likelihood List (Scrabble-style letter frequency)
-        scrabble_freq = {
-            'A': 9, 'B': 2, 'C': 2, 'D': 4, 'E': 12, 'F': 2, 'G': 3, 'H': 2, 'I': 9,
-            'J': 1, 'K': 1, 'L': 4, 'M': 2, 'N': 6, 'O': 8, 'P': 2, 'Q': 1, 'R': 6,
-            'S': 4, 'T': 6, 'U': 4, 'V': 2, 'W': 2, 'X': 1, 'Y': 2, 'Z': 1
+        # Conditional fetching based on list_type
+        response = {
+            'nwl': [], 'csw': [], 'csw_only': [], 'likelihood': [], 'uniques': [], 'added': []
         }
 
-        def calculate_scrabble_likelihood(word):
-            letter_counts = {}
-            total = 0
-            for ch in word:
-                base = scrabble_freq.get(ch, 0)
-                seen = letter_counts.get(ch, 0)
-                total += max(0, base - seen)
-                letter_counts[ch] = seen + 1
-            return total
+        if list_type in ['all', 'nwl', 'csw_only', 'likelihood']:
+            nwl_set = load_source_set('NWL.txt')
+            if list_type in ['all', 'nwl']: response['nwl'] = sorted(list(nwl_set))
 
-        likelihood_list = []
-        for w in nwl_set:
-            score = calculate_scrabble_likelihood(w)
-            likelihood_list.append({'score': score, 'word': w})
-        likelihood_list.sort(key=lambda x: (-x['score'], x['word']))
+        if list_type in ['all', 'csw', 'csw_only']:
+            csw_set = load_source_set('CSW.txt')
+            if list_type in ['all', 'csw']: response['csw'] = sorted(list(csw_set))
 
-        # 5. Uniques (randomTWLunique.txt)
-        uniques_set = load_source_set('randomTWLunique.txt')
+        if list_type in ['all', 'csw_only']:
+            # We need both sets for CSW only
+            if 'nwl_set' not in locals(): nwl_set = load_source_set('NWL.txt')
+            if 'csw_set' not in locals(): csw_set = load_source_set('CSW.txt')
+            response['csw_only'] = sorted(list(csw_set - nwl_set))
 
-        return jsonify({
-            'nwl': sorted(list(nwl_set)),
-            'csw': sorted(list(csw_set)),
-            'csw_only': sorted(list(csw_only_set)),
-            'likelihood': likelihood_list,
-            'uniques': sorted(list(uniques_set)),
-            'added': []
-        })
+        if list_type in ['all', 'likelihood']:
+            if 'nwl_set' not in locals(): nwl_set = load_source_set('NWL.txt')
+            scrabble_freq = {
+                'A': 9, 'B': 2, 'C': 2, 'D': 4, 'E': 12, 'F': 2, 'G': 3, 'H': 2, 'I': 9,
+                'J': 1, 'K': 1, 'L': 4, 'M': 2, 'N': 6, 'O': 8, 'P': 2, 'Q': 1, 'R': 6,
+                'S': 4, 'T': 6, 'U': 4, 'V': 2, 'W': 2, 'X': 1, 'Y': 2, 'Z': 1
+            }
+            def calculate_scrabble_likelihood(word):
+                letter_counts = {}
+                total = 0
+                for ch in word:
+                    base = scrabble_freq.get(ch, 0)
+                    seen = letter_counts.get(ch, 0)
+                    total += max(0, base - seen)
+                    letter_counts[ch] = seen + 1
+                return total
+            
+            likelihood_list = []
+            for w in nwl_set:
+                score = calculate_scrabble_likelihood(w)
+                likelihood_list.append({'score': score, 'word': w})
+            likelihood_list.sort(key=lambda x: (-x['score'], x['word']))
+            response['likelihood'] = likelihood_list
+
+        if list_type in ['all', 'uniques']:
+            response['uniques'] = sorted(list(load_source_set('randomTWLunique.txt')))
+            
+        if list_type in ['all', 'added']:
+            response['added'] = sorted(list(load_source_set('added_words.txt')))
+
+        return jsonify(response)
 
     except Exception as e:
         print(f"Error fetching lists: {e}")
@@ -2568,7 +2759,7 @@ def tools_validate_word():
     pronunciation = None
     if is_valid:
         global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
-        if DEFINITIONS_CACHE is None:
+        if not DEFINITIONS_CACHE:
             load_definitions()
         if PRONUNCIATIONS_CACHE is None:
             load_pronunciations()
@@ -2859,7 +3050,7 @@ def tools_random_word():
     
     # Get definition and pronunciation
     global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
-    if DEFINITIONS_CACHE is None:
+    if not DEFINITIONS_CACHE:
         load_definitions()
     if PRONUNCIATIONS_CACHE is None:
         load_pronunciations()
@@ -2899,7 +3090,7 @@ def tools_wotd():
     
     # Get definition and pronunciation
     global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
-    if DEFINITIONS_CACHE is None:
+    if not DEFINITIONS_CACHE:
         load_definitions()
     if PRONUNCIATIONS_CACHE is None:
         load_pronunciations()
@@ -3868,4 +4059,4 @@ def get_private_match_history(match_id):
 
 if __name__ == '__main__':
     print('Morpheme server running on http://localhost:3000')
-    app.run(host='0.0.0.0', port=3000, debug=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=3000, debug=True, use_reloader=True)

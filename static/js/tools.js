@@ -2188,23 +2188,75 @@ function setupListsTool() {
             fetchListsData();
         });
     }
+
+    const typeFilter = document.getElementById('list-type-filter');
+    if (typeFilter) {
+        typeFilter.addEventListener('change', () => {
+            fetchListsData();
+        });
+    }
+
 }
 
-async function fetchListsData() {
+
+window.removeAddedWordFromTools = async function(word) {
+    try {
+        const response = await fetch('/api/mods/added_words/remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ word: word.toUpperCase() })
+        });
+        const data = await response.json();
+        if (data.success) {
+            fetchListsData(); // Refresh
+        } else {
+            alert(data.error || "Failed to remove word.");
+        }
+    } catch (err) {
+        console.error("Error removing word:", err);
+    }
+};
+
+window.loadAddedWords = fetchListsData;
+async function fetchListsData(typeOverride) {
     // Get Filter Values
     const lengthSelect = document.getElementById('list-length-filter');
     const startSelect = document.getElementById('list-start-filter');
+    const typeSelect = document.getElementById('list-type-filter');
+    
+    // If we have a type override, update the select's value to keep UI in sync
+    if (typeOverride && typeSelect) {
+        typeSelect.value = typeOverride;
+    }
+    
+    const selectedType = typeSelect ? typeSelect.value : 'nwl';
 
-    // UI Feedback
-    const colIds = ['col-nwl', 'col-csw', 'col-csw-only', 'col-likelihood', 'col-uniques', 'col-added'];
-    colIds.forEach(id => {
-        const el = document.querySelector(`#${id} .list-scroll-area`);
-        if (el) el.innerHTML = '<div style="padding:10px; opacity:0.6;">Loading...</div>';
-    });
+    const titleEl = document.getElementById('list-display-title');
+    const countEl = document.getElementById('main-list-count');
+    const scrollArea = document.getElementById('main-list-results');
+
+    // Update UI title mapping
+    const typeMap = {
+        'nwl': 'NWL (North American)',
+        'csw': 'CSW (International)',
+        'csw_only': 'CSW Only',
+        'likelihood': 'Likelihood (Scrabble)',
+        'uniques': 'NWL Uniques',
+        'added': 'Added Words'
+    };
+
+    if (titleEl) {
+        titleEl.innerText = typeMap[selectedType] || 'Word List';
+    }
+
+    if (scrollArea) {
+        scrollArea.innerHTML = '<div style="padding:20px; opacity:0.6; text-align:center;">Loading list data...</div>';
+    }
+    if (countEl) countEl.innerText = '';
 
     try {
         // Build Query URL
-        let url = '/api/tools/lists?';
+        let url = `/api/tools/lists?list_type=${selectedType}&`;
 
         if (lengthSelect && lengthSelect.value !== 'all') {
             url += `length=${lengthSelect.value}&`;
@@ -2213,77 +2265,64 @@ async function fetchListsData() {
             url += `starts_with=${startSelect.value}`;
         }
 
-        const response = await fetch(url);
+        const response = await fetch(url + `&t=${Date.now()}`);
         const data = await response.json();
 
         if (data.error) {
             console.error(data.error);
+            if (scrollArea) scrollArea.innerHTML = `<div style="color:red; padding:20px; text-align:center;">Error: ${data.error}</div>`;
             return;
         }
 
-        renderListColumn('col-nwl', data.nwl);
-        renderListColumn('col-csw', data.csw);
-        renderListColumn('col-csw-only', data.csw_only);
-        renderLikelihoodColumn('col-likelihood', data.likelihood);
-        renderListColumn('col-added', data.added);
-        renderListColumn('col-uniques', data.uniques);
+        // The API returns an object where the key is the list type
+        const words = data[selectedType] || [];
+        console.log(`[Lists] Received ${words.length} words for type: ${selectedType}. First 5:`, words.slice(0, 5));
+        
+        if (countEl) {
+            countEl.textContent = words && words.length ? `(${words.length.toLocaleString()})` : '(0)';
+        }
+
+        if (!words || words.length === 0) {
+            if (scrollArea) scrollArea.innerHTML = '<div style="padding:20px; opacity:0.6; text-align:center;">No words found matching these filters.</div>';
+            return;
+        }
+
+        // Render based on type
+        let html = '';
+        if (selectedType === 'likelihood') {
+            // Each item is { score, word }
+            html = words.map(item => `
+                <div class="list-item">
+                    <span class="likelihood-score">${item.score}</span> ${item.word}
+                </div>
+            `).join('');
+        } else if (selectedType === 'added') {
+            // Added words: show removal for mods
+            const isMod = window.currentUserIsMod;
+            html = words.map(w => `
+                <div class="list-item added-word" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>${w}</span>
+                    ${isMod ? `<button onclick="removeAddedWordFromTools('${w}')" style="background:none; border:none; color:#f43f5e; cursor:pointer; font-weight:bold; padding:0 5px;" title="Remove">&times;</button>` : ''}
+                </div>
+            `).join('');
+        } else {
+            // Each item is just a string
+            html = words.map(w => `<div class="list-item">${w}</div>`).join('');
+        }
+
+        if (scrollArea) {
+            scrollArea.innerHTML = html;
+            scrollArea.scrollTop = 0;
+        }
 
         listsDataLoaded = true;
 
     } catch (err) {
         console.error('Failed to fetch lists:', err);
-        colIds.forEach(id => {
-            const el = document.querySelector(`#${id} .list-scroll-area`);
-            if (el) el.innerHTML = '<div style="color:red; padding:10px;">Error loading.</div>';
-        });
+        if (scrollArea) {
+            scrollArea.innerHTML = '<div style="color:red; padding:20px; text-align:center;">Network error. Check console for details.</div>';
+        }
     }
-}
-
-function renderListColumn(colId, words) {
-    const container = document.querySelector(`#${colId} .list-scroll-area`);
-    if (!container) return;
-
-    // Update count in header
-    const countMap = {
-        'col-nwl': 'count-nwl',
-        'col-csw': 'count-csw',
-        'col-csw-only': 'count-csw-only',
-        'col-uniques': 'count-uniques',
-        'col-added': 'count-added'
-    };
-    const countEl = document.getElementById(countMap[colId]);
-    if (countEl) countEl.textContent = words && words.length ? `(${words.length.toLocaleString()})` : '(0)';
-
-    if (!words || words.length === 0) {
-        container.innerHTML = '<div style="padding:10px; opacity:0.6;">(Empty)</div>';
-        return;
-    }
-
-    // Creating a huge string is faster than creating elements one by one.
-    const html = words.map(w => `<div class="list-item">${w}</div>`).join('');
-    container.innerHTML = html;
-}
-
-function renderLikelihoodColumn(colId, items) {
-    const container = document.querySelector(`#${colId} .list-scroll-area`);
-    if (!container) return;
-
-    // Update count in header
-    const countEl = document.getElementById('count-likelihood');
-    if (countEl) countEl.textContent = items && items.length ? `(${items.length.toLocaleString()})` : '(0)';
-
-    if (!items || items.length === 0) {
-        container.innerHTML = '<div style="padding:10px; opacity:0.6;">(Empty)</div>';
-        return;
-    }
-
-    // Each item is { score, word }. Display as "score WORD"
-    const html = items.map(item => {
-        const score = item.score;
-        const word = item.word;
-        return `<div class="list-item"><span class="likelihood-score">${score}</span> ${word}</div>`;
-    }).join('');
-    container.innerHTML = html;
 }
 
 // --- Sequence Tool Logic ---

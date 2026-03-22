@@ -12,10 +12,36 @@ async function checkModStatus() {
         
         if (data.is_mod) {
             loadModList();
+            document.querySelectorAll('.mod-only-btn').forEach(btn => btn.style.display = 'inline-block');
         }
     } catch (err) {
         console.error("Error checking mod status:", err);
     }
+}
+
+function showModStatus(message, isError = false, targetId = 'mod-status-area') {
+    const statusArea = document.getElementById(targetId);
+    if (!statusArea) {
+        // Fallback to alert if status area not found
+        alert(message);
+        return;
+    }
+    statusArea.textContent = message;
+    statusArea.style.color = isError ? '#f43f5e' : '#4ade80';
+    statusArea.style.opacity = '1';
+    
+    // Clear after 5 seconds
+    setTimeout(() => {
+        if (statusArea.textContent === message) {
+            statusArea.style.transition = 'opacity 1s ease';
+            statusArea.style.opacity = '0';
+            setTimeout(() => {
+                if (statusArea.textContent === message) statusArea.textContent = '';
+                statusArea.style.opacity = '1';
+                statusArea.style.transition = '';
+            }, 1000);
+        }
+    }, 5000);
 }
 
 
@@ -33,12 +59,12 @@ async function loadModList() {
                     <button class="remove-mod-btn" onclick="removeModerator('${m}')" title="Remove Moderator">&times;</button>
                 </div>
             `).join('');
-
         }
     } catch (err) {
         console.error("Error loading mod list:", err);
     }
 }
+
 
 async function addModerator() {
     const input = document.getElementById('new-mod-username');
@@ -54,13 +80,14 @@ async function addModerator() {
         const data = await response.json();
         if (data.success) {
             if (input) input.value = '';
-            alert(`User ${username} added as moderator.`);
+            showModStatus(`User ${username} added as moderator.`);
             loadModList();
         } else {
-            alert(data.error || "Failed to add moderator.");
+            showModStatus(data.error || "Failed to add moderator.", true);
         }
     } catch (err) {
         console.error("Error adding mod:", err);
+        showModStatus("Network error adding moderator.", true);
     }
 }
 
@@ -75,13 +102,14 @@ async function removeModerator(username) {
         });
         const data = await response.json();
         if (data.success) {
-            alert(`User ${username} removed from moderators.`);
+            showModStatus(`User ${username} removed from moderators.`);
             loadModList();
         } else {
-            alert(data.error || "Failed to remove moderator.");
+            showModStatus(data.error || "Failed to remove moderator.", true);
         }
     } catch (err) {
         console.error("Error removing mod:", err);
+        showModStatus("Network error removing moderator.", true);
     }
 }
 
@@ -107,12 +135,13 @@ async function addPronunciation() {
         if (data.success) {
             if (wordInput) wordInput.value = '';
             if (pronInput) pronInput.value = '';
-            alert(`Pronunciation for ${word} added successfully.`);
+            showModStatus(`Pronunciation for ${word} added successfully.`, false, 'pron-status-area');
         } else {
-            alert(data.error || "Failed to add pronunciation.");
+            showModStatus(data.error || "Failed to add pronunciation.", true, 'pron-status-area');
         }
     } catch (err) {
         console.error("Error adding pronunciation:", err);
+        showModStatus("Network error adding pronunciation.", true, 'pron-status-area');
     }
 }
 
@@ -136,14 +165,87 @@ async function removePronunciation() {
         const data = await response.json();
         if (data.success) {
             if (wordInput) wordInput.value = '';
-            alert(`Pronunciation for ${word} removed successfully.`);
+            showModStatus(`Pronunciation for ${word} removed successfully.`, false, 'pron-status-area');
         } else {
-            alert(data.error || "Failed to remove pronunciation.");
+            showModStatus(data.error || "Failed to remove pronunciation.", true, 'pron-status-area');
         }
     } catch (err) {
         console.error("Error removing pronunciation:", err);
+        showModStatus("Network error removing pronunciation.", true, 'pron-status-area');
     }
 }
+
+async function addAddedWord() {
+    console.info("[Mods] addAddedWord triggered.");
+    const wordInput = document.getElementById('added-word-input');
+    const word = wordInput ? wordInput.value.trim() : '';
+
+    if (!word) {
+        alert("Word is required.");
+        return;
+    }
+
+    console.info(`[Mods] Attempting to add word: "${word}"`);
+
+    try {
+        const response = await fetch('/api/mods/added_words/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ word })
+        });
+        const data = await response.json();
+        if (data.success) {
+            if (wordInput) wordInput.value = '';
+            showModStatus(`Word "${word}" added to Added Words list.`, false, 'added-word-status-area');
+            
+            if (window.loadAddedWords) window.loadAddedWords('added');
+        } else {
+            showModStatus(data.error || "Failed to add word.", true, 'added-word-status-area');
+        }
+    } catch (err) {
+        console.error("Error adding added word:", err);
+        showModStatus("Network error adding word.", true, 'added-word-status-area');
+    }
+}
+
+async function removeAddedWord() {
+    console.info("[Mods] removeAddedWord triggered.");
+    const wordInput = document.getElementById('added-word-input');
+    const word = wordInput ? wordInput.value.trim() : '';
+
+    if (!word) {
+        alert("Word is required to remove.");
+        return;
+    }
+
+    console.info(`[Mods] Attempting to remove word: "${word}"`);
+
+    try {
+        const response = await fetch('/api/mods/added_words/remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ word: word.toUpperCase() })
+        });
+        const data = await response.json();
+        if (data.success) {
+            if (wordInput) wordInput.value = '';
+            showModStatus(`Word "${word}" removed from Added Words list.`, false, 'added-word-status-area');
+            alert(`Success: Word "${word}" was removed from the dictionary.`);
+            
+            if (window.loadAddedWords) window.loadAddedWords('added');
+        } else {
+            showModStatus(data.error || "Failed to remove word.", true, 'added-word-status-area');
+            alert("Error: " + (data.error || "Failed to remove word."));
+        }
+    } catch (err) {
+        console.error("Error removing added word:", err);
+        showModStatus("Network error removing word.", true, 'added-word-status-area');
+        alert("Network error: Could not reach the server.");
+    }
+}
+window.addAddedWord = addAddedWord;
+window.removeAddedWord = removeAddedWord;
+
 
 // Global initialization
 document.addEventListener('DOMContentLoaded', () => {
@@ -165,8 +267,138 @@ document.addEventListener('DOMContentLoaded', () => {
     if (removePronBtn) {
         removePronBtn.addEventListener('click', removePronunciation);
     }
+
+    // Added Words
+    const addAddedWordBtn = document.getElementById('add-added-word-btn');
+    if (addAddedWordBtn) {
+        addAddedWordBtn.addEventListener('click', addAddedWord);
+    }
+
+    const removeAddedWordBtn = document.getElementById('remove-added-word-btn');
+    if (removeAddedWordBtn) {
+        removeAddedWordBtn.addEventListener('click', removeAddedWord);
+    }
+
+    // Definitions
+    const addDefBtn = document.getElementById('add-def-btn');
+    if (addDefBtn) {
+        addDefBtn.addEventListener('click', addDefinition);
+    }
+
+    const removeDefBtn = document.getElementById('remove-def-btn');
+    if (removeDefBtn) {
+        removeDefBtn.addEventListener('click', removeDefinition);
+    }
 });
 
-// Re-check on login/logout events if they exist
-window.addEventListener('user-login', checkModStatus);
+async function addDefinition() {
+    const wordInput = document.getElementById('def-word-input');
+    const textInput = document.getElementById('def-text-input');
+    const word = wordInput ? wordInput.value.trim().toUpperCase() : '';
+    const def = textInput ? textInput.value.trim() : '';
+
+    if (!word || !def) {
+        alert("Both word and definition are required.");
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/mods/definitions/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ word, definition: def })
+        });
+        const data = await response.json();
+        if (data.success) {
+            if (wordInput) wordInput.value = '';
+            if (textInput) textInput.value = '';
+            showModStatus(`Definition for "${word}" updated.`, false, 'def-status-area');
+            alert(`Success: Definition for "${word}" has been set.`);
+        } else {
+            alert("Error: " + (data.error || "Failed to set definition."));
+        }
+    } catch (err) {
+        console.error("Error setting definition:", err);
+        showModStatus("Network error setting definition.", true, 'def-status-area');
+    }
+}
+
+async function removeDefinition() {
+    const wordInput = document.getElementById('def-word-input');
+    const word = wordInput ? wordInput.value.trim().toUpperCase() : '';
+
+    if (!word) {
+        alert("Word is required to remove definition.");
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/mods/definitions/remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ word })
+        });
+        const data = await response.json();
+        if (data.success) {
+            if (wordInput) wordInput.value = '';
+            showModStatus(`Definition for "${word}" removed.`, false, 'def-status-area');
+            alert(`Success: Definition for "${word}" has been removed.`);
+        } else {
+            alert("Error: " + (data.error || "Failed to remove definition."));
+        }
+    } catch (err) {
+        console.error("Error removing definition:", err);
+        showModStatus("Network error removing definition.", true, 'def-status-area');
+    }
+}
+
+
+window.promptAddAddedWord = async function() {
+    const word = prompt("Enter word to add to Added Words list:");
+    if (!word) return;
+    
+    try {
+        const response = await fetch('/api/mods/added_words/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ word: word.trim() })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message);
+            if (window.loadAddedWords) window.loadAddedWords();
+        } else {
+            alert(data.error);
+        }
+    } catch (err) {
+        console.error("Error adding word:", err);
+        alert("Failed to add word.");
+    }
+};
+
+window.promptRemoveAddedWord = async function() {
+    const word = prompt("Enter word to remove from Added Words list:");
+    if (!word) return;
+    
+    try {
+        const response = await fetch('/api/mods/added_words/remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ word: word.trim().toUpperCase() })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message || `Word "${word}" removed.`);
+            if (window.loadAddedWords) window.loadAddedWords('added');
+        } else {
+            alert("Error: " + (data.error || "Failed to remove word."));
+        }
+    } catch (err) {
+        console.error("Error removing word:", err);
+        alert("Network error: Could not reach the server.");
+    }
+};
+
 

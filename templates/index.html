@@ -31,7 +31,7 @@
             <button class="nav-btn" data-page="howtoplay">How to Play</button>
             <button class="nav-btn" data-page="lobby">Lobby <span id="lobby-badge"
                     class="nav-badge hidden"></span></button>
-            <button class="nav-btn" data-page="mods" id="nav-mods-btn">Mods</button>
+            <button class="nav-btn" data-page="mods" id="nav-mods-btn" style="display: none;">Mods</button>
             <button class="nav-btn" data-page="tournaments" id="nav-tournaments-btn">Tournaments</button>
 
             <button class="nav-btn" id="play-btn" data-page="play" disabled>Play</button>
@@ -1510,35 +1510,23 @@
                                     <option value="Y">Y</option>
                                     <option value="Z">Z</option>
                                 </select>
+                                <span class="filter-label">Type:</span>
+                                <select id="list-type-filter" style="width: 130px;">
+                                    <option value="nwl" selected>NWL</option>
+                                    <option value="csw">CSW</option>
+                                    <option value="csw_only">CSW Only</option>
+                                    <option value="likelihood">Likelihood</option>
+                                    <option value="uniques">NWL Uniques</option>
+                                    <option value="added">Added Words</option>
+                                </select>
                                 <button id="list-update-btn">Update</button>
                             </div>
                         </div>
 
                         <div class="lists-container" id="lists-container">
-                            <!-- Columns will be injected by JS or hardcoded structure -->
-                            <div class="list-column" id="col-nwl">
-                                <h3>NWL <span class="list-count" id="count-nwl"></span></h3>
-                                <div class="list-scroll-area">Loading...</div>
-                            </div>
-                            <div class="list-column" id="col-csw">
-                                <h3>CSW <span class="list-count" id="count-csw"></span></h3>
-                                <div class="list-scroll-area">Loading...</div>
-                            </div>
-                            <div class="list-column" id="col-csw-only">
-                                <h3>CSW Only <span class="list-count" id="count-csw-only"></span></h3>
-                                <div class="list-scroll-area">Loading...</div>
-                            </div>
-                            <div class="list-column" id="col-likelihood">
-                                <h3>NWL Likelihood <span class="list-count" id="count-likelihood"></span></h3>
-                                <div class="list-scroll-area">Loading...</div>
-                            </div>
-                            <div class="list-column" id="col-uniques">
-                                <h3>NWL Uniques <span class="list-count" id="count-uniques"></span></h3>
-                                <div class="list-scroll-area">Loading...</div>
-                            </div>
-                            <div class="list-column" id="col-added">
-                                <h3>Added Words <span class="list-count" id="count-added"></span></h3>
-                                <div class="list-scroll-area">Loading...</div>
+                            <div class="list-column" id="main-list-column" style="flex: 1;">
+                                <h3><span id="list-display-title">NWL</span> <span class="list-count" id="main-list-count"></span></h3>
+                                <div class="list-scroll-area" id="main-list-results">Loading...</div>
                             </div>
                         </div>
                     </div>
@@ -1694,14 +1682,54 @@
                 <!-- Pronunciation Management -->
                 <div class="mod-section">
                     <div class="mod-list-title">Pronunciation Dictionary</div>
-                    <div class="mod-add-section">
-                        <input type="text" id="pron-word-input" placeholder="Word (e.g. MORPHEME)">
-                        <input type="text" id="pron-value-input" placeholder="Pronunciation (e.g. MORE-FEEM)">
-                        <div class="mod-action-buttons">
-                            <button id="add-pron-btn" class="add-mod-btn">Add Pronunciation</button>
-                            <button id="remove-pron-btn" class="remove-mod-btn" style="padding: 12px 20px;">Remove
-                                Pronunciation</button>
+                    <div id="pron-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
+                    <div class="mod-add-section pron-layout">
+                        <div class="input-row">
+                            <input type="text" id="pron-word-input" placeholder="Word (e.g. MORPHEME)">
+                            <input type="text" id="pron-value-input" placeholder="Pronunciation (e.g. MORE-FEEM)">
                         </div>
+                        <div class="mod-action-buttons">
+                            <button id="add-pron-btn" class="mod-full-btn add">Add Pronunciation</button>
+                            <button id="remove-pron-btn" class="mod-full-btn remove">Remove Pronunciation</button>
+                        </div>
+                    </div>
+                </div>
+
+                <hr style="opacity: 0.1; margin: 30px 0;">
+
+                <!-- Added Words Management -->
+                <div class="mod-section">
+                    <div class="mod-list-title">Added Words Management</div>
+                    <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 5px;">Words in this list are always included in board solving and are highlighted <strong>purple</strong> when found on the board.</p>
+                    
+                    <div id="added-word-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
+
+                    <div class="mod-add-section pron-layout" style="margin-bottom: 20px;">
+                        <input type="text" id="added-word-input" style="flex: 1;" placeholder="Enter word (e.g. MORPHEME)">
+                        <div class="mod-action-buttons">
+                            <button id="add-added-word-btn" class="mod-full-btn add">Add Word</button>
+                            <button id="remove-added-word-btn" class="mod-full-btn remove">Remove Word</button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <hr style="opacity: 0.1; margin: 30px 0;">
+                
+                <!-- Definition Management -->
+                <div class="mod-section">
+                    <div class="mod-list-title">Definition Management</div>
+                    <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 5px;">Add, update, or remove definitions for any word in the dictionary.</p>
+                    
+                    <div id="def-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
+                    
+                    <div class="mod-add-section pron-layout" style="margin-bottom: 15px;">
+                        <input type="text" id="def-word-input" style="flex: 0.4;" placeholder="Word (e.g. MORPHEME)">
+                        <textarea id="def-text-input" style="flex: 1; min-height: 48px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); padding: 8px; font-family: inherit; font-size: 0.9rem; resize: vertical;" placeholder="Enter definition..."></textarea>
+                    </div>
+                    <div class="mod-action-buttons">
+                        <button id="add-def-btn" class="mod-full-btn add">Set Definition</button>
+                        <button id="remove-def-btn" class="mod-full-btn remove">Remove Definition</button>
                     </div>
                 </div>
 
@@ -1710,6 +1738,7 @@
                 <!-- Moderator Management -->
                 <div class="mod-section">
                     <div class="mod-list-title">Moderator Access</div>
+                    <div id="mod-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
                     <div class="mod-add-section">
                         <input type="text" id="new-mod-username" placeholder="Enter username to add...">
                         <button id="add-mod-btn" class="add-mod-btn">Add Moderator</button>
@@ -2335,6 +2364,10 @@
                                         that were present on
                                         the
                                         board but eluded your discovery.</li>
+                                    <li><span class="faq-highlight purple">Royal Purple</span> - 
+                                        <strong>Added Words</strong>.
+                                        Special words curated by moderators that are currently present on the board.
+                                    </li>
                                     <li><span class="found-indicator present">✓</span> <span
                                             class="faq-highlight check">Checkmark</span> - Indicates
                                         words

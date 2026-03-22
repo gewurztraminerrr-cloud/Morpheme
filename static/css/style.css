@@ -5603,7 +5603,7 @@ body {
     color: var(--text-primary);
 }
 
-.mod-item::before {
+#mod-list-container .mod-item::before {
     content: '🛡️';
     font-size: 1.1rem;
 }
@@ -5627,17 +5627,58 @@ body {
 
 .mod-action-buttons {
     display: flex;
-    gap: 10px;
+    gap: 15px;
     width: 100%;
-    margin-top: 10px;
-}
-
-.mod-action-buttons button {
-    flex: 1;
 }
 
 .remove-mod-btn:hover {
     background: #ff4757;
     color: #fff;
-    transform: scale(1.05);
+    transform: scale(1.1);
+}
+
+
+.mod-add-section.pron-layout {
+    flex-direction: column;
+    gap: 15px;
+}
+
+.mod-add-section.pron-layout .input-row {
+    display: flex;
+    gap: 15px;
+    width: 100%;
+}
+
+.mod-add-section.pron-layout .input-row input {
+    flex: 1;
+}
+
+.mod-full-btn {
+    flex: 1;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 15px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    text-align: center;
+}
+
+
+.mod-full-btn.add {
+    background: #00b894;
+    color: #fff;
+}
+
+.mod-full-btn.remove {
+    background: #e94560;
+    color: #fff;
+}
+
+.mod-full-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }

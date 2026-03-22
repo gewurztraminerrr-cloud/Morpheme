@@ -699,9 +699,10 @@ function updateAuthUI() {
         // Handle Mods Button
         const modsBtn = document.getElementById('nav-mods-btn');
         if (modsBtn) {
-            const isAuthorized = window.currentUserIsMod || (currentUser && currentUser.toLowerCase() === 'jeffy');
+            const isAuthorized = window.currentUserIsMod;
             modsBtn.style.display = isAuthorized ? 'block' : 'none';
         }
+
     } else {
         if (loginNavBtn) loginNavBtn.classList.remove('hidden');
         if (userDisplay) userDisplay.classList.add('hidden');

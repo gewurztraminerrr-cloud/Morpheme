@@ -1134,6 +1134,15 @@ body.theme-light-brown .word-item.bonus-word {
     /* Remove opacity to ensure readable */
 }
 
+/* Added Word (Royal Purple) — Higher Priority than CSW-Only */
+.added-word {
+    background: rgba(147, 51, 234, 0.4) !important;
+    border: 2px solid #9333ea !important;
+    box-shadow: 0 0 10px rgba(147, 51, 234, 0.5) !important;
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
 /* CSW-Only Word (Third Priority: Yellow/Gold) */
 .word-item.csw-only {
     background: rgba(255, 215, 0, 0.4) !important;
@@ -1201,9 +1210,8 @@ body.theme-light-brown .word-item.bonus-word {
 
 /* --- LISTS TOOL STYLING --- */
 .lists-container {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 10px;
+    display: flex;
+    gap: 15px;
     height: calc(100vh - 240px);
     width: 100%;
     padding: 0 15px 10px 0;

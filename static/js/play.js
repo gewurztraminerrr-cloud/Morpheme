@@ -690,7 +690,7 @@ async function updateGameState() {
                 }
 
                 const uniqueGlobalFound = [...new Set(allPlayerFoundStrs)];
-                displayAllWords(allWords, state.bonus_word, targetWords, uniqueGlobalFound, state.all_word_scores, state.csw_only_words);
+                displayAllWords(allWords, state.bonus_word, targetWords, uniqueGlobalFound, state.all_word_scores, state.csw_only_words, state.added_words);
                 if (state.game_type === 'split' || state.game_type === 'fcfs') addSplitViewBoardToggle();
 
             } else if (state.game_type !== 'fcfs') {
@@ -719,9 +719,16 @@ async function updateGameState() {
                         const isBonus = state.bonus_word && wordUpper === state.bonus_word.toUpperCase();
                         const isCSWOnly = state.csw_only_words && state.csw_only_words.some(csw => csw.toUpperCase() === wordUpper);
 
+                        const isAddedWord = state.added_words && state.added_words.some(aw => aw.toUpperCase() === wordUpper);
+
                         let className = 'word-item player-word';
-                        if (isBonus) className += ' bonus-word';
-                        if (isCSWOnly) className += ' csw-only';
+                        if (isBonus) {
+                            className += ' bonus-word';
+                        } else if (isAddedWord) {
+                            className += ' added-word';
+                        } else if (isCSWOnly) {
+                            className += ' csw-only';
+                        }
                         if (points < 0) className += ' penalty-word';
                         if (highlightedFoundWord === wordUpper) className += ' finder-active';
 
@@ -778,7 +785,23 @@ async function updateGameState() {
                         const isMe = finder === currentUser;
                         const isBonus = state.bonus_word && wordUpper === state.bonus_word.toUpperCase();
 
-                        let className = 'word-item' + (isMe ? ' player-word' : ' opponent-word') + (isBonus ? ' bonus-word' : '');
+                        const isAddedWord = state.added_words && state.added_words.some(aw => aw.toUpperCase() === wordUpper);
+
+                        let className = 'word-item';
+                        if (isMe) {
+                            className += ' player-word';
+                        } else {
+                            className += ' opponent-word';
+                        }
+
+                        if (isBonus) {
+                            className += ' bonus-word';
+                        } else if (isAddedWord) {
+                            className += ' added-word';
+                        } else if (isCSWOnly) {
+                            className += ' csw-only';
+                        }
+                        
                         if (highlightedFoundWord === wordUpper) className += ' finder-active';
 
                         const indicator = '<span class="found-indicator present">✓</span>';
@@ -1364,7 +1387,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWords = [], allWordScores = {}, cswOnlyWords = []) {
+function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWords = [], allWordScores = {}, cswOnlyWords = [], addedWords = []) {
     const listEl = document.getElementById('submitted-words-list');
     if (!allWords || allWords.length === 0) {
         listEl.innerHTML = '<p class="placeholder">No words found</p>';
@@ -1374,6 +1397,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     const targetWordsUpper = targetUserWords.map(w => w.toUpperCase());
     const allFoundUpper = allFoundWords.map(w => w.toUpperCase());
     const cswOnlyUpper = (cswOnlyWords || []).map(w => w.toUpperCase());
+    const addedUpper = (addedWords || []).map(w => w.toUpperCase());
 
     // Sort: Length desc, then Alpha
     // Sort: Color Priority, then Length desc, then Alpha
@@ -1407,6 +1431,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         const wordUpper = word.toUpperCase();
         const isBonus = bonusWord && wordUpper === bonusWord.toUpperCase();
         const isCSWOnly = cswOnlyUpper.includes(wordUpper);
+        const isAddedWord = addedUpper.includes(wordUpper);
         const isTargetFound = targetWordsUpper.includes(wordUpper);
         const isFoundByAny = allFoundUpper.includes(wordUpper);
         const pointsData = allWordScores[word] || allWordScores[wordUpper] || 0;
@@ -1432,11 +1457,15 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         if (isBonus) {
             className += ' bonus-word';
         }
-        // Priority 2: Word Found by Me/Selected Player (Blue)
+        // Priority 2: Added Word (Royal Purple)
+        else if (isAddedWord) {
+            className += ' added-word';
+        }
+        // Priority 3: Word Found by Me/Selected Player (Blue)
         else if (isTargetFound) {
             className += ' player-word';
         }
-        // Priority 3: CSW-Only Word (Yellow/Gold)
+        // Priority 4: CSW-Only Word (Yellow/Gold)
         else if (isCSWOnly) {
             className += ' csw-only';
         }
