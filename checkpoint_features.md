@@ -1,37 +1,32 @@
-# Morpheme Project Checkpoint - March 20, 2026 (5:20 PM)
+# Morpheme Project Checkpoint - March 22, 2026 (3:05 PM)
 
-The current state of the Morpheme application and the Boggle-Gen integration has been saved.
+The current state of the Morpheme application has been saved as the new "Start Over" point.
 
 ## Core Features Saved:
 
-### 1. Morpheme Application (Flask Backend)
-- **Forum System**:
-  - Full Forum UI with category browsing.
-  - Search User Posts feature (Box horizontal size adjusted to prevent overlap).
-  - Post history and user-specific views.
-- **Word Validation & Scoring**:
-  - NWL and CSW dictionary integration (over 280k words).
-  - Massive Pronunciation Upgrade (160k+ coverage using Moby/Wiktionary).
-  - CHAMOIS and other specific pronunciation fixes.
-- **Social & Profile**:
-  - User Profiles (Update Profile, Avatar uploads).
-  - Private Match logic (Invitations, Match creation).
-  - Private Messaging (Unread count APIs, thread display).
-  - Friends List functionality.
-- **Game Logic**:
-  - Tournament system and tournament management logic.
-  - Spinner sets and UI components for game interactions.
+### 1. Forum & Lobby Enhancements
+- **Categorized Forums**: Integrated specific categories for easier navigation:
+  - **Bugs/Errors**: Direct reporting for technical issues.
+  - **News**: Official updates and announcements.
+  - **Suggestions**: Community feedback collection.
+- **Global Lobby Notice**: Server-wide messaging system for moderators.
+- **Guest Restrictions**: Enhanced security logic to manage Guest user capabilities.
 
-### 2. Boggle-Gen Integration
-- **New Project Structure**: Integrated `boggle-gen` as a sub-project.
-- **Boggle Engine**: Source code for the Boggle board generator.
-- **Frontend**: Web-based interface for interacting with the Boggle generator.
-- **Workspace**: VS Code workspace configuration.
+### 2. Moderator & User Controls
+- **Advanced Banning**: Full user erasure (removes all stats, posts, history, and profile data).
+- **Pronunciation Management**: Streamlined UI for managing word pronunciations.
+- **Added Words Management**: Integrated "purple" highlighting for custom words during rounds.
+- **Trophy Logic**: New PE-based (Performance Efficiency 2.0+) trophy icons next to usernames for exceptional rounds.
 
-### 3. Automation & Workflows
-- **`start-over` Workflow**: Updated to revert precisely to this point (tag: `snapshot-current`).
-- **Persistence**: Re-added dictionaries and static uploads to the tracked repository.
+### 3. Application Reliability & Performance
+- **Git Optimization**: Configured root `.gitignore` to resolve the "too many active changes" warning in Antigravity.
+- **Round Stability**: Improved concurrency for round history saving and room cleanup.
+- **Dictionary Support**: Full NWL, CSW, and 16+ supplementary dictionary loading.
 
-## Tags created:
-- `snapshot-current`
-- `save_point_2026-03-20`
+### 4. Workflows & Project Structure
+- **Updated 'Start Over' Snapshot**: The `/start-over` command now reverts back to this March 22nd state.
+- **Root-Level Execution**: The application is configured to run from the `/Users/jeffbabiak/` directory for better integration.
+
+## Git Tags:
+- `snapshot-current` (Updated to reflect this state)
+- `save_point_2026-03-22`
