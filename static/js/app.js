@@ -446,6 +446,9 @@ function showPage(pageId) {
         if (typeof window.loadPrivateMatches === 'function') {
             window.loadPrivateMatches();
         }
+        if (typeof window.checkLobbyNotice === 'function') {
+            window.checkLobbyNotice();
+        }
     }
 
     // 2. Handle Game Polling
@@ -961,3 +964,15 @@ window.setCurrentUser = function (user) {
         }
     }, 1000);
 })();
+
+window.checkLobbyNotice = async function() {
+    try {
+        const res = await fetch('/api/mods/lobby-notice');
+        const data = await res.json();
+        if (data && data.notice) {
+             window.showAlertModal("Morpheme News & Notices", data.notice);
+        }
+    } catch (e) {
+        console.warn('Failed to check lobby notice', e);
+    }
+};

@@ -248,7 +248,55 @@ window.removeAddedWord = removeAddedWord;
 
 
 // Global initialization
+
+async function loadLobbyNotice() {
+    const input = document.getElementById('lobby-notice-input');
+    if (!input) return;
+    
+    try {
+        const response = await fetch('/api/mods/lobby-notice');
+        const data = await response.json();
+        if (data.notice) {
+            input.value = data.notice;
+        } else {
+            input.value = '';
+        }
+    } catch (err) {
+        console.error("Error loading lobby notice:", err);
+    }
+}
+
+async function updateLobbyNotice() {
+    const input = document.getElementById('lobby-notice-input');
+    if (!input) return;
+    const notice = input.value.trim();
+    
+    try {
+        const response = await fetch('/api/mods/lobby-notice/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notice })
+        });
+        const data = await response.json();
+        if (data.success) {
+            showModStatus("Lobby notice updated successfully.", false, 'notice-status-area');
+        } else {
+            showModStatus(data.error || "Failed to update notice.", true, 'notice-status-area');
+        }
+    } catch (err) {
+        console.error("Error updating notice:", err);
+        showModStatus("Network error updating notice.", true, 'notice-status-area');
+    }
+}
+
+async function clearLobbyNotice() {
+    const input = document.getElementById('lobby-notice-input');
+    if (input) input.value = '';
+    await updateLobbyNotice();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    loadLobbyNotice(); // Load initial notice
     checkModStatus();
     
     // Moderators
@@ -289,7 +337,56 @@ document.addEventListener('DOMContentLoaded', () => {
     if (removeDefBtn) {
         removeDefBtn.addEventListener('click', removeDefinition);
     }
+
+    // Ban User
+    const banUserBtn = document.getElementById('ban-user-btn');
+    if (banUserBtn) {
+        banUserBtn.addEventListener('click', banUser);
+    }
+
+    const setNoticeBtn = document.getElementById('set-notice-btn');
+    if (setNoticeBtn) {
+        setNoticeBtn.addEventListener('click', updateLobbyNotice);
+    }
+
+    const clearNoticeBtn = document.getElementById('clear-notice-btn');
+    if (clearNoticeBtn) {
+        clearNoticeBtn.addEventListener('click', clearLobbyNotice);
+    }
 });
+
+async function banUser() {
+    const input = document.getElementById('ban-username-input');
+    const username = input ? input.value.trim() : '';
+    if (!username) {
+        alert("Please enter a username to ban.");
+        return;
+    }
+
+    if (!confirm(`ARE YOU SURE? This will permanently ERASE all data for user "${username}". This cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/mods/ban_user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+        const data = await response.json();
+        if (data.success) {
+            if (input) input.value = '';
+            showModStatus(data.message, false, 'ban-status-area');
+            alert(`User "${username}" has been permanently erased from the database.`);
+        } else {
+            showModStatus(data.error || "Failed to ban user.", true, 'ban-status-area');
+            alert("Error: " + (data.error || "Failed to ban user."));
+        }
+    } catch (err) {
+        console.error("Error banning user:", err);
+        showModStatus("Network error banning user.", true, 'ban-status-area');
+    }
+}
 
 async function addDefinition() {
     const wordInput = document.getElementById('def-word-input');

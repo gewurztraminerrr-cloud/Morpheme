@@ -108,7 +108,14 @@ const Forum = {
         // Show/hide New Post button based on guest status
         // restriction: guests cannot post
         const isGuest = window.currentUserIsGuest || (window.currentUser === null);
-        document.getElementById('forum-new-post-btn').classList.toggle('hidden', isGuest);
+        let hideNewPost = isGuest;
+        
+        // Restriction: Only moderators can post in the News category
+        if (category.name === "News" && !window.currentUserIsMod) {
+            hideNewPost = true;
+        }
+        
+        document.getElementById('forum-new-post-btn').classList.toggle('hidden', hideNewPost);
 
         await this.loadPosts(catId);
         this.showListView();
@@ -375,7 +382,7 @@ const Forum = {
 
         // Show image upload for Screenshots, General, and Tips categories
         const category = this.categories.find(c => c.id === this.currentCategoryId);
-        const allowUpload = ["Screenshots", "General", "Tips, Tricks, and Strategies"].includes(category.name);
+        const allowUpload = ["Screenshots", "General", "Tips, Tricks, and Strategies", "Bugs/Errors", "News", "Suggestions"].includes(category.name);
         document.getElementById('forum-image-upload-section').classList.toggle('hidden', !allowUpload);
     },
 

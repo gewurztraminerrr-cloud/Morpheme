@@ -16,6 +16,7 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 from tournament_logic import tournament_manager
 from private_match_logic import private_match_manager
+from word_validator import word_validator
 
 # MODERATOR SYSTEM
 MODS_FILE = os.path.join(os.path.dirname(__file__), 'dictionaries', 'mods.txt')
@@ -182,14 +183,18 @@ def add_pronunciation():
     
     if not word or not pronunciation:
         return jsonify({'error': 'Word and pronunciation required'}), 400
+    
+    # Check if word is valid in NWL, CSW, or Added Words
+    if not (word_validator.is_valid_word(word, 'CSW') or word_validator.is_valid_word(word, 'NWL')):
+        return jsonify({'error': f'"{word}" is not a valid word in NWL, CSW, or Added Words.'}), 400
         
     pron_path = os.path.join(os.path.dirname(__file__), 'dictionaries', 'pronunciations.txt')
     
     try:
         # Update Cache
         global PRONUNCIATIONS_CACHE
-        if 'PRONUNCIATIONS_CACHE' not in globals():
-            PRONUNCIATIONS_CACHE = {}
+        if PRONUNCIATIONS_CACHE is None:
+            load_pronunciations()
         PRONUNCIATIONS_CACHE[word] = pronunciation
         
         # Check if already exists in mapping or file to avoid duplicates.
@@ -220,10 +225,10 @@ def remove_pronunciation():
     try:
         # Update Cache
         global PRONUNCIATIONS_CACHE
-        if 'PRONUNCIATIONS_CACHE' not in globals():
-            PRONUNCIATIONS_CACHE = {}
+        if PRONUNCIATIONS_CACHE is None:
+            load_pronunciations()
             
-        if word in PRONUNCIATIONS_CACHE:
+        if PRONUNCIATIONS_CACHE and word in PRONUNCIATIONS_CACHE:
             del PRONUNCIATIONS_CACHE[word]
             
         # Rewrite file without that word
@@ -420,6 +425,101 @@ def remove_definition_api():
         return jsonify({'success': True, 'message': f'Definition for {word} removed.'})
     except Exception as e:
         print(f"Error removing definition: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/mods/ban_user', methods=['POST'])
+@login_required
+def ban_user_api():
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.json
+    username = (data.get('username') or '').strip()
+    
+    if not username:
+        return jsonify({'error': 'Username required'}), 400
+
+    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn.row_factory = sqlite3.Row
+    try:
+        # Get user ID
+        cursor = conn.execute("SELECT id FROM users WHERE username = ?", (username,))
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({'error': 'User not found'}), 404
+        user_id = row['id']
+        
+        # Start transaction
+        conn.execute("BEGIN TRANSACTION")
+        
+        # Deletions (Erase all traces)
+        # ID-based deletions
+        conn.execute("DELETE FROM forum_comments WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM forum_posts WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM friends WHERE user_id = ? OR friend_id = ?", (user_id, user_id))
+        conn.execute("DELETE FROM match_invites WHERE sender_id = ?", (user_id,))
+        conn.execute("DELETE FROM private_match_players WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM private_match_starts WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM private_match_turns WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM private_matches WHERE creator_id = ?", (user_id,))
+        conn.execute("DELETE FROM private_messages WHERE sender_id = ? OR receiver_id = ?", (user_id, user_id))
+        conn.execute("DELETE FROM round_history WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM tournament_matchups WHERE user1_id = ? OR user2_id = ? OR winner_id = ?", (user_id, user_id, user_id))
+        conn.execute("DELETE FROM tournament_participants WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM tournament_scores WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM user_ratings WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM user_settings WHERE user_id = ?", (user_id,))
+        
+        # Name-based string deletions
+        conn.execute("DELETE FROM match_invites WHERE recipient_username = ?", (username,))
+        conn.execute("DELETE FROM private_match_players WHERE username = ?", (username,))
+        conn.execute("DELETE FROM private_messages WHERE sender_username = ?", (username,))
+
+        # Finally, delete the user record
+        conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Error banning user: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+        
+    return jsonify({'success': True, 'message': f'User {username} successfully banned and all traces erased.'})
+
+
+@app.route('/api/mods/lobby-notice', methods=['GET'])
+def get_lobby_notice():
+    notice_path = os.path.join(os.path.dirname(__file__), 'dictionaries', 'lobby_notice.txt')
+    if not os.path.exists(notice_path):
+        return jsonify({'notice': ''})
+    try:
+        with open(notice_path, 'r', encoding='utf-8') as f:
+            notice = f.read().strip()
+        return jsonify({'notice': notice})
+    except:
+        return jsonify({'notice': ''})
+
+@app.route('/api/mods/lobby-notice/update', methods=['POST'])
+@login_required
+def update_lobby_notice():
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.get_json()
+    notice = data.get('notice', '').strip()
+    
+    notice_dir = os.path.join(os.path.dirname(__file__), 'dictionaries')
+    if not os.path.exists(notice_dir):
+        os.makedirs(notice_dir)
+        
+    notice_path = os.path.join(notice_dir, 'lobby_notice.txt')
+    try:
+        with open(notice_path, 'w', encoding='utf-8') as f:
+            f.write(notice)
+        return jsonify({'success': True})
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
@@ -768,7 +868,10 @@ def init_db():
             ("General", "General discussion about Morpheme."),
             ("Tips, Tricks, and Strategies", "Share your best gameplay advice."),
             ("Screenshots", "Show off your high scores and cool boards."),
-            ("Introduce Yourself", "New here? Say hello!")
+            ("Introduce Yourself", "New here? Say hello!"),
+            ("News", "Official news and updates from the developers."),
+            ("Suggestions", "Share your ideas for improving Morpheme."),
+            ("Bugs/Errors", "Report bugs or technical issues encountered.")
         ]
         for name, desc in categories:
             conn.execute('INSERT OR IGNORE INTO forum_categories (name, description) VALUES (?, ?)', (name, desc))
@@ -1565,7 +1668,6 @@ def upload_avatar():
 
 # Game Room APIs
 from game_room import room_manager
-from word_validator import word_validator
 import uuid
 
 def apply_leave_penalty(user_id, room):
@@ -1640,10 +1742,9 @@ def create_room():
     min_rating = data.get('min_rating', 0)
     max_rating = data.get('max_rating', 9999)
     
-    # Guest Restriction: Guests cannot create rooms with rating limits
+    # Guest Restriction: Guests cannot create rooms
     if session.get('is_guest', False):
-        if int(min_rating) > 0 or int(max_rating) < 9999:
-            return jsonify({'error': 'Guests can only create/join rooms with no rating limits (0-∞).'}), 403
+        return jsonify({'error': 'Guest users are not allowed to create rooms. Please register to unlock this feature.'}), 403
     
     # Create room
     generated_id = str(uuid.uuid4())
@@ -3326,6 +3427,12 @@ def create_forum_post():
             
     conn = sqlite3.connect('morpheme.db', timeout=30)
     try:
+        # [Restriction]: Only mods can post in 'News'
+        cur = conn.execute('SELECT name FROM forum_categories WHERE id = ?', (category_id,))
+        cat_row = cur.fetchone()
+        if cat_row and cat_row[0] == "News" and not is_mod(session['username']):
+            return jsonify({'error': 'Only moderators can post in the News category.'}), 403
+            
         cursor = conn.execute('''
             INSERT INTO forum_posts (category_id, user_id, title, content, image_url)
             VALUES (?, ?, ?, ?, ?)

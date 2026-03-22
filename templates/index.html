@@ -1676,8 +1676,21 @@
             <div class="mods-container">
                 <div class="mods-header">
                     <h2>Moderator Management</h2>
-                    <p>Manage site moderators and word pronunciations.</p>
                 </div>
+
+
+                <!-- Moderator Control: Ban User -->
+                <div class="mod-section">
+                    <div class="mod-list-title">Moderator Control: Ban User</div>
+                    <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 5px; color: #f43f5e;"><strong>WARNING:</strong> This will permanently delete the user and erase all their stats, posts, and history.</p>
+                    <div id="ban-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
+                    <div class="mod-add-section">
+                        <input type="text" id="ban-username-input" placeholder="Enter username to ban...">
+                        <button id="ban-user-btn" class="mod-full-btn remove">Ban and Erase User</button>
+                    </div>
+                </div>
+
+                <hr style="opacity: 0.1; margin: 30px 0;">
 
                 <!-- Pronunciation Management -->
                 <div class="mod-section">
@@ -1730,6 +1743,22 @@
                     <div class="mod-action-buttons">
                         <button id="add-def-btn" class="mod-full-btn add">Set Definition</button>
                         <button id="remove-def-btn" class="mod-full-btn remove">Remove Definition</button>
+                    </div>
+                </div>
+
+                <hr style="opacity: 0.1; margin: 30px 0;">
+
+                <!-- Lobby Notice Management -->
+                <div class="mod-section">
+                    <div class="mod-list-title" style="color: var(--accent-color); font-weight: 700;">Global Lobby Notice</div>
+                    <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 10px;">This message will be shown as a popup to all users <strong>ONLY</strong> when they enter the Lobby. (NOT during gameplay).</p>
+                    <div id="notice-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
+                    <div class="mod-add-section" style="flex-direction: column; align-items: stretch; gap: 10px;">
+                        <textarea id="lobby-notice-input" placeholder="Enter notice message... (Supports multi-line)" style="width: 100%; min-height: 100px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); padding: 12px; font-family: inherit; font-size: 0.95rem; resize: vertical;"></textarea>
+                        <div class="mod-action-buttons" style="display: flex; gap: 10px;">
+                            <button id="set-notice-btn" class="mod-full-btn add" style="flex: 1;">Update Lobby Notice</button>
+                            <button id="clear-notice-btn" class="mod-full-btn remove" style="flex: 0.3;">Clear</button>
+                        </div>
                     </div>
                 </div>
 

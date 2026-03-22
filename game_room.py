@@ -691,20 +691,19 @@ class GameRoom:
                     expected = (p.rating / reg_rating_sum) * reg_score_sum
                     p.performance_efficiency = p.score / expected if expected > 0 else 0
                     max_pe = max(max_pe, p.performance_efficiency)
-                    # Remarkable threshold: Winner AND (PE >= 4.0 & Score >= 40 OR Raw Score >= 100)
-                    p.has_exceptional_round = multiple_active and p.score > 0 and p.score == max_score and \
-                                             ((p.performance_efficiency >= 4.0 and p.score >= 40) or p.score >= 100)
+                    # Remarkable threshold: Only based on unusually high PE (PE >= 1.5)
+                    p.has_exceptional_round = multiple_active and p.performance_efficiency >= 1.5
             else:
                 for p in reg_players:
                     p.performance_efficiency = 1.0
                     max_pe = max(max_pe, 1.0)
-                    p.has_exceptional_round = multiple_active and p.score > 0 and p.score == max_score and (p.score >= 100)
+                    p.has_exceptional_round = False # PE is 1.0 (Average)
 
             # 2. Guests Pool
             for p in guest_players:
                 p.performance_efficiency = 1.0
                 max_pe = max(max_pe, 1.0)
-                p.has_exceptional_round = multiple_active and p.score > 0 and p.score == max_score and (p.score >= 100)
+                p.has_exceptional_round = False # PE is 1.0 (Average)
 
             # Determine Notable Winners for Replay Tab
             # The user wants "enormous wins" to determine replay listing.

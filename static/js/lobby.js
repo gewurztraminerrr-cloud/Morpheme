@@ -359,14 +359,19 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
     // Ensure persistent structure for inputs so they aren't wiped on poll
     let roomsContainer = document.getElementById('dynamic-rooms-container');
     if (!roomsContainer) {
+        const isGuest = window.currentUser && window.currentUser.startsWith('Guest_');
         const createButtonHtml = `
-            <div class="create-room-panel">
-                <div style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-bottom: 8px; text-align: center;">Set Rating Limits (Optional)</div>
-                <div class="rating-inputs-row">
-                    <input type="number" class="rating-input min-rating-input" placeholder="Min Rating" min="0" step="100">
-                    <input type="number" class="rating-input max-rating-input" placeholder="Max Rating" min="0" step="100">
+            <div class="create-room-panel" ${isGuest ? 'style="filter: grayscale(1); opacity: 0.7;"' : ''}>
+                <div style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-bottom: 8px; text-align: center;">
+                    ${isGuest ? 'Register to Create Custom Rooms' : 'Set Rating Limits (Optional)'}
                 </div>
-                <button class="confirm-create-room-btn">+ Create Room</button>
+                <div class="rating-inputs-row">
+                    <input type="number" class="rating-input min-rating-input" placeholder="Min Rating" min="0" step="100" ${isGuest ? 'disabled' : ''}>
+                    <input type="number" class="rating-input max-rating-input" placeholder="Max Rating" min="0" step="100" ${isGuest ? 'disabled' : ''}>
+                </div>
+                <button class="confirm-create-room-btn" ${isGuest ? 'disabled style="cursor:not-allowed;"' : ''}>
+                    ${isGuest ? 'Registered Only' : '+ Create Room'}
+                </button>
             </div>
             <div id="dynamic-rooms-container" style="display: flex; flex-direction: column; gap: 12px;">
                 <p class="placeholder">Loading rooms...</p>
