@@ -66,7 +66,7 @@ class SpinnerSet:
     
     @staticmethod
     def _spin_word_count(dictionary_name='NWL'):
-        """25% 50-100, 50% 100-200, 25% 200+ (max dict size)"""
+        """24% 50-100, 50% 100-200, 25% 200+, 1% 2000+"""
         # Get actual size of selected dictionary
         if dictionary_name == 'CSW':
             max_words = len(word_validator.csw_words)
@@ -74,11 +74,12 @@ class SpinnerSet:
             max_words = len(word_validator.nwl_words)
             
         ranges = [
-            (50, 100),
-            (100, 200),
-            (200, max_words)
+            '50-100',
+            '100-200',
+            '200+',      # 200+
+            '500+'       # 500+
         ]
-        return random.choices(ranges, weights=[25, 50, 25])[0]
+        return random.choices(ranges, weights=[24, 50, 25, 1])[0]
     
     @staticmethod
     def _spin_dictionary():

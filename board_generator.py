@@ -16,6 +16,10 @@ LETTER_FREQ_MH = [343, 100, 157, 161, 455, 64, 106, 108, 326, 11, 64, 236,
 LETTER_FREQ_DEFAULT = [190, 45, 99, 82, 278, 29, 69, 61, 222, 4, 23, 129,
                        71, 165, 163, 74, 4, 172, 237, 161, 81, 23, 19, 7, 40, 12]
 
+# IO Base weights (Sum = 10000)
+LETTER_FREQ_IO_BASE = [800, 230, 360, 410, 1180, 150, 300, 240, 750, 20, 140, 560, 
+                       280, 580, 610, 290, 20, 730, 940, 570, 370, 100, 120, 30, 180, 40]
+
 VOWELS = 'AEIOU'
 CONSONANTS = 'BCDFGHJKLMNPQRSTVWXYZ'
 
@@ -59,13 +63,21 @@ class BoardGenerator:
         # REMOVED: Cache lookup that overrode user format preference
         # We now strictly respect the board_format passed in arguments
         
-        # Try to generate valid board (max 15 attempts)
-        max_attempts = 15 
-        
         # 0. Handle "Mania" without a prefix (e.g. from user dropdown selection)
         if board_format == 'Mania':
             mania_letter = random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
             board_format = f"{mania_letter} Mania"
+
+        # Try to generate valid board (max 15 attempts)
+        max_attempts = 15 
+
+        # 0.1 Handle 500+ mode (Iterative Optimization)
+        if min_words >= 500:
+            print(f"[BoardGen] Entering 500+ Mode (Iterative Optimization)")
+            rows, cols = map(int, dimensions.split('x'))
+            board = self._create_2000plus_board(rows, cols, dictionary)
+            all_words = self._solve_board(board, dictionary, (min_words, max_words), min_word_length)
+            return board, all_words, None
 
         for attempt in range(1, max_attempts + 1):
             with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
@@ -162,13 +174,17 @@ class BoardGenerator:
         if isinstance(word_count_range, tuple):
             return word_count_range
         
-        # Handle string format: "50-100", "100-200", "200+"
+        # Handle string format: "50-100", "100-200", "200+", "500+"
         if word_count_range == '50-100':
             return (50, 100)
         elif word_count_range == '100-200':
             return (100, 200)
         elif word_count_range == '200+':
-            return (200, float('inf'))
+            return (200, 500)
+        elif word_count_range == '500+':
+            return (500, 99999)
+        elif word_count_range in ['1500+', '2000+']:
+            return (500, 99999) # Backward compatibility
         else:
             # Default to no restrictions
             return (0, float('inf'))
@@ -260,6 +276,36 @@ class BoardGenerator:
                     board[r][c] = random.choices(VOWELS, weights=vowel_weights, k=1)[0]
         return board
     
+    def _create_2000plus_board(self, rows, cols, dictionary):
+        """
+        Iterative Optimization (IO)
+        1. Start with a random board using custom IO Base weights.
+        2. Scan every position. For each, test A-Z and pick the best letter.
+        """
+        weights = LETTER_FREQ_IO_BASE
+        board = self._create_normal_board(rows, cols, weights)
+        
+        print(f"[BoardGen] Initializing IO Optimization for {rows}x{cols} board")
+        
+        for r in range(rows):
+            for c in range(cols):
+                best_char = board[r][c]
+                max_words = 0
+                
+                # Test each letter in the alphabet
+                for char in self.letters:
+                    board[r][c] = char
+                    # Quick solve for this configuration
+                    words = self._solve_board(board, dictionary, (0, 99999), 3)
+                    if len(words) > max_words:
+                        max_words = len(words)
+                        best_char = char
+                
+                board[r][c] = best_char
+                print(f"[BoardGen] Optimized ({r},{c}) -> {best_char} (Words: {max_words})")
+        
+        return board
+
     def _create_either_or_board(self, rows, cols, weights):
         """Create a board where some tiles contain two letters (e.g. L/T)."""
         board = self._create_normal_board(rows, cols, weights)

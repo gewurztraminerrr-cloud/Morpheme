@@ -231,6 +231,18 @@ class GameRoom:
         self.add_chat_message("System", f"{username} has entered the room.", is_system=True)
         return True
     
+    def _get_wc_tuple(self, wc_range):
+        """Helper to parse wc_range into (min, max) tuple"""
+        if isinstance(wc_range, tuple):
+            return wc_range
+        # Map specific labels to numeric ranges for internal logic
+        if wc_range == '50-100': return (50, 100)
+        if wc_range == '100-200': return (100, 200)
+        if wc_range == '200+': return (200, 500)
+        if wc_range == '500+': return (500, 99999)
+        if wc_range in ['1500+', '2000+']: return (500, 99999) # Backward compatibility
+        return (0, 0)
+    
     def remove_player(self, user_id, force=False):
         """Remove player or spectator from room"""
         # PERSISTENCE: Never remove players from 24h rooms unless forced (e.g. logout)
@@ -741,8 +753,13 @@ class GameRoom:
                 # This implies they expect to see recent ones. 50 cover 10.)
                 if len(self.winners_history) > 50:
                     self.winners_history = self.winners_history[:50]
-            if board_format != 'Normal':
-                print(f"[GameRoom] Round {self.current_round} is UNRANKED (Format: {board_format}). Skipping rating updates.")
+            # Skip rating updates for non-Normal formats OR for 500+ modes (unranked)
+            wc_range = self.spinner_params.get('word_count_range', (0, 0))
+            wc_tuple = self._get_wc_tuple(wc_range)
+            is_500plus = wc_tuple[0] >= 500
+            
+            if board_format != 'Normal' or is_500plus:
+                print(f"[GameRoom] Round {self.current_round} is UNRANKED (Format: {board_format}, 500+: {is_500plus}). Skipping rating updates.")
                 rating_changes = {p.user_id: 0 for p in self.players}
             else:
                 rating_changes = calculate_proportional_rating_change(self.players, is_private=self.is_private)
@@ -1142,6 +1159,19 @@ class RoomManager:
                 print(f"[RoomManager] WARNING: No words to save to history (Round {room.current_round})")
             
             print(f"[RoomManager] Generating spinner parameters for {room.board_dimensions}")
+            
+            # CLEAR BOARD & WORDS IMMEDIATELY to prevent "deceiving" the user during sync generation
+            # This ensures they see an empty board until the optimized one is ready.
+            # ONLY DO THIS FOR 500+ (IO) rounds though, to avoid flickering for normal ones
+            wc_range = room.spinner_params.get('word_count_range', (0, 0))
+            wc_tuple = room._get_wc_tuple(wc_range)
+            is_500plus = wc_tuple[0] >= 500
+            if is_500plus:
+                rows_num, cols_num = map(int, room.board_dimensions.split('x'))
+                room.board = [['' for _ in range(cols_num)] for _ in range(rows_num)]
+                room.all_words = []
+                room.complete_words = []
+            
             # Generate spinner parameters (Skip if solo and already configured)
             if not (room.is_solo and room.spinner_params):
                 is_24h = room.time_limit >= 7200
@@ -1154,8 +1184,17 @@ class RoomManager:
             
             # Get bonus word from dictionary
             fmt = room.spinner_params['board_format']
-            if 'Mania' in fmt or fmt == 'Checkerboard':
-                print(f"[RoomManager] {fmt} selected - disabling bonus word")
+            wc_range = room.spinner_params.get('word_count_range', (0, 0))
+            wc_tuple = room._get_wc_tuple(wc_range)
+            is_500plus = wc_tuple[0] >= 500
+            
+            if 'Mania' in fmt or fmt == 'Checkerboard' or is_500plus:
+                if is_500plus:
+                    print(f"[RoomManager] 500+ Mode: Forcing Normal format and no bonus word")
+                    room.spinner_params['board_format'] = 'Normal'
+                    fmt = 'Normal'
+                else:
+                    print(f"[RoomManager] {fmt} selected - disabling bonus word")
                 bonus_word = ''
             else:
                 print(f"[RoomManager] Getting bonus word (length={room.spinner_params['bonus_word_length']}, dict={room.spinner_params['dictionary']})")
@@ -1348,9 +1387,19 @@ class RoomManager:
             self.generate_spinner_params(room_id)
         
         fmt = room.spinner_params['board_format']
+        wc_range = room.spinner_params.get('word_count_range', (0, 0))
+        wc_tuple = room._get_wc_tuple(wc_range)
+        is_500plus = wc_tuple[0] >= 500
+        
         # User Request: "Only apply Mania or Checkerboard on their own: Do not apply a bonus word if the Format is one of these."
-        if 'Mania' in fmt or fmt == 'Checkerboard' or fmt == 'Either/Or':
-            print(f"[RoomManager] {fmt} format selected - disabling bonus word")
+        # User Request: "On 2000+ boards, automatically set the Format to Normal, and do not place a bonus word into the board"
+        if 'Mania' in fmt or fmt == 'Checkerboard' or fmt == 'Either/Or' or is_500plus:
+            if is_500plus:
+                print(f"[RoomManager] 500+ Mode: Forcing Normal format and no bonus word")
+                room.spinner_params['board_format'] = 'Normal'
+                fmt = 'Normal'
+            else:
+                print(f"[RoomManager] {fmt} format selected - disabling bonus word")
             bonus_word = ''
         else:
             print(f"[RoomManager] Getting bonus word (length={room.spinner_params['bonus_word_length']}, dict={room.spinner_params['dictionary']})")
@@ -1358,6 +1407,15 @@ class RoomManager:
                                               room.spinner_params['dictionary'])
         room.next_round_bonus = bonus_word
         print(f"[RoomManager] Bonus word selected: '{bonus_word}'")
+        
+        # If 500+, CLEAR THE CURRENT BOARD NOW so user doesn't see a "deceptive" board
+        # while optimization is running in the background.
+        if is_500plus:
+            print(f"[RoomManager] 500+ detected: Clearing active board ahead of time")
+            rows_num, cols_num = map(int, room.board_dimensions.split('x'))
+            room.board = [['' for _ in range(cols_num)] for _ in range(rows_num)]
+            room.all_words = []
+            room.complete_words = []
         
         # Start board generation in background thread
         def generate_in_background():
@@ -1404,6 +1462,19 @@ class RoomManager:
                 print(f"[RoomManager] WARNING: Board not ready, falling back to start_round")
                 return self.start_round(room_id)
             
+            # CLEAR BOARD & WORDS IMMEDIATELY if we are about to generate a new one
+            # This handles the fallback Case or any state where we want to avoid stale data
+            # ONLY DO THIS FOR 500+ (IO) rounds though, to avoid flickering for normal ones
+            wc_range = room.spinner_params.get('word_count_range', (0, 0))
+            wc_tuple = room._get_wc_tuple(wc_range)
+            is_500plus = wc_tuple[0] >= 500
+            
+            if (not room.next_round_board or not room.next_round_words) and is_500plus:
+                rows_num, cols_num = map(int, room.board_dimensions.split('x'))
+                room.board = [['' for _ in range(cols_num)] for _ in range(rows_num)]
+                room.all_words = []
+                room.complete_words = []
+
             # SAVE PREVIOUS ROUND DATA (Persistence for "Previous Day" tab)
             # CHECK if we already snapshotted during intermission. If so, KEEP IT!
             # Use getattr with explicit check for None and emptiness to avoid bugs
@@ -1588,8 +1659,12 @@ class RoomManager:
             timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             
             board_format = room.current_board_format
-            if board_format != 'Normal':
-                 print(f"[RoomManager] SKIPPING history save for room {room.room_id} - format '{board_format}' is unranked.")
+            wc_range = room.spinner_params.get('word_count_range', (0, 0))
+            wc_tuple = room._get_wc_tuple(wc_range)
+            is_500plus = wc_tuple[0] >= 500
+            
+            if board_format != 'Normal' or is_500plus:
+                 print(f"[RoomManager] SKIPPING history save for room {room.room_id} - format '{board_format}' or 500+ is unranked.")
                  conn.close()
                  return
                  

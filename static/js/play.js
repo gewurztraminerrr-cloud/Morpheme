@@ -1721,13 +1721,36 @@ function renderBoard(board, grayed) {
         grayed = false; // Active rounds are never grayed
     }
 
-    console.log(`[renderBoard] Called with board: ${board ? board.length + ' rows' : 'null'}, grayed: ${grayed}`);
-    if (!board || board.length === 0) {
-        console.warn('[renderBoard] Board is empty or null, skipping render.');
-        return;
+    const h = (board && board.length > 0 && board[0].length > 0) ? board.length : 0;
+    const w = h > 0 ? board[0].length : 0;
+    const hasLetters = board && board.some(row => row.some(cell => cell && cell.trim() !== ''));
+
+    if (h > 0 && !hasLetters) {
+        console.log('[renderBoard] Empty board detected (Loading State). Showing placeholder.');
+        const boardEl = document.getElementById('game-board');
+        if (boardEl) {
+            boardEl.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; 
+                            width:100%; height:300px; color:var(--text-primary); font-family:var(--font-primary);">
+                    <div class="loading-spinner" style="margin-bottom:15px; width:40px; height:40px; border:4px solid rgba(var(--text-primary-rgb),0.1); 
+                                border-top-color:var(--accent-color); border-radius:50%; animation:spin 1s linear infinite;"></div>
+                    <div style="font-weight:700; font-size:1.2rem; text-transform:uppercase; letter-spacing:1px; color:var(--accent-color);">
+                        Optimizing Board...
+                    </div>
+                </div>
+            `;
+            // Ensure container class is set for layout consistency
+            boardEl.className = 'game-board';
+            boardEl.style.display = 'flex';
+            boardEl.style.justifyContent = 'center';
+            boardEl.style.alignItems = 'center';
+            boardEl.style.gridTemplateColumns = '';
+        }
+        return; // Skip standard cell rendering
     }
+
     const boardEl = document.getElementById('game-board');
-    if (!boardEl) return; // play page might not be active
+    if (!boardEl) return;
 
     // Reset container style
     const boardJSON = JSON.stringify(board);
@@ -2620,8 +2643,16 @@ function showSpinnerOverlay(spinnerParams, players = []) {
     safeSetText('spinner-difficulty', spinnerParams.difficulty || '?');
 
     const wr = spinnerParams.word_count_range;
-    if (wr && Array.isArray(wr) && wr.length >= 2) {
-        safeSetText('spinner-word-count', `${wr[0]}-${wr[1]}`);
+    if (typeof wr === 'string') {
+        safeSetText('spinner-word-count', wr);
+    } else if (wr && Array.isArray(wr) && wr.length >= 2) {
+        if (wr[1] >= 9999) {
+            safeSetText('spinner-word-count', `${wr[0]}+`);
+        } else if (wr[0] === 200 && wr[1] === 500) {
+            safeSetText('spinner-word-count', '200+');
+        } else {
+            safeSetText('spinner-word-count', `${wr[0]}-${wr[1]}`);
+        }
     } else {
         safeSetText('spinner-word-count', '?-?');
     }

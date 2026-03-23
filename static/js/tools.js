@@ -176,12 +176,28 @@ window.showMiniProfile = async function (username) {
         if (nameEl) nameEl.innerText = data.username;
         const fullNEl = document.getElementById('mini-profile-fullname');
         if (fullNEl) fullNEl.innerText = data.full_name || '-';
+
+        // Stats: Games, Wins, Win Rate
         const gamesEl = document.getElementById('mini-profile-games');
         if (gamesEl) gamesEl.innerText = data.games_played || 0;
         const winsEl = document.getElementById('mini-profile-wins');
         if (winsEl) winsEl.innerText = data.wins || 0;
-        const ageEl = document.getElementById('mini-profile-age');
-        if (ageEl) ageEl.innerText = data.age || '-';
+
+        const winRateEl = document.getElementById('mini-profile-winrate');
+        if (winRateEl) {
+            const games = data.games_played || 0;
+            const wins = data.wins || 0;
+            const rate = games > 0 ? ((wins / games) * 100).toFixed(1) : '0.0';
+            winRateEl.innerText = `${rate}%`;
+        }
+
+        // Demographics: Age and Gender
+        const demoEl = document.getElementById('mini-profile-demographics');
+        if (demoEl) {
+            const age = data.age || '-';
+            const gender = data.gender || '-';
+            demoEl.innerText = `Age: ${age}, Gender: ${gender}`;
+        }
 
         // Render Joined Date with Duration
         const joinedEl = document.getElementById('mini-profile-joined');
@@ -205,25 +221,9 @@ window.showMiniProfile = async function (username) {
             joinedEl.innerText = "Joined: -";
         }
 
-        // PE and Rank stats
-        const maxPeEl = document.getElementById('mini-profile-max-pe');
-        if (maxPeEl) maxPeEl.innerText = data.max_pe ? `${data.max_pe.toFixed(2)}x` : '-';
-
-        const avgPeEl = document.getElementById('mini-profile-avg-pe');
-        if (avgPeEl) avgPeEl.innerText = data.avg_pe ? `${data.avg_pe.toFixed(2)}x` : '-';
-
-        const rankEl = document.getElementById('mini-profile-rank-placeholder');
-        if (rankEl) rankEl.innerText = '-';
-
         // Flag and Meta
         const flagEl = document.getElementById('mini-profile-flag');
         if (flagEl) flagEl.innerText = data.country_flag || '🏳️';
-
-        // Description and Quote
-        const quoteEl = document.getElementById('mini-profile-quote');
-        const descEl = document.getElementById('mini-profile-description');
-        if (quoteEl) quoteEl.innerText = data.quote ? `"${data.quote}"` : 'No personal quote available.';
-        if (descEl) descEl.innerText = data.description || 'No description provided.';
 
         // Country Name Lookup
         const flagEmoji = data.country_flag || '🏳️';
@@ -231,41 +231,25 @@ window.showMiniProfile = async function (username) {
         const countryNameEl = document.getElementById('mini-profile-country-name');
         if (countryNameEl) countryNameEl.innerText = countryLookup ? countryLookup.name : 'International';
 
-        // Online Status
-        const statusEl = document.getElementById('mini-profile-status');
-        const statusIcon = document.getElementById('mini-profile-status-icon');
-        const isOnline = data.status && data.status.is_online;
-        if (statusEl) {
-            statusEl.innerText = isOnline ? 'Online' : 'Offline';
-            statusEl.style.color = isOnline ? '#4ade80' : 'rgba(255,255,255,0.5)';
-        }
-        if (statusIcon) {
-            statusIcon.innerText = isOnline ? '🟢' : '⚪';
-            statusIcon.style.filter = isOnline ? 'drop-shadow(0 0 5px #4ade80)' : 'none';
-        }
-
-        // Rating Badge Styling
-        const rating = data.rating || 0;
-        const ratingBadge = document.getElementById('mini-profile-rating-badge');
-        if (ratingBadge) {
-            ratingBadge.innerText = rating;
-            const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#fff';
-            ratingBadge.style.color = rColor;
-            ratingBadge.style.borderColor = `${rColor}44`;
-
-            if (data.avatar_url) {
-                ratingBadge.style.cursor = 'pointer';
-                ratingBadge.title = "View user image";
-                ratingBadge.onclick = () => showImageLightbox(data.avatar_url, `${data.username}'s Profile Image`);
+        // Proof
+        const proofEl = document.getElementById('mini-profile-proof');
+        if (proofEl) {
+            if (data.proof_url) {
+                proofEl.innerHTML = `<a href="${data.proof_url}" target="_blank" style="color: #4facfe; text-decoration: none;">View Proof</a>`;
             } else {
-                ratingBadge.style.cursor = 'default';
-                ratingBadge.title = "";
-                ratingBadge.onclick = null;
+                proofEl.innerText = 'Proof: -';
             }
         }
 
+        // Description and Quote
+        const quoteEl = document.getElementById('mini-profile-quote');
+        const descEl = document.getElementById('mini-profile-description');
+        if (quoteEl) quoteEl.innerText = data.quote ? `"${data.quote}"` : 'No personal quote available.';
+        if (descEl) descEl.innerText = data.description || 'No description provided.';
+
         // Avatar
         const avatar = document.getElementById('mini-profile-avatar');
+        const rating = data.rating || 0;
         if (avatar) {
             if (data.avatar_url) {
                 avatar.style.background = 'none';
@@ -325,8 +309,14 @@ window.showMiniProfile = async function (username) {
                 const friendBtn = document.getElementById('mini-profile-friend');
                 if (friendBtn) {
                     friendBtn.classList.remove('hidden');
-                    await updateFriendButtonStatus(data.username, friendBtn);
-                    friendBtn.onclick = () => handleFriendAction(data.username, friendBtn);
+                    if (window.updateFriendButtonStatus) {
+                        await window.updateFriendButtonStatus(data.username, friendBtn);
+                    }
+                    friendBtn.onclick = () => {
+                        if (window.handleFriendAction) {
+                            window.handleFriendAction(data.username, friendBtn);
+                        }
+                    };
                 }
             } else {
                 msgBtn.classList.add('hidden');

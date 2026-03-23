@@ -2741,7 +2741,6 @@
                         <div id="mini-profile-username" class="mini-username">Username</div>
                         <div id="mini-profile-fullname" class="mini-fullname">Full Name</div>
                     </div>
-                    <div id="mini-profile-rating-badge" class="mini-rating-badge">1200</div>
                 </div>
 
                 <div class="mini-profile-stats">
@@ -2750,48 +2749,31 @@
                         <span id="mini-profile-games" class="mini-stat-value">0</span>
                     </div>
                     <div class="mini-stat-item">
+                        <span class="mini-stat-label">Win Rate</span>
+                        <span id="mini-profile-winrate" class="mini-stat-value">0%</span>
+                    </div>
+                    <div class="mini-stat-item">
                         <span class="mini-stat-label">Wins</span>
                         <span id="mini-profile-wins" class="mini-stat-value">0</span>
-                    </div>
-                    <div class="mini-stat-item">
-                        <span class="mini-stat-label">Age</span>
-                        <span id="mini-profile-age" class="mini-stat-value">-</span>
-                    </div>
-                    <!-- Optional: Use display:none if not needed -->
-                    <!-- <div class="mini-stat-item">
-                    <span class="mini-stat-label">Gender</span>
-                    <span id="mini-profile-gender" class="mini-stat-value">-</span>
-                </div> -->
-                </div>
-                <div class="mini-profile-stats" style="margin-top: 8px;">
-                    <div class="mini-stat-item">
-                        <span class="mini-stat-label">Max PE</span>
-                        <span id="mini-profile-max-pe" class="mini-stat-value"
-                            title="Max Performance Efficiency">0.0</span>
-                    </div>
-                    <div class="mini-stat-item">
-                        <span class="mini-stat-label">Avg PE</span>
-                        <span id="mini-profile-avg-pe" class="mini-stat-value"
-                            title="Average Performance Efficiency">0.0</span>
-                    </div>
-                    <div class="mini-stat-item">
-                        <span class="mini-stat-label">Rank</span>
-                        <span id="mini-profile-rank-placeholder" class="mini-stat-value">-</span>
                     </div>
                 </div>
 
                 <div class="mini-profile-metadata">
                     <div class="mini-meta-item">
-                        <span class="mini-meta-icon">🗓️</span>
-                        <span id="mini-profile-joined" class="mini-meta-text">Joined: -</span>
-                    </div>
-                    <div class="mini-meta-item">
-                        <span class="mini-meta-icon" id="mini-profile-status-icon">⚪</span>
-                        <span id="mini-profile-status" class="mini-meta-text">Offline</span>
+                        <span class="mini-meta-icon">👤</span>
+                        <span id="mini-profile-demographics" class="mini-meta-text">Age: -, Gender: -</span>
                     </div>
                     <div class="mini-meta-item">
                         <span id="mini-profile-flag" class="mini-meta-icon" style="font-size: 1.2rem;">🏳️</span>
                         <span id="mini-profile-country-name" class="mini-meta-text">International</span>
+                    </div>
+                    <div class="mini-meta-item">
+                        <span class="mini-meta-icon">🗓️</span>
+                        <span id="mini-profile-joined" class="mini-meta-text">Joined: -</span>
+                    </div>
+                    <div class="mini-meta-item">
+                        <span class="mini-meta-icon">🔑</span>
+                        <span id="mini-profile-proof" class="mini-meta-text">Proof: -</span>
                     </div>
                 </div>
 
@@ -2800,7 +2782,7 @@
                     "No quote provided."
                 </div>
 
-                <div class="mini-profile-section-label">Description</div>
+                <div class="mini-profile-section-label">About Me</div>
                 <div class="mini-profile-description" id="mini-profile-description">
                     No description provided.
                 </div>
@@ -2808,9 +2790,9 @@
                 <div class="mini-profile-actions">
                     <button id="mini-profile-view-full" class="mini-action-btn secondary">Full
                         Profile</button>
-                    <button id="mini-profile-message" class="mini-action-btn primary">Message</button>
                     <button id="mini-profile-round-reviews" class="mini-action-btn secondary">Round
                         Reviews</button>
+                    <button id="mini-profile-message" class="mini-action-btn primary hidden">Message</button>
                     <button id="mini-profile-friend" class="mini-action-btn secondary hidden">Add
                         Friend</button>
                 </div>
