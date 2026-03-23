@@ -1,38 +1,29 @@
-# Morpheme Project Checkpoint - March 22, 2026 (10:20 PM)
+# Morpheme Project Checkpoint - March 23, 2026 (4:35 PM)
 
-The current state of the Morpheme application (Rating Tiers, User Banning, Trophy Logic) has been saved as the new "Start Over" point.
+This checkpoint represents the successfully restored and stabilized state of the Morpheme application after several regressions were fixed. 
 
-## Core Features Saved:
+## Core Features Captured:
 
-### 1. Rating & Visual Enhancements
-- **Enhanced Color Bar**: Integrated a more granular rating system into the Play page:
-  - **Black (6000-6999)**: The "ALIEN BEING" tier is now represented by pure black (#000000).
-  - **Purple (7000+)**: The "SINGULARITY" tier is now represented by vibrant purple (#a020f0).
-- **Dynamic Chart Rendering**: The `renderGameColorBar` function now automatically adapts to these tiers.
+### 1. UI & Visibility Refinements (Commit 79754b6)
+- **High-Contrast Mini Profiles**: Refined for bright/white layout settings (Weight 800 labels, bold values).
+- **Visible Close Button**: The "X" now has a circular background and high contrast, ensuring visibility in all themes.
+- **Dynamic Rating Badge Click**: Clicking the rating square correctly refreshes and shows the latest mini-profile data.
 
-### 2. Forum & Lobby Enhancements
-- **Categorized Forums**: Integrated specific categories for easier navigation:
-  - **Bugs/Errors**: Direct reporting for technical issues.
-  - **News**: Official updates and announcements.
-  - **Suggestions**: Community feedback collection.
-- **Global Lobby Notice**: Server-wide messaging system for moderators.
-- **Guest Restrictions**: Enhanced security logic to manage Guest user capabilities.
+### 2. Synesthesia & Personalization
+- **Full Letter Color Support**: User 'jeffy' has been manually configured with a full 26-letter color palette in the database.
+- **CSS Variables**: Styles are correctly mapped to `--letter-[A-Z]-color` for in-game board coloring.
 
-### 2. Moderator & User Controls
-- **Advanced Banning**: Full user erasure (removes all stats, posts, history, and profile data).
-- **Pronunciation Management**: Streamlined UI for managing word pronunciations.
-- **Added Words Management**: Integrated "purple" highlighting for custom words during rounds.
-- **Trophy Logic**: New PE-based (Performance Efficiency 2.0+) trophy icons next to usernames for exceptional rounds.
+### 3. Server Stability & AI Support
+- **Stable Flask Environment**: Debug mode (`debug=False`) and the reloader (`use_reloader=False`) have been disabled to prevent port conflicts and improve startup reliability.
+- **Port 3000 Standard**: The server is cleanly bound to port 3000 and verified to be responding.
+- **500+ Word Count Logic**: Iterative board optimization for high-word-count rounds (500+) is active.
 
-### 3. Application Reliability & Performance
-- **Git Optimization**: Configured root `.gitignore` to resolve the "too many active changes" warning in Antigravity.
-- **Round Stability**: Improved concurrency for round history saving and room cleanup.
-- **Dictionary Support**: Full NWL, CSW, and 16+ supplementary dictionary loading.
+### 4. Database Persistence
+- **Snapshot Created**: The current `morpheme.db` has been snapshotted to `morpheme.db.save_point_2026-03-23`.
 
-### 4. Workflows & Project Structure
-- **Updated 'Start Over' Snapshot**: The `/start-over` command now reverts back to this March 22nd state.
-- **Root-Level Execution**: The application is configured to run from the `/Users/jeffbabiak/` directory for better integration.
-
-## Git Tags:
-- `snapshot-current` (Updated to reflect this state)
-- `save_point_2026-03-22`
+## Restore Procedure:
+To return to this EXACT state, run:
+1. `git reset --hard save_point_2026-03-23_STABLE`
+2. `git clean -fd`
+3. `cp morpheme.db.save_point_2026-03-23 morpheme.db`
+4. `./run_morpheme.sh`
