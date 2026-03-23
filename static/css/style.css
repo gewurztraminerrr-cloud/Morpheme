@@ -1932,11 +1932,11 @@ body {
     width: 320px;
     height: 450px;
     z-index: 10000;
-    background: rgba(15, 15, 25, 0.95);
+    background: var(--toast-bg);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(var(--text-primary-rgb), 0.1);
     border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
     display: flex;
     flex-direction: column;
 }
@@ -1968,9 +1968,9 @@ body {
 }
 
 .mini-profile-card {
-    background: rgba(15, 15, 25, 0.98);
+    background: var(--toast-bg);
     border: 1px solid rgba(var(--text-primary-rgb), 0.1);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(244, 63, 94, 0.05);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(var(--text-primary-rgb), 0.05);
     border-radius: 24px;
     width: 360px;
     padding: 24px;
@@ -1994,13 +1994,21 @@ body {
     position: absolute;
     top: 15px;
     right: 15px;
-    background: none;
+    width: 32px;
+    height: 32px;
+    background: rgba(var(--text-primary-rgb), 0.1);
     border: none;
-    color: var(--text-40);
-    font-size: 24px;
+    border-radius: 50%;
+    color: var(--text-primary);
+    font-size: 20px;
+    font-weight: 800;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     line-height: 1;
-    transition: color 0.2s;
+    transition: all 0.2s;
+    z-index: 1000;
 }
 
 .mini-profile-close:hover {
@@ -2042,7 +2050,8 @@ body {
 
 .mini-fullname {
     font-size: 0.85rem;
-    color: var(--text-50);
+    color: var(--text-primary);
+    opacity: 0.7;
     font-weight: 500;
 }
 
@@ -2074,9 +2083,10 @@ body {
 
 .mini-stat-label {
     font-size: 0.7rem;
-    color: var(--text-40);
+    color: var(--text-primary);
+    opacity: 0.7;
     text-transform: uppercase;
-    font-weight: 700;
+    font-weight: 800;
     letter-spacing: 0.5px;
     margin-bottom: 4px;
 }
@@ -2125,7 +2135,7 @@ body {
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 6px;
-    opacity: 0.4;
+    opacity: 0.8;
     padding-left: 2px;
 }
 
@@ -2143,9 +2153,9 @@ body {
 
 .mini-profile-description {
     font-size: 0.85rem;
-    color: var(--text-60);
+    color: var(--text-primary);
     line-height: 1.5;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(var(--text-primary-rgb), 0.05);
     border-radius: 12px;
     padding: 12px;
     margin-bottom: 24px;
@@ -2311,7 +2321,7 @@ body {
 
 .chat-modal-input-area input {
     flex: 1;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(var(--text-primary-rgb), 0.05);
     border: 1px solid rgba(var(--text-primary-rgb), 0.1);
     border-radius: 20px;
     padding: 8px 15px;
