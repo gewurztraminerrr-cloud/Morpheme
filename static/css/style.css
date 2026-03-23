@@ -2618,11 +2618,10 @@ body {
     align-items: center;
     font-weight: 800;
     font-size: 1.4rem;
-    color: #ffffff;
+    color: #ffffff !important;
     /* High contrast white text */
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-
-
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+    pointer-events: none;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
@@ -3193,7 +3192,7 @@ body {
     justify-content: center;
     align-items: center;
     font-weight: 800;
-    color: var(--text-primary);
+    color: #ffffff !important;
     transition: all 0.2s ease;
 }
 
