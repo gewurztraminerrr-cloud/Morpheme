@@ -59,12 +59,32 @@
             <h2>Morpheme Store</h2>
             <p>Customize your experience.</p>
             <div class="store-tabs">
-                <button class="store-tab active" data-category="themes">Themes</button>
+                <button class="store-tab active" data-category="hardware">Hardware</button>
+                <button class="store-tab" data-category="themes">Themes</button>
                 <button class="store-tab" data-category="avatars">Avatars</button>
                 <button class="store-tab" data-category="perks">Perks</button>
             </div>
             <div class="store-grid" id="store-items-grid">
-                <p class="placeholder">Store items coming soon...</p>
+                <!-- Hardware category initially visible -->
+                <div class="store-item" data-category="hardware">
+                    <div class="store-item-image">
+                        <img src="/static/images/stylus.png" alt="Yacig 4-in-1 Stylus">
+                    </div>
+                    <div class="store-item-info">
+                        <div class="store-item-header">
+                            <h3>Yacig 4-in-1 Capacitive Stylus</h3>
+                            <span class="store-item-price">$17.98</span>
+                        </div>
+                        <p class="store-item-desc">High-precision 4-in-1 stylus with clear disc tip, mesh fiber, and black rubber tips. Perfect for Morpheme mobile and tablet play!</p>
+                        <ul class="store-item-features">
+                            <li>4-in-1 Tip Design</li>
+                            <li>Universal Compatibility</li>
+                            <li>No Batteries Required</li>
+                            <li>Free Replacement Tips</li>
+                        </ul>
+                        <a href="https://www.amazon.ca/Yacig-Capacitive-Sensitivity-Precision-Compatible/dp/B07GKY9FJZ?th=1" target="_blank" class="buy-now-btn">View on Amazon</a>
+                    </div>
+                </div>
             </div>
         </div>
 

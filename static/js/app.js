@@ -388,10 +388,32 @@ function setupStoreTabs() {
             document.querySelectorAll('.store-tab').forEach(t => t.classList.remove('active'));
             newTab.classList.add('active');
             const category = newTab.getAttribute('data-category');
+            
+            // Filter items
+            document.querySelectorAll('.store-item').forEach(item => {
+                if (item.getAttribute('data-category') === category) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
             console.log('Switching store category to:', category);
-            // In a real app we'd filter items here
         });
     });
+
+    // Default to first active tab's category
+    const activeTab = document.querySelector('.store-tab.active');
+    if (activeTab) {
+        const category = activeTab.getAttribute('data-category');
+        document.querySelectorAll('.store-item').forEach(item => {
+            if (item.getAttribute('data-category') === category) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
 }
 
 

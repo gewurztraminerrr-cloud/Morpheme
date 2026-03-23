@@ -21,6 +21,10 @@ This checkpoint represents the successfully restored and stabilized state of the
 ### 4. Database Persistence
 - **Snapshot Created**: The current `morpheme.db` has been snapshotted to `morpheme.db.save_point_2026-03-23`.
 
+### 5. Start Over Workflow (Hardened)
+- **Automated Restoration**: The `.agent/workflows/start_over.md` has been updated to point to this stable state.
+- **Database Injection**: The workflow now automatically restores the Synesthesia database snapshot, ensuring your personal colors are never lost during a reset.
+
 ## Restore Procedure:
 To return to this EXACT state, run:
 1. `git reset --hard save_point_2026-03-23_STABLE`
