@@ -66,7 +66,8 @@ const RATING_RANGES = [
     { min: 3000, max: 3999, color: '#330000', label: '3000 - 3999', name: 'Ascendant' },
     { min: 4000, max: 4999, color: '#220000', label: '4000 - 4999', name: 'Transcendent' },
     { min: 5000, max: 5999, color: '#110000', label: '5000 - 5999', name: 'Ethereal' },
-    { min: 6000, max: 99999, color: '#000000', label: '6000+', name: 'ALIEN BEING' }
+    { min: 6000, max: 6999, color: '#000000', label: '6000 - 6999', name: 'ALIEN BEING' },
+    { min: 7000, max: 99999, color: '#a020f0', label: '7000+', name: 'SINGULARITY' }
 ];
 
 // Single Instance Logic
@@ -811,7 +812,7 @@ window.getRatingColor = function (rating) {
 
     // Fallback logic if out of bounds
     if (rating < 1) return RATING_RANGES[0].color;
-    return '#000000'; // Super high
+    return '#a020f0'; // Super high (Purple)
 };
 
 window.showAlertModal = function (title, message) {

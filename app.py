@@ -1334,8 +1334,8 @@ def get_public_profile(username):
             print(f"Error processing config {cfg_key}: {e}")
             config_stats[cfg_key] = {'rating': rating, 'avg_score': 0, 'avg_perf': 0}
 
-    # Calculate overall AVG WPM (only for boards with 300+ words)
-    wpm_games = [p['wpm'] for p in processed_all if p['total_words_avail'] >= 300]
+    # Calculate overall AVG WPM (only for boards with 50+ words where user had a valid WPM)
+    wpm_games = [p['wpm'] for p in processed_all if p['total_words_avail'] >= 50 and p['wpm'] > 0]
     avg_wpm = round(sum(wpm_games) / len(wpm_games), 1) if wpm_games else 0
 
     # Recent rounds (last 10)

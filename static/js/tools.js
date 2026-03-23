@@ -976,7 +976,7 @@ async function renderProfile(user) {
     const wpmEl = document.getElementById('profile-avg-wpm');
     if (wpmEl) {
         wpmEl.innerText = user.avg_wpm_300 || 0;
-        wpmEl.title = "Average Words Per Minute in boards with 300+ potential words";
+        wpmEl.title = "Average Words Per Minute in boards with 100+ potential words (requires finding 20+ words in a round)";
     }
 
     const bestScoreEl = document.getElementById('profile-best-score');

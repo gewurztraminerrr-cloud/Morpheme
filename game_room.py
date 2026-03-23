@@ -1587,26 +1587,21 @@ class RoomManager:
             board_json = json.dumps(room.board)
             timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             
-            # Statistics Rule: Only count rounds where at least 2 humans actually played (score > 0)
-            # This prevents padding stats and leaderboard by playing in empty or non-competitive rooms.
-            # We exclude AI bots from this count since they don't count as "another person".
-            active_scorers = [p for p in room.players if p.score > 0 and not p.is_ai]
             board_format = room.current_board_format
-            
             if board_format != 'Normal':
                  print(f"[RoomManager] SKIPPING history save for room {room.room_id} - format '{board_format}' is unranked.")
                  conn.close()
                  return
                  
-            if len(active_scorers) < 2:
-                print(f"[RoomManager] SKIPPING history save for room {room.room_id} - only {len(active_scorers)} human player(s) reached a positive score.")
+            # Identify registered players who actually made any attempt
+            participating_registered = [p for p in room.players if p.user_id > 0 and (p.score > 0 or p.submitted_words or p.invalid_words)]
+            
+            if not participating_registered:
+                print(f"[RoomManager] SKIPPING history save for room {room.room_id} - no participating registered users.")
                 conn.close()
                 return
 
-            playing_players = [p for p in room.players if p.user_id > 0]
-            # No need for another check on playing_players as active_scorers implies human players exists.
-
-            for p in playing_players:
+            for p in participating_registered:
                 # Use current submitted_words because we call this BEFORE clearing
                 
                 # NORMALIZE TIMESTAMPS: Ensure numeric s for replay
@@ -1628,25 +1623,32 @@ class RoomManager:
                 best_word_text = best_w_entry['word'] if best_w_entry else None
                 best_word_val = best_w_entry.get('points', 0) if best_w_entry else 0
 
-                # Calculate Peak Burst WPM (Words Per Minute)
-                # User Objective: Only include the fastest sequence of 20 valid words in a row.
-                peak_wpm = 0.0
-                if len(words_data) >= 20:
+                # Calculate WPM (Words Per Minute)
+                # User Objective: Fastest sequence of 20 valid words in a row.
+                # Fallback: Average WPM of entire round if at least 5 words found.
+                final_wpm = 0.0
+                if len(words_data) >= 5:
                     # Ensure chronological order
                     sorted_entries = sorted(words_data, key=lambda x: x['timestamp'])
-                    for i in range(len(sorted_entries) - 19):
-                        # Window of 20 words: from index i to i+19
-                        t_first = sorted_entries[i]['timestamp']
-                        t_last = sorted_entries[i+19]['timestamp']
+                    if len(sorted_entries) >= 20:
+                        peak_wpm = 0.0
+                        for i in range(len(sorted_entries) - 19):
+                            # Window of 20 words: from index i to i+19
+                            t_first = sorted_entries[i]['timestamp']
+                            t_last = sorted_entries[i+19]['timestamp']
+                            dt = t_last - t_first
+                            if dt > 0.001:
+                                current_burst_wpm = (20.0 * 60.0) / dt
+                                if current_burst_wpm > peak_wpm:
+                                    peak_wpm = current_burst_wpm
+                        final_wpm = peak_wpm
+                    else:
+                        # Full sequence average for < 20 words
+                        t_first = sorted_entries[0]['timestamp']
+                        t_last = sorted_entries[-1]['timestamp']
                         dt = t_last - t_first
                         if dt > 0.001:
-                            # 20 words over dt seconds
-                            # (20 words / dt seconds) * 60 seconds/min
-                            current_burst_wpm = (20.0 * 60.0) / dt
-                            if current_burst_wpm > peak_wpm:
-                                peak_wpm = current_burst_wpm
-                
-                final_wpm = peak_wpm
+                            final_wpm = (len(sorted_entries) * 60.0) / dt
                 
                 conn.execute('''
                     INSERT INTO round_history (user_id, room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, timestamp, user_rating, performance_ratio, best_word, best_word_score, board_dimensions, wpm, total_words_avail)

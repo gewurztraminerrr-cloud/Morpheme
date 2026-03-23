@@ -1,10 +1,16 @@
-# Morpheme Project Checkpoint - March 22, 2026 (3:05 PM)
+# Morpheme Project Checkpoint - March 22, 2026 (9:00 PM)
 
 The current state of the Morpheme application has been saved as the new "Start Over" point.
 
 ## Core Features Saved:
 
-### 1. Forum & Lobby Enhancements
+### 1. Rating & Visual Enhancements
+- **Enhanced Color Bar**: Integrated a more granular rating system into the Play page:
+  - **Black (6000-6999)**: The "ALIEN BEING" tier is now represented by pure black (#000000).
+  - **Purple (7000+)**: The "SINGULARITY" tier is now represented by vibrant purple (#a020f0).
+- **Dynamic Chart Rendering**: The `renderGameColorBar` function now automatically adapts to these tiers.
+
+### 2. Forum & Lobby Enhancements
 - **Categorized Forums**: Integrated specific categories for easier navigation:
   - **Bugs/Errors**: Direct reporting for technical issues.
   - **News**: Official updates and announcements.
