@@ -661,7 +661,11 @@
 
                         <!-- Matchups (Pairings) -->
                         <div id="tournament-matchups-card" class="tournament-card matchups-panel hidden">
-                            <h3>Current Pairings</h3>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <h3 style="margin: 0;">Current Pairings</h3>
+                                <button id="view-all-pairings-btn" class="sf-action-btn"
+                                    style="font-size: 0.7rem; padding: 4px 10px; border-radius: 6px; background: var(--bg-element); border: 1px solid var(--input-border);">View All Pairings</button>
+                            </div>
                             <div id="tournament-matchups-list" class="t-matchups-list">
                                 <!-- Pairings injected by JS -->
                             </div>

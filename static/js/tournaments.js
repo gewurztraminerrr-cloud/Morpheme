@@ -175,39 +175,28 @@ function renderTournament(data) {
     // 4.6 Matchups (Pairings)
     const mCard = document.getElementById('tournament-matchups-card');
     const mList = document.getElementById('tournament-matchups-list');
+    const viewAllBtn = document.getElementById('view-all-pairings-btn');
+
     if (mCard && mList) {
         if (data.all_matchups && data.all_matchups.length > 0) {
             mCard.classList.remove('hidden');
-            mList.innerHTML = data.all_matchups.map(m => {
-                const u1_isMe = m.u1_name === window.currentUser;
-                const u2_isMe = m.u2_name === window.currentUser;
-                const highlight = (u1_isMe || u2_isMe) ? 'border: 1px solid var(--accent-color); background: rgba(var(--text-primary-rgb), 0.05);' : '';
 
-                const s1 = m.u1_score === null ? '...' : m.u1_score;
-                const s2 = m.u2_score === null ? '...' : m.u2_score;
+            // USER REQUEST: Display the pairing for yourself only by default
+            const myMatchup = data.all_matchups.find(m => 
+                m.u1_name === window.currentUser || m.u2_name === window.currentUser
+            );
+            
+            if (myMatchup) {
+                mList.innerHTML = renderMatchupItemHTML(myMatchup);
+            } else {
+                mList.innerHTML = `<p class="placeholder">You have been eliminated or are not in this round.</p>`;
+            }
 
-                let vsLine = "";
-                if (m.user2_id === -1) {
-                    vsLine = `<span style="opacity:0.5">BYE</span>`;
-                } else {
-                    vsLine = `<span class="u2 ${u2_isMe ? 'me' : ''}">${m.u2_name}</span> <span class="pts">${s2}</span>`;
-                }
-
-                return `
-                    <div class="t-matchup-item" style="${highlight}">
-                        <div class="participant">
-                            <span class="username ${u1_isMe ? 'me' : ''}">${m.u1_name}</span> <span class="pts">${s1}</span>
-                        </div>
-                        <div class="vs">vs</div>
-                        <div class="participant">
-                            ${m.user2_id === -1
-                        ? `<span style="opacity:0.5">BYE</span>`
-                        : `<span class="username ${u2_isMe ? 'me' : ''}">${m.u2_name}</span> <span class="pts">${s2}</span>`
-                    }
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            if (viewAllBtn) {
+                viewAllBtn.onclick = () => {
+                    showAllPairingsModal(data.all_matchups);
+                };
+            }
         } else {
             mCard.classList.add('hidden');
         }
@@ -538,3 +527,66 @@ window.watchTournamentWinnerReplay = async function (tid, username) {
         alert("Error connecting to server.");
     }
 };
+function renderMatchupItemHTML(m) {
+    const u1_isMe = m.u1_name === window.currentUser;
+    const u2_isMe = m.u2_name === window.currentUser;
+    const highlight = (u1_isMe || u2_isMe) ? 'border: 1px solid var(--accent-color); background: rgba(144, 12, 63, 0.1);' : '';
+
+    const s1 = m.u1_score === null ? '...' : m.u1_score;
+    const s2 = m.u2_score === null ? '...' : m.u2_score;
+
+    return `
+        <div class="t-matchup-item" style="${highlight}">
+            <div class="participant">
+                <span class="username ${u1_isMe ? 'me' : ''}">${m.u1_name}</span> <span class="pts">${s1}</span>
+            </div>
+            <div class="vs">vs</div>
+            <div class="participant">
+                ${m.user2_id === -1
+            ? `<span style="opacity:0.5">BYE</span>`
+            : `<span class="username ${u2_isMe ? 'me' : ''}">${m.u2_name}</span> <span class="pts">${s2}</span>`
+        }
+            </div>
+        </div>
+    `;
+}
+
+function showAllPairingsModal(matchups) {
+    const modal = document.getElementById('generic-modal');
+    const titleEl = document.getElementById('generic-modal-title');
+    const bodyEl = document.getElementById('generic-modal-body');
+
+    if (!modal || !titleEl || !bodyEl) return;
+
+    titleEl.textContent = "All Tournament Pairings";
+    
+    // Sort matchups such that user's pair is near top for convenience
+    const sorted = [...matchups].sort((a,b) => {
+        const aHasMe = a.u1_name === window.currentUser || a.u2_name === window.currentUser;
+        const bHasMe = b.u1_name === window.currentUser || b.u2_name === window.currentUser;
+        if (aHasMe) return -1;
+        if (bHasMe) return 1;
+        return 0;
+    });
+
+    bodyEl.innerHTML = `
+        <div class="t-matchups-list" style="padding: 10px 0;">
+            ${sorted.map(m => renderMatchupItemHTML(m)).join('')}
+        </div>
+    `;
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+}
+
+// Add close listener if not added globally elsewhere (usually handled by app.js)
+const closeGenModal = document.getElementById('close-generic-modal');
+if (closeGenModal) {
+    closeGenModal.onclick = () => {
+        const modal = document.getElementById('generic-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+        }
+    };
+}
