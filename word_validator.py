@@ -155,6 +155,59 @@ class WordValidator:
         else:  # NWL (default)
             return self.nwl_words | self.long_words | self.added_words
 
+    def find_word_on_board(self, board, word):
+        """Standard DFS search for a word on a Boggle board."""
+        if not word or not board:
+            return False
+            
+        word = word.upper()
+        rows = len(board)
+        cols = len(board[0])
+        
+        def dfs(r, c, index, visited):
+            if r < 0 or r >= rows or c < 0 or c >= cols:
+                return False
+            if (r, c) in visited:
+                return False
+                
+            cell_char = str(board[r][c]).upper()
+            match_len = 0
+            
+            # Special handling for 'Q' (QU)
+            if cell_char == 'Q':
+                if word[index:index+2] == 'QU':
+                    match_len = 2
+                elif word[index] == 'Q':
+                    match_len = 1
+                else:
+                    return False
+            else:
+                if word[index] == cell_char:
+                    match_len = 1
+                else:
+                    return False
+                    
+            next_index = index + match_len
+            if next_index >= len(word):
+                return True
+                
+            visited_copy = visited.copy()
+            visited_copy.add((r, c))
+            
+            for dr in [-1, 0, 1]:
+                for dc in [-1, 0, 1]:
+                    if dr == 0 and dc == 0:
+                        continue
+                    if dfs(r + dr, c + dc, next_index, visited_copy):
+                        return True
+            return False
+
+        for r in range(rows):
+            for c in range(cols):
+                if dfs(r, c, 0, set()):
+                    return True
+        return False
+
 # Global instance
 word_validator = WordValidator()
 
