@@ -452,14 +452,6 @@ async function updateGameState() {
                 highlightedFoundWord = null;
                 selectedPlayerUsername = null; // Reset player selection
 
-                // Reset Player List Scroll (Undo "Find Me")
-                const playersListEl = document.getElementById('players-list');
-                if (playersListEl) {
-                    playersListEl.scrollTop = 0;
-                    // And potentially the parent container if needed
-                    if (playersListEl.parentElement) playersListEl.parentElement.scrollTop = 0;
-                }
-
                 // DATA SYNC FIX: Explicitly clear Remaining list to prevent crossover
                 const remainingList = document.getElementById('remaining-words-list');
                 if (remainingList) remainingList.innerHTML = '';
@@ -1153,8 +1145,15 @@ function renderPlayers(players, currentUser = null, state = null) {
     }).join('');
 
     if (html === lastPlayersHtml) return;
+    
+    // SAVE SCROLL POSITION
+    const oldScrollTop = listEl.scrollTop;
+    
     lastPlayersHtml = html;
     listEl.innerHTML = html;
+
+    // RESTORE SCROLL POSITION (Prevents jumping on score updates)
+    listEl.scrollTop = oldScrollTop;
 
     // Add click listeners for selection
     const items = listEl.querySelectorAll('.player-item');
@@ -1311,7 +1310,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const listEl = document.getElementById('players-list');
             const myCard = listEl.querySelector('.current-user');
             if (myCard) {
-                myCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Precise scroll-to-card in container
+                const containerRect = listEl.getBoundingClientRect();
+                const cardRect = myCard.getBoundingClientRect();
+                const relativeTop = cardRect.top - containerRect.top;
+                const scrollTarget = listEl.scrollTop + relativeTop - (containerRect.height / 2) + (cardRect.height / 2);
+                
+                listEl.scrollTo({ 
+                    top: scrollTarget, 
+                    behavior: 'smooth' 
+                });
+
                 // Subtle highlight animation
                 myCard.style.transition = 'background 0.3s ease';
                 const originalBg = myCard.style.background;
