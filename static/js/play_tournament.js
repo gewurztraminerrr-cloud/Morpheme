@@ -17,6 +17,8 @@ let gameState = {
     score: 0,
     timeLimit: 0,
     startTime: 0,
+    tournamentId: null,
+    roundNumber: null,
     timerInterval: null
 };
 
@@ -54,6 +56,8 @@ async function initGame() {
         const data = await response.json();
         gameState.board = data.board;
         gameState.timeLimit = data.parameters.time_limit || 180;
+        gameState.tournamentId = data.tournament_id;
+        gameState.roundNumber = data.round_number;
 
         renderBoard(gameState.board);
         startTimer();
@@ -206,10 +210,12 @@ async function endGame() {
 
     // Submit Final Score
     try {
-        await fetch('/api/tournament/submit_score', {
+        await fetch('/api/tournament/submit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+                tournament_id: gameState.tournamentId,
+                round_number: gameState.roundNumber,
                 score: gameState.score,
                 words: gameState.foundWords // Send full objects
             })
