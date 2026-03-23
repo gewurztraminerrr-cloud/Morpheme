@@ -1,6 +1,6 @@
-# Morpheme Project Checkpoint - March 22, 2026 (9:00 PM)
+# Morpheme Project Checkpoint - March 22, 2026 (10:20 PM)
 
-The current state of the Morpheme application has been saved as the new "Start Over" point.
+The current state of the Morpheme application (Rating Tiers, User Banning, Trophy Logic) has been saved as the new "Start Over" point.
 
 ## Core Features Saved:
 
