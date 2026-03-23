@@ -9,8 +9,8 @@ echo "Stopping server on Port 3000..."
 lsof -t -i :3000 | xargs kill -9 || true
 
 # 2. Reset the code
-echo "Reverting all code to stable tag..."
-git reset --hard save_point_2026-03-23_STABLE
+echo "Reverting all code to PERMANENT tag..."
+git reset --hard PERMANENT_RESTORATION_SAVE_POINT_DO_NOT_DELETE
 
 # 3. Clean untracked files
 echo "Cleaning working directory..."

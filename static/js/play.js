@@ -202,7 +202,7 @@ async function updateGameState() {
 
         const boardPanel = document.querySelector('.board-panel');
         const wordInputSection = document.querySelector('.word-input-section');
-        const currentUsername = state.your_username || window.currentUser || localStorage.getItem('morpheme_username');
+                const currentUsername = state.your_username || window.currentUser || localStorage.getItem('morpheme_username');
 
         // Cache for recovery after reset
         if (currentUsername) {
@@ -219,19 +219,50 @@ async function updateGameState() {
             return match;
         });
 
-        // EVICTION LOGIC: If I am neither a player nor a spectator, I've been kicked for inactivity
+        const is24H = (state.game_type === 'accumulative' && state.time_limit >= 7200);
+
+        // COMBINED EVICTION / 24H RESET LOGIC
         if (!amIPlayer && !amISpectator && currentUsername) {
-            console.warn('[play.js] User not found in room lists. Likely evicted for inactivity. Redirecting to lobby. User:', currentUsername);
+            // Was I in the room in the previous heartbeat?
+            const wasInBefore = previousState && (
+                previousState.players.some(p => p.username.toLowerCase() === currentUsername.toLowerCase()) ||
+                (previousState.spectators || []).some(s => s.username.toLowerCase() === currentUsername.toLowerCase())
+            );
+
+            if (is24H && wasInBefore) {
+                 console.log("[play.js] Detecting 24H Reset: User gone from lists. Handling auto-rejoin instead of eviction.");
+                 // Attempt to join immediately
+                 fetch(`/api/room/${roomId}/join`, {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify({ as_spectator: false })
+                 })
+                 .then(resp => resp.json())
+                 .then(data => {
+                     if (data.success) {
+                         console.log("Auto-rejoin successful! Refreshing state.");
+                         updateGameState();
+                     } else {
+                         console.error("Auto-rejoin failed:", data.error);
+                         window.location.href = '/';
+                     }
+                 })
+                 .catch(err => {
+                     console.error("Auto-rejoin network error:", err);
+                     window.location.href = '/';
+                 });
+                 return; // Halt this update call, wait for rejoin
+            }
+
+            // Normal Eviction (Likely 10m idle)
+            console.warn('[play.js] User not found in room lists. Likely evicted for inactivity. Redirecting to lobby.');
             stopPolling();
             window.currentRoomId = null;
             if (window.showPage) window.showPage('page-lobby');
 
             // Show alert AFTER switching pages
             setTimeout(() => {
-                // Automatically close Spinner Set popup if it exists
-                if (typeof hideSpinnerOverlay === 'function') {
-                    hideSpinnerOverlay();
-                }
+                if (typeof hideSpinnerOverlay === 'function') hideSpinnerOverlay();
                 if (window.showAlertModal) {
                     window.showAlertModal("Notice", "You have been kicked out of the room because you were idle for 10 minutes.");
                 } else {
@@ -484,52 +515,7 @@ async function updateGameState() {
             currentUser = state.your_username || window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
         } catch (e) { console.warn('No currentUser', e); }
 
-        // KICK LOGIC FOR 24H RESET
-        // If we were in the room in the previous state, but are gone now (and it's a 24h room),
-        // it means the daily reset wiped us. Redirect to lobby.
-        const is24H = (state.game_type === 'accumulative' && state.time_limit >= 7200);
 
-        if (is24H && previousState && previousState.players && currentUser) {
-            const prevState = previousState;
-
-            // Was I in the room before?
-            const wasIn = prevState.players.some(p => p.username === currentUser) ||
-                (prevState.spectators || []).some(s => s.username === currentUser);
-
-            // Am I in the room now?
-            const isIn = state.players.some(p => p.username === currentUser) ||
-                (state.spectators || []).some(s => s.username === currentUser);
-
-            if (wasIn && !isIn) {
-                // Only kick if round changed or time jumped (Reset likely)
-                // Actually, in 24h room, removal ONLY happens on reset.
-                console.log("User removed from 24H room - Attempting Auto-Rejoin");
-
-                // Attempt to join immediately
-                fetch(`/api/room/${roomId}/join`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ as_spectator: false })
-                })
-                    .then(resp => resp.json())
-                    .then(data => {
-                        if (data.success) {
-                            console.log("Auto-rejoin successful!");
-                            // Toast or small notification could go here
-                        } else {
-                            console.error("Auto-rejoin failed:", data.error);
-                            alert("Daily Reset! You have been moved to the lobby.");
-                            window.location.href = '/';
-                        }
-                    })
-                    .catch(err => {
-                        console.error("Auto-rejoin error:", err);
-                        window.location.href = '/';
-                    });
-
-                return; // Wait for join response
-            }
-        }
 
         // 1. Configure Tab Buttons Visibility & Labels
         // const is24H = ... (already declared above)

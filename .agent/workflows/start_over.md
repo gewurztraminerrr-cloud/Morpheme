@@ -10,7 +10,7 @@ description: Revert the project to the March 23, 2026 save point. Use this when 
 
 2.  **Reset Repository to Save Point:**
 // turbo
-    - `git reset --hard save_point_2026-03-23_STABLE`
+    - `git reset --hard PERMANENT_RESTORATION_SAVE_POINT_DO_NOT_DELETE`
 
 3.  **Clean Up Untracked Files:**
 // turbo

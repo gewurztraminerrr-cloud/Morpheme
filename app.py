@@ -4164,6 +4164,40 @@ def get_private_match_history(match_id):
     conn.close()
     return jsonify(results)
 
+def room_tick_worker():
+    """Background worker to advance room states without needing a client request."""
+    from game_room import room_manager
+    while True:
+        try:
+            # Create a copy of values to avoid concurrent modification errors
+            rooms = list(room_manager.rooms.values())
+            for room in rooms:
+                # 1. Update state (active -> intermission transitions)
+                room.check_and_update_state()
+                
+                # 2. Progress through intermission milestones
+                if room.state == 'intermission':
+                    milestone = room.get_intermission_milestone()
+                    if milestone == 'spinner':
+                        room_manager.generate_spinner_params(room.room_id)
+                    elif milestone == 'search':
+                        room_manager.start_board_search(room.room_id)
+                    elif milestone == 'start' and not room.starting_round:
+                        # Auto-start next round precisely
+                        print(f"[RoomTickWorker] Auto-advancing room {room.room_id} to new round")
+                        threading.Thread(target=room_manager.start_round, args=(room.room_id,), daemon=True).start()
+            
+        except Exception as e:
+            # Use a slightly less verbose error for common issues
+            pass
+            
+        time.sleep(5) # Poll every 5 seconds for precise transitions
+
 if __name__ == '__main__':
+    # Start the room advancer thread
+    print("[Main] Starting Background Room Advancer...")
+    advancer_thread = threading.Thread(target=room_tick_worker, daemon=True)
+    advancer_thread.start()
+
     print('Morpheme server running on http://localhost:3000')
     app.run(host='0.0.0.0', port=3000, debug=False, use_reloader=False)
