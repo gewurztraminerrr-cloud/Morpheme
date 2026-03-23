@@ -552,25 +552,31 @@ function renderMatchupItemHTML(m) {
 }
 
 function showAllPairingsModal(matchups) {
-    const modal = document.getElementById('generic-modal');
+    console.log("[Tournament] Opening All Pairings Modal, count:", matchups.length);
+    const modal = document.getElementById('generic-info-modal');
     const titleEl = document.getElementById('generic-modal-title');
     const bodyEl = document.getElementById('generic-modal-body');
 
-    if (!modal || !titleEl || !bodyEl) return;
+    if (!modal || !titleEl || !bodyEl) {
+        console.error("[Tournament] Modal elements not found:", { modal, titleEl, bodyEl });
+        return;
+    }
 
     titleEl.textContent = "All Tournament Pairings";
     
+    const curUser = window.currentUser || localStorage.getItem('morpheme_username');
+    
     // Sort matchups such that user's pair is near top for convenience
     const sorted = [...matchups].sort((a,b) => {
-        const aHasMe = a.u1_name === window.currentUser || a.u2_name === window.currentUser;
-        const bHasMe = b.u1_name === window.currentUser || b.u2_name === window.currentUser;
+        const aHasMe = a.u1_name === curUser || a.u2_name === curUser;
+        const bHasMe = b.u1_name === curUser || b.u2_name === curUser;
         if (aHasMe) return -1;
         if (bHasMe) return 1;
         return 0;
     });
 
     bodyEl.innerHTML = `
-        <div class="t-matchups-list" style="padding: 10px 0;">
+        <div class="t-matchups-list" style="padding: 10px 0; max-height: 500px; overflow-y: auto;">
             ${sorted.map(m => renderMatchupItemHTML(m)).join('')}
         </div>
     `;
@@ -583,7 +589,7 @@ function showAllPairingsModal(matchups) {
 const closeGenModal = document.getElementById('close-generic-modal');
 if (closeGenModal) {
     closeGenModal.onclick = () => {
-        const modal = document.getElementById('generic-modal');
+        const modal = document.getElementById('generic-info-modal');
         if (modal) {
             modal.classList.add('hidden');
             modal.style.display = 'none';
