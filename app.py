@@ -1337,7 +1337,7 @@ def get_public_profile(username):
     best_score_period = max([p['total_score'] for p in processed_all]) if processed_all else 0
 
     # Sort recent and exceptional
-    recent_rounds = sorted(processed_all, key=lambda x: x['timestamp'], reverse=True)[:20]
+    recent_rounds = sorted(processed_all, key=lambda x: x['timestamp'], reverse=True)[:50]
     exceptional_rounds = sorted([p for p in processed_all if p['performance_value'] > config_stats.get(f"{p['game_type']}|{p['dimensions']}|{p['round_duration']}", {}).get('avg_perf', 0)], 
                                key=lambda x: x['performance_value'], reverse=True)[:50]
 
@@ -1551,19 +1551,19 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
 
     # SORTING BY TIMESTAMP (Recency) as requested
     # Exceptional: by Timestamp DESC (Ratio >= 1.0 to include solo play/good rounds)
-    exceptional = sorted([r for r in performance_list if r['ratio'] >= 1.0], key=lambda x: x['timestamp'], reverse=True)[:30]
+    exceptional = sorted([r for r in performance_list if r['ratio'] >= 1.0], key=lambda x: x['timestamp'], reverse=True)[:50]
     
     # Winning: by Timestamp DESC
-    winning = sorted([r for r in performance_list if r['is_win']], key=lambda x: x['timestamp'], reverse=True)[:30]
+    winning = sorted([r for r in performance_list if r['is_win']], key=lambda x: x['timestamp'], reverse=True)[:50]
     
     # Best Scores: Score DESC, then Timestamp DESC
-    best_scores = sorted(performance_list, key=lambda x: (int(x['total_score']), x['timestamp']), reverse=True)[:30]
+    best_scores = sorted(performance_list, key=lambda x: (int(x['total_score']), x['timestamp']), reverse=True)[:50]
     
     # Best Word Counts: Count DESC, then Timestamp DESC
-    best_counts = sorted(performance_list, key=lambda x: (int(x['num_words']), x['timestamp']), reverse=True)[:30]
+    best_counts = sorted(performance_list, key=lambda x: (int(x['num_words']), x['timestamp']), reverse=True)[:50]
     
     # Games Played: Timestamp DESC (True Recency)
-    recent = sorted(performance_list, key=lambda x: x['timestamp'], reverse=True)[:30] 
+    recent = sorted(performance_list, key=lambda x: x['timestamp'], reverse=True)[:50] 
     
     # Best Words: Points DESC (Unique words only)
     unique_words = {}
@@ -1574,7 +1574,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
              unique_words[word_text] = {'word': word_text, 'points': points, 'timestamp': w.get('timestamp'), 'game_id': w.get('game_id')}
     
     unique_word_list = list(unique_words.values())
-    best_words = sorted(unique_word_list, key=lambda x: x['points'], reverse=True)[:30]
+    best_words = sorted(unique_word_list, key=lambda x: x['points'], reverse=True)[:50]
 
     # Get config rating
     cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', (user_id, config_key))
