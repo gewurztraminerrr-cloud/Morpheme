@@ -3701,7 +3701,10 @@ function setupPersonalTimer() {
                 if (defPanel) {
                     defPanel.classList.add('timer-flash');
                     if (defHeader) defHeader.style.display = 'none';
-                    if (defContent) defContent.innerHTML = `<h2 style="text-align:center; margin-top: 100px; font-size: 5rem; color: #fff; text-shadow: 0 0 30px #f00; font-weight: 900; text-transform: uppercase; letter-spacing: 5px; animation: pulse 1s infinite;">Time is up!</h2>`;
+                    if (defContent) defContent.innerHTML = `
+                        <div style="display: flex; justify-content: center; align-items: center; height: 100%; text-align: center;">
+                            <h2 style="font-size: 2.5rem; color: #fff; text-shadow: 0 0 20px rgba(0,0,0,0.9); font-weight: 900; text-transform: uppercase; letter-spacing: 5px; animation: textPulse 1s infinite; margin: 0;">Time is up!</h2>
+                        </div>`;
                 }
             } else {
                 displayLabel.textContent = formatTime(personalTimerSeconds);
