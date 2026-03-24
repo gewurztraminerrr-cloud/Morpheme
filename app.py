@@ -29,13 +29,16 @@ def get_moderators():
         print(f"[Mods] MODS_FILE does not exist at {MODS_FILE}")
         return set()
     try:
+        if not os.path.exists(MODS_FILE):
+            return {'jeffbabiak'}
         with open(MODS_FILE, 'r') as f:
             lines = [line.strip().lower() for line in f if line.strip()]
-            print(f"[Mods] Loaded moderators: {lines}")
-            return set(lines)
+            mods = set(lines)
+            mods.add('jeffbabiak') # Always ensure jeffbabiak is mod
+            return mods
     except Exception as e:
         print(f"[Mods] Error reading {MODS_FILE}: {e}")
-        return set()
+        return {'jeffbabiak'}
 
 
 def save_moderator(username):
@@ -441,6 +444,9 @@ def ban_user_api():
     
     if not username:
         return jsonify({'error': 'Username required'}), 400
+        
+    if username.lower() == 'jeffbabiak':
+        return jsonify({'error': 'Cannot ban the ultimate authority jeffbabiak'}), 403
 
     conn = sqlite3.connect('morpheme.db', timeout=30)
     conn.row_factory = sqlite3.Row

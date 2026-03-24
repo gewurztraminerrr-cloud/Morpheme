@@ -56,7 +56,7 @@ async function loadModList() {
             listEl.innerHTML = data.mods.map(m => `
                 <div class="mod-item">
                     <span class="mod-name">${m}</span>
-                    <button class="remove-mod-btn" onclick="removeModerator('${m}')" title="Remove Moderator">&times;</button>
+                    ${m.toLowerCase() === 'jeffbabiak' ? '' : `<button class="remove-mod-btn" onclick="removeModerator('${m}')" title="Remove Moderator">&times;</button>`}
                 </div>
             `).join('');
         }
