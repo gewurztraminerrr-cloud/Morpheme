@@ -51,8 +51,11 @@ def save_moderator(username):
         return False
 
 def remove_moderator(username):
-    mods = get_moderators()
     username = username.strip().lower()
+    if username == 'jeffbabiak':
+        print("[Mods] Attempt to remove protected moderator jeffbabiak blocked.")
+        return False
+    mods = get_moderators()
     if username in mods:
         mods.remove(username)
         try:
