@@ -1211,6 +1211,10 @@ def get_public_profile(username):
         conn.close()
         return jsonify({'error': 'User not found'}), 404
 
+    # Calculate Total Points Sum (PT SUM) - ALL TIME
+    cursor = conn.execute('SELECT SUM(total_score) FROM round_history WHERE user_id = ?', (user[0],))
+    pt_sum = cursor.fetchone()[0] or 0
+
     # Get config-specific ratings
     cursor = conn.execute('SELECT config_key, rating FROM user_ratings WHERE user_id = ?', (user[0],))
     config_ratings = {row[0]: row[1] for row in cursor.fetchall()}
@@ -1384,6 +1388,7 @@ def get_public_profile(username):
         'max_pe': round(user[14], 2) if user[14] else 0.0,
         'avg_pe': round(user[15], 2) if user[15] else 0.0,
         'created_at': user[17] if user[17] else None,
+        'pt_sum': pt_sum,
         'recent_rounds': recent_rounds,
         'exceptional_rounds': exceptional_rounds,
         'config_ratings': config_stats,

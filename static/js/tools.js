@@ -191,6 +191,9 @@ window.showMiniProfile = async function (username) {
             winRateEl.innerText = `${rate}%`;
         }
 
+        const ptSumEl = document.getElementById('mini-profile-pt-sum');
+        if (ptSumEl) ptSumEl.innerText = (data.pt_sum || 0).toLocaleString();
+
         // Demographics: Age and Gender
         const demoEl = document.getElementById('mini-profile-demographics');
         if (demoEl) {
@@ -901,6 +904,10 @@ async function renderProfile(user) {
     // Full Name
     const fullNameEl = document.getElementById('profile-full-name');
     if (fullNameEl) fullNameEl.innerText = user.full_name || '-';
+
+    // PT SUM
+    const ptSumEl = document.getElementById('profile-pt-sum');
+    if (ptSumEl) ptSumEl.innerText = (user.pt_sum || 0).toLocaleString();
 
     // Rating & Color (Global display removed, but we still need color for avatar theme)
     const avatar = document.querySelector('.profile-avatar.large');
