@@ -921,8 +921,9 @@ class GameRoom:
                         ''', (player.user_id, config_key, player.rating, actual_db_delta))
                         
                         # Competitive if at least 2 registered humans participated (EXCLUDE BOTS as human equivalents)
+                        # EXCLUDE MID-ROUND JOINERS from competition pool
                         # INCORPORATE QUITTERS into competition count
-                        human_participants = [p for p in all_involved if (not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False) and (p.score > 0 or p.submitted_words or p.invalid_words))]
+                        human_participants = [p for p in all_involved if (not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False) and not getattr(p, 'joined_mid_round', False) and (p.score > 0 or p.submitted_words or p.invalid_words))]
                         is_competitive = len(human_participants) >= 2
                         
                         # Allow global rank update if competitive AND (is ranked format OR there's an abandonment bonus to distribute)

@@ -20,11 +20,11 @@ def calculate_proportional_rating_change(players, is_private=False):
     """
     changes = {p.user_id: 0 for p in players}
     
-    # Filter to only including competitive human players (non-bots, non-guests)
+    # Filter to only including competitive human players (non-bots, non-guests, non-mid-round-joiners)
     # Bots are identified by p.is_ai == True
     competitive_humans = [
         p for p in players 
-        if not getattr(p, 'is_ai', False) and not is_player_guest(p)
+        if not getattr(p, 'is_ai', False) and not is_player_guest(p) and not getattr(p, 'joined_mid_round', False)
     ]
     
     if not competitive_humans:
