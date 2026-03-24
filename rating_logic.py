@@ -31,7 +31,7 @@ def calculate_proportional_rating_change(players, is_private=False):
         return changes
 
     # Count players with score >= 1 among competitive humans
-    active_humans = [p for p in competitive_humans if getattr(p, 'score', 0) >= 1]
+    active_humans = [p for p in competitive_humans if getattr(p, 'score', 0) >= 1 or len(getattr(p, 'invalid_words', [])) > 0]
     number_of_players = len(active_humans)
             
     if number_of_players == 0:

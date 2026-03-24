@@ -1086,6 +1086,8 @@ function renderPlayers(players, currentUser = null, state = null) {
             changeTxt = `${p.rating_change}`;
             changeClass = 'change-negative';
         }
+
+
         
         // Final display string (User request: in brackets next to rating)
         const ratingDisplayStr = `${displayRating} <span class="${changeClass}">(${changeTxt})</span>`;

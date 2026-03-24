@@ -38,6 +38,7 @@ class Player:
     is_guest: bool = False
     is_ai: bool = False
     ai_rating: int = 1200
+    has_abandoned: bool = False
 
 @dataclass
 class GameRoom:
@@ -102,6 +103,8 @@ class GameRoom:
     # Players
     players: List[Player] = field(default_factory=list)
     past_players: Dict[str, Player] = field(default_factory=dict) # Archive of players for persistence
+    round_quitters: List[Player] = field(default_factory=list) # Players who left mid-round after playing
+    abandonment_bounty: int = 0 # Points collected from quitters for distribution at round end
     
     # Chat
     chat_messages: List[Dict] = field(default_factory=list)
@@ -140,6 +143,10 @@ class GameRoom:
         """Add player to room"""
         is_daily = self.time_limit >= 7200
         
+        # NOTE: Abandonment penalty is fixed at exit; re-joining does not remove from quitters list.
+
+
+        
         # Check if player already exists (PERSISTENCE)
         existing_player = self.get_player(user_id)
         if existing_player and is_daily:
@@ -169,6 +176,16 @@ class GameRoom:
         # Track if they were already in the room (to avoid mid-round flag on refresh)
         was_already_in_room = existing_player is not None
             
+        # Check if player exists in round_quitters (RESTORE mid-round state)
+        quitter = next((q for q in self.round_quitters if str(q.user_id) == str(user_id)), None)
+        if quitter:
+            print(f"[GameRoom] Restoring quitter {username} ({user_id}) to active players list with {len(quitter.submitted_words)} words.")
+            quitter.last_active = time.time()
+            quitter.country_flag = country_flag
+            quitter.is_guest = is_guest
+            self.players.append(quitter)
+            return True
+
         # Check if player exists in past_players
         # print(f"DEBUG: Checking past_players for {user_id}. Past players count: {len(self.past_players)}")
         existing_player = next((p for p in self.past_players.values() if str(p.user_id) == str(user_id)), None)
@@ -258,6 +275,54 @@ class GameRoom:
         leaving_player = next((p for p in self.players if str(p.user_id) == str(user_id)), None)
         username = leaving_player.username if leaving_player else "Someone"
         
+        # Track abandonment (if in active round and played)
+        if leaving_player and self.state == 'active':
+             print(f"[DEBUG-PENALTY] Player {username} leaving during active round. Activity check: words={len(leaving_player.submitted_words)}, invalid={len(leaving_player.invalid_words)}, score={leaving_player.score}")
+             if leaving_player.submitted_words or leaving_player.invalid_words:
+                  # Only add if not already in quitters
+                  if not any(q.user_id == leaving_player.user_id for q in self.round_quitters):
+                       print(f"[GameRoom] Player {username} ({user_id}) abandoned mid-round. Logging as Quitter.")
+                       self.round_quitters.append(leaving_player)
+                       
+                       # AUTOMATIC INSTANT PENALTY - Deduct 16 immediately to prevent "cheating" re-joins
+                       is_guest = is_player_guest(leaving_player)
+                       print(f"[DEBUG-PENALTY] Quitter {username} is_guest={is_guest}, user_id={leaving_player.user_id}")
+                       
+                       if not is_guest and leaving_player.user_id > 0:
+                             print(f"[DEBUG-PENALTY] Applying -16 to {username} (Current Rating: {leaving_player.rating})")
+                             leaving_player.rating = max(0, leaving_player.rating - 16)
+                             leaving_player.rating_change -= 16
+                             self.abandonment_bounty += 16
+                             print(f"[GameRoom] INSTANT Penalty applied to {username}. Bounty now: {self.abandonment_bounty}")
+                             
+                             # Apply to Global Rank immediately
+                             try:
+                                 db_path = '/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/morpheme.db'
+                                 db_conn = sqlite3.connect(db_path, timeout=30)
+                                 
+                                 # 1. Update Global users table
+                                 cur = db_conn.execute('UPDATE users SET rating = rating - 16 WHERE id = ?', (leaving_player.user_id,))
+                                 print(f"[DEBUG-PENALTY] users table update for {username}: rows modified = {cur.rowcount}")
+                                 
+                                 # 2. Update config-specific user_ratings table
+                                 current_config = f"{self.game_type}|{self.board_dimensions}|{self.time_limit}"
+                                 cur2 = db_conn.execute('UPDATE user_ratings SET rating = rating - 16 WHERE user_id = ? AND config_key = ?', (leaving_player.user_id, current_config))
+                                 print(f"[DEBUG-PENALTY] user_ratings table update for {username} (config={current_config}): rows modified = {cur2.rowcount}")
+                                 
+                                 db_conn.commit()
+                                 db_conn.close()
+                                 print(f"[DEBUG-PENALTY] DB Commit successful for {username}")
+                             except Exception as e:
+                                 print(f"[GameRoom] Instant Penalty DB update Error for {username}: {e}")
+                       else:
+                             print(f"[DEBUG-PENALTY] SKIPPING DB update for {username} (Guest or Invalid ID)")
+                  else:
+                       print(f"[DEBUG-PENALTY] Player {username} already in round_quitters. Skipping duplicate penalty.")
+             else:
+                  print(f"[DEBUG-PENALTY] Player {username} left but had NO activity. (words=0, invalid=0)")
+        else:
+             print(f"[DEBUG-PENALTY] Player {username} removed outside active round or state. (state={self.state})")
+
         self.players = [p for p in self.players if str(p.user_id) != str(user_id)]
         if len(self.players) < initial_players:
             print(f"[GameRoom] Removed player {user_id} ({username}) from room {self.room_id} (force={force})")
@@ -297,23 +362,20 @@ class GameRoom:
     def check_inactivity(self, timeout=600, spec_timeout=1800): 
         """Remove players and spectators who haven't been active for their respective timeout seconds"""
         now = time.time()
-        active_players = []
-        players_removed = False
         is_daily = self.time_limit >= 7200
         
+        # Collect IDs to remove to avoid modifying list during iteration (10-minute standard timeout)
+        to_remove_ids = []
         for p in self.players:
             age = now - p.last_active
-            # Standard rooms: 10m timeout
-            # 24h rooms: infinite timeout (never kick)
-            if is_daily or age < timeout:
-                active_players.append(p)
-            else:
-                log_msg = f"[GameRoom] Removing inactive player {p.username} (ID={p.user_id}) in room {self.room_id} (inactive for {age:.1f}s)\n"
-                print(log_msg.strip())
-                players_removed = True
-        
-        if players_removed:
-            self.players = active_players
+            if not is_daily and age >= timeout and not p.is_ai:
+                to_remove_ids.append(p.user_id)
+
+        players_removed = False
+        for uid in to_remove_ids:
+            # remove_player handles the abandonment rating penalty logic!
+            self.remove_player(uid)
+            players_removed = True
 
         # Check spectators
         active_spectators = []
@@ -753,30 +815,94 @@ class GameRoom:
                 # This implies they expect to see recent ones. 50 cover 10.)
                 if len(self.winners_history) > 50:
                     self.winners_history = self.winners_history[:50]
-            # Skip rating updates for non-Normal formats OR for 500+ modes (unranked)
+            # ABANDONMENT PENALTY (Requested Rule):
+            # Track quitters and their bounty independently of the ranked/unranked format check.
+            # 1. Real Quitters (those who explicitly left mid-round)
+            active_quitters = [q for q in self.round_quitters if not is_player_guest(q) and not q.is_ai and (q.score > 0 or q.submitted_words or q.invalid_words)]
+            
+            # 2. Zombies (Soft Abandoners: humans who closed the tab but haven't been purged by the 10-minute timeout yet)
+            # Threshold: 45 seconds since last poll during an active round.
+            now = time.time()
+            soft_quitters = [p for p in self.players if not is_player_guest(p) and not p.is_ai and (now - p.last_active) > 45 and (p.score > 0 or p.submitted_words or p.invalid_words)]
+            
+            # Record soft-quitter IDs for penalty and distribution exclusion
+            soft_quitter_ids = {p.user_id for p in soft_quitters}
+            active_quitters.extend(soft_quitters) # Combine for uniform penalty reporting
+            active_quitter_ids = {q.user_id for q in active_quitters}
+            
+            # Calculate total bounty (accumulated instant penalties + pending soft penalties)
+            total_bounty = self.abandonment_bounty + (len(soft_quitters) * 16)
+            
+            # Skip rating updates for 500+ modes (unranked)
             wc_range = self.spinner_params.get('word_count_range', (0, 0))
             wc_tuple = self._get_wc_tuple(wc_range)
             is_500plus = wc_tuple[0] >= 500
             
-            if board_format != 'Normal' or is_500plus:
-                print(f"[GameRoom] Round {self.current_round} is UNRANKED (Format: {board_format}, 500+: {is_500plus}). Skipping rating updates.")
+            # Ranked vs Unranked check
+            is_ranked_format = (str(board_format).strip() == 'Normal')
+            if not is_ranked_format or is_500plus:
+                print(f"[GameRoom] Round {self.current_round} is inherently UNRANKED (Format: {board_format}, 500+: {is_500plus}).")
                 rating_changes = {p.user_id: 0 for p in self.players}
             else:
                 rating_changes = calculate_proportional_rating_change(self.players, is_private=self.is_private)
-            
+                
+            # APPLY ABANDONMENT PENALTY & BOUNTY (Regardless of rank status - Discourages quitting everywhere)
+            if total_bounty > 0 or active_quitters:
+                # 1. Distribute the 'bounty' collected from all quitters.
+                if total_bounty > 0:
+                    # Remaining human players who actually played and stayed throughout (didn't exit and aren't zombies)
+                    active_humans_remaining = [p for p in self.players if not p.is_ai and not is_player_guest(p) and p.user_id not in active_quitter_ids and (p.score > 0 or p.submitted_words or p.invalid_words)]
+
+                    if active_humans_remaining:
+                        bonus = total_bounty // len(active_humans_remaining)
+                        for p in active_humans_remaining:
+                            # Apply bonus and hard cap the total change at 16 (just like a normal great win)
+                            total_change = rating_changes.get(p.user_id, 0) + bonus
+                            rating_changes[p.user_id] = max(-16, min(16, total_change))
+                            print(f"[GameRoom] Awarding {bonus} bonus points to {p.username} due to {total_bounty} penalty points from quitters. Final Change (capped): {rating_changes[p.user_id]}")
+                    
+                # 2. Ensure ALL quitters (real and soft) show as -16 in the UI report
+                for q in active_quitters:
+                    rating_changes[q.user_id] = -16
+
             # Connect for stats check - AND NOW PERSISTENCE
             try:
-                conn = sqlite3.connect('morpheme.db', timeout=30)
+                db_path = '/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/morpheme.db'
+                conn = sqlite3.connect(db_path, timeout=30)
             except:
                 conn = None
 
-            for player in self.players:
+            # Process unique participants for DB updates (prioritize current players for memory persistence)
+            involved_ids = set()
+            all_involved = []
+            for p in self.players:
+                if p.user_id not in involved_ids:
+                    all_involved.append(p)
+                    involved_ids.add(p.user_id)
+            for q in self.round_quitters:
+                if q.user_id not in involved_ids:
+                    all_involved.append(q)
+                    involved_ids.add(q.user_id)
+
+            # Identification of quitters to avoid double-subtracting their instant penalty
+            # Only those who were ALREADY penalized on exit should be skipped in the DB delta.
+            # Soft-quitters (zombies) STILL need their DB penalty applied now.
+            already_penalized_ids = {q.user_id for q in self.round_quitters if not any(sq.user_id == q.user_id for sq in soft_quitters)}
+
+            for player in all_involved:
                 change = int(rating_changes.get(player.user_id, 0))
-                player.rating += change
-                player.rating_change = change
+                
+                # AVOID DOUBLE-DIPPING: Penny was already deducted from DB and object if they were a REAL quitter.
+                actual_db_delta = change
+                if player.user_id in already_penalized_ids:
+                    # Penalty already applied at exit, so don't apply it again here in the DB update.
+                    actual_db_delta = 0 
+                
+                player.rating += actual_db_delta
+                player.rating_change = change # Use full change (including -16) for UI display
                 print(f"[GameRoom] Rating Update Applied: {player.username} ({player.user_id}) -> Change: {change}, New Rating: {player.rating}")
                 
-                 # Skip saving history if player was inactive (0 score, no attempts)
+                # Skip saving history if player was inactive (0 score, no attempts)
                 if player.score == 0 and not player.submitted_words and not player.invalid_words:
                     print(f"[GameRoom] Skipping DB history for inactive player {player.username} in round {self.current_round}")
                     continue
@@ -785,8 +911,6 @@ class GameRoom:
                 if conn and player.user_id > 0 and not self.is_solo and board_format == 'Normal':
                     try:
                         # 1. Update Global Profile Rating
-                        # (Global users.rating update is below at line 724)
-                        
                         # 2. Update Config-Specific Rating
                         dims = f"{len(self.board)}x{len(self.board[0])}"
                         config_key = f"{self.game_type}|{dims}|{self.time_limit}"
@@ -794,27 +918,26 @@ class GameRoom:
                         conn.execute('''
                             INSERT INTO user_ratings (user_id, config_key, rating) VALUES (?, ?, ?)
                             ON CONFLICT(user_id, config_key) DO UPDATE SET rating = rating + ?
-                        ''', (player.user_id, config_key, player.rating, change))
+                        ''', (player.user_id, config_key, player.rating, actual_db_delta))
                         
                         # Competitive if at least 2 registered humans participated (EXCLUDE BOTS as human equivalents)
-                        human_participants = [p for p in self.players if (not getattr(p, 'is_ai', False) and (p.score > 0 or p.submitted_words or p.invalid_words))]
+                        # INCORPORATE QUITTERS into competition count
+                        human_participants = [p for p in all_involved if (not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False) and (p.score > 0 or p.submitted_words or p.invalid_words))]
                         is_competitive = len(human_participants) >= 2
                         
-                        if is_competitive and board_format == 'Normal':
+                        # Allow global rank update if competitive AND (is ranked format OR there's an abandonment bonus to distribute)
+                        if is_competitive and (is_ranked_format or self.abandonment_bounty > 0):
                             conn.execute('UPDATE users SET rating = ?, games_played = games_played + 1 WHERE id = ?', (player.rating, player.user_id))
-                            print(f"[GameRoom] DB Updated: User {player.username} rating/stats (Competitive: {is_competitive})")
+                            print(f"[GameRoom] DB Updated: User {player.username} global rating/stats (Competitive: {is_competitive}, Format: {board_format})")
                         else:
                             # Still update in-memory but skip global rank if not competitive or not normal
                             print(f"[GameRoom] DB SKIP: User {player.username} global rating update (Competitive: {is_competitive}, Format: {board_format})")
                         
                         if is_competitive and player.score > 0 and board_format == 'Normal':
                              # Find max score among ALL participants (even bots) to see if this human actually won
-                             max_all_score = max([p.score for p in self.players]) if self.players else 0
+                             max_all_score = max([p.score for p in all_involved]) if all_involved else 0
                              if player.score == max_all_score:
                                  conn.execute('UPDATE users SET wins = wins + 1 WHERE id = ?', (player.user_id,))
-
-
-                        
                         if is_competitive:
                             conn.execute('''
                                 UPDATE users 
@@ -831,7 +954,9 @@ class GameRoom:
                 conn.commit()
                 conn.close()
 
-
+            # CLEAR QUITTERS AND BOUNTY FOR NEXT ROUND
+            self.round_quitters = []
+            self.abandonment_bounty = 0
 
             # Reset timing flags for next intermission
             self.spinner_params_generated = False

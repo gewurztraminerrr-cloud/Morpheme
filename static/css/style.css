@@ -1349,8 +1349,8 @@ body {
 
 .profile-stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
     margin-bottom: 25px;
 }
 
@@ -1367,9 +1367,14 @@ body {
 }
 
 .stat-num {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-weight: 700;
     color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    letter-spacing: -0.5px; /* Tighter letter spacing for numbers */
 }
 
 .stat-desc {
