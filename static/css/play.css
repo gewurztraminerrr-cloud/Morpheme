@@ -1932,7 +1932,7 @@ body.theme-light-brown .word-item.bonus-word {
     }
 }
 
-.change-positive { color: #2ecc71; font-weight: 800; text-shadow: 0 0 5px rgba(46, 204, 113, 0.4); }
+.change-positive { color: #1b8a4f; font-weight: 800; text-shadow: 0 0 5px rgba(27, 138, 79, 0.4); }
 .change-negative { color: #f43f5e; font-weight: 800; text-shadow: 0 0 5px rgba(244, 63, 94, 0.4); }
 .change-neutral { opacity: 0.5; color: var(--muted-text); }
 
