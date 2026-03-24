@@ -1,17 +1,19 @@
-# Morpheme Project Checkpoint - March 23, 2026 (4:35 PM)
+# Morpheme Project Checkpoint - March 24, 2026 (5:10 PM)
 
-This checkpoint represents the successfully restored and stabilized state of the Morpheme application after several regressions were fixed. 
+This checkpoint represents the successfully restored and stabilized state of the Morpheme application after a series of significant UI and logic refinements on March 24th.
 
 ## Core Features Captured:
 
-### 1. UI & Visibility Refinements (Commit 79754b6)
-- **High-Contrast Mini Profiles**: Refined for bright/white layout settings (Weight 800 labels, bold values).
-- **Visible Close Button**: The "X" now has a circular background and high contrast, ensuring visibility in all themes.
-- **Dynamic Rating Badge Click**: Clicking the rating square correctly refreshes and shows the latest mini-profile data.
+### 1. Game Fairness & Scoring Refinements (Commit f93afa4)
+- **Mid-Round Joiner Exclusion**: Dynamic logic ensures that players joining after the round start do not impact the ratings of original participants.
+- **Selective Reward/Penalty Pools**: Scoring calculations now distinguish between full-participation "competitive" players and "casual" mid-round joiners.
+- **Abandonment Detection**: Implemented soft abandonment detection to ensure fair bounty distribution when players exit mid-round.
 
-### 2. Synesthesia & Personalization
-- **Full Letter Color Support**: User 'jeffy' has been manually configured with a full 26-letter color palette in the database.
-- **CSS Variables**: Styles are correctly mapped to `--letter-[A-Z]-color` for in-game board coloring.
+### 2. UI & Aesthetic Excellence (Commit 658c4b1)
+- **Spinner Set Window Congratulatory Style**: Improved accessibility for the "CONGRATULATIONS" message with a dark, high-contrast background and gold text flash (visible across all themes).
+- **Profile UI Background Contrast**: Enhanced profile cards for improved readability on diverse user-selected color palettes.
+- **Achievement Limits**: All achievement/ranking tables are now capped at 50 rows to ensuring UI stability and performance.
+- **Simplified Profile Filters**: Redundant time-period filters (Day/Week/Month/Year) have been removed from Round Reviews and Exceptional Rounds to declutter the interface.
 
 ### 3. Server Stability & AI Support
 - **Stable Flask Environment**: Debug mode (`debug=False`) and the reloader (`use_reloader=False`) have been disabled to prevent port conflicts and improve startup reliability.
@@ -19,15 +21,15 @@ This checkpoint represents the successfully restored and stabilized state of the
 - **500+ Word Count Logic**: Iterative board optimization for high-word-count rounds (500+) is active.
 
 ### 4. Database Persistence
-- **Snapshot Created**: The current `morpheme.db` has been snapshotted to `morpheme.db.save_point_2026-03-23`.
+- **Snapshot Created**: The current `morpheme.db` has been snapshotted to `morpheme.db.save_point_2026-03-24_final`.
 
 ### 5. Start Over Workflow (Hardened)
-- **Automated Restoration**: The `.agent/workflows/start_over.md` has been updated to point to this stable state.
-- **Database Injection**: The workflow now automatically restores the Synesthesia database snapshot, ensuring your personal colors are never lost during a reset.
+- **Automated Restoration**: The `.agent/workflows/start_over.md` has been updated to point to this March 24th baseline.
+- **Database Injection**: The workflow now automatically restores the Synesthesia database snapshot, ensuring personal colors are never lost during a reset.
 
 ## Restore Procedure:
 To return to this EXACT state, run:
-1. `git reset --hard save_point_2026-03-23_STABLE`
+1. `git reset --hard save_point_2026-03-24_STABLE`
 2. `git clean -fd`
-3. `cp morpheme.db.save_point_2026-03-23 morpheme.db`
+3. `cp morpheme.db.save_point_2026-03-24_final morpheme.db`
 4. `./run_morpheme.sh`
