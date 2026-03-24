@@ -1,6 +1,6 @@
 #!/bin/bash
 # RESTORE_NOW.sh
-# Emergency recovery to March 23 Stable State
+# Emergency recovery to March 24 Stable State
 
 echo "=== EMERGENCY RESTORATION STARTING ==="
 
@@ -18,7 +18,7 @@ git clean -fd
 
 # 4. Inject the stable database snapshot (User settings, Synesthesia, etc)
 echo "Restoring database from stable backup..."
-cp morpheme.db.save_point_2026-03-23 morpheme.db
+cp morpheme.db.save_point_2026-03-24 morpheme.db
 
 # 5. Restart the server
 echo "Restarting Morpheme server (Single Process Mode)..."
