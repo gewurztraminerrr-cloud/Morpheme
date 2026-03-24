@@ -8,7 +8,7 @@ instance/
 .pytest_cache/
 .coverage
 htmlcov/
-morpheme.db
+morpheme.db*
 developer_messages.db
 *.db
 room_state.json
