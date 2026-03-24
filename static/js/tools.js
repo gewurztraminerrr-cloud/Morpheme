@@ -977,11 +977,8 @@ async function renderProfile(user) {
     }
 
     const bestScoreEl = document.getElementById('profile-best-score');
-    if (bestScoreEl && user.recent_rounds && user.recent_rounds.length > 0) {
-        const best = Math.max(...user.recent_rounds.map(r => r.total_score || 0));
-        bestScoreEl.innerText = best;
-    } else if (bestScoreEl) {
-        bestScoreEl.innerText = '-';
+    if (bestScoreEl) {
+        bestScoreEl.innerText = user.best_score || '-';
     }
 
     // Profile Details

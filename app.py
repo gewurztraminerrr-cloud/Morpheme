@@ -1211,16 +1211,7 @@ def get_public_profile(username):
         conn.close()
         return jsonify({'error': 'User not found'}), 404
 
-    # Calculate Total Points Sum (PT SUM) - ALL TIME
-    cursor = conn.execute('SELECT SUM(total_score) FROM round_history WHERE user_id = ?', (user[0],))
-    pt_sum = cursor.fetchone()[0] or 0
-
-    # Get config-specific ratings
-    cursor = conn.execute('SELECT config_key, rating FROM user_ratings WHERE user_id = ?', (user[0],))
-    config_ratings = {row[0]: row[1] for row in cursor.fetchall()}
-
-    # Get recent rounds (last 50) with optional period filtering
-    from flask import request
+    user_id = user[0]
     period = request.args.get('period', 'all').lower()
     
     time_filter = ""
@@ -1233,6 +1224,41 @@ def get_public_profile(username):
     elif period == 'year':
         time_filter = "AND date(timestamp, 'localtime') >= date('now', '-365 days', 'localtime')"
 
+    # Calculate Period Stats (If 'all', we still calculate from round_history for consistency, 
+    # but could use user table for performance if data volume is high)
+    cursor_stats = conn.execute(f'''
+        SELECT COUNT(DISTINCT room_id || '_' || round_number), SUM(total_score)
+        FROM round_history
+        WHERE user_id = ? {time_filter}
+    ''', (user_id,))
+    games_played_period, pt_sum_period = cursor_stats.fetchone()
+    games_played_period = games_played_period or 0
+    pt_sum_period = pt_sum_period or 0
+
+    # Calculate Wins in Period
+    cursor_wins = conn.execute(f'''
+        SELECT rh.room_id, rh.round_number, rh.timestamp, rh.total_score
+        FROM round_history rh
+        WHERE rh.user_id = ? {time_filter}
+    ''', (user_id,))
+    user_rounds = cursor_wins.fetchall()
+    
+    wins_period = 0
+    for r_id, r_num, ts, my_score in user_rounds:
+        if my_score <= 0: continue
+        cursor_max = conn.execute('''
+            SELECT MAX(total_score) FROM round_history 
+            WHERE room_id = ? AND round_number = ? AND timestamp = ?
+        ''', (r_id, r_num, ts))
+        max_score = cursor_max.fetchone()[0] or 0
+        if my_score >= max_score and max_score > 0:
+            wins_period += 1
+
+    # Get config-specific ratings (Current ratings are ALWAYS current/lifetime)
+    cursor = conn.execute('SELECT config_key, rating FROM user_ratings WHERE user_id = ?', (user_id,))
+    config_ratings = {row[0]: row[1] for row in cursor.fetchall()}
+
+    # Get matching rounds for calculations
     cursor_all = conn.execute(f'''
         SELECT room_id, game_type, round_number, board_json, words_json, total_score, 
                round_start_time, round_duration, timestamp, user_rating, performance_ratio, id,
@@ -1240,45 +1266,25 @@ def get_public_profile(username):
         FROM round_history
         WHERE user_id = ? {time_filter}
         ORDER BY timestamp DESC
-    ''', (user[0],))
+    ''', (user_id,))
     all_rows = cursor_all.fetchall()
     
-    # Filter and Deduplicate BEFORE processing (for performance and correctness)
-    # 1. Deduplicate by (room_id, round_number) - Keep most recent (already sorted by DESC)
-    # 2. Filter out rounds where user "did not play" (0 words found)
+    # Filter and Deduplicate
     seen_rounds = set()
     clean_rows = []
-    
     for r in all_rows:
-        room_id = r[0]
-        round_val = r[2]
-        wjson = r[4]
-        
-        # Dedup Check
-        round_key = (room_id, round_val)
-        if round_key in seen_rounds:
-            continue
-            
-        # "Did not play" check (Empty words list)
+        room_id, r_num, wjson = r[0], r[2], r[4]
+        round_key = (room_id, r_num)
+        if round_key in seen_rounds: continue
         try:
-            # If wjson is exactly '[]', skip
-            if wjson == '[]':
-                continue
-            # Double check with load if unsure
-            w_list = json.loads(wjson)
-            if not w_list:
-                continue
-        except:
-            continue
-            
+            if wjson == '[]' or not json.loads(wjson): continue
+        except: continue
         seen_rounds.add(round_key)
         clean_rows.append(r)
 
-    # helper to process a row into a rich dict
+    # helper to process a row
     def process_round_row(row, db_conn):
         room_id, gtype, rnum, bjson, wjson, score, rstart, rdur, ts, urat, pe_ratio, g_id, wpm, twa = row
-        
-        # Get all players in this specific round
         c_room = db_conn.execute('''
             SELECT rh.total_score, rh.user_rating, u.username
             FROM round_history rh
@@ -1286,109 +1292,78 @@ def get_public_profile(username):
             WHERE rh.room_id = ? AND rh.round_number = ? AND rh.timestamp = ?
         ''', (room_id, rnum, ts))
         r_entries = c_room.fetchall()
-        
-        # Use stored pe_ratio (multiplied by 100 for percentage scale)
         perf_val = int(pe_ratio * 100) if pe_ratio else 100
-
         words = json.loads(wjson)
-        num_words = len(words) if isinstance(words, list) else 0
+        num_words = len(words)
         top_word = "-"
         if num_words > 0:
-            best_w_obj = max(words, key=lambda x: x.get('points', 0)) if words else {}
-            top_word = best_w_obj.get('word', '-') if isinstance(best_w_obj, dict) else "-"
-
-        avg_len = 0
-        if num_words > 0:
-            total_l = sum(len(str(w.get('word', ''))) for w in words if isinstance(w, dict))
-            avg_len = round(total_l / num_words, 1)
+            best_w_obj = max(words, key=lambda x: x.get('points', 0))
+            top_word = best_w_obj.get('word', '-')
+        avg_len = round(sum(len(str(w.get('word', ''))) for w in words)/num_words, 1) if num_words > 0 else 0
         room_strength = sum(e[1] for e in r_entries) if r_entries else urat
-        
         board = json.loads(bjson)
         dims = f"{len(board)}x{len(board[0])}" if board else "4x4"
-
         return {
-            'game_id': g_id,
-            'room_id': room_id,
-            'game_type': gtype,
-            'round_number': rnum,
-            'board': board,
-            'dimensions': dims,
-            'words': words,
-            'num_words': num_words,
-            'top_word': top_word,
-            'avg_len': avg_len,
-            'total_score': score,
-            'performance_value': perf_val,
-            'room_strength': room_strength,
-            'round_start_time': rstart,
-            'round_duration': rdur,
-            'timestamp': ts,
-            'wpm': wpm or 0,
-            'total_words_avail': twa or 0,
+            'game_id': g_id, 'room_id': room_id, 'game_type': gtype, 'round_number': rnum,
+            'board': board, 'dimensions': dims, 'words': words, 'num_words': num_words,
+            'top_word': top_word, 'avg_len': avg_len, 'total_score': score,
+            'performance_value': perf_val, 'room_strength': room_strength,
+            'round_start_time': rstart, 'round_duration': rdur, 'timestamp': ts,
+            'wpm': wpm or 0, 'total_words_avail': twa or 0,
             'all_players': sorted([{'username': e[2], 'score': e[0], 'rating': e[1]} for e in r_entries], key=lambda x: x['score'], reverse=True)
         }
 
-    # Process all rows once to get data for both averages and exceptional rounds
     processed_all = [process_round_row(r, conn) for r in clean_rows]
     
-    # Calculate Averages and Config Stats
+    # Config Stats (Averages for the period)
     config_stats = {}
     for cfg_key, rating in config_ratings.items():
         try:
             gtype, dims, dur = cfg_key.split('|')
             matching = [p for p in processed_all if p['game_type'] == gtype and p['dimensions'] == dims and p['round_duration'] == int(dur)]
-            
             config_stats[cfg_key] = {
                 'rating': rating,
                 'avg_score': round(sum(p['total_score'] for p in matching) / len(matching), 1) if matching else 0,
                 'avg_perf': round(sum(p['performance_value'] for p in matching) / len(matching), 1) if matching else 0
             }
-        except Exception as e:
-            print(f"Error processing config {cfg_key}: {e}")
+        except:
             config_stats[cfg_key] = {'rating': rating, 'avg_score': 0, 'avg_perf': 0}
 
-    # Calculate overall AVG WPM (only for boards with 50+ words where user had a valid WPM)
+    # Period-specific AVG WPM
     wpm_games = [p['wpm'] for p in processed_all if p['total_words_avail'] >= 50 and p['wpm'] > 0]
     avg_wpm = round(sum(wpm_games) / len(wpm_games), 1) if wpm_games else 0
 
-    # Recent rounds (last 10)
-    recent_rounds = sorted(processed_all, key=lambda x: x['timestamp'], reverse=True)[:10]
+    # Best Score in Period
+    best_score_period = max([p['total_score'] for p in processed_all]) if processed_all else 0
 
-    # Calculate exceptional rounds: any round where performance exceeds the personal average for that config
-    exceptional_rounds = []
-    for processed in processed_all:
-        config_key = f"{processed['game_type']}|{processed['dimensions']}|{processed['round_duration']}"
-        avg_p = config_stats.get(config_key, {}).get('avg_perf', 0)
-        if processed['performance_value'] > avg_p and processed['performance_value'] > 0:
-            exceptional_rounds.append(processed)
-            
-    # Sort by best performance value first
-    exceptional_rounds = sorted(exceptional_rounds, key=lambda x: x['performance_value'], reverse=True)[:50]
+    # Sort recent and exceptional
+    recent_rounds = sorted(processed_all, key=lambda x: x['timestamp'], reverse=True)[:20]
+    exceptional_rounds = sorted([p for p in processed_all if p['performance_value'] > config_stats.get(f"{p['game_type']}|{p['dimensions']}|{p['round_duration']}", {}).get('avg_perf', 0)], 
+                               key=lambda x: x['performance_value'], reverse=True)[:50]
 
     conn.close()
-    
-    # Get online status and current room info
     session_info = room_manager.find_user_session(user[0])
         
     return jsonify({
         'username': user[1],
         'rating': user[2],
-        'games_played': user[3],
-        'avatar_url': user[4] if user[4] else None,
-        'country_flag': user[5] if user[5] else '🏳️',
-        'avg_wpm_300': avg_wpm,
-        'full_name': user[6] if user[6] else '-',
-        'age': user[7] if user[7] else '-',
-        'gender': user[8] if user[8] else '-',
-        'location': user[9] if user[9] else '-',
-        'quote': user[10] if user[10] else 'Enter a personal quote',
-        'description': user[11] if user[11] else 'Add a detailed description about yourself...',
-        'proof_url': user[12] if user[12] else None,
-        'wins': user[13] if user[13] else 0,
+        'games_played': games_played_period, # PER-PERIOD
+        'wins': wins_period,                 # PER-PERIOD
+        'pt_sum': pt_sum_period,             # PER-PERIOD
+        'best_score': best_score_period,     # PER-PERIOD
+        'avg_wpm_300': avg_wpm,              # PER-PERIOD (already was)
+        'avatar_url': user[4],
+        'country_flag': user[5] or '🏳️',
+        'full_name': user[6] or '-',
+        'age': user[7] or '-',
+        'gender': user[8] or '-',
+        'location': user[9] or '-',
+        'quote': user[10] or 'Enter a personal quote',
+        'description': user[11] or 'Add a detailed description about yourself...',
+        'proof_url': user[12],
         'max_pe': round(user[14], 2) if user[14] else 0.0,
         'avg_pe': round(user[15], 2) if user[15] else 0.0,
-        'created_at': user[17] if user[17] else None,
-        'pt_sum': pt_sum,
+        'created_at': user[17],
         'recent_rounds': recent_rounds,
         'exceptional_rounds': exceptional_rounds,
         'config_ratings': config_stats,
