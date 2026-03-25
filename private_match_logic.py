@@ -196,6 +196,10 @@ class PrivateMatchManager:
         bonus_len = parameters.get('bonus_word_length', 0)
         bonus_word = ""
         # Check if the format allows a bonus word
+        target_format = parameters.get('board_format', 'Normal')
+        target_range = parameters.get('word_count_range')
+        target_difficulty = parameters.get('difficulty', 'Medium')
+        
         if bonus_len > 0 and 'Mania' not in target_format and target_format != 'Checkerboard' and target_format != 'Either/Or':
             from word_validator import word_validator
             dictionary_set = word_validator.csw_words if dict_name == 'CSW' else word_validator.nwl_words

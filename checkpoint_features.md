@@ -20,7 +20,10 @@ This checkpoint represents the successfully restored and stabilized state of the
 - **Port 3000 Standard**: The server is cleanly bound to port 3000 and verified to be responding.
 - **500+ Word Count Logic**: Iterative board optimization for high-word-count rounds (500+) is active.
 
-### 4. Database Persistence
+### 4. Multiplayer Bug Fixes
+- **Private Match Initialization**: Fixed a critical variable initialization bug in `private_match_logic.py` that caused "With Friends" matches to fail creation silently and become stuck at `current_round = 0`. Users can now successfully invite friends and start private matches.
+
+### 5. Database Persistence
 - **Snapshot Created**: The current `morpheme.db` has been snapshotted to `morpheme.db.save_point_2026-03-24_final`.
 
 ### 5. Start Over Workflow (Hardened)
