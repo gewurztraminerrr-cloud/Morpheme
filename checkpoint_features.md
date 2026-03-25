@@ -9,7 +9,9 @@ This checkpoint represents the successfully restored and stabilized state of the
 - **Selective Reward/Penalty Pools**: Scoring calculations now distinguish between full-participation "competitive" players and "casual" mid-round joiners.
 - **Abandonment Detection**: Implemented soft abandonment detection to ensure fair bounty distribution when players exit mid-round.
 
-### 2. UI & Aesthetic Excellence (Commit 658c4b1)
+### 2. UI & Aesthetic Excellence
+- **Sticky Popup Controls**: The "X" close buttons on all long scrolling modals (e.g., Achievements, Replay Walkthroughs) have been updated to `position: sticky`. They now intuitively follow the user down the screen, ensuring the window is always readily closable.
+- **Readable "With Friends" Invites**: Rebuilt the invite "toast" notifications using a universal, high-contrast dark theme (`#1e1e24` background with white text). This prevents unreadable color clashing that previously occurred when the toast inherited conflicting light/dark UI theme variables.
 - **Spinner Set Window Congratulatory Style**: Improved accessibility for the "CONGRATULATIONS" message with a dark, high-contrast background and gold text flash (visible across all themes).
 - **Profile UI Background Contrast**: Enhanced profile cards for improved readability on diverse user-selected color palettes.
 - **Achievement Limits**: All achievement/ranking tables are now capped at 50 rows to ensuring UI stability and performance.

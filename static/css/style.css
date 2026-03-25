@@ -2769,15 +2769,16 @@ body {
 }
 
 .pm-toast-content {
-    background: var(--toast-bg);
+    background: #1e1e24; /* Universal dark background for readability */
+    color: #ffffff;
     backdrop-filter: blur(12px);
-    border: 1px solid var(--input-border);
+    border: 1px solid #333333;
     border-radius: 12px;
     padding: 15px;
     display: flex;
     align-items: center;
     gap: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
     min-width: 320px;
 }
 
@@ -2798,13 +2799,13 @@ body {
 
 .pm-toast-title {
     font-weight: 700;
-    color: var(--text-primary);
+    color: #ffffff;
     font-size: 0.9rem;
     margin-bottom: 2px;
 }
 
 .pm-toast-text {
-    color: var(--text-70);
+    color: #dddddd;
     font-size: 0.85rem;
 }
 
@@ -2826,23 +2827,23 @@ body {
 }
 
 .pm-toast-btn.respond {
-    background: #3b82f6;
-    color: var(--text-primary);
+    background: #4ade80;
+    color: #000000;
 }
 
 .pm-toast-btn.respond:hover {
-    background: #2563eb;
+    background: #22c55e;
     transform: scale(1.05);
 }
 
 .pm-toast-btn.close {
-    background: rgba(var(--text-primary-rgb), 0.1);
-    color: var(--text-60);
+    background: #333333;
+    color: #bbbbbb;
 }
 
 .pm-toast-btn.close:hover {
-    background: rgba(var(--text-primary-rgb), 0.2);
-    color: var(--text-primary);
+    background: #444444;
+    color: #ffffff;
 }
 
 /* Winner Announcement */
@@ -2979,6 +2980,10 @@ body {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     padding: 0;
     line-height: 1;
+    position: sticky;
+    top: 15px;
+    z-index: 10001;
+    align-self: flex-end;
 }
 
 .close-overlay:hover {
@@ -3354,8 +3359,11 @@ body {
 }
 
 .achievement-card .close-modal-btn {
+    position: sticky;
     top: 15px;
-    right: 15px;
+    float: right;
+    margin-right: -10px;
+    margin-bottom: -40px;
     font-size: 2rem;
     width: 36px;
     height: 36px;
@@ -3365,11 +3373,9 @@ body {
     align-items: center;
     justify-content: center;
     padding-bottom: 4px;
-    /* Center the X visually */
     color: rgba(var(--text-primary-rgb), 0.8);
     opacity: 0.8;
     z-index: 10001;
-    position: absolute;
     border: 1px solid rgba(var(--text-primary-rgb), 0.1);
 }
 
