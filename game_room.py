@@ -275,8 +275,8 @@ class GameRoom:
         leaving_player = next((p for p in self.players if str(p.user_id) == str(user_id)), None)
         username = leaving_player.username if leaving_player else "Someone"
         
-        # Track abandonment (if in active round and played)
-        if leaving_player and self.state == 'active':
+        # Track abandonment (if in active round and played and NOT mid-round joiner)
+        if leaving_player and self.state == 'active' and not getattr(leaving_player, 'joined_mid_round', False):
              print(f"[DEBUG-PENALTY] Player {username} leaving during active round. Activity check: words={len(leaving_player.submitted_words)}, invalid={len(leaving_player.invalid_words)}, score={leaving_player.score}")
              if leaving_player.submitted_words or leaving_player.invalid_words:
                   # Only add if not already in quitters
@@ -822,8 +822,9 @@ class GameRoom:
             
             # 2. Zombies (Soft Abandoners: humans who closed the tab but haven't been purged by the 10-minute timeout yet)
             # Threshold: 45 seconds since last poll during an active round.
+            # Must exclude joined_mid_round to prevent penalizing mid-round joiners!
             now = time.time()
-            soft_quitters = [p for p in self.players if not is_player_guest(p) and not p.is_ai and (now - p.last_active) > 45 and (p.score > 0 or p.submitted_words or p.invalid_words)]
+            soft_quitters = [p for p in self.players if not is_player_guest(p) and not p.is_ai and not getattr(p, 'joined_mid_round', False) and (now - p.last_active) > 45 and (p.score > 0 or p.submitted_words or p.invalid_words)]
             
             # Record soft-quitter IDs for penalty and distribution exclusion
             soft_quitter_ids = {p.user_id for p in soft_quitters}
@@ -838,11 +839,28 @@ class GameRoom:
             wc_tuple = self._get_wc_tuple(wc_range)
             is_500plus = wc_tuple[0] >= 500
             
-            # Ranked vs Unranked check
+            competitive_human_starters = [
+                p for p in self.players + self.round_quitters 
+                if not getattr(p, 'is_ai', False) and not is_player_guest(p) and not getattr(p, 'joined_mid_round', False)
+            ]
+            
+            # Ranked vs Unranked check, ENFORCING >= 2 competitive starters for Lobby Rooms
             is_ranked_format = (str(board_format).strip() == 'Normal')
+            is_strictly_ranked = True
             if not is_ranked_format or is_500plus:
+                is_strictly_ranked = False
                 print(f"[GameRoom] Round {self.current_round} is inherently UNRANKED (Format: {board_format}, 500+: {is_500plus}).")
-                rating_changes = {p.user_id: 0 for p in self.players}
+            elif not self.is_private and len(competitive_human_starters) <= 1:
+                is_strictly_ranked = False
+                print(f"[GameRoom] Round {self.current_round} UNRANKED: Only {len(competitive_human_starters)} human player(s) started from the beginning.")
+                
+            if not is_strictly_ranked:
+                rating_changes = {p.user_id: 0 for p in self.players + self.round_quitters}
+                
+                # Zero out bounties to definitively block any ratings from artificially changing
+                total_bounty = 0
+                active_quitters = []
+                self.abandonment_bounty = 0
             else:
                 rating_changes = calculate_proportional_rating_change(self.players, is_private=self.is_private)
                 
@@ -851,7 +869,12 @@ class GameRoom:
                 # 1. Distribute the 'bounty' collected from all quitters.
                 if total_bounty > 0:
                     # Remaining human players who actually played and stayed throughout (didn't exit and aren't zombies)
-                    active_humans_remaining = [p for p in self.players if not p.is_ai and not is_player_guest(p) and p.user_id not in active_quitter_ids and (p.score > 0 or p.submitted_words or p.invalid_words)]
+                    # ONLY competitive starters can collect the bounty!
+                    active_humans_remaining = [
+                        p for p in self.players 
+                        if not p.is_ai and not is_player_guest(p) and not getattr(p, 'joined_mid_round', False) 
+                        and p.user_id not in active_quitter_ids and (p.score > 0 or p.submitted_words or p.invalid_words)
+                    ]
 
                     if active_humans_remaining:
                         bonus = total_bounty // len(active_humans_remaining)
