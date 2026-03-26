@@ -1510,6 +1510,7 @@ function updateParameters(state) {
         'accumulative': 'Accumulative',
         'fcfs': 'First Come First Serve',
         'split': 'Split Points',
+        '3d': 'CUBE',
         'private': 'With Friends',
         'tournament': 'Tournament'
     };
@@ -1561,7 +1562,10 @@ function updateParameters(state) {
 
     const words = document.getElementById('param-words');
     if (words) {
-        let wr = sp.word_count_range || state.word_count_range;
+        if (state.board_dimensions === '3x3x3') {
+            words.textContent = 'None';
+        } else {
+            let wr = sp.word_count_range || state.word_count_range;
         if (Array.isArray(wr) && wr.length >= 2) {
             // Suffix with + if upper bound is very high
             if (wr[1] > 900) {
@@ -1586,6 +1590,7 @@ function updateParameters(state) {
             words.textContent = '50-100/100-200/200+';
         }
     }
+}
 
     const format = document.getElementById('param-format');
     if (format) format.textContent = sp.board_format || state.board_format || 'Normal';
@@ -1715,39 +1720,55 @@ function renderBoard(board, grayed) {
     if (isTournamentPlay || isPrivateMatchPlay) {
         grayed = false; // Special turns are never grayed
     } else if (window.lastGameState && window.lastGameState.state === 'active') {
-        grayed = false; // Active rounds are never grayed
+        grayed = false;
+    }
+    if (!board || !Array.isArray(board) || board.length === 0) {
+        return;
     }
 
-    const h = (board && board.length > 0 && board[0].length > 0) ? board.length : 0;
-    const w = h > 0 ? board[0].length : 0;
-    const hasLetters = board && board.some(row => row.some(cell => cell && cell.trim() !== ''));
+    const h = board.length;
+    // Enhanced is3D check: 6 faces, and each face is an array of arrays
+    const is3D = h === 6 && board[0] && Array.isArray(board[0]) && board[0][0] && Array.isArray(board[0][0]);
+    
+    const boardEl = document.getElementById('game-board');
+    if (!boardEl) return;
+
+    // Toggle 3D hint below word input
+    const rotateHint = document.getElementById('cube-rotate-hint');
+    if (rotateHint) {
+        const showHint = is3D && window.lastGameState && window.lastGameState.state === 'active';
+        if (showHint) rotateHint.classList.remove('hidden');
+        else rotateHint.classList.add('hidden');
+    }
+
+    const rotateBtn = document.getElementById('rotate-board-btn');
+    if (rotateBtn) {
+        if (is3D) rotateBtn.classList.add('hidden');
+        else rotateBtn.classList.remove('hidden');
+    }
+
+    const hasLetters = is3D ? board.some(f => f.some(r => r.some(c => c && c.trim() !== ''))) : board.some(row => row.some(cell => cell && cell.trim() !== ''));
 
     if (h > 0 && !hasLetters) {
         console.log('[renderBoard] Empty board detected (Loading State). Showing placeholder.');
-        const boardEl = document.getElementById('game-board');
-        if (boardEl) {
-            boardEl.innerHTML = `
-                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; 
-                            width:100%; height:300px; color:var(--text-primary); font-family:var(--font-primary);">
-                    <div class="loading-spinner" style="margin-bottom:15px; width:40px; height:40px; border:4px solid rgba(var(--text-primary-rgb),0.1); 
-                                border-top-color:var(--accent-color); border-radius:50%; animation:spin 1s linear infinite;"></div>
-                    <div style="font-weight:700; font-size:1.2rem; text-transform:uppercase; letter-spacing:1px; color:var(--accent-color);">
-                        Optimizing Board...
-                    </div>
+        boardEl.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; 
+                        width:100%; height:300px; color:var(--text-primary); font-family:var(--font-primary);">
+                <div class="loading-spinner" style="margin-bottom:15px; width:40px; height:40px; border:4px solid rgba(var(--text-primary-rgb),0.1); 
+                            border-top-color:var(--accent-color); border-radius:50%; animation:spin 1s linear infinite;"></div>
+                <div style="font-weight:700; font-size:1.2rem; text-transform:uppercase; letter-spacing:1px; color:var(--accent-color);">
+                    Optimizing Board...
                 </div>
-            `;
-            // Ensure container class is set for layout consistency
-            boardEl.className = 'game-board';
-            boardEl.style.display = 'flex';
-            boardEl.style.justifyContent = 'center';
-            boardEl.style.alignItems = 'center';
-            boardEl.style.gridTemplateColumns = '';
-        }
+            </div>
+        `;
+        // Ensure container class is set for layout consistency
+        boardEl.className = 'game-board';
+        boardEl.style.display = 'flex';
+        boardEl.style.justifyContent = 'center';
+        boardEl.style.alignItems = 'center';
+        boardEl.style.gridTemplateColumns = '';
         return; // Skip standard cell rendering
     }
-
-    const boardEl = document.getElementById('game-board');
-    if (!boardEl) return;
 
     // Reset container style
     const boardJSON = JSON.stringify(board);
@@ -1767,8 +1788,42 @@ function renderBoard(board, grayed) {
     boardEl.style.overflowY = '';
     boardEl.style.alignItems = '';
 
+    if (is3D) {
+        boardEl.classList.add('is-3d-view');
+        boardEl.style.display = 'block';
+        boardEl.style.gridTemplateColumns = 'none';
+        boardEl.style.gridTemplateRows = 'none';
+        
+        let html = `
+            <div class="cube-container">
+                <div class="cube" id="game-cube" style="transform: rotateX(${window.cubeRotationX !== undefined ? window.cubeRotationX : -30}deg) rotateY(${window.cubeRotationY !== undefined ? window.cubeRotationY : 45}deg);">
+        `;
+        const faceClasses = ['face-front', 'face-back', 'face-left', 'face-right', 'face-top', 'face-bottom'];
+        board.forEach((face, f) => {
+            html += `<div class="cube-face ${faceClasses[f]}">`;
+            face.forEach((row, r) => {
+                row.forEach((cell, c) => {
+                    const char = (cell || "").trim();
+                    const L = char.includes('/') ? char.split('/')[0] : char;
+                    const displayL = L === 'Q' ? 'QU' : L;
+                    html += `<div class="cube-cell board-cell tile-cell" data-f="${f}" data-r="${r}" data-c="${c}" data-letter="${char}">${displayL}</div>`;
+                });
+            });
+            html += `</div>`;
+        });
+        html += `
+                </div>
+            </div>
+        `;
+        boardEl.innerHTML = html;
+        setupCubeRotation();
+        reapplyBoardHighlights();
+        return;
+    }
+
     const rows = board.length;
-    const cols = board[0].length;
+    const cols = (board[0] && board[0].length) ? board[0].length : 0;
+    if (cols === 0) return;
 
     boardEl.style.gridTemplateColumns = `repeat(${cols}, var(--cell-size, 60px))`;
     boardEl.style.gridTemplateRows = `repeat(${rows}, var(--cell-size, 60px))`;
@@ -2153,10 +2208,15 @@ function reapplyBoardHighlights() {
         const isEnabled = window.userSettings && window.userSettings.highlight_mouse !== false;
         if (isEnabled) {
             mouseState.selectedPath.forEach((p, index) => {
-                const cell = document.querySelector(`.board-cell[data-row="${p.row}"][data-col="${p.col}"]`);
+                const isCurrent = (index === mouseState.selectedPath.length - 1);
+                let selector = `.board-cell[data-row="${p.row}"][data-col="${p.col}"]`;
+                if (p.face !== undefined && p.face !== null) {
+                    selector = `.board-cell[data-f="${p.face}"][data-r="${p.row}"][data-c="${p.col}"]`;
+                }
+                const cell = document.querySelector(selector);
                 if (cell) {
                     cell.classList.add('selected');
-                    if (index === mouseState.selectedPath.length - 1) {
+                    if (isCurrent) {
                         cell.classList.add('current');
                     }
                 }
@@ -2546,8 +2606,10 @@ function renderFCFSNotepads(players, state) {
                     ptsDisplay = `${originalValue}+${wObj.score_details.bonus_letter_points}=${wObj.points}`;
                 }
 
+                const row = document.createElement('div'); // Define row here
+                row.className = 'notepad-item'; // Assign class here
                 if (ptsNum < 0) {
-                    row.className += ' penalty-word';
+                    row.classList.add('penalty-word'); // Use classList.add
                     row.style.color = '#ff3333';
                     row.style.fontWeight = 'bold';
                 }
@@ -2892,7 +2954,7 @@ function showValidationFeedback(message, isValid) {
 async function leaveCurrentRoom() {
     if (isTournamentPlay) {
         // We don't necessarily want to force forfeit on EVERY leave (e.g. browser refresh handles itself better)
-        // but for the "Leave" button it is handled in the listener. 
+        // but for the "Leave" button it is handled in the listener.
         // This is a backup.
         exitTournamentPlay();
         return;
@@ -3038,26 +3100,29 @@ function createSpectatorPanel() {
 
 // ─────────── Mouse & Touch Board Interaction ───────────
 
-function selectCell(row, col, letter, cellEl) {
-    const key = `${row},${col}`;
+function selectCell(row, col, letter, cellEl, face = null) {
+    const key = face !== null ? `${face},${row},${col}` : `${row},${col}`;
     const pathLen = mouseState.selectedPath.length;
 
-    // Check for backtracking: Is this the second-to-last cell in the path?
+    // Check for backtracking
     if (pathLen >= 2) {
         const secondToLast = mouseState.selectedPath[pathLen - 2];
-        if (secondToLast.row === row && secondToLast.col === col) {
-            // BACKTRACKING DETECTED
+        const match = face !== null ?
+            (secondToLast.face === face && secondToLast.row === row && secondToLast.col === col) :
+            (secondToLast.row === row && secondToLast.col === col);
+
+        if (match) {
             const lastCell = mouseState.selectedPath.pop();
-            const lastKey = `${lastCell.row},${lastCell.col}`;
+            const lastKey = lastCell.face !== null ? `${lastCell.face},${lastCell.row},${lastCell.col}` : `${lastCell.row},${lastCell.col}`;
             mouseState.visitedCells.delete(lastKey);
 
-            // Remove visual highlight from the cell we just left
-            const oldCellEl = document.querySelector(`.board-cell[data-row="${lastCell.row}"][data-col="${lastCell.col}"]`);
-            if (oldCellEl) {
-                oldCellEl.classList.remove('selected', 'current');
+            let oldSelector = `.board-cell[data-row="${lastCell.row}"][data-col="${lastCell.col}"]`;
+            if (lastCell.face !== null && lastCell.face !== undefined) {
+                oldSelector = `.board-cell[data-f="${lastCell.face}"][data-r="${lastCell.row}"][data-c="${lastCell.col}"]`;
             }
+            const oldCellEl = document.querySelector(oldSelector);
+            if (oldCellEl) oldCellEl.classList.remove('selected', 'current');
 
-            // Mark the new tail as 'current'
             if (cellEl) {
                 document.querySelectorAll('.board-cell.current').forEach(c => c.classList.remove('current'));
                 cellEl.classList.add('current');
@@ -3068,15 +3133,12 @@ function selectCell(row, col, letter, cellEl) {
         }
     }
 
-    // Don't revisit a cell already in the path (unless backtracking above)
     if (mouseState.visitedCells.has(key)) return;
 
     mouseState.visitedCells.add(key);
-    mouseState.selectedPath.push({ row, col, letter });
+    mouseState.selectedPath.push({ row, col, letter, face });
 
-    // Visual feedback
     if (cellEl) {
-        // Remove 'current' from previous tail
         document.querySelectorAll('.board-cell.current').forEach(c => c.classList.remove('current'));
         cellEl.classList.add('selected', 'current');
     }
@@ -3109,10 +3171,11 @@ function handleCellMouseDown(e) {
         c.classList.remove('selected', 'current');
     });
 
-    const row = parseInt(cell.dataset.row);
-    const col = parseInt(cell.dataset.col);
+    const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
+    const r = parseInt(cell.dataset.r || cell.dataset.row);
+    const c = parseInt(cell.dataset.c || cell.dataset.col);
     const letter = cell.dataset.letter;
-    selectCell(row, col, letter, cell);
+    selectCell(r, c, letter, cell, f);
 }
 
 function handleCellMouseOver(e) {
@@ -3122,10 +3185,11 @@ function handleCellMouseOver(e) {
     const cell = e.target.closest('.board-cell');
     if (!cell || cell.classList.contains('grayed')) return;
 
-    const row = parseInt(cell.dataset.row);
-    const col = parseInt(cell.dataset.col);
+    const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
+    const r = parseInt(cell.dataset.r || cell.dataset.row);
+    const c = parseInt(cell.dataset.c || cell.dataset.col);
     const letter = cell.dataset.letter;
-    selectCell(row, col, letter, cell);
+    selectCell(r, c, letter, cell, f);
 }
 
 function handleCellTouchStart(e) {
@@ -3136,7 +3200,7 @@ function handleCellTouchStart(e) {
     const cell = target && target.closest('.board-cell');
 
     if (cell && !cell.classList.contains('grayed')) {
-        e.preventDefault(); // Prevent scrolling while playing
+        e.preventDefault();
 
         mouseState.isDown = true;
         mouseState.selectedPath = [];
@@ -3145,15 +3209,17 @@ function handleCellTouchStart(e) {
             c.classList.remove('selected', 'current');
         });
 
-        const row = parseInt(cell.dataset.row);
-        const col = parseInt(cell.dataset.col);
+        const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
+        const r = parseInt(cell.dataset.r || cell.dataset.row);
+        const c = parseInt(cell.dataset.c || cell.dataset.col);
         const letter = cell.dataset.letter;
-        selectCell(row, col, letter, cell);
+        selectCell(r, c, letter, cell, f);
     }
 }
 
 function handleCellTouchMove(e) {
     if (!mouseState.isDown) return;
+    if (window.isSpectatorMode) return;
 
     const touch = e.touches[0];
     const target = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -3161,10 +3227,11 @@ function handleCellTouchMove(e) {
 
     if (cell && !cell.classList.contains('grayed')) {
         e.preventDefault();
-        const row = parseInt(cell.dataset.row);
-        const col = parseInt(cell.dataset.col);
+        const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
+        const r = parseInt(cell.dataset.r || cell.dataset.row);
+        const c = parseInt(cell.dataset.c || cell.dataset.col);
         const letter = cell.dataset.letter;
-        selectCell(row, col, letter, cell);
+        selectCell(r, c, letter, cell, f);
     }
 }
 
@@ -3175,11 +3242,10 @@ function finishDragSelection() {
     const path = mouseState.selectedPath;
     if (path.length >= 1) {
         const word = path.map(p => {
-            // Handle dual-letter tiles like L/T — use the letter stored at selection time
             const L = p.letter.includes('/') ? p.letter.split('/')[0] : p.letter;
             return L === 'Q' ? 'QU' : L;
         }).join('');
-        const serverPath = path.map(p => [p.row, p.col]);
+        const serverPath = path.map(p => (p.face !== null && p.face !== undefined) ? [p.face, p.row, p.col] : [p.row, p.col]);
 
         if (word.length >= 3) {
             submitWord(word, serverPath);
@@ -3809,4 +3875,49 @@ function renderPreviousBoard(board, container) {
             container.appendChild(cell);
         }
     }
+}
+
+// --- 3D Morpheme Cube Rotation ---
+window.cubeRotationX = -25;
+window.cubeRotationY = 45;
+
+function setupCubeRotation() {
+    // We bind a global keydown for arrows to rotate the current active cube
+    // This listener is idempotent; only one global listener is needed.
+    if (window.cubeListenerAdded) return;
+    window.cubeListenerAdded = true;
+
+    document.addEventListener('keydown', (e) => {
+        const cube = document.getElementById('game-cube');
+        if (!cube) return;
+
+        const step = 90;
+        let changed = false;
+
+        // Initialize if first time
+        if (window.cubeRotationX === undefined) window.cubeRotationX = -30;
+        if (window.cubeRotationY === undefined) window.cubeRotationY = 45;
+
+        if (e.key === 'ArrowUp') { 
+            // Up Arrow -> Tilted Top View
+            window.cubeRotationX = -30;
+            changed = true;
+        }
+        else if (e.key === 'ArrowDown') { 
+            // Down Arrow -> Tilted Bottom View
+            window.cubeRotationX = 30;
+            changed = true;
+        }
+        else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { 
+            // Left/Right -> Rotate sides while maintaining tilt
+            const dir = (e.key === 'ArrowLeft') ? -1 : 1;
+            window.cubeRotationY += (dir * step);
+            changed = true; 
+        }
+
+        if (changed) {
+            e.preventDefault();
+            cube.style.transform = `rotateX(${window.cubeRotationX}deg) rotateY(${window.cubeRotationY}deg)`;
+        }
+    });
 }

@@ -45,6 +45,11 @@
     align-items: center;
 }
 
+.matrix-3d .matrix-header,
+.matrix-3d .matrix-row {
+    grid-template-columns: 60px 1fr;
+}
+
 .corner-cell {
     width: 60px;
     height: 35px;

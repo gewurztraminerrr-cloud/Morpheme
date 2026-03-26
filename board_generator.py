@@ -54,6 +54,16 @@ class BoardGenerator:
         print(f"[BoardGen] generate_board called: {dimensions}, bonus={bonus_word}, range={word_count_range}, format={board_format}, dict={dictionary}")
         
         
+        # 0. Handle 3x3x3 Cube Generation
+        if dimensions == '3x3x3':
+            print(f"[BoardGen] Generating 3x3x3 Cube Board (No Point Range Restriction)...")
+            board = self._create_cube_board(difficulty)
+            # Embed bonus word if any
+            if bonus_word:
+                self._embed_bonus_word_cube(board, bonus_word)
+            all_words = self._solve_cube_board(board, dictionary, min_word_length)
+            return board, all_words, None
+
         # Parse word count requirements
         with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
             f.write(f"[board_generator.py] generate_board: Parsing word count range {word_count_range} at {time.time()}\n")
@@ -692,11 +702,172 @@ class BoardGenerator:
                         elif word.startswith('Q'): match_len = 1
                     elif word.startswith(char):
                         match_len = 1
-                    
-                    if match_len > 0:
-                        if dfs_find(r, c, match_len, {(r, c)}, False):
-                            return True
         return False
+    def _create_cube_board(self, difficulty='Normal'):
+        """Create a 3x3x3 cube board (6 faces, 3x3 each)"""
+        weights = self._get_weights(difficulty)
+        board = []
+        for f in range(6):
+            face = [[random.choices(self.letters, weights=weights, k=1)[0] for _ in range(3)] for _ in range(3)]
+            board.append(face)
+        return board
+
+    def _get_cube_neighbors(self, f, r, c):
+        """Standard 8-way adjacency for a 3x3x3 cube surface"""
+        # (face, row, col)
+        res = []
+        # Intra-face
+        for dr in [-1, 0, 1]:
+            for dc in [-1, 0, 1]:
+                if dr == 0 and dc == 0: continue
+                nr, nc = r+dr, c+dc
+                if 0 <= nr < 3 and 0 <= nc < 3:
+                    res.append((f, nr, nc))
+
+        # Inter-face (Edges and Corners)
+        # Face Layout (Standard Net):
+        #      [4] (Top)
+        #  [2] [0] [3] [1] (Left, Front, Right, Back)
+        #      [5] (Bottom)
+        
+        # 0 (Front)
+        if f == 0:
+            if r == 0: # Top Edge
+                res.extend([(4, 2, c), (4, 2, c-1), (4, 2, c+1)]) # Orthogonal + Corners
+            if r == 2: # Bottom Edge
+                res.extend([(5, 0, c), (5, 0, c-1), (5, 0, c+1)])
+            if c == 0: # Left Edge
+                res.extend([(2, r, 2), (2, r-1, 2), (2, r+1, 2)])
+            if c == 2: # Right Edge
+                res.extend([(3, r, 0), (3, r-1, 0), (3, r+1, 0)])
+
+        # 1 (Back)
+        elif f == 1:
+            if r == 0: # Top Edge -> Top (4) Top
+                res.extend([(4, 0, 2-c), (4, 0, 2-(c-1)), (4, 0, 2-(c+1))])
+            if r == 2: # Bottom Edge -> Bottom (5) Bottom
+                res.extend([(5, 2, 2-c), (5, 2, 2-(c-1)), (5, 2, 2-(c+1))])
+            if c == 0: # Left Edge -> Right (3) Right
+                res.extend([(3, r, 2), (3, r-1, 2), (3, r+1, 2)])
+            if c == 2: # Right Edge -> Left (2) Left
+                res.extend([(2, r, 0), (2, r-1, 0), (2, r+1, 0)])
+
+        # 2 (Left)
+        elif f == 2:
+            if r == 0: # Top Edge -> Top (4) Left
+                res.extend([(4, c, 0), (4, c-1, 0), (4, c+1, 0)])
+            if r == 2: # Bottom Edge -> Bottom (5) Left
+                res.extend([(5, 2-c, 0), (5, 2-(c-1), 0), (5, 2-(c+1), 0)])
+            if c == 0: # Left Edge -> Back (1) Right
+                res.extend([(1, r, 2), (1, r-1, 2), (1, r+1, 2)])
+            if c == 2: # Right Edge -> Front (0) Left
+                res.extend([(0, r, 0), (0, r-1, 0), (0, r+1, 0)])
+
+        # 3 (Right)
+        elif f == 3:
+            if r == 0: # Top Edge -> Top (4) Right
+                res.extend([(4, 2-c, 2), (4, 2-(c-1), 2), (4, 2-(c+1), 2)])
+            if r == 2: # Bottom Edge -> Bottom (5) Right
+                res.extend([(5, c, 2), (5, c-1, 2), (5, c+1, 2)])
+            if c == 0: # Left Edge -> Front (0) Right
+                res.extend([(0, r, 2), (0, r-1, 2), (0, r+1, 2)])
+            if c == 2: # Right Edge -> Back (1) Left
+                res.extend([(1, r, 0), (1, r-1, 0), (1, r+1, 0)])
+
+        # 4 (Top)
+        elif f == 4:
+            if r == 0: # Top Edge -> Back (1) Top
+                res.extend([(1, 0, 2-c), (1, 0, 2-(c-1)), (1, 0, 2-(c+1))])
+            if r == 2: # Bottom Edge -> Front (0) Top
+                res.extend([(0, 0, c), (0, 0, c-1), (0, 0, c+1)])
+            if c == 0: # Left Edge -> Left (2) Top
+                res.extend([(2, 0, r), (2, 0, r-1), (2, 0, r+1)])
+            if c == 2: # Right Edge -> Right (3) Top
+                res.extend([(3, 0, 2-r), (3, 0, 2-(r-1)), (3, 0, 2-(r+1))])
+
+        # 5 (Bottom)
+        elif f == 5:
+            if r == 0: # Top Edge -> Front (0) Bottom
+                res.extend([(0, 2, c), (0, 2, c-1), (0, 2, c+1)])
+            if r == 2: # Bottom Edge -> Back (1) Bottom
+                res.extend([(1, 2, 2-c), (1, 2, 2-(c-1)), (1, 2, 2-(c+1))])
+            if c == 0: # Left Edge -> Left (2) Bottom
+                res.extend([(2, 2, 2-r), (2, 2, 2-(r-1)), (2, 2, 2-(r+1))])
+            if c == 2: # Right Edge -> Right (3) Bottom
+                res.extend([(3, 2, r), (3, 2, r-1), (3, 2, r+1)])
+
+        # Filter out invalid and duplicates
+        clean = []
+        seen = set()
+        for nf, nr, nc in res:
+            if 0 <= nf < 6 and 0 <= nr < 3 and 0 <= nc < 3 and (nf, nr, nc) not in seen and (nf, nr, nc) != (f, r, c):
+                clean.append((nf, nr, nc))
+                seen.add((nf, nr, nc))
+        return clean
+
+    def _solve_cube_board(self, board, dictionary, min_word_length=3):
+        """Find words on a 3x3x3 cube surface using DFS"""
+        found = set()
+        max_len = 25
+        
+        def dfs(f, r, c, visited, word):
+            char = board[f][r][c]
+            # Branch 1: Normal
+            w1 = word + char
+            if word_validator.is_valid_word(w1, dictionary) and len(w1) >= min_word_length:
+                found.add(w1)
+            if len(w1) < max_len and word_validator.has_valid_prefix(w1, dictionary):
+                for nf, nr, nc in self._get_cube_neighbors(f, r, c):
+                    if (nf, nr, nc) not in visited:
+                        dfs(nf, nr, nc, visited | {(nf, nr, nc)}, w1)
+            # Branch 2: QU
+            if char == 'Q':
+                w2 = word + 'QU'
+                if word_validator.is_valid_word(w2, dictionary) and len(w2) >= min_word_length:
+                    found.add(w2)
+                if len(w2) < max_len and word_validator.has_valid_prefix(w2, dictionary):
+                    for nf, nr, nc in self._get_cube_neighbors(f, r, c):
+                        if (nf, nr, nc) not in visited:
+                            dfs(nf, nr, nc, visited | {(nf, nr, nc)}, w2)
+
+        for f in range(6):
+            for r in range(3):
+                for c in range(3):
+                    dfs(f, r, c, {(f, r, c)}, "")
+        
+        return sorted(list(found))
+
+    def _embed_bonus_word_cube(self, board, bonus_word):
+        """Backtracking embed on cube surface"""
+        p_word = []
+        i = 0
+        while i < len(bonus_word):
+            if i < len(bonus_word) - 1 and bonus_word[i:i+2].upper() == 'QU':
+                p_word.append('Q'); i += 2
+            else:
+                p_word.append(bonus_word[i].upper()); i += 1
+        
+        cells = [(f, r, c) for f in range(6) for r in range(3) for c in range(3)]
+        random.shuffle(cells)
+        
+        def backtrack(path):
+            if len(path) == len(p_word): return path
+            cf, cr, cc = path[-1]
+            neighbors = self._get_cube_neighbors(cf, cr, cc)
+            random.shuffle(neighbors)
+            for nf, nr, nc in neighbors:
+                if (nf, nr, nc) not in path:
+                    res = backtrack(path + [(nf, nr, nc)])
+                    if res: return res
+            return None
+
+        for sf, sr, sc in cells:
+            path = backtrack([(sf, sr, sc)])
+            if path:
+                for idx, (f, r, c) in enumerate(path):
+                    board[f][r][c] = p_word[idx]
+                return path
+        return None
 if __name__ == '__main__':
     gen = BoardGenerator()
     board, words, bonus_cell = gen.generate_board('4x4', 'BACKWARD', (50, 150), 'NWL', 'Normal', 3, 'Normal')

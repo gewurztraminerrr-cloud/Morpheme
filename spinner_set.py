@@ -35,7 +35,7 @@ class SpinnerSet:
             'difficulty': SpinnerSet._spin_difficulty(),
             'word_count_range': SpinnerSet._spin_word_count(dictionary),
             'dictionary': dictionary,
-            'board_format': SpinnerSet._spin_board_format(is_24h)
+            'board_format': SpinnerSet._spin_board_format(is_24h, board_dimensions)
         }
     
     @staticmethod
@@ -56,6 +56,8 @@ class SpinnerSet:
             return random.choices([5, 6, 7], weights=[25, 50, 25])[0]
         elif dims == '6x8':
             return random.choices([6, 7, 8], weights=[25, 50, 25])[0]
+        elif dims == '3x3x3':
+            return random.choice([6, 7, 8])
         else:
             return 3  # Default
     
@@ -87,12 +89,15 @@ class SpinnerSet:
         return random.choice(['NWL', 'CSW'])
     
     @staticmethod
-    def _spin_board_format(is_24h=False):
+    def _spin_board_format(is_24h=False, dimensions='4x4'):
         """
         Normal rooms: 82% Normal, 8% Checkerboard, 2% Penalty, 2% Mania, 2% Either/Or, 2% Bonus Letter, 2% Valued Letters
         24h rooms: 100% Normal (No alternate formats allowed)
+        3D rooms: 100% Normal (No alternate formats allowed initially)
         """
         if is_24h:
+            return 'Normal'
+        elif dimensions == '3x3x3':
             return 'Normal'
         else:
             result = random.choices(

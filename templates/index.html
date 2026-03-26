@@ -404,6 +404,32 @@
                         </div>
                     </div>
 
+                    <!-- CUBE -->
+                    <div class="game-section">
+                        <h3 class="game-title">CUBE</h3>
+                        <div class="game-matrix matrix-3d">
+                            <div class="matrix-header">
+                                <div class="corner-cell"></div>
+                                <div class="dim-label" style="flex: 1;">3x3x3</div>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">3m</div>
+                                <button class="game-btn split-btn" data-game="3d" data-time="180"
+                                    data-board="3x3x3">Show Rooms [0]</button>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">5m</div>
+                                <button class="game-btn split-btn" data-game="3d" data-time="300"
+                                    data-board="3x3x3">Show Rooms [0]</button>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">10m</div>
+                                <button class="game-btn split-btn" data-game="3d" data-time="600"
+                                    data-board="3x3x3">Show Rooms [0]</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Solo and With Friends Section -->
                     <div class="game-section solo-friends-section">
                         <h3 class="game-title">Play Solo or With Friends</h3>
@@ -415,6 +441,7 @@
                                     <option value="4x6">4x6 Extended</option>
                                     <option value="5x7">5x7 Large</option>
                                     <option value="6x8">6x8 Massive</option>
+                                    <option value="3x3x3">3x3x3 CUBE</option>
                                 </select>
                             </div>
                             <div class="config-group">
@@ -616,6 +643,7 @@
                         <button id="submit-word-btn">Submit</button>
                         <button id="rotate-board-btn" class="rotate-btn">Rotate</button>
                     </div>
+                    <div id="cube-rotate-hint" class="cube-rotate-hint hidden">ARROWS TO ROTATE</div>
                 </div>
 
                 <!-- Right Panel: Submitted Words and Definitions -->

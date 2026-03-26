@@ -55,8 +55,12 @@
         // Dynamic Min Word Len options
         const soloDims = document.getElementById('sf-config-dims');
         if (soloDims) {
-            soloDims.addEventListener('change', updateMinWordLenOptions);
+            soloDims.addEventListener('change', () => {
+                updateMinWordLenOptions();
+                updateFormatOptions();
+            });
             updateMinWordLenOptions();
+            updateFormatOptions();
         }
     }
 
@@ -70,7 +74,8 @@
             '4x4': [3, 4, 5],
             '4x6': [4, 5, 6],
             '5x7': [5, 6, 7],
-            '6x8': [6, 7, 8]
+            '6x8': [6, 7, 8],
+            '3x3x3': [6, 7, 8]
         };
 
         const options = config[dim] || [3, 4, 5];
@@ -83,6 +88,28 @@
         // Ensure the selected value is valid for the new options
         if (!options.includes(parseInt(soloMinLen.value))) {
             soloMinLen.value = options[0];
+        }
+    }
+
+    function updateFormatOptions() {
+        const soloDims = document.getElementById('sf-config-dims');
+        const soloFormat = document.getElementById('sf-config-format');
+        if (!soloDims || !soloFormat) return;
+
+        if (soloDims.value === '3x3x3') {
+            // Force Normal
+            soloFormat.value = 'Normal';
+            // Disable other options to prevent selection
+            Array.from(soloFormat.options).forEach(opt => {
+                if (opt.value !== 'Normal') {
+                    opt.disabled = true;
+                }
+            });
+        } else {
+            // Re-enable options for 2D boards
+            Array.from(soloFormat.options).forEach(opt => {
+                opt.disabled = false;
+            });
         }
     }
 

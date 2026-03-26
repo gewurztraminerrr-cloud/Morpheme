@@ -855,9 +855,8 @@ class GameRoom:
             ]
             
             # Ranked vs Unranked check, ENFORCING >= 2 competitive starters for Lobby Rooms
-            is_ranked_format = (str(board_format).strip() == 'Normal')
             is_strictly_ranked = True
-            if not is_ranked_format or is_500plus:
+            if is_500plus or self.game_type == '3d':
                 is_strictly_ranked = False
                 print(f"[GameRoom] Round {self.current_round} is inherently UNRANKED (Format: {board_format}, 500+: {is_500plus}).")
             elif not self.is_private and len(competitive_human_starters) <= 1:
@@ -941,7 +940,8 @@ class GameRoom:
                     continue
 
                 # Persist Rating to DB - SKIP FOR SOLO AND UNRANKED
-                if conn and player.user_id > 0 and not self.is_solo and board_format == 'Normal':
+                is_ranked_mode = not self.is_solo and not is_500plus and self.game_type != '3d'
+                if conn and player.user_id > 0 and is_ranked_mode:
                     try:
                         # 1. Update Global Profile Rating
                         # 2. Update Config-Specific Rating
@@ -1822,8 +1822,8 @@ class RoomManager:
             wc_tuple = room._get_wc_tuple(wc_range)
             is_500plus = wc_tuple[0] >= 500
             
-            if board_format != 'Normal' or is_500plus:
-                 print(f"[RoomManager] SKIPPING history save for room {room.room_id} - format '{board_format}' or 500+ is unranked.")
+            if board_format != 'Normal' or is_500plus or room.game_type == '3d':
+                 print(f"[RoomManager] SKIPPING history save for room {room.room_id} - format '{board_format}', 500+, or 3D is unranked.")
                  conn.close()
                  return
                  
