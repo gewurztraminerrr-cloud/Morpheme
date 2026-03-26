@@ -97,19 +97,40 @@
     border-left-color: var(--accent-color);
 }
 
+/* Golden state for new content (unread) */
 .forum-cat-item.has-new {
-    border-left-color: #ffd700; /* Golden */
-    background: rgba(255, 215, 0, 0.05);
+    border-left-color: #ffd700; 
+    background: rgba(255, 215, 0, 0.08); /* Slightly more vibrant background for new */
+    box-shadow: inset 5px 0 15px rgba(255, 215, 0, 0.05);
 }
 
 .forum-cat-item.has-new .forum-cat-name {
     color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.forum-cat-item.has-new .forum-cat-desc {
+    color: #ffd700;
+    opacity: 0.8;
 }
 
 .forum-cat-item.has-new .forum-cat-name::after {
     content: " •";
     color: #ffd700;
     font-weight: 800;
+}
+
+/* Greyed-out state for seen content (read) */
+.forum-cat-item:not(.has-new):not(.active) .forum-cat-name {
+    color: var(--text-60); /* Muted grey */
+}
+
+.forum-cat-item:not(.has-new):not(.active) .forum-cat-desc {
+    color: var(--text-40); /* Even more muted grey */
+}
+
+.forum-cat-item:not(.has-new):not(.active):hover .forum-cat-name {
+    color: var(--text-primary); /* Brighten on hover */
 }
 
 .forum-cat-name {

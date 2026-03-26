@@ -12,6 +12,13 @@ const Forum = {
         this.setupEventListeners();
         await this.loadCategories();
         this.initialized = true;
+
+        // Auto-refresh categories every 30s while the forum is open to show new posts from others
+        setInterval(() => {
+            if (document.getElementById('page-forums').classList.contains('active')) {
+                this.loadCategories();
+            }
+        }, 30000);
     },
 
     setupEventListeners: function () {
@@ -81,9 +88,16 @@ const Forum = {
         
         listEl.innerHTML = this.categories.map(cat => {
             const lastContent = cat.last_content_at ? new Date(cat.last_content_at).getTime() : 0;
-            const lastView = lastViewed[cat.id] || 0;
+            // Force numeric comparison
+            const lastView = Number(lastViewed[cat.id]) || 0;
             const hasNew = lastContent > lastView;
             
+            if (hasNew) {
+                console.debug(`[Forum Rendering] Category ${cat.name} (ID: ${cat.id}) IS GOLD: content=${lastContent}, view=${lastView}`);
+            } else {
+                console.debug(`[Forum Rendering] Category ${cat.name} (ID: ${cat.id}) IS GREY: content=${lastContent}, view=${lastView}`);
+            }
+
             return `
                 <div class="forum-cat-item ${hasNew ? 'has-new' : ''}" data-id="${cat.id}">
                     <span class="forum-cat-name">${cat.name}</span>
@@ -247,6 +261,49 @@ const Forum = {
         }
     },
 
+    handlePostDelete: async function (postId) {
+        if (!confirm("Are you sure you want to PERMANENTLY delete this thread and ALL of its comments? This cannot be undone.")) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/forum/post/delete/${postId}`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+            if (data.success) {
+                // Return to list and reload everything
+                await this.loadCategories(); // Refresh side counts (though we don't show counts yet)
+                await this.selectCategory(this.currentCategoryId); // Refresh posts list for current category
+                this.showListView();
+            } else {
+                alert(data.error || "Failed to delete post.");
+            }
+        } catch (err) {
+            console.error("[Forum] Post delete error:", err);
+            alert("Failed to delete post.");
+        }
+    },
+
+    handleCommentDelete: async function (commentId) {
+        if (!confirm("Delete this comment permanently?")) return;
+
+        try {
+            const response = await fetch(`/api/forum/comment/delete/${commentId}`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+            if (data.success) {
+                await this.loadPostDetail(this.currentPostId);
+            } else {
+                alert(data.error || "Failed to delete comment.");
+            }
+        } catch (err) {
+            console.error("[Forum] Comment delete error:", err);
+            alert("Failed to delete comment.");
+        }
+    },
+
     renderPostDetail: function (post, comments) {
         const detailEl = document.getElementById('forum-post-detail');
         const date = new Date(post.timestamp);
@@ -254,7 +311,12 @@ const Forum = {
 
         detailEl.innerHTML = `
             <div class="post-detail-header">
-                <h1 class="post-detail-title">${this.escapeHtml(post.title)}</h1>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <h1 class="post-detail-title">${this.escapeHtml(post.title)}</h1>
+                    ${window.currentUserIsMod ? `
+                        <button id="forum-delete-post-btn" class="forum-action-btn remove" style="background: #f43f5e; font-size: 0.8rem; padding: 5px 12px;">Delete Post</button>
+                    ` : ''}
+                </div>
                 <div class="post-author-box">
                     <div class="author-avatar">${post.username[0].toUpperCase()}</div>
                     <div class="author-info">
@@ -270,6 +332,15 @@ const Forum = {
                 </div>
             ` : ''}
         `;
+
+        // Attach delete listener if button exists
+        const deleteBtn = document.getElementById('forum-delete-post-btn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.handlePostDelete(post.id);
+            });
+        }
 
         // Render comments
         const commentsListEl = document.getElementById('forum-comments-list');
@@ -287,12 +358,23 @@ const Forum = {
                             <div class="comment-header">
                                 <span class="comment-author">${c.username}</span>
                                 <span class="comment-date">${cDate}</span>
+                                ${window.currentUserIsMod ? `
+                                    <button class="forum-comment-delete-btn" data-id="${c.id}" style="margin-left: auto; background: none; border: none; color: #f43f5e; cursor: pointer; font-size: 0.75rem; opacity: 0.6;">Delete</button>
+                                ` : ''}
                             </div>
                             <div class="comment-content">${this.escapeHtml(c.content)}</div>
                         </div>
                     </div>
                 `;
             }).join('');
+
+            // Attach comment delete listeners
+            detailEl.querySelectorAll('.forum-comment-delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const commentId = parseInt(btn.getAttribute('data-id'));
+                    this.handleCommentDelete(commentId);
+                });
+            });
         }
 
         // Show/hide comment form
@@ -324,10 +406,12 @@ const Forum = {
             });
             const data = await response.json();
             if (data.success) {
-                // Return to list and reload
+                // Return to list and reload everything
                 document.getElementById('forum-post-form').reset();
-                this.handleImagePreview({ target: { files: [] } }); // Reset preview
-                await this.selectCategory(this.currentCategoryId);
+                this.handleImagePreview({ target: { files: [] } }); 
+                
+                await this.loadCategories(); // Refresh ALL side buttons first
+                await this.selectCategory(this.currentCategoryId); // Then load posts for the current one
             } else {
                 alert(data.error);
             }
@@ -353,6 +437,7 @@ const Forum = {
             const data = await response.json();
             if (data.success) {
                 document.getElementById('forum-comment-input').value = '';
+                await this.loadCategories(); // Refresh side buttons (to clear/update gold)
                 await this.loadPostDetail(this.currentPostId);
             } else {
                 alert(data.error);

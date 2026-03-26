@@ -361,10 +361,13 @@ async function checkForumActivity() {
 
         data.categories.forEach(cat => {
             const lastContent = cat.last_content_at ? new Date(cat.last_content_at).getTime() : 0;
-            const lastView = lastViewed[cat.id] || 0;
-            if (lastContent > lastView) {
+            // Coerce to number and check for 0
+            const lastView = Number(lastViewed[cat.id]) || 0;
+            const hasNew = lastContent > lastView;
+            if (hasNew) {
                 hasNewGlobally = true;
             }
+            console.debug(`[Forum Global] Cat ${cat.id}: content=${lastContent}, view=${lastView}, new=${hasNew}`);
         });
 
         if (hasNewGlobally) {

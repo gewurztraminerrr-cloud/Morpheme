@@ -3415,6 +3415,41 @@ def get_forum_post_detail(post_id):
     finally:
         conn.close()
 
+@app.route('/api/forum/post/delete/<int:post_id>', methods=['POST'])
+def delete_forum_post(post_id):
+    if not session.get('username') or not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    conn = sqlite3.connect('morpheme.db', timeout=30)
+    try:
+        # Delete associated comments first to maintain referential integrity
+        conn.execute('DELETE FROM forum_comments WHERE post_id = ?', (post_id,))
+        # Delete the main post
+        conn.execute('DELETE FROM forum_posts WHERE id = ?', (post_id,))
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Post and associated comments deleted.'})
+    except Exception as e:
+        print(f"Error deleting forum post: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/forum/comment/delete/<int:comment_id>', methods=['POST'])
+def delete_forum_comment(comment_id):
+    if not session.get('username') or not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    conn = sqlite3.connect('morpheme.db', timeout=30)
+    try:
+        conn.execute('DELETE FROM forum_comments WHERE id = ?', (comment_id,))
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Comment deleted.'})
+    except Exception as e:
+        print(f"Error deleting forum comment: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
 @app.route('/api/forum/posts', methods=['POST'])
 def create_forum_post():
     if 'user_id' not in session or session.get('is_guest'):

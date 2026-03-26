@@ -1,5 +1,5 @@
 ---
-description: Revert the project to the March 24, 2026 save point. Use this when the user says "Start Over".
+description: Revert the project to the March 25, 2026 save point. Use this when the user says "Start Over".
 ---
 
 ### Revert Procedure
@@ -18,7 +18,7 @@ description: Revert the project to the March 24, 2026 save point. Use this when 
 
 4.  **Restore Database Snapshot (Synesthesia & User Settings):**
 // turbo
-    - `cp morpheme.db.save_point_2026-03-24_final morpheme.db`
+    - `cp morpheme.db.save_point_2026-03-25_final morpheme.db`
 
 5.  **Restart Server:**
 // turbo
