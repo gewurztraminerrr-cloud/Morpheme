@@ -2451,36 +2451,41 @@ def get_lis(nums):
                 dp[i] = max(dp[i], dp[j] + 1)
     return max(dp) if dp else 0
 
-def calculate_mp_pass(source, target, source_len, target_len):
-    """Calculates MP score for a specific alignment pass."""
-    # 1. Map Positions
-    position = [-1] * target_len
-    for s_idx, s_char in enumerate(source):
-        for t_idx, t_char in enumerate(target):
-            if s_char == t_char and position[t_idx] == -1:
-                position[t_idx] = s_idx
-                break
-    
-    # 2. Stats
-    matched_indices = [p for p in position if p != -1]
-    count = len(matched_indices)
-    
-    # 3. LIS
-    count2 = get_lis(matched_indices)
-    
-    # 4. Calculation
-    # Moves = count - count2
-    # Inserts = target_len - count (Asterisks)
-    # Deletes = source_len - count
-    micro_procedures = (count - count2) + (target_len - count) + (source_len - count)
-    
-    # 5. Hamming Optimization (Java 'count3' check)
-    if source_len == target_len:
-        count3 = sum(1 for a, b in zip(source, target) if a != b)
-        if micro_procedures > count3:
-            micro_procedures = count3
-            
-    return micro_procedures, count
+def calculate_morpheme_metric(source, target):
+    s_len, t_len = len(source), len(target)
+    # 1. LCS (Linearity)
+    dp = [[0] * (t_len + 1) for _ in range(s_len + 1)]
+    for i in range(1, s_len + 1):
+        for j in range(1, t_len + 1):
+            if source[i-1] == target[j-1]: dp[i][j] = dp[i-1][j-1] + 1
+            else: dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+    linearity = dp[s_len][t_len]
+    if linearity == 0: return 99, 0
+    # Backtrace
+    matched_s_indices = []
+    i, j = s_len, t_len
+    while i > 0 and j > 0:
+        if source[i-1] == target[j-1]:
+            matched_s_indices.append(i-1)
+            i -= 1; j -= 1
+        elif dp[i-1][j] >= dp[i][j-1]: i -= 1
+        else: j -= 1
+    matched_s_indices.reverse()
+    # Relocations
+    lis_len = get_lis(matched_s_indices)
+    relocations = len(matched_s_indices) - lis_len
+    # Extra Letters & Trimming
+    used_in_lcs = [False] * s_len
+    for idx in matched_s_indices: used_in_lcs[idx] = True
+    first_used = next((idx for idx, val in enumerate(used_in_lcs) if val), -1)
+    last_used = s_len - 1 - next((idx for idx, val in enumerate(reversed(used_in_lcs)) if val), -1) if first_used != -1 else -1
+    paid_deletions = sum(1 for idx, used in enumerate(used_in_lcs) if not used and first_used != -1 and idx > first_used and idx < last_used)
+    insertions = t_len - len(matched_s_indices)
+    return relocations + paid_deletions + insertions, linearity
+
+def check_and_add_mp(mp_groups, mp, word):
+    if 0 <= mp <= 6:
+        if word not in mp_groups[mp]: mp_groups[mp].append(word)
 
 def check_and_add_mp(mp_groups, source_len, target_len, mp, word):
     """Applies strict filtering logic from combos.java."""
@@ -2541,33 +2546,18 @@ def check_and_add_mp(mp_groups, source_len, target_len, mp, word):
         mp_groups[mp].append(word)
 
 def check_and_add_lic(lic_groups, count, target_len, word):
-    """Applies strict LIC filtering from combos.java."""
-    # Logic: 
-    # 3 Matches: target < 5 (Inferred)
-    # 4 Matches: target < 6 (Inferred)
-    # 5 Matches: target < 7
-    # 6 Matches: target < 8
-    # 7 Matches: target < 10
-    # 8,9,10 Matches: target < 9
-    
-    if count not in lic_groups:
-        lic_groups[count] = []
-        
-    # Validations from Java
+    if count not in lic_groups: lic_groups[count] = []
     valid = False
-    
-    if count == 3 and target_len < 5: valid = True # New for 3-letter inputs
-    elif count == 4 and target_len < 6: valid = True # New for 4-letter inputs
-    elif count == 5 and target_len < 7: valid = True
-    elif count == 6 and target_len < 8: valid = True
-    elif count == 7 and target_len < 10: valid = True
-    elif count == 8 and target_len < 9: valid = True # Java groups 8,9,10 together for <9 constraint
-    elif count == 9 and target_len < 9: valid = True
-    elif count == 10 and target_len < 9: valid = True
-    
+    if count == 1: valid = (target_len < 3)
+    elif count == 2: valid = (target_len < 4)
+    elif count == 3: valid = (target_len < 5)
+    elif count == 4: valid = (target_len < 6)
+    elif count == 5: valid = (target_len < 7)
+    elif count == 6: valid = (target_len < 8)
+    elif count == 7: valid = (target_len < 10)
+    elif count >= 8: valid = (target_len < 11)
     if valid:
-        if word not in lic_groups[count]:
-            lic_groups[count].append(word)
+        if word not in lic_groups[count]: lic_groups[count].append(word)
 
 @app.route('/api/tools/combo', methods=['POST'])
 def tools_combo_check():
@@ -2589,42 +2579,45 @@ def tools_combo_check():
     source_len = len(search_term)
     
     # Initialize Groups
-    mp_groups = {i: [] for i in range(6)}
+    mp_groups = {i: [] for i in range(7)} # 0MP to 6MP
     lic_groups = {}
     
     search_term_rev = search_term[::-1]
     
     for word in dictionary:
         target_len = len(word)
+        if abs(source_len - target_len) > 6: continue
         
-        if abs(source_len - target_len) > 5: continue
+        # 4 Passes to find best alignment
+        best_mp, _ = calculate_morpheme_metric(search_term, word)
         
-        # 4 Passes
-        # Pass 1: Fwd / Fwd
-        mp1, count1 = calculate_mp_pass(search_term, word, source_len, target_len)
-        if mp1 <= 5: check_and_add_mp(mp_groups, source_len, target_len, mp1, word)
-        check_and_add_lic(lic_groups, count1, target_len, word)
+        m2, _ = calculate_morpheme_metric(search_term, word[::-1])
+        best_mp = min(best_mp, m2)
         
-        # Pass 2: Fwd / Rev 
-        mp2, count2 = calculate_mp_pass(search_term, word[::-1], source_len, target_len)
-        if mp2 <= 5: check_and_add_mp(mp_groups, source_len, target_len, mp2, word)
-        check_and_add_lic(lic_groups, count2, target_len, word)
-
-        # Pass 3: Rev / Fwd 
-        mp3, count3 = calculate_mp_pass(search_term_rev, word, source_len, target_len)
-        if mp3 <= 5: check_and_add_mp(mp_groups, source_len, target_len, mp3, word)
-        check_and_add_lic(lic_groups, count3, target_len, word)
-
-        # Pass 4: Rev / Rev 
-        mp4, count4 = calculate_mp_pass(search_term_rev, word[::-1], source_len, target_len)
-        if mp4 <= 5: check_and_add_mp(mp_groups, source_len, target_len, mp4, word)
-        check_and_add_lic(lic_groups, count4, target_len, word)
+        m3, _ = calculate_morpheme_metric(search_term_rev, word)
+        best_mp = min(best_mp, m3)
+        
+        m4, _ = calculate_morpheme_metric(search_term_rev, word[::-1])
+        best_mp = min(best_mp, m4)
+        
+        if best_mp <= 6:
+            check_and_add_mp(mp_groups, best_mp, word)
+            
+        # LIC logic: letters in common
+        s_count = Counter(search_term)
+        w_count = Counter(word)
+        overlap = s_count & w_count
+        shared_count = sum(overlap.values())
+        
+        if shared_count >= 1:
+            check_and_add_lic(lic_groups, shared_count, target_len, word)
 
     # Sort Groups
     for k in mp_groups:
-        mp_groups[k].sort(key=lambda x: (-len(x), x))
+        mp_groups[k] = sorted(list(set(mp_groups[k])), key=lambda x: (-len(x), x))
+        
     for k in lic_groups:
-        lic_groups[k].sort(key=lambda x: (len(x), x))
+        lic_groups[k] = sorted(list(set(lic_groups[k])), key=lambda x: (len(x), x))
     
     return jsonify({
         'mp_groups': mp_groups, 
@@ -3405,13 +3398,19 @@ def get_forum_post_detail(post_id):
             FROM forum_comments c
             JOIN users u ON c.user_id = u.id
             WHERE c.post_id = ?
-            ORDER BY c.timestamp ASC
+            ORDER BY c.timestamp DESC
         ''', (post_id,)).fetchall()
         
-        return jsonify({
+        response_data = {
             'post': dict(post),
-            'comments': [dict(c) for c in comments]
-        })
+            'comments': [dict(c) for c in comments],
+            'sorting': 'newest_first'
+        }
+        res = jsonify(response_data)
+        res.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        res.headers["Pragma"] = "no-cache"
+        res.headers["Expires"] = "0"
+        return res
     finally:
         conn.close()
 
@@ -4289,4 +4288,4 @@ if __name__ == '__main__':
     advancer_thread.start()
 
     print('Morpheme server running on http://localhost:3000')
-    app.run(host='0.0.0.0', port=3000, debug=False, use_reloader=False)
+    app.run(host='0.0.0.0', port=3000, debug=True, use_reloader=True)

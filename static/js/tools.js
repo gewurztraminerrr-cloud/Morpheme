@@ -70,14 +70,13 @@ async function runComboSearch() {
     const dictEl = document.getElementById('combo-dict');
     const resultsContainer = document.getElementById('combo-results');
 
-    const searchTerm = inputEl.value.trim();
-    const dictionary = dictEl.value;
+    const searchTerm = inputEl.value.trim().toUpperCase();
+    if (!searchTerm || searchTerm.length < 3) return;
 
-    if (!searchTerm) return;
-
-    // Clear previous results
-    document.getElementById('mp-container').innerHTML = '';
-    document.getElementById('lic-container').innerHTML = '';
+    const mpContainer = document.getElementById('mp-container');
+    const licContainer = document.getElementById('lic-container');
+    if (mpContainer) mpContainer.innerHTML = '<div class="loading-spinner">Searching...</div>';
+    if (licContainer) licContainer.innerHTML = '';
 
     resultsContainer.classList.remove('hidden');
 
@@ -85,25 +84,22 @@ async function runComboSearch() {
         const response = await fetch('/api/tools/combo', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ search_term: searchTerm, dictionary: dictionary })
+            body: JSON.stringify({ search_term: searchTerm, dictionary: dictEl.value })
         });
 
         const data = await response.json();
-
         if (data.error) {
             alert(data.error);
             return;
         }
 
-        // Render MP Groups (0MP to 5MP)
+        if (mpContainer) mpContainer.innerHTML = '';
         renderGroups(data.mp_groups, 'mp-container', 'MP');
-
-        // Render LIC Groups (Shared Count)
         renderGroups(data.lic_groups, 'lic-container', 'LIC');
 
     } catch (error) {
-        console.error('Combo check failed:', error);
-        alert('An error occurred while checking combo.');
+        console.error('Combo Search Error:', error);
+        if (mpContainer) mpContainer.innerHTML = '<div class="error-msg">Search failed.</div>';
     }
 }
 
@@ -111,25 +107,18 @@ function renderGroups(groupsData, containerId, type) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    // Sort keys logically
-    // MP keys are 0, 1, 2... (Integers)
-    // LIC keys are Lengths (Integers)
     const keys = Object.keys(groupsData).map(Number).sort((a, b) => a - b);
+    let foundAny = false;
 
     keys.forEach(key => {
         const words = groupsData[key];
-        if (words.length === 0) return;
+        if (!words || words.length === 0) return;
+        foundAny = true;
 
-        let label = '';
-        if (type === 'MP') {
-            label = `${key}MP`; // e.g. 0MP (0 Ops)
-        } else {
-            label = `${key}LIC`; // e.g. 5LIC
-        }
-
+        const label = type === 'MP' ? `${key}MP` : `${key}LIC`;
+        
         const colDiv = document.createElement('div');
         colDiv.className = 'group-column';
-
         colDiv.innerHTML = `
             <div class="group-header">${label}</div>
             <div class="group-table-container">
@@ -140,9 +129,12 @@ function renderGroups(groupsData, containerId, type) {
                 </table>
             </div>
         `;
-
         container.appendChild(colDiv);
     });
+
+    if (!foundAny) {
+        container.innerHTML = `<div class="no-results">No ${type === 'MP' ? 'connections within 6MP' : 'letters in common'} found.</div>`;
+    }
 }
 
 // --- Mini Profile Logic ---

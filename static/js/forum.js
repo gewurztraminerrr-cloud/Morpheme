@@ -254,6 +254,7 @@ const Forum = {
         try {
             const response = await fetch(`/api/forum/post/${postId}`);
             const data = await response.json();
+            console.log(`[Forum] Rendering post ${postId} with ${data.comments.length} comments (Newest First)`);
             this.renderPostDetail(data.post, data.comments);
             this.showPostView();
         } catch (err) {
@@ -344,12 +345,19 @@ const Forum = {
 
         // Render comments
         const commentsListEl = document.getElementById('forum-comments-list');
-        document.getElementById('forum-comment-count').textContent = `${comments.length} comments`;
+        document.getElementById('forum-comment-count').textContent = `${comments.length} comments (Newest First)`;
 
-        if (comments.length === 0) {
+        // Sort comments by timestamp newest first to be absolutely sure
+        const sortedComments = [...comments].sort((a, b) => {
+            const dateA = new Date(a.timestamp);
+            const dateB = new Date(b.timestamp);
+            return dateB - dateA;
+        });
+
+        if (sortedComments.length === 0) {
             commentsListEl.innerHTML = '<p class="forum-placeholder">No comments yet. Start the discussion!</p>';
         } else {
-            commentsListEl.innerHTML = comments.map(c => {
+            commentsListEl.innerHTML = sortedComments.map(c => {
                 const cDate = new Date(c.timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' });
                 return `
                     <div class="forum-comment">
