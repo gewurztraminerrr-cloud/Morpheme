@@ -17,6 +17,7 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 from tournament_logic import tournament_manager
 from private_match_logic import private_match_manager
 from word_validator import word_validator
+from scoring import calculate_word_score
 
 # MODERATOR SYSTEM
 MODS_FILE = os.path.join(os.path.dirname(__file__), 'dictionaries', 'mods.txt')
@@ -3322,8 +3323,31 @@ def get_forum_categories():
     conn = sqlite3.connect('morpheme.db', timeout=30)
     conn.row_factory = sqlite3.Row
     try:
-        rows = conn.execute('SELECT * FROM forum_categories').fetchall()
-        return jsonify({'categories': [dict(row) for row in rows]})
+        # Include last_content_at by checking latest post OR latest comment in each category
+        query = '''
+            SELECT c.*, 
+                   (SELECT MAX(ts) FROM (
+                       SELECT MAX(timestamp) as ts FROM forum_posts fp WHERE fp.category_id = c.id
+                       UNION ALL
+                       SELECT MAX(fc.timestamp) as ts FROM forum_comments fc 
+                       JOIN forum_posts fp2 ON fc.post_id = fp2.id 
+                       WHERE fp2.category_id = c.id
+                   )) as last_content_at
+            FROM forum_categories c
+        '''
+        rows = conn.execute(query).fetchall()
+        categories = []
+        for row in rows:
+            d = dict(row)
+            if d['last_content_at']:
+                # Ensure it has Z for UTC parsing
+                if ' ' in d['last_content_at'] and 'Z' not in d['last_content_at']:
+                    d['last_content_at'] = d['last_content_at'].replace(' ', 'T') + 'Z'
+            else:
+                # Fallback to a very old date so new users don't see unread indicators for empty cats
+                d['last_content_at'] = '2000-01-01T00:00:00Z'
+            categories.append(d)
+        return jsonify({'categories': categories})
     finally:
         conn.close()
 
@@ -4041,11 +4065,52 @@ def submit_private_match_turn():
         data = request.json
         match_id = data.get('match_id')
         round_number = data.get('round_number')
-        words_data = data.get('words')
-        score = data.get('score')
+        words_data = data.get('words', [])
         
-        private_match_manager.submit_turn(match_id, round_number, session['user_id'], words_data, score)
-        return jsonify({'success': True})
+        # RECALCULATE SCORE on the server for safety and consistency with scoring.py
+        conn = private_match_manager.get_db()
+        m = conn.execute('SELECT parameters FROM private_matches WHERE id = ?', (match_id,)).fetchone()
+        r = conn.execute('SELECT board_data, bonus_word FROM private_match_rounds WHERE match_id = ? AND round_number = ?', (match_id, round_number)).fetchone()
+        conn.close()
+        
+        if not m or not r:
+            return jsonify({'error': 'Match or round data not found'}), 404
+            
+        params = json.loads(m['parameters'])
+        board = json.loads(r['board_data'])
+        bonus_word = r['bonus_word']
+        fmt = params.get('board_format', 'Normal')
+        
+        valid_words = []
+        total_score = 0
+        
+        # Dictionary for validation
+        dict_name = params.get('dictionary', 'NWL')
+        official_dict = word_validator.load_dictionary(dict_name)
+        
+        for item in words_data:
+            word = item.get('word', '').strip().upper()
+            if not word or word in [v['word'] for v in valid_words]:
+                continue
+            
+            # Basic validation
+            if len(word) < params.get('min_word_length', 3):
+                continue
+            if word not in official_dict:
+                continue
+            if not word_validator.find_word_on_board(board, word):
+                continue
+                
+            pts = calculate_word_score(word, bonus_word=bonus_word, board_format=fmt, is_private=True)
+            valid_words.append({
+                'word': word,
+                'points': pts,
+                'timestamp': item.get('timestamp', time.time())
+            })
+            total_score += pts
+        
+        private_match_manager.submit_turn(match_id, round_number, session['user_id'], valid_words, total_score)
+        return jsonify({'success': True, 'score': total_score})
     except Exception as e:
         print(f"Submit Turn Error: {e}")
         return jsonify({'error': str(e)}), 500

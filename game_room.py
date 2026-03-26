@@ -160,7 +160,7 @@ class GameRoom:
             # For now, let's stick to the user's rule for ALL rooms.
             if manual_accessed:
                 existing_player.joined_mid_round = True
-            elif not is_daily and self.state == 'active' and (self.time_limit - self.time_remaining) > 5:
+            elif not is_daily and self.state == 'active':
                 # If they rejoin mid-round after being gone, mark them late? 
                 # Ideally yes, unless was_already_in_room logic covers it. 
                 # But here we are reusing existing_player object which means they were in past_players.
@@ -175,6 +175,7 @@ class GameRoom:
         
         # Track if they were already in the room (to avoid mid-round flag on refresh)
         was_already_in_room = existing_player is not None
+        was_joined_mid_round = getattr(existing_player, 'joined_mid_round', False) if existing_player else False
             
         # Check if player exists in round_quitters (RESTORE mid-round state)
         quitter = next((q for q in self.round_quitters if str(q.user_id) == str(user_id)), None)
@@ -199,7 +200,7 @@ class GameRoom:
             existing_player.is_guest = is_guest # Update guest status
             if manual_accessed:
                 existing_player.joined_mid_round = True
-            elif not is_daily and self.state == 'active' and (self.time_limit - self.time_remaining) > 5:
+            elif not is_daily and self.state == 'active':
                  # Check for "Refresh" grace period (15s)
                  # If they were gone for > 15s, mark as late joiner even if restoring
                  if (time.time() - existing_player.last_active) > 15:
@@ -218,7 +219,9 @@ class GameRoom:
         player = Player(user_id, username, rating, games_played=games_played, country_flag=country_flag, is_guest=is_guest)
         if manual_accessed:
             player.joined_mid_round = True
-        elif self.state == 'active' and (self.time_limit - self.time_remaining) > 5 and not is_daily and not was_already_in_room:
+        elif was_already_in_room:
+            player.joined_mid_round = was_joined_mid_round
+        elif self.state == 'active' and not is_daily:
             player.joined_mid_round = True
             
         self.players.append(player)
@@ -277,49 +280,56 @@ class GameRoom:
         
         # Track abandonment (if in active round and played and NOT mid-round joiner)
         if leaving_player and self.state == 'active' and not getattr(leaving_player, 'joined_mid_round', False):
-             print(f"[DEBUG-PENALTY] Player {username} leaving during active round. Activity check: words={len(leaving_player.submitted_words)}, invalid={len(leaving_player.invalid_words)}, score={leaving_player.score}")
-             if leaving_player.submitted_words or leaving_player.invalid_words:
-                  # Only add if not already in quitters
-                  if not any(q.user_id == leaving_player.user_id for q in self.round_quitters):
-                       print(f"[GameRoom] Player {username} ({user_id}) abandoned mid-round. Logging as Quitter.")
-                       self.round_quitters.append(leaving_player)
-                       
-                       # AUTOMATIC INSTANT PENALTY - Deduct 16 immediately to prevent "cheating" re-joins
-                       is_guest = is_player_guest(leaving_player)
-                       print(f"[DEBUG-PENALTY] Quitter {username} is_guest={is_guest}, user_id={leaving_player.user_id}")
-                       
-                       if not is_guest and leaving_player.user_id > 0:
-                             print(f"[DEBUG-PENALTY] Applying -16 to {username} (Current Rating: {leaving_player.rating})")
-                             leaving_player.rating = max(0, leaving_player.rating - 16)
-                             leaving_player.rating_change -= 16
-                             self.abandonment_bounty += 16
-                             print(f"[GameRoom] INSTANT Penalty applied to {username}. Bounty now: {self.abandonment_bounty}")
-                             
-                             # Apply to Global Rank immediately
-                             try:
-                                 db_path = '/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/morpheme.db'
-                                 db_conn = sqlite3.connect(db_path, timeout=30)
+             # ENFORCE RULE: Only apply abandonment penalty if there is at least one OTHER player who started from the beginning.
+             other_starters = [
+                 p for p in self.players + self.round_quitters 
+                 if str(p.user_id) != str(user_id) and not getattr(p, 'is_ai', False) and not is_player_guest(p) and not getattr(p, 'joined_mid_round', False)
+             ]
+             
+             if len(other_starters) >= 1:
+                 print(f"[DEBUG-PENALTY] Player {username} leaving during active round. Activity check: words={len(leaving_player.submitted_words)}, invalid={len(leaving_player.invalid_words)}, score={leaving_player.score}")
+                 if leaving_player.submitted_words or leaving_player.invalid_words:
+                      # Only add if not already in quitters
+                      if not any(q.user_id == leaving_player.user_id for q in self.round_quitters):
+                           print(f"[GameRoom] Player {username} ({user_id}) abandoned mid-round. Logging as Quitter.")
+                           self.round_quitters.append(leaving_player)
+                           
+                           # AUTOMATIC INSTANT PENALTY - Deduct 16 immediately to prevent "cheating" re-joins
+                           is_guest = is_player_guest(leaving_player)
+                           print(f"[DEBUG-PENALTY] Quitter {username} is_guest={is_guest}, user_id={leaving_player.user_id}")
+                           
+                           if not is_guest and leaving_player.user_id > 0:
+                                 print(f"[DEBUG-PENALTY] Applying -16 to {username} (Current Rating: {leaving_player.rating})")
+                                 leaving_player.rating = max(0, leaving_player.rating - 16)
+                                 leaving_player.rating_change -= 16
+                                 self.abandonment_bounty += 16
+                                 print(f"[GameRoom] INSTANT Penalty applied to {username}. Bounty now: {self.abandonment_bounty}")
                                  
-                                 # 1. Update Global users table
-                                 cur = db_conn.execute('UPDATE users SET rating = rating - 16 WHERE id = ?', (leaving_player.user_id,))
-                                 print(f"[DEBUG-PENALTY] users table update for {username}: rows modified = {cur.rowcount}")
-                                 
-                                 # 2. Update config-specific user_ratings table
-                                 current_config = f"{self.game_type}|{self.board_dimensions}|{self.time_limit}"
-                                 cur2 = db_conn.execute('UPDATE user_ratings SET rating = rating - 16 WHERE user_id = ? AND config_key = ?', (leaving_player.user_id, current_config))
-                                 print(f"[DEBUG-PENALTY] user_ratings table update for {username} (config={current_config}): rows modified = {cur2.rowcount}")
-                                 
-                                 db_conn.commit()
-                                 db_conn.close()
-                                 print(f"[DEBUG-PENALTY] DB Commit successful for {username}")
-                             except Exception as e:
-                                 print(f"[GameRoom] Instant Penalty DB update Error for {username}: {e}")
-                       else:
-                             print(f"[DEBUG-PENALTY] SKIPPING DB update for {username} (Guest or Invalid ID)")
-                  else:
-                       print(f"[DEBUG-PENALTY] Player {username} already in round_quitters. Skipping duplicate penalty.")
-             else:
-                  print(f"[DEBUG-PENALTY] Player {username} left but had NO activity. (words=0, invalid=0)")
+                                 # Apply to Global Rank immediately
+                                 try:
+                                     db_path = '/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/morpheme.db'
+                                     db_conn = sqlite3.connect(db_path, timeout=30)
+                                     
+                                     # 1. Update Global users table
+                                     cur = db_conn.execute('UPDATE users SET rating = rating - 16 WHERE id = ?', (leaving_player.user_id,))
+                                     print(f"[DEBUG-PENALTY] users table update for {username}: rows modified = {cur.rowcount}")
+                                     
+                                     # 2. Update config-specific user_ratings table
+                                     current_config = f"{self.game_type}|{self.board_dimensions}|{self.time_limit}"
+                                     cur2 = db_conn.execute('UPDATE user_ratings SET rating = rating - 16 WHERE user_id = ? AND config_key = ?', (leaving_player.user_id, current_config))
+                                     print(f"[DEBUG-PENALTY] user_ratings table update for {username} (config={current_config}): rows modified = {cur2.rowcount}")
+                                     
+                                     db_conn.commit()
+                                     db_conn.close()
+                                     print(f"[DEBUG-PENALTY] DB Commit successful for {username}")
+                                 except Exception as e:
+                                     print(f"[GameRoom] Instant Penalty DB update Error for {username}: {e}")
+                           else:
+                                 print(f"[DEBUG-PENALTY] SKIPPING DB update for {username} (Guest or Invalid ID)")
+                      else:
+                           print(f"[DEBUG-PENALTY] Player {username} already in round_quitters. Skipping duplicate penalty.")
+                 else:
+                      print(f"[DEBUG-PENALTY] Player {username} left but had NO activity. (words=0, invalid=0)")
         else:
              print(f"[DEBUG-PENALTY] Player {username} removed outside active round or state. (state={self.state})")
 

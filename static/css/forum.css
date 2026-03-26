@@ -97,6 +97,21 @@
     border-left-color: var(--accent-color);
 }
 
+.forum-cat-item.has-new {
+    border-left-color: #ffd700; /* Golden */
+    background: rgba(255, 215, 0, 0.05);
+}
+
+.forum-cat-item.has-new .forum-cat-name {
+    color: #ffd700;
+}
+
+.forum-cat-item.has-new .forum-cat-name::after {
+    content: " •";
+    color: #ffd700;
+    font-weight: 800;
+}
+
 .forum-cat-name {
     display: block;
     font-weight: 600;

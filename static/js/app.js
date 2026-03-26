@@ -339,8 +339,44 @@ async function checkTournamentTurn() {
 }
 
 // Check initially and periodically (every 60s)
-setTimeout(checkTournamentTurn, 2000);
-setInterval(checkTournamentTurn, 60000);
+setTimeout(() => {
+    checkTournamentTurn();
+    checkForumActivity();
+}, 2000);
+setInterval(() => {
+    checkTournamentTurn();
+    checkForumActivity();
+}, 60000);
+
+async function checkForumActivity() {
+    if (!currentUser) return;
+    try {
+        const res = await fetch('/api/forum/categories');
+        const data = await res.json();
+        const btn = document.getElementById('btn-forums');
+        if (!btn) return;
+
+        const lastViewed = JSON.parse(localStorage.getItem('forum_last_viewed') || '{}');
+        let hasNewGlobally = false;
+
+        data.categories.forEach(cat => {
+            const lastContent = cat.last_content_at ? new Date(cat.last_content_at).getTime() : 0;
+            const lastView = lastViewed[cat.id] || 0;
+            if (lastContent > lastView) {
+                hasNewGlobally = true;
+            }
+        });
+
+        if (hasNewGlobally) {
+            btn.classList.add('has-new');
+        } else {
+            btn.classList.remove('has-new');
+        }
+    } catch (e) {
+        console.warn('[Forum] Activity check failed', e);
+    }
+}
+window.checkForumActivity = checkForumActivity;
 
 // Note: Private Match polling is handled via loadPrivateMatches in private_matches.js
 

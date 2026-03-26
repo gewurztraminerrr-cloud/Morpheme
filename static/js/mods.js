@@ -363,6 +363,11 @@ async function banUser() {
         return;
     }
 
+    if (username.toLowerCase() === 'jeffbabiak') {
+        alert("Action Prohibited: User 'JeffBabiak' cannot be banned.");
+        return;
+    }
+
     if (!confirm(`ARE YOU SURE? This will permanently ERASE all data for user "${username}". This cannot be undone.`)) {
         return;
     }

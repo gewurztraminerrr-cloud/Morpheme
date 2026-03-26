@@ -699,7 +699,7 @@ class BoardGenerator:
         return False
 if __name__ == '__main__':
     gen = BoardGenerator()
-    board, words = gen.generate_board('4x4', 'BACKWARD', (50, 150), 'NWL', 'Normal', 3, 'Normal')
+    board, words, bonus_cell = gen.generate_board('4x4', 'BACKWARD', (50, 150), 'NWL', 'Normal', 3, 'Normal')
     if board:
         print("Board generated!")
         for row in board:

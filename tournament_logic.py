@@ -128,7 +128,7 @@ class TournamentManager:
         random.seed() 
 
         # Use tournament parameters
-        board, all_words_on_board = bg.generate_board(
+        board, all_words_on_board, _bonus_cell = bg.generate_board(
             dimensions=dims,
             bonus_word="", # Picked later if needed, or non-active in tournament
             word_count_range=params.get('word_count_range', '50-100'),

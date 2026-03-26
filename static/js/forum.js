@@ -77,12 +77,20 @@ const Forum = {
         const listEl = document.getElementById('forum-categories-list');
         if (!listEl) return;
 
-        listEl.innerHTML = this.categories.map(cat => `
-            <div class="forum-cat-item" data-id="${cat.id}">
-                <span class="forum-cat-name">${cat.name}</span>
-                <span class="forum-cat-desc">${cat.description}</span>
-            </div>
-        `).join('');
+        const lastViewed = JSON.parse(localStorage.getItem('forum_last_viewed') || '{}');
+        
+        listEl.innerHTML = this.categories.map(cat => {
+            const lastContent = cat.last_content_at ? new Date(cat.last_content_at).getTime() : 0;
+            const lastView = lastViewed[cat.id] || 0;
+            const hasNew = lastContent > lastView;
+            
+            return `
+                <div class="forum-cat-item ${hasNew ? 'has-new' : ''}" data-id="${cat.id}">
+                    <span class="forum-cat-name">${cat.name}</span>
+                    <span class="forum-cat-desc">${cat.description}</span>
+                </div>
+            `;
+        }).join('');
 
         // Attach listeners
         listEl.querySelectorAll('.forum-cat-item').forEach(item => {
@@ -99,8 +107,17 @@ const Forum = {
 
         // Update UI
         document.querySelectorAll('.forum-cat-item').forEach(item => {
-            item.classList.toggle('active', parseInt(item.getAttribute('data-id')) === catId);
+            const isThisCat = parseInt(item.getAttribute('data-id')) === catId;
+            item.classList.toggle('active', isThisCat);
+            if (isThisCat) {
+                item.classList.remove('has-new');
+            }
         });
+
+        // Update last viewed timestamp in localStorage
+        const lastViewed = JSON.parse(localStorage.getItem('forum_last_viewed') || '{}');
+        lastViewed[catId] = Date.now();
+        localStorage.setItem('forum_last_viewed', JSON.stringify(lastViewed));
 
         document.getElementById('forum-category-title').textContent = category.name;
         document.getElementById('forum-category-desc').textContent = category.description;

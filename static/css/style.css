@@ -2868,7 +2868,8 @@ body {
     margin: 0;
     text-align: center;
     line-height: 1.2;
-    word-break: break-all;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 
@@ -5088,6 +5089,26 @@ body {
     color: #fff !important;
     box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
     animation: pulse-green 2s infinite;
+}
+
+.nav-btn.has-new {
+    background: #ffd700 !important;
+    border-color: #daa520 !important;
+    color: #000 !important;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    animation: pulse-gold 2s infinite;
+}
+
+@keyframes pulse-green {
+    0% { box-shadow: 0 0 5px rgba(46, 204, 113, 0.3); }
+    50% { box-shadow: 0 0 15px rgba(46, 204, 113, 0.6); }
+    100% { box-shadow: 0 0 5px rgba(46, 204, 113, 0.3); }
+}
+
+@keyframes pulse-gold {
+    0% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.7); }
+    100% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.3); }
 }
 
 @keyframes pulse-green {

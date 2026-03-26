@@ -3411,7 +3411,7 @@ async function handleTournamentWord(word) {
         return;
     }
 
-    // Use common scoring logic (1=1, 2=2, 3=3, 4=4, 5=5, 6=10, 7=15, 8=25)
+    // Use tournament-specific scoring (1=1, 2=2, 3=3, 4=4, 5=5, 6=10, 7=15, 8=25)
     let pts = word.length;
     if (word.length === 6) pts = 10;
     else if (word.length === 7) pts = 15;
@@ -3651,11 +3651,29 @@ async function handlePrivateMatchWord(word) {
         return;
     }
 
-    // Points calculation (Simplified client side)
-    let pts = word.length;
-    if (word.length === 6) pts = 10;
-    else if (word.length === 7) pts = 15;
-    else if (word.length >= 8) pts = 25;
+    // Points calculation (Align with scoring.py)
+    const fmt = privateMatchParams ? privateMatchParams.board_format : 'Normal';
+    let pts = 0;
+
+    if (fmt === 'Valued Letters') {
+        const letterValues = {
+            'A': 2, 'B': 4, 'C': 4, 'D': 3, 'E': 1, 'F': 5, 'G': 3, 'H': 5, 'I': 2, 'J': 10,
+            'K': 6, 'L': 3, 'M': 4, 'N': 2, 'O': 2, 'P': 4, 'Q': 10, 'R': 2, 'S': 2, 'T': 2,
+            'U': 4, 'V': 5, 'W': 5, 'X': 9, 'Y': 5, 'Z': 9
+        };
+        for (let char of word.toUpperCase()) {
+            pts += letterValues[char] || 1;
+        }
+    } else {
+        // Standard Boggle rules (with Private Match 5-letter word exception: 5 pts)
+        const L = word.length;
+        if (L <= 2) pts = 0;
+        else if (L <= 4) pts = 1;
+        else if (L === 5) pts = 5;
+        else if (L === 6) pts = 3;
+        else if (L === 7) pts = 5;
+        else pts = 11;
+    }
 
     const activeMatch = JSON.parse(localStorage.getItem('private_match_active'));
     if (activeMatch && activeMatch.bonus_word === word) {
