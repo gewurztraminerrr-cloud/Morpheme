@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const gameNames = {
                 'fcfs': 'First Come First Serve',
                 'split': 'Split Points',
-                '3d': 'CUBE'
+                '3d': 'Cube'
             };
 
             const infoEl = document.getElementById('selected-game-info');

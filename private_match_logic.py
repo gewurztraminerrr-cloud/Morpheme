@@ -42,6 +42,7 @@ class PrivateMatchManager:
                 round_number INTEGER,
                 board_data TEXT, -- JSON
                 bonus_word TEXT,
+                bonus_cell TEXT, -- NEW: (r, c) or (f, r, c)
                 word_count_range TEXT, -- NEW: Specifically selected range
                 all_words TEXT, -- JSON of all valid words on board
                 start_time REAL,
@@ -81,6 +82,18 @@ class PrivateMatchManager:
         # MIGRATION: Add word_count_range column if it doesn't exist
         try:
             conn.execute('ALTER TABLE private_match_rounds ADD COLUMN word_count_range TEXT')
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass # Column likely already exists
+            
+        try:
+            conn.execute('ALTER TABLE private_match_rounds ADD COLUMN bonus_cell TEXT')
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass # Column likely already exists
+
+        try:
+            conn.execute('ALTER TABLE private_match_rounds ADD COLUMN board_format TEXT')
             conn.commit()
         except sqlite3.OperationalError:
             pass # Column likely already exists
@@ -188,6 +201,7 @@ class PrivateMatchManager:
         random.seed()
 
         bg = BoardGenerator()
+        bonus_cell = None # Initialize to avoid NameError
         dims = parameters.get('board_dimensions', '4x4')
         dict_name = parameters.get('dictionary', 'CSW')
         min_len = parameters.get('min_word_length', 3)
@@ -197,10 +211,21 @@ class PrivateMatchManager:
         bonus_word = ""
         # Check if the format allows a bonus word
         target_format = parameters.get('board_format', 'Normal')
+        
+        # 0. Handle "Mania" without a prefix (ensure 30% vowels, 70% consonants)
+        if target_format.strip() == 'Mania':
+            import random
+            if random.random() < 0.30:
+                mania_letter = random.choice('AEIOU')
+            else:
+                mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')
+            target_format = f"{mania_letter} Mania"
+            
         target_range = parameters.get('word_count_range')
         target_difficulty = parameters.get('difficulty', 'Medium')
         
-        if bonus_len > 0 and 'Mania' not in target_format and target_format != 'Checkerboard' and target_format != 'Either/Or':
+        fmt_check = target_format.lower()
+        if bonus_len > 0 and 'mania' not in fmt_check and 'checkerboard' not in fmt_check and 'either' not in fmt_check:
             from word_validator import word_validator
             dictionary_set = word_validator.csw_words if dict_name == 'CSW' else word_validator.nwl_words
             potential_dict_words = [w for w in dictionary_set if len(w) == bonus_len]
@@ -208,7 +233,7 @@ class PrivateMatchManager:
                 bonus_word = random.choice(potential_dict_words)
         
         # Generate board (this will now embed the bonus_word if provided)
-        board, all_words_on_board, _bonus_cell = bg.generate_board(
+        board, all_words_on_board, bonus_cell = bg.generate_board(
             dimensions=dims,
             bonus_word=bonus_word,
             word_count_range=target_range,
@@ -229,10 +254,15 @@ class PrivateMatchManager:
         if not external_conn:
             conn = self.get_db()
 
-        conn.execute('''
-            INSERT INTO private_match_rounds (match_id, round_number, board_data, bonus_word, word_count_range, all_words, start_time, end_time)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (match_id, round_number, json.dumps(board), bonus_word, json.dumps(target_range), json.dumps(all_words_on_board), now, end_time))
+        try:
+            conn.execute('''
+                INSERT INTO private_match_rounds (match_id, round_number, board_data, bonus_word, bonus_cell, word_count_range, all_words, start_time, end_time, board_format)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (match_id, round_number, json.dumps(board), bonus_word, json.dumps(bonus_cell) if bonus_cell else None, json.dumps(target_range), json.dumps(all_words_on_board), now, end_time, target_format))
+        except Exception as e:
+            print(f"FAILED TO INSERT ROUND: {e}")
+            print(f"DEBUG LOCALS: board={ 'board' in locals() }, bonus_cell={ 'bonus_cell' in locals() }, target_format={ 'target_format' in locals() }")
+            raise e
         
         if not external_conn:
             conn.commit()
@@ -431,12 +461,23 @@ class PrivateMatchManager:
 
                 round_data = conn.execute('SELECT * FROM private_match_rounds WHERE match_id = ? AND round_number = ?', (match_id, round_number)).fetchone()
                 if round_data:
-                    all_possible_words = json.loads(round_data['all_words'])
-                    bonus_word = round_data['bonus_word']
+                    rd = dict(round_data)
+                    all_possible_words = json.loads(rd['all_words'])
+                    bonus_word = rd['bonus_word']
+                    board_format = rd.get('board_format', 'Normal')
+                    bonus_cell_str = rd.get('bonus_cell', None)
+                    bonus_cell = json.loads(bonus_cell_str) if bonus_cell_str else None
                     
                     for ai in ais:
                         if ai['user_id'] not in submitted_ids:
-                            ai_words, ai_score = self.generate_ai_submission(ai['ai_rating'], all_possible_words, bonus_word, duration=duration)
+                            ai_words, ai_score = self.generate_ai_submission(
+                                ai['ai_rating'], 
+                                all_possible_words, 
+                                bonus_word, 
+                                board_format=board_format,
+                                bonus_cell=bonus_cell,
+                                duration=duration
+                            )
                             conn.execute('''
                                 INSERT INTO private_match_turns (match_id, round_number, user_id, score, submitted_words, submitted_at)
                                 VALUES (?, ?, ?, ?, ?, ?)
@@ -470,7 +511,7 @@ class PrivateMatchManager:
         finally:
             conn.close()
 
-    def generate_ai_submission(self, rating, possible_words, bonus_word, duration=60):
+    def generate_ai_submission(self, rating, possible_words, bonus_word, board_format='Normal', bonus_cell=None, duration=60):
         # AI Logic (WPM Model):
         # Rating 800: ~4.0 WPM 
         # Rating 1200: ~10.0 WPM
@@ -498,7 +539,16 @@ class PrivateMatchManager:
         # We'll score all possible words first to pick the best ones
         word_scores = []
         for w in possible_words:
-            word_scores.append((w, calculate_word_score(w, bonus_word, is_private=True)))
+            # Note: We don't have the full board object here, but calculate_word_score 
+            # handles basic format scoring without it if needed (path omitted).
+            # For AI, we assume they hit the bonus cell if it exists (simplified).
+            word_scores.append((w, calculate_word_score(
+                w, 
+                bonus_word, 
+                board_format=board_format, 
+                bonus_cell=bonus_cell, 
+                is_private=True
+            )))
         
         # Sort by points descending
         word_scores.sort(key=lambda x: x[1], reverse=True)
@@ -534,7 +584,14 @@ class PrivateMatchManager:
             # Ensure index 0 doesn't just get it if we can find it
             if not any(w[0] == bonus_word for w in selected_words):
                 # Replace a word or just add it
-                bonus_tuple = (bonus_word, calculate_word_score(bonus_word, bonus_word, is_private=True))
+                bonus_pts = calculate_word_score(
+                    bonus_word, 
+                    bonus_word, 
+                    board_format=board_format, 
+                    bonus_cell=bonus_cell, 
+                    is_private=True
+                )
+                bonus_tuple = (bonus_word, bonus_pts)
                 if len(selected_words) > 0:
                     idx = random.randint(0, len(selected_words) - 1)
                     selected_words[idx] = bonus_tuple

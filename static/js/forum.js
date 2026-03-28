@@ -377,7 +377,7 @@ const Forum = {
             }).join('');
 
             // Attach comment delete listeners
-            detailEl.querySelectorAll('.forum-comment-delete-btn').forEach(btn => {
+            commentsListEl.querySelectorAll('.forum-comment-delete-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const commentId = parseInt(btn.getAttribute('data-id'));
                     this.handleCommentDelete(commentId);

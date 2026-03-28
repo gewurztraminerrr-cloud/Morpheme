@@ -1967,7 +1967,8 @@ def get_lobby_stats():
         if key not in stats:
             stats[key] = 0
             
-        stats[key] += len(room.players)
+        humans = [p for p in room.players if not p.is_ai]
+        stats[key] += len(humans)
     
     return jsonify({'stats': stats})
 
@@ -1975,6 +1976,9 @@ def get_lobby_stats():
 def get_room_state(room_id):
     if 'user_id' in session:
         room_manager.update_presence(session['user_id'])
+        room = room_manager.get_room(room_id)
+        if room:
+            room.update_player_activity(session['user_id'])
     
     # Use file-based logger for execution flow tracking
     with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
@@ -2000,8 +2004,12 @@ def get_room_state(room_id):
                 if not p.is_ai or not is_active or w.get('time', 0) <= now
             ]
             
-            # Calculate score safely (allowing negative values from Penalty deductions)
-            score = sum(w.get('points', 0) for w in visible_words)
+            # Calculate score with sequential floor at 0 (never go below 0 total)
+            score = 0
+            for w in visible_words:
+                score += w.get('points', 0)
+                if score < 0:
+                    score = 0
                 
             found_bonus = any(w['word'] == room.bonus_word for w in visible_words)
             
@@ -2009,7 +2017,7 @@ def get_room_state(room_id):
         # Check for inactive players (zombies)
         # Use 10 minutes (600s) globally for players, 30m (1800s) for spectators
         timeout = 600
-        spec_timeout = 1800
+        spec_timeout = 600
         
         players_removed = room.check_inactivity(timeout=timeout, spec_timeout=spec_timeout)
         
@@ -2040,7 +2048,7 @@ def get_room_state(room_id):
         
         # If intermission just ended, check for timing milestones (Accumulative & FCFS)
         # If intermission just ended, check for timing milestones (Accumulative & FCFS)
-        if room.state == 'intermission' and room.game_type in ['accumulative', 'solo_accumulative', 'fcfs', 'split']:
+        if room.state == 'intermission' and room.game_type in ['accumulative', 'solo_accumulative', 'fcfs', 'split', 'standard', '3d']:
             milestone = room.get_intermission_milestone()
             
             if milestone == 'spinner':
@@ -2108,6 +2116,10 @@ def get_room_state(room_id):
             'bonus_cell': getattr(room, 'bonus_cell', None),
             'spinner_params': room.spinner_params,
             'current_board_format': getattr(room, 'current_board_format', 'Normal'),
+            'current_min_word_length': getattr(room, 'current_min_length', 3),
+            'current_word_count_range': getattr(room, 'current_word_count_range', '100-200'),
+            'current_dictionary': getattr(room, 'current_dictionary', 'NWL'),
+            'current_difficulty': getattr(room, 'current_difficulty', 'Normal'),
             'solving_complete': room.solving_complete,  # Let frontend know if still solving
             'max_players': room.max_players,
             'min_rating': room.min_rating,
@@ -4016,7 +4028,11 @@ def create_private_match():
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
     except Exception as e:
-        return jsonify({'error': f"Failed to create match: {str(e)}"}), 500
+        import traceback
+        traceback.print_exc()
+        error_msg = f"Failed to create match: {str(e)}"
+        print(f"DEBUG: Create Match Error Local State - match_type={match_type}, parameters={parameters}")
+        return jsonify({'error': error_msg}), 500
 
 @app.route('/api/private-match/list', methods=['GET'])
 @login_required
@@ -4104,7 +4120,7 @@ def submit_private_match_turn():
         # RECALCULATE SCORE on the server for safety and consistency with scoring.py
         conn = private_match_manager.get_db()
         m = conn.execute('SELECT parameters FROM private_matches WHERE id = ?', (match_id,)).fetchone()
-        r = conn.execute('SELECT board_data, bonus_word FROM private_match_rounds WHERE match_id = ? AND round_number = ?', (match_id, round_number)).fetchone()
+        r = conn.execute('SELECT board_data, bonus_word, bonus_cell FROM private_match_rounds WHERE match_id = ? AND round_number = ?', (match_id, round_number)).fetchone()
         conn.close()
         
         if not m or not r:
@@ -4113,6 +4129,8 @@ def submit_private_match_turn():
         params = json.loads(m['parameters'])
         board = json.loads(r['board_data'])
         bonus_word = r['bonus_word']
+        bonus_cell_raw = r['bonus_cell']
+        bonus_cell = json.loads(bonus_cell_raw) if bonus_cell_raw else None
         fmt = params.get('board_format', 'Normal')
         
         valid_words = []
@@ -4130,18 +4148,25 @@ def submit_private_match_turn():
             # Basic validation
             if len(word) < params.get('min_word_length', 3):
                 continue
-            if word not in official_dict:
-                continue
-            if not word_validator.find_word_on_board(board, word):
-                continue
+            is_on_board = word_validator.find_word_on_board(board, word)
                 
-            pts = calculate_word_score(word, bonus_word=bonus_word, board_format=fmt, is_private=True)
+            pts = 0
+            if word in official_dict and is_on_board:
+                pts = calculate_word_score(word, bonus_word=bonus_word, board_format=fmt, board=board, bonus_cell=bonus_cell, is_private=True)
+            elif 'penalty' in fmt.lower() and is_on_board:
+                pts = -3 # Penalty for words on board but not in dict
+                
+            if pts == 0 and not (is_on_board and 'penalty' in fmt.lower()):
+                continue # Skip invalid words that aren't penalties
+
             valid_words.append({
                 'word': word,
                 'points': pts,
                 'timestamp': item.get('timestamp', time.time())
             })
             total_score += pts
+            if total_score < 0:
+                total_score = 0
         
         private_match_manager.submit_turn(match_id, round_number, session['user_id'], valid_words, total_score)
         return jsonify({'success': True, 'score': total_score})
@@ -4288,4 +4313,10 @@ if __name__ == '__main__':
     advancer_thread.start()
 
     print('Morpheme server running on http://localhost:3000')
-    app.run(host='0.0.0.0', port=3000, debug=True, use_reloader=True)
+    try:
+        app.run(host='0.0.0.0', port=3000, debug=True, use_reloader=False)
+    except Exception as e:
+        print(f"Server startup error: {e}. Attempting fallback (No Reloader)...")
+        # Retry without reloader if it failed due to termios/EINTR issues
+        app.run(host='0.0.0.0', port=3000, debug=True, use_reloader=False)
+

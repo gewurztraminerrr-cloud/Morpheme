@@ -11,7 +11,7 @@ class BoggleGame {
         this.boardElement = document.getElementById('board');
         this.shakeButton = document.getElementById('shake-btn');
         this.isShaking = false;
-        this.isCrashed = true; // Start in crashed state per request
+        this.isCrashed = false; // Start in normal state
         this.savesList = document.getElementById('saves-list');
         this.restartBtn = document.getElementById('restart-server-btn');
         this.checkpointBtn = document.getElementById('checkpoint-btn');
@@ -124,7 +124,7 @@ class BoggleGame {
             this.savesList.innerHTML = `
                 <div class="crash-status">
                     <span class="crash-icon">⚠️</span>
-                    <p class="crash-msg">Antigravity server crashed unexpectedly. Please restart to fully restore AI features.</p>
+                    <p class="crash-msg">Boggle-Gen History service is offline. Local board history may be unavailable.</p>
                 </div>
             `;
             return;

@@ -57,7 +57,7 @@ class SpinnerSet:
         elif dims == '6x8':
             return random.choices([6, 7, 8], weights=[25, 50, 25])[0]
         elif dims == '3x3x3':
-            return random.choice([6, 7, 8])
+            return random.choices([6, 7, 8], weights=[25, 50, 25])[0]
         else:
             return 3  # Default
     
@@ -105,8 +105,11 @@ class SpinnerSet:
                 weights=[82, 8, 2, 2, 2, 2, 2]
             )[0]
             if result == 'Mania':
-                # Pick a random letter for Mania mode
-                mania_letter = random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+                # User Request: 30% vowels, 70% consonants for Mania formats
+                if random.random() < 0.30:
+                    mania_letter = random.choice('AEIOU')
+                else:
+                    mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')
                 return f'{mania_letter} Mania'
             return result
 

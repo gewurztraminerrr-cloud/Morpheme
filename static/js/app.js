@@ -483,8 +483,14 @@ function setupModalListeners() {
     const genericModal = document.getElementById('generic-info-modal');
     const closeGenericBtn = document.getElementById('close-generic-modal');
     if (genericModal && closeGenericBtn) {
-        closeGenericBtn.onclick = () => genericModal.classList.add('hidden');
-        genericModal.onclick = (e) => { if (e.target === genericModal) genericModal.classList.add('hidden'); };
+        const closeModal = () => {
+            genericModal.classList.add('hidden');
+            window._hasPriorityModal = false; // Reset priority flag on close
+        };
+        closeGenericBtn.onclick = closeModal;
+        genericModal.onclick = (e) => { 
+            if (e.target === genericModal) closeModal(); 
+        };
     }
 }
 
@@ -876,15 +882,27 @@ window.getRatingColor = function (rating) {
     return '#a020f0'; // Super high (Purple)
 };
 
-window.showAlertModal = function (title, message) {
+window.showAlertModal = function (title, message, priority = false) {
     const modal = document.getElementById('generic-info-modal');
     const titleEl = document.getElementById('generic-modal-title');
     const bodyEl = document.getElementById('generic-modal-body');
+    
+    // If a priority modal is already showing (e.g. Inactivity Kick), 
+    // don't let a normal notice (e.g. Lobby Notice) overwrite it immediately.
+    if (window._hasPriorityModal && !priority) {
+        console.log('[Modal] Normal modal suppressed by priority modal.');
+        return;
+    }
+
     if (modal && titleEl && bodyEl) {
+        if (priority) window._hasPriorityModal = true;
         titleEl.textContent = title;
         bodyEl.innerHTML = `<p style="padding: 30px; text-align: center; font-size: 1.2rem; line-height: 1.6; color: var(--text-primary);">${message}</p>`;
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
+        
+        // Reset priority flag when modal is manually closed or after a long timeout
+        // (Close listener is in setupModalListeners)
     } else {
         alert(message);
     }

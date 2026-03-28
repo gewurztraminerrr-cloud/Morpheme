@@ -1430,14 +1430,25 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
             const fontSize = Math.floor(cellSize * 0.6) + 'px';
 
 
+            const is3D = rows === 6 && cols === 3;
+            if (is3D) {
+                boardContainer.style.display = 'none';
+                console.log(`[Replay] 3D Cube detected: Board visual hidden per user request.`);
+                return;
+            }
+
+            const flatBoard = round.board.flat();
+            
             boardContainer.style.display = 'grid';
             boardContainer.style.gridTemplateColumns = `repeat(${cols}, ${cellSize}px)`;
             boardContainer.style.gridTemplateRows = `repeat(${rows}, ${cellSize}px)`;
             boardContainer.style.gap = `${gap}px`;
 
-            boardContainer.innerHTML = round.board.flat().map(letter => `
-                <div class="review-cell" style="width: ${cellSize}px; height: ${cellSize}px; font-size: ${fontSize}">${letter}</div>
-            `).join('');
+            boardContainer.innerHTML = flatBoard.map((letter, i) => {
+                return `
+                    <div class="review-cell" style="width: ${cellSize}px; height: ${cellSize}px; font-size: ${fontSize}">${letter}</div>
+                `;
+            }).join('');
 
             console.log(`[Replay] Scaled ${cols}x${rows} board to ${cellSize}px cells`);
         }, 50);
@@ -1576,34 +1587,43 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
                     if (elapsed >= relWordTime || isNaN(relWordTime)) {
                         console.log(`[Review] Displaying word: ${word.word} (relative: ${relWordTime ? relWordTime.toFixed(1) : 'NaN'}s)`);
 
-                        // Insert at BOTTOM (Chronological: Order Found)
-                        if (walkthroughList) {
-                            walkthroughList.insertAdjacentHTML('beforeend', renderWord(word));
-                            // Optional: Scroll to follow?
-                            walkthroughList.scrollTop = walkthroughList.scrollHeight;
+                        try {
+                            // Insert at BOTTOM (Chronological: Order Found)
+                            if (walkthroughList) {
+                                walkthroughList.insertAdjacentHTML('beforeend', renderWord(word));
+                                walkthroughList.scrollTop = walkthroughList.scrollHeight;
+                            }
+
+                            currentScore += word.points;
+                            if (currentScoreEl) currentScoreEl.innerText = `${currentScore} pts`;
+
+                            // Highlight Path (ONLY FOR 2D BOARDS - 3D Replay board is hidden)
+                            const rows = round.board.length;
+                            const cols = (round.board[0] && Array.isArray(round.board[0])) ? round.board[0].length : 0;
+                            const is3D = rows === 6 && cols === 3;
+
+                            if (!is3D) {
+                                const path = findWordPath(round.board, word.word);
+                                if (path && boardContainer) {
+                                    const cells = boardContainer.querySelectorAll('.review-cell');
+                                    const gridCols = round.board[0].length;
+
+                                    // Clear and apply new highlight
+                                    cells.forEach(c => c.classList.remove('highlight'));
+                                    path.forEach((p, i) => {
+                                        const idx = p.row * gridCols + p.col;
+                                        setTimeout(() => {
+                                            if (cells[idx]) cells[idx].classList.add('highlight');
+                                        }, i * 40);
+                                    });
+                                }
+                            }
+                        } catch (err) {
+                            console.error("[Review] Error processing word in replay:", err);
+                        } finally {
+                            // IMPORTANT: Increment wordIndex even if rendering fails to prevent infinite loops!
+                            wordIndex++;
                         }
-
-                        currentScore += word.points;
-                        if (currentScoreEl) currentScoreEl.innerText = `${currentScore} pts`;
-
-
-                        // Highlight Path
-                        const path = findWordPath(round.board, word.word);
-                        if (path && boardContainer) {
-                            const cells = boardContainer.querySelectorAll('.review-cell');
-                            const cols = round.board[0].length;
-
-                            // Clear and apply new highlight
-                            cells.forEach(c => c.classList.remove('highlight'));
-                            path.forEach((p, i) => {
-                                const idx = p.row * cols + p.col;
-                                setTimeout(() => {
-                                    if (cells[idx]) cells[idx].classList.add('highlight');
-                                }, i * 40);
-                            });
-                        }
-
-                        wordIndex++;
                     } else {
                         break;
                     }

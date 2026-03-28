@@ -123,4 +123,9 @@ def logout():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5005)
+    try:
+        app.run(debug=True, host='0.0.0.0', port=5005, use_reloader=False)
+    except Exception as e:
+        print(f"Boggle-gen server startup error: {e}. Attempting fallback (No Reloader)...")
+        app.run(debug=True, host='0.0.0.0', port=5005, use_reloader=False)
+

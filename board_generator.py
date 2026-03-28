@@ -74,9 +74,17 @@ class BoardGenerator:
         # We now strictly respect the board_format passed in arguments
         
         # 0. Handle "Mania" without a prefix (e.g. from user dropdown selection)
-        if board_format == 'Mania':
-            mania_letter = random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+        if board_format.strip() == 'Mania':
+            # User Request: 30% vowels, 70% consonants for Mania formats
+            import random
+            if random.random() < 0.30:
+                mania_letter = random.choice('AEIOU')
+            else:
+                mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')
             board_format = f"{mania_letter} Mania"
+            # Update fmt_clean/fmt_lower for subsequent steps
+            fmt_clean = board_format.strip()
+            fmt_lower = fmt_clean.lower()
 
         # Try to generate valid board (max 15 attempts)
         max_attempts = 15 
@@ -98,7 +106,10 @@ class BoardGenerator:
             weights = self._get_weights(difficulty)
             
             # 1. Create base board
-            if board_format == 'Checkerboard':
+            fmt_clean = board_format.strip()
+            fmt_lower = fmt_clean.lower()
+            
+            if 'checkerboard' in fmt_lower:
                 board = self._create_checkerboard(rows, cols, weights)
             else:
                 board = self._create_normal_board(rows, cols, weights)
@@ -121,7 +132,7 @@ class BoardGenerator:
                 print(f"[BoardGen] ✓ Bonus word '{actual_bonus_word}' embedded successfully")
             
             # Now pick bonus_cell for 'Bonus Letter' format (AFTER bonus word path is known)
-            if board_format == 'Bonus Letter':
+            if 'bonus letter' in fmt_lower:
                 # Allow overlap with bonus word (User request: Bonus Word may randomly use Bonus Letter)
                 selectable_cells = [(r, c) for r in range(rows) for c in range(cols)]
                 if selectable_cells:
@@ -129,10 +140,10 @@ class BoardGenerator:
                 else:
                     # Fallback: pick any cell if the bonus word filled the entire board somehow
                     bonus_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
-                print(f"[BoardGen] ✓ Bonus Letter cell selected: {bonus_cell} (letter: {board[bonus_cell[0]][bonus_cell[1]]})")
+                print(f"[BoardGen] * Bonus Letter cell selected: {bonus_cell}")
             
             # Now set bonus_cell for 'Either/Or' format, creating the tile AFTER bonus word
-            if board_format == 'Either/Or':
+            if 'either/or' in fmt_lower or 'either' in fmt_lower:
                 # Allow overlap with bonus word
                 selectable_cells = [(r, c) for r in range(rows) for c in range(cols)]
                 if selectable_cells:
@@ -148,10 +159,10 @@ class BoardGenerator:
                 other = random.choices(others, weights=other_weights, k=1)[0]
                 pair = sorted([orig, other])
                 board[r][c] = f"{pair[0]}/{pair[1]}"
-                print(f"[BoardGen] ✓ Either/Or cell identified: {bonus_cell} (letters: {board[r][c]})")
+                print(f"[BoardGen] * Either/Or cell identified: {bonus_cell}")
             
             # 4. Apply extra effects
-            if board_format.endswith(' Mania'):
+            if 'mania' in fmt_lower:
                 mania_letter = board_format.split(' ')[0]
                 self._apply_mania_to_board(board, mania_letter, exclude_cells=bonus_cells_set)
             
@@ -161,7 +172,7 @@ class BoardGenerator:
             all_words = self._solve_board(board, dictionary, word_count_range, min_word_length)
             with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
                 f.write(f"[board_generator.py] generate_board: Solve complete for attempt {attempt} at {time.time()} ({len(all_words)} words)\n")
-            if board_format == 'Either/Or':
+            if 'either/or' in fmt_lower or 'either' in fmt_lower:
                 if self._has_either_or_ambiguity(board, dictionary):
                     print(f"[BoardGen] ✗ Either/Or ambiguity detected, retrying...")
                     continue
@@ -574,15 +585,17 @@ class BoardGenerator:
                         
                         visited.add((nr, nc))
                         
-                        # Handle Q/QU branching
-                        cell_letter = board[nr][nc]
+                        # Handle Either/Or and Q/QU branching
+                        cell_val = str(board[nr][nc])
+                        letters = cell_val.split('/') if '/' in cell_val else [cell_val]
                         
-                        # Branch 1: Treat as regular letter
-                        dfs(nr, nc, path + [(nr, nc)], visited, word + cell_letter)
-                        
-                        # Branch 2: Specific QU logic
-                        if cell_letter == 'Q':
-                            dfs(nr, nc, path + [(nr, nc)], visited, word + 'QU')
+                        for char in letters:
+                            # Branch 1: Treat as regular letter
+                            dfs(nr, nc, path + [(nr, nc)], visited, word + char)
+                            
+                            # Branch 2: Specific QU logic
+                            if char == 'Q':
+                                dfs(nr, nc, path + [(nr, nc)], visited, word + 'QU')
                         
                         visited.remove((nr, nc))
         
@@ -590,66 +603,83 @@ class BoardGenerator:
         for r in range(rows):
             for c in range(cols):
                 visited = {(r, c)}
-                start_letter = board[r][c]
+                cell_val = str(board[r][c])
+                letters = cell_val.split('/') if '/' in cell_val else [cell_val]
                 
-                # Branch 1
-                dfs(r, c, [(r, c)], visited, start_letter)
-                
-                # Branch 2
-                if start_letter == 'Q':
-                     dfs(r, c, [(r, c)], visited, 'QU')
+                for char in letters:
+                    # Branch 1
+                    dfs(r, c, [(r, c)], visited, char)
+                    
+                    # Branch 2
+                    if char == 'Q':
+                         dfs(r, c, [(r, c)], visited, 'QU')
         
         print(f"[BoardGen] Complete solver finished: found {len(found_words)} total words")
         return sorted(list(found_words))
-
+    
     def is_word_on_board(self, word, board):
-        """Check if a specific word exists on the board (ignoring dictionary)"""
-        rows, cols = len(board), len(board[0])
+        """Check if a word exists on the board (2D or 3D Surface)"""
+        if not board: return False
+        is_3d = (len(board) == 6 and isinstance(board[0], list) and isinstance(board[0][0], list))
         word = word.upper()
         
-        def dfs_find(r, c, index, visited):
-            if index >= len(word):
-                return True
+        def dfs_find(f, r, c, index, visited):
+            if index >= len(word): return True
             
-            # Check all 8 neighbors
-            for dr in [-1, 0, 1]:
-                for dc in [-1, 0, 1]:
-                    if dr == 0 and dc == 0:
-                        continue
-                    nr, nc = r + dr, c + dc
-                    if (0 <= nr < rows and 0 <= nc < cols and (nr, nc) not in visited):
-                        cell_val = str(board[nr][nc]).upper()
-                        letters = cell_val.split('/') if '/' in cell_val else [cell_val]
-                        
-                        for char in letters:
-                            match_len = 0
-                            if char == 'Q':
-                                if word.startswith('QU', index): match_len = 2
-                                elif word[index] == 'Q': match_len = 1
-                            elif word[index] == char:
-                                match_len = 1
-                            
-                            if match_len > 0:
-                                if dfs_find(nr, nc, index + match_len, visited | {(nr, nc)}):
-                                    return True
+            # Use appropriate neighbors based on dimension
+            neighbors = []
+            if not is_3d:
+                rows, cols = len(board), len(board[0])
+                for dr in [-1, 0, 1]:
+                    for dc in [-1, 0, 1]:
+                        if dr == 0 and dc == 0: continue
+                        nr, nc = r+dr, c+dc
+                        if 0 <= nr < rows and 0 <= nc < cols: neighbors.append((-1, nr, nc))
+            else:
+                neighbors = self._get_cube_neighbors(f, r, c)
+            
+            for nf, nr, nc in neighbors:
+                if (nf, nr, nc) in visited: continue
+                
+                cell_val = str(board[nf][nr][nc] if is_3d else board[nr][nc]).upper()
+                letters = cell_val.split('/') if '/' in cell_val else [cell_val]
+                
+                for char in letters:
+                    match_length = 0
+                    if char == 'Q' and word.startswith('QU', index): match_length = 2
+                    elif word.startswith(char, index): match_length = len(char)
+                    
+                    if match_length > 0:
+                        if index + match_length >= len(word): return True
+                        if dfs_find(nf, nr, nc, index + match_length, visited | {(nf, nr, nc)}):
+                            return True
             return False
 
         # Start from every cell
-        for r in range(rows):
-            for c in range(cols):
-                cell_val = str(board[r][c]).upper()
-                letters = cell_val.split('/') if '/' in cell_val else [cell_val]
-                for char in letters:
-                    match_len = 0
-                    if char == 'Q':
-                        if word.startswith('QU'): match_len = 2
-                        elif word.startswith('Q'): match_len = 1
-                    elif word.startswith(char):
-                        match_len = 1
-                    
-                    if match_len > 0:
-                        if dfs_find(r, c, match_len, {(r, c)}):
-                            return True
+        if not is_3d:
+            rows, cols = len(board), len(board[0])
+            for r in range(rows):
+                for c in range(cols):
+                    cell_val = str(board[r][c]).upper()
+                    # Initial check
+                    for char in (cell_val.split('/') if '/' in cell_val else [cell_val]):
+                        match_l = 0
+                        if char == 'Q' and word.startswith('QU', 0): match_l = 2
+                        elif word.startswith(char, 0): match_l = len(char)
+                        if match_l > 0:
+                            if match_l >= len(word): return True
+                            if dfs_find(-1, r, c, match_l, {(-1, r, c)}): return True
+        else:
+            for f in range(6):
+                for r in range(3):
+                    for c in range(3):
+                        cell_val = str(board[f][r][c]).upper()
+                        if cell_val == 'Q' and word.startswith('QU', 0):
+                            if 2 >= len(word): return True
+                            if dfs_find(f, r, c, 2, {(f, r, c)}): return True
+                        elif word.startswith(cell_val, 0):
+                            if len(cell_val) >= len(word): return True
+                            if dfs_find(f, r, c, len(cell_val), {(f, r, c)}): return True
         return False
 
     def can_word_hit_bonus(self, word, board, bonus_cell):
