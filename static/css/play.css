@@ -577,6 +577,8 @@ body.theme-light-brown .player-score-val {
     background: rgba(0, 0, 0, 0.2);
     padding: 12px;
     border-radius: 12px;
+    max-width: 95vw;
+    box-sizing: border-box;
 }
 
 :root {
@@ -3173,15 +3175,24 @@ input[type=range]::-moz-range-track {
 }
 
 /* 3D Cube Styles */
+:root {
+    --cube-face-size: 220px;
+    --cube-half-size: 110px; /* S/2 */
+    --cube-container-size: 320px;
+    --cube-cell-font-size: calc(var(--cube-face-size) * 0.175);
+}
+
 .cube-container {
     perspective: 1200px;
     perspective-origin: 50% 50%;
-    width: 320px;
-    height: 320px;
+    width: var(--cube-container-size);
+    height: var(--cube-container-size);
     margin: 20px auto;
     position: relative;
     user-select: none;
     display: block;
+    max-width: 95vw;
+    box-sizing: border-box;
 }
 
 .cube {
@@ -3195,8 +3206,8 @@ input[type=range]::-moz-range-track {
 
 .cube-face {
     position: absolute;
-    width: 220px;
-    height: 220px;
+    width: var(--cube-face-size);
+    height: var(--cube-face-size);
     border: 3px solid rgba(0, 0, 0, 0.4); 
     background: rgba(255, 255, 255, 0.98);
     display: grid;
@@ -3206,18 +3217,19 @@ input[type=range]::-moz-range-track {
     padding: 10px;
     box-sizing: border-box;
     backface-visibility: visible;
-    left: 50px;
-    top: 50px;
+    /* Center the face in the container */
+    left: calc((var(--cube-container-size) - var(--cube-face-size)) / 2);
+    top: calc((var(--cube-container-size) - var(--cube-face-size)) / 2);
     box-shadow: inset 0 0 40px rgba(0,0,0,0.1), 0 5px 25px rgba(0,0,0,0.2);
 }
 
-/* Face positions */
-.face-front  { transform: rotateY(  0deg) translateZ(110px); }
-.face-back   { transform: rotateY(180deg) translateZ(110px); }
-.face-right  { transform: rotateY( 90deg) translateZ(110px); }
-.face-left   { transform: rotateY(-90deg) translateZ(110px); }
-.face-top    { transform: rotateX( 90deg) translateZ(110px); }
-.face-bottom { transform: rotateX(-90deg) translateZ(110px); }
+/* Face positions using half-size for translation */
+.face-front  { transform: rotateY(  0deg) translateZ(var(--cube-half-size)); }
+.face-back   { transform: rotateY(180deg) translateZ(var(--cube-half-size)); }
+.face-right  { transform: rotateY( 90deg) translateZ(var(--cube-half-size)); }
+.face-left   { transform: rotateY(-90deg) translateZ(var(--cube-half-size)); }
+.face-top    { transform: rotateX( 90deg) translateZ(var(--cube-half-size)); }
+.face-bottom { transform: rotateX(-90deg) translateZ(var(--cube-half-size)); }
 
 .cube-cell {
     background: rgba(0, 0, 0, 0.03) !important;
@@ -3226,7 +3238,7 @@ input[type=range]::-moz-range-track {
     display: flex !important;
     align-items: center;
     justify-content: center;
-    font-size: 2.4rem !important;
+    font-size: var(--cube-cell-font-size) !important;
     font-weight: 900;
     width: auto !important; /* OVERRIDE .board-cell */
     height: auto !important; /* OVERRIDE .board-cell */

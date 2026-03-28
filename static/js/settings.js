@@ -18,6 +18,7 @@ function debounce(func, wait) {
         chat_font_size: 13,
         def_font_size: 15,
         board_size: 60,
+        cube_size: 220,
         highlight_typing: true,
         highlight_mouse: true,
         next_round_bell_enabled: true,
@@ -59,6 +60,21 @@ function debounce(func, wait) {
                     if (size > 65) playPage.classList.add('layout-huge-board');
                     else playPage.classList.remove('layout-huge-board');
                 }
+            }
+        }
+
+        // Cube Size (3D)
+        if (settings.cube_size) {
+            const size = parseInt(settings.cube_size);
+            if (!isNaN(size)) {
+                document.documentElement.style.setProperty('--cube-face-size', `${size}px`);
+                document.documentElement.style.setProperty('--cube-half-size', `${size / 2}px`);
+                document.documentElement.style.setProperty('--cube-container-size', `${size * 1.45}px`);
+                
+                const slider = document.getElementById('setting-cube-size');
+                if (slider) slider.value = size;
+                const label = document.getElementById('setting-cube-size-val');
+                if (label) label.textContent = `${size}px`;
             }
         }
 
@@ -316,6 +332,19 @@ function debounce(func, wait) {
             const preview = document.getElementById('preview-def-text');
             if (preview) preview.style.fontSize = `${val}px`;
             saveSettingDebounced('def_font_size', val);
+        });
+    }
+
+    const cubeSizeSlider = document.getElementById('setting-cube-size');
+    if (cubeSizeSlider) {
+        cubeSizeSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            document.documentElement.style.setProperty('--cube-face-size', `${val}px`);
+            document.documentElement.style.setProperty('--cube-half-size', `${val / 2}px`);
+            document.documentElement.style.setProperty('--cube-container-size', `${val * 1.45}px`);
+            const label = document.getElementById('setting-cube-size-val');
+            if (label) label.textContent = `${val}px`;
+            saveSettingDebounced('cube_size', val);
         });
     }
 
