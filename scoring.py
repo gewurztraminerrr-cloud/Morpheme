@@ -13,7 +13,7 @@ if not score_logger.handlers:
 LETTER_VALUES = {
     'A': 2, 'B': 4, 'C': 4, 'D': 3, 'E': 1, 'F': 5, 'G': 3, 'H': 5, 'I': 2, 'J': 10,
     'K': 6, 'L': 3, 'M': 4, 'N': 2, 'O': 2, 'P': 4, 'Q': 10, 'R': 2, 'S': 2, 'T': 2,
-    'U': 4, 'V': 5, 'W': 5, 'X': 9, 'Y': 5, 'Z': 9
+    'U': 4, 'V': 5, 'W': 5, 'X': 10, 'Y': 5, 'Z': 10
 }
 
 def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None, bonus_cell=None, board=None, return_details=False, **kwargs):
@@ -63,7 +63,7 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
 
     # Hidden Bonus Word (+Length points)
     bonus_word_score = 0
-    if bonus_word and word.upper() == bonus_word.upper():
+    if bonus_word and word.upper() == bonus_word.upper() and 'checkerboard' not in fmt_lower:
         bonus_word_score = length
         score += bonus_word_score
         
@@ -160,8 +160,9 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
                     return [(nf, nr, nc) for nf, nr, nc in res if 0 <= nf < 6 and 0 <= nr < 3 and 0 <= nc < 3]
 
             def find_through(f, r, c, index, has_hit_bonus, visited):
-                now_hit = has_hit_bonus or (f == bf and r == bx and c == by)
                 cell_val = str(board[f][r][c] if is_3d else board[r][c]).upper()
+                # Award hit if matches bx,by OR it's an Either/Or tile (contains '/')
+                now_hit = has_hit_bonus or (f == bf and r == bx and c == by) or ('/' in cell_val)
                 letters = cell_val.split('/') if '/' in cell_val else [cell_val]
                 
                 for char in letters:
@@ -194,9 +195,8 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
                         if find_through(-1, r, c, 0, False, {(-1, r, c)}):
                             used_bonus = True; break
 
-    # Final tally
+    # Final tally (Always award 3 extra points for special tiles, unless checkerboard)
     bonus_letter_score = 0
-    # USER REQUEST: No bonuses for Checkerboard matches
     if used_bonus and 'checkerboard' not in fmt_lower:
         bonus_letter_score = 3
         score += bonus_letter_score

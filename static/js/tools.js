@@ -1126,29 +1126,49 @@ async function renderProfile(user) {
     // Helper for rendering a dense data row for a round
     window.renderRoundGridItem = (round) => {
         const gameTypeLabel = round.game_type === 'split' ? 'Split' :
-            round.game_type === 'fcfs' ? 'FCFS' : 'Acc';
+            round.game_type === 'fcfs' ? 'FCFS' : 
+            round.game_type === '3d' ? 'Cube' : 'Acc';
         const typeClass = `history-type-${round.game_type}`;
 
         let miniBoardHTML = '';
         if (round.board && Array.isArray(round.board)) {
             const rows = round.board.length;
-            const cols = round.board[0].length;
-            const cellSize = 5; // tiny pixels
+            const firstRow = round.board[0];
+            const is3D = rows === 6 && Array.isArray(firstRow) && Array.isArray(firstRow[0]);
 
-            let gridCells = '';
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                    const letter = round.board[r][c];
-                    // Very tiny representation
-                    gridCells += `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); border-radius: 1px; font-size: 5px; color: rgba(255,255,255,0.5);">${letter}</div>`;
+            if (is3D) {
+                // Render the front face (Face 0)
+                const frontFace = round.board[0];
+                let cellsHTML = '';
+                for (let r = 0; r < 3; r++) {
+                    for (let c = 0; c < 3; c++) {
+                        const letter = frontFace[r][c] || '?';
+                        cellsHTML += `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(var(--accent-color-rgb), 0.2); border-radius: 1px; font-size: 8px; color: #fff; font-weight: 800;">${letter}</div>`;
+                    }
                 }
-            }
+                miniBoardHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 40px; height: 40px; border: 1px solid var(--accent-color); border-radius: 4px; overflow: hidden;">
+                        ${cellsHTML}
+                    </div>
+                `;
+            } else if (firstRow && Array.isArray(firstRow)) {
+                const cols = firstRow.length;
+                let gridCells = '';
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const letter = round.board[r] ? round.board[r][c] : '?';
+                        gridCells += `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); border-radius: 1px; font-size: 5px; color: rgba(255,255,255,0.5);">${letter}</div>`;
+                    }
+                }
 
-            miniBoardHTML = `
-                <div style="display: grid; grid-template-columns: repeat(${cols}, 1fr); gap: 1px; width: 40px; height: 40px; pointer-events: none;">
-                    ${gridCells}
-                </div>
-            `;
+                miniBoardHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(${cols}, 1fr); gap: 1px; width: 40px; height: 40px; pointer-events: none;">
+                        ${gridCells}
+                    </div>
+                `;
+            } else {
+                miniBoardHTML = '<span style="opacity:0.3; font-size: 0.7rem;">No Preview</span>';
+            }
         } else {
             miniBoardHTML = '<span style="opacity:0.3; font-size: 0.7rem;">No Preview</span>';
         }
@@ -1234,8 +1254,6 @@ async function renderProfile(user) {
     // Render Ratings Grid (32 setups)
     renderRatingsGrid(user.config_ratings || {}, user);
 
-
-
     setupProfileEditing(isOwner);
 }
 
@@ -1243,55 +1261,125 @@ async function renderProfile(user) {
 function findWordPath(board, word) {
     if (!board || !word) return null;
     const rows = board.length;
-    const cols = board[0].length;
-    const targetWord = word.toUpperCase();
+    const cols = (board[0] && Array.isArray(board[0])) ? board[0].length : 0;
+    const is3D = rows === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
 
+    if (is3D) {
+        return findWordPathOnCube(word, board);
+    }
+
+    const targetWord = word.toUpperCase();
     function dfs(r, c, index, visited) {
         if (index >= targetWord.length) return [];
-
         const letter = board[r][c].toUpperCase();
         let matchLen = 0;
-
-        // Boggle Logic: Q tile usually represents 'QU'
         if (targetWord[index] === letter) {
             matchLen = 1;
         } else if (letter === 'Q' && targetWord.substring(index, index + 2) === 'QU') {
             matchLen = 2;
         }
-
         if (matchLen === 0) return null;
-
-        // Final letter check
         if (index + matchLen === targetWord.length) {
             return [{ row: r, col: c }];
         }
-
         visited.add(`${r},${c}`);
-
-        // 8 directions
         for (let dr = -1; dr <= 1; dr++) {
             for (let dc = -1; dc <= 1; dc++) {
                 if (dr === 0 && dc === 0) continue;
                 const nr = r + dr;
                 const nc = c + dc;
-
                 if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !visited.has(`${nr},${nc}`)) {
                     const result = dfs(nr, nc, index + matchLen, visited);
-                    if (result) {
-                        return [{ row: r, col: c }, ...result];
-                    }
+                    if (result) return [{ row: r, col: c }, ...result];
                 }
             }
         }
-
         visited.delete(`${r},${c}`);
         return null;
     }
-
     for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
             const path = dfs(r, c, 0, new Set());
             if (path) return path;
+        }
+    }
+    return null;
+}
+
+function findWordPathOnCube(word, board) {
+    if (!word || !board || board.length !== 6) return null;
+    const upperWord = word.toUpperCase();
+
+    function getCubeNeighbors(f, r, c) {
+        const res = [];
+        for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+                if (dr === 0 && dc === 0) continue;
+                const nr = r + dr, nc = c + dc;
+                if (nr >= 0 && nr < 3 && nc >= 0 && nc < 3) res.push({ f, r: nr, c: nc });
+            }
+        }
+        if (f === 0) {
+            if (r === 0) res.push({ f: 4, r: 2, c }, { f: 4, r: 2, c: c - 1 }, { f: 4, r: 2, c: c + 1 });
+            if (r === 2) res.push({ f: 5, r: 0, c }, { f: 5, r: 0, c: c - 1 }, { f: 5, r: 0, c: c + 1 });
+            if (c === 0) res.push({ f: 2, r, c: 2 }, { f: 2, r: r - 1, c: 2 }, { f: 2, r: r + 1, c: 2 });
+            if (c === 2) res.push({ f: 3, r, c: 0 }, { f: 3, r: r - 1, c: 0 }, { f: 3, r: r + 1, c: 0 });
+        } else if (f === 1) {
+            if (r === 0) res.push({ f: 4, r: 0, c: 2 - c }, { f: 4, r: 0, c: 2 - (c - 1) }, { f: 4, r: 0, c: 2 - (c + 1) });
+            if (r === 2) res.push({ f: 5, r: 2, c: 2 - c }, { f: 5, r: 2, c: 2 - (c - 1) }, { f: 5, r: 2, c: 2 - (c + 1) });
+            if (c === 0) res.push({ f: 3, r, c: 2 }, { f: 3, r: r - 1, c: 2 }, { f: 3, r: r + 1, c: 2 });
+            if (c === 2) res.push({ f: 2, r, c: 0 }, { f: 2, r: r - 1, c: 0 }, { f: 2, r: r + 1, c: 0 });
+        } else if (f === 2) {
+            if (r === 0) res.push({ f: 4, r: c, c: 0 }, { f: 4, r: c - 1, c: 0 }, { f: 4, r: c + 1, c: 0 });
+            if (r === 2) res.push({ f: 5, r: 2 - c, c: 0 }, { f: 5, r: 2 - (c - 1), c: 0 }, { f: 5, r: 2 - (c + 1), c: 0 });
+            if (c === 0) res.push({ f: 1, r, c: 2 }, { f: 1, r: r - 1, c: 2 }, { f: 1, r: r + 1, c: 2 });
+            if (c === 2) res.push({ f: 0, r, c: 0 }, { f: 0, r: r - 1, c: 0 }, { f: 0, r: r + 1, c: 0 });
+        } else if (f === 3) {
+            if (r === 0) res.push({ f: 4, r: 2 - c, c: 2 }, { f: 4, r: 2 - (c - 1), c: 2 }, { f: 4, r: 2 - (c + 1), c: 2 });
+            if (r === 2) res.push({ f: 5, r: c, c: 2 }, { f: 5, r: c - 1, c: 2 }, { f: 5, r: c + 1, c: 2 });
+            if (c === 0) res.push({ f: 0, r, c: 2 }, { f: 0, r: r - 1, c: 2 }, { f: 0, r: r + 1, c: 2 });
+            if (c === 2) res.push({ f: 1, r, c: 0 }, { f: 1, r: r - 1, c: 0 }, { f: 1, r: r + 1, c: 0 });
+        } else if (f === 4) {
+            if (r === 0) res.push({ f: 1, r: 0, c: 2 - c }, { f: 1, r: 0, c: 2 - (c - 1) }, { f: 1, r: 0, c: 2 - (c + 1) });
+            if (r === 2) res.push({ f: 0, r: 0, c }, { f: 0, r: 0, c: c - 1 }, { f: 0, r: 0, c: c + 1 });
+            if (c === 0) res.push({ f: 2, r: 0, c: r }, { f: 2, r: 0, c: r - 1 }, { f: 2, r: 0, c: r + 1 });
+            if (c === 2) res.push({ f: 3, r: 0, c: 2 - r }, { f: 3, r: 0, c: 2 - (r - 1) }, { f: 3, r: 0, c: 2 - (r + 1) });
+        } else if (f === 5) {
+            if (r === 0) res.push({ f: 0, r: 2, c }, { f: 0, r: 2, c: c - 1 }, { f: 0, r: 2, c: c + 1 });
+            if (r === 2) res.push({ f: 1, r: 2, c: 2 - c }, { f: 1, r: 2, c: 2 - (c - 1) }, { f: 1, r: 2, c: 2 - (c + 1) });
+            if (c === 0) res.push({ f: 2, r: 2, c: 2 - r }, { f: 2, r: 2, c: 2 - (r - 1) }, { f: 2, r: 2, c: 2 - (r + 1) });
+            if (c === 2) res.push({ f: 3, r: 2, c: r }, { f: 3, r: 2, c: r - 1 }, { f: 3, r: 2, c: r + 1 });
+        }
+        return res.filter(n => n.f >= 0 && n.f < 6 && n.r >= 0 && n.r < 3 && n.c >= 0 && n.c < 3);
+    }
+
+    function dfs(f, r, c, index, currentPath, visited) {
+        if (index >= upperWord.length) return currentPath;
+        if (visited.has(`${f},${r},${c}`)) return null;
+        const cellValue = board[f][r][c].toUpperCase();
+        let matchLength = 0;
+        if (cellValue === 'Q') {
+            if (upperWord.substring(index, index + 2) === 'QU') matchLength = 2;
+            else if (upperWord[index] === 'Q') matchLength = 1;
+        } else if (upperWord[index] === cellValue) matchLength = 1;
+        if (matchLength === 0) return null;
+        const newVisited = new Set(visited);
+        newVisited.add(`${f},${r},${c}`);
+        const newPath = [...currentPath, { f, r, c }];
+        const nextIndex = index + matchLength;
+        if (nextIndex >= upperWord.length) return newPath;
+        for (const n of getCubeNeighbors(f, r, c)) {
+            const result = dfs(n.f, n.r, n.c, nextIndex, newPath, newVisited);
+            if (result) return result;
+        }
+        return null;
+    }
+    for (let f = 0; f < 6; f++) {
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+                const path = dfs(f, r, c, 0, [], new Set());
+                if (path) return path;
+            }
         }
     }
     return null;
@@ -1430,10 +1518,32 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
             const fontSize = Math.floor(cellSize * 0.6) + 'px';
 
 
-            const is3D = rows === 6 && cols === 3;
+            const is3D = rows === 6 && (Array.isArray(round.board[0]) && Array.isArray(round.board[0][0]) || Array.isArray(round.board[0]) && round.board[0].length === 3);
             if (is3D) {
-                boardContainer.style.display = 'none';
-                console.log(`[Replay] 3D Cube detected: Board visual hidden per user request.`);
+                boardContainer.style.display = 'grid';
+                boardContainer.style.gridTemplateColumns = `repeat(3, 1fr)`; 
+                boardContainer.style.gap = `20px`; 
+                boardContainer.style.padding = `20px`;
+                boardContainer.style.background = `rgba(0,0,0,0.2)`;
+                boardContainer.style.borderRadius = `15px`;
+
+                boardContainer.innerHTML = round.board.map((face, fIdx) => {
+                    let faceHTML = '';
+                    for (let r = 0; r < 3; r++) {
+                        for (let c = 0; c < 3; c++) {
+                            const val = face[r][c] || '?';
+                            faceHTML += `<div class="review-cell" style="width: 30px; height: 30px; font-size: 16px; border-radius: 4px;">${val}</div>`;
+                        }
+                    }
+                    return `
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                            <div style="font-size: 0.6rem; color: rgba(255,255,255,0.3); font-weight: 900; text-transform: uppercase;">Face ${fIdx}</div>
+                            <div style="display: grid; grid-template-columns: repeat(3, 30px); gap: 4px;">
+                                ${faceHTML}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
                 return;
             }
 
@@ -1597,12 +1707,28 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
                             currentScore += word.points;
                             if (currentScoreEl) currentScoreEl.innerText = `${currentScore} pts`;
 
-                            // Highlight Path (ONLY FOR 2D BOARDS - 3D Replay board is hidden)
+                            // Highlight Path
                             const rows = round.board.length;
-                            const cols = (round.board[0] && Array.isArray(round.board[0])) ? round.board[0].length : 0;
-                            const is3D = rows === 6 && cols === 3;
+                            const firstRow = round.board[0];
+                            const is3D = rows === 6 && Array.isArray(firstRow) && Array.isArray(firstRow[0]);
 
-                            if (!is3D) {
+                            if (is3D) {
+                                // 3D Cube Highlighting
+                                const path = findWordPathOnCube(word.word, round.board);
+                                if (path && boardContainer) {
+                                    const cells = boardContainer.querySelectorAll('.review-cell');
+                                    // Clear and apply new highlight
+                                    cells.forEach(c => c.classList.remove('highlight'));
+                                    path.forEach((p, i) => {
+                                        // Index is f*9 + r*3 + c
+                                        const idx = p.f * 9 + p.r * 3 + p.c;
+                                        setTimeout(() => {
+                                            if (cells[idx]) cells[idx].classList.add('highlight');
+                                        }, i * 40);
+                                    });
+                                }
+                            } else {
+                                // 2D Board Highlighting
                                 const path = findWordPath(round.board, word.word);
                                 if (path && boardContainer) {
                                     const cells = boardContainer.querySelectorAll('.review-cell');
@@ -1775,14 +1901,15 @@ function renderRatingsGrid(configRatings, user = null) {
     const filterDims = document.getElementById('rankings-filter-dims')?.value || 'all';
     const filterTime = document.getElementById('rankings-filter-time')?.value || 'all';
 
-    const modes = ['accumulative', 'fcfs', 'split'];
-    const boards = ['4x4', '4x6', '5x7', '6x8'];
-    const accTimes = [45, 180, 600];
-    const otherTimes = [45, 180];
+    const modes = ['accumulative', 'fcfs', 'split', '3d'];
+    const boards = ['4x4', '4x6', '5x7', '6x8', '3x3x3'];
+    const accTimes = [45, 180, 300, 600, 86400];
+    const otherTimes = [45, 180, 300, 600];
 
     const formatTimeShort = (s) => {
         if (s === 45) return '45s';
         if (s === 180) return '3m';
+        if (s === 300) return '5m';
         if (s === 600) return '10m';
         if (s === 86400) return '24h';
         return s + 's';
@@ -1793,12 +1920,19 @@ function renderRatingsGrid(configRatings, user = null) {
     modes.forEach(mode => {
         if (filterMode !== 'all' && mode !== filterMode) return;
 
-        const times = (mode === 'accumulative') ? accTimes : otherTimes;
+        const times = (mode === 'accumulative' || mode === '3d') ? accTimes : otherTimes;
         boards.forEach(board => {
             if (filterDims !== 'all' && board !== filterDims) return;
 
+            // COMPATIBILITY FILTER: 3x3x3 is for Cube ONLY; traditional boards for others
+            if (mode === '3d' && board !== '3x3x3') return;
+            if (mode !== '3d' && board === '3x3x3') return;
+
             times.forEach(time => {
                 if (filterTime !== 'all' && String(time) !== filterTime) return;
+
+                // COMPATIBILITY FILTER: No 45s or 24h for Cube
+                if (mode === '3d' && (time === 45 || time === 86400)) return;
 
                 const configKey = `${mode}|${board}|${time}`;
                 const configData = ratings[configKey] || { rating: 1200, avg_score: 0, avg_perf: 0 };
@@ -1812,7 +1946,7 @@ function renderRatingsGrid(configRatings, user = null) {
                 box.innerHTML = `
                     <div class="rating-box-swatch" style="background: ${rColor};"></div>
                     <div class="rating-box-info" style="flex: 1;">
-                        <div class="rating-box-mode" style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800;">${mode}</div>
+                        <div class="rating-box-mode" style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800;">${mode === '3d' ? 'CUBE' : mode}</div>
                         <div class="rating-box-config" style="font-weight: 700;">${board} | ${formatTimeShort(time)}</div>
                         <div style="display: flex; gap: 10px; margin-top: 4px; font-size: 0.65rem; color: rgba(255,255,255,0.3); font-weight: 700;">
                            <span>AVG S: <span style="color: #fff;">${configData.avg_score}</span></span>

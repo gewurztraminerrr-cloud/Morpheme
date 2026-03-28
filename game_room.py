@@ -90,9 +90,10 @@ class GameRoom:
     # Spinner parameters
     current_min_length: int = 3
     current_board_format: str = 'Normal'
-    current_word_count_range: str = '50-200'
+    current_word_count_range: str = '100-200'
     current_dictionary: str = 'NWL'
     current_difficulty: str = 'Normal'
+    current_bonus_word_length: int = 0
     spinner_params: Dict = field(default_factory=dict)
     
     # Next round pre-generation (for Accumulative timing)
@@ -727,8 +728,11 @@ class GameRoom:
         # Check milestones in order (most urgent first)
         if time_remaining <= 0:
             return 'start'
-        elif not self.spinner_params_generated and not self.board_search_started:
-            # Trigger both Spinner Generation and Board Search immediately on round end
+        elif time_remaining <= 15:
+            if not self.board_search_started:
+                return 'search'
+        elif not self.spinner_params_generated:
+            # Trigger Spinner Generation as soon as intermission begins (if not already done)
             return 'spinner'
         
         return None
@@ -792,13 +796,15 @@ class GameRoom:
                     expected = (p.rating / reg_rating_sum) * reg_score_sum
                     p.performance_efficiency = p.score / expected if expected > 0 else 0
                     max_pe = max(max_pe, p.performance_efficiency)
-                    # Remarkable threshold: Only based on unusually high PE (PE >= 1.5)
-                    p.has_exceptional_round = multiple_active and p.performance_efficiency >= 1.5
+                    # Exceptional Round: 
+                    # 1. Beating your fair share significantly (PE >= 1.5)
+                    # 2. Or pure excellence (Score >= 100) even if solo/average
+                    p.has_exceptional_round = (multiple_active and p.performance_efficiency >= 1.5) or (p.score >= 100)
             else:
                 for p in reg_players:
                     p.performance_efficiency = 1.0
                     max_pe = max(max_pe, 1.0)
-                    p.has_exceptional_round = False # PE is 1.0 (Average)
+                    p.has_exceptional_round = (p.score >= 100)
 
             # 2. Guests Pool
             for p in guest_players:
@@ -956,19 +962,21 @@ class GameRoom:
                     print(f"[GameRoom] Skipping DB history for inactive player {player.username} in round {self.current_round}")
                     continue
 
-                # Persist Rating to DB - SKIP FOR SOLO AND UNRANKED
-                is_ranked_mode = not self.is_solo and not is_500plus
+                # Persist Rating to DB - ALLOW SOLO FOR PRIVATE AND CUBE
+                is_ranked_mode = (not self.is_solo or self.is_private or self.game_type == '3d') and not is_500plus
                 if conn and player.user_id > 0 and is_ranked_mode:
                     try:
                         # 1. Update Global Profile Rating
-                        # 2. Update Config-Specific Rating
-                        dims = self.board_dimensions
-                        config_key = f"{self.game_type}|{dims}|{self.time_limit}"
+                        # 2. Update Config-Specific Rating (GUARDED BY RANKED MODE)
+                        if is_ranked_mode:
+                            dims = self.board_dimensions
+                            config_key = f"{self.game_type.replace('solo_', '')}|{dims}|{self.time_limit}"
+                            
+                            conn.execute('''
+                                INSERT INTO user_ratings (user_id, config_key, rating) VALUES (?, ?, ?)
+                                ON CONFLICT(user_id, config_key) DO UPDATE SET rating = rating + ?
+                            ''', (player.user_id, config_key, player.rating, actual_db_delta))
                         
-                        conn.execute('''
-                            INSERT INTO user_ratings (user_id, config_key, rating) VALUES (?, ?, ?)
-                            ON CONFLICT(user_id, config_key) DO UPDATE SET rating = rating + ?
-                        ''', (player.user_id, config_key, player.rating, actual_db_delta))
                         
                         # Competitive if at least 2 registered humans participated (EXCLUDE BOTS as human equivalents)
                         # EXCLUDE MID-ROUND JOINERS from competition pool
@@ -984,7 +992,7 @@ class GameRoom:
                             # Still update in-memory but skip global rank if not competitive or not normal
                             print(f"[GameRoom] DB SKIP: User {player.username} global rating update (Competitive: {is_competitive}, Format: {board_format})")
                         
-                        if is_competitive and player.score > 0 and board_format == 'Normal':
+                        if is_competitive and player.score > 0 and board_format in ['Normal', 'Cube']:
                              # Find max score among ALL participants (even bots) to see if this human actually won
                              max_all_score = max([p.score for p in all_involved]) if all_involved else 0
                              if player.score == max_all_score:
@@ -1016,7 +1024,7 @@ class GameRoom:
         
         # Check if intermission has expired
         if self.state == 'intermission' and self.time_remaining == 0:
-            if self.game_type in ['accumulative', 'solo_accumulative', 'fcfs', 'split']:
+            if self.game_type in ['accumulative', 'solo_accumulative', 'fcfs', 'split', 'standard', '3d']:
                 # Signal that new round should start
                 # This will be handled by RoomManager
                 return True
@@ -1388,21 +1396,21 @@ class RoomManager:
             # Get bonus word from dictionary
             fmt = room.spinner_params['board_format']
             wc_range = room.spinner_params.get('word_count_range', (0, 0))
+            fmt = room.spinner_params['board_format']
+            wc_range = room.spinner_params.get('word_count_range', '100-200')
             wc_tuple = room._get_wc_tuple(wc_range)
-            is_500plus = wc_tuple[0] >= 500
             
-            if 'Mania' in fmt or fmt == 'Checkerboard' or fmt == 'Either/Or' or 'Bonus Letter' in fmt or is_500plus:
-                if is_500plus:
-                    print(f"[RoomManager] 500+ Mode: Forcing Normal format and no bonus word")
-                    room.spinner_params['board_format'] = 'Normal'
-                    fmt = 'Normal'
-                else:
-                    print(f"[RoomManager] {fmt} format selected - disabling bonus word")
-                bonus_word = ''
-            else:
-                print(f"[RoomManager] Getting bonus word (length={room.spinner_params['bonus_word_length']}, dict={room.spinner_params['dictionary']})")
-                bonus_word = self._get_bonus_word(room.spinner_params['bonus_word_length'], 
-                                                  room.spinner_params['dictionary'])
+            # ALWAYS get a bonus word based on the spinner length
+            bonus_word = self._get_bonus_word(room.spinner_params['bonus_word_length'], 
+                                              room.spinner_params['dictionary'])
+            
+            # User Request: NO BONUS WORDS on Checkerboard boards
+            if 'checkerboard' in str(room.spinner_params.get('board_format', '')).lower():
+                bonus_word = "" # Explicitly clear it for this format
+                room.spinner_params['bonus_word_length'] = 0
+                room.current_bonus_word_length = 0
+                print(f"[GameRoom] FORCED bonus word to 0 for Checkerboard format")
+                
             room.bonus_word = bonus_word
             with open(log_path, 'a') as f:
                 f.write(f"[START_ROUND] Calling generate_board for {room_id} (bonus={bonus_word})\n")
@@ -1444,12 +1452,19 @@ class RoomManager:
             room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
             room.current_dictionary = room.spinner_params.get("dictionary", "NWL")
             room.current_difficulty = room.spinner_params.get("difficulty", "Normal")
+            room.current_bonus_word_length = room.spinner_params.get("bonus_word_length", 0)
+            
+            # Clear stale params so they don't leak into the next intermission display prematurely
+            room.spinner_params = {}
+            room.spinner_params_generated = False
             
             # ATOMICITY FIX: Everyone in the room at start_round is NO LONGER mid-round joined
             for p in room.players:
                 p.joined_mid_round = False
-            # room.state = 'active'  <-- MOVED TO END
-            # room.round_start_time = time.time() <-- MOVED TO END
+            
+            # SET ACTIVE STATE LAST to ensure all parameters are written before polling returns
+            room.state = 'active'
+            print(f"[RoomManager] Round {room.current_round} started and state set to ACTIVE")
             
             # Default custom end time
             room.custom_end_time = 0
@@ -1481,40 +1496,10 @@ class RoomManager:
                 player.performance_efficiency = 0.0
                 
             # Daily Room Logic (>= 24h) - Reset at Midnight
-            # LOGIC FIX: We must process persistence BEFORE clearing data
             if room.time_limit >= 7200 and room.current_round > 1:
-                print(f"[RoomManager] Daily Reset: Updating persistence in room {room_id}")
+                self._apply_daily_reset(room)
                 
-                # Snapshot history if not done
-                if not room.previous_day_history:
-                    for p in room.players:
-                        room.previous_day_history[str(p.user_id)] = {
-                            'username': p.username,
-                            'found_words': [w['word'] for w in p.previous_submitted_words]
-                        }
-
-                # DO NOT WIPE PLAYERS - Just reset their scores/words for the new day
-                # This prevents the client-side "kicked" logic from triggering.
-                # However, we still archive them to past_players for retrieval.
-                for p in room.players:
-                    room.past_players[str(p.user_id)] = p
-                
-                # We specifically DO NOT set room.players = [] here anymore
-                # The reset loop at line 1244 already cleared player.submitted_words etc.
-                room.spectators = []
-            
             # Clear FCFS global list
-            room.fcfs_found_words.clear()
-            
-            # Only align to midnight if it's genuinely a long-duration room
-            if room.time_limit >= 7200:
-                now = datetime.datetime.now()
-                now_dt = datetime.datetime.now()
-                # Next midnight
-                midnight = (now_dt + datetime.timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-                delta = (midnight - now_dt).total_seconds()
-                room.custom_end_time = time.time() + delta
-                print(f"[RoomManager] Daily room: aligned to next midnight ({midnight})")
                 
             # Clear FCFS global list
             room.fcfs_found_words.clear()
@@ -1565,109 +1550,153 @@ class RoomManager:
             # Always reset the flag, even if board generation fails
             room.starting_round = False
     
+    def _apply_daily_reset(self, room):
+        """Perform daily cleanup and midnight alignment for 24h rooms"""
+        print(f"[RoomManager] Daily Reset: Clearing ALL players and spectators for room {room.room_id}")
+        
+        # Store existing players for rating reference
+        for p in room.players:
+            room.past_players[str(p.user_id)] = p
+        
+        # CLEAR THE LISTS: Forces all clients to re-join
+        room.players = []
+        room.spectators = []
+        
+        # RE-ALIGN TO NEXT MIDNIGHT
+        now_dt = datetime.datetime.now()
+        midnight = (now_dt + datetime.timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        delta = (midnight - now_dt).total_seconds()
+        room.custom_end_time = time.time() + delta
+        print(f"[RoomManager] Daily room: re-aligned to next midnight ({midnight})")
+
     def generate_spinner_params(self, room_id):
         """Generate Spinner Set parameters for next round (called immediately on round end)"""
-        print(f"[RoomManager] Generating Spinner Set parameters and starting board search for room {room_id}")
         room = self.get_room(room_id)
         if not room:
             print(f"[RoomManager] ERROR: Room {room_id} not found")
             return False
+            
+        # TWO-STAGE GUARD: Check if already done OR if currently in progress
+        if getattr(room, 'spinner_params_generated', False) or getattr(room, 'spinner_params_loading', False):
+            return True
+            
+        # ATOMICITY GUARD: Set loading flag immediately
+        room.spinner_params_loading = True
+        print(f"[RoomManager] Starting generation of Spinner Set parameters for room {room_id}")
         
-        # Generate spinner parameters for next round
-        is_24h = room.time_limit >= 7200
-        room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h)
-        # Note: spinner_params_generated = True is now set AFTER board search completes in start_board_search
-        
-        print(f"[RoomManager] Spinner params generated: {room.spinner_params}. Initiating Board Search...")
-        return self.start_board_search(room_id)
+        try:
+            # Generate spinner parameters for next round
+            is_24h = room.time_limit >= 7200
+            new_params = SpinnerSet.generate_params(room.board_dimensions, is_24h)
+            
+            # ATOMIC SWAP: New params applied first, then final flag set
+            room.spinner_params = new_params
+            room.spinner_params_generated = True
+            
+            print(f"[RoomManager] Spinner params generated and assigned: {room.spinner_params}.")
+            return True
+        finally:
+            room.spinner_params_loading = False
     
     def start_board_search(self, room_id):
         """Start board search using Spinner Set parameters (called at 15s remaining)"""
-        print(f"[RoomManager] Starting board search at 15s remaining for room {room_id}")
         room = self.get_room(room_id)
         if not room:
             print(f"[RoomManager] ERROR: Room {room_id} not found")
             return False
-        
+            
+        # TWO-STAGE GUARD: Check if already done OR if currently in progress
+        if getattr(room, 'board_search_started', False) or getattr(room, 'board_search_loading', False):
+            return True
+            
         if not room.spinner_params_generated:
-            print(f"[RoomManager] WARNING: Spinner params not generated yet, generating now")
-            self.generate_spinner_params(room_id)
+            print(f"[RoomManager] WARNING: Spinner params not generated yet - cannot start search.")
+            return False
+            
+        # ATOMICITY GUARD: Set loading flag immediately
+        room.board_search_loading = True
+        print(f"[RoomManager] Starting board search process at 15s remaining for room {room_id}")
         
-        fmt = room.spinner_params['board_format']
-        wc_range = room.spinner_params.get('word_count_range', (0, 0))
-        wc_tuple = room._get_wc_tuple(wc_range)
-        is_500plus = wc_tuple[0] >= 500
-        
-        # User Request: "Only apply Mania or Checkerboard on their own: Do not apply a bonus word if the Format is one of these."
-        # User Request: "On 500+ boards, automatically set the Format to Normal, and do not place a bonus word into the board"
-        if 'Mania' in fmt or fmt == 'Checkerboard' or fmt == 'Either/Or' or 'Bonus Letter' in fmt or is_500plus:
-            if is_500plus:
-                print(f"[RoomManager] 500+ Mode: Forcing Normal format and no bonus word")
-                room.spinner_params['board_format'] = 'Normal'
-                fmt = 'Normal'
-            else:
-                print(f"[RoomManager] {fmt} format selected - disabling HIDDEN bonus word (but keeping format)")
-            bonus_word = ''
-        else:
-            print(f"[RoomManager] Getting bonus word (length={room.spinner_params['bonus_word_length']}, dict={room.spinner_params['dictionary']})")
+        try:
+            fmt = room.spinner_params['board_format']
+            wc_range = room.spinner_params.get('word_count_range', '100-200')
+            wc_tuple = room._get_wc_tuple(wc_range)
+            
+            # ALWAYS get a bonus word based on the spinner length
             bonus_word = self._get_bonus_word(room.spinner_params['bonus_word_length'], 
                                               room.spinner_params['dictionary'])
-        room.next_round_bonus = bonus_word
-        print(f"[RoomManager] Bonus word selected: '{bonus_word}'")
-        
-        # If 500+, CLEAR THE CURRENT BOARD NOW so user doesn't see a "deceptive" board
-        # while optimization is running in the background.
-        if is_500plus:
-            print(f"[RoomManager] 500+ detected: Clearing active board ahead of time")
-            rows_num, cols_num = map(int, room.board_dimensions.split('x'))
-            room.board = [['' for _ in range(cols_num)] for _ in range(rows_num)]
-            room.all_words = []
-            room.complete_words = []
-        
-        room.board_search_started = True
-        
-        # Start board generation in background thread
-        def generate_in_background():
-            print(f"[RoomManager] Background board generation started...")
-            board, all_words, bonus_cell = self.board_generator.generate_board(
-                room.board_dimensions,
-                bonus_word,
-                room.spinner_params['word_count_range'],
-                room.spinner_params['dictionary'],
-                room.spinner_params['board_format'],
-                room.spinner_params['min_word_length'],
-                room.spinner_params['difficulty']
-            )
             
-            if board is None:
-                print(f"[RoomManager] ERROR: Board generation failed!")
-                room.board_search_started = False # Reset to allow retry
-                return
+            # User Request: NO BONUS WORDS on Checkerboard boards
+            if 'checkerboard' in str(room.spinner_params.get('board_format', '')).lower():
+                bonus_word = "" # Explicitly clear it for this format
+                room.spinner_params['bonus_word_length'] = 0
+                room.next_round_bonus_length = 0
+                print(f"[GameRoom] FORCED bonus word length to 0 for Checkerboard search")
+                
+            room.next_round_bonus = bonus_word
+            print(f"[RoomManager] Bonus word selected: '{bonus_word}'")
             
-            room.next_round_board = board
-            room.next_round_words = all_words
-            room.next_round_bonus_cell = bonus_cell
+            # If 500+, CLEAR THE CURRENT BOARD NOW so user doesn't see a "deceptive" board
+            # while optimization is running in the background.
+            if is_500plus:
+                print(f"[RoomManager] 500+ detected: Clearing active board ahead of time")
+                rows_num, cols_num = map(int, room.board_dimensions.split('x'))
+                room.board = [['' for _ in range(cols_num)] for _ in range(rows_num)]
+                room.all_words = []
+                room.complete_words = []
             
-            # User requirement: "When you show the Spinner Set Popup, that means you have found a board."
-            # So we only set generated=True AFTER the background thread succeeds!
-            room.spinner_params_generated = True
+            room.board_search_started = True
             
-            print(f"[RoomManager] Board found and params revealed! Words: {len(all_words) if all_words else 0}")
-        
-        thread = threading.Thread(target=generate_in_background, daemon=True)
-        thread.start()
-        return True
+            # Start board generation in background thread
+            def generate_in_background():
+                print(f"[RoomManager] Background board generation started...")
+                board, all_words, bonus_cell = self.board_generator.generate_board(
+                    room.board_dimensions,
+                    bonus_word,
+                    room.spinner_params['word_count_range'],
+                    room.spinner_params['dictionary'],
+                    room.spinner_params['board_format'],
+                    room.spinner_params['min_word_length'],
+                    room.spinner_params['difficulty']
+                )
+                
+                if board is None:
+                    print(f"[RoomManager] ERROR: Board generation failed!")
+                    room.board_search_started = False # Reset to allow retry
+                    return
+                
+                room.next_round_board = board
+                room.next_round_words = all_words
+                room.next_round_bonus_cell = bonus_cell
+                
+                # User requirement: "When you show the Spinner Set Popup, that means you have found a board."
+                # So we only set generated=True AFTER the background thread succeeds!
+                room.spinner_params_generated = True
+                
+                print(f"[RoomManager] Board found and params revealed! Words: {len(all_words) if all_words else 0}")
+            
+            thread = threading.Thread(target=generate_in_background, daemon=True)
+            thread.start()
+            return True
+        finally:
+            room.board_search_loading = False
     
     
     def start_next_round(self, room_id):
         """Start next round with pre-generated board (called at 0s remaining)"""
+        room = self.get_room(room_id)
+        if not room:
+            print(f"[RoomManager] ERROR: Room {room_id} not found")
+            return False
+            
+        if getattr(room, 'starting_round', False):
+            print(f"[RoomManager] Round start already in progress for room {room_id}, skipping duplicate call.")
+            return False
+            
+        room.starting_round = True
         print(f"[RoomManager] start_next_round called for room {room_id}")
         
         try:
-            room = self.get_room(room_id)
-            if not room:
-                print(f"[RoomManager] ERROR: Room {room_id} not found")
-                return False
             
             print(f"[RoomManager] checking fallback for room {room_id} (game={room.game_type})")
             # Check if board is ready
@@ -1725,22 +1754,22 @@ class RoomManager:
             # Use pre-generated board and words
             room.board = room.next_round_board
             room.all_words = room.next_round_words
-            room.bonus_word = room.next_round_bonus
-            room.bonus_cell = room.next_round_bonus_cell
-            
-            # Start the round
-            room.current_round += 1
-            room.state = 'active'
+            # Snapshot parameters for the round
             room.current_min_length = room.spinner_params.get('min_word_length', 3)
             room.current_board_format = room.spinner_params.get('board_format', 'Normal')
             room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
             room.current_dictionary = room.spinner_params.get("dictionary", "NWL")
             room.current_difficulty = room.spinner_params.get("difficulty", "Normal")
+            room.current_bonus_word_length = room.spinner_params.get("bonus_word_length", 0)
+            
+            # ATOMICITY FIX: SET ACTIVE STATE NOW that parameters are fully populated
+            room.state = 'active'
             room.round_start_time = time.time()
             
             # Reset flags for the NEW round's next intermission
             room.spinner_params_generated = False
             room.board_search_started = False
+            room.spinner_params = {} # CLEAR STALE PARAMS
             
             # SPLIT POINTS RANDOMIATION
             if room.game_type == 'split':
@@ -1771,6 +1800,7 @@ class RoomManager:
                 player.joined_mid_round = False
                 player.has_exceptional_round = False
                 player.performance_efficiency = 0.0
+            print(f"[RoomManager] Round {room.current_round} started with pre-generated board!")
 
             # Generate AI turns AFTER player reset so bot pre-generated words are not immediately erased.
             room.generate_ai_turns()
@@ -1779,21 +1809,7 @@ class RoomManager:
                 
             # PERSISTENCE: If this is a 24h room, clear the player list for the new day
             if room.time_limit >= 7200:
-                print(f"[RoomManager] Daily Reset: Clearing ALL players and spectators for a fresh start in room {room_id}")
-                # Store existing players in past_players for rating reference if needed
-                for p in room.players:
-                    room.past_players[str(p.user_id)] = p
-                
-                # Full CLEAR: Forces all clients to re-join on their next poll/heartbeat
-                room.players = []
-                room.spectators = []
-
-                # RE-ALIGN TO NEXT MIDNIGHT (Crucial for loop)
-                now_dt = datetime.datetime.now()
-                midnight = (now_dt + datetime.timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-                delta = (midnight - now_dt).total_seconds()
-                room.custom_end_time = time.time() + delta
-                print(f"[RoomManager] Daily room: re-aligned to next midnight ({midnight})")
+                self._apply_daily_reset(room)
                 
             # Clear FCFS global list
             if hasattr(room, 'fcfs_found_words'):
@@ -1826,6 +1842,9 @@ class RoomManager:
             print(f"[RoomManager] CRITICAL ERROR in start_next_round: {e}")
             traceback.print_exc()
             return False
+        finally:
+            if room:
+                room.starting_round = False
     
     def _get_bonus_word(self, length, dictionary):
         """Get a bonus word of specified length"""
@@ -1871,8 +1890,10 @@ class RoomManager:
             wc_tuple = room._get_wc_tuple(wc_range)
             is_500plus = wc_tuple[0] >= 500
             
-            if board_format != 'Normal' or is_500plus or room.game_type == '3d':
-                 print(f"[RoomManager] SKIPPING history save for room {room.room_id} - format '{board_format}', 500+, or 3D is unranked.")
+            # Board formats (Normal, Cube, Mania, etc.) are allowed for history
+            # (Validation for rank/stats can be done at display time if needed)
+            if is_500plus:
+                 print(f"[RoomManager] SKIPPING history save for room {room.room_id} - 500+ is unranked.")
                  conn.close()
                  return
                  

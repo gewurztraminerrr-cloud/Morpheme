@@ -41,28 +41,57 @@ class BoardGenerator:
         Generate a valid board that meets word count requirements.
         Uses cached optimal method or tests both formats on first use.
         Only counts words >= min_word_length.
-        Returns: (board, all_words) or None if unable to generate
+        Returns: (board, all_words, bonus_cell)
         """
         import time
         with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
             f.write(f"[board_generator.py] generate_board ENTERED for {dimensions} at {time.time()}\n")
+            
+        # Initialize defaults to prevent NameError in return paths
+        board = None
+        all_words = []
+        bonus_cell = None
+        word_count = 0
+        
         # FOR UNCONDITIONAL UNIQUENESS: Re-seed random from system randomness
         # This breaks any process-level determinism from forks/seeds
         import random
         random.seed()
         
+        # For unconditional Checkerboard pattern accuracy (User Request: No bonus words on Checkerboard)
+        if 'checkerboard' in str(board_format).lower():
+            bonus_word = ""
+            actual_bonus_word = ""
+            print(f"[BoardGen] FORCE CLEAR bonus word for Checkerboard format")
+            
         print(f"[BoardGen] generate_board called: {dimensions}, bonus={bonus_word}, range={word_count_range}, format={board_format}, dict={dictionary}")
         
         
         # 0. Handle 3x3x3 Cube Generation
         if dimensions == '3x3x3':
-            print(f"[BoardGen] Generating 3x3x3 Cube Board (No Point Range Restriction)...")
-            board = self._create_cube_board(difficulty)
-            # Embed bonus word if any
-            if bonus_word:
-                self._embed_bonus_word_cube(board, bonus_word)
-            all_words = self._solve_cube_board(board, dictionary, min_word_length)
-            return board, all_words, None
+            min_words, max_words = self._parse_word_count_range(word_count_range)
+            print(f"[BoardGen] Generating 3x3x3 Cube Board (Iterative Search: {min_words}-{max_words})...")
+            
+            for attempt in range(1, 21): # Up to 20 attempts for Cube
+                board = self._create_cube_board(difficulty)
+                if bonus_word:
+                    self._embed_bonus_word_cube(board, bonus_word)
+                
+                # Enforce vowel minimum (33%)
+                self._enforce_vowel_minimum(board, self._get_weights(difficulty))
+                
+                all_words = self._solve_cube_board(board, dictionary, min_word_length)
+                word_count = len(all_words)
+                
+                if min_words <= word_count <= max_words:
+                    print(f"[BoardGen] ✓ Cube Board valid on attempt {attempt} (Words: {word_count})")
+                    return board, all_words, None
+                
+                # If we are failing, maybe try adjusting weights?
+                # Optimization: if too few words, keep trying.
+                if attempt == 20:
+                    print(f"[BoardGen] WARNING: Cube generation hit max attempts, returning best effort (Words: {word_count})")
+                    return board, all_words, None
 
         # Parse word count requirements
         with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
@@ -91,9 +120,35 @@ class BoardGenerator:
 
         # 0.1 Handle 500+ mode (Iterative Optimization)
         if min_words >= 500:
-            print(f"[BoardGen] Entering 500+ Mode (Iterative Optimization)")
+            print(f"[BoardGen] Entering 500+ Mode (Iterative Optimization with Bonus Word)")
+            fmt_clean = board_format.strip()
+            fmt_lower = fmt_clean.lower()
+            is_checkerboard_fmt = 'checkerboard' in fmt_lower
+            
             rows, cols = map(int, dimensions.split('x'))
-            board = self._create_2000plus_board(rows, cols, dictionary)
+            if is_checkerboard_fmt:
+                board = self._create_checkerboard(rows, cols, self._get_weights(difficulty))
+                # Now optimize it while FOLLOWING the pattern
+                board = self._create_2000plus_board(rows, cols, dictionary, is_checkerboard=True)
+                # NO BONUS WORD EMBEDDING for Checkerboard
+                bonus_word = None
+            else:
+                board = self._create_2000plus_board(rows, cols, dictionary)
+            
+            # Embed bonus word into the dense board
+            bonus_cells_set = set()
+            if bonus_word and not is_checkerboard_fmt:
+                path = self._embed_bonus_word(board, bonus_word, is_checkerboard=is_checkerboard_fmt)
+                if path:
+                    bonus_cells_set = set(path)
+            
+            # 4.2 Enforce vowel minimum (30-33%) - Dense Mode (Skip for Checkerboard)
+            self._enforce_vowel_minimum(board, self._get_weights(difficulty), is_checkerboard=is_checkerboard_fmt)
+                
+            # 4.3 Final Checkerboard Safeguard (Clean up any remaining mismatches)
+            if is_checkerboard_fmt:
+                self._verify_checkerboard_safeguard(board, self._get_weights(difficulty), bonus_cells_set)
+                
             all_words = self._solve_board(board, dictionary, (min_words, max_words), min_word_length)
             return board, all_words, None
 
@@ -108,8 +163,14 @@ class BoardGenerator:
             # 1. Create base board
             fmt_clean = board_format.strip()
             fmt_lower = fmt_clean.lower()
+            is_checkerboard_fmt = 'checkerboard' in fmt_lower
             
-            if 'checkerboard' in fmt_lower:
+            # User Request: NO BONUS WORDS on Checkerboard boards to ensure perfect alternation
+            if is_checkerboard_fmt:
+                actual_bonus_word = None
+                bonus_word = None
+                
+            if is_checkerboard_fmt:
                 board = self._create_checkerboard(rows, cols, weights)
             else:
                 board = self._create_normal_board(rows, cols, weights)
@@ -124,7 +185,7 @@ class BoardGenerator:
             
             bonus_cells_set = set()
             if actual_bonus_word:
-                path = self._embed_bonus_word(board, actual_bonus_word)
+                path = self._embed_bonus_word(board, actual_bonus_word, is_checkerboard=is_checkerboard_fmt)
                 if not path:
                     print(f"[BoardGen] ✗ Failed to embed bonus word, retrying...")
                     continue
@@ -164,7 +225,10 @@ class BoardGenerator:
             # 4. Apply extra effects
             if 'mania' in fmt_lower:
                 mania_letter = board_format.split(' ')[0]
-                self._apply_mania_to_board(board, mania_letter, exclude_cells=bonus_cells_set)
+                self._apply_mania_to_board(board, mania_letter, exclude_cells=bonus_cells_set, is_checkerboard=is_checkerboard_fmt)
+            
+            # 4.1 Enforce vowel minimum (30-33%) - All boards (Skip logic inside method for Checkerboard)
+            self._enforce_vowel_minimum(board, weights, is_checkerboard=is_checkerboard_fmt)
             
             # 5. Solve and Validate
             with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
@@ -181,9 +245,11 @@ class BoardGenerator:
             word_count = len(scorable_words)
             
             if self._validate_word_count(word_count, min_words, max_words):
+                # 6. Final Checkerboard Safeguard
+                if is_checkerboard_fmt:
+                    self._verify_checkerboard_safeguard(board, weights, bonus_cells_set)
+                
                 print(f"[BoardGen] ✓ Board valid: {word_count} scorable words")
-                # If Bonus Letter, we return it as part of a metadata dictionary or something?
-                # For now let's return (board, all_words, bonus_cell)
                 return board, all_words, bonus_cell
                 
         print(f"[BoardGen] ⚠ Max attempts reached: {word_count} words")
@@ -297,16 +363,19 @@ class BoardGenerator:
                     board[r][c] = random.choices(VOWELS, weights=vowel_weights, k=1)[0]
         return board
     
-    def _create_2000plus_board(self, rows, cols, dictionary):
+    def _create_2000plus_board(self, rows, cols, dictionary, is_checkerboard=False):
         """
         Iterative Optimization (IO)
         1. Start with a random board using custom IO Base weights.
         2. Scan every position. For each, test A-Z and pick the best letter.
         """
         weights = LETTER_FREQ_IO_BASE
-        board = self._create_normal_board(rows, cols, weights)
+        if is_checkerboard:
+            board = self._create_checkerboard(rows, cols, weights)
+        else:
+            board = self._create_normal_board(rows, cols, weights)
         
-        print(f"[BoardGen] Initializing IO Optimization for {rows}x{cols} board")
+        print(f"[BoardGen] Initializing IO Optimization for {rows}x{cols} board (Checkerboard: {is_checkerboard})")
         
         for r in range(rows):
             for c in range(cols):
@@ -314,7 +383,14 @@ class BoardGenerator:
                 max_words = 0
                 
                 # Test each letter in the alphabet
+                # If checkerboard, ONLY test letters that match the required type
+                required_is_vowel = ((r + c) % 2 != 0)
+                
                 for char in self.letters:
+                    if is_checkerboard:
+                        if self._is_vowel(char) != required_is_vowel:
+                            continue
+                            
                     board[r][c] = char
                     # Quick solve for this configuration
                     words = self._solve_board(board, dictionary, (0, 99999), 3)
@@ -352,10 +428,13 @@ class BoardGenerator:
             
         return board
     
-    def _apply_mania_to_board(self, board, mania_letter, exclude_cells):
+    def _apply_mania_to_board(self, board, mania_letter, exclude_cells, is_checkerboard=False):
         """Fill approx 31% of cells with the mania letter (5/16 ratio)."""
         rows, cols = len(board), len(board[0])
         total_cells = rows * cols
+        
+        # Determine mania type
+        is_mania_vowel = self._is_vowel(mania_letter)
         
         # Target ratio: 5/16 (31.25%)
         target_ratio = 5.0 / 16.0
@@ -366,7 +445,20 @@ class BoardGenerator:
         
         if needed <= 0: return
             
-        all_positions = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in exclude_cells and not '/' in board[r][c]]
+        all_positions = []
+        for r in range(rows):
+            for c in range(cols):
+                if (r, c) in exclude_cells: continue
+                if '/' in str(board[r][c]): continue
+                
+                # If checkerboard, only allow positions that match the mania letter's type
+                if is_checkerboard:
+                    is_cell_vowel_expected = ((r + c) % 2 != 0)
+                    if is_mania_vowel != is_cell_vowel_expected:
+                        continue
+                        
+                all_positions.append((r, c))
+
         random.shuffle(all_positions)
         
         filled = 0
@@ -375,7 +467,7 @@ class BoardGenerator:
             board[r][c] = mania_letter
             filled += 1
     
-    def _embed_bonus_word(self, board, bonus_word):
+    def _embed_bonus_word(self, board, bonus_word, is_checkerboard=False):
         """Embed bonus word using backtracking to find a valid path.
         Returns the path (list of cells) if successful, else None."""
         rows, cols = len(board), len(board[0])
@@ -392,6 +484,15 @@ class BoardGenerator:
                 i += 1
         
         word_len = len(processed_word)
+        
+        # If checkerboard, NO BONUS WORDS allowed per user request
+        if is_checkerboard:
+            with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+                f.write(f"[BoardGen] Strictly skipping bonus word embedding for Checkerboard.\n")
+            return None
+        
+        # Pre-calculate C/V status for each letter in word
+        word_vowel_map = [self._is_vowel(letter) for letter in processed_word]
         
         # Create list of all cells and shuffle for randomness
         start_cells = [(r, c) for r in range(rows) for c in range(cols)]
@@ -413,21 +514,41 @@ class BoardGenerator:
             if len(current_path) == word_len:
                 return current_path
             
+            idx = len(current_path)
             r, c = current_path[-1]
             visited = set(current_path)
             
             for nr, nc in get_valid_neighbors(r, c, visited):
+                # If checkerboard, the next cell (nr, nc) must match the type of processed_word[idx]
+                if is_checkerboard:
+                    is_expected_vowel = ((nr + nc) % 2 != 0)
+                    if word_vowel_map[idx] != is_expected_vowel:
+                        continue
+                        
                 result = backtrack(current_path + [(nr, nc)])
                 if result:
                     return result
             return None
 
         # Try to find a path from any random starting cell
+        # Filter starts based on checkerboard if needed
+        possible_starts = []
+        for r in range(rows):
+            for c in range(cols):
+                if is_checkerboard:
+                    is_expected_vowel = ((r + c) % 2 != 0)
+                    if word_vowel_map[0] == is_expected_vowel:
+                        possible_starts.append((r, c))
+                else:
+                    possible_starts.append((r, c))
+                    
+        random.shuffle(possible_starts)
+        
         import time
         with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
             f.write(f"[board_generator.py] _embed_bonus_word: Attempting to embed '{bonus_word}' at {time.time()}\n")
         
-        for start_r, start_c in start_cells:
+        for start_r, start_c in possible_starts:
             path = backtrack([(start_r, start_c)])
             if path:
                 # Embed the processed letters
@@ -834,6 +955,149 @@ class BoardGenerator:
                 clean.append((nf, nr, nc))
                 seen.add((nf, nr, nc))
         return clean
+
+    def _enforce_vowel_minimum(self, board, weights, is_checkerboard=False):
+        """Ensure 30%-33% of tiles are vowels (User Request: Strict range for all boards)
+           FOR CHECKERBOARD: Always skip this balancer as it must stay at 50%."""
+        if not board or is_checkerboard: return
+        
+        # Flatten board to get all cells
+        flat_cells = []
+        is_3d = (len(board) == 6 and isinstance(board[0], list) and isinstance(board[0][0], list))
+        
+        if is_3d:
+            # 3x3x3 Cube Surface (54 total cells)
+            for f in range(6):
+                for r in range(3):
+                    for c in range(3):
+                        flat_cells.append((f, r, c))
+        else:
+            # Standard 2D Grid
+            rows, cols = len(board), len(board[0])
+            for r in range(rows):
+                for c in range(cols):
+                    flat_cells.append((r, c))
+        
+        total_cells = len(flat_cells)
+        # Target: 30%-33%
+        # 16 cells -> 5 (31.2%)
+        # 25 cells -> 8 (32.0%)
+        # 54 cells -> 17 (31.5%)
+        target_vowels = (total_cells * 315 + 500) // 1000 
+        
+        v_indices = [self.letters.index(v) for v in VOWELS]
+        v_w = [weights[v_idx] for v_idx in v_indices]
+        c_indices = [self.letters.index(c) for c in CONSONANTS]
+        c_w = [weights[c_idx] for c_idx in c_indices]
+        
+        # Count current vowels
+        current_vowel_cells = []
+        current_consonant_cells = []
+        
+        for pos in flat_cells:
+            if is_3d:
+                f, r, c = pos
+                val = str(board[f][r][c])
+            else:
+                r, c = pos
+                val = str(board[r][c])
+            
+            if self._is_vowel(val):
+                current_vowel_cells.append(pos)
+            else:
+                current_consonant_cells.append(pos)
+        
+        current_count = len(current_vowel_cells)
+        random.shuffle(current_vowel_cells)
+        random.shuffle(current_consonant_cells)
+        
+        if current_count < target_vowels:
+            # Need more vowels
+            needed = target_vowels - current_count
+            for i in range(min(needed, len(current_consonant_cells))):
+                pos = current_consonant_cells[i]
+                new_v = random.choices(list(VOWELS), weights=v_w, k=1)[0]
+                if is_3d:
+                    f, r, c = pos
+                    board[f][r][c] = new_v
+                else:
+                    r, c = pos
+                    board[r][c] = new_v
+            print(f"[BoardGen] Enforced 30-33% vowels: Added {needed} vowels.")
+            
+        elif current_count > target_vowels:
+            # Need fewer vowels (Too many can happen with weights)
+            over = current_count - target_vowels
+            for i in range(min(over, len(current_vowel_cells))):
+                pos = current_vowel_cells[i]
+                new_c = random.choices(list(CONSONANTS), weights=c_w, k=1)[0]
+                if is_3d:
+                    f, r, c = pos
+                    board[f][r][c] = new_c
+                else:
+                    r, c = pos
+                    board[r][c] = new_c
+            print(f"[BoardGen] Enforced 30-33% vowels: Removed {over} vowels.")
+
+    def _verify_checkerboard_safeguard(self, board, weights, bonus_cells_set):
+        """Final check to ensure the board strictly alternates C/V in checkerboard mode."""
+        if not board: return
+        rows, cols = len(board), len(board[0])
+        v_indices = [self.letters.index(v) for v in VOWELS]
+        v_weights = [weights[v_idx] for v_idx in v_indices]
+        c_indices = [self.letters.index(c) for c in CONSONANTS]
+        c_weights = [weights[c_idx] for c_idx in c_indices]
+        
+        repaired = 0
+        for r in range(rows):
+            for c in range(cols):
+                # We used to skip the bonus word path, but the USER requested strict layout 
+                # for ALL spots on a 4x4 board, so we now repair EVERY spot.
+                if '/' in str(board[r][c]): continue
+                
+                # Check expectation: (0,0) is C, (0,1) is V...
+                is_expected_vowel = ((r + c) % 2 != 0)
+                is_actual_vowel = self._is_vowel(board[r][c])
+                
+                if is_actual_vowel != is_expected_vowel:
+                    # Swap it
+                    if is_expected_vowel:
+                        board[r][c] = random.choices(list(VOWELS), weights=v_weights, k=1)[0]
+                    else:
+                        board[r][c] = random.choices(list(CONSONANTS), weights=c_weights, k=1)[0]
+                    repaired += 1
+        if repaired > 0:
+            print(f"[BoardGen] Checkerboard Safeguard: Forced {repaired} letters to maintain alternation pattern.")
+
+    def _is_vowel(self, char):
+        """Helper to check if a letter (or tile string) is a vowel"""
+        if not char: return False
+        # Handle Either/Or L/T - return True if either is a vowel
+        letters = str(char).upper().split('/')
+        for l in letters:
+            if l in VOWELS:
+                return True
+        return False
+
+    def _is_consonant(self, char):
+        """Helper to check if a letter is a consonant"""
+        if not char: return False
+        letters = str(char).upper().split('/')
+        for l in letters:
+            if l in CONSONANTS:
+                return True
+        return False
+
+    def _is_alternating_word(self, word_chars):
+        """Check if a series of letters strictly alternates C/V"""
+        if not word_chars: return True
+        current_v = self._is_vowel(word_chars[0])
+        for i in range(1, len(word_chars)):
+            next_v = self._is_vowel(word_chars[i])
+            if next_v == current_v:
+                return False
+            current_v = next_v
+        return True
 
     def _solve_cube_board(self, board, dictionary, min_word_length=3):
         """Find words on a 3x3x3 cube surface using DFS"""

@@ -1163,7 +1163,7 @@ function renderPlayers(players, currentUser = null, state = null) {
                 ${trophyHtml}
                 <div style="flex:1;"></div>
                 <span class="player-words-count">${p.words_count} words</span>
-                <span class="player-score-val">${(p.score === 0 && p.words_count === 0 && (!p.invalid_words || p.invalid_words.length === 0) && (state && state.state === 'intermission')) ? 'DNP' : p.score + ' pts'}</span>
+                <span class="player-score-val">${(p.score === 0 && p.words_count === 0 && (!p.invalid_words || p.invalid_words.length === 0) && (state && state.state === 'intermission')) ? 'DNP' : Math.max(0, p.score) + ' pts'}</span>
             </div>
         </div>
         `;
@@ -1564,16 +1564,18 @@ function updateParameters(state) {
     if (timeEl) timeEl.textContent = (state.time_limit || 60) + 's';
 
     const sp = state.spinner_params || {};
+    const isIntermission = state.state === 'intermission';
     
-    // Use CURRENT round parameters if available (decoupled from the 'upcoming' spinner_params)
-    const currentFmt = state.current_board_format || sp.board_format || 'Normal';
-    const currentMinLen = state.current_min_word_length || sp.min_word_length || '3';
-    const currentDict = state.current_dictionary || sp.dictionary || 'NWL';
-    const currentDiff = state.current_difficulty || sp.difficulty || 'Medium';
-    const currentWordRange = state.current_word_count_range || sp.word_count_range;
+    // Use UPCOMING round parameters if in intermission (revealed), otherwise use CURRENT round parameters
+    const currentFmt = (isIntermission && sp.board_format) ? sp.board_format : (state.current_board_format || 'Normal');
+    const currentMinLen = (isIntermission && sp.min_word_length) ? sp.min_word_length : (state.current_min_word_length || 3);
+    const currentDict = (isIntermission && sp.dictionary) ? sp.dictionary : (state.current_dictionary || 'NWL');
+    const currentDiff = (isIntermission && sp.difficulty) ? sp.difficulty : (state.current_difficulty || 'Normal');
+    const currentWordRange = (isIntermission && sp.word_count_range) ? sp.word_count_range : (state.current_word_count_range || '100-200');
+    const currentBonus = (isIntermission && sp.bonus_word_length) ? sp.bonus_word_length : (state.current_bonus_word_length || (state.bonus_word ? state.bonus_word.length : 0) || 'None');
 
     const bonusLen = document.getElementById('param-bonus');
-    if (bonusLen) bonusLen.textContent = (sp.bonus_word_length || state.bonus_word_length || 'None') + (sp.bonus_word_length ? 'L' : '');
+    if (bonusLen) bonusLen.textContent = (currentBonus === 'None' || currentBonus === 0) ? 'None' : currentBonus + 'L';
 
     const diff = document.getElementById('param-diff');
     if (diff) {
@@ -1596,10 +1598,7 @@ function updateParameters(state) {
 
     const words = document.getElementById('param-words');
     if (words) {
-        if (state.board_dimensions === '3x3x3') {
-            words.textContent = 'None';
-        } else {
-            let wr = currentWordRange;
+        let wr = currentWordRange;
         if (Array.isArray(wr) && wr.length >= 2) {
             // Suffix with + if upper bound is very high
             if (wr[1] > 900) {
@@ -1624,10 +1623,9 @@ function updateParameters(state) {
             words.textContent = '50-100/100-200/200+';
         }
     }
-}
 
     const format = document.getElementById('param-format');
-    if (format) format.textContent = sp.board_format || state.board_format || 'Normal';
+    if (format) format.textContent = currentFmt;
 }
 
 function updateTimer(seconds) {
@@ -1763,6 +1761,7 @@ function renderBoard(board, grayed) {
     const h = board.length;
     // Enhanced is3D check: 6 faces, and each face is an array of arrays
     const is3D = h === 6 && board[0] && Array.isArray(board[0]) && board[0][0] && Array.isArray(board[0][0]);
+    console.log(`[renderBoard] Rendering ${is3D ? '3D Cube' : '2D Board'}. Dim: ${is3D ? '6 faces' : h + 'x' + (board[0] ? board[0].length : 0)}. Grayed: ${grayed}`);
     
     const boardEl = document.getElementById('game-board');
     if (!boardEl) return;
@@ -1852,7 +1851,20 @@ function renderBoard(board, grayed) {
                         }
                     }
                     
-                    html += `<div class="cube-cell board-cell tile-cell${bonusClass}" data-f="${f}" data-r="${r}" data-c="${c}" data-letter="${char}">${displayL}</div>`;
+                    // Valued Letters support for 3D
+                    let tileValue = "";
+                    let bFormat = (window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : null;
+                    if (!bFormat && window.lastGameState && window.lastGameState.spinner_params) {
+                        bFormat = window.lastGameState.spinner_params.board_format || 'Normal';
+                    }
+                    
+                    const normalizedFmt = (bFormat || "").toLowerCase();
+                    if (normalizedFmt.includes('valued') && !char.includes('/')) {
+                        const val = LETTER_VALUES[char.toUpperCase()] || 1;
+                        tileValue = `<span class="tile-value">${val}</span>`;
+                    }
+                    
+                    html += `<div class="cube-cell board-cell tile-cell${bonusClass}" data-f="${f}" data-r="${r}" data-c="${c}" data-letter="${char}">${displayL}${tileValue}</div>`;
                 });
             });
             html += `</div>`;
@@ -2103,16 +2115,17 @@ if (window.ResizeObserver) {
 
 // Letter values for "Valued Letters" format
 const LETTER_VALUES = {
-    'A': 2, 'B': 4, 'C': 4, 'D': 3, 'E': 1, 'F': 5, 'G': 3, 'H': 5, 'I': 2, 'J': 10, 'K': 6, 'L': 3, 'M': 4, 'N': 2, 'O': 2, 'P': 4, 'Q': 10, 'R': 2, 'S': 2, 'T': 2, 'U': 3, 'V': 5, 'W': 5, 'X': 10, 'Y': 5, 'Z': 10
+    'A': 2, 'B': 4, 'C': 4, 'D': 3, 'E': 1, 'F': 5, 'G': 3, 'H': 5, 'I': 2, 'J': 10, 'K': 6, 'L': 3, 'M': 4, 'N': 2, 'O': 2, 'P': 4, 'Q': 10, 'R': 2, 'S': 2, 'T': 2, 'U': 4, 'V': 5, 'W': 5, 'X': 10, 'Y': 5, 'Z': 10
 };
 
 // Helper to create a board cell
 function createBoardCell(r, c, letter, grayed) {
     const cell = document.createElement('div');
-    let boardFormat = (window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : 'Normal';
+    let boardFormat = (window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : null;
     if (!boardFormat && window.lastGameState && window.lastGameState.spinner_params) {
         boardFormat = window.lastGameState.spinner_params.board_format || 'Normal';
     }
+    const normalizedFmt = (boardFormat || "").toLowerCase();
     const bonusCell = (window.lastGameState) ? window.lastGameState.bonus_cell : null;
 
     cell.className = 'board-cell' + (grayed ? ' grayed' : '');
@@ -2169,7 +2182,7 @@ function createBoardCell(r, c, letter, grayed) {
     }
 
     // 3. Handle Valued Letters Points Display
-    if (boardFormat === 'Valued Letters') {
+    if (normalizedFmt.includes('valued')) {
         const valSpan = document.createElement('span');
         valSpan.className = 'tile-value';
         // If dual letter, we skip for now or show average? User didn't specify interaction.
@@ -2195,16 +2208,14 @@ function createBoardCell(r, c, letter, grayed) {
  * Finds if a word can be formed on the board and returns the path of coordinates.
  * Supports the "Q" tile representing "QU".
  */
-function findWordPathOnBoard(word, board) {
+function findWordPathOnBoard(word, board, targetCoord = null) {
     if (!word || !board) return null;
     const rows = board.length;
     if (rows === 0) return null;
     const cols = board[0].length;
     const upperWord = word.toUpperCase();
 
-    function dfs(r, c, index, currentPath, visited) {
-        if (index >= upperWord.length) return currentPath;
-
+    function dfs(r, c, index, currentPath, visited, hasHitTarget) {
         if (r < 0 || r >= rows || c < 0 || c >= cols) return null;
         if (visited.has(`${r},${c}`)) return null;
 
@@ -2236,25 +2247,74 @@ function findWordPathOnBoard(word, board) {
         const newVisited = new Set(visited);
         newVisited.add(`${r},${c}`);
         const newPath = [...currentPath, { r, c }];
+        
+        // Track hit
+        let nowHit = hasHitTarget;
+        if (targetCoord) {
+            if (Array.isArray(targetCoord)) {
+                if (r === targetCoord[0] && c === targetCoord[1]) nowHit = true;
+            } else if (typeof targetCoord === 'object') {
+                if (r === targetCoord.r && c === targetCoord.c) nowHit = true;
+            }
+        }
 
         const nextIndex = index + matchLength;
-        if (nextIndex >= upperWord.length) return newPath;
+        if (nextIndex >= upperWord.length) return nowHit ? newPath : null;
 
         // Try directions
         for (let dr = -1; dr <= 1; dr++) {
             for (let dc = -1; dc <= 1; dc++) {
                 if (dr === 0 && dc === 0) continue;
-                const result = dfs(r + dr, c + dc, nextIndex, newPath, newVisited);
+                const result = dfs(r + dr, c + dc, nextIndex, newPath, newVisited, nowHit);
                 if (result) return result;
             }
         }
         return null;
     }
 
+    // Try starting from all possible cells to find a path that hits the target
+    if (targetCoord) {
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const path = dfs(r, c, 0, [], new Set(), false);
+                if (path) return path;
+            }
+        }
+    }
+    
+    // If no bonus-hitting path found or no target, return any valid path
+    function dfsBasic(r, c, index, currentPath, visited) {
+        if (r < 0 || r >= rows || c < 0 || c >= cols) return null;
+        if (visited.has(`${r},${c}`)) return null;
+        const cellValue = board[r][c].toUpperCase();
+        const letters = cellValue.includes('/') ? cellValue.split('/') : [cellValue];
+        let foundMatch = false;
+        let matchLength = 0;
+        for (const char of letters) {
+            if (char === 'Q') {
+                if (upperWord.substring(index, index + 2) === 'QU') { matchLength = 2; foundMatch = true; break; }
+                else if (upperWord[index] === 'Q') { matchLength = 1; foundMatch = true; break; }
+            } else if (upperWord[index] === char) { matchLength = 1; foundMatch = true; break; }
+        }
+        if (!foundMatch) return null;
+        const newVisited = new Set(visited);
+        newVisited.add(`${r},${c}`);
+        const newPath = [...currentPath, { r, c }];
+        const nextIndex = index + matchLength;
+        if (nextIndex >= upperWord.length) return newPath;
+        for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+                if (dr === 0 && dc === 0) continue;
+                const result = dfsBasic(r + dr, c + dc, nextIndex, newPath, newVisited);
+                if (result) return result;
+            }
+        }
+        return null;
+    }
     for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-            const path = dfs(r, c, 0, [], new Set());
-            if (path) return path;
+            const result = dfsBasic(r, c, 0, [], new Set());
+            if (result) return result;
         }
     }
     return null;
@@ -2858,7 +2918,11 @@ function showSpinnerOverlay(spinnerParams, players = []) {
         if (el) el.textContent = text;
     };
 
-    safeSetText('spinner-bonus-length', (spinnerParams.bonus_word_length || '?') + ' letters');
+    let bonusText = (spinnerParams.bonus_word_length || '?');
+    if (spinnerParams.bonus_word_length === 0) bonusText = 'None';
+    else if (bonusText !== '?') bonusText += ' letters';
+    
+    safeSetText('spinner-bonus-length', bonusText);
     safeSetText('spinner-min-length', spinnerParams.min_word_length || '?');
     safeSetText('spinner-difficulty', spinnerParams.difficulty || '?');
 
@@ -3007,7 +3071,7 @@ async function submitWord(wordParam = null, pathParam = null) {
                 // Update total score and re-render players list
                 const me = currentState.players.find(p => p.username === currentUser);
                 if (me) {
-                    me.score = data.new_score;
+                    me.score = Math.max(0, data.new_score);
                     // Re-render the left panel players list with new score/rank
                     renderPlayers(currentState.players, currentUser, currentState);
                 }
@@ -3542,6 +3606,7 @@ async function initTournamentPlay() {
             status: 'active',
             board_dimensions: data.params.board_dimensions,
             time_limit: data.params.time_limit,
+            current_board_format: data.params.board_format || 'Normal',
             spinner_params: data.params
         };
         window.lastGameState = tournamentGameState;
@@ -3701,7 +3766,7 @@ async function finishTournamentTurn() {
                 tournament_id: activeData.tid,
                 round_number: activeData.round,
                 words: tournamentWords,
-                score: tournamentScore,
+                score: Math.floor(tournamentScore),
                 round_start_time: tournamentStartTime
             })
         });
@@ -3754,6 +3819,7 @@ window.initPrivateMatchPlay = function () {
         game_type: 'private',
         board_dimensions: activeMatch.parameters.board_dimensions,
         time_limit: activeMatch.parameters.time_limit,
+        current_board_format: activeMatch.parameters.board_format || 'Normal',
         spinner_params: activeMatch.parameters
     };
     window.lastGameState = mockState;
@@ -3924,6 +3990,13 @@ async function handlePrivateMatchWord(word) {
             const wordPath = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
             if (wordPath) {
                 const hitsBonus = wordPath.some(coord => {
+                    const cell = is3D ? board[coord.f][coord.r][coord.c] : board[coord.r][coord.c];
+                    const isEitherOr = typeof cell === 'string' && cell.includes('/');
+                    
+                    if (isEitherOr) return true; // Any Either/Or tile usage triggers bonus
+                    
+                    if (!bonusCell) return false;
+
                     if (Array.isArray(bonusCell)) {
                         if (is3D && bonusCell.length === 3) return coord.f === bonusCell[0] && coord.r === bonusCell[1] && coord.c === bonusCell[2];
                         return coord.r === bonusCell[0] && coord.c === bonusCell[1];
@@ -3964,6 +4037,7 @@ async function handlePrivateMatchWord(word) {
         is_penalty: isPenalty
     });
     privateMatchScore += pts;
+    if (privateMatchScore < 0) privateMatchScore = 0;
 
     const scoreEl = document.querySelector('.player-card .score');
     if (scoreEl) scoreEl.textContent = `Score: ${privateMatchScore}`;

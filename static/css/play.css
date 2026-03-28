@@ -3238,6 +3238,7 @@ input[type=range]::-moz-range-track {
     display: flex !important;
     align-items: center;
     justify-content: center;
+    position: relative !important;
     font-size: var(--cube-cell-font-size) !important;
     font-weight: 900;
     width: auto !important; /* OVERRIDE .board-cell */

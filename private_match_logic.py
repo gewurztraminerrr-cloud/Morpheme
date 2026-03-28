@@ -225,7 +225,11 @@ class PrivateMatchManager:
         target_difficulty = parameters.get('difficulty', 'Medium')
         
         fmt_check = target_format.lower()
-        if bonus_len > 0 and 'mania' not in fmt_check and 'checkerboard' not in fmt_check and 'either' not in fmt_check:
+        if 'checkerboard' in fmt_check:
+            bonus_word = ""
+            parameters['bonus_word_length'] = 0
+            print(f"[PrivateMatch] FORCE CLEAR bonus word for Checkerboard")
+        elif bonus_len > 0 and 'mania' not in fmt_check and 'either' not in fmt_check:
             from word_validator import word_validator
             dictionary_set = word_validator.csw_words if dict_name == 'CSW' else word_validator.nwl_words
             potential_dict_words = [w for w in dictionary_set if len(w) == bonus_len]
@@ -292,6 +296,10 @@ class PrivateMatchManager:
         for m in all_p_matches:
             match_id = m['id']
             curr_round = m['current_round']
+            
+            # Skip matches that are still initializing (round 0)
+            if curr_round == 0:
+                continue
             
             # Check if user has submitted for this round
             turn = conn.execute('''
@@ -431,7 +439,9 @@ class PrivateMatchManager:
                 conn.close()
                 return
 
-            # Record Turn
+            # Record Turn (Enforce floor of 0)
+            score = max(0, int(score))
+
             conn.execute('''
                 INSERT INTO private_match_turns (match_id, round_number, user_id, score, submitted_words, submitted_at)
                 VALUES (?, ?, ?, ?, ?, ?)
@@ -619,6 +629,7 @@ class PrivateMatchManager:
                 'time_offset': times[i]
             })
             
+        total_score = max(0, total_score)
         return submission, total_score
 
     def _apply_match_ratings(self, match_id, round_number, conn):

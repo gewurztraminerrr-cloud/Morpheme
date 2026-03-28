@@ -28,14 +28,25 @@ class SpinnerSet:
         """Generate granular spinner parameters given dimensions"""
         # Generate dictionary FIRST so we can use its size for word count
         dictionary = SpinnerSet._spin_dictionary()
+        wc_range = SpinnerSet._spin_word_count(dictionary)
         
+        # Determine format (Force Normal for 500+ density to ensure solvability)
+        board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions)
+        if wc_range == '500+':
+            board_format = 'Normal'
+
+        # Force bonus_word_length to 0 for Checkerboard to ensure UI consistency
+        bonus_len = SpinnerSet._spin_bonus_word_length()
+        if 'checkerboard' in board_format.lower():
+            bonus_len = 0
+            
         return {
-            'bonus_word_length': SpinnerSet._spin_bonus_word_length(),
+            'bonus_word_length': bonus_len,
             'min_word_length': SpinnerSet._spin_min_word_length(board_dimensions),
             'difficulty': SpinnerSet._spin_difficulty(),
-            'word_count_range': SpinnerSet._spin_word_count(dictionary),
+            'word_count_range': wc_range,
             'dictionary': dictionary,
-            'board_format': SpinnerSet._spin_board_format(is_24h, board_dimensions)
+            'board_format': board_format
         }
     
     @staticmethod

@@ -1236,24 +1236,20 @@ def get_public_profile(username):
     games_played_period = games_played_period or 0
     pt_sum_period = pt_sum_period or 0
 
-    # Calculate Wins in Period
+    # Calculate Wins in Period (Optimized single query)
     cursor_wins = conn.execute(f'''
-        SELECT rh.room_id, rh.round_number, rh.timestamp, rh.total_score
-        FROM round_history rh
-        WHERE rh.user_id = ? {time_filter}
-    ''', (user_id,))
-    user_rounds = cursor_wins.fetchall()
-    
-    wins_period = 0
-    for r_id, r_num, ts, my_score in user_rounds:
-        if my_score <= 0: continue
-        cursor_max = conn.execute('''
-            SELECT MAX(total_score) FROM round_history 
-            WHERE room_id = ? AND round_number = ? AND timestamp = ?
-        ''', (r_id, r_num, ts))
-        max_score = cursor_max.fetchone()[0] or 0
-        if my_score >= max_score and max_score > 0:
-            wins_period += 1
+        SELECT COUNT(*) FROM (
+            SELECT rh.room_id, rh.round_number, rh.timestamp, MAX(rh.total_score) as max_s
+            FROM round_history rh
+            WHERE rh.room_id IN (SELECT room_id FROM round_history WHERE user_id = ? {time_filter})
+            GROUP BY rh.room_id, rh.round_number, rh.timestamp
+        ) as room_winners
+        JOIN round_history rh2 ON rh2.room_id = room_winners.room_id 
+            AND rh2.round_number = room_winners.round_number 
+            AND rh2.timestamp = room_winners.timestamp
+        WHERE rh2.user_id = ? AND rh2.total_score >= room_winners.max_s AND room_winners.max_s > 0
+    ''', (user_id, user_id))
+    wins_period = cursor_wins.fetchone()[0] or 0
 
     # Get config-specific ratings (Current ratings are ALWAYS current/lifetime)
     cursor = conn.execute('SELECT config_key, rating FROM user_ratings WHERE user_id = ?', (user_id,))
@@ -1263,7 +1259,7 @@ def get_public_profile(username):
     cursor_all = conn.execute(f'''
         SELECT room_id, game_type, round_number, board_json, words_json, total_score, 
                round_start_time, round_duration, timestamp, user_rating, performance_ratio, id,
-               wpm, total_words_avail
+               wpm, total_words_avail, board_dimensions
         FROM round_history
         WHERE user_id = ? {time_filter}
         ORDER BY timestamp DESC
@@ -1285,7 +1281,7 @@ def get_public_profile(username):
 
     # helper to process a row
     def process_round_row(row, db_conn):
-        room_id, gtype, rnum, bjson, wjson, score, rstart, rdur, ts, urat, pe_ratio, g_id, wpm, twa = row
+        room_id, gtype, rnum, bjson, wjson, score, rstart, rdur, ts, urat, pe_ratio, g_id, wpm, twa, saved_dims = row
         c_room = db_conn.execute('''
             SELECT rh.total_score, rh.user_rating, u.username
             FROM round_history rh
@@ -1303,7 +1299,15 @@ def get_public_profile(username):
         avg_len = round(sum(len(str(w.get('word', ''))) for w in words)/num_words, 1) if num_words > 0 else 0
         room_strength = sum(e[1] for e in r_entries) if r_entries else urat
         board = json.loads(bjson)
-        dims = f"{len(board)}x{len(board[0])}" if board else "4x4"
+        
+        # Use saved dimensions if available, otherwise calculate fallback
+        if saved_dims:
+            dims = saved_dims
+        elif gtype == '3d':
+            dims = '3x3x3'
+        else:
+            dims = f"{len(board)}x{len(board[0])}" if board else "4x4"
+            
         return {
             'game_id': g_id, 'room_id': room_id, 'game_type': gtype, 'round_number': rnum,
             'board': board, 'dimensions': dims, 'words': words, 'num_words': num_words,
@@ -1339,7 +1343,9 @@ def get_public_profile(username):
 
     # Sort recent and exceptional
     recent_rounds = sorted(processed_all, key=lambda x: x['timestamp'], reverse=True)[:50]
-    exceptional_rounds = sorted([p for p in processed_all if p['performance_value'] > config_stats.get(f"{p['game_type']}|{p['dimensions']}|{p['round_duration']}", {}).get('avg_perf', 0)], 
+    exceptional_rounds = sorted([p for p in processed_all if 
+                               (p['performance_value'] > config_stats.get(f"{p['game_type']}|{p['dimensions']}|{p['round_duration']}", {}).get('avg_perf', 0))
+                               or (p['total_score'] >= 100)], 
                                key=lambda x: x['performance_value'], reverse=True)[:50]
 
     conn.close()
@@ -1392,23 +1398,15 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     user_id = user[0]
     config_key = f"{game_type}|{board_dimensions}|{time_limit}"
     
-    # 1. Get All Matching Rounds (for Global Stats)
-    all_query = '''
-        SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating
+    # 1. Get Matching Rounds (using the board_dimensions column)
+    query_all = '''
+        SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions
         FROM round_history
-        WHERE user_id = ? AND game_type = ? AND round_duration = ?
+        WHERE user_id = ? AND game_type = ? AND board_dimensions = ? AND round_duration = ?
         ORDER BY timestamp DESC
     '''
-    cursor_all = conn.execute(all_query, (user_id, game_type, time_limit))
-    all_rows = cursor_all.fetchall()
-    
-    global_matching = []
-    for row in all_rows:
-        try:
-            board = json.loads(row[5])
-            if f"{len(board)}x{len(board[0]) if board else 0}" == board_dimensions:
-                global_matching.append(row)
-        except: continue
+    cursor_all = conn.execute(query_all, (user_id, game_type, board_dimensions, time_limit))
+    global_matching = cursor_all.fetchall()
     
     # Calculate Global Best (All-Time)
     global_stats = {
@@ -1418,16 +1416,18 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     }
     
     for row in global_matching:
-        words = json.loads(row[0])
-        score = row[1]
-        global_stats["total_score"] += score
-        global_stats["total_words"] += len(words)
-        if score > global_stats["high_score"]: global_stats["high_score"] = score
-        if len(words) > global_stats["max_words"]: global_stats["max_words"] = len(words)
-        for w in words:
-            if len(w['word']) > len(global_stats["longest_word"]): global_stats["longest_word"] = w['word']
-            if w.get('points', 0) > global_stats["best_word"]["points"]:
-                global_stats["best_word"] = {"word": w['word'], "points": w.get('points',0)}
+        try:
+            words = json.loads(row[0])
+            score = row[1]
+            global_stats["total_score"] += score
+            global_stats["total_words"] += len(words)
+            if score > global_stats["high_score"]: global_stats["high_score"] = score
+            if len(words) > global_stats["max_words"]: global_stats["max_words"] = len(words)
+            for w in words:
+                if len(w['word']) > len(global_stats["longest_word"]): global_stats["longest_word"] = w['word']
+                if w.get('points', 0) > global_stats["best_word"]["points"]:
+                    global_stats["best_word"] = {"word": w['word'], "points": w.get('points',0)}
+        except: continue
 
     # 2. Filter by Period for the lists - Enforce Calendar Day logic
     time_filter = ""
@@ -1437,21 +1437,15 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     elif period == 'year': time_filter = "AND date(timestamp, 'localtime') >= date('now', '-365 days', 'localtime')"
         
     query = f'''
-        SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating
+        SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions
         FROM round_history
-        WHERE user_id = ? AND game_type = ? AND round_duration = ? {time_filter}
+        WHERE user_id = ? AND game_type = ? AND board_dimensions = ? AND round_duration = ? {time_filter}
         ORDER BY timestamp DESC
     '''
-    cursor = conn.execute(query, (user_id, game_type, time_limit))
+    cursor = conn.execute(query, (user_id, game_type, board_dimensions, time_limit))
     period_rows = cursor.fetchall()
     
-    period_matching = []
-    for row in period_rows:
-        try:
-            board = json.loads(row[5])
-            if f"{len(board)}x{len(board[0]) if board else 0}" == board_dimensions:
-                period_matching.append(row)
-        except: continue
+    period_matching = period_rows
 
     if not period_matching and period != 'all':
         conn.close()
@@ -1732,9 +1726,20 @@ def create_room():
     min_rating = data.get('min_rating', 0)
     max_rating = data.get('max_rating', 9999)
     
-    # Guest Restriction: Guests cannot create rooms
+    # Guest Restriction: Guests cannot create custom/limited rooms
+    # Guest Restriction: Guests cannot create CUSTOM rooms with limits
     if session.get('is_guest', False):
-        return jsonify({'error': 'Guest users are not allowed to create rooms. Please register to unlock this feature.'}), 403
+        try:
+            m_rat = int(min_rating or 0)
+            x_rat = int(max_rating or 9999)
+            print(f"[app.py] Guest Create Attempt: game={game_type} min={m_rat} max={x_rat}")
+            if m_rat > 0 or x_rat < 9999:
+                 return jsonify({'error': 'RANK_REJECT: Guest users are not allowed to create rooms with rating limits. Please register to unlock this feature.'}), 403
+        except (ValueError, TypeError) as e:
+            print(f"[app.py] Guest Create Error in parsing: {e}")
+            pass
+    else:
+        print(f"[app.py] Regular Create Attempt: user={session.get('username')} game={game_type} min={min_rating} max={max_rating}")
     
     # Create room
     generated_id = str(uuid.uuid4())
@@ -2120,6 +2125,7 @@ def get_room_state(room_id):
             'current_word_count_range': getattr(room, 'current_word_count_range', '100-200'),
             'current_dictionary': getattr(room, 'current_dictionary', 'NWL'),
             'current_difficulty': getattr(room, 'current_difficulty', 'Normal'),
+            'current_bonus_word_length': getattr(room, 'current_bonus_word_length', 0) or (len(room.bonus_word) if room.bonus_word else 0),
             'solving_complete': room.solving_complete,  # Let frontend know if still solving
             'max_players': room.max_players,
             'min_rating': room.min_rating,
@@ -3555,25 +3561,30 @@ def get_leaderboard_data():
              where_clauses.append("rh.round_duration = ?")
              params.append(time_limit)
         else:
-             # Exclude 10m (600) and 24h (86400) from generic aggregated views for Accumulative to prevent them from obfuscating normal fast-paced leaderboards
-             where_clauses.append("(rh.game_type != 'accumulative' OR rh.round_duration NOT IN (600, 86400))")
+             # Exclude 10m (600) and 24h (86400) from generic aggregated views for Accumulative 
+             # Only apply this exclusion if NO game_type filter is present or if filtering for Accumulative
+             # This ensures that selecting "Cube" as game type correctly shows 10m/24h Cube rounds in "All Speeds"
+             if game_type == 'all' or game_type == 'accumulative':
+                where_clauses.append("(rh.game_type != 'accumulative' OR rh.round_duration NOT IN (600, 86400))")
 
         # Time Filter - Calendar Day logic
+        period_clause = "1=1"
         if period == 'day':
-             where_clauses.append("date(rh.timestamp, 'localtime') = date('now', 'localtime')")
+             period_clause = "date(rh.timestamp, 'localtime') = date('now', 'localtime')"
         elif period == 'week':
-             where_clauses.append("rh.timestamp >= datetime('now', '-7 days', 'localtime')")
+             period_clause = "rh.timestamp >= datetime('now', '-7 days', 'localtime')"
         elif period == 'month':
-             where_clauses.append("rh.timestamp >= datetime('now', '-30 days', 'localtime')")
+             period_clause = "rh.timestamp >= datetime('now', '-30 days', 'localtime')"
         elif period == 'year':
-             where_clauses.append("rh.timestamp >= datetime('now', '-365 days', 'localtime')")
-             
+             period_clause = "rh.timestamp >= datetime('now', '-365 days', 'localtime')"
+        
+        where_clauses.append(period_clause)
         base_where = " AND ".join(where_clauses)
         
         # 1. Best Scores (Highest total score in a round - Max 1 per user)
         scores = conn.execute(f"""
             SELECT * FROM (
-                SELECT rh.total_score, rh.user_rating, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id,
+                SELECT rh.total_score, rh.user_rating, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id, rh.game_type,
                 ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.total_score DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
@@ -3587,7 +3598,7 @@ def get_leaderboard_data():
         # 2. Best Words (Highest point single word - Max 1 per user)
         words = conn.execute(f"""
             SELECT * FROM (
-                SELECT rh.best_word, rh.best_word_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id,
+                SELECT rh.best_word, rh.best_word_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id, rh.game_type,
                 ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.best_word_score DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
@@ -3601,7 +3612,7 @@ def get_leaderboard_data():
         # 3. Best PE (Highest Performance Efficiency - Max 1 per user)
         pes = conn.execute(f"""
             SELECT * FROM (
-                SELECT rh.performance_ratio, rh.total_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id,
+                SELECT rh.performance_ratio, rh.total_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id, rh.game_type,
                 ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.performance_ratio DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
@@ -3615,7 +3626,7 @@ def get_leaderboard_data():
         # 4. Best Ratings Achieved (Max achieved in period - One per user)
         # Note: We group by user_id to get one entry per user
         ratings = conn.execute(f"""
-            SELECT MAX(rh.user_rating) as max_rating, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.timestamp
+            SELECT MAX(rh.user_rating) as max_rating, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.timestamp, rh.game_type
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE {base_where}
@@ -3637,26 +3648,81 @@ def get_leaderboard_data():
         """, params).fetchall()
 
         # 6. Most Games Played (Activity Leaderboard)
-        most_games = conn.execute(f"""
-            SELECT COUNT(*) as game_count, MAX(rh.timestamp) as last_active, u.username, u.country_flag, u.avatar_url, u.rating
-            FROM round_history rh
-            JOIN users u ON rh.user_id = u.id
-            WHERE {base_where}
-            GROUP BY u.id
-            ORDER BY game_count DESC
-            LIMIT 50
-        """, params).fetchall()
+        # Showing the rating for the specific mode if filtered, else global
+        if game_type != 'all':
+            rating_pattern = f"{game_type}|%"
+            if dims != 'all' and time_limit != 'all': rating_pattern = f"{game_type}|{dims}|{time_limit}"
+            elif dims != 'all': rating_pattern = f"{game_type}|{dims}|%"
+            elif time_limit != 'all': rating_pattern = f"{game_type}|%|{time_limit}"
+
+            m_sql = f"""SELECT u.username, u.country_flag, u.avatar_url, MAX(rh.timestamp) as last_active,
+                               COUNT(rh.id) as game_count,
+                               COALESCE((SELECT MAX(rating) FROM user_ratings WHERE user_id = u.id AND config_key LIKE ?), 1200) as rating,
+                               rh.game_type
+                        FROM round_history rh 
+                        JOIN users u ON rh.user_id = u.id 
+                        WHERE {base_where} 
+                        GROUP BY u.id 
+                        ORDER BY game_count DESC LIMIT 50"""
+            m_params = [rating_pattern] + params
+        else:
+            # For 'All Game Types', show the highest rating among modes actually played in this period
+            m_sql = f"""SELECT u.username, u.country_flag, u.avatar_url, MAX(rh.timestamp) as last_active,
+                               COUNT(rh.id) as game_count,
+                               (SELECT MAX(rating) FROM user_ratings 
+                                WHERE user_id = u.id 
+                                AND config_key IN (
+                                    SELECT DISTINCT (game_type || '|' || board_dimensions || '|' || round_duration)
+                                    FROM round_history 
+                                    WHERE user_id = u.id AND {period_clause}
+                                )) as rating,
+                               rh.game_type
+                        FROM round_history rh 
+                        JOIN users u ON rh.user_id = u.id 
+                        WHERE {base_where} 
+                        GROUP BY u.id 
+                        ORDER BY game_count DESC LIMIT 50"""
+            m_params = params
+
+        most_games = conn.execute(m_sql, m_params).fetchall()
         
         # 7. Current Ratings (Users active in period, sorted by CURRENT rating)
-        current_ratings = conn.execute(f"""
-            SELECT u.username, u.rating, u.country_flag, u.avatar_url, MAX(rh.timestamp) as last_active
-            FROM round_history rh
-            JOIN users u ON rh.user_id = u.id
-            WHERE {base_where}
-            GROUP BY u.id
-            ORDER BY u.rating DESC
-            LIMIT 1000
-        """, params).fetchall()
+        if game_type != 'all':
+            rating_pattern = f"{game_type}|%"
+            if dims != 'all' and time_limit != 'all': rating_pattern = f"{game_type}|{dims}|{time_limit}"
+            elif dims != 'all': rating_pattern = f"{game_type}|{dims}|%"
+            elif time_limit != 'all': rating_pattern = f"{game_type}|%|{time_limit}"
+
+            current_ratings = conn.execute(f"""
+                SELECT u.username, u.country_flag, u.avatar_url, MAX(rh.timestamp) as last_active,
+                COALESCE((SELECT MAX(rating) FROM user_ratings WHERE user_id = u.id AND config_key LIKE ?), 1200) as rating,
+                rh.game_type
+                FROM round_history rh
+                JOIN users u ON rh.user_id = u.id
+                WHERE {base_where}
+                GROUP BY u.id
+                ORDER BY rating DESC
+                LIMIT 1000
+            """, [rating_pattern] + params).fetchall()
+        else:
+            # For 'All Game Types', show the highest rating among modes actually played in this period
+            current_ratings = conn.execute(f"""
+                SELECT u.username, u.country_flag, u.avatar_url, MAX(rh.timestamp) as last_active,
+                COALESCE((SELECT MAX(rating) FROM user_ratings 
+                 WHERE user_id = u.id 
+                 AND config_key IN (
+                     SELECT DISTINCT (game_type || '|' || board_dimensions || '|' || round_duration)
+                     FROM round_history 
+                     WHERE user_id = u.id AND {period_clause}
+                 )), 1200) as rating,
+                rh.game_type
+                FROM round_history rh
+                JOIN users u ON rh.user_id = u.id
+                WHERE {base_where}
+                GROUP BY u.id
+                ORDER BY rating DESC
+                LIMIT 1000
+            """, params).fetchall()
         
         # Helper to dict
         def to_list(rows):
@@ -3902,6 +3968,7 @@ def submit_tournament_score():
             })
             total_score += pts
             
+    total_score = max(0, total_score)
     conn = sqlite3.connect('morpheme.db', timeout=30)
     try:
         conn.execute('''
@@ -3976,9 +4043,19 @@ def create_solo_match():
     if not session.get('is_guest'):
         try:
             conn = sqlite3.connect('morpheme.db', timeout=30)
-            cur = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
+            # Use mode-specific rating for initial entry to avoid global rating bleed
+            display_game_type = game_type.replace('solo_', '')
+            config_key = f"{display_game_type}|{board_dimensions}|{time_limit}"
+            cur = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
+                             (session['user_id'], config_key))
             row = cur.fetchone()
-            if row: rating = row[0]
+            if row: 
+                rating = row[0]
+            else:
+                 # Fallback to global only if no mode-specific rating exists yet
+                 cur_g = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
+                 row_g = cur_g.fetchone()
+                 if row_g: rating = row_g[0]
             conn.close()
         except Exception as e:
             print(f"[app.py] DB Error fetching rating for solo: {e}")
@@ -4104,6 +4181,7 @@ def get_private_match_status(match_id):
         'parameters': params,
         'board': json.loads(r['board_data']),
         'bonus_word': r['bonus_word'],
+        'bonus_cell': json.loads(r['bonus_cell']) if r['bonus_cell'] else None,
         'end_time': calculated_end_time,
         'time_remaining': time_remaining
     })
@@ -4297,8 +4375,10 @@ def room_tick_worker():
                         room_manager.start_board_search(room.room_id)
                     elif milestone == 'start' and not room.starting_round:
                         # Auto-start next round precisely
+                        # ATOMIC GUARD: Set starting_round TRUE before spawning thread to avoid races
+                        room.starting_round = True
                         print(f"[RoomTickWorker] Auto-advancing room {room.room_id} to new round")
-                        threading.Thread(target=room_manager.start_round, args=(room.room_id,), daemon=True).start()
+                        threading.Thread(target=room_manager.start_next_round, args=(room.room_id,), daemon=True).start()
             
         except Exception as e:
             # Use a slightly less verbose error for common issues

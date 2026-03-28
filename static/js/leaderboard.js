@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <select id="lb-filter-game">
                         <option value="all">All Game Types</option>
                         <option value="accumulative">Accumulative</option>
+                        <option value="3d">Cube</option>
                         <option value="fcfs">First Come First Serve</option>
                         <option value="split">Split Points</option>
                     </select>
@@ -43,11 +44,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         <option value="4x6">4x6</option>
                         <option value="5x7">5x7</option>
                         <option value="6x8">6x8</option>
+                        <option value="3x3x3">3x3x3 Cube</option>
                     </select>
                     <select id="lb-filter-time">
                         <option value="all">All Speeds</option>
                         <option value="45">45s Blitz</option>
                         <option value="180">3m Standard</option>
+                        <option value="300">5m Speed</option>
                         <option value="600">10m Relaxed</option>
                     </select>
                 </div>
@@ -162,19 +165,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const contentArea = document.getElementById('lb-content-area');
         contentArea.innerHTML = '';
 
-        // We will render multiple "Cards" / Sections
-        // 1. Top Performers (Best Scores)
-        // 2. Best Words
-        // 3. Most Efficient (PE)
-        // 4. Highest Ratings (Peak)
-        // 5. Highest Average (Consistency)
-        // 6. Current Ratings
+        const filterGame = document.getElementById('lb-filter-game')?.value;
+        const showType = filterGame === 'all';
+
+        const renderTypeBadge = (type) => {
+            if (!showType || !type) return '';
+            const label = type === '3d' ? 'Cube' :
+                          type === 'accumulative' ? 'Acc' :
+                          type === 'fcfs' ? 'FCFS' :
+                          type === 'split' ? 'Split' : type;
+            const bg = type === '3d' ? 'rgba(235, 68, 90, 0.2)' :
+                       type === 'accumulative' ? 'rgba(56, 128, 255, 0.2)' :
+                       type === 'fcfs' ? 'rgba(45, 211, 111, 0.2)' :
+                       'rgba(152, 116, 248, 0.2)';
+            const color = type === '3d' ? '#eb445a' :
+                          type === 'accumulative' ? '#3880ff' :
+                          type === 'fcfs' ? '#2dd36f' :
+                          '#9874f8';
+            return `<span style="background:${bg}; color:${color}; padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; margin-left: 8px; vertical-align: middle;">${label}</span>`;
+        };
 
         createTableCard(contentArea, "Highest Single Round Scores", data.best_scores, (row, i) => {
             return `
                 <td class="col-rank">#${i + 1}</td>
                 <td class="col-user">
                     ${renderUserLink(row)}
+                    ${renderTypeBadge(row.game_type)}
                 </td>
                 <td class="col-val highlight">${row.total_score} pts</td>
                 <td class="col-meta">${row.round_duration < 60 ? row.round_duration + 's' : (row.round_duration / 60) + 'm'}</td>
@@ -190,6 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td class="col-rank">#${i + 1}</td>
                 <td class="col-user">
                      ${renderUserLink(row)}
+                     ${renderTypeBadge(row.game_type)}
                 </td>
                 <td class="col-val highlight">${row.best_word}</td>
                 <td class="col-meta" style="color: #ffd700;">${row.best_word_score} pts</td>
@@ -205,6 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  <td class="col-rank">#${i + 1}</td>
                  <td class="col-user">
                       ${renderUserLink(row)}
+                      ${renderTypeBadge(row.game_type)}
                  </td>
                  <td class="col-val highlight">${parseFloat(row.performance_ratio).toFixed(2)}x</td>
                  <td class="col-meta">(${row.total_score} pts)</td>
@@ -233,9 +251,10 @@ document.addEventListener('DOMContentLoaded', () => {
                  <td class="col-rank">#${i + 1}</td>
                  <td class="col-user">
                       ${renderUserLink(row)}
+                      ${renderTypeBadge(row.game_type)}
                  </td>
-                 <td class="col-val highlight">${row.max_rating}</td> 
-                 <td class="col-meta">ELOKR</td>
+                 <td class="col-val highlight" style="color: #409cff;">${row.max_rating}</td> 
+                 <td class="col-meta">Peak</td>
                  <td class="col-date">${formatDate(row.timestamp)}</td>
                  <td class="col-action"></td>
              `;
@@ -246,6 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  <td class="col-rank">#${i + 1}</td>
                  <td class="col-user">
                       ${renderUserLink(row)}
+                      ${renderTypeBadge(row.game_type)}
                  </td>
                  <td class="col-val highlight">${row.game_count}</td> 
                  <td class="col-meta">Games</td>
@@ -259,6 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  <td class="col-rank">#${i + 1}</td>
                  <td class="col-user">
                       ${renderUserLink(row)}
+                      ${renderTypeBadge(row.game_type)}
                  </td>
                  <td class="col-val highlight">${row.rating}</td>
                  <td class="col-meta">Current</td>
