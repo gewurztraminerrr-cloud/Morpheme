@@ -18,7 +18,7 @@ git clean -fd
 
 # 4. Inject the stable database snapshot (User settings, Synesthesia, etc)
 echo "Restoring database from stable backup..."
-cp morpheme.db.save_point_2026-03-24_final morpheme.db
+cp morpheme.db.save_point_2026-03-28_final morpheme.db
 
 # 5. Restart the server
 echo "Restarting Morpheme server (Single Process Mode)..."
