@@ -85,13 +85,13 @@ class BoardGenerator:
                 
                 if min_words <= word_count <= max_words:
                     print(f"[BoardGen] ✓ Cube Board valid on attempt {attempt} (Words: {word_count})")
-                    return board, all_words, None
+                    return board, all_words, None, board_format
                 
                 # If we are failing, maybe try adjusting weights?
                 # Optimization: if too few words, keep trying.
                 if attempt == 20:
                     print(f"[BoardGen] WARNING: Cube generation hit max attempts, returning best effort (Words: {word_count})")
-                    return board, all_words, None
+                    return board, all_words, None, board_format
 
         # Parse word count requirements
         with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
@@ -114,6 +114,7 @@ class BoardGenerator:
             # Update fmt_clean/fmt_lower for subsequent steps
             fmt_clean = board_format.strip()
             fmt_lower = fmt_clean.lower()
+            print(f"[BoardGen] Mania: Picked letter '{mania_letter}', new format: '{board_format}'")
 
         # Try to generate valid board (max 15 attempts)
         max_attempts = 15 
@@ -150,7 +151,7 @@ class BoardGenerator:
                 self._verify_checkerboard_safeguard(board, self._get_weights(difficulty), bonus_cells_set)
                 
             all_words = self._solve_board(board, dictionary, (min_words, max_words), min_word_length)
-            return board, all_words, None
+            return board, all_words, None, board_format
 
         for attempt in range(1, max_attempts + 1):
             with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
@@ -223,12 +224,22 @@ class BoardGenerator:
                 print(f"[BoardGen] * Either/Or cell identified: {bonus_cell}")
             
             # 4. Apply extra effects
-            if 'mania' in fmt_lower:
-                mania_letter = board_format.split(' ')[0]
-                self._apply_mania_to_board(board, mania_letter, exclude_cells=bonus_cells_set, is_checkerboard=is_checkerboard_fmt)
-            
             # 4.1 Enforce vowel minimum (30-33%) - All boards (Skip logic inside method for Checkerboard)
             self._enforce_vowel_minimum(board, weights, is_checkerboard=is_checkerboard_fmt)
+
+            # APPLY MANIA AFTER VOWEL BALANCING so it doesn't get overwritten
+            if 'mania' in fmt_lower:
+                parts = board_format.split(' ')
+                if len(parts) >= 2 and len(parts[0]) == 1:
+                    mania_letter = parts[0].upper()
+                else:
+                    # Fallback or initialization error - already handled at top but be safe
+                    import random
+                    if random.random() < 0.30: mania_letter = random.choice('AEIOU')
+                    else: mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')
+                    board_format = f"{mania_letter} Mania"
+                    
+                self._apply_mania_to_board(board, mania_letter, exclude_cells=bonus_cells_set, is_checkerboard=is_checkerboard_fmt)
             
             # 5. Solve and Validate
             with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
@@ -250,10 +261,10 @@ class BoardGenerator:
                     self._verify_checkerboard_safeguard(board, weights, bonus_cells_set)
                 
                 print(f"[BoardGen] ✓ Board valid: {word_count} scorable words")
-                return board, all_words, bonus_cell
+                return board, all_words, bonus_cell, board_format
                 
         print(f"[BoardGen] ⚠ Max attempts reached: {word_count} words")
-        return board, all_words, bonus_cell
+        return board, all_words, bonus_cell, board_format
     
     def _parse_word_count_range(self, word_count_range):
         """Parse word count range (tuple or string) into (min, max) tuple"""
@@ -430,6 +441,10 @@ class BoardGenerator:
     
     def _apply_mania_to_board(self, board, mania_letter, exclude_cells, is_checkerboard=False):
         """Fill approx 31% of cells with the mania letter (5/16 ratio)."""
+        if not mania_letter or len(mania_letter) != 1:
+             print(f"[BoardGen] Mania: INVALID letter '{mania_letter}', skipping abundance")
+             return
+             
         rows, cols = len(board), len(board[0])
         total_cells = rows * cols
         

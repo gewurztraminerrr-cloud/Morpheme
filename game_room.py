@@ -1418,7 +1418,7 @@ class RoomManager:
             # Generate board
             with open(log_path, 'a') as f:
                 f.write(f"[START_ROUND] board_generator instance: {self.board_generator}\n")
-            board, all_words, bonus_cell = self.board_generator.generate_board(
+            board, all_words, bonus_cell, updated_format = self.board_generator.generate_board(
                 room.board_dimensions,
                 bonus_word,
                 room.spinner_params['word_count_range'],
@@ -1427,6 +1427,9 @@ class RoomManager:
                 room.spinner_params['min_word_length'],  # Only count words meeting min length
                 room.spinner_params['difficulty']
             )
+            # Update the room's format to include the mania letter if it was generated
+            room.spinner_params['board_format'] = updated_format
+            room.current_board_format = updated_format
             room.bonus_cell = bonus_cell
             print(f"[RoomManager] Board generation complete! Board: {board is not None}, Words: {len(all_words) if all_words else 0}")
             
@@ -1650,7 +1653,7 @@ class RoomManager:
             # Start board generation in background thread
             def generate_in_background():
                 print(f"[RoomManager] Background board generation started...")
-                board, all_words, bonus_cell = self.board_generator.generate_board(
+                board, all_words, bonus_cell, updated_format = self.board_generator.generate_board(
                     room.board_dimensions,
                     bonus_word,
                     room.spinner_params['word_count_range'],
@@ -1665,9 +1668,12 @@ class RoomManager:
                     room.board_search_started = False # Reset to allow retry
                     return
                 
+                # Update the room's format for the next round
+                room.spinner_params['board_format'] = updated_format
                 room.next_round_board = board
                 room.next_round_words = all_words
                 room.next_round_bonus_cell = bonus_cell
+                room.next_round_format = updated_format # Cache for when the round actually starts
                 
                 # User requirement: "When you show the Spinner Set Popup, that means you have found a board."
                 # So we only set generated=True AFTER the background thread succeeds!

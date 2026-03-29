@@ -237,7 +237,7 @@ class PrivateMatchManager:
                 bonus_word = random.choice(potential_dict_words)
         
         # Generate board (this will now embed the bonus_word if provided)
-        board, all_words_on_board, bonus_cell = bg.generate_board(
+        board, all_words_on_board, bonus_cell, updated_format = bg.generate_board(
             dimensions=dims,
             bonus_word=bonus_word,
             word_count_range=target_range,
@@ -246,6 +246,8 @@ class PrivateMatchManager:
             min_word_length=min_len,
             difficulty=target_difficulty
         )
+        # Use the updated format (e.g. "X Mania" instead of just "Mania")
+        target_format = updated_format
         
         now = time.time()
 

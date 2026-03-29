@@ -4166,6 +4166,8 @@ def get_private_match_status(match_id):
             params['word_count_range'] = json.loads(r['word_count_range'])
         except:
             pass
+    if r['board_format']:
+        params['board_format'] = r['board_format']
 
     # NEW: Record/Retrieve the persistent turn start time for this user
     # This prevents them from resetting the timer by leaving and re-entering the match.
