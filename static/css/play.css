@@ -1198,9 +1198,22 @@ body.theme-light-brown .word-item.bonus-word {
 
 /* Missed by User (Red) */
 .word-item.missed {
-    background: rgba(244, 63, 94, 0.15) !important;
-    border: 1px solid rgba(244, 63, 94, 0.3) !important;
-    color: rgba(251, 113, 133, 0.6) !important;
+    background: rgba(244, 63, 94, 0.1) !important;
+    border: 1px solid rgba(244, 63, 94, 0.2) !important;
+    color: #fb7185 !important; /* Vibrant rose for dark themes */
+    opacity: 0.95;
+}
+
+[class*="theme-white"] .word-item.missed,
+[class*="theme-light-"] .word-item.missed,
+body.theme-yellow .word-item.missed,
+body.theme-pink .word-item.missed,
+body.theme-orange .word-item.missed,
+body.theme-gray .word-item.missed,
+body.theme-light-brown .word-item.missed {
+    color: #9f1239 !important; /* Deep crimson for light themes */
+    background: rgba(159, 18, 57, 0.05) !important;
+    border-color: rgba(159, 18, 57, 0.1) !important;
 }
 
 /* Equal Height for MP and LIC Charts */
@@ -1465,7 +1478,7 @@ body.theme-light-brown .word-item.bonus-word {
     display: flex;
     height: 100%;
     min-height: 500px;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(var(--text-primary-rgb), 0.05);
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid rgba(var(--text-primary-rgb), 0.1);
@@ -2659,9 +2672,15 @@ body.theme-light-brown .word-item.bonus-word {
 }
 
 .word-item.prev-missed {
-    background: rgba(244, 63, 94, 0.1) !important;
-    border: 1px solid rgba(244, 63, 94, 0.2) !important;
-    color: rgba(251, 113, 133, 0.6) !important;
+    background: rgba(244, 63, 94, 0.08) !important;
+    border: 1px solid rgba(244, 63, 94, 0.15) !important;
+    color: #fb7185 !important;
+    opacity: 0.9;
+}
+
+[class*="theme-white"] .word-item.prev-missed,
+[class*="theme-light-"] .word-item.prev-missed {
+    color: #9f1239 !important;
 }
 
 /* --- SETTINGS PAGE --- */

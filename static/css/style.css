@@ -1034,9 +1034,8 @@ body {
 }
 
 .user-notepad {
-    background: #fdf6e3;
-    /* Yellowish notepad color */
-    color: #333;
+    background: rgba(var(--text-primary-rgb), 0.05); /* Theme-aware background */
+    color: var(--text-primary); /* Theme-aware text color */
     border-radius: 8px;
     padding: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
@@ -3009,7 +3008,7 @@ body {
 
 .profile-tabs-header {
     display: flex;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(var(--text-primary-rgb), 0.1);
     border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05);
     flex-wrap: wrap;
     /* Allow tabs to wrap if space is tight */
@@ -3199,7 +3198,7 @@ body {
 }
 
 .integrated-review-board {
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(var(--text-primary-rgb), 0.05);
     border-radius: 16px;
     display: grid;
     gap: 6px;
@@ -4548,7 +4547,7 @@ body {
 .history-scroll-container {
     max-height: 350px;
     overflow-y: auto;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(var(--text-primary-rgb), 0.05);
     border-radius: 12px;
     border: 1px solid rgba(var(--text-primary-rgb), 0.06);
     scrollbar-width: thin;
