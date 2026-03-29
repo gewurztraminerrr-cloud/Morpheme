@@ -2351,13 +2351,13 @@ body.theme-light-brown .word-item.bonus-word {
     font-size: 0.85rem;
     padding: 4px 8px;
     border-radius: 4px;
-    background: rgba(var(--text-primary-rgb), 0.9);
-    color: #000;
+    background: rgba(var(--text-primary-rgb), 0.08);
+    color: var(--text-primary);
     margin-bottom: 2px;
 }
 
 .notepad-item:nth-child(odd) {
-    background: rgba(240, 240, 240, 0.9);
+    background: rgba(var(--text-primary-rgb), 0.12);
 }
 
 .notepad-item.invalid {

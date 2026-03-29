@@ -2660,7 +2660,7 @@ function renderSplitNotepads(players, state) {
 
         // Render words
         if (wordsToShow.length === 0) {
-            list.innerHTML = '<div style="color:#000;font-style:italic;padding:10px;text-align:center;">None</div>';
+            list.innerHTML = '<div style="color:var(--text-primary);font-style:italic;padding:10px;text-align:center;">None</div>';
         } else {
             wordsToShow.forEach(w => {
                 const row = document.createElement('div');
@@ -2803,7 +2803,7 @@ function renderFCFSNotepads(players, state) {
         scrollControls.appendChild(btnDown);
 
         if (!p.submitted_words || p.submitted_words.length === 0) {
-            list.innerHTML = '<div style="color:#000;font-style:italic;padding:10px;text-align:center;">None</div>';
+            list.innerHTML = '<div style="color:var(--text-primary);font-style:italic;padding:10px;text-align:center;">None</div>';
         } else {
             // Sort words: Longest first, then alphabetical
             const wordsToShow = [...p.submitted_words];
