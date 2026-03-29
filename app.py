@@ -2501,9 +2501,6 @@ def calculate_morpheme_metric(source, target):
     insertions = t_len - len(matched_s_indices)
     return relocations + paid_deletions + insertions, linearity
 
-def check_and_add_mp(mp_groups, mp, word):
-    if 0 <= mp <= 6:
-        if word not in mp_groups[mp]: mp_groups[mp].append(word)
 
 def check_and_add_mp(mp_groups, source_len, target_len, mp, word):
     """Applies strict filtering logic from combos.java."""
@@ -2619,7 +2616,7 @@ def tools_combo_check():
         best_mp = min(best_mp, m4)
         
         if best_mp <= 6:
-            check_and_add_mp(mp_groups, best_mp, word)
+            check_and_add_mp(mp_groups, source_len, target_len, best_mp, word)
             
         # LIC logic: letters in common
         s_count = Counter(search_term)
