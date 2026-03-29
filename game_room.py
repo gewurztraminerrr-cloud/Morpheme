@@ -1178,7 +1178,7 @@ class RoomManager:
         """Periodically clean up inactive rooms and players"""
         while True:
             try:
-                time.sleep(60) # Run every minute
+                time.sleep(15) # Run every 15 seconds for more responsive room flips (e.g. at midnight)
                 # Routine 10-minute inactivity cleanup
                 self.cleanup_rooms(timeout=600) 
                 
@@ -1322,7 +1322,34 @@ class RoomManager:
         # Iterate over a copy of keys to avoid modification issues
         for room_id, room in list(self.rooms.items()):
             try:
-                # Check for inactive players
+                # 1. Update Game State (Transitions)
+                # This is critical for 24h rooms to flip at midnight even if empty
+                state_changed = room.check_and_update_state()
+                
+                # If intermission just ended, check for timing milestones (Accumulative & FCFS)
+                if room.state == 'intermission':
+                    milestone = room.get_intermission_milestone()
+                    
+                    if milestone == 'spinner':
+                        # At 45s remaining: Generate Spinner Set parameters
+                        if not room.is_solo and not getattr(room, 'spinner_params_generated', False):
+                            print(f"[BG-Cleanup] Room {room_id}: Milestone 'spinner' - Generating params")
+                            self.generate_spinner_params(room_id)
+                        elif room.is_solo:
+                            room.spinner_params_generated = True
+                    
+                    elif milestone == 'search':
+                        # At 15s remaining: Start board search
+                        if not getattr(room, 'board_search_started', False):
+                            print(f"[BG-Cleanup] Room {room_id}: Milestone 'search' - Starting board search")
+                            self.start_board_search(room_id)
+                    
+                    elif milestone == 'start':
+                        # At 0s: Start next round
+                        print(f"[BG-Cleanup] Room {room_id}: Milestone 'start' - Starting next round")
+                        self.start_next_round(room_id)
+
+                # 2. Check for inactive players
                 room.check_inactivity(timeout, spec_timeout)
                 
                 # Close room if empty (excludes AI bots)
@@ -1336,7 +1363,8 @@ class RoomManager:
                     rooms_to_delete.append(room_id)
                     
             except Exception as e:
-                print(f"[RoomManager] Error cleaning up room {room_id}: {e}")
+                import traceback
+                print(f"[RoomManager] Error cleaning up/ticking room {room_id}: {e}\n{traceback.format_exc()}")
         
         # Delete marked rooms
         for room_id in rooms_to_delete:
@@ -1447,7 +1475,13 @@ class RoomManager:
             room.spinner_params['board_format'] = updated_format
             room.current_board_format = updated_format
             room.bonus_cell = bonus_cell
-            print(f"[RoomManager] Board generation complete! Board: {board is not None}, Words: {len(all_words) if all_words else 0}")
+            
+            # User Request Fix: Double Lockdown - Ensure bonus_cell is strictly None for Normal and other non-special formats
+            fmt_low = str(room.current_board_format).lower()
+            if 'bonus letter' not in fmt_low and 'either' not in fmt_low:
+                room.bonus_cell = None
+                
+            print(f"[RoomManager] Board generation complete! Board: {board is not None}, Words: {len(all_words) if all_words else 0}, BonusCell: {room.bonus_cell}")
             
             if board is None:
                 print(f"[RoomManager] ERROR: Board generation failed!")
@@ -1691,6 +1725,12 @@ class RoomManager:
                 room.next_round_board = board
                 room.next_round_words = all_words
                 room.next_round_bonus_cell = bonus_cell
+                
+                # User Request Fix: Background Lockdown - Clear if format is not Bonus/Either
+                f_low = str(updated_format).lower()
+                if 'bonus letter' not in f_low and 'either' not in f_low:
+                     room.next_round_bonus_cell = None
+                     
                 room.next_round_format = updated_format # Cache for when the round actually starts
                 
                 # User requirement: "When you show the Spinner Set Popup, that means you have found a board."
@@ -1787,6 +1827,11 @@ class RoomManager:
             room.current_bonus_word_length = room.spinner_params.get("bonus_word_length", 0)
             room.bonus_word = getattr(room, 'next_round_bonus', '')
             room.bonus_cell = getattr(room, 'next_round_bonus_cell', None)
+            
+            # User Request Fix: Double Lockdown - Ensure bonus_cell is strictly None for Normal and other non-special formats
+            fmt_low = str(room.current_board_format).lower()
+            if 'bonus letter' not in fmt_low and 'either' not in fmt_low:
+                room.bonus_cell = None
             
             # ATOMICITY FIX: SET ACTIVE STATE NOW that parameters are fully populated
             room.state = 'active'

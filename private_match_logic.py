@@ -249,6 +249,11 @@ class PrivateMatchManager:
         # Use the updated format (e.g. "X Mania" instead of just "Mania")
         target_format = updated_format
         
+        # User Request Fix: Ensure private matches also respect the lockdown for Normal format
+        f_low = str(target_format).lower()
+        if 'bonus letter' not in f_low and 'either' not in f_low:
+             bonus_cell = None
+        
         now = time.time()
 
         now = time.time()

@@ -197,7 +197,11 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
 
     # Final tally (Always award 3 extra points for special tiles, unless checkerboard)
     bonus_letter_score = 0
-    if used_bonus and 'checkerboard' not in fmt_lower:
+    
+    # User Request Fix: ONLY award bonus points if format is specifically intended to have a bonus letter
+    is_spec_bonus_fmt = ('bonus letter' in fmt_lower or 'either' in fmt_lower)
+    
+    if used_bonus and is_spec_bonus_fmt and 'checkerboard' not in fmt_lower:
         bonus_letter_score = 3
         score += bonus_letter_score
     

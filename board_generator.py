@@ -86,7 +86,12 @@ class BoardGenerator:
                 
                 if min_words <= word_count <= max_words:
                     print(f"[BoardGen] ✓ Cube Board valid on attempt {attempt} (Words: {word_count})")
-                    bonus_cell = path[0] if path else None
+                    # User Request Fix: Only set bonus_cell if format is specifically Bonus Letter or if using Either/Or
+                    fmt_lower = board_format.lower()
+                    if 'bonus letter' in fmt_lower or 'either' in fmt_lower:
+                        bonus_cell = path[0] if path else None
+                    else:
+                        bonus_cell = None
                     return board, all_words, bonus_cell, board_format
                 
                 # If we are failing, maybe try adjusting weights?
@@ -139,12 +144,17 @@ class BoardGenerator:
                 board = self._create_2000plus_board(rows, cols, dictionary)
             
             # Embed bonus word into the dense board
-            bonus_cells_set = set()
+            bonus_cells_set = set() # Avoid NameError
             if bonus_word and not is_checkerboard_fmt:
                 path = self._embed_bonus_word(board, bonus_word, is_checkerboard=is_checkerboard_fmt)
                 if path:
                     bonus_cells_set = set(path)
-                    bonus_cell = random.choice(path)
+                    # User Request Fix: DO NOT highlight bonus word cell in Normal format
+                    fmt_lower = board_format.lower()
+                    if 'bonus letter' in fmt_lower or 'either' in fmt_lower:
+                        bonus_cell = random.choice(path)
+                    else:
+                        bonus_cell = None
                 else:
                     bonus_cell = None
             
@@ -189,7 +199,7 @@ class BoardGenerator:
             # 3. Embed bonus word (Overlay first)
             actual_bonus_word = bonus_word if bonus_word else ""
             
-            bonus_cells_set = set()
+            bonus_cells_set = set() # Always initialize to avoid NameError below
             if actual_bonus_word:
                 path = self._embed_bonus_word(board, actual_bonus_word, is_checkerboard=is_checkerboard_fmt)
                 if not path:
@@ -197,9 +207,9 @@ class BoardGenerator:
                     continue
                 bonus_cells_set = set(path)
                 print(f"[BoardGen] ✓ Bonus word '{actual_bonus_word}' embedded successfully")
-                # Fallback: highlight one of the bonus word cells if no other special cell is assigned yet
-                if not bonus_cell and path:
-                    bonus_cell = random.choice(path)
+                # User Request Fix: REMOVED the unconditional bonus_cell highlight of a bonus word letter.
+                # Bonus cell will be assigned explicitly below if format is 'Bonus Letter' or 'Either/Or'.
+                bonus_cell = None
             
             # Now pick bonus_cell for 'Bonus Letter' format (AFTER bonus word path is known)
             if 'bonus letter' in fmt_lower:
