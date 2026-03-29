@@ -503,6 +503,62 @@ class PrivateMatchManager:
             all_done = all(p['user_id'] in submitted_ids for p in players)
             
             if all_done:
+                # --- SPLIT POINTS RECALCULATION (Private Match) ---
+                match_row = conn.execute('SELECT parameters FROM private_matches WHERE id = ?', (match_id,)).fetchone()
+                if match_row:
+                    params = json.loads(match_row['parameters'])
+                    if params.get('game_type') == 'split':
+                        print(f"DEBUG: All players done for Split Points match {match_id}. Recalculating scores...")
+                        # 1. Gather ALL submissions for this round
+                        turns = conn.execute('SELECT user_id, submitted_words FROM private_match_turns WHERE match_id = ? AND round_number = ?', (match_id, round_number)).fetchall()
+                        user_submissions = {t['user_id']: json.loads(t['submitted_words']) for t in turns}
+                        
+                        # 2. Count finders for each word
+                        word_finders = {} # {WORD: [user_id, ...]}
+                        for uid, words in user_submissions.items():
+                            for w in words:
+                                word_text = w['word'].upper()
+                                if word_text not in word_finders:
+                                    word_finders[word_text] = []
+                                word_finders[word_text].append(uid)
+                        
+                        # 3. Recalculate each user's score and points
+                        for uid, words in user_submissions.items():
+                            new_total_score = 0
+                            for w in words:
+                                word_text = w['word'].upper()
+                                finders = word_finders.get(word_text, [])
+                                count = len(finders)
+                                
+                                # Original score was for "only me"
+                                original_points = w.get('points', 0)
+                                
+                                # If it's a negative penalty, everyone gets -3 (NOT split)
+                                if original_points < 0:
+                                    w['shared_count'] = 1
+                                    # No change to pts
+                                else:
+                                    w['shared_count'] = count
+                                    # SPLIT LOGIC: (points + count -1) // count
+                                    new_pts = (original_points + count - 1) // count
+                                    w['points'] = new_pts
+                                    # Update score_details if present
+                                    if 'score_details' in w and w['score_details']:
+                                        sd = w['score_details']
+                                        sd['total'] = new_pts
+                                        sd['base'] = (sd.get('base', 0) + count - 1) // count
+                                        sd['bonus_word_points'] = (sd.get('bonus_word_points', 0) + count - 1) // count
+                                        sd['bonus_letter_points'] = (sd.get('bonus_letter_points', 0) + count - 1) // count
+
+                                new_total_score += w['points']
+                                
+                            # Enforce floor of 0
+                            new_total_score = max(0, new_total_score)
+                            
+                            # 4. Update the turn in the DB
+                            conn.execute('UPDATE private_match_turns SET score = ?, submitted_words = ? WHERE match_id = ? AND round_number = ? AND user_id = ?',
+                                         (new_total_score, json.dumps(words), match_id, round_number, uid))
+                        
                 # Apply Rating Changes
                 try:
                     self._apply_match_ratings(match_id, round_number, conn)
@@ -624,12 +680,23 @@ class PrivateMatchManager:
         times.sort()
         
         for i, (w, pts) in enumerate(selected_words):
-            total_score += pts
+            # Recalculate with details for the submission record
+            res = calculate_word_score(
+                w, 
+                bonus_word, 
+                board_format=board_format, 
+                bonus_cell=bonus_cell, 
+                is_private=True,
+                return_details=True
+            )
             submission.append({
                 'word': w,
-                'points': pts,
+                'points': res['total'],
+                'is_bonus': (bonus_word and w == bonus_word.upper()),
+                'score_details': res,
                 'time_offset': times[i]
             })
+            total_score += res['total']
             
         total_score = max(0, total_score)
         return submission, total_score

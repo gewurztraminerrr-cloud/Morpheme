@@ -24,7 +24,7 @@ class SpinnerSet:
         return params
 
     @staticmethod
-    def generate_params(board_dimensions, is_24h=False):
+    def generate_params(board_dimensions, is_24h=False, is_split=False):
         """Generate granular spinner parameters given dimensions"""
         # Generate dictionary FIRST so we can use its size for word count
         dictionary = SpinnerSet._spin_dictionary()
@@ -35,9 +35,9 @@ class SpinnerSet:
         if wc_range == '500+':
             board_format = 'Normal'
 
-        # Force bonus_word_length to 0 for Checkerboard to ensure UI consistency
+        # Force bonus_word_length to 0 for Checkerboard to ensure UI consistency (Except Split Points)
         bonus_len = SpinnerSet._spin_bonus_word_length()
-        if 'checkerboard' in board_format.lower():
+        if 'checkerboard' in board_format.lower() and not is_split:
             bonus_len = 0
             
         return {

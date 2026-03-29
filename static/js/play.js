@@ -1892,7 +1892,7 @@ function renderBoard(board, grayed) {
         // Bottom-up, Right-to-left
         for (let r = rows - 1; r >= 0; r--) {
             for (let c = cols - 1; c >= 0; c--) {
-                const cell = createBoardCell(r, c, board[r][c], grayed);
+                const cell = createBoardCell(r, c, board[r][c], grayed, (is3D ? f : undefined));
                 boardEl.appendChild(cell);
             }
         }
@@ -1900,7 +1900,7 @@ function renderBoard(board, grayed) {
         // Normal: Top-down, Left-to-right
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
-                const cell = createBoardCell(r, c, board[r][c], grayed);
+                const cell = createBoardCell(r, c, board[r][c], grayed, (is3D ? f : undefined));
                 boardEl.appendChild(cell);
             }
         }
@@ -2119,7 +2119,7 @@ const LETTER_VALUES = {
 };
 
 // Helper to create a board cell
-function createBoardCell(r, c, letter, grayed) {
+function createBoardCell(r, c, letter, grayed, f) {
     const cell = document.createElement('div');
     let boardFormat = (window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : null;
     if (!boardFormat && window.lastGameState && window.lastGameState.spinner_params) {
@@ -2693,10 +2693,25 @@ function renderSplitNotepads(players, state) {
                 };
 
                 let ptsDisplay = w.points;
-                if (w.score_details && w.score_details.bonus_letter_points > 0) {
-                    const originalValue = w.score_details.base + (w.score_details.bonus_word_points || 0);
-                    ptsDisplay = `${originalValue}+${w.score_details.bonus_letter_points}=${w.points}`;
+                if (w.score_details) {
+                    const bonusWordPts = w.score_details.bonus_word_points || 0;
+                    const bonusLetterPts = w.score_details.bonus_letter_points || 0;
+                    
+                    if (bonusLetterPts > 0) {
+                        const originalValue = w.score_details.base + bonusWordPts;
+                        ptsDisplay = `${originalValue}+${bonusLetterPts}=${w.points}`;
+                    } else if (bonusWordPts > 0) {
+                        ptsDisplay = `${w.score_details.base}+${bonusWordPts}=${w.points}`;
+                    }
                 }
+                
+                // Add split multiplier indicator for shared words
+                if (w.shared_count > 1) {
+                    ptsDisplay += ` <small style="opacity:0.7;">(÷${w.shared_count})</small>`;
+                }
+
+                const isBonusWord = w.is_bonus || (state.bonus_word && w.word.toUpperCase() === state.bonus_word.toUpperCase());
+                if (isBonusWord) row.classList.add('bonus-word');
 
                 row.innerHTML = `<span>${w.word}</span> <span style="font-size:0.85em; opacity:0.9;">${ptsDisplay}</span>`;
                 list.appendChild(row);

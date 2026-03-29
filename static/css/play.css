@@ -1099,7 +1099,8 @@ body.theme-light-brown .player-score-val {
     color: var(--text-primary);
 }
 
-.word-item.bonus-word {
+.word-item.bonus-word,
+.notepad-item.bonus-word {
     background: rgba(50, 255, 50, 0.4) !important;
     /* Vibrant Lime Green */
     border: 3px solid #32ff32 !important;
@@ -1112,12 +1113,19 @@ body.theme-light-brown .player-score-val {
 
 /* Remove blurriness for bonus word in light themes */
 [class*="theme-white"] .word-item.bonus-word,
+[class*="theme-white"] .notepad-item.bonus-word,
 [class*="theme-light-"] .word-item.bonus-word,
+[class*="theme-light-"] .notepad-item.bonus-word,
 body.theme-yellow .word-item.bonus-word,
+body.theme-yellow .notepad-item.bonus-word,
 body.theme-pink .word-item.bonus-word,
+body.theme-pink .notepad-item.bonus-word,
 body.theme-orange .word-item.bonus-word,
+body.theme-orange .notepad-item.bonus-word,
 body.theme-gray .word-item.bonus-word,
-body.theme-light-brown .word-item.bonus-word {
+body.theme-gray .notepad-item.bonus-word,
+body.theme-light-brown .word-item.bonus-word,
+body.theme-light-brown .notepad-item.bonus-word {
     text-shadow: none !important;
     box-shadow: 0 2px 8px rgba(0, 128, 0, 0.3) !important;
     color: #000 !important;

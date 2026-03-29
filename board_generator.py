@@ -74,8 +74,9 @@ class BoardGenerator:
             
             for attempt in range(1, 21): # Up to 20 attempts for Cube
                 board = self._create_cube_board(difficulty)
+                path = None
                 if bonus_word:
-                    self._embed_bonus_word_cube(board, bonus_word)
+                    path = self._embed_bonus_word_cube(board, bonus_word)
                 
                 # Enforce vowel minimum (33%)
                 self._enforce_vowel_minimum(board, self._get_weights(difficulty))
@@ -85,7 +86,8 @@ class BoardGenerator:
                 
                 if min_words <= word_count <= max_words:
                     print(f"[BoardGen] ✓ Cube Board valid on attempt {attempt} (Words: {word_count})")
-                    return board, all_words, None, board_format
+                    bonus_cell = path[0] if path else None
+                    return board, all_words, bonus_cell, board_format
                 
                 # If we are failing, maybe try adjusting weights?
                 # Optimization: if too few words, keep trying.
@@ -142,6 +144,9 @@ class BoardGenerator:
                 path = self._embed_bonus_word(board, bonus_word, is_checkerboard=is_checkerboard_fmt)
                 if path:
                     bonus_cells_set = set(path)
+                    bonus_cell = random.choice(path)
+                else:
+                    bonus_cell = None
             
             # 4.2 Enforce vowel minimum (30-33%) - Dense Mode (Skip for Checkerboard)
             self._enforce_vowel_minimum(board, self._get_weights(difficulty), is_checkerboard=is_checkerboard_fmt)
@@ -151,7 +156,7 @@ class BoardGenerator:
                 self._verify_checkerboard_safeguard(board, self._get_weights(difficulty), bonus_cells_set)
                 
             all_words = self._solve_board(board, dictionary, (min_words, max_words), min_word_length)
-            return board, all_words, None, board_format
+            return board, all_words, bonus_cell, board_format
 
         for attempt in range(1, max_attempts + 1):
             with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
@@ -192,6 +197,9 @@ class BoardGenerator:
                     continue
                 bonus_cells_set = set(path)
                 print(f"[BoardGen] ✓ Bonus word '{actual_bonus_word}' embedded successfully")
+                # Fallback: highlight one of the bonus word cells if no other special cell is assigned yet
+                if not bonus_cell and path:
+                    bonus_cell = random.choice(path)
             
             # Now pick bonus_cell for 'Bonus Letter' format (AFTER bonus word path is known)
             if 'bonus letter' in fmt_lower:

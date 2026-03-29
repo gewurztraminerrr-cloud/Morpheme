@@ -586,7 +586,23 @@
                         if (Array.isArray(words) && words.length > 0) {
                             // Sort by length (desc) then alphabetically (asc)
                             words.sort((a, b) => b.word.length - a.word.length || a.word.localeCompare(b.word));
-                            const wordStrs = words.map(w => `<span style="background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; margin:2px; display:inline-block; font-size:0.8em;">${w.word} (${w.points})</span>`).join('');
+                            const wordStrs = words.map(w => {
+                                const isBonus = w.is_bonus;
+                                let ptsDisplay = w.points;
+                                if (w.score_details) {
+                                    const bonusWordPts = w.score_details.bonus_word_points || 0;
+                                    const bonusLetterPts = w.score_details.bonus_letter_points || 0;
+                                    if (bonusLetterPts > 0) {
+                                        const originalValue = w.score_details.base + bonusWordPts;
+                                        ptsDisplay = `${originalValue}+${bonusLetterPts}=${w.points}`;
+                                    } else if (bonusWordPts > 0) {
+                                        ptsDisplay = `${w.score_details.base}+${bonusWordPts}=${w.points}`;
+                                    }
+                                }
+                                const bg = isBonus ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255,255,255,0.1)';
+                                const border = isBonus ? '1px solid rgba(76, 175, 80, 0.5)' : 'none';
+                                return `<span style="background:${bg}; border:${border}; padding:2px 6px; border-radius:4px; margin:2px; display:inline-block; font-size:0.8em;">${w.word} (${ptsDisplay})</span>`;
+                            }).join('');
                             wordListHtml = `<div style="margin-top:5px; text-align:left; opacity:0.8;">${wordStrs}</div>`;
                         } else {
                             wordListHtml = `<div style="margin-top:5px; text-align:left; font-style:italic; opacity:0.6;">No words found.</div>`;

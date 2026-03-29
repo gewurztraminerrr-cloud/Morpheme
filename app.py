@@ -2003,11 +2003,13 @@ def get_room_state(room_id):
             now = time.time()
             is_active = room.state == 'active'
             
-            # Filter words: If bot and active, only show words with timestamp <= now
-            visible_words = [
-                w for w in p.submitted_words 
-                if not p.is_ai or not is_active or w.get('time', 0) <= now
-            ]
+            visible_words = []
+            for w in p.submitted_words:
+                if not p.is_ai or not is_active or w.get('time', 0) <= now:
+                    # Enrich word with is_bonus flag for real-time highlighting
+                    w_copy = dict(w)
+                    w_copy['is_bonus'] = (room.bonus_word and w['word'] == room.bonus_word.upper())
+                    visible_words.append(w_copy)
             
             # Calculate score with sequential floor at 0 (never go below 0 total)
             score = 0
@@ -2016,7 +2018,7 @@ def get_room_state(room_id):
                 if score < 0:
                     score = 0
                 
-            found_bonus = any(w['word'] == room.bonus_word for w in visible_words)
+            found_bonus = any(w.get('is_bonus', False) for w in visible_words)
             
             return visible_words, score, found_bonus
         # Check for inactive players (zombies)
@@ -4228,10 +4230,16 @@ def submit_private_match_turn():
             is_on_board = word_validator.find_word_on_board(board, word)
                 
             pts = 0
+            is_bonus = False
+            details = None
             if word in official_dict and is_on_board:
-                pts = calculate_word_score(word, bonus_word=bonus_word, board_format=fmt, board=board, bonus_cell=bonus_cell, is_private=True)
+                res = calculate_word_score(word, bonus_word=bonus_word, board_format=fmt, board=board, bonus_cell=bonus_cell, is_private=True, return_details=True)
+                pts = res['total']
+                details = res
+                is_bonus = (bonus_word and word == bonus_word.upper())
             elif 'penalty' in fmt.lower() and is_on_board:
                 pts = -3 # Penalty for words on board but not in dict
+                details = {'total': -3, 'base': -3, 'bonus_word_points': 0, 'bonus_letter_points': 0}
                 
             if pts == 0 and not (is_on_board and 'penalty' in fmt.lower()):
                 continue # Skip invalid words that aren't penalties
@@ -4239,6 +4247,8 @@ def submit_private_match_turn():
             valid_words.append({
                 'word': word,
                 'points': pts,
+                'is_bonus': is_bonus,
+                'score_details': details,
                 'timestamp': item.get('timestamp', time.time())
             })
             total_score += pts

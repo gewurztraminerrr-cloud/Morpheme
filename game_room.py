@@ -1085,6 +1085,15 @@ class GameRoom:
             # Formula: ceil(a/b) = (a + b - 1) // b
             final_points = (base_points + count - 1) // count
             
+            # SPLIT THE DETAILS for frontend breakdown accuracy
+            # Scaling original values by 1/count (rounded up)
+            split_details = {
+                'total': final_points,
+                'base': (res.get('base', 0) + count - 1) // count,
+                'bonus_word_points': (res.get('bonus_word_points', 0) + count - 1) // count,
+                'bonus_letter_points': (res.get('bonus_letter_points', 0) + count - 1) // count
+            }
+            
             for i, (player, timestamp, w_obj) in enumerate(finders):
                 # No remainder distribution - everyone gets the same rounded-up value
                 
@@ -1096,6 +1105,12 @@ class GameRoom:
                 w_obj['is_unique'] = (count == 1)
                 w_obj['points'] = final_points
                 w_obj['base_points'] = base_points
+                w_obj['score_details'] = split_details
+                w_obj['is_bonus'] = (word == self.bonus_word)
+                
+                # Ensure found_bonus_word is set if this word is the bonus word
+                if word == self.bonus_word:
+                    player.found_bonus_word = True
                 
         # 3. Update scores for each player
         for p in self.players:
@@ -1385,7 +1400,8 @@ class RoomManager:
             # Generate spinner parameters (Use existing if already generated during intermission)
             if not room.spinner_params:
                 is_24h = room.time_limit >= 7200
-                room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h)
+                is_split = (room.game_type == 'split')
+                room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split)
                 room.spinner_params_generated = True
                 with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
                     f.write(f"[game_room.py] start_round: Params generated at {time.time()}\n")
@@ -1404,8 +1420,8 @@ class RoomManager:
             bonus_word = self._get_bonus_word(room.spinner_params['bonus_word_length'], 
                                               room.spinner_params['dictionary'])
             
-            # User Request: NO BONUS WORDS on Checkerboard boards
-            if 'checkerboard' in str(room.spinner_params.get('board_format', '')).lower():
+            # User Request: NO BONUS WORDS on Checkerboard boards (Except Split Points where it is desired)
+            if 'checkerboard' in str(room.spinner_params.get('board_format', '')).lower() and room.game_type != 'split':
                 bonus_word = "" # Explicitly clear it for this format
                 room.spinner_params['bonus_word_length'] = 0
                 room.current_bonus_word_length = 0
@@ -1464,6 +1480,7 @@ class RoomManager:
             # ATOMICITY FIX: Everyone in the room at start_round is NO LONGER mid-round joined
             for p in room.players:
                 p.joined_mid_round = False
+                p.found_bonus_word = False
             
             # SET ACTIVE STATE LAST to ensure all parameters are written before polling returns
             room.state = 'active'
@@ -1590,7 +1607,8 @@ class RoomManager:
         try:
             # Generate spinner parameters for next round
             is_24h = room.time_limit >= 7200
-            new_params = SpinnerSet.generate_params(room.board_dimensions, is_24h)
+            is_split = (room.game_type == 'split')
+            new_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split)
             
             # ATOMIC SWAP: New params applied first, then final flag set
             room.spinner_params = new_params
@@ -1629,8 +1647,8 @@ class RoomManager:
             bonus_word = self._get_bonus_word(room.spinner_params['bonus_word_length'], 
                                               room.spinner_params['dictionary'])
             
-            # User Request: NO BONUS WORDS on Checkerboard boards
-            if 'checkerboard' in str(room.spinner_params.get('board_format', '')).lower():
+            # User Request: NO BONUS WORDS on Checkerboard boards (Except Split Points where it is desired)
+            if 'checkerboard' in str(room.spinner_params.get('board_format', '')).lower() and room.game_type != 'split':
                 bonus_word = "" # Explicitly clear it for this format
                 room.spinner_params['bonus_word_length'] = 0
                 room.next_round_bonus_length = 0
@@ -1767,6 +1785,8 @@ class RoomManager:
             room.current_dictionary = room.spinner_params.get("dictionary", "NWL")
             room.current_difficulty = room.spinner_params.get("difficulty", "Normal")
             room.current_bonus_word_length = room.spinner_params.get("bonus_word_length", 0)
+            room.bonus_word = getattr(room, 'next_round_bonus', '')
+            room.bonus_cell = getattr(room, 'next_round_bonus_cell', None)
             
             # ATOMICITY FIX: SET ACTIVE STATE NOW that parameters are fully populated
             room.state = 'active'
