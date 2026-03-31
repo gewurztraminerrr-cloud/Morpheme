@@ -203,11 +203,14 @@ class PrivateMatchManager:
         bg = BoardGenerator()
         bonus_cell = None # Initialize to avoid NameError
         dims = parameters.get('board_dimensions', '4x4')
-        dict_name = parameters.get('dictionary', 'CSW')
+        dict_name = parameters.get('dictionary', 'NWL')
         min_len = parameters.get('min_word_length', 3)
 
         # Bonus word selection BEFORE board generation to allow embedding
         bonus_len = parameters.get('bonus_word_length', 0)
+        if bonus_len == 0:
+             # Force a bonus word for private rooms if none was specified (standard UI behavior)
+             bonus_len = random.randint(6, 10)
         bonus_word = ""
         # Check if the format allows a bonus word
         target_format = parameters.get('board_format', 'Normal')
@@ -221,23 +224,19 @@ class PrivateMatchManager:
                 mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')
             target_format = f"{mania_letter} Mania"
             
-        target_range = parameters.get('word_count_range')
+        target_range = parameters.get('word_count_range', '100-200')
         target_difficulty = parameters.get('difficulty', 'Medium')
         
         fmt_check = target_format.lower()
-        if 'checkerboard' in fmt_check:
-            bonus_word = ""
-            parameters['bonus_word_length'] = 0
-            print(f"[PrivateMatch] FORCE CLEAR bonus word for Checkerboard")
-        elif bonus_len > 0 and 'mania' not in fmt_check and 'either' not in fmt_check:
+        if bonus_len > 0:
             from word_validator import word_validator
             dictionary_set = word_validator.csw_words if dict_name == 'CSW' else word_validator.nwl_words
             potential_dict_words = [w for w in dictionary_set if len(w) == bonus_len]
             if potential_dict_words:
                 bonus_word = random.choice(potential_dict_words)
         
-        # Generate board (this will now embed the bonus_word if provided)
-        board, all_words_on_board, bonus_cell, updated_format = bg.generate_board(
+        # Generate board (now returns paths dictionary as 5th value)
+        board, all_words_on_board, bonus_cell, updated_format, all_words_dict = bg.generate_board(
             dimensions=dims,
             bonus_word=bonus_word,
             word_count_range=target_range,
@@ -269,7 +268,7 @@ class PrivateMatchManager:
             conn.execute('''
                 INSERT INTO private_match_rounds (match_id, round_number, board_data, bonus_word, bonus_cell, word_count_range, all_words, start_time, end_time, board_format)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (match_id, round_number, json.dumps(board), bonus_word, json.dumps(bonus_cell) if bonus_cell else None, json.dumps(target_range), json.dumps(all_words_on_board), now, end_time, target_format))
+            ''', (match_id, round_number, json.dumps(board), bonus_word, json.dumps(bonus_cell) if bonus_cell else None, json.dumps(target_range), json.dumps(all_words_dict), now, end_time, target_format))
         except Exception as e:
             print(f"FAILED TO INSERT ROUND: {e}")
             print(f"DEBUG LOCALS: board={ 'board' in locals() }, bonus_cell={ 'bonus_cell' in locals() }, target_format={ 'target_format' in locals() }")
@@ -611,13 +610,19 @@ class PrivateMatchManager:
         # Sort words to identify high-scorers
         # We'll score all possible words first to pick the best ones
         word_scores = []
+        is_dict = isinstance(possible_words, dict)
+        
         for w in possible_words:
+            # OPTIMIZATION: Use path from dictionary if available to avoid slow DFS
+            w_path = possible_words[w] if is_dict else None
+            
             # Note: We don't have the full board object here, but calculate_word_score 
             # handles basic format scoring without it if needed (path omitted).
             # For AI, we assume they hit the bonus cell if it exists (simplified).
             word_scores.append((w, calculate_word_score(
                 w, 
                 bonus_word, 
+                path=w_path,
                 board_format=board_format, 
                 bonus_cell=bonus_cell, 
                 is_private=True

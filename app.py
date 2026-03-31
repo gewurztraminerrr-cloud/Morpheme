@@ -903,6 +903,24 @@ def init_db():
     except Exception:
         pass
 
+    try:
+        conn.execute('ALTER TABLE round_history ADD COLUMN bonus_word TEXT')
+        conn.commit()
+    except Exception:
+        pass
+
+    try:
+        conn.execute('ALTER TABLE round_history ADD COLUMN bonus_cell TEXT')
+        conn.commit()
+    except Exception:
+        pass
+
+    try:
+        conn.execute('ALTER TABLE round_history ADD COLUMN board_format TEXT DEFAULT "Normal"')
+        conn.commit()
+    except Exception:
+        pass
+
     conn.close()
 
 init_db()
@@ -1742,7 +1760,17 @@ def create_room():
         print(f"[app.py] Regular Create Attempt: user={session.get('username')} game={game_type} min={min_rating} max={max_rating}")
     
     # Create room
-    generated_id = str(uuid.uuid4())
+    # For public 10m and 24h rooms, generate STABLE IDs so history persists across restarts
+    is_public = (int(min_rating) == 0 and int(max_rating) == 9999)
+    is_long_running = (int(time_limit) >= 600)
+    
+    if is_public and is_long_running:
+        # Use deterministic ID: pub_[game]_[dims]_[time]
+        generated_id = f"pub_{game_type}_{board_dimensions}_{time_limit}".replace(' ', '_').lower()
+        print(f"[app.py] Using stable ID for public room: {generated_id}")
+    else:
+        generated_id = str(uuid.uuid4())
+        
     room = room_manager.create_room(generated_id, game_type, int(time_limit), board_dimensions, int(min_rating), int(max_rating))
     
     # Ensure user is not in any other room
@@ -1981,9 +2009,6 @@ def get_lobby_stats():
 def get_room_state(room_id):
     if 'user_id' in session:
         room_manager.update_presence(session['user_id'])
-        room = room_manager.get_room(room_id)
-        if room:
-            room.update_player_activity(session['user_id'])
     
     # Use file-based logger for execution flow tracking
     with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
@@ -2004,30 +2029,48 @@ def get_room_state(room_id):
             is_active = room.state == 'active'
             
             visible_words = []
+            score = 0
+            found_bonus = False
+            
             for w in p.submitted_words:
-                if not p.is_ai or not is_active or w.get('time', 0) <= now:
-                    # Enrich word with is_bonus flag for real-time highlighting
+                # 1. Determine time-based visibility (AI)
+                is_visible_by_time = (not p.is_ai or not is_active or w.get('time', 0) <= now)
+                
+                if is_visible_by_time:
+                    # 2. Add to incremental score calculation (Floor at 0 per requirements)
+                    score += w.get('points', 0)
+                    if score < 0:
+                        score = 0
+                    
+                    # 3. Check for bonus word
+                    is_bonus = (room.bonus_word and w['word'].upper() == room.bonus_word.upper())
+                    if is_bonus:
+                        found_bonus = True
+                    
+                    # 4. FILTER FOR FCFS: Exclude non-words (penalties) from display
+                    if room.game_type == 'fcfs' and w.get('is_penalty'):
+                        continue # Skip appending to visible_words list
+                        
+                    # Enrich and add to display list
                     w_copy = dict(w)
-                    w_copy['is_bonus'] = (room.bonus_word and w['word'] == room.bonus_word.upper())
+                    w_copy['is_bonus'] = is_bonus
                     visible_words.append(w_copy)
             
-            # Calculate score with sequential floor at 0 (never go below 0 total)
-            score = 0
-            for w in visible_words:
-                score += w.get('points', 0)
-                if score < 0:
-                    score = 0
-                
-            found_bonus = any(w.get('is_bonus', False) for w in visible_words)
-            
             return visible_words, score, found_bonus
-        # Check for inactive players (zombies)
+        # 1. Check for inactive players (zombies)
         # Use 10 minutes (600s) globally for players, 30m (1800s) for spectators
         timeout = 600
         spec_timeout = 600
-        
         players_removed = room.check_inactivity(timeout=timeout, spec_timeout=spec_timeout)
         
+        # 2. MEMBERSHIP GUARD: If requester is logged in but no longer in room, kick to lobby via 403 response
+        if 'user_id' in session:
+            uid = session['user_id']
+            is_player = any(p.user_id == uid for p in room.players)
+            is_spectator = any(s.user_id == uid for s in room.spectators)
+            if not is_player and not is_spectator:
+                 return jsonify({'error': 'You have been removed for inactivity.'}), 403
+
         # Immediate cleanup: If room is now empty and not a 24h room, delete it
         if len(room.players) == 0 and len(room.spectators) == 0 and room.time_limit < 7200:
             print(f"[app.py] Room {room_id} is empty after cleanup. Deleting immediately.")
@@ -2092,16 +2135,22 @@ def get_room_state(room_id):
         # IMPORTANT: We filter by min_word_length here so that validation-only words (length 2)
         # don't appear as "Missed Words" in the UI.
         # FIX: Use room.current_min_length instead of spinner_params to avoid leak when next round params generated
-        min_len = getattr(room, 'current_min_length', room.spinner_params.get('min_word_length', 3))
+        # EXEMPT BONUS WORD: Ensure the bonus word is ALWAYS returned, even if below min_len
+        bonus_upper = room.bonus_word.upper() if room.bonus_word else None
+        min_len = getattr(room, 'current_min_length', 3)
         
-        words_to_return = [w for w in room.all_words if len(w) >= min_len]
+        words_to_return = [w for w in room.all_words if (len(w) >= min_len or (bonus_upper and w.upper() == bonus_upper))]
         if room.state == 'intermission':
             # Use complete words if solving is done, otherwise show initial words while solving
             if room.solving_complete and room.complete_words:
-                words_to_return = [w for w in room.complete_words if len(w) >= min_len]
+                words_to_return = [w for w in room.complete_words if (len(w) >= min_len or (bonus_upper and w.upper() == bonus_upper))]
             else:
-                words_to_return = [w for w in room.all_words if len(w) >= min_len]
+                words_to_return = [w for w in room.all_words if (len(w) >= min_len or (bonus_upper and w.upper() == bonus_upper))]
         
+        # ENSURE 24H ROOM HISTORY IS LOADED (Persistence Fallback)
+        # This populates room.previous_all_words, room.previous_board, etc. if empty
+        prev_day_hist = room_manager.get_yesterdays_history(room, room.current_round)
+
         # Create response with Cache-Control headers
         resp = jsonify({
             'room_id': room.room_id,
@@ -2126,7 +2175,7 @@ def get_room_state(room_id):
             'current_min_word_length': getattr(room, 'current_min_length', 3),
             'current_word_count_range': getattr(room, 'current_word_count_range', '100-200'),
             'current_dictionary': getattr(room, 'current_dictionary', 'NWL'),
-            'current_difficulty': getattr(room, 'current_difficulty', 'Normal'),
+            'current_difficulty': getattr(room, 'current_difficulty', 'Medium'),
             'current_bonus_word_length': getattr(room, 'current_bonus_word_length', 0) or (len(room.bonus_word) if room.bonus_word else 0),
             'solving_complete': room.solving_complete,  # Let frontend know if still solving
             'max_players': room.max_players,
@@ -2134,7 +2183,7 @@ def get_room_state(room_id):
             'max_rating': room.max_rating,
             'previous_all_words': room.previous_all_words,
             'previous_board': room.previous_board,
-            'previous_day_history': room.previous_day_history,
+            'previous_day_history': prev_day_hist,
             'fcfs_found_words': list(room.fcfs_found_words) if hasattr(room, 'fcfs_found_words') else [],
             'your_username': session.get('username'),
             'players': [
@@ -3879,11 +3928,26 @@ def get_tournament_game_state():
         return jsonify({'error': 'Round data not found'}), 404
         
     params = json.loads(t['parameters'])
+    board_raw = json.loads(r['board_data'])
+    
+    # Support new dict format OR legacy list format
+    if isinstance(board_raw, dict):
+        board = board_raw.get('board')
+        bonus_word = board_raw.get('bonus_word', '')
+        all_words = board_raw.get('all_words', [])
+    else:
+        board = board_raw
+        bonus_word = ''
+        all_words = []
     
     return jsonify({
         'tournament_id': t['id'],
         'round_number': t['current_round'],
-        'board': json.loads(r['board_data']),
+        'board': board,
+        'bonus_word': bonus_word,
+        'bonus_cell': board_raw.get('bonus_cell') if isinstance(board_raw, dict) else None,
+        'board_format': board_raw.get('board_format', 'Normal') if isinstance(board_raw, dict) else 'Normal',
+        'all_words': all_words,
         'params': params,
         'end_time': r['end_time'],
         'server_time': time.time()
@@ -3925,7 +3989,19 @@ def submit_tournament_score():
         return jsonify({'error': 'Tournament or round not found'}), 404
         
     params = json.loads(t['parameters'])
-    board = json.loads(r['board_data'])
+    board_raw = json.loads(r['board_data'])
+    
+    # NEW: Handle dict format with real bonus_word
+    if isinstance(board_raw, dict):
+        board = board_raw.get('board')
+        target_bonus_word = board_raw.get('bonus_word', '').upper()
+        # Fallback to length-only if word is missing but length is provided
+        bonus_len_target = params.get('bonus_word_length', 0)
+    else:
+        board = board_raw
+        target_bonus_word = None # Legacy tournaments don't have a specific word
+        bonus_len_target = params.get('bonus_word_length', 0)
+
     dict_name = params.get('dictionary', 'NWL')
     min_len = params.get('min_word_length', 3)
     
@@ -3947,17 +4023,45 @@ def submit_tournament_score():
         
         # Check uniqueness in valid_words to avoid double scoring
         if not any(v['word'] == word for v in valid_words):
-            # Scoring
+            # Scoring (Base)
             pts = len(word)
             if len(word) == 6: pts = 10
             elif len(word) == 7: pts = 15
             elif len(word) >= 8: pts = 25
             
-            # Bonus word
+            # --- Bonus Point Logic for Tournaments ---
             is_bonus = False
-            if len(word) == params.get('bonus_word_length'):
-                pts += 10
+            fmt_low = str(board_raw.get('board_format', 'Normal')).lower() if isinstance(board_raw, dict) else 'normal'
+            bonus_word_target = target_bonus_word.upper() if target_bonus_word else ""
+            bonus_cell = board_raw.get('bonus_cell') if isinstance(board_raw, dict) else None
+            
+            # 1. Hidden Bonus Word (+Length)
+            if bonus_word_target and word == bonus_word_target:
+                pts += len(word)
                 is_bonus = True
+            
+            # 2. Special Format Tiles (+3)
+            # Find path and hit bonus cell if format uses them
+            if bonus_cell and ('bonus letter' in fmt_low or 'either' in fmt_low):
+                # We reuse word_validator.find_word_on_board which now returns (found, path)
+                found, path = word_validator.find_word_on_board(board, word, return_path=True)
+                if found and path:
+                    # bx, by = bonus_cell['r'], bonus_cell['c'] ? or list [r, c]?
+                    # Standardizing coordinate access
+                    bx = bonus_cell[0] if isinstance(bonus_cell, (list, tuple)) else bonus_cell.get('r', -1)
+                    by = bonus_cell[1] if isinstance(bonus_cell, (list, tuple)) else bonus_cell.get('c', -1)
+                    
+                    if any((p[0] == bx and p[1] == by) for p in path):
+                        pts += 3
+                    elif 'either' in fmt_low:
+                        # On either/or, hit ANY either/or cell
+                        if any('/' in str(board[p[0]][p[1]]) for p in path):
+                            pts += 3
+            elif 'either' in fmt_low:
+                # Fallback if no specific bonus_cell but is Either/Or format
+                found, path = word_validator.find_word_on_board(board, word, return_path=True)
+                if found and path and any('/' in str(board[p[0]][p[1]]) for p in path):
+                    pts += 3
                 
             valid_words.append({
                 'word': word,
@@ -4006,8 +4110,12 @@ def create_solo_match():
     room = room_manager.create_room(room_id, game_type, time_limit, board_dimensions, is_private=True)
     room.is_solo = True # Disables history and statistics
     
-    # 2. Configure Parameters from User Input
-    dict_name = parameters.get('dictionary', 'NWL')
+    # 2. Configure Parameters (Randomize by default if not strictly specified)
+    dict_name = parameters.get('dictionary')
+    if not dict_name or dict_name == 'random':
+        from spinner_set import SpinnerSet
+        dict_name = SpinnerSet._spin_dictionary()
+    
     board_format = parameters.get('board_format', 'Normal')
     from spinner_set import SpinnerSet
 
@@ -4025,12 +4133,18 @@ def create_solo_match():
     else:
         wc_range = SpinnerSet._spin_word_count(dict_name)
 
+    # First-round difficulty randomization
+    target_difficulty = parameters.get('difficulty')
+    if not target_difficulty or target_difficulty == 'random' or target_difficulty == 'Medium':
+        # Even if they picked Medium, if we want to "vary it up", we randomize the spin
+        target_difficulty = SpinnerSet._spin_difficulty()
+
     room.spinner_params = {
         'dictionary': dict_name,
         'min_word_length': int(parameters.get('min_word_length', 3)),
         'bonus_word_length': int(parameters.get('bonus_word_length', 8)),
         'board_format': board_format,
-        'difficulty': parameters.get('difficulty', 'Medium'),
+        'difficulty': target_difficulty,
         'word_count_range': wc_range
     }
     
@@ -4095,7 +4209,8 @@ def create_private_match():
         
     data = request.json
     match_type = data.get('match_type')
-    parameters = data.get('parameters')
+    parameters = data.get('parameters', {})
+    
     participants = data.get('participants', [])
     
     try:

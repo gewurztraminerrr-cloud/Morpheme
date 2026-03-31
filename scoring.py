@@ -63,7 +63,7 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
 
     # Hidden Bonus Word (+Length points)
     bonus_word_score = 0
-    if bonus_word and word.upper() == bonus_word.upper() and 'checkerboard' not in fmt_lower:
+    if bonus_word and word.upper() == bonus_word.upper():
         bonus_word_score = length
         score += bonus_word_score
         
@@ -72,7 +72,14 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
     used_bonus = False
     
     # 3. Board Pathfinding (Check if word uses the bonus tile)
-    if board and len(board) > 0:
+    # OPTIMIZATION: Only perform expensive DFS if format requires checking for bonus tiles
+    fmt_lower = str(board_format).lower() if board_format else ''
+    is_spec_bonus_fmt = ('bonus letter' in fmt_lower or 'either' in fmt_lower)
+    
+    # If no path is provided AND we have no reason to look for one (Normal format, no bonus cell), skip DFS
+    should_skip_pathfinding = (not path and not is_spec_bonus_fmt and not bonus_cell)
+
+    if board and len(board) > 0 and not should_skip_pathfinding:
         is_3d = (len(board) == 6 and isinstance(board[0], list) and isinstance(board[0][0], list))
         
         # Coordinate extraction
@@ -99,22 +106,33 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
                     elif len(node) == 2:
                         nf, nx, ny = -1, int(node[0]), int(node[1])
                 
+                # Check for Bonus Cell Hit
                 if nf == bf and nx == bx and ny == by:
                     used_bonus = True
-                    break
+                
+                # Check for Either/Or tile Hit (Identified by '/' in cell value)
+                cell_val = str(board[nf][nx][ny] if is_3d else board[nx][ny])
+                if '/' in cell_val:
+                    # User Request: "Simply give bonus points for using the Either/Or tile"
+                    used_bonus = True
+                
+                if used_bonus: break
         
-        # B. Fallback: Recalculate path manually via DFS
-        if not used_bonus:
+        # B. Fallback: Recalculate path manually via DFS (STRICTLY for special formats if path missing)
+        if not used_bonus and is_spec_bonus_fmt:
             word_target = word.upper()
             
             def get_neighbors(f, r, c):
                 if not is_3d:
+                    # Optimized 2D Neighbor lookup
                     res = []
+                    rows = len(board)
+                    cols = len(board[0])
                     for dr in [-1, 0, 1]:
                         for dc in [-1, 0, 1]:
                             if dr == 0 and dc == 0: continue
                             nr, nc = r + dr, c + dc
-                            if 0 <= nr < len(board) and 0 <= nc < len(board[0]):
+                            if 0 <= nr < rows and 0 <= nc < cols:
                                 res.append((-1, nr, nc))
                     return res
                 else:
@@ -197,15 +215,9 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
 
     # Final tally (Always award 3 extra points for special tiles, unless checkerboard)
     bonus_letter_score = 0
-    
-    # User Request Fix: ONLY award bonus points if format is specifically intended to have a bonus letter
-    is_spec_bonus_fmt = ('bonus letter' in fmt_lower or 'either' in fmt_lower)
-    
     if used_bonus and is_spec_bonus_fmt and 'checkerboard' not in fmt_lower:
         bonus_letter_score = 3
         score += bonus_letter_score
-    
-    score_logger.debug(f"[Scorer] {word} - Final Total: {score} (Bonus: {bonus_letter_score}, used_bonus={used_bonus}, fmt_lower={fmt_lower})")
             
     if return_details:
         res = {
@@ -214,8 +226,10 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
             'bonus_word_points': bonus_word_score,
             'bonus_letter_points': bonus_letter_score
         }
-        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/scoring_debug.log', 'a') as f:
-            f.write(f"[Scoring] Word: {word}, Format: {board_format}, BonusCell: {bonus_cell}, UsedBonus: {'used_bonus' in locals() and used_bonus}, Total: {score}\n")
+        # Only log if it's a specific interesting score or debug mode
+        if score > base_score:
+            with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/scoring_debug.log', 'a') as f:
+                f.write(f"[Scoring] Word: {word}, Format: {board_format}, Total: {score}\n")
         return res
         
     return score

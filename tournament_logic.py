@@ -128,23 +128,50 @@ class TournamentManager:
         random.seed() 
 
         # Use tournament parameters
-        board, all_words_on_board, _bonus_cell = bg.generate_board(
+        # User Request: Bonus words should appear in ALL rooms, including tournaments
+        target_format = params.get('board_format', 'Normal')
+        bonus_len = params.get('bonus_word_length', 6)
+        dict_name = params.get('dictionary', 'NWL')
+        
+        from word_validator import word_validator
+        dictionary_set = word_validator.csw_words if dict_name == 'CSW' else word_validator.nwl_words
+        potential_words = [w for w in dictionary_set if len(w) == bonus_len]
+        bonus_word = random.choice(potential_words) if potential_words else ""
+        
+        # User Request Check: Bonus words should appear in ALL rooms, including tournaments
+        # (Previously Checkerboard was excluded, but user requested 'Every board in every Format' on March 29)
+        # if 'checkerboard' in target_format.lower():
+        #     bonus_word = ""
+
+        board, all_words_on_board, bonus_cell = bg.generate_board(
             dimensions=dims,
-            bonus_word="", # Picked later if needed, or non-active in tournament
-            word_count_range=params.get('word_count_range', '50-100'),
-            dictionary=params.get('dictionary', 'CSW'),
-            board_format=params.get('board_format', 'Normal'),
+            bonus_word=bonus_word,
+            word_count_range=params.get('word_count_range', '100-200'),
+            dictionary=dict_name,
+            board_format=target_format,
             min_word_length=params.get('min_word_length', 3),
-            difficulty=params.get('difficulty', 'Normal')
+            difficulty=params.get('difficulty', 'Medium')
         )
         
         now = time.time()
         end_time = now + self.turn_duration
         
+        # Tournament rounds table needs to store the bonus word
+        # (Assuming the schema supports it or we use board_data JSON)
+        # We will embed it into board_data as a wrapper if needed, 
+        # but the standard game-state API in app.py expects it from the round object.
+        # Wait! Let's check the schema.
+        
         conn.execute('''
             INSERT INTO tournament_rounds (tournament_id, round_number, start_time, end_time, board_data)
             VALUES (?, ?, ?, ?, ?)
-        ''', (tid, round_number, now, end_time, json.dumps(board)))
+        ''', (tid, round_number, now, end_time, json.dumps({
+            'board': board,
+            'bonus_word': bonus_word,
+            'all_words': all_words_on_board,
+            'bonus_cell': bonus_cell,
+            'board_format': target_format
+        })))
         
         # 4. Generate Matchups for this round
         self.create_matchups(tid, round_number, conn)

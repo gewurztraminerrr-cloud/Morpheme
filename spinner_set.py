@@ -35,14 +35,13 @@ class SpinnerSet:
         if wc_range == '500+':
             board_format = 'Normal'
 
-        # Force bonus_word_length to 0 for Checkerboard to ensure UI consistency (Except Split Points)
-        bonus_len = SpinnerSet._spin_bonus_word_length()
-        if 'checkerboard' in board_format.lower() and not is_split:
-            bonus_len = 0
+        # Minimum word length must be established first to cap bonus len
+        min_word_length = SpinnerSet._spin_min_word_length(board_dimensions)
+        bonus_len = max(min_word_length, SpinnerSet._spin_bonus_word_length())
             
         return {
             'bonus_word_length': bonus_len,
-            'min_word_length': SpinnerSet._spin_min_word_length(board_dimensions),
+            'min_word_length': min_word_length,
             'difficulty': SpinnerSet._spin_difficulty(),
             'word_count_range': wc_range,
             'dictionary': dictionary,
@@ -79,25 +78,13 @@ class SpinnerSet:
     
     @staticmethod
     def _spin_word_count(dictionary_name='NWL'):
-        """24% 50-100, 50% 100-200, 25% 200+, 1% 2000+"""
-        # Get actual size of selected dictionary
-        if dictionary_name == 'CSW':
-            max_words = len(word_validator.csw_words)
-        else:
-            max_words = len(word_validator.nwl_words)
-            
-        ranges = [
-            '50-100',
-            '100-200',
-            '200+',      # 200+
-            '500+'       # 500+
-        ]
-        return random.choices(ranges, weights=[24, 50, 25, 1])[0]
+        """24% 50-100, 50% 100-200, 25% 200+, 1% 500+"""
+        return random.choices(['50-100', '100-200', '200+', '500+'], weights=[24, 50, 25, 1])[0]
     
     @staticmethod
     def _spin_dictionary():
         """50% NWL, 50% CSW"""
-        return random.choice(['NWL', 'CSW'])
+        return random.choices(['NWL', 'CSW'], weights=[50, 50])[0]
     
     @staticmethod
     def _spin_board_format(is_24h=False, dimensions='4x4'):

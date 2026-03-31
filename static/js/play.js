@@ -60,10 +60,99 @@ function updateInputMethod(method) {
     }
 }
 
+// --- EVICTION / KICK LOGIC ---
+let lastActivityTime = Date.now();
+function resetIdleTimer() {
+    lastActivityTime = Date.now();
+}
+
+// Global activity listeners
+window.addEventListener('mousemove', resetIdleTimer, { passive: true });
+window.addEventListener('mousedown', resetIdleTimer, { passive: true });
+window.addEventListener('keydown', resetIdleTimer, { passive: true });
+window.addEventListener('touchstart', resetIdleTimer, { passive: true });
+window.addEventListener('scroll', resetIdleTimer, { passive: true });
+
+function ejectToLobby(reason = "inactivity") {
+    // 1. Immediately close the Spinner Set popup if it's open
+    if (typeof hideSpinnerOverlay === 'function') hideSpinnerOverlay();
+    const spinner = document.getElementById('spinner-overlay') || document.querySelector('.spinner-overlay');
+    if (spinner) {
+        spinner.classList.add('hidden');
+        spinner.style.display = 'none';
+        console.log('[play.js] Force-closed Spinner Set popup on kick.');
+    }
+
+    console.warn(`[play.js] EVICTING USER. Reason: ${reason}`);
+    
+    // 2. Stop poll and clear state
+    stopPolling();
+    window.currentRoomId = null;
+
+    // 3. Clear ANY other overlays that might block the explanation
+    document.querySelectorAll('.modal-overlay, .board-overlay, .results-overlay, .spinner-content').forEach(ov => {
+        ov.classList.add('hidden');
+        ov.style.display = 'none';
+    });
+
+    // 4. Redirect to Lobby
+    if (window.navigateToPage) window.navigateToPage('lobby');
+    else if (window.showPage) window.showPage('page-lobby');
+    else window.location.href = '/';
+
+    // 5. Show Explanation Popup (Immediate, then again after a short delay for SPA stability)
+    const showExplanation = () => {
+        let msg = "You have been kicked back to the lobby because you were idle in the room for 10 minutes.";
+        let title = "Idle Timeout";
+        
+        if (reason === "daily_reset") {
+            msg = "The daily room has reset for a new day! Please rejoin if you'd like to play.";
+            title = "Daily Reset";
+        } else if (reason === "manual") {
+            msg = "You have been removed from the room.";
+            title = "Inactivity Kick";
+        }
+
+        if (window.showAlertModal) {
+            window.showAlertModal(title, msg, true); // true = PRIORITY modal
+        } else {
+            alert(msg);
+        }
+    };
+
+    setTimeout(showExplanation, 100);
+    setTimeout(showExplanation, 600); // Second attempt in case SPA navigation wiped the first one
+}
+
+// Check for idle logout every 5 seconds
+setInterval(() => {
+    const roomId = getCurrentRoomId();
+    if (roomId) {
+        // EXEMPTION: No idle limit for 24h rooms
+        const is24h = window.lastGameState && window.lastGameState.game_type === 'accumulative' && window.lastGameState.time_limit >= 7200;
+        if (is24h) return;
+
+        const idleTime = Date.now() - lastActivityTime;
+        if (idleTime > 10 * 60 * 1000) { // 10 minutes
+            console.warn('[play.js] 10m Idle reached. EVICTING.');
+            ejectToLobby("inactivity");
+        }
+    }
+}, 5000);
+
 // Add global listeners for input detection
-document.addEventListener('keydown', () => updateInputMethod('keyboard'), true);
-document.addEventListener('mousedown', () => updateInputMethod('mouse'), true);
-document.addEventListener('touchstart', () => updateInputMethod('touch'), true);
+document.addEventListener('keydown', () => {
+    updateInputMethod('keyboard');
+    resetIdleTimer();
+}, true);
+document.addEventListener('mousedown', () => {
+    updateInputMethod('mouse');
+    resetIdleTimer();
+}, true);
+document.addEventListener('touchstart', () => {
+    updateInputMethod('touch');
+    resetIdleTimer();
+}, true);
 
 function getCurrentRoomId() {
     return window.currentRoomId || null;
@@ -71,6 +160,7 @@ function getCurrentRoomId() {
 
 // Expose for lobby.js to call
 window.startGamePolling = function () {
+    console.log('[play.js] window.startGamePolling called');
     if (localStorage.getItem('tournament_play_active')) {
         initTournamentPlay();
         return;
@@ -89,7 +179,9 @@ window.stopGamePolling = function () {
 };
 
 function startPolling() {
-    console.log('[play.js] startPolling() called');
+    console.log('[play.js] Starting Game Polling - Resetting Idle Timer');
+    resetIdleTimer(); // IMPORTANT: Reset timer on fresh room entry
+    
     if (pollInterval) {
         clearInterval(pollInterval);
     }
@@ -100,27 +192,12 @@ function startPolling() {
     isTournamentPlay = false;
     privateMatchWords = [];
     privateMatchScore = 0;
-    tournamentWords = [];
-    tournamentScore = 0;
-    lastPlayersHtml = null; // Force player list re-render
-    lastRenderedBoardJSON = null; // Force board re-render
-
-
-    console.log('[play.js] Setting up interval to call updateGameState');
-    pollInterval = setInterval(updateGameState, 1000); // 1 second polling
-    console.log('[play.js] Calling updateGameState() immediately');
-
-    // If we are in a special play mode, the intervals might have been cleared, so we check here
-    if (isTournamentPlay) {
-        initTournamentPlay();
-        return;
-    }
-    if (isPrivateMatchPlay) {
-        initPrivateMatchPlay();
-        return;
-    }
-
-    updateGameState(); // Initial call
+    
+    // Initial fetch to ensure we have state immediately
+    updateGameState();
+    
+    // Setup interval for subsequent polls
+    pollInterval = setInterval(updateGameState, 1000);
 }
 
 function stopPolling() {
@@ -147,40 +224,20 @@ async function updateGameState(incomingState = null) {
         } else {
             const response = await fetch(`/api/room/${roomId}/state`, { cache: 'no-store' });
             if (!response.ok) {
-                // If the room state fetch fails with 401, 403, or 404, we must immediately eject to lobby.
                 if (response.status === 404 || response.status === 403 || response.status === 401) {
                     let errorMsg = "";
                     try {
-                        // Attempt to parse the error message from the server (e.g. "Room closed due to inactivity")
                         const errData = await response.json();
                         errorMsg = errData.error || "";
-                    } catch(e) {
-                        console.warn("[play.js] Failed to parse error response body:", e);
-                    }
+                    } catch(e) {}
 
-                    console.warn(`[play.js] Room state fetch failed (${response.status}). Ejecting to lobby. Error: ${errorMsg}`);
-                    stopPolling();
-                    window.currentRoomId = null;
-                    
-                    // 1. CLEANUP: Force hide any and all obstructions (Including Spinner Set / Spinner Overlay)
-                    if (typeof hideSpinnerOverlay === 'function') hideSpinnerOverlay();
-                    document.querySelectorAll('.spinner-overlay, .modal-overlay, .board-overlay').forEach(ov => {
-                        ov.classList.add('hidden');
-                    });
-
-                    // 2. Redirect to Lobby
-                    if (window.showPage) window.showPage('page-lobby');
-
-                    // 3. Show Inactivity Popup if that was the reason
-                    if (errorMsg.toLowerCase().includes('inactivity') || errorMsg.toLowerCase().includes('idle')) {
-                         setTimeout(() => {
-                             const msg = "You have been kicked out of the room because you were idle for 10 minutes.";
-                             if (window.showAlertModal) {
-                                 window.showAlertModal("Inactivity Kick", msg, true); // True = PRIORITY
-                             } else {
-                                 alert(msg);
-                             }
-                         }, 500);
+                    if (errorMsg.toLowerCase().includes('inactivity') || errorMsg.toLowerCase().includes('removed') || errorMsg.toLowerCase().includes('idle')) {
+                        ejectToLobby("inactivity");
+                    } else {
+                        // Generic failure (e.g. room actually gone)
+                        stopPolling();
+                        window.currentRoomId = null;
+                        if (window.showPage) window.showPage('page-lobby');
                     }
                 }
                 return;
@@ -250,49 +307,12 @@ async function updateGameState(incomingState = null) {
             const roundChanged = previousState && state.current_round > previousState.current_round;
 
             if (is24H && wasInBefore && roundChanged) {
-                 console.log("[play.js] Detecting 24H Reset: Round incremented. Redirecting to lobby for fresh join.");
-                 stopPolling();
-                 window.currentRoomId = null;
-                 if (window.showPage) window.showPage('page-lobby');
-                 setTimeout(() => {
-                     const msg = "The daily room has reset for a new day! Please rejoin if you'd like to play.";
-                     if (window.showAlertModal) {
-                         window.showAlertModal("Daily Reset", msg, true);
-                     } else {
-                         alert(msg);
-                     }
-                 }, 500);
+                 ejectToLobby("daily_reset");
                  return;
             }
 
-            // Normal Eviction (10m idle or kicked by mod)
-            console.error('[play.js] User evicted (not in players list). Redirecting to lobby.');
-            stopPolling();
-            window.currentRoomId = null;
-            
-            // 1. CLEANUP: Force hide any and all obstructions (Including Spinner Set / Spinner Overlay)
-            if (typeof hideSpinnerOverlay === 'function') hideSpinnerOverlay();
-            const spinnerOverlay = document.getElementById('spinner-overlay');
-            if (spinnerOverlay) {
-                spinnerOverlay.classList.add('hidden');
-            }
-            
-            // Clear all other possible overlays (Modals, board coverage, etc.) EXCEPT the one we are about to show
-            document.querySelectorAll('.spinner-overlay, .modal-overlay, .board-overlay').forEach(ov => {
-                ov.classList.add('hidden');
-            });
-            
-            // 2. Redirect to Lobby
-            if (window.showPage) window.showPage('page-lobby');
-            
-            setTimeout(() => {
-                const msg = "You have been kicked out of the room because you were idle for 10 minutes.";
-                if (window.showAlertModal) {
-                    window.showAlertModal("Inactivity Kick", msg, true); // True = PRIORITY
-                } else {
-                    alert(msg);
-                }
-            }, 500); 
+            // Normal Eviction
+            ejectToLobby("inactivity");
             return;
         }
 
@@ -410,7 +430,8 @@ async function updateGameState(incomingState = null) {
         } else {
             // ONLY gray out if we are specifically in intermission
             const isIntermission = state.state === 'intermission';
-            renderBoard(state.board, isIntermission);
+            const is3D = state.game_type === '3d' || (state.board && state.board.length === 6 && Array.isArray(state.board[0]) && Array.isArray(state.board[0][0]));
+            renderBoard(state.board, isIntermission, is3D);
         }
 
         // Update players (pass full state for context if needed)
@@ -754,23 +775,35 @@ async function updateGameState(incomingState = null) {
                 }
             } else {
                 // FCFS: Shared Live Feed
-                let allFoundWords = [];
-                state.players.forEach(p => {
-                    if (p.submitted_words) {
-                        p.submitted_words.forEach(w => {
-                            let wObj = (typeof w === 'string') ? { word: w, points: '?', time: 0 } : { ...w };
-                            wObj.finder = p.username;
-                            allFoundWords.push(wObj);
+                // Use dedicated shared list from server if available (Fixes disappearances when players leave)
+                let allFoundWords = [...(state.fcfs_found_words || [])];
+                
+                // DATA AGGREGATION: Supplement shared list with individual player words (Ensure 100% sync)
+                if (state.players && Array.isArray(state.players)) {
+                    state.players.forEach(p => {
+                        const words = p.submitted_words || [];
+                        words.forEach(w => {
+                            const wordStr = (typeof w === 'string' ? w : w.word) || '';
+                            const wordUpper = wordStr.toUpperCase();
+                            if (!wordUpper) return;
+
+                            const alreadyIn = allFoundWords.some(afw => (afw.word || '').toUpperCase() === wordUpper);
+                            if (!alreadyIn) {
+                                let wObj = (typeof w === 'string') ? { word: w, points: '?', time: 0 } : { ...w };
+                                wObj.finder = p.username;
+                                wObj.is_ai = p.is_ai || (p.username && p.username.toLowerCase().includes('bot'));
+                                allFoundWords.push(wObj);
+                            }
                         });
-                    }
-                });
+                    });
+                }
 
                 const totalWords = allWords.length;
-                const uniqueFound = new Set(allFoundWords.map(w => w.word.toUpperCase())).size;
+                const uniqueFound = new Set(allFoundWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase())).size;
                 const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
                 wordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}%`;
 
-                const sortedWords = allFoundWords.sort((a, b) => (a.time || 0) - (b.time || 0));
+                const sortedWords = allFoundWords.sort((a, b) => (b.time || 0) - (a.time || 0));
                 const threshold = 150;
                 const isAtBottom = (listEl.scrollTop + listEl.clientHeight >= listEl.scrollHeight - threshold);
                 const wasEmpty = listEl.innerHTML.includes('placeholder') || listEl.children.length === 0;
@@ -782,30 +815,23 @@ async function updateGameState(incomingState = null) {
                         const word = wObj.word;
                         const wordUpper = word.toUpperCase();
                         const points = wObj.points;
-                        const finder = wObj.finder;
+                        const finder = wObj.finder || (wObj.is_ai ? 'AI' : 'Someone');
                         const isMe = finder === currentUser;
-                        const isBonus = state.bonus_word && wordUpper === state.bonus_word.toUpperCase();
+                        const indicator = isMe ? '<span class="found-indicator present">✓</span>' : (wObj.is_ai ? '<span>🤖</span>' : '<span>🔸</span>');
 
+                        const isBonus = state.bonus_word && wordUpper === state.bonus_word.toUpperCase();
                         const isAddedWord = state.added_words && state.added_words.some(aw => aw.toUpperCase() === wordUpper);
+                        const isCSWOnly = state.csw_only_words && state.csw_only_words.some(csw => csw.toUpperCase() === wordUpper);
 
                         let className = 'word-item';
-                        if (isMe) {
-                            className += ' player-word';
-                        } else {
-                            className += ' opponent-word';
-                        }
+                        if (isMe) className += ' player-word';
+                        else className += ' opponent-word';
 
-                        if (isBonus) {
-                            className += ' bonus-word';
-                        } else if (isAddedWord) {
-                            className += ' added-word';
-                        } else if (isCSWOnly) {
-                            className += ' csw-only';
-                        }
+                        if (isBonus) className += ' bonus-word';
+                        else if (isAddedWord) className += ' added-word';
+                        else if (isCSWOnly) className += ' csw-only';
                         
                         if (highlightedFoundWord === wordUpper) className += ' finder-active';
-
-                        const indicator = '<span class="found-indicator present">✓</span>';
 
                         return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
                             <div>${indicator}<span style="font-weight:bold;">${word}</span><span style="font-size:0.8em; opacity:0.7; margin-left:6px;">(${finder})</span></div>
@@ -825,8 +851,10 @@ async function updateGameState(incomingState = null) {
                             };
                         });
 
-                        if (isAtBottom || wasEmpty) {
-                            requestAnimationFrame(() => { listEl.scrollTop = listEl.scrollHeight; });
+                        // For FCFS Feed (Newest at top), we don't automatically scroll to bottom.
+                        // If it was empty, ensure we are at top.
+                        if (wasEmpty) {
+                            requestAnimationFrame(() => { listEl.scrollTop = 0; });
                         }
                     }
                 }
@@ -1608,7 +1636,7 @@ function updateParameters(state) {
             }
         } else if (typeof wr === 'string') {
             if (wr === 'random') {
-                words.textContent = '50-100/100-200/200+';
+                words.textContent = '50-100/100-200/200+/500+';
             } else if (wr.includes('99999') || wr.includes('500-') || wr.includes('200-')) {
                 const parts = wr.split('-');
                 if (parts.length === 2 && (parseInt(parts[1]) > 900 || isNaN(parseInt(parts[1])))) {
@@ -1655,6 +1683,16 @@ function syncTimerWithServer(state) {
         localEndTime = endTime - stableServerTimeOffset;
     }
 
+    // SPECIAL CASE: 24h Rooms align to LOCAL MIDNIGHT for display
+    if (state.time_limit >= 7200) {
+        const now = new Date();
+        const tomorrow = new Date(now);
+        tomorrow.setDate(now.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        localEndTime = tomorrow.getTime() / 1000;
+        timerFormatIs24h = true;
+    }
+
     if (!timerInterval && localEndTime > 0) {
         timerInterval = setInterval(updateLocalTimer, 100);
     } else if (localEndTime <= 0 && timerInterval) {
@@ -1683,7 +1721,8 @@ function updateLocalTimer() {
         const hours = Math.floor(seconds / 3600);
         const mins = Math.floor((seconds % 3600) / 60);
         const secs = seconds % 60;
-        display = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        // Use H:MM:SS format as requested (no leading zero on hours if < 10)
+        display = `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     } else {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
@@ -1747,24 +1786,9 @@ function updateSpecialMatchTimer(seconds) {
     }
 }
 
-function renderBoard(board, grayed) {
-    // 1. Force state-aware graying logic
-    if (isTournamentPlay || isPrivateMatchPlay) {
-        grayed = false; // Special turns are never grayed
-    } else if (window.lastGameState && window.lastGameState.state === 'active') {
-        grayed = false;
-    }
-    if (!board || !Array.isArray(board) || board.length === 0) {
-        return;
-    }
-
-    const h = board.length;
-    // Enhanced is3D check: 6 faces, and each face is an array of arrays
-    const is3D = h === 6 && board[0] && Array.isArray(board[0]) && board[0][0] && Array.isArray(board[0][0]);
-    console.log(`[renderBoard] Rendering ${is3D ? '3D Cube' : '2D Board'}. Dim: ${is3D ? '6 faces' : h + 'x' + (board[0] ? board[0].length : 0)}. Grayed: ${grayed}`);
-    
+function renderBoard(board, grayed = false, is3D = false) {
     const boardEl = document.getElementById('game-board');
-    if (!boardEl) return;
+    if (!boardEl || !board) return;
 
     // Toggle 3D hint below word input
     const rotateHint = document.getElementById('cube-rotate-hint');
@@ -1780,52 +1804,40 @@ function renderBoard(board, grayed) {
         else rotateBtn.classList.remove('hidden');
     }
 
+    // Handle Empty/Loading State
     const hasLetters = is3D ? board.some(f => f.some(r => r.some(c => c && c.trim() !== ''))) : board.some(row => row.some(cell => cell && cell.trim() !== ''));
-
-    if (h > 0 && !hasLetters) {
-        console.log('[renderBoard] Empty board detected (Loading State). Showing placeholder.');
+    if (board.length > 0 && !hasLetters) {
         boardEl.innerHTML = `
-            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; 
-                        width:100%; height:300px; color:var(--text-primary); font-family:var(--font-primary);">
-                <div class="loading-spinner" style="margin-bottom:15px; width:40px; height:40px; border:4px solid rgba(var(--text-primary-rgb),0.1); 
-                            border-top-color:var(--accent-color); border-radius:50%; animation:spin 1s linear infinite;"></div>
-                <div style="font-weight:700; font-size:1.2rem; text-transform:uppercase; letter-spacing:1px; color:var(--accent-color);">
-                    Optimizing Board...
-                </div>
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:300px; color:var(--text-primary);">
+                <div class="loading-spinner" style="margin-bottom:15px; width:40px; height:40px; border:4px solid rgba(var(--text-primary-rgb),0.1); border-top-color:var(--accent-color); border-radius:50%; animation:spin 1s linear infinite;"></div>
+                <div style="font-weight:700; font-size:1.2rem; text-transform:uppercase; letter-spacing:1px; color:var(--accent-color);">Optimizing Board...</div>
             </div>
         `;
-        // Ensure container class is set for layout consistency
         boardEl.className = 'game-board';
         boardEl.style.display = 'flex';
         boardEl.style.justifyContent = 'center';
         boardEl.style.alignItems = 'center';
-        boardEl.style.gridTemplateColumns = '';
-        return; // Skip standard cell rendering
-    }
-
-    // Reset container style
-    const boardJSON = JSON.stringify(board);
-    if (boardJSON === lastRenderedBoardJSON && grayed === lastRenderedGrayed && isBoardRotated === lastRenderedRotation && boardEl.classList.contains('game-board')) {
-        reapplyBoardHighlights(); // Still update highlights if board didn't change!
         return;
     }
 
+    // Optimization: Skip if board hasn't changed
+    const boardJSON = JSON.stringify(board);
+    if (boardJSON === lastRenderedBoardJSON && grayed === lastRenderedGrayed && isBoardRotated === lastRenderedRotation && boardEl.classList.contains('game-board')) {
+        reapplyBoardHighlights();
+        return;
+    }
     lastRenderedBoardJSON = boardJSON;
     lastRenderedGrayed = grayed;
     lastRenderedRotation = isBoardRotated;
 
     boardEl.className = 'game-board';
-    // Clear styles set by renderSplitNotepads
     boardEl.style.display = '';
-    boardEl.style.gap = '';
-    boardEl.style.overflowY = '';
-    boardEl.style.alignItems = '';
-
+    boardEl.style.gridTemplateColumns = '';
+    boardEl.style.gridTemplateRows = '';
+    
     if (is3D) {
         boardEl.classList.add('is-3d-view');
         boardEl.style.display = 'block';
-        boardEl.style.gridTemplateColumns = 'none';
-        boardEl.style.gridTemplateRows = 'none';
         
         let html = `
             <div class="cube-container">
@@ -1837,9 +1849,23 @@ function renderBoard(board, grayed) {
             face.forEach((row, r) => {
                 row.forEach((cell, c) => {
                     const char = (cell || "").trim();
-                    const L = char.includes('/') ? char.split('/')[0] : char;
-                    const displayL = L === 'Q' ? 'QU' : L;
-                    
+                    let tileHtml = "";
+                    if (char.includes('/')) {
+                        const [top, bottom] = char.split('/');
+                        const topDisp = top === 'Q' ? 'QU' : top;
+                        const bottomDisp = bottom === 'Q' ? 'QU' : bottom;
+                        tileHtml = `
+                            <div class="dual-letter-container" style="display:flex; flex-direction:column; justify-content:space-evenly; height:100%; width:100%; align-items:center;">
+                                <span style="font-size:0.45em; line-height:1;">${topDisp}</span>
+                                <div class="dual-divider" style="width:60%; height:1px; background:rgba(0,0,0,0.2); margin:2px 0;"></div>
+                                <span style="font-size:0.45em; line-height:1;">${bottomDisp}</span>
+                            </div>
+                        `;
+                    } else {
+                        const displayL = char === 'Q' ? 'QU' : char;
+                        tileHtml = displayL;
+                    }
+
                     // 3D Bonus Highlight Detection
                     let bonusClass = "";
                     if (window.lastGameState && window.lastGameState.bonus_cell) {
@@ -1857,14 +1883,12 @@ function renderBoard(board, grayed) {
                     if (!bFormat && window.lastGameState && window.lastGameState.spinner_params) {
                         bFormat = window.lastGameState.spinner_params.board_format || 'Normal';
                     }
-                    
-                    const normalizedFmt = (bFormat || "").toLowerCase();
-                    if (normalizedFmt.includes('valued') && !char.includes('/')) {
+                    if (bFormat && bFormat.toLowerCase().includes('valued') && !char.includes('/')) {
                         const val = LETTER_VALUES[char.toUpperCase()] || 1;
                         tileValue = `<span class="tile-value">${val}</span>`;
                     }
-                    
-                    html += `<div class="cube-cell board-cell tile-cell${bonusClass}" data-f="${f}" data-r="${r}" data-c="${c}" data-letter="${char}">${displayL}${tileValue}</div>`;
+
+                    html += `<div class="cube-cell board-cell tile-cell${bonusClass}" data-f="${f}" data-r="${r}" data-c="${c}" data-letter="${char}">${tileHtml}${tileValue}</div>`;
                 });
             });
             html += `</div>`;
@@ -1887,31 +1911,26 @@ function renderBoard(board, grayed) {
     boardEl.style.gridTemplateRows = `repeat(${rows}, var(--cell-size, 60px))`;
     boardEl.innerHTML = '';
 
-    // Handle Rotation: 180 degrees flip
     if (isBoardRotated) {
-        // Bottom-up, Right-to-left
         for (let r = rows - 1; r >= 0; r--) {
             for (let c = cols - 1; c >= 0; c--) {
-                const cell = createBoardCell(r, c, board[r][c], grayed, (is3D ? f : undefined));
+                const cell = createBoardCell(r, c, board[r][c], grayed);
                 boardEl.appendChild(cell);
             }
         }
     } else {
-        // Normal: Top-down, Left-to-right
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
-                const cell = createBoardCell(r, c, board[r][c], grayed, (is3D ? f : undefined));
+                const cell = createBoardCell(r, c, board[r][c], grayed);
                 boardEl.appendChild(cell);
             }
         }
     }
 
-    // Check for overflow after render
     setTimeout(checkBoardOverflow, 50);
-
-    // Reapply Highlights that were wiped by innerHTML = ''
     reapplyBoardHighlights();
 }
+
 
 // Helper: Check if board panel needs vertical scrolling
 // Continuous Adaptive Layout Engine (formerly checkBoardOverflow)
@@ -3011,10 +3030,13 @@ if (submitBtn && wordInputEl) {
         document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
         if (!word || !board || (mouseState && mouseState.isDragging)) return;
 
-        const path = findWordPathOnBoard(word, board);
+        const is3D = board.length === 6 && Array.isArray(board[0]);
+        const path = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
         if (path) {
             path.forEach(coord => {
-                const cell = document.querySelector(`.board-cell[data-row="${coord.r}"][data-col="${coord.c}"]`);
+                let selector = `.board-cell[data-row="${coord.r}"][data-col="${coord.c}"]`;
+                if (coord.f !== undefined) selector = `.board-cell[data-f="${coord.f}"][data-r="${coord.r}"][data-c="${coord.c}"]`;
+                const cell = document.querySelector(selector);
                 if (cell) cell.classList.add('typing-highlight');
             });
         }
@@ -3130,15 +3152,13 @@ async function submitWord(wordParam = null, pathParam = null) {
                     <span class="feed-info">${currentUser} • ${data.points}pts</span>
                 </div>`;
 
-                // Append to BOTTOM (Live Feed order is oldest -> newest, or actually newest at bottom usually for chat-like)
-                // In render implementation: feedItems.sort((a, b) => a.time - b.time); (Oldest first)
-                // So new items go to bottom.
-                listEl.insertAdjacentHTML('beforeend', html);
+                // Insert at TOP (Newest at top)
+                listEl.insertAdjacentHTML('afterbegin', html);
 
-                // Scroll to bottom
-                const panelEl = listEl.parentElement; // or closest('.words-panel')
+                // Ensure visible
+                const panelEl = listEl.parentElement;
                 requestAnimationFrame(() => {
-                    if (panelEl) panelEl.scrollTop = panelEl.scrollHeight;
+                    if (panelEl) panelEl.scrollTop = 0;
                 });
 
                 // Update stats text optimistically
@@ -3242,7 +3262,9 @@ if (rotateBtnEl) {
         // Force re-render if we have state
         if (window.lastGameState && window.lastGameState.board) {
             // Consistent with updateGameState: Only gray in intermission
-            renderBoard(window.lastGameState.board, window.lastGameState.state === 'intermission');
+            const isIntermission = window.lastGameState.state === 'intermission';
+            const is3D = window.lastGameState.game_type === '3d' || (window.lastGameState.board && window.lastGameState.board.length === 6 && Array.isArray(window.lastGameState.board[0]) && Array.isArray(window.lastGameState.board[0][0]));
+            renderBoard(window.lastGameState.board, isIntermission, is3D);
         }
     });
 }
@@ -3393,7 +3415,7 @@ function updateWordInputFromPath() {
     const wordInputEl = document.getElementById('word-input');
     if (wordInputEl) {
         wordInputEl.value = mouseState.selectedPath.map(p => {
-            const L = p.letter.includes('/') ? p.letter.split('/')[0] : p.letter;
+            const L = p.letter; // Show full letter string (e.g. "L/T")
             return L === 'Q' ? 'QU' : L;
         }).join('');
     }
@@ -3629,7 +3651,8 @@ async function initTournamentPlay() {
 
         // Render Board
         console.log('[Tournament] Rendering tournament board. Format:', (data.params.board_format || 'Normal'));
-        renderBoard(data.board, false);
+        const is3D = data.params.board_dimensions === '3x3x3' || (data.board && data.board.length === 6 && Array.isArray(data.board[0]));
+        renderBoard(data.board, false, is3D);
         updateParameters(tournamentGameState);
         resetPlayUI();
 
@@ -3691,7 +3714,8 @@ async function handleTournamentWord(word) {
         return;
     }
 
-    const path = findWordPathOnBoard(word, board);
+    const is3D = board.length === 6 && Array.isArray(board[0]);
+    const path = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
     if (!path) {
         showValidationFeedback(`${word} is invalid.`, false);
         return;
@@ -3841,7 +3865,8 @@ window.initPrivateMatchPlay = function () {
     lastRenderedBoardJSON = null; // Force re-render
 
     console.log('[play.js] Rendering private match board:', activeMatch.board);
-    renderBoard(activeMatch.board, false);
+    const is3D = activeMatch.parameters.board_dimensions === '3x3x3' || (activeMatch.board && activeMatch.board.length === 6 && Array.isArray(activeMatch.board[0]));
+    renderBoard(activeMatch.board, false, is3D);
 
     updateParameters(mockState);
     resetPlayUI();
@@ -3932,7 +3957,8 @@ async function handlePrivateMatchWord(word) {
         return;
     }
 
-    const path = findWordPathOnBoard(word, board);
+    const is3D = board.length === 6 && Array.isArray(board[0]);
+    const path = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
     if (!path) {
         showValidationFeedback('Not on board!', false);
         return;
@@ -3963,7 +3989,6 @@ async function handlePrivateMatchWord(word) {
     const fmt = privateMatchParams ? privateMatchParams.board_format : 'Normal';
     const fmtLower = fmt.toLowerCase();
     const activeMatch = JSON.parse(localStorage.getItem('private_match_active'));
-    const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
     const bonusCell = activeMatch ? activeMatch.bonus_cell : null;
     let pts = 0;
     let isPenalty = false;

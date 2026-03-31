@@ -155,58 +155,51 @@ class WordValidator:
         else:  # NWL (default)
             return self.nwl_words | self.long_words | self.added_words
 
-    def find_word_on_board(self, board, word):
-        """Standard DFS search for a word on a Boggle board."""
+    def find_word_on_board(self, board, word, return_path=False):
+        """Standard DFS search for a word on a Boggle board.
+           Supports Either/Or cells (e.g. 'A/B') and Qu (Q matches QU)."""
         if not word or not board:
-            return False
+            return (False, None) if return_path else False
             
         word = word.upper()
         rows = len(board)
         cols = len(board[0])
         
-        def dfs(r, c, index, visited):
+        def dfs(r, c, index, visited_path):
             if r < 0 or r >= rows or c < 0 or c >= cols:
-                return False
-            if (r, c) in visited:
-                return False
+                return None
+            if (r, c) in visited_path:
+                return None
                 
-            cell_char = str(board[r][c]).upper()
-            match_len = 0
+            cell_val = str(board[r][c]).upper()
+            # Support Either/Or tiles
+            letters = cell_val.split('/') if '/' in cell_val else [cell_val]
             
-            # Special handling for 'Q' (QU)
-            if cell_char == 'Q':
-                if word[index:index+2] == 'QU':
+            for char in letters:
+                match_len = 0
+                if char == 'Q' and word[index:index+2] == 'QU': 
                     match_len = 2
-                elif word[index] == 'Q':
-                    match_len = 1
-                else:
-                    return False
-            else:
-                if word[index] == cell_char:
-                    match_len = 1
-                else:
-                    return False
-                    
-            next_index = index + match_len
-            if next_index >= len(word):
-                return True
+                elif word.startswith(char, index): 
+                    match_len = len(char)
                 
-            visited_copy = visited.copy()
-            visited_copy.add((r, c))
-            
-            for dr in [-1, 0, 1]:
-                for dc in [-1, 0, 1]:
-                    if dr == 0 and dc == 0:
-                        continue
-                    if dfs(r + dr, c + dc, next_index, visited_copy):
-                        return True
-            return False
+                if match_len > 0:
+                    current_path = visited_path + [(r, c)]
+                    if index + match_len >= len(word):
+                        return current_path
+                        
+                    for dr in [-1, 0, 1]:
+                        for dc in [-1, 0, 1]:
+                            if dr == 0 and dc == 0: continue
+                            res_path = dfs(r + dr, c + dc, index + match_len, current_path)
+                            if res_path: return res_path
+            return None
 
         for r in range(rows):
             for c in range(cols):
-                if dfs(r, c, 0, set()):
-                    return True
-        return False
+                path = dfs(r, c, 0, [])
+                if path:
+                    return (True, path) if return_path else True
+        return (False, None) if return_path else False
 
 # Global instance
 word_validator = WordValidator()

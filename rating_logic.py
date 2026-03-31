@@ -20,35 +20,47 @@ def calculate_proportional_rating_change(players, is_private=False):
     """
     changes = {p.user_id: 0 for p in players}
     
+    print(f"[RatingLogic] Calculating change for {len(players)} total players.")
+    for p in players:
+        print(f"  - Player {getattr(p, 'username', 'N/A')}: id={p.user_id}, AI={getattr(p, 'is_ai', False)}, Guest={is_player_guest(p)}, MidRound={getattr(p, 'joined_mid_round', False)}")
+
     # Filter to only including competitive human players (non-bots, non-guests, non-mid-round-joiners)
-    # Bots are identified by p.is_ai == True
     competitive_humans = [
         p for p in players 
         if not getattr(p, 'is_ai', False) and not is_player_guest(p) and not getattr(p, 'joined_mid_round', False)
     ]
     
+    print(f"[RatingLogic] Found {len(competitive_humans)} competitive human players.")
     if not competitive_humans:
         return changes
 
-    # Count players with score >= 1 among competitive humans
-    active_humans = [p for p in competitive_humans if getattr(p, 'score', 0) >= 1 or len(getattr(p, 'invalid_words', [])) > 0]
-    number_of_players = len(active_humans)
+    # Count players among competitive humans who were actually present AND active
+    # "Did not play" = 0 score AND no words found (valid or invalid)
+    active_pool = [
+        p for p in competitive_humans 
+        if getattr(p, 'score', 0) > 0 or getattr(p, 'submitted_words', []) or getattr(p, 'invalid_words', [])
+    ]
+    
+    number_of_players = len(active_pool)
+    print(f"[RatingLogic] Found {number_of_players} active participants out of {len(competitive_humans)} humans.")
+    for p in active_pool:
+        print(f"  - Active: {getattr(p, 'username', 'N/A')} (Score: {getattr(p, 'score', 0)})")
             
-    if number_of_players == 0:
+    if number_of_players < 2:
+        print(f"[RatingLogic] ABORTING: Not enough active human players ({number_of_players}).")
         return changes
     
-    # Sort active humans by score descending
-    active_pool = sorted(active_humans, key=lambda x: getattr(x, 'score', 0), reverse=True)
-    
-    # Calculate scoreSum and ratingSum ONLY for competitive humans in the active pool
+    # Calculate scoreSum and ratingSum
     score_sum = sum(getattr(p, 'score', 0) for p in active_pool)
     rating_sum = sum(getattr(p, 'rating', 1200) for p in active_pool)
     
-    if rating_sum <= 0:
+    print(f"[RatingLogic] Totals - ScoreSum: {score_sum}, RatingSum: {rating_sum}")
+    if rating_sum <= 0 or score_sum <= 0:
+        # If no one scored anything, no ratings change (Tie)
+        print(f"[RatingLogic] ABORTING: Zero total score or rating.")
         return changes
         
     # K-factor approach: Change = K * (ActualRatio - ExpectedRatio)
-    # This yields a more balanced distribution and naturally scales to multiple players.
     K = 40 
 
     for p in active_pool:
