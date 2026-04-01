@@ -476,7 +476,7 @@ async function updateGameState(incomingState = null) {
         
         // --- SPINNER SET & WINNER ANNOUNCEMENT LOGIC ---
         if (state.state === 'intermission') {
-            const currentRoundId = `${state.room_id}_${state.current_round}`;
+            const currentRoundId = `${state.room_id}_${state.current_round}_intermission`;
             
             // Show only if not already shown for this specific round ID, 
             // and only once we have valid params from the generator.
