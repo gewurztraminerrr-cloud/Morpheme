@@ -41,6 +41,7 @@ let lastRenderedRotation = null;
 let hasPlayedIntermissionBell = false; // Flag for next round notification
 let findFriendsMode = false;
 let userFriendsCache = [];
+let spinnerShownForRound = null; // Persistent track of whether the popup was shown for this round
 
 // Input Method Tracking
 let currentInputMethod = 'mouse';
@@ -471,24 +472,38 @@ async function updateGameState(incomingState = null) {
             }
         }
 
-        // Check for state transitions
         const lastStateStr = previousState ? previousState.state : null;
-        if (lastStateStr !== state.state) {
-            if (state.state === 'intermission' && lastStateStr === 'active') {
+        
+        // --- SPINNER SET & WINNER ANNOUNCEMENT LOGIC ---
+        if (state.state === 'intermission') {
+            const currentRoundId = `${state.room_id}_${state.current_round}`;
+            
+            // Show only if not already shown for this specific round ID, 
+            // and only once we have valid params from the generator.
+            if (spinnerShownForRound !== currentRoundId && 
+                state.spinner_params && state.spinner_params.word_count_range) {
+                
+                console.log(`[play.js] Showing Spinner Set for Round ${currentRoundId}`);
                 showSpinnerOverlay(state.spinner_params, state.players);
+                spinnerShownForRound = currentRoundId;
 
-                // Focus Chat on Intermission
+                // Focus Chat when the results appear
                 setTimeout(() => {
                     const chatInput = document.getElementById('chat-input');
                     if (chatInput) chatInput.focus();
-                }, 100);
+                }, 200);
 
-                // Reset scroll position
+                // Reset Winners List scroll to top
                 const listEl = document.getElementById('submitted-words-list');
                 if (listEl && listEl.parentElement) {
                     listEl.parentElement.scrollTop = 0;
                 }
-            } else if (state.state === 'active' && lastStateStr !== 'active') {
+            }
+        }
+        
+        // Check for state transitions (Cleanup/Misc)
+        if (lastStateStr !== state.state) {
+            if (state.state === 'active' && lastStateStr !== 'active') {
                 hideSpinnerOverlay();
                 const wordsList = document.getElementById('submitted-words-list');
                 if (wordsList) {
