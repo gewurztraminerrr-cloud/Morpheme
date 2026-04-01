@@ -68,8 +68,7 @@
 .play-grid {
     display: grid;
     grid-template-columns: var(--left-panel-w, 340px) 1fr var(--right-panel-w, 320px);
-    /* Reduced panels to ensure Split Points notepads fit */
-    gap: 20px;
+    gap: 15px; /* Restored to comfortable gap */
     flex: 1;
     min-height: 0;
     /* Important for scrolling children */
@@ -116,7 +115,7 @@
 .left-panel-container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
     height: 100%;
 }
 
@@ -137,7 +136,7 @@
     background: var(--bg-panel);
     border-radius: 12px;
     padding: 10px;
-    height: 180px;
+    height: 200px; /* Restored for snug fit */
     flex-shrink: 0;
     /* Protect chat */
     display: flex;
@@ -165,10 +164,14 @@
 .chat-user {
     font-weight: 700;
     margin-right: 5px;
+    /* User contrast outline: replaces blur with sharp definition */
+    -webkit-text-stroke: 0.5px rgba(0,0,0,0.4);
+    text-shadow: 0.5px 0.5px 0 rgba(0,0,0,0.1); 
 }
 
 .chat-text {
     color: var(--text-primary);
+    text-shadow: 0 0 1px rgba(0,0,0,0.1);
 }
 
 .chat-sys {
@@ -276,20 +279,17 @@
 #players-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    /* Slightly more gap for two-line rows */
+    gap: 6px; /* Tighter gap */
     overflow-y: auto;
-    max-height: 420px;
-    /* (6 * 65px) + (5 * 6px) approx 420px */
+    max-height: 480px; /* Increased to fit +1 row */
     min-height: 0;
     padding-right: 5px;
 }
 
 .player-item {
     background: rgba(var(--text-primary-rgb), 0.1);
-    padding: 8px 15px;
-    height: 65px;
-    /* Reduced from 85px */
+    padding: 6px 15px;
+    height: 60px; /* Reduced from 65px for compactness */
     flex-shrink: 0;
     border-radius: 12px;
     font-size: 0.95rem;
@@ -456,7 +456,7 @@ body.theme-light-brown .player-score-val {
     background: var(--bg-panel);
     border-radius: 12px;
     padding: 12px 15px;
-    height: 180px;
+    height: 200px; /* Reverted to match chat */
     flex-shrink: 0;
     border-top: none;
     /* Removed redundant border since it's now a separate box */

@@ -249,9 +249,7 @@ async function updateGameState(incomingState = null) {
             }
             state = await response.json();
 
-            if (isTournamentPlay || isPrivateMatchPlay) {
-                return;
-            }
+            // STATE UPDATE CONTINUES (Ensures intermissions work everywhere)
         }
 
         if (!state) return;

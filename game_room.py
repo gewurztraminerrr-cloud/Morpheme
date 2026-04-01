@@ -1692,8 +1692,14 @@ class RoomManager:
             is_500plus = wc_tuple[0] >= 500
             if is_500plus:
                 print(f"[RoomManager] 500+ detected: Clearing active board ahead of time")
-                rows_num, cols_num = map(int, room.board_dimensions.split('x'))
-                room.board = [['' for _ in range(cols_num)] for _ in range(rows_num)]
+                dims = room.board_dimensions.split('x')
+                if len(dims) == 3:
+                     # 3D Cube
+                     f_num, r_num, c_num = map(int, dims)
+                     room.board = [[['' for _ in range(c_num)] for _ in range(r_num)] for _ in range(6)]
+                else:
+                    rows_num, cols_num = map(int, dims)
+                    room.board = [['' for _ in range(cols_num)] for _ in range(rows_num)]
                 room.all_words = []
                 room.complete_words = []
             
