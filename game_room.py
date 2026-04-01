@@ -798,6 +798,15 @@ class GameRoom:
                     self.state = 'intermission'
                     self.intermission_start_time = time.time()
                     board_format = self.current_board_format
+
+                    # ROBUST DAILY RESET (Players): Clear lists IMMEDIATELY at midnight transition
+                    if self.time_limit >= 7200:
+                        print(f"[GameRoom] Daily Reset Trigger: Clearing lists for room {self.room_id}")
+                        for p in self.players:
+                            self.past_players[str(p.user_id)] = p
+                        self.players = []
+                        self.spectators = []
+                        self.custom_end_time = 0
                 except Exception as e:
                     print(f"[GameRoom] Critical Error in state transition: {e}")
                     return # Prevent further processing if transition failed
@@ -962,6 +971,7 @@ class GameRoom:
                     # Reset flags for next round search
                     self.spinner_params_generated = False
                     self.board_search_started = False
+                    self.spinner_params = {} # Clear stale parameters from previous round
                 self.board_search_loading = False
                 return True
         
@@ -1852,6 +1862,7 @@ class RoomManager:
                     print(f"[RoomManager] SKIPPING snapshot - Using existing history from intermission")
 
                 # Use pre-generated board and words
+                room.current_round += 1
                 room.board = room.next_round_board
                 room.all_words = room.next_round_words
                 # Snapshot parameters for the round
@@ -1879,8 +1890,7 @@ class RoomManager:
                 room.round_start_time = time.time()
                 
                 # Daily reset (Clear players/Reset metadata)
-                if room.time_limit >= 7200:
-                     self._apply_daily_reset(room)
+                # MOVED TO check_and_update_state (Intermission Transition) to show Start [0] at Lobby instantly.
                 
                 # Reset flags for the NEW round's next intermission
                 room.spinner_params_generated = False

@@ -41,7 +41,7 @@ let lastRenderedRotation = null;
 let hasPlayedIntermissionBell = false; // Flag for next round notification
 let findFriendsMode = false;
 let userFriendsCache = [];
-let spinnerShownForRound = null; // Persistent track of whether the popup was shown for this round
+let lastSpinnerDataJSON = null; // Detect if parameters have actually changed
 
 // Input Method Tracking
 let currentInputMethod = 'mouse';
@@ -475,30 +475,35 @@ async function updateGameState(incomingState = null) {
         const lastStateStr = previousState ? previousState.state : null;
         
         // --- SPINNER SET & WINNER ANNOUNCEMENT LOGIC ---
-        if (state.state === 'intermission') {
-            const currentRoundId = `${state.room_id}_${state.current_round}_intermission`;
+        if (state.state === 'intermission' && state.spinner_params && state.spinner_params.word_count_range) {
+            const currentSpinnerJSON = JSON.stringify({
+                rid: state.room_id,
+                rnd: state.current_round,
+                params: state.spinner_params
+            });
             
-            // Show only if not already shown for this specific round ID, 
-            // and only once we have valid params from the generator.
-            if (spinnerShownForRound !== currentRoundId && 
-                state.spinner_params && state.spinner_params.word_count_range) {
-                
-                console.log(`[play.js] Showing Spinner Set for Round ${currentRoundId}`);
+            // Show if it's new data for this session, 
+            // OR if the popup is somehow hidden but we have fresh data.
+            const overlay = document.getElementById('spinner-overlay');
+            const isHidden = !overlay || overlay.classList.contains('hidden');
+            
+            // Trigger SHOW if:
+            // 1. It's brand new data we haven't seen in this session (lastSpinnerDataJSON is null or different)
+            // 2. AND we haven't already marked this specific data as "handled"
+            if (lastSpinnerDataJSON !== currentSpinnerJSON) {
+                console.log(`[play.js] Fresh Intermission Data detected (ID: ${currentSpinnerJSON.substring(0, 30)}...). Triggering popup.`);
                 showSpinnerOverlay(state.spinner_params, state.players);
-                spinnerShownForRound = currentRoundId;
+                lastSpinnerDataJSON = currentSpinnerJSON;
 
-                // Focus Chat when the results appear
+                // Focus Chat when results appear
                 setTimeout(() => {
                     const chatInput = document.getElementById('chat-input');
                     if (chatInput) chatInput.focus();
                 }, 200);
-
-                // Reset Winners List scroll to top
-                const listEl = document.getElementById('submitted-words-list');
-                if (listEl && listEl.parentElement) {
-                    listEl.parentElement.scrollTop = 0;
-                }
             }
+        } else if (state.state !== 'intermission') {
+            // Reset tracker when not in intermission so it's fresh for next time
+            lastSpinnerDataJSON = null;
         }
         
         // Check for state transitions (Cleanup/Misc)

@@ -1990,9 +1990,6 @@ def list_rooms():
 @app.route('/api/lobby-stats', methods=['GET'])
 def get_lobby_stats():
     """Get aggregated player counts for all game configurations"""
-    # Clean up first
-    room_manager.cleanup_rooms(timeout=600, spec_timeout=1800)
-    
     stats = {}
     
     for room in room_manager.rooms.values():
