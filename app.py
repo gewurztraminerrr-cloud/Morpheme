@@ -4509,8 +4509,6 @@ def room_tick_worker():
                         room_manager.start_board_search(room.room_id)
                     elif milestone == 'start' and not room.starting_round:
                         # Auto-start next round precisely
-                        # ATOMIC GUARD: Set starting_round TRUE before spawning thread to avoid races
-                        room.starting_round = True
                         print(f"[RoomTickWorker] Auto-advancing room {room.room_id} to new round")
                         threading.Thread(target=room_manager.start_next_round, args=(room.room_id,), daemon=True).start()
             

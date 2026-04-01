@@ -2996,11 +2996,7 @@ function showSpinnerOverlay(spinnerParams, players = []) {
         safeSetText('spinner-word-count', wrText);
     }
 
-    // [ANIMATION] Trigger rolling effect for tactical feedback
-    document.querySelectorAll('.spinner-params .param-value').forEach(el => {
-        el.classList.add('rolling');
-        setTimeout(() => el.classList.remove('rolling'), 800);
-    });
+    // Rolling animation removed as per user request
 
     safeSetText('spinner-dictionary', spinnerParams.dictionary || 'Unknown');
     safeSetText('spinner-format', spinnerParams.board_format || 'Standard');
