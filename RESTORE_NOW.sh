@@ -1,6 +1,6 @@
 #!/bin/bash
 # RESTORE_NOW.sh
-# Emergency recovery to March 24 Stable State
+# Emergency recovery to April 1 Stable State
 
 echo "=== EMERGENCY RESTORATION STARTING ==="
 
@@ -9,7 +9,7 @@ echo "Stopping server on Port 3000..."
 lsof -t -i :3000 | xargs kill -9 || true
 
 # 2. Reset the code
-echo "Reverting all code to PERMANENT tag..."
+echo "Reverting all code to PERMANENT tag (April 1 Status)..."
 git reset --hard PERMANENT_RESTORATION_SAVE_POINT_DO_NOT_DELETE
 
 # 3. Clean untracked files
@@ -17,8 +17,8 @@ echo "Cleaning working directory..."
 git clean -fd
 
 # 4. Inject the stable database snapshot (User settings, Synesthesia, etc)
-echo "Restoring database from stable backup..."
-cp morpheme.db.save_point_2026-03-29_final morpheme.db
+echo "Restoring database from stable backup (April 1)..."
+cp morpheme.db.save_point_2026-04-01_final_stable morpheme.db
 
 # 5. Restart the server
 echo "Restarting Morpheme server (Single Process Mode)..."
