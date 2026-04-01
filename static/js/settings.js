@@ -12,8 +12,9 @@ function debounce(func, wait) {
 (function () {
     console.log('[settings.js] Loading settings module...');
 
-    // Global Settings State
-    window.userSettings = window.userSettings || {
+    // Global Settings State - Load from localStorage for instant availability (prevents race conditions)
+    const savedSettings = localStorage.getItem('morpheme_settings');
+    window.userSettings = savedSettings ? JSON.parse(savedSettings) : {
         lobby_music: true,
         chat_font_size: 13,
         def_font_size: 15,
@@ -88,7 +89,13 @@ function debounce(func, wait) {
                 const label = document.getElementById('setting-chat-size-val');
                 if (label) label.textContent = `${size}px`;
                 const preview = document.getElementById('preview-chat-text');
-                if (preview) preview.style.fontSize = `${size}px`;
+                if (preview) {
+                    const container = preview.closest('.settings-preview-box');
+                    if (container) container.style.fontSize = `${size}px`;
+                    else preview.style.fontSize = `${size}px`;
+                }
+                const chatInput = document.getElementById('chat-input');
+                if (chatInput) chatInput.style.fontSize = `${size}px`;
             }
         }
 
@@ -102,7 +109,11 @@ function debounce(func, wait) {
                 const label = document.getElementById('setting-def-size-val');
                 if (label) label.textContent = `${size}px`;
                 const preview = document.getElementById('preview-def-text');
-                if (preview) preview.style.fontSize = `${size}px`;
+                if (preview) {
+                    const container = preview.closest('.settings-preview-box');
+                    if (container) container.style.fontSize = `${size}px`;
+                    else preview.style.fontSize = `${size}px`;
+                }
             }
         }
 
@@ -188,6 +199,10 @@ function debounce(func, wait) {
 
             const container = document.getElementById('bell-selection-container');
             if (container) container.style.display = val ? 'flex' : 'none';
+
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.next_round_bell_enabled = val;
+            localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
         }
 
         // Next Round Bell Type
@@ -198,6 +213,10 @@ function debounce(func, wait) {
                 if (btn.getAttribute('data-bell') === type) btn.classList.add('active');
                 else btn.classList.remove('active');
             });
+
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.next_round_bell_type = type;
+            localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
         }
 
         // Synesthesia: Letter Colors
@@ -232,6 +251,9 @@ function debounce(func, wait) {
         }
         console.log(`[settings.js] Saving ${key}: ${saveVal}`);
         try {
+            // Cache locally for instant next load
+            localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
+
             await fetch('/api/settings/update', {
                 method: 'POST',
                 headers: {
@@ -317,7 +339,11 @@ function debounce(func, wait) {
             const label = document.getElementById('setting-chat-size-val');
             if (label) label.textContent = `${val}px`;
             const preview = document.getElementById('preview-chat-text');
-            if (preview) preview.style.fontSize = `${val}px`;
+            if (preview) {
+                const container = preview.closest('.settings-preview-box');
+                if (container) container.style.fontSize = `${val}px`;
+                else preview.style.fontSize = `${val}px`;
+            }
             saveSettingDebounced('chat_font_size', val);
         });
     }
@@ -330,7 +356,11 @@ function debounce(func, wait) {
             const label = document.getElementById('setting-def-size-val');
             if (label) label.textContent = `${val}px`;
             const preview = document.getElementById('preview-def-text');
-            if (preview) preview.style.fontSize = `${val}px`;
+            if (preview) {
+                const container = preview.closest('.settings-preview-box');
+                if (container) container.style.fontSize = `${val}px`;
+                else preview.style.fontSize = `${val}px`;
+            }
             saveSettingDebounced('def_font_size', val);
         });
     }

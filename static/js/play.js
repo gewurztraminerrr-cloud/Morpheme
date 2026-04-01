@@ -75,14 +75,6 @@ window.addEventListener('touchstart', resetIdleTimer, { passive: true });
 window.addEventListener('scroll', resetIdleTimer, { passive: true });
 
 function ejectToLobby(reason = "inactivity") {
-    // 1. Immediately close the Spinner Set popup if it's open
-    if (typeof hideSpinnerOverlay === 'function') hideSpinnerOverlay();
-    const spinner = document.getElementById('spinner-overlay') || document.querySelector('.spinner-overlay');
-    if (spinner) {
-        spinner.classList.add('hidden');
-        spinner.style.display = 'none';
-    }
-
     console.warn(`[play.js] EVICTING USER. Reason: ${reason}`);
     
     // 2. Stop poll and clear state
@@ -90,7 +82,7 @@ function ejectToLobby(reason = "inactivity") {
     window.currentRoomId = null;
 
     // 3. Clear ANY other overlays that might block the explanation
-    document.querySelectorAll('.modal-overlay, .board-overlay, .results-overlay, .spinner-content, .spinner-overlay').forEach(ov => {
+    document.querySelectorAll('.modal-overlay, .board-overlay, .results-overlay').forEach(ov => {
         ov.classList.add('hidden');
         ov.style.display = 'none';
     });
@@ -262,14 +254,166 @@ async function updateGameState(incomingState = null) {
         // Detect transition to intermission (round end)
         if (previousState && previousState.state === 'active' && state.state === 'intermission') {
             const wordInput = document.getElementById('word-input');
-            if (wordInput) {
-                wordInput.value = '';
-                wordInput.blur();
+            const chatInput = document.getElementById('chat-input');
+            
+            // User Request: Prevent typists from spillover chatting for 2s, but mousers get immediate focus
+            if (currentInputMethod === 'keyboard') {
+                if (chatInput) {
+                    chatInput.disabled = true;
+                    const originalPlaceholder = chatInput.placeholder;
+                    chatInput.placeholder = "Typists: Chat disabled for 2s...";
+                    
+                    // Clear word input immediately so they see it's over
+                    if (wordInput) {
+                        wordInput.value = '';
+                        wordInput.blur();
+                    }
+                    
+                    if (window.chatFocusTimeout) clearTimeout(window.chatFocusTimeout);
+                    window.chatFocusTimeout = setTimeout(() => {
+                        chatInput.disabled = false;
+                        chatInput.placeholder = originalPlaceholder || "Type message...";
+                        // Ensure we are still in intermission before stealing focus from potentially new round input
+                        if (window.lastGameState && window.lastGameState.state === 'intermission') {
+                            chatInput.focus();
+                        }
+                    }, 2000);
+                }
+            } else {
+                // If mousing/touching, set focus immediately
+                if (wordInput) {
+                    wordInput.value = '';
+                    wordInput.blur();
+                }
+                // Reset mouse selection state if it was active
+                if (typeof mouseState !== 'undefined') {
+                    mouseState.isDown = false;
+                    mouseState.selectedPath = [];
+                    if (mouseState.visitedCells) mouseState.visitedCells.clear();
+                }
+                
+                if (chatInput) {
+                    // Slight delay to ensure UI transition is smooth
+                    if (window.chatFocusTimeout) clearTimeout(window.chatFocusTimeout);
+                    window.chatFocusTimeout = setTimeout(() => {
+                        // Ensure we are still in intermission
+                        if (window.lastGameState && window.lastGameState.state === 'intermission') {
+                            chatInput.focus();
+                        }
+                    }, 150);
+                }
             }
-            if (typeof mouseState !== 'undefined') {
-                mouseState.isDown = false;
-                mouseState.selectedPath = [];
-                if (mouseState.visitedCells) mouseState.visitedCells.clear();
+
+            // AUTO-SCROLL TO BOTTOM ON INTERMISSION START (Only if currently on play page)
+            const playPage = document.getElementById('page-play');
+            // FIX: Use classList.contains('active') because visibility is controlled by class in style.css
+            const isShowingPlay = playPage && playPage.classList.contains('active') && window.location.hash === '#page-play';
+            
+            if (isShowingPlay) {
+                requestAnimationFrame(() => {
+                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                });
+            }
+
+            // FORCE TAB TO 'WORDS' ON INTERMISSION START (Only if not already viewing something else)
+            if (activeWordsTab !== 'history' && activeWordsTab !== 'remaining') {
+                activeWordsTab = 'found';
+            }
+            window.userViewingDefinitionIntermission = false;
+            
+            // CLEAR STALE DEFINITIONS (Ensure winner announcement triggers)
+            const defContent = document.getElementById('definition-content');
+            if (defContent) {
+                defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
+            }
+            const defHeader = document.getElementById('definition-header');
+            if (defHeader) defHeader.style.display = 'none';
+
+            console.log('[play.js] Transition to Intermission: Forcing Words tab and resetting view state.');
+        }
+
+        // WINNER ANNOUNCEMENT LOGIC (Persistent during intermission)
+        if (state.state === 'intermission' && state.winners_history && state.winners_history.length > 0) {
+            const defContent = document.getElementById('definition-content');
+            const defPanel = document.querySelector('.definitions-panel');
+            const defHeader = document.getElementById('definition-header');
+            
+            // Render only if not already showing the announcement (to avoid flickering/re-adding button)
+            // EXPLICITLY SKIP if the user has manually selected a word to view its definition
+            const isViewingDefinition = window.userViewingDefinitionIntermission === true;
+            if (defContent && !isViewingDefinition && (!defContent.innerHTML.includes('CONGRATULATIONS') || defContent.innerHTML.includes('placeholder'))) {
+                const latest = state.winners_history[0];
+                const winnersList = latest.winners.map(w => w.username).join(' & ');
+                
+                if (defPanel) {
+                    defPanel.classList.add('winner-flash');
+                    defPanel.classList.remove('timer-flash');
+                }
+                if (defHeader) defHeader.style.display = 'none';
+                
+                // For Spectators, include the Join Button in the announcement
+                const me = (state.your_username || window.currentUser || document.getElementById('current-username')?.innerText || '').toLowerCase().trim();
+                const amIPlayerInRoom = state.players.some(p => p.username.toLowerCase().trim() === me);
+                
+                const playerCount = (state.players && Array.isArray(state.players)) ? state.players.length : 0;
+                const maxPlayers = state.max_players || 8;
+                const canJoinInThisRoom = (playerCount < maxPlayers) || state.game_type === 'accumulative';
+
+                const joinButtonHtml = (!amIPlayerInRoom && canJoinInThisRoom) 
+                    ? `<button id="winner-spec-join-btn" class="spectator-join-btn premium-btn" style="margin-top: 10px; width: auto; font-size: 0.9rem; padding: 10px 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 2px solid #ffd700; z-index: 10; flex-shrink: 0;">Join Match</button>` 
+                    : '';
+
+                defContent.innerHTML = `
+                    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100%; text-align: center; padding: 5px; box-sizing: border-box; background: rgba(255, 215, 0, 0.05);">
+                        <div style="font-size: 0.75rem; color: #ffd700; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 850; margin-bottom: 2px; animation: textPulse 1.5s infinite; flex-shrink: 0;">🏆 Round Complete 🏆</div>
+                        <h2 style="font-size: 1.2rem; color: #fff; text-shadow: 0 0 10px rgba(255,215,0,0.5); font-weight: 950; margin: 3px 0; line-height: 1; flex-shrink: 0;">CONGRATULATIONS</h2>
+                        <div style="font-size: 1.15rem; color: #ffd700; font-weight: 800; text-shadow: 0 0 8px rgba(0,0,0,0.7); max-width: 95%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0;">${winnersList.toUpperCase()}</div>
+                        <div style="font-size: 0.75rem; opacity: 0.95; margin-top: 3px; font-style: italic; flex-shrink: 0;">1st Place with ${latest.score || 0} pts</div>
+                        ${joinButtonHtml}
+                    </div>
+                `;
+
+                // Handle Join Button inside winner announcement
+                if (joinButtonHtml) {
+                    setTimeout(() => {
+                        const winJoinBtn = document.getElementById('winner-spec-join-btn');
+                        if (winJoinBtn) {
+                            winJoinBtn.onclick = async () => {
+                                winJoinBtn.textContent = 'Joining...';
+                                winJoinBtn.disabled = true;
+                                try {
+                                    const roomId = window.currentRoomId;
+                                    const resp = await fetch(`/api/room/${roomId}/join`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ as_spectator: false })
+                                    });
+                                    const data = await resp.json();
+                                    if (data.success) {
+                                        window.isSpectatorMode = false;
+                                        setTimeout(updateGameState, 100);
+                                    } else {
+                                        alert(data.error);
+                                        winJoinBtn.textContent = 'Join Match';
+                                        winJoinBtn.disabled = false;
+                                    }
+                                } catch (e) {
+                                    console.error('Spec Join Error:', e);
+                                    winJoinBtn.textContent = 'Error';
+                                    winJoinBtn.disabled = false;
+                                }
+                            };
+                        }
+                    }, 50);
+                }
+            } else if (isViewingDefinition) {
+                // IF viewing a definition: Clean up celebratory effects and restore study header
+                if (defPanel && defPanel.classList.contains('winner-flash')) {
+                    defPanel.classList.remove('winner-flash');
+                }
+                if (defHeader && defHeader.style.display === 'none') {
+                    defHeader.style.display = 'flex';
+                }
             }
         }
 
@@ -335,67 +479,79 @@ async function updateGameState(incomingState = null) {
             }
 
             const defContent = document.getElementById('definition-content');
-            if (defContent) defContent.style.display = 'none';
-            spectatorPanel.style.display = 'flex';
-
-            // Check if there is space to join
-            const playerCount = (state.players && Array.isArray(state.players)) ? state.players.length : 0;
-            const maxPlayers = state.max_players || 8;
-            const isAccumulative = state.game_type === 'accumulative';
-            const canJoin = isAccumulative || (playerCount < maxPlayers);
-
-            // Render Content
-            spectatorPanel.innerHTML = `
-                <div class="spectator-title">SPECTATING</div>
-                <div class="spectator-actions">
-                    ${canJoin ?
-                    `<button id="spec-join-btn" class="spectator-join-btn premium-btn">Join Game</button>` :
-                    `<div class="spectator-full-badge">Full Room</div>`
+            
+            // PRIORITY: During intermission, show the winner announcement for everyone (even spectators)
+            if (defContent) {
+                if (state.state === 'intermission') {
+                    defContent.style.display = 'block';
+                    if (spectatorPanel) spectatorPanel.style.display = 'none';
+                } else {
+                    defContent.style.display = 'none';
+                    if (spectatorPanel) spectatorPanel.style.display = 'flex';
                 }
-                </div>
-            `;
+            }
+            
+            // Re-render spectator content only if not in intermission (if in intermission, defContent wins)
+            if (state.state !== 'intermission' && spectatorPanel) {
+                spectatorPanel.style.display = 'flex';
 
-            // Re-attach event listener
-            setTimeout(() => {
-                const joinBtn = document.getElementById('spec-join-btn');
-                if (joinBtn) {
-                    joinBtn.onclick = async () => {
-                        console.log('[SpecJoin] Join clicked');
-                        joinBtn.textContent = 'Joining...';
-                        joinBtn.disabled = true;
+                // Check if there is space to join
+                const playerCount = (state.players && Array.isArray(state.players)) ? state.players.length : 0;
+                const maxPlayers = state.max_players || 8;
+                const isAccumulative = state.game_type === 'accumulative';
+                const canJoin = isAccumulative || (playerCount < maxPlayers);
 
-                        try {
-                            const resp = await fetch(`/api/room/${window.currentRoomId}/join`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ as_spectator: false })
-                            });
-                            const data = await resp.json();
+                // Render Content
+                spectatorPanel.innerHTML = `
+                    <div class="spectator-title">SPECTATING</div>
+                    <div class="spectator-actions">
+                        ${canJoin ?
+                        `<button id="spec-join-btn" class="spectator-join-btn premium-btn">Join Game</button>` :
+                        `<div class="spectator-full-badge">Full Room</div>`
+                    }
+                    </div>
+                `;
 
-                            if (data.success) {
-                                window.isSpectatorMode = false;
-                                const playBtn = document.getElementById('play-btn');
-                                if (playBtn) {
-                                    playBtn.disabled = false;
-                                    playBtn.title = "";
+                // Re-attach event listener
+                setTimeout(() => {
+                    const joinBtn = document.getElementById('spec-join-btn');
+                    if (joinBtn) {
+                        joinBtn.onclick = async () => {
+                            console.log('[SpecJoin] Join clicked');
+                            joinBtn.textContent = 'Joining...';
+                            joinBtn.disabled = true;
+
+                            try {
+                                const resp = await fetch(`/api/room/${window.currentRoomId}/join`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ as_spectator: false })
+                                });
+                                const data = await resp.json();
+
+                                if (data.success) {
+                                    window.isSpectatorMode = false;
+                                    const playBtn = document.getElementById('play-btn');
+                                    if (playBtn) {
+                                        playBtn.disabled = false;
+                                        playBtn.title = "";
+                                    }
+                                    if (window.updateManualToolState) window.updateManualToolState();
+                                    setTimeout(updateGameState, 100);
+                                } else {
+                                    alert(data.error);
+                                    joinBtn.textContent = 'Join Game';
+                                    joinBtn.disabled = false;
                                 }
-                                if (window.updateManualToolState) window.updateManualToolState();
-                                setTimeout(updateGameState, 100);
-                            } else {
-                                alert(data.error);
-                                joinBtn.textContent = 'Join Game';
+                            } catch (e) {
+                                console.error('Spec Join Error:', e);
+                                joinBtn.textContent = 'Error';
                                 joinBtn.disabled = false;
                             }
-                        } catch (e) {
-                            console.error(e);
-                            alert('Network error');
-                            joinBtn.textContent = 'Join Game';
-                            joinBtn.disabled = false;
-                        }
-                    };
-                }
-            }, 0);
-
+                        };
+                    }
+                }, 50);
+            }
         } else {
             // I am a player
             if (wordInputSection) wordInputSection.style.display = ''; // Restore flex/block
@@ -448,31 +604,62 @@ async function updateGameState(incomingState = null) {
         // Enable/disable input and buttons
         const isActive = state.state === 'active';
         const inputEl = document.getElementById('word-input');
-        const submitBtn = document.getElementById('submit-word-btn');
+        const submitBtnEl = document.getElementById('submit-word-btn');
         const rotateBtn = document.getElementById('rotate-board-btn');
 
         if ((isSplitIntermission || isFCFSIntermission) && !showBoardInSplitIntermission) {
             // Hide controls when board is hidden (Split/FCFS intermission)
             if (inputEl) inputEl.style.display = 'none';
-            if (submitBtn) submitBtn.style.display = 'none';
+            if (submitBtnEl) submitBtnEl.style.display = 'none';
             if (rotateBtn) rotateBtn.style.display = 'none';
         } else {
             // Show otherwise
             if (inputEl) inputEl.style.display = '';
-            if (submitBtn) submitBtn.style.display = '';
+            if (submitBtnEl) submitBtnEl.style.display = '';
             if (rotateBtn) rotateBtn.style.display = '';
 
             if (inputEl && inputEl.disabled !== !isActive) {
                 inputEl.disabled = !isActive;
             }
-            if (submitBtn && submitBtn.disabled !== !isActive) {
-                submitBtn.disabled = !isActive;
+            if (submitBtnEl && submitBtnEl.disabled !== !isActive) {
+                submitBtnEl.disabled = !isActive;
             }
         }
 
         const lastStateStr = previousState ? previousState.state : null;
         
-        // --- SPINNER SET & WINNER ANNOUNCEMENT LOGIC ---
+        // --- POST-ROUND RESULTS RENDERING (Heartbeat Sync) ---
+        if (state.state === 'intermission') {
+            const currentRoundId = `${state.room_id}_${state.current_round}`;
+            const wordsListEl = document.getElementById('submitted-words-list');
+            
+            // Allow re-rendering if data was empty or for the first 5s to ensure sync
+            const isTransition = !window.lastRenderedIntermissionWords || window.lastRenderedIntermissionWords !== currentRoundId;
+            const isEmpty = wordsListEl && (wordsListEl.innerHTML.includes('placeholder') || wordsListEl.children.length === 0);
+            
+            if (isTransition || isEmpty || (state.time_remaining > (state.intermission_duration || 60) - 5)) {
+                if (state.all_words) {
+                    const myWords = state.players.find(p => p.username.toLowerCase().trim() === (state.your_username || currentUsername || '').toLowerCase().trim())?.submitted_words || [];
+                    const allFound = state.players.reduce((acc, p) => acc.concat(p.submitted_words || []), []);
+                    
+                    displayAllWords(
+                        state.all_words, 
+                        state.bonus_word, 
+                        myWords, 
+                        allFound, 
+                        state.all_word_scores || {}, 
+                        state.csw_only_words || [], 
+                        state.added_words || []
+                    );
+                    window.lastRenderedIntermissionWords = currentRoundId;
+                }
+            }
+
+        } else if (state.state !== 'intermission') {
+            window.lastRenderedIntermissionWords = null;
+        }
+
+        // --- DEPRECATED SPINNER POPUP (Cleanup) ---
         if (state.state === 'intermission' && state.spinner_params && state.spinner_params.word_count_range) {
             const currentSpinnerJSON = JSON.stringify({
                 rid: state.room_id,
@@ -480,34 +667,29 @@ async function updateGameState(incomingState = null) {
                 params: state.spinner_params
             });
             
-            // Show if it's new data for this session, 
-            // OR if the popup is somehow hidden but we have fresh data.
-            const overlay = document.getElementById('spinner-overlay');
-            const isHidden = !overlay || overlay.classList.contains('hidden');
-            
-            // Trigger SHOW if:
-            // 1. It's brand new data we haven't seen in this session (lastSpinnerDataJSON is null or different)
-            // 2. AND we haven't already marked this specific data as "handled"
             if (lastSpinnerDataJSON !== currentSpinnerJSON) {
-                console.log(`[play.js] Fresh Intermission Data detected (ID: ${currentSpinnerJSON.substring(0, 30)}...). Triggering popup.`);
-                showSpinnerOverlay(state.spinner_params, state.players);
                 lastSpinnerDataJSON = currentSpinnerJSON;
-
-                // Focus Chat when results appear
-                setTimeout(() => {
-                    const chatInput = document.getElementById('chat-input');
-                    if (chatInput) chatInput.focus();
-                }, 200);
             }
         } else if (state.state !== 'intermission') {
-            // Reset tracker when not in intermission so it's fresh for next time
             lastSpinnerDataJSON = null;
         }
         
         // Check for state transitions (Cleanup/Misc)
-        if (lastStateStr !== state.state) {
-            if (state.state === 'active' && lastStateStr !== 'active') {
-                hideSpinnerOverlay();
+        const isNewRound = (state.state === 'active' && (lastStateStr !== 'active' || (previousState && state.current_round !== previousState.current_round)));
+        if (lastStateStr !== state.state || isNewRound) {
+            if (isNewRound) {
+                // Clear any winner announcement from Definitions Panel
+                const defContent = document.getElementById('definition-content');
+                const defHeader = document.getElementById('definition-header');
+                const defPanel = document.querySelector('.definitions-panel');
+                if (defContent) defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
+                if (defHeader) defHeader.style.display = 'none';
+                if (defPanel) {
+                    defPanel.classList.remove('timer-flash');
+                    defPanel.classList.remove('winner-flash');
+                }
+                window.userViewingDefinitionIntermission = false;
+
                 const wordsList = document.getElementById('submitted-words-list');
                 if (wordsList) {
                     wordsList.innerHTML = '<p class="placeholder">Game active - Waiting for words...</p>';
@@ -529,11 +711,19 @@ async function updateGameState(incomingState = null) {
                 const showEveryoneBtn = document.getElementById('show-everyone-btn');
                 if (showEveryoneBtn) showEveryoneBtn.classList.remove('active');
 
-                // Focus Word Input on Game Start
+                // Clear and Focus Word Input on Game Start
+                if (window.chatFocusTimeout) {
+                    clearTimeout(window.chatFocusTimeout);
+                    window.chatFocusTimeout = null;
+                }
+                
                 setTimeout(() => {
                     const wordInput = document.getElementById('word-input');
-                    if (wordInput) wordInput.focus();
-                }, 100);
+                    if (wordInput) {
+                        wordInput.value = '';
+                        wordInput.focus();
+                    }
+                }, 150);
             }
             // NO assignment to previousState constant. window.lastGameState update at top handles tracking.
         }
@@ -1302,7 +1492,41 @@ function renderChat(messages) {
         // Escape HTML to prevent XSS
         const safeText = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-        if (isSystem) {
+        if (isSystem || (username && username.toUpperCase() === 'SYSTEM')) {
+            const lowerText = safeText.toLowerCase();
+            
+            // SPECIAL: Apply Premium Golden styling to winner announcement messages
+            const isWinner = msg.is_winner || 
+                            lowerText.includes('🏆') || 
+                            lowerText.includes('winner') || 
+                            lowerText.includes('congratulations') || 
+                            lowerText.includes('winning the round');
+
+            const isGoldColor = (msg.color && (msg.color.toLowerCase() === '#ffd700' || msg.color.toLowerCase() === 'gold'));
+
+            if (isWinner || isGoldColor) {
+                // High-visibility premium styling
+                const winnerStyles = `
+                    color: #ffd700 !important; 
+                    font-weight: 950 !important; 
+                    text-shadow: 0 0 10px rgba(255, 215, 0, 0.7), 0 0 2px rgba(0,0,0,0.9) !important;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                `;
+                const containerStyles = `
+                    border-left: 4px solid #ffd700;
+                    background: rgba(255, 215, 0, 0.08);
+                    padding: 8px 12px;
+                    margin: 6px 0;
+                    border-radius: 0 8px 8px 0;
+                `;
+                
+                return `
+                <div class="chat-message chat-sys" style="${containerStyles}">
+                    <span class="chat-text gold-status" style="${winnerStyles}">${safeText}</span>
+                </div>`;
+            }
+
             return `
             <div class="chat-message chat-sys">
                 <span class="chat-text">${safeText}</span>
@@ -1459,13 +1683,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWords = [], allWordScores = {}, cswOnlyWords = [], addedWords = []) {
     const listEl = document.getElementById('submitted-words-list');
+    const titleEl = document.getElementById('words-panel-title');
+    if (titleEl && activeWordsTab === 'found') {
+        titleEl.textContent = 'All Words';
+    }
+
     if (!allWords || allWords.length === 0) {
         listEl.innerHTML = '<p class="placeholder">No words found</p>';
         return;
     }
 
-    const targetWordsUpper = targetUserWords.map(w => w.toUpperCase());
-    const allFoundUpper = allFoundWords.map(w => w.toUpperCase());
+    const targetWordsUpper = targetUserWords.map(w => (typeof w === 'object' ? (w.word || '') : w).toUpperCase());
+    const allFoundUpper = allFoundWords.map(w => (typeof w === 'object' ? (w.word || '') : w).toUpperCase());
     const cswOnlyUpper = (cswOnlyWords || []).map(w => w.toUpperCase());
     const addedUpper = (addedWords || []).map(w => w.toUpperCase());
 
@@ -1473,8 +1702,8 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     // Sort: Color Priority, then Length desc, then Alpha
     // Priority: Green (Bonus) > Blue (Found) > Gold (CSW) > Black/Gray (Missed/Unfound)
     const sortedWords = [...allWords].sort((a, b) => {
-        const wordA = a.toUpperCase();
-        const wordB = b.toUpperCase();
+        const wordA = (typeof a === 'object' ? (a.word || '') : a).toUpperCase();
+        const wordB = (typeof b === 'object' ? (b.word || '') : b).toUpperCase();
         const bonusUpper = bonusWord ? bonusWord.toUpperCase() : null;
 
         // 0. Bonus Word (Absolute Top Priority)
@@ -1484,11 +1713,13 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         }
 
         // 1. Length (Desc)
-        if (a.length !== b.length) return b.length - a.length;
+        const lenA = (typeof a === 'object' ? (a.word || '') : a).length;
+        const lenB = (typeof b === 'object' ? (b.word || '') : b).length;
+        if (lenA !== lenB) return lenB - lenA;
 
         // 2. Score (Desc)
-        const scoreA = allWordScores[wordA] || 0;
-        const scoreB = allWordScores[wordB] || 0;
+        const scoreA = (typeof allWordScores[wordA] === 'object' ? (allWordScores[wordA].total || 0) : (allWordScores[wordA] || 0));
+        const scoreB = (typeof allWordScores[wordB] === 'object' ? (allWordScores[wordB].total || 0) : (allWordScores[wordB] || 0));
         if (scoreA !== scoreB) return scoreB - scoreA;
 
         // 3. Alpha
@@ -1497,7 +1728,8 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
 
     console.log('[renderWordsList] Rendering words:', sortedWords.length);
 
-    listEl.innerHTML = sortedWords.map(word => {
+    listEl.innerHTML = sortedWords.map(entry => {
+        const word = (typeof entry === 'object' ? (entry.word || '') : entry);
         const wordUpper = word.toUpperCase();
         const isBonus = bonusWord && wordUpper === bonusWord.toUpperCase();
         const isCSWOnly = cswOnlyUpper.includes(wordUpper);
@@ -1563,6 +1795,12 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     wordItems.forEach(item => {
         item.addEventListener('click', () => {
             const word = item.dataset.word.toUpperCase();
+            
+            // Mark that the user is explicitly viewing a definition (so winner announcement doesn't overwrite it)
+            if (window.lastGameState && window.lastGameState.state === 'intermission') {
+                window.userViewingDefinitionIntermission = true;
+            }
+
             if (highlightedFoundWord === word) {
                 highlightedFoundWord = null;
             } else {
@@ -2935,114 +3173,6 @@ function addSplitViewBoardToggle() {
 }
 
 // Spinner Logic
-function showSpinnerOverlay(spinnerParams, players = []) {
-    if (!spinnerParams || !spinnerParams.word_count_range) {
-        console.warn('[play.js] showSpinnerOverlay called with incomplete spinnerParams:', spinnerParams);
-        if (!spinnerParams) return;
-    }
-
-    // WINNER LOGIC
-    const winnerAnnounceEl = document.getElementById('spinner-winner-announcement');
-    const winnerTextEl = document.getElementById('spinner-winner-text');
-
-    if (winnerAnnounceEl && winnerTextEl) {
-        // Find players with score > 0
-        const activePlayers = (players || []).filter(p => p.score > 0);
-
-        if (activePlayers.length === 0) {
-            winnerAnnounceEl.classList.add('hidden');
-        } else {
-            // Find max score
-            const maxScore = Math.max(...activePlayers.map(p => p.score));
-            const winners = activePlayers.filter(p => p.score === maxScore).map(p => p.username);
-
-            if (winners.length === 1) {
-                winnerTextEl.textContent = `CONGRATULATIONS to ${winners[0]} for scoring 1st place with ${maxScore} points!`;
-            } else {
-                // Formatting for multiple winners: "User1, User2 and User3"
-                let winnerStr = winners.slice(0, -1).join(', ') + ' and ' + winners.slice(-1);
-                winnerTextEl.textContent = `CONGRATULATIONS to ${winnerStr} for scoring 1st place with ${maxScore} points!`;
-            }
-
-            winnerAnnounceEl.classList.remove('hidden');
-        }
-    }
-
-    // Defensive updates
-    const safeSetText = (id, text) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = text;
-    };
-
-    let bonusText = (spinnerParams.bonus_word_length || '?');
-    if (spinnerParams.bonus_word_length === 0) bonusText = 'None';
-    else if (bonusText !== '?') bonusText += ' letters';
-    
-    safeSetText('spinner-bonus-length', bonusText);
-    safeSetText('spinner-min-length', spinnerParams.min_word_length || '?');
-    // Dynamic Color Coding for Difficulty
-    const diffEl = document.getElementById('spinner-difficulty');
-    if (diffEl) {
-        diffEl.className = 'param-value'; // Reset
-        const d = spinnerParams.difficulty;
-        if (d === 'Easy') diffEl.classList.add('diff-easy');
-        else if (d === 'Medium') diffEl.classList.add('diff-medium');
-        else if (d === 'Hard') diffEl.classList.add('diff-hard');
-        safeSetText('spinner-difficulty', d || '?');
-    }
-
-    // Dynamic Color Coding for Word Count
-    const wcEl = document.getElementById('spinner-word-count');
-    if (wcEl) {
-        wcEl.className = 'param-value'; // Reset
-        const wr = spinnerParams.word_count_range;
-        let wrText = '?-?';
-        
-        if (typeof wr === 'string') {
-            wrText = wr;
-            if (wr === '500+') wcEl.classList.add('wc-rare');
-            else if (wr === '200+') wcEl.classList.add('wc-high');
-        } else if (wr && Array.isArray(wr) && wr.length >= 2) {
-            if (wr[1] >= 999) {
-                wrText = (wr[0] >= 500) ? '500+' : `${wr[0]}+`;
-                if (wr[0] >= 500) wcEl.classList.add('wc-rare');
-                else wcEl.classList.add('wc-high');
-            } else {
-                wrText = `${wr[0]}-${wr[1]}`;
-            }
-        }
-        safeSetText('spinner-word-count', wrText);
-    }
-
-    // Rolling animation removed as per user request
-
-    safeSetText('spinner-dictionary', spinnerParams.dictionary || 'Unknown');
-    safeSetText('spinner-format', spinnerParams.board_format || 'Standard');
-
-    const overlay = document.getElementById('spinner-overlay');
-    if (overlay) overlay.classList.remove('hidden');
-}
-
-function hideSpinnerOverlay() {
-    const overlay = document.getElementById('spinner-overlay');
-    if (overlay) {
-        overlay.classList.add('hidden');
-    }
-
-    // If closing spinner during intermission, likely want to chat
-    if (window.lastGameState && window.lastGameState.state === 'intermission') {
-        const chatInput = document.getElementById('chat-input');
-        if (chatInput) {
-            setTimeout(() => chatInput.focus(), 50);
-        }
-    }
-}
-
-const closeSpinnerBtn = document.getElementById('close-spinner-btn');
-if (closeSpinnerBtn) {
-    closeSpinnerBtn.addEventListener('click', hideSpinnerOverlay);
-}
-
 // Word Submission
 const submitBtn = document.getElementById('submit-word-btn');
 const wordInputEl = document.getElementById('word-input');
@@ -3052,12 +3182,26 @@ if (submitBtn && wordInputEl) {
         if (e.key === 'Enter') {
             e.preventDefault();
             submitWord();
+            
+            // UX: If round ended while we were typing, refocus chat now that we're done
+            if (window.refocusChatPending) {
+                window.refocusChatPending = false;
+                const chatInput = document.getElementById('chat-input');
+                if (chatInput) setTimeout(() => chatInput.focus(), 150);
+            }
         }
     });
 
     // Real-time highlighting and "word declaration" while typing
     wordInputEl.addEventListener('input', () => {
         const word = wordInputEl.value.trim();
+        
+        // UX: If round ended and we just cleared the input manually, refocus chat
+        if (window.refocusChatPending && word.length === 0 && (!mouseState || !mouseState.isDown)) {
+            window.refocusChatPending = false;
+            const chatInput = document.getElementById('chat-input');
+            if (chatInput) setTimeout(() => chatInput.focus(), 150);
+        }
         const board = window.lastGameState ? window.lastGameState.board : null;
 
         // Highlighting logic continues below...
@@ -3230,10 +3374,14 @@ async function submitWord(wordParam = null, pathParam = null) {
     // input.value = ''; // MOVED TO TOP OF FUNCTION
     // Clear typing highlights and declaration after submission
     document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
-    const defHeader = document.getElementById('definition-header');
-    if (defHeader) defHeader.style.display = 'none';
-    const defContent = document.getElementById('definition-content');
-    if (defContent) defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
+    // ONLY clear panel and header if we're not celebrating the winner!
+    const isIntermission = window.lastGameState && window.lastGameState.state === 'intermission';
+    if (!isIntermission) {
+        const defHeader = document.getElementById('definition-header');
+        if (defHeader) defHeader.style.display = 'none';
+        const defContent = document.getElementById('definition-content');
+        if (defContent) defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
+    }
 }
 
 function showValidationFeedback(message, isValid) {
@@ -3351,6 +3499,11 @@ async function fetchDefinition(word) {
 const submittedWordsListEl = document.getElementById('submitted-words-list');
 if (submittedWordsListEl) {
     submittedWordsListEl.addEventListener('click', (e) => {
+        // Mark that the user is explicitly viewing a definition (so winner announcement doesn't overwrite it)
+        if (window.lastGameState && window.lastGameState.state === 'intermission') {
+            window.userViewingDefinitionIntermission = true;
+        }
+
         // Handle clicks on feed items, notepads, etc.
         const item = e.target.closest('.word-item') ||
             e.target.closest('.feed-item') ||
@@ -3565,9 +3718,20 @@ function finishDragSelection() {
     mouseState.selectedPath = [];
     mouseState.visitedCells = new Set();
 
-    // Clear live input display
-    const wordInputEl = document.getElementById('word-input');
-    if (wordInputEl) wordInputEl.value = '';
+    // UX: If round ended while we were dragging, refocus chat now that we're released
+    const inputEl = document.getElementById('word-input');
+    if (window.refocusChatPending) {
+        const typingInProgress = (inputEl && inputEl.value.trim().length > 0);
+        
+        if (!typingInProgress) {
+            window.refocusChatPending = false;
+            const chatInput = document.getElementById('chat-input');
+            if (chatInput) setTimeout(() => chatInput.focus(), 150);
+        }
+    }
+
+    // ALWAYS clear live input display after selection is committed
+    if (inputEl) inputEl.value = '';
 }
 
 // Wire board events via delegation on the static board wrapper

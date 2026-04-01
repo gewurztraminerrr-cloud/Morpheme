@@ -136,13 +136,15 @@ class GameRoom:
         # INITIALIZE LOCKS
         self._state_lock = threading.Lock() # Preventing race conditions during transitions
             
-    def add_chat_message(self, username, message, is_system=False, image=None):
+    def add_chat_message(self, username, message, is_system=False, image=None, color=None, is_winner=False):
         """Add chat message to room"""
         self.chat_messages.append({
             'username': username,
             'message': message,
             'image': image,
             'is_system': is_system,
+            'is_winner': is_winner,
+            'color': color,
             'time': time.time()
         })
         # Keep only last 30 messages
@@ -298,34 +300,35 @@ class GameRoom:
              ]
              
              if len(other_starters) >= 1:
-                 # ENFORCE: Penalty applies to all round starters, even if they haven't typed yet (to discourage "peeking")
-                 if True: # Removed submitted_words/invalid_words check
-                      # Only add if not already in quitters
-                      if not any(q.user_id == leaving_player.user_id for q in self.round_quitters):
-                           print(f"[GameRoom] Player {username} ({user_id}) abandoned mid-round. Logging as Quitter.")
-                           self.round_quitters.append(leaving_player)
-                           
-                           # AUTOMATIC INSTANT PENALTY - Deduct 16 immediately to discourage mid-round quitting.
-                           import sqlite3
-                           if not is_player_guest(leaving_player) and leaving_player.user_id > 0:
-                                 print(f"[DEBUG-PENALTY] Applying -16 to {username} (Current: {leaving_player.rating})")
-                                 leaving_player.rating = max(0, leaving_player.rating - 16)
-                                 leaving_player.rating_change -= 16
-                                 self.abandonment_bounty += 16
-                                 
-                                 # Apply to Global Rank immediately to prevent re-joining exploit
-                                 try:
-                                     db_conn = sqlite3.connect("morpheme.db", timeout=30)
-                                     db_conn.execute("UPDATE users SET rating = rating - 16 WHERE id = ?", (leaving_player.user_id,))
-                                     config_key = f"{self.game_type.replace('solo_', '')}|{self.board_dimensions}|{self.time_limit}"
-                                     db_conn.execute("INSERT INTO user_ratings (user_id, config_key, rating) VALUES (?, ?, ?)" +
-                                         " ON CONFLICT(user_id, config_key) DO UPDATE SET rating = rating - 16", (leaving_player.user_id, config_key, leaving_player.rating))
-                                     db_conn.commit()
-                                     db_conn.close()
-                                 except Exception as e:
-                                     print(f"Error updating rating on quit: {e}")
-                 else:
-                      print(f"[DEBUG-PENALTY] Player {username} left but had NO activity. (words=0, invalid=0)")
+                  # ENFORCE: Penalty only applies if the player has actually found something (to avoid penalizing peeking without playing) or has a score > 0
+                  has_activity = leaving_player.score > 0 or len(leaving_player.submitted_words) > 0 or len(leaving_player.invalid_words) > 0
+                  if has_activity:
+                       # Only add if not already in quitters
+                       if not any(q.user_id == leaving_player.user_id for q in self.round_quitters):
+                            print(f"[GameRoom] Player {username} ({user_id}) abandoned mid-round. Logging as Quitter.")
+                            self.round_quitters.append(leaving_player)
+                            
+                            # AUTOMATIC INSTANT PENALTY - Deduct 16 immediately to discourage mid-round quitting.
+                            import sqlite3
+                            if not is_player_guest(leaving_player) and leaving_player.user_id > 0:
+                                  print(f"[DEBUG-PENALTY] Applying -16 to {username} (Current: {leaving_player.rating})")
+                                  leaving_player.rating = max(0, leaving_player.rating - 16)
+                                  leaving_player.rating_change -= 16
+                                  self.abandonment_bounty += 16
+                                  
+                                  # Apply to Global Rank immediately to prevent re-joining exploit
+                                  try:
+                                      db_conn = sqlite3.connect("morpheme.db", timeout=30)
+                                      db_conn.execute("UPDATE users SET rating = rating - 16 WHERE id = ?", (leaving_player.user_id,))
+                                      config_key = f"{self.game_type.replace('solo_', '')}|{self.board_dimensions}|{self.time_limit}"
+                                      db_conn.execute("INSERT INTO user_ratings (user_id, config_key, rating) VALUES (?, ?, ?)" +
+                                          " ON CONFLICT(user_id, config_key) DO UPDATE SET rating = rating - 16", (leaving_player.user_id, config_key, leaving_player.rating))
+                                      db_conn.commit()
+                                      db_conn.close()
+                                  except Exception as e:
+                                      print(f"Error updating rating on quit: {e}")
+                  else:
+                       print(f"[DEBUG-PENALTY] Player {username} left but had NO activity. (words=0, invalid=0)")
         else:
              print(f"[DEBUG-PENALTY] Player {username} removed outside active round or state. (state={self.state})")
 
@@ -771,11 +774,13 @@ class GameRoom:
 
     def check_and_update_state(self):
         """Check timers and update game state accordingly with thread-safe locking"""
-        # Quick check without lock for efficiency
-        
         # Determine if we should end the round
         current_tr = self.time_remaining
         should_end = (current_tr == 0)
+        
+        # LOGGING for remote diagnosis
+        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+            f.write(f"[StateTrace] {self.room_id} | State: {self.state} | TR: {current_tr} | ShouldEnd: {should_end}\n")
         
         # ROBUST 24H RESET: If the calendar day has changed since the round started, force end the round immediately.
         if self.state == 'active' and self.time_limit >= 7200:
@@ -799,14 +804,7 @@ class GameRoom:
                     self.intermission_start_time = time.time()
                     board_format = self.current_board_format
 
-                    # ROBUST DAILY RESET (Players): Clear lists IMMEDIATELY at midnight transition
-                    if self.time_limit >= 7200:
-                        print(f"[GameRoom] Daily Reset Trigger: Clearing lists for room {self.room_id}")
-                        for p in self.players:
-                            self.past_players[str(p.user_id)] = p
-                        self.players = []
-                        self.spectators = []
-                        self.custom_end_time = 0
+                # (Daily reset clearing moved to end of transition for scoring accuracy)
                 except Exception as e:
                     print(f"[GameRoom] Critical Error in state transition: {e}")
                     return # Prevent further processing if transition failed
@@ -818,19 +816,23 @@ class GameRoom:
                     if self.game_type == 'split':
                         self.calculate_split_scores()
                     else:
+                        # Recalculate scores for ALL participants (Humans + AI) to ensure server-side consistency
                         for p in self.players:
-                            if p.is_ai:
-                                self._recalculate_player_score(p)
+                            self._recalculate_player_score(p)
+
 
                     # 3. Snapshot history for UI/Replays
-                    active_competitors = [p for p in self.players if (p.score > 0 or len(p.submitted_words) > 0 or len(p.invalid_words) > 0)]
-                    max_score = max([p.score for p in active_competitors]) if active_competitors else 0
+                    active_pool = [
+                        p for p in self.players 
+                        if getattr(p, 'score', 0) > 0 or (getattr(p, 'submitted_words', []) and any(w.get('points', 0) > 0 for w in p.submitted_words)) or getattr(p, 'invalid_words', [])
+                    ]
+                    max_score = max([p.score for p in active_pool]) if active_pool else 0
                     max_pe = max([getattr(p, 'performance_efficiency', 1.0) for p in self.players]) if self.players else 1.0
                     
-                    if active_competitors:
-                        winners_data = [{'username': p.username, 'rating': p.rating, 'pe': getattr(p, 'performance_efficiency', 0.0)} for p in active_competitors if p.score == max_score]
+                    if active_pool:
+                        winners_data = [{'username': p.username, 'rating': p.rating, 'pe': getattr(p, 'performance_efficiency', 0.0)} for p in active_pool if p.score == max_score]
                         winner_words = []
-                        for p in active_competitors:
+                        for p in active_pool:
                             if p.score == max_score:
                                 winner_words = [{'word': w['word'], 'points': w.get('points', 0), 'timestamp': w.get('time', time.time())} for w in p.submitted_words]
                                 break
@@ -838,7 +840,7 @@ class GameRoom:
                         self.winners_history.insert(0, {
                             'round': self.current_round,
                             'winners': winners_data,
-                            'all_players': sorted([{'username': p.username, 'score': p.score, 'rating': p.rating, 'pe': getattr(p, 'performance_efficiency', 0.0)} for p in active_competitors], key=lambda x: x['score'], reverse=True),
+                            'all_players': sorted([{'username': p.username, 'score': p.score, 'rating': p.rating, 'pe': getattr(p, 'performance_efficiency', 0.0)} for p in active_pool], key=lambda x: x['score'], reverse=True),
                             'score': max_score,
                             'max_pe': max_pe,
                             'board': self.board,
@@ -894,26 +896,63 @@ class GameRoom:
                             rating_changes[p.user_id] = rating_changes.get(p.user_id, 0) + share
                     
                     # Connect to DB and update
+                    # 🏆 ROUND WINNER ANNOUNCEMENT IN CHAT
+                    try:
+                        all_participants = []
+                        _seen_ids = set()
+                        for p in self.players + self.round_quitters:
+                            if p.user_id not in _seen_ids:
+                                all_participants.append(p)
+                                _seen_ids.add(p.user_id)
+                        
+                        # Ensure ALL participants have up-to-date scores before announcing
+                        for p in all_participants:
+                            if self.game_type != 'split' or not getattr(p, '_split_done', False):
+                                self._recalculate_player_score(p)
+
+                        winner_candidates = [p for p in all_participants if not getattr(p, 'is_ai', False)]
+                        final_winners = []
+                        highest_points = 0
+                        
+                        if winner_candidates:
+                            highest_points = max(p.score for p in winner_candidates)
+                            if highest_points > 0:
+                                # Use name matching to handle both objects and potential state mismatches
+                                final_winners = [p.username for p in winner_candidates if p.score == highest_points]
+                        
+                        # LOGGING for remote diagnosis
+                        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+                            f.write(f"[ChatWinner] Found {len(winner_candidates)} humans. Max Score: {highest_points}. Winners: {final_winners}\n")
+
+                        if final_winners:
+                            if len(final_winners) == 1:
+                                announcement = f"🏆 Congratulations to {final_winners[0]} for winning the round with {int(highest_points)} points!"
+                            else:
+                                if len(final_winners) == 2:
+                                    winners_joint = f"{final_winners[0]} and {final_winners[1]}"
+                                else:
+                                    winners_joint = ", ".join(final_winners[:-1]) + f", and {final_winners[-1]}"
+                                announcement = f"🏆 Congratulations to {winners_joint} for a tie for 1st place with {int(highest_points)} points!"
+                            
+                            # PRIORITY BROADCAST: Ensure the chat message is added regardless of DB success
+                            self.add_chat_message("SYSTEM", announcement, is_system=True, color='#ffd700', is_winner=True)
+                            print(f"[ChatWinner] Broadcast: {announcement}")
+                    except Exception as ann_err:
+                        # Log but don't crash the state transition
+                        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+                            f.write(f"[ChatWinner] ERROR: {ann_err}\n")
+                        print(f"[ChatWinner] ERROR in announcement: {ann_err}")
+
+                    # 4. Rating & Database Updates (Decoupled from announcement)
                     try:
                         # Use relative path for consistency with app.py and to avoid hardcoded absolute path issues
                         db_path = 'morpheme.db'
                         conn = sqlite3.connect(db_path, timeout=30)
                         
-                        involved_ids = set()
-                        all_involved = []
-                        for p in self.players:
-                            if p.user_id not in involved_ids:
-                                all_involved.append(p)
-                                involved_ids.add(p.user_id)
-                        for q in self.round_quitters:
-                            if q.user_id not in involved_ids:
-                                all_involved.append(q)
-                                involved_ids.add(q.user_id)
-                        
                         # Real quitters were already penalized during remove_player
                         already_penalized_ids = {q.user_id for q in self.round_quitters}
                         
-                        for player in all_involved:
+                        for player in all_participants:
                             change = int(rating_changes.get(player.user_id, 0))
                             # FINAL SAFETY CLAMP: Never allow a display or DB change outside -16/+16
                             change = max(-16, min(16, change))
@@ -938,7 +977,7 @@ class GameRoom:
                                     ON CONFLICT(user_id, config_key) DO UPDATE SET rating = rating + ?
                                 ''', (player.user_id, config_key, player.rating, actual_db_delta))
                                 
-                                human_participants = [p for p in all_involved if (not p.is_ai and not is_player_guest(p) and not getattr(p, 'joined_mid_round', False) and (p.score > 0 or p.submitted_words or p.invalid_words or rating_changes.get(p.user_id, 0) != 0))]
+                                human_participants = [p for p in all_participants if (not p.is_ai and not is_player_guest(p) and not getattr(p, 'joined_mid_round', False) and (p.score > 0 or p.submitted_words or p.invalid_words or rating_changes.get(p.user_id, 0) != 0))]
                                 is_competitive = len(human_participants) >= 2
                                 
                                 # Allow global rank update if competitive OR if an explicitly applied penalty exists
@@ -947,22 +986,27 @@ class GameRoom:
                                     print(f"[RatingTrace] DB Updated for {player.username}: global rating += {actual_db_delta}")
                                 
                                 if is_competitive and player.score > 0 and board_format in ['Normal', 'Cube']:
-                                    max_all_score = max([p.score for p in all_involved])
+                                    max_all_score = max([p.score for p in all_participants])
                                     if player.score == max_all_score:
                                         conn.execute('UPDATE users SET wins = wins + 1 WHERE id = ?', (player.user_id,))
                         
                         conn.commit()
                         conn.close()
+
+
                     except Exception as db_e:
                         print(f"[GameRoom] DB Update Error: {db_e}")
                         if 'conn' in locals() and conn:
                             conn.close()
+                    finally:
+                        # ROBUST DAILY RESET (Players): Clear lists AFTER scoring/announcement
+                        if self.time_limit >= 7200:
+                            print(f"[GameRoom] Daily Reset Execution: Purging active lists for {self.room_id}")
+                            for p in self.players:
+                                self.past_players[str(p.user_id)] = p
+                            self.players = []
+                            self.custom_end_time = 0
 
-
-                except Exception as e:
-                    import traceback
-                    print(f"[GameRoom] CRITICAL ERROR in intermission transition: {e}")
-                    traceback.print_exc()
                 finally:
                     # CLEAR QUITTERS AND BOUNTY FOR NEXT ROUND
                     self.round_quitters = []
@@ -1686,22 +1730,6 @@ class RoomManager:
             # (Previously Checkerboard was excluded, but user requested 'Every board in every Format' on March 29)
             room.next_round_bonus = bonus_word
             print(f"[RoomManager] Bonus word selected: '{bonus_word}'")
-            
-            # If 500+, CLEAR THE CURRENT BOARD NOW so user doesn't see a "deceptive" board
-            # while optimization is running in the background.
-            is_500plus = wc_tuple[0] >= 500
-            if is_500plus:
-                print(f"[RoomManager] 500+ detected: Clearing active board ahead of time")
-                dims = room.board_dimensions.split('x')
-                if len(dims) == 3:
-                     # 3D Cube
-                     f_num, r_num, c_num = map(int, dims)
-                     room.board = [[['' for _ in range(c_num)] for _ in range(r_num)] for _ in range(6)]
-                else:
-                    rows_num, cols_num = map(int, dims)
-                    room.board = [['' for _ in range(cols_num)] for _ in range(rows_num)]
-                room.all_words = []
-                room.complete_words = []
             
             room.board_search_started = True
             

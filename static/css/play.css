@@ -32,7 +32,33 @@
     font-size: 1.05rem;
     opacity: 0.95;
     font-weight: 500;
+    transition: color 0.5s ease;
 }
+
+.game-params.reveal-new {
+    animation: fadeGoldToNormal 4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+
+@keyframes fadeGoldToNormal {
+    0% {
+        color: #ffd700; /* Instant snap to gold */
+        text-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+        transform: scale(1.02); /* Slight pop when turning gold */
+    }
+    15% {
+        color: #ffd700; /* Hold gold briefly */
+        transform: scale(1);
+    }
+    100% {
+        color: var(--text-primary); /* Fade back to normal readable color faster as requested */
+        text-shadow: none;
+    }
+}
+
+
+
+
 
 .return-btn {
     padding: 6px 12px;
@@ -176,10 +202,31 @@
 
 .chat-sys {
     font-style: italic;
-    opacity: 0.8;
-    color: var(--text-primary);
-    font-size: 0.8rem;
+    opacity: 1;
+    font-size: var(--chat-font-size);
+    padding: 3px 0;
+}
+
+/* Premium Gold Styling for Winner Announcements */
+.chat-sys .chat-text.gold-status,
+.chat-sys .chat-text[data-is-winner="true"] {
+    color: #ffd700 !important;
+    font-weight: 950 !important;
+    font-style: normal !important; /* Stand out from standard system italics */
+    text-shadow: 
+        0 0 8px rgba(255, 215, 0, 0.6), 
+        0 0 2px rgba(0,0,0,0.8),
+        0 0 15px rgba(255, 215, 0, 0.3);
+    letter-spacing: 0.5px;
+    opacity: 1 !important;
+    display: inline-block;
+    animation: goldShimmer 2.5s infinite alternate ease-in-out;
     padding: 2px 0;
+}
+
+@keyframes goldShimmer {
+    from { filter: brightness(1); }
+    to { filter: brightness(1.3) contrast(1.1); }
 }
 
 .chat-input-section {
@@ -191,10 +238,12 @@
     flex: 1;
     background: var(--input-bg);
     border: 1px solid var(--input-border);
-    border-radius: 4px;
-    padding: 4px 6px;
+    border-radius: 8px;
+    padding: 8px 12px;
     color: var(--text-primary);
-    font-size: 0.8rem;
+    font-size: var(--chat-font-size);
+    outline: none;
+    transition: all 0.3s ease;
     height: 28px;
 }
 
@@ -456,7 +505,7 @@ body.theme-light-brown .player-score-val {
     background: var(--bg-panel);
     border-radius: 12px;
     padding: 12px 15px;
-    height: 200px; /* Reverted to match chat */
+    height: 140px; /* Reduced from 200px to grow the Words table above it */
     flex-shrink: 0;
     border-top: none;
     /* Removed redundant border since it's now a separate box */
@@ -466,6 +515,7 @@ body.theme-light-brown .player-score-val {
     overflow: hidden;
     justify-content: flex-start;
     border-top: 1px solid rgba(var(--text-primary-rgb), 0.05);
+    font-size: var(--def-font-size);
 }
 
 .definition-header {
@@ -478,7 +528,7 @@ body.theme-light-brown .player-score-val {
 #definition-content {
     flex: 1;
     overflow-y: auto;
-    font-size: var(--def-font-size);
+    font-size: 1em;
     line-height: 1.5;
     color: var(--text-primary);
 }
@@ -486,7 +536,7 @@ body.theme-light-brown .player-score-val {
 .definition-word {
     font-weight: 800;
     color: var(--accent-color);
-    font-size: 1.2rem;
+    font-size: 1.2em;
     display: block;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -495,7 +545,7 @@ body.theme-light-brown .player-score-val {
 .definition-text {
     opacity: 0.9;
     font-style: italic;
-    font-size: 0.95rem;
+    font-size: 1em;
 }
 
 /* Board Panel */
@@ -3195,6 +3245,32 @@ input[type=range]::-moz-range-track {
 .lb-local-msg {
     font-size: 0.7rem;
     margin-left: 5px;
+}
+
+/* Personal Timer /* Winner Celebration Pulse (Golden) */
+@keyframes winnerAlertPulse {
+    0% {
+        background-color: rgba(255, 215, 0, 0.2);
+        box-shadow: inset 0 0 40px rgba(255, 215, 0, 0.3);
+    }
+    50% {
+        background-color: rgba(255, 215, 0, 0.5);
+        box-shadow: inset 0 0 80px rgba(255, 215, 0, 0.6);
+    }
+    100% {
+        background-color: rgba(255, 215, 0, 0.2);
+        box-shadow: inset 0 0 40px rgba(255, 215, 0, 0.3);
+    }
+}
+
+.winner-flash {
+    animation: winnerAlertPulse 2.5s infinite ease-in-out !important;
+    background-image: none !important;
+}
+
+.winner-flash * {
+    color: #ffffff !important;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
 }
 
 /* Personal Timer Styles */

@@ -1085,8 +1085,8 @@ class BoardGenerator:
         return clean
 
     def _enforce_vowel_minimum(self, board, weights, is_checkerboard=False, excluded_cells=None):
-        """Ensure 30%-33% of tiles are vowels (User Request: Strict range for all boards)
-           FOR CHECKERBOARD: Always skip this balancer as it must stay at 50%."""
+        """Ensure 33%-38% of tiles are vowels (User Request: Strict range for all boards)
+           FOR CHECKERBOARD: Preserve pattern (50%) to avoid breaking logic."""
         if not board or is_checkerboard: return
         
         # Flatten board to get all cells
@@ -1111,11 +1111,13 @@ class BoardGenerator:
                         flat_cells.append((r, c))
         
         total_cells = len(flat_cells)
-        # Target: 30%-33%
-        # 16 cells -> 5 (31.2%)
-        # 25 cells -> 8 (32.0%)
-        # 54 cells -> 17 (31.5%)
-        target_vowels = (total_cells * 315 + 500) // 1000 
+        # Target: 35.5% (Midpoint of 33%-38%)
+        target_vowels = (total_cells * 355 + 500) // 1000 
+        
+        # Clamp to ensure we are strictly within 33%-38%
+        min_v = (total_cells * 330 + 999) // 1000
+        max_v = (total_cells * 380) // 1000
+        target_vowels = max(min_v, min(max_v, target_vowels))
         
         v_indices = [self.letters.index(v) for v in VOWELS]
         v_w = [weights[v_idx] for v_idx in v_indices]
@@ -1155,7 +1157,7 @@ class BoardGenerator:
                 else:
                     r, c = pos
                     board[r][c] = new_v
-            print(f"[BoardGen] Enforced 30-33% vowels: Added {needed} vowels.")
+            print(f"[BoardGen] Enforced 33-38% vowels: Added {needed} vowels (Total: {target_vowels}/{total_cells}).")
             
         elif current_count > target_vowels:
             # Need fewer vowels (Too many can happen with weights)
@@ -1169,7 +1171,7 @@ class BoardGenerator:
                 else:
                     r, c = pos
                     board[r][c] = new_c
-            print(f"[BoardGen] Enforced 30-33% vowels: Removed {over} vowels.")
+            print(f"[BoardGen] Enforced 33-38% vowels: Removed {over} vowels (Total: {target_vowels}/{total_cells}).")
 
     def _verify_checkerboard_safeguard(self, board, weights, bonus_cells_set):
         """Final check to ensure the board strictly alternates C/V in checkerboard mode."""

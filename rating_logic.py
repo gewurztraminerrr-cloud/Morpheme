@@ -38,7 +38,7 @@ def calculate_proportional_rating_change(players, is_private=False):
     # "Did not play" = 0 score AND no words found (valid or invalid)
     active_pool = [
         p for p in competitive_humans 
-        if getattr(p, 'score', 0) > 0 or getattr(p, 'submitted_words', []) or getattr(p, 'invalid_words', [])
+        if getattr(p, 'score', 0) > 0 or (getattr(p, 'submitted_words', []) and any(w.get('points', 0) > 0 for w in p.submitted_words)) or getattr(p, 'invalid_words', [])
     ]
     
     number_of_players = len(active_pool)
