@@ -4,6 +4,7 @@ Generates randomized parameters for each round
 """
 
 import random
+import time
 
 from word_validator import word_validator
 
@@ -26,27 +27,48 @@ class SpinnerSet:
     @staticmethod
     def generate_params(board_dimensions, is_24h=False, is_split=False):
         """Generate granular spinner parameters given dimensions"""
-        # Generate dictionary FIRST so we can use its size for word count
-        dictionary = SpinnerSet._spin_dictionary()
-        wc_range = SpinnerSet._spin_word_count(dictionary)
-        
-        # Determine format (Force Normal for 500+ density to ensure solvability)
-        board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions)
-        if wc_range == '500+':
-            board_format = 'Normal'
-
-        # Minimum word length must be established first to cap bonus len
-        min_word_length = SpinnerSet._spin_min_word_length(board_dimensions)
-        bonus_len = max(min_word_length, SpinnerSet._spin_bonus_word_length())
+        try:
+            # Randomize dictionary
+            dictionary = SpinnerSet._spin_dictionary()
             
-        return {
-            'bonus_word_length': bonus_len,
-            'min_word_length': min_word_length,
-            'difficulty': SpinnerSet._spin_difficulty(),
-            'word_count_range': wc_range,
-            'dictionary': dictionary,
-            'board_format': board_format
-        }
+            # Weighted word count
+            wc_range = SpinnerSet._spin_word_count(dictionary)
+            
+            # Determine format (Force Normal for 500+ density to ensure solvability)
+            board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions)
+            if wc_range == '500+':
+                board_format = 'Normal'
+
+            # Minimum word length
+            min_word_length = SpinnerSet._spin_min_word_length(board_dimensions)
+            bonus_len = max(min_word_length, SpinnerSet._spin_bonus_word_length())
+            
+            # Generate the result
+            res = {
+                'bonus_word_length': bonus_len,
+                'min_word_length': min_word_length,
+                'difficulty': SpinnerSet._spin_difficulty(),
+                'word_count_range': wc_range,
+                'dictionary': dictionary,
+                'board_format': board_format,
+                'generated_at': time.time()
+            }
+            
+            print(f"[SpinnerSet] Generated: {res['difficulty']} / {res['dictionary']} / {res['word_count_range']}")
+            return res
+            
+        except Exception as e:
+            print(f"[SpinnerSet] CRITICAL GENERATOR ERROR: {e}")
+            # Emergency dynamic fallback to avoid static repetition
+            return {
+                'difficulty': random.choice(['Easy', 'Medium', 'Hard']),
+                'dictionary': random.choice(['NWL', 'CSW']),
+                'word_count_range': random.choice(['50-100', '100-200', '200+', '500+']),
+                'board_format': 'Normal',
+                'min_word_length': 3,
+                'bonus_word_length': 8,
+                'generated_at': time.time()
+            }
     
     @staticmethod
     def _spin_bonus_word_length():
@@ -56,17 +78,16 @@ class SpinnerSet:
     @staticmethod
     def _spin_min_word_length(board_dimensions):
         """Based on board dimensions with specified percentages"""
-        dims = board_dimensions.lower()
-        
-        if dims == '4x4':
+        dims = str(board_dimensions).lower()
+        if '4x4' in dims:
             return random.choices([3, 4, 5], weights=[25, 50, 25])[0]
-        elif dims == '4x6':
+        elif '4x6' in dims:
             return random.choices([4, 5, 6], weights=[25, 50, 25])[0]
-        elif dims == '5x7':
+        elif '5x7' in dims:
             return random.choices([5, 6, 7], weights=[25, 50, 25])[0]
-        elif dims == '6x8':
+        elif '6x8' in dims:
             return random.choices([6, 7, 8], weights=[25, 50, 25])[0]
-        elif dims == '3x3x3':
+        elif '3x3x3' in dims:
             return random.choices([6, 7, 8], weights=[25, 50, 25])[0]
         else:
             return 3  # Default
@@ -89,36 +110,21 @@ class SpinnerSet:
     @staticmethod
     def _spin_board_format(is_24h=False, dimensions='4x4'):
         """
-        Normal rooms: 82% Normal, 8% Checkerboard, 2% Penalty, 2% Mania, 2% Either/Or, 2% Bonus Letter, 2% Valued Letters
-        24h rooms: 100% Normal (No alternate formats allowed)
-        3D rooms: 100% Normal (No alternate formats allowed initially)
+        Normal: 82% Normal, 8% Checkerboard, rest 2% each
         """
-        if is_24h:
+        if is_24h or '3x3x3' in str(dimensions):
             return 'Normal'
-        elif dimensions == '3x3x3':
-            return 'Normal'
-        else:
-            result = random.choices(
-                ['Normal', 'Checkerboard', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters'],
-                weights=[82, 8, 2, 2, 2, 2, 2]
-            )[0]
-            if result == 'Mania':
-                # User Request: 30% vowels, 70% consonants for Mania formats
-                if random.random() < 0.30:
-                    mania_letter = random.choice('AEIOU')
-                else:
-                    mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')
-                return f'{mania_letter} Mania'
-            return result
-
-# Test
-if __name__ == '__main__':
-    print("Testing Spinner Set (Normal Rooms):")
-    for dim in ['4x4', '4x6']:
-        params = SpinnerSet.generate_params(dim, is_24h=False)
-        print(f"{dim}: {params['board_format']}")
-    
-    print("\nTesting Spinner Set (24h Rooms):")
-    for dim in ['4x4', '4x6']:
-        params = SpinnerSet.generate_params(dim, is_24h=True)
-        print(f"{dim}: {params['board_format']}")
+            
+        result = random.choices(
+            ['Normal', 'Checkerboard', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters'],
+            weights=[82, 8, 2, 2, 2, 2, 2]
+        )[0]
+        
+        if result == 'Mania':
+            # User Request: 30% vowels, 70% consonants for Mania formats
+            if random.random() < 0.30:
+                mania_letter = random.choice('AEIOU')
+            else:
+                mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')
+            return f'{mania_letter} Mania'
+        return result

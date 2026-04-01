@@ -457,7 +457,8 @@
                             <div class="config-group">
                                 <label>Dictionary</label>
                                 <select id="sf-config-dict">
-                                    <option value="NWL" selected>NWL (North American)</option>
+                                    <option value="random" selected>Random (50/50)</option>
+                                    <option value="NWL">NWL (North American)</option>
                                     <option value="CSW">CSW (International)</option>
                                 </select>
                             </div>
@@ -482,8 +483,9 @@
                             <div class="config-group">
                                 <label>Difficulty</label>
                                 <select id="sf-config-difficulty">
+                                     <option value="random" selected>Random (25/50/25)</option>
                                     <option value="Easy">Easy (25%)</option>
-                                    <option value="Medium" selected>Medium (50%)</option>
+                                    <option value="Medium">Medium (50%)</option>
                                     <option value="Hard">Hard (25%)</option>
                                 </select>
                             </div>
@@ -500,11 +502,11 @@
                                 </select>
                             </div>
                             <div class="config-group">
-                                <label>Point Range</label>
+                                <label>Word Count Range</label>
                                 <select id="sf-config-range">
-                                    <option value="random">Random (24/50/25/1)</option>
+                                     <option value="random" selected>Random (24/50/25/1)</option>
                                     <option value="50-100">50-100 (24%)</option>
-                                    <option value="100-200" selected>100-200 (50%)</option>
+                                    <option value="100-200">100-200 (50%)</option>
                                     <option value="200-500">200-500 (25%)</option>
                                     <option value="500-99999">500+ (1%)</option>
                                 </select>
@@ -746,7 +748,7 @@
                             <span class="param-value" id="spinner-difficulty">-</span>
                         </div>
                         <div class="param-item">
-                            <span class="param-label">Word Count Range:</span>
+                            <span class="param-label">Word Count:</span>
                             <span class="param-value" id="spinner-word-count">-</span>
                         </div>
                         <div class="param-item">

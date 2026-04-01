@@ -1793,9 +1793,10 @@ def create_room():
         if row:
             rating = row[0]
         else:
-            # If no specific rating exists, check if legacy global rating exists (optional, or just start at 1200)
-            # For now, start fresh at 1200 for each new mode
-            rating = 1200
+            # If no specific rating exists, fallback to legacy global rating from users table
+            fallback_cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
+            fallback_row = fallback_cursor.fetchone()
+            rating = fallback_row[0] if fallback_row else 1200
         conn.close()
 
     # Get extra stats (games_played, country_flag)
@@ -1834,8 +1835,9 @@ def join_room(room_id):
     if not room:
         return jsonify({'error': 'Room not found'}), 404
     
-    # Get configuration-specific rating
-    config_key = f"{room.game_type}|{room.board_dimensions}|{room.time_limit}"
+    # Get configuration-specific rating (Strip solo_ prefix to match game_room.py consolidation)
+    game_type_base = room.game_type.replace('solo_', '')
+    config_key = f"{game_type_base}|{room.board_dimensions}|{room.time_limit}"
     rating = 1200
     
     if session.get('is_guest', False):
@@ -1847,6 +1849,11 @@ def join_room(room_id):
         row = cursor.fetchone()
         if row:
             rating = row[0]
+        else:
+            # Fallback to global user rating
+            fallback_cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
+            fallback_row = fallback_cursor.fetchone()
+            rating = fallback_row[0] if fallback_row else 1200
         conn.close()
         
     # Ensure user is not in any other room
@@ -2103,15 +2110,16 @@ def get_room_state(room_id):
             
             if milestone == 'spinner':
                 # At 45s remaining: Generate Spinner Set parameters
-                # Skip for Solo rooms — user already chose parameters; we must not overwrite them.
-                # NEW GUARD: Only generate ONCE per round to avoid re-rolling format/dictionary every second
-                if not room.is_solo and not getattr(room, 'spinner_params_generated', False):
-                    print(f"[Milestone] 45s remaining - Generating Spinner Set parameters")
-                    room_manager.generate_spinner_params(room_id)
-                elif room.is_solo:
-                    # Just mark as generated so the milestone doesn't keep triggering
-                    room.spinner_params_generated = True
-                    print(f"[Milestone] 45s remaining - Solo room: skipping spinner generation, preserving user-selected params")
+                # Skip for Solo rooms UNLESS the user explicitly chose randomization in the lobby
+                # Only generate ONCE per round to avoid re-rolling format/dictionary every second
+                if not getattr(room, 'spinner_params_generated', False):
+                    if not room.is_solo or getattr(room, 'randomize_spinner', False):
+                        print(f"[Milestone] 45s remaining - Generating Spinner Set parameters")
+                        room_manager.generate_spinner_params(room_id)
+                    else:
+                        # Fixed Solo room: preserve user-selected params and mark as 'done'
+                        room.spinner_params_generated = True
+                        print(f"[Milestone] 45s remaining - Fixed Solo room: skipping spinner generation")
             
             elif milestone == 'search':
                 # At 15s remaining: Start board search
@@ -4120,24 +4128,26 @@ def create_solo_match():
     from spinner_set import SpinnerSet
 
     # Point range / word count: allow user to specify, else spin a default
-    custom_word_count_range = parameters.get('word_count_range', None)
-    if custom_word_count_range and custom_word_count_range != 'random':
-        if isinstance(custom_word_count_range, str) and '-' in custom_word_count_range:
-            # Parse "50-100" style string from frontend select
-            parts = custom_word_count_range.split('-')
-            wc_range = (int(parts[0]), int(parts[1]))
-        elif isinstance(custom_word_count_range, (list, tuple)):
-            wc_range = tuple(int(x) for x in custom_word_count_range)
-        else:
-            wc_range = SpinnerSet._spin_word_count(dict_name)
-    else:
+    custom_word_count_range = parameters.get('word_count_range', 'random')
+    if custom_word_count_range == 'random':
+        from spinner_set import SpinnerSet
         wc_range = SpinnerSet._spin_word_count(dict_name)
+    else:
+        # Use custom range provided by user
+        wc_range = custom_word_count_range
 
     # First-round difficulty randomization
-    target_difficulty = parameters.get('difficulty')
-    if not target_difficulty or target_difficulty == 'random' or target_difficulty == 'Medium':
-        # Even if they picked Medium, if we want to "vary it up", we randomize the spin
+    target_difficulty = parameters.get('difficulty', 'random')
+    if target_difficulty == 'random':
+        from spinner_set import SpinnerSet
         target_difficulty = SpinnerSet._spin_difficulty()
+
+    # Check if the user wants randomization per round
+    room.randomize_spinner = (
+        parameters.get('dictionary') == 'random' or
+        parameters.get('difficulty', 'random') == 'random' or
+        parameters.get('word_count_range', 'random') == 'random'
+    )
 
     room.spinner_params = {
         'dictionary': dict_name,
@@ -4505,10 +4515,12 @@ def room_tick_worker():
                         threading.Thread(target=room_manager.start_next_round, args=(room.room_id,), daemon=True).start()
             
         except Exception as e:
-            # Use a slightly less verbose error for common issues
-            pass
+            import traceback
+            print(f"[RoomTickWorker] CRITICAL ERROR: {e}")
+            traceback.print_exc()
+            time.sleep(10) # Wait longer on error
             
-        time.sleep(5) # Poll every 5 seconds for precise transitions
+        time.sleep(2) # Polling every 2s for better response
 
 if __name__ == '__main__':
     # Start the room advancer thread

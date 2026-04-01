@@ -93,7 +93,9 @@ class GameRoom:
     current_board_format: str = 'Normal'
     current_word_count_range: str = '100-200'
     current_dictionary: str = 'NWL'
-    current_difficulty: str = 'Medium'
+    current_difficulty: str = 'Varying...'
+    current_dictionary: str = 'Varying...'
+    current_word_count_range: str = 'Varying...'
     current_bonus_word_length: int = 0
     spinner_params: Dict = field(default_factory=dict)
     
@@ -176,9 +178,8 @@ class GameRoom:
                 # But if they left and came back much later in same round?
                 # User rule is usually strict. Let's stick to the consistent check.
                 existing_player.joined_mid_round = True
-            else:
-                # If they join during intermission or early enough, reset the flag
-                existing_player.joined_mid_round = False
+            # Ensure they are removed from round_quitters if they were in there (REJOIN TRANSITION)
+            self.round_quitters = [q for q in self.round_quitters if str(q.user_id) != str(user_id)]
             return True
         
         # Track if they were already in the room (to avoid mid-round flag on refresh)
@@ -193,6 +194,8 @@ class GameRoom:
             quitter.country_flag = country_flag
             quitter.is_guest = is_guest
             self.players.append(quitter)
+            # CRITICAL: Remove from round_quitters so they aren't penalized as a quitter at round end
+            self.round_quitters = [q for q in self.round_quitters if str(q.user_id) != str(user_id)]
             return True
 
         # Check if player exists in past_players
@@ -229,7 +232,7 @@ class GameRoom:
             player.joined_mid_round = True
         elif was_already_in_room:
             player.joined_mid_round = was_joined_mid_round
-        elif self.state == 'active' and not is_daily:
+        elif (self.state == 'active' or getattr(self, 'starting_round', False)) and not is_daily:
             player.joined_mid_round = True
             
         self.players.append(player)
@@ -302,40 +305,25 @@ class GameRoom:
                            print(f"[GameRoom] Player {username} ({user_id}) abandoned mid-round. Logging as Quitter.")
                            self.round_quitters.append(leaving_player)
                            
-                           # AUTOMATIC INSTANT PENALTY - Deduct 16 immediately to prevent "cheating" re-joins
-                           is_guest = is_player_guest(leaving_player)
-                           print(f"[DEBUG-PENALTY] Quitter {username} is_guest={is_guest}, user_id={leaving_player.user_id}")
-                           
-                           if not is_guest and leaving_player.user_id > 0:
-                                 print(f"[DEBUG-PENALTY] Applying -16 to {username} (Current Rating: {leaving_player.rating})")
+                           # AUTOMATIC INSTANT PENALTY - Deduct 16 immediately to discourage mid-round quitting.
+                           import sqlite3
+                           if not is_player_guest(leaving_player) and leaving_player.user_id > 0:
+                                 print(f"[DEBUG-PENALTY] Applying -16 to {username} (Current: {leaving_player.rating})")
                                  leaving_player.rating = max(0, leaving_player.rating - 16)
                                  leaving_player.rating_change -= 16
                                  self.abandonment_bounty += 16
-                                 print(f"[GameRoom] INSTANT Penalty applied to {username}. Bounty now: {self.abandonment_bounty}")
                                  
-                                 # Apply to Global Rank immediately
+                                 # Apply to Global Rank immediately to prevent re-joining exploit
                                  try:
-                                     db_path = '/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/morpheme.db'
-                                     db_conn = sqlite3.connect(db_path, timeout=30)
-                                     
-                                     # 1. Update Global users table
-                                     cur = db_conn.execute('UPDATE users SET rating = rating - 16 WHERE id = ?', (leaving_player.user_id,))
-                                     print(f"[DEBUG-PENALTY] users table update for {username}: rows modified = {cur.rowcount}")
-                                     
-                                     # 2. Update config-specific user_ratings table
-                                     current_config = f"{self.game_type}|{self.board_dimensions}|{self.time_limit}"
-                                     cur2 = db_conn.execute('UPDATE user_ratings SET rating = rating - 16 WHERE user_id = ? AND config_key = ?', (leaving_player.user_id, current_config))
-                                     print(f"[DEBUG-PENALTY] user_ratings table update for {username} (config={current_config}): rows modified = {cur2.rowcount}")
-                                     
+                                     db_conn = sqlite3.connect("morpheme.db", timeout=30)
+                                     db_conn.execute("UPDATE users SET rating = rating - 16 WHERE id = ?", (leaving_player.user_id,))
+                                     config_key = f"{self.game_type.replace('solo_', '')}|{self.board_dimensions}|{self.time_limit}"
+                                     db_conn.execute("INSERT INTO user_ratings (user_id, config_key, rating) VALUES (?, ?, ?)" +
+                                         " ON CONFLICT(user_id, config_key) DO UPDATE SET rating = rating - 16", (leaving_player.user_id, config_key, leaving_player.rating))
                                      db_conn.commit()
                                      db_conn.close()
-                                     print(f"[DEBUG-PENALTY] DB Commit successful for {username}")
                                  except Exception as e:
-                                     print(f"[GameRoom] Instant Penalty DB update Error for {username}: {e}")
-                           else:
-                                 print(f"[DEBUG-PENALTY] SKIPPING DB update for {username} (Guest or Invalid ID)")
-                      else:
-                           print(f"[DEBUG-PENALTY] Player {username} already in round_quitters. Skipping duplicate penalty.")
+                                     print(f"Error updating rating on quit: {e}")
                  else:
                       print(f"[DEBUG-PENALTY] Player {username} left but had NO activity. (words=0, invalid=0)")
         else:
@@ -773,11 +761,10 @@ class GameRoom:
             if getattr(self, 'starting_round', False):
                 return None # Already in transition
             return 'start'
-        elif time_remaining <= 15:
-            if not self.board_search_started:
-                return 'search'
-        elif not self.spinner_params_generated:
-            # Trigger Spinner Generation as soon as intermission begins (if not already done)
+        elif not self.board_search_started:
+            # Trigger Board Search as soon as spinner params are ready
+            if self.spinner_params_generated:
+                 return 'search'
             return 'spinner'
         
         return None
@@ -855,30 +842,16 @@ class GameRoom:
                         })
                         if len(self.winners_history) > 50: self.winners_history = self.winners_history[:50]
                     
-                    # ABANDONMENT PENALTY & RATING UPDATES (RESTORED)
-                    # 1. Track Zombies (Soft Abandoners)
-                    # ENFORCE: Penalty applies even if zero words were found, to discourage board-sitting
-                    now = time.time()
-                    soft_quitters = [
-                        p for p in self.players 
-                        if not is_player_guest(p) and not p.is_ai and not getattr(p, 'joined_mid_round', False) 
-                        and (now - p.last_active) > 120
+                    # RATING SUMMARY (Intermission Transition)
+                    competitive_human_starters = [
+                        p for p in self.players + self.round_quitters 
+                        if not getattr(p, 'is_ai', False) and not is_player_guest(p) and not getattr(p, 'joined_mid_round', False)
                     ]
-                    active_quitter_ids = {q.user_id for q in self.round_quitters}
-                    for sq in soft_quitters: active_quitter_ids.add(sq.user_id)
-                    
-                    total_bounty = self.abandonment_bounty + (len(soft_quitters) * 16)
-                    print(f"[RatingTrace] Bounty Calculation: stored_bounty={self.abandonment_bounty}, soft_quitters={len(soft_quitters)}, total={total_bounty}")
                     
                     # Skip rating updates for 500+ modes (unranked)
                     wc_range = getattr(self, 'current_word_count_range', '100-200')
                     wc_tuple = self._get_wc_tuple(wc_range)
                     is_500plus = wc_tuple[0] >= 500
-                    
-                    competitive_human_starters = [
-                        p for p in self.players + self.round_quitters 
-                        if not getattr(p, 'is_ai', False) and not is_player_guest(p) and not getattr(p, 'joined_mid_round', False)
-                    ]
                     
                     is_strictly_ranked = True
                     if is_500plus:
@@ -893,96 +866,88 @@ class GameRoom:
                     
                     if not is_strictly_ranked:
                         rating_changes = {p.user_id: 0 for p in self.players + self.round_quitters}
-                        total_bounty = 0
-                        self.abandonment_bounty = 0
                     else:
                         rating_changes = calculate_proportional_rating_change(self.players + self.round_quitters, is_private=self.is_private)
                     
-                    # Apply Bounty distribution
-                    if total_bounty > 0:
-                        # ENFORCE: Bounty is shared by all human participants who stayed until the end and were there for the start
-                        active_humans_remaining = [
-                            p for p in self.players 
-                            if not p.is_ai and not is_player_guest(p) and not getattr(p, 'joined_mid_round', False) 
-                            and p.user_id not in active_quitter_ids
-                        ]
-                        print(f"[RatingTrace] Distributing bounty of {total_bounty} to {len(active_humans_remaining)} remaining active humans.")
-                        if active_humans_remaining:
-                            bonus = total_bounty // len(active_humans_remaining)
-                            for p in active_humans_remaining:
-                                old_change = rating_changes.get(p.user_id, 0)
-                                total_change = old_change + bonus
-                                # ENFORCE: Maximum rating change per round is strictly 16, even with bounty
-                                rating_changes[p.user_id] = max(-16, min(16, total_change)) 
-                                print(f"[RatingTrace] Bounty Result for {p.username}: baseline={old_change}, bonus={bonus}, total={total_change}, final_clamped={rating_changes[p.user_id]}")
-                        else:
-                            print(f"[RatingTrace] No eligible humans for bounty distribution ({total_bounty} lost).")
+                    # Revert: Remove manual idle-penalty blocks and bounty distribution overrides 
+                    # that were causing double-penalties and tie bugs. 
+                    # Note: calculate_proportional_rating_change already penalizes real quitters.
+                    active_quitter_ids = {q.user_id for q in self.round_quitters}
+                    soft_quitter_ids = set() # Reverted soft quitter logic
                     
-                    # Ensure quitters show -16
-                    for q_id in active_quitter_ids:
-                        rating_changes[q_id] = -16
+                    # BOUNTY DISTRIBUTION: Split the collected quitter points among active participants.
+                    # "Active" = Score > 0 and was at the start.
+                    eligible_humans = [p for p in self.players if not p.is_ai and not is_player_guest(p) and p.score > 0 and not getattr(p, "joined_mid_round", False)]
+                    if eligible_humans and self.abandonment_bounty > 0:
+                        share = self.abandonment_bounty // len(eligible_humans)
+                        print(f"[RatingTrace] Distributing {self.abandonment_bounty} bounty to {len(eligible_humans)} active humans (+{share} each)")
+                        for p in eligible_humans:
+                            rating_changes[p.user_id] = rating_changes.get(p.user_id, 0) + share
                     
-                        # Connect to DB and update
-                        try:
-                            db_path = '/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/morpheme.db'
-                            conn = sqlite3.connect(db_path, timeout=30)
+                    # Connect to DB and update
+                    try:
+                        # Use relative path for consistency with app.py and to avoid hardcoded absolute path issues
+                        db_path = 'morpheme.db'
+                        conn = sqlite3.connect(db_path, timeout=30)
+                        
+                        involved_ids = set()
+                        all_involved = []
+                        for p in self.players:
+                            if p.user_id not in involved_ids:
+                                all_involved.append(p)
+                                involved_ids.add(p.user_id)
+                        for q in self.round_quitters:
+                            if q.user_id not in involved_ids:
+                                all_involved.append(q)
+                                involved_ids.add(q.user_id)
+                        
+                        # Real quitters were already penalized during remove_player
+                        already_penalized_ids = {q.user_id for q in self.round_quitters}
+                        
+                        for player in all_involved:
+                            change = int(rating_changes.get(player.user_id, 0))
+                            # FINAL SAFETY CLAMP: Never allow a display or DB change outside -16/+16
+                            change = max(-16, min(16, change))
                             
-                            involved_ids = set()
-                            all_involved = []
-                            for p in self.players:
-                                if p.user_id not in involved_ids:
-                                    all_involved.append(p)
-                                    involved_ids.add(p.user_id)
-                            for q in self.round_quitters:
-                                if q.user_id not in involved_ids:
-                                    all_involved.append(q)
-                                    involved_ids.add(q.user_id)
+                            actual_db_delta = change
+                            if player.user_id in already_penalized_ids:
+                                actual_db_delta = 0 
                             
-                            # Real quitters were already penalized, soft quitters weren't
-                            soft_quitter_ids = {sq.user_id for sq in soft_quitters}
-                            already_penalized_ids = {q.user_id for q in self.round_quitters if q.user_id not in soft_quitter_ids}
+                            player.rating += actual_db_delta
+                            player.rating_change = change
+                            print(f"[RatingTrace] Saving {player.username} Final Change: {change} (actual_db_delta={actual_db_delta})")
                             
-                            for player in all_involved:
-                                change = int(rating_changes.get(player.user_id, 0))
-                                # FINAL SAFETY CLAMP: Never allow a display or DB change outside -16/+16
-                                change = max(-16, min(16, change))
+                            # FIX: Only skip saving history if player was inactive AND has no rating change (penalty)
+                            if player.score == 0 and not player.submitted_words and not player.invalid_words and actual_db_delta == 0:
+                                continue
                                 
-                                actual_db_delta = change
-                                if player.user_id in already_penalized_ids:
-                                    actual_db_delta = 0 
+                            is_ranked_format = (not self.is_solo or self.is_private or self.game_type == '3d') and not is_500plus
+                            if conn and player.user_id > 0 and (is_ranked_format or actual_db_delta != 0):
+                                config_key = f"{self.game_type.replace('solo_', '')}|{self.board_dimensions}|{self.time_limit}"
+                                conn.execute('''
+                                    INSERT INTO user_ratings (user_id, config_key, rating) VALUES (?, ?, ?)
+                                    ON CONFLICT(user_id, config_key) DO UPDATE SET rating = rating + ?
+                                ''', (player.user_id, config_key, player.rating, actual_db_delta))
                                 
-                                player.rating += actual_db_delta
-                                player.rating_change = change
-                                print(f"[RatingTrace] Saving {player.username} Final Change: {change} (actual_db_delta={actual_db_delta})")
+                                human_participants = [p for p in all_involved if (not p.is_ai and not is_player_guest(p) and not getattr(p, 'joined_mid_round', False) and (p.score > 0 or p.submitted_words or p.invalid_words or rating_changes.get(p.user_id, 0) != 0))]
+                                is_competitive = len(human_participants) >= 2
                                 
-                                if player.score == 0 and not player.submitted_words and not player.invalid_words:
-                                    continue
-                                    
-                                is_ranked_format = (not self.is_solo or self.is_private or self.game_type == '3d') and not is_500plus
-                                if conn and player.user_id > 0 and is_ranked_format:
-                                    config_key = f"{self.game_type.replace('solo_', '')}|{self.board_dimensions}|{self.time_limit}"
-                                    conn.execute('''
-                                        INSERT INTO user_ratings (user_id, config_key, rating) VALUES (?, ?, ?)
-                                        ON CONFLICT(user_id, config_key) DO UPDATE SET rating = rating + ?
-                                    ''', (player.user_id, config_key, player.rating, actual_db_delta))
-                                    
-                                    human_participants = [p for p in all_involved if (not p.is_ai and not is_player_guest(p) and not getattr(p, 'joined_mid_round', False) and (p.score > 0 or p.submitted_words or p.invalid_words))]
-                                    is_competitive = len(human_participants) >= 2
-                                    
-                                    if is_competitive and (is_ranked_format or total_bounty > 0):
-                                        conn.execute('UPDATE users SET rating = rating + ?, games_played = games_played + 1 WHERE id = ?', (actual_db_delta, player.user_id))
-                                        
-                                        if player.score > 0 and board_format in ['Normal', 'Cube']:
-                                            max_all_score = max([p.score for p in all_involved])
-                                            if player.score == max_all_score:
-                                                conn.execute('UPDATE users SET wins = wins + 1 WHERE id = ?', (player.user_id,))
-                            
-                            conn.commit()
+                                # Allow global rank update if competitive OR if an explicitly applied penalty exists
+                                if (is_competitive and is_ranked_format) or (actual_db_delta < 0 and player.user_id > 0):
+                                    conn.execute('UPDATE users SET rating = rating + ?, games_played = games_played + 1 WHERE id = ?', (actual_db_delta, player.user_id))
+                                    print(f"[RatingTrace] DB Updated for {player.username}: global rating += {actual_db_delta}")
+                                
+                                if is_competitive and player.score > 0 and board_format in ['Normal', 'Cube']:
+                                    max_all_score = max([p.score for p in all_involved])
+                                    if player.score == max_all_score:
+                                        conn.execute('UPDATE users SET wins = wins + 1 WHERE id = ?', (player.user_id,))
+                        
+                        conn.commit()
+                        conn.close()
+                    except Exception as db_e:
+                        print(f"[GameRoom] DB Update Error: {db_e}")
+                        if 'conn' in locals() and conn:
                             conn.close()
-                        except Exception as db_e:
-                            print(f"[GameRoom] DB Update Error: {db_e}")
-                            if 'conn' in locals() and conn:
-                                conn.close()
 
 
                 except Exception as e:
@@ -1549,9 +1514,11 @@ class RoomManager:
             room.board = board
             room.all_words = all_words
             room.current_round += 1
-            room.current_difficulty = room.spinner_params.get('difficulty', 'Medium')
-            room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
-            room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
+            room.current_difficulty = room.spinner_params.get('difficulty', 'Varying...')
+            room.current_dictionary = room.spinner_params.get('dictionary', 'Varying...')
+            room.current_word_count_range = room.spinner_params.get('word_count_range', 'Varying...')
+            
+            print(f"[RoomManager] ROUND {room.current_round} START - Params: {room.current_difficulty}, {room.current_dictionary}, {room.current_word_count_range}")
             
             print(f"[RoomManager] ROUND {room.current_round} START for room {room_id}")
             print(f"[RoomManager]   > Difficulty: {room.current_difficulty}")
@@ -1840,6 +1807,12 @@ class RoomManager:
                     room.all_words = []
                     room.complete_words = []
 
+                # USE PRE-GENERATED DATA OR WAIT
+                if not getattr(room, 'next_round_board', None):
+                    print(f"[RoomManager] transition hit 0:00 but board NOT READY for {room_id}. Postponing start.")
+                    room.starting_round = False # Allow background loop to try again
+                    return False
+                    
                 # SAVE PREVIOUS ROUND DATA (Persistence for "Previous Day" tab)
                 # CHECK if we already snapshotted during intermission. If so, KEEP IT!
                 # Use getattr with explicit check for None and emptiness to avoid bugs

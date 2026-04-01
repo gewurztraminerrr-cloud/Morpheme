@@ -1232,38 +1232,51 @@ class BoardGenerator:
         return True
 
     def _solve_cube_board(self, board, dictionary, min_word_length=3):
-        """Find words on a 3x3x3 cube surface using DFS"""
+        """Find words on a 3x3x3 cube surface using Optimized Backtracking DFS"""
         found = {} # {word: path}
         max_len = 25
+        visited_cells = set()
+        path_list = []
         
-        def dfs(f, r, c, visited_path, word_str):
+        def dfs(f, r, c, word_str):
             char = board[f][r][c]
-            # Branch 1: Normal
+            
+            # Normal Branch
             w1 = word_str + char
-            if len(w1) >= min_word_length and word_validator.is_valid_word(w1, dictionary):
-                if w1 not in found:
-                    found[w1] = visited_path
-            
-            if len(w1) < max_len and word_validator.has_valid_prefix(w1, dictionary):
-                for nf, nr, nc in self._get_cube_neighbors(f, r, c):
-                    if (nf, nr, nc) not in visited_path:
-                        dfs(nf, nr, nc, visited_path + [(nf, nr, nc)], w1)
-            
-            # Branch 2: QU
+            if word_validator.has_valid_prefix(w1, dictionary):
+                if len(w1) >= min_word_length and word_validator.is_valid_word(w1, dictionary):
+                    if w1 not in found:
+                        found[w1] = list(path_list) + [(f, r, c)]
+                
+                if len(w1) < max_len:
+                    visited_cells.add((f, r, c))
+                    path_list.append((f, r, c))
+                    for nf, nr, nc in self._get_cube_neighbors(f, r, c):
+                        if (nf, nr, nc) not in visited_cells:
+                            dfs(nf, nr, nc, w1)
+                    path_list.pop()
+                    visited_cells.remove((f, r, c))
+
+            # Special 'QU' Branch
             if char == 'Q':
                 w2 = word_str + 'QU'
-                if len(w2) >= min_word_length and word_validator.is_valid_word(w2, dictionary):
-                    if w2 not in found:
-                        found[w2] = visited_path
-                if len(w2) < max_len and word_validator.has_valid_prefix(w2, dictionary):
-                    for nf, nr, nc in self._get_cube_neighbors(f, r, c):
-                        if (nf, nr, nc) not in visited_path:
-                            dfs(nf, nr, nc, visited_path + [(nf, nr, nc)], w2)
+                if word_validator.has_valid_prefix(w2, dictionary):
+                    if len(w2) >= min_word_length and word_validator.is_valid_word(w2, dictionary):
+                        if w2 not in found:
+                            found[w2] = list(path_list) + [(f, r, c)]
+                    if len(w2) < max_len:
+                        visited_cells.add((f, r, c))
+                        path_list.append((f, r, c))
+                        for nf, nr, nc in self._get_cube_neighbors(f, r, c):
+                            if (nf, nr, nc) not in visited_cells:
+                                dfs(nf, nr, nc, w2)
+                        path_list.pop()
+                        visited_cells.remove((f, r, c))
 
         for f in range(6):
             for r in range(3):
                 for c in range(3):
-                    dfs(f, r, c, [(f, r, c)], "")
+                    dfs(f, r, c, "")
         
         return found
 

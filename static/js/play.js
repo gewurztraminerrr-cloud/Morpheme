@@ -80,7 +80,6 @@ function ejectToLobby(reason = "inactivity") {
     if (spinner) {
         spinner.classList.add('hidden');
         spinner.style.display = 'none';
-        console.log('[play.js] Force-closed Spinner Set popup on kick.');
     }
 
     console.warn(`[play.js] EVICTING USER. Reason: ${reason}`);
@@ -90,7 +89,7 @@ function ejectToLobby(reason = "inactivity") {
     window.currentRoomId = null;
 
     // 3. Clear ANY other overlays that might block the explanation
-    document.querySelectorAll('.modal-overlay, .board-overlay, .results-overlay, .spinner-content').forEach(ov => {
+    document.querySelectorAll('.modal-overlay, .board-overlay, .results-overlay, .spinner-content, .spinner-overlay').forEach(ov => {
         ov.classList.add('hidden');
         ov.style.display = 'none';
     });
@@ -98,30 +97,35 @@ function ejectToLobby(reason = "inactivity") {
     // 4. Redirect to Lobby
     if (window.navigateToPage) window.navigateToPage('lobby');
     else if (window.showPage) window.showPage('page-lobby');
-    else window.location.href = '/';
+    else window.location.href = '#page-lobby';
 
-    // 5. Show Explanation Popup (Immediate, then again after a short delay for SPA stability)
-    const showExplanation = () => {
-        let msg = "You have been kicked back to the lobby because you were idle in the room for 10 minutes.";
-        let title = "Idle Timeout";
+    // 6. DELAYED SHOW: Stagger the modal so it appears AFTER the page switch
+    setTimeout(() => {
+        const title = "Session Expired";
+        const message = `
+            You have been returned to the lobby due to 10 minutes of inactivity. 
+            <br><br>
+            To keep room slots open for active players, matches are automatically cleared after prolonged idle periods. 
+            Feel free to join a new match when you're ready!
+        `;
         
-        if (reason === "daily_reset") {
-            msg = "The daily room has reset for a new day! Please rejoin if you'd like to play.";
-            title = "Daily Reset";
-        } else if (reason === "manual") {
-            msg = "You have been removed from the room.";
-            title = "Inactivity Kick";
-        }
-
         if (window.showAlertModal) {
-            window.showAlertModal(title, msg, true); // true = PRIORITY modal
+            window.showAlertModal(title, message, true); // priority=true ensures it isn't overwritten by lobby notices
+            console.log('[play.js] Displayed inactivity modal via showAlertModal.');
         } else {
-            alert(msg);
+            // Fallback for extreme cases
+            const modal = document.getElementById('generic-info-modal');
+            const titleEl = document.getElementById('generic-modal-title');
+            const bodyEl = document.getElementById('generic-modal-body');
+            if (modal && titleEl && bodyEl) {
+                titleEl.textContent = title;
+                bodyEl.innerHTML = `<p style="padding: 30px; text-align: center; color: var(--text-primary);">${message}</p>`;
+                modal.classList.remove('hidden');
+                modal.style.display = 'flex';
+                modal.style.zIndex = '100001';
+            }
         }
-    };
-
-    setTimeout(showExplanation, 100);
-    setTimeout(showExplanation, 600); // Second attempt in case SPA navigation wiped the first one
+    }, 800); // Increased delay to 800ms for more stability across all devices
 }
 
 // Check for idle logout every 5 seconds
@@ -2958,22 +2962,45 @@ function showSpinnerOverlay(spinnerParams, players = []) {
     
     safeSetText('spinner-bonus-length', bonusText);
     safeSetText('spinner-min-length', spinnerParams.min_word_length || '?');
-    safeSetText('spinner-difficulty', spinnerParams.difficulty || '?');
-
-    const wr = spinnerParams.word_count_range;
-    if (typeof wr === 'string') {
-        safeSetText('spinner-word-count', wr);
-    } else if (wr && Array.isArray(wr) && wr.length >= 2) {
-        if (wr[1] >= 9999) {
-            safeSetText('spinner-word-count', `${wr[0]}+`);
-        } else if (wr[0] === 200 && wr[1] === 500) {
-            safeSetText('spinner-word-count', '200+');
-        } else {
-            safeSetText('spinner-word-count', `${wr[0]}-${wr[1]}`);
-        }
-    } else {
-        safeSetText('spinner-word-count', '?-?');
+    // Dynamic Color Coding for Difficulty
+    const diffEl = document.getElementById('spinner-difficulty');
+    if (diffEl) {
+        diffEl.className = 'param-value'; // Reset
+        const d = spinnerParams.difficulty;
+        if (d === 'Easy') diffEl.classList.add('diff-easy');
+        else if (d === 'Medium') diffEl.classList.add('diff-medium');
+        else if (d === 'Hard') diffEl.classList.add('diff-hard');
+        safeSetText('spinner-difficulty', d || '?');
     }
+
+    // Dynamic Color Coding for Word Count
+    const wcEl = document.getElementById('spinner-word-count');
+    if (wcEl) {
+        wcEl.className = 'param-value'; // Reset
+        const wr = spinnerParams.word_count_range;
+        let wrText = '?-?';
+        
+        if (typeof wr === 'string') {
+            wrText = wr;
+            if (wr === '500+') wcEl.classList.add('wc-rare');
+            else if (wr === '200+') wcEl.classList.add('wc-high');
+        } else if (wr && Array.isArray(wr) && wr.length >= 2) {
+            if (wr[1] >= 999) {
+                wrText = (wr[0] >= 500) ? '500+' : `${wr[0]}+`;
+                if (wr[0] >= 500) wcEl.classList.add('wc-rare');
+                else wcEl.classList.add('wc-high');
+            } else {
+                wrText = `${wr[0]}-${wr[1]}`;
+            }
+        }
+        safeSetText('spinner-word-count', wrText);
+    }
+
+    // [ANIMATION] Trigger rolling effect for tactical feedback
+    document.querySelectorAll('.spinner-params .param-value').forEach(el => {
+        el.classList.add('rolling');
+        setTimeout(() => el.classList.remove('rolling'), 800);
+    });
 
     safeSetText('spinner-dictionary', spinnerParams.dictionary || 'Unknown');
     safeSetText('spinner-format', spinnerParams.board_format || 'Standard');

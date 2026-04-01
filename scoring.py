@@ -113,105 +113,107 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
                 # Check for Either/Or tile Hit (Identified by '/' in cell value)
                 cell_val = str(board[nf][nx][ny] if is_3d else board[nx][ny])
                 if '/' in cell_val:
-                    # User Request: "Simply give bonus points for using the Either/Or tile"
                     used_bonus = True
                 
                 if used_bonus: break
         
-        # B. Fallback: Recalculate path manually via DFS (STRICTLY for special formats if path missing)
-        if not used_bonus and is_spec_bonus_fmt:
+        # B. Fallback: Recalculate path manually via DFS (STRICTLY if no path was provided for special formats)
+        elif is_spec_bonus_fmt:
             word_target = word.upper()
-            
-            def get_neighbors(f, r, c):
-                if not is_3d:
-                    # Optimized 2D Neighbor lookup
-                    res = []
-                    rows = len(board)
-                    cols = len(board[0])
-                    for dr in [-1, 0, 1]:
-                        for dc in [-1, 0, 1]:
-                            if dr == 0 and dc == 0: continue
-                            nr, nc = r + dr, c + dc
-                            if 0 <= nr < rows and 0 <= nc < cols:
-                                res.append((-1, nr, nc))
-                    return res
-                else:
-                    # Comprehensive 3D Surface Neighbors (Ported from BoardGenerator)
-                    res = []
-                    # Intra-face
-                    for dr in [-1, 0, 1]:
-                        for dc in [-1, 0, 1]:
-                            if dr == 0 and dc == 0: continue
-                            nr, nc = r+dr, c+dc
-                            if 0 <= nr < 3 and 0 <= nc < 3: res.append((f, nr, nc))
-                    # Inter-face Wrap Logic
-                    if f == 0:
-                        if r == 0: res.extend([(4, 2, c), (4, 2, c-1), (4, 2, c+1)])
-                        if r == 2: res.extend([(5, 0, c), (5, 0, c-1), (5, 0, c+1)])
-                        if c == 0: res.extend([(2, r, 2), (2, r-1, 2), (2, r+1, 2)])
-                        if c == 2: res.extend([(3, r, 0), (3, r-1, 0), (3, r+1, 0)])
-                    elif f == 1:
-                        if r == 0: res.extend([(4, 0, 2-c), (4, 0, 2-(c-1)), (4, 0, 2-(c+1))])
-                        if r == 2: res.extend([(5, 2, 2-c), (5, 2, 2-(c-1)), (5, 2, 2-(c+1))])
-                        if c == 0: res.extend([(3, r, 2), (3, r-1, 2), (3, r+1, 2)])
-                        if c == 2: res.extend([(2, r, 0), (2, r-1, 0), (2, r+1, 0)])
-                    elif f == 2:
-                        if r == 0: res.extend([(4, c, 0), (4, c-1, 0), (4, c+1, 0)])
-                        if r == 2: res.extend([(5, 2-c, 0), (5, 2-(c-1), 0), (5, 2-(c+1), 0)])
-                        if c == 0: res.extend([(1, r, 2), (1, r-1, 2), (1, r+1, 2)])
-                        if c == 2: res.extend([(0, r, 0), (0, r-1, 0), (0, r+1, 0)])
-                    elif f == 3:
-                        if r == 0: res.extend([(4, 2-c, 2), (4, 2-(c-1), 2), (4, 2-(c+1), 2)])
-                        if r == 2: res.extend([(5, c, 2), (5, c-1, 2), (5, c+1, 2)])
-                        if c == 0: res.extend([(0, r, 2), (0, r-1, 2), (0, r+1, 2)])
-                        if c == 2: res.extend([(1, r, 0), (1, r-1, 0), (1, r+1, 0)])
-                    elif f == 4:
-                        if r == 0: res.extend([(1, 0, 2-c), (1, 0, 2-(c-1)), (1, 0, 2-(c+1))])
-                        if r == 2: res.extend([(0, 0, c), (0, 0, c-1), (0, 0, c+1)])
-                        if c == 0: res.extend([(2, 0, r), (2, 0, r-1), (2, 0, r+1)])
-                        if c == 2: res.extend([(3, 0, 2-r), (3, 0, 2-(r-1)), (3, 0, 2-(r+1))])
-                    elif f == 5:
-                        if r == 0: res.extend([(0, 2, c), (0, 2, c-1), (0, 2, c+1)])
-                        if r == 2: res.extend([(1, 2, 2-c), (1, 2, 2-(c-1)), (1, 2, 2-(c+1))])
-                        if c == 0: res.extend([(2, 2, 2-r), (2, 2, 2-(r-1)), (2, 2, 2-(r+1))])
-                        if c == 2: res.extend([(3, 2, r), (3, 2, r-1), (3, 2, r+1)])
-                    return [(nf, nr, nc) for nf, nr, nc in res if 0 <= nf < 6 and 0 <= nr < 3 and 0 <= nc < 3]
-
-            def find_through(f, r, c, index, has_hit_bonus, visited):
-                cell_val = str(board[f][r][c] if is_3d else board[r][c]).upper()
-                # Award hit if matches bx,by OR it's an Either/Or tile (contains '/')
-                now_hit = has_hit_bonus or (f == bf and r == bx and c == by) or ('/' in cell_val)
-                letters = cell_val.split('/') if '/' in cell_val else [cell_val]
-                
-                for char in letters:
-                    match_len = 0
-                    if char == 'Q' and word_target.startswith('QU', index): match_len = 2
-                    elif word_target.startswith(char, index): match_len = len(char)
-                    
-                    if match_len > 0:
-                        if index + match_len >= len(word_target):
-                            if now_hit: return True
-                            continue
-                        for nf, nr, nc in get_neighbors(f, r, c):
-                            if (nf, nr, nc) not in visited:
-                                if find_through(nf, nr, nc, index + match_len, now_hit, visited | {(nf, nr, nc)}):
-                                    return True
-                return False
-
-            if is_3d:
-                for f in range(6):
-                    if used_bonus: break
-                    for r in range(3):
-                        if used_bonus: break
-                        for c in range(3):
-                            if find_through(f, r, c, 0, False, {(f, r, c)}):
-                                used_bonus = True; break
+            # Optimization: If it's 3D and word is long, this is very slow. Skip for long words in 3D if no path.
+            if is_3d and len(word_target) > 12:
+                 pass 
             else:
-                for r in range(len(board)):
-                    if used_bonus: break
-                    for c in range(len(board[0])):
-                        if find_through(-1, r, c, 0, False, {(-1, r, c)}):
-                            used_bonus = True; break
+                def get_neighbors(f, r, c):
+                    if not is_3d:
+                        # Optimized 2D Neighbor lookup
+                        res = []
+                        rows = len(board)
+                        cols = len(board[0])
+                        for dr in [-1, 0, 1]:
+                            for dc in [-1, 0, 1]:
+                                if dr == 0 and dc == 0: continue
+                                nr, nc = r + dr, c + dc
+                                if 0 <= nr < rows and 0 <= nc < cols:
+                                    res.append((-1, nr, nc))
+                        return res
+                    else:
+                        # Comprehensive 3D Surface Neighbors (Ported from BoardGenerator)
+                        res = []
+                        # Intra-face
+                        for dr in [-1, 0, 1]:
+                            for dc in [-1, 0, 1]:
+                                if dr == 0 and dc == 0: continue
+                                nr, nc = r+dr, c+dc
+                                if 0 <= nr < 3 and 0 <= nc < 3: res.append((f, nr, nc))
+                        # Inter-face Wrap Logic
+                        if f == 0:
+                            if r == 0: res.extend([(4, 2, c), (4, 2, c-1), (4, 2, c+1)])
+                            if r == 2: res.extend([(5, 0, c), (5, 0, c-1), (5, 0, c+1)])
+                            if c == 0: res.extend([(2, r, 2), (2, r-1, 2), (2, r+1, 2)])
+                            if c == 2: res.extend([(3, r, 0), (3, r-1, 0), (3, r+1, 0)])
+                        elif f == 1:
+                            if r == 0: res.extend([(4, 0, 2-c), (4, 0, 2-(c-1)), (4, 0, 2-(c+1))])
+                            if r == 2: res.extend([(5, 2, 2-c), (5, 2, 2-(c-1)), (5, 2, 2-(c+1))])
+                            if c == 0: res.extend([(3, r, 2), (3, r-1, 2), (3, r+1, 2)])
+                            if c == 2: res.extend([(2, r, 0), (2, r-1, 0), (2, r+1, 0)])
+                        elif f == 2:
+                            if r == 0: res.extend([(4, c, 0), (4, c-1, 0), (4, c+1, 0)])
+                            if r == 2: res.extend([(5, 2-c, 0), (5, 2-(c-1), 0), (5, 2-(c+1), 0)])
+                            if c == 0: res.extend([(1, r, 2), (1, r-1, 2), (1, r+1, 2)])
+                            if c == 2: res.extend([(0, r, 0), (0, r-1, 0), (0, r+1, 0)])
+                        elif f == 3:
+                            if r == 0: res.extend([(4, 2-c, 2), (4, 2-(c-1), 2), (4, 2-(c+1), 2)])
+                            if r == 2: res.extend([(5, c, 2), (5, c-1, 2), (5, c+1, 2)])
+                            if c == 0: res.extend([(0, r, 2), (0, r-1, 2), (0, r+1, 2)])
+                            if c == 2: res.extend([(1, r, 0), (1, r-1, 0), (1, r+1, 0)])
+                        elif f == 4:
+                            if r == 0: res.extend([(1, 0, 2-c), (1, 0, 2-(c-1)), (1, 0, 2-(c+1))])
+                            if r == 2: res.extend([(0, 0, c), (0, 0, c-1), (0, 0, c+1)])
+                            if c == 0: res.extend([(2, 0, r), (2, 0, r-1), (2, 0, r+1)])
+                            if c == 2: res.extend([(3, 0, 2-r), (3, 0, 2-(r-1)), (3, 0, 2-(r+1))])
+                        elif f == 5:
+                            if r == 0: res.extend([(0, 2, c), (0, 2, c-1), (0, 2, c+1)])
+                            if r == 2: res.extend([(1, 2, 2-c), (1, 2, 2-(c-1)), (1, 2, 2-(c+1))])
+                            if c == 0: res.extend([(2, 2, 2-r), (2, 2, 2-(r-1)), (2, 2, 2-(r+1))])
+                            if c == 2: res.extend([(3, 2, r), (3, 2, r-1), (3, 2, r+1)])
+                        return [(nf, nr, nc) for nf, nr, nc in res if 0 <= nf < 6 and 0 <= nr < 3 and 0 <= nc < 3]
+
+                def find_through(f, r, c, index, has_hit_bonus, visited):
+                    cell_val = str(board[f][r][c] if is_3d else board[r][c]).upper()
+                    # Award hit if matches bx,by OR it's an Either/Or tile (contains '/')
+                    now_hit = has_hit_bonus or (f == bf and r == bx and c == by) or ('/' in cell_val)
+                    letters = cell_val.split('/') if '/' in cell_val else [cell_val]
+                
+                    for char in letters:
+                        match_len = 0
+                        if char == 'Q' and word_target.startswith('QU', index): match_len = 2
+                        elif word_target.startswith(char, index): match_len = len(char)
+                    
+                        if match_len > 0:
+                            if index + match_len >= len(word_target):
+                                if now_hit: return True
+                                continue
+                            for nf, nr, nc in get_neighbors(f, r, c):
+                                if (nf, nr, nc) not in visited:
+                                    if find_through(nf, nr, nc, index + match_len, now_hit, visited | {(nf, nr, nc)}):
+                                        return True
+                    return False
+
+                if is_3d:
+                    for f in range(6):
+                        if used_bonus: break
+                        for r in range(3):
+                            if used_bonus: break
+                            for c in range(3):
+                                if find_through(f, r, c, 0, False, {(f, r, c)}):
+                                    used_bonus = True; break
+                else:
+                    for r in range(len(board)):
+                        if used_bonus: break
+                        for c in range(len(board[0])):
+                            if find_through(-1, r, c, 0, False, {(-1, r, c)}):
+                                used_bonus = True; break
 
     # Final tally (Always award 3 extra points for special tiles, unless checkerboard)
     bonus_letter_score = 0
