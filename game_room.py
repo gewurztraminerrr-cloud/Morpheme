@@ -205,20 +205,26 @@ class GameRoom:
         existing_player = next((p for p in self.past_players.values() if str(p.user_id) == str(user_id)), None)
         
         if existing_player:
-            print(f"DEBUG: RESTORING player {user_id} from past_players. History len: {len(existing_player.previous_submitted_words)}")
-            print(f"DEBUG: Restored words: {[w['word'] for w in existing_player.previous_submitted_words]}")
+            # FIX FOR GHOST ACTIVITY: If rejoining from an old round, clear their round-specific lists
+            last_p_round = getattr(existing_player, '_last_round_seen', -1)
+            if last_p_round != -1 and last_p_round != self.current_round:
+                existing_player.found_bonus_word = False
+                existing_player.has_abandoned = False
+                existing_player.joined_mid_round = (self.state == 'active')
+            
+            existing_player._last_round_seen = self.current_round
             existing_player.last_active = time.time()
-            existing_player.country_flag = country_flag # Update flag
-            existing_player.games_played = games_played # Update games played (if changed)
-            existing_player.is_guest = is_guest # Update guest status
+            existing_player.country_flag = country_flag
+            existing_player.games_played = games_played
+            existing_player.is_guest = is_guest
+            
             if manual_accessed:
                 existing_player.joined_mid_round = True
             elif not is_daily and self.state == 'active':
                  # Check for "Refresh" grace period (15s)
-                 # If they were gone for > 15s, mark as late joiner even if restoring
                  if (time.time() - existing_player.last_active) > 15:
-                      print(f"[GameRoom] Restored player {username} marked as LATE JOINER (Inactive for {time.time() - existing_player.last_active:.1f}s)")
                       existing_player.joined_mid_round = True
+            
             self.players.append(existing_player)
             return True
 
@@ -293,31 +299,50 @@ class GameRoom:
         
         # Track abandonment (if in active round and played and NOT mid-round joiner)
         if leaving_player and self.state == 'active' and not getattr(leaving_player, 'joined_mid_round', False):
-             # ENFORCE RULE: Only apply abandonment penalty if there is at least one OTHER player who started from the beginning.
-             other_starters = [
+             # AUDIT LOG: Log every mid-round removal attempt for rating tracing
+             with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
+                  log.write(f"[{time.time()}] Removal Attempt: User {username}, Score: {leaving_player.score}, Words: {len(leaving_player.submitted_words)}, Room: {self.room_id}, Round: {self.current_round}\n")
+             
+             # USER RULE: Only apply abandonment penalty if there is at least one OTHER human starter who has actually PLAYED.
+             other_competitors_active = [
                  p for p in self.players + self.round_quitters 
-                 if str(p.user_id) != str(user_id) and not getattr(p, 'is_ai', False) and not is_player_guest(p) and not getattr(p, 'joined_mid_round', False)
+                 if str(p.user_id) != str(user_id) and not getattr(p, 'is_ai', False) and not is_player_guest(p) and not getattr(p, 'joined_mid_round', False) and (p.score > 0 or len(p.submitted_words) > 0)
              ]
              
-             if len(other_starters) >= 1:
-                  # ENFORCE: Penalty only applies if the player has actually found something (to avoid penalizing peeking without playing) or has a score > 0
-                  has_activity = leaving_player.score > 0 or len(leaving_player.submitted_words) > 0 or len(leaving_player.invalid_words) > 0
-                  if has_activity:
+             if len(other_competitors_active) >= 1:
+                  # ENFORCE: Penalty only applies if the player has actually found a valid word or has positive score.
+                  # ADDED SAFETY: Explicitly must NOT be 0.
+                  has_real_activity = (leaving_player.score > 0) or (len(leaving_player.submitted_words) > 0)
+                  
+                  # FINAL OVERRIDE: If no words and no score, they CANNOT be penalized.
+                  if not has_real_activity:
+                       print(f"[GameRoom-Audit] Skipping penalty for {username} - No activity in round {self.current_round}")
+                       return True
+
+                  if not getattr(leaving_player, 'has_abandoned', False):
                        # Only add if not already in quitters
                        if not any(q.user_id == leaving_player.user_id for q in self.round_quitters):
-                            print(f"[GameRoom] Player {username} ({user_id}) abandoned mid-round. Logging as Quitter.")
+                            print(f"[GameRoom] Player {username} ({user_id}) abandoned mid-round while competitive. Logging as Quitter.")
                             self.round_quitters.append(leaving_player)
                             
+                            # Mark as abandoned on the object so re-join/re-leaves aren't penalized twice
+                            leaving_player.has_abandoned = True
+                            
                             # AUTOMATIC INSTANT PENALTY - Deduct 16 immediately to discourage mid-round quitting.
-                            import sqlite3
-                            if not is_player_guest(leaving_player) and leaving_player.user_id > 0:
-                                  print(f"[DEBUG-PENALTY] Applying -16 to {username} (Current: {leaving_player.rating})")
+                            # FIX: If they already have has_abandoned=True (e.g. from app.py cleanup), do not penalize twice.
+                            if not is_player_guest(leaving_player) and leaving_player.user_id > 0 and not getattr(leaving_player, 'has_abandoned', False):
+                                  print(f"[DEBUG-PENALTY-EXECUTE] Applying -16 to {username} (Current Rating: {leaving_player.rating})")
+                                  with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
+                                      log.write(f"[{time.time()}] PENALTY APPLIED to {username}: -16 points\n")
+                                      
                                   leaving_player.rating = max(0, leaving_player.rating - 16)
                                   leaving_player.rating_change -= 16
+                                  leaving_player.has_abandoned = True # Mark here as well
                                   self.abandonment_bounty += 16
                                   
                                   # Apply to Global Rank immediately to prevent re-joining exploit
                                   try:
+                                      import sqlite3
                                       db_conn = sqlite3.connect("morpheme.db", timeout=30)
                                       db_conn.execute("UPDATE users SET rating = rating - 16 WHERE id = ?", (leaving_player.user_id,))
                                       config_key = f"{self.game_type.replace('solo_', '')}|{self.board_dimensions}|{self.time_limit}"
@@ -328,9 +353,15 @@ class GameRoom:
                                   except Exception as e:
                                       print(f"Error updating rating on quit: {e}")
                   else:
-                       print(f"[DEBUG-PENALTY] Player {username} left but had NO activity. (words=0, invalid=0)")
+                       print(f"[DEBUG-PENALTY-SKIP] Player {username} left but had NO score/words or already abandoned. Skipping penalty. (score={leaving_player.score}, words={len(leaving_player.submitted_words)})")
+                       with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
+                           log.write(f"[{time.time()}] Penalty Skipped for {username}: No activity or already penalized\n")
+             else:
+                  print(f"[DEBUG-PENALTY-SKIP] Player {username} removed but no OTHER active humans were playing. Skipping penalty.")
+                  with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
+                       log.write(f"[{time.time()}] Penalty Skipped for {username}: No other active competitors\n")
         else:
-             print(f"[DEBUG-PENALTY] Player {username} removed outside active round or state. (state={self.state})")
+             print(f"[DEBUG-PENALTY-SKIP] Player {username} removed outside active round or is mid-round joiner. (state={self.state})")
 
         self.players = [p for p in self.players if str(p.user_id) != str(user_id)]
         if len(self.players) < initial_players:
@@ -490,7 +521,10 @@ class GameRoom:
         # Update activity on submission
         self.update_player_activity(user_id)
         
-        word = word.upper()
+        if not word or not word.strip():
+             return False, "Empty word", 0, None
+        
+        word = word.strip().upper()
         
         # Check if word is valid
         matched_word = None
@@ -880,15 +914,17 @@ class GameRoom:
                     else:
                         rating_changes = calculate_proportional_rating_change(self.players + self.round_quitters, is_private=self.is_private)
                     
-                    # Revert: Remove manual idle-penalty blocks and bounty distribution overrides 
-                    # that were causing double-penalties and tie bugs. 
-                    # Note: calculate_proportional_rating_change already penalizes real quitters.
+                    # USER REQUEST: If they already lost 16 points for abandonment, do not apply further formulaic rating changes.
+                    # This prevents the "extra -1 point" seen by users who refresh/quit and return.
+                    for p in self.players + self.round_quitters:
+                        if getattr(p, 'has_abandoned', False):
+                            rating_changes[p.user_id] = 0
                     active_quitter_ids = {q.user_id for q in self.round_quitters}
                     soft_quitter_ids = set() # Reverted soft quitter logic
                     
                     # BOUNTY DISTRIBUTION: Split the collected quitter points among active participants.
-                    # "Active" = Score > 0 and was at the start.
-                    eligible_humans = [p for p in self.players if not p.is_ai and not is_player_guest(p) and p.score > 0 and not getattr(p, "joined_mid_round", False)]
+                    # "Active" = Score > 0 and was at the start AND has not abandoned the round.
+                    eligible_humans = [p for p in self.players if not p.is_ai and not is_player_guest(p) and p.score > 0 and not getattr(p, "joined_mid_round", False) and not getattr(p, "has_abandoned", False)]
                     if eligible_humans and self.abandonment_bounty > 0:
                         share = self.abandonment_bounty // len(eligible_humans)
                         print(f"[RatingTrace] Distributing {self.abandonment_bounty} bounty to {len(eligible_humans)} active humans (+{share} each)")
@@ -1616,6 +1652,8 @@ class RoomManager:
                 p.joined_mid_round = False
                 p.has_exceptional_round = False
                 p.performance_efficiency = 0.0
+                p.has_abandoned = False # Reset penalty flag for new round
+                p._last_round_seen = room.current_round
                 
             # Clear FCFS global list
             room.fcfs_found_words = []

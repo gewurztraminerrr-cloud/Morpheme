@@ -659,16 +659,30 @@ async function updateGameState(incomingState = null) {
             window.lastRenderedIntermissionWords = null;
         }
 
-        // --- DEPRECATED SPINNER POPUP (Cleanup) ---
-        if (state.state === 'intermission' && state.spinner_params && state.spinner_params.word_count_range) {
-            const currentSpinnerJSON = JSON.stringify({
+        // --- HEADER PARAMETER REVEAL ANIMATION (Gold Fade) ---
+        // Triggered only when the NEW parameters for the upcoming round are revealed (at 45s remaining)
+        if (state.state === 'intermission') {
+            const hasSpinner = !!(state.spinner_params && state.spinner_params.word_count_range);
+            const currentSpinnerJSON = hasSpinner ? JSON.stringify({
                 rid: state.room_id,
                 rnd: state.current_round,
                 params: state.spinner_params
-            });
+            }) : null;
             
-            if (lastSpinnerDataJSON !== currentSpinnerJSON) {
+            // FIX: Only trigger reveal transition if we have reached the 45s threshold
+            // This prevents the fade effect from happening at the very beginning of intermission.
+            const isParamRevealTransition = (hasSpinner && state.time_remaining <= 45 && lastSpinnerDataJSON !== currentSpinnerJSON);
+
+            if (isParamRevealTransition) {
                 lastSpinnerDataJSON = currentSpinnerJSON;
+                
+                // Trigger the CSS animation
+                const container = document.querySelector('.game-params');
+                if (container) {
+                    container.classList.remove('reveal-new');
+                    void container.offsetWidth; // Force reflow to allow re-triggering the animation
+                    container.classList.add('reveal-new');
+                }
             }
         } else if (state.state !== 'intermission') {
             lastSpinnerDataJSON = null;
@@ -1845,22 +1859,26 @@ function updateParameters(state) {
         headerTitle.textContent = typeMap[state.game_type] || 'Game';
     }
 
-    const boardEl = document.getElementById('param-board');
-    if (boardEl) boardEl.textContent = state.board_dimensions || '4x4';
-
-    const timeEl = document.getElementById('param-time');
-    if (timeEl) timeEl.textContent = (state.time_limit || 60) + 's';
-
     const sp = state.spinner_params || {};
     const isIntermission = state.state === 'intermission';
-    
-    // Use UPCOMING round parameters if in intermission (revealed), otherwise use CURRENT round parameters
-    const currentFmt = (isIntermission && sp.board_format) ? sp.board_format : (state.current_board_format || 'Normal');
-    const currentMinLen = (isIntermission && sp.min_word_length) ? sp.min_word_length : (state.current_min_word_length || 3);
-    const currentDict = (isIntermission && sp.dictionary) ? sp.dictionary : (state.current_dictionary || 'NWL');
-    const currentDiff = (isIntermission && sp.difficulty) ? sp.difficulty : (state.current_difficulty || 'Normal');
-    const currentWordRange = (isIntermission && sp.word_count_range) ? sp.word_count_range : (state.current_word_count_range || '100-200');
-    const currentBonus = (isIntermission && sp.bonus_word_length) ? sp.bonus_word_length : (state.current_bonus_word_length || (state.bonus_word ? state.bonus_word.length : 0) || 'None');
+    // REVEAL REFINED: Only show the upcoming spinner parameters if we are deep into the intermission (<= 45s)
+    const isRevealed = isIntermission && state.time_remaining <= 45;
+
+    // Use UPCOMING round parameters if in intermission AND revealed, otherwise use CURRENT round parameters
+    const currentBoardDims = (isRevealed && sp.board_dimensions) ? sp.board_dimensions : (state.board_dimensions || '4x4');
+    const currentTimeLimit = (isRevealed && sp.time_limit) ? sp.time_limit : (state.time_limit || 60);
+    const currentFmt = (isRevealed && sp.board_format) ? sp.board_format : (state.current_board_format || 'Normal');
+    const currentMinLen = (isRevealed && sp.min_word_length) ? sp.min_word_length : (state.current_min_word_length || 3);
+    const currentDict = (isRevealed && sp.dictionary) ? sp.dictionary : (state.current_dictionary || 'NWL');
+    const currentDiff = (isRevealed && sp.difficulty) ? sp.difficulty : (state.current_difficulty || 'Normal');
+    const currentWordRange = (isRevealed && sp.word_count_range) ? sp.word_count_range : (state.current_word_count_range || '100-200');
+    const currentBonus = (isRevealed && sp.bonus_word_length) ? sp.bonus_word_length : (state.current_bonus_word_length || (state.bonus_word ? state.bonus_word.length : 0) || 'None');
+
+    const boardEl = document.getElementById('param-board');
+    if (boardEl) boardEl.textContent = currentBoardDims;
+
+    const timeEl = document.getElementById('param-time');
+    if (timeEl) timeEl.textContent = currentTimeLimit + 's';
 
     const bonusLen = document.getElementById('param-bonus');
     if (bonusLen) bonusLen.textContent = (currentBonus === 'None' || currentBonus === 0) ? 'None' : currentBonus + 'L';

@@ -788,10 +788,14 @@ function updateAuthUI() {
 async function handleLogout() {
     try {
         await fetch('/api/logout', { method: 'POST' });
-        // Completely reset app state by reloading to the root
+        // Completely reset app state by clearing all local storage and reloading to the root
+        localStorage.clear();
+        sessionStorage.clear();
         window.location.href = '/';
     } catch (error) {
         console.error('Logout error:', error);
+        localStorage.clear();
+        sessionStorage.clear();
         window.location.href = '/';
     }
 }
@@ -1031,15 +1035,7 @@ window.setCurrentUser = function (user) {
             // Check if we are actually logged in (currentUser is set in app.js context)
             if (window.currentUser || localStorage.getItem('morpheme_username')) {
                 console.log("[IdleLogout] User inactive for 24 hours. Logging out.");
-                fetch('/api/logout', { method: 'POST' })
-                    .then(() => {
-                        // Clear locals just in case
-                        localStorage.removeItem('morpheme_username');
-                        window.location.href = '/';
-                    })
-                    .catch(() => {
-                        window.location.href = '/';
-                    });
+                handleLogout();
             }
         }
     }, 1000);

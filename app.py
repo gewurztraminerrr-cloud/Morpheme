@@ -1010,24 +1010,25 @@ def get_user_count():
         conn.close()
 
 
-# Serve static files
 @app.route('/')
 def index():
-    # Force logout on initial page load / entry to URL
+    # USER REQUEST: If a user refreshes (re-enters root while logged in), 
+    # completely cut ties (logout) and send back to login.
     if 'user_id' in session:
-        user_id = session.get('user_id')
-        username = session.get('username')
-        print(f"[Auth] Auto-signing out user {username} ({user_id}) on root URL entry")
+        user_id = session['user_id']
+        username = session.get('username', 'Unknown')
+        print(f"[RefreshLogout] User {username} ({user_id}) refreshed. Severing ties.")
         
-        # Cleanup presence in rooms before clearing
-        try:
-            from game_room import room_manager
-            room_manager.remove_presence(user_id)
-        except Exception as e:
-            print(f"[Auth] Error during auto-logout cleanup: {e}")
-            
+        # Penalty/Room logic handled here
+        cleanup_user_rooms_entirely(user_id)
+        room_manager.remove_presence(user_id)
+        
+        # Clear session
         session.clear()
-    
+        
+        # Redirect back to root to trigger a clean login page state
+        return redirect('/')
+        
     return render_template('index.html')
 
 @app.route('/<path:path>')
@@ -1674,29 +1675,54 @@ import uuid
 
 def apply_leave_penalty(user_id, room):
     """
-    Apply rating penalty if user leaves a non-24h room with score > 0.
-    REDUCED: The -16 penalty was too aggressive and confusing.
-    Now we just log it or apply a minimal penalty (0 for now to stop the frustration).
+    Apply rating penalty if user leaves a non-24h room from the beginning.
+    USER REQUEST: "If a user refreshes, cut all ties... take away 16 points and distribute those points across all the people who played"
     """
     if room.time_limit >= 7200:
         return # No penalty for 24h rooms
     
     player = room.get_player(user_id)
-    if player and player.score > 0 and player.user_id > 0:
-        # Check if anyone else played
-        other_players_played = any(
-            p.user_id != player.user_id and (p.score > 0 or len(p.submitted_words) > 0)
-            for p in room.players
-        )
-        if not other_players_played:
-            print(f"[Penalty] Player {player.username} left room {room.room_id} with score {player.score}, but no one else played. No penalty applied.")
-            return
-            
-        print(f"[Penalty] Player {player.username} left room {room.room_id} with score {player.score}. Logic for -16 is currently DISABLED.")
-        # player.rating = max(0, player.rating - 16)
+    if not player or player.user_id <= 0 or player.is_guest:
+        return
         
-        # We still might want to track that they left, but avoid the heavy penalty
-        # player.rating_change = -16  # For UI (though unlikely to be seen if they leave)
+    # Check if they played "from the beginning" (not a mid-round joiner)
+    # AND they are leaving during an active round or its intermission
+    if not getattr(player, 'joined_mid_round', False) and room.state in ['active', 'intermission']:
+        penalty = 16
+        
+        # Distribute across all other competitive players in the room
+        others = [p for p in room.players if str(p.user_id) != str(user_id) and not p.is_guest and not p.is_ai]
+        
+        # Deduct from leaving player
+        conn = sqlite3.connect('morpheme.db', timeout=30)
+        try:
+            conn.execute('UPDATE users SET rating = MAX(0, rating - ?) WHERE id = ?', (penalty, user_id))
+            player.rating = max(0, player.rating - penalty)
+            player.rating_change -= penalty
+            player.has_abandoned = True
+            
+            if others:
+                per_person = penalty // len(others)
+                remainder = penalty % len(others)
+                for i, other in enumerate(others):
+                    bonus = per_person + (1 if i < remainder else 0)
+                    conn.execute('UPDATE users SET rating = rating + ? WHERE id = ?', (bonus, other.user_id))
+                    other.rating += bonus
+                    other.rating_change += bonus
+            
+            conn.commit()
+            print(f"[Penalty] {player.username} penalized -16 for abandonment. Distributed to {len(others)} players.")
+            
+            # Log for transparency
+            with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as f:
+                ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                o_list = ", ".join([o.username for o in others])
+                f.write(f"[{ts}] {player.username} left room {room.room_id}. Penalty -16 applied. Distributed to: {o_list}\n")
+                
+        except Exception as e:
+            print(f"Error applying penalty distribution: {e}")
+        finally:
+            conn.close()
 
 def cleanup_user_rooms(user_id, exclude_room_id=None):
     """Remove user from all rooms except exclude_room_id and 24h persistent rooms"""
@@ -1716,18 +1742,15 @@ def cleanup_user_rooms(user_id, exclude_room_id=None):
         room.remove_player(user_id)
 
 def cleanup_user_rooms_entirely(user_id):
-    """FORCED removal from ALL rooms (skipping 24h for persistence) - used for Logout"""
+    """FORCED removal from ALL rooms (skipping 24h skip for explicit Logout) - used for Logout"""
     for rid in list(room_manager.rooms.keys()):
         room = room_manager.rooms[rid]
         
-        # PERSISTENCE: Skip removal for 24h rooms on logout
-        if room.time_limit >= 7200:
-            continue
-            
-        # Apply leave penalty if applicable (non-24h only)
-        apply_leave_penalty(user_id, room)
+        # Apply leave penalty if applicable (non-24h only, typically)
+        if room.time_limit < 7200:
+            apply_leave_penalty(user_id, room)
 
-        # Force removal from players
+        # Force removal from players (clears past_players too so they don't auto-restore)
         room.remove_player(user_id, force=True)
 
 @app.route('/api/room/create', methods=['POST'])

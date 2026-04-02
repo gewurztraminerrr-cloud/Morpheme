@@ -24,7 +24,6 @@ def calculate_proportional_rating_change(players, is_private=False):
     for p in players:
         print(f"  - Player {getattr(p, 'username', 'N/A')}: id={p.user_id}, AI={getattr(p, 'is_ai', False)}, Guest={is_player_guest(p)}, MidRound={getattr(p, 'joined_mid_round', False)}")
 
-    # Filter to only including competitive human players (non-bots, non-guests, non-mid-round-joiners)
     competitive_humans = [
         p for p in players 
         if not getattr(p, 'is_ai', False) and not is_player_guest(p) and not getattr(p, 'joined_mid_round', False)
@@ -35,10 +34,12 @@ def calculate_proportional_rating_change(players, is_private=False):
         return changes
 
     # Count players among competitive humans who were actually present AND active
-    # "Did not play" = 0 score AND no words found (valid or invalid)
+    # "Did not play" = 0 score AND no points found in words.
+    # We EXCLUDE people with only invalid_words from the active_pool 
+    # to prevent them from losing rating for unintentional or 0-point rounds.
     active_pool = [
         p for p in competitive_humans 
-        if getattr(p, 'score', 0) > 0 or (getattr(p, 'submitted_words', []) and any(w.get('points', 0) > 0 for w in p.submitted_words)) or getattr(p, 'invalid_words', [])
+        if getattr(p, 'score', 0) > 0 or (getattr(p, 'submitted_words', []) and any(w.get('points', 0) > 0 for w in p.submitted_words))
     ]
     
     number_of_players = len(active_pool)
