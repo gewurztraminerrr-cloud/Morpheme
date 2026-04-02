@@ -205,12 +205,16 @@ class GameRoom:
         existing_player = next((p for p in self.past_players.values() if str(p.user_id) == str(user_id)), None)
         
         if existing_player:
-            # FIX FOR GHOST ACTIVITY: If rejoining from an old round, clear their round-specific lists
             last_p_round = getattr(existing_player, '_last_round_seen', -1)
             if last_p_round != -1 and last_p_round != self.current_round:
+                # NEW ROUND: Clear all round-specific activity
                 existing_player.found_bonus_word = False
                 existing_player.has_abandoned = False
                 existing_player.joined_mid_round = (self.state == 'active')
+                existing_player.submitted_words = []
+                existing_player.invalid_words = []
+                existing_player.score = 0
+                existing_player.previous_round_score = 0
             
             existing_player._last_round_seen = self.current_round
             existing_player.last_active = time.time()
@@ -1035,12 +1039,21 @@ class GameRoom:
                         if 'conn' in locals() and conn:
                             conn.close()
                     finally:
-                        # ROBUST DAILY RESET (Players): Clear lists AFTER scoring/announcement
+                        # ROBUST DAILY RESET (Players): Set flag to clear AFTER scoring/saving in app.py
                         if self.time_limit >= 7200:
-                            print(f"[GameRoom] Daily Reset Execution: Purging active lists for {self.room_id}")
+                            print(f"[GameRoom] Daily Reset Milestone: Snapshotting history for {self.room_id}")
+                            
+                            # SNAPSHOT HISTORY for "Previous Day" tab
+                            self.previous_day_history = {}
                             for p in self.players:
-                                self.past_players[str(p.user_id)] = p
-                            self.players = []
+                                self.previous_day_history[str(p.user_id)] = {
+                                    'username': p.username,
+                                    'found_words': [w['word'] for w in p.submitted_words] if isinstance(p.submitted_words, list) else []
+                                }
+                            print(f"[GameRoom] Snapshotted history for {len(self.previous_day_history)} players.")
+                            
+                            # SIGNAL app.py to call save_round_history() and then purge players
+                            self.midnight_reset_occurred = True
                             self.custom_end_time = 0
 
                 finally:
@@ -1935,6 +1948,17 @@ class RoomManager:
 
                 # Use pre-generated board and words
                 room.current_round += 1
+                
+                # NEW ROUND: Clear per-player round activity for everyone already in the room
+                # This prevents "ghost words" from the previous day/round appearing on the new board
+                for p in room.players:
+                    p.submitted_words = []
+                    p.invalid_words = []
+                    p.score = 0
+                    p.found_bonus_word = False
+                    p.has_abandoned = False
+                    p._last_round_seen = room.current_round
+
                 room.board = room.next_round_board
                 room.all_words = room.next_round_words
                 # Snapshot parameters for the round

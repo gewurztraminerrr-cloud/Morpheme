@@ -10,7 +10,7 @@ const pages = {
     'btn-forums': 'page-forums',
     'btn-tools': 'page-tools',
     'btn-settings': 'page-settings',
-    'btn-contact': 'page-contact'
+    'nav-donate-btn': 'page-donate'
 };
 
 let currentUser = null;

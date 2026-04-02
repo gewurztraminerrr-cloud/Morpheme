@@ -2108,12 +2108,27 @@ def get_room_state(room_id):
         prev_state = room.state
         state_changed = room.check_and_update_state()
 
+        # Handle Robust Daily Reset Sequencing (24h rooms)
+        if getattr(room, 'midnight_reset_occurred', False):
+            print(f"[app.py] Executing Midnight Reset Purge for {room_id}")
+            # 1. First, save round history while players are still in the room
+            room_manager.save_round_history(room)
+            
+            # 2. Then, move them to past_players and clear list for the new day
+            for p in room.players:
+                 room.past_players[str(p.user_id)] = p
+            room.players = []
+            
+            # 3. Clean up flags
+            room.midnight_reset_occurred = False
+            state_changed = True # Ensure clients see the refresh
+
         
         # If just transitioned to intermission, start complete solving in background
         if state_changed and room.state == 'intermission' and prev_state == 'active':
             print(f"Transitioned to intermission, using fast solve words immediately.")
             
-            # SAVE ROUND HISTORY
+            # SAVE ROUND HISTORY (for standard rounds, or redundant for 24h)
             room_manager.save_round_history(room)
             
 
