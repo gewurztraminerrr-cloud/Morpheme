@@ -12,6 +12,15 @@ let cachedTimerValueEl = null;    // Cache for high-frequency updates
 let cachedBoardPanelEl = null;
 let lastPlayersHtml = null;       // Cache for renderPlayers
 const playerRatingCache = new Map(); // Cache for Chat Colors
+/* --- Distributed Board Generation (DBG) --- */
+const DICE_CONFIG_4x4 = [
+    "AAEEGN", "ABBJOO", "ACHOPS", "AFFKPS",
+    "AOOTTW", "CIMOTU", "DEILRX", "DELRVY",
+    "DISTTY", "EEGHNW", "EEINSU", "EHRTVW",
+    "EIOSST", "ELRTTY", "HIMNQU", "HLNNRZ"
+];
+let lastProbeTime = 0;
+const PROBE_INTERVAL = 4000; // 4 seconds between probes
 let tournamentScore = 0;
 let tournamentStartTime = 0;
 let localEndTime = 0;
@@ -123,6 +132,9 @@ function ejectToLobby(reason = "inactivity") {
 
 // Check for idle logout every 5 seconds
 setInterval(() => {
+    // Optimization: Skip idle check if tab is hidden to save battery
+    if (document.hidden) return;
+
     const roomId = getCurrentRoomId();
     if (roomId) {
         // EXEMPTION: No idle limit for 24h rooms
@@ -171,13 +183,16 @@ window.startGamePolling = function () {
     startPolling();
 };
 
+let joinAttemptCount = 0; // Track initial join attempts to avoid race-condition kickouts
+
 window.stopGamePolling = function () {
     stopPolling();
 };
 
 function startPolling() {
-    console.log('[play.js] Starting Game Polling - Resetting Idle Timer');
-    resetIdleTimer(); // IMPORTANT: Reset timer on fresh room entry
+    console.log('[play.js] Starting Game Polling - Resetting Join Counter');
+    joinAttemptCount = 0; // Reset counter for new room entry
+    resetIdleTimer();
     
     if (pollInterval) {
         clearInterval(pollInterval);
@@ -193,9 +208,42 @@ function startPolling() {
     // Initial fetch to ensure we have state immediately
     updateGameState();
     
-    // Setup interval for subsequent polls
-    pollInterval = setInterval(updateGameState, 1000);
+    // Setup pulse for subsequent polls (Dynamic based on visibility)
+    refreshPollInterval();
 }
+
+function refreshPollInterval() {
+    if (pollInterval) clearInterval(pollInterval);
+    
+    const delay = document.hidden ? 15000 : 1000;
+    pollInterval = setInterval(updateGameState, delay);
+    console.log(`[play.js] Polling interval set to ${delay}ms (hidden: ${document.hidden})`);
+}
+
+// Global Visibility Listener to handle battery management
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        // Tab became visible: Update immediately and restore fast polling
+        console.log('[play.js] Tab visible: Restoring fast polling.');
+        updateGameState();
+        refreshPollInterval();
+        
+        // Re-sync timer if needed
+        if (window.lastGameState) {
+            syncTimerWithServer(window.lastGameState);
+        }
+    } else {
+        // Tab hidden: Enter battery-saving mode
+        console.log('[play.js] Tab hidden: Entering battery-saving mode.');
+        refreshPollInterval();
+        
+        // Pause the high-frequency timer interval while hidden
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+    }
+});
 
 function stopPolling() {
     if (pollInterval) {
@@ -219,6 +267,8 @@ async function updateGameState(incomingState = null) {
         if (incomingState) {
             state = incomingState;
         } else {
+            // Optimization: Skip fetching if tab has been hidden for a while but not yet reached the 15s pulse
+            // This is just extra safety, the refreshPollInterval handles the bulk of it.
             const response = await fetch(`/api/room/${roomId}/state`, { cache: 'no-store' });
             if (!response.ok) {
                 if (response.status === 404 || response.status === 403 || response.status === 401) {
@@ -231,7 +281,14 @@ async function updateGameState(incomingState = null) {
                     if (errorMsg.toLowerCase().includes('inactivity') || errorMsg.toLowerCase().includes('removed') || errorMsg.toLowerCase().includes('idle')) {
                         ejectToLobby("inactivity");
                     } else {
-                        // Generic failure (e.g. room actually gone)
+                        // RACE CONDITION PROTECTION: If we just joined, wait a few polls for server to sync
+                        if (!window.lastGameState && joinAttemptCount < 5) {
+                            joinAttemptCount++;
+                            console.log(`[play.js] Poll failed (403/404) during join sequence. Attempt ${joinAttemptCount}/5. Silently retrying...`);
+                            return; 
+                        }
+                        
+                        // Generic failure (only if we are established or exhausted retries)
                         stopPolling();
                         window.currentRoomId = null;
                         if (window.showPage) window.showPage('page-lobby');
@@ -240,12 +297,35 @@ async function updateGameState(incomingState = null) {
                 return;
             }
             state = await response.json();
-
-            // STATE UPDATE CONTINUES (Ensures intermissions work everywhere)
         }
 
         if (!state) return;
-        // console.log('[play.js] Processing state:', state.room_id, state.state);
+
+        // --- BATTERY OPTIMIZATION: STATE CHANGE CHECK ---
+        // If the state hasn't changed (excluding jittery fields like server_time/time_remaining), skip rendering
+        const stateToCompare = { ...state };
+        delete stateToCompare.server_time;
+        delete stateToCompare.time_remaining;
+        
+        const stateJSON = JSON.stringify(stateToCompare);
+        if (window.lastRenderedStateJSON === stateJSON && !incomingState) {
+            // Optimization: Update server heartbeat timestamp even if state is identical
+            lastServerUpdate = Date.now();
+            
+            // If the tab is hidden, we definitely don't need to do anything else
+            if (document.hidden) return;
+            
+            // If visible, we still need to sync the timer reference, but we can skip heavy DOM re-renders
+            syncTimerWithServer(state);
+            return;
+        }
+        window.lastRenderedStateJSON = stateJSON;
+        
+        // --- Distributed Board Generation (DBG) ---
+        // If the server is searching, we help by probing random boards.
+        if (state && state.board_search_started && !state.solving_complete && state.spinner_params_revealed && !isTournamentPlay) {
+            runBoardProbe();
+        }
 
         // Capture previous state for transition logic (e.g. daily reset kick)
         const previousState = window.lastGameState;
@@ -338,11 +418,13 @@ async function updateGameState(incomingState = null) {
             const defPanel = document.querySelector('.definitions-panel');
             const defHeader = document.getElementById('definition-header');
             
-            // Render only if not already showing the announcement (to avoid flickering/re-adding button)
+            const latest = state.winners_history[0];
+            const hasActualWinner = latest && latest.score > 0;
+
+            // Render only if not already showing the announcement AND someone actually scored points
             // EXPLICITLY SKIP if the user has manually selected a word to view its definition
             const isViewingDefinition = window.userViewingDefinitionIntermission === true;
-            if (defContent && !isViewingDefinition && (!defContent.innerHTML.includes('CONGRATULATIONS') || defContent.innerHTML.includes('placeholder'))) {
-                const latest = state.winners_history[0];
+            if (hasActualWinner && defContent && !isViewingDefinition && (!defContent.innerHTML.includes('CONGRATULATIONS') || defContent.innerHTML.includes('placeholder'))) {
                 const winnersList = latest.winners.map(w => w.username).join(' & ');
                 
                 if (defPanel) {
@@ -501,7 +583,7 @@ async function updateGameState(incomingState = null) {
                 const isAccumulative = state.game_type === 'accumulative';
                 const canJoin = isAccumulative || (playerCount < maxPlayers);
 
-                // Render Content
+            // Render Content
                 spectatorPanel.innerHTML = `
                     <div class="spectator-title">SPECTATING</div>
                     <div class="spectator-actions">
@@ -567,7 +649,6 @@ async function updateGameState(incomingState = null) {
             return;
         }
 
-        console.log('[play.js] Updating parameters...');
         // Update parameters
         updateParameters(state);
 
@@ -578,7 +659,7 @@ async function updateGameState(incomingState = null) {
         lastServerUpdate = Date.now();
 
         // Render board
-        console.log('[play.js] Rendering board...');
+        // Render board
         const isSplitIntermission = (state.game_type === 'split' && state.state === 'intermission');
         const isFCFSIntermission = (state.game_type === 'fcfs' && state.state === 'intermission');
 
@@ -633,11 +714,13 @@ async function updateGameState(incomingState = null) {
             const currentRoundId = `${state.room_id}_${state.current_round}`;
             const wordsListEl = document.getElementById('submitted-words-list');
             
-            // Allow re-rendering if data was empty or for the first 5s to ensure sync
+            // OPTIMIZATION: Only render the massive word list once per round transition or when solving finishes.
+            // Rendering 2000+ words on every pulse (1s) can cause the browser main thread to hang.
             const isTransition = !window.lastRenderedIntermissionWords || window.lastRenderedIntermissionWords !== currentRoundId;
             const isEmpty = wordsListEl && (wordsListEl.innerHTML.includes('placeholder') || wordsListEl.children.length === 0);
+            const newlySolved = state.solving_complete && !window.lastSolvingComplete;
             
-            if (isTransition || isEmpty || (state.time_remaining > (state.intermission_duration || 60) - 5)) {
+            if (isTransition || isEmpty || newlySolved) {
                 if (state.all_words) {
                     const myWords = state.players.find(p => p.username.toLowerCase().trim() === (state.your_username || currentUsername || '').toLowerCase().trim())?.submitted_words || [];
                     const allFound = state.players.reduce((acc, p) => acc.concat(p.submitted_words || []), []);
@@ -652,11 +735,13 @@ async function updateGameState(incomingState = null) {
                         state.added_words || []
                     );
                     window.lastRenderedIntermissionWords = currentRoundId;
+                    window.lastSolvingComplete = state.solving_complete;
                 }
             }
 
         } else if (state.state !== 'intermission') {
             window.lastRenderedIntermissionWords = null;
+            window.lastSolvingComplete = false;
         }
 
         // --- HEADER PARAMETER REVEAL ANIMATION (Gold Fade) ---
@@ -854,7 +939,7 @@ async function updateGameState(incomingState = null) {
                 // INTERMISSION: Show ALL words
 
                 // 1. Calculate Global Stats (All players)
-                const totalWords = allWords.length;
+                const totalWords = state.total_words_count || allWords.length;
                 const globalUnique = new Set(allPlayerFoundStrs).size;
                 const globalPercentage = totalWords > 0 ? Math.round((globalUnique / totalWords) * 100) : 0;
 
@@ -949,7 +1034,7 @@ async function updateGameState(incomingState = null) {
 
 
                 // 2. Personal Stats Only (Active)
-                const totalWords = allWords.length;
+                const totalWords = state.total_words_count || allWords.length;
                 const uniqueFound = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase())).size;
                 const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
 
@@ -1024,7 +1109,7 @@ async function updateGameState(incomingState = null) {
                     });
                 }
 
-                const totalWords = allWords.length;
+                const totalWords = state.total_words_count || allWords.length;
                 const uniqueFound = new Set(allFoundWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase())).size;
                 const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
                 wordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}%`;
@@ -1100,13 +1185,32 @@ async function updateGameState(incomingState = null) {
                 }
             }
 
-            const remainingWords = allWords.filter(w => !myFoundStrs.includes(w.toUpperCase()));
-            const countsByLen = {};
-            for (let i = 3; i <= 20; i++) countsByLen[i] = 0;
-            remainingWords.forEach(w => {
-                const len = w.length;
-                if (len >= 3 && len <= 20) countsByLen[len]++;
-            });
+            // User Request Fix: Use server-provided total counts if available
+            // to allow tracking even when all_words is hidden (Anti-Cheat).
+            const isIntermission = state.state === 'intermission';
+            const showRealtimeCounts = !isIntermission && state.total_counts_by_len;
+            
+            let countsByLen = {};
+            if (showRealtimeCounts) {
+                // Real-time mode: calculate remaining from server totals minus local found
+                const totalByLen = state.total_counts_by_len || {};
+                const foundByLen = {};
+                myFoundStrs.forEach(w => {
+                    const l = w.length;
+                    foundByLen[l] = (foundByLen[l] || 0) + 1;
+                });
+                for (let i = 3; i <= 20; i++) {
+                    countsByLen[i] = Math.max(0, (totalByLen[i] || 0) - (foundByLen[i] || 0));
+                }
+            } else {
+                // Intermission/Clues fallback: calculate from explicit list
+                const remainingWords = allWords.filter(w => !myFoundStrs.includes(w.toUpperCase()));
+                for (let i = 3; i <= 20; i++) countsByLen[i] = 0;
+                remainingWords.forEach(w => {
+                    const len = w.length;
+                    if (len >= 3 && len <= 20) countsByLen[len]++;
+                });
+            }
 
             let html = '<table id="remaining-words-table">';
             for (let i = 3; i <= 20; i++) {
@@ -1124,6 +1228,7 @@ async function updateGameState(incomingState = null) {
             const myWords = myPlayer ? myPlayer.submitted_words : [];
             const foundSet = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase()));
             const unfoundWords = allWords.filter(w => !foundSet.has(w.toUpperCase()));
+            console.log('[CluesDebug] allWords:', allWords.length, 'foundSet:', foundSet.size, 'unfound:', unfoundWords.length);
 
             if (unfoundWords.length === 0) {
                 cluesListEl.innerHTML = '<p class="placeholder">All words found!</p>';
@@ -1131,7 +1236,11 @@ async function updateGameState(incomingState = null) {
                 unfoundWords.sort((a, b) => a.length - b.length || a.localeCompare(b));
                 const html = unfoundWords.map(w => {
                     const prefix = w.substring(0, 2);
-                    return `<div class="clue-item">${prefix}.. (${w.length})</div>`;
+                    let sum = 0;
+                    for (let char of w.toUpperCase()) {
+                        sum += (window.LETTER_VALUES || LETTER_VALUES)[char] || 1;
+                    }
+                    return `<div class="clue-item">${prefix}.. (${w.length}) [${sum}]</div>`;
                 }).join('');
                 cluesListEl.innerHTML = html;
             }
@@ -1197,9 +1306,13 @@ async function updateGameState(incomingState = null) {
                 foundList.sort(sortFn);
                 missedList.sort(sortFn);
 
+                const prevCSWOnly = (state.previous_csw_only_words || []).map(w => w.toUpperCase());
+
                 // Render Helper
                 const renderRow = (w, isFound) => {
-                    const statusClass = isFound ? 'player-word' : 'missed';
+                    const isCSWOnly = prevCSWOnly.includes(w.toUpperCase());
+                    let statusClass = isFound ? 'player-word' : 'missed';
+                    if (!isFound && isCSWOnly) statusClass += ' csw-only';
                     const icon = isFound ? '✓' : '✗';
                     return `<div class="word-item ${statusClass}" data-word="${w}" style="display:flex; justify-content:space-between; cursor:pointer;">
                         <span>${w}</span>
@@ -1742,72 +1855,12 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
 
     console.log('[renderWordsList] Rendering words:', sortedWords.length);
 
-    listEl.innerHTML = sortedWords.map(entry => {
-        const word = (typeof entry === 'object' ? (entry.word || '') : entry);
-        const wordUpper = word.toUpperCase();
-        const isBonus = bonusWord && wordUpper === bonusWord.toUpperCase();
-        const isCSWOnly = cswOnlyUpper.includes(wordUpper);
-        const isAddedWord = addedUpper.includes(wordUpper);
-        const isTargetFound = targetWordsUpper.includes(wordUpper);
-        const isFoundByAny = allFoundUpper.includes(wordUpper);
-        const pointsData = allWordScores[word] || allWordScores[wordUpper] || 0;
-        let pointsText = pointsData;
-
-        if (typeof pointsData === 'object' && pointsData !== null) {
-            if (pointsData.bonus_letter_points > 0) {
-                const originalValue = pointsData.base + (pointsData.bonus_word_points || 0);
-                pointsText = `${originalValue} + ${pointsData.bonus_letter_points} = ${pointsData.total}`;
-            } else {
-                pointsText = pointsData.total;
-            }
-        }
-
-        let className = 'word-item';
-
-        // Highlighting for finder feature
-        if (highlightedFoundWord === wordUpper) {
-            className += ' finder-active';
-        }
-
-        // Priority 1: Bonus Word (Green) - Top Priority
-        if (isBonus) {
-            className += ' bonus-word';
-        }
-        // Priority 2: Added Word (Royal Purple)
-        else if (isAddedWord) {
-            className += ' added-word';
-        }
-        // Priority 3: Word Found by Me/Selected Player (Blue)
-        else if (isTargetFound) {
-            className += ' player-word';
-        }
-        // Priority 4: CSW-Only Word (Yellow/Gold)
-        else if (isCSWOnly) {
-            className += ' csw-only';
-        }
-        // Priority 4: Found by others but not me (Neutral/Missed)
-        else if (isFoundByAny) {
-            className += ' found-by-other missed';
-        }
-        // Priority 5: Not found by anyone (Gray/Missed)
-        else {
-            className += ' unfound missed';
-        }
-
-        const indicatorClass = isFoundByAny ? 'found-indicator present' : 'found-indicator empty';
-        const indicatorIcon = isFoundByAny ? '✓' : '';
-        const indicator = `<span class="${indicatorClass}">${indicatorIcon}</span>`;
-
-        return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; cursor:pointer;">
-            <span>${indicator}${word}</span>
-            <span style="opacity:0.8">${pointsText}</span>
-        </div>`;
-    }).join('');
-
-    // Add click listeners for finder highlighting
-    const wordItems = listEl.querySelectorAll('.word-item');
-    wordItems.forEach(item => {
-        item.addEventListener('click', () => {
+    // PERFORMANCE: Use event delegation instead of 2000 individual listeners
+    if (listEl && !listEl.hasScoringListener) {
+        listEl.addEventListener('click', (e) => {
+            const item = e.target.closest('.word-item');
+            if (!item || !item.dataset.word) return;
+            
             const word = item.dataset.word.toUpperCase();
             
             // Mark that the user is explicitly viewing a definition (so winner announcement doesn't overwrite it)
@@ -1820,14 +1873,80 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             } else {
                 highlightedFoundWord = word;
             }
+
+            // Highlighting update - fast approach using classes on the parent
+            const allItems = listEl.querySelectorAll('.word-item');
+            allItems.forEach(el => el.classList.remove('finder-active'));
+            if (highlightedFoundWord) item.classList.add('finder-active');
+
+            // Optionally call updateGameState to sync other UI parts, but keep it minimal
             if (window.lastGameState) {
                 updateGameState(window.lastGameState);
-            } else {
-                updateGameState();
             }
+            
             window.fetchDefinition(item.dataset.word);
         });
-    });
+        listEl.hasScoringListener = true;
+    }
+
+    listEl.innerHTML = sortedWords.map(entry => {
+        const word = (typeof entry === 'object' ? (entry.word || '') : entry);
+        const wordUpper = word.toUpperCase();
+        const isBonus = bonusWord && wordUpper === bonusWord.toUpperCase();
+        const isCSWOnly = cswOnlyUpper.includes(wordUpper);
+        const isAddedWord = addedUpper.includes(wordUpper);
+        const isTargetFound = targetWordsUpper.includes(wordUpper);
+        const isFoundByAny = allFoundUpper.includes(wordUpper);
+        const pointsData = allWordScores[word] || allWordScores[wordUpper] || 0;
+        let pointsText = pointsData;
+
+        if (typeof pointsData === 'object' && pointsData !== null) {
+            const hasBonusLetter = (pointsData.bonus_letter_points || 0) > 0;
+            const hasBonusWord = (pointsData.bonus_word_points || 0) > 0;
+            
+            if (hasBonusLetter || hasBonusWord) {
+                let parts = [];
+                // Only show base if it's > 0 (Standard scoring) or if no other parts exist
+                if (pointsData.base > 0 || (!hasBonusWord && !hasBonusLetter)) {
+                    parts.push(pointsData.base);
+                }
+                if (hasBonusWord) parts.push(pointsData.bonus_word_points);
+                if (hasBonusLetter) parts.push(pointsData.bonus_letter_points);
+                
+                if (parts.length > 1) {
+                    pointsText = `${parts.join(' + ')} = ${pointsData.total}`;
+                } else {
+                    pointsText = pointsData.total;
+                }
+            } else {
+                pointsText = pointsData.total;
+            }
+        }
+
+        let className = 'word-item';
+
+        // Highlighting for finder feature
+        if (highlightedFoundWord === wordUpper) {
+            className += ' finder-active';
+        }
+
+        // Priority classes
+        if (isBonus) className += ' bonus-word';
+        else if (isAddedWord) className += ' added-word';
+        else if (isTargetFound) className += ' player-word';
+        else if (isCSWOnly) className += ' csw-only';
+        else if (isFoundByAny) className += ' found-by-other missed';
+        else className += ' unfound missed';
+
+        const indicatorClass = isFoundByAny ? 'found-indicator present' : 'found-indicator empty';
+        const indicatorIcon = isFoundByAny ? '✓' : '';
+        const indicator = `<span class="${indicatorClass}">${indicatorIcon}</span>`;
+
+        return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; cursor:pointer;">
+            <span>${indicator}${word}</span>
+            <span style="opacity:0.8">${pointsText}</span>
+        </div>`;
+    }).join('');
 }
 
 // ... existing functions (updateParameters, renderBoard, etc) ...
@@ -1860,78 +1979,140 @@ function updateParameters(state) {
     }
 
     const sp = state.spinner_params || {};
-    const isIntermission = state.state === 'intermission';
-    // REVEAL REFINED: Only show the upcoming spinner parameters if we are deep into the intermission (<= 45s)
-    const isRevealed = isIntermission && state.time_remaining <= 45;
-
-    // Use UPCOMING round parameters if in intermission AND revealed, otherwise use CURRENT round parameters
-    const currentBoardDims = (isRevealed && sp.board_dimensions) ? sp.board_dimensions : (state.board_dimensions || '4x4');
-    const currentTimeLimit = (isRevealed && sp.time_limit) ? sp.time_limit : (state.time_limit || 60);
-    const currentFmt = (isRevealed && sp.board_format) ? sp.board_format : (state.current_board_format || 'Normal');
-    const currentMinLen = (isRevealed && sp.min_word_length) ? sp.min_word_length : (state.current_min_word_length || 3);
-    const currentDict = (isRevealed && sp.dictionary) ? sp.dictionary : (state.current_dictionary || 'NWL');
-    const currentDiff = (isRevealed && sp.difficulty) ? sp.difficulty : (state.current_difficulty || 'Normal');
-    const currentWordRange = (isRevealed && sp.word_count_range) ? sp.word_count_range : (state.current_word_count_range || '100-200');
-    const currentBonus = (isRevealed && sp.bonus_word_length) ? sp.bonus_word_length : (state.current_bonus_word_length || (state.bonus_word ? state.bonus_word.length : 0) || 'None');
-
-    const boardEl = document.getElementById('param-board');
-    if (boardEl) boardEl.textContent = currentBoardDims;
-
-    const timeEl = document.getElementById('param-time');
-    if (timeEl) timeEl.textContent = currentTimeLimit + 's';
-
-    const bonusLen = document.getElementById('param-bonus');
-    if (bonusLen) bonusLen.textContent = (currentBonus === 'None' || currentBonus === 0) ? 'None' : currentBonus + 'L';
-
-    const diff = document.getElementById('param-diff');
-    if (diff) {
-        let val = currentDiff;
-        if (val === 'Normal') {
-            val = 'Medium';
-        } else if (val === 'Expert' || val === 'Difficult') {
-            val = 'Hard';
-        } else if (val === 'Beginner') {
-            val = 'Easy';
-        }
-        diff.textContent = val;
+    // --- STICKY PARAMETERS LOGIC ---
+    // User Request: Only change labels at the same time as the gold-to-black reveal.
+    // We maintain a local cache of what's currently shown.
+    if (!window._displayedParams) {
+        window._displayedParams = { dims: '', time: '', bonus: '', diff: '', uniq: '' };
+        window._lastRevealedRoundCount = -1;
     }
 
-    const minL = document.getElementById('param-min');
-    if (minL) minL.textContent = currentMinLen + 'L';
+    const currentRound = state.current_round || 0;
+    const isRevealed = !!(state.spinner_params && state.spinner_params_revealed);
+    const wasRevealed = !!(window._lastRevealedState);
+    const isIntermission = state.state === 'intermission';
+    const now = Date.now();
 
-    const dict = document.getElementById('param-dict');
-    if (dict) dict.textContent = currentDict;
+    // Determine current fact-checked labels
+    // INTERMISSION REVEAL: During intermission, we prefer the spinner_params (sp) if they are the target of the reveal.
+    // Otherwise, we prefer the state's authoritative ground-truth labels.
+    const factBoardDims = sp.board_dimensions || state.board_dimensions || '4x4';
+    const factTimeLimit = sp.time_limit || state.time_limit || 60;
+    const preferSp = isIntermission && isRevealed;
 
-    const words = document.getElementById('param-words');
-    if (words) {
-        let wr = currentWordRange;
-        if (Array.isArray(wr) && wr.length >= 2) {
-            // Suffix with + if upper bound is very high
-            if (wr[1] > 900) {
-                words.textContent = `${wr[0]}+`;
-            } else {
-                words.textContent = `${wr[0]}-${wr[1]}`;
-            }
-        } else if (typeof wr === 'string') {
-            if (wr === 'random') {
-                words.textContent = '50-100/100-200/200+/500+';
-            } else if (wr.includes('99999') || wr.includes('500-') || wr.includes('200-')) {
-                const parts = wr.split('-');
-                if (parts.length === 2 && (parseInt(parts[1]) > 900 || isNaN(parseInt(parts[1])))) {
-                    words.textContent = parts[0] + '+';
-                } else {
-                    words.textContent = wr;
-                }
-            } else {
-                words.textContent = wr;
-            }
+    const factFmt = (preferSp ? (sp.board_format || state.current_board_format) : (state.current_board_format || sp.board_format)) || 'Normal';
+    const factDiff = (preferSp ? (sp.difficulty || state.current_difficulty) : (state.current_difficulty || sp.difficulty)) || 'Medium';
+    const factBonus = (preferSp ? (sp.bonus_word_length || state.current_bonus_word_length) : (state.current_bonus_word_length || sp.bonus_word_length)) || (state.bonus_word ? state.bonus_word.length : 0);
+    const factMinLen = (preferSp ? (sp.min_word_length || state.current_min_length) : (state.current_min_length || sp.min_word_length)) || 3;
+    const factDict = (preferSp ? (sp.dictionary || state.current_dictionary) : (state.current_dictionary || sp.dictionary)) || 'NWL';
+    const factWordRange = (preferSp ? (sp.word_count_range || state.current_word_count_range) : (state.current_word_count_range || sp.word_count_range)) || '100-200';
+    
+    let factUniq = 0; 
+    if (!isIntermission || (isIntermission && isRevealed)) {
+        factUniq = (state.current_uniqueness !== undefined && state.current_uniqueness !== null) ? state.current_uniqueness : 0;
+        if (factUniq === 0 && sp.uniqueness) factUniq = sp.uniqueness;
+    }
+
+    // UPDATE POLICY:
+    // 1. If Active Round: Update immediately to match facts.
+    // 2. If Intermission & NOT Revealed: Stay sticky to previous round facts.
+    // 3. If Intermission & JUST Revealed: Update NOW and trigger animation.
+    
+    let shouldUpdateLabels = false;
+    let triggerAnimation = false;
+
+    if (!isIntermission) {
+        shouldUpdateLabels = true;
+        window._lastRevealedRoundCount = currentRound; 
+    } else {
+        if (isRevealed && !wasRevealed && (currentRound !== window._animTriggeredForRound)) {
+            shouldUpdateLabels = true;
+            triggerAnimation = true;
+            window._animTriggeredForRound = currentRound;
+            console.log("[play.js] REVEAL ANIMATION + LABEL UPDATE for round:", currentRound);
+        } else if (isRevealed) {
+            shouldUpdateLabels = true;
         } else {
-            words.textContent = '50-100/100-200/200+';
+            shouldUpdateLabels = false;
+        }
+    }
+
+    if (shouldUpdateLabels) {
+        window._displayedParams.dims = factBoardDims;
+        window._displayedParams.time = factTimeLimit + 's';
+        window._displayedParams.bonus = (factBonus === 0) ? 'None' : factBonus + 'L';
+        window._displayedParams.min = factMinLen + 'L';
+        window._displayedParams.dict = factDict;
+        window._displayedParams.range = factWordRange;
+        window._displayedParams.fmt = factFmt;
+        
+        let diffLabel = factDiff;
+        if (diffLabel === 'Varying...') diffLabel = 'Random';
+        else if (diffLabel === 'Normal') diffLabel = 'Medium';
+        else if (diffLabel === 'Expert' || diffLabel === 'Difficult') diffLabel = 'Hard';
+        else if (diffLabel === 'Beginner') diffLabel = 'Easy';
+        
+        const uniquePct = (factUniq > 0 && !diffLabel.includes('(')) ? ` (${(factUniq * 100).toFixed(1)}%)` : "";
+        window._displayedParams.diff = diffLabel + uniquePct;
+        
+        if (typeof updateColorBarHighlight === 'function') {
+            updateColorBarHighlight(diffLabel, factUniq);
+        }
+    }
+
+    // Apply to DOM
+    if (document.getElementById('param-board')) document.getElementById('param-board').textContent = window._displayedParams.dims;
+    if (document.getElementById('param-time')) document.getElementById('param-time').textContent = window._displayedParams.time;
+    if (document.getElementById('param-bonus')) document.getElementById('param-bonus').textContent = window._displayedParams.bonus;
+    if (document.getElementById('param-diff')) document.getElementById('param-diff').textContent = window._displayedParams.diff;
+    if (document.getElementById('param-min')) document.getElementById('param-min').textContent = window._displayedParams.min;
+    if (document.getElementById('param-dict')) document.getElementById('param-dict').textContent = window._displayedParams.dict;
+
+    if (triggerAnimation) {
+        const paramContainer = document.querySelector('.game-params');
+        if (paramContainer) {
+            paramContainer.classList.remove('reveal-new');
+            void paramContainer.offsetWidth; // Force reflow
+            paramContainer.classList.add('reveal-new');
+        }
+    }
+    
+    window._lastRevealedState = isRevealed;
+
+    // Word Range
+    const words = document.getElementById('param-words');
+    if (words && (shouldUpdateLabels || !words.textContent)) {
+        let wr = window._displayedParams.range;
+        const totalCount = state.total_words_count || 0;
+        
+        // Use a pretty range string if it's 'random'
+        let rangeStr = wr;
+        if (rangeStr === 'random') rangeStr = '50-100/100-200/200+';
+        
+        // If round is active and we have an exact count, show the range + exact count!
+        if (totalCount > 0 && !isIntermission) {
+            words.textContent = `${rangeStr} (${totalCount})`;
+        } else {
+            // Format range strings (e.g. 500-999 -> 500+)
+            if (Array.isArray(wr) && wr.length >= 2) {
+                if (wr[1] > 900) words.textContent = `${wr[0]}+`;
+                else words.textContent = `${wr[0]}-${wr[1]}`;
+            } else if (typeof wr === 'string') {
+                if (wr === 'random') words.textContent = '50-100/100-200/200+/500+';
+                else if (wr.includes('99999') || wr.includes('500-') || wr.includes('200-')) {
+                    const parts = wr.split('-');
+                    if (parts.length === 2 && (parseInt(parts[1]) > 900 || isNaN(parseInt(parts[1])))) {
+                        words.textContent = parts[0] + '+';
+                    } else words.textContent = wr;
+                } else words.textContent = wr;
+            } else words.textContent = '50-100/100-200/200+';
         }
     }
 
     const format = document.getElementById('param-format');
-    if (format) format.textContent = currentFmt;
+    if (format && (shouldUpdateLabels || !format.textContent)) {
+        format.textContent = window._displayedParams.fmt;
+    }
 }
 
 function updateTimer(seconds) {
@@ -1971,9 +2152,9 @@ function syncTimerWithServer(state) {
         timerFormatIs24h = true;
     }
 
-    if (!timerInterval && localEndTime > 0) {
-        timerInterval = setInterval(updateLocalTimer, 100);
-    } else if (localEndTime <= 0 && timerInterval) {
+    if (!timerInterval && localEndTime > 0 && !document.hidden) {
+        timerInterval = setInterval(updateLocalTimer, 500); // Optimized from 100ms to 500ms
+    } else if ((localEndTime <= 0 || document.hidden) && timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
     }
@@ -2083,20 +2264,48 @@ function renderBoard(board, grayed = false, is3D = false) {
     }
 
     // Handle Empty/Loading State
-    const hasLetters = is3D ? board.some(f => f.some(r => r.some(c => c && c.trim() !== ''))) : board.some(row => row.some(cell => cell && cell.trim() !== ''));
-    if (board.length > 0 && !hasLetters) {
+    // Check if board has any actual letter content
+    let hasLetters = false;
+    if (is3D) {
+        if (Array.isArray(board) && board.length > 0) {
+            hasLetters = board.some(f => Array.isArray(f) && f.some(r => Array.isArray(r) && r.some(c => c && typeof c === 'string' && c.trim() !== '')));
+        }
+    } else {
+        if (Array.isArray(board) && board.length > 0) {
+            hasLetters = board.some(row => Array.isArray(row) && row.some(cell => cell && typeof cell === 'string' && cell.trim() !== ''));
+        }
+    }
+    
+    // IF board is empty OR has no letters, show loading spinner
+    if (board.length === 0 || !hasLetters) {
+        const loadingMsg = "";
+        const subMsg = "";
+        
         boardEl.innerHTML = `
+            <style>
+                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                @keyframes pulse { 0%, 100% { opacity: 0.6; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
+                .loading-spinner { animation: spin 0.8s linear infinite !important; }
+                .optimizing-text { animation: pulse 2s ease-in-out infinite; }
+            </style>
             <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:300px; color:var(--text-primary);">
-                <div class="loading-spinner" style="margin-bottom:15px; width:40px; height:40px; border:4px solid rgba(var(--text-primary-rgb),0.1); border-top-color:var(--accent-color); border-radius:50%; animation:spin 1s linear infinite;"></div>
-                <div style="font-weight:700; font-size:1.2rem; text-transform:uppercase; letter-spacing:1px; color:var(--accent-color);">Optimizing Board...</div>
+                <div class="loading-spinner" style="margin-bottom:15px; width:45px; height:45px; border:4px solid rgba(var(--text-primary-rgb),0.1); border-top:4px solid var(--accent-color); border-radius:50%;"></div>
+                <div class="optimizing-text" style="font-weight:700; font-size:1.2rem; text-transform:uppercase; letter-spacing:1px; color:var(--accent-color);">${loadingMsg}</div>
+                <div style="font-size:0.9rem; opacity:0.7; margin-top:10px; text-align:center; max-width:80%;">${subMsg}</div>
             </div>
         `;
         boardEl.className = 'game-board';
         boardEl.style.display = 'flex';
         boardEl.style.justifyContent = 'center';
         boardEl.style.alignItems = 'center';
+        // CRITICAL: Clear grid styles so the spinner isn't constrained
+        boardEl.style.gridTemplateColumns = '';
+        boardEl.style.gridTemplateRows = '';
         return;
     }
+
+    const rows = (is3D && Array.isArray(board[0])) ? board[0].length : board.length;
+    const cols = (is3D && Array.isArray(board[0])) ? board[0][0].length : (board[0] ? board[0].length : 0);
 
     // Optimization: Skip if board hasn't changed
     const boardJSON = JSON.stringify(board);
@@ -2110,8 +2319,15 @@ function renderBoard(board, grayed = false, is3D = false) {
 
     boardEl.className = 'game-board';
     boardEl.style.display = '';
-    boardEl.style.gridTemplateColumns = '';
-    boardEl.style.gridTemplateRows = '';
+    
+    // FORTE: Enforce grid sizing BEFORE children are added to prevent "vertical column" flickering
+    if (!is3D && cols > 0 && rows > 0) {
+        boardEl.style.gridTemplateColumns = `repeat(${cols}, var(--cell-size, 60px))`;
+        boardEl.style.gridTemplateRows = `repeat(${rows}, var(--cell-size, 60px))`;
+    } else {
+        boardEl.style.gridTemplateColumns = '';
+        boardEl.style.gridTemplateRows = '';
+    }
     
     if (is3D) {
         boardEl.classList.add('is-3d-view');
@@ -2133,10 +2349,10 @@ function renderBoard(board, grayed = false, is3D = false) {
                         const topDisp = top === 'Q' ? 'QU' : top;
                         const bottomDisp = bottom === 'Q' ? 'QU' : bottom;
                         tileHtml = `
-                            <div class="dual-letter-container" style="display:flex; flex-direction:column; justify-content:space-evenly; height:100%; width:100%; align-items:center;">
-                                <span style="font-size:0.45em; line-height:1;">${topDisp}</span>
-                                <div class="dual-divider" style="width:60%; height:1px; background:rgba(0,0,0,0.2); margin:2px 0;"></div>
-                                <span style="font-size:0.45em; line-height:1;">${bottomDisp}</span>
+                            <div class="dual-letter-container" style="display:flex; flex-direction:column; justify-content:center; height:100%; width:100%; align-items:center; gap: 2px;">
+                                <span style="font-size:0.52em; line-height:0.9; font-weight:900;">${topDisp}</span>
+                                <div class="dual-divider" style="width:65%; height:1px; background:rgba(0,0,0,0.3); margin:1px 0;"></div>
+                                <span style="font-size:0.52em; line-height:0.9; font-weight:900;">${bottomDisp}</span>
                             </div>
                         `;
                     } else {
@@ -2181,12 +2397,9 @@ function renderBoard(board, grayed = false, is3D = false) {
         return;
     }
 
-    const rows = board.length;
-    const cols = (board[0] && board[0].length) ? board[0].length : 0;
-    if (cols === 0) return;
+    // rows and cols are already defined in the scope from lines 2199-2200
+    if (cols === 0 || rows === 0) return;
 
-    boardEl.style.gridTemplateColumns = `repeat(${cols}, var(--cell-size, 60px))`;
-    boardEl.style.gridTemplateRows = `repeat(${rows}, var(--cell-size, 60px))`;
     boardEl.innerHTML = '';
 
     if (isBoardRotated) {
@@ -2205,6 +2418,7 @@ function renderBoard(board, grayed = false, is3D = false) {
         }
     }
 
+    // Trigger overflow check but don't clear grid styles anymore (to prevent flickering)
     setTimeout(checkBoardOverflow, 50);
     reapplyBoardHighlights();
 }
@@ -2240,28 +2454,46 @@ function checkBoardOverflow() {
             if (match) rows = parseInt(match[1]);
         }
     }
-    // Fallbacks
-    if (!cols) cols = 8;
-    if (!rows) rows = 8; // Default is usually square-ish if unknown
-
-    // Condition: Is this strictly a 6x8 board? (Or 8x6)
-    // User requested changes ONLY for 6x8.
-    const isSixByEight = (cols === 6 && rows === 8) || (cols === 8 && rows === 6);
-    console.log(`[Layout] Board: ${cols}x${rows}. Is 6x8 target? ${isSixByEight}`);
-
-    // Get Cell Size (Cache this based on window size to avoid repeated getComputedStyle)
-    if (!window.cachedCellSize || window.lastW !== window.innerWidth) {
-        const computedStyle = getComputedStyle(document.documentElement);
-        const cellSizeVar = computedStyle.getPropertyValue('--cell-size').trim();
-        window.cachedCellSize = parseInt(cellSizeVar) || 60;
-        window.lastW = window.innerWidth;
+    // FALLBACKS: Try to get from last rendered state OR global state
+    if (!cols || !rows) {
+        if (window.lastGameState && window.lastGameState.board_dimensions) {
+             const parts2 = window.lastGameState.board_dimensions.split('x');
+             if (parts2.length >= 2) {
+                 // Format is usually [Rows]x[Cols] or [Face]x[Rows]x[Cols]
+                 if (parts2.length === 3) {
+                     rows = parseInt(parts2[1]);
+                     cols = parseInt(parts2[2]);
+                 } else {
+                     rows = parseInt(parts2[0]);
+                     cols = parseInt(parts2[1]);
+                 }
+             }
+        }
     }
-    const cellSize = window.cachedCellSize;
+
+    if (cols === 0 || rows === 0) return;
+    
+    if (!cols) cols = 4;
+    if (!rows) rows = 4;
+
+    const isSixByEight = (cols === 6 && rows === 8) || (cols === 8 && rows === 6);
+    console.log(`[LayoutCheck] Dimensions: ${cols}x${rows}. Is 6x8 target? ${isSixByEight}`);
+
+    // Get Cell Size (Always fetch to ensure sync with User Settings)
+    const computedStyle = getComputedStyle(document.documentElement);
+    const cellSizeVar = computedStyle.getPropertyValue('--cell-size').trim();
+    let baseCellSize = parseInt(cellSizeVar) || 60;
+    
+    // User Request: Settings-true board size (Remove 6x8 override)
+    let cellSize = baseCellSize;
+    playPage.style.setProperty('--cell-size', `${cellSize}px`);
+
+    window.cachedCellSize = cellSize; // Store for other listeners if needed
 
     // 2. Calculate Required Width for Board
     // Width = (Cols * Size) + Gap + Padding + Scrollbar
     const boardGap = 4 * (cols - 1);
-    const boardPadding = 40; // 20px * 2 (CSS matches this)
+    const boardPadding = 40; // Standard padding
     let requiredBoardWidth = (cols * cellSize) + boardGap + boardPadding;
 
     // Add Scrollbar Width if present
@@ -2270,7 +2502,7 @@ function checkBoardOverflow() {
 
     // 3. Calculate Available Space
     const windowWidth = window.innerWidth;
-    // Safety Margin: 40px padding + 40px gaps + 40px buffer = 120px Total.
+    // Safety Margin: Standard
     const safetyMargin = 120;
 
     // The key difference: We start with Window and subtract Board
@@ -2289,12 +2521,11 @@ function checkBoardOverflow() {
         let maxLeft, maxRight;
 
         if (isSixByEight) {
-            // "Apply the size changes" -> Smaller
-            maxLeft = 260;
-            maxRight = 240;
+            // User Request: Near-standard panels to allow full board size
+            maxLeft = 350;   
+            maxRight = 330;  
         } else {
-            // "Keep what they previously were" -> Standard/Larger
-            // Default CSS implies 340/320 base.
+            // Standard/Balanced for smaller grids
             maxLeft = 340;
             maxRight = 320;
         }
@@ -2435,23 +2666,24 @@ function createBoardCell(r, c, letter, grayed, f) {
                 // 3D Cube: [f, r, c]
                 const face = window._currentFaceIndex !== undefined ? window._currentFaceIndex : 0;
                 // Note: f is passed to createBoardCell for 3D
-                if (typeof f !== 'undefined' && bonusCell[0] === f && bonusCell[1] === r && bonusCell[2] === c) {
+                if (typeof f !== 'undefined' && Number(bonusCell[0]) === f && Number(bonusCell[1]) === r && Number(bonusCell[2]) === c) {
                     isMatch = true;
                 }
             } else if (bonusCell.length === 2) {
                 // 2D Board: [r, c]
-                if (bonusCell[0] === r && bonusCell[1] === c) isMatch = true;
+                // ROBUSTNESS: Ensure Number comparison to handle typed arrays or JSON strings
+                if (Number(bonusCell[0]) === r && Number(bonusCell[1]) === c) isMatch = true;
             }
         } else if (typeof bonusCell === 'object') {
             // Dict format: {r: 1, c: 2} or {f: 0, r: 1, c: 2}
             if (bonusCell.f !== undefined) {
-                if (typeof f !== 'undefined' && bonusCell.f === f && bonusCell.r === r && bonusCell.c === c) isMatch = true;
+                if (typeof f !== 'undefined' && Number(bonusCell.f) === f && Number(bonusCell.r) === r && Number(bonusCell.c) === c) isMatch = true;
             } else {
-                if (bonusCell.r === r && bonusCell.c === c) isMatch = true;
+                if (Number(bonusCell.r) === r && Number(bonusCell.c) === c) isMatch = true;
             }
         }
         
-        if (isMatch) {
+        if (isMatch || (normalizedFmt.includes('either') && letter.includes('/'))) {
             cell.classList.add('bonus-highlight');
         }
     }
@@ -2461,17 +2693,22 @@ function createBoardCell(r, c, letter, grayed, f) {
         cell.classList.add('dual-letter');
         const [top, bottom] = letter.split('/');
 
+        const container = document.createElement('div');
+        container.className = 'dual-letter-container';
+
         const topEl = document.createElement('span');
-        topEl.textContent = top === 'Q' ? 'QU' : top;
-        cell.appendChild(topEl);
+        topEl.textContent = (top === 'Q' ? 'QU' : top);
+        container.appendChild(topEl);
 
         const divider = document.createElement('div');
         divider.className = 'dual-divider';
-        cell.appendChild(divider);
+        container.appendChild(divider);
 
         const bottomEl = document.createElement('span');
-        bottomEl.textContent = bottom === 'Q' ? 'QU' : bottom;
-        cell.appendChild(bottomEl);
+        bottomEl.textContent = (bottom === 'Q' ? 'QU' : bottom);
+        container.appendChild(bottomEl);
+
+        cell.appendChild(container);
     } else {
         const letterSpan = document.createElement('span');
         letterSpan.textContent = letter === 'Q' ? 'QU' : letter;
@@ -2498,6 +2735,16 @@ function createBoardCell(r, c, letter, grayed, f) {
     cell.dataset.row = r;
     cell.dataset.col = c;
     cell.dataset.letter = letter; // Original letter
+    
+    // User Request: Fix for 'Alphabet tooltip' glitch. Explicitly force title to empty 
+    // to prevent any accidental browser/library tooltips showing raw dataset strings.
+    cell.setAttribute('title', "");
+    cell.removeAttribute('title');
+    
+    // Extra: Apply to children to be absolutely certain
+    hitbox.title = "";
+    hitbox.removeAttribute('title');
+    
     return cell;
 }
 
@@ -4386,39 +4633,91 @@ function renderPreviousBoard(board, container) {
     if (!board || board.length === 0 || !container) return;
 
     container.innerHTML = '';
-    container.style.display = 'grid';
-    container.style.gap = '4px';
-    container.style.padding = '10px';
-    container.style.background = 'rgba(0,0,0,0.2)';
-    container.style.borderRadius = '12px';
-    container.style.marginBottom = '15px';
+    
+    // Check if 3D (3 layers of arrays) or 2D (2 layers)
+    const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
 
-    const rows = board.length;
-    const cols = board[0].length;
+    if (is3D) {
+        // Render 3D Cube Faces (2x3 grid)
+        container.style.display = 'grid';
+        container.style.gridTemplateColumns = 'repeat(3, 1fr)';
+        container.style.gap = '15px';
+        container.style.padding = '15px';
+        container.style.background = 'rgba(0,0,0,0.3)';
+        container.style.borderRadius = '16px';
+        container.style.marginBottom = '20px';
 
-    // Use smaller cell size for previous board
-    const cellSize = rows > 4 ? '35px' : '45px';
-    container.style.gridTemplateColumns = `repeat(${cols}, ${cellSize})`;
-    container.style.gridTemplateRows = `repeat(${rows}, ${cellSize})`;
-    container.style.justifyContent = 'center';
+        board.forEach((face, idx) => {
+            const faceCont = document.createElement('div');
+            faceCont.style.display = 'grid';
+            faceCont.style.gap = '2px';
+            faceCont.style.padding = '5px';
+            faceCont.style.background = 'rgba(0,0,0,0.2)';
+            faceCont.style.borderRadius = '8px';
+            
+            const rows = face.length;
+            const cols = face[0].length;
+            const fCellSize = rows > 4 ? '18px' : '22px';
+            
+            faceCont.style.gridTemplateColumns = `repeat(${cols}, ${fCellSize})`;
+            faceCont.style.gridTemplateRows = `repeat(${rows}, ${fCellSize})`;
+            faceCont.style.justifyContent = 'center';
 
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-            const cell = document.createElement('div');
-            cell.className = 'board-cell';
-            cell.style.width = cellSize;
-            cell.style.height = cellSize;
-            cell.style.fontSize = rows > 4 ? '0.9rem' : '1.1rem';
-            cell.style.display = 'flex';
-            cell.style.justifyContent = 'center';
-            cell.style.alignItems = 'center';
-            cell.style.fontWeight = '700';
-            cell.style.background = 'var(--input-bg)';
-            cell.style.border = '1px solid var(--input-border)';
-            cell.style.borderRadius = '6px';
-            cell.style.color = 'var(--text-primary)';
-            cell.textContent = board[r][c];
-            container.appendChild(cell);
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const cell = document.createElement('div');
+                    cell.style.width = fCellSize;
+                    cell.style.height = fCellSize;
+                    cell.style.fontSize = '0.7rem';
+                    cell.style.display = 'flex';
+                    cell.style.justifyContent = 'center';
+                    cell.style.alignItems = 'center';
+                    cell.style.fontWeight = '800';
+                    cell.style.background = 'var(--input-bg)';
+                    cell.style.borderRadius = '3px';
+                    cell.style.color = 'var(--text-primary)';
+                    cell.textContent = face[r][c];
+                    faceCont.appendChild(cell);
+                }
+            }
+            container.appendChild(faceCont);
+        });
+    } else {
+        // Render 2D Grid
+        container.style.display = 'grid';
+        container.style.gap = '4px';
+        container.style.padding = '10px';
+        container.style.background = 'rgba(0,0,0,0.2)';
+        container.style.borderRadius = '12px';
+        container.style.marginBottom = '20px';
+
+        const rows = board.length;
+        const cols = board[0].length;
+
+        // Use smaller cell size for previous board
+        const cellSize = rows > 4 ? '35px' : '45px';
+        container.style.gridTemplateColumns = `repeat(${cols}, ${cellSize})`;
+        container.style.gridTemplateRows = `repeat(${rows}, ${cellSize})`;
+        container.style.justifyContent = 'center';
+
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'board-cell';
+                cell.style.width = cellSize;
+                cell.style.height = cellSize;
+                cell.style.fontSize = rows > 4 ? '0.9rem' : '1.1rem';
+                cell.style.display = 'flex';
+                cell.style.justifyContent = 'center';
+                cell.style.alignItems = 'center';
+                cell.style.fontWeight = '700';
+                cell.style.background = 'var(--input-bg)';
+                cell.style.border = '1px solid var(--input-border)';
+                cell.style.borderRadius = '6px';
+                cell.style.color = 'var(--text-primary)';
+                cell.textContent = board[r][c];
+                container.appendChild(cell);
+            }
         }
     }
 }
@@ -4466,4 +4765,112 @@ function setupCubeRotation() {
             cube.style.transform = `rotateX(${window.cubeRotationX}deg) rotateY(${window.cubeRotationY}deg)`;
         }
     });
+}
+
+// --- Distributed Board Generation (DBG) Methods ---
+function runBoardProbe() {
+    const s = window.lastGameState;
+    if (!s || !s.spinner_params) return;
+    
+    // Safety: Only probe if we are in intermission or a search is explicitly active
+    const now = Date.now();
+    if (now - lastProbeTime < PROBE_INTERVAL) return;
+    lastProbeTime = now;
+
+    console.log('[DBG] Client Probing...');
+    const board = generateProbeBoard(s.spinner_params);
+    if (!board) return;
+
+    fetch(`/api/room/${s.room_id}/propose-board`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ board: board })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            console.log(`[DBG] SUCCESS! Server accepted our board (${data.words_found} words, ${Math.round(data.uniqueness*100)}% unique)`);
+        }
+    })
+    .catch(e => {}); // Fail silently
+}
+
+function generateProbeBoard(params) {
+    const dims = params.dimensions || '4x4';
+    const format = params.format || 'Normal';
+    const bonusWord = params.bonus_word || '';
+    const parts = dims.split('x');
+    if (parts.length !== 2) return null;
+    const rows = parseInt(parts[0]);
+    const cols = parseInt(parts[1]);
+
+    let letters = [];
+    if (rows === 4 && cols === 4 && format !== 'Checkerboard') {
+         const dice = [...DICE_CONFIG_4x4];
+         for (let i = dice.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [dice[i], dice[j]] = [dice[j], dice[i]];
+         }
+         letters = dice.map(d => d[Math.floor(Math.random() * 6)]);
+    } else {
+         const alpha = "EEEEEEEEEEERRRRRRRRRTTTTTTTTTAAAAAAAAAIIIIIIIINNNNNNNNSSSSSSSSOOOOOOOLLLLLLDDDDDDUUUUUCCCGGGMMMYYYPPPBKBVWFZKQXJ";
+         for(let i=0; i<rows*cols; i++) letters.push(alpha[Math.floor(Math.random()*alpha.length)]);
+    }
+
+    let board = [];
+    for(let r=0; r<rows; r++) board.push(letters.slice(r*cols, (r+1)*cols));
+
+    if (format === 'Checkerboard') {
+         const vowels = "AEIOU";
+         const cons = "BCDFGHJKLMNPQRSTVWXYZ";
+         for(let r=0; r<rows; r++) {
+             for(let c=0; c<cols; c++) {
+                 const isVowelSpace = (r + c) % 2 === 0;
+                 board[r][c] = isVowelSpace ? vowels[Math.floor(Math.random()*vowels.length)] : cons[Math.floor(Math.random()*cons.length)];
+             }
+         }
+    }
+
+    if (bonusWord) {
+        board = embedBonusWordForProbe(board, bonusWord);
+    }
+
+    return board;
+}
+
+function embedBonusWordForProbe(board, word) {
+    if (!word) return board;
+    const rows = board.length;
+    const cols = board[0].length;
+    const pWord = word.toUpperCase().replace(/QU/g, 'Q').split('');
+    if (pWord.length > rows * cols) return board;
+
+    for (let attempt = 0; attempt < 10; attempt++) {
+        let r = Math.floor(Math.random() * rows);
+        let c = Math.floor(Math.random() * cols);
+        let path = [[r, c]];
+        let currentBoard = board.map(row => [...row]);
+        currentBoard[r][c] = pWord[0];
+
+        let success = true;
+        for (let i = 1; i < pWord.length; i++) {
+            let neighbors = [];
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    if (dr === 0 && dc === 0) continue;
+                    let nr = r + dr, nc = c + dc;
+                    if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !path.some(p => p[0] === nr && p[1] === nc)) {
+                        neighbors.push([nr, nc]);
+                    }
+                }
+            }
+            if (neighbors.length === 0) { success = false; break; }
+            let next = neighbors[Math.floor(Math.random() * neighbors.length)];
+            r = next[0]; c = next[1];
+            path.push([r, c]);
+            currentBoard[r][c] = pWord[i];
+        }
+        if (success) return currentBoard;
+    }
+    return board;
 }

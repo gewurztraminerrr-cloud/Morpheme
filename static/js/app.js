@@ -71,48 +71,71 @@ const RATING_RANGES = [
 ];
 
 // Single Instance Logic
-(function () {
-    const channel = new BroadcastChannel('morpheme_instance');
-    let isOriginal = true;
+async function validateSingleInstance() {
+    if (window.location.search.includes('force=true')) return true;
+    
+    return new Promise((resolve) => {
+        const channel = new BroadcastChannel('morpheme_instance');
+        let duplicateFound = false;
 
-    // Check if other tabs exist
-    channel.postMessage('check_if_exists');
+        channel.onmessage = (event) => {
+            if (event.data.type === 'PING') {
+                channel.postMessage({ type: 'PONG' });
+            } else if (event.data.type === 'PONG') {
+                duplicateFound = true;
+                showAlreadyOpenScreen();
+                resolve(false);
+            }
+        };
 
-    channel.onmessage = (event) => {
-        if (event.data === 'check_if_exists') {
-            // Another tab is asking if we exist. We do.
-            channel.postMessage('i_exist');
-        } else if (event.data === 'i_exist') {
-            // Another tab exists! We are the duplicate.
-            isOriginal = false;
-            document.body.innerHTML = `
-                <div style="
-                    display: flex; 
-                    justify-content: center; 
-                    align-items: center; 
-                    height: 100vh; 
-                    background: #0d1117; 
-                    color: #fff; 
-                    font-family: sans-serif; 
-                    text-align: center;
-                    padding: 20px;
-                ">
-                    <div>
-                        <h1 style="color: #e74c3c;">Morpheme is already open</h1>
-                        <p style="font-size: 1.2rem; color: #aaa;">
-                            Please close this tab and use the existing window.
-                        </p>
-                    </div>
+        // Ping and wait a short moment for a response
+        channel.postMessage({ type: 'PING' });
+        
+        setTimeout(() => {
+            if (!duplicateFound) {
+                resolve(true); // No response, we are the only one
+            }
+        }, 300); // 300ms is enough for local IPC
+    });
+}
+
+function showAlreadyOpenScreen() {
+    document.body.innerHTML = `
+        <div id="already-open-blocker" style="
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            background: #0d1117; 
+            color: #fff; 
+            font-family: 'Inter', sans-serif; 
+            text-align: center;
+            padding: 20px;
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            z-index: 999999;
+        ">
+            <div style="background: rgba(255,255,255,0.05); padding: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); max-width: 500px;">
+                <img src="/static/images/morpheme.png" style="width: 80px; margin-bottom: 20px;">
+                <h1 style="color: var(--accent-color, #e74c3c); margin-bottom: 10px;">Morpheme is already open</h1>
+                <p style="color: #8b949e; line-height: 1.6; margin-bottom: 25px;">
+                    To prevent rating desync and session issues, Morpheme's restricted to one tab at a time.
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="window.close()" style="padding: 10px 20px; background: #21262d; border: 1px solid #30363d; color: #c9d1d9; border-radius: 6px; cursor: pointer; font-weight: 600;">Close Tab</button>
+                    <button onclick="window.location.href = window.location.pathname + '?force=true'" style="padding: 10px 20px; background: var(--accent-color, #e74c3c); border: none; color: #fff; border-radius: 6px; cursor: pointer; font-weight: 600;">Open Anyway</button>
                 </div>
-            `;
-            // Stop further execution
-            throw new Error("Morpheme already running in another tab.");
-        }
-    };
-})();
+            </div>
+        </div>
+    `;
+}
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', async () => {
+    // Check for duplicate tab first
+    const canInitialize = await validateSingleInstance();
+    if (!canInitialize) return;
+
     setupNavigation();
     setupModalListeners();
     setupAuth(); // Initialize auth listeners
@@ -514,7 +537,7 @@ function showPage(pageId) {
         if (typeof window.loadPrivateMatches === 'function') {
             window.loadPrivateMatches();
         }
-        if (typeof window.checkLobbyNotice === 'function') {
+        if (typeof window.checkLobbyNotice === 'function' && !window._lobbyNoticeShownThisSession) {
             window.checkLobbyNotice();
         }
     }
@@ -559,6 +582,10 @@ function showPage(pageId) {
         const contactEmailInput = document.getElementById('contact-user-email');
         if (contactEmailInput && currentUserEmail) {
             contactEmailInput.value = currentUserEmail;
+        }
+    } else if (pageId === 'page-donate') {
+        if (typeof window.initDonatePage === 'function') {
+            window.initDonatePage();
         }
     } else {
         if (window.stopGamePolling) {
@@ -787,18 +814,34 @@ function updateAuthUI() {
 
 async function handleLogout() {
     try {
+        console.info('[Auth] Logout initiated. Preserving global markers...');
         await fetch('/api/logout', { method: 'POST' });
-        // Completely reset app state by clearing all local storage and reloading to the root
+        
+        // Preserve global "read" states (Notices, Forum markers) across login sessions
+        const noticeId = localStorage.getItem('morpheme_read_notice_id');
+        const forumViewed = localStorage.getItem('forum_last_viewed');
+        const userSettings = localStorage.getItem('morpheme_user_settings');
+        
+        console.info(`[Auth] Preservation: noticeId=${noticeId}, forumViewed=${forumViewed}`);
+
+        // Clear only session-specific or sensitive data
         localStorage.clear();
         sessionStorage.clear();
+        
+        // Restore non-sensitive global markers
+        if (noticeId) localStorage.setItem('morpheme_read_notice_id', noticeId);
+        if (forumViewed) localStorage.setItem('forum_last_viewed', forumViewed);
+        if (userSettings) localStorage.setItem('morpheme_user_settings', userSettings);
+        
+        console.info('[Auth] Markers restored. Redirecting...');
         window.location.href = '/';
     } catch (error) {
         console.error('Logout error:', error);
-        localStorage.clear();
-        sessionStorage.clear();
         window.location.href = '/';
     }
 }
+
+
 
 // Setup authentication
 function setupAuth() {
@@ -957,15 +1000,55 @@ function renderGameColorBar() {
 
     bar.innerHTML = '';
 
-    ranges.forEach(range => {
+    ranges.forEach((range, index) => {
         const segment = document.createElement('div');
         segment.className = 'color-bar-segment';
         segment.style.backgroundColor = range.color;
-        // Tooltip text - Uppercase names for maximum legibility
+        
+        // segment.style.backgroundColor = range.color; (already set above)
+
+        // TOOLTIP: Simplified to Rank and Rating Range only
         segment.setAttribute('data-name', `${range.name.toUpperCase()}`);
         segment.setAttribute('data-label', `${range.label}`);
+        segment.setAttribute('data-index', index);
         bar.appendChild(segment);
     });
+}
+
+/**
+ * Highlights the segment in the color bar that matches current uniqueness/difficulty
+ */
+function updateColorBarHighlight(difficulty, uniqueness) {
+    const bar = document.getElementById('game-color-bar');
+    if (!bar) return;
+
+    const segments = bar.querySelectorAll('.color-bar-segment');
+    segments.forEach(s => s.classList.remove('active'));
+
+    let targetIndex = 0;
+    const pct = Math.round(uniqueness * 100);
+    
+    // TIER MAPPING FOR SPINNER HIGHLIGHT (13 segments total)
+    // EASY: Indices 0,1,2,3,4 (Rating 1-499)
+    // MEDIUM: Indices 5,6,7,8,9,10,11 (Rating 500-1399)
+    // HARD: Index 12 (Rating 1400+)
+    
+    if (pct < 40) {
+        // Map 0-39% to first 5 segments (0-4)
+        targetIndex = Math.floor((pct / 40) * 5);
+    } else if (pct < 70) {
+        // Map 40-69% to next 7 segments (5-11)
+        targetIndex = 5 + Math.floor(((pct - 40) / 30) * 7);
+    } else {
+        // Map 70%+ to the final segment (12)
+        targetIndex = 12;
+    }
+    
+    targetIndex = Math.min(Math.max(targetIndex, 0), 12);
+    
+    if (segments[targetIndex]) {
+        segments[targetIndex].classList.add('active');
+    }
 }
 
 // Presence Beacon: Notify server when browser tab is closed
@@ -1042,13 +1125,36 @@ window.setCurrentUser = function (user) {
 })();
 
 window.checkLobbyNotice = async function() {
+    if (window._lobbyNoticeShownThisSession) {
+        console.debug('[LobbyNotice] Already checked/shown this session.');
+        return;
+    }
+    
     try {
         const res = await fetch('/api/mods/lobby-notice');
         const data = await res.json();
-        if (data && data.notice) {
-             window.showAlertModal("Morpheme News & Notices", data.notice);
+        
+        if (data && data.notice && data.notice.trim() !== '') {
+             const viewedId = localStorage.getItem('morpheme_read_notice_id');
+             const currentId = String(data.notice_id);
+             
+             console.info(`[LobbyNotice] Current: ${currentId}, Local: ${viewedId}`);
+             
+             if (viewedId !== currentId) {
+                  console.info(`[LobbyNotice] Version mismatch - showing alert.`);
+                  window.showAlertModal("Morpheme News & Notices", data.notice);
+                  
+                  localStorage.setItem('morpheme_read_notice_id', currentId);
+                  window._lobbyNoticeShownThisSession = true;
+             } else {
+                  console.info(`[LobbyNotice] Versions match (${currentId}). Skipping.`);
+                  window._lobbyNoticeShownThisSession = true;
+             }
+        } else {
+             window._lobbyNoticeShownThisSession = true;
         }
     } catch (e) {
-        console.warn('Failed to check lobby notice', e);
+        console.warn('[LobbyNotice] Failed to check notice:', e);
     }
 };
+

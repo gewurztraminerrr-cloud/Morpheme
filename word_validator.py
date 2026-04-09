@@ -21,9 +21,44 @@ class WordValidator:
         self.added_words = set()  # Custom moderator-added words
         self.nwl_trie = TrieNode()
         self.csw_trie = TrieNode()
+        self.unique_nwl_trie = TrieNode()
+        self.unique_csw_trie = TrieNode()
         self.long_trie = TrieNode()
         self.added_trie = TrieNode()
+        
+        self.use_added_words = True # Global toggle for moderator words
+        self.config_path = os.path.join(os.path.dirname(__file__), 'dictionaries', 'added_words_config.json')
+        
+        self._load_config()
         self._load_dictionaries()
+
+    def _load_config(self):
+        """Load global config for added words"""
+        if os.path.exists(self.config_path):
+            try:
+                import json
+                with open(self.config_path, 'r') as f:
+                    config = json.load(f)
+                    self.use_added_words = config.get('use_added_words', True)
+            except:
+                self.use_added_words = True
+
+    def _save_config(self):
+        """Save global config for added words"""
+        try:
+            import json
+            with open(self.config_path, 'w') as f:
+                json.dump({'use_added_words': self.use_added_words}, f)
+        except:
+            pass
+
+    def toggle_added_words(self, enabled):
+        """Toggle added words and REBUILD Tries for immediate game-wide effect"""
+        self.use_added_words = enabled
+        self._save_config()
+        # Full Rebuild to ensure Tries and sets are clean
+        self._load_dictionaries()
+        return self.use_added_words
     
     def _load_dictionaries(self):
         """Load both dictionaries and the 16+ supplementary list into memory"""
@@ -38,6 +73,10 @@ class WordValidator:
         csw_path = os.path.join(base_dir, 'dictionaries', 'CSW.txt')
         with open(csw_path, 'r') as f:
             self.csw_words = {line.strip().upper() for line in f if line.strip()}
+            
+        # Calculate CSW-only words (In CSW but not in NWL)
+        # This is used for golden highlights in the UI.
+        self.csw_only = self.csw_words - self.nwl_words
 
         # Load 16+ supplementary list
         long_path = os.path.join(base_dir, 'dictionaries', '16plus.txt')
@@ -51,23 +90,61 @@ class WordValidator:
         # Load custom added words
         self.reload_added_words()
         
-        # Calculate CSW-only words
-        self.csw_only = self.csw_words - self.nwl_words
-        
-        print(f"Loaded {len(self.nwl_words)} NWL words and {len(self.csw_words)} CSW words")
+        # Load Unique NWL
+        un_path = os.path.join(base_dir, 'dictionaries', 'uniqueNWL.txt')
+        if os.path.exists(un_path):
+            with open(un_path, 'r') as f:
+                self.unique_nwl_words = {line.strip().upper() for line in f if line.strip()}
+        else:
+            self.unique_nwl_words = set()
+
+        # Load Unique CSW
+        uc_path = os.path.join(base_dir, 'dictionaries', 'uniqueCSW.txt')
+        if os.path.exists(uc_path):
+            with open(uc_path, 'r') as f:
+                self.unique_csw_words = {line.strip().upper() for line in f if line.strip()}
+        else:
+            self.unique_csw_words = set()
+
+        print(f"Loaded {len(self.nwl_words)} NWL words, {len(self.csw_words)} CSW words, and unique sets ({len(self.unique_nwl_words)}/{len(self.unique_csw_words)})")
         print(f"Found {len(self.csw_only)} CSW-only words")
+        
+        # Pre-cache words by length for fast bonus word lookup
+        self.nwl_by_len = {}
+        self.csw_by_len = {}
+        for w in self.nwl_words:
+            length = len(w)
+            if length not in self.nwl_by_len: self.nwl_by_len[length] = []
+            self.nwl_by_len[length].append(w)
+        for w in self.csw_words:
+            length = len(w)
+            if length not in self.csw_by_len: self.csw_by_len[length] = []
+            self.csw_by_len[length].append(w)
         
         # Build tries for fast prefix checking
         print("Building tries for fast prefix checking...")
-        for word in self.nwl_words:
-            self._add_to_trie(self.nwl_trie, word)
-        for word in self.csw_words:
-            self._add_to_trie(self.csw_trie, word)
-        # Build a shared trie for the 16+ list
-        for word in self.long_words:
-            self._add_to_trie(self.long_trie, word)
-        # Custom words trie is built in reload_added_words()
-        print("Tries built successfully!")
+        indices = [
+            (self.nwl_trie, self.nwl_words),
+            (self.csw_trie, self.csw_words),
+            (self.unique_nwl_trie, self.unique_nwl_words),
+            (self.unique_csw_trie, self.unique_csw_words)
+        ]
+        
+        for trie, word_set in indices:
+            for word in word_set:
+                self._add_to_trie(trie, word)
+            # Merge supplementary lists into main tries for O(1) single-lookup performance
+            for word in self.long_words:
+                self._add_to_trie(trie, word)
+            
+            if self.use_added_words:
+                for word in self.added_words:
+                    self._add_to_trie(trie, word)
+                
+        print("Tries built and merged successfully!")
+        
+        # Pre-calculate full sets for O(1) union performance
+        self._recalculate_full_sets()
     
     def reload_added_words(self):
         """Reload custom added words from file and rebuild their trie"""
@@ -85,6 +162,7 @@ class WordValidator:
                         self.added_words.add(word)
                         self._add_to_trie(self.added_trie, word)
             print(f"Loaded {len(self.added_words)} custom added words")
+            self._recalculate_full_sets()
 
     def _add_to_trie(self, root, word):
         """Add a word to the trie"""
@@ -96,31 +174,17 @@ class WordValidator:
         node.is_word = True
     
     def has_valid_prefix(self, prefix, dictionary='NWL'):
-        """Check if prefix could lead to a valid word.
-        Checks main dictionary, 16+ list, AND custom added words."""
-        prefix = prefix.upper()
-        trie = self.nwl_trie if dictionary == 'NWL' else self.csw_trie
+        """Check if prefix could lead to a valid word using pre-merged tries."""
+        if dictionary == 'UniqueNWL':
+            trie = self.unique_nwl_trie
+        elif dictionary == 'UniqueCSW':
+            trie = self.unique_csw_trie
+        elif dictionary == 'CSW':
+            trie = self.csw_trie
+        else:
+            trie = self.nwl_trie
         
-        # Check main dictionary trie
         node = trie
-        for char in prefix:
-            if char not in node.children:
-                break
-            node = node.children[char]
-        else:
-            return True
-
-        # Check supplementary 16+ trie
-        node = self.long_trie
-        for char in prefix:
-            if char not in node.children:
-                break
-            node = node.children[char]
-        else:
-            return True
-            
-        # Check custom added words trie
-        node = self.added_trie
         for char in prefix:
             if char not in node.children:
                 return False
@@ -128,13 +192,15 @@ class WordValidator:
         return True
     
     def is_valid_word(self, word, dictionary='NWL'):
-        """Check if word is valid in dictionary, 16+ list, OR custom added list"""
-        word = word.upper()
-        is_added = word in self.added_words
-        if dictionary == 'CSW':
-            return word in self.csw_words or word in self.long_words or is_added
+        """Check if word is valid using pre-merged sets."""
+        if dictionary == 'UniqueNWL':
+            return word in self.unique_nwl_words
+        elif dictionary == 'UniqueCSW':
+            return word in self.unique_csw_words
+        elif dictionary == 'CSW':
+            return word in self.csw_words or word in self.long_words or (self.use_added_words and word in self.added_words)
         else:  # NWL
-            return word in self.nwl_words or word in self.long_words or is_added
+            return word in self.nwl_words or word in self.long_words or (self.use_added_words and word in self.added_words)
     
     def is_csw_only(self, word):
         """Check if word is in CSW but not NWL"""
@@ -143,17 +209,27 @@ class WordValidator:
     def is_added_word(self, word):
         """Check if word is in the custom moderator-added list"""
         return word.upper() in self.added_words
+
+    def is_valid_word_authoritative(self, word):
+        """Check if word is in ANY official dictionary (excluding Added Words)"""
+        w = word.upper()
+        return w in self.nwl_words or w in self.csw_words or w in self.long_words
     
     def filter_valid_words(self, words, dictionary='NWL'):
         """Filter list to only valid words"""
         return [w for w in words if self.is_valid_word(w, dictionary)]
     
+    def _recalculate_full_sets(self):
+        """Update the pre-calculated full sets (union of main, long, and added words)"""
+        self.full_nwl_set = self.nwl_words | self.long_words | self.added_words
+        self.full_csw_set = self.csw_words | self.long_words | self.added_words
+
     def load_dictionary(self, dict_name):
-        """Return the word set for the given dictionary name, including 16+ and custom words."""
+        """Return the pre-calculated full set for the given dictionary."""
         if dict_name == 'CSW':
-            return self.csw_words | self.long_words | self.added_words
+            return self.full_csw_set
         else:  # NWL (default)
-            return self.nwl_words | self.long_words | self.added_words
+            return self.full_nwl_set
 
     def find_word_on_board(self, board, word, return_path=False):
         """Standard DFS search for a word on a Boggle board.

@@ -1,0 +1,4279 @@
+[
+  {
+    "params": "4x4 - 200+ words - easy - 3LM - NWL",
+    "grid": [
+      [
+        "N",
+        "B",
+        "M",
+        "N"
+      ],
+      [
+        "O",
+        "E",
+        "O",
+        "A"
+      ],
+      [
+        "Z",
+        "R",
+        "C",
+        "L"
+      ],
+      [
+        "A",
+        "N",
+        "G",
+        "I"
+      ]
+    ],
+    "bonus": "MALIGN",
+    "count": 214,
+    "uniqueness": 33.177570093457945,
+    "top_words": [
+      "BECLAMOR",
+      "ANCONAL",
+      "ANGLICE",
+      "BORAZON",
+      "CLAMBER",
+      "EMBOLIC",
+      "GLOMERA",
+      "NARCOMA",
+      "AREOLA",
+      "BEMOAN"
+    ]
+  },
+  {
+    "params": "4x4 - 200+ words - easy - 4LM - NWL",
+    "grid": [
+      [
+        "E",
+        "A",
+        "I",
+        "K"
+      ],
+      [
+        "K",
+        "V",
+        "T",
+        "N"
+      ],
+      [
+        "H",
+        "S",
+        "W",
+        "A"
+      ],
+      [
+        "O",
+        "O",
+        "I",
+        "T"
+      ]
+    ],
+    "bonus": "ATISHOO",
+    "count": 73,
+    "uniqueness": 56.16438356164384,
+    "top_words": [
+      "OSTINATI",
+      "ATISHOO",
+      "INTAKE",
+      "NATIVE",
+      "NITWIT",
+      "TATSOI",
+      "ANTAE",
+      "HOIST",
+      "HOSTA",
+      "KNITS"
+    ]
+  },
+  {
+    "params": "4x4 - 200+ words - easy - 5LM - NWL",
+    "grid": [
+      [
+        "E",
+        "L",
+        "I",
+        "X"
+      ],
+      [
+        "E",
+        "P",
+        "Z",
+        "Z"
+      ],
+      [
+        "U",
+        "E",
+        "Q",
+        "N"
+      ],
+      [
+        "V",
+        "C",
+        "D",
+        "E"
+      ]
+    ],
+    "bonus": "DECUPLE",
+    "count": 4,
+    "uniqueness": 100.0,
+    "top_words": [
+      "DECUPLE",
+      "PIZZLE",
+      "CUPEL",
+      "CUVEE"
+    ]
+  },
+  {
+    "params": "4x4 - 200+ words - medium - 3LM - NWL",
+    "grid": [
+      [
+        "W",
+        "T",
+        "E",
+        "K"
+      ],
+      [
+        "B",
+        "O",
+        "I",
+        "A"
+      ],
+      [
+        "A",
+        "L",
+        "N",
+        "A"
+      ],
+      [
+        "D",
+        "K",
+        "T",
+        "S"
+      ]
+    ],
+    "bonus": "TOADLIKE",
+    "count": 210,
+    "uniqueness": 39.04761904761905,
+    "top_words": [
+      "KNOBLIKE",
+      "TANKLIKE",
+      "TOADLIKE",
+      "AEOLIAN",
+      "ANTLIKE",
+      "KALIANS",
+      "KAOLINS",
+      "OAKLIKE",
+      "ABLINS",
+      "ALOINS"
+    ]
+  },
+  {
+    "params": "4x4 - 200+ words - medium - 4LM - NWL",
+    "grid": [
+      [
+        "B",
+        "T",
+        "O",
+        "B"
+      ],
+      [
+        "A",
+        "E",
+        "R",
+        "A"
+      ],
+      [
+        "K",
+        "C",
+        "S",
+        "I"
+      ],
+      [
+        "O",
+        "I",
+        "H",
+        "D"
+      ]
+    ],
+    "bonus": "ORCHIDS",
+    "count": 234,
+    "uniqueness": 41.88034188034188,
+    "top_words": [
+      "BAREBACK",
+      "AIRSICK",
+      "ASHCAKE",
+      "ATRESIA",
+      "ATRESIC",
+      "BACKERS",
+      "BOARISH",
+      "KOCHIAS",
+      "ORCHIDS",
+      "SETBACK"
+    ]
+  },
+  {
+    "params": "4x4 - 200+ words - medium - 5LM - NWL",
+    "grid": [
+      [
+        "B",
+        "T",
+        "F",
+        "K"
+      ],
+      [
+        "T",
+        "Y",
+        "L",
+        "R"
+      ],
+      [
+        "T",
+        "Z",
+        "I",
+        "N"
+      ],
+      [
+        "E",
+        "Z",
+        "C",
+        "O"
+      ]
+    ],
+    "bonus": "FRIZZLY",
+    "count": 7,
+    "uniqueness": 100.0,
+    "top_words": [
+      "FRIZZLY",
+      "FRIZZY",
+      "FLYTE",
+      "FRIZZ",
+      "FYTTE",
+      "NOILY",
+      "ZINCO"
+    ]
+  },
+  {
+    "params": "4x4 - 200+ words - hard - 3LM - NWL",
+    "grid": [
+      [
+        "A",
+        "G",
+        "A",
+        "M"
+      ],
+      [
+        "T",
+        "M",
+        "E",
+        "R"
+      ],
+      [
+        "S",
+        "A",
+        "C",
+        "A"
+      ],
+      [
+        "B",
+        "E",
+        "K",
+        "N"
+      ]
+    ],
+    "bonus": "MAGMATA",
+    "count": 240,
+    "uniqueness": 35.0,
+    "top_words": [
+      "CATAMARAN",
+      "CRANKEST",
+      "GEARCASE",
+      "TAMARACK",
+      "AMERCES",
+      "BESMEAR",
+      "MACRAME",
+      "MAGMATA",
+      "MARACAS",
+      "RANKEST"
+    ]
+  },
+  {
+    "params": "4x4 - 200+ words - hard - 4LM - NWL",
+    "grid": [
+      [
+        "W",
+        "N",
+        "D",
+        "Y"
+      ],
+      [
+        "E",
+        "I",
+        "R",
+        "L"
+      ],
+      [
+        "A",
+        "E",
+        "Z",
+        "A"
+      ],
+      [
+        "K",
+        "O",
+        "N",
+        "S"
+      ]
+    ],
+    "bonus": "WIZARDLY",
+    "count": 120,
+    "uniqueness": 52.5,
+    "top_words": [
+      "WIZARDLY",
+      "KAIZENS",
+      "NARDINE",
+      "SARDINE",
+      "WEAKENS",
+      "WEAKONS",
+      "WEIRDLY",
+      "ALDRIN",
+      "ARIDLY",
+      "DIZENS"
+    ]
+  },
+  {
+    "params": "4x4 - 200+ words - hard - 5LM - NWL",
+    "grid": [
+      [
+        "D",
+        "O",
+        "D",
+        "A"
+      ],
+      [
+        "I",
+        "Y",
+        "W",
+        "C"
+      ],
+      [
+        "S",
+        "H",
+        "R",
+        "B"
+      ],
+      [
+        "E",
+        "W",
+        "J",
+        "T"
+      ]
+    ],
+    "bonus": "DOWDYISH",
+    "count": 7,
+    "uniqueness": 100.0,
+    "top_words": [
+      "DOWDYISH",
+      "DISHY",
+      "DOWDY",
+      "DOWRY",
+      "HYOID",
+      "WHEWS",
+      "WHYDA"
+    ]
+  },
+  {
+    "params": "4x6  - 200+ words - easy - 4LM - NWL",
+    "grid": [
+      [
+        "K",
+        "I",
+        "E",
+        "N",
+        "T",
+        "P"
+      ],
+      [
+        "O",
+        "R",
+        "A",
+        "O",
+        "S",
+        "U"
+      ],
+      [
+        "B",
+        "V",
+        "T",
+        "H",
+        "F",
+        "N"
+      ],
+      [
+        "R",
+        "A",
+        "C",
+        "A",
+        "I",
+        "T"
+      ]
+    ],
+    "bonus": "UPSHIFT",
+    "count": 259,
+    "uniqueness": 41.6988416988417,
+    "top_words": [
+      "TINSTONE",
+      "AEROBAT",
+      "BRACHIA",
+      "BREATHS",
+      "CARBORA",
+      "INSNARE",
+      "ORIENTS",
+      "UNSHIFT",
+      "UPSHIFT",
+      "AIRTHS"
+    ]
+  },
+  {
+    "params": "4x6  - 200+ words - easy - 5LM - NWL",
+    "grid": [
+      [
+        "X",
+        "E",
+        "G",
+        "N",
+        "I",
+        "S"
+      ],
+      [
+        "S",
+        "E",
+        "A",
+        "R",
+        "N",
+        "G"
+      ],
+      [
+        "R",
+        "B",
+        "T",
+        "J",
+        "U",
+        "P"
+      ],
+      [
+        "E",
+        "N",
+        "S",
+        "I",
+        "P",
+        "O"
+      ]
+    ],
+    "bonus": "OPPUGNING",
+    "count": 210,
+    "uniqueness": 9.523809523809524,
+    "top_words": [
+      "OPPUGNING",
+      "REEARNING",
+      "REGEARING",
+      "STRANGERS",
+      "STRINGERS",
+      "BEARINGS",
+      "EARNINGS",
+      "GEARINGS",
+      "INGRATES",
+      "REARINGS"
+    ]
+  },
+  {
+    "params": "4x6  - 200+ words - easy - 6LM - NWL",
+    "grid": [
+      [
+        "T",
+        "I",
+        "C",
+        "B",
+        "Z",
+        "R"
+      ],
+      [
+        "R",
+        "E",
+        "S",
+        "A",
+        "E",
+        "E"
+      ],
+      [
+        "L",
+        "E",
+        "T",
+        "S",
+        "N",
+        "A"
+      ],
+      [
+        "C",
+        "I",
+        "N",
+        "I",
+        "K",
+        "A"
+      ]
+    ],
+    "bonus": "TIRELESS",
+    "count": 259,
+    "uniqueness": 27.027027027027028,
+    "top_words": [
+      "CASSITERITE",
+      "CELESTINES",
+      "EASTERLIES",
+      "SERENITIES",
+      "ASBESTINE",
+      "BASELINER",
+      "CELESTINE",
+      "INTERTIES",
+      "RELICENSE",
+      "RESINATES"
+    ]
+  },
+  {
+    "params": "4x6  - 200+ words- medium - 4LM - NWL",
+    "grid": [
+      [
+        "J",
+        "N",
+        "S",
+        "K",
+        "R",
+        "Z"
+      ],
+      [
+        "T",
+        "O",
+        "I",
+        "Q",
+        "E",
+        "I"
+      ],
+      [
+        "S",
+        "G",
+        "A",
+        "V",
+        "A",
+        "S"
+      ],
+      [
+        "E",
+        "U",
+        "L",
+        "P",
+        "N",
+        "U"
+      ]
+    ],
+    "bonus": "UNPLUG",
+    "count": 207,
+    "uniqueness": 41.54589371980676,
+    "top_words": [
+      "REVALUES",
+      "SAVAGEST",
+      "GLAIVES",
+      "PLAGUES",
+      "PLAINTS",
+      "REVALUE",
+      "SAVAGES",
+      "UNPLUGS",
+      "VAGUEST",
+      "ALGINS"
+    ]
+  },
+  {
+    "params": "4x6  - 200+ words- medium - 5LM - NWL",
+    "grid": [
+      [
+        "F",
+        "U",
+        "R",
+        "C",
+        "N",
+        "I"
+      ],
+      [
+        "B",
+        "I",
+        "C",
+        "K",
+        "F",
+        "T"
+      ],
+      [
+        "B",
+        "I",
+        "X",
+        "O",
+        "F",
+        "R"
+      ],
+      [
+        "O",
+        "T",
+        "K",
+        "A",
+        "B",
+        "A"
+      ]
+    ],
+    "bonus": "FUCKOFF",
+    "count": 17,
+    "uniqueness": 100.0,
+    "top_words": [
+      "FUCKOFF",
+      "KICKOFF",
+      "BOFFIN",
+      "COFFIN",
+      "RIBBIT",
+      "ABAFT",
+      "BARFI",
+      "BUCKO",
+      "COBRA",
+      "CRICK"
+    ]
+  },
+  {
+    "params": "4x6  - 200+ words- medium - 6LM - NWL",
+    "grid": [
+      [
+        "R",
+        "O",
+        "F",
+        "C",
+        "N",
+        "C"
+      ],
+      [
+        "T",
+        "M",
+        "I",
+        "A",
+        "O",
+        "A"
+      ],
+      [
+        "W",
+        "C",
+        "C",
+        "X",
+        "T",
+        "C"
+      ],
+      [
+        "E",
+        "B",
+        "A",
+        "A",
+        "I",
+        "R"
+      ]
+    ],
+    "bonus": "BACCIFORM",
+    "count": 16,
+    "uniqueness": 100.0,
+    "top_words": [
+      "BACCIFORM",
+      "BECCAFICO",
+      "CICATRIX",
+      "ACIFORM",
+      "FANATIC",
+      "FORMICA",
+      "TAXICAB",
+      "ACACIA",
+      "ANOXIA",
+      "ANOXIC"
+    ]
+  },
+  {
+    "params": "4x6  - 200+ words - hard - 4LM - NWL",
+    "grid": [
+      [
+        "V",
+        "T",
+        "I",
+        "A",
+        "I",
+        "T"
+      ],
+      [
+        "I",
+        "S",
+        "K",
+        "N",
+        "E",
+        "N"
+      ],
+      [
+        "A",
+        "R",
+        "I",
+        "J",
+        "A",
+        "E"
+      ],
+      [
+        "V",
+        "G",
+        "K",
+        "W",
+        "S",
+        "B"
+      ]
+    ],
+    "bonus": "ARGININES",
+    "count": 198,
+    "uniqueness": 52.52525252525253,
+    "top_words": [
+      "ARGININES",
+      "VAGINITIS",
+      "ARGINASE",
+      "ARGININE",
+      "TSARINAS",
+      "ASININE",
+      "BANKITS",
+      "BANKSIA",
+      "GRISKIN",
+      "KAINITE"
+    ]
+  },
+  {
+    "params": "4x6  - 200+ words - hard - 5LM - NWL",
+    "grid": [
+      [
+        "J",
+        "B",
+        "Z",
+        "B",
+        "R",
+        "D"
+      ],
+      [
+        "T",
+        "Z",
+        "A",
+        "U",
+        "M",
+        "O"
+      ],
+      [
+        "A",
+        "A",
+        "I",
+        "D",
+        "H",
+        "K"
+      ],
+      [
+        "N",
+        "Z",
+        "A",
+        "E",
+        "N",
+        "T"
+      ]
+    ],
+    "bonus": "DRUMHEAD",
+    "count": 23,
+    "uniqueness": 91.30434782608695,
+    "top_words": [
+      "DRUMHEAD",
+      "AUDIENT",
+      "ENDURO",
+      "MUDHEN",
+      "ZAIDEH",
+      "ABMHO",
+      "ABUZZ",
+      "AZIDE",
+      "BAIZA",
+      "DRUID"
+    ]
+  },
+  {
+    "params": "4x6  - 200+ words - hard - 6LM - NWL",
+    "grid": [
+      [
+        "O",
+        "K",
+        "N",
+        "M",
+        "U",
+        "U"
+      ],
+      [
+        "N",
+        "B",
+        "K",
+        "O",
+        "L",
+        "G"
+      ],
+      [
+        "R",
+        "X",
+        "C",
+        "B",
+        "A",
+        "B"
+      ],
+      [
+        "C",
+        "V",
+        "A",
+        "B",
+        "Q",
+        "N"
+      ]
+    ],
+    "bonus": "COAGULUM",
+    "count": 4,
+    "uniqueness": 100.0,
+    "top_words": [
+      "COAGULUM",
+      "BAOBAB",
+      "BONBON",
+      "COLUMN"
+    ]
+  },
+  {
+    "params": "5x7 - 200+ words - easy - 5LW - NWL",
+    "grid": [
+      [
+        "R",
+        "X",
+        "C",
+        "S",
+        "T",
+        "E",
+        "R"
+      ],
+      [
+        "O",
+        "I",
+        "E",
+        "O",
+        "Z",
+        "E",
+        "S"
+      ],
+      [
+        "R",
+        "A",
+        "B",
+        "E",
+        "K",
+        "H",
+        "U"
+      ],
+      [
+        "T",
+        "N",
+        "V",
+        "O",
+        "H",
+        "C",
+        "C"
+      ],
+      [
+        "K",
+        "E",
+        "L",
+        "J",
+        "A",
+        "S",
+        "O"
+      ]
+    ],
+    "bonus": "CHUCKHOLE",
+    "count": 204,
+    "uniqueness": 23.52941176470588,
+    "top_words": [
+      "VENTRICOSE",
+      "CHUCKHOLE",
+      "STOKEHOLE",
+      "CHUCKERS",
+      "KEESTERS",
+      "SHACKOES",
+      "SUCKHOLE",
+      "VARICOSE",
+      "ACCUSER",
+      "BEEZERS"
+    ]
+  },
+  {
+    "params": "5x7 - 200+ words - easy - 6LW - NWL",
+    "grid": [
+      [
+        "O",
+        "T",
+        "C",
+        "H",
+        "L",
+        "I",
+        "Z"
+      ],
+      [
+        "Z",
+        "W",
+        "I",
+        "Y",
+        "I",
+        "N",
+        "C"
+      ],
+      [
+        "A",
+        "V",
+        "O",
+        "B",
+        "K",
+        "C",
+        "E"
+      ],
+      [
+        "E",
+        "V",
+        "A",
+        "C",
+        "A",
+        "C",
+        "T"
+      ],
+      [
+        "B",
+        "A",
+        "K",
+        "W",
+        "I",
+        "K",
+        "A"
+      ]
+    ],
+    "bonus": "BITCHILY",
+    "count": 24,
+    "uniqueness": 87.5,
+    "top_words": [
+      "BITCHILY",
+      "BOYCHICK",
+      "KICKBACK",
+      "AKVAVIT",
+      "BACCATE",
+      "BOYCHIK",
+      "CABINET",
+      "ITCHILY",
+      "LINKBOY",
+      "TACKILY"
+    ]
+  },
+  {
+    "params": "5x7 - 200+ words - easy - 7LW - NWL",
+    "grid": [
+      [
+        "T",
+        "E",
+        "A",
+        "L",
+        "L",
+        "E",
+        "B"
+      ],
+      [
+        "N",
+        "T",
+        "C",
+        "I",
+        "T",
+        "U",
+        "H"
+      ],
+      [
+        "A",
+        "O",
+        "G",
+        "N",
+        "T",
+        "O",
+        "S"
+      ],
+      [
+        "R",
+        "V",
+        "I",
+        "E",
+        "R",
+        "E",
+        "V"
+      ],
+      [
+        "S",
+        "R",
+        "S",
+        "S",
+        "A",
+        "X",
+        "A"
+      ]
+    ],
+    "bonus": "BUSHELLING",
+    "count": 233,
+    "uniqueness": 33.047210300429185,
+    "top_words": [
+      "BUTTRESSING",
+      "OVERSETTING",
+      "BUSHELLING",
+      "CONTAINERS",
+      "OUTTELLING",
+      "ROULETTING",
+      "ROUTINISES",
+      "SEROTINIES",
+      "VERTIGINES",
+      "ANOINTERS"
+    ]
+  },
+  {
+    "params": "5x7 - 200+ words- medium - 5LW - NWL",
+    "grid": [
+      [
+        "C",
+        "K",
+        "B",
+        "E",
+        "K",
+        "A",
+        "S"
+      ],
+      [
+        "B",
+        "C",
+        "A",
+        "K",
+        "A",
+        "C",
+        "I"
+      ],
+      [
+        "I",
+        "C",
+        "R",
+        "V",
+        "I",
+        "S",
+        "T"
+      ],
+      [
+        "T",
+        "E",
+        "O",
+        "T",
+        "I",
+        "V",
+        "I"
+      ],
+      [
+        "S",
+        "I",
+        "L",
+        "A",
+        "A",
+        "X",
+        "C"
+      ]
+    ],
+    "bonus": "COALIEST",
+    "count": 202,
+    "uniqueness": 41.089108910891085,
+    "top_words": [
+      "RELATIVISTIC",
+      "ATROCITIES",
+      "AXIALITIES",
+      "CERVICITIS",
+      "RELATIVIST",
+      "VITALISTIC",
+      "VITALITIES",
+      "VIVACITIES",
+      "VORACITIES",
+      "ACROLECTS"
+    ]
+  },
+  {
+    "params": "5x7 - 200+ words- medium - 6LW - NWL",
+    "grid": [
+      [
+        "E",
+        "A",
+        "P",
+        "V",
+        "O",
+        "S",
+        "S"
+      ],
+      [
+        "R",
+        "I",
+        "S",
+        "A",
+        "C",
+        "I",
+        "A"
+      ],
+      [
+        "T",
+        "A",
+        "M",
+        "R",
+        "T",
+        "C",
+        "N"
+      ],
+      [
+        "J",
+        "I",
+        "S",
+        "I",
+        "A",
+        "B",
+        "I"
+      ],
+      [
+        "O",
+        "O",
+        "N",
+        "C",
+        "S",
+        "W",
+        "N"
+      ]
+    ],
+    "bonus": "ARAPAIMAS",
+    "count": 202,
+    "uniqueness": 41.089108910891085,
+    "top_words": [
+      "ASPIRATIONS",
+      "ASPIRATION",
+      "BACITRACIN",
+      "PARASITISM",
+      "ACTINISMS",
+      "AERATIONS",
+      "ARAPAIMAS",
+      "PARASITIC",
+      "SANITARIA",
+      "SCIATICAS"
+    ]
+  },
+  {
+    "params": "5x7 - 200+ words- medium - 7LW - NWL",
+    "grid": [
+      [
+        "C",
+        "C",
+        "A",
+        "B",
+        "S",
+        "C",
+        "B"
+      ],
+      [
+        "T",
+        "O",
+        "I",
+        "S",
+        "A",
+        "R",
+        "I"
+      ],
+      [
+        "I",
+        "N",
+        "E",
+        "T",
+        "M",
+        "B",
+        "A"
+      ],
+      [
+        "C",
+        "B",
+        "N",
+        "E",
+        "L",
+        "U",
+        "D"
+      ],
+      [
+        "T",
+        "O",
+        "R",
+        "S",
+        "E",
+        "O",
+        "C"
+      ]
+    ],
+    "bonus": "DOCUMENTABLE",
+    "count": 200,
+    "uniqueness": 41.5,
+    "top_words": [
+      "RELUBRICATION",
+      "DOCUMENTABLE",
+      "RELUBRICATES",
+      "ADUMBRATION",
+      "LUBRICATION",
+      "RELUBRICATE",
+      "ADUMBRATES",
+      "COLUMBARIA",
+      "DOUBLENESS",
+      "LUBRICATES"
+    ]
+  },
+  {
+    "params": "5x7 - 200+ words - hard - 5LW - NWL",
+    "grid": [
+      [
+        "Z",
+        "R",
+        "E",
+        "C",
+        "O",
+        "T",
+        "E"
+      ],
+      [
+        "E",
+        "A",
+        "E",
+        "O",
+        "W",
+        "J",
+        "S"
+      ],
+      [
+        "V",
+        "I",
+        "S",
+        "Z",
+        "O",
+        "B",
+        "U"
+      ],
+      [
+        "O",
+        "L",
+        "T",
+        "I",
+        "N",
+        "O",
+        "B"
+      ],
+      [
+        "S",
+        "U",
+        "M",
+        "E",
+        "V",
+        "C",
+        "A"
+      ]
+    ],
+    "bonus": "VOLUMINOUS",
+    "count": 240,
+    "uniqueness": 42.5,
+    "top_words": [
+      "REVOLUTION",
+      "VOLUMINOUS",
+      "EVOLUTION",
+      "MULTISIZE",
+      "VOLUMIZER",
+      "VOLUMIZES",
+      "ACONITUM",
+      "COSTLIER",
+      "EMULSION",
+      "EMULSIVE"
+    ]
+  },
+  {
+    "params": "5x7 - 200+ words - hard - 6LW - NWL",
+    "grid": [
+      [
+        "O",
+        "C",
+        "I",
+        "T",
+        "A",
+        "P",
+        "R"
+      ],
+      [
+        "T",
+        "A",
+        "B",
+        "O",
+        "R",
+        "F",
+        "O"
+      ],
+      [
+        "T",
+        "Y",
+        "R",
+        "Z",
+        "I",
+        "E",
+        "I"
+      ],
+      [
+        "E",
+        "V",
+        "E",
+        "A",
+        "J",
+        "C",
+        "N"
+      ],
+      [
+        "E",
+        "K",
+        "C",
+        "B",
+        "C",
+        "A",
+        "I"
+      ]
+    ],
+    "bonus": "PREFATORY",
+    "count": 66,
+    "uniqueness": 66.66666666666666,
+    "top_words": [
+      "PATRICIAN",
+      "PREFATORY",
+      "ACERBATE",
+      "ARBORIZE",
+      "BAREBACK",
+      "PRIORATE",
+      "REJACKET",
+      "ACERATE",
+      "ACERBIC",
+      "AEROBAT"
+    ]
+  },
+  {
+    "params": "5x7 - 200+ words - hard - 7LW - NWL",
+    "grid": [
+      [
+        "W",
+        "A",
+        "C",
+        "E",
+        "V",
+        "A",
+        "T"
+      ],
+      [
+        "A",
+        "R",
+        "Q",
+        "A",
+        "E",
+        "R",
+        "C"
+      ],
+      [
+        "C",
+        "O",
+        "A",
+        "T",
+        "L",
+        "U",
+        "X"
+      ],
+      [
+        "I",
+        "N",
+        "B",
+        "P",
+        "O",
+        "E",
+        "N"
+      ],
+      [
+        "A",
+        "C",
+        "T",
+        "B",
+        "O",
+        "V",
+        "I"
+      ]
+    ],
+    "bonus": "EXCULPATE",
+    "count": 27,
+    "uniqueness": 100.0,
+    "top_words": [
+      "EXCULPATE",
+      "INVOLUCRA",
+      "INVOLUCRE",
+      "VACUOLATE",
+      "BOOTLACE",
+      "BOTANICA",
+      "EXCAVATE",
+      "EXCRETAL",
+      "EXULTANT",
+      "TARLATAN"
+    ]
+  },
+  {
+    "params": "6x8 - 200+ words - easy - 6LW - NWL",
+    "grid": [
+      [
+        "R",
+        "E",
+        "Z",
+        "O",
+        "N",
+        "T",
+        "C",
+        "B"
+      ],
+      [
+        "A",
+        "O",
+        "C",
+        "I",
+        "I",
+        "V",
+        "E",
+        "A"
+      ],
+      [
+        "X",
+        "E",
+        "N",
+        "C",
+        "N",
+        "R",
+        "O",
+        "Y"
+      ],
+      [
+        "C",
+        "C",
+        "X",
+        "E",
+        "T",
+        "I",
+        "R",
+        "P"
+      ],
+      [
+        "S",
+        "R",
+        "N",
+        "I",
+        "O",
+        "C",
+        "A",
+        "I"
+      ],
+      [
+        "R",
+        "O",
+        "S",
+        "A",
+        "S",
+        "I",
+        "C",
+        "E"
+      ]
+    ],
+    "bonus": "ANISOTROPY",
+    "count": 192,
+    "uniqueness": 54.166666666666664,
+    "top_words": [
+      "INCONTINENCE",
+      "ISOTRETINOIN",
+      "ANISOTROPIC",
+      "BACTERIOCIN",
+      "INTERNECINE",
+      "ANISOTROPY",
+      "CONCENTRIC",
+      "CONTINENCE",
+      "ECCENTRICS",
+      "RECONVINCE"
+    ]
+  },
+  {
+    "params": "6x8 - 200+ words - easy - 7LW - NWL",
+    "grid": [
+      [
+        "A",
+        "R",
+        "B",
+        "Z",
+        "A",
+        "W",
+        "Z",
+        "E"
+      ],
+      [
+        "E",
+        "O",
+        "I",
+        "E",
+        "C",
+        "B",
+        "I",
+        "A"
+      ],
+      [
+        "Z",
+        "I",
+        "C",
+        "T",
+        "C",
+        "T",
+        "Z",
+        "C"
+      ],
+      [
+        "E",
+        "A",
+        "I",
+        "A",
+        "A",
+        "R",
+        "O",
+        "O"
+      ],
+      [
+        "K",
+        "E",
+        "A",
+        "R",
+        "O",
+        "A",
+        "R",
+        "A"
+      ],
+      [
+        "Z",
+        "O",
+        "N",
+        "B",
+        "I",
+        "T",
+        "T",
+        "A"
+      ]
+    ],
+    "bonus": "AEROBICIZE",
+    "count": 28,
+    "uniqueness": 96.42857142857143,
+    "top_words": [
+      "AEROBICIZE",
+      "ATARACTIC",
+      "BRIARROOT",
+      "COARCTATE",
+      "TACTICIAN",
+      "TRATTORIA",
+      "TRATTORIE",
+      "BACCARAT",
+      "BORACITE",
+      "COROTATE"
+    ]
+  },
+  {
+    "params": "6x8 - 200+ words - easy - 8LW - NWL",
+    "grid": [
+      [
+        "O",
+        "C",
+        "T",
+        "S",
+        "A",
+        "V",
+        "I",
+        "T"
+      ],
+      [
+        "E",
+        "S",
+        "E",
+        "K",
+        "R",
+        "O",
+        "A",
+        "N"
+      ],
+      [
+        "C",
+        "T",
+        "M",
+        "W",
+        "R",
+        "I",
+        "V",
+        "J"
+      ],
+      [
+        "T",
+        "I",
+        "T",
+        "T",
+        "N",
+        "O",
+        "A",
+        "S"
+      ],
+      [
+        "A",
+        "P",
+        "U",
+        "I",
+        "R",
+        "Q",
+        "C",
+        "S"
+      ],
+      [
+        "T",
+        "B",
+        "L",
+        "E",
+        "C",
+        "N",
+        "E",
+        "W"
+      ]
+    ],
+    "bonus": "SEMIPUBLIC",
+    "count": 9,
+    "uniqueness": 100.0,
+    "top_words": [
+      "INTUITABLE",
+      "PUBLICNESS",
+      "SEMIPUBLIC",
+      "ACONITIC",
+      "CESARIAN",
+      "COSMETIC",
+      "INTITULE",
+      "INTRORSE",
+      "WETTABLE"
+    ]
+  },
+  {
+    "params": "6x8 - 200+ words - medium - 6LW - NWL",
+    "grid": [
+      [
+        "N",
+        "A",
+        "O",
+        "O",
+        "S",
+        "B",
+        "V",
+        "W"
+      ],
+      [
+        "C",
+        "A",
+        "C",
+        "N",
+        "C",
+        "N",
+        "W",
+        "O"
+      ],
+      [
+        "C",
+        "N",
+        "V",
+        "R",
+        "V",
+        "Z",
+        "Z",
+        "B"
+      ],
+      [
+        "J",
+        "R",
+        "Q",
+        "X",
+        "R",
+        "B",
+        "A",
+        "N"
+      ],
+      [
+        "E",
+        "U",
+        "O",
+        "S",
+        "O",
+        "G",
+        "Q",
+        "W"
+      ],
+      [
+        "L",
+        "Y",
+        "K",
+        "E",
+        "T",
+        "N",
+        "C",
+        "E"
+      ]
+    ],
+    "bonus": "GROTESQUELY",
+    "count": 10,
+    "uniqueness": 100.0,
+    "top_words": [
+      "GROTESQUELY",
+      "GROTESQUE",
+      "COONCAN",
+      "ACCRUE",
+      "BOSKET",
+      "BOSQUE",
+      "BROGAN",
+      "CANCAN",
+      "EUROKY",
+      "SORELY"
+    ]
+  },
+  {
+    "params": "6x8 - 200+ words - medium - 7LW - NWL",
+    "grid": [
+      [
+        "N",
+        "A",
+        "T",
+        "E",
+        "N",
+        "W",
+        "X",
+        "W"
+      ],
+      [
+        "O",
+        "T",
+        "V",
+        "O",
+        "R",
+        "T",
+        "J",
+        "J"
+      ],
+      [
+        "M",
+        "I",
+        "I",
+        "S",
+        "E",
+        "J",
+        "R",
+        "T"
+      ],
+      [
+        "Z",
+        "A",
+        "T",
+        "R",
+        "B",
+        "V",
+        "S",
+        "E"
+      ],
+      [
+        "N",
+        "C",
+        "I",
+        "O",
+        "A",
+        "E",
+        "E",
+        "R"
+      ],
+      [
+        "O",
+        "X",
+        "E",
+        "S",
+        "A",
+        "C",
+        "E",
+        "I"
+      ]
+    ],
+    "bonus": "ATOMIZATION",
+    "count": 200,
+    "uniqueness": 55.00000000000001,
+    "top_words": [
+      "ANTISTORIES",
+      "ATOMIZATION",
+      "EROSIVITIES",
+      "OVERSTORIES",
+      "REVERSIONER",
+      "ACTIVATION",
+      "ACTIVATORS",
+      "AVIATRICES",
+      "AVIATRIXES",
+      "ESTIVATION"
+    ]
+  },
+  {
+    "params": "6x8 - 200+ words - medium - 8LW - NWL",
+    "grid": [
+      [
+        "S",
+        "B",
+        "I",
+        "C",
+        "E",
+        "R",
+        "T",
+        "C"
+      ],
+      [
+        "S",
+        "O",
+        "L",
+        "C",
+        "N",
+        "I",
+        "E",
+        "N"
+      ],
+      [
+        "N",
+        "E",
+        "N",
+        "O",
+        "R",
+        "E",
+        "C",
+        "A"
+      ],
+      [
+        "I",
+        "S",
+        "E",
+        "I",
+        "T",
+        "I",
+        "E",
+        "R"
+      ],
+      [
+        "A",
+        "T",
+        "S",
+        "R",
+        "O",
+        "N",
+        "I",
+        "S"
+      ],
+      [
+        "Z",
+        "T",
+        "E",
+        "A",
+        "N",
+        "B",
+        "R",
+        "C"
+      ]
+    ],
+    "bonus": "RECONCILES",
+    "count": 241,
+    "uniqueness": 55.601659751037346,
+    "top_words": [
+      "CENTRICITIES",
+      "INTERIORISES",
+      "ANCIENTRIES",
+      "BONESETTERS",
+      "CLONICITIES",
+      "CORNEITISES",
+      "ICONICITIES",
+      "INTERIORISE",
+      "NOTORIETIES",
+      "RECOLONISES"
+    ]
+  },
+  {
+    "params": "6x8 - 200+ words - hard - 6LW - NWL",
+    "grid": [
+      [
+        "A",
+        "N",
+        "A",
+        "S",
+        "I",
+        "C",
+        "I",
+        "B"
+      ],
+      [
+        "J",
+        "R",
+        "T",
+        "C",
+        "E",
+        "A",
+        "T",
+        "K"
+      ],
+      [
+        "A",
+        "C",
+        "D",
+        "A",
+        "C",
+        "A",
+        "B",
+        "E"
+      ],
+      [
+        "B",
+        "E",
+        "L",
+        "I",
+        "N",
+        "S",
+        "Z",
+        "T"
+      ],
+      [
+        "I",
+        "M",
+        "O",
+        "B",
+        "O",
+        "I",
+        "T",
+        "I"
+      ],
+      [
+        "O",
+        "E",
+        "I",
+        "A",
+        "N",
+        "R",
+        "K",
+        "C"
+      ]
+    ],
+    "bonus": "BIOMEDICAL",
+    "count": 229,
+    "uniqueness": 54.58515283842795,
+    "top_words": [
+      "MELIORISTIC",
+      "ALBINISTIC",
+      "BIOMEDICAL",
+      "DELICACIES",
+      "MELANISTIC",
+      "SEASONABLE",
+      "ABIDANCES",
+      "BASTINADE",
+      "DECLINIST",
+      "MEDIACIES"
+    ]
+  },
+  {
+    "params": "6x8 - 200+ words - hard - 7LW - NWL",
+    "grid": [
+      [
+        "R",
+        "I",
+        "V",
+        "K",
+        "B",
+        "A",
+        "O",
+        "T"
+      ],
+      [
+        "B",
+        "I",
+        "W",
+        "S",
+        "O",
+        "E",
+        "N",
+        "C"
+      ],
+      [
+        "S",
+        "N",
+        "I",
+        "C",
+        "I",
+        "S",
+        "I",
+        "E"
+      ],
+      [
+        "S",
+        "T",
+        "H",
+        "R",
+        "O",
+        "T",
+        "C",
+        "A"
+      ],
+      [
+        "E",
+        "N",
+        "E",
+        "P",
+        "H",
+        "G",
+        "R",
+        "B"
+      ],
+      [
+        "I",
+        "R",
+        "I",
+        "A",
+        "R",
+        "A",
+        "O",
+        "I"
+      ]
+    ],
+    "bonus": "ORTHOGRAPHER",
+    "count": 222,
+    "uniqueness": 54.054054054054056,
+    "top_words": [
+      "AORTOGRAPHIC",
+      "CARTOGRAPHER",
+      "CARTOGRAPHIC",
+      "ORTHOGRAPHER",
+      "ORTHOGRAPHIC",
+      "BAROGRAPHIC",
+      "ETHNICITIES",
+      "PHENETICIST",
+      "APHORISTIC",
+      "BIOGRAPHER"
+    ]
+  },
+  {
+    "params": "6x8 - 200+ words - hard - 8LW - NWL",
+    "grid": [
+      [
+        "O",
+        "N",
+        "A",
+        "V",
+        "V",
+        "T",
+        "X",
+        "X"
+      ],
+      [
+        "Z",
+        "A",
+        "K",
+        "W",
+        "R",
+        "I",
+        "Y",
+        "Q"
+      ],
+      [
+        "E",
+        "E",
+        "V",
+        "E",
+        "C",
+        "R",
+        "U",
+        "L"
+      ],
+      [
+        "R",
+        "S",
+        "A",
+        "B",
+        "Z",
+        "I",
+        "O",
+        "S"
+      ],
+      [
+        "C",
+        "A",
+        "B",
+        "I",
+        "X",
+        "V",
+        "R",
+        "P"
+      ],
+      [
+        "T",
+        "I",
+        "R",
+        "E",
+        "R",
+        "A",
+        "S",
+        "U"
+      ]
+    ],
+    "bonus": "SPURIOUSLY",
+    "count": 16,
+    "uniqueness": 100.0,
+    "top_words": [
+      "SPURIOUSLY",
+      "SATIRIZER",
+      "VARIOUSLY",
+      "VICIOUSLY",
+      "BERIBERI",
+      "CRABBIER",
+      "LYRICIZE",
+      "POLYURIC",
+      "PRIORITY",
+      "PROVIRUS"
+    ]
+  },
+  {
+    "params": "4x4 - 200+ words - easy - 3LM - CSW",
+    "grid": [
+      [
+        "S",
+        "S",
+        "E",
+        "A"
+      ],
+      [
+        "K",
+        "N",
+        "L",
+        "D"
+      ],
+      [
+        "O",
+        "E",
+        "I",
+        "L"
+      ],
+      [
+        "O",
+        "K",
+        "J",
+        "Z"
+      ]
+    ],
+    "bonus": "OEILLADE",
+    "count": 208,
+    "uniqueness": 33.65384615384615,
+    "top_words": [
+      "ALIKENESS",
+      "KOOKINESS",
+      "OEILLADES",
+      "IDLENESS",
+      "KNEIDELS",
+      "LIKENESS",
+      "LINELESS",
+      "OEILLADE",
+      "SEALLIKE",
+      "ALIENED"
+    ]
+  },
+  {
+    "params": "4x4 - 200+ words - easy - 4LM - CSW",
+    "grid": [
+      [
+        "B",
+        "A",
+        "V",
+        "T"
+      ],
+      [
+        "T",
+        "S",
+        "R",
+        "T"
+      ],
+      [
+        "V",
+        "I",
+        "N",
+        "E"
+      ],
+      [
+        "K",
+        "A",
+        "C",
+        "K"
+      ]
+    ],
+    "bonus": "CANKER",
+    "count": 215,
+    "uniqueness": 36.27906976744186,
+    "top_words": [
+      "CENTRIST",
+      "CERATINS",
+      "KERATINS",
+      "NAVICERT",
+      "VARIANCE",
+      "BASINET",
+      "CANKERS",
+      "CANTERS",
+      "CERATIN",
+      "KERATIN"
+    ]
+  },
+  {
+    "params": "4x4 - 200+ words - easy - 5LM - CSW",
+    "grid": [
+      [
+        "V",
+        "O",
+        "B",
+        "X"
+      ],
+      [
+        "E",
+        "Q",
+        "I",
+        "I"
+      ],
+      [
+        "S",
+        "I",
+        "M",
+        "N"
+      ],
+      [
+        "A",
+        "W",
+        "F",
+        "I"
+      ]
+    ],
+    "bonus": "MINIFIES",
+    "count": 4,
+    "uniqueness": 100.0,
+    "top_words": [
+      "MINIFIES",
+      "BIMINI",
+      "SAIMIN",
+      "ASWIM"
+    ]
+  },
+  {
+    "params": "4x4 - 200+ words - medium - 3LM - CSW",
+    "grid": [
+      [
+        "S",
+        "I",
+        "C",
+        "K"
+      ],
+      [
+        "T",
+        "L",
+        "N",
+        "G"
+      ],
+      [
+        "K",
+        "R",
+        "U",
+        "A"
+      ],
+      [
+        "C",
+        "A",
+        "S",
+        "H"
+      ]
+    ],
+    "bonus": "HANGULS",
+    "count": 232,
+    "uniqueness": 39.6551724137931,
+    "top_words": [
+      "HURTLING",
+      "SHAULING",
+      "CARLING",
+      "CARTING",
+      "HANGULS",
+      "HAULING",
+      "HURLING",
+      "HURTING",
+      "KARTING",
+      "CARLIN"
+    ]
+  },
+  {
+    "params": "4x4 - 200+ words - medium - 4LM - CSW",
+    "grid": [
+      [
+        "V",
+        "E",
+        "B",
+        "R"
+      ],
+      [
+        "S",
+        "E",
+        "Q",
+        "U"
+      ],
+      [
+        "K",
+        "A",
+        "J",
+        "D"
+      ],
+      [
+        "C",
+        "R",
+        "E",
+        "D"
+      ]
+    ],
+    "bonus": "JUDDER",
+    "count": 74,
+    "uniqueness": 54.054054054054056,
+    "top_words": [
+      "ACKEES",
+      "BUDDER",
+      "BURQAS",
+      "CRAKES",
+      "CREAKS",
+      "CREASE",
+      "JUDDER",
+      "RAKEES",
+      "RUDDER",
+      "SACRED"
+    ]
+  },
+  {
+    "params": "4x4 - 200+ words - medium - 5LM - CSW",
+    "grid": [
+      [
+        "I",
+        "C",
+        "A",
+        "B"
+      ],
+      [
+        "L",
+        "F",
+        "O",
+        "N"
+      ],
+      [
+        "O",
+        "W",
+        "B",
+        "C"
+      ],
+      [
+        "P",
+        "X",
+        "J",
+        "E"
+      ]
+    ],
+    "bonus": "COWFLOP",
+    "count": 10,
+    "uniqueness": 100.0,
+    "top_words": [
+      "COWFLOP",
+      "BONACI",
+      "COWPOX",
+      "BACON",
+      "BANCO",
+      "BONCE",
+      "CABOB",
+      "FOLIC",
+      "NABOB",
+      "OXBOW"
+    ]
+  },
+  {
+    "params": "4x4 - 200+ words - hard - 3LM - CSW",
+    "grid": [
+      [
+        "Z",
+        "H",
+        "S",
+        "I"
+      ],
+      [
+        "A",
+        "R",
+        "E",
+        "B"
+      ],
+      [
+        "H",
+        "I",
+        "A",
+        "W"
+      ],
+      [
+        "E",
+        "K",
+        "N",
+        "R"
+      ]
+    ],
+    "bonus": "HARSH",
+    "count": 203,
+    "uniqueness": 37.4384236453202,
+    "top_words": [
+      "RAINWEAR",
+      "BARNIER",
+      "ARABIS",
+      "BEANIE",
+      "BERAKE",
+      "KARAHI",
+      "KINARA",
+      "KNAWES",
+      "RABIES",
+      "REWAKE"
+    ]
+  },
+  {
+    "params": "4x4 - 200+ words - hard - 4LM - CSW",
+    "grid": [
+      [
+        "T",
+        "N",
+        "R",
+        "S"
+      ],
+      [
+        "E",
+        "G",
+        "U",
+        "O"
+      ],
+      [
+        "A",
+        "T",
+        "N",
+        "C"
+      ],
+      [
+        "V",
+        "I",
+        "S",
+        "K"
+      ]
+    ],
+    "bonus": "OUTSING",
+    "count": 219,
+    "uniqueness": 42.922374429223744,
+    "top_words": [
+      "NEGRONIS",
+      "OUTGAINS",
+      "SCOUTING",
+      "VISCOUNT",
+      "CONTENT",
+      "CORNETS",
+      "CORNUTE",
+      "GURNETS",
+      "NEGRONI",
+      "NOUGATS"
+    ]
+  },
+  {
+    "params": "4x4 - 200+ words - hard - 5LM - CSW",
+    "grid": [
+      [
+        "E",
+        "B",
+        "A",
+        "U"
+      ],
+      [
+        "N",
+        "X",
+        "G",
+        "N"
+      ],
+      [
+        "E",
+        "X",
+        "Z",
+        "A"
+      ],
+      [
+        "D",
+        "Y",
+        "H",
+        "W"
+      ]
+    ],
+    "bonus": "NAUGAHYDE",
+    "count": 3,
+    "uniqueness": 100.0,
+    "top_words": [
+      "NAUGAHYDE",
+      "UNAXED",
+      "WHANG"
+    ]
+  },
+  {
+    "params": "4x6  - 200+ words - easy - 4LM - CSW",
+    "grid": [
+      [
+        "E",
+        "T",
+        "O",
+        "V",
+        "S",
+        "A"
+      ],
+      [
+        "A",
+        "D",
+        "I",
+        "R",
+        "B",
+        "O"
+      ],
+      [
+        "R",
+        "N",
+        "U",
+        "K",
+        "A",
+        "T"
+      ],
+      [
+        "C",
+        "K",
+        "A",
+        "K",
+        "N",
+        "I"
+      ]
+    ],
+    "bonus": "BRUITED",
+    "count": 217,
+    "uniqueness": 53.91705069124424,
+    "top_words": [
+      "AUDITORS",
+      "RUINATED",
+      "UNCRATED",
+      "URINATED",
+      "AUDITOR",
+      "BRUITED",
+      "EDITORS",
+      "RUINATE",
+      "UNAKITE",
+      "UNCRATE"
+    ]
+  },
+  {
+    "params": "4x6  - 200+ words - easy - 5LM - CSW",
+    "grid": [
+      [
+        "A",
+        "K",
+        "I",
+        "E",
+        "E",
+        "N"
+      ],
+      [
+        "P",
+        "R",
+        "W",
+        "T",
+        "E",
+        "S"
+      ],
+      [
+        "A",
+        "K",
+        "A",
+        "S",
+        "E",
+        "R"
+      ],
+      [
+        "C",
+        "L",
+        "Y",
+        "S",
+        "K",
+        "B"
+      ]
+    ],
+    "bonus": "PARALYSES",
+    "count": 243,
+    "uniqueness": 21.39917695473251,
+    "top_words": [
+      "IRATENESSES",
+      "LATENESSES",
+      "TWEENESSES",
+      "CARITASES",
+      "IRATENESS",
+      "LATEENERS",
+      "PARAKITES",
+      "PARALYSES",
+      "TERSENESS",
+      "CLASSERS"
+    ]
+  },
+  {
+    "params": "4x6  - 200+ words - easy - 6LM - CSW",
+    "grid": [
+      [
+        "W",
+        "B",
+        "S",
+        "L",
+        "P",
+        "K"
+      ],
+      [
+        "W",
+        "N",
+        "X",
+        "S",
+        "I",
+        "W"
+      ],
+      [
+        "X",
+        "W",
+        "K",
+        "T",
+        "A",
+        "K"
+      ],
+      [
+        "O",
+        "B",
+        "E",
+        "J",
+        "Q",
+        "E"
+      ]
+    ],
+    "bonus": "WASPLIKE",
+    "count": 4,
+    "uniqueness": 100.0,
+    "top_words": [
+      "WASPLIKE",
+      "ASSLIKE",
+      "BETAKE",
+      "PITSAW"
+    ]
+  },
+  {
+    "params": "4x6  - 200+ words- medium - 4LM - CSW",
+    "grid": [
+      [
+        "E",
+        "S",
+        "I",
+        "L",
+        "B",
+        "C"
+      ],
+      [
+        "B",
+        "A",
+        "E",
+        "A",
+        "T",
+        "A"
+      ],
+      [
+        "K",
+        "A",
+        "L",
+        "O",
+        "X",
+        "W"
+      ],
+      [
+        "S",
+        "R",
+        "C",
+        "S",
+        "O",
+        "S"
+      ]
+    ],
+    "bonus": "SCALABLE",
+    "count": 249,
+    "uniqueness": 49.79919678714859,
+    "top_words": [
+      "CATALASE",
+      "CATALOES",
+      "SCALABLE",
+      "SEALABLE",
+      "TAXABLES",
+      "ACTABLE",
+      "ALASKAS",
+      "CABALAS",
+      "CATALOS",
+      "SALABLE"
+    ]
+  },
+  {
+    "params": "4x6  - 200+ words- medium - 5LM - CSW",
+    "grid": [
+      [
+        "I",
+        "T",
+        "E",
+        "O",
+        "E",
+        "A"
+      ],
+      [
+        "C",
+        "A",
+        "S",
+        "U",
+        "I",
+        "C"
+      ],
+      [
+        "X",
+        "K",
+        "R",
+        "M",
+        "E",
+        "G"
+      ],
+      [
+        "T",
+        "R",
+        "W",
+        "A",
+        "N",
+        "Y"
+      ]
+    ],
+    "bonus": "GYNAECEUM",
+    "count": 100,
+    "uniqueness": 40.0,
+    "top_words": [
+      "GEARSTICK",
+      "GYNAECEUM",
+      "GYNAECIUM",
+      "CAESURAE",
+      "GYNAECEA",
+      "GYNAECIA",
+      "GYNECIUM",
+      "CAESURA",
+      "GYNECIA",
+      "KARSTIC"
+    ]
+  },
+  {
+    "params": "4x6  - 200+ words- medium - 6LM - CSW",
+    "grid": [
+      [
+        "S",
+        "A",
+        "R",
+        "E",
+        "L",
+        "A"
+      ],
+      [
+        "R",
+        "O",
+        "E",
+        "I",
+        "Q",
+        "U"
+      ],
+      [
+        "X",
+        "Z",
+        "A",
+        "Z",
+        "I",
+        "V"
+      ],
+      [
+        "X",
+        "A",
+        "O",
+        "E",
+        "A",
+        "Q"
+      ]
+    ],
+    "bonus": "RELIQUIAE",
+    "count": 8,
+    "uniqueness": 100.0,
+    "top_words": [
+      "EQUALIZER",
+      "RELIQUIAE",
+      "EQUALIZE",
+      "ROSARIA",
+      "ELUVIA",
+      "QUALIA",
+      "VIZIER",
+      "ZOARIA"
+    ]
+  },
+  {
+    "params": "4x6  - 200+ words - hard - 4LM - CSW",
+    "grid": [
+      [
+        "K",
+        "R",
+        "U",
+        "F",
+        "C",
+        "A"
+      ],
+      [
+        "O",
+        "N",
+        "L",
+        "B",
+        "E",
+        "R"
+      ],
+      [
+        "O",
+        "L",
+        "I",
+        "A",
+        "S",
+        "Z"
+      ],
+      [
+        "T",
+        "Y",
+        "K",
+        "Z",
+        "N",
+        "E"
+      ]
+    ],
+    "bonus": "CAREFULLY",
+    "count": 221,
+    "uniqueness": 57.9185520361991,
+    "top_words": [
+      "CAREFULLY",
+      "CREAKILY",
+      "AREALLY",
+      "ARSENAL",
+      "BALLOON",
+      "BURLILY",
+      "CAREFUL",
+      "FLAKILY",
+      "INULASE",
+      "REALLOT"
+    ]
+  },
+  {
+    "params": "4x6  - 200+ words - hard - 5LM - CSW",
+    "grid": [
+      [
+        "M",
+        "U",
+        "O",
+        "B",
+        "Q",
+        "K"
+      ],
+      [
+        "O",
+        "T",
+        "Z",
+        "I",
+        "N",
+        "J"
+      ],
+      [
+        "E",
+        "V",
+        "V",
+        "C",
+        "C",
+        "I"
+      ],
+      [
+        "A",
+        "V",
+        "B",
+        "W",
+        "E",
+        "K"
+      ]
+    ],
+    "bonus": "OUTMOVE",
+    "count": 3,
+    "uniqueness": 100.0,
+    "top_words": [
+      "OUTMOVE",
+      "BOINK",
+      "VINIC"
+    ]
+  },
+  {
+    "params": "4x6  - 200+ words - hard - 6LM - CSW",
+    "grid": [
+      [
+        "X",
+        "O",
+        "Z",
+        "Z",
+        "J",
+        "Z"
+      ],
+      [
+        "N",
+        "E",
+        "G",
+        "V",
+        "B",
+        "X"
+      ],
+      [
+        "B",
+        "R",
+        "E",
+        "X",
+        "V",
+        "O"
+      ],
+      [
+        "J",
+        "U",
+        "G",
+        "J",
+        "A",
+        "W"
+      ]
+    ],
+    "bonus": "GREENBUG",
+    "count": 5,
+    "uniqueness": 100.0,
+    "top_words": [
+      "GREENBUG",
+      "BURGEON",
+      "BOVVER",
+      "BURGEE",
+      "EVZONE"
+    ]
+  },
+  {
+    "params": "5x7 - 200+ words - easy - 5LW - CSW",
+    "grid": [
+      [
+        "N",
+        "K",
+        "I",
+        "W",
+        "O",
+        "I",
+        "N"
+      ],
+      [
+        "K",
+        "A",
+        "E",
+        "R",
+        "I",
+        "U",
+        "Q"
+      ],
+      [
+        "W",
+        "S",
+        "R",
+        "N",
+        "I",
+        "A",
+        "E"
+      ],
+      [
+        "T",
+        "S",
+        "X",
+        "G",
+        "S",
+        "X",
+        "R"
+      ],
+      [
+        "A",
+        "E",
+        "S",
+        "A",
+        "S",
+        "E",
+        "K"
+      ]
+    ],
+    "bonus": "INQUIRING",
+    "count": 274,
+    "uniqueness": 17.51824817518248,
+    "top_words": [
+      "QUEASINESSES",
+      "GASSINESSES",
+      "AIRINESSES",
+      "EASINESSES",
+      "QUEASINESS",
+      "SEXINESSES",
+      "SIGNIORIES",
+      "WIRINESSES",
+      "AEQUORINS",
+      "ASSIGNERS"
+    ]
+  },
+  {
+    "params": "5x7 - 200+ words - easy - 6LW - CSW",
+    "grid": [
+      [
+        "Z",
+        "B",
+        "E",
+        "T",
+        "P",
+        "M",
+        "A"
+      ],
+      [
+        "O",
+        "X",
+        "A",
+        "H",
+        "O",
+        "C",
+        "N"
+      ],
+      [
+        "R",
+        "R",
+        "T",
+        "B",
+        "I",
+        "S",
+        "E"
+      ],
+      [
+        "A",
+        "E",
+        "I",
+        "C",
+        "R",
+        "H",
+        "T"
+      ],
+      [
+        "O",
+        "C",
+        "S",
+        "A",
+        "C",
+        "A",
+        "N"
+      ]
+    ],
+    "bonus": "AMPHIBRACHS",
+    "count": 209,
+    "uniqueness": 44.01913875598086,
+    "top_words": [
+      "AMPHIBRACHS",
+      "ANTHRACITES",
+      "AEROBATICS",
+      "AMPHIBRACH",
+      "ANTHRACITE",
+      "TRIBRACHIC",
+      "AEROBATIC",
+      "ARBITRATE",
+      "BISERRATE",
+      "BORACITES"
+    ]
+  },
+  {
+    "params": "5x7 - 200+ words - easy - 7LW - CSW",
+    "grid": [
+      [
+        "O",
+        "B",
+        "E",
+        "X",
+        "E",
+        "A",
+        "C"
+      ],
+      [
+        "V",
+        "L",
+        "I",
+        "C",
+        "S",
+        "S",
+        "B"
+      ],
+      [
+        "E",
+        "O",
+        "A",
+        "T",
+        "R",
+        "O",
+        "V"
+      ],
+      [
+        "V",
+        "S",
+        "I",
+        "I",
+        "O",
+        "S",
+        "T"
+      ],
+      [
+        "E",
+        "N",
+        "S",
+        "C",
+        "N",
+        "I",
+        "E"
+      ]
+    ],
+    "bonus": "BOLECTION",
+    "count": 206,
+    "uniqueness": 49.51456310679612,
+    "top_words": [
+      "ISOELECTRONIC",
+      "ISOLATIONIST",
+      "SELECTIONIST",
+      "ABORTIONIST",
+      "BIOELECTRIC",
+      "ELECTRONICS",
+      "INSOLATIONS",
+      "ISOELECTRIC",
+      "BASSOONIST",
+      "BILECTIONS"
+    ]
+  },
+  {
+    "params": "5x7 - 200+ words- medium - 5LW - CSW",
+    "grid": [
+      [
+        "E",
+        "N",
+        "C",
+        "E",
+        "C",
+        "K",
+        "M"
+      ],
+      [
+        "I",
+        "K",
+        "X",
+        "Z",
+        "O",
+        "U",
+        "A"
+      ],
+      [
+        "J",
+        "T",
+        "E",
+        "T",
+        "T",
+        "J",
+        "N"
+      ],
+      [
+        "A",
+        "B",
+        "E",
+        "Z",
+        "E",
+        "K",
+        "E"
+      ],
+      [
+        "B",
+        "K",
+        "J",
+        "V",
+        "J",
+        "E",
+        "C"
+      ]
+    ],
+    "bonus": "TETOTUM",
+    "count": 18,
+    "uniqueness": 100.0,
+    "top_words": [
+      "TEETOTUM",
+      "EXECUTE",
+      "TETOTUM",
+      "BETAKE",
+      "JEJUNA",
+      "JEJUNE",
+      "JUNKET",
+      "TAJINE",
+      "TEEVEE",
+      "TUNKET"
+    ]
+  },
+  {
+    "params": "5x7 - 200+ words- medium - 6LW - CSW",
+    "grid": [
+      [
+        "S",
+        "C",
+        "I",
+        "T",
+        "I",
+        "M",
+        "C"
+      ],
+      [
+        "T",
+        "I",
+        "Z",
+        "N",
+        "O",
+        "A",
+        "Y"
+      ],
+      [
+        "A",
+        "I",
+        "E",
+        "S",
+        "P",
+        "R",
+        "C"
+      ],
+      [
+        "I",
+        "S",
+        "I",
+        "N",
+        "H",
+        "E",
+        "I"
+      ],
+      [
+        "S",
+        "K",
+        "I",
+        "R",
+        "A",
+        "T",
+        "N"
+      ]
+    ],
+    "bonus": "CYMOPHANE",
+    "count": 232,
+    "uniqueness": 43.103448275862064,
+    "top_words": [
+      "CYMOPHANES",
+      "EROTICIZES",
+      "INTERPOINT",
+      "INTERPOSES",
+      "IONICITIES",
+      "NECROPSIES",
+      "NECROTIZES",
+      "NEPHROTICS",
+      "TONICITIES",
+      "CAPONIZES"
+    ]
+  },
+  {
+    "params": "5x7 - 200+ words- medium - 7LW - CSW",
+    "grid": [
+      [
+        "N",
+        "E",
+        "T",
+        "A",
+        "S",
+        "Z",
+        "I"
+      ],
+      [
+        "E",
+        "L",
+        "N",
+        "Z",
+        "O",
+        "E",
+        "T"
+      ],
+      [
+        "J",
+        "S",
+        "O",
+        "W",
+        "Q",
+        "E",
+        "N"
+      ],
+      [
+        "O",
+        "S",
+        "H",
+        "S",
+        "V",
+        "S",
+        "Q"
+      ],
+      [
+        "E",
+        "S",
+        "W",
+        "T",
+        "K",
+        "E",
+        "C"
+      ]
+    ],
+    "bonus": "WHOLENESSES",
+    "count": 18,
+    "uniqueness": 100.0,
+    "top_words": [
+      "WHOLENESSES",
+      "LONENESSES",
+      "SANENESSES",
+      "SOLENESSES",
+      "ONENESSES",
+      "SELENOSES",
+      "SEVENTIES",
+      "WHOLENESS",
+      "LONENESS",
+      "SANENESS"
+    ]
+  },
+  {
+    "params": "5x7 - 200+ words - hard - 5LW - CSW",
+    "grid": [
+      [
+        "B",
+        "I",
+        "R",
+        "B",
+        "T",
+        "A",
+        "A"
+      ],
+      [
+        "B",
+        "B",
+        "C",
+        "U",
+        "N",
+        "E",
+        "K"
+      ],
+      [
+        "S",
+        "S",
+        "S",
+        "A",
+        "P",
+        "L",
+        "B"
+      ],
+      [
+        "W",
+        "Z",
+        "X",
+        "K",
+        "I",
+        "A",
+        "I"
+      ],
+      [
+        "B",
+        "I",
+        "E",
+        "N",
+        "S",
+        "C",
+        "B"
+      ]
+    ],
+    "bonus": "UPLINKS",
+    "count": 227,
+    "uniqueness": 41.409691629955944,
+    "top_words": [
+      "PANATELAS",
+      "BEAKLIKE",
+      "BEANLIKE",
+      "CALPAINS",
+      "CAPELINS",
+      "PANATELA",
+      "PEAKLIKE",
+      "RUNELIKE",
+      "SALICINE",
+      "SCABLIKE"
+    ]
+  },
+  {
+    "params": "5x7 - 200+ words - hard - 6LW - CSW",
+    "grid": [
+      [
+        "Z",
+        "I",
+        "N",
+        "P",
+        "R",
+        "E",
+        "S"
+      ],
+      [
+        "A",
+        "Q",
+        "O",
+        "J",
+        "N",
+        "B",
+        "A"
+      ],
+      [
+        "A",
+        "Q",
+        "N",
+        "V",
+        "W",
+        "G",
+        "E"
+      ],
+      [
+        "E",
+        "O",
+        "E",
+        "X",
+        "N",
+        "E",
+        "F"
+      ],
+      [
+        "Z",
+        "I",
+        "A",
+        "O",
+        "K",
+        "L",
+        "U"
+      ]
+    ],
+    "bonus": "PRESAGEFUL",
+    "count": 5,
+    "uniqueness": 100.0,
+    "top_words": [
+      "PRESAGEFUL",
+      "PRESAGE",
+      "BAGFUL",
+      "ENJOIN",
+      "RENVOI"
+    ]
+  },
+  {
+    "params": "5x7 - 200+ words - hard - 7LW - CSW",
+    "grid": [
+      [
+        "S",
+        "E",
+        "C",
+        "N",
+        "R",
+        "W",
+        "S"
+      ],
+      [
+        "O",
+        "J",
+        "T",
+        "K",
+        "A",
+        "A",
+        "S"
+      ],
+      [
+        "B",
+        "K",
+        "B",
+        "B",
+        "K",
+        "C",
+        "J"
+      ],
+      [
+        "A",
+        "J",
+        "I",
+        "E",
+        "N",
+        "K",
+        "A"
+      ],
+      [
+        "E",
+        "C",
+        "Q",
+        "F",
+        "I",
+        "N",
+        "J"
+      ]
+    ],
+    "bonus": "JACKKNIFE",
+    "count": 7,
+    "uniqueness": 100.0,
+    "top_words": [
+      "JACKKNIFE",
+      "NINEBARK",
+      "ARABICA",
+      "FINBACK",
+      "JACKASS",
+      "SETBACK",
+      "SWABBIE"
+    ]
+  },
+  {
+    "params": "6x8 - 200+ words - easy - 6LW - CSW",
+    "grid": [
+      [
+        "R",
+        "T",
+        "A",
+        "I",
+        "B",
+        "A",
+        "C",
+        "A"
+      ],
+      [
+        "C",
+        "I",
+        "I",
+        "B",
+        "S",
+        "V",
+        "D",
+        "I"
+      ],
+      [
+        "N",
+        "O",
+        "Z",
+        "O",
+        "T",
+        "E",
+        "T",
+        "C"
+      ],
+      [
+        "O",
+        "C",
+        "N",
+        "C",
+        "S",
+        "T",
+        "O",
+        "V"
+      ],
+      [
+        "M",
+        "I",
+        "B",
+        "A",
+        "I",
+        "N",
+        "C",
+        "O"
+      ],
+      [
+        "S",
+        "A",
+        "R",
+        "L",
+        "I",
+        "C",
+        "A",
+        "E"
+      ]
+    ],
+    "bonus": "NOMINALISED",
+    "count": 234,
+    "uniqueness": 45.72649572649573,
+    "top_words": [
+      "NOMINALISED",
+      "NOMINALISES",
+      "NOMINALISTS",
+      "ARABINOSES",
+      "BRAINCASES",
+      "NOMINALISE",
+      "NOMINALIST",
+      "ARABINOSE",
+      "ARBALISTS",
+      "BASILICAE"
+    ]
+  },
+  {
+    "params": "6x8 - 200+ words - easy - 7LW - CSW",
+    "grid": [
+      [
+        "T",
+        "C",
+        "V",
+        "Z",
+        "N",
+        "S",
+        "R",
+        "E"
+      ],
+      [
+        "R",
+        "S",
+        "R",
+        "D",
+        "E",
+        "S",
+        "S",
+        "T"
+      ],
+      [
+        "T",
+        "R",
+        "I",
+        "T",
+        "J",
+        "F",
+        "R",
+        "A"
+      ],
+      [
+        "E",
+        "I",
+        "E",
+        "S",
+        "R",
+        "O",
+        "T",
+        "E"
+      ],
+      [
+        "C",
+        "T",
+        "N",
+        "S",
+        "E",
+        "S",
+        "X",
+        "W"
+      ],
+      [
+        "N",
+        "N",
+        "A",
+        "T",
+        "C",
+        "A",
+        "S",
+        "O"
+      ]
+    ],
+    "bonus": "FORTRESSED",
+    "count": 296,
+    "uniqueness": 30.067567567567565,
+    "top_words": [
+      "DIRECTNESSES",
+      "STRICTNESSES",
+      "DIRTINESSES",
+      "EXACTNESSES",
+      "FORECASTERS",
+      "INTERSTATES",
+      "ANCIENTEST",
+      "CASTRATERS",
+      "DEFROSTERS",
+      "DIRECTNESS"
+    ]
+  },
+  {
+    "params": "6x8 - 200+ words - easy - 8LW - CSW",
+    "grid": [
+      [
+        "Z",
+        "A",
+        "S",
+        "N",
+        "V",
+        "K",
+        "T",
+        "K"
+      ],
+      [
+        "N",
+        "O",
+        "E",
+        "V",
+        "T",
+        "C",
+        "T",
+        "N"
+      ],
+      [
+        "A",
+        "R",
+        "E",
+        "I",
+        "X",
+        "O",
+        "A",
+        "R"
+      ],
+      [
+        "M",
+        "H",
+        "Z",
+        "T",
+        "W",
+        "W",
+        "N",
+        "V"
+      ],
+      [
+        "O",
+        "N",
+        "I",
+        "S",
+        "N",
+        "A",
+        "V",
+        "S"
+      ],
+      [
+        "A",
+        "C",
+        "I",
+        "S",
+        "R",
+        "O",
+        "X",
+        "T"
+      ]
+    ],
+    "bonus": "HARMONICIST",
+    "count": 26,
+    "uniqueness": 100.0,
+    "top_words": [
+      "HARMONICIST",
+      "ANTIHEROES",
+      "INCOHERENT",
+      "CARNOTITE",
+      "CISTERNAE",
+      "HARMONICA",
+      "HARMONIST",
+      "HARMONIZE",
+      "SERMONIZE",
+      "VARSITIES"
+    ]
+  },
+  {
+    "params": "6x8 - 200+ words - medium - 6LW - CSW",
+    "grid": [
+      [
+        "X",
+        "R",
+        "W",
+        "N",
+        "M",
+        "S",
+        "X",
+        "E"
+      ],
+      [
+        "A",
+        "W",
+        "X",
+        "A",
+        "C",
+        "I",
+        "O",
+        "S"
+      ],
+      [
+        "B",
+        "T",
+        "T",
+        "P",
+        "O",
+        "V",
+        "N",
+        "B"
+      ],
+      [
+        "T",
+        "S",
+        "A",
+        "S",
+        "I",
+        "C",
+        "I",
+        "T"
+      ],
+      [
+        "I",
+        "C",
+        "I",
+        "T",
+        "I",
+        "R",
+        "O",
+        "R"
+      ],
+      [
+        "K",
+        "C",
+        "I",
+        "S",
+        "E",
+        "V",
+        "C",
+        "N"
+      ]
+    ],
+    "bonus": "POSITIVISM",
+    "count": 255,
+    "uniqueness": 40.3921568627451,
+    "top_words": [
+      "SPASTICITIES",
+      "CONCRETISTS",
+      "SPIRITISTIC",
+      "VISCOSITIES",
+      "VORTICITIES",
+      "APOSTATISE",
+      "CAPACITIES",
+      "CAPACITIVE",
+      "CONCRETIST",
+      "EROTICISTS"
+    ]
+  },
+  {
+    "params": "6x8 - 200+ words - medium - 7LW - CSW",
+    "grid": [
+      [
+        "R",
+        "Z",
+        "I",
+        "T",
+        "L",
+        "C",
+        "E",
+        "T"
+      ],
+      [
+        "E",
+        "E",
+        "S",
+        "E",
+        "I",
+        "A",
+        "A",
+        "S"
+      ],
+      [
+        "N",
+        "C",
+        "J",
+        "S",
+        "D",
+        "R",
+        "C",
+        "T"
+      ],
+      [
+        "S",
+        "I",
+        "I",
+        "O",
+        "A",
+        "S",
+        "T",
+        "I"
+      ],
+      [
+        "O",
+        "X",
+        "K",
+        "N",
+        "O",
+        "C",
+        "I",
+        "V"
+      ],
+      [
+        "N",
+        "B",
+        "O",
+        "R",
+        "E",
+        "C",
+        "E",
+        "E"
+      ]
+    ],
+    "bonus": "SIDALCEAS",
+    "count": 234,
+    "uniqueness": 54.27350427350427,
+    "top_words": [
+      "RASCALITIES",
+      "ANORECTICS",
+      "CARDITISES",
+      "CITIZENESS",
+      "COENOSARCS",
+      "CORONARIES",
+      "CRANKINESS",
+      "DESCENSION",
+      "DISSENSION",
+      "NODALITIES"
+    ]
+  },
+  {
+    "params": "6x8 - 200+ words - medium - 8LW - CSW",
+    "grid": [
+      [
+        "C",
+        "W",
+        "N",
+        "E",
+        "C",
+        "J",
+        "A",
+        "R"
+      ],
+      [
+        "J",
+        "E",
+        "W",
+        "N",
+        "E",
+        "N",
+        "I",
+        "B"
+      ],
+      [
+        "V",
+        "E",
+        "K",
+        "A",
+        "Z",
+        "S",
+        "S",
+        "X"
+      ],
+      [
+        "C",
+        "I",
+        "V",
+        "N",
+        "A",
+        "S",
+        "R",
+        "I"
+      ],
+      [
+        "Q",
+        "R",
+        "B",
+        "A",
+        "S",
+        "E",
+        "V",
+        "I"
+      ],
+      [
+        "E",
+        "P",
+        "P",
+        "K",
+        "C",
+        "N",
+        "T",
+        "J"
+      ]
+    ],
+    "bonus": "APPERCEIVE",
+    "count": 9,
+    "uniqueness": 100.0,
+    "top_words": [
+      "APPERCEIVE",
+      "EVENNESSES",
+      "KEENNESSES",
+      "NEWNESSES",
+      "ASSASSIN",
+      "EVENNESS",
+      "KEENNESS",
+      "PERCEIVE",
+      "VERSINES"
+    ]
+  },
+  {
+    "params": "6x8 - 200+ words - hard - 6LW - CSW",
+    "grid": [
+      [
+        "C",
+        "N",
+        "C",
+        "C",
+        "A",
+        "B",
+        "S",
+        "S"
+      ],
+      [
+        "I",
+        "T",
+        "A",
+        "R",
+        "A",
+        "E",
+        "R",
+        "V"
+      ],
+      [
+        "R",
+        "C",
+        "I",
+        "V",
+        "E",
+        "L",
+        "V",
+        "E"
+      ],
+      [
+        "S",
+        "V",
+        "O",
+        "J",
+        "T",
+        "I",
+        "K",
+        "R"
+      ],
+      [
+        "I",
+        "T",
+        "Z",
+        "N",
+        "X",
+        "K",
+        "S",
+        "W"
+      ],
+      [
+        "N",
+        "E",
+        "T",
+        "E",
+        "B",
+        "E",
+        "J",
+        "E"
+      ]
+    ],
+    "bonus": "RAVELERS",
+    "count": 218,
+    "uniqueness": 42.6605504587156,
+    "top_words": [
+      "ALTERCATION",
+      "CONTEXTLESS",
+      "ALTERATION",
+      "BARIATRICS",
+      "LITERATION",
+      "ACCRETIVE",
+      "BARIATRIC",
+      "CAREERERS",
+      "CIVETLIKE",
+      "COVARIANT"
+    ]
+  },
+  {
+    "params": "6x8 - 200+ words - hard - 7LW - CSW",
+    "grid": [
+      [
+        "P",
+        "V",
+        "E",
+        "A",
+        "B",
+        "I",
+        "B",
+        "N"
+      ],
+      [
+        "O",
+        "A",
+        "R",
+        "R",
+        "K",
+        "B",
+        "T",
+        "S"
+      ],
+      [
+        "V",
+        "P",
+        "T",
+        "T",
+        "I",
+        "N",
+        "E",
+        "V"
+      ],
+      [
+        "H",
+        "O",
+        "R",
+        "O",
+        "B",
+        "S",
+        "I",
+        "C"
+      ],
+      [
+        "T",
+        "A",
+        "M",
+        "C",
+        "T",
+        "T",
+        "X",
+        "O"
+      ],
+      [
+        "H",
+        "E",
+        "G",
+        "I",
+        "A",
+        "O",
+        "N",
+        "N"
+      ]
+    ],
+    "bonus": "APOPHTHEGM",
+    "count": 140,
+    "uniqueness": 55.714285714285715,
+    "top_words": [
+      "CONNOTATIVE",
+      "OVERPROMOTE",
+      "TRAVERTINES",
+      "APOPHTHEGM",
+      "ARISTOCRAT",
+      "CRAMOISIES",
+      "HEMOTOXINS",
+      "INSTIGATOR",
+      "MICROPHAGE",
+      "PHOTOTOXIC"
+    ]
+  },
+  {
+    "params": "6x8 - 200+ words - hard - 8LW - CSW",
+    "grid": [
+      [
+        "J",
+        "C",
+        "R",
+        "I",
+        "E",
+        "K",
+        "K",
+        "I"
+      ],
+      [
+        "J",
+        "E",
+        "Z",
+        "E",
+        "S",
+        "L",
+        "C",
+        "K"
+      ],
+      [
+        "W",
+        "R",
+        "R",
+        "A",
+        "C",
+        "S",
+        "E",
+        "Z"
+      ],
+      [
+        "A",
+        "I",
+        "B",
+        "R",
+        "S",
+        "B",
+        "I",
+        "I"
+      ],
+      [
+        "N",
+        "B",
+        "R",
+        "O",
+        "N",
+        "X",
+        "V",
+        "O"
+      ],
+      [
+        "V",
+        "O",
+        "B",
+        "N",
+        "T",
+        "E",
+        "B",
+        "N"
+      ]
+    ],
+    "bonus": "CREASELESS",
+    "count": 15,
+    "uniqueness": 100.0,
+    "top_words": [
+      "CREASELESS",
+      "CARESSIVE",
+      "CEASELESS",
+      "SORCERIES",
+      "WARBONNET",
+      "AIRBORNE",
+      "BASELESS",
+      "CESARIAN",
+      "ORRERIES",
+      "RISKLESS"
+    ]
+  }
+]

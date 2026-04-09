@@ -1,0 +1,40 @@
+# Difficulty Definitions (Uniqueness / Accepted Words Percentage):
+# Easy: 0% - 39%
+# Medium: 40% - 59%
+# Hard: 60%+
+#
+4x4 - 50-100 words - easy - 3LM - NWL
+4x4 - 50-100 words - easy - 4LM - NWL
+4x4 - 50-100 words - easy - 5LM - NWL
+4x4 - 50-100 words - medium - 3LM - NWL
+4x4 - 50-100 words - medium - 4LM - NWL
+4x4 - 50-100 words - medium - 5LM - NWL
+4x4 - 50-100 words - hard - 3LM - NWL
+4x4 - 50-100 words - hard - 4LM - NWL
+4x4 - 50-100 words - hard - 5LM - NWL
+4x4 - 100-200 words - easy - 3LM - NWL
+4x4 - 100-200 words - easy - 4LM - NWL
+4x4 - 100-200 words - easy - 5LM - NWL
+4x4 - 100-200 words - medium - 3LM - NWL
+4x4 - 100-200 words - medium - 4LM - NWL
+4x4 - 100-200 words - medium - 5LM - NWL
+4x4 - 100-200 words - hard - 3LM - NWL
+4x4 - 100-200 words - hard - 4LM - NWL
+4x4 - 100-200 words - hard - 5LM - NWL
+4x4 - 200+ words - easy - 3LM - NWL
+4x4 - 200+ words - easy - 4LM - NWL
+4x4 - 200+ words - easy - 5LM - NWL
+4x4 - 200+ words - medium - 3LM - NWL
+4x4 - 200+ words - medium - 4LM - NWL
+4x4 - 200+ words - medium - 5LM - NWL
+4x4 - 200+ words - hard - 3LM - NWL
+4x4 - 200+ words - hard - 4LM - NWL
+4x4 - 200+ words - hard - 5LM - NWL
+
+4x6 - 50-100 words - easy - 4LM - NWL
+4x6 - 50-100 words - easy - 5LM - NWL
+4x6 - 50-100 words - easy - 6LM - NWL
+4x6  - 50-100 words - medium - 4LM - NWL
+4x6  - 50-100 words - medium - 5LM - NWL
+4x6  - 50-100 words - medium - 6LM - NWL
+4x6 - 50-100 words - hard - 4LM - NWL

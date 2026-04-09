@@ -194,16 +194,27 @@ async function addAddedWord() {
             body: JSON.stringify({ word })
         });
         const data = await response.json();
+        
+        // Clear input and refocus (as requested for better workflow)
+        if (wordInput) {
+            wordInput.value = '';
+            wordInput.focus();
+        }
+
         if (data.success) {
-            if (wordInput) wordInput.value = '';
-            showModStatus(`Word "${word}" added to Added Words list.`, false, 'added-word-status-area');
-            
+            const msg = data.message || `Word "${word}" added (V2 Success)`;
+            showModStatus(msg, false, 'added-word-status-area');
             if (window.loadAddedWords) window.loadAddedWords('added');
         } else {
-            showModStatus(data.error || "Failed to add word.", true, 'added-word-status-area');
+            const errorMsg = data.error || "Failed to add word (V2 Error)";
+            showModStatus(errorMsg, true, 'added-word-status-area');
         }
     } catch (err) {
         console.error("Error adding added word:", err);
+        if (wordInput) {
+            wordInput.value = '';
+            wordInput.focus();
+        }
         showModStatus("Network error adding word.", true, 'added-word-status-area');
     }
 }
@@ -227,8 +238,14 @@ async function removeAddedWord() {
             body: JSON.stringify({ word: word.toUpperCase() })
         });
         const data = await response.json();
+        
+        // Clear input regardless of success/fail (consistency)
+        if (wordInput) {
+            wordInput.value = '';
+            wordInput.focus();
+        }
+
         if (data.success) {
-            if (wordInput) wordInput.value = '';
             showModStatus(`Word "${word}" removed from Added Words list.`, false, 'added-word-status-area');
             alert(`Success: Word "${word}" was removed from the dictionary.`);
             
@@ -237,14 +254,56 @@ async function removeAddedWord() {
             showModStatus(data.error || "Failed to remove word.", true, 'added-word-status-area');
             alert("Error: " + (data.error || "Failed to remove word."));
         }
+        
+        // Final focus catch specifically after alerts
+        if (wordInput) wordInput.focus();
     } catch (err) {
         console.error("Error removing added word:", err);
+        if (wordInput) {
+            wordInput.value = '';
+            wordInput.focus();
+        }
         showModStatus("Network error removing word.", true, 'added-word-status-area');
         alert("Network error: Could not reach the server.");
+        if (wordInput) wordInput.focus();
     }
 }
 window.addAddedWord = addAddedWord;
 window.removeAddedWord = removeAddedWord;
+
+async function loadAddedWordsConfig() {
+    const toggle = document.getElementById('toggle-use-added-words');
+    if (!toggle) return;
+    
+    try {
+        const response = await fetch('/api/mods/added_words/config');
+        const data = await response.json();
+        if (data.hasOwnProperty('use_added_words')) {
+            toggle.checked = data.use_added_words;
+        }
+    } catch (err) {
+        console.error("Error loading added words config:", err);
+    }
+}
+
+async function toggleAddedWords(enabled) {
+    try {
+        const response = await fetch('/api/mods/added_words/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled })
+        });
+        const data = await response.json();
+        if (data.success) {
+            showModStatus(`Added Words are now ${enabled ? 'ENABLED' : 'DISABLED'} game-wide.`, false, 'added-word-status-area');
+        } else {
+            showModStatus(data.error || "Failed to toggle added words.", true, 'added-word-status-area');
+        }
+    } catch (err) {
+        console.error("Error toggling added words:", err);
+        showModStatus("Network error toggling added words.", true, 'added-word-status-area');
+    }
+}
 
 
 // Global initialization
@@ -298,6 +357,7 @@ async function clearLobbyNotice() {
 document.addEventListener('DOMContentLoaded', () => {
     loadLobbyNotice(); // Load initial notice
     checkModStatus();
+    loadAddedWordsConfig();
     
     // Moderators
     const addModBtn = document.getElementById('add-mod-btn');
@@ -325,6 +385,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const removeAddedWordBtn = document.getElementById('remove-added-word-btn');
     if (removeAddedWordBtn) {
         removeAddedWordBtn.addEventListener('click', removeAddedWord);
+    }
+
+    const toggleAddedWordsEl = document.getElementById('toggle-use-added-words');
+    if (toggleAddedWordsEl) {
+        toggleAddedWordsEl.addEventListener('change', (e) => toggleAddedWords(e.target.checked));
     }
 
     // Definitions

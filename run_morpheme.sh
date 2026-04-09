@@ -20,7 +20,7 @@ kill_port() {
 }
 
 # Cleanup existing servers to prevent "Address already in use"
-kill_port 3000
+kill_port 5001
 kill_port 5005
 
 # Start Boggle-Gen History Service (Port 5005) in background
@@ -28,8 +28,8 @@ echo "Starting Boggle-Gen service on http://localhost:5005..."
 nohup python3 boggle-gen/web/app.py >> "$BOGGLE_LOG" 2>&1 &
 BOGGLE_PID=$!
 
-# Start Main Morpheme Server (Port 3000) with Auto-Restart Loop
-echo "Starting Morpheme main server on http://localhost:3000..."
+# Start Main Morpheme Server (Port 5001) with Auto-Restart Loop
+echo "Starting Morpheme main server on http://localhost:5001..."
 echo "Auto-restart protection active."
 
 while true; do
@@ -39,8 +39,17 @@ while true; do
         nohup python3 boggle-gen/web/app.py >> "$BOGGLE_LOG" 2>&1 &
     fi
 
-    # Run main Morpheme server in foreground of this loop
-    python3 app.py >> "$MAIN_LOG" 2>&1
+    # Kill any existing processes on port 5001
+    echo "Cleaning up existing Morpheme processes..."
+    PIDS=$(lsof -t -i:5001)
+    if [ ! -z "$PIDS" ]; then
+        kill -9 $PIDS
+        sleep 3
+    fi
+
+    # Run the server and CAPTURE its completion/crash
+    echo "Starting Morpheme Server (app.py)..."
+    python3 app.py 2>&1 | tee server.log
     
     echo "Main server crashed or stopped. Checking for termios issues..."
     if grep -q "termios.error" "$MAIN_LOG"; then

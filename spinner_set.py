@@ -25,37 +25,64 @@ class SpinnerSet:
         return params
 
     @staticmethod
-    def generate_params(board_dimensions, is_24h=False, is_split=False):
+    def generate_params(board_dimensions, is_24h=False, is_split=False, previous_params=None):
         """Generate granular spinner parameters given dimensions"""
         try:
-            # Randomize dictionary
-            dictionary = SpinnerSet._spin_dictionary()
+            # Loop to ensure parameters are DIFFERENT from previous (User Request)
+            # We allow up to 30 attempts to find a unique combination
+            best_res = None
             
-            # Weighted word count
-            wc_range = SpinnerSet._spin_word_count(dictionary)
-            
-            # Determine format (Force Normal for 500+ density to ensure solvability)
-            board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions)
-            if wc_range == '500+':
-                board_format = 'Normal'
+            for _ in range(30):
+                # Randomize dictionary
+                dictionary = SpinnerSet._spin_dictionary()
+                
+                # Minimum word length (spin BEFORE word count to inform density)
+                min_word_length = SpinnerSet._spin_min_word_length(board_dimensions)
 
-            # Minimum word length
-            min_word_length = SpinnerSet._spin_min_word_length(board_dimensions)
-            bonus_len = max(min_word_length, SpinnerSet._spin_bonus_word_length())
-            
-            # Generate the result
-            res = {
-                'bonus_word_length': bonus_len,
-                'min_word_length': min_word_length,
-                'difficulty': SpinnerSet._spin_difficulty(),
-                'word_count_range': wc_range,
-                'dictionary': dictionary,
-                'board_format': board_format,
-                'generated_at': time.time()
-            }
-            
-            print(f"[SpinnerSet] Generated: {res['difficulty']} / {res['dictionary']} / {res['word_count_range']}")
-            return res
+                # Difficulty (spin first to inform density)
+                difficulty = SpinnerSet._spin_difficulty()
+                
+                # Weighted word count (density cap for Hard/Expert and long-word rounds)
+                wc_range = SpinnerSet._spin_word_count(dictionary, min_word_length, difficulty, board_dimensions)
+                
+                # Determine format (Allow Either/Or to persist at high density)
+                board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions)
+                if wc_range == '500+' or wc_range == '200+':
+                    if min_word_length >= 5:
+                        # Keep Either/Or and Checkerboard as they are highly requested/stable
+                        if board_format not in ['Either/Or', 'Checkerboard']:
+                            board_format = 'Normal'
+                bonus_len = max(min_word_length, SpinnerSet._spin_bonus_word_length())
+                
+                res = {
+                    'bonus_word_length': bonus_len,
+                    'min_word_length': min_word_length,
+                    'difficulty': difficulty,
+                    'word_count_range': wc_range,
+                    'dictionary': dictionary,
+                    'board_format': board_format,
+                    'generated_at': time.time()
+                }
+                
+                if not previous_params:
+                    return res
+                
+                # Uniqueness Check: Ensure at least one major visual parameter changed
+                # Keys to check for variety:
+                major_keys = ['difficulty', 'min_word_length', 'word_count_range', 'dictionary', 'board_format']
+                is_different = False
+                for k in major_keys:
+                    if str(res.get(k)) != str(previous_params.get(k)):
+                        is_different = True
+                        break
+                
+                if is_different:
+                    return res
+                
+                best_res = res # Fallback to last attempt if we somehow fail 30 times
+
+            print(f"[SpinnerSet] WARNING: Could not find unique params after 30 attempts. Using last roll.")
+            return best_res or res
             
         except Exception as e:
             print(f"[SpinnerSet] CRITICAL GENERATOR ERROR: {e}")
@@ -86,21 +113,28 @@ class SpinnerSet:
         elif '5x7' in dims:
             return random.choices([5, 6, 7], weights=[25, 50, 25])[0]
         elif '6x8' in dims:
-            return random.choices([6, 7, 8], weights=[25, 50, 25])[0]
+            # User Request: Never exceed 7-letter minimum for 6x8 playability
+            return random.choices([6, 7], weights=[40, 60])[0]
         elif '3x3x3' in dims:
+            # User Request: 25% 6LM, 50% 7LM, 25% 8LM for 3x3x3
             return random.choices([6, 7, 8], weights=[25, 50, 25])[0]
         else:
             return 3  # Default
     
     @staticmethod
     def _spin_difficulty():
-        """25% Easy, 50% Medium, 25% Hard"""
+        """Balanced difficulty selection: 25% Easy, 50% Medium, 25% Hard"""
         return random.choices(['Easy', 'Medium', 'Hard'], weights=[25, 50, 25])[0]
     
     @staticmethod
-    def _spin_word_count(dictionary_name='NWL'):
-        """24% 50-100, 50% 100-200, 25% 200+, 1% 500+"""
-        return random.choices(['50-100', '100-200', '200+', '500+'], weights=[24, 50, 25, 1])[0]
+    def _spin_word_count(dictionary_name='NWL', min_word_length=3, difficulty='Medium', board_dimensions='4x4'):
+        # CRITICAL: For cubes, we must check total tiles via something other than rows*cols 
+        # since depth isn't passed here. We default to is_large if caller uses rows/cols correctly or detect via values.
+        # 3x3x3 cube has 27 tiles, but surface area logic often treats it as large.
+        is_large = ('3x3x3' in str(board_dimensions)) or ('6x8' in str(board_dimensions))
+        choices = ['50-100', '100-200', '200+', '500+']
+        weights = [24, 50, 25, 1]
+        return random.choices(choices, weights=weights)[0]
     
     @staticmethod
     def _spin_dictionary():
@@ -112,12 +146,15 @@ class SpinnerSet:
         """
         Normal: 82% Normal, 8% Checkerboard, rest 2% each
         """
-        if is_24h or '3x3x3' in str(dimensions):
+        if is_24h:
+            return 'Valued Letters'
+            
+        if '3x3x3' in str(dimensions):
             return 'Normal'
             
         result = random.choices(
             ['Normal', 'Checkerboard', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters'],
-            weights=[82, 8, 2, 2, 2, 2, 2]
+            weights=[60, 10, 6, 6, 6, 6, 6]
         )[0]
         
         if result == 'Mania':

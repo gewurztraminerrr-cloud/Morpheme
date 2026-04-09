@@ -819,8 +819,9 @@ body {
 
 /* Pages */
 .pages {
-    padding: 20px 40px;
-    max-width: 1400px;
+    padding: 10px 20px; /* Reduced from 20px 40px */
+    max-width: 1800px; /* Increased from 1400px to use more screen width */
+    width: 100%;
     margin: 0 auto;
 }
 
@@ -5739,4 +5740,8 @@ body {
     transform: translateY(-2px);
     filter: brightness(1.1);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }

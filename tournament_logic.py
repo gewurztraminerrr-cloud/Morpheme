@@ -143,7 +143,7 @@ class TournamentManager:
         # if 'checkerboard' in target_format.lower():
         #     bonus_word = ""
 
-        board, all_words_on_board, bonus_cell = bg.generate_board(
+        board, all_words_on_board, bonus_cell, _, _, uniqueness_ratio = bg.generate_board(
             dimensions=dims,
             bonus_word=bonus_word,
             word_count_range=params.get('word_count_range', '100-200'),
@@ -170,7 +170,8 @@ class TournamentManager:
             'bonus_word': bonus_word,
             'all_words': all_words_on_board,
             'bonus_cell': bonus_cell,
-            'board_format': target_format
+            'board_format': target_format,
+            'uniqueness_ratio': uniqueness_ratio
         })))
         
         # 4. Generate Matchups for this round

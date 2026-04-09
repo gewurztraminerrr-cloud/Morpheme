@@ -98,7 +98,7 @@ function renderTournament(data) {
                 </div>
                 <div class="param-item">
                     <span class="param-label">Difficulty</span>
-                    <span class="param-value">${params.difficulty || 'Medium'}</span>
+                    <span class="param-value">${params.difficulty || 'Medium'}${params.uniqueness_ratio ? ` (${Math.round(params.uniqueness_ratio * 100)}%)` : ''}</span>
                 </div>
                 <div class="param-item">
                     <span class="param-label">Word Count</span>

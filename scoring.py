@@ -94,8 +94,8 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
                     bx, by = int(bonus_cell[0]), int(bonus_cell[1])
                     bf = -1
 
-        # A. Use explicit path if provided
-        if path:
+        # A. Use explicit path if provided (Check it's a list for optimized solver)
+        if path and isinstance(path, (list, tuple)):
             for node in path:
                 nx, ny, nf = -1, -1, -1
                 if isinstance(node, dict):
@@ -229,9 +229,8 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
             'bonus_letter_points': bonus_letter_score
         }
         # Only log if it's a specific interesting score or debug mode
-        if score > base_score:
-            with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/scoring_debug.log', 'a') as f:
-                f.write(f"[Scoring] Word: {word}, Format: {board_format}, Total: {score}\n")
+        # with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/scoring_debug.log', 'a') as f:
+        #     f.write(f"[Scoring] Word: {word}, Format: {board_format}, Total: {score}\n")
         return res
         
     return score
