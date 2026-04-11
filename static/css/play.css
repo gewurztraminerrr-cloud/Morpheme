@@ -664,6 +664,19 @@ body.theme-light-brown .player-score-val {
         -0.5px 0.5px 0 #000,
         0.5px 0.5px 0 #000,
         0px 0px 1px #000;
+    
+    /* DYNAMIC FEEDBACK: Smoothly transition density shading */
+    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                color 0.4s ease, 
+                transform 0.2s ease, 
+                box-shadow 0.4s ease;
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    user-select: none;
+    cursor: pointer;
 }
 
 /* Synesthesia: Custom Letter Colors */
@@ -687,17 +700,16 @@ body.theme-light-brown .player-score-val {
     color: var(--letter-E-color, #111111) !important;
 }
 
-.board-cell[data-letter*="F"] {
-    color: var(--letter-F-color, #111111) !important;
-}
+.board-cell[data-letter*="F"] { color: var(--letter-F-color, #111111) !important; }
+.board-cell[data-letter*="G"] { color: var(--letter-G-color, #111111) !important; }
+.board-cell[data-letter*="H"] { color: var(--letter-H-color, #111111) !important; }
 
-.board-cell[data-letter*="G"] {
-    color: var(--letter-G-color, #111111) !important;
+@keyframes cell-lighten-pulse {
+    0% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.1); filter: brightness(1.4); }
+    100% { transform: scale(1); filter: brightness(1); }
 }
-
-.board-cell[data-letter*="H"] {
-    color: var(--letter-H-color, #111111) !important;
-}
+.cell-lightened { animation: cell-lighten-pulse 0.4s ease-out; }
 
 .board-cell[data-letter*="I"] {
     color: var(--letter-I-color, #111111) !important;
@@ -1243,13 +1255,13 @@ body.theme-light-brown .notepad-item.bonus-word {
     font-weight: 700;
 }
 
-/* CSW-Only Word (Third Priority: Yellow/Gold) */
+/* CSW-Only Word (Third Priority: Solid Gold) */
 .word-item.csw-only {
-    background: rgba(255, 215, 0, 0.4) !important;
+    background: rgba(255, 215, 0, 0.7) !important;
     border: 2px solid #ffd700 !important;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3) !important;
-    color: var(--text-primary);
-    font-weight: 700;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
+    color: #000 !important; /* Black text for better contrast on gold */
+    font-weight: 800;
 }
 
 /* Active Highlight for Finding Finders */
@@ -1276,7 +1288,8 @@ body.theme-light-brown .notepad-item.bonus-word {
 
 .found-indicator.present {
     background: #2ecc71;
-    color: var(--text-primary);
+    color: #fff;
+    border: 1.5px solid #000;
     box-shadow: 0 0 5px rgba(46, 204, 113, 0.4);
 }
 
@@ -2225,109 +2238,7 @@ body.theme-light-brown .word-item.missed {
     }
 }
 
-/* Color Bar Container */
-#game-color-bar {
-    width: 100%;
-    height: 16px;
-    display: flex;
-    margin: 10px 0 5px 0;
-    /* Minimal margin */
-    position: relative;
-    z-index: 100;
-    /* Higher z-index for the bar itself */
-}
 
-/* Color Bar Segments */
-.color-bar-segment {
-    height: 100%;
-    flex: 1;
-    position: relative;
-    cursor: help;
-    transition: filter 0.1s;
-
-    /* Outlines and Separators */
-    border-top: 2px solid #000;
-    border-bottom: 2px solid #000;
-    border-right: 1px solid rgba(0, 0, 0, 0.2);
-    box-sizing: border-box;
-}
-
-.color-bar-segment.active {
-    filter: brightness(1.2);
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.6), inset 0 0 10px rgba(255, 255, 255, 0.4);
-    z-index: 101; /* Stay above others */
-    transform: scaleY(1.3);
-    border-radius: 2px;
-}
-
-.color-bar-segment:first-child {
-    border-top-left-radius: 4px;
-    border-bottom-left-radius: 4px;
-    border-left: 2px solid #000;
-}
-
-.color-bar-segment:last-child {
-    border-top-right-radius: 4px;
-    border-bottom-right-radius: 4px;
-    border-right: 2px solid #000;
-}
-
-.color-bar-segment:hover {
-    filter: brightness(1.4) contrast(1.1);
-}
-
-/* Custom Tooltip */
-.color-bar-segment::before {
-    content: attr(data-name) "\A" attr(data-label);
-    position: absolute;
-    bottom: 140%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #000000 !important;
-    color: #ffffff !important;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 0.85rem !important;
-    font-weight: 700 !important;
-    line-height: 1.3;
-    text-align: center;
-    white-space: pre-wrap;
-    width: max-content;
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition: all 0.1s ease-out;
-    border: 1.5px solid rgba(var(--text-primary-rgb), 0.2) !important;
-    z-index: 100000 !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important;
-    font-family: 'Inter', Arial, sans-serif !important;
-    -webkit-font-smoothing: antialiased !important;
-    text-rendering: optimizeLegibility !important;
-}
-
-.color-bar-segment::after {
-    content: '';
-    position: absolute;
-    bottom: 140%;
-    left: 50%;
-    transform: translateX(-50%) translateY(10px);
-    border-width: 6px;
-    border-style: solid;
-    border-color: #777777 transparent transparent transparent;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.1s ease-out;
-    z-index: 100000 !important;
-}
-
-.color-bar-segment:hover::before,
-.color-bar-segment:active::before,
-.color-bar-segment:hover::after,
-.color-bar-segment:active::after {
-    opacity: 1 !important;
-    visibility: visible !important;
-    bottom: 165%;
-}
 
 /* Rating Indicator */
 .rating-indicator {
@@ -2336,8 +2247,9 @@ body.theme-light-brown .word-item.missed {
     height: 12px;
     border-radius: 2px;
     margin-right: 8px;
-    border: 1px solid rgba(var(--text-primary-rgb), 0.3);
+    border: 1.5px solid #000;
     vertical-align: middle;
+    box-sizing: border-box;
 }
 
 /* Split Points Logic Styles */
@@ -2545,6 +2457,7 @@ body.theme-light-brown .word-item.missed {
     box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
     border: 1px solid #000;
 }
+
 
 /* Toggle Link/Button styling */
 .active-room-btn {
@@ -3526,3 +3439,97 @@ input[type=range]::-moz-range-track {
 .cube-cell[data-letter*="X"] { color: var(--letter-X-color, #111111) !important; }
 .cube-cell[data-letter*="Y"] { color: var(--letter-Y-color, #111111) !important; }
 .cube-cell[data-letter*="Z"] { color: var(--letter-Z-color, #111111) !important; }
+
+/* Bonus Indicator Tags (Word List) */
+.list-bonus-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    flex-shrink: 0;
+}
+
+.bonus-cell-tag {
+    background: #32cd32; /* Lime green */
+    border: 1px solid #28a428;
+}
+
+.bonus-word-tag {
+    background: #ffd700; /* Gold */
+    color: #000;
+    border: 1px solid #daa520;
+}
+
+.eo-tag {
+    background: #ff4500; /* OrangeRed */
+    border: 1px solid #cc3700;
+}
+
+.points-math {
+    white-space: nowrap;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 3px 10px;
+    border-radius: 6px;
+    flex-shrink: 0; /* USER REQUEST: Never squish the math breakdown */
+    margin-left: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.word-item {
+    display: flex !important;
+    flex-wrap: wrap !important; /* USER REQUEST: Allow content to occupy a second line */
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 6px 14px !important;
+    cursor: pointer;
+    padding: 10px 14px !important;
+    min-width: 0;
+}
+
+.word-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: auto;
+    flex: 1 1 auto;
+}
+
+.word-text {
+    font-size: 1.15rem;
+    font-weight: 700;
+    white-space: normal; /* No more ellipsis truncation */
+    overflow: visible;
+    min-width: 0;
+    line-height: 1.2;
+    word-break: break-all; /* Break extremely long words if needed */
+}
+
+.points-math {
+    white-space: nowrap;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 4px 12px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    margin-left: auto; /* Always right-aligned, even on second row */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.found-indicator, .list-bonus-tag {
+    flex-shrink: 0;
+}

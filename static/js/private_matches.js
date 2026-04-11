@@ -97,11 +97,13 @@
         if (!soloDims || !soloFormat) return;
 
         if (soloDims.value === '3x3x3') {
-            // Force Normal
-            soloFormat.value = 'Normal';
+            // Force Normal OR Density
+            if (soloFormat.value !== 'Normal' && soloFormat.value !== 'Density') {
+                soloFormat.value = 'Normal';
+            }
             // Disable other options to prevent selection
             Array.from(soloFormat.options).forEach(opt => {
-                if (opt.value !== 'Normal') {
+                if (opt.value !== 'Normal' && opt.value !== 'Density') {
                     opt.disabled = true;
                 }
             });

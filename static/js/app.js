@@ -302,7 +302,8 @@ async function checkSession() {
             window.currentUserIsMod = data.is_mod; // Store mod status
             localStorage.setItem('morpheme_username', currentUser);
 
-            updateAuthUI(); // Update UI for logged in state
+            window.lastPlayerRating = data.rating;
+            updateAuthUI(data.rating); // Update UI for logged in state
 
 
             // LOAD ALL SETTINGS
@@ -532,6 +533,16 @@ function showPage(pageId) {
         targetPage.classList.add('active');
     }
 
+    // Standardize: Rating color bar ONLY appears on the Play page
+    const colorBar = document.getElementById('game-color-bar');
+    if (colorBar) {
+        if (pageId === 'page-play') {
+            colorBar.style.display = 'flex';
+        } else {
+            colorBar.style.display = 'none';
+        }
+    }
+
     // NEW: Load Private Matches instantly when entering Lobby
     if (pageId === 'page-lobby') {
         if (typeof window.loadPrivateMatches === 'function') {
@@ -671,7 +682,8 @@ async function handleSignIn() {
                 checkModStatus();
             }
             
-            navigateToLobby();
+            window.lastPlayerRating = data.rating;
+            navigateToLobby(data.rating);
         } else {
 
             errorEl.textContent = data.error || data.message;
@@ -717,7 +729,8 @@ async function handleSignUp() {
             currentUserEmail = email; // From the signup form
             window.currentUserEmail = currentUserEmail;
             window.currentUserIsGuest = false;
-            navigateToLobby();
+            window.lastPlayerRating = data.rating;
+            navigateToLobby(data.rating);
         } else {
             errorEl.textContent = data.error || data.message;
         }
@@ -752,9 +765,11 @@ async function handleGuestLogin() {
     }
 }
 
-function navigateToLobby() {
+function navigateToLobby(rating = null) {
+    if (rating) window.lastPlayerRating = rating;
+
     // Update UI for logged in state
-    updateAuthUI();
+    updateAuthUI(rating);
 
     // Show lobby page
     showPage('page-lobby');
@@ -780,7 +795,7 @@ function navigateToLobby() {
 }
 
 
-function updateAuthUI() {
+function updateAuthUI(rating = null) {
     const loginNavBtn = document.getElementById('nav-login-btn');
     const userDisplay = document.getElementById('user-display');
     const usernameEl = document.getElementById('username-display');
@@ -792,6 +807,12 @@ function updateAuthUI() {
             usernameEl.textContent = currentUser;
             const color = window.getRatingColor ? window.getRatingColor(0) : '#fff'; // Default or fetch actual rating
             usernameEl.style.color = 'var(--accent-color)';
+        }
+
+        // Handle Rating Bar
+        renderGameColorBar();
+        if (rating || window.lastPlayerRating) {
+            updateUserRatingHighlight(rating || window.lastPlayerRating);
         }
 
         // Handle Mods Button
@@ -806,6 +827,10 @@ function updateAuthUI() {
         if (userDisplay) userDisplay.classList.add('hidden');
         const modsBtn = document.getElementById('nav-mods-btn');
         if (modsBtn) modsBtn.style.display = 'none';
+
+        // Hide Rating Bar when logged out
+        const bar = document.getElementById('game-color-bar');
+        if (bar) bar.innerHTML = '';
     }
 }
 
@@ -1018,6 +1043,9 @@ function renderGameColorBar() {
 /**
  * Highlights the segment in the color bar that matches current uniqueness/difficulty
  */
+/**
+ * Highlights the segment in the color bar that matches current board difficulty
+ */
 function updateColorBarHighlight(difficulty, uniqueness) {
     const bar = document.getElementById('game-color-bar');
     if (!bar) return;
@@ -1029,18 +1057,11 @@ function updateColorBarHighlight(difficulty, uniqueness) {
     const pct = Math.round(uniqueness * 100);
     
     // TIER MAPPING FOR SPINNER HIGHLIGHT (13 segments total)
-    // EASY: Indices 0,1,2,3,4 (Rating 1-499)
-    // MEDIUM: Indices 5,6,7,8,9,10,11 (Rating 500-1399)
-    // HARD: Index 12 (Rating 1400+)
-    
     if (pct < 40) {
-        // Map 0-39% to first 5 segments (0-4)
         targetIndex = Math.floor((pct / 40) * 5);
     } else if (pct < 70) {
-        // Map 40-69% to next 7 segments (5-11)
         targetIndex = 5 + Math.floor(((pct - 40) / 30) * 7);
     } else {
-        // Map 70%+ to the final segment (12)
         targetIndex = 12;
     }
     
@@ -1048,6 +1069,26 @@ function updateColorBarHighlight(difficulty, uniqueness) {
     
     if (segments[targetIndex]) {
         segments[targetIndex].classList.add('active');
+    }
+}
+
+/**
+ * Specifically highlights the segment for the USER'S CURRENT RATING with the pulsing effect.
+ */
+window.updateUserRatingHighlight = function(rating) {
+    const bar = document.getElementById('game-color-bar');
+    if (!bar) return;
+
+    const segments = bar.querySelectorAll('.color-bar-segment');
+    segments.forEach(s => s.classList.remove('user-rating-segment'));
+
+    if (rating === undefined || rating === null || rating <= 0) return;
+
+    // Find the range index that matches the user's rating
+    const rangeIndex = RATING_RANGES.findIndex(r => rating >= r.min && rating <= r.max);
+    
+    if (rangeIndex !== -1 && segments[rangeIndex]) {
+        segments[rangeIndex].classList.add('user-rating-segment');
     }
 }
 

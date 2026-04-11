@@ -50,6 +50,7 @@
     </header>
 
     <div class="separator"></div>
+    <div id="game-color-bar" class="global-rating-bar"></div>
 
     <!-- Pages Container -->
     <main class="pages">
@@ -493,6 +494,7 @@
                                 <select id="sf-config-format">
                                     <option value="Normal">Normal</option>
                                     <option value="Checkerboard">Checkerboard</option>
+                                    <option value="Density">Density</option>
                                     <option value="Penalty">Penalty</option>
                                     <option value="Mania">Mania</option>
                                     <option value="Either/Or">Either/Or</option>
@@ -599,8 +601,6 @@
                 <button class="return-btn" id="return-lobby-btn">Return to Lobby</button>
             </div>
 
-            <!-- Color Bar -->
-            <div id="game-color-bar"></div>
 
             <div class="play-grid">
                 <!-- Left Panel: Players -->
@@ -894,6 +894,17 @@
                                 <div class="comment-input-wrapper">
                                     <textarea id="forum-comment-input"
                                         placeholder="Join the conversation..."></textarea>
+                                    
+                                    <div id="forum-comment-image-upload" class="forum-upload-group" style="padding: 10px; margin-bottom: 10px; border-width: 1px; border-style: solid;">
+                                        <div class="file-input-wrapper" style="font-size: 0.8rem;">
+                                            <input type="file" id="forum-comment-image" accept="image/*">
+                                            <div class="file-dummy" style="padding: 10px;">
+                                                <span class="file-text">📎 Attach an image (optional)</span>
+                                            </div>
+                                        </div>
+                                        <div id="forum-comment-image-preview" class="image-preview hidden" style="max-height: 150px; margin-top: 5px;"></div>
+                                    </div>
+
                                     <div class="comment-controls">
                                         <button id="forum-submit-comment" class="forum-action-btn">Post
                                             Comment</button>
@@ -924,7 +935,7 @@
                                         required></textarea>
                                 </div>
                                 <div id="forum-image-upload-section" class="forum-upload-group hidden">
-                                    <label>Attach Screenshot</label>
+                                    <label>Attach Image</label>
                                     <div class="file-input-wrapper">
                                         <input type="file" id="forum-post-image" accept="image/*">
                                         <div class="file-dummy">

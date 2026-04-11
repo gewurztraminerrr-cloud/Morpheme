@@ -47,6 +47,7 @@ let highlightedFoundWord = null; // Track word from All Words list to highlight 
 let lastRenderedBoardJSON = null;
 let lastRenderedGrayed = null;
 let lastRenderedRotation = null;
+let lastRenderedDensityJSON = null;
 let hasPlayedIntermissionBell = false; // Flag for next round notification
 let findFriendsMode = false;
 let userFriendsCache = [];
@@ -215,9 +216,18 @@ function startPolling() {
 function refreshPollInterval() {
     if (pollInterval) clearInterval(pollInterval);
     
-    const delay = document.hidden ? 15000 : 1000;
+    let delay = document.hidden ? 15000 : 1000;
+    
+    // User Request: Automatic/instant transition. 
+    // Speed up polling significantly when intermission is about to end (last 2s)
+    if (window.lastGameState && window.lastGameState.state === 'intermission' && !document.hidden) {
+        const tr = window.lastGameState.time_remaining;
+        if (tr < 2.5) {
+             delay = 500; // Poll twice as fast at the very end
+        }
+    }
+
     pollInterval = setInterval(updateGameState, delay);
-    console.log(`[play.js] Polling interval set to ${delay}ms (hidden: ${document.hidden})`);
 }
 
 // Global Visibility Listener to handle battery management
@@ -323,13 +333,20 @@ async function updateGameState(incomingState = null) {
         
         // --- Distributed Board Generation (DBG) ---
         // If the server is searching, we help by probing random boards.
-        if (state && state.board_search_started && !state.solving_complete && state.spinner_params_revealed && !isTournamentPlay) {
+        // Lead-Time Optimization: Use next_spinner_params if they exist (Proactive search)
+        const canProbe = state.board_search_started && !state.solving_complete && !isTournamentPlay;
+        if (canProbe && (state.spinner_params_revealed || state.next_spinner_params)) {
             runBoardProbe();
         }
 
         // Capture previous state for transition logic (e.g. daily reset kick)
         const previousState = window.lastGameState;
         window.lastGameState = state;  // Store for optimistic updates
+        
+        // Ensure polling interval is fresh (switches to high-frequency if near intermission end)
+        if (state.state === 'intermission') {
+            refreshPollInterval();
+        }
 
         // Detect transition to intermission (round end)
         if (previousState && previousState.state === 'active' && state.state === 'intermission') {
@@ -651,6 +668,14 @@ async function updateGameState(incomingState = null) {
 
         // Update parameters
         updateParameters(state);
+
+        // [DYNAMIC RATING] Emphasize the user's current rating on the color bar
+        if (state.players && typeof window.updateUserRatingHighlight === 'function') {
+            const me = state.players.find(p => p.username.toLowerCase().trim() === (currentUsername ? currentUsername.toLowerCase().trim() : ''));
+            if (me) {
+                window.updateUserRatingHighlight(me.rating);
+            }
+        }
 
         // Sync local timer with server
         syncTimerWithServer(state);
@@ -1023,7 +1048,10 @@ async function updateGameState(incomingState = null) {
                 }
 
                 const uniqueGlobalFound = [...new Set(allPlayerFoundStrs)];
-                displayAllWords(allWords, state.bonus_word, targetWords, uniqueGlobalFound, state.all_word_scores, state.csw_only_words, state.added_words);
+                const bonusForList = state.state === 'intermission' ? (state.previous_bonus_word || state.bonus_word) : state.bonus_word;
+                const cswForList = state.state === 'intermission' ? (state.previous_csw_only_words || state.csw_only_words) : state.csw_only_words;
+                
+                displayAllWords(allWords, bonusForList, targetWords, uniqueGlobalFound, state.all_word_scores, cswForList, state.added_words);
                 if (state.game_type === 'split' || state.game_type === 'fcfs') addSplitViewBoardToggle();
 
             } else if (state.game_type !== 'fcfs') {
@@ -1566,11 +1594,11 @@ function renderPlayers(players, currentUser = null, state = null) {
 }
 
 // Chat Logic
-let lastChatCount = 0;
+let lastChatTimestamp = 0;
 
 function resetChat() {
     console.log('[play.js] resetting chat state');
-    lastChatCount = 0;
+    lastChatTimestamp = 0;
     const listEl = document.getElementById('chat-history');
     if (listEl) {
         listEl.innerHTML = '<p class="placeholder">No messages yet</p>';
@@ -1588,9 +1616,12 @@ function renderChat(messages) {
         return;
     }
 
-    // Only update if new messages arrived
-    if (messages.length === lastChatCount) return;
-    lastChatCount = messages.length;
+    // Only update if new messages arrived (using timestamp of last message for precision)
+    const latestMsg = messages[messages.length - 1];
+    const latestTimestamp = latestMsg ? (latestMsg.time || 0) : 0;
+    
+    if (latestTimestamp === lastChatTimestamp && messages.length > 0) return;
+    lastChatTimestamp = latestTimestamp;
 
     // Remove placeholder
     const placeholder = listEl.querySelector('.placeholder');
@@ -1903,15 +1934,16 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         if (typeof pointsData === 'object' && pointsData !== null) {
             const hasBonusLetter = (pointsData.bonus_letter_points || 0) > 0;
             const hasBonusWord = (pointsData.bonus_word_points || 0) > 0;
+            const hasEO = (pointsData.either_or_points || 0) > 0;
             
-            if (hasBonusLetter || hasBonusWord) {
+            if (hasBonusLetter || hasBonusWord || hasEO) {
                 let parts = [];
-                // Only show base if it's > 0 (Standard scoring) or if no other parts exist
-                if (pointsData.base > 0 || (!hasBonusWord && !hasBonusLetter)) {
-                    parts.push(pointsData.base);
-                }
+                // Base
+                parts.push(pointsData.base);
+                
                 if (hasBonusWord) parts.push(pointsData.bonus_word_points);
                 if (hasBonusLetter) parts.push(pointsData.bonus_letter_points);
+                if (hasEO) parts.push(pointsData.either_or_points);
                 
                 if (parts.length > 1) {
                     pointsText = `${parts.join(' + ')} = ${pointsData.total}`;
@@ -1940,11 +1972,35 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
 
         const indicatorClass = isFoundByAny ? 'found-indicator present' : 'found-indicator empty';
         const indicatorIcon = isFoundByAny ? '✓' : '';
+        
+        // Bonus indicator (Left side)
+        let bonusIndicator = '';
+        if (typeof pointsData === 'object' && pointsData !== null) {
+            if ((pointsData.bonus_letter_points || 0) > 0) {
+                 // Try to get the actual bonus letter from the board
+                 const s = window.lastGameState;
+                 let bChar = '★';
+                 if (s && s.bonus_cell) {
+                     const r = s.bonus_cell.r, c = s.bonus_cell.c;
+                     if (s.board && s.board[r] && s.board[r][c]) bChar = s.board[r][c];
+                 }
+                 bonusIndicator = `<span class="list-bonus-tag bonus-cell-tag">${bChar}</span>`;
+            } else if ((pointsData.bonus_word_points || 0) > 0) {
+                 bonusIndicator = `<span class="list-bonus-tag bonus-word-tag">★</span>`;
+            } else if ((pointsData.either_or_points || 0) > 0) {
+                 bonusIndicator = `<span class="list-bonus-tag eo-tag">EO</span>`;
+            }
+        }
+
         const indicator = `<span class="${indicatorClass}">${indicatorIcon}</span>`;
 
-        return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; cursor:pointer;">
-            <span>${indicator}${word}</span>
-            <span style="opacity:0.8">${pointsText}</span>
+        return `<div class="${className}" data-word="${word}">
+            <div class="word-left">
+                ${indicator}
+                ${bonusIndicator}
+                <span class="word-text">${wordUpper}</span>
+            </div>
+            <span class="points-math">${pointsText}</span>
         </div>`;
     }).join('');
 }
@@ -2008,9 +2064,10 @@ function updateParameters(state) {
     const factWordRange = (preferSp ? (sp.word_count_range || state.current_word_count_range) : (state.current_word_count_range || sp.word_count_range)) || '100-200';
     
     let factUniq = 0; 
-    if (!isIntermission || (isIntermission && isRevealed)) {
+    if (preferSp) {
+        factUniq = sp.uniqueness || 0;
+    } else {
         factUniq = (state.current_uniqueness !== undefined && state.current_uniqueness !== null) ? state.current_uniqueness : 0;
-        if (factUniq === 0 && sp.uniqueness) factUniq = sp.uniqueness;
     }
 
     // UPDATE POLICY:
@@ -2038,35 +2095,43 @@ function updateParameters(state) {
     }
 
     if (shouldUpdateLabels) {
-        window._displayedParams.dims = factBoardDims;
-        window._displayedParams.time = factTimeLimit + 's';
-        window._displayedParams.bonus = (factBonus === 0) ? 'None' : factBonus + 'L';
-        window._displayedParams.min = factMinLen + 'L';
-        window._displayedParams.dict = factDict;
-        window._displayedParams.range = factWordRange;
-        window._displayedParams.fmt = factFmt;
+        const newUniq = factUniq;
+        const newDiff = factDiff;
+        const stringified = JSON.stringify([factBoardDims, factTimeLimit, factBonus, factMinLen, factDict, factWordRange, factFmt, newDiff, newUniq]);
         
-        let diffLabel = factDiff;
-        if (diffLabel === 'Varying...') diffLabel = 'Random';
-        else if (diffLabel === 'Normal') diffLabel = 'Medium';
-        else if (diffLabel === 'Expert' || diffLabel === 'Difficult') diffLabel = 'Hard';
-        else if (diffLabel === 'Beginner') diffLabel = 'Easy';
-        
-        const uniquePct = (factUniq > 0 && !diffLabel.includes('(')) ? ` (${(factUniq * 100).toFixed(1)}%)` : "";
-        window._displayedParams.diff = diffLabel + uniquePct;
-        
-        if (typeof updateColorBarHighlight === 'function') {
-            updateColorBarHighlight(diffLabel, factUniq);
+        if (window._lastParamString !== stringified) {
+            window._lastParamString = stringified;
+            
+            window._displayedParams.dims = factBoardDims;
+            window._displayedParams.time = factTimeLimit + 's';
+            window._displayedParams.bonus = (factBonus === 0) ? 'None' : factBonus + 'L';
+            window._displayedParams.min = factMinLen + 'L';
+            window._displayedParams.dict = factDict;
+            window._displayedParams.range = factWordRange;
+            window._displayedParams.fmt = factFmt;
+            
+            let diffLabel = factDiff;
+            if (diffLabel === 'Varying...') diffLabel = 'Random';
+            else if (diffLabel === 'Normal') diffLabel = 'Medium';
+            else if (diffLabel === 'Expert' || diffLabel === 'Difficult') diffLabel = 'Hard';
+            else if (diffLabel === 'Beginner') diffLabel = 'Easy';
+            
+            const uniquePct = (newUniq > 0 && !diffLabel.includes('(')) ? ` (${(newUniq * 100).toFixed(1)}%)` : "";
+            window._displayedParams.diff = diffLabel + uniquePct;
+            
+            if (typeof updateColorBarHighlight === 'function') {
+                updateColorBarHighlight(diffLabel, newUniq);
+            }
+
+            // Apply to DOM
+            if (document.getElementById('param-board')) document.getElementById('param-board').textContent = window._displayedParams.dims;
+            if (document.getElementById('param-time')) document.getElementById('param-time').textContent = window._displayedParams.time;
+            if (document.getElementById('param-bonus')) document.getElementById('param-bonus').textContent = window._displayedParams.bonus;
+            if (document.getElementById('param-diff')) document.getElementById('param-diff').textContent = window._displayedParams.diff;
+            if (document.getElementById('param-min')) document.getElementById('param-min').textContent = window._displayedParams.min;
+            if (document.getElementById('param-dict')) document.getElementById('param-dict').textContent = window._displayedParams.dict;
         }
     }
-
-    // Apply to DOM
-    if (document.getElementById('param-board')) document.getElementById('param-board').textContent = window._displayedParams.dims;
-    if (document.getElementById('param-time')) document.getElementById('param-time').textContent = window._displayedParams.time;
-    if (document.getElementById('param-bonus')) document.getElementById('param-bonus').textContent = window._displayedParams.bonus;
-    if (document.getElementById('param-diff')) document.getElementById('param-diff').textContent = window._displayedParams.diff;
-    if (document.getElementById('param-min')) document.getElementById('param-min').textContent = window._displayedParams.min;
-    if (document.getElementById('param-dict')) document.getElementById('param-dict').textContent = window._displayedParams.dict;
 
     if (triggerAnimation) {
         const paramContainer = document.querySelector('.game-params');
@@ -2216,6 +2281,16 @@ function updateLocalTimer() {
         clearInterval(timerInterval);
         timerInterval = null;
         if (cachedBoardPanelEl) cachedBoardPanelEl.classList.remove('low-time-warning');
+
+        // User Request: Automatic/instant transition at 0:00
+        const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
+        if (currentState === 'intermission') {
+            console.log('[play.js] Intermission local timer reached 0:00 - Triggering immediate server poll for next round.');
+            // Small delay (200ms) to allow the server's background heartbeat (0.5s) to finalize the transition
+            setTimeout(() => {
+                updateGameState();
+            }, 200);
+        }
     }
 
     // -- Next Round Bell Logic --
@@ -2308,12 +2383,18 @@ function renderBoard(board, grayed = false, is3D = false) {
     const cols = (is3D && Array.isArray(board[0])) ? board[0][0].length : (board[0] ? board[0].length : 0);
 
     // Optimization: Skip if board hasn't changed
+    const densityJSON = JSON.stringify((window.lastGameState && window.lastGameState.cell_density) || []);
     const boardJSON = JSON.stringify(board);
-    if (boardJSON === lastRenderedBoardJSON && grayed === lastRenderedGrayed && isBoardRotated === lastRenderedRotation && boardEl.classList.contains('game-board')) {
+    if (boardJSON === lastRenderedBoardJSON && 
+        densityJSON === lastRenderedDensityJSON &&
+        grayed === lastRenderedGrayed && 
+        isBoardRotated === lastRenderedRotation && 
+        boardEl.classList.contains('game-board')) {
         reapplyBoardHighlights();
         return;
     }
     lastRenderedBoardJSON = boardJSON;
+    lastRenderedDensityJSON = densityJSON;
     lastRenderedGrayed = grayed;
     lastRenderedRotation = isBoardRotated;
 
@@ -2382,7 +2463,27 @@ function renderBoard(board, grayed = false, is3D = false) {
                         tileValue = `<span class="tile-value">${val}</span>`;
                     }
 
-                    html += `<div class="cube-cell board-cell tile-cell${bonusClass}" data-f="${f}" data-r="${r}" data-c="${c}" data-letter="${char}">${tileHtml}${tileValue}</div>`;
+                    // Density Format Support for 3D
+                    let densityStyle = "";
+                    if (window.lastGameState && window.lastGameState.cell_density && bFormat && bFormat.toLowerCase().includes('density')) {
+                         const grid = window.lastGameState.cell_density;
+                         const maxD = window.lastGameState.max_cell_density || 1;
+                         if (grid && grid[f]) {
+                             const cur = grid[f][r][c];
+                             if (cur === 0) {
+                                 densityStyle = "background: #ffffff !important; color: #000000 !important; box-shadow: inset 0 0 10px rgba(0,0,0,0.1) !important;";
+                             } else {
+                                 // HIGH CONTRAST GRAYSCALE: Normalizing by GLOBAL MAX density
+                                 const ratio = Math.max(0, Math.min(1, cur / maxD));
+                                 // 100% (white) to 0% (black)
+                                 const grayVal = Math.round(100 - (ratio * 100));
+                                 const textColor = (grayVal < 50) ? '#ffffff' : '#000000';
+                                 densityStyle = `background: hsl(0, 0%, ${grayVal}%) !important; color: ${textColor} !important; transition: background 0.4s ease, color 0.4s ease;`;
+                             }
+                         }
+                    }
+
+                    html += `<div class="cube-cell board-cell tile-cell${bonusClass}" data-f="${f}" data-r="${r}" data-c="${c}" data-letter="${char}" style="${densityStyle}">${tileHtml}${tileValue}</div>`;
                 });
             });
             html += `</div>`;
@@ -2400,20 +2501,47 @@ function renderBoard(board, grayed = false, is3D = false) {
     // rows and cols are already defined in the scope from lines 2199-2200
     if (cols === 0 || rows === 0) return;
 
-    boardEl.innerHTML = '';
-
-    if (isBoardRotated) {
-        for (let r = rows - 1; r >= 0; r--) {
-            for (let c = cols - 1; c >= 0; c--) {
-                const cell = createBoardCell(r, c, board[r][c], grayed);
-                boardEl.appendChild(cell);
+    // OPTIMIZATION: In Density mode, we want SMOOTH transitions.
+    // Wiping innerHTML destroys elements and breaks CSS transitions. 
+    // We only wipe if the board dimensions have changed.
+    const expectedCount = rows * cols;
+    const currentCells = boardEl.querySelectorAll('.board-cell:not(.cube-cell)'); // Only 2D cells
+    
+    if (currentCells.length === expectedCount && !is3D) {
+        // SYNC EXISTING CELLS (Supports Dynamic Shading Transitions)
+        let idx = 0;
+        if (isBoardRotated) {
+            for (let r = rows - 1; r >= 0; r--) {
+                for (let c = cols - 1; c >= 0; c--) {
+                    const existing = currentCells[idx++];
+                    // Update only if necessary
+                    updateBoardCell(existing, r, c, board[r][c], grayed);
+                }
+            }
+        } else {
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const existing = currentCells[idx++];
+                    updateBoardCell(existing, r, c, board[r][c], grayed);
+                }
             }
         }
     } else {
-        for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++) {
-                const cell = createBoardCell(r, c, board[r][c], grayed);
-                boardEl.appendChild(cell);
+        // FULL RERENDER
+        boardEl.innerHTML = '';
+        if (isBoardRotated) {
+            for (let r = rows - 1; r >= 0; r--) {
+                for (let c = cols - 1; c >= 0; c--) {
+                    const cell = createBoardCell(r, c, board[r][c], grayed);
+                    boardEl.appendChild(cell);
+                }
+            }
+        } else {
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const cell = createBoardCell(r, c, board[r][c], grayed);
+                    boardEl.appendChild(cell);
+                }
             }
         }
     }
@@ -2646,105 +2774,150 @@ const LETTER_VALUES = {
     'A': 2, 'B': 4, 'C': 4, 'D': 3, 'E': 1, 'F': 5, 'G': 3, 'H': 5, 'I': 2, 'J': 10, 'K': 6, 'L': 3, 'M': 4, 'N': 2, 'O': 2, 'P': 4, 'Q': 10, 'R': 2, 'S': 2, 'T': 2, 'U': 4, 'V': 5, 'W': 5, 'X': 10, 'Y': 5, 'Z': 10
 };
 
-// Helper to create a board cell
-function createBoardCell(r, c, letter, grayed, f) {
-    const cell = document.createElement('div');
-    let boardFormat = (window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : null;
-    if (!boardFormat && window.lastGameState && window.lastGameState.spinner_params) {
-        boardFormat = window.lastGameState.spinner_params.board_format || 'Normal';
-    }
-    const normalizedFmt = (boardFormat || "").toLowerCase();
-    const bonusCell = (window.lastGameState) ? window.lastGameState.bonus_cell : null;
-
+function updateBoardCell(cell, r, c, letter, grayed, f) {
+    if (!cell) return;
+    
+    // Update basic classes
     cell.className = 'board-cell' + (grayed ? ' grayed' : '');
+    
+    // Update dataset for identification
+    cell.dataset.r = r;
+    cell.dataset.c = c;
+    if (typeof f !== 'undefined') cell.dataset.f = f;
 
-    // 1. Handle Bonus Letter Format Highlighting (Robust coordinate extraction)
+    // Check if letter changed OR if cell is empty (init)
+    const currentLetter = cell.dataset.letter;
+    if (currentLetter !== letter || cell.children.length <= 1) { // 1 if only hitbox, but let's be safe
+        cell.dataset.letter = letter;
+        cell.innerHTML = ''; // Fresh start
+        
+        if (letter.includes('/')) {
+            cell.classList.add('dual-letter');
+            const [top, bottom] = letter.split('/');
+            const container = document.createElement('div');
+            container.className = 'dual-letter-container';
+            const topEl = document.createElement('span');
+            topEl.textContent = (top === 'Q' ? 'QU' : top);
+            container.appendChild(topEl);
+            const divider = document.createElement('div');
+            divider.className = 'dual-divider';
+            container.appendChild(divider);
+            const bottomEl = document.createElement('span');
+            bottomEl.textContent = (bottom === 'Q' ? 'QU' : bottom);
+            container.appendChild(bottomEl);
+            cell.appendChild(container);
+        } else {
+            const letterSpan = document.createElement('span');
+            letterSpan.textContent = letter === 'Q' ? 'QU' : letter;
+            cell.appendChild(letterSpan);
+        }
+        
+        // Valued Letters support (Points in corner)
+        let bFormat = (window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : 'Normal';
+        if (bFormat.toLowerCase().includes('valued') && !letter.includes('/')) {
+            const valSpan = document.createElement('span');
+            valSpan.className = 'tile-value';
+            valSpan.textContent = LETTER_VALUES[letter.toUpperCase()] || 1;
+            cell.appendChild(valSpan);
+        }
+
+        // Re-inject hitbox
+        const hitbox = document.createElement('div');
+        hitbox.className = 'cell-hitbox';
+        cell.appendChild(hitbox);
+        
+        // Tooltip suppression fix
+        cell.removeAttribute('title');
+        hitbox.removeAttribute('title');
+    }
+
+    // Update Special Highlights (Bonus Cell)
+    const bonusCell = (window.lastGameState) ? window.lastGameState.bonus_cell : null;
+    let isMatch = false;
     if (bonusCell) {
-        let isMatch = false;
         if (Array.isArray(bonusCell)) {
             if (bonusCell.length === 3) {
-                // 3D Cube: [f, r, c]
-                const face = window._currentFaceIndex !== undefined ? window._currentFaceIndex : 0;
-                // Note: f is passed to createBoardCell for 3D
-                if (typeof f !== 'undefined' && Number(bonusCell[0]) === f && Number(bonusCell[1]) === r && Number(bonusCell[2]) === c) {
-                    isMatch = true;
-                }
+                if (typeof f !== 'undefined' && Number(bonusCell[0]) === f && Number(bonusCell[1]) === r && Number(bonusCell[2]) === c) isMatch = true;
             } else if (bonusCell.length === 2) {
-                // 2D Board: [r, c]
-                // ROBUSTNESS: Ensure Number comparison to handle typed arrays or JSON strings
                 if (Number(bonusCell[0]) === r && Number(bonusCell[1]) === c) isMatch = true;
             }
         } else if (typeof bonusCell === 'object') {
-            // Dict format: {r: 1, c: 2} or {f: 0, r: 1, c: 2}
             if (bonusCell.f !== undefined) {
                 if (typeof f !== 'undefined' && Number(bonusCell.f) === f && Number(bonusCell.r) === r && Number(bonusCell.c) === c) isMatch = true;
             } else {
                 if (Number(bonusCell.r) === r && Number(bonusCell.c) === c) isMatch = true;
             }
         }
-        
-        if (isMatch || (normalizedFmt.includes('either') && letter.includes('/'))) {
-            cell.classList.add('bonus-highlight');
-        }
     }
-
-    // 2. Handle Either/Or Dual Letters
-    if (letter.includes('/')) {
-        cell.classList.add('dual-letter');
-        const [top, bottom] = letter.split('/');
-
-        const container = document.createElement('div');
-        container.className = 'dual-letter-container';
-
-        const topEl = document.createElement('span');
-        topEl.textContent = (top === 'Q' ? 'QU' : top);
-        container.appendChild(topEl);
-
-        const divider = document.createElement('div');
-        divider.className = 'dual-divider';
-        container.appendChild(divider);
-
-        const bottomEl = document.createElement('span');
-        bottomEl.textContent = (bottom === 'Q' ? 'QU' : bottom);
-        container.appendChild(bottomEl);
-
-        cell.appendChild(container);
+    
+    let boardFormat = (window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : 'Normal';
+    if (isMatch || (boardFormat.toLowerCase().includes('either') && letter.includes('/'))) {
+        cell.classList.add('bonus-highlight');
     } else {
-        const letterSpan = document.createElement('span');
-        letterSpan.textContent = letter === 'Q' ? 'QU' : letter;
-        cell.appendChild(letterSpan);
+        cell.classList.remove('bonus-highlight');
     }
 
-    // 3. Handle Valued Letters Points Display
-    if (normalizedFmt.includes('valued')) {
-        const valSpan = document.createElement('span');
-        valSpan.className = 'tile-value';
-        // If dual letter, we skip for now or show average? User didn't specify interaction.
-        // Assuming Valued Letters and Either/Or don't mix often, but let's handle single letter.
-        if (!letter.includes('/')) {
-            valSpan.textContent = LETTER_VALUES[letter.toUpperCase()] || 1;
-            cell.appendChild(valSpan);
-        }
+    // Apply Density (This is the DYNAMIC part!)
+    applyDensityToCell(cell, r, c, f);
+}
+
+function applyDensityToCell(cell, r, c, f) {
+    const densityData = window.lastGameState && window.lastGameState.cell_density;
+    const hasDensityData = densityData && Array.isArray(densityData) && densityData.length > 0;
+    const boardFormat = (window.lastGameState && window.lastGameState.current_board_format) || 'Normal';
+    
+    if (hasDensityData) {
+         const grid = densityData;
+         const maxD = Math.max(1, window.lastGameState.max_cell_density || 1);
+         let cur = -1;
+         
+         if (typeof f !== 'undefined' && grid[f] && grid[f][r]) {
+             cur = grid[f][r][c];
+         } else if (grid[r]) {
+             cur = grid[r][c];
+         }
+         
+         if (cur === 0) {
+             cell.style.setProperty('background', '#ffffff', 'important');
+             cell.style.setProperty('background-color', '#ffffff', 'important');
+             cell.style.setProperty('color', '#000000', 'important');
+             cell.style.setProperty('box-shadow', 'inset 0 0 10px rgba(0,0,0,0.1)', 'important');
+         } else if (cur > 0) {
+             // HIGH CONTRAST GRAYSCALE: Linear ratio matching 3D implementation
+             const ratio = Math.max(0, Math.min(1, cur / maxD));
+             const grayLightness = Math.round(100 - (ratio * 100)); 
+             const hslColor = `hsl(0, 0%, ${grayLightness}%)`;
+             
+             // Trigger animation if density changed
+             const lastD = cell.dataset.lastD;
+             if (lastD !== undefined && Number(lastD) !== cur) {
+                 cell.classList.remove('cell-lightened');
+                 void cell.offsetWidth; // Trigger reflow
+                 cell.classList.add('cell-lightened');
+             }
+             cell.dataset.lastD = cur;
+
+             cell.style.setProperty('background', hslColor, 'important');
+             cell.style.setProperty('background-color', hslColor, 'important');
+             cell.style.setProperty('transition', 'background 0.4s ease, color 0.4s ease', 'important');
+             
+             const textColor = (grayLightness < 50) ? '#ffffff' : '#000000';
+             cell.style.setProperty('color', textColor, 'important');
+         }
+    } else {
+        // Reset if no density data (e.g. format changed)
+        cell.style.background = '';
+        cell.style.backgroundColor = '';
+        cell.style.color = '';
+        cell.style.boxShadow = '';
     }
+}
 
-    // 4. Inject strict octagonal hitbox overlay
-    const hitbox = document.createElement('div');
-    hitbox.className = 'cell-hitbox';
-    cell.appendChild(hitbox);
-
-    cell.dataset.row = r;
-    cell.dataset.col = c;
-    cell.dataset.letter = letter; // Original letter
-    
-    // User Request: Fix for 'Alphabet tooltip' glitch. Explicitly force title to empty 
-    // to prevent any accidental browser/library tooltips showing raw dataset strings.
-    cell.setAttribute('title', "");
-    cell.removeAttribute('title');
-    
-    // Extra: Apply to children to be absolutely certain
-    hitbox.title = "";
-    hitbox.removeAttribute('title');
-    
+// Helper to create a board cell
+function createBoardCell(r, c, letter, grayed, f) {
+    const cell = document.createElement('div');
+    cell.dataset.letter = letter;
+    updateBoardCell(cell, r, c, letter, grayed, f);
     return cell;
 }
 
@@ -2967,11 +3140,11 @@ function reapplyBoardHighlights() {
 
     // 1. Reapply mouse selection highlights (drag)
     if (mouseState && mouseState.selectedPath && mouseState.selectedPath.length > 0) {
-        const isEnabled = window.userSettings && window.userSettings.highlight_mouse !== false;
+        const isEnabled = !(window.userSettings && window.userSettings.highlight_mouse === false);
         if (isEnabled) {
             mouseState.selectedPath.forEach((p, index) => {
                 const isCurrent = (index === mouseState.selectedPath.length - 1);
-                let selector = `.board-cell[data-row="${p.row}"][data-col="${p.col}"]`;
+                let selector = `.board-cell[data-r="${p.row}"][data-c="${p.col}"]`;
                 if (p.face !== undefined && p.face !== null) {
                     selector = `.board-cell[data-f="${p.face}"][data-r="${p.row}"][data-c="${p.col}"]`;
                 }
@@ -2990,14 +3163,14 @@ function reapplyBoardHighlights() {
     const wordInputEl = document.getElementById('word-input');
     const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
 
-    if (wordInputEl && wordInputEl.value.trim() && !(mouseState && mouseState.isDragging)) {
-        const isEnabled = window.userSettings && window.userSettings.highlight_typing !== false;
+    if (wordInputEl && wordInputEl.value.trim() && !(mouseState && mouseState.isDown)) {
+        const isEnabled = !(window.userSettings && window.userSettings.highlight_typing === false);
         if (isEnabled) {
             const word = wordInputEl.value.trim();
             const path = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
             if (path) {
                 path.forEach(coord => {
-                    let selector = `.board-cell[data-row="${coord.r}"][data-col="${coord.c}"]`;
+                    let selector = `.board-cell[data-r="${coord.r}"][data-c="${coord.c}"]`;
                     if (coord.f !== undefined) selector = `.board-cell[data-f="${coord.f}"][data-r="${coord.r}"][data-c="${coord.c}"]`;
                     const cell = document.querySelector(selector);
                     if (cell) cell.classList.add('typing-highlight');
@@ -3012,15 +3185,18 @@ function reapplyBoardHighlights() {
         if (path) {
             // Check if we need to animate (new selection) or just show (board refresh)
             const isNewSelection = window._lastAnimatedReviewWord !== highlightedFoundWord;
+            
+            // CAPTURE the current word for the closure to avoid race conditions with window._lastAnimatedReviewWord
+            const currentHighlightedWord = highlightedFoundWord;
 
             path.forEach((coord, index) => {
-                let selector = `.board-cell[data-row="${coord.r}"][data-col="${coord.c}"]`;
+                let selector = `.board-cell[data-r="${coord.r}"][data-c="${coord.c}"]`;
                 if (coord.f !== undefined) selector = `.board-cell[data-f="${coord.f}"][data-r="${coord.r}"][data-c="${coord.c}"]`;
                 const cell = document.querySelector(selector);
                 if (cell) {
                     if (isNewSelection) {
                         setTimeout(() => {
-                            if (highlightedFoundWord === window._lastAnimatedReviewWord) {
+                            if (highlightedFoundWord === currentHighlightedWord) {
                                 cell.classList.add('review-highlight');
                             }
                         }, index * 60);
@@ -3029,7 +3205,6 @@ function reapplyBoardHighlights() {
                     }
                 }
             });
-
             window._lastAnimatedReviewWord = highlightedFoundWord;
         }
     } else {
@@ -3439,13 +3614,21 @@ function addSplitViewBoardToggle() {
 
 // Spinner Logic
 // Word Submission
-const submitBtn = document.getElementById('submit-word-btn');
-const wordInputEl = document.getElementById('word-input');
-if (submitBtn && wordInputEl) {
-    submitBtn.addEventListener('click', () => submitWord());
+// Initialize Word Submission Listeners
+function initWordSubmission() {
+    const submitBtn = document.getElementById('submit-word-btn');
+    const wordInputEl = document.getElementById('word-input');
+    
+    if (!wordInputEl) {
+        console.warn('[play.js] word-input element not found during initWordSubmission');
+        return;
+    }
+
+    // Attach Keydown listener (Enter/Return)
     wordInputEl.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
+        if (e.key === 'Enter' || e.key === 'Return') {
             e.preventDefault();
+            console.log('[play.js] submission triggered via keydown:', e.key);
             submitWord();
             
             // UX: If round ended while we were typing, refocus chat now that we're done
@@ -3456,6 +3639,13 @@ if (submitBtn && wordInputEl) {
             }
         }
     });
+
+    if (submitBtn) {
+        submitBtn.addEventListener('click', () => {
+            console.log('[play.js] submission triggered via button click');
+            submitWord();
+        });
+    }
 
     // Real-time highlighting and "word declaration" while typing
     wordInputEl.addEventListener('input', () => {
@@ -3469,8 +3659,6 @@ if (submitBtn && wordInputEl) {
         }
         const board = window.lastGameState ? window.lastGameState.board : null;
 
-        // Highlighting logic continues below...
-
         const isEnabled = window.userSettings && window.userSettings.highlight_typing !== false;
         if (!isEnabled) {
             document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
@@ -3478,13 +3666,13 @@ if (submitBtn && wordInputEl) {
         }
 
         document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
-        if (!word || !board || (mouseState && mouseState.isDragging)) return;
+        if (!word || !board || (mouseState && mouseState.isDown)) return;
 
         const is3D = board.length === 6 && Array.isArray(board[0]);
         const path = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
         if (path) {
             path.forEach(coord => {
-                let selector = `.board-cell[data-row="${coord.r}"][data-col="${coord.c}"]`;
+                let selector = `.board-cell[data-r="${coord.r}"][data-c="${coord.c}"]`;
                 if (coord.f !== undefined) selector = `.board-cell[data-f="${coord.f}"][data-r="${coord.r}"][data-c="${coord.c}"]`;
                 const cell = document.querySelector(selector);
                 if (cell) cell.classList.add('typing-highlight');
@@ -3492,15 +3680,39 @@ if (submitBtn && wordInputEl) {
         }
     });
 }
+initWordSubmission();
+
 
 async function submitWord(wordParam = null, pathParam = null) {
     const input = document.getElementById('word-input');
+    if (!input && !wordParam) {
+        console.error('[play.js] word-input element not found and no wordParam provided');
+        return;
+    }
     const word = wordParam ? wordParam.toUpperCase() : input.value.trim().toUpperCase();
 
+    // 1. PATH RESOLUTION
+    let finalPath = pathParam;
+    const board = window.lastGameState ? window.lastGameState.board : null;
+    if (!finalPath && word && board) {
+        const is3D = board.length === 6 && Array.isArray(board[0]);
+        finalPath = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
+        if (finalPath) {
+            finalPath = finalPath.map(p => {
+                if (typeof p.f !== 'undefined') return [p.f, p.r, p.c];
+                return [p.r, p.c];
+            });
+        }
+    }
+
+    // Define currentUser for consistency in local updates
+    const currentUser = window.currentUser || (window.lastGameState && window.lastGameState.your_username) || localStorage.getItem('morpheme_username') || '';
+
     // Clear immediately for maximum responsiveness
-    input.value = '';
-    // Trigger 'input' event to clear board highlights and description synchronously
-    input.dispatchEvent(new Event('input'));
+    if (input && !wordParam) {
+        input.value = '';
+        input.dispatchEvent(new Event('input'));
+    }
 
     if (isTournamentPlay) {
         handleTournamentWord(word);
@@ -3513,7 +3725,16 @@ async function submitWord(wordParam = null, pathParam = null) {
     }
 
     const roomId = getCurrentRoomId();
-    if (!word || !roomId) return;
+    if (!word) return;
+    
+    if (!roomId) {
+        console.warn('[play.js] Submission failed: No active Room ID found');
+        showValidationFeedback('Not in a game room', false);
+        return;
+    }
+
+    console.log(`[play.js] Submitting word "${word}" to room ${roomId} via ${currentInputMethod}`);
+
 
     try {
         const response = await fetch(`/room/${roomId}/submit_word`, {
@@ -3522,7 +3743,7 @@ async function submitWord(wordParam = null, pathParam = null) {
             body: JSON.stringify({
                 word: word,
                 input_method: currentInputMethod,
-                path: pathParam
+                path: finalPath
             })
         });
         const data = await response.json();
@@ -3531,106 +3752,74 @@ async function submitWord(wordParam = null, pathParam = null) {
         showValidationFeedback(data.message || (data.success ? 'Valid Word' : 'Invalid Word'), data.success);
 
         if (data.success) {
-            // Optimistic Update for Accumulative Mode
             const currentState = window.lastGameState;
-            if (currentState && currentState.game_type === 'accumulative') {
+            if (currentState) {
+                // USER: INSTANT DENSITY UPDATE
+                if (data.cell_density) {
+                    currentState.cell_density = data.cell_density;
+                    currentState.max_cell_density = data.max_cell_density;
+                    updateGameState(currentState);
+                }
+
                 const listEl = document.getElementById('submitted-words-list');
                 const wordsStats = document.getElementById('words-stats');
 
-                // Remove placeholder
-                const placeholder = listEl.querySelector('.placeholder');
-                if (placeholder) placeholder.remove();
+                if (currentState.game_type === 'accumulative') {
+                    if (listEl) {
+                        const placeholder = listEl.querySelector('.placeholder');
+                        if (placeholder) placeholder.remove();
 
-                // Create HTML
-                const isBonus = data.word === currentState.bonus_word;
-                let className = 'word-item player-word';
-                if (isBonus) className += ' bonus-word';
-                if (data.points < 0) className += ' penalty-word';
+                        const isBonus = data.word === currentState.bonus_word;
+                        let className = 'word-item player-word' + (isBonus ? ' bonus-word' : '') + (data.points < 0 ? ' penalty-word' : '');
+                        const html = `<div class="${className}" style="display:flex; justify-content:space-between; animation: slideIn 0.3s ease;">
+                            <span>${data.word}</span>
+                            <span style="opacity:0.8">${data.points}</span>
+                        </div>`;
+                        listEl.insertAdjacentHTML('afterbegin', html);
 
-                const html = `<div class="${className}" style="display:flex; justify-content:space-between; animation: slideIn 0.3s ease;">
-                    <span>${data.word}</span>
-                    <span style="opacity:0.8">${data.points}</span>
-                </div>`;
-
-                // Prepend to top (since we sort by newest)
-                listEl.insertAdjacentHTML('afterbegin', html);
-
-                // Update total score and re-render players list
-                const me = currentState.players.find(p => p.username === currentUser);
-                if (me) {
-                    me.score = Math.max(0, data.new_score);
-                    // Re-render the left panel players list with new score/rank
-                    renderPlayers(currentState.players, currentUser, currentState);
-                }
-
-                // Update stats text optimistically (only for genuine dictionary words)
-                if (wordsStats && data.points > 0) {
-                    const parts = wordsStats.textContent.match(/(\d+)\/(\d+) - (\d+)%/);
-                    if (parts) {
-                        let found = parseInt(parts[1]);
-                        const total = parseInt(parts[2]);
-                        found++;
-                        const percent = total > 0 ? Math.round((found / total) * 100) : 0;
-                        wordsStats.textContent = `${found}/${total} - ${percent}%`;
+                        const me = currentState.players.find(p => p.username === currentUser);
+                        if (me) {
+                            me.score = Math.max(0, data.new_score);
+                            renderPlayers(currentState.players, currentUser, currentState);
+                        }
                     }
-                    else if (currentState.all_words) {
-                        const total = currentState.all_words.length;
-                        const found = 1;
-                        const percent = total > 0 ? Math.round((found / total) * 100) : 0;
-                        wordsStats.textContent = `${found}/${total} - ${percent}%`;
+
+                    if (wordsStats && data.points > 0) {
+                        const parts = wordsStats.textContent.match(/(\d+)\/(\d+) - (\d+)%/);
+                        if (parts) {
+                            let found = parseInt(parts[1]) + 1;
+                            const total = parseInt(parts[2]);
+                            const percent = total > 0 ? Math.round((found / total) * 100) : 0;
+                            wordsStats.textContent = `${found}/${total} - ${percent}%`;
+                        }
                     }
-                }
-            } else if (currentState && currentState.game_type === 'fcfs') {
-                // FCFS Optimistic Update (Live Feed)
-                const listEl = document.getElementById('submitted-words-list');
-                const wordsStats = document.getElementById('words-stats');
+                } else if (currentState.game_type === 'fcfs') {
+                    if (listEl) {
+                        const placeholder = listEl.querySelector('.placeholder');
+                        if (placeholder) placeholder.remove();
 
-                // Remove placeholder
-                const placeholder = listEl.querySelector('.placeholder');
-                if (placeholder) placeholder.remove();
+                        const itemId = `feed-${currentUser}-${data.word}`.replace(/\s+/g, '');
+                        const html = `<div id="${itemId}" class="feed-item myself" style="animation: slideInRight 0.3s ease;">
+                            <span class="feed-word">${data.word}</span>
+                            <span class="feed-info">${currentUser} • ${data.points}pts</span>
+                        </div>`;
+                        listEl.insertAdjacentHTML('afterbegin', html);
+                        
+                        const panelEl = listEl.parentElement;
+                        requestAnimationFrame(() => { if (panelEl) panelEl.scrollTop = 0; });
+                    }
 
-                // Create Feed Item HTML
-                // Structure: <div id="feed-USER-WORD" class="feed-item myself">...</div>
-                const currentUser = window.currentUser || 'You';
-                const itemId = `feed-${currentUser}-${data.word}`.replace(/\s+/g, '');
-
-                // Avoid checking if exists because success=true implies it's new/valid
-
-                const html = `
-                <div id="${itemId}" class="feed-item myself" style="animation: slideInRight 0.3s ease;">
-                    <span class="feed-word">${data.word}</span>
-                    <span class="feed-info">${currentUser} • ${data.points}pts</span>
-                </div>`;
-
-                // Insert at TOP (Newest at top)
-                listEl.insertAdjacentHTML('afterbegin', html);
-
-                // Ensure visible
-                const panelEl = listEl.parentElement;
-                requestAnimationFrame(() => {
-                    if (panelEl) panelEl.scrollTop = 0;
-                });
-
-                // Update stats text optimistically
-                if (wordsStats) {
-                    const parts = wordsStats.textContent.match(/(\d+)\/(\d+) - (\d+)%/);
-                    if (parts) {
-                        let found = parseInt(parts[1]);
-                        const total = parseInt(parts[2]);
-                        found++;
-                        const percent = total > 0 ? Math.round((found / total) * 100) : 0;
-                        wordsStats.textContent = `${found}/${total} - ${percent}%`;
-                    } else if (currentState.all_words) {
-                        const total = currentState.all_words.length;
-                        const found = 1;
-                        const percent = total > 0 ? Math.round((found / total) * 100) : 0;
-                        wordsStats.textContent = `${found}/${total} - ${percent}%`;
+                    if (wordsStats) {
+                        const parts = wordsStats.textContent.match(/(\d+)\/(\d+) - (\d+)%/);
+                        if (parts) {
+                            let found = parseInt(parts[1]) + 1;
+                            const total = parseInt(parts[2]);
+                            const percent = total > 0 ? Math.round((found / total) * 100) : 0;
+                            wordsStats.textContent = `${found}/${total} - ${percent}%`;
+                        }
                     }
                 }
             }
-
-            // Still trigger poll to sync everything else (User list scores, etc)
-            // But immediate feedback is done
         }
     } catch (error) {
         console.error('Error submitting word:', error);
@@ -3840,7 +4029,7 @@ function selectCell(row, col, letter, cellEl, face = null) {
             const lastKey = lastCell.face !== null ? `${lastCell.face},${lastCell.row},${lastCell.col}` : `${lastCell.row},${lastCell.col}`;
             mouseState.visitedCells.delete(lastKey);
 
-            let oldSelector = `.board-cell[data-row="${lastCell.row}"][data-col="${lastCell.col}"]`;
+            let oldSelector = `.board-cell[data-r="${lastCell.row}"][data-c="${lastCell.col}"]`;
             if (lastCell.face !== null && lastCell.face !== undefined) {
                 oldSelector = `.board-cell[data-f="${lastCell.face}"][data-r="${lastCell.row}"][data-c="${lastCell.col}"]`;
             }
@@ -4068,6 +4257,11 @@ function resetPlayUI() {
 
     // Ensure spectator mode flag is reset
     window.isSpectatorMode = false;
+
+    // Refresh submission listeners to ensure DOM sync
+    if (typeof initWordSubmission === 'function') {
+        initWordSubmission();
+    }
 
     // Refresh layout sizing
     setTimeout(checkBoardOverflow, 100);
@@ -4770,7 +4964,11 @@ function setupCubeRotation() {
 // --- Distributed Board Generation (DBG) Methods ---
 function runBoardProbe() {
     const s = window.lastGameState;
-    if (!s || !s.spinner_params) return;
+    if (!s) return;
+    
+    // Choose params: Prefer next_spinner_params for proactive search, fallback to current
+    const params = s.next_spinner_params || s.spinner_params;
+    if (!params) return;
     
     // Safety: Only probe if we are in intermission or a search is explicitly active
     const now = Date.now();

@@ -40,7 +40,7 @@ class SpinnerSet:
                 min_word_length = SpinnerSet._spin_min_word_length(board_dimensions)
 
                 # Difficulty (spin first to inform density)
-                difficulty = SpinnerSet._spin_difficulty()
+                difficulty = SpinnerSet._spin_difficulty(board_dimensions)
                 
                 # Weighted word count (density cap for Hard/Expert and long-word rounds)
                 wc_range = SpinnerSet._spin_word_count(dictionary, min_word_length, difficulty, board_dimensions)
@@ -49,8 +49,8 @@ class SpinnerSet:
                 board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions)
                 if wc_range == '500+' or wc_range == '200+':
                     if min_word_length >= 5:
-                        # Keep Either/Or and Checkerboard as they are highly requested/stable
-                        if board_format not in ['Either/Or', 'Checkerboard']:
+                        # Keep Either/Or, Checkerboard, and Density as they are highly requested/stable
+                        if board_format not in ['Either/Or', 'Checkerboard', 'Density']:
                             board_format = 'Normal'
                 bonus_len = max(min_word_length, SpinnerSet._spin_bonus_word_length())
                 
@@ -67,8 +67,14 @@ class SpinnerSet:
                 if not previous_params:
                     return res
                 
-                # Uniqueness Check: Ensure at least one major visual parameter changed
-                # Keys to check for variety:
+                # VARIETY ENFORCEMENT: Avoid repeating the same board format (User Request)
+                # If we rolled the exact same format (e.g., 'Either/Or' twice), we re-roll 
+                # up to the loop limit to find a different experience.
+                if res.get('board_format') == previous_params.get('board_format'):
+                     if _ < 25: # Allow a fallback for extremely restricted cases
+                         continue
+
+                # Uniqueness Check: Ensure at least one major parameter changed
                 major_keys = ['difficulty', 'min_word_length', 'word_count_range', 'dictionary', 'board_format']
                 is_different = False
                 for k in major_keys:
@@ -122,9 +128,17 @@ class SpinnerSet:
             return 3  # Default
     
     @staticmethod
-    def _spin_difficulty():
-        """Balanced difficulty selection: 25% Easy, 50% Medium, 25% Hard"""
-        return random.choices(['Easy', 'Medium', 'Hard'], weights=[25, 50, 25])[0]
+    def _spin_difficulty(board_dimensions='4x4'):
+        """Balanced difficulty selection: 25% Easy, 50% Medium, 25% Hard.
+        For 4x4 rooms, we slightly boost Hard to 34% per user request."""
+        choices = ['Easy', 'Medium', 'Hard']
+        weights = [25, 50, 25] # Default for large/normal
+        
+        is_small = ('4x4' in str(board_dimensions)) or ('4x6' in str(board_dimensions))
+        if is_small:
+            weights = [26, 40, 34] # Boosted Hard for small boards
+            
+        return random.choices(choices, weights=weights)[0]
     
     @staticmethod
     def _spin_word_count(dictionary_name='NWL', min_word_length=3, difficulty='Medium', board_dimensions='4x4'):
@@ -132,8 +146,19 @@ class SpinnerSet:
         # since depth isn't passed here. We default to is_large if caller uses rows/cols correctly or detect via values.
         # 3x3x3 cube has 27 tiles, but surface area logic often treats it as large.
         is_large = ('3x3x3' in str(board_dimensions)) or ('6x8' in str(board_dimensions))
+        is_4x4 = ('4x4' in str(board_dimensions))
+        
         choices = ['50-100', '100-200', '200+', '500+']
         weights = [24, 50, 25, 1]
+        
+        # User Request Fix: A 4x4 grid cannot hit 200+ words while maintaining 'Hard' uniqueness (55%+).
+        # We must clamp word count if difficulty is Hard on small grids to avoid timeouts and header jumps.
+        if is_4x4 and difficulty == 'Hard':
+             # For 4x4 Hard, we limit to 50-100 or 100-200. 
+             # 200+ is technically possible but will ALWAYS result in low uniqueness.
+             choices = ['50-100', '100-200']
+             weights = [40, 60]
+             
         return random.choices(choices, weights=weights)[0]
     
     @staticmethod
@@ -153,8 +178,8 @@ class SpinnerSet:
             return 'Normal'
             
         result = random.choices(
-            ['Normal', 'Checkerboard', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters'],
-            weights=[60, 10, 6, 6, 6, 6, 6]
+            ['Normal', 'Checkerboard', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Density'],
+            weights=[80, 8, 2, 2, 2, 2, 2, 2]
         )[0]
         
         if result == 'Mania':

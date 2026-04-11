@@ -52,10 +52,15 @@ const Forum = {
             submitCommentBtn.addEventListener('click', () => this.handleCommentSubmit());
         }
 
-        // Image preview
+        // Image previews
         const imageInput = document.getElementById('forum-post-image');
         if (imageInput) {
-            imageInput.addEventListener('change', (e) => this.handleImagePreview(e));
+            imageInput.addEventListener('change', (e) => this.handleImagePreview(e, 'forum-image-preview'));
+        }
+
+        const commentImageInput = document.getElementById('forum-comment-image');
+        if (commentImageInput) {
+            commentImageInput.addEventListener('change', (e) => this.handleImagePreview(e, 'forum-comment-image-preview'));
         }
 
         // User search
@@ -371,6 +376,11 @@ const Forum = {
                                 ` : ''}
                             </div>
                             <div class="comment-content">${this.escapeHtml(c.content)}</div>
+                            ${c.image_url ? `
+                                <div class="comment-image-container" style="margin-top: 10px; border-radius: 8px; overflow: hidden; border: 1px solid var(--input-border);">
+                                    <img src="${c.image_url}" style="max-width: 100%; display: block;" alt="Comment attachment">
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
                 `;
@@ -416,7 +426,7 @@ const Forum = {
             if (data.success) {
                 // Return to list and reload everything
                 document.getElementById('forum-post-form').reset();
-                this.handleImagePreview({ target: { files: [] } }); 
+                this.handleImagePreview({ target: { files: [] } }, 'forum-image-preview'); 
                 
                 await this.loadCategories(); // Refresh ALL side buttons first
                 await this.selectCategory(this.currentCategoryId); // Then load posts for the current one
@@ -431,20 +441,29 @@ const Forum = {
 
     handleCommentSubmit: async function () {
         const content = document.getElementById('forum-comment-input').value;
+        const imageFile = document.getElementById('forum-comment-image') ? document.getElementById('forum-comment-image').files[0] : null;
+
         if (!content) return;
+
+        const formData = new FormData();
+        formData.append('post_id', this.currentPostId);
+        formData.append('content', content);
+        if (imageFile) {
+            formData.append('image', imageFile);
+        }
 
         try {
             const response = await fetch('/api/forum/comments', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    post_id: this.currentPostId,
-                    content: content
-                })
+                body: formData // No Content-Type header needed for FormData
             });
             const data = await response.json();
             if (data.success) {
                 document.getElementById('forum-comment-input').value = '';
+                const commentImageInput = document.getElementById('forum-comment-image');
+                if (commentImageInput) commentImageInput.value = '';
+                this.handleImagePreview({ target: { files: [] } }, 'forum-comment-image-preview');
+
                 await this.loadCategories(); // Refresh side buttons (to clear/update gold)
                 await this.loadPostDetail(this.currentPostId);
             } else {
@@ -456,14 +475,15 @@ const Forum = {
         }
     },
 
-    handleImagePreview: function (e) {
+    handleImagePreview: function (e, previewId) {
         const file = e.target.files[0];
-        const previewEl = document.getElementById('forum-image-preview');
+        const previewEl = document.getElementById(previewId);
+        if (!previewEl) return;
 
         if (file) {
             const reader = new FileReader();
             reader.onload = function (event) {
-                previewEl.innerHTML = `<img src="${event.target.result}">`;
+                previewEl.innerHTML = `<img src="${event.target.result}" style="max-width: 100%; border-radius: 8px;">`;
                 previewEl.classList.remove('hidden');
             };
             reader.readAsDataURL(file);
@@ -490,10 +510,8 @@ const Forum = {
         document.getElementById('forum-view-create').classList.add('active');
         document.getElementById('forum-post-category-id').value = this.currentCategoryId;
 
-        // Show image upload for Screenshots, General, and Tips categories
-        const category = this.categories.find(c => c.id === this.currentCategoryId);
-        const allowUpload = ["Screenshots", "General", "Tips, Tricks, and Strategies", "Bugs/Errors", "News", "Suggestions"].includes(category.name);
-        document.getElementById('forum-image-upload-section').classList.toggle('hidden', !allowUpload);
+        // User Request Update: Allow all posts in every topic to attach an image
+        document.getElementById('forum-image-upload-section').classList.remove('hidden');
     },
 
     showRestrictedView: function () {

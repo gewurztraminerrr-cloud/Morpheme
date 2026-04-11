@@ -1,3 +1,5 @@
+print(f"[Main] SERVER STARTING - VERSION: 2026-04-10_20:41 (Reload Confirm)")
+
 from flask import Flask, request, jsonify, session, send_from_directory, g, redirect, url_for, render_template
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -1247,11 +1249,24 @@ def guest_login():
 def get_session():
     if 'user_id' in session:
         room_manager.update_presence(session['user_id'])
+        
+        # Fetch fresh rating from DB
+        try:
+            conn = sqlite3.connect('morpheme.db')
+            cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
+            rating_row = cursor.fetchone()
+            rating = rating_row[0] if rating_row else 0
+            conn.close()
+        except Exception as e:
+            print(f"[Session] Failed to fetch rating: {e}")
+            rating = 0
+
         return jsonify({
             'authenticated': True,
             'username': session['username'],
             'email': session.get('email', ''),
             'is_guest': session.get('is_guest', False),
+            'rating': rating,
             'is_mod': is_mod(session['username'])
         })
     return jsonify({'authenticated': False})
@@ -1788,6 +1803,14 @@ def apply_leave_penalty(user_id, room):
             log.write(f"[{time.time()}] Penalty SKIPPED for {player.username} in {room.room_id}: Intermission\n")
         return
 
+    # 2b. Mid-Round Exemption: USER MANDATE - Do not penalize if they joined mid-round
+    # We use a very strict check here to ensure NO ONE who joins late is penalized.
+    is_late_joiner = getattr(player, 'joined_mid_round', False)
+    if is_late_joiner:
+        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
+            log.write(f"[{time.time()}] Penalty SKIPPED for {player.username} in {room.room_id}: Joined mid-round (Flag check: {is_late_joiner})\n")
+        return
+
     has_score = (player.score > 0)
     has_words = (len(player.submitted_words) > 0)
     
@@ -1796,7 +1819,29 @@ def apply_leave_penalty(user_id, room):
             log.write(f"[{time.time()}] Penalty SKIPPED for {player.username} in {room.room_id}: No activity (score={player.score}, words={len(player.submitted_words)})\n")
         return
 
-    # 3. Apply the -16 Penalty
+    # 3. Check if others played with the user (Human participants only)
+    # USER MANDATE: Only penalize if we are abandoning REGISTERED STARTER players.
+    # We trigger the penalty if ANY other human starter is in the room, regardless of their score.
+    other_participants = [
+        p for p in room.players 
+        if str(p.user_id) != str(user_id) 
+        and not p.is_ai 
+        and not getattr(p, 'is_guest', False)
+        and not getattr(p, 'joined_mid_round', False)
+    ]
+    
+    if not other_participants:
+        num_humans = len([p for p in room.players if not p.is_ai])
+        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
+            log.write(f"[{time.time()}] Penalty SKIPPED: No other registered human STARTERS in {room.room_id}.\n")
+        return
+
+    # Diagnostic: Log EXACTLY who is causing the penalty to trigger
+    others_names = ", ".join([f"{p.username}(Starter={not getattr(p, 'joined_mid_round', False)})" for p in other_participants])
+    with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
+        log.write(f"[{time.time()}] Penalty TRIGGERED by presence of: {others_names}\n")
+
+    # 4. Apply the -16 Penalty to the leaver
     with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
         log.write(f"[{time.time()}] Penalty APPLYING to {player.username} in {room.room_id}: -16 points\n")
     
@@ -1806,19 +1851,28 @@ def apply_leave_penalty(user_id, room):
     
     conn = sqlite3.connect('morpheme.db', timeout=30)
     try:
-        # Subtract from mode-specific rating
+        # Subtract from leaver
         conn.execute('''
             UPDATE user_ratings 
             SET rating = MAX(400, rating - 16) 
             WHERE user_id = ? AND config_key = ?
         ''', (user_id, config_key))
         
-        # Also subtract from global rating (if user exists there)
         conn.execute('''
             UPDATE users 
             SET rating = MAX(400, rating - 16) 
             WHERE id = ?
         ''', (user_id,))
+        
+        # Update in-memory rating so subsequent round-end calcs use the penalized value
+        player.rating = max(400, player.rating - 16)
+
+        # 5. Add to the room's abandonment_bounty pool (To be distributed at round end results)
+        # USER MANDATE: Distribute at the end when results are shown.
+        room.abandonment_bounty += 16
+        
+        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
+            log.write(f"[{time.time()}] Bounty Collection: +16 added to {room.room_id} pool (Total: {room.abandonment_bounty})\n")
         
         conn.commit()
     except Exception as e:
@@ -2073,8 +2127,16 @@ def leave_room(room_id):
         
         room.remove_player(session['user_id'])
         
-        # Delete room if empty (except for 24h rooms which persist)
-        if len(room.players) == 0 and room.time_limit < 240:
+        # USER REQUEST: Immediate cleanup if no humans left
+        humans = [p for p in room.players if not p.is_ai]
+        is_daily = (room.time_limit >= 7200)
+        
+        if len(humans) == 0 and not is_daily:
+            # Kick remaining spectators if any (Double-down on game_room.py logic)
+            room.is_closing = True
+            room.spectators = []
+                 
+            print(f"[app.py] Room {room_id} has no humans left. Deleting immediately.")
             room_manager.delete_room(room_id)
     
     return jsonify({'success': True})
@@ -2099,9 +2161,9 @@ def list_rooms():
             room.time_limit == time_limit):
             
             humans = [p for p in room.players if not getattr(p, 'is_ai', False)]
-            # Never list empty rooms in the Active Rooms panel — UNLESS it's a persistent public hub
-            is_hub = str(room_id).startswith('pub_')
-            if len(humans) == 0 and len(room.spectators) == 0 and not is_hub:
+            # Never list empty rooms in the Active Rooms panel — UNLESS it's a persistent 24h room
+            is_daily = (room.time_limit >= 7200)
+            if len(humans) == 0 and len(room.spectators) == 0 and not is_daily:
                 continue
             
             # Calculate combined rating
@@ -2132,9 +2194,9 @@ def get_lobby_stats():
             continue
             
         humans = [p for p in room.players if not p.is_ai]
-        # Skip empty rooms — UNLESS it's a persistent public hub (to keep lobby stats consistent)
-        is_hub = str(room.room_id).startswith('pub_')
-        if len(humans) == 0 and not is_hub:
+        # Skip empty rooms — UNLESS it's a persistent 24h room
+        is_daily = (room.time_limit >= 7200)
+        if len(humans) == 0 and not is_daily:
             continue
             
         # Create a unique key for this configuration
@@ -2148,6 +2210,7 @@ def get_lobby_stats():
 
 @app.route('/api/room/<room_id>/state', methods=['GET'])
 def get_room_state(room_id):
+    print(f"[API] get_room_state for {room_id} at {time.time()}")
     if 'user_id' in session:
         uid = session['user_id']
         room_manager.update_presence(uid)
@@ -2235,7 +2298,11 @@ def get_room_state(room_id):
             
             if not is_player and not is_spectator:
                  is_hub = str(room_id).startswith('pub_')
-                 if is_hub:
+                 has_humans = len([p for p in room.players if not p.is_ai]) > 0
+                 
+                 # AUTO-RESTORE: Only if it's a hub AND has other players (or is a server-recovery scenario)
+                 # If a spectator was kicked because the room emptied, we do NOT self-heal them.
+                 if is_hub and has_humans:
                      # AUTO-RESTORE: If it's a hub, simply add them back silently!
                      # Fetch basic stats for restoration (Rating, Games Played)
                      try:
@@ -2269,12 +2336,14 @@ def get_room_state(room_id):
                  else:
                      return jsonify({'error': 'You have been removed for inactivity.'}), 403
 
-        # Immediate cleanup: If room is now empty and not a 24h room or public hub, delete it
-        is_hub = room_id.startswith('pub_')
-        if len(room.players) == 0 and len(room.spectators) == 0 and room.time_limit < 7200 and not is_hub:
-            print(f"[app.py] Room {room_id} is empty after cleanup. Deleting immediately.")
+        # Immediate cleanup: If room is now empty (or closing) and not a 24h room, delete it
+        humans = [p for p in room.players if not p.is_ai]
+        if (len(humans) == 0 or room.is_closing) and room.time_limit < 7200:
+            print(f"[app.py] Room {room_id} has no human players (closing={room.is_closing}). Evicting.")
+            if room.spectators:
+                room.spectators = []
             room_manager.delete_room(room_id)
-            return jsonify({'error': 'Room closed due to inactivity'}), 404
+            return jsonify({'error': 'Room closed because no players remain.'}), 403
 
         # Check and update state based on timers
         prev_state = room.state
@@ -2323,7 +2392,7 @@ def get_room_state(room_id):
         
         # If intermission just ended, check for timing milestones
         if room.state == 'intermission':
-            milestone = room.get_intermission_milestone()
+            milestone = room.get_next_round_milestone()
             
             if milestone == 'spinner':
                 room_manager.generate_spinner_params(room_id, reveal=False)
@@ -2335,9 +2404,11 @@ def get_room_state(room_id):
                 room_manager.start_board_search(room_id)
 
             elif milestone == 'start':
-                print(f"[Milestone] 0s remaining - Starting next round")
-                import threading
-                threading.Thread(target=room_manager.start_next_round, args=(room_id,), daemon=True).start()
+                # ATOMIC GUARD: Only launch ONE transition thread
+                if not getattr(room, 'starting_round', False):
+                    print(f"[Milestone] 0s remaining - Starting next round for {room_id}")
+                    import threading
+                    threading.Thread(target=room_manager.start_next_round, args=(room_id,), daemon=True).start()
 
         
         # Determine which word list to return
@@ -2350,12 +2421,16 @@ def get_room_state(room_id):
         word_scores_to_return = {}
         
         if room.state == 'intermission':
-            # INTERMISSION: Send everything for the Missed Words list
-            if room.solving_complete and room.complete_words:
-                words_to_return = [w for w in room.complete_words if (len(w) >= min_len or (bonus_upper and w.upper() == bonus_upper))]
+            # INTERMISSION: Use Snapshots from the round that JUST ended
+            # This ensures 'All Words' list has correct math and highlights
+            prev_all = getattr(room, 'previous_all_words', {})
+            if isinstance(prev_all, dict):
+                 words_to_return = list(prev_all.keys())
+                 # Always return available scores (including Fast Metrics estimates)
+                 word_scores_to_return = prev_all
             else:
-                words_to_return = [w for w in room.all_words if (len(w) >= min_len or (bonus_upper and w.upper() == bonus_upper))]
-            word_scores_to_return = room.solved_words_with_scores
+                 words_to_return = list(prev_all)
+                 word_scores_to_return = {}
         else:
             # ACTIVE: Omit word list for standard rooms (Anti-Cheat)
             # EXCEPTION: 24h rooms need the clues to show lengths/starting letters
@@ -2389,8 +2464,6 @@ def get_room_state(room_id):
              elapsed = time.time() - room.intermission_start_time
              limit = 65 if room.time_limit < 7200 else 7 # 60s + 5s buffer
              if elapsed > limit and not getattr(room, 'starting_round', False):
-                 with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
-                     f.write(f"[app.py] WATCHDOG: Forcing transition for {room_id} at {time.time()}\n")
                  # We trigger it in a thread to avoid blocking this poll request too long
                  threading.Thread(target=room_manager.start_next_round, args=(room_id,), daemon=True).start()
 
@@ -2416,6 +2489,7 @@ def get_room_state(room_id):
             'bonus_word': room.bonus_word,
             'bonus_cell': getattr(room, 'bonus_cell', None),
             'spinner_params': room.spinner_params, # Source of truth for revealed/active metadata
+            'next_spinner_params': getattr(room, 'next_spinner_params', None),
             'current_board_format': getattr(room, 'current_board_format', 'Normal'),
             'current_min_word_length': getattr(room, 'current_min_length', 3),
             'current_word_count_range': getattr(room, 'current_word_count_range', '100-200'),
@@ -2424,14 +2498,19 @@ def get_room_state(room_id):
             'current_uniqueness': getattr(room, 'current_uniqueness', 0.0),
             'next_round_uniqueness': getattr(room, 'next_round_uniqueness', None),
             'current_bonus_word_length': getattr(room, 'current_bonus_word_length', 0) or (len(room.bonus_word) if room.bonus_word else 0),
+            'cell_density': getattr(room, 'cell_density', None),
+            'initial_cell_density': getattr(room, 'initial_cell_density', None),
+            'max_cell_density': getattr(room, 'max_cell_density', 0),
             'spinner_params_revealed': getattr(room, 'spinner_params_revealed', False),
             'solving_complete': room.solving_complete,  # Let frontend know if still solving
+            'starting_round': getattr(room, 'starting_round', False),
             'max_players': room.max_players,
             'min_rating': room.min_rating,
             'max_rating': room.max_rating,
             'previous_all_words': room.previous_all_words,
             'previous_csw_only_words': [w for w in (room.previous_all_words or []) if word_validator.is_csw_only(w)],
             'previous_board': room.previous_board,
+            'previous_bonus_word': getattr(room, 'previous_bonus_word', None),
             'previous_day_history': prev_day_hist,
             'fcfs_found_words': list(room.fcfs_found_words) if hasattr(room, 'fcfs_found_words') else [],
             'your_username': session.get('username'),
@@ -2554,13 +2633,21 @@ def submit_word(room_id):
     input_method = data.get('input_method')
     path = data.get('path') # List of [r, c] pairs from Mouse/Touch
 
+    print(f"[Submit-Diag] User {user_id} submitting word '{word}' for room {room_id}")
+    
     # Update input method if provided
     if input_method:
         player = room.get_player(user_id)
         if player:
             player.input_method = input_method
             
-    success, message, points, final_word = room.submit_word(user_id, word, path=path)
+    try:
+        success, message, points, final_word = room.submit_word(user_id, word, path=path)
+    except Exception as e:
+        import traceback
+        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+            f.write(f"[Submit-Error] Room: {room_id} | Error: {e}\n{traceback.format_exc()}\n")
+        return jsonify({'success': False, 'message': f'Server Error: {str(e)}'}), 500
     
     # Refresh activity on any submission attempt (valid or not)
     room.update_player_activity(user_id)
@@ -2573,7 +2660,9 @@ def submit_word(room_id):
         'message': message,
         'points': points,
         'word': final_word,
-        'new_score': new_score
+        'new_score': new_score,
+        'cell_density': getattr(room, 'cell_density', None),
+        'max_cell_density': getattr(room, 'max_cell_density', 0)
     })
 
 @app.route('/room/<room_id>/update_input_method', methods=['POST'])
@@ -2779,7 +2868,7 @@ def get_lis(nums):
     # Using DP (O(n^2)) for simplicity and correctness with small N.
     dp = [1] * len(nums)
     for i in range(len(nums)):
-        for j in range(i):
+        for j in range(len(nums[:i])):
             if nums[i] > nums[j]:
                 dp[i] = max(dp[i], dp[j] + 1)
     return max(dp) if dp else 0
@@ -3844,19 +3933,30 @@ def create_forum_comment():
     if 'user_id' not in session or session.get('is_guest'):
         return jsonify({'error': 'Registered users only'}), 403
         
-    data = request.get_json()
+    # Switch to request.form to support multipart/form-data for image uploads
+    data = request.form
     post_id = data.get('post_id')
     content = data.get('content')
     
     if not post_id or not content:
         return jsonify({'error': 'Missing fields'}), 400
         
+    image_url = None
+    if 'image' in request.files:
+        file = request.files['image']
+        if file and file.filename != '' and allowed_file(file.filename):
+            import uuid
+            ext = file.filename.rsplit('.', 1)[1].lower()
+            filename = f"reply_{uuid.uuid4()}.{ext}"
+            file.save(os.path.join(app.config['FORUM_UPLOAD_FOLDER'], filename))
+            image_url = f"/static/uploads/forum/{filename}"
+
     conn = sqlite3.connect('morpheme.db', timeout=30)
     try:
         conn.execute('''
-            INSERT INTO forum_comments (post_id, user_id, content)
-            VALUES (?, ?, ?)
-        ''', (post_id, session['user_id'], content))
+            INSERT INTO forum_comments (post_id, user_id, content, image_url)
+            VALUES (?, ?, ?, ?)
+        ''', (post_id, session['user_id'], content, image_url))
         conn.commit()
         return jsonify({'success': True})
     except Exception as e:
@@ -4788,7 +4888,7 @@ def room_tick_worker():
                 
                 # 2. Progress through intermission milestones
                 if room.state == 'intermission':
-                    milestone = room.get_intermission_milestone()
+                    milestone = room.get_next_round_milestone()
                     if milestone == 'spinner':
                         room_manager.generate_spinner_params(room.room_id, reveal=True)
                     elif milestone == 'search':
