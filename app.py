@@ -356,42 +356,126 @@ def add_added_word_api():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/mods/added_words/remove', methods=['POST'])
-@mod_required
-def remove_added_word_api():
-    
+def remove_added_word():
+    # Only moderators can remove
+    username = session.get('username')
+    if not is_mod(username):
+        return jsonify({'error': 'Unauthorized'}), 401
+        
     data = request.json
     word = data.get('word', '').strip().upper()
     if not word:
-        return jsonify({'error': 'Word required'}), 400
+        return jsonify({'error': 'Word is required'}), 400
         
     try:
         if not os.path.exists(ADDED_WORDS_FILE):
-            print(f"[Mods] ADDED_WORDS_FILE not found at {ADDED_WORDS_FILE}")
-            return jsonify({'success': True})
+             return jsonify({'success': False, 'error': 'File not found'})
             
-        lines = []
-        found = False
         with open(ADDED_WORDS_FILE, 'r') as f:
-            for line in f:
-                clean_line = line.strip().upper()
-                if clean_line != word:
-                    lines.append(line)
-                else:
-                    print(f"[Mods] Found word '{word}' in file - removing it.")
-                    found = True
+            lines = [line.strip().upper() for line in f if line.strip()]
         
-        if found:
+        if word in lines:
+            new_lines = [l for l in lines if l != word]
             with open(ADDED_WORDS_FILE, 'w') as f:
-                f.writelines(lines)
+                for l in new_lines:
+                    f.write(l + '\n')
             
-            word_validator.reload_added_words()
-            print(f"[Mods] {session['username']} successfully removed word: {word}")
+            if word_validator:
+                word_validator.reload_added_words()
             return jsonify({'success': True, 'message': f'Word "{word}" removed.'})
         
-        print(f"[Mods] Word '{word}' NOT found in file.")
         return jsonify({'error': 'Word not found in the list.'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/mods/dictionary/submit', methods=['POST'])
+def submit_dictionary_words():
+    """
+    User Request: If it is “newNWL.txt”, add these words to NWL.txt alphabetically 
+    and remove all words in the file from the list in Added Words in Tools > Lists.
+    """
+    username = session.get('username')
+    if not is_mod(username):
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No file part'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No selected file'}), 400
+    
+    filename = file.filename
+    if filename not in ['newNWL.txt', 'newCSW.txt']:
+        return jsonify({'success': False, 'error': 'Invalid file name. Must be newNWL.txt or newCSW.txt'}), 400
+
+    try:
+        content = file.read().decode('utf-8')
+        new_words = {line.strip().upper() for line in content.splitlines() if line.strip()}
+        
+        if not new_words:
+            return jsonify({'success': False, 'error': 'File is empty'}), 400
+
+        base_dir = os.path.dirname(__file__)
+        dict_dir = os.path.join(base_dir, 'dictionaries')
+        
+        # Determine target dictionary
+        target_dict_name = 'NWL.txt' if filename == 'newNWL.txt' else 'CSW.txt'
+        target_path = os.path.join(dict_dir, target_dict_name)
+        
+        # 1. Load existing words
+        existing_words = set()
+        if os.path.exists(target_path):
+            with open(target_path, 'r') as f:
+                existing_words = {line.strip().upper() for line in f if line.strip()}
+        
+        # 2. Add new words alphabetically
+        updated_words = sorted(list(existing_words | new_words))
+        with open(target_path, 'w') as f:
+            for w in updated_words:
+                f.write(w + '\n')
+                
+        # 3. Tracking Table: "New XXX Words"
+        tracking_filename = 'new_NWL.txt' if filename == 'newNWL.txt' else 'new_CSW.txt'
+        tracking_path = os.path.join(dict_dir, tracking_filename)
+        
+        # Read existing tracked words to avoid duplicates in the "New" list
+        tracked_words = []
+        if os.path.exists(tracking_path):
+            with open(tracking_path, 'r') as f:
+                tracked_words = [line.strip().upper() for line in f if line.strip()]
+        
+        tracked_set = set(tracked_words)
+        added_to_track = [w for w in sorted(list(new_words)) if w not in tracked_set]
+        
+        with open(tracking_path, 'a') as f:
+            for w in added_to_track:
+                f.write(w + '\n')
+
+        # 4. Remove from Added Words (Staging Area)
+        if os.path.exists(ADDED_WORDS_FILE):
+            with open(ADDED_WORDS_FILE, 'r') as f:
+                current_added = [line.strip().upper() for line in f if line.strip()]
+            
+            filtered_added = [w for w in current_added if w not in new_words]
+            
+            with open(ADDED_WORDS_FILE, 'w') as f:
+                for w in filtered_added:
+                    f.write(w + '\n')
+        
+        # 5. Reload Word Validator
+        if word_validator:
+            word_validator._load_dictionaries()
+            
+        return jsonify({
+            'success': True, 
+            'added_count': len(new_words), 
+            'target': target_dict_name
+        })
+
+    except Exception as e:
+        print(f"[Admin] Dictionary upload error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/mods/definitions/add', methods=['POST'])
 @login_required
@@ -2481,7 +2565,8 @@ def get_room_state(room_id):
             'board_dimensions': room.board_dimensions,
             'time_limit': room.time_limit,
             'all_words': words_to_return,
-            'total_words_count': getattr(room, 'total_words_count', len(room.all_words)),
+            'total_words_count': getattr(room, 'total_words_count', 0) or len(room.all_words) or (len(room.next_round_words) if (room.state == 'intermission' and room.spinner_params_revealed) else 0),
+            'total_points_count': getattr(room, 'total_points_count', 0) or (room.recalculate_total_points() if room.state == 'active' else (getattr(room, 'next_round_total_points', 0) if (room.state == 'intermission' and room.spinner_params_revealed) else 0)) or sum([1 if len(w) <= 4 else (2 if len(w) == 5 else (3 if len(w) == 6 else (5 if len(w) == 7 else 11))) for w in room.all_words]),
             'total_counts_by_len': getattr(room, 'total_counts_by_len', {}),
             'all_word_scores': word_scores_to_return,
             'csw_only_words': getattr(room, 'csw_only_words', []),
@@ -3096,7 +3181,8 @@ def tools_get_lists():
 
         # Conditional fetching based on list_type
         response = {
-            'nwl': [], 'csw': [], 'csw_only': [], 'likelihood': [], 'uniques': [], 'added': []
+            'nwl': [], 'csw': [], 'csw_only': [], 'likelihood': [], 'uniques': [], 'added': [],
+            'new_nwl': [], 'new_csw': []
         }
 
         if list_type in ['all', 'nwl', 'csw_only', 'likelihood']:
@@ -3139,6 +3225,14 @@ def tools_get_lists():
 
         if list_type in ['all', 'uniques']:
             response['uniques'] = sorted(list(load_source_set('uniqueNWL.txt')))
+            
+        if list_type in ['all', 'new_nwl']:
+            response['new_nwl'] = list(load_source_set('new_NWL.txt'))
+            response['new_nwl'].reverse() # Show most recent first
+            
+        if list_type in ['all', 'new_csw']:
+            response['new_csw'] = list(load_source_set('new_CSW.txt'))
+            response['new_csw'].reverse() # Show most recent first
             
         if list_type in ['all', 'added']:
             # Added Words: Preserve file order (which is chronological as they are appended)

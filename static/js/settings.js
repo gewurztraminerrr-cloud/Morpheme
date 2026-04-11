@@ -39,6 +39,9 @@ function debounce(func, wait) {
             if (data.settings) {
                 console.log('[settings.js] Settings loaded:', data.settings);
                 applySettings(data.settings);
+            } else {
+                console.log('[settings.js] No server settings, providing default view');
+                applySettings(window.userSettings || {});
             }
         } catch (error) {
             console.error('[settings.js] Failed to load settings:', error);

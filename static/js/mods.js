@@ -286,6 +286,7 @@ async function loadAddedWordsConfig() {
     }
 }
 
+
 async function toggleAddedWords(enabled) {
     try {
         const response = await fetch('/api/mods/added_words/toggle', {
@@ -302,6 +303,65 @@ async function toggleAddedWords(enabled) {
     } catch (err) {
         console.error("Error toggling added words:", err);
         showModStatus("Network error toggling added words.", true, 'added-word-status-area');
+    }
+}
+
+// Dictionary Database Submission
+async function submitDictionaryToDatabase() {
+    const fileInput = document.getElementById('dict-upload-input');
+    const statusEl = document.getElementById('dict-upload-status');
+    
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        if (statusEl) {
+            statusEl.innerText = "Error: No file selected.";
+            statusEl.style.color = "#f43f5e";
+        }
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    if (statusEl) {
+        statusEl.innerText = "Submitting to database...";
+        statusEl.style.color = "#00d2ff";
+    }
+
+    try {
+        const response = await fetch('/api/mods/dictionary/submit', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            if (statusEl) {
+                statusEl.innerText = `Success: ${data.added_count} words added to ${data.target}.`;
+                statusEl.style.color = "#4ade80";
+            }
+            alert(`Dictionary Updated: ${data.added_count} words successfully merged into ${data.target}. Staging list cleaned.`);
+            
+            // Reset input
+            fileInput.value = '';
+            const triggerBtn = document.getElementById('dict-upload-trigger-btn');
+            if (triggerBtn) triggerBtn.innerText = "Select .txt File";
+            
+            // Refresh added words list if open
+            if (window.loadAddedWords) window.loadAddedWords('added');
+        } else {
+            if (statusEl) {
+                statusEl.innerText = "Error: " + (data.error || "Upload failed.");
+                statusEl.style.color = "#f43f5e";
+            }
+        }
+    } catch (err) {
+        console.error("Dict Upload Error:", err);
+        if (statusEl) {
+            statusEl.innerText = "Network error during submission.";
+            statusEl.style.color = "#f43f5e";
+        }
     }
 }
 
@@ -409,6 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
         banUserBtn.addEventListener('click', banUser);
     }
 
+
     const setNoticeBtn = document.getElementById('set-notice-btn');
     if (setNoticeBtn) {
         setNoticeBtn.addEventListener('click', updateLobbyNotice);
@@ -417,6 +478,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearNoticeBtn = document.getElementById('clear-notice-btn');
     if (clearNoticeBtn) {
         clearNoticeBtn.addEventListener('click', clearLobbyNotice);
+    }
+
+    // Dictionary Upload
+    const dictTriggerBtn = document.getElementById('dict-upload-trigger-btn');
+    const dictFileInput = document.getElementById('dict-upload-input');
+    const dictSubmitBtn = document.getElementById('dict-submit-db-btn');
+
+    if (dictTriggerBtn && dictFileInput) {
+        dictTriggerBtn.addEventListener('click', () => dictFileInput.click());
+        dictFileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const name = e.target.files[0].name;
+                dictTriggerBtn.innerText = `File: ${name}`;
+                const statusEl = document.getElementById('dict-upload-status');
+                if (statusEl) {
+                    statusEl.innerText = `Selected: ${name}`;
+                    statusEl.style.color = "#fff";
+                }
+            }
+        });
+    }
+
+    if (dictSubmitBtn) {
+        dictSubmitBtn.addEventListener('click', submitDictionaryToDatabase);
     }
 });
 

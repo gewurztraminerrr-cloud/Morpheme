@@ -2763,12 +2763,14 @@ body.theme-light-brown .word-item.missed {
     padding: 40px;
     color: var(--text-primary);
     overflow-y: auto;
-    height: calc(100vh - 80px);
+    width: 100%;
+    min-height: calc(100vh - 120px);
     box-sizing: border-box;
 }
 
 #page-settings.active {
-    display: flex;
+    display: flex !important;
+    opacity: 1 !important;
 }
 
 .settings-grid {
@@ -3471,6 +3473,11 @@ input[type=range]::-moz-range-track {
 .eo-tag {
     background: #ff4500; /* OrangeRed */
     border: 1px solid #cc3700;
+}
+
+.bl-tag {
+    background: #32cd32; /* Lime green */
+    border: 1px solid #28a428;
 }
 
 .points-math {

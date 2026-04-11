@@ -16,6 +16,35 @@ document.addEventListener('DOMContentLoaded', () => {
     setupPersonalTimer();
 });
 
+// NEW: Global Tool Switcher Helper
+window.showTool = function(toolId) {
+    const navBtns = document.querySelectorAll('.tool-nav-btn');
+    const panes = document.querySelectorAll('.tool-pane');
+    
+    // Update buttons
+    navBtns.forEach(b => {
+        if (b.dataset.tool === toolId) b.classList.add('active');
+        else b.classList.remove('active');
+    });
+
+    // Show pane
+    panes.forEach(p => {
+        if (p.id === `tool-${toolId}`) p.classList.add('active');
+        else p.classList.remove('active');
+    });
+
+    // Trigger lazy loads
+    if (toolId === 'profile') {
+        if (typeof refreshProfileTool === 'function') refreshProfileTool();
+    }
+    if (toolId === 'lists') {
+        if (typeof fetchListsData === 'function') fetchListsData();
+    }
+    if (toolId === 'wotd') {
+        if (typeof updateWotd === 'function') updateWotd();
+    }
+};
+
 function setupToolsNavigation() {
     const navBtns = document.querySelectorAll('.tool-nav-btn');
     const panes = document.querySelectorAll('.tool-pane');
@@ -144,24 +173,35 @@ function setupMiniProfileModal() {
     const closeBtn = document.getElementById('mini-profile-close');
 
     if (modal && closeBtn) {
-        closeBtn.onclick = () => modal.classList.add('hidden');
+        const closeModal = () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('forced-show');
+        };
+        closeBtn.onclick = closeModal;
         modal.onclick = (e) => {
-            if (e.target === modal) modal.classList.add('hidden');
+            if (e.target === modal) closeModal();
         };
     }
 }
 
 window.showMiniProfile = async function (username) {
     if (!username) return;
-
+    console.log(`[showMiniProfile] Attempting to open profile for: ${username}`);
     const modal = document.getElementById('mini-profile-modal');
-    if (!modal) return;
+    if (!modal) {
+        console.error('[showMiniProfile] mini-profile-modal NOT FOUND in DOM!');
+        return;
+    }
 
     try {
         const response = await fetch(`/api/profile/${encodeURIComponent(username)}`);
         const data = await response.json();
+        console.log('[showMiniProfile] Data received:', data);
 
-        if (data.error) return;
+        if (data.error) {
+            console.error('[showMiniProfile] API error:', data.error);
+            return;
+        }
 
         // Populate Modal Basic Info
         const nameEl = document.getElementById('mini-profile-username');
@@ -270,6 +310,7 @@ window.showMiniProfile = async function (username) {
         if (viewFullBtn) {
             viewFullBtn.onclick = () => {
                 modal.classList.add('hidden');
+                modal.classList.remove('forced-show');
                 const toolsBtn = document.querySelector('.nav-btn[data-page="tools"]');
                 if (toolsBtn) toolsBtn.click();
                 const profileToolBtn = document.querySelector('.tool-nav-btn[data-tool="profile"]');
@@ -282,6 +323,7 @@ window.showMiniProfile = async function (username) {
         if (roundReviewsBtn) {
             roundReviewsBtn.onclick = () => {
                 modal.classList.add('hidden');
+                modal.classList.remove('forced-show');
                 const toolsBtn = document.querySelector('.nav-btn[data-page="tools"]');
                 if (toolsBtn) toolsBtn.click();
                 const profileToolBtn = document.querySelector('.tool-nav-btn[data-tool="profile"]');
@@ -299,6 +341,7 @@ window.showMiniProfile = async function (username) {
                 msgBtn.classList.remove('hidden');
                 msgBtn.onclick = () => {
                     modal.classList.add('hidden');
+                    modal.classList.remove('forced-show');
                     window.openPrivateChat(data.username, true);
                 };
                 const friendBtn = document.getElementById('mini-profile-friend');
@@ -321,7 +364,10 @@ window.showMiniProfile = async function (username) {
         }
 
         // Finally Show
-        modal.classList.remove('hidden');
+        if (modal) {
+            modal.classList.add('forced-show');
+            modal.classList.remove('hidden');
+        }
 
     } catch (err) {
         console.error("Mini profile fetch error:", err);
@@ -1454,12 +1500,14 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     const prefix = useOverlay ? 'review' : 'integrated';
 
     if (useOverlay) {
+        overlay.classList.add('forced-show');
         overlay.classList.remove('hidden');
         // Setup Close Handler
         const closeBtn = document.getElementById('close-history-review');
         if (closeBtn) {
             closeBtn.onclick = () => {
                 overlay.classList.add('hidden');
+                overlay.classList.remove('forced-show');
                 if (window.replayInterval) {
                     clearInterval(window.replayInterval);
                     window.replayInterval = null;
@@ -1886,7 +1934,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function renderRatingsGrid(configRatings, user = null) {
     const grid = document.getElementById('profile-ratings-grid');
-    if (!grid) return;
+    if (!grid) {
+        console.warn('[Tools] #profile-ratings-grid not found in DOM.');
+        return;
+    }
 
     // Cache the original data and user on the element if not already there
     if (configRatings) grid._configRatings = configRatings;
@@ -1993,14 +2044,18 @@ function setupImageLightbox() {
     const closeBtn = document.getElementById('image-lightbox-close');
 
     if (modal && closeBtn) {
-        closeBtn.onclick = () => modal.classList.add('hidden');
+        const closeModal = () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('forced-show');
+        };
+        closeBtn.onclick = closeModal;
         modal.onclick = (e) => {
-            if (e.target === modal) modal.classList.add('hidden');
+            if (e.target === modal) closeModal();
         };
 
         // ESC key to close
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') modal.classList.add('hidden');
+            if (e.key === 'Escape') closeModal();
         });
     }
 
@@ -2382,7 +2437,9 @@ async function fetchListsData(typeOverride) {
         'csw_only': 'CSW Only',
         'likelihood': 'Likelihood (Scrabble)',
         'uniques': 'NWL Uniques',
-        'added': 'Added Words'
+        'added': 'Added Words',
+        'new_nwl': 'New NWL Words',
+        'new_csw': 'New CSW Words'
     };
 
     if (titleEl) {

@@ -70,18 +70,20 @@ const RATING_RANGES = [
     { min: 7000, max: 99999, color: '#a020f0', label: '7000+', name: 'SINGULARITY' }
 ];
 
-// Single Instance Logic
+// Single Instance Logic (Harden to prevent self-collision)
 async function validateSingleInstance() {
     if (window.location.search.includes('force=true')) return true;
     
     return new Promise((resolve) => {
+        const instanceId = Math.random().toString(36).substring(7);
         const channel = new BroadcastChannel('morpheme_instance');
         let duplicateFound = false;
 
         channel.onmessage = (event) => {
-            if (event.data.type === 'PING') {
-                channel.postMessage({ type: 'PONG' });
-            } else if (event.data.type === 'PONG') {
+            if (event.data.type === 'PING' && event.data.senderId !== instanceId) {
+                channel.postMessage({ type: 'PONG', senderId: instanceId });
+            } else if (event.data.type === 'PONG' && event.data.senderId !== instanceId) {
+                console.warn('[app.js] Duplicate Morpheme instance detected via BroadcastChannel.');
                 duplicateFound = true;
                 showAlreadyOpenScreen();
                 resolve(false);
@@ -89,13 +91,15 @@ async function validateSingleInstance() {
         };
 
         // Ping and wait a short moment for a response
-        channel.postMessage({ type: 'PING' });
+        channel.postMessage({ type: 'PING', senderId: instanceId });
         
+        // Ensure we always resolve even if BroadcastChannel is blocked or fails
         setTimeout(() => {
             if (!duplicateFound) {
-                resolve(true); // No response, we are the only one
+                console.info('[app.js] Instance validation passed (no duplicate found).');
+                resolve(true); 
             }
-        }, 300); // 300ms is enough for local IPC
+        }, 800); 
     });
 }
 
@@ -132,22 +136,41 @@ function showAlreadyOpenScreen() {
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', async () => {
-    // Check for duplicate tab first
-    const canInitialize = await validateSingleInstance();
-    if (!canInitialize) return;
-
+    // 1. Core UI Setup (Always Run First for Responsiveness)
     setupNavigation();
     setupModalListeners();
     setupAuth(); // Initialize auth listeners
     setupContactForm(); // Initialize contact form listeners
-    // initSettings is now handled by settings.js
 
+    // 2. Single Instance Validation (Non-blocking for UI)
+    const isSingle = await validateSingleInstance();
+    if (!isSingle) return;
+
+    // 3. Application Domain Logic
+    // Stub or existing system initializers
+    if (typeof handleLobbyMusicState === 'function') handleLobbyMusicState();
+    if (typeof checkLobbyNotice === 'function') checkLobbyNotice();
+    
+    // NEW: Proper setup for Global listeners
+    setupGlobalProfileLogic();
+    
+    // Initial State Check
+    requestAnimationFrame(() => {
+        checkNavVisibility();
+        checkForumActivity();
+    });
 
     await checkSession();
 
-
-    // Handle initial navigation
-    const hash = window.location.hash;
+    // NEW: Handle initial navigation based on hash OR landing page
+    const hash = window.location.hash || '';
+    if (hash.startsWith('#page-')) {
+        showPage(hash.substring(1));
+    } else if (!window.currentUser) {
+        showPage('page-login');
+    } else {
+        showPage('page-lobby');
+    }
     const tournamentActive = localStorage.getItem('tournament_play_active');
     const privateActive = localStorage.getItem('private_match_active');
 
@@ -409,31 +432,29 @@ window.checkForumActivity = checkForumActivity;
 
 function setupNavigation() {
     const navButtons = document.querySelectorAll('.nav-btn');
-    // ... existing loop ...
+    console.log(`[setupNavigation] Initializing ${navButtons.length} buttons.`);
+    
     navButtons.forEach(btn => {
-        btn.addEventListener('click', async () => {
-            if (!btn.disabled) {
-                const pageTarget = btn.getAttribute('data-page');
+        btn.addEventListener('click', async (e) => {
+            const pageTarget = btn.dataset.page;
+            console.log(`[setupNavigation] Clicked Target: ${pageTarget}`);
+            
+            if (btn.disabled) return;
 
-                // Special Case: How to Play is a Modal
-                if (pageTarget === 'howtoplay') {
-                    const modal = document.getElementById('modal-howtoplay');
-                    if (modal) {
-                        modal.classList.remove('hidden');
-                    }
-                    return; // Do not navigation
+            // Handle Modals (Not Pages)
+            if (pageTarget === 'howtoplay') {
+                const modal = document.getElementById('modal-howtoplay');
+                if (modal) {
+                    modal.classList.add('forced-show');
+                    modal.classList.remove('hidden');
                 }
-
-                const pageId = 'page-' + pageTarget;
-
-                // Store Tab Logic
-                if (pageTarget === 'store') {
-                    setupStoreTabs();
-                }
-
-                showPage(pageId);
-                updateActiveNav(btn);
+                return;
             }
+
+            // Default Page Navigation
+            const pageId = 'page-' + pageTarget;
+            showPage(pageId);
+            updateActiveNav(btn);
         });
     });
 }
@@ -486,12 +507,14 @@ function setupModalListeners() {
 
     if (modal && closeBtn) {
         closeBtn.addEventListener('click', () => {
+            modal.classList.remove('forced-show');
             modal.classList.add('hidden');
         });
 
         // Close on escape key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                modal.classList.remove('forced-show');
                 modal.classList.add('hidden');
             }
         });
@@ -499,6 +522,7 @@ function setupModalListeners() {
         // Close on click outside (optional, but nice)
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
+                modal.classList.remove('forced-show');
                 modal.classList.add('hidden');
             }
         });
@@ -508,6 +532,7 @@ function setupModalListeners() {
     const closeGenericBtn = document.getElementById('close-generic-modal');
     if (genericModal && closeGenericBtn) {
         const closeModal = () => {
+            genericModal.classList.remove('forced-show');
             genericModal.classList.add('hidden');
             window._hasPriorityModal = false; // Reset priority flag on close
         };
@@ -524,14 +549,21 @@ function showPage(pageId) {
         history.replaceState(null, null, "#" + pageId);
     }
 
+    // Auto-hide modals/overlays when navigating pages
+    const overlays = document.querySelectorAll('.modal-window, .mini-profile-overlay, .review-overlay, .overlay');
+    overlays.forEach(o => {
+        o.classList.remove('forced-show');
+        o.classList.add('hidden');
+    });
+
     // 1. Update Page Visibility
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
+        if (page.id === pageId) {
+            page.classList.add('active');
+            page.style.opacity = '1'; // Explicitly force visibility
+        }
     });
-    const targetPage = document.getElementById(pageId);
-    if (targetPage) {
-        targetPage.classList.add('active');
-    }
 
     // Standardize: Rating color bar ONLY appears on the Play page
     const colorBar = document.getElementById('game-color-bar');
@@ -551,6 +583,13 @@ function showPage(pageId) {
         if (typeof window.checkLobbyNotice === 'function' && !window._lobbyNoticeShownThisSession) {
             window.checkLobbyNotice();
         }
+    }
+
+    // NEW: Automatically update navigation button active state
+    const pageName = pageId.replace('page-', '');
+    const navBtn = document.querySelector(`.nav-btn[data-page="${pageName}"]`);
+    if (navBtn) {
+        updateActiveNav(navBtn);
     }
 
     // 2. Handle Game Polling
@@ -681,6 +720,13 @@ async function handleSignIn() {
             if (typeof checkModStatus === 'function') {
                 checkModStatus();
             }
+            if (data.settings) {
+                console.log('[settings.js] Settings loaded:', data.settings);
+                applySettings(data.settings);
+            } else {
+                console.log('[settings.js] No settings found, applying defaults');
+                applySettings(window.userSettings || {});
+            }
             
             window.lastPlayerRating = data.rating;
             navigateToLobby(data.rating);
@@ -805,8 +851,15 @@ function updateAuthUI(rating = null) {
         if (userDisplay) userDisplay.classList.remove('hidden');
         if (usernameEl) {
             usernameEl.textContent = currentUser;
-            const color = window.getRatingColor ? window.getRatingColor(0) : '#fff'; // Default or fetch actual rating
             usernameEl.style.color = 'var(--accent-color)';
+            // RESTORED: Profile navigation on click
+            usernameEl.onclick = () => {
+                if (typeof window.performProfileSearch === 'function') {
+                    showPage('page-tools');
+                    window.showTool('profile'); // Uses the new window.showTool helper
+                    window.performProfileSearch(currentUser);
+                }
+            };
         }
 
         // Handle Rating Bar
@@ -867,6 +920,34 @@ async function handleLogout() {
 }
 
 
+
+// setupGlobalProfileLogic - Handle global profile triggers (like the rating bar)
+function setupGlobalProfileLogic() {
+    const bar = document.getElementById('game-color-bar');
+    if (bar) {
+        bar.addEventListener('click', (e) => {
+            const segment = e.target.closest('.color-bar-segment');
+            if (segment && window.showMiniProfile) {
+                // If it's the user-rating-segment, we might show current user, 
+                // but usually the user wants to see their stats.
+                // For now, let's look for any user whose rating might be clicked? 
+                // Actually, the request says "colored square representing rating does not open a brief profile".
+                // We'll show the current user's mini profile as a default if none selected.
+                if (window.currentUser) {
+                    window.showMiniProfile(window.currentUser);
+                }
+            }
+        });
+    }
+}
+
+function setupMobileLogic() {
+    // Add any mobile-specific listeners or adjustments
+    window.addEventListener('resize', () => {
+        const isMobile = window.innerWidth <= 768;
+        document.body.classList.toggle('is-mobile', isMobile);
+    });
+}
 
 // Setup authentication
 function setupAuth() {

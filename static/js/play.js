@@ -430,81 +430,94 @@ async function updateGameState(incomingState = null) {
         }
 
         // WINNER ANNOUNCEMENT LOGIC (Persistent during intermission)
-        if (state.state === 'intermission' && state.winners_history && state.winners_history.length > 0) {
+        if (state.state === 'intermission' && state.winners_history) {
             const defContent = document.getElementById('definition-content');
             const defPanel = document.querySelector('.definitions-panel');
             const defHeader = document.getElementById('definition-header');
             
             const latest = state.winners_history[0];
-            const hasActualWinner = latest && latest.score > 0;
+            // MANDATE: Only show if the record is for the round that JUST finished AND someone scored
+            const isForCurrentRound = latest && latest.round === state.current_round;
+            const hasActualWinner = isForCurrentRound && (latest.score || 0) > 0;
 
-            // Render only if not already showing the announcement AND someone actually scored points
-            // EXPLICITLY SKIP if the user has manually selected a word to view its definition
             const isViewingDefinition = window.userViewingDefinitionIntermission === true;
-            if (hasActualWinner && defContent && !isViewingDefinition && (!defContent.innerHTML.includes('CONGRATULATIONS') || defContent.innerHTML.includes('placeholder'))) {
-                const winnersList = latest.winners.map(w => w.username).join(' & ');
-                
-                if (defPanel) {
-                    defPanel.classList.add('winner-flash');
-                    defPanel.classList.remove('timer-flash');
-                }
-                if (defHeader) defHeader.style.display = 'none';
-                
-                // For Spectators, include the Join Button in the announcement
-                const me = (state.your_username || window.currentUser || document.getElementById('current-username')?.innerText || '').toLowerCase().trim();
-                const amIPlayerInRoom = state.players.some(p => p.username.toLowerCase().trim() === me);
-                
-                const playerCount = (state.players && Array.isArray(state.players)) ? state.players.length : 0;
-                const maxPlayers = state.max_players || 8;
-                const canJoinInThisRoom = (playerCount < maxPlayers) || state.game_type === 'accumulative';
 
-                const joinButtonHtml = (!amIPlayerInRoom && canJoinInThisRoom) 
-                    ? `<button id="winner-spec-join-btn" class="spectator-join-btn premium-btn" style="margin-top: 10px; width: auto; font-size: 0.9rem; padding: 10px 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 2px solid #ffd700; z-index: 10; flex-shrink: 0;">Join Match</button>` 
-                    : '';
+            if (hasActualWinner && defContent && !isViewingDefinition) {
+                // If not already showing this round's winner
+                const winnerTextIdentifier = `WINNER_R${latest.round}`;
+                if (!defContent.innerHTML.includes(winnerTextIdentifier) || defContent.innerHTML.includes('placeholder')) {
+                    const winnersList = latest.winners.map(w => w.username).join(' & ');
+                    
+                    if (defPanel) {
+                        defPanel.classList.add('winner-flash');
+                        defPanel.classList.remove('timer-flash');
+                    }
+                    if (defHeader) defHeader.style.display = 'none';
+                    
+                    const me = (state.your_username || window.currentUser || document.getElementById('current-username')?.innerText || '').toLowerCase().trim();
+                    const amIPlayerInRoom = state.players.some(p => p.username.toLowerCase().trim() === me);
+                    const playerCount = (state.players && Array.isArray(state.players)) ? state.players.length : 0;
+                    const maxPlayers = state.max_players || 8;
+                    const canJoinInThisRoom = (playerCount < maxPlayers) || state.game_type === 'accumulative';
 
-                defContent.innerHTML = `
-                    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100%; text-align: center; padding: 5px; box-sizing: border-box; background: rgba(255, 215, 0, 0.05);">
-                        <div style="font-size: 0.75rem; color: #ffd700; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 850; margin-bottom: 2px; animation: textPulse 1.5s infinite; flex-shrink: 0;">🏆 Round Complete 🏆</div>
-                        <h2 style="font-size: 1.2rem; color: #fff; text-shadow: 0 0 10px rgba(255,215,0,0.5); font-weight: 950; margin: 3px 0; line-height: 1; flex-shrink: 0;">CONGRATULATIONS</h2>
-                        <div style="font-size: 1.15rem; color: #ffd700; font-weight: 800; text-shadow: 0 0 8px rgba(0,0,0,0.7); max-width: 95%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0;">${winnersList.toUpperCase()}</div>
-                        <div style="font-size: 0.75rem; opacity: 0.95; margin-top: 3px; font-style: italic; flex-shrink: 0;">1st Place with ${latest.score || 0} pts</div>
-                        ${joinButtonHtml}
-                    </div>
-                `;
+                    const joinButtonHtml = (!amIPlayerInRoom && canJoinInThisRoom) 
+                        ? `<button id="winner-spec-join-btn" class="spectator-join-btn premium-btn" style="margin-top: 10px; width: auto; font-size: 0.9rem; padding: 10px 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 2px solid #ffd700; z-index: 10; flex-shrink: 0;">Join Match</button>` 
+                        : '';
 
-                // Handle Join Button inside winner announcement
-                if (joinButtonHtml) {
-                    setTimeout(() => {
-                        const winJoinBtn = document.getElementById('winner-spec-join-btn');
-                        if (winJoinBtn) {
-                            winJoinBtn.onclick = async () => {
-                                winJoinBtn.textContent = 'Joining...';
-                                winJoinBtn.disabled = true;
-                                try {
-                                    const roomId = window.currentRoomId;
-                                    const resp = await fetch(`/api/room/${roomId}/join`, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ as_spectator: false })
-                                    });
-                                    const data = await resp.json();
-                                    if (data.success) {
-                                        window.isSpectatorMode = false;
-                                        setTimeout(updateGameState, 100);
-                                    } else {
-                                        alert(data.error);
-                                        winJoinBtn.textContent = 'Join Match';
+                    defContent.innerHTML = `
+                        <div id="${winnerTextIdentifier}" style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100%; text-align: center; padding: 5px; box-sizing: border-box; background: rgba(255, 215, 0, 0.05);">
+                            <div style="font-size: 0.75rem; color: #ffd700; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 850; margin-bottom: 2px; animation: textPulse 1.5s infinite; flex-shrink: 0;">🏆 Round Complete 🏆</div>
+                            <h2 style="font-size: 1.2rem; color: #fff; text-shadow: 0 0 10px rgba(255,215,0,0.5); font-weight: 950; margin: 3px 0; line-height: 1; flex-shrink: 0;">CONGRATULATIONS</h2>
+                            <div style="font-size: 1.15rem; color: #ffd700; font-weight: 800; text-shadow: 0 0 8px rgba(0,0,0,0.7); max-width: 95%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0;">${winnersList.toUpperCase()}</div>
+                            <div style="font-size: 0.75rem; opacity: 0.95; margin-top: 3px; font-style: italic; flex-shrink: 0;">1st Place with ${latest.score || 0} pts</div>
+                            ${joinButtonHtml}
+                        </div>
+                    `;
+
+                    // Handle Join Button inside winner announcement
+                    if (joinButtonHtml) {
+                        setTimeout(() => {
+                            const winJoinBtn = document.getElementById('winner-spec-join-btn');
+                            if (winJoinBtn) {
+                                winJoinBtn.onclick = async () => {
+                                    winJoinBtn.textContent = 'Joining...';
+                                    winJoinBtn.disabled = true;
+                                    try {
+                                        const roomId = window.currentRoomId;
+                                        const resp = await fetch(`/api/room/${roomId}/join`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ as_spectator: false })
+                                        });
+                                        const data = await resp.json();
+                                        if (data.success) {
+                                            window.isSpectatorMode = false;
+                                            setTimeout(updateGameState, 100);
+                                        } else {
+                                            alert(data.error);
+                                            winJoinBtn.textContent = 'Join Match';
+                                            winJoinBtn.disabled = false;
+                                        }
+                                    } catch (e) {
+                                        console.error('Spec Join Error:', e);
+                                        winJoinBtn.textContent = 'Error';
                                         winJoinBtn.disabled = false;
                                     }
-                                } catch (e) {
-                                    console.error('Spec Join Error:', e);
-                                    winJoinBtn.textContent = 'Error';
-                                    winJoinBtn.disabled = false;
-                                }
-                            };
-                        }
-                    }, 50);
+                                };
+                            }
+                        }, 50);
+                    }
                 }
+            } else if (!hasActualWinner && defContent && !isViewingDefinition && defContent.innerHTML.includes('CONGRATULATIONS')) {
+                // CLEAR the previous winner announcement if current round had no winner
+                defContent.innerHTML = `
+                    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100%; text-align: center; opacity: 0.6;">
+                        <div style="font-size: 0.8rem; color: var(--text-primary);">Round Ended</div>
+                        <div style="font-size: 1rem; color: var(--accent-color); font-weight: 700;">No Scoring Words Found</div>
+                    </div>
+                `;
+                if (defPanel) defPanel.classList.remove('winner-flash');
+                if (defHeader) defHeader.style.display = 'flex';
             } else if (isViewingDefinition) {
                 // IF viewing a definition: Clean up celebratory effects and restore study header
                 if (defPanel && defPanel.classList.contains('winner-flash')) {
@@ -991,52 +1004,15 @@ async function updateGameState(incomingState = null) {
                     }
                 }
 
+                const totalPointsValue = state.total_points_count || 0;
                 wordsStats.innerHTML = `
                     <div style="line-height: 1.2;" class="stats-text-primary">
-                        ${personalUnique}/${totalWords} - ${personalPercentage}%
+                        ${personalUnique}/${totalWords} - ${personalPercentage}% (${totalPointsValue} total pts)
                         <div class="stats-text-secondary" style="font-size: 0.75em; margin-top: 2px;">
                             Collective Percentage: ${globalPercentage}%
                         </div>
                         ${finderButtonHtml}
                     </div>`;
-
-                // Global function for opening the finders modal
-                window.showFinderModal = function (word) {
-                    const modal = document.getElementById('generic-info-modal');
-                    const title = document.getElementById('generic-modal-title');
-                    const body = document.getElementById('generic-modal-body');
-
-                    if (modal && title && body) {
-                        const wordUpper = word.toUpperCase();
-                        title.textContent = `Who found "${wordUpper}"?`;
-
-                        // Use current game state to find players
-                        if (!window.lastGameState || !window.lastGameState.players) return;
-
-                        const finders = window.lastGameState.players.filter(p =>
-                            p.submitted_words && p.submitted_words.some(sw =>
-                                (typeof sw === 'object' ? sw.word : sw).toUpperCase() === wordUpper
-                            )
-                        );
-
-                        body.innerHTML = finders.map(p => {
-                            const rating = p.rating || 0;
-                            const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#fff';
-                            return `
-                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); margin-bottom: 4px; border-radius: 6px;">
-                                    <div style="display: flex; align-items: center; gap: 12px;">
-                                        <div style="width: 14px; height: 14px; background: ${rColor}; border-radius: 3px; box-shadow: 0 0 10px ${rColor}22;"></div>
-                                        <span style="font-weight: 700; font-size: 0.95rem;">${p.username}</span>
-                                    </div>
-                                    <span style="opacity: 0.5; font-size: 0.8rem; font-weight: 600;">${rating}</span>
-                                </div>
-                            `;
-                        }).join('');
-
-                        modal.classList.remove('hidden');
-                        modal.style.display = 'flex'; // Ensure it's visible despite any other classes
-                    }
-                };
 
                 const targetUsername = selectedPlayerUsername || currentUser;
                 let targetWords = [];
@@ -1067,7 +1043,14 @@ async function updateGameState(incomingState = null) {
                 const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
 
                 // Single line display
-                wordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}%`;
+                const totalPoints = state.total_points_count || 0;
+                
+                // DATA SYNC FIX: Ensure stats element exists and is updated with total pts
+                const safeWordsStats = document.getElementById('words-stats') || wordsStats;
+                if (safeWordsStats) {
+                    safeWordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}% (${totalPoints} total pts)`;
+                    safeWordsStats.style.display = 'block';
+                }
 
                 const sortedWords = [...myWords].sort((a, b) => (b.time || 0) - (a.time || 0));
                 if (sortedWords.length === 0) {
@@ -1139,8 +1122,8 @@ async function updateGameState(incomingState = null) {
 
                 const totalWords = state.total_words_count || allWords.length;
                 const uniqueFound = new Set(allFoundWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase())).size;
-                const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
-                wordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}%`;
+                const totalPoints = state.total_points_count || 0;
+                wordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}% (${totalPoints} total pts)`;
 
                 const sortedWords = allFoundWords.sort((a, b) => (b.time || 0) - (a.time || 0));
                 const threshold = 150;
@@ -1342,9 +1325,22 @@ async function updateGameState(incomingState = null) {
                     let statusClass = isFound ? 'player-word' : 'missed';
                     if (!isFound && isCSWOnly) statusClass += ' csw-only';
                     const icon = isFound ? '✓' : '✗';
+                    const details = state.previous_all_words && state.previous_all_words[w];
+                    let ptsDisplay = '';
+                    if (details) {
+                        const total = details.total || 0;
+                        const base = details.base || 0;
+                        const bonus = (details.bonus_word_points || 0) + (details.bonus_letter_points || 0) + (details.either_or_points || 0);
+                        if (bonus > 0) {
+                            ptsDisplay = `${base} + ${bonus} = ${total}`;
+                        } else {
+                            ptsDisplay = total;
+                        }
+                    }
+
                     return `<div class="word-item ${statusClass}" data-word="${w}" style="display:flex; justify-content:space-between; cursor:pointer;">
                         <span>${w}</span>
-                        <span style="opacity:0.6">${icon}</span>
+                        <span style="opacity:0.6; font-size:0.85em;">${ptsDisplay} ${icon}</span>
                     </div>`;
                 };
 
@@ -1984,7 +1980,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
                      const r = s.bonus_cell.r, c = s.bonus_cell.c;
                      if (s.board && s.board[r] && s.board[r][c]) bChar = s.board[r][c];
                  }
-                 bonusIndicator = `<span class="list-bonus-tag bonus-cell-tag">${bChar}</span>`;
+                 bonusIndicator = `<span class="list-bonus-tag bl-tag" title="Used Bonus Letter">BL</span>`;
             } else if ((pointsData.bonus_word_points || 0) > 0) {
                  bonusIndicator = `<span class="list-bonus-tag bonus-word-tag">★</span>`;
             } else if ((pointsData.either_or_points || 0) > 0) {
@@ -2785,10 +2781,14 @@ function updateBoardCell(cell, r, c, letter, grayed, f) {
     cell.dataset.c = c;
     if (typeof f !== 'undefined') cell.dataset.f = f;
 
-    // Check if letter changed OR if cell is empty (init)
+    // Check if letter OR format changed (to ensure point badges are cleared/added correctly)
     const currentLetter = cell.dataset.letter;
-    if (currentLetter !== letter || cell.children.length <= 1) { // 1 if only hitbox, but let's be safe
+    const currentFormat = cell.dataset.renderedFormat;
+    const boardFormat = (window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : 'Normal';
+    
+    if (currentLetter !== letter || currentFormat !== boardFormat || cell.children.length <= 1) {
         cell.dataset.letter = letter;
+        cell.dataset.renderedFormat = boardFormat;
         cell.innerHTML = ''; // Fresh start
         
         if (letter.includes('/')) {
@@ -2850,7 +2850,6 @@ function updateBoardCell(cell, r, c, letter, grayed, f) {
         }
     }
     
-    let boardFormat = (window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : 'Normal';
     if (isMatch || (boardFormat.toLowerCase().includes('either') && letter.includes('/'))) {
         cell.classList.add('bonus-highlight');
     } else {
@@ -3416,11 +3415,12 @@ function renderSplitNotepads(players, state) {
                     const bonusWordPts = w.score_details.bonus_word_points || 0;
                     const bonusLetterPts = w.score_details.bonus_letter_points || 0;
                     
-                    if (bonusLetterPts > 0) {
-                        const originalValue = w.score_details.base + bonusWordPts;
-                        ptsDisplay = `${originalValue}+${bonusLetterPts}=${w.points}`;
+                    if (bonusLetterPts > 0 || (w.score_details.either_or_points || 0) > 0) {
+                        const extra = bonusLetterPts + (w.score_details.either_or_points || 0);
+                        const originalValue = (w.score_details.base || 0) + bonusWordPts;
+                        ptsDisplay = `${originalValue} + ${extra} = ${w.points}`;
                     } else if (bonusWordPts > 0) {
-                        ptsDisplay = `${w.score_details.base}+${bonusWordPts}=${w.points}`;
+                        ptsDisplay = `${(w.score_details.base || 0)} + ${bonusWordPts} = ${w.points}`;
                     }
                 }
                 
@@ -3556,9 +3556,12 @@ function renderFCFSNotepads(players, state) {
                 let ptsNum = (typeof wObj === 'string' ? 0 : wObj.points);
                 let ptsDisplay = (typeof wObj === 'string' ? '?' : wObj.points);
 
-                if (wObj.score_details && wObj.score_details.bonus_letter_points > 0) {
-                    const originalValue = wObj.score_details.base + (wObj.score_details.bonus_word_points || 0);
-                    ptsDisplay = `${originalValue}+${wObj.score_details.bonus_letter_points}=${wObj.points}`;
+                if (wObj.score_details && (wObj.score_details.bonus_letter_points > 0 || (wObj.score_details.either_or_points || 0) > 0)) {
+                    const extra = (wObj.score_details.bonus_letter_points || 0) + (wObj.score_details.either_or_points || 0);
+                    const originalValue = (wObj.score_details.base || 0) + (wObj.score_details.bonus_word_points || 0);
+                    ptsDisplay = `${originalValue} + ${extra} = ${wObj.points}`;
+                } else if (wObj.score_details && (wObj.score_details.bonus_word_points || 0) > 0) {
+                    ptsDisplay = `${(wObj.score_details.base || 0)} + ${wObj.score_details.bonus_word_points} = ${wObj.points}`;
                 }
 
                 const row = document.createElement('div'); // Define row here
@@ -3785,12 +3788,22 @@ async function submitWord(wordParam = null, pathParam = null) {
                     }
 
                     if (wordsStats && data.points > 0) {
-                        const parts = wordsStats.textContent.match(/(\d+)\/(\d+) - (\d+)%/);
+                        const parts = wordsStats.textContent.match(/(\d+)\/(\d+) - (\d+)% \(([\d,]+) total pts\)/);
                         if (parts) {
                             let found = parseInt(parts[1]) + 1;
                             const total = parseInt(parts[2]);
                             const percent = total > 0 ? Math.round((found / total) * 100) : 0;
-                            wordsStats.textContent = `${found}/${total} - ${percent}%`;
+                            const totalPoints = parts[4];
+                            wordsStats.textContent = `${found}/${total} - ${percent}% (${totalPoints} total pts)`;
+                        } else {
+                            // Fallback for simple match
+                            const partsSimple = wordsStats.textContent.match(/(\d+)\/(\d+) - (\d+)%/);
+                            if (partsSimple) {
+                                let found = parseInt(partsSimple[1]) + 1;
+                                const total = parseInt(partsSimple[2]);
+                                const percent = total > 0 ? Math.round((found / total) * 100) : 0;
+                                wordsStats.textContent = `${found}/${total} - ${percent}%`;
+                            }
                         }
                     }
                 } else if (currentState.game_type === 'fcfs') {
@@ -3810,12 +3823,21 @@ async function submitWord(wordParam = null, pathParam = null) {
                     }
 
                     if (wordsStats) {
-                        const parts = wordsStats.textContent.match(/(\d+)\/(\d+) - (\d+)%/);
+                        const parts = wordsStats.textContent.match(/(\d+)\/(\d+) - (\d+)% \(([\d,]+) total pts\)/);
                         if (parts) {
                             let found = parseInt(parts[1]) + 1;
                             const total = parseInt(parts[2]);
                             const percent = total > 0 ? Math.round((found / total) * 100) : 0;
-                            wordsStats.textContent = `${found}/${total} - ${percent}%`;
+                            const totalPoints = parts[4];
+                            wordsStats.textContent = `${found}/${total} - ${percent}% (${totalPoints} total pts)`;
+                        } else {
+                            const partsSimple = wordsStats.textContent.match(/(\d+)\/(\d+) - (\d+)%/);
+                            if (partsSimple) {
+                                let found = parseInt(partsSimple[1]) + 1;
+                                const total = parseInt(partsSimple[2]);
+                                const percent = total > 0 ? Math.round((found / total) * 100) : 0;
+                                wordsStats.textContent = `${found}/${total} - ${percent}%`;
+                            }
                         }
                     }
                 }
@@ -5072,3 +5094,50 @@ function embedBonusWordForProbe(board, word) {
     }
     return board;
 }
+
+/**
+ * Global function for opening the finders modal (Shared across play.js logic)
+ */
+window.showFinderModal = function (word) {
+    const modal = document.getElementById('generic-info-modal');
+    const title = document.getElementById('generic-modal-title');
+    const body = document.getElementById('generic-modal-body');
+
+    if (modal && title && body) {
+        const wordUpper = word.toUpperCase();
+        title.textContent = `Who found "${wordUpper}"?`;
+
+        // Use current game state to find players
+        if (!window.lastGameState || !window.lastGameState.players) {
+            console.warn('[showFinderModal] No lastGameState available');
+            return;
+        }
+
+        const finders = window.lastGameState.players.filter(p =>
+            p.submitted_words && p.submitted_words.some(sw =>
+                (typeof sw === 'object' ? sw.word : sw).toUpperCase() === wordUpper
+            )
+        );
+
+        if (finders.length === 0) {
+            body.innerHTML = '<p class="placeholder" style="padding: 20px; text-align: center;">No one has found this word yet.</p>';
+        } else {
+            body.innerHTML = finders.map(p => {
+                const rating = p.rating || 0;
+                const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#fff';
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); margin-bottom: 4px; border-radius: 6px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 14px; height: 14px; background: ${rColor}; border-radius: 3px; box-shadow: 0 0 10px ${rColor}22;"></div>
+                            <span style="font-weight: 700; font-size: 0.95rem;">${p.username}</span>
+                        </div>
+                        <span style="opacity: 0.5; font-size: 0.8rem; font-weight: 600;">${rating}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex'; // Ensure it's visible despite any other classes
+    }
+};

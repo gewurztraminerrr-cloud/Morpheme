@@ -28,17 +28,17 @@
         <nav class="nav">
             <button class="nav-btn" data-page="store" id="btn-store">Store</button>
             <button class="nav-btn" data-page="login" id="nav-login-btn">Login</button>
-            <button class="nav-btn" data-page="howtoplay">How to Play</button>
-            <button class="nav-btn" data-page="lobby">Lobby <span id="lobby-badge"
+            <button class="nav-btn" data-page="howtoplay" id="nav-howtoplay-btn">How to Play</button>
+            <button class="nav-btn" data-page="lobby" id="nav-lobby-btn">Lobby <span id="lobby-badge"
                     class="nav-badge hidden"></span></button>
             <button class="nav-btn" data-page="mods" id="nav-mods-btn" style="display: none;">Mods</button>
             <button class="nav-btn" data-page="tournaments" id="nav-tournaments-btn">Tournaments</button>
 
             <button class="nav-btn" id="play-btn" data-page="play" disabled>Play</button>
-            <button class="nav-btn" data-page="leaderboards">Leaderboards</button>
+            <button class="nav-btn" data-page="leaderboards" id="nav-leaderboards-btn">Leaderboards</button>
             <button class="nav-btn" data-page="forums" id="btn-forums">Forum</button>
-            <button class="nav-btn" data-page="tools">Tools</button>
-            <button class="nav-btn" data-page="settings">Settings</button>
+            <button class="nav-btn" data-page="tools" id="nav-tools-btn">Tools</button>
+            <button class="nav-btn" data-page="settings" id="nav-settings-btn">Settings</button>
 
 
 
@@ -1673,6 +1673,8 @@
                                     <option value="likelihood">Likelihood</option>
                                     <option value="uniques">NWL Uniques</option>
                                     <option value="added">Added Words</option>
+                                    <option value="new_nwl">New NWL Words</option>
+                                    <option value="new_csw">New CSW Words</option>
                                 </select>
                                 <button id="list-update-btn">Update</button>
                             </div>
@@ -1891,8 +1893,22 @@
                             <button id="remove-added-word-btn" class="mod-full-btn remove">Remove Word</button>
                         </div>
                     </div>
-
                 </div>
+
+                <!-- Dictionary Submission Section -->
+                    <div class="mod-section" style="background: var(--bg-panel); border: 1px solid var(--input-border); padding: 18px; border-radius: 12px; margin-top: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <div class="mod-list-title" style="margin-bottom: 8px; color: var(--accent-color); font-size: 1rem;">Database Submission</div>
+                        <p style="font-size: 0.85rem; line-height: 1.4; margin-bottom: 15px; color: var(--text-primary); opacity: 0.9;">
+                            Upload a text file (e.g., <code style="color: var(--accent-color); font-weight: 800; background: rgba(var(--text-primary-rgb), 0.1); padding: 2px 4px; border-radius: 4px;">newNWL.txt</code> or <code style="color: var(--accent-color); font-weight: 800; background: rgba(var(--text-primary-rgb), 0.1); padding: 2px 4px; border-radius: 4px;">newCSW.txt</code>) 
+                            to permanently add words to the dictionary DB and tracking tables.
+                        </p>
+                        <div id="dict-upload-status" style="min-height: 20px; margin-bottom: 12px; font-weight: 700; font-size: 0.9rem;"></div>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <input type="file" id="dict-upload-input" accept=".txt" style="display: none;">
+                            <button id="dict-upload-trigger-btn" class="mod-full-btn" style="background: var(--input-bg); flex: 1; border: 1px solid var(--input-border); color: var(--text-primary); font-weight: 600;">Select .txt File</button>
+                            <button id="dict-submit-db-btn" class="mod-full-btn add" style="flex: 1; font-weight: 800;">Submit to Database</button>
+                        </div>
+                    </div>
 
                 <hr style="opacity: 0.1; margin: 30px 0;">
                 
@@ -1950,7 +1966,7 @@
 
         <!-- Settings Page -->
         <div id="page-settings" class="page">
-            <h2 style="font-size: 2.5rem; color: #fff; margin-bottom: 30px; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+            <h2 style="font-size: 2.5rem; color: var(--text-primary); margin-bottom: 30px; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">
                 User
                 Settings</h2>
             <div class="settings-grid">
@@ -2489,12 +2505,13 @@
                 </div>
             </div>
         </div>
+    </main>
 
-        <!-- How to Play Modal (Independent Window) -->
-        <div id="modal-howtoplay" class="modal-window hidden">
-            <div class="modal-content-wrapper">
-                <button id="close-howtoplay" class="close-modal-btn">×</button>
-                <h1 class="modal-main-title">How to Play & FAQ</h1>
+    <!-- How to Play Modal (Independent Window) -->
+    <div id="modal-howtoplay" class="modal-window hidden">
+        <div class="modal-content-wrapper">
+            <button id="close-howtoplay" class="close-modal-btn">×</button>
+            <h1 class="modal-main-title">How to Play & FAQ</h1>
                 <div class="instructions-container">
                     <!-- Card 1: Connect -->
                     <div class="instruction-card">
@@ -2562,310 +2579,307 @@
                     </div>
                 </div>
 
-                <!-- FAQ Section -->
-                <div class="faq-section">
-                    <div class="faq-container">
-                        <!-- Q1 -->
-                        <div class="faq-item">
-                            <div class="faq-question">What do the various highlights on the "All
-                                Words" table signify?
-                            </div>
-                            <div class="faq-answer">
-                                <p>Our "All Words" table employs a sophisticated color-coding system
-                                    to provide
-                                    at-a-glance
-                                    insights into the round's results:</p>
-                                <ul>
-                                    <li><span class="faq-highlight lime">Lime Green</span> - The
-                                        <strong>Bonus
-                                            Word</strong>.
-                                        Successfully
-                                        finding this word awards you a 5-point premium.
-                                    </li>
-                                    <li><span class="faq-highlight blue">Vibrant Blue</span> - Words
-                                        you personally
-                                        discovered
-                                        during the round.</li>
-                                    <li><span class="faq-highlight gold">Golden Yellow</span> -
-                                        <strong>CSW-Only</strong>
-                                        words. These
-                                        are
-                                        lexical gems found in the Collins Scrabble Words dictionary
-                                        but absent from the
-                                        NWL.
-                                    </li>
-                                    <li><span class="faq-highlight red">Crimson Red</span> - Words
-                                        that were present on
-                                        the
-                                        board but eluded your discovery.</li>
-                                    <li><span class="faq-highlight purple">Royal Purple</span> - 
-                                        <strong>Added Words</strong>.
-                                        Special words curated by moderators that are currently present on the board.
-                                    </li>
-                                    <li><span class="found-indicator present">✓</span> <span
-                                            class="faq-highlight check">Checkmark</span> - Indicates
-                                        words
-                                        successfully
-                                        identified by you, a competitor, or multiple players in the
-                                        room.</li>
-                                </ul>
-                            </div>
+            <!-- FAQ Section -->
+            <div class="faq-section">
+                <div class="faq-container">
+                    <!-- Q1 -->
+                    <div class="faq-item">
+                        <div class="faq-question">What do the various highlights on the "All
+                            Words" table signify?
                         </div>
+                        <div class="faq-answer">
+                            <p>Our "All Words" table employs a sophisticated color-coding system
+                                to provide
+                                at-a-glance
+                                insights into the round's results:</p>
+                            <ul>
+                                <li><span class="faq-highlight lime">Lime Green</span> - The
+                                    <strong>Bonus
+                                        Word</strong>.
+                                    Successfully
+                                    finding this word awards you a 5-point premium.
+                                </li>
+                                <li><span class="faq-highlight blue">Vibrant Blue</span> - Words
+                                    you personally
+                                    discovered
+                                    during the round.</li>
+                                <li><span class="faq-highlight gold">Golden Yellow</span> -
+                                    <strong>CSW-Only</strong>
+                                    words. These
+                                    are
+                                    lexical gems found in the Collins Scrabble Words dictionary
+                                    but absent from the
+                                    NWL.
+                                </li>
+                                <li><span class="faq-highlight red">Crimson Red</span> - Words
+                                    that were present on
+                                    the
+                                    board but eluded your discovery.</li>
+                                <li><span class="faq-highlight purple">Royal Purple</span> - 
+                                    <strong>Added Words</strong>.
+                                    Special words curated by moderators that are currently present on the board.
+                                </li>
+                                <li><span class="found-indicator present">✓</span> <span
+                                        class="faq-highlight check">Checkmark</span> - Indicates
+                                    words
+                                    successfully
+                                    identified by you, a competitor, or multiple players in the
+                                    room.</li>
+                            </ul>
+                        </div>
+                    </div>
 
-                        <!-- Q2 -->
-                        <div class="faq-item">
-                            <div class="faq-question">How does the rating system evaluate my
-                                performance and skill?
-                            </div>
-                            <div class="faq-answer">
-                                <p>Morpheme utilizes a refined <strong>Proportional Share</strong>
-                                    engine designed to
-                                    ensure
-                                    ultimate
-                                    fairness. Unlike traditional win/loss systems, our engine
-                                    evaluates your individual
-                                    contribution relative to the collective strength of the room.
-                                </p>
+                    <!-- Q2 -->
+                    <div class="faq-item">
+                        <div class="faq-question">How does the rating system evaluate my
+                            performance and skill?
+                        </div>
+                        <div class="faq-answer">
+                            <p>Morpheme utilizes a refined <strong>Proportional Share</strong>
+                                engine designed to
+                                ensure
+                                ultimate
+                                fairness. Unlike traditional win/loss systems, our engine
+                                evaluates your individual
+                                contribution relative to the collective strength of the room.
+                            </p>
 
-                                <p><strong>1. The Expected Score</strong><br>
-                                    At the conclusion of each round, the server calculates a
-                                    tailored "Expected Score"
+                            <p><strong>1. The Expected Score</strong><br>
+                                At the conclusion of each round, the server calculates a
+                                tailored "Expected Score"
+                                for
+                                you. This target represents your fair share of the points based
+                                on your current
+                                rating
+                                relative to your opponents. Masters are naturally expected to
+                                achieve higher scores,
+                                while
+                                newcomers have a more accessible performance baseline.</p>
+
+                            <p><strong>2. Room Stability & Population</strong><br>
+                                The integrity of your rating is bolstered by the number of
+                                participants. A larger
+                                gathering
+                                of players provides a more stable and accurate performance
+                                baseline, ensuring that
+                                rating
+                                adjustments are precise and reflective of your true mastery.
+                                More people in the room
+                                means
+                                more stability in the rating results.</p>
+
+                            <p><strong>3. Dynamic Gains and Losses</strong><br>
+                                Your final rating change is determined by how significantly you
+                                exceed or fall below
+                                your
+                                Expected Score. Adjustments occur on a precise 0-16 scale,
+                                rewarding consistent
+                                excellence
+                                while maintaining ranking stability through a capped maximum
+                                change per round.</p>
+                        </div>
+                    </div>
+
+                    <!-- Q3 -->
+                    <div class="faq-item">
+                        <div class="faq-question">What are the distinct strategies for the
+                            different game types?
+                        </div>
+                        <div class="faq-answer">
+                            <p>Morpheme offers three unique arenas, each demanding a different
+                                tactical approach:
+                            </p>
+                            <ul>
+                                <li><strong>Accumulative:</strong> The classic experience of
+                                    independent discovery.
+                                    Every
+                                    player explores the board at their own pace, receiving full
+                                    points for every
+                                    word
+                                    found, regardless of others' performance.</li>
+                                <li><strong>First Come First Serve (FCFS):</strong> A
+                                    high-stakes race where words
+                                    are a
+                                    finite resource. The moment a word is claimed, it is removed
+                                    from the board for
+                                    all
+                                    other players. Speed and decisiveness are your primary
+                                    weapons.</li>
+                                <li><strong>Split Points:</strong> A strategic blend of
+                                    discovery and uniqueness.
+                                    Points
                                     for
-                                    you. This target represents your fair share of the points based
-                                    on your current
-                                    rating
-                                    relative to your opponents. Masters are naturally expected to
-                                    achieve higher scores,
-                                    while
-                                    newcomers have a more accessible performance baseline.</p>
-
-                                <p><strong>2. Room Stability & Population</strong><br>
-                                    The integrity of your rating is bolstered by the number of
-                                    participants. A larger
-                                    gathering
-                                    of players provides a more stable and accurate performance
-                                    baseline, ensuring that
-                                    rating
-                                    adjustments are precise and reflective of your true mastery.
-                                    More people in the room
-                                    means
-                                    more stability in the rating results.</p>
-
-                                <p><strong>3. Dynamic Gains and Losses</strong><br>
-                                    Your final rating change is determined by how significantly you
-                                    exceed or fall below
-                                    your
-                                    Expected Score. Adjustments occur on a precise 0-16 scale,
-                                    rewarding consistent
-                                    excellence
-                                    while maintaining ranking stability through a capped maximum
-                                    change per round.</p>
-                            </div>
+                                    each word are shared among everyone who finds it. While
+                                    common words yield split
+                                    rewards, uncovering unique words grants you the full bounty.
+                                </li>
+                            </ul>
                         </div>
+                    </div>
 
-                        <!-- Q3 -->
-                        <div class="faq-item">
-                            <div class="faq-question">What are the distinct strategies for the
-                                different game types?
-                            </div>
-                            <div class="faq-answer">
-                                <p>Morpheme offers three unique arenas, each demanding a different
-                                    tactical approach:
-                                </p>
-                                <ul>
-                                    <li><strong>Accumulative:</strong> The classic experience of
-                                        independent discovery.
-                                        Every
-                                        player explores the board at their own pace, receiving full
-                                        points for every
-                                        word
-                                        found, regardless of others' performance.</li>
-                                    <li><strong>First Come First Serve (FCFS):</strong> A
-                                        high-stakes race where words
-                                        are a
-                                        finite resource. The moment a word is claimed, it is removed
-                                        from the board for
-                                        all
-                                        other players. Speed and decisiveness are your primary
-                                        weapons.</li>
-                                    <li><strong>Split Points:</strong> A strategic blend of
-                                        discovery and uniqueness.
-                                        Points
-                                        for
-                                        each word are shared among everyone who finds it. While
-                                        common words yield split
-                                        rewards, uncovering unique words grants you the full bounty.
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <!-- Q4 -->
-                        <div class="faq-item">
-                            <div class="faq-question">What do the different icons next to the flags
-                                mean?</div>
-                            <div class="faq-answer">
-                                <p>These icons provide insight into the method a user is employing
-                                    to enter words,
-                                    allowing
-                                    you
-                                    to understand their playstyle:</p>
-                                <div class="icon-list">
-                                    <div class="icon-item">
-                                        <span>⌨️</span>
-                                        <div><strong>Typing Icon:</strong> Indicates the user is
-                                            entering words via a
-                                            physical
-                                            or virtual keyboard.</div>
-                                    </div>
-                                    <div class="icon-item">
-                                        <span>🖱️</span>
-                                        <div><strong>Mousing Icon:</strong> Indicates the user is
-                                            selecting words using
-                                            a
-                                            mouse
-                                            or trackpad.</div>
-                                    </div>
-                                    <div class="icon-item">
-                                        <span>📱</span>
-                                        <div><strong>Swiping Icon:</strong> Indicates the user is
-                                            swiping to connect
-                                            letters
-                                            on
-                                            a mobile device.</div>
-                                    </div>
+                    <!-- Q4 -->
+                    <div class="faq-item">
+                        <div class="faq-question">What do the different icons next to the flags
+                            mean?</div>
+                        <div class="faq-answer">
+                            <p>These icons provide insight into the method a user is employing
+                                to enter words,
+                                allowing
+                                you
+                                to
+                                understand their playstyle:</p>
+                            <div class="icon-list">
+                                <div class="icon-item">
+                                    <span>⌨️</span>
+                                    <div><strong>Typing Icon:</strong> Indicates the user is
+                                        entering words via a
+                                        physical
+                                        or virtual keyboard.</div>
+                                </div>
+                                <div class="icon-item">
+                                    <span>🖱️</span>
+                                    <div><strong>Mousing Icon:</strong> Indicates the user is
+                                        selecting words using
+                                        a
+                                        mouse
+                                        or trackpad.</div>
+                                </div>
+                                <div class="icon-item">
+                                    <span>📱</span>
+                                    <div><strong>Swiping Icon:</strong> Indicates the user is
+                                        swiping to connect
+                                        letters
+                                        on
+                                        a mobile device.</div>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="faq-item">
-                            <div class="faq-question">What are the different game Formats and what do they do?</div>
-                            <div class="faq-answer">
-                                <p><strong>Normal (82%):</strong> The standard gameplay experience where everything is
-                                    balanced for classic play.</p>
-                                <p><strong>Checkerboard (8%):</strong> Alternate vowels and consonants along rows and
-                                    diagonals. This rhythmic layout creates unique patterns for word formation.</p>
-                                <p><strong>[Letter] Mania (2%):</strong> Over 30% of the tiles on the board are assigned
-                                    the same specific letter (e.g., "S" Mania). This letter changes every round,
-                                    creating a focused board where words containing that letter are prominent.</p>
-                                <p><strong>Penalty (2%):</strong> Exercise caution! Any sequence found on the board that
-                                    is NOT in the dictionary results in a <strong>3-point deduction</strong>.</p>
-                                <p><strong>Either/Or (2%):</strong> Exactly one tile on the board contains two possible
-                                    letters (e.g., C/H). Words utilizing either of these letters receive a <strong>+3
-                                        point bonus</strong>. When playing, the game determines which letter you
-                                    intended based on where you touch the tile or the word you type.</p>
-                                <p><strong>Bonus Letter (2%):</strong> One letter on the board is highlighted in a
-                                    vibrant, persisting color. Words containing this letter grant <strong>+3 extra
-                                        points</strong>.</p>
-                                <p><strong>Valued Letters (2%):</strong> Each letter has a custom numerical point value
-                                    (e.g., Q=10, E=1). Word scores are the sum of their letter values.</p>
-                            </div>
+                    <div class="faq-item">
+                        <div class="faq-question">What are the different game Formats and what do they do?</div>
+                        <div class="faq-answer">
+                            <p><strong>Normal (82%):</strong> The standard gameplay experience where everything is
+                                balanced for classic play.</p>
+                            <p><strong>Checkerboard (8%):</strong> Alternate vowels and consonants along rows and
+                                diagonals. This rhythmic layout creates unique patterns for word formation.</p>
+                            <p><strong>Density (2%):</strong> A high-contrast visual format where tiles reflect their
+                                "lexical weight." Tiles are shaded in grayscale based on how many words pass through
+                                them. <strong>Darker tiles</strong> indicate high-density letters that are part of many
+                                possible words, while <strong>lighter tiles</strong> have lower connectivity. In
+                                dynamic rounds, these shades shift as words are discovered!</p>
+                            <p><strong>[Letter] Mania (2%):</strong> Over 30% of the tiles on the board are assigned
+                                the same specific letter (e.g., "S" Mania). This letter changes every round,
+                                creating a focused board where words containing that letter are prominent.</p>
+                            <p><strong>Penalty (2%):</strong> Exercise caution! Any sequence found on the board that
+                                is NOT in the dictionary results in a <strong>3-point deduction</strong>.</p>
+                            <p><strong>Either/Or (2%):</strong> Exactly one tile on the board contains two possible
+                                letters (e.g., C/H). Words utilizing either of these letters receive a <strong>+3
+                                    point bonus</strong>. When playing, the game determines which letter you
+                                intended based on where you touch the tile or the word you type.</p>
+                            <p><strong>Bonus Letter (2%):</strong> One letter on the board is highlighted in a
+                                vibrant, persisting color. Words containing this letter grant <strong>+3 extra
+                                    points</strong>.</p>
+                            <p><strong>Valued Letters (2%):</strong> Each letter has a custom numerical point value
+                                (e.g., Q=10, E=1). Word scores are the sum of their letter values.</p>
                         </div>
+                    </div>
 
-                        <div class="faq-item">
-                            <div class="faq-question">Can I play Solo or With Friends?</div>
-                            <div class="faq-answer">
-                                <p>Yes! Scroll down in the lobby to find the "Solo" and "With Friends" match creation
-                                    tabs. You can customize your own rooms and invite others by name.</p>
-                            </div>
+                    <div class="faq-item">
+                        <div class="faq-question">Can I play Solo or With Friends?</div>
+                        <div class="faq-answer">
+                            <p>Yes! Scroll down in the lobby to find the "Solo" and "With Friends" match creation
+                                tabs. You can customize your own rooms and invite others by name.</p>
                         </div>
+                    </div>
 
-                        <!-- Q6 -->
-                        <div class="faq-item">
-                            <div class="faq-question">What determines the difficulty level of a
-                                board?</div>
-                            <div class="faq-answer">
-                                <p>Board difficulty is scientifically determined by the ratio of
-                                    obscure or complex
-                                    words to
-                                    common vocabulary. If over 75% to 80% of the possible words are
-                                    statistically
-                                    difficult
-                                    to
-                                    uncover, the board is classified as <strong>Difficult</strong>.
-                                    Conversely, if 80%
-                                    to
-                                    90% of the
-                                    words
-                                    are common and easily found, the board is considered
-                                    <strong>Easy</strong>.
-                                </p>
-                            </div>
+                    <!-- Q6 -->
+                    <div class="faq-item">
+                        <div class="faq-question">What determines the difficulty level of a
+                            board?</div>
+                        <div class="faq-answer">
+                            <p>Board difficulty is scientifically determined by the ratio of
+                                obscure or complex
+                                words to
+                                common vocabulary. If over 75% to 80% of the possible words are
+                                statistically
+                                difficult
+                                to
+                                uncover, the board is classified as <strong>Difficult</strong>.
+                                Conversely, if 80%
+                                to
+                                90% of the
+                                words
+                                are common and easily found, the board is considered
+                                <strong>Easy</strong>.
+                            </p>
                         </div>
+                    </div>
 
-                        <!-- Q7 -->
-                        <div class="faq-item">
-                            <div class="faq-question">Is there a faster way to view a user’s
-                                profile?</div>
-                            <div class="faq-answer">
-                                <p>Indeed. Simply click the colored rating square next to any
-                                    username to evoke a
-                                    <strong>Mini
-                                        Profile</strong>. This provides a brief overview of their
-                                    statistics. For a
-                                    comprehensive view,
-                                    visit the full Profile section within the Tools menu.
-                                </p>
-                            </div>
+                    <!-- Q7 -->
+                    <div class="faq-item">
+                        <div class="faq-question">Is there a faster way to view a user’s
+                            profile?</div>
+                        <div class="faq-answer">
+                            <p>Indeed. Simply click the colored rating square next to any
+                                username to evoke a
+                                <strong>Mini
+                                    Profile</strong>. This provides a brief overview of their
+                                statistics. For a
+                                comprehensive view,
+                                visit the full Profile section within the Tools menu.
+                            </p>
                         </div>
+                    </div>
 
-                        <!-- Q8 -->
-                        <div class="faq-item">
-                            <div class="faq-question">Why does the system generate unique parameters
-                                for each round?
-                            </div>
-                            <div class="faq-answer">
-                                <p>Every round is a fresh challenge governed by the <strong>Spinner
-                                        Set</strong>. These
-                                    randomly
-                                    generated
-                                    parameters—including word density, dictionary selection, and
-                                    board format—ensure
-                                    that no
-                                    two
-                                    games are ever alike. This prevents memorization and maintains a
-                                    fair,
-                                    unpredictable,
-                                    and
-                                    ever-evolving competitive landscape.</p>
-                            </div>
+                    <!-- Q8 -->
+                    <div class="faq-item">
+                        <div class="faq-question">Why does the system generate unique parameters
+                            for each round?
                         </div>
-
-                        <!-- Q9 -->
-                        <div class="faq-item">
-                            <div class="faq-question">When I mouse over letters, other letters are being selected on the
-                                board.</div>
-                            <div class="faq-answer">
-                                <p>In Settings, uncheck <strong>"Highlight as you type"</strong>.</p>
-                            </div>
+                        <div class="faq-answer">
+                            <p>Every round is a fresh challenge governed by the <strong>Spinner
+                                    Set</strong>. These
+                                randomly
+                                generated
+                                parameters—including word density, dictionary selection, and
+                                board format—ensure
+                                that no
+                                two
+                                games are ever alike. This prevents memorization and maintains a
+                                fair,
+                                unpredictable,
+                                and
+                                ever-evolving competitive landscape.</p>
                         </div>
+                    </div>
 
-                        <!-- Q10 -->
-                        <div class="faq-item">
-                            <div class="faq-question">What is the "Combo Checker" in the Tools tab?</div>
-                            <div class="faq-answer">
-                                <p><strong>ELI5 (Explain Like I'm Five):</strong> Imagine the Combo Checker is like a
-                                    word wizard that shows you how to change one word into another on the board! If you have
-                                    one word and want to turn it into a new one, the wizard shows you all the tiny steps to
-                                    get there. This includes <strong>insertions</strong> (adding a new letter), <strong>removals</strong> (taking a
-                                    letter away), and <strong>switches</strong> (changing one letter into a different one). It's like a
-                                    map that shows you the fastest way to travel from word to word!</p>
-                            </div>
+                    <!-- Q9 -->
+                    <div class="faq-item">
+                        <div class="faq-question">When I mouse over letters, other letters are being selected on the
+                            board.</div>
+                        <div class="faq-answer">
+                            <p>In Settings, uncheck <strong>"Highlight as you type"</strong>.</p>
+                        </div>
+                    </div>
+
+                    <!-- Q10 -->
+                    <div class="faq-item">
+                        <div class="faq-question">What is the "Combo Checker" in the Tools tab?</div>
+                        <div class="faq-answer">
+                            <p><strong>ELI5 (Explain Like I'm Five):</strong> Imagine the Combo Checker is like a
+                                word wizard that shows you how to change one word into another on the board! If you have
+                                one word and want to turn it into a new one, the wizard shows you all the tiny steps to
+                                get there. This includes <strong>insertions</strong> (adding a new letter), <strong>removals</strong> (taking a
+                                letter away), and <strong>switches</strong> (changing one letter into a different one). It's like a
+                                map that shows you the fastest way to travel from word to word!</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Create Room Modal removed: Reverted to prompt -->
-
-        <script src="/js/settings.js?v=5"></script>
-        <script src="/js/forum.js?v=30"></script>
-        <script src="/js/app.js?v=2"></script>
-        <script src="/js/lobby.js?v=2"></script>
-        <script src="/js/play.js?v=12"></script>
-        <script src="/js/tournaments.js?v=2"></script>
-        <script src="/js/leaderboard.js?v=2"></script>
+    </div>
+    </div>
 
         <!-- History Review Overlay -->
         <div id="history-review-overlay" class="overlay hidden">
@@ -2924,12 +2938,7 @@
                 </div>
             </div>
         </div>
-        <script src="/js/tools.js?v=20"></script>
-        <script src="/js/mouse_selection.js?v=3"></script>
-        <script src="/js/mods.js?v=1"></script>
 
-
-        <script src="/js/private_matches.js?v=2"></script>
         <!-- Private Chat Modal -->
         <div id="private-chat-modal" class="chat-modal hidden">
             <div class="chat-modal-content">
@@ -3320,8 +3329,8 @@
                 </div>
 
             </div> <!-- End Tab Content -->
-
-    </main>
+        </div>
+    </div>
 
 
     <style>
@@ -3389,6 +3398,18 @@
             <div id="image-lightbox-caption" class="image-lightbox-caption"></div>
         </div>
     </div>
+    <!-- Core Scripts -->
+    <script src="/js/settings.js?v=5"></script>
+    <script src="/js/forum.js?v=30"></script>
+    <script src="/js/app.js?v=2"></script>
+    <script src="/js/lobby.js?v=2"></script>
+    <script src="/js/play.js?v=12"></script>
+    <script src="/js/tournaments.js?v=2"></script>
+    <script src="/js/leaderboard.js?v=2"></script>
+    <script src="/js/tools.js?v=20"></script>
+    <script src="/js/mouse_selection.js?v=3"></script>
+    <script src="/js/mods.js?v=1"></script>
+    <script src="/js/private_matches.js?v=2"></script>
 </body>
 
 </html>

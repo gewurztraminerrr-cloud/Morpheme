@@ -107,7 +107,8 @@ class GameRoom:
     max_cell_density: int = 0 # NEW: Global max density for normalization
     bonus_word_history: List[str] = field(default_factory=list)
     next_spinner_params: Dict = field(default_factory=dict) # NEW: Isolate pre-gen params from active params
-    
+    total_words_count: int = 0
+    total_points_count: int = 0 
     # Next round pre-generation (for Accumulative timing)
     spinner_params_generated: bool = False  # Track if spinner set generated for next round
     board_search_started: bool = False      # Track if board search started
@@ -271,8 +272,6 @@ class GameRoom:
         )
         if manual_accessed:
             player.joined_mid_round = True
-        elif was_already_in_room:
-            player.joined_mid_round = was_joined_mid_round
         elif (self.state == 'active' or getattr(self, 'starting_round', False)) and not is_daily:
             player.joined_mid_round = True
             
@@ -1324,6 +1323,29 @@ class GameRoom:
                         self._fcfs_found_words_set.add(wd['word'].upper())
             
             print(f"[GameRoom] Bot {ai.username} pre-generated {len(ai.submitted_words)} words (Synced for FCFS: {self.game_type == 'fcfs'})")
+            
+    def recalculate_total_points(self):
+        """Aggregate total attainable points for the active round's word list"""
+        try:
+            attainable = 0
+            if not getattr(self, 'solved_words_with_scores', None):
+                self.total_points_count = 0
+                return 0
+                
+            for pts in self.solved_words_with_scores.values():
+                if isinstance(pts, dict):
+                    attainable += pts.get('total', 0)
+                elif isinstance(pts, int):
+                    attainable += pts
+            self.total_points_count = attainable
+            # LOG FOR DIAGNOSIS
+            if attainable == 0 and len(self.solved_words_with_scores or {}) > 0:
+                 print(f"[RECALC-DEBUG] Room {self.room_id}: Attainable=0 despite {len(self.solved_words_with_scores)} scores! First value: {list(self.solved_words_with_scores.values())[0] if self.solved_words_with_scores else 'N/A'}")
+            return attainable
+        except Exception as e:
+            print(f"[GameRoom] Error recalculating points for {self.room_id}: {e}")
+            self.total_points_count = 0
+            return 0
 
 def calculate_word_score(word, bonus_word, board_format='Normal', path=None, bonus_cell=None, **kwargs):
     """Calculate points for a word using shared utility"""
@@ -2156,7 +2178,12 @@ class RoomManager:
             new_params['time_limit'] = room.time_limit
 
             with room._state_lock:
+                # 1. ALWAYS store the newly generated params systematically
+                room.next_spinner_params = dict(new_params)
+                room.spinner_params_generated = True
+
                 if reveal:
+                    # 2. PERFORM THE REVEAL (Making them visible to players)
                     room.spinner_params = dict(new_params)
                     
                     # Update authoritative labels
@@ -2165,12 +2192,11 @@ class RoomManager:
                     room._reveal_sync_complete = True
                     print(f"[RoomManager] SUCCESS: Generated and Revealed params for room {room_id}")
                 else:
-                    room.next_spinner_params = dict(new_params)
-                    room.spinner_params_generated = True
                     print(f"[RoomManager] SUCCESS: Silent parameter generation complete for room {room_id}")
-                    # PROACTIVE LEAD TIME: Start searching for the board IMMEDIATELY after params are decided
-                    # This gives us up to 45-60s of lead time instead of 15s.
-                    threading.Thread(target=self.start_board_search, args=(room_id,), daemon=True).start()
+                
+                # 3. PROACTIVE LEAD TIME: Start searching for the board IMMEDIATELY after params are decided
+                # This gives us up to 45-60s of lead time instead of 15s.
+                threading.Thread(target=self.start_board_search, args=(room_id,), daemon=True).start()
             
             return True
             
@@ -2368,8 +2394,17 @@ class RoomManager:
                                     board_format=updated_format, bonus_cell=bonus_cell,
                                     board=board, return_details=True
                                 )
-                            room.next_round_word_scores = refined
-                            print(f"[RoomManager] Board {room_id} scoring refinement complete.")
+                            # Sync both staging and active (if round started during refinement)
+                            if room.next_round_board == board:
+                                room.next_round_word_scores = refined
+                                room.next_round_total_points = sum(
+                                    (pts.get('total', 0) if isinstance(pts, dict) else pts) 
+                                    for pts in refined.values()
+                                )
+                            if room.board == board:
+                                room.solved_words_with_scores = refined
+                                room.recalculate_total_points()
+                            print(f"[RoomManager] Board {room_id} scoring refinement complete. Next Round Total: {getattr(room, 'next_round_total_points', 0)}")
                         except Exception as e:
                             print(f"[RoomManager] Refinement error for {room_id}: {e}")
                     
@@ -2609,6 +2644,10 @@ class RoomManager:
                                     board=e_board, return_details=True
                                 )
                             room.next_round_word_scores = refined_e
+                            # Active Sync
+                            if room.board == e_board:
+                                room.solved_words_with_scores = refined_e
+                                room.recalculate_total_points()
                         except: pass
                     
                     threading.Thread(target=refine_emergency_scores, daemon=True).start()
@@ -2660,10 +2699,6 @@ class RoomManager:
                     room.all_words = []
                     room.complete_words = []
 
-                # ATOMIC PROMOTION: Set state to active NOW to let players in!
-                room.state = 'active'
-                room.round_start_time = time.time()
-
                 # 1. ATOMIC SWAP: All round data set at once
                 room.board = room.next_round_board
                 room.all_words = set(room.next_round_words) if room.next_round_words else set()
@@ -2681,6 +2716,8 @@ class RoomManager:
                 
                 room.solving_complete = True 
                 room.complete_words = list(room.all_words) 
+                room.total_words_count = len(room.all_words)
+                room.recalculate_total_points()
                 
                 # Double-check: If density data is missing in staging but format says 'Density', regenerate it now
                 ns_params = getattr(room, 'next_spinner_params', {}) or {}
@@ -2693,24 +2730,23 @@ class RoomManager:
                 room.next_round_bonus = None
                 
                 # TRIGGER PROACTIVE LEAD-TIME SEARCH
-                self.pre_generate_next_round(room_id)
-                
-                actual_fmt = room.next_round_format or ns_params.get('board_format', 'Normal')
-                room.current_board_format = actual_fmt
-                # HONOUR REVEAL: If we already promised a difficulty at 45s, don't let it change at 0s
-                if not getattr(room, 'spinner_params_revealed', False):
-                    room.current_difficulty = getattr(room, 'next_round_difficulty', room.current_difficulty)
-                
+                # ATOMIC PARAMETER PROMOTION (0s mark)
+                # Ensure the parameters promised to players at 45s (reveal) are the ones they see at 0s (active)
                 if not getattr(room, 'spinner_params_revealed', False) and hasattr(room, 'next_spinner_params') and room.next_spinner_params:
                     room.spinner_params = room.next_spinner_params
                     room.spinner_params_revealed = True
+
+                room.current_board_format = room.next_round_format or room.spinner_params.get('board_format', 'Normal')
+                room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
+                room.current_difficulty = room.spinner_params.get('difficulty', 'Medium')
+                room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
                 
-                # ATOMIC PARAMETER PROMOTION (0s mark)
                 raw_min = room.spinner_params.get('min_word_length', getattr(room, 'next_round_min_length', 3))
                 try:
                     room.current_min_length = int(raw_min)
                 except:
                     room.current_min_length = 3
+                
                 room.current_uniqueness = getattr(room, 'next_round_uniqueness', room.current_uniqueness)
                 
                 # Reset Round
@@ -2724,7 +2760,12 @@ class RoomManager:
                 room.csw_only_words = getattr(room, 'next_round_csw_only_words', [])
                 room.added_words = getattr(room, 'next_round_added_words', [])
                 
-                room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
+                # ATOMIC PROMOTION: Set state to active LAST
+                room.state = 'active'
+                room.round_start_time = time.time()
+                
+                # Pre-generate board for the round AFTER the one that just started
+                self.pre_generate_next_round(room_id)
                 room.current_bonus_word_length = room.spinner_params.get("bonus_word_length", 0) or len(room.bonus_word)
                 
                 # Robust Format Check

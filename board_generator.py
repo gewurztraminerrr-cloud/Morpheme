@@ -566,8 +566,8 @@ class BoardGenerator:
         # SMALL BOARD SAFETY CLAMP: 
         # Large word count targets (200+, 100+) depend heavily on min_word_length.
         if num_tiles <= 16: 
-            # Empirical limits for 4x4: 3L: ~180, 4L: ~100, 5L: ~45
-            target_limit = 180 if min_word_length <= 3 else 100 if min_word_length == 4 else 45
+            # Empirical limits for 4x4: 3L: ~180, 4L: ~100, 5L: ~55
+            target_limit = 180 if min_word_length <= 3 else 100 if min_word_length == 4 else 55
             if min_words > target_limit:
                 print(f"[BoardGen] Target {min_words} is extremely difficult for 4x4 ({min_word_length}L). Clamping to {target_limit}.")
                 min_words = target_limit
@@ -820,15 +820,25 @@ class BoardGenerator:
                         if depth > 1:
                             f_eo, r_eo, c_eo = eo_cell
                             orig = board[f_eo][r_eo][c_eo] or random.choices(self.letters, weights=weights, k=1)[0]
-                            others = [l for l in self.letters if l != orig]
-                            other = random.choices(others, weights=[weights[self.letters.index(l)] for l in others], k=1)[0]
+                            is_orig_vowel = self._is_vowel(orig)
+                            if is_orig_vowel:
+                                others = [l for l in self.letters if not self._is_vowel(l)]
+                            else:
+                                others = [l for l in self.letters if self._is_vowel(l)]
+                            other_weights = [weights[self.letters.index(l)] for l in others]
+                            other = random.choices(others, weights=other_weights, k=1)[0]
                             pair = sorted([str(orig), str(other)])
                             board[f_eo][r_eo][c_eo] = f"{pair[0]}/{pair[1]}"
                         else:
                             r_eo, c_eo = eo_cell
                             orig = board[r_eo][c_eo] or random.choices(self.letters, weights=weights, k=1)[0]
-                            others = [l for l in self.letters if l != orig]
-                            other = random.choices(others, weights=[weights[self.letters.index(l)] for l in others], k=1)[0]
+                            is_orig_vowel = self._is_vowel(orig)
+                            if is_orig_vowel:
+                                others = [l for l in self.letters if not self._is_vowel(l)]
+                            else:
+                                others = [l for l in self.letters if self._is_vowel(l)]
+                            other_weights = [weights[self.letters.index(l)] for l in others]
+                            other = random.choices(others, weights=other_weights, k=1)[0]
                             pair = sorted([str(orig), str(other)])
                             board[r_eo][c_eo] = f"{pair[0]}/{pair[1]}"
                     print(f"[BoardGen] * Applied {len(special_cells)} special cells.")
@@ -868,9 +878,9 @@ class BoardGenerator:
                     # USER REQUEST: For 100+ boards, follow the Two-Stage "IO and B" strategy
                     if min_words >= 100:
                         # Base target: Targeted to ensure we actually hit the range peak
-                        if min_words >= 500: base_target = 450
-                        elif min_words >= 200: base_target = 200
-                        else: base_target = 60 # 100-200 rounds
+                        if min_words >= 500: base_target = 600
+                        elif min_words >= 200: base_target = 250
+                        else: base_target = 110 # 100-200 rounds
                         print(f"[BoardGen] STAGE 1: Generating {base_target} words Base Board for target {min_words}...")
                         
                         board = self._create_2000plus_board(
@@ -935,12 +945,8 @@ class BoardGenerator:
                         weights=weights,
                     )
 
-                # USER REQUEST: For 100+ boards, vowels come naturally via IO. 
-                # Skip manual balancing to prevent disrupting optimized word counts.
-                if not is_checkerboard_fmt and min_words < 100:
-                    self._enforce_vowel_minimum(
-                        board, weights, is_checkerboard=False, excluded_cells=all_excluded, difficulty=difficulty
-                    )
+                # Vowel balancing removed per User Request/Confirmation.
+                # All boards now use natural letter frequencies based on the difficulty distribution.
 
                 if "either/or" in fmt_lower or "either" in fmt_lower:
                     if self._has_either_or_ambiguity(board, dictionary):
@@ -998,18 +1004,18 @@ class BoardGenerator:
                     within_unique_range = min_r <= ratio <= max_r
 
                     # Current candidate score
-                    # User Request Fix: Prioritize UNIQUENESS (Difficulty) over exact word count range for small boards.
-                    # This ensures that if we have to choose between a 'correct difficulty' board and an 'incorrect difficulty' board,
-                    # we pick the one that matches what the user saw in the lobby.
-                    range_bonus = 1000 if within_word_range else -10000
-                    unique_bonus = 25000 if within_unique_range else 0
+                    # Priority 1: Word Count Compliance (range_bonus)
+                    # Priority 2: Uniqueness/Difficulty Compliance (unique_bonus)
+                    # Priority 3: Raw Word Count (count_total)
+                    range_bonus = 50000 if within_word_range else -10000
+                    unique_bonus = 10000 if within_unique_range else 0
                     candidate_score = unique_bonus + range_bonus + count_total
 
-                    # Get previous best score
+                    # Get previous best score (Must use same weighting logic)
                     prev_within_word = min_words <= best_count_global <= max_words
                     prev_within_unique = min_r <= best_ratio_global <= max_r
                     best_score = (
-                        (25000 if prev_within_unique else 0) + (1000 if prev_within_word else -10000) + best_count_global
+                        (10000 if prev_within_unique else 0) + (50000 if prev_within_word else -10000) + best_count_global
                     )
 
                     if candidate_score > best_score:
@@ -1039,9 +1045,9 @@ class BoardGenerator:
                         continue
 
                     # USER REQUEST: Instant generation for Emergency boards.
-                    # We skip strict compliance to ensure the board is returned <500ms.
-                    if is_emergency:
-                        print(f"[BoardGen] ✓ Emergency board accepted immediately ({count_total} words).")
+                    # We only skip compliance if we've failed to find a 'perfect' board in the first few quick passes.
+                    if is_emergency and attempt > 10:
+                        print(f"[BoardGen] ✓ Emergency fallback board accepted ({count_total} words).")
                         is_compliant = True
 
                     if not is_compliant:
@@ -2083,8 +2089,16 @@ class BoardGenerator:
         for i in range(count):
             r, c = cells[i]
             orig = board[r][c]
-            # Pick a second letter.
-            others = [l for l in self.letters if l != orig]
+            
+            # ENSURE: One vowel, one consonant
+            is_orig_vowel = self._is_vowel(orig)
+            if is_orig_vowel:
+                # Pick other from consonants
+                others = [l for l in self.letters if not self._is_vowel(l)]
+            else:
+                # Pick other from vowels
+                others = [l for l in self.letters if self._is_vowel(l)]
+            
             other_weights = [weights[self.letters.index(l)] for l in others]
             other = random.choices(others, weights=other_weights, k=1)[0]
 
@@ -2844,133 +2858,6 @@ class BoardGenerator:
                 clean.append((nf, nr, nc))
                 seen.add((nf, nr, nc))
         return clean
-
-    def _enforce_vowel_minimum(self, board, weights, is_checkerboard=False, excluded_cells=None, difficulty="Medium"):
-        """Ensure 33%-38% of tiles are vowels (User Request: Strict range for all boards)
-        FOR CHECKERBOARD: Preserve pattern (50%) to avoid breaking logic."""
-        if not board or is_checkerboard:
-            return
-
-        # Flatten board to get all cells
-        flat_cells = []
-        is_3d = len(board) > 0 and isinstance(board[0], list) and isinstance(board[0][0], list)
-        depth_val = len(board) if is_3d else 1
-        
-        excluded_set = set(excluded_cells) if excluded_cells else set()
-
-        if is_3d:
-            rows, cols = len(board[0]), len(board[0][0])
-            for f in range(depth_val):
-                for r in range(rows):
-                    for c in range(cols):
-                        if (f, r, c) not in excluded_set:
-                            flat_cells.append((f, r, c))
-        else:
-            # Standard 2D Grid
-            rows, cols = len(board), len(board[0])
-            for r in range(rows):
-                for c in range(cols):
-                    if (r, c) not in excluded_set:
-                        flat_cells.append((r, c))
-
-        # 1. Calculate TOTAL board size and Vowel Count currently in protected/excluded cells
-        full_board_size = rows * cols * depth_val
-        vowels_in_excluded = 0
-        for pos in excluded_set:
-            if is_3d:
-                f, r, c = pos
-                val = str(board[f][r][c])
-            else:
-                r, c = pos
-                val = str(board[r][c])
-            if any(v in val.upper() for v in VOWELS):
-                vowels_in_excluded += 1
-
-        # 2. Target: 32.5% (Midpoint of 30%-35%) for the ENTIRE board
-        # Use precise percentages to avoid floor issues on smaller boards
-        target_total_v = int(round(full_board_size * 0.325))
-        min_total_v = int(round(full_board_size * 0.30))
-        max_total_v = int(round(full_board_size * 0.35))
-
-        # Clamp target to the user's strict range
-        target_total_v = max(min_total_v, min(max_total_v, target_total_v))
-
-        # 3. Calculate remaining vowels needed in the non-excluded area
-        total_remaining_needed = max(0, target_total_v - vowels_in_excluded)
-
-        v_indices = [self.letters.index(v) for v in VOWELS]
-        v_w = [weights[v_idx] for v_idx in v_indices]
-        c_indices = [self.letters.index(c) for c in CONSONANTS]
-        c_w = [weights[c_idx] for c_idx in c_indices]
-
-        # Count current vowels
-        current_vowel_cells = []
-        current_consonant_cells = []
-
-        for pos in flat_cells:
-            if is_3d:
-                f, r, c = pos
-                val = str(board[f][r][c])
-            else:
-                r, c = pos
-                val = str(board[r][c])
-
-            if self._is_vowel(val):
-                current_vowel_cells.append(pos)
-            else:
-                current_consonant_cells.append(pos)
-
-        current_count = len(current_vowel_cells)
-        random.shuffle(current_vowel_cells)
-        random.shuffle(current_consonant_cells)
-
-        if current_count < total_remaining_needed:
-            # Need more vowels
-            needed = total_remaining_needed - current_count
-            for i in range(min(needed, len(current_consonant_cells))):
-                pos = current_consonant_cells[i]
-                if is_3d:
-                    f, r, c = pos
-                else:
-                    r, c = pos
-                
-                safe_v_found = False
-                for _ in range(5):
-                    new_v = random.choices(list(VOWELS), weights=v_w, k=1)[0]
-                    # Local validation ONLY: Sequence prohibition is authoritative
-                    if difficulty not in ["Medium", "Hard"] or not self._is_creating_forbidden_sequence(
-                        board, new_v, r, c, f if is_3d else 0, depth=depth_val
-                    ):
-                        if is_3d:
-                            board[f][r][c] = new_v
-                        else:
-                            board[r][c] = new_v
-                        safe_v_found = True
-                        break
-            print(f"[BoardGen] Enforced 30-35% vowels: Added {needed} vowels to reach {target_total_v} total (Excluded: {vowels_in_excluded}).")
-
-        elif current_count > total_remaining_needed:
-            # Need fewer vowels (Too many can happen with weights)
-            over = current_count - total_remaining_needed
-            for i in range(min(over, len(current_vowel_cells))):
-                pos = current_vowel_cells[i]
-                for _ in range(5):
-                    new_c = random.choices(list(CONSONANTS), weights=c_w, k=1)[0]
-                    if is_3d:
-                        f, r, c = pos
-                        if difficulty not in ["Medium", "Hard"] or not self._is_creating_forbidden_sequence(
-                            board, new_c, r, c, f, depth=depth_val
-                        ):
-                            board[f][r][c] = new_c
-                            break
-                    else:
-                        r, c = pos
-                        if difficulty not in ["Medium", "Hard"] or not self._is_creating_forbidden_sequence(
-                            board, new_c, r, c, 0, depth=depth_val
-                        ):
-                            board[r][c] = new_c
-                            break
-            print(f"[BoardGen] Enforced 30-35% vowels: Removed {over} vowels to reach {target_total_v} total (Excluded: {vowels_in_excluded}).")
 
     def _count_vowels(self, board):
         v_count = 0
