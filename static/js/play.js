@@ -165,7 +165,17 @@ document.addEventListener('touchstart', () => {
 }, true);
 
 function getCurrentRoomId() {
-    return window.currentRoomId || null;
+    let rid = window.currentRoomId;
+    if (!rid) {
+        // Fallback 1: URL path /room/xyz
+        const m = window.location.pathname.match(/\/room\/([^\/]+)/);
+        if (m) rid = m[1];
+    }
+    if (!rid) {
+        // Fallback 2: localStorage
+        rid = localStorage.getItem('last_joined_room');
+    }
+    return rid || null;
 }
 
 // Expose for lobby.js to call
@@ -430,17 +440,17 @@ async function updateGameState(incomingState = null) {
         }
 
         // WINNER ANNOUNCEMENT LOGIC (Persistent during intermission)
+        const defContent = document.getElementById('definition-content');
+        const defPanel = document.querySelector('.definitions-panel');
+        const defHeader = document.getElementById('definition-header');
+        const isViewingDefinition = window.userViewingDefinitionIntermission === true;
+        let hasActualWinner = false;
+
         if (state.state === 'intermission' && state.winners_history) {
-            const defContent = document.getElementById('definition-content');
-            const defPanel = document.querySelector('.definitions-panel');
-            const defHeader = document.getElementById('definition-header');
-            
             const latest = state.winners_history[0];
             // MANDATE: Only show if the record is for the round that JUST finished AND someone scored
             const isForCurrentRound = latest && latest.round === state.current_round;
-            const hasActualWinner = isForCurrentRound && (latest.score || 0) > 0;
-
-            const isViewingDefinition = window.userViewingDefinitionIntermission === true;
+            hasActualWinner = isForCurrentRound && (latest.score || 0) > 0;
 
             if (hasActualWinner && defContent && !isViewingDefinition) {
                 // If not already showing this round's winner
@@ -895,10 +905,10 @@ async function updateGameState(incomingState = null) {
             foundTabBtn.textContent = (state.game_type === 'fcfs') ? 'Live Feed' : 'Words';
         }
 
-        // Identify current user
         let currentUser = null;
         try {
-            currentUser = state.your_username || window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
+            currentUser = state.your_username || window.currentUser || localStorage.getItem('morpheme_username') || null;
+            if (currentUser) currentUser = currentUser.trim();
         } catch (e) { console.warn('No currentUser', e); }
 
 
@@ -983,7 +993,7 @@ async function updateGameState(incomingState = null) {
                 const globalPercentage = totalWords > 0 ? Math.round((globalUnique / totalWords) * 100) : 0;
 
                 // 2. Calculate Personal Stats (Current User)
-                const myPlayer = state.players.find(p => p.username === currentUser);
+                const myPlayer = state.players.find(p => p.username.toLowerCase() === (currentUser || "").toLowerCase());
                 const myWords = myPlayer ? (myPlayer.submitted_words || []) : [];
                 const personalUnique = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase())).size;
                 const personalPercentage = totalWords > 0 ? Math.round((personalUnique / totalWords) * 100) : 0;
@@ -1034,7 +1044,7 @@ async function updateGameState(incomingState = null) {
             } else if (state.game_type !== 'fcfs') {
                 // ACTIVE STATE (Not Intermission) & Not FCFS
                 // Personal List for Standard, Split, AND Accumulative
-                const myPlayer = state.players.find(p => p.username === currentUser);
+                const myPlayer = state.players.find(p => (p.username || "").toLowerCase().trim() === (currentUser || "").toLowerCase().trim());
                 const myWords = myPlayer ? (myPlayer.submitted_words || []) : [];
 
 
@@ -1191,7 +1201,7 @@ async function updateGameState(incomingState = null) {
             if (state.game_type === 'fcfs') {
                 myFoundStrs = allPlayerFoundStrs;
             } else if (currentUser) {
-                const me = state.players.find(p => p.username === currentUser);
+                const me = state.players.find(p => p.username.toLowerCase() === (currentUser || "").toLowerCase());
                 if (me && me.submitted_words) {
                     myFoundStrs = me.submitted_words.map(w => (typeof w === 'string' ? w : w.word).toUpperCase());
                 }
@@ -1264,7 +1274,7 @@ async function updateGameState(incomingState = null) {
         // --- CLUES TAB (24H Only) ---
         const cluesListEl = document.getElementById('clues-list');
         if (cluesListEl && activeWordsTab === 'clues') {
-            const myPlayer = state.players.find(p => p.username === currentUser);
+            const myPlayer = state.players.find(p => p.username.toLowerCase() === (currentUser || "").toLowerCase());
             const myWords = myPlayer ? myPlayer.submitted_words : [];
             const foundSet = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase()));
             const unfoundWords = allWords.filter(w => !foundSet.has(w.toUpperCase()));
@@ -1296,7 +1306,7 @@ async function updateGameState(incomingState = null) {
             } else {
                 // PERSONAL HISTORY: Use my restored player's previous words OR persisted history
                 // Note: state.players might be empty if wiped by 24h reset!
-                const myPlayer = (state.players || []).find(p => p.username === currentUser);
+                const myPlayer = (state.players || []).find(p => p.username.toLowerCase() === (currentUser || "").toLowerCase());
                 let myPrevWords = myPlayer ? (myPlayer.previous_submitted_words || []) : [];
 
                 // BACKUP: If player was wiped (24h daily reset), check history
@@ -1507,7 +1517,7 @@ function renderPlayers(players, currentUser = null, state = null) {
 
     if (findFriendsMode && currentUser) {
         itemsToRender = itemsToRender.filter(p =>
-            p.username === currentUser ||
+            p.username.toLowerCase() === (currentUser || "").toLowerCase() ||
             userFriendsCache.some(f => f.username.toLowerCase() === p.username.toLowerCase())
         );
     }
@@ -1537,7 +1547,7 @@ function renderPlayers(players, currentUser = null, state = null) {
         const ratingDisplay = (isGuest && displayRating === 0 && p.rating_change === 0) ? 'Guest' : ratingDisplayStr;
 
         const bonusClass = p.found_bonus_word ? ' bonus-finder' : '';
-        const userClass = (p.username === currentUser) ? ' current-user' : '';
+        const userClass = (p.username.toLowerCase() === (currentUser || "").toLowerCase()) ? ' current-user' : '';
 
         // Highlight if selected
         const selectedClass = (p.username === selectedPlayerUsername) ? ' selected-player' : '';
@@ -2034,7 +2044,14 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
 // Copying existing helper functions to ensure file completion
 
 function updateParameters(state) {
-    // Display mappings
+    if (!state) return;
+    try {
+        // Clear stale local flags if we are receiving a legitimate room state
+        if (state.room_id && !state.room_id.includes('tournament')) {
+            isTournamentPlay = false;
+        }
+        
+        // Display mappings
     const typeMap = {
         'accumulative': 'Accumulative',
         'fcfs': 'First Come First Serve',
@@ -2071,7 +2088,7 @@ function updateParameters(state) {
     const currentRound = state.current_round || 0;
     const isRevealed = !!(state.spinner_params && state.spinner_params_revealed);
     const wasRevealed = !!(window._lastRevealedState);
-    const isIntermission = state.state === 'intermission';
+    const isIntermission = state.intermission === true || state.state === 'intermission';
     const now = Date.now();
 
     // Determine current fact-checked labels
@@ -2184,26 +2201,31 @@ function updateParameters(state) {
         if (cleanRange === 'random') cleanRange = '50-100/100-200/200+';
         
         if (totalCount > 0) {
+            // Teaser Format: Use Total-only if we are in intermission (which includes the 45s reveal)
             if (isIntermission) {
-                // Requested Format: "Words: 100-200 (148)"
-                words.textContent = `Words: ${cleanRange} (${totalCount})`;
+                // Requested Format: "50-100 (57)" -- Label 'Words: ' provided by HTML
+                words.textContent = `${cleanRange} (${totalCount})`;
             } else {
-                // Active Game Format: "Words: 100-200 (12/148)"
-                const myPlayer = state.players.find(p => p.username === (window.currentUser || ''));
+                // Active Game Format: "50-100 (12/148)" -- Label 'Words: ' provided by HTML
+                const me = window.currentUser || '';
+                const myPlayer = state.players.find(p => p.username.toLowerCase() === me.toLowerCase());
                 const myWords = myPlayer ? (myPlayer.submitted_words || []) : [];
                 const validFound = myWords.filter(w => (typeof w === 'string' ? true : (w.points > 0 || (w.score_details && w.score_details.total > 0))));
                 const foundCount = validFound.length;
-                words.textContent = `Words: ${cleanRange} (${foundCount}/${totalCount})`;
+                words.textContent = `${cleanRange} (${foundCount}/${totalCount})`;
             }
         } else {
             // Standard Range Fallback
-            words.textContent = `Words: ${cleanRange}`;
+            words.textContent = `${cleanRange}`;
         }
     }
 
-    const format = document.getElementById('param-format');
-    if (format && (shouldUpdateLabels || !format.textContent)) {
-        format.textContent = window._displayedParams.fmt;
+        const format = document.getElementById('param-format');
+        if (format && (shouldUpdateLabels || !format.textContent)) {
+            format.textContent = window._displayedParams.fmt;
+        }
+    } catch (err) {
+        console.error('[play.js] Error in updateParameters:', err);
     }
 }
 
@@ -3658,28 +3680,26 @@ function initWordSubmission() {
         return;
     }
 
-    // Attach Keydown listener (Enter/Return)
-    wordInputEl.addEventListener('keydown', (e) => {
+    if (submitBtn) {
+        submitBtn.onclick = () => {
+            const val = wordInputEl.value;
+            console.log('[play.js] submission triggered via button click:', val);
+            submitWord(val);
+        };
+    }
+
+// DELEGATED GLOBAL LISTENER for Enter-key submission
+// This ensures it works even if the input element is re-created or swapped.
+document.addEventListener('keydown', (e) => {
+    if (e.target && e.target.id === 'word-input') {
         if (e.key === 'Enter' || e.key === 'Return') {
             e.preventDefault();
-            console.log('[play.js] submission triggered via keydown:', e.key);
-            submitWord();
-            
-            // UX: If round ended while we were typing, refocus chat now that we're done
-            if (window.refocusChatPending) {
-                window.refocusChatPending = false;
-                const chatInput = document.getElementById('chat-input');
-                if (chatInput) setTimeout(() => chatInput.focus(), 150);
-            }
+            const wordToSubmit = e.target.value;
+            console.log('[play.js] delegated submission triggered:', wordToSubmit);
+            submitWord(wordToSubmit);
         }
-    });
-
-    if (submitBtn) {
-        submitBtn.addEventListener('click', () => {
-            console.log('[play.js] submission triggered via button click');
-            submitWord();
-        });
     }
+});
 
     // Real-time highlighting and "word declaration" while typing
     wordInputEl.addEventListener('input', () => {
@@ -3719,18 +3739,30 @@ initWordSubmission();
 
 async function submitWord(wordParam = null, pathParam = null) {
     const input = document.getElementById('word-input');
-    if (!input && !wordParam) {
-        console.error('[play.js] word-input element not found and no wordParam provided');
+    const word = wordParam ? wordParam.toUpperCase() : (input ? input.value.trim().toUpperCase() : '');
+    const roomId = getCurrentRoomId();
+    
+    // Visual Debug / Clear immediately
+    if (input) {
+        input.value = '';
+        input.style.backgroundColor = 'rgba(255, 255, 0, 0.1)'; // Yellow tint for "pending"
+        input.dispatchEvent(new Event('input'));
+    }
+
+    console.log('[play.js] submitWord entering:', word, 'Room:', roomId);
+    if (!word) {
+        console.warn('[play.js] Empty word submission ignored');
         return;
     }
-    const word = wordParam ? wordParam.toUpperCase() : input.value.trim().toUpperCase();
 
     // 1. PATH RESOLUTION
     let finalPath = pathParam;
     const board = window.lastGameState ? window.lastGameState.board : null;
     if (!finalPath && word && board) {
         const is3D = board.length === 6 && Array.isArray(board[0]);
-        finalPath = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
+        finalPath = (is3D && typeof findWordPathOnCube === 'function') 
+            ? findWordPathOnCube(word, board) 
+            : (typeof findWordPathOnBoard === 'function' ? findWordPathOnBoard(word, board) : null);
         if (finalPath) {
             finalPath = finalPath.map(p => {
                 if (typeof p.f !== 'undefined') return [p.f, p.r, p.c];
@@ -3740,13 +3772,10 @@ async function submitWord(wordParam = null, pathParam = null) {
     }
 
     // Define currentUser for consistency in local updates
-    const currentUser = window.currentUser || (window.lastGameState && window.lastGameState.your_username) || localStorage.getItem('morpheme_username') || '';
+    let currentUser = window.currentUser || (window.lastGameState && window.lastGameState.your_username) || localStorage.getItem('morpheme_username') || '';
+    currentUser = currentUser.trim();
 
-    // Clear immediately for maximum responsiveness
-    if (input && !wordParam) {
-        input.value = '';
-        input.dispatchEvent(new Event('input'));
-    }
+    console.log(`[play.js] Attempting submission: "${word}" (Path: ${finalPath ? 'Yes' : 'No'})`);
 
     if (isTournamentPlay) {
         handleTournamentWord(word);
@@ -3758,7 +3787,6 @@ async function submitWord(wordParam = null, pathParam = null) {
         return;
     }
 
-    const roomId = getCurrentRoomId();
     if (!word) return;
     
     if (!roomId) {
@@ -3785,7 +3813,17 @@ async function submitWord(wordParam = null, pathParam = null) {
         // Show validation feedback
         showValidationFeedback(data.message || (data.success ? 'Valid Word' : 'Invalid Word'), data.success);
 
+        if (input) {
+            input.style.backgroundColor = data.success ? 'rgba(0, 255, 0, 0.1)' : 'rgba(255, 0, 0, 0.1)';
+            setTimeout(() => { if (input) input.style.backgroundColor = ''; }, 1000);
+        }
+
         if (data.success) {
+            // Force "Words" tab so the user sees their new word
+            if (typeof activeWordsTab !== 'undefined' && activeWordsTab !== 'found') {
+                activeWordsTab = 'found';
+            }
+            
             const currentState = window.lastGameState;
             if (currentState) {
                 // USER: INSTANT DENSITY UPDATE
@@ -3798,7 +3836,11 @@ async function submitWord(wordParam = null, pathParam = null) {
                 const listEl = document.getElementById('submitted-words-list');
                 const wordsStats = document.getElementById('words-stats');
 
-                if (currentState.game_type === 'accumulative') {
+                // Local UI Update: Add word immediately to the list for instant feedback
+                const isFcfs = (currentState.game_type === 'fcfs');
+                
+                if (!isFcfs) {
+                    // Standard, Split, Accumulative, 3D, and Solo modes
                     if (listEl) {
                         const placeholder = listEl.querySelector('.placeholder');
                         if (placeholder) placeholder.remove();
@@ -3811,7 +3853,7 @@ async function submitWord(wordParam = null, pathParam = null) {
                         </div>`;
                         listEl.insertAdjacentHTML('afterbegin', html);
 
-                        const me = currentState.players.find(p => p.username === currentUser);
+                        const me = currentState.players.find(p => p.username.toLowerCase() === (currentUser || "").toLowerCase().trim());
                         if (me) {
                             me.score = Math.max(0, data.new_score);
                             renderPlayers(currentState.players, currentUser, currentState);
@@ -3819,6 +3861,7 @@ async function submitWord(wordParam = null, pathParam = null) {
                     }
 
                     if (wordsStats && data.points > 0) {
+                        // Update the "Found/Total" counter immediately
                         const parts = wordsStats.textContent.match(/(\d+)\/(\d+) - (\d+)% \(([\d,]+) total pts\)/);
                         if (parts) {
                             let found = parseInt(parts[1]) + 1;
@@ -3827,7 +3870,6 @@ async function submitWord(wordParam = null, pathParam = null) {
                             const totalPoints = parts[4];
                             wordsStats.textContent = `${found}/${total} - ${percent}% (${totalPoints} total pts)`;
                         } else {
-                            // Fallback for simple match
                             const partsSimple = wordsStats.textContent.match(/(\d+)\/(\d+) - (\d+)%/);
                             if (partsSimple) {
                                 let found = parseInt(partsSimple[1]) + 1;
@@ -3837,7 +3879,8 @@ async function submitWord(wordParam = null, pathParam = null) {
                             }
                         }
                     }
-                } else if (currentState.game_type === 'fcfs') {
+                } else {
+                    // FCFS Mode: Shared Feed update
                     if (listEl) {
                         const placeholder = listEl.querySelector('.placeholder');
                         if (placeholder) placeholder.remove();

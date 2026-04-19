@@ -2481,7 +2481,8 @@ def get_room_state(room_id):
                     {'username': s.username, 'rating': s.rating, 'user_id': s.user_id} for s in room.spectators
                 ] if hasattr(room, 'spectators') else [],
                 'chat_messages': getattr(room, 'chat_messages', []),
-                'winners_history': getattr(room, 'winners_history', [])
+                'winners_history': getattr(room, 'winners_history', []),
+                'your_username': session.get('username')
             })
             
             resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'

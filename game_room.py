@@ -2451,7 +2451,7 @@ class RoomManager:
                         rows = int(b_dims[1] if len(b_dims) == 3 else b_dims[0])
                         cols = int(b_dims[2] if len(b_dims) == 3 else b_dims[1])
                         achieved_diff = self.board_generator.get_difficulty_label(u_ratio, rows, cols, search_dict, depth=d_val)
-                        achieved_wc = self._get_factchecked_wc_range(len(all_words))
+                        # Wait to calculate achieved_wc until AFTER authoritative truncation
                         
                         # Frontend handles appending uniqueness percentage to difficulty label
                         
@@ -2467,6 +2467,9 @@ class RoomManager:
                             sorted_trimmed = sorted(list(all_words), key=lambda w: (len(w), w), reverse=True)[:max_target]
                             all_words = set(sorted_trimmed)
                             all_words_dict = {w: all_words_dict[w] for w in all_words if w in all_words_dict}
+                            
+                        # AUTHORITATIVE SYNC: Update both the staging area AND the revealed UI slot.
+                        achieved_wc = self._get_factchecked_wc_range(len(all_words))
                             
                         # Update staging data with correctly constrained results
                         room.next_round_words = list(all_words)
@@ -3002,10 +3005,11 @@ class RoomManager:
                  room.starting_round = False
     
     def _get_factchecked_wc_range(self, count):
-        """Map actual word count to the closest standard spinner display range."""
-        if count >= 500: return '500+'
-        if count >= 200: return '200+'
-        if count >= 100: return '100-200'
+        """Map actual word count to the closest standard spinner display range.
+           Boundary counts (100, 200, 500) are kept in the 'prettier' range."""
+        if count > 500: return '500+'
+        if count > 200: return '200+'
+        if count > 100: return '100-200'
         return '50-100'
 
     def _get_bonus_word(self, length=8, dictionary='NWL', alternating=False, difficulty='Medium', exclude=None):
