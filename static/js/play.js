@@ -1199,33 +1199,66 @@ async function updateGameState(incomingState = null) {
             // User Request Fix: Use server-provided total counts if available
             // to allow tracking even when all_words is hidden (Anti-Cheat).
             const isIntermission = state.state === 'intermission';
-            const showRealtimeCounts = !isIntermission && state.total_counts_by_len;
+            const isRevealed = state.spinner_params_revealed;
+            // Use server totals if we are active OR in the revealed revelation phase of intermission
+            const showRealtimeCounts = (!isIntermission || isRevealed) && state.total_counts_by_len;
             
             let countsByLen = {};
             if (showRealtimeCounts) {
-                // Real-time mode: calculate remaining from server totals minus local found
+                // Real-time mode: calculate remaining from server totals minus found words
                 const totalByLen = state.total_counts_by_len || {};
+                
+                // ROUND SYNC: If the server provided a round tag, verify it matches the current round.
+                // If it doesn't match, we are in a transition state.
+                if (totalByLen._round !== undefined && totalByLen._round !== state.current_round) {
+                    remainingListEl.innerHTML = '<p class="placeholder" style="opacity: 0.6; font-style: italic;">Syncing word counts...</p>';
+                    return; 
+                }
+                
                 const foundByLen = {};
-                myFoundStrs.forEach(w => {
-                    const l = w.length;
-                    foundByLen[l] = (foundByLen[l] || 0) + 1;
+                
+                const isFCFS = state.game_type === 'fcfs';
+                const sourceWords = (isFCFS && state.global_found_words) ? state.global_found_words : myFoundStrs;
+                
+                // CRITICAL SYNC: Only subtract VALID words from the board totals.
+                // Subtracting penalties or duplicates makes the Remaining tab inaccurate.
+                const validFound = sourceWords.filter(w => {
+                    if (typeof w === 'string') return true; // Standard word
+                    return (w.points > 0 || (w.score_details && w.score_details.total > 0));
                 });
-                for (let i = 3; i <= 20; i++) {
+                
+                validFound.forEach(w => {
+                    const wordStr = (typeof w === 'string' ? w : w.word);
+                    const l = wordStr ? wordStr.length : 0;
+                    if (l > 0) foundByLen[l] = (foundByLen[l] || 0) + 1;
+                });
+                
+                for (let i = 3; i <= 30; i++) {
                     countsByLen[i] = Math.max(0, (totalByLen[i] || 0) - (foundByLen[i] || 0));
+                }
+
+                // HEADER SYNC: Update the "Words:" header (e.g. 0/201) to match the Remaining tab
+                const wordsCountEl = document.getElementById('param-words');
+                if (wordsCountEl && !isIntermission) {
+                    const foundCount = validFound.length;
+                    const totalCount = state.total_words_count || 0;
+                    const wr = state.current_word_count_range || '100-200';
+                    wordsCountEl.textContent = `Words: ${wr} (${foundCount}/${totalCount})`;
                 }
             } else {
                 // Intermission/Clues fallback: calculate from explicit list
                 const remainingWords = allWords.filter(w => !myFoundStrs.includes(w.toUpperCase()));
-                for (let i = 3; i <= 20; i++) countsByLen[i] = 0;
+                for (let i = 3; i <= 30; i++) countsByLen[i] = 0;
                 remainingWords.forEach(w => {
                     const len = w.length;
-                    if (len >= 3 && len <= 20) countsByLen[len]++;
+                    if (len >= 3 && len <= 30) countsByLen[len]++;
                 });
             }
 
             let html = '<table id="remaining-words-table">';
-            for (let i = 3; i <= 20; i++) {
-                // Show all lengths from 3 to 20 as requested for scrollability
+            const minLen = state.current_min_word_length || 3;
+            for (let i = minLen; i <= 30; i++) {
+                // Show rows from minLen to 20
                 html += `<tr><td class="len-cell">${i}LW</td><td class="count-cell">${countsByLen[i] || 0}</td></tr>`;
             }
             html += '</table>';

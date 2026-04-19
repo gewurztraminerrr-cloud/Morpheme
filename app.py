@@ -2467,17 +2467,21 @@ def get_room_state(room_id):
             import threading
             threading.Thread(target=room_manager.save_round_history, args=(room,), daemon=True).start()
             
-
-
             # Ensure solving_complete is True so frontend proceeds
             room.solving_complete = True
             if not room.complete_words and room.all_words:
                  room.complete_words = list(room.all_words)
-        
-        # If intermission just ended, check for timing milestones
-        if room.state == 'intermission':
-            milestone = room.get_next_round_milestone()
+
+@app.route('/api/room/<room_id>/state')
+def get_room_state(room_id):
+    try:
+        room = room_manager.get_room(room_id)
+        if not room:
+            return jsonify({'error': 'Room not found'}), 404
             
+        with room._state_lock:
+            # 1. Heartbeat Trigger (If TR=0/45/Search)
+            milestone = room.get_milestone_trigger()
             if milestone == 'spinner':
                 room_manager.generate_spinner_params(room_id, reveal=False)
             elif milestone == 'reveal':
@@ -2486,7 +2490,6 @@ def get_room_state(room_id):
             elif milestone == 'search':
                 print(f"[API] Room {room_id}: TR={room.time_remaining} - STARTING board search (synchronous)")
                 room_manager.start_board_search(room_id)
-
             elif milestone == 'start':
                 # ATOMIC GUARD: Only launch ONE transition thread
                 if not getattr(room, 'starting_round', False):
@@ -2494,150 +2497,132 @@ def get_room_state(room_id):
                     import threading
                     threading.Thread(target=room_manager.start_next_round, args=(room_id,), daemon=True).start()
 
-        
-        # Determine which word list to return
-        # SECURITY & PERFORMANCE: Only send the full solution list during intermission.
-        # Sending it during 'active' is a 1MB+ payload and a major cheating vulnerability.
-        bonus_upper = room.bonus_word.upper() if room.bonus_word else None
-        min_len = getattr(room, 'current_min_length', 3)
-        
-        words_to_return = []
-        word_scores_to_return = {}
-        
-        if room.state == 'intermission':
-            # INTERMISSION: Use Snapshots from the round that JUST ended
-            # This ensures 'All Words' list has correct math and highlights
-            prev_all = getattr(room, 'previous_all_words', {})
-            if isinstance(prev_all, dict):
-                 words_to_return = list(prev_all.keys())
-                 # Always return available scores (including Fast Metrics estimates)
-                 word_scores_to_return = prev_all
-            else:
-                 words_to_return = list(prev_all)
-                 word_scores_to_return = {}
-        else:
-            # ACTIVE: Omit word list for standard rooms (Anti-Cheat)
-            # EXCEPTION: 24h rooms need the clues to show lengths/starting letters
-            is_24h = (room.time_limit >= 7200)
+            # 2. Collect State Under Lock (Atomic Snapshot)
+            is_revealed = room.spinner_params_revealed
+            is_active = room.state == 'active'
+            is_intermission = room.state == 'intermission'
+            is_fcfs = (room.game_type == 'fcfs')
             
-            with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
-                 f.write(f"[app.py] CHECKING CLUES: {room.room_id} limit={room.time_limit} is_24h={is_24h} state={room.state} time={time.time()}\n")
+            # GLOBAL FOUND WORDS (Critical for FCFS accuracy)
+            global_found = list(room.global_round_found_words) if hasattr(room, 'global_round_found_words') else []
             
-            if is_24h:
-                 words_to_return = [w for w in room.all_words if (len(w) >= min_len or (bonus_upper and w.upper() == bonus_upper))]
-                 # Word scores not needed for clues, omitted for payload size
-                 word_scores_to_return = {}
-            else:
-                 words_to_return = []
-                 word_scores_to_return = {}
-        
-        # Removed synchronous DB rating refresh to prevent poll hangs on locked database.
-        # Ratings are refreshed during room join and round start/end.
+            # FAIL-SAFE: If active but counts are missing or from a previous round, force a synchronous sync
+            counts_obj = getattr(room, 'total_counts_by_len', {})
+            needs_update = (not counts_obj or len(counts_obj) == 0 or counts_obj.get('_round') != room.current_round)
+            
+            if is_active and needs_update:
+                print(f"[Remaining-Hardener] Found stale/missing counts (Round {counts_obj.get('_round') if counts_obj else 'None'} vs {room.current_round}) for {room_id}. Forcing sync.")
+                room.update_counts_by_len()
 
-        # ENSURE 24H ROOM HISTORY IS LOADED
-        prev_day_hist = room_manager.get_yesterdays_history(room, room.current_round)
+            words_to_return = []
+            word_scores_to_return = {}
+            if is_intermission:
+                prev_all = getattr(room, 'previous_all_word_scores', {}) or getattr(room, 'previous_all_words', {})
+                if isinstance(prev_all, dict):
+                    words_to_return = list(prev_all.keys())
+                    word_scores_to_return = prev_all
+            elif is_active and is_fcfs:
+                words_to_return = list(room.all_words)
+                word_scores_to_return = room.solved_words_with_scores
 
-        # Diagnostic Logging for 24h Clues
-        if room.time_limit >= 7200:
-             with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
-                 f.write(f"[app.py] 24h CLUES: words_to_return={len(words_to_return)} total={len(room.all_words)} min={min_len} at {time.time()}\n")
-                 
-        # ULTIMATE SAFETY: Trigger transition if heartbeat is lagging or stuck
-        if room.state == 'intermission' and room.time_remaining <= 0:
-             # If room stuck at 0:00 for > 5s beyond intended intermission duration
-             elapsed = time.time() - room.intermission_start_time
-             limit = 65 if room.time_limit < 7200 else 7 # 60s + 5s buffer
-             if elapsed > limit and not getattr(room, 'starting_round', False):
-                 # We trigger it in a thread to avoid blocking this poll request too long
-                 threading.Thread(target=room_manager.start_next_round, args=(room_id,), daemon=True).start()
+            # Determine user visibility
+            user_id = session.get('user_id')
+            
+            def get_incremental_data(p):
+                """Helper to filter words and calculate score based on time for incremental bots"""
+                now = time.time()
+                is_cur_active = (room.state == 'active')
+                v_words = []
+                v_score = 0
+                f_bonus = False
+                for w in p.submitted_words:
+                    if not p.is_ai or not is_cur_active or w.get('time', 0) <= now:
+                        v_score += w.get('points', 0)
+                        if v_score < 0: v_score = 0
+                        is_b = (room.bonus_word and w['word'].upper() == room.bonus_word.upper())
+                        if is_b: f_bonus = True
+                        if is_fcfs and w.get('is_penalty'): continue
+                        w_copy = dict(w)
+                        w_copy['is_bonus'] = is_b
+                        v_words.append(w_copy)
+                return (v_words, v_score, f_bonus)
 
-        # Create response with Cache-Control headers
-        resp = jsonify({
-            'room_id': room.room_id,
-            'game_type': room.game_type,
-            'state': room.state,
-            'current_round': room.current_round,
-            'time_remaining': room.time_remaining,
-            'server_time': time.time(),  # Current server timestamp
-            'round_end_time': room.round_end_time,  # When active round ends
-            'intermission_end_time': room.intermission_end_time,  # When intermission ends
-            'board': room.board,
-            'board_dimensions': room.board_dimensions,
-            'time_limit': room.time_limit,
-            'all_words': words_to_return,
-            'total_words_count': getattr(room, 'total_words_count', 0) or len(room.all_words) or (len(room.next_round_words) if (room.state == 'intermission' and room.spinner_params_revealed) else 0),
-            'total_points_count': getattr(room, 'total_points_count', 0) or (room.recalculate_total_points() if room.state == 'active' else (getattr(room, 'next_round_total_points', 0) if (room.state == 'intermission' and room.spinner_params_revealed) else 0)) or sum([1 if len(w) <= 4 else (2 if len(w) == 5 else (3 if len(w) == 6 else (5 if len(w) == 7 else 11))) for w in room.all_words]),
-            'total_counts_by_len': getattr(room, 'total_counts_by_len', {}),
-            'all_word_scores': word_scores_to_return,
-            'csw_only_words': getattr(room, 'csw_only_words', []),
-            'added_words': getattr(room, 'added_words', []),
-            'bonus_word': room.bonus_word,
-            'bonus_cell': getattr(room, 'bonus_cell', None),
-            'spinner_params': room.spinner_params, # Source of truth for revealed/active metadata
-            'next_spinner_params': getattr(room, 'next_spinner_params', None),
-            'current_board_format': getattr(room, 'current_board_format', 'Normal'),
-            'current_min_word_length': getattr(room, 'current_min_length', 3),
-            'current_word_count_range': getattr(room, 'current_word_count_range', '100-200'),
-            'current_dictionary': getattr(room, 'current_dictionary', 'NWL'),
-            'current_difficulty': getattr(room, 'current_difficulty', 'Medium'),
-            'current_uniqueness': getattr(room, 'current_uniqueness', 0.0),
-            'next_round_uniqueness': getattr(room, 'next_round_uniqueness', None),
-            'current_bonus_word_length': getattr(room, 'current_bonus_word_length', 0) or (len(room.bonus_word) if room.bonus_word else 0),
-            'cell_density': getattr(room, 'cell_density', None),
-            'initial_cell_density': getattr(room, 'initial_cell_density', None),
-            'max_cell_density': getattr(room, 'max_cell_density', 0),
-            'spinner_params_revealed': getattr(room, 'spinner_params_revealed', False),
-            'solving_complete': room.solving_complete,  # Let frontend know if still solving
-            'starting_round': getattr(room, 'starting_round', False),
-            'max_players': room.max_players,
-            'min_rating': room.min_rating,
-            'max_rating': room.max_rating,
-            'previous_all_words': room.previous_all_words,
-            'previous_csw_only_words': [w for w in (room.previous_all_words or []) if word_validator.is_csw_only(w)],
-            'previous_board': room.previous_board,
-            'previous_bonus_word': getattr(room, 'previous_bonus_word', None),
-            'previous_day_history': prev_day_hist,
-            'fcfs_found_words': list(room.fcfs_found_words) if hasattr(room, 'fcfs_found_words') else [],
-            'your_username': session.get('username'),
-            'players': [
-                {
-                    'user_id': p.user_id,
-                    'username': p.username,
-                    'is_ai': p.is_ai,
-                    'rating': p.rating,
-                    'words_count': len(data[0]),
-                    'score': data[1],
-                    'rating_change': p.rating_change,
-                    'found_bonus_word': data[2],
-                    'submitted_words': data[0],
-                    'previous_submitted_words': p.previous_submitted_words,
-                    'invalid_words': p.invalid_words,
-                    'input_method': p.input_method,
-                    'last_active_age': time.time() - p.last_active,
-                    'games_played': p.games_played,
-                    'country_flag': p.country_flag,
-                    'joined_mid_round': getattr(p, 'joined_mid_round', False),
-                    'has_exceptional_round': getattr(p, 'has_exceptional_round', False),
-                    'performance_efficiency': getattr(p, 'performance_efficiency', 0.0)
-                } for p, data in sorted(
-                    [(p, get_incremental_data(p)) for p in room.players], 
-                    key=lambda x: x[1][1], 
-                    reverse=True
-                )
-            ],
-            'spectators': [
-                {'username': s.username, 'rating': s.rating, 'user_id': s.user_id} for s in room.spectators
-            ] if hasattr(room, 'spectators') else [],
-            'chat_messages': room.chat_messages,
-            'winners_history': room.winners_history
-        })
-        
-        return resp
+            # In FCFS, total_words_count should reflect what's left globally
+            actual_total = room.total_words_count
+            if is_active and is_fcfs:
+                actual_total = max(0, room.total_words_count - len(global_found))
+
+            resp = jsonify({
+                'room_id': room.room_id,
+                'game_type': room.game_type,
+                'state': room.state,
+                'current_round': room.current_round,
+                'time_limit': room.time_limit,
+                'time_remaining': room.time_remaining,
+                'server_time': time.time(),
+                'board': room.board,
+                'board_dimensions': room.board_dimensions,
+                'bonus_word': room.bonus_word,
+                'bonus_cell': room.bonus_cell,
+                'all_words': words_to_return,
+                'total_words_count': (getattr(room, 'next_round_total_words_count', 0) if (is_intermission and is_revealed) else actual_total),
+                'total_points_count': (getattr(room, 'next_round_total_points', 0) if (is_intermission and is_revealed) else room.total_points_count),
+                'total_counts_by_len': (getattr(room, 'next_round_counts_by_len', {}) if (is_intermission and is_revealed) else getattr(room, 'total_counts_by_len', {})),
+                'all_word_scores': word_scores_to_return,
+                'global_found_words': global_found,
+                'csw_only_words': getattr(room, 'csw_only_words', []),
+                'added_words': getattr(room, 'added_words', []),
+                'previous_all_words': room.previous_all_words,
+                'previous_board': room.previous_board,
+                'previous_csw_only_words': room.previous_csw_only_words,
+                'previous_added_words': room.previous_added_words,
+                'previous_bonus_word': room.previous_bonus_word,
+                'spinner_params': room.spinner_params,
+                'current_min_word_length': (getattr(room, 'next_round_min_length', 3) if (is_intermission and is_revealed) else getattr(room, 'current_min_length', 3)),
+                'current_board_format': getattr(room, 'current_board_format', 'Normal'),
+                'current_word_count_range': getattr(room, 'current_word_count_range', '100-200'),
+                'spinner_params_revealed': is_revealed,
+                'players': [
+                    {
+                        'user_id': p.user_id,
+                        'username': p.username,
+                        'is_ai': p.is_ai,
+                        'rating': p.rating,
+                        'words_count': len(data[0]),
+                        'score': data[1],
+                        'rating_change': p.rating_change,
+                        'found_bonus_word': data[2],
+                        'submitted_words': data[0],
+                        'previous_submitted_words': p.previous_submitted_words,
+                        'invalid_words': p.invalid_words,
+                        'input_method': p.input_method,
+                        'last_active_age': time.time() - p.last_active,
+                        'games_played': p.games_played,
+                        'country_flag': p.country_flag,
+                        'joined_mid_round': getattr(p, 'joined_mid_round', False),
+                        'has_exceptional_round': getattr(p, 'has_exceptional_round', False),
+                        'performance_efficiency': getattr(p, 'performance_efficiency', 0.0)
+                    } for p, data in sorted(
+                        [(p, get_incremental_data(p)) for p in room.players], 
+                        key=lambda x: x[1][1], 
+                        reverse=True
+                    )
+                ],
+                'spectators': [
+                    {'username': s.username, 'rating': s.rating, 'user_id': s.user_id} for s in room.spectators
+                ] if hasattr(room, 'spectators') else [],
+                'chat_messages': getattr(room, 'chat_messages', []),
+                'winners_history': getattr(room, 'winners_history', [])
+            })
+            
+            resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            resp.headers['Pragma'] = 'no-cache'
+            resp.headers['Expires'] = '0'
+            return resp
 
     except Exception as e:
         import traceback
-        error_msg = f"ERROR in get_room_state: {e}\n{traceback.format_exc()}"
-        print(error_msg)
+        print(f"ERROR in get_room_state: {e}\n{traceback.format_exc()}")
         return jsonify({'error': 'Server error'}), 500
 
 @app.route('/api/room/<room_id>/propose-board', methods=['POST'])

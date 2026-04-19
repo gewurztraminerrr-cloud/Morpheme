@@ -1072,10 +1072,10 @@ class BoardGenerator:
                         all_words_dict[actual_bonus_word.upper()] = path
                         all_found_list.append(actual_bonus_word.upper())
                         actual_found = True
-                    # FINAL PROTECTED SOLVE: Capture ALL words (3L+) to avoid 'INVALID' errors if params drift
+                    # FINAL PROTECTED SOLVE: Capture words matching the intentional minimum length
                     # Enforcement of round-specific min_length happens in game_room.submit_word
                     final_words_dict = self._solve_board(
-                        board, original_dictionary, (0, 99999), min_word_length=3, max_depth=final_depth, store_paths=True
+                        board, original_dictionary, (0, 99999), min_word_length=min_word_length, max_depth=final_depth, store_paths=True
                     )
                     
                     # RECALCULATE ACCURATE RATIO (User Request: Absolute Accuracy)
@@ -2493,7 +2493,7 @@ class BoardGenerator:
             
         return found_words
 
-    def complete_solve_board(self, board, dictionary):
+    def complete_solve_board(self, board, dictionary, min_word_length=3):
         """
         Exhaustively find ALL valid words on the board without limits.
         Used for background solving during intermission.
@@ -2515,7 +2515,7 @@ class BoardGenerator:
 
             # Add word if it's valid and long enough
             # Use cached validator results if possible
-            if len(word) >= 3 and word_validator.is_valid_word(word, dictionary):
+            if len(word) >= min_word_length and word_validator.is_valid_word(word, dictionary):
                 found_words.add(word)
 
             # Prune search using Trie/Prefix checking
