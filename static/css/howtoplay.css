@@ -40,9 +40,11 @@
 
 /* Close Button */
 .close-modal-btn {
-    position: absolute;
-    top: -30px;
+    position: sticky;
+    top: 15px;
     right: 20px;
+    float: right;
+    z-index: 10001;
     background: none;
     border: none;
     color: var(--text-primary);

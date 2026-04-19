@@ -121,8 +121,14 @@ class WordValidator:
             if length not in self.csw_by_len: self.csw_by_len[length] = []
             self.csw_by_len[length].append(w)
         
+        # Reset tries for a fresh build
+        self.nwl_trie = TrieNode()
+        self.csw_trie = TrieNode()
+        self.unique_nwl_trie = TrieNode()
+        self.unique_csw_trie = TrieNode()
+        
         # Build tries for fast prefix checking
-        print("Building tries for fast prefix checking...")
+        print("Building tries (clean build) for fast prefix checking...")
         indices = [
             (self.nwl_trie, self.nwl_words),
             (self.csw_trie, self.csw_words),
@@ -193,11 +199,12 @@ class WordValidator:
     
     def is_valid_word(self, word, dictionary='NWL'):
         """Check if word is valid using pre-merged sets."""
-        if dictionary == 'UniqueNWL':
-            return word in self.unique_nwl_words
-        elif dictionary == 'UniqueCSW':
-            return word in self.unique_csw_words
-        elif dictionary == 'CSW':
+        d_upper = str(dictionary).upper()
+        if d_upper == 'UNIQUENWL':
+            return word in self.unique_nwl_words or (self.use_added_words and word in self.added_words)
+        elif d_upper == 'UNIQUECSW':
+            return word in self.unique_csw_words or (self.use_added_words and word in self.added_words)
+        elif d_upper == 'CSW':
             return word in self.csw_words or word in self.long_words or (self.use_added_words and word in self.added_words)
         else:  # NWL
             return word in self.nwl_words or word in self.long_words or (self.use_added_words and word in self.added_words)
@@ -221,8 +228,12 @@ class WordValidator:
     
     def _recalculate_full_sets(self):
         """Update the pre-calculated full sets (union of main, long, and added words)"""
-        self.full_nwl_set = self.nwl_words | self.long_words | self.added_words
-        self.full_csw_set = self.csw_words | self.long_words | self.added_words
+        if self.use_added_words:
+            self.full_nwl_set = self.nwl_words | self.long_words | self.added_words
+            self.full_csw_set = self.csw_words | self.long_words | self.added_words
+        else:
+            self.full_nwl_set = self.nwl_words | self.long_words
+            self.full_csw_set = self.csw_words | self.long_words
 
     def load_dictionary(self, dict_name):
         """Return the pre-calculated full set for the given dictionary."""

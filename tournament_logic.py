@@ -143,7 +143,7 @@ class TournamentManager:
         # if 'checkerboard' in target_format.lower():
         #     bonus_word = ""
 
-        board, all_words_on_board, bonus_cell, _, _, uniqueness_ratio = bg.generate_board(
+        res = bg.generate_board(
             dimensions=dims,
             bonus_word=bonus_word,
             word_count_range=params.get('word_count_range', '100-200'),
@@ -152,6 +152,14 @@ class TournamentManager:
             min_word_length=params.get('min_word_length', 3),
             difficulty=params.get('difficulty', 'Medium')
         )
+        
+        if len(res) == 7:
+            board, all_words_on_board, bonus_cell, _, _, uniqueness_ratio, final_bonus_word = res
+        else:
+            board, all_words_on_board, bonus_cell, _, _, uniqueness_ratio = res
+            final_bonus_word = bonus_word
+            
+        bonus_word = final_bonus_word
         
         now = time.time()
         end_time = now + self.turn_duration

@@ -195,19 +195,20 @@ async function addAddedWord() {
         });
         const data = await response.json();
         
-        // Clear input and refocus (as requested for better workflow)
-        if (wordInput) {
-            wordInput.value = '';
-            wordInput.focus();
-        }
-
         if (data.success) {
+            // Clear input and refocus (Only on success)
+            if (wordInput) {
+                wordInput.value = '';
+                wordInput.focus();
+            }
             const msg = data.message || `Word "${word}" added (V2 Success)`;
             showModStatus(msg, false, 'added-word-status-area');
             if (window.loadAddedWords) window.loadAddedWords('added');
         } else {
+            // DO NOT clear input on error (User wants to see the word and the red message)
             const errorMsg = data.error || "Failed to add word (V2 Error)";
             showModStatus(errorMsg, true, 'added-word-status-area');
+            if (wordInput) wordInput.focus();
         }
     } catch (err) {
         console.error("Error adding added word:", err);

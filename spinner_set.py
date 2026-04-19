@@ -176,11 +176,14 @@ class SpinnerSet:
                 # 4x4 with 5L minimum: 200+ and 500+ are physically impossible.
                 # 100-200 is extremely difficult, so we favor 50-100.
                 if wc_range in ['100-200', '200+', '500+']:
-                    wc_range = random.choices(['50-100', '100-200'], weights=[90, 10])[0]
+                    wc_range = random.choices(['50-100', '100-200'], weights=[95, 5])[0]
             elif min_word_length >= 4:
-                # 4x4 with 4L minimum: 500+ is impossible.
-                if wc_range == '500+':
-                    wc_range = random.choices(['50-100', '100-200', '200+'], weights=[40, 50, 10])[0]
+                # 4x4 with 4L minimum: 500+ and 200+ are generally impossible or extremely rare.
+                if wc_range in ['200+', '500+']:
+                    wc_range = random.choices(['50-100', '100-200'], weights=[70, 30])[0]
+                elif wc_range == '100-200':
+                    # Still favor lower range for 4L 4x4 to ensure success
+                    wc_range = random.choices(['50-100', '100-200'], weights=[40, 60])[0]
                  
         return wc_range
     
@@ -206,8 +209,8 @@ class SpinnerSet:
         )[0]
         
         if result == 'Mania':
-            # User Request: 30% vowels, 70% consonants for Mania formats
-            if random.random() < 0.30:
+            # User Request: 35% vowels, 65% consonants for Mania formats
+            if random.random() < 0.35:
                 mania_letter = random.choice('AEIOU')
             else:
                 mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')

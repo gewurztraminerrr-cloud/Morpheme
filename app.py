@@ -331,12 +331,26 @@ def add_added_word_api():
             with open(ADDED_WORDS_FILE, 'r') as f:
                 lines = [line.strip().upper() for line in f if line.strip()]
         
-        # Remove if already exists so we can re-insert at index 0 (top of file/list)
-        if word in lines:
-            lines = [l for l in lines if l != word]
-            print(f"[Mods] Word '{word}' already exists. Moving to top position.")
+        # Reject if already present in Added Words list (User Request)
+        # Use the authoritative WordValidator set to avoid file-system latency issues
+        if word_validator.is_added_word(word):
+            print(f"[Mods] REJECTED Duplicate: '{word}' is already in the Added Words set.")
+            return jsonify({
+                'error': f"'{word}' is already present on Added Words list.",
+                'is_duplicate': True
+            }), 400
         
-        # Insert at the beginning (Top of the list)
+        # Load existing lines to potentially remove duplicates and maintain order (Safety fallback)
+        lines = []
+        if os.path.exists(ADDED_WORDS_FILE):
+            with open(ADDED_WORDS_FILE, 'r') as f:
+                lines = [line.strip().upper() for line in f if line.strip()]
+        
+        # Final safety check against list (if cache somehow lagged)
+        if word in lines:
+             return jsonify({'error': f"'{word}' is already present on Added Words list."}), 400
+
+        # Insert at the beginning (Top of the list) for NEW words
         lines.insert(0, word)
         
         # Write back full list to preserve order
@@ -345,11 +359,11 @@ def add_added_word_api():
                 f.write(f"{l}\n")
                 
         word_validator.reload_added_words()
-        print(f"[Mods] Successfully added/moved '{word}' to most recent.")
+        print(f"[Mods] Successfully added NEW word '{word}' to top of list.")
         return jsonify({
             'success': True, 
-            'message': f'Word "{word}" added to top of list.',
-            'code_version': 'V4-CHRONO-BUMP'
+            'message': f'New word "{word}" added to Added Words list successfully.',
+            'code_version': 'V5-STRICT-UNIQUE'
         })
         
     except Exception as e:
@@ -2292,9 +2306,8 @@ def get_lobby_stats():
     
     return jsonify({'stats': stats})
 
-@app.route('/api/room/<room_id>/state', methods=['GET'])
+@app.route('/api/room/<room_id>/state')
 def get_room_state(room_id):
-    print(f"[API] get_room_state for {room_id} at {time.time()}")
     if 'user_id' in session:
         uid = session['user_id']
         room_manager.update_presence(uid)
@@ -2304,184 +2317,30 @@ def get_room_state(room_id):
         if room:
             room.update_player_activity(uid)
     
-    # Use file-based logger for execution flow tracking
-    with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
-        f.write(f"[app.py] get_room_state ENTERED for {room_id} at {time.time()}\n")
-    
     room = room_manager.get_room(room_id)
-    if not room:
-        # User Request: STABILITY. Public hubs (pub_...) should be recreated on demand if they vanish (e.g. server restart)
-        if room_id.startswith('pub_'):
-            try:
-                parts = room_id.split('_')
-                if len(parts) >= 4:
-                    # Deterministic reconstruction: pub_[game]_[dims]_[time]
-                    g_type = parts[1]
-                    dims = parts[2]
-                    t_limit = int(parts[3])
-                    print(f"[app.py] Reconstructing public singleton hub: {room_id}")
-                    # Re-create room (create_room method handles singleton logic already)
-                    # Note: create_room starts the room in 'intermission' state with 60s timer.
-                    # We NO LONGER call start_round immediately; we let the heartbeat handle the 
-                    # canonical transition to allow players to see the transition/countdown.
-                    room = room_manager.create_room(room_id, g_type, t_limit, dims, 0, 9999)
-            except Exception as re_err:
-                print(f"[app.py] Could not reconstruct public hub {room_id}: {re_err}")
+    try:
+        if not room:
+            # User Request: STABILITY. Public hubs (pub_...) should be recreated on demand if they vanish (e.g. server restart)
+            if room_id.startswith('pub_'):
+                try:
+                    parts = room_id.split('_')
+                    if len(parts) >= 4:
+                        # Deterministic reconstruction: pub_[game]_[dims]_[time]
+                        g_type = parts[1]
+                        dims = parts[2]
+                        t_limit = int(parts[3])
+                        print(f"[app.py] Reconstructing public singleton hub: {room_id}")
+                        # Re-create room (create_room method handles singleton logic already)
+                        room = room_manager.create_room(room_id, g_type, t_limit, dims, 0, 9999)
+                except Exception as re_err:
+                    print(f"[app.py] Could not reconstruct public hub {room_id}: {re_err}")
 
         if not room:
-            with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
-                f.write(f"[app.py] get_room_state ERROR: Room {room_id} not found at {time.time()}\n")
-            return jsonify({'error': 'Room not found'}), 404
-
-    try:
-        print(f"Room found - game_type: {room.game_type}, current_round: {room.current_round}, state: {room.state}")
-
-        def get_incremental_data(p):
-            """Helper to filter words and calculate score based on time for incremental bots"""
-            now = time.time()
-            is_active = room.state == 'active'
-            
-            visible_words = []
-            score = 0
-            found_bonus = False
-            
-            for w in p.submitted_words:
-                # 1. Determine time-based visibility (AI)
-                is_visible_by_time = (not p.is_ai or not is_active or w.get('time', 0) <= now)
-                
-                if is_visible_by_time:
-                    # 2. Add to incremental score calculation (Floor at 0 per requirements)
-                    score += w.get('points', 0)
-                    if score < 0:
-                        score = 0
-                    
-                    # 3. Check for bonus word
-                    is_bonus = (room.bonus_word and w['word'].upper() == room.bonus_word.upper())
-                    if is_bonus:
-                        found_bonus = True
-                    
-                    # 4. FILTER FOR FCFS: Exclude non-words (penalties) from display
-                    if room.game_type == 'fcfs' and w.get('is_penalty'):
-                        continue # Skip appending to visible_words list
-                        
-                    # Enrich and add to display list
-                    w_copy = dict(w)
-                    w_copy['is_bonus'] = is_bonus
-                    visible_words.append(w_copy)
-            
-            return visible_words, score, found_bonus
-        # Inactivity removal is handled by the RoomManager background thread now.
-        # This reduces per-request DB overhead and potential race conditions.
-        
-        # 2. MEMBERSHIP GUARD: If requester is logged in but no longer in room, kick to lobby via 403 response
-        # EXCEPTION: For public hubs (pub_), allow 'Self-Healing' restoration if they were dropped (e.g. server restart)
-        if 'user_id' in session and room.time_limit < 7200:
-            uid = session['user_id']
-            is_player = any(p.user_id == uid for p in room.players)
-            is_spectator = any(s.user_id == uid for s in room.spectators)
-            
-            if not is_player and not is_spectator:
-                 is_hub = str(room_id).startswith('pub_')
-                 has_humans = len([p for p in room.players if not p.is_ai]) > 0
-                 
-                 # AUTO-RESTORE: Only if it's a hub AND has other players (or is a server-recovery scenario)
-                 # If a spectator was kicked because the room emptied, we do NOT self-heal them.
-                 if is_hub and has_humans:
-                     # AUTO-RESTORE: If it's a hub, simply add them back silently!
-                     # Fetch basic stats for restoration (Rating, Games Played)
-                     try:
-                         # We can't do heavy DB work here, but we can call join_room's core logic
-                         rating = 1200
-                         if not session.get('is_guest', False):
-                             try:
-                                 game_type_base = room.game_type.replace('solo_', '')
-                                 config_key = f"{game_type_base}|{room.board_dimensions}|{room.time_limit}"
-                                 
-                                 conn = sqlite3.connect('morpheme.db', timeout=30)
-                                 # Config specific rating
-                                 cur = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', (uid, config_key))
-                                 row = cur.fetchone()
-                                 if row:
-                                     rating = row[0]
-                                 else:
-                                     # Global rating
-                                     cur = conn.execute('SELECT rating FROM users WHERE id = ?', (uid,))
-                                     row = cur.fetchone()
-                                     rating = row[0] if row else 1200
-                                 conn.close()
-                             except:
-                                 pass
-                         
-                         room.add_player(uid, session.get('username', 'Player'), rating, is_guest=session.get('is_guest', False))
-                         print(f"[app.py] SELF-HEALED session for {session.get('username')} in Hub {room_id}")
-                     except Exception as heal_err:
-                         print(f"[app.py] ERROR self-healing hub session: {heal_err}")
-                         return jsonify({'error': 'You have been removed for inactivity.'}), 403
-                 else:
-                     return jsonify({'error': 'You have been removed for inactivity.'}), 403
-
-        # Immediate cleanup: If room is now empty (or closing) and not a 24h room, delete it
-        humans = [p for p in room.players if not p.is_ai]
-        if (len(humans) == 0 or room.is_closing) and room.time_limit < 7200:
-            print(f"[app.py] Room {room_id} has no human players (closing={room.is_closing}). Evicting.")
-            if room.spectators:
-                room.spectators = []
-            room_manager.delete_room(room_id)
-            return jsonify({'error': 'Room closed because no players remain.'}), 403
-
-        # Check and update state based on timers
-        prev_state = room.state
-        state_changed = room.check_and_update_state()
-
-        # Handle Robust Daily Reset Sequencing (24h rooms)
-        if getattr(room, 'midnight_reset_occurred', False):
-            print(f"[app.py] Executing ATOMIC Midnight Reset for {room_id}")
-            
-            # 1. Archive current round activity for players
-            for p in room.players:
-                 p.previous_submitted_words = [dict(w) for w in p.submitted_words]
-                 p.previous_round_score = p.score
-                 p.submitted_words = []
-                 p.invalid_words = []
-                 p.score = 0
-                 p.found_bonus_word = False
-                 p.joined_mid_round = False
-                 room.past_players[str(p.user_id)] = p
-
-            # 2. Trigger asynchronous DB save
-            import threading
-            threading.Thread(target=room_manager.save_round_history, args=(room,), daemon=True).start()
-            
-            # 3. Trigger immediate board change in background to avoid blocking the poll
-            threading.Thread(target=room_manager.start_round, args=(room_id,), daemon=True).start()
-            
-            room.midnight_reset_occurred = False
-            state_changed = True
-
-        
-        # If just transitioned to intermission, start complete solving in background
-        if state_changed and room.state == 'intermission' and prev_state == 'active':
-            print(f"Transitioned to intermission, using fast solve words immediately.")
-            
-            # SAVE ROUND HISTORY (Offloaded to background thread)
-            import threading
-            threading.Thread(target=room_manager.save_round_history, args=(room,), daemon=True).start()
-            
-            # Ensure solving_complete is True so frontend proceeds
-            room.solving_complete = True
-            if not room.complete_words and room.all_words:
-                 room.complete_words = list(room.all_words)
-
-@app.route('/api/room/<room_id>/state')
-def get_room_state(room_id):
-    try:
-        room = room_manager.get_room(room_id)
-        if not room:
-            return jsonify({'error': 'Room not found'}), 404
+             return jsonify({'error': 'Room not found'}), 404
             
         with room._state_lock:
             # 1. Heartbeat Trigger (If TR=0/45/Search)
-            milestone = room.get_milestone_trigger()
+            milestone = room.get_next_round_milestone()
             if milestone == 'spinner':
                 room_manager.generate_spinner_params(room_id, reveal=False)
             elif milestone == 'reveal':
@@ -2517,10 +2376,17 @@ def get_room_state(room_id):
             words_to_return = []
             word_scores_to_return = {}
             if is_intermission:
-                prev_all = getattr(room, 'previous_all_word_scores', {}) or getattr(room, 'previous_all_words', {})
-                if isinstance(prev_all, dict):
-                    words_to_return = list(prev_all.keys())
-                    word_scores_to_return = prev_all
+                # Intermission solutions are preserved in room.all_words until 0:00
+                words_to_return = list(room.all_words)
+                word_scores_to_return = getattr(room, 'solved_words_with_scores', {})
+                # Fallback to previous if current is somehow missing
+                if not words_to_return:
+                    prev_all = getattr(room, 'previous_all_word_scores', {}) or getattr(room, 'previous_all_words', {})
+                    if isinstance(prev_all, dict):
+                        words_to_return = list(prev_all.keys())
+                        word_scores_to_return = prev_all
+                    elif isinstance(prev_all, list):
+                        words_to_return = prev_all
             elif is_active and is_fcfs:
                 words_to_return = list(room.all_words)
                 word_scores_to_return = room.solved_words_with_scores
@@ -2559,6 +2425,8 @@ def get_room_state(room_id):
                 'current_round': room.current_round,
                 'time_limit': room.time_limit,
                 'time_remaining': room.time_remaining,
+                'round_end_time': room.round_end_time if room.state == 'active' else 0,
+                'intermission_end_time': room.intermission_end_time if room.state == 'intermission' else 0,
                 'server_time': time.time(),
                 'board': room.board,
                 'board_dimensions': room.board_dimensions,
@@ -2572,11 +2440,12 @@ def get_room_state(room_id):
                 'global_found_words': global_found,
                 'csw_only_words': getattr(room, 'csw_only_words', []),
                 'added_words': getattr(room, 'added_words', []),
-                'previous_all_words': room.previous_all_words,
-                'previous_board': room.previous_board,
-                'previous_csw_only_words': room.previous_csw_only_words,
-                'previous_added_words': room.previous_added_words,
-                'previous_bonus_word': room.previous_bonus_word,
+                'previous_all_words': getattr(room, 'previous_all_words', []),
+                'previous_all_word_scores': getattr(room, 'previous_all_word_scores', {}),
+                'previous_board': getattr(room, 'previous_board', []),
+                'previous_csw_only_words': getattr(room, 'previous_csw_only_words', []),
+                'previous_added_words': getattr(room, 'previous_added_words', []),
+                'previous_bonus_word': getattr(room, 'previous_bonus_word', ''),
                 'spinner_params': room.spinner_params,
                 'current_min_word_length': (getattr(room, 'next_round_min_length', 3) if (is_intermission and is_revealed) else getattr(room, 'current_min_length', 3)),
                 'current_board_format': getattr(room, 'current_board_format', 'Normal'),
@@ -4268,7 +4137,7 @@ def get_tournament_status():
     t = tournament_manager.get_current_tournament()
     user_status = {'status': 'not_joined', 'has_turn': False}
     
-    if 'user_id' in session and not session.get('is_guest'):
+    if t and 'user_id' in session and not session.get('is_guest'):
         user_id = session['user_id']
         conn = sqlite3.connect('morpheme.db', timeout=30)
         conn.row_factory = sqlite3.Row
@@ -4286,7 +4155,7 @@ def get_tournament_status():
     
     # Get round end time if active
     round_end_time = 0
-    if t['status'] == 'active':
+    if t and t['status'] == 'active':
         conn = sqlite3.connect('morpheme.db', timeout=30)
         r = conn.execute('SELECT end_time FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?',
                         (t['id'], t['current_round'])).fetchone()
@@ -4294,7 +4163,7 @@ def get_tournament_status():
         if r: round_end_time = r[0]
 
     round_scores = []
-    if t['status'] == 'active':
+    if t and t['status'] == 'active':
         raw_scores = tournament_manager.get_round_scores(t['id'], t['current_round'])
         for rs in raw_scores:
             if rs.get('submitted_words'):

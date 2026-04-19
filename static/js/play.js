@@ -792,7 +792,7 @@ async function updateGameState(incomingState = null) {
                 params: state.spinner_params
             }) : null;
             
-            // FIX: Only trigger reveal transition if we have reached the 45s threshold
+            // FIX: Only trigger reveal transition if we have reached the 0:45 remaining threshold
             // This prevents the fade effect from happening at the very beginning of intermission.
             const isParamRevealTransition = (hasSpinner && state.time_remaining <= 45 && lastSpinnerDataJSON !== currentSpinnerJSON);
 
@@ -806,6 +806,7 @@ async function updateGameState(incomingState = null) {
                     void container.offsetWidth; // Force reflow to allow re-triggering the animation
                     container.classList.add('reveal-new');
                 }
+
             }
         } else if (state.state !== 'intermission') {
             lastSpinnerDataJSON = null;
@@ -1196,12 +1197,10 @@ async function updateGameState(incomingState = null) {
                 }
             }
 
-            // User Request Fix: Use server-provided total counts if available
-            // to allow tracking even when all_words is hidden (Anti-Cheat).
+            // User Request Fix: Persistence - Keep showing the previous round's remaining words 
+            // for the ENTIRE intermission. We only switch to the new round data when state is 'active'.
             const isIntermission = state.state === 'intermission';
-            const isRevealed = state.spinner_params_revealed;
-            // Use server totals if we are active OR in the revealed revelation phase of intermission
-            const showRealtimeCounts = (!isIntermission || isRevealed) && state.total_counts_by_len;
+            const showRealtimeCounts = !isIntermission && state.total_counts_by_len;
             
             let countsByLen = {};
             if (showRealtimeCounts) {
@@ -1209,8 +1208,12 @@ async function updateGameState(incomingState = null) {
                 const totalByLen = state.total_counts_by_len || {};
                 
                 // ROUND SYNC: If the server provided a round tag, verify it matches the current round.
-                // If it doesn't match, we are in a transition state.
-                if (totalByLen._round !== undefined && totalByLen._round !== state.current_round) {
+                // WE ALLOW +1 if in revelation phase (Teaser data for next round)
+                const isLateIntermission = state.state === 'intermission' && state.spinner_params_revealed;
+                const expectedRound = isLateIntermission ? (state.current_round + 1) : state.current_round;
+                
+                if (totalByLen._round !== undefined && totalByLen._round !== expectedRound) {
+                    console.warn(`[Remaining-Sync] Mismatch (Counts Round: ${totalByLen._round}, Expected: ${expectedRound}).`);
                     remainingListEl.innerHTML = '<p class="placeholder" style="opacity: 0.6; font-style: italic;">Syncing word counts...</p>';
                     return; 
                 }
@@ -1233,18 +1236,11 @@ async function updateGameState(incomingState = null) {
                     if (l > 0) foundByLen[l] = (foundByLen[l] || 0) + 1;
                 });
                 
-                for (let i = 3; i <= 30; i++) {
+                for (let i = 1; i <= 30; i++) {
                     countsByLen[i] = Math.max(0, (totalByLen[i] || 0) - (foundByLen[i] || 0));
                 }
 
-                // HEADER SYNC: Update the "Words:" header (e.g. 0/201) to match the Remaining tab
-                const wordsCountEl = document.getElementById('param-words');
-                if (wordsCountEl && !isIntermission) {
-                    const foundCount = validFound.length;
-                    const totalCount = state.total_words_count || 0;
-                    const wr = state.current_word_count_range || '100-200';
-                    wordsCountEl.textContent = `Words: ${wr} (${foundCount}/${totalCount})`;
-                }
+                // HEADER SYNC is handled by updateGameStatsHeader to avoid fighting/duplicate labels
             } else {
                 // Intermission/Clues fallback: calculate from explicit list
                 const remainingWords = allWords.filter(w => !myFoundStrs.includes(w.toUpperCase()));
@@ -2175,31 +2171,33 @@ function updateParameters(state) {
 
     // Word Range
     const words = document.getElementById('param-words');
-    if (words && (shouldUpdateLabels || !words.textContent)) {
+    if (words) {
+        // Robust Strip: Remove any and all instances of "Words:" and "Words: " to prevent doubling.
         let wr = window._displayedParams.range;
+        if (typeof wr === 'string') {
+            wr = wr.replace(/Words:\s*/gi, '').trim();
+        }
         const totalCount = state.total_words_count || 0;
         
         // Use a pretty range string if it's 'random'
-        let rangeStr = wr;
-        if (rangeStr === 'random') rangeStr = '50-100/100-200/200+';
+        let cleanRange = wr;
+        if (cleanRange === 'random') cleanRange = '50-100/100-200/200+';
         
-        // If round is active and we have an exact count, show the range + exact count!
-        if (totalCount > 0 && !isIntermission) {
-            words.textContent = `${rangeStr} (${totalCount})`;
+        if (totalCount > 0) {
+            if (isIntermission) {
+                // Requested Format: "Words: 100-200 (148)"
+                words.textContent = `Words: ${cleanRange} (${totalCount})`;
+            } else {
+                // Active Game Format: "Words: 100-200 (12/148)"
+                const myPlayer = state.players.find(p => p.username === (window.currentUser || ''));
+                const myWords = myPlayer ? (myPlayer.submitted_words || []) : [];
+                const validFound = myWords.filter(w => (typeof w === 'string' ? true : (w.points > 0 || (w.score_details && w.score_details.total > 0))));
+                const foundCount = validFound.length;
+                words.textContent = `Words: ${cleanRange} (${foundCount}/${totalCount})`;
+            }
         } else {
-            // Format range strings (e.g. 500-999 -> 500+)
-            if (Array.isArray(wr) && wr.length >= 2) {
-                if (wr[1] > 900) words.textContent = `${wr[0]}+`;
-                else words.textContent = `${wr[0]}-${wr[1]}`;
-            } else if (typeof wr === 'string') {
-                if (wr === 'random') words.textContent = '50-100/100-200/200+/500+';
-                else if (wr.includes('99999') || wr.includes('500-') || wr.includes('200-')) {
-                    const parts = wr.split('-');
-                    if (parts.length === 2 && (parseInt(parts[1]) > 900 || isNaN(parseInt(parts[1])))) {
-                        words.textContent = parts[0] + '+';
-                    } else words.textContent = wr;
-                } else words.textContent = wr;
-            } else words.textContent = '50-100/100-200/200+';
+            // Standard Range Fallback
+            words.textContent = `Words: ${cleanRange}`;
         }
     }
 
@@ -2226,10 +2224,10 @@ function syncTimerWithServer(state) {
     }
 
     let endTime = 0;
-    if (state.state === 'active' && state.round_end_time) {
-        endTime = state.round_end_time;
-    } else if (state.state === 'intermission' && state.intermission_end_time) {
-        endTime = state.intermission_end_time;
+    if (state.state === 'active') {
+        endTime = state.round_end_time || (state.server_time + state.time_remaining);
+    } else if (state.state === 'intermission') {
+        endTime = state.intermission_end_time || (state.server_time + state.time_remaining);
     }
 
     if (endTime && stableServerTimeOffset !== null) {
@@ -4376,12 +4374,12 @@ async function initTournamentPlay() {
         resetPlayUI();
 
         // Timer Setup: The tournament game has its OWN local timer starting from the moment they click play
-        localEndTime = Date.now() + (data.params.time_limit * 1000);
+        localEndTime = (Date.now() / 1000) + data.params.time_limit;
 
         if (timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(() => {
-            const current = Date.now();
-            const diff = Math.max(0, Math.ceil((localEndTime - current) / 1000));
+            const current = Date.now() / 1000;
+            const diff = Math.max(0, Math.ceil(localEndTime - current));
             updateSpecialMatchTimer(diff); // Use the new helper
 
             if (diff <= 0) {
