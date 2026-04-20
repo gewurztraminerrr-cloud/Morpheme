@@ -3028,7 +3028,12 @@ function findWordPathOnBoard(word, board, targetCoord = null) {
         }
 
         const nextIndex = index + matchLength;
-        if (nextIndex >= upperWord.length) return nowHit ? newPath : null;
+        if (nextIndex >= upperWord.length) {
+            // If we are searching for a specific target cell, enforce the hit.
+            // Otherwise (standard typing), return the path.
+            if (targetCoord && !nowHit) return null;
+            return newPath;
+        }
 
         // Try directions
         for (let dr = -1; dr <= 1; dr++) {
@@ -3722,7 +3727,7 @@ document.addEventListener('keydown', (e) => {
         document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
         if (!word || !board || (mouseState && mouseState.isDown)) return;
 
-        const is3D = board.length === 6 && Array.isArray(board[0]);
+        const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
         const path = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
         if (path) {
             path.forEach(coord => {
@@ -3759,7 +3764,7 @@ async function submitWord(wordParam = null, pathParam = null) {
     let finalPath = pathParam;
     const board = window.lastGameState ? window.lastGameState.board : null;
     if (!finalPath && word && board) {
-        const is3D = board.length === 6 && Array.isArray(board[0]);
+        const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
         finalPath = (is3D && typeof findWordPathOnCube === 'function') 
             ? findWordPathOnCube(word, board) 
             : (typeof findWordPathOnBoard === 'function' ? findWordPathOnBoard(word, board) : null);
@@ -3819,11 +3824,6 @@ async function submitWord(wordParam = null, pathParam = null) {
         }
 
         if (data.success) {
-            // Force "Words" tab so the user sees their new word
-            if (typeof activeWordsTab !== 'undefined' && activeWordsTab !== 'found') {
-                activeWordsTab = 'found';
-            }
-            
             const currentState = window.lastGameState;
             if (currentState) {
                 // USER: INSTANT DENSITY UPDATE
@@ -4474,7 +4474,7 @@ async function handleTournamentWord(word) {
         return;
     }
 
-    const is3D = board.length === 6 && Array.isArray(board[0]);
+    const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
     const path = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
     if (!path) {
         showValidationFeedback(`${word} is invalid.`, false);
@@ -4717,7 +4717,7 @@ async function handlePrivateMatchWord(word) {
         return;
     }
 
-    const is3D = board.length === 6 && Array.isArray(board[0]);
+    const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
     const path = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
     if (!path) {
         showValidationFeedback('Not on board!', false);
