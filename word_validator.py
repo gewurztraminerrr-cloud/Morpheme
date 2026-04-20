@@ -59,6 +59,15 @@ class WordValidator:
         # Full Rebuild to ensure Tries and sets are clean
         self._load_dictionaries()
         return self.use_added_words
+
+    def get_use_added_words(self):
+        """Actively read config to sync across multiple Gunicorn workers"""
+        old_val = getattr(self, 'use_added_words', True)
+        self._load_config()
+        if old_val != self.use_added_words:
+            # Sync happened from another worker, we must rebuild locally too!
+            self._load_dictionaries()
+        return self.use_added_words
     
     def _load_dictionaries(self):
         """Load both dictionaries and the 16+ supplementary list into memory"""

@@ -301,7 +301,7 @@ def list_added_words_api():
 @mod_required
 def get_added_words_config():
     return jsonify({
-        'use_added_words': word_validator.use_added_words
+        'use_added_words': word_validator.get_use_added_words()
     })
 
 @app.route('/api/mods/added_words/toggle', methods=['POST'])
@@ -2428,6 +2428,8 @@ def get_room_state(room_id):
                 'round_end_time': room.round_end_time if room.state == 'active' else 0,
                 'intermission_end_time': room.intermission_end_time if room.state == 'intermission' else 0,
                 'server_time': time.time(),
+                'your_username': session.get('username'),
+                'your_user_id': session.get('user_id'),
                 'board': room.board,
                 'board_dimensions': room.board_dimensions,
                 'bonus_word': room.bonus_word,
@@ -2448,8 +2450,8 @@ def get_room_state(room_id):
                 'previous_bonus_word': getattr(room, 'previous_bonus_word', ''),
                 'spinner_params': room.spinner_params,
                 'current_min_word_length': (getattr(room, 'next_round_min_length', 3) if (is_intermission and is_revealed) else getattr(room, 'current_min_length', 3)),
-                'current_board_format': getattr(room, 'current_board_format', 'Normal'),
-                'current_word_count_range': getattr(room, 'current_word_count_range', '100-200'),
+                'current_board_format': (room.spinner_params.get('board_format', 'Normal') if (is_intermission and is_revealed) else getattr(room, 'current_board_format', 'Normal')),
+                'current_word_count_range': (room.spinner_params.get('word_count_range', '100-200') if (is_intermission and is_revealed) else getattr(room, 'current_word_count_range', '100-200')),
                 'spinner_params_revealed': is_revealed,
                 'players': [
                     {

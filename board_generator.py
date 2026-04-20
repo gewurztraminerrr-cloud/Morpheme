@@ -78,34 +78,33 @@ RARE_SET = "ZXQJKVWYPFBHCMAU" + "ETAOINSRHDLU" + "AEIOUAEIOU"  # Blend with comm
 # Sparse weights for large grids with low word count targets (Heavily reduced vowels/common consonants)
 # Sum = 2605 (approx 1/4 of standard 10000 set for rare packing)
 LETTER_FREQ_SPARSE = [
-    70,   # A
+    180,  # A (Increased)
     120,  # B
-    140,  # C
+    260,  # C (Increased)
     110,  # D
-    90,   # E
-    110,  # F
+    140,  # E
+    220,  # F (Increased)
     120,  # G
-    120,  # H
-    80,   # I
-    130,  # J
-    125,  # K
+    220,  # H (Increased)
+    140,  # I (Increased)
+    5,    # J (Drastically Decreased)
+    40,   # K (Decreased)
     140,  # L
-    130,  # M
+    240,  # M (Increased)
     110,  # N
-    80,   # O
-    110,  # P
-    130,  # Q
+    140,  # O (Increased)
+    220,  # P (Increased)
+    2,    # Q (Drastically Decreased)
     100,  # R
     100,  # S
     90,   # T
     50,   # U
-    130,  # V
-    115,  # W
-    150,  # X
+    220,  # V (Increased)
+    210,  # W (Increased)
+    5,    # X (Drastically Decreased)
     110,  # Y
-    140   # Z
+    5     # Z (Drastically Decreased)
 ]
-
 
 class BoardGenerator:
     # Class-level cache for optimal board generation method per parameter set
@@ -711,7 +710,7 @@ class BoardGenerator:
                     weights = LETTER_FREQ_EASY
                 elif min_words >= 150:
                     weights = LETTER_FREQ_EASY
-                elif (num_tiles >= 35) and max_words <= 150:
+                elif (num_tiles >= 35) and max_words <= 150 and min_word_length < 5:
                     # Ultra-Sparse weights for HUGE grids with LOW word targets (50-100)
                     weights = LETTER_FREQ_SPARSE
                 elif (num_tiles >= 35) and max_words <= 320:
@@ -1232,7 +1231,7 @@ class BoardGenerator:
 
         # 4. Fill the rest with random letters
         # GRID-AWARE FALLBACK WEIGHTS:
-        if (num_tiles >= 35) and max_words <= 150:
+        if (num_tiles >= 35) and max_words <= 150 and min_word_length < 5:
             weights = LETTER_FREQ_SPARSE
         elif (num_tiles >= 35) and max_words <= 320:
             weights = LETTER_FREQ_USER

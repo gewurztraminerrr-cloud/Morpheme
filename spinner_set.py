@@ -184,8 +184,17 @@ class SpinnerSet:
                 elif wc_range == '100-200':
                     # Still favor lower range for 4L 4x4 to ensure success
                     wc_range = random.choices(['50-100', '100-200'], weights=[40, 60])[0]
-                 
-        return wc_range
+
+        elif is_large:
+            if min_word_length >= 7:
+                # 6x8/Cube with 7L minimum: 500+ and 200+ are extremely difficult to fill with quality words.
+                if wc_range in ['200+', '500+']:
+                    # Downshift to realistic large-grid targets for 7L
+                    wc_range = random.choices(['50-100', '100-200'], weights=[60, 40])[0]
+            elif min_word_length >= 6:
+                # 6L minimum: 500+ is still very unlikely.
+                if wc_range == '500+':
+                    wc_range = '200+'
     
     @staticmethod
     def _spin_dictionary():

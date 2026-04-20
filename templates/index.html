@@ -640,7 +640,7 @@
                     <div id="game-board" class="game-board"></div>
                     <div id="word-validation-status" class="validation-status"></div>
                     <div class="word-input-section">
-                        <input type="text" id="word-input" placeholder="Enter word" autocomplete="off">
+                        <input type="text" id="word-input" placeholder="Enter word" autocomplete="off" onkeydown="if(event.key==='Enter'||event.keyCode===13){event.preventDefault();submitWord(this.value);}">
                         <button id="submit-word-btn">Submit</button>
                         <button id="rotate-board-btn" class="rotate-btn">Rotate</button>
                     </div>

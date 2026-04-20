@@ -592,7 +592,14 @@ class GameRoom:
         
         # 2. Logic Check
         is_in = word in self.all_words
-        min_len_req = getattr(self, 'current_min_length', 3)
+        min_len_req = self.current_min_length
+        
+        # EARLY EXIT: Check minimum length FIRST (User Request: Clearer feedback)
+        # Boggle usually treats 'Q' as 'QU', so check if length would be sufficient even with expansion
+        effective_len = len(word.replace('Q', 'QU')) if 'Q' in word else len(word)
+        if effective_len < min_len_req:
+            return False, f"{word.upper()} is too short (Min: {min_len_req})", 0, None
+
         with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/word_debug.log', 'a') as debug:
             debug.write(f"[{time.time()}] Word: {word} | In Board: {is_in} | Min: {min_len_req} | Len: {len(word)} | Room: {self.room_id}\n")
 
@@ -657,12 +664,6 @@ class GameRoom:
         
         # Use the matched word (which might be the QU variant) for scoring/display
         final_word = matched_word
-        
-        # Check minimum length (use the final word length, e.g., QUATE is 5, QATE is 4)
-        # Use snapshotted min_length to avoid contamination from next-round pre-generation
-        min_len = self.current_min_length
-        if len(final_word) < min_len:
-            return False, f"{final_word} is too short", 0, None
         
         # Check if already submitted (by this player)
         # Extract existing words from the list of dicts
@@ -2466,10 +2467,7 @@ class RoomManager:
                             # Priority: Longest/Highest scoring words first to ensure quality results
                             sorted_trimmed = sorted(list(all_words), key=lambda w: (len(w), w), reverse=True)[:max_target]
                             all_words = set(sorted_trimmed)
-                            all_words_dict = {w: all_words_dict[w] for w in all_words if w in all_words_dict}
-                            
-                        # AUTHORITATIVE SYNC: Update both the staging area AND the revealed UI slot.
-                        achieved_wc = self._get_factchecked_wc_range(len(all_words))
+                            all_words_dict = {w: all_words_dict.get(w, []) for w in all_words}
                             
                         # Update staging data with correctly constrained results
                         room.next_round_words = list(all_words)
@@ -2483,19 +2481,27 @@ class RoomManager:
                                 for w, pts in room.next_round_word_scores.items() if w in all_words
                             )
                         
+                        # Apply draconian slice to scores as well to prevent ghost scoring elements
+                        if hasattr(room, 'next_round_word_scores'):
+                            room.next_round_word_scores = {w: room.next_round_word_scores[w] for w in all_words if w in room.next_round_word_scores}
+                            
+                        # AUTHORITATIVE SYNC: Update both the staging area AND the revealed UI slot.
+                        achieved_wc = self._get_factchecked_wc_range(len(all_words))
+                        # Note: we purposely DON'T overwrite spinner params with achieved_wc to preserve UI intent
+                        
                         # UPDATE: Always update the staging params with facts once generation completes,
                         # even if already revealed. This ensures the header is accurate at T-minus 0s.
                         if getattr(room, 'next_spinner_params', None):
                             room.next_spinner_params['difficulty'] = achieved_diff
                             room.next_spinner_params['board_format'] = updated_format
-                            room.next_spinner_params['word_count_range'] = achieved_wc
+                            # We intentionally DO NOT overwrite word_count_range here. 
+                            # If the solver produces 105 words for a 50-100 target, we keep the 
+                            # original intent (50-100) to ensure the UI aligns with the Spinner Animation.
                             
                             # If already revealed, update the active spinner_params too
                             if getattr(room, 'spinner_params_revealed', False):
                                 room.spinner_params['difficulty'] = achieved_diff
                                 room.spinner_params['board_format'] = updated_format
-                                room.spinner_params['word_count_range'] = achieved_wc
-                                
                         # REVEAL SYNC: Pre-calculate counts by length for the revelation phase
                         # This avoids the "Remaining tab lag" where it shows previous round stats
                         # Always calculate 1-30 to ensure valid data regardless of min-length transitions
@@ -2706,10 +2712,10 @@ class RoomManager:
                     # SYNCHRONOUS COUNTS FOR EMERGENCY (Ensures Remaining Tab is accurate at 0s mark)
                     # We must set current_min_length on the room if it's about to be promoted
                     room.current_min_length = params.get('min_word_length', 3)
-                    room.update_counts_by_len()
+                    filtered_e_words = [w for w in (e_words or []) if len(w) >= room.current_min_length]
                     
-                    room.next_round_counts_by_len = room.total_counts_by_len
-                    room.next_round_total_words_count = room.total_words_count
+                    room.next_round_counts_by_len = {str(l): sum(1 for w in filtered_e_words if len(w) == l) for l in range(1, 31)}
+                    room.next_round_total_words_count = len(filtered_e_words)
                     room.next_round_total_points = sum(pts['total'] if isinstance(pts, dict) else pts for pts in e_scored_dict.values())
                     
                     room.next_round_board = e_board # PROMPT SIGNALING
@@ -2739,12 +2745,12 @@ class RoomManager:
 
                     # FACT-CHECK labels for UI
                     from word_validator import word_validator
-                    e_achieved_wc = self._get_factchecked_wc_range(len(e_words))
-                    if not getattr(room, 'spinner_params_revealed', False):
-                        if getattr(room, 'next_spinner_params', None):
-                            room.next_spinner_params['word_count_range'] = e_achieved_wc
-                        room.spinner_params['word_count_range'] = e_achieved_wc
-                        room.current_word_count_range = e_achieved_wc
+                    # We NO LONGER overwrite word_count_range here to prevent "Intent Flipping"
+                    # If players saw 50-100, we keep that label even if emergency found 105 words.
+                    if getattr(room, 'next_spinner_params', None):
+                        room.next_spinner_params['board_format'] = e_fmt
+                    room.spinner_params['board_format'] = e_fmt
+                    room.current_board_format = e_fmt
                     
                     room.next_round_csw_only_words = [w for w in e_words if word_validator.is_csw_only(w)]
                     room.next_round_added_words = [w for w in e_words if word_validator.is_added_word(w)]
@@ -2792,7 +2798,8 @@ class RoomManager:
                     room.spinner_params_revealed = True
 
                 if getattr(room, 'spinner_params_revealed', False):
-                    room.current_board_format = room.spinner_params.get('board_format', 'Normal')
+                    # Favor the fact (actual board) over the intent (revealed label) if they differ
+                    room.current_board_format = room.next_round_format or room.spinner_params.get('board_format', 'Normal')
                     room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
                     room.current_difficulty = room.spinner_params.get('difficulty', 'Medium')
                     room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
@@ -2816,17 +2823,30 @@ class RoomManager:
                     print(f"[REMAINING-STABILIZER] Staging empty for {room_id} at promotion. Forcing emergency fallbackboard.")
                     from board_generator import BoardGenerator
                     bg = BoardGenerator()
-                    e_board, e_words, e_paths = bg.generate_and_solve(
+                    # CORRECTION: The method is generate_board, and it MUST receive the intended range to properly constrain results
+                    target_range = room.spinner_params.get('word_count_range', '100-200')
+                    e_results = bg.generate_board(
                         room.board_dimensions, 
-                        min_word_count=50, 
-                        min_word_length=room.current_min_length, 
-                        dictionary=room.current_dictionary
+                        bonus_word=getattr(room, 'next_round_bonus', ''),
+                        word_count_range=target_range,
+                        dictionary=room.current_dictionary,
+                        board_format=room.current_board_format,
+                        min_word_length=room.current_min_length,
+                        difficulty=room.current_difficulty,
+                        is_emergency=True
                     )
+                    # generate_board returns (board, all_words, bonus_cell, board_format, all_words_dict, uniqueness_ratio)
+                    e_board, e_words, _, _, e_paths, _ = e_results
+                    
                     room.next_round_board = e_board
                     room.next_round_words = e_words
                     room.next_round_word_paths = e_paths
+                    room.next_round_total_words_count = len(e_words)
                 
-                # --- 3. HISTORY PROMOTION ---
+                # --- 3. FINAL COUNT SYNC: Ensure factual counts are promoted even if truncation was skipped ---
+                room.total_words_count = getattr(room, 'next_round_total_words_count', len(room.next_round_words or []))
+                
+                # --- 4. HISTORY PROMOTION ---
                 room.previous_board = list(room.board) if room.board else []
                 room.previous_all_words = list(room.all_words) if room.all_words else []
                 room.previous_csw_only_words = list(room.csw_only_words) if room.csw_only_words else []
@@ -2836,33 +2856,59 @@ class RoomManager:
                 room.csw_only_words = getattr(room, 'next_round_csw_only_words', [])
                 room.added_words = getattr(room, 'next_round_added_words', [])
 
+                # ATOMIC PROMOTION: Carry staging data to active room state
                 room.board = room.next_round_board
                 
                 # DRACONIAN FILTER: Eliminate any word shorter than the current minimum immediately
                 room.all_words = {w for w in (room.next_round_words or []) if len(w) >= room.current_min_length}
                 room.all_words_paths = {w: p for w, p in (room.next_round_word_paths or {}).items() if len(w) >= room.current_min_length}
                 room.solved_words_with_scores = getattr(room, 'next_round_word_scores', {})
-                room.bonus_cell = room.next_round_bonus_cell
-                room.bonus_word = getattr(room, 'next_round_bonus', '')
+                
+                # USER REQUEST: Ensure Bonus Word is ironclad (highlighted in green at end)
+                # If for any reason next_round_bonus is empty (e.g. emergency stall), pick a fresh one now
+                current_bw = getattr(room, 'next_round_bonus', '')
+                if not current_bw:
+                    bw_l = room.spinner_params.get('bonus_word_length', 8)
+                    current_bw = self._get_bonus_word(
+                        length=bw_l,
+                        dictionary=room.current_dictionary,
+                        alternating=('checkerboard' in str(room.current_board_format).lower())
+                    )
+                room.bonus_word = current_bw
+                
+                # SAFETY SYNC: Ensure the bonus word is actually in all_words
+                # (Prevents UI from failing to highlight it if it were somehow missed by the solver)
+                # And ensure it bypasses the min-length filter if it was somehow shorter (unlikely but safe)
+                if room.bonus_word and room.bonus_word not in room.all_words:
+                    room.all_words.add(room.bonus_word)
+                
+                room.bonus_cell = getattr(room, 'next_round_bonus_cell', None)
                 
                 # --- 4. ACCURACY ENFORCEMENT: Draconian word count truncation ---
-                # Ensure the round strictly respects the revealed parameters (Spinner Set range)
                 target_range = getattr(room, 'current_word_count_range', '100-200')
-                try:
+                if target_range:
                     _, max_target = self.board_generator._parse_word_count_range(target_range)
                     if max_target < 99999 and len(room.all_words) > max_target:
                         print(f"[ACCURACY-SYCN] Truncating Round {room.current_round} to {max_target} words to match revealed range '{target_range}'")
                         # Sort by length desc then alpha to keep the highest quality teaser words
                         sorted_trimmed = sorted(list(room.all_words), key=lambda w: (len(w), w), reverse=True)[:max_target]
                         room.all_words = set(sorted_trimmed)
-                        room.all_words_paths = {w: room.all_words_paths[w] for w in room.all_words if w in room.all_words_paths}
+                        room.all_words_paths = {w: room.all_words_paths.get(w, []) for w in room.all_words}
+                        
                         if hasattr(room, 'solved_words_with_scores'):
                              room.solved_words_with_scores = {w: room.solved_words_with_scores[w] for w in room.all_words if w in room.solved_words_with_scores}
+                             
+                        # Explicitly verify the length matches what we truncated to avoid ANY downstream counting ghosts
+                        room.total_words_count = len(room.all_words)
                 except Exception as e:
                     print(f"[ACCURACY-ERROR] Failed to truncate: {e}")
                 
                 # FINAL ACCURACY SYNC: Ensure the header labels exactly match the results
-                room.current_word_count_range = self._get_factchecked_wc_range(len(room.all_words))
+                # Enforce whatever length survived to avoid UI disjoint
+                # NOTE: We NO LONGER overwrite current_word_count_range here.
+                # We want to keep the Spinner Set's "Intent" range (e.g. 50-100) 
+                # even if the result is 105 words, to avoid "Parameter Drift" UI flips.
+                room.total_words_count = len(room.all_words)
                 room.current_difficulty = getattr(room, 'next_round_difficulty', room.current_difficulty)
 
                 room.cell_density = getattr(room, 'next_round_cell_density', [])
