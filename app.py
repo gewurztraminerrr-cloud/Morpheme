@@ -2373,6 +2373,27 @@ def get_room_state(room_id):
                 print(f"[Remaining-Hardener] Found stale/missing counts (Round {counts_obj.get('_round') if counts_obj else 'None'} vs {room.current_round}) for {room_id}. Forcing sync.")
                 room.update_counts_by_len()
 
+            # TOTAL POINTS HARDENER: If active and total_points_count is 0, compute it now inline
+            # This handles the race window between start_next_round setting state=active and
+            # recalculate_total_points() being called, and also the first round of a new room.
+            if is_active and room.total_points_count == 0:
+                computed_pts = room.recalculate_total_points()
+                if computed_pts == 0 and getattr(room, 'all_words', None):
+                    # Ultra fallback: length-based estimate
+                    fmt = str(getattr(room, 'current_board_format', '')).lower()
+                    is_valued = 'valued' in fmt
+                    pts = 0
+                    for w in room.all_words:
+                        l = len(w)
+                        if is_valued: pts += l
+                        elif l <= 4: pts += 1
+                        elif l == 5: pts += 2
+                        elif l == 6: pts += 3
+                        elif l == 7: pts += 5
+                        else: pts += 11
+                    room.total_points_count = pts
+                print(f"[PTS-HARDENER] Room {room_id} Round {room.current_round}: total_points_count={room.total_points_count} words={len(getattr(room,'all_words',set()))} scores={len(getattr(room,'solved_words_with_scores',{}))}")
+
             words_to_return = []
             word_scores_to_return = {}
             if is_intermission:
@@ -2387,9 +2408,12 @@ def get_room_state(room_id):
                         word_scores_to_return = prev_all
                     elif isinstance(prev_all, list):
                         words_to_return = prev_all
-            elif is_active and is_fcfs:
-                words_to_return = list(room.all_words)
-                word_scores_to_return = room.solved_words_with_scores
+            elif is_active:
+                # ACTIVE: Provide word scores for total-points calculation client-side
+                # (Avoids showing '0 total pts' when total_points_count hasn't been computed yet)
+                word_scores_to_return = getattr(room, 'solved_words_with_scores', {}) or {}
+                if is_fcfs:
+                    words_to_return = list(room.all_words)
 
             # Determine user visibility
             user_id = session.get('user_id')
@@ -2402,7 +2426,13 @@ def get_room_state(room_id):
                 v_score = 0
                 f_bonus = False
                 for w in p.submitted_words:
-                    if not p.is_ai or not is_cur_active or w.get('time', 0) <= now:
+                    # Privacy: If it's a HUMAN player in a standard competitive mode (Accumulative), 
+                    # do NOT show their words to other players until the round is over.
+                    # EXCEPT in FCFS mode, where all findings MUST be public immediately.
+                    is_me = (str(p.user_id) == str(user_id))
+                    is_shared_mode = (is_fcfs or not is_active)
+                    
+                    if is_me or is_shared_mode or p.is_ai or not is_cur_active or w.get('time', 0) <= now:
                         v_score += w.get('points', 0)
                         if v_score < 0: v_score = 0
                         is_b = (room.bonus_word and w['word'].upper() == room.bonus_word.upper())
@@ -2410,6 +2440,7 @@ def get_room_state(room_id):
                         if is_fcfs and w.get('is_penalty'): continue
                         w_copy = dict(w)
                         w_copy['is_bonus'] = is_b
+                        w_copy['finder'] = p.username # Guarantee finder name is attached
                         v_words.append(w_copy)
                 return (v_words, v_score, f_bonus)
 
@@ -2418,7 +2449,7 @@ def get_room_state(room_id):
             if is_active and is_fcfs:
                 actual_total = max(0, room.total_words_count - len(global_found))
 
-            resp = jsonify({
+            return jsonify({
                 'room_id': room.room_id,
                 'game_type': room.game_type,
                 'state': room.state,
@@ -2435,13 +2466,16 @@ def get_room_state(room_id):
                 'bonus_word': room.bonus_word,
                 'bonus_cell': room.bonus_cell,
                 'all_words': words_to_return,
-                'total_words_count': (getattr(room, 'next_round_total_words_count', 0) if (is_intermission and is_revealed) else actual_total),
-                'total_points_count': (getattr(room, 'next_round_total_points', 0) if (is_intermission and is_revealed) else room.total_points_count),
-                'total_counts_by_len': (getattr(room, 'next_round_counts_by_len', {}) if (is_intermission and is_revealed) else getattr(room, 'total_counts_by_len', {})),
+                'total_words_count': (getattr(room, 'next_round_total_words_count', 0) if (is_intermission and is_revealed and getattr(room, 'next_round_total_words_count', 0) > 0) else (room.previous_total_words if is_intermission else actual_total)),
+                'total_points_count': (getattr(room, 'next_round_total_points', 0) if (is_intermission and is_revealed and getattr(room, 'next_round_total_points', 0) > 0) else (room.previous_total_points if is_intermission else room.total_points_count)),
+                'total_counts_by_len': (getattr(room, 'next_round_counts_by_len', {}) if (is_intermission and is_revealed and getattr(room, 'next_round_total_words_count', 0) > 0) else (room.previous_total_counts_by_len if is_intermission else getattr(room, 'total_counts_by_len', {}))),
+                'cell_density': (getattr(room, 'next_round_cell_density', []) if (is_intermission and is_revealed) else getattr(room, 'cell_density', [])),
+                'max_cell_density': (getattr(room, 'next_round_max_cell_density', 0) if (is_intermission and is_revealed) else getattr(room, 'max_cell_density', 0)),
                 'all_word_scores': word_scores_to_return,
                 'global_found_words': global_found,
-                'csw_only_words': getattr(room, 'csw_only_words', []),
-                'added_words': getattr(room, 'added_words', []),
+                'fcfs_found_words': list(getattr(room, 'fcfs_found_words', [])) if (is_active and is_fcfs) else [],
+                'csw_only_words': (getattr(room, 'next_round_csw_only_words', []) if (is_intermission and is_revealed) else getattr(room, 'csw_only_words', [])),
+                'added_words': (getattr(room, 'next_round_added_words', []) if (is_intermission and is_revealed) else getattr(room, 'added_words', [])),
                 'previous_all_words': getattr(room, 'previous_all_words', []),
                 'previous_all_word_scores': getattr(room, 'previous_all_word_scores', {}),
                 'previous_board': getattr(room, 'previous_board', []),
@@ -2584,7 +2618,8 @@ def submit_word(room_id):
             player.input_method = input_method
             
     try:
-        success, message, points, final_word = room.submit_word(user_id, word, path=path)
+        with room._state_lock:
+            success, message, points, final_word = room.submit_word(user_id, word, path=path)
     except Exception as e:
         import traceback
         with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
@@ -3250,6 +3285,8 @@ def tools_unscramble_random():
     import random
     length = request.args.get('length', type=int)
     dict_name = request.args.get('dictionary', 'NWL')
+    must_have = request.args.get('must_have', '').upper().strip()
+    print(f"[Unscramble-API-Debug] Length: {length}, MustHave: '{must_have}'")
     
     if not length:
         return jsonify({'error': 'Length required'}), 400
@@ -3258,8 +3295,10 @@ def tools_unscramble_random():
     if not dictionary:
         return jsonify({'error': f'Dictionary {dict_name} not found'}), 404
         
-    # Filter dictionary for words of exactly this length
+    # Filter dictionary for words of exactly this length and containing must_have
     eligible_words = [w for w in dictionary if len(w) == length]
+    if must_have:
+        eligible_words = [w for w in eligible_words if must_have in w]
     
     if not eligible_words:
         return jsonify({'error': 'No words found for this length'}), 404

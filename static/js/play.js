@@ -351,6 +351,20 @@ async function updateGameState(incomingState = null) {
 
         // Capture previous state for transition logic (e.g. daily reset kick)
         const previousState = window.lastGameState;
+        
+        // RESILIENCE FIX: If heartbeat response is missing density/counts (common during round start
+        // or server-side lag), preserve the previous values to prevent UI flickering/0-point states.
+        if (previousState) {
+            if (!state.cell_density && previousState.cell_density) {
+                state.cell_density = previousState.cell_density;
+                state.max_cell_density = previousState.max_cell_density;
+            }
+            if (state.total_points_count === 0 && previousState.total_points_count > 0) {
+                state.total_points_count = previousState.total_points_count;
+                state.total_words_count = previousState.total_words_count;
+            }
+        }
+        
         window.lastGameState = state;  // Store for optimistic updates
         
         // Ensure polling interval is fresh (switches to high-frequency if near intermission end)
@@ -545,6 +559,7 @@ async function updateGameState(incomingState = null) {
         const boardPanel = document.querySelector('.board-panel');
         const wordInputSection = document.querySelector('.word-input-section');
                 const currentUsername = state.your_username || window.currentUser || localStorage.getItem('morpheme_username');
+        window.currentUser = currentUsername ? currentUsername.trim() : null;
 
         // Cache for recovery after reset
         if (currentUsername) {
@@ -1015,7 +1030,18 @@ async function updateGameState(incomingState = null) {
                     }
                 }
 
-                const totalPointsValue = state.total_points_count || 0;
+                let totalPointsValue = state.total_points_count || 0;
+                // Cache from all_word_scores during intermission (populated server-side)
+                if (totalPointsValue === 0 && state.all_word_scores) {
+                    const computed = Object.values(state.all_word_scores).reduce((s, v) =>
+                        s + (typeof v === 'number' ? v : (v && v.total) || 0), 0);
+                    if (computed > 0) totalPointsValue = computed;
+                }
+                if (totalPointsValue === 0 && window.lastValidTotalPoints) {
+                    totalPointsValue = window.lastValidTotalPoints;
+                }
+                if (totalPointsValue > 0) window.lastValidTotalPoints = totalPointsValue;
+
                 wordsStats.innerHTML = `
                     <div style="line-height: 1.2;" class="stats-text-primary">
                         ${personalUnique}/${totalWords} - ${personalPercentage}% (${totalPointsValue} total pts)
@@ -1053,10 +1079,15 @@ async function updateGameState(incomingState = null) {
                 const uniqueFound = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase())).size;
                 const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
 
-                // Single line display
-                const totalPoints = state.total_points_count || 0;
-                
-                // DATA SYNC FIX: Ensure stats element exists and is updated with total pts
+                // Total points — use server value, fall back to last known good
+                let totalPoints = state.total_points_count || 0;
+                if (totalPoints === 0 && window.lastValidTotalPoints) totalPoints = window.lastValidTotalPoints;
+                if (totalPoints === 0 && state.all_word_scores) {
+                    totalPoints = Object.values(state.all_word_scores).reduce((s, v) =>
+                        s + (typeof v === 'number' ? v : (v && v.total) || 0), 0);
+                }
+                if (totalPoints > 0) window.lastValidTotalPoints = totalPoints;
+
                 const safeWordsStats = document.getElementById('words-stats') || wordsStats;
                 if (safeWordsStats) {
                     safeWordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}% (${totalPoints} total pts)`;
@@ -1108,11 +1139,11 @@ async function updateGameState(incomingState = null) {
                 }
             } else {
                 // FCFS: Shared Live Feed
-                // Use dedicated shared list from server if available (Fixes disappearances when players leave)
+                // Use dedicated shared list from server (The Authoritative Source)
                 let allFoundWords = [...(state.fcfs_found_words || [])];
                 
-                // DATA AGGREGATION: Supplement shared list with individual player words (Ensure 100% sync)
-                if (state.players && Array.isArray(state.players)) {
+                // If the server list is somehow empty but we have player words, use those as fallback
+                if (allFoundWords.length === 0 && state.players && Array.isArray(state.players)) {
                     state.players.forEach(p => {
                         const words = p.submitted_words || [];
                         words.forEach(w => {
@@ -1133,8 +1164,15 @@ async function updateGameState(incomingState = null) {
 
                 const totalWords = state.total_words_count || allWords.length;
                 const uniqueFound = new Set(allFoundWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase())).size;
-                const totalPoints = state.total_points_count || 0;
-                wordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}% (${totalPoints} total pts)`;
+                const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
+                let totalPoints = state.total_points_count || 0;
+                if (state.state === 'intermission' && totalPoints === 0 && window.lastValidTotalPoints) {
+                    totalPoints = window.lastValidTotalPoints;
+                }
+                if (totalPoints > 0) window.lastValidTotalPoints = totalPoints;
+
+                const safeWordsStats = document.getElementById('words-stats');
+                if (safeWordsStats) safeWordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}% (${totalPoints} total pts)`;
 
                 const sortedWords = allFoundWords.sort((a, b) => (b.time || 0) - (a.time || 0));
                 const threshold = 150;
@@ -1149,7 +1187,7 @@ async function updateGameState(incomingState = null) {
                         const wordUpper = word.toUpperCase();
                         const points = wObj.points;
                         const finder = wObj.finder || (wObj.is_ai ? 'AI' : 'Someone');
-                        const isMe = finder === currentUser;
+                        const isMe = finder && currentUser && finder.toLowerCase().trim() === currentUser.toLowerCase().trim();
                         const indicator = isMe ? '<span class="found-indicator present">✓</span>' : (wObj.is_ai ? '<span>🤖</span>' : '<span>🔸</span>');
 
                         const isBonus = state.bonus_word && wordUpper === state.bonus_word.toUpperCase();
@@ -2206,13 +2244,7 @@ function updateParameters(state) {
                 // Requested Format: "50-100 (57)" -- Label 'Words: ' provided by HTML
                 words.textContent = `${cleanRange} (${totalCount})`;
             } else {
-                // Active Game Format: "50-100 (12/148)" -- Label 'Words: ' provided by HTML
-                const me = window.currentUser || '';
-                const myPlayer = state.players.find(p => p.username.toLowerCase() === me.toLowerCase());
-                const myWords = myPlayer ? (myPlayer.submitted_words || []) : [];
-                const validFound = myWords.filter(w => (typeof w === 'string' ? true : (w.points > 0 || (w.score_details && w.score_details.total > 0))));
-                const foundCount = validFound.length;
-                words.textContent = `${cleanRange} (${foundCount}/${totalCount})`;
+                words.textContent = `${cleanRange} (${totalCount})`;
             }
         } else {
             // Standard Range Fallback
@@ -2956,12 +2988,17 @@ function applyDensityToCell(cell, r, c, f) {
              const textColor = (grayLightness < 50) ? '#ffffff' : '#000000';
              cell.style.setProperty('color', textColor, 'important');
          }
+    } else if (boardFormat.toLowerCase().includes('density')) {
+        // We have no density data BUT we are in density mode. 
+        // Do NOT clear the style yet - wait for a state that has it.
+        // This prevents the "brief flickers" during heartbeats.
     } else {
-        // Reset if no density data (e.g. format changed)
+        // Reset ONLY if we are truly no longer in density format
         cell.style.background = '';
         cell.style.backgroundColor = '';
         cell.style.color = '';
         cell.style.boxShadow = '';
+        delete cell.dataset.lastD;
     }
 }
 
@@ -3266,6 +3303,19 @@ function reapplyBoardHighlights() {
         }
     } else {
         window._lastAnimatedReviewWord = null;
+    }
+
+    // 4. Reapply density shading (Density format) — must run after every highlight pass
+    // because density inline styles can be overwritten by class-based highlight rules.
+    const densityData = window.lastGameState && window.lastGameState.cell_density;
+    const bFormat = (window.lastGameState && window.lastGameState.current_board_format) || '';
+    if (densityData && Array.isArray(densityData) && densityData.length > 0 && bFormat.toLowerCase().includes('density')) {
+        document.querySelectorAll('.board-cell').forEach(cell => {
+            const r = parseInt(cell.dataset.r);
+            const c = parseInt(cell.dataset.c);
+            const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : undefined;
+            applyDensityToCell(cell, r, c, f);
+        });
     }
 }
 

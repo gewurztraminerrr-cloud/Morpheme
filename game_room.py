@@ -137,7 +137,9 @@ class GameRoom:
     
     # History of winners
     winners_history: List[Dict] = field(default_factory=list) # [{'round': N, 'winners': [names], 'score': S}]
-
+    previous_total_points: int = 0
+    previous_total_words: int = 0
+    previous_total_counts_by_len: Dict = field(default_factory=dict)
     @property
     def round_end_time(self):
         """Absolute timestamp when the current round expires"""
@@ -1071,11 +1073,11 @@ class GameRoom:
                 self.previous_csw_only_words = [w for w in (self.all_words or []) if word_validator.word_validator.is_csw_only(w)]
                 self.previous_bonus_word = self.bonus_word
                 
-                # DIAGNOSTIC: Log successful transition
-                try:
-                    with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
-                        f.write(f"[{time.time()}] ROOM {self.room_id}: Transition ACTIVE -> INTERMISSION\n")
-                except: pass
+                # Snapshot for persistence
+                self.recalculate_total_points() # Authoritative sync before snapshot
+                self.previous_total_points = getattr(self, 'total_points_count', 0)
+                self.previous_total_words = getattr(self, 'total_words_count', 0)
+                self.previous_total_counts_by_len = dict(getattr(self, 'total_counts_by_len', {}))
                 
                 # Asynchronous Post-Round Processing
                 def process_results_async():
@@ -1357,19 +1359,34 @@ class GameRoom:
         """Aggregate total attainable points for the active round's word list"""
         try:
             attainable = 0
-            if not getattr(self, 'solved_words_with_scores', None):
-                self.total_points_count = 0
-                return 0
-                
-            for pts in self.solved_words_with_scores.values():
-                if isinstance(pts, dict):
-                    attainable += pts.get('total', 0)
-                elif isinstance(pts, int):
-                    attainable += pts
+            scores = getattr(self, 'solved_words_with_scores', None)
+            
+            if scores:
+                for pts in scores.values():
+                    if isinstance(pts, dict):
+                        attainable += pts.get('total', 0)
+                    elif isinstance(pts, int):
+                        attainable += pts
+            
+            # FALLBACK: If scores are missing/empty but words exist, use fast length-based estimate
+            if attainable == 0 and getattr(self, 'all_words', None):
+                fmt = str(getattr(self, 'current_board_format', '')).lower()
+                is_valued = 'valued' in fmt
+                for w in self.all_words:
+                    length = len(w)
+                    if is_valued:
+                        attainable += length
+                    else:
+                        if length <= 2:   attainable += 0
+                        elif length <= 4: attainable += 1
+                        elif length == 5: attainable += 2
+                        elif length == 6: attainable += 3
+                        elif length == 7: attainable += 5
+                        else:             attainable += 11
+
             self.total_points_count = attainable
-            # LOG FOR DIAGNOSIS
-            if attainable == 0 and len(self.solved_words_with_scores or {}) > 0:
-                 print(f"[RECALC-DEBUG] Room {self.room_id}: Attainable=0 despite {len(self.solved_words_with_scores)} scores! First value: {list(self.solved_words_with_scores.values())[0] if self.solved_words_with_scores else 'N/A'}")
+            if attainable == 0 and len(scores or {}) > 0:
+                print(f"[RECALC-DEBUG] Room {self.room_id}: Attainable=0 despite {len(scores)} scores! First value: {list(scores.values())[0]}")
             return attainable
         except Exception as e:
             print(f"[GameRoom] Error recalculating points for {self.room_id}: {e}")
@@ -2050,6 +2067,7 @@ class RoomManager:
             
             # AUTHORITATIVE SYNC
             room.update_counts_by_len()
+            room.recalculate_total_points() # Ensure total pts is non-zero from round start
             
             # --- ASYNCHRONOUS POST-START TASKS ---
             # Offload heavy scoring and next-round pre-gen to background threads
@@ -2077,6 +2095,7 @@ class RoomManager:
                     room.solved_words_with_scores = final_scores
                     room.complete_words = room.all_words
                     room.solving_complete = True # Signal that missed words are ready
+                    room.recalculate_total_points() # Sync refined points after background scoring
                     
                     # 4. Trigger Pre-Generation for Round 2
                     self.pre_generate_next_round(room_id)
@@ -2409,8 +2428,17 @@ class RoomManager:
                             scored_dict[word] = {'total': s, 'base': s}
                     
                     room.next_round_word_scores = scored_dict
+                    room.next_round_total_points = sum(pts['total'] for pts in scored_dict.values())
                     room.next_round_board = board # SIGNAL READY IMMEDIATELY!
-                    print(f"[RoomManager] Board {room_id} signal-ready (Fast metrics applied)")
+                    
+                    # FIRST ROUND / LATE SYNC: If the round started while we were searching,
+                    # promote the fast metrics to the ACTIVE state immediately to avoid 0-point displays.
+                    if room.board == board:
+                        room.solved_words_with_scores = scored_dict
+                        room.recalculate_total_points()
+                        print(f"[RoomManager] Board {room_id} fast-synced to ACTIVE round ({room.total_points_count} pts)")
+                    else:
+                        print(f"[RoomManager] Board {room_id} signal-ready (Fast metrics applied: {room.next_round_total_points} pts)")
 
                     # BACKGROUND REFINEMENT: Detailed scoring (Scoring bonuses, paths, etc.)
                     from scoring import calculate_word_score
@@ -2456,20 +2484,8 @@ class RoomManager:
                         
                         # Frontend handles appending uniqueness percentage to difficulty label
                         
-                        # AUTHORITATIVE TRUNCATION:
-                        # Enforce the Spinner Set range immediately so teaser counts are accurate.
-                        target_wc_range = room.next_spinner_params.get('word_count_range', '100-200')
-                        _, max_target = self.board_generator._parse_word_count_range(target_wc_range)
-                        
-                        # SAFETY: If max_target is HUGE (+), skip truncation
-                        if max_target < 99999 and len(all_words) > max_target:
-                            print(f"[PreGen-Sync] TRUNCATING: Room {room_id} found {len(all_words)} words, target max is {max_target}. Enforcing.")
-                            # Priority: Longest/Highest scoring words first to ensure quality results
-                            sorted_trimmed = sorted(list(all_words), key=lambda w: (len(w), w), reverse=True)[:max_target]
-                            all_words = set(sorted_trimmed)
-                            all_words_dict = {w: all_words_dict.get(w, []) for w in all_words}
-                            
-                        # Update staging data with correctly constrained results
+                        # AUTHORITATIVE SYNC: Ensure factual counts are promoted.
+                        # The generator already enforces compliance, so we use the full list to avoid biasing length distribution.
                         room.next_round_words = list(all_words)
                         room.next_round_word_paths = all_words_dict
                         room.next_round_total_words_count = len(all_words)
@@ -2481,16 +2497,13 @@ class RoomManager:
                                 for w, pts in room.next_round_word_scores.items() if w in all_words
                             )
                         
-                        # Apply draconian slice to scores as well to prevent ghost scoring elements
+                        # Sync scores list to match the word list (Safety check)
                         if hasattr(room, 'next_round_word_scores'):
                             room.next_round_word_scores = {w: room.next_round_word_scores[w] for w in all_words if w in room.next_round_word_scores}
                             
-                        # AUTHORITATIVE SYNC: Update both the staging area AND the revealed UI slot.
+                        # Update metadata for the pending round
                         achieved_wc = self._get_factchecked_wc_range(len(all_words))
-                        # Note: we purposely DON'T overwrite spinner params with achieved_wc to preserve UI intent
                         
-                        # UPDATE: Always update the staging params with facts once generation completes,
-                        # even if already revealed. This ensures the header is accurate at T-minus 0s.
                         if getattr(room, 'next_spinner_params', None):
                             room.next_spinner_params['difficulty'] = achieved_diff
                             room.next_spinner_params['board_format'] = updated_format
@@ -2708,6 +2721,7 @@ class RoomManager:
                             e_scored_dict[word] = {'total': max(1, s), 'base': max(1, s)}
                     
                     room.next_round_word_scores = e_scored_dict
+                    room.next_round_total_points = sum(pts['total'] for pts in e_scored_dict.values())
                     
                     # SYNCHRONOUS COUNTS FOR EMERGENCY (Ensures Remaining Tab is accurate at 0s mark)
                     # We must set current_min_length on the room if it's about to be promoted
@@ -2842,6 +2856,24 @@ class RoomManager:
                     room.next_round_words = e_words
                     room.next_round_word_paths = e_paths
                     room.next_round_total_words_count = len(e_words)
+                    
+                    # USER REQUEST: Ensure Total Points is never 0.
+                    # Fast-apply length based scores for the emergency board immediately.
+                    is_valued_e = ('valued' in str(room.current_board_format).lower())
+                    e_scores = {}
+                    for w in e_words:
+                        if is_valued_e: e_scores[w] = {'total': len(w), 'base': len(w)}
+                        else:
+                            length = len(w)
+                            s = 0
+                            if length <= 2: s = 0
+                            elif length <= 4: s = 1
+                            elif length == 5: s = 2
+                            elif length == 6: s = 3
+                            elif length == 7: s = 5
+                            elif length >= 8: s = 11
+                            e_scores[w] = {'total': s, 'base': s}
+                    room.next_round_word_scores = e_scores
                 
                 # --- 3. FINAL COUNT SYNC: Ensure factual counts are promoted even if truncation was skipped ---
                 room.total_words_count = getattr(room, 'next_round_total_words_count', len(room.next_round_words or []))
@@ -2885,21 +2917,22 @@ class RoomManager:
                 room.bonus_cell = getattr(room, 'next_round_bonus_cell', None)
                 
                 # --- 4. ACCURACY ENFORCEMENT: Draconian word count truncation ---
-                target_range = getattr(room, 'current_word_count_range', '100-200')
-                if target_range:
-                    _, max_target = self.board_generator._parse_word_count_range(target_range)
-                    if max_target < 99999 and len(room.all_words) > max_target:
-                        print(f"[ACCURACY-SYCN] Truncating Round {room.current_round} to {max_target} words to match revealed range '{target_range}'")
-                        # Sort by length desc then alpha to keep the highest quality teaser words
-                        sorted_trimmed = sorted(list(room.all_words), key=lambda w: (len(w), w), reverse=True)[:max_target]
-                        room.all_words = set(sorted_trimmed)
-                        room.all_words_paths = {w: room.all_words_paths.get(w, []) for w in room.all_words}
-                        
-                        if hasattr(room, 'solved_words_with_scores'):
-                             room.solved_words_with_scores = {w: room.solved_words_with_scores[w] for w in room.all_words if w in room.solved_words_with_scores}
-                             
-                        # Explicitly verify the length matches what we truncated to avoid ANY downstream counting ghosts
-                        room.total_words_count = len(room.all_words)
+                try:
+                    target_range = getattr(room, 'current_word_count_range', '100-200')
+                    if target_range:
+                        _, max_target = self.board_generator._parse_word_count_range(target_range)
+                        if max_target < 99999 and len(room.all_words) > max_target:
+                            print(f"[ACCURACY-SYCN] Truncating Round {room.current_round} to {max_target} words to match revealed range '{target_range}'")
+                            # Sort by length desc then alpha to keep the highest quality teaser words
+                            sorted_trimmed = sorted(list(room.all_words), key=lambda w: (len(w), w), reverse=True)[:max_target]
+                            room.all_words = set(sorted_trimmed)
+                            room.all_words_paths = {w: room.all_words_paths.get(w, []) for w in room.all_words}
+                            
+                            if hasattr(room, 'solved_words_with_scores'):
+                                 room.solved_words_with_scores = {w: room.solved_words_with_scores[w] for w in room.all_words if w in room.solved_words_with_scores}
+                                 
+                            # Explicitly verify the length matches what we truncated to avoid ANY downstream counting ghosts
+                            room.total_words_count = len(room.all_words)
                 except Exception as e:
                     print(f"[ACCURACY-ERROR] Failed to truncate: {e}")
                 

@@ -529,6 +529,11 @@ class BoardGenerator:
         with open("/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log", "a") as f:
             f.write(f"[board_generator.py] generate_board ENTERED for {dimensions} (Range: {word_count_range}) at {time.time()}\n")
 
+        # USER REQUEST: Ensure Added Words are actually usable on boards.
+        # Calling get_use_added_words() triggers a trie rebuild if settings have changed across workers.
+        from word_validator import word_validator
+        word_validator.get_use_added_words()
+
         # --- DIFFICULTY NORMALIZATION (User Change: Normal -> Medium / Expert -> Hard) ---
         # Ensure that lobby-specific or legacy difficulty labels are mapped correctly for internal logic
         diff_map = {"NORMAL": "Medium", "EXPERT": "Hard", "DIFFICULT": "Hard", "MASTERS": "Hard"}
@@ -781,6 +786,41 @@ class BoardGenerator:
                         continue
                     bonus_cells_set = set(path)
                     print(f"[BoardGen] ✓ Bonus word '{actual_bonus_word}' embedded successfully")
+                
+                # USER REQUEST: Ensure Added Words are actually present if enabled.
+                # We pick 1-2 random words from the custom list and attempt to embed them.
+                # Moved OUTSIDE the bonus word block so it runs even if no bonus word is set.
+                if word_validator.get_use_added_words() and word_validator.added_words:
+                    try:
+                        # Use a local list to avoid threading issues
+                        custom_candidates = list(word_validator.added_words)
+                        num_to_embed = min(2, len(custom_candidates))
+                        embedded_added = 0
+                        
+                        # Filter to reasonable lengths for the current board
+                        max_fit = (rows * cols) // 2
+                        fit_candidates = [w for w in custom_candidates if len(w) <= max_fit and len(w) >= min_word_length]
+                        
+                        if fit_candidates:
+                            random.shuffle(fit_candidates)
+                            for custom_w in fit_candidates:
+                                if embedded_added >= num_to_embed: break
+                                
+                                # Use a light version of embedding that doesn't restart the whole loop
+                                # If 3D, use cube embedding
+                                if depth > 1:
+                                    success_path = self._embed_bonus_word_cube(board, custom_w, is_checkerboard=is_checkerboard_fmt)
+                                else:
+                                    success_path = self._embed_bonus_word(board, custom_w, is_checkerboard=is_checkerboard_fmt)
+                                    
+                                if success_path:
+                                    embedded_added += 1
+                                    # CRITICAL: Add to bonus_cells_set so IO optimization protects these cells!
+                                    for node in success_path:
+                                        bonus_cells_set.add(node)
+                                    print(f"[BoardGen] + Custom Added Word '{custom_w}' embedded and PROTECTED successfully.")
+                    except Exception as custom_err:
+                        print(f"[BoardGen] Warning: Could not embed custom words: {custom_err}")
 
                 # --- RUN OPTIMIZATION PASS IF REQUIRED ---
                 # (Optimization logic moved below special formats)
@@ -2518,7 +2558,7 @@ class BoardGenerator:
                 found_words.add(word)
 
             # Prune search using Trie/Prefix checking
-            if len(word) < 10 and word_validator.has_valid_prefix(word, dictionary):
+            if word_validator.has_valid_prefix(word, dictionary):
                 for dr in [-1, 0, 1]:
                     for dc in [-1, 0, 1]:
                         if dr == 0 and dc == 0:

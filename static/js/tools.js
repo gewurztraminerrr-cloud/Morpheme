@@ -3534,6 +3534,20 @@ function setupUnscrambleTool() {
         });
     }
 
+    // PURGE PREFETCH ON SETTING CHANGE
+    const lengthSel = document.getElementById('unscramble-length');
+    const dictSel = document.getElementById('unscramble-dict');
+    const mustSel = document.getElementById('unscramble-must-have');
+
+    [lengthSel, dictSel, mustSel].forEach(sel => {
+        if (sel) {
+            sel.addEventListener('change', () => {
+                unscrambleState.nextData = null;
+                prefetchUnscramble(); 
+            });
+        }
+    });
+
     // Trigger initial load if empty
     setTimeout(() => {
         const display = document.getElementById('unscramble-jumbled');
@@ -3564,8 +3578,10 @@ async function startNewUnscramble(keepFound = false) {
 
     const lenInput = document.getElementById('unscramble-length');
     const dictInput = document.getElementById('unscramble-dict');
+    const mustInput = document.getElementById('unscramble-must-have');
     const len = lenInput ? lenInput.value : 5;
     const dict = dictInput ? dictInput.value : 'NWL';
+    const must = mustInput ? mustInput.value.trim().toUpperCase() : '';
 
     const display = document.getElementById('unscramble-jumbled');
     const info = document.getElementById('unscramble-count-info');
@@ -3606,12 +3622,12 @@ async function startNewUnscramble(keepFound = false) {
     try {
         let data;
         // USE PREFETCHED DATA IF AVAILABLE AND MATCHES SETTINGS
-        if (unscrambleState.nextData && unscrambleState.nextData.len == len && unscrambleState.nextData.dict == dict) {
+        if (unscrambleState.nextData && unscrambleState.nextData.len == len && unscrambleState.nextData.dict == dict && unscrambleState.nextData.must == must) {
             data = unscrambleState.nextData.data;
             unscrambleState.nextData = null;
             console.log("Using prefetched unscramble data");
         } else {
-            const resp = await fetch(`/api/tools/unscramble/random?length=${len}&dictionary=${dict}`);
+            const resp = await fetch(`/api/tools/unscramble/random?length=${len}&dictionary=${dict}&must_have=${encodeURIComponent(must)}`);
             data = await resp.json();
         }
 
@@ -3626,6 +3642,13 @@ async function startNewUnscramble(keepFound = false) {
 
         if (display) display.innerText = data.jumbled.toUpperCase();
         if (info) info.innerText = `${data.count} word${data.count !== 1 ? 's' : ''} possible`;
+
+        // FINAL SAFETY CHECK: If we requested a letter and it's missing, FORCE RE-FETCH
+        if (must && !data.jumbled.toUpperCase().includes(must)) {
+            console.error("CRITICAL: Scrambled word missing required letter. Auto-correcting...");
+            unscrambleState.nextData = null;
+            return startNewUnscramble(keepFound);
+        }
 
         renderUnscrambleFound();
 
@@ -3651,14 +3674,16 @@ async function startNewUnscramble(keepFound = false) {
 async function prefetchUnscramble() {
     const lenInput = document.getElementById('unscramble-length');
     const dictInput = document.getElementById('unscramble-dict');
+    const mustInput = document.getElementById('unscramble-must-have');
     const len = lenInput ? lenInput.value : 5;
     const dict = dictInput ? dictInput.value : 'NWL';
+    const must = mustInput ? mustInput.value.trim().toUpperCase() : '';
 
     try {
-        const resp = await fetch(`/api/tools/unscramble/random?length=${len}&dictionary=${dict}`);
+        const resp = await fetch(`/api/tools/unscramble/random?length=${len}&dictionary=${dict}&must_have=${encodeURIComponent(must)}`);
         const data = await resp.json();
         if (!data.error) {
-            unscrambleState.nextData = { data, len, dict };
+            unscrambleState.nextData = { data, len, dict, must };
             console.log("Next unscramble prefetched");
         }
     } catch (e) { }
