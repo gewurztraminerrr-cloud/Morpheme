@@ -576,7 +576,7 @@ async function updateGameState(incomingState = null) {
             return match;
         });
 
-        const is24H = (state.game_type === 'accumulative' && state.time_limit >= 7200);
+        const is24H = (state.time_limit >= 7200);
 
         // COMBINED EVICTION / 24H RESET LOGIC
         if (!amIPlayer && !amISpectator && currentUsername) {
@@ -906,8 +906,9 @@ async function updateGameState(incomingState = null) {
             let headerText = 'Words';
             if (state.game_type === 'fcfs') headerText = 'Live Feed';
 
-            if (activeWordsTab === 'remaining') headerText = 'Remaining';
-            if (activeWordsTab === 'clues') headerText = 'Clues';
+            const factRange = (state.spinner_params && state.spinner_params.word_count_range) || state.current_word_count_range || '100-200';
+            if (activeWordsTab === 'remaining') headerText = `Remaining (${factRange})`;
+            if (activeWordsTab === 'clues') headerText = `Clues (${factRange})`;
             if (activeWordsTab === 'previous') headerText = 'Previous Day';
             if (activeWordsTab === 'history') headerText = 'Past Winners';
             if (state.state === 'intermission' && activeWordsTab === 'found') headerText = 'All Words';
@@ -1321,16 +1322,24 @@ async function updateGameState(incomingState = null) {
             if (unfoundWords.length === 0) {
                 cluesListEl.innerHTML = '<p class="placeholder">All words found!</p>';
             } else {
+                // Sort Clues Alpha for better searching
                 unfoundWords.sort((a, b) => a.length - b.length || a.localeCompare(b));
-                const html = unfoundWords.map(w => {
+                const clueListHtml = unfoundWords.map(w => {
                     const prefix = w.substring(0, 2);
                     let sum = 0;
                     for (let char of w.toUpperCase()) {
                         sum += (window.LETTER_VALUES || LETTER_VALUES)[char] || 1;
                     }
-                    return `<div class="clue-item">${prefix}.. (${w.length}) [${sum}]</div>`;
+                    return `
+                        <div class="clue-item">
+                            <span class="clue-prefix">${prefix}..</span>
+                            <div class="clue-divider"></div>
+                            <span class="clue-stats">${w.length} Letters &bull; ${sum} pts</span>
+                        </div>
+                    `;
                 }).join('');
-                cluesListEl.innerHTML = html;
+                
+                cluesListEl.innerHTML = '<div class="clues-grid" style="grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px;">' + clueListHtml + '</div>';
             }
         }
 

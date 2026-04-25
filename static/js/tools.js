@@ -2619,22 +2619,22 @@ async function runSequenceSearch() {
 let manualSolvedWords = [];
 
 function setupManualTool() {
-    const dimSelect = document.getElementById('manual-dim');
-    const solveBtn = document.getElementById('manual-solve-btn');
-    const revealBtn = document.getElementById('manual-reveal-btn');
+    try {
+        const solveBtn = document.getElementById('direct-solve-btn');
+        if (solveBtn) {
+            solveBtn.onclick = (e) => {
+                console.log("Button clicked from onclick");
+                runManualSolve();
+            };
+        }
 
-    if (dimSelect) {
-        dimSelect.addEventListener('change', (e) => renderManualGrid(e.target.value));
-        // Initial render
-        renderManualGrid(dimSelect.value);
-    }
-
-    if (solveBtn) {
-        solveBtn.addEventListener('click', runManualSolve);
-    }
-
-    if (revealBtn) {
-        revealBtn.addEventListener('click', revealManualWords);
+        const dimSelect = document.getElementById('manual-dim');
+        if (dimSelect) {
+            dimSelect.onchange = (e) => renderManualGrid(e.target.value);
+            renderManualGrid(dimSelect.value);
+        }
+    } catch (e) {
+        console.error("Manual tool setup failed:", e);
     }
 }
 
@@ -2642,160 +2642,132 @@ function renderManualGrid(dims) {
     const gridEl = document.getElementById('manual-grid');
     if (!gridEl) return;
 
-    const [rows, cols] = dims.split('x').map(Number);
+    try {
+        const [rows, cols] = dims.split('x').map(Number);
+        gridEl.style.gridTemplateColumns = `repeat(${cols}, 55px)`;
+        gridEl.style.gridTemplateRows = `repeat(${rows}, 55px)`;
+        gridEl.innerHTML = '';
 
-    gridEl.style.gridTemplateColumns = `repeat(${cols}, 45px)`;
-    gridEl.style.gridTemplateRows = `repeat(${rows}, 45px)`;
-
-    gridEl.innerHTML = '';
-
-    // Create inputs
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.className = 'manual-cell';
-            input.maxLength = 1;
-            input.dataset.r = r;
-            input.dataset.c = c;
-
-            // Auto-advance logic
-            input.addEventListener('input', (e) => {
-                const val = e.target.value;
-                if (val && val.length === 1) {
-                    const next = input.nextElementSibling;
-                    if (next) next.focus();
-                }
-            });
-
-            // Backspace logic
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Backspace' && !input.value) {
-                    const prev = input.previousElementSibling;
-                    if (prev) prev.focus();
-                }
-            });
-
-            gridEl.appendChild(input);
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const input = document.createElement('input');
+                input.className = 'manual-cell';
+                input.maxLength = 2;
+                input.placeholder = '?';
+                input.oninput = (e) => {
+                    const val = e.target.value.toUpperCase();
+                    e.target.value = val;
+                    if (val.length === 2 || (val.length === 1 && val !== 'Q')) {
+                        if (input.nextElementSibling) input.nextElementSibling.focus();
+                    }
+                };
+                input.onkeydown = (e) => {
+                    if (e.key === 'Backspace' && !input.value) {
+                        if (input.previousElementSibling) input.previousElementSibling.focus();
+                    }
+                };
+                gridEl.appendChild(input);
+            }
         }
-    }
 
-    // Reset state
-    manualSolvedWords = [];
-    const resultsContainer = document.getElementById('manual-results-container');
-    const revealBtn = document.getElementById('manual-reveal-btn');
-    if (resultsContainer) resultsContainer.style.display = 'none';
-    if (revealBtn) revealBtn.style.display = 'none';
+        const res = document.getElementById('manual-results-container');
+        if (res) {
+            res.style.display = 'flex';
+            res.innerHTML = '<div class="seq-results-placeholder" style="padding: 20px; color: var(--muted-text);">Ready to solve...</div>';
+        }
+    } catch (err) {
+        console.error("Grid render failed:", err);
+    }
 }
 
 async function runManualSolve() {
+    const solveBtn = document.getElementById('direct-solve-btn');
     const gridEl = document.getElementById('manual-grid');
     const dictEl = document.getElementById('manual-dict');
-    const solveBtn = document.getElementById('manual-solve-btn');
-    const revealBtn = document.getElementById('manual-reveal-btn');
-    const resultsContainer = document.getElementById('manual-results-container');
     const dimSelect = document.getElementById('manual-dim');
+    const resultsContainer = document.getElementById('manual-results-container');
 
-    if (!gridEl || !dimSelect) return;
-
-    const [rows, cols] = dimSelect.value.split('x').map(Number);
-    const cells = gridEl.querySelectorAll('.manual-cell');
-
-    // Build 2D board
-    const board = [];
-    let cellIdx = 0;
-    let missing = false;
-
-    for (let r = 0; r < rows; r++) {
-        const row = [];
-        for (let c = 0; c < cols; c++) {
-            const val = cells[cellIdx++].value.trim().toUpperCase();
-            if (!val) {
-                missing = true;
-            }
-            row.push(val);
-        }
-        board.push(row);
-    }
-
-    if (missing) {
-        alert("Please fill in all letters first.");
+    if (!gridEl || !dimSelect || !solveBtn || !resultsContainer) {
+        alert("Tool elements not found. Please refresh.");
         return;
     }
 
-    solveBtn.innerText = "Solving...";
-    solveBtn.disabled = true;
-
     try {
-        const response = await fetch('/api/tools/manual_solve', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                board: board,
-                dictionary: dictEl.value
-            })
-        });
+        const [rows, cols] = dimSelect.value.split('x').map(Number);
+        const cells = gridEl.querySelectorAll('.manual-cell');
+        const board = [];
+        let idx = 0;
+        let missing = false;
 
-        const data = await response.json();
+        for (let r = 0; r < rows; r++) {
+            const row = [];
+            for (let c = 0; c < cols; c++) {
+                const v = cells[idx++].value.trim().toUpperCase();
+                if (!v) missing = true;
+                row.push(v);
+            }
+            board.push(row);
+        }
 
-        if (data.error) {
-            alert("Solve failed: " + data.error);
+        if (missing) {
+            alert("Please fill all cells first.");
             return;
         }
 
-        // If this board matches a currently live room, block results
+        solveBtn.innerText = "Solving...";
+        solveBtn.disabled = true;
+
+        const resp = await fetch('/api/tools/manual_solve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ board, dictionary: dictEl.value })
+        });
+        const data = await resp.json();
+
+        if (data.error) {
+            alert("Solve error: " + data.error);
+            return;
+        }
+
         if (data.board_matches_active_room) {
-            manualSolvedWords = [];
-            resultsContainer.innerHTML = `
-                <div style="padding: 20px; text-align: center; color: #f87171;">
-                    <div style="font-size: 1.5rem; margin-bottom: 8px;">⚠️</div>
-                    <div style="font-weight: 700; font-size: 1rem; margin-bottom: 6px;">Board In Use</div>
-                    <div style="font-size: 0.85rem; opacity: 0.7;">This board is currently being played in a live room.<br>Results are not available while the round is active.</div>
-                </div>`;
-            resultsContainer.style.display = 'flex';
-            revealBtn.style.display = 'none';
+            resultsContainer.innerHTML = '<div style="padding: 30px; text-align: center; color: #f87171;">⚠️ Active Room Match - Solve Blocked</div>';
             return;
         }
 
         manualSolvedWords = data.results;
-
-        // Show reveal button, hide results space initially
-        revealBtn.style.display = 'inline-block';
-        revealBtn.innerText = "Reveal Words";
-        resultsContainer.style.display = 'none';
+        revealManualWords(true);
 
     } catch (err) {
-        console.error("Manual solve failed:", err);
-        alert("Server error during solve.");
+        alert("Solve failed: " + err.message);
     } finally {
         solveBtn.innerText = "Solve";
         solveBtn.disabled = false;
     }
 }
 
-function revealManualWords() {
+function revealManualWords(forceShow = false) {
     const resultsContainer = document.getElementById('manual-results-container');
     const revealBtn = document.getElementById('manual-reveal-btn');
 
-    if (resultsContainer.style.display === 'flex') {
+    if (!forceShow && resultsContainer.style.display === 'flex') {
         resultsContainer.style.display = 'none';
-        revealBtn.innerText = "Reveal Words";
+        if (revealBtn) revealBtn.innerText = "Reveal Words";
         return;
     }
 
     if (manualSolvedWords.length === 0) {
-        resultsContainer.innerHTML = '<div class="seq-results-placeholder">No words found on this board.</div>';
+        resultsContainer.innerHTML = '<div class="seq-results-placeholder" style="padding: 20px; color: var(--muted-text);">No words found on this board.</div>';
     } else {
         let html = `
-            <div style="padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); font-weight: 700; color: #4facfe; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem;">
+            <div style="padding: 12px 20px; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1); background: rgba(var(--text-primary-rgb), 0.05); font-weight: 700; color: #4facfe; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem;">
                 Found ${manualSolvedWords.length} words
             </div>
             <div style="flex: 1; overflow-y: auto; padding: 20px;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px;">
         `;
 
         html += manualSolvedWords.map(w => `
-            <div style="padding: 8px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: rgba(255,255,255,0.9); font-family: 'JetBrains Mono', monospace; text-align: center; font-size: 1rem; transition: background 0.2s; cursor: default;">
+            <div style="padding: 12px 15px; background: rgba(var(--text-primary-rgb), 0.05); border: 1px solid rgba(var(--text-primary-rgb), 0.1); border-radius: 10px; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; text-align: center; font-size: 1.1rem; transition: all 0.2s; cursor: default; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                 ${w}
             </div>
         `).join('');
@@ -2808,7 +2780,7 @@ function revealManualWords() {
     }
 
     resultsContainer.style.display = 'flex';
-    revealBtn.innerText = "Hide Words";
+    if (revealBtn) revealBtn.innerText = "Hide Words";
 }
 
 // --- Random Word Tool Logic ---

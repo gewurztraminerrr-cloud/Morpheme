@@ -2412,7 +2412,7 @@ def get_room_state(room_id):
                 # ACTIVE: Provide word scores for total-points calculation client-side
                 # (Avoids showing '0 total pts' when total_points_count hasn't been computed yet)
                 word_scores_to_return = getattr(room, 'solved_words_with_scores', {}) or {}
-                if is_fcfs:
+                if is_fcfs or room.time_limit >= 7200:
                     words_to_return = list(room.all_words)
 
             # Determine user visibility
@@ -3517,10 +3517,10 @@ def tools_manual_solve():
         
     try:
         # We use the board_generator from the global room_manager instance
-        all_words = room_manager.board_generator._solve_board(board, dictionary, (0, float('inf')), 3)
+        all_words_dict = room_manager.board_generator._solve_board(board, dictionary, (0, float('inf')), 3)
         
         # Sort by largest first (Length DESC, then Alpha ASC)
-        all_words.sort(key=lambda x: (-len(x), x))
+        all_words = sorted(list(all_words_dict.keys()), key=lambda x: (-len(x), x))
         
         return jsonify({
             'results': all_words,

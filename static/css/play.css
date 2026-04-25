@@ -1412,25 +1412,40 @@ body.theme-light-brown .word-item.missed {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    height: 40vh;
-    /* Reduced from 60vh to fit better */
-    max-height: 400px;
-    /* Reduced max-cap */
+    height: 75vh;
+    /* Increased for more room */
+    max-height: 1200px;
+    /* Increased from 400px to allow full vertical utilization */
 }
 
 /* --- MANUAL TOOL STYLING --- */
+.manual-workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    align-items: center;
+    margin-top: 20px;
+    flex: 1;
+}
+
 #manual-results-container {
-    height: 70vh;
-    max-height: 800px;
+    width: 100%;
+    flex: 1;
+    min-height: 400px;
+    height: auto !important;
+    max-height: none !important;
+    margin-top: 10px !important;
 }
 
 .manual-grid-scroll {
-    max-height: 400px;
+    width: auto;
+    max-height: 600px !important;
     overflow-y: auto;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 12px;
-    padding: 20px;
-    margin-top: 20px;
+    padding: 24px;
+    border: 1px solid rgba(var(--text-primary-rgb), 0.1);
 }
 
 /* --- SUBANAGRAMS TOOL STYLING --- */
@@ -1446,23 +1461,58 @@ body.theme-light-brown .word-item.missed {
 }
 
 .manual-cell {
-    width: 45px;
-    height: 45px;
+    width: 55px;
+    height: 55px;
     background: #fff;
-    border: none;
-    border-radius: 6px;
+    border: 2px solid rgba(0,0,0,0.1);
+    border-radius: 8px;
     text-align: center;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #000;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #111;
     text-transform: uppercase;
     outline: none;
     transition: all 0.2s;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .manual-cell:focus {
     box-shadow: 0 0 10px rgba(64, 156, 255, 0.8);
     transform: scale(1.05);
+}
+
+.manual-action-btn {
+    padding: 0 25px;
+    height: 100%;
+    background: linear-gradient(135deg, #4ade80, #22c55e);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(74, 222, 128, 0.3);
+    transition: all 0.2s;
+    min-width: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.manual-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(74, 222, 128, 0.4);
+    filter: brightness(1.1);
+}
+
+.manual-action-btn:active {
+    transform: translateY(0);
+}
+
+.manual-action-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+    transform: none;
 }
 
 .manual-results-hidden {
@@ -2720,15 +2770,45 @@ body.theme-light-brown .word-item.missed {
 }
 
 .clue-item {
-    background: rgba(var(--text-primary-rgb), 0.03);
-    border: 1px solid rgba(var(--text-primary-rgb), 0.08);
-    border-radius: 8px;
-    padding: 10px;
+    background: rgba(var(--text-primary-rgb), 0.04);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.1);
+    border-radius: 12px;
+    padding: 20px 15px;
     text-align: center;
-    font-size: 0.85rem;
-    color: rgba(var(--text-primary-rgb), 0.9);
+    color: rgba(var(--text-primary-rgb), 0.95);
     font-family: 'JetBrains Mono', 'Courier New', monospace;
-    transition: all 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.clue-prefix {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--accent-color);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.clue-divider {
+    width: 30%;
+    height: 2px;
+    background: rgba(var(--text-primary-rgb), 0.1);
+    margin: 8px 0;
+    border-radius: 2px;
+}
+
+.clue-stats {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
 }
 
 .clue-item:hover {
