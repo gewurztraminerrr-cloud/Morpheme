@@ -1940,7 +1940,8 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
 
     // Sort: Length desc, then Alpha
     // Sort: Color Priority, then Length desc, then Alpha
-    // Priority: Green (Bonus) > Blue (Found) > Gold (CSW) > Black/Gray (Missed/Unfound)
+    // Priority: Red/Orange (Bonus) > Purple (Added) > Blue (Found) > Gold (CSW) > Black/Gray (Missed/Unfound)
+    console.log(`[displayAllWords] Added words for highlight:`, addedUpper);
     const sortedWords = [...allWords].sort((a, b) => {
         const wordA = (typeof a === 'object' ? (a.word || '') : a).toUpperCase();
         const wordB = (typeof b === 'object' ? (b.word || '') : b).toUpperCase();
@@ -1951,6 +1952,18 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             if (wordA === bonusUpper) return -1;
             if (wordB === bonusUpper) return 1;
         }
+
+        // 0.5 Added Words (Purple) (Second Priority)
+        const isAAdded = addedUpper.includes(wordA);
+        const isBAdded = addedUpper.includes(wordB);
+        if (isAAdded && !isBAdded) return -1;
+        if (!isAAdded && isBAdded) return 1;
+
+        // 0.6 Found Words (User or Global) vs Missed
+        const isAFound = allFoundUpper.includes(wordA) || targetWordsUpper.includes(wordA);
+        const isBFound = allFoundUpper.includes(wordB) || targetWordsUpper.includes(wordB);
+        if (isAFound && !isBFound) return -1;
+        if (!isAFound && isBFound) return 1;
 
         // 1. Length (Desc)
         const lenA = (typeof a === 'object' ? (a.word || '') : a).length;

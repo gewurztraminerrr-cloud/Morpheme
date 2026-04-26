@@ -1899,6 +1899,11 @@ class RoomManager:
              
         room.starting_round = True
         room._round_start_init_time = time.time()
+        
+        # SYNC ADDED WORDS CONFIG: Ensure all processes reload the use_added_words state from disk
+        if hasattr(word_validator, 'word_validator'):
+            word_validator.word_validator.get_use_added_words()
+            
         try:
             # Save previous round data before generating new one
             has_prev = hasattr(room, 'previous_all_words') and room.previous_all_words
@@ -1988,7 +1993,15 @@ class RoomManager:
                 
             # ATOMICITY: Apply new round data
             room.board = board
-            room.all_words = all_words
+            room.all_words = all_words or []
+            
+            # CATEGORIZATION (Synchronous): Ensure these are available immediately for UI sync
+            if hasattr(word_validator, 'word_validator'):
+                room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
+                room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
+            else:
+                room.csw_only_words = []
+                room.added_words = []
             
             # CRITICAL: Preserve special cell metadata (Bonus Letter / Either/Or)
             # generate_board returns 'bonus_cell' coordinate as the 3rd element.
@@ -2074,11 +2087,6 @@ class RoomManager:
             import threading
             def finalize_start_round_data():
                 try:
-                    # 1. Word Categorization (CSW, Added Words)
-                    from word_validator import word_validator
-                    room.csw_only_words = [w for w in room.all_words if word_validator.is_csw_only(w)]
-                    room.added_words = [w for w in room.all_words if word_validator.is_added_word(w)]
-
                     # 2. Scoring (Calculated in background to allow instant round start)
                     from scoring import calculate_word_score
                     final_scores = {}

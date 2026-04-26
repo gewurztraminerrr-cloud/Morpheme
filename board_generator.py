@@ -2435,7 +2435,9 @@ class BoardGenerator:
         solver_timeout = timeout  # Configurable timeout for board solving
 
         # --- PRE-LOAD TRIE ROOT ---
-        # --- PRE-LOAD TRIE ROOT ---
+        # SYNC: Ensure tries are current with 'Added Words' toggle and file state
+        word_validator.get_use_added_words()
+        
         d_upper = str(dictionary).upper()
         if d_upper == "UNIQUENWL":
             trie_root = word_validator.unique_nwl_trie

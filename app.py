@@ -2398,6 +2398,11 @@ def get_room_state(room_id):
             word_scores_to_return = {}
             if is_intermission:
                 # Intermission solutions are preserved in room.all_words until 0:00
+                # SYNC: Re-categorized added/csw words in case dictionaries changed during the round
+                if hasattr(word_validator, 'word_validator'):
+                    room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
+                    room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
+                
                 words_to_return = list(room.all_words)
                 word_scores_to_return = getattr(room, 'solved_words_with_scores', {})
                 # Fallback to previous if current is somehow missing
@@ -2474,8 +2479,8 @@ def get_room_state(room_id):
                 'all_word_scores': word_scores_to_return,
                 'global_found_words': global_found,
                 'fcfs_found_words': list(getattr(room, 'fcfs_found_words', [])) if (is_active and is_fcfs) else [],
-                'csw_only_words': (getattr(room, 'next_round_csw_only_words', []) if (is_intermission and is_revealed) else getattr(room, 'csw_only_words', [])),
-                'added_words': (getattr(room, 'next_round_added_words', []) if (is_intermission and is_revealed) else getattr(room, 'added_words', [])),
+                'added_words': [w for w in words_to_return if word_validator.get_use_added_words() and word_validator.is_added_word(w)],
+                'csw_only_words': [w for w in words_to_return if word_validator.is_csw_only(w)],
                 'previous_all_words': getattr(room, 'previous_all_words', []),
                 'previous_all_word_scores': getattr(room, 'previous_all_word_scores', {}),
                 'previous_board': getattr(room, 'previous_board', []),
@@ -3516,6 +3521,9 @@ def tools_manual_solve():
         print(f"[ManualSolve] Error during room board check (non-fatal): {check_err}")
         
     try:
+        # SYNC: Ensure dictionary state is fresh for this process
+        word_validator.get_use_added_words()
+
         # We use the board_generator from the global room_manager instance
         all_words_dict = room_manager.board_generator._solve_board(board, dictionary, (0, float('inf')), 3)
         

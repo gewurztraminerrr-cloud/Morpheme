@@ -61,12 +61,28 @@ class WordValidator:
         return self.use_added_words
 
     def get_use_added_words(self):
-        """Actively read config to sync across multiple Gunicorn workers"""
+        """Actively read config and check for word list changes to sync across multiple Gunicorn workers"""
         old_val = getattr(self, 'use_added_words', True)
         self._load_config()
-        if old_val != self.use_added_words:
-            # Sync happened from another worker, we must rebuild locally too!
-            self._load_dictionaries()
+        
+        # Check added_words.txt timestamp for changes even if toggle didn't change
+        added_path = os.path.join(self.base_path, 'added_words.txt')
+        curr_mtime = 0
+        if os.path.exists(added_path):
+            curr_mtime = os.path.getmtime(added_path)
+        
+        old_mtime = getattr(self, '_added_words_mtime', 0)
+        
+        if old_val != self.use_added_words or curr_mtime != old_mtime:
+            # Sync happened or file changed, we must rebuild locally too!
+            self._added_words_mtime = curr_mtime
+            if old_val != self.use_added_words:
+                 # Full dictionary rebuild only if toggle changed
+                 self._load_dictionaries()
+            else:
+                 # Just words list changed, lightweight reload
+                 self.reload_added_words()
+                 
         return self.use_added_words
     
     def _load_dictionaries(self):
@@ -176,7 +192,14 @@ class WordValidator:
                     if word:
                         self.added_words.add(word)
                         self._add_to_trie(self.added_trie, word)
-            print(f"Loaded {len(self.added_words)} custom added words")
+                        # CRITICAL: If enabled, inject these into the high-speed main tries so they appear on boards
+                        if getattr(self, 'use_added_words', True):
+                            self._add_to_trie(self.nwl_trie, word)
+                            self._add_to_trie(self.csw_trie, word)
+                            self._add_to_trie(self.unique_nwl_trie, word)
+                            self._add_to_trie(self.unique_csw_trie, word)
+
+            print(f"Loaded {len(self.added_words)} custom added words (Re-injected into main tries)")
             self._recalculate_full_sets()
 
     def _add_to_trie(self, root, word):

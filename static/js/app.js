@@ -607,6 +607,10 @@ function showPage(pageId) {
                 input.focus();
             }
         }, 100);
+    } else if (pageId === 'page-mods') {
+        if (typeof window.loadAddedWordsConfig === 'function') {
+            window.loadAddedWordsConfig();
+        }
     } else if (pageId === 'page-tools') {
         if (typeof window.refreshProfileTool === 'function') {
             window.refreshProfileTool(true); // Force refresh to current user

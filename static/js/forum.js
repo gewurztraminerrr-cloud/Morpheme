@@ -138,6 +138,11 @@ const Forum = {
         lastViewed[catId] = Date.now();
         localStorage.setItem('forum_last_viewed', JSON.stringify(lastViewed));
 
+        // Immediately update global nav button status
+        if (typeof window.checkForumActivity === 'function') {
+            window.checkForumActivity();
+        }
+
         document.getElementById('forum-category-title').textContent = category.name;
         document.getElementById('forum-category-desc').textContent = category.description;
 
