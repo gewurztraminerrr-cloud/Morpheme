@@ -1954,37 +1954,13 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     const sortedWords = [...allWords].sort((a, b) => {
         const wordA = (typeof a === 'object' ? (a.word || '') : a).toUpperCase();
         const wordB = (typeof b === 'object' ? (b.word || '') : b).toUpperCase();
-        const bonusUpper = bonusWord ? bonusWord.toUpperCase() : null;
 
-        // 0. Bonus Word (Absolute Top Priority)
-        if (bonusUpper) {
-            if (wordA === bonusUpper) return -1;
-            if (wordB === bonusUpper) return 1;
-        }
-
-        // 0.5 Added Words (Purple) (Second Priority)
-        const isAAdded = addedUpper.includes(wordA);
-        const isBAdded = addedUpper.includes(wordB);
-        if (isAAdded && !isBAdded) return -1;
-        if (!isAAdded && isBAdded) return 1;
-
-        // 0.6 Found Words (User or Global) vs Missed
-        const isAFound = allFoundUpper.includes(wordA) || targetWordsUpper.includes(wordA);
-        const isBFound = allFoundUpper.includes(wordB) || targetWordsUpper.includes(wordB);
-        if (isAFound && !isBFound) return -1;
-        if (!isAFound && isBFound) return 1;
-
-        // 1. Length (Desc)
-        const lenA = (typeof a === 'object' ? (a.word || '') : a).length;
-        const lenB = (typeof b === 'object' ? (b.word || '') : b).length;
+        // 1. Length (Desc) - Primary sort
+        const lenA = wordA.length;
+        const lenB = wordB.length;
         if (lenA !== lenB) return lenB - lenA;
 
-        // 2. Score (Desc)
-        const scoreA = (typeof allWordScores[wordA] === 'object' ? (allWordScores[wordA].total || 0) : (allWordScores[wordA] || 0));
-        const scoreB = (typeof allWordScores[wordB] === 'object' ? (allWordScores[wordB].total || 0) : (allWordScores[wordB] || 0));
-        if (scoreA !== scoreB) return scoreB - scoreA;
-
-        // 3. Alpha
+        // 2. Alphabetical (Asc) - Secondary sort
         return wordA.localeCompare(wordB);
     });
 
