@@ -1954,6 +1954,13 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     const sortedWords = [...allWords].sort((a, b) => {
         const wordA = (typeof a === 'object' ? (a.word || '') : a).toUpperCase();
         const wordB = (typeof b === 'object' ? (b.word || '') : b).toUpperCase();
+        const bonusUpper = bonusWord ? bonusWord.toUpperCase() : null;
+
+        // 0. Bonus Word (Absolute Top Priority)
+        if (bonusUpper) {
+            if (wordA === bonusUpper) return -1;
+            if (wordB === bonusUpper) return 1;
+        }
 
         // 1. Length (Desc) - Primary sort
         const lenA = wordA.length;

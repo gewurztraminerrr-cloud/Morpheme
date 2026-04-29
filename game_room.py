@@ -425,8 +425,9 @@ class GameRoom:
             age = now - p.last_active
             if age >= timeout and not p.is_ai:
                 # PERSISTENCE: Never remove players from 24h rooms for inactivity
-                if is_daily:
-                    continue 
+                # User Request: Enforce inactivity removal even for 24h rooms to keep lobby counts accurate
+                # if is_daily:
+                #    continue 
                 to_remove_ids.append(p.user_id)
 
         players_removed = False
@@ -3022,11 +3023,16 @@ class RoomManager:
                 
                 # Reset Round counters
                 room.current_round += 1
-                for p in room.players:
-                    p.submitted_words, p.invalid_words, p.score = [], [], 0
-                    p.found_bonus_word, p.has_abandoned = False, False
-                    p.joined_mid_round = False
-                    p._last_round_seen = room.current_round
+                # USER REQUEST: Reset 24h rooms to [0] players at midnight transition
+                if room.time_limit >= 7200:
+                    room.players = []
+                    room.spectators = []
+                else:
+                    for p in room.players:
+                        p.submitted_words, p.invalid_words, p.score = [], [], 0
+                        p.found_bonus_word, p.has_abandoned = False, False
+                        p.joined_mid_round = False
+                        p._last_round_seen = room.current_round
                 
                 # Update word counts by length for the new round
                 room.update_counts_by_len()
