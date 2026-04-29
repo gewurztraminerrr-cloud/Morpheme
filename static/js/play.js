@@ -84,9 +84,18 @@ window.addEventListener('keydown', resetIdleTimer, { passive: true });
 window.addEventListener('touchstart', resetIdleTimer, { passive: true });
 window.addEventListener('scroll', resetIdleTimer, { passive: true });
 
-function ejectToLobby(reason = "inactivity") {
+async function ejectToLobby(reason = "inactivity") {
     console.warn(`[play.js] EVICTING USER. Reason: ${reason}`);
     
+    // 1. Notify server immediately so lobby counts decrease
+    if (window.leaveCurrentRoom) {
+        try {
+            await window.leaveCurrentRoom();
+        } catch (e) {
+            console.error('[play.js] Failed to notify server of leave during ejection:', e);
+        }
+    }
+
     // 2. Stop poll and clear state
     stopPolling();
     window.currentRoomId = null;

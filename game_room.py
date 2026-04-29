@@ -2932,6 +2932,10 @@ class RoomManager:
                     )
                 room.bonus_word = current_bw
                 
+                # SYNC: Ensure Spinner Set params match the ACTUAL bonus word length we are starting with.
+                if room.bonus_word and getattr(room, 'spinner_params', None):
+                    room.spinner_params['bonus_word_length'] = len(room.bonus_word)
+                
                 # SAFETY SYNC: Ensure the bonus word is actually in all_words
                 # (Prevents UI from failing to highlight it if it were somehow missed by the solver)
                 # And ensure it bypasses the min-length filter if it was somehow shorter (unlikely but safe)
@@ -2945,11 +2949,16 @@ class RoomManager:
                     target_range = getattr(room, 'current_word_count_range', '100-200')
                     if target_range:
                         _, max_target = self.board_generator._parse_word_count_range(target_range)
-                        if max_target < 99999 and len(room.all_words) > max_target:
-                            print(f"[ACCURACY-SYCN] Truncating Round {room.current_round} to {max_target} words to match revealed range '{target_range}'")
-                            # Sort by length desc then alpha to keep the highest quality teaser words
-                            sorted_trimmed = sorted(list(room.all_words), key=lambda w: (len(w), w), reverse=True)[:max_target]
-                            room.all_words = set(sorted_trimmed)
+                        
+                        # USER REQUEST: Only truncate scorable words. We must preserve 3L/4L words for metadata.
+                        scorable_words = [w for w in room.all_words if len(w) >= room.current_min_length]
+                        non_scorable = [w for w in room.all_words if len(w) < room.current_min_length]
+                        
+                        if max_target < 99999 and len(scorable_words) > max_target:
+                            print(f"[ACCURACY-SYNC] Truncating Round {room.current_round} SCORABLE count to {max_target} words to match range '{target_range}'")
+                            # Sort scorable by length desc then alpha
+                            sorted_scorable = sorted(scorable_words, key=lambda w: (len(w), w), reverse=True)[:max_target]
+                            room.all_words = set(sorted_scorable + non_scorable)
                             room.all_words_paths = {w: room.all_words_paths.get(w, []) for w in room.all_words}
                             
                             if hasattr(room, 'solved_words_with_scores'):

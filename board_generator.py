@@ -1096,6 +1096,12 @@ class BoardGenerator:
                         print(
                             f"[BoardGen] ✗ NON-COMPLIANT word count {count_total} for target {min_words}-{max_words}. KEEP SEARCHING..."
                         )
+                        # EMERGENCY: If we are on the last attempts and still undershooting,
+                        # switch to Easy frequency to force word count compliance.
+                        if attempt >= max_attempts - 3 and count_total < min_words:
+                            print(f"[BoardGen] ! Emergency Strategy Shift: Forcing 'Easy' density for word count compliance.")
+                            difficulty = "Easy"
+                            strategy = "DensityOptimization"
                         continue
 
                     print(f"[BoardGen] ✓ Valid board found: {count_total} words, {ratio:.2%} unique")
@@ -2115,8 +2121,9 @@ class BoardGenerator:
                     else:
                         score = unique_w
                         if total_w > max_words:
-                            # Heavy penalty for every word over the limit to keep density in check during Stage 2
-                            score -= (total_w - max_words) * 10
+                            # Draconian penalty for every word over the limit to keep density in check during Stage 2
+                            # User Request: "also above it as well" - we must ensure we don't overshoot.
+                            score -= (total_w - max_words) * 100
                 except Exception:
                     score = 0
                     
