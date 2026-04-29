@@ -1353,7 +1353,8 @@ class GameRoom:
             '_round': self.current_round,
             **{str(l): sum(1 for w in (self.all_words or []) if len(w) == l) for l in range(1, 31)}
         }
-        self.total_words_count = len(self.all_words or [])
+        min_len = getattr(self, 'current_min_length', 3)
+        self.total_words_count = sum(1 for w in (self.all_words or []) if len(w) >= min_len)
         
     def recalculate_total_points(self):
         """Aggregate total attainable points for the active round's word list"""
@@ -2009,6 +2010,7 @@ class RoomManager:
 
             if final_bonus_word:
                 room.bonus_word = final_bonus_word
+                room.spinner_params['bonus_word_length'] = len(final_bonus_word)
 
             print(f"[RoomManager] ROUND {room.current_round} START for {room_id}. Words found: {len(all_words)}")
             with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
@@ -2332,8 +2334,11 @@ class RoomManager:
             try:
                 bw_l_raw = params.get('bonus_word_length', 6)
                 bw_l = max(int(bw_l_raw), min_l)
+                # SYNC: Update the params so the Spinner Set UI displays the actual length used.
+                params['bonus_word_length'] = bw_l
             except:
                 bw_l = max(6, min_l)
+                params['bonus_word_length'] = bw_l
             
             # Snapshot for the upcoming round logic
             room.next_round_min_length = min_l
@@ -2531,12 +2536,18 @@ class RoomManager:
                             '_round': room.current_round + 1,
                             **{str(l): sum(1 for w in (all_words or []) if len(w) == l) for l in range(1, 31)}
                         }
+                        # SYNC: If the board generator picked a natural fallback bonus word of a different length, update the UI params.
+                        if final_bonus_word and getattr(room, 'next_spinner_params', None):
+                            room.next_spinner_params['bonus_word_length'] = len(final_bonus_word)
+                            if getattr(room, 'spinner_params_revealed', False):
+                                room.spinner_params['bonus_word_length'] = len(final_bonus_word)
                         if getattr(room, 'next_spinner_params', None):
                             room.next_spinner_params['uniqueness'] = u_ratio
                         room.next_round_difficulty = achieved_diff
                         
                         # Authoritative recount after truncation (if any)
-                        room.next_round_total_words_count = len(all_words)
+                        min_len = room.next_spinner_params.get('min_word_length', 3) if getattr(room, 'next_spinner_params', None) else 3
+                        room.next_round_total_words_count = sum(1 for w in (all_words or []) if len(w) >= min_len)
                         print(f"[RoomManager] Background pre-gen complete for {room_id}: {achieved_diff} | {updated_format} (Count: {len(all_words)})")
                         
                     # NOTE: Do NOT update room.current_difficulty here!
@@ -2736,7 +2747,7 @@ class RoomManager:
                     room.current_min_length = params.get('min_word_length', 3)
                     filtered_e_words = [w for w in (e_words or []) if len(w) >= room.current_min_length]
                     
-                    room.next_round_counts_by_len = {str(l): sum(1 for w in filtered_e_words if len(w) == l) for l in range(1, 31)}
+                    room.next_round_counts_by_len = {str(l): sum(1 for w in (e_words or []) if len(w) == l) for l in range(1, 31)}
                     room.next_round_total_words_count = len(filtered_e_words)
                     room.next_round_total_points = sum(pts['total'] if isinstance(pts, dict) else pts for pts in e_scored_dict.values())
                     
@@ -2884,7 +2895,11 @@ class RoomManager:
                     room.next_round_word_scores = e_scores
                 
                 # --- 3. FINAL COUNT SYNC: Ensure factual counts are promoted even if truncation was skipped ---
-                room.total_words_count = getattr(room, 'next_round_total_words_count', len(room.next_round_words or []))
+                # USER REQUEST: Total count should reflect scorable words only.
+                if hasattr(room, 'next_round_total_words_count') and room.next_round_total_words_count > 0:
+                    room.total_words_count = room.next_round_total_words_count
+                else:
+                    room.total_words_count = sum(1 for w in (room.next_round_words or []) if len(w) >= room.current_min_length)
                 
                 # --- 4. HISTORY PROMOTION ---
                 room.previous_board = list(room.board) if room.board else []
@@ -2899,9 +2914,10 @@ class RoomManager:
                 # ATOMIC PROMOTION: Carry staging data to active room state
                 room.board = room.next_round_board
                 
-                # DRACONIAN FILTER: Eliminate any word shorter than the current minimum immediately
-                room.all_words = {w for w in (room.next_round_words or []) if len(w) >= room.current_min_length}
-                room.all_words_paths = {w: p for w, p in (room.next_round_word_paths or {}).items() if len(w) >= room.current_min_length}
+                # USER REQUEST: Capture all valid words (>= 3L) for 'Remaining' tab metadata.
+                # Scorable minimum enforcement happens in submit_word.
+                room.all_words = {w for w in (room.next_round_words or []) if len(w) >= 3}
+                room.all_words_paths = {w: p for w, p in (room.next_round_word_paths or {}).items() if len(w) >= 3}
                 room.solved_words_with_scores = getattr(room, 'next_round_word_scores', {})
                 
                 # USER REQUEST: Ensure Bonus Word is ironclad (highlighted in green at end)
@@ -2949,7 +2965,8 @@ class RoomManager:
                 # NOTE: We NO LONGER overwrite current_word_count_range here.
                 # We want to keep the Spinner Set's "Intent" range (e.g. 50-100) 
                 # even if the result is 105 words, to avoid "Parameter Drift" UI flips.
-                room.total_words_count = len(room.all_words)
+                # USER REQUEST: Total count should reflect scorable words only.
+                room.total_words_count = sum(1 for w in room.all_words if len(w) >= room.current_min_length)
                 room.current_difficulty = getattr(room, 'next_round_difficulty', room.current_difficulty)
 
                 room.cell_density = getattr(room, 'next_round_cell_density', [])

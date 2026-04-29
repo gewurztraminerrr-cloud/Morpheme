@@ -737,9 +737,12 @@ class BoardGenerator:
                     min_r, max_r = self._get_uniqueness_range(difficulty, rows, cols, dictionary)
                 else:
                     # USER REQUEST: SPEED. For large grids (6x8), reduce retry attempts.
-                    # Large grids are easy to pack; if we fail twice, we should hit fallback early.
                     if (num_tiles >= 35):
-                        max_attempts = 4
+                        # USER REQUEST: For high-min rounds (7L+), give more attempts since hit rate is lower.
+                        max_attempts = 8 if min_word_length >= 7 else 4
+                    else:
+                        # 4x4 and 4x6 boards
+                        max_attempts = 20 if min_word_length >= 4 else 15
                     
                     # On the absolute last attempts (or ANY emergency attempt), relax the word count range
                     current_min_words = min_words
@@ -942,7 +945,7 @@ class BoardGenerator:
                         )
                         print(f"[BoardGen] STAGE 2: Applying IO and B Uniqueness Optimization...")
                         board = self._apply_io_b_uniqueness_optimization(
-                            board, rows, cols, search_dictionary, all_excluded, min_word_length, depth=depth, difficulty=difficulty
+                            board, rows, cols, search_dictionary, all_excluded, min_word_length, depth=depth, difficulty=difficulty, max_words=max_words
                         )
                     else:
                         # Standard single-pass IO for low word count targets (50-100)
@@ -1114,7 +1117,7 @@ class BoardGenerator:
                     # FINAL PROTECTED SOLVE: Capture words matching the intentional minimum length
                     # Enforcement of round-specific min_length happens in game_room.submit_word
                     final_words_dict = self._solve_board(
-                        board, original_dictionary, (0, 99999), min_word_length=min_word_length, max_depth=final_depth, store_paths=True
+                        board, original_dictionary, (0, 99999), min_word_length=3, max_depth=final_depth, store_paths=True
                     )
                     
                     # RECALCULATE ACCURATE RATIO (User Request: Absolute Accuracy)
@@ -1177,7 +1180,7 @@ class BoardGenerator:
                     best_board_global,
                     original_dictionary,
                     (0, 99999),
-                    min_word_length,
+                    3,
                     max_depth=final_depth,
                     store_paths=True,
                 )
@@ -1190,7 +1193,8 @@ class BoardGenerator:
                     fb_words_rel = [w for w in final_best_dict if len(w) >= 5]
                     if not fb_words_rel: fb_words_rel = list(final_best_dict.keys())
                 else:
-                    fb_words_rel = list(final_best_dict.keys())
+                    fb_words_rel = [w for w in final_best_dict if len(w) >= min_word_length]
+                    if not fb_words_rel: fb_words_rel = list(final_best_dict.keys())
 
                 fb_count = len(fb_words_rel)
                 fb_unique = sum(1 for w in fb_words_rel if w.upper() in unique_set_final)
@@ -1340,7 +1344,7 @@ class BoardGenerator:
                 # Final Path-Tracking Solve for fallback check
                 # Performance Safety: Even fallback solves MUST be timed on huge grids
                 final_words_dict = self._solve_board(
-                    fallback_board, original_dictionary, (0, 99999), min_word_length, max_depth=12, store_paths=True, timeout=0.8 if is_emergency else 4.0
+                    fallback_board, original_dictionary, (0, 99999), 3, max_depth=12, store_paths=True, timeout=0.8 if is_emergency else 4.0
                 )
                 
                 # Injection Safety: Use fallback_special_cells[-1] as the coordinate for the bonus word
@@ -1349,9 +1353,10 @@ class BoardGenerator:
                     final_words_dict[actual_bonus_word.upper()] = fb_bonus_coords
 
                 final_found_list = list(final_words_dict.keys())
+                ffl_rel = [w for w in final_found_list if len(w) >= min_word_length]
                 # ABSOLUTE Ironclad Compliance for Fallback
-                is_dense_enough = len(final_found_list) >= min_words
-                is_not_too_dense = len(final_found_list) <= (max_words * 1.10 if num_tiles >= 48 else max_words)
+                is_dense_enough = len(ffl_rel) >= min_words
+                is_not_too_dense = len(ffl_rel) <= (max_words * 1.10 if num_tiles >= 48 else max_words)
 
                 if is_dense_enough and is_not_too_dense:
                     break
@@ -1388,7 +1393,7 @@ class BoardGenerator:
         
         # We must solve it once more (accurately) to ensure results are valid for return
         final_best_dict = self._solve_board(
-            best_board_global, original_dictionary, (0, 99999), min_word_length, max_depth=12, store_paths=True, timeout=5.0
+            best_board_global, original_dictionary, (0, 99999), 3, max_depth=12, store_paths=True, timeout=5.0
         )
         return (
             best_board_global,
@@ -1714,7 +1719,7 @@ class BoardGenerator:
             for tile in tiles:
                 # CRITICAL: Total timeout for all passes combined to prevent background thread stalls
                 # For large grids, 10s of optimization is plenty; if not met, fallback is better.
-                io_timeout = 10 if rows * cols >= 35 else 20 if (is_4x4 and min_words >= 200) else 12 if is_4x4 else 15
+                io_timeout = 10 if rows * cols >= 35 else 20 if (is_4x4 and min_words >= 200) else 15 if is_4x4 else 18
                 elapsed_io = time.time() - start_overall_io_time
                 if elapsed_io > io_timeout:
                     print(f"[BoardGen] IO Global Timeout reached ({elapsed_io:.1f}s > {io_timeout}s). Returning current state.")
@@ -1735,7 +1740,11 @@ class BoardGenerator:
                     current_solve_depth = max(min_word_length + 2, 10)
                     # 2D Large (5x7, 6x8): 75% skip is enough even for high density
                     # 3D Cubes (54 cells): 90% skip due to massive connectivity
-                    skip_prob = 0.9 if depth > 1 else 0.75
+                    # USER REQUEST: For high-min rounds (7L+), skip FEWER tiles to ensure we hit targets.
+                    if min_word_length >= 7:
+                        skip_prob = 0.5 if depth > 1 else 0.35
+                    else:
+                        skip_prob = 0.9 if depth > 1 else 0.75
                     if random.random() < skip_prob:
                         continue
                 elif num_cells >= 24:
@@ -1744,8 +1753,8 @@ class BoardGenerator:
                         continue
                 else:
                     # 4x4 boards (16 cells)
-                    # Optimization: For 200+ words, depth 8 is plenty and much faster.
-                    current_solve_depth = 8 if (is_4x4 and min_words >= 150) else 9 
+                    # USER REQUEST: For high-min rounds (5L+), increase depth to capture more long words.
+                    current_solve_depth = 11 if min_word_length >= 5 else 8 if (is_4x4 and min_words >= 150) else 9
 
                 # Check for Early Exist before we start modifying this tile again to see if we're done
                 # PERFORMANCE: 200+ targets need precision. Solving every 2nd tile caughts success earlier.
@@ -1858,9 +1867,11 @@ class BoardGenerator:
                             # User Request: If aiming for high density, use most common English letters
                             # Expand pool for 4x4 to ensure we don't hit variety-plateaus
                             test_pool = list("ETAOINSRDL") + (list("BCUM") if is_4x4 else [])
-                        elif max_words <= 150 and rows * cols >= 35:
+                        elif max_words <= 150 and rows * cols >= 35 and min_word_length <= 4:
                             # User Request: On large grids with low word targets, we need RARE letters to prevent
                             # word counts from exploding. Using standard English frequency makes 100 counts impossible.
+                            # ONLY APPLY THIS IF MIN LENGTH IS SMALL (3L or 4L). 
+                            # High-min rounds (7L+) are naturally sparse and need common letters.
                             if difficulty == "Easy":
                                 # For Easy sparse boards, use a more balanced pool to keep uniqueness low
                                 test_pool = list("ETAOINSRDL") + list("BCUMFVGPH")
@@ -1887,7 +1898,8 @@ class BoardGenerator:
                     sample_size = 5 # Reduced for 4x4 speed
                 elif num_cells >= 48:
                     # 6x8 grids: cap at 4 samples to ensure completion under 20s
-                    sample_size = 4 if min_words >= 200 else 2 
+                    # USER REQUEST: For high-min rounds (7L+), increase sample size to ensure connectivity
+                    sample_size = 4 if (min_words >= 200 or min_word_length >= 7) else 2 
                 else:
                     sample_size = 2 # 4x6, 3x3x3 speedup (from 4)
                 test_pool = test_pool[:sample_size]
@@ -2027,7 +2039,7 @@ class BoardGenerator:
 
         return board
 
-    def _apply_io_b_uniqueness_optimization(self, board, rows, cols, dictionary, excluded_cells, min_word_length, depth=1, difficulty="Medium"):
+    def _apply_io_b_uniqueness_optimization(self, board, rows, cols, dictionary, excluded_cells, min_word_length, depth=1, difficulty="Medium", max_words=200):
         """
         USER MANDATE: Stage 2 of 200+ Optimization. 
         Implements specific "IO and B" checkerboard where:
@@ -2094,9 +2106,17 @@ class BoardGenerator:
                         board, dictionary, (0, 99999), min_word_length, 
                         max_depth=solve_depth, store_paths=False, timeout=timeout_cell
                     )
-                    # Easy: Prioritize Total Word Density
-                    # Normal/Hard: Prioritize Uniqueness
-                    score = len(all_found) if is_easy else sum(1 for w in all_found if w in unique_set)
+                    total_w = len(all_found)
+                    unique_w = sum(1 for w in all_found if w in unique_set)
+                    
+                    # Normal/Hard: Prioritize Uniqueness but STERNLY penalize overshooting max_words
+                    if is_easy:
+                        score = total_w
+                    else:
+                        score = unique_w
+                        if total_w > max_words:
+                            # Heavy penalty for every word over the limit to keep density in check during Stage 2
+                            score -= (total_w - max_words) * 10
                 except Exception:
                     score = 0
                     

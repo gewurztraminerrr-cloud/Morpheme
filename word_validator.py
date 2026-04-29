@@ -27,7 +27,8 @@ class WordValidator:
         self.added_trie = TrieNode()
         
         self.use_added_words = True # Global toggle for moderator words
-        self.config_path = os.path.join(os.path.dirname(__file__), 'dictionaries', 'added_words_config.json')
+        self.base_path = os.path.join(os.path.dirname(__file__), 'dictionaries')
+        self.config_path = os.path.join(self.base_path, 'added_words_config.json')
         
         self._load_config()
         self._load_dictionaries()
