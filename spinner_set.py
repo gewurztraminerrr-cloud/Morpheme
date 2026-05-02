@@ -63,7 +63,7 @@ class SpinnerSet:
                     'bonus_word_length': bonus_len,
                     'min_word_length': min_word_length,
                     'difficulty': difficulty,
-                    'word_count_range': wc_range,
+                    'word_count_range': wc_range or SpinnerSet._spin_word_count(dictionary, min_word_length, difficulty, board_dimensions),
                     'dictionary': dictionary,
                     'board_format': board_format,
                     'generated_at': time.time()
@@ -102,7 +102,7 @@ class SpinnerSet:
             return {
                 'difficulty': random.choice(['Easy', 'Medium', 'Hard']),
                 'dictionary': random.choice(['NWL', 'CSW']),
-                'word_count_range': random.choice(['50-100', '100-200', '200+', '500+']),
+                'word_count_range': random.choices(['50-100', '100-200', '200+', '500+'], weights=[24, 50, 25, 1])[0],
                 'board_format': 'Normal',
                 'min_word_length': 3,
                 'bonus_word_length': 8,
@@ -138,13 +138,14 @@ class SpinnerSet:
         """Balanced difficulty selection: 25% Easy, 50% Medium, 25% Hard.
         For 4x4 rooms, we slightly boost Hard to 34% per user request.
         For 5L+ minimum length rounds, we force Hard as Easy uniqueness is physically impossible."""
-        if min_word_length >= 5 and ('4x4' in str(board_dimensions) or '4x6' in str(board_dimensions)):
+        dims_str = str(board_dimensions)
+        if min_word_length >= 5 and ('4x4' in dims_str or '4x6' in dims_str):
             return 'Hard'
 
         choices = ['Easy', 'Medium', 'Hard']
         weights = [25, 50, 25] # Default for large/normal
         
-        is_small = ('4x4' in str(board_dimensions)) or ('4x6' in str(board_dimensions))
+        is_small = ('4x4' in dims_str) or ('4x6' in dims_str)
         if is_small:
             weights = [26, 40, 34] # Boosted Hard for small boards
             
@@ -155,8 +156,9 @@ class SpinnerSet:
         # CRITICAL: For cubes, we must check total tiles via something other than rows*cols 
         # since depth isn't passed here. We default to is_large if caller uses rows/cols correctly or detect via values.
         # 3x3x3 cube has 27 tiles, but surface area logic often treats it as large.
-        is_large = ('3x3x3' in str(board_dimensions)) or ('6x8' in str(board_dimensions))
-        is_4x4 = ('4x4' in str(board_dimensions))
+        dims_str = str(board_dimensions)
+        is_large = ('3x3x3' in dims_str) or ('6x8' in dims_str)
+        is_4x4 = ('4x4' in dims_str)
         
         choices = ['50-100', '100-200', '200+', '500+']
         weights = [24, 50, 25, 1]
@@ -178,23 +180,21 @@ class SpinnerSet:
                 if wc_range in ['100-200', '200+', '500+']:
                     wc_range = '50-100'
             elif min_word_length >= 4:
-                # 4x4 with 4L minimum: 500+ and 200+ are generally impossible or extremely rare.
+                # 4x4 with 4L minimum: 500+ and 200+ are generally impossible.
                 if wc_range in ['200+', '500+']:
                     wc_range = '100-200'
-                elif wc_range == '100-200':
-                    # Still favor lower range for 4L 4x4 to ensure success
-                    wc_range = random.choices(['50-100', '100-200'], weights=[70, 30])[0]
 
         elif is_large:
             if min_word_length >= 7:
-                # 6x8/Cube with 7L minimum: 500+ and 200+ are extremely difficult to fill with quality words.
-                if wc_range in ['200+', '500+']:
-                    # Downshift to realistic large-grid targets for 7L
-                    wc_range = random.choices(['50-100', '100-200'], weights=[60, 40])[0]
+                # 6x8/Cube with 7L minimum: 500+ is extremely difficult.
+                if wc_range == '500+':
+                    wc_range = '200+'
             elif min_word_length >= 6:
                 # 6L minimum: 500+ is still very unlikely.
                 if wc_range == '500+':
                     wc_range = '200+'
+        
+        return wc_range
     
     @staticmethod
     def _spin_dictionary():

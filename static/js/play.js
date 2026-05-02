@@ -915,7 +915,7 @@ async function updateGameState(incomingState = null) {
             let headerText = 'Words';
             if (state.game_type === 'fcfs') headerText = 'Live Feed';
 
-            const factRange = (state.spinner_params && state.spinner_params.word_count_range) || state.current_word_count_range || '100-200';
+            const factRange = (state.spinner_params && state.spinner_params.word_count_range) || state.current_word_count_range || 'Random';
             if (activeWordsTab === 'remaining') headerText = `Remaining (${factRange})`;
             if (activeWordsTab === 'clues') headerText = `Clues (${factRange})`;
             if (activeWordsTab === 'previous') headerText = 'Previous Day';
@@ -2155,7 +2155,7 @@ function updateParameters(state) {
     const factBonus = (preferSp ? (sp.bonus_word_length || state.current_bonus_word_length) : (state.current_bonus_word_length || sp.bonus_word_length)) || (state.bonus_word ? state.bonus_word.length : 0);
     const factMinLen = (preferSp ? (sp.min_word_length || state.current_min_length) : (state.current_min_length || sp.min_word_length)) || 3;
     const factDict = (preferSp ? (sp.dictionary || state.current_dictionary) : (state.current_dictionary || sp.dictionary)) || 'NWL';
-    const factWordRange = (preferSp ? (sp.word_count_range || state.current_word_count_range) : (state.current_word_count_range || sp.word_count_range)) || '100-200';
+    const factWordRange = (preferSp ? (sp.word_count_range || state.current_word_count_range) : (state.current_word_count_range || sp.word_count_range)) || 'Random';
     
     let factUniq = 0; 
     if (preferSp) {

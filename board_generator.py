@@ -1027,7 +1027,8 @@ class BoardGenerator:
                 )
 
                 if all_words_dict is not None:
-                    count_total = len(all_words_dict)
+                    # AUDIT SYNC: Use scorable-only count for compliance enforcement
+                    count_total = sum(1 for w in all_words_dict.keys() if len(w) >= min_word_length)
                     all_found_list = list(all_words_dict.keys())
                     ratio = self.get_uniqueness_ratio(
                         board, all_found_list, rows, cols, original_dictionary, depth=depth
@@ -1175,21 +1176,59 @@ class BoardGenerator:
                         final_ratio,
                         actual_bonus_word.upper() if actual_bonus_word else None
                     )
-            # --- RETURN BEST FOUND IF ALL ATTEMPTS FAILED ---
-            # User Request: If it isn't compliant, return the BEST candidate found rather than hanging.
+            # --- RESCUE SWEEPS: ANTI-29 & OVERSHOOT LOCKDOWN (User Request) ---
+            # If we've exhausted all attempts and the best board found is still non-compliant,
+            # we perform a final targeted optimization pass to force it into range.
+            
+            # 1. ANTI-29 RESCUE (Undershoot)
+            if best_count_global < min_words and (best_count_global < 35 or best_count_global < min_words * 0.8):
+                print(f"[BoardGen] !! ANTI-29 RESCUE: Severe undershoot ({best_count_global} vs {min_words}). Forcing Easy Rescue Pass...")
+                # Use absolute maximum density (Easy) and 2 passes to guarantee word count
+                rescue_board = self._create_2000plus_board(
+                    rows, cols, original_dictionary, is_checkerboard_fmt, best_board_global, all_excluded, "Density",
+                    min_word_length, max_words, min_words, 0, 1, depth=depth, difficulty="Easy", weights=LETTER_FREQ_EASY
+                )
+                rescue_solve = self._solve_board(
+                    rescue_board, original_dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=False
+                )
+                rescue_count = len(rescue_solve)
+                if rescue_count > best_count_global:
+                    print(f"[BoardGen] ✓ Rescue (Anti-29) successful: {best_count_global} -> {rescue_count} words.")
+                    best_board_global = rescue_board
+                    best_count_global = rescue_count
+
+            # 2. OVERSHOOT LOCKDOWN (Pruning)
+            elif best_count_global > max_words and max_words < 9999:
+                # If we are overshooting by more than 20% (or 10% for large grids)
+                limit_trigger = 1.10 if num_tiles >= 48 else 1.20
+                if best_count_global > max_words * limit_trigger:
+                    print(f"[BoardGen] !! OVERSHOOT LOCKDOWN: Severe overshoot ({best_count_global} vs {max_words}). Forcing Pruning Pass...")
+                    # Use "Uniqueness" optimization with "Hard" targets to prune words aggressively
+                    prune_board = self._create_2000plus_board(
+                        rows, cols, original_dictionary, is_checkerboard_fmt, best_board_global, all_excluded, "Uniqueness",
+                        min_word_length, max_words, min_words, 0.8, 1.0, depth=depth, difficulty="Hard"
+                    )
+                    prune_solve = self._solve_board(
+                        prune_board, original_dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=False
+                    )
+                    prune_count = len(prune_solve)
+                    if prune_count < best_count_global:
+                         print(f"[BoardGen] ✓ Rescue (Overshoot) successful: {best_count_global} -> {prune_count} words.")
+                         best_board_global = prune_board
+                         best_count_global = prune_count
+
+            # Re-solve the final best result with paths to ensure total consistency
+            if best_board_global is not None:
+                best_dict_global = self._solve_board(
+                    best_board_global, original_dictionary, (0, 99999), 3, max_depth=final_depth, store_paths=True
+                )
+
             if best_board_global is not None:
                 print(
                     f"[BoardGen] !! Exhausted {max_attempts} attempts. Returning BEST candidate (Words: {best_count_global}, Unique: {best_ratio_global:.2%})"
                 )
-                # final_depth already defined at loop start
-                final_best_dict = self._solve_board(
-                    best_board_global,
-                    original_dictionary,
-                    (0, 99999),
-                    3,
-                    max_depth=final_depth,
-                    store_paths=True,
-                )
+                # best_dict_global already solved with paths above
+                final_best_dict = best_dict_global
                 
                 # RECALCULATE ACCURATE RATIO FOR BEST-FOUND
                 unique_set_final = self._get_difficulty_set(original_dictionary)
@@ -1412,31 +1451,36 @@ class BoardGenerator:
         )
 
     def _parse_word_count_range(self, word_count_range):
-        """Parse word count range (tuple or string) into (min, max) tuple"""
-        # Handle tuple format from spinner_set: (30, 60)
+        """Parse word count range using Pattern-Aware Regex"""
         if isinstance(word_count_range, tuple):
             return word_count_range
 
         if not isinstance(word_count_range, str):
-            return (0, float("inf"))
-
-        # Handle string format: "50-100", "100-200", "200+", "500+"
-        if word_count_range == "50-100":
             return (50, 100)
-        elif word_count_range == "100-200":
-            return (100, 200)
-        elif word_count_range == "200+":
-            return (200, 99999)
-        elif word_count_range == "500+":
-            return (500, 99999)
 
-        # Generic dash parsing: "100-200", "500-99999"
-        if "-" in word_count_range:
-            try:
-                parts = word_count_range.split("-")
-                return (int(parts[0]), int(parts[1]))
-            except (ValueError, IndexError):
-                pass
+        import re
+        
+        # 1. Look for explicit dash range (e.g. "50-100" or "Words: 50-100")
+        # Pattern: digits, optional spaces, dash, optional spaces, digits
+        range_match = re.search(r'(\d+)\s*-\s*(\d+)', word_count_range)
+        if range_match:
+            return (int(range_match.group(1)), int(range_match.group(2)))
+            
+        # 2. Look for open-ended range (e.g. "200+" or "500+")
+        plus_match = re.search(r'(\d+)\s*\+', word_count_range)
+        if plus_match:
+            return (int(plus_match.group(1)), 99999)
+            
+        # 3. Fallback: Just the first number found if no range pattern
+        nums = re.findall(r'\d+', word_count_range)
+        if nums:
+            # If we see many numbers (like in a full summary), skip the first few (dims, time)
+            # and look for the one that looks like a range.
+            # But the patterns above should catch 99% of cases.
+            val = int(nums[-1]) # Take the LAST number if all else fails
+            return (val, val + 50)
+
+        return (50, 100) # Safety floor
 
         if word_count_range in ["1500+", "2000+"]:
             return (500, 99999)  # Backward compatibility
@@ -1511,42 +1555,37 @@ class BoardGenerator:
                 for _ in range(depth)
             ]
 
-        board = [[None for _ in range(cols)] for _ in range(rows)]
+        board = [[random.choices(self.letters, weights=weights, k=1)[0] for _ in range(cols)] for _ in range(rows)]
+        
+        # USER REQUEST: Vowel Density Floor
+        # If the random board has < 25% vowels, it's likely a "dead board" for high-min words.
+        v_floor = int(rows * cols * 0.25)
+        v_count = self._count_vowels(board)
+        if v_count < v_floor:
+            vowels = [l for l in self.letters if self._is_vowel(l)]
+            v_weights = [weights[self.letters.index(l)] for l in vowels]
+            consonant_tiles = [(r, c) for r in range(rows) for c in range(cols) if not self._is_vowel(board[r][c])]
+            random.shuffle(consonant_tiles)
+            for _ in range(v_floor - v_count):
+                if not consonant_tiles: break
+                tr, tc = consonant_tiles.pop()
+                board[tr][tc] = random.choices(vowels, weights=v_weights, k=1)[0]
+        
+        # Q/U Logic: Ensure Q has a chance for U but avoid redundant clusters
         for r in range(rows):
             for c in range(cols):
-                # We'll try up to 3 times to pick a letter that doesn't form forbidden ING
-                # (only for Medium/Hard)
-                for _ in range(3):
-                    # Check neighbors for a 'Q'
-                    has_q_neighbor = False
+                if board[r][c] == "Q":
+                    has_u = False
+                    neighbors = []
                     for dr in [-1, 0, 1]:
                         for dc in [-1, 0, 1]:
                             nr, nc = r + dr, c + dc
-                            if 0 <= nr < rows and 0 <= nc < cols:
-                                if board[nr][nc] == "Q":
-                                    has_q_neighbor = True
-                                    break
-                        if has_q_neighbor:
-                            break
-
-                    if has_q_neighbor:
-                        safe_weights = list(weights)
-                        safe_weights[20] = 0  # No 'U'
-                        char = random.choices(self.letters, weights=safe_weights, k=1)[0]
-                    else:
-                        char = random.choices(self.letters, weights=weights, k=1)[0]
-
-                    # Proactive Forbidden Sequence Check
-                    # Note: We can't know the final max_ing here easily, so we just try to avoid it
-                    if self._is_creating_forbidden_sequence(board, char, r, c, 0, depth=1):
-                        continue  # Re-roll this tile
-
-                    board[r][c] = char
-                    break
-
-                if board[r][c] is None:
-                    # Final fallback if we keep hitting ING (unlikely)
-                    board[r][c] = random.choices(self.letters, weights=weights, k=1)[0]
+                            if 0 <= nr < rows and 0 <= nc < cols and (dr != 0 or dc != 0):
+                                neighbors.append((nr, nc))
+                                if board[nr][nc] == "U": has_u = True
+                    if not has_u and neighbors:
+                        nr, nc = random.choice(neighbors)
+                        board[nr][nc] = "U"
         return board
 
     def _create_checkerboard(self, rows, cols, weights, depth=1):
@@ -1666,14 +1705,16 @@ class BoardGenerator:
         pass_count = 1
         if target_type == "Density":
             if rows * cols >= 35:
-                pass_count = 1 # 6x8/Huge grids are extremely dense; 1 pass is always enough
+                # User Request: High minimum lengths (7L+) are very hard even on large grids.
+                # Standard density only needs 1 pass, but 7L+ needs more effort.
+                pass_count = 3 if min_word_length >= 7 else 1
             elif min_words >= 200:
                 pass_count = 4 # High Density targets need more passes to pack words (4x4)
             elif min_word_length >= 7:
                 pass_count = 3
         else:  # Uniqueness target
             if rows * cols >= 35:
-                pass_count = 1 # One pass is enough to hit 50% uniqueness on 6x8
+                pass_count = 2 if min_word_length >= 7 else 1
             elif min_word_length >= 5:
                 pass_count = 2
 
@@ -1748,7 +1789,7 @@ class BoardGenerator:
                     # 3D Cubes (54 cells): 90% skip due to massive connectivity
                     # USER REQUEST: For high-min rounds (7L+), skip FEWER tiles to ensure we hit targets.
                     if min_word_length >= 7:
-                        skip_prob = 0.5 if depth > 1 else 0.35
+                        skip_prob = 0.5 if depth > 1 else 0.10 # Reduced skip for 7L+
                     else:
                         skip_prob = 0.9 if depth > 1 else 0.75
                     if random.random() < skip_prob:

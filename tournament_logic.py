@@ -143,10 +143,15 @@ class TournamentManager:
         # if 'checkerboard' in target_format.lower():
         #     bonus_word = ""
 
+        # Use tournament parameters
+        target_range = params.get('word_count_range')
+        if not target_range or target_range == 'None':
+             target_range = SpinnerSet._spin_word_count(dict_name, params.get('min_word_length', 3), params.get('difficulty', 'Medium'), dims)
+        
         res = bg.generate_board(
             dimensions=dims,
             bonus_word=bonus_word,
-            word_count_range=params.get('word_count_range', '100-200'),
+            word_count_range=target_range,
             dictionary=dict_name,
             board_format=target_format,
             min_word_length=params.get('min_word_length', 3),

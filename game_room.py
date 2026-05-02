@@ -2834,13 +2834,23 @@ class RoomManager:
                 if getattr(room, 'spinner_params_revealed', False):
                     # Favor the fact (actual board) over the intent (revealed label) if they differ
                     room.current_board_format = room.next_round_format or room.spinner_params.get('board_format', 'Normal')
-                    room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
+                    
+                    wc_range = room.spinner_params.get('word_count_range')
+                    if not wc_range:
+                         wc_range = SpinnerSet._spin_word_count(room.spinner_params.get('dictionary', 'NWL'), room.spinner_params.get('min_word_length', 3), room.spinner_params.get('difficulty', 'Medium'), room.board_dimensions)
+                    room.current_word_count_range = wc_range
+                    
                     room.current_difficulty = room.spinner_params.get('difficulty', 'Medium')
                     room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
                     raw_min = room.spinner_params.get('min_word_length', 3)
                 else:
                     room.current_board_format = room.next_round_format or room.spinner_params.get('board_format', 'Normal')
-                    room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
+                    
+                    wc_range = room.spinner_params.get('word_count_range')
+                    if not wc_range:
+                         wc_range = SpinnerSet._spin_word_count(room.spinner_params.get('dictionary', 'NWL'), 3, 'Medium', room.board_dimensions)
+                    room.current_word_count_range = wc_range
+                    
                     room.current_difficulty = room.spinner_params.get('difficulty', 'Medium')
                     room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
                     raw_min = getattr(room, 'next_round_min_length', 3)

@@ -81,7 +81,7 @@ function renderTournament(data) {
     const pContainer = document.getElementById('tournament-params-container');
     if (pContainer) {
         if (params.board_dimensions) {
-            const wordRange = params.word_count_range || '100-200';
+            const wordRange = params.word_count_range || '...';
             let wordsStr = wordRange;
             if (Array.isArray(wordRange)) {
                 wordsStr = wordRange[1] > 50000 ? `${wordRange[0]}+` : `${wordRange[0]}-${wordRange[1]}`;
