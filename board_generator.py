@@ -556,9 +556,9 @@ class BoardGenerator:
             # --- BOARD CREATION ---
             is_checkerboard = "checkerboard" in board_format.lower()
             if is_checkerboard:
-                board = self._create_checkerboard(rows, cols, weights, depth=depth)
+                board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
             else:
-                board = self._create_normal_board(rows, cols, weights, depth=depth)
+                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty)
             
             # Special formats (Mania, etc)
             all_excluded = set()
@@ -575,9 +575,11 @@ class BoardGenerator:
             # --- OPTIMIZATION ---
             if strategy == "StepwiseOptimization":
                 # Stage 1: Base Board (Targeting 150 for safety margin)
+                # USER REQUEST: Even if we use "Easy" weights for speed, we MUST respect forbidden sequences 
+                # if the target difficulty is Medium or Hard.
                 board = self._create_2000plus_board(
                     rows, cols, dictionary, is_checkerboard, board, all_excluded, "Density",
-                    min_word_length, 300, 150, 0, 1, depth=depth, difficulty="Easy", weights=LETTER_FREQ_EASY
+                    min_word_length, 300, 150, 0, 1, depth=depth, difficulty=difficulty, weights=LETTER_FREQ_EASY
                 )
                 # Stage 2: IO and B Uniqueness
                 board = self._apply_io_b_uniqueness_optimization(
@@ -874,7 +876,7 @@ class BoardGenerator:
         else:
             return LETTER_FREQ_USER
 
-    def _create_normal_board(self, rows, cols, weights, depth=1):
+    def _create_normal_board(self, rows, cols, weights, depth=1, difficulty="Easy"):
         """Create board with weighted random letters, avoiding redundant U next to Q"""
         if depth > 1:
             return [
@@ -882,7 +884,18 @@ class BoardGenerator:
                 for _ in range(depth)
             ]
 
-        board = [[random.choices(self.letters, weights=weights, k=1)[0] for _ in range(cols)] for _ in range(rows)]
+        board = [[None for _ in range(cols)] for _ in range(rows)]
+        for r in range(rows):
+            for c in range(cols):
+                # Try a few times to avoid forbidden sequences (ING) in Medium/Hard
+                for _ in range(3):
+                    char = random.choices(self.letters, weights=weights, k=1)[0]
+                    if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, char, r, c, 0, depth=1):
+                        continue
+                    board[r][c] = char
+                    break
+                if board[r][c] is None:
+                    board[r][c] = random.choices(self.letters, weights=weights, k=1)[0]
         
         # USER REQUEST: Vowel Density Floor
         # If the random board has < 25% vowels, it's likely a "dead board" for high-min words.
@@ -915,7 +928,7 @@ class BoardGenerator:
                         board[nr][nc] = "U"
         return board
 
-    def _create_checkerboard(self, rows, cols, weights, depth=1):
+    def _create_checkerboard(self, rows, cols, weights, depth=1, difficulty="Easy"):
         """Create checkerboard pattern (consonants/vowels) with weighted letters.
         To ensure it alternates 'diagonally', we use row % 2."""
         vowel_indices = [self.letters.index(c) for c in VOWELS]
@@ -938,7 +951,7 @@ class BoardGenerator:
                             else:
                                 char = random.choices(VOWELS, weights=vowel_weights, k=1)[0]
 
-                            if self._is_creating_forbidden_sequence(board, char, r, c, f, depth=depth):
+                            if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, char, r, c, f, depth=depth):
                                 continue
 
                             board[f][r][c] = char
@@ -961,7 +974,7 @@ class BoardGenerator:
                     else:
                         char = random.choices(VOWELS, weights=vowel_weights, k=1)[0]
 
-                    if self._is_creating_forbidden_sequence(board, char, r, c, 0, depth=1):
+                    if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, char, r, c, 0, depth=1):
                         continue
 
                     board[r][c] = char
