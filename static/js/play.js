@@ -2191,14 +2191,13 @@ function updateParameters(state) {
     if (shouldUpdateLabels) {
         const newUniq = factUniq;
         const newDiff = factDiff;
-        const stringified = JSON.stringify([factBoardDims, factTimeLimit, factBonus, factMinLen, factDict, factWordRange, factFmt, newDiff, newUniq]);
+        const stringified = JSON.stringify([factBoardDims, factTimeLimit, factMinLen, factDict, factWordRange, factFmt, newDiff, newUniq]);
         
         if (window._lastParamString !== stringified) {
             window._lastParamString = stringified;
             
             window._displayedParams.dims = factBoardDims;
             window._displayedParams.time = factTimeLimit + 's';
-            window._displayedParams.bonus = (factBonus === 0) ? 'None' : factBonus + 'L';
             window._displayedParams.min = factMinLen + 'L';
             window._displayedParams.dict = factDict;
             window._displayedParams.range = factWordRange;
@@ -2220,7 +2219,6 @@ function updateParameters(state) {
             // Apply to DOM
             if (document.getElementById('param-board')) document.getElementById('param-board').textContent = window._displayedParams.dims;
             if (document.getElementById('param-time')) document.getElementById('param-time').textContent = window._displayedParams.time;
-            if (document.getElementById('param-bonus')) document.getElementById('param-bonus').textContent = window._displayedParams.bonus;
             if (document.getElementById('param-diff')) document.getElementById('param-diff').textContent = window._displayedParams.diff;
             if (document.getElementById('param-min')) document.getElementById('param-min').textContent = window._displayedParams.min;
             if (document.getElementById('param-dict')) document.getElementById('param-dict').textContent = window._displayedParams.dict;
@@ -2239,32 +2237,6 @@ function updateParameters(state) {
     window._lastRevealedState = isRevealed;
 
     // Word Range
-    const words = document.getElementById('param-words');
-    if (words) {
-        // Robust Strip: Remove any and all instances of "Words:" and "Words: " to prevent doubling.
-        let wr = window._displayedParams.range;
-        if (typeof wr === 'string') {
-            wr = wr.replace(/Words:\s*/gi, '').trim();
-        }
-        const totalCount = state.total_words_count || 0;
-        
-        // Use a pretty range string if it's 'random'
-        let cleanRange = wr;
-        if (cleanRange === 'random') cleanRange = '50-100/100-200/200+';
-        
-        if (totalCount > 0) {
-            // Teaser Format: Use Total-only if we are in intermission (which includes the 45s reveal)
-            if (isIntermission) {
-                // Requested Format: "50-100 (57)" -- Label 'Words: ' provided by HTML
-                words.textContent = `${cleanRange} (${totalCount})`;
-            } else {
-                words.textContent = `${cleanRange} (${totalCount})`;
-            }
-        } else {
-            // Standard Range Fallback
-            words.textContent = `${cleanRange}`;
-        }
-    }
 
         const format = document.getElementById('param-format');
         if (format && (shouldUpdateLabels || !format.textContent)) {

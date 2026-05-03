@@ -133,15 +133,7 @@ class TournamentManager:
         bonus_len = params.get('bonus_word_length', 6)
         dict_name = params.get('dictionary', 'NWL')
         
-        from word_validator import word_validator
-        dictionary_set = word_validator.csw_words if dict_name == 'CSW' else word_validator.nwl_words
-        potential_words = [w for w in dictionary_set if len(w) == bonus_len]
-        bonus_word = random.choice(potential_words) if potential_words else ""
-        
-        # User Request Check: Bonus words should appear in ALL rooms, including tournaments
-        # (Previously Checkerboard was excluded, but user requested 'Every board in every Format' on March 29)
-        # if 'checkerboard' in target_format.lower():
-        #     bonus_word = ""
+        bonus_word = "" # User Request: No manual embedding. BoardGen will pick a natural one.
 
         # Use tournament parameters
         target_range = params.get('word_count_range')

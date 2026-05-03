@@ -57,10 +57,10 @@ class SpinnerSet:
                         # Keep Either/Or, Checkerboard, and Density as they are highly requested/stable
                         if board_format not in ['Either/Or', 'Checkerboard', 'Density']:
                             board_format = 'Normal'
-                bonus_len = max(min_word_length, SpinnerSet._spin_bonus_word_length())
+                if board_format == 'IO-Checkerboard':
+                    wc_range = '100-300'
                 
                 res = {
-                    'bonus_word_length': bonus_len,
                     'min_word_length': min_word_length,
                     'difficulty': difficulty,
                     'word_count_range': wc_range or SpinnerSet._spin_word_count(dictionary, min_word_length, difficulty, board_dimensions),
@@ -70,7 +70,15 @@ class SpinnerSet:
                 }
                 
                 if not previous_params:
-                    return res
+                    # USER REQUEST: Specific initial state for the first round (Density Focused)
+                    return {
+                        'min_word_length': 3,
+                        'difficulty': 'Easy',
+                        'word_count_range': '100-300',
+                        'dictionary': 'NWL',
+                        'board_format': 'Normal',
+                        'generated_at': time.time()
+                    }
                 
                 # VARIETY ENFORCEMENT: Avoid repeating the same board format (User Request)
                 # If we rolled the exact same format (e.g., 'Either/Or' twice), we re-roll 
@@ -102,17 +110,12 @@ class SpinnerSet:
             return {
                 'difficulty': random.choice(['Easy', 'Medium', 'Hard']),
                 'dictionary': random.choice(['NWL', 'CSW']),
-                'word_count_range': random.choices(['50-100', '100-200', '200+', '500+'], weights=[24, 50, 25, 1])[0],
+                'word_count_range': '100-300',
                 'board_format': 'Normal',
                 'min_word_length': 3,
-                'bonus_word_length': 8,
                 'generated_at': time.time()
             }
     
-    @staticmethod
-    def _spin_bonus_word_length():
-        """20% each for 6, 7, 8, 9, 10 letters"""
-        return random.choice([6, 7, 8, 9, 10])
     
     @staticmethod
     def _spin_min_word_length(board_dimensions):
@@ -152,49 +155,9 @@ class SpinnerSet:
         return random.choices(choices, weights=weights)[0]
     
     @staticmethod
-    def _spin_word_count(dictionary_name='NWL', min_word_length=3, difficulty='Medium', board_dimensions='4x4'):
-        # CRITICAL: For cubes, we must check total tiles via something other than rows*cols 
-        # since depth isn't passed here. We default to is_large if caller uses rows/cols correctly or detect via values.
-        # 3x3x3 cube has 27 tiles, but surface area logic often treats it as large.
-        dims_str = str(board_dimensions)
-        is_large = ('3x3x3' in dims_str) or ('6x8' in dims_str)
-        is_4x4 = ('4x4' in dims_str)
-        
-        choices = ['50-100', '100-200', '200+', '500+']
-        weights = [24, 50, 25, 1]
-        
-        wc_range = random.choices(choices, weights=weights)[0]
-
-        # User Request Fix: A 4x4 grid cannot hit 200+ words while maintaining 'Easy' uniqueness.
-        # We also constraint 4x4 targets based on min_word_length to avoid impossible search goals.
-        if is_4x4:
-            if wc_range in ['200+', '500+']:
-                # High density on 4x4 ALWAYS results in high uniqueness (Hard).
-                # Force Hard difficulty so the generator doesn't trim words to meet 'Easy' targets.
-                # Note: This effectively 'promotes' the difficulty if a dense WC is rolled.
-                pass
-            
-            if min_word_length >= 5:
-                # 4x4 with 5L minimum: 200+ and 500+ are physically impossible.
-                # 100-200 is extremely difficult, so we strictly cap at 50-100.
-                if wc_range in ['100-200', '200+', '500+']:
-                    wc_range = '50-100'
-            elif min_word_length >= 4:
-                # 4x4 with 4L minimum: 500+ and 200+ are generally impossible.
-                if wc_range in ['200+', '500+']:
-                    wc_range = '100-200'
-
-        elif is_large:
-            if min_word_length >= 7:
-                # 6x8/Cube with 7L minimum: 500+ is extremely difficult.
-                if wc_range == '500+':
-                    wc_range = '200+'
-            elif min_word_length >= 6:
-                # 6L minimum: 500+ is still very unlikely.
-                if wc_range == '500+':
-                    wc_range = '200+'
-        
-        return wc_range
+    def _spin_word_count(dictionary, min_word_length, difficulty, board_dimensions):
+        # USER REQUEST: Always between 100 and 300 words.
+        return '100-300'
     
     @staticmethod
     def _spin_dictionary():
@@ -213,8 +176,8 @@ class SpinnerSet:
             return 'Normal'
             
         result = random.choices(
-            ['Normal', 'Checkerboard', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Density'],
-            weights=[80, 8, 2, 2, 2, 2, 2, 2]
+            ['Normal', 'Checkerboard', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Density', 'IO-Checkerboard'],
+            weights=[78, 8, 2, 2, 2, 2, 2, 2, 2]
         )[0]
         
         if result == 'Mania':

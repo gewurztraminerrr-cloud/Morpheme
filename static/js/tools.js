@@ -2717,10 +2717,11 @@ async function runManualSolve() {
         solveBtn.innerText = "Solving...";
         solveBtn.disabled = true;
 
+        const min_word_length = window._displayedParams ? (window._displayedParams.min || 3) : 3;
         const resp = await fetch('/api/tools/manual_solve', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ board, dictionary: dictEl.value })
+            body: JSON.stringify({ board, dictionary: dictEl.value, min_word_length })
         });
         const data = await resp.json();
 

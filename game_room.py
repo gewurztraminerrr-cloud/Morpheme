@@ -111,6 +111,7 @@ class GameRoom:
     total_points_count: int = 0 
     # Next round pre-generation (for Accumulative timing)
     spinner_params_generated: bool = False  # Track if spinner set generated for next round
+    spinner_params_revealed: bool = False   # NEW: Track if params are visible to players
     board_search_started: bool = False      # Track if board search started
     next_round_board: List[List[str]] = field(default_factory=list)  # Store pre-generated board
     next_round_words: List[str] = field(default_factory=list)  # Store pre-generated word list
@@ -138,6 +139,7 @@ class GameRoom:
     # History of winners
     winners_history: List[Dict] = field(default_factory=list) # [{'round': N, 'winners': [names], 'score': S}]
     previous_total_points: int = 0
+    creation_time: float = field(default_factory=time.time)
     previous_total_words: int = 0
     previous_total_counts_by_len: Dict = field(default_factory=dict)
     @property
@@ -1028,6 +1030,7 @@ class GameRoom:
                         should_end = True
                         self.midnight_reset_occurred = True
                         self.previous_board = [list(row) for row in self.board] if self.board else None
+                        self.previous_min_length = getattr(self, 'current_min_length', 3)
                         self.previous_all_words = getattr(self, 'solved_words_with_scores', {}) if self.solved_words_with_scores else {w: {} for w in self.all_words} # Dict for scoring fallback
 
         # 2. Transition ACTIVE -> INTERMISSION
@@ -1415,6 +1418,7 @@ class RoomManager:
     
     def _bg_cleanup_loop(self):
         """Authoritative Heartbeat: State transitions, cleanup, and milestones."""
+        print("[RoomManager] Heartbeat entering main loop...")
         loop_counter = 0
         while True:
             loop_counter += 1
@@ -1423,8 +1427,6 @@ class RoomManager:
                 rooms_to_process = list(self.rooms.items())
                 for room_id, room in rooms_to_process:
                     try:
-                        if room.state == 'intermission':
-                            print(f"[Heartbeat] Ticking room {room_id} in {room.state} (TR: {room.time_remaining})")
                         # timers/transitions
                         room.check_and_update_state()
                         
@@ -1441,8 +1443,8 @@ class RoomManager:
                         elif milestone == 'search':
                             # ATOMIC LOCK: Set flag IMMEDIATELY in this main heartbeat thread
                             with room._state_lock:
-                                if not getattr(room, 'board_search_started', False):
-                                    room.board_search_started = True 
+                                if not getattr(room, 'board_search_started', False) and not getattr(room, 'board_search_loading', False):
+                                    room.board_search_loading = True 
                                     threading.Thread(target=self.start_board_search, args=(room_id,), daemon=True).start()
                         elif milestone == 'start':
                             # ATOMIC LOCK check only; start_next_round handles state management
@@ -1466,130 +1468,102 @@ class RoomManager:
                 
     def create_room(self, room_id, game_type, time_limit, board_dimensions, min_rating=0, max_rating=9999, is_private=False):
         """Create a new game room or return an existing singleton for the configuration"""
-        with self.lock:
-            # Singleton Logic for Multiplayer Hubs (Skip for Private/Solo rooms)
-            if not is_private:
-                for existing_room in self.rooms.values():
-                    if (existing_room.game_type == game_type and 
-                        existing_room.board_dimensions == board_dimensions and
-                        existing_room.time_limit == time_limit and
-                        existing_room.min_rating == min_rating and
-                        existing_room.max_rating == max_rating and
-                        not existing_room.is_solo and
-                        not existing_room.is_private and
-                        not existing_room.room_id.startswith('practice_')):
-                        print(f"[RoomManager] Singleton: Returning existing {game_type} room {existing_room.room_id}")
-                        return existing_room
+        try:
+            with self.lock:
+                # Singleton Logic for Multiplayer Hubs (Skip for Private/Solo rooms)
+                if not is_private:
+                    for existing_room in self.rooms.values():
+                        if (existing_room.game_type == game_type and 
+                            existing_room.board_dimensions == board_dimensions and
+                            existing_room.time_limit == time_limit and
+                            existing_room.min_rating == min_rating and
+                            existing_room.max_rating == max_rating and
+                            not existing_room.is_solo and
+                            not existing_room.is_private and
+                            not existing_room.room_id.startswith('practice_')):
+                            print(f"[RoomManager] Singleton: Returning existing {game_type} room {existing_room.room_id}")
+                            return existing_room
 
-            print(f"[RoomManager] Creating NEW room {room_id} for {game_type} ({board_dimensions})")
-            room = GameRoom(
-                room_id=room_id,
-                game_type=game_type,
-                time_limit=time_limit,
-                board_dimensions=board_dimensions,
-                min_rating=min_rating,
-                max_rating=max_rating,
-                is_solo=(game_type == 'practice' or (room_id and room_id.startswith('practice_'))),
-                is_private=is_private
-            )
-            
-            # Unlimited players for Accumulative, 8 for others
-            if game_type in ['accumulative', 'solo_accumulative']:
-                room.max_players = 9999
-            else:
-                room.max_players = 8
+                print(f"[RoomManager] Creating NEW room {room_id} for {game_type} ({board_dimensions})")
+                room = GameRoom(
+                    room_id=room_id,
+                    game_type=game_type,
+                    time_limit=time_limit,
+                    board_dimensions=board_dimensions,
+                    min_rating=min_rating,
+                    max_rating=max_rating,
+                    is_solo=(game_type == 'practice' or (room_id and room_id.startswith('practice_'))),
+                    is_private=is_private
+                )
+                
+                # Capacity Check
+                if room.game_type in ['accumulative', 'solo_accumulative']:
+                    room.max_players = 9999
+                else:
+                    room.max_players = 8
 
-            self.rooms[room_id] = room
-            
-            # ATOMIC INITIALIZATION: 
-            # If this is a new room, we MUST start the intermission timer and search
-            # to prevent it from getting stuck in 'waiting' state.
-            room.state = 'intermission'
-            room.intermission_start_time = time.time() - 50 # Start with only 10s left for first user Experience
-            
-            # INITIALIZATION LOCKDOWN: Ensure spinner params are set immediately 
-            # so the first round (started in background) is guaranteed to have a bonus word.
-            is_24h = (room.time_limit >= 7200)
-            is_split = (room.game_type == 'split')
-            room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split)
-            room.spinner_params_generated = True
+                self.rooms[room_id] = room
+                
+                # ATOMIC INITIALIZATION
+                import threading
+                is_24h = (room.time_limit >= 7200)
+                is_split = (room.game_type == 'split')
+                room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split)
 
-            # PRE-EMPTIVE GENERATION: Trigger board search immediately for new hub rooms
-            # so they are ready by the time the initial intermission ends.
-            if room_id.startswith('pub_') and not is_24h:
-                 threading.Thread(target=self.start_board_search, args=(room_id,), daemon=True).start()
-
-            # 24H RECOVERY: If this is a stable-ID public room, check if a board was already generated today
-            if is_24h and room_id.startswith('pub_'):
-                try:
-                    import sqlite3
-                    import json
-                    import datetime
-                    conn_r = sqlite3.connect('morpheme.db', timeout=30)
-                    # Find LATEST round for this exact stable ID generated in the last 24h
-                    # We need the timestamp to ensure we don't recover a "yesterday" board 
-                    # from the last 24h window if we are already in "today".
-                    cursor = conn_r.execute('''
-                        SELECT board_json, all_solutions_json, bonus_word, bonus_cell, board_format, all_words_paths, round_number, timestamp
-                        FROM round_history 
-                        WHERE room_id = ? AND timestamp > datetime('now', '-24 hours')
-                        ORDER BY id DESC LIMIT 1
-                    ''', (room_id,))
-                    row = cursor.fetchone()
-                    if row:
-                        b_json, sols_json, b_word, b_cell_json, b_fmt, paths_json, r_num, ts_str = row
+                # INSTANT START: User Request - No wait on first entry for public hubs.
+                if room_id.startswith('pub_') and not is_24h:
+                    print(f"[RoomManager] {room_id}: First entry. Generating synchronous kickstart board...")
+                    # 1. Pick a bonus word
+                    bw_l = room.spinner_params.get('bonus_word_length', 8)
+                    b_word = self._get_bonus_word(length=bw_l, dictionary=room.spinner_params.get('dictionary', 'NWL'))
+                    
+                    # 2. Generate board (Emergency mode for speed)
+                    e_results = self.board_generator.generate_board(
+                        dimensions=room.board_dimensions,
+                        bonus_word=b_word,
+                        word_count_range=(50, 300), 
+                        dictionary=room.spinner_params.get('dictionary', 'NWL'),
+                        board_format=room.spinner_params.get('board_format', 'Normal'),
+                        min_word_length=room.spinner_params.get('min_word_length', 3),
+                        is_emergency=True
+                    )
+                    
+                    if e_results and len(e_results) >= 7:
+                        e_board, e_words, e_bonus_c, e_fmt, e_dict, e_ratio, e_bonus_word = e_results[:7]
                         
-                        # CALENDAR DAY CHECK: Only recover if it was started TODAY
-                        now = datetime.datetime.now()
-                        try:
-                            # sqlite timestamp is usually 'YYYY-MM-DD HH:MM:SS'
-                            round_dt = datetime.datetime.strptime(ts_str, '%Y-%m-%d %H:%M:%S')
-                        except:
-                            # Fallback if format differs
-                            round_dt = now # Default to reset
-                            
-                        if now.date() == round_dt.date():
-                            print(f"[RoomManager] Recovered board for 24h room {room_id} (Today's board)")
-                            room.current_round = r_num
-                            room.board = json.loads(b_json)
-                            room.all_words = set(json.loads(sols_json)) if sols_json else set()
-                            room.bonus_word = b_word
-                            room.bonus_cell = json.loads(b_cell_json) if b_cell_json else None
-                            room.current_board_format = b_fmt or 'Normal'
-                            room.all_words_paths = json.loads(paths_json) if paths_json else {}
-                            room.state = 'active'
-                            
-                            # CRITICAL: Preserve the actual start time!
-                            room.round_start_time = round_dt.timestamp()
+                        # 3. Promote to ACTIVE immediately
+                        room.state = 'active'
+                        room.round_start_time = time.time()
+                        room.board = e_board
+                        # Filter words for length lockdown
+                        min_l = room.spinner_params.get('min_word_length', 3)
+                        display_min = min_l
+                        room.all_words = {w for w in (e_words or []) if len(w) >= display_min}
+                        room.all_words_paths = {w: p for w, p in (e_dict or {}).items() if len(w) >= display_min}
+                        room.bonus_word = e_bonus_word or b_word
+                        room.bonus_cell = e_bonus_c
+                        room.current_board_format = e_fmt
+                        room.current_round = 1
+                        room.current_min_word_length = min_l
+                        room.initialize_density(e_board, room.all_words_paths, e_fmt)
+                        room.recalculate_total_points()
+                        
+                        # 4. Trigger PROACTIVE search for Round 2 in background
+                        room.spinner_params_generated = True
+                        threading.Thread(target=self.start_board_search, args=(room_id,), daemon=True).start()
+                        print(f"[RoomManager] {room_id}: Kickstart complete. Round 1 started.")
+                else:
+                    # Default behavior: Intermission
+                    room.state = 'intermission'
+                    room.intermission_start_time = time.time() - 45 # 15s TR
+                    if room_id.startswith('pub_') and not is_24h:
+                         threading.Thread(target=self.start_board_search, args=(room_id,), daemon=True).start()
 
-                            from scoring import calculate_word_score
-                            room.solved_words_with_scores = {}
-                            for word in room.all_words:
-                                room.solved_words_with_scores[word] = calculate_word_score(
-                                    word, room.bonus_word, board_format=room.current_board_format, 
-                                    bonus_cell=room.bonus_cell, path=room.all_words_paths.get(word), # Corrected 'paths' arg
-                                    return_details=True
-                                )
-                            
-                            # Initial Density for Recovered Room
-                            try:
-                                room.initialize_density(room.board, room.all_words_paths, room.current_board_format)
-                            except Exception as dens_err:
-                                print(f"[Density-Diag] Failed to recover density for {room_id}: {dens_err}")
-                        else:
-                            print(f"[RoomManager] 24h {room_id}: Found board from yesterday ({round_dt.date()}). Starting fresh for {now.date()}.")
-                            # Explicitly start today's round instead of recovering stale data
-                            self.start_round(room_id)
-                    else:
-                        # No recent history? Start fresh search for the FIRST round
-                        print(f"[RoomManager] 24h {room_id}: No recent history. Kickstarting search.")
-                        self.start_board_search(room_id)
-                    conn_r.close()
-                except Exception as rec_err:
-                    import traceback
-                    print(f"[RoomManager] Error recovering 24h board for {room_id}: {rec_err}\n{traceback.format_exc()}")
-            
-            return room
+                return room
+        except Exception as e:
+            import traceback
+            print(f"[RoomManager] CRITICAL ERROR in create_room: {e}\n{traceback.format_exc()}")
+            raise
     
     def get_yesterdays_history(self, room, current_round):
         """Recover history for a 24h room from the database (Fallback)"""
@@ -1874,13 +1848,12 @@ class RoomManager:
                 is_daily = (room.time_limit >= 7200)
                 
                 if is_empty_of_humans and not is_daily:
-                    # User Request: Kick spectators if no players
-                    if room.spectators:
-                        print(f"[RoomManager] Kicking {len(room.spectators)} abandoned spectators from room {room_id}")
-                        room.spectators = []
-                    
-                    print(f"[RoomManager] Marking room {room_id} for deletion (No human players)")
-                    rooms_to_delete.append(room_id)
+                    # Grace Period: Don't delete rooms that are less than 10 minutes old
+                    # This allows time for players to join newly created/reconstructed rooms.
+                    room_uptime = time.time() - getattr(room, 'creation_time', time.time())
+                    if room_uptime > 600:
+                        print(f"[RoomManager] Marking room {room_id} for deletion (No human players, uptime: {int(room_uptime)}s)")
+                        rooms_to_delete.append(room_id)
                     
             except Exception as e:
                 import traceback
@@ -1910,9 +1883,10 @@ class RoomManager:
             # Save previous round data before generating new one
             has_prev = hasattr(room, 'previous_all_words') and room.previous_all_words
             if not has_prev and room.all_words:
-                min_len = getattr(room, 'current_min_length', 3)
-                old_bonus = (room.bonus_word.upper() if room.bonus_word else None)
-                words_list = [w for w in room.all_words if (len(w) >= min_len or (old_bonus and w.upper() == old_bonus))]
+                # USER REQUEST: Absolute filter for history. 
+                # Display Floor is 4L, but must also respect round minimum (e.g. 5L).
+                display_min_hist = min_len
+                words_list = [w for w in room.all_words if len(w) >= display_min_hist]
                 room.previous_all_words = {w: {} for w in words_list} # Dict format for scores compatibility
                 room.previous_board = [list(row) for row in room.board]
                 print(f"[RoomManager] Saved {len(room.previous_all_words)} words to history (Fallback/Round {room.current_round})")
@@ -1993,9 +1967,9 @@ class RoomManager:
                 print(f"[RoomManager] ERROR: Board generation failed!")
                 return False
                 
-            # ATOMICITY: Apply new round data
-            room.board = board
-            room.all_words = all_words or []
+            # ATOMICITY: Apply new round data with strict display filtering
+            display_min_start = room.spinner_params.get('min_word_length', 3)
+            room.all_words = {w for w in (all_words or []) if len(w) >= display_min_start}
             
             # CATEGORIZATION (Synchronous): Ensure these are available immediately for UI sync
             if hasattr(word_validator, 'word_validator'):
@@ -2078,7 +2052,8 @@ class RoomManager:
                     init_scored_dict[word] = {'total': max(1, s), 'base': max(1, s)}
             
             room.solved_words_with_scores = init_scored_dict
-            room.complete_words = list(all_words)
+            display_min_init = getattr(room, 'current_min_length', 3)
+            room.complete_words = [w for w in (all_words or []) if len(w) >= display_min_init]
             room.solving_complete = False # Detailed refinement still pending
             
             # AUTHORITATIVE SYNC
@@ -2276,12 +2251,6 @@ class RoomManager:
             print(f"[RoomManager] ERROR: Room {room_id} not found")
             return False
             
-        # TOTAL ATOMICITY GUARD: Exit immediately if already started or loading
-        with room._state_lock:
-            if getattr(room, 'board_search_started', False) or getattr(room, 'board_search_loading', False):
-                return True
-            room.board_search_loading = True  # Set STALL FLAG immediately to prevent race
-        
         # 1. 24H ROOMS: Board generation is synchronous or triggered at midnight, 
         # so we don't start a background thread here to avoid potential race conditions with app.py reset.
         if room.time_limit >= 7200: 
@@ -2302,12 +2271,13 @@ class RoomManager:
             
         # ATOMIC GUARD: Prevent redundant threads while allowing the legitimate one to proceed
         with room._state_lock:
-            # Check if ALREADY LOADING (The 'started' flag is set by heartbeat before launch)
-            if getattr(room, 'board_search_loading', False):
+            # Check if ALREADY STARTED (To prevent redundant generation)
+            if getattr(room, 'board_search_started_actual', False):
                 return False
             
             # Start the search process
             room.board_search_loading = True
+            room.board_search_started_actual = True # New flag to track actual execution
             room.board_search_started = True 
             room._last_search_start_time = time.time()
             
@@ -2383,7 +2353,7 @@ class RoomManager:
             
             # Start board generation in background thread
             def generate_in_background():
-                nonlocal bonus_word
+                nonlocal bonus_word, params
                 try:
                     print(f"[RoomManager] Background board generation started for {room_id}...")
                     # Capture params locally for thread safety
@@ -2443,7 +2413,16 @@ class RoomManager:
                     
                     room.next_round_word_scores = scored_dict
                     room.next_round_total_points = sum(pts['total'] for pts in scored_dict.values())
-                    room.next_round_board = board # SIGNAL READY IMMEDIATELY!
+                    
+                    # RE-VERIFY: Ensure we are still updating the ACTIVE room instance
+                    # (Prevents data loss if the room was reconstructed during search)
+                    target_room = room
+                    active_room = self.get_room(room_id)
+                    if active_room and active_room is not room:
+                         print(f"[RoomManager] Search complete for {room_id}, but room was reconstructed. Redirecting to active instance.")
+                         target_room = active_room
+
+                    target_room.next_round_board = board # SIGNAL READY IMMEDIATELY!
                     
                     # FIRST ROUND / LATE SYNC: If the round started while we were searching,
                     # promote the fast metrics to the ACTIVE state immediately to avoid 0-point displays.
@@ -2564,11 +2543,16 @@ class RoomManager:
                     room.spinner_params_generated = True
                     
                     # PERFORMANCE CACHE: Categorize words once per round
-                    from word_validator import word_validator
-                    room.next_round_csw_only_words = [w for w in all_words if word_validator.is_csw_only(w)]
-                    room.next_round_added_words = [w for w in all_words if word_validator.is_added_word(w)]
+                    # USER REQUEST: Filter by min_len strictly.
+                    # HARD FLOOR: Always exclude 3-letter words from the final solution display (User Request: "NOT 3 letter wrods")
+                    min_l = room.next_spinner_params.get('min_word_length', 3) if getattr(room, 'next_spinner_params', None) else 3
+                    display_min = min_l
+                    filtered_all = [w for w in (all_words or []) if len(w) >= display_min]
                     
-                    print(f"[RoomManager] Board found and params revealed! Words: {len(all_words) if all_words else 0}")
+                    room.next_round_csw_only_words = [w for w in filtered_all if word_validator.word_validator.is_csw_only(w)]
+                    room.next_round_added_words = [w for w in filtered_all if word_validator.word_validator.is_added_word(w)]
+                    
+                    print(f"[RoomManager] Board found and params revealed! Words: {len(filtered_all)}")
                 except Exception as e:
                     import traceback
                     print(f"[RoomManager] ERROR in background search for {room_id}: {e}")
@@ -2879,13 +2863,18 @@ class RoomManager:
                         difficulty=room.current_difficulty,
                         is_emergency=True
                     )
-                    # generate_board returns (board, all_words, bonus_cell, board_format, all_words_dict, uniqueness_ratio)
-                    e_board, e_words, _, _, e_paths, _ = e_results
+                    # Robust Unpacking: Support both 6-tuple and 7-tuple returns
+                    if len(e_results) == 7:
+                        e_board, e_words, e_bonus_c, _, e_paths, e_ratio, e_bonus_word = e_results
+                    else:
+                        e_board, e_words, e_bonus_c, _, e_paths, e_ratio = e_results
+                        e_bonus_word = getattr(room, 'next_round_bonus', '')
                     
                     room.next_round_board = e_board
                     room.next_round_words = e_words
                     room.next_round_word_paths = e_paths
                     room.next_round_total_words_count = len(e_words)
+                    room.next_round_bonus = e_bonus_word
                     
                     # USER REQUEST: Ensure Total Points is never 0.
                     # Fast-apply length based scores for the emergency board immediately.
@@ -2913,8 +2902,11 @@ class RoomManager:
                     room.total_words_count = sum(1 for w in (room.next_round_words or []) if len(w) >= room.current_min_length)
                 
                 # --- 4. HISTORY PROMOTION ---
+                room.previous_min_length = getattr(room, 'current_min_length', 3)
                 room.previous_board = list(room.board) if room.board else []
-                room.previous_all_words = list(room.all_words) if room.all_words else []
+                # USER REQUEST: Ensure intermission list matches round rules
+                display_min_prev = getattr(room, 'current_min_length', 3)
+                room.previous_all_words = [w for w in (room.all_words or []) if len(w) >= display_min_prev]
                 room.previous_csw_only_words = list(room.csw_only_words) if room.csw_only_words else []
                 room.previous_added_words = list(room.added_words) if room.added_words else []
                 
@@ -2925,10 +2917,12 @@ class RoomManager:
                 # ATOMIC PROMOTION: Carry staging data to active room state
                 room.board = room.next_round_board
                 
-                # USER REQUEST: Capture all valid words (>= 3L) for 'Remaining' tab metadata.
-                # Scorable minimum enforcement happens in submit_word.
-                room.all_words = {w for w in (room.next_round_words or []) if len(w) >= 3}
-                room.all_words_paths = {w: p for w, p in (room.next_round_word_paths or {}).items() if len(w) >= 3}
+                # USER REQUEST: Absolute consistency. Only include words that meet the round's scorable minimum.
+                # HARD FLOOR: Always exclude 3-letter words from the 'All Words' list (User Request: "NOT 3 letter wrods")
+                min_l = room.current_min_length if hasattr(room, 'current_min_length') else 3
+                display_min = min_l
+                room.all_words = {w for w in (room.next_round_words or []) if len(w) >= display_min}
+                room.all_words_paths = {w: p for w, p in (room.next_round_word_paths or {}).items() if len(w) >= display_min}
                 room.solved_words_with_scores = getattr(room, 'next_round_word_scores', {})
                 
                 # USER REQUEST: Ensure Bonus Word is ironclad (highlighted in green at end)
@@ -2957,35 +2951,35 @@ class RoomManager:
                 
                 # --- 4. ACCURACY ENFORCEMENT: Draconian word count truncation ---
                 try:
+                    # USER REQUEST: Absolute filter for the final scorable set.
+                    # This ensures 3L and 4L words are PURGED from both the list and the score dictionary.
+                    min_l = room.current_min_length if hasattr(room, 'current_min_length') else 3
+                    display_min_final = min_l
+                    
+                    room.all_words = {w for w in (room.all_words or []) if len(w) >= display_min_final}
+                    room.all_words_paths = {w: room.all_words_paths.get(w, []) for w in room.all_words}
+                    
+                    if hasattr(room, 'solved_words_with_scores'):
+                        room.solved_words_with_scores = {w: room.solved_words_with_scores[w] for w in room.all_words if w in room.solved_words_with_scores}
+
                     target_range = getattr(room, 'current_word_count_range', '100-200')
                     if target_range:
                         _, max_target = self.board_generator._parse_word_count_range(target_range)
                         
-                        # USER REQUEST: Only truncate scorable words. We must preserve 3L/4L words for metadata.
-                        scorable_words = [w for w in room.all_words if len(w) >= room.current_min_length]
-                        non_scorable = [w for w in room.all_words if len(w) < room.current_min_length]
-                        
-                        if max_target < 99999 and len(scorable_words) > max_target:
-                            print(f"[ACCURACY-SYNC] Truncating Round {room.current_round} SCORABLE count to {max_target} words to match range '{target_range}'")
-                            # Sort scorable by length desc then alpha
-                            sorted_scorable = sorted(scorable_words, key=lambda w: (len(w), w), reverse=True)[:max_target]
-                            room.all_words = set(sorted_scorable + non_scorable)
+                        if max_target < 99999 and len(room.all_words) > max_target:
+                            print(f"[ACCURACY-SYNC] Truncating Round {room.current_round} to {max_target} words to match range '{target_range}'")
+                            # Sort by length desc then alpha
+                            sorted_scorable = sorted(list(room.all_words), key=lambda w: (len(w), w), reverse=True)[:max_target]
+                            room.all_words = set(sorted_scorable)
                             room.all_words_paths = {w: room.all_words_paths.get(w, []) for w in room.all_words}
+                            room.solved_words_with_scores = {w: room.solved_words_with_scores[w] for w in room.all_words if w in room.solved_words_with_scores}
                             
-                            if hasattr(room, 'solved_words_with_scores'):
-                                 room.solved_words_with_scores = {w: room.solved_words_with_scores[w] for w in room.all_words if w in room.solved_words_with_scores}
-                                 
-                            # Explicitly verify the length matches what we truncated to avoid ANY downstream counting ghosts
-                            room.total_words_count = len(room.all_words)
+                    # Explicitly verify the length matches what we truncated to avoid ANY downstream counting ghosts
+                    room.total_words_count = len(room.all_words)
                 except Exception as e:
                     print(f"[ACCURACY-ERROR] Failed to truncate: {e}")
                 
                 # FINAL ACCURACY SYNC: Ensure the header labels exactly match the results
-                # Enforce whatever length survived to avoid UI disjoint
-                # NOTE: We NO LONGER overwrite current_word_count_range here.
-                # We want to keep the Spinner Set's "Intent" range (e.g. 50-100) 
-                # even if the result is 105 words, to avoid "Parameter Drift" UI flips.
-                # USER REQUEST: Total count should reflect scorable words only.
                 room.total_words_count = sum(1 for w in room.all_words if len(w) >= room.current_min_length)
                 room.current_difficulty = getattr(room, 'next_round_difficulty', room.current_difficulty)
 
@@ -2998,6 +2992,15 @@ class RoomManager:
                 room.complete_words = list(room.all_words) 
                 room.update_counts_by_len()
                 room.recalculate_total_points()
+                
+                # FINAL VALIDATION: If the board is STILL empty, we cannot start the round.
+                # Revert to a 5-second emergency intermission to try again.
+                if not room.board or len(room.board) == 0:
+                    print(f"[RoomManager] CRITICAL: Room {room_id} failed to secure a board. Reverting to emergency intermission.")
+                    room.state = 'intermission'
+                    room.intermission_start_time = time.time() - 55 # 5s remaining
+                    room.starting_round = False
+                    return False
                 
                 # Double-check: If density data is missing in staging but format says 'Density', regenerate it now
                 f_low_promo = str(room.current_board_format).lower()

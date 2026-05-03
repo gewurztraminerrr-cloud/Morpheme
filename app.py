@@ -2397,14 +2397,21 @@ def get_room_state(room_id):
             words_to_return = []
             word_scores_to_return = {}
             if is_intermission:
-                # Intermission solutions are preserved in room.all_words until 0:00
-                # SYNC: Re-categorized added/csw words in case dictionaries changed during the round
-                if hasattr(word_validator, 'word_validator'):
-                    room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
-                    room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
+                # USER REQUEST: Absolute 'Last-Mile' Safety Net.
+                # Never allow 3L/4L words to reach the client if the Spinner says 5L+.
+                # Also enforce the global 4L floor for all solution lists.
+                cur_min = getattr(room, 'current_min_length', 3)
+                display_floor = cur_min
+                words_to_return = [w for w in (room.all_words or []) if len(w) >= display_floor]
                 
-                words_to_return = list(room.all_words)
+                # RE-SYNC: Ensure re-categorized lists also respect this floor
+                if hasattr(word_validator, 'word_validator'):
+                    room.csw_only_words = [w for w in words_to_return if word_validator.word_validator.is_csw_only(w)]
+                    room.added_words = [w for w in words_to_return if word_validator.word_validator.is_added_word(w)]
+                
                 word_scores_to_return = getattr(room, 'solved_words_with_scores', {})
+                # Purge scores as well
+                word_scores_to_return = {w: word_scores_to_return[w] for w in words_to_return if w in word_scores_to_return}
                 # Fallback to previous if current is somehow missing
                 if not words_to_return:
                     prev_all = getattr(room, 'previous_all_word_scores', {}) or getattr(room, 'previous_all_words', {})
@@ -2481,8 +2488,8 @@ def get_room_state(room_id):
                 'fcfs_found_words': list(getattr(room, 'fcfs_found_words', [])) if (is_active and is_fcfs) else [],
                 'added_words': [w for w in words_to_return if word_validator.get_use_added_words() and word_validator.is_added_word(w)],
                 'csw_only_words': [w for w in words_to_return if word_validator.is_csw_only(w)],
-                'previous_all_words': getattr(room, 'previous_all_words', []),
-                'previous_all_word_scores': getattr(room, 'previous_all_word_scores', {}),
+                'previous_all_words': [w for w in (getattr(room, 'previous_all_words', []) or []) if len(w) >= getattr(room, 'previous_min_length', 3)],
+                'previous_all_word_scores': {w: v for w, v in (getattr(room, 'previous_all_word_scores', {}) or {}).items() if len(w) >= getattr(room, 'previous_min_length', 3)},
                 'previous_board': getattr(room, 'previous_board', []),
                 'previous_csw_only_words': getattr(room, 'previous_csw_only_words', []),
                 'previous_added_words': getattr(room, 'previous_added_words', []),
@@ -3525,7 +3532,8 @@ def tools_manual_solve():
         word_validator.get_use_added_words()
 
         # We use the board_generator from the global room_manager instance
-        all_words_dict = room_manager.board_generator._solve_board(board, dictionary, (0, float('inf')), 3)
+        min_word_length = int(data.get('min_word_length', 3))
+        all_words_dict = room_manager.board_generator._solve_board(board, dictionary, (0, float('inf')), min_word_length)
         
         # Sort by largest first (Length DESC, then Alpha ASC)
         all_words = sorted(list(all_words_dict.keys()), key=lambda x: (-len(x), x))
