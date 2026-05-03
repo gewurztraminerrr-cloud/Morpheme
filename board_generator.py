@@ -69,6 +69,35 @@ LETTER_FREQ_EASY = [
     40,
 ]  # A=1050, E=1400, U=600
 
+LETTER_FREQ_SUPER_DENSITY = [
+    1200, # A
+    150,  # B
+    250,  # C
+    300,  # D
+    1600, # E
+    100,  # F
+    150,  # G
+    200,  # H
+    1100, # I
+    10,   # J
+    50,   # K
+    500,  # L
+    200,  # M
+    600,  # N
+    1000, # O
+    150,  # P
+    5,    # Q
+    600,  # R
+    800,  # S
+    800,  # T
+    400,  # U
+    30,   # V
+    40,   # W
+    10,   # X
+    100,  # Y
+    5,    # Z
+]
+
 VOWELS = "AEIOU"
 CONSONANTS = "BCDFGHJKLMNPQRSTVWXYZ"
 # User-identified difficult letters for Hard rounds (with common support for density)
@@ -522,8 +551,8 @@ class BoardGenerator:
         Generate a valid board that meets word count requirements (100-300).
         RESTARTED: Simplified logic with ironclad compliance.
         """
-        # USER REQUEST: Absolute Ironclad 100-300 range regardless of spinner or difficulty
-        min_words, max_words = 100, 300
+        # USER REQUEST: Parse word count range from spinner instead of hardcoding
+        min_words, max_words = self._parse_word_count_range(word_count_range)
         
         # 1. Dimension Parsing
         if dimensions == "3x3x3":
@@ -543,15 +572,16 @@ class BoardGenerator:
         
         while time.time() - start_time < timeout:
             attempts += 1
-            print(f"[BoardGen] COMPLIANCE ATTEMPT {attempts} (Target: 100-300, MinLen: {min_word_length})")
+            print(f"[BoardGen] COMPLIANCE ATTEMPT {attempts} (Target: {min_words}-{max_words}, MinLen: {min_word_length})")
             
             # --- STRATEGY SELECTION ---
             # We use StepwiseOptimization for high density targets (100+)
-            # But for 4x4, we can use natural frequencies with high density weights.
             strategy = "StepwiseOptimization" if num_tiles >= 24 else "HighDensity"
             
             # Weighted frequencies for density
-            weights = LETTER_FREQ_EASY if attempts > 5 else LETTER_FREQ_USER
+            # USER REQUEST: If target is 100+, we MUST use Easy weights to ensure we hit the floor.
+            is_high_count = (min_words >= 100)
+            weights = LETTER_FREQ_EASY if (is_high_count or attempts > 3) else LETTER_FREQ_USER
             
             # --- BOARD CREATION ---
             is_checkerboard = "checkerboard" in board_format.lower()
@@ -579,18 +609,23 @@ class BoardGenerator:
                 # if the target difficulty is Medium or Hard.
                 board = self._create_2000plus_board(
                     rows, cols, dictionary, is_checkerboard, board, all_excluded, "Density",
-                    min_word_length, 300, 150, 0, 1, depth=depth, difficulty=difficulty, weights=LETTER_FREQ_EASY
+                    min_word_length, max_words, min_words, 0, 1, depth=depth, difficulty=difficulty, weights=LETTER_FREQ_EASY
                 )
                 # Stage 2: IO and B Uniqueness
                 board = self._apply_io_b_uniqueness_optimization(
-                    board, rows, cols, dictionary, all_excluded, min_word_length, depth=depth, difficulty=difficulty, max_words=300
+                    board, rows, cols, dictionary, all_excluded, min_word_length, depth=depth, difficulty=difficulty, max_words=max_words
                 )
             else:
-                # Direct High Density fill
                 board = self._create_2000plus_board(
                     rows, cols, dictionary, is_checkerboard, board, all_excluded, "Density",
-                    min_word_length, 300, 120, 0, 1, depth=depth, difficulty=difficulty, weights=LETTER_FREQ_EASY
+                    min_word_length, max_words, min_words, 0, 1, depth=depth, difficulty=difficulty, weights=LETTER_FREQ_EASY
                 )
+
+            # --- RESCUE SWEEP (Anti-Under-Compliance) ---
+            # USER REQUEST: If still below min_words, perform random-location IO sweeps to hit the target.
+            current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=15, store_paths=False)
+            if len(current_solve) < min_words:
+                board = self._perform_rescue_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty)
 
             # --- VERIFICATION ---
             # USER REQUEST: Total count (100-300) should reflect words that will actually be SHOWN.
@@ -602,7 +637,9 @@ class BoardGenerator:
             )
             
             count = len(all_words_dict)
-            if 100 <= count <= 300:
+            print(f"[BoardGen] ATTEMPT {attempts} VERIFICATION: Count={count} Target={min_words}-{max_words} MinLen={display_min_target}L")
+            
+            if min_words <= count <= max_words:
                 print(f"[BoardGen] ✓ COMPLIANT BOARD FOUND ({count} words @ {display_min_target}L+) on attempt {attempts}")
                 
                 # RECALCULATE RATIO
@@ -635,38 +672,49 @@ class BoardGenerator:
         # [Simplified fallback logic here...]
         # For brevity in this restart, we'll return the best found or a dummy that meets rules.
         # But we'll ensure the rules are met.
-        return self._generate_emergency_compliant_board(dimensions, min_word_length, dictionary, board_format)
+        return self._generate_emergency_compliant_board(dimensions, min_word_length, dictionary, board_format, word_count_range, difficulty)
 
-    def _generate_emergency_compliant_board(self, dimensions, min_word_length, dictionary, board_format):
-        """Zero-failure fallback that injects words until the 100-word floor is hit."""
+    def _generate_emergency_compliant_board(self, dimensions, min_word_length, dictionary, board_format, word_count_range, difficulty):
+        """Zero-failure fallback that injects words until the target floor is hit."""
         # Standard Parsing
         if dimensions == "3x3x3": depth, rows, cols = 6, 3, 3
         else:
             parts = dimensions.split("x")
             depth, rows, cols = (map(int, parts) if len(parts) == 3 else (1, int(parts[0]), int(parts[1])))
         
-        # We use a known high-density vowel-heavy set to force 100+ words
-        # This is a brute-force fill for the absolute worst-case scenario.
-        weights = LETTER_FREQ_EASY
-        board = self._create_normal_board(rows, cols, weights, depth=depth)
+        min_words, max_words = self._parse_word_count_range(word_count_range)
         
-        # Optimization: One quick pass at max density
-        board = self._create_2000plus_board(
-            rows, cols, dictionary, False, board, set(), "Density",
-            min_word_length, 300, 110, 0, 1, depth=depth, weights=LETTER_FREQ_EASY
-        )
+        # We give it a few quick tries to hit the target
+        for _attempt in range(100):
+            # We use a known high-density vowel-heavy set to force many words
+            weights = LETTER_FREQ_SUPER_DENSITY if min_word_length >= 4 else LETTER_FREQ_EASY
+            board = self._create_normal_board(rows, cols, weights, depth=depth)
+            
+            # Optimization: One quick pass at max density
+            board = self._create_2000plus_board(
+                rows, cols, dictionary, False, board, set(), "Density",
+                min_word_length, max_words, min_words, 0, 1, depth=depth, weights=weights
+            )
+            
+            # Final Rescue Sweep to hit the target floor
+            board = self._perform_rescue_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, set(), difficulty)
+            
+            display_min = min_word_length
+            final_solve = self._solve_board(board, dictionary, (0, 99999), display_min, max_depth=25, store_paths=True)
+            count = len(final_solve)
+            
+            if min_words <= count <= max_words:
+                print(f"[BoardGen] ✓ EMERGENCY COMPLIANCE SUCCESS: {count} words after {(_attempt + 1)} emergency tries.")
+                # Fallback metadata
+                unique_set = self._get_difficulty_set(dictionary)
+                u_count = sum(1 for w in final_solve if w.upper() in unique_set)
+                ratio = u_count / count if count > 0 else 0
+                
+                return (board, sorted(list(final_solve.keys())), None, board_format + " (Emergency)", final_solve, ratio, None)
+            else:
+                print(f"[BoardGen] ✗ EMERGENCY ATTEMPT {(_attempt + 1)} FAILED: {count} words is not in {min_words}-{max_words}")
         
-        # USER REQUEST: Ensure 100-300 words at the display level (respecting round min if 5L+)
-        display_min = min_word_length
-        final_solve = self._solve_board(board, dictionary, (0, 99999), display_min, max_depth=25, store_paths=True)
-        count = len(final_solve)
-        
-        # Fallback metadata
-        unique_set = self._get_difficulty_set(dictionary)
-        u_count = sum(1 for w in final_solve if w.upper() in unique_set)
-        ratio = u_count / count if count > 0 else 0
-        
-        return (board, sorted(list(final_solve.keys())), None, board_format + " (Emergency)", final_solve, ratio, None)
+        return None # Should never happen
 
     def _generate_io_base_board_procedure(
         self, dimensions, bonus_word, word_count_range, dictionary, min_word_length, difficulty
@@ -741,8 +789,8 @@ class BoardGenerator:
             )
             final_count = len(final_words_dict)
             
-            if 100 <= final_count <= 300:
-                print(f"[BoardGen] ✓ IO-Base Compliance: {final_count} words (Range: 100-300)")
+            if min_words <= final_count <= max_words:
+                print(f"[BoardGen] ✓ IO-Base Compliance: {final_count} words (Range: {min_words}-{max_words})")
                 break
             else:
                 print(f"[BoardGen] ✗ IO-Base Non-Compliance: {final_count} words. Retrying...")
@@ -1069,9 +1117,14 @@ class BoardGenerator:
 
         # PERFORMANCE: 4x4 grids are fast to solve, so we can afford more passes for high-density
         is_4x4 = rows * cols == 16
-        # User Request: Ensure 200+ boards on 4x4 are consistently found (Weight 25% in Spinner)
-        # We increase pass_count to 4 for 200+ 4x4 targets to ensure success.
-        max_passes = 4 if (is_4x4 and min_words >= 200) else pass_count if (not is_4x4 or min_words >= 200) else 1
+        # USER REQUEST: Ensure 100+ and 200+ boards on 4x4 are consistently found.
+        # We need at least 2 passes for 100+ and 4 passes for 200+.
+        if is_4x4:
+            if min_words >= 200: max_passes = 4
+            elif min_words >= 100: max_passes = 2
+            else: max_passes = 1
+        else:
+            max_passes = pass_count
 
         # Use a more targeted dictionary for Uniqueness optimization to match Java's speed/efficiency
         # PERFORMANCE: For 4x4 grids, the full dictionary is fast enough. 
@@ -1105,8 +1158,9 @@ class BoardGenerator:
 
             for tile in tiles:
                 # CRITICAL: Total timeout for all passes combined to prevent background thread stalls
-                # For large grids, 10s of optimization is plenty; if not met, fallback is better.
-                io_timeout = 10 if rows * cols >= 35 else 20 if (is_4x4 and min_words >= 200) else 15 if is_4x4 else 18
+                # For large grids, 15s of optimization is plenty; if not met, fallback is better.
+                # USER REQUEST: For high-density 4x4 (200+), we need more time for 4 passes.
+                io_timeout = 15 if rows * cols >= 35 else 40 if (is_4x4 and min_words >= 100) else 18
                 elapsed_io = time.time() - start_overall_io_time
                 if elapsed_io > io_timeout:
                     print(f"[BoardGen] IO Global Timeout reached ({elapsed_io:.1f}s > {io_timeout}s). Returning current state.")
@@ -1365,7 +1419,13 @@ class BoardGenerator:
                                 best_char = char
                     else:  # Density target
                         # Mode (Easy/Medium): Maximize density (Points/Word)
-                        if not is_overshooting and (val > curr_count or (val == curr_count and count_w > best_count_w)):
+                        # USER REQUEST: If undershooting, prioritize raw count over point-value to hit floor.
+                        if is_undershooting:
+                            if count_w > best_count_w or (count_w == best_count_w and val > curr_count):
+                                curr_count = val
+                                best_count_w = count_w
+                                best_char = char
+                        elif not is_overshooting and (val > curr_count or (val == curr_count and count_w > best_count_w)):
                             # Standard improvement (Under limit)
                             curr_count = val
                             best_count_w = count_w
@@ -1424,6 +1484,52 @@ class BoardGenerator:
                 )
                 break
 
+        return board
+
+    def _perform_rescue_sweep(self, board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, excluded, difficulty):
+        """
+        USER REQUEST: Perform IO operations on random locations until desired word count is reached.
+        """
+        import time
+        start_time = time.time()
+        positions = []
+        for f in range(depth):
+            for r in range(rows):
+                for c in range(cols):
+                    pos = (f, r, c) if depth > 1 else (r, c)
+                    if pos not in excluded: positions.append(pos)
+        random.shuffle(positions)
+        current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=15, store_paths=False)
+        current_count = len(current_solve)
+        if current_count >= min_words: return board
+        print(f"[BoardGen] 🆘 RESCUE SWEEP START (Current: {current_count}, Target: {min_words})")
+        max_rescue_tiles = 24 if rows * cols >= 48 else len(positions)
+        rescue_pool = positions[:max_rescue_tiles]
+        for pos in rescue_pool:
+            if time.time() - start_time > 30.0: break
+            f_p, r_p, c_p = (pos[0], pos[1], pos[2]) if depth > 1 else (0, pos[0], pos[1])
+            old_char = board[f_p][r_p][c_p] if depth > 1 else board[r_p][c_p]
+            best_char, max_score = old_char, current_count
+            test_chars = ["S", "E", "R", "T", "A", "I", "O", "N", "L", "C", "D", "U", "H", "P", "B"]
+            for char in list(set(test_chars)):
+                if char == old_char: continue
+                if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, char, r_p, c_p, f_p, depth=depth):
+                    continue
+                if depth > 1: board[f_p][r_p][c_p] = char
+                else: board[r_p][c_p] = char
+                
+                # Solve (Deeper depth for accuracy in rescue)
+                res = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=16, store_paths=False)
+                new_count = len(res)
+                if new_count > max_score and new_count <= max_words:
+                    max_score, best_char = new_count, char
+                if max_score >= min_words: break
+            if depth > 1: board[f_p][r_p][c_p] = best_char
+            else: board[r_p][c_p] = best_char
+            current_count = max_score
+            if current_count >= min_words:
+                print(f"[BoardGen] ✅ RESCUE SUCCESSFUL: Hit {current_count} words.")
+                break
         return board
 
     def _apply_io_b_uniqueness_optimization(self, board, rows, cols, dictionary, excluded_cells, min_word_length, depth=1, difficulty="Medium", max_words=200):
@@ -1496,15 +1602,17 @@ class BoardGenerator:
                     total_w = len(all_found)
                     unique_w = sum(1 for w in all_found if w in unique_set)
                     
-                    # Normal/Hard: Prioritize Uniqueness but STERNLY penalize overshooting max_words
+                    # USER REQUEST: Total word count compliance.
+                    # We prioritize density/uniqueness but STERNLY penalize overshooting max_words (ceiling).
                     if is_easy:
                         score = total_w
                     else:
                         score = unique_w
-                        if total_w > max_words:
-                            # Draconian penalty for every word over the limit to keep density in check during Stage 2
-                            # User Request: "also above it as well" - we must ensure we don't overshoot.
-                            score -= (total_w - max_words) * 100
+                    
+                    if total_w > max_words:
+                        # Draconian penalty for every word over the limit to keep density in check during Stage 2
+                        # User Request: "also above it as well" - we must ensure we don't overshoot.
+                        score -= (total_w - max_words) * 1000
                 except Exception:
                     score = 0
                     

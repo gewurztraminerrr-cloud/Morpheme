@@ -1521,7 +1521,7 @@ class RoomManager:
                     e_results = self.board_generator.generate_board(
                         dimensions=room.board_dimensions,
                         bonus_word=b_word,
-                        word_count_range=(50, 300), 
+                        word_count_range=room.spinner_params.get('word_count_range', '100-200'), 
                         dictionary=room.spinner_params.get('dictionary', 'NWL'),
                         board_format=room.spinner_params.get('board_format', 'Normal'),
                         min_word_length=room.spinner_params.get('min_word_length', 3),
@@ -2284,14 +2284,15 @@ class RoomManager:
         print(f"[RoomManager] Starting board search process for room {room_id}")
         
         try:
-            # SAFETY: Ensure next_spinner_params exists; fallback to current spinner_params if necessary
+            # AUTHORITATIVE: Use the specific params intended for this background search.
+            # Fallback to spinner_params ONLY if it's the very first round (current_round == 1)
             params = getattr(room, 'next_spinner_params', None)
-            if not params:
+            if not params and room.current_round == 1:
                 params = getattr(room, 'spinner_params', {})
             
             if not params:
-                print(f"[RoomManager] CRITICAL: No parameters found for board search in room {room_id}")
-                room.board_search_loading = False
+                # If still no params, we must wait or fail to avoid bleeding from previous round
+                print(f"[RoomManager] WARNING: No next_spinner_params for {room_id}. Waiting for generation...")
                 return False
                 
             fmt = params.get('board_format', 'Normal')
@@ -2678,24 +2679,20 @@ class RoomManager:
                             exclude=getattr(room, 'bonus_word_history', [])
                         )
 
-                    # TARGET SYNC: Extract the Spinner's intended range to avoid 200+ vs 86 mismatches
-                    intent_range = params.get('word_count_range', '100-200')
-                    low, high = 25, 300 # Extremes
-                    if '500' in str(intent_range): low, high = 80, 800
-                    elif '200' in str(intent_range): low, high = 60, 500
-                    elif '100' in str(intent_range): low, high = 40, 300
-                    
-                    # Relaxed range for Near-Instant generation (<1s) but respecting intent
-                    e_board, e_words, e_bonus_c, e_fmt, e_dict, e_ratio, e_bonus_word = self.board_generator.generate_board(
+                    # Generate board using RAW spinner intent to ensure ironclad compliance
+                    e_results = self.board_generator.generate_board(
                         dimensions=room.board_dimensions,
                         bonus_word=b_word, 
-                        word_count_range=(low, high), 
+                        word_count_range=params.get('word_count_range', '100-200'), 
                         dictionary=params.get('dictionary', 'NWL'),
                         board_format=params.get('board_format', 'Normal'),
                         min_word_length=params.get('min_word_length', 3),
                         difficulty=params.get('difficulty', 'Normal'),
                         is_emergency=True
                     )
+                    
+                    if e_results:
+                        e_board, e_words, e_bonus_c, e_fmt, e_dict, e_ratio, e_bonus_word = e_results[:7]
                     
                     # STAGE the emergency result
                     room.next_round_board = e_board
@@ -3073,34 +3070,13 @@ class RoomManager:
                 room.state = 'active'
                 room.round_start_time = time.time()
                 
+                room.custom_end_time = 0 
+                
                 # START PRE-GENERATION FOR N+2 NOW (Safe since all R+1 staging is cleared)
+                # USER REQUEST: Ensure this happens AFTER all cleanup to avoid race conditions.
                 threading.Thread(target=self.pre_generate_next_round, args=(room_id,), daemon=True).start()
                 
-                # PERFORMANCE LOGGING: Track transition duration
-                init_time = getattr(room, '_round_start_init_time', room.round_start_time)
-                trans_duration = time.time() - init_time
-                with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/transition_perf.log', 'a') as perf:
-                    perf.write(f"[{time.time()}] ROOM {room_id} TRANSITION COMPLETE: {trans_duration:.3f}s (Round {room.current_round})\n")
-                
-                # RESET Proactive Lead-Time Search & Spinner Flags for the next round cycle
-                # We do this ATOMICALLY here so heartbeat can start the cycle for the round that JUST started.
-                room.board_search_started = False
-                room.board_search_loading = False
-                room.spinner_params_generated = False
-                room.spinner_params_revealed = False
-                room._transition_spinner_launched = False
-                
-                room.spinner_params_loading = False
-                room.next_spinner_params = None
-                room._last_search_start_time = 0
-                room._reveal_sync_complete = False 
-                
-                # Clear staging metadata to prevent stale fact-checking or ghost labels
-                room.next_round_uniqueness = 0.0
-                room.next_round_difficulty = None
-                room.next_round_format = None
-                room.next_round_bonus = None
-                room.custom_end_time = 0 
+                return True
                 
                 # IMPORTANT: CLEAR STARTING LOCK
                 room.starting_round = False
@@ -3138,10 +3114,10 @@ class RoomManager:
     
     def _get_factchecked_wc_range(self, count):
         """Map actual word count to the closest standard spinner display range.
-           Boundary counts (100, 200, 500) are kept in the 'prettier' range."""
-        if count > 500: return '500+'
-        if count > 200: return '200+'
-        if count > 100: return '100-200'
+           Matches the 100-200 and 200-300 targets defined in SpinnerSet."""
+        if count >= 300: return '200-300'
+        if count >= 200: return '200-300'
+        if count >= 100: return '100-200'
         return '50-100'
 
     def _get_bonus_word(self, length=8, dictionary='NWL', alternating=False, difficulty='Medium', exclude=None):

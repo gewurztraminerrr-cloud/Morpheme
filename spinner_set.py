@@ -58,7 +58,7 @@ class SpinnerSet:
                         if board_format not in ['Either/Or', 'Checkerboard', 'Density']:
                             board_format = 'Normal'
                 if board_format == 'IO-Checkerboard':
-                    wc_range = '100-300'
+                    wc_range = random.choice(['100-200', '200-300'])
                 
                 res = {
                     'min_word_length': min_word_length,
@@ -74,7 +74,7 @@ class SpinnerSet:
                     return {
                         'min_word_length': 3,
                         'difficulty': 'Easy',
-                        'word_count_range': '100-300',
+                        'word_count_range': random.choice(['100-200', '200-300']),
                         'dictionary': 'NWL',
                         'board_format': 'Normal',
                         'generated_at': time.time()
@@ -110,7 +110,7 @@ class SpinnerSet:
             return {
                 'difficulty': random.choice(['Easy', 'Medium', 'Hard']),
                 'dictionary': random.choice(['NWL', 'CSW']),
-                'word_count_range': '100-300',
+                'word_count_range': random.choice(['100-200', '200-300']),
                 'board_format': 'Normal',
                 'min_word_length': 3,
                 'generated_at': time.time()
@@ -156,8 +156,8 @@ class SpinnerSet:
     
     @staticmethod
     def _spin_word_count(dictionary, min_word_length, difficulty, board_dimensions):
-        # USER REQUEST: Always between 100 and 300 words.
-        return '100-300'
+        # USER REQUEST: 50% 100-200, 50% 200-300
+        return random.choices(['100-200', '200-300'], weights=[50, 50])[0]
     
     @staticmethod
     def _spin_dictionary():

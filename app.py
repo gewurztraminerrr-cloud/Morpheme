@@ -2497,7 +2497,7 @@ def get_room_state(room_id):
                 'spinner_params': room.spinner_params,
                 'current_min_word_length': (getattr(room, 'next_round_min_length', 3) if (is_intermission and is_revealed) else getattr(room, 'current_min_length', 3)),
                 'current_board_format': (room.spinner_params.get('board_format', 'Normal') if (is_intermission and is_revealed) else getattr(room, 'current_board_format', 'Normal')),
-                'current_word_count_range': (room.spinner_params.get('word_count_range') or getattr(room, 'current_word_count_range', None) or 'Random'),
+                'current_word_count_range': (room.spinner_params.get('word_count_range') if (is_intermission and is_revealed) else getattr(room, 'current_word_count_range', 'Random')),
                 'spinner_params_revealed': is_revealed,
                 'players': [
                     {

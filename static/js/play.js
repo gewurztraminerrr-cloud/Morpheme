@@ -2222,6 +2222,7 @@ function updateParameters(state) {
             if (document.getElementById('param-diff')) document.getElementById('param-diff').textContent = window._displayedParams.diff;
             if (document.getElementById('param-min')) document.getElementById('param-min').textContent = window._displayedParams.min;
             if (document.getElementById('param-dict')) document.getElementById('param-dict').textContent = window._displayedParams.dict;
+            if (document.getElementById('param-range')) document.getElementById('param-range').textContent = window._displayedParams.range;
         }
     }
 
@@ -2236,12 +2237,10 @@ function updateParameters(state) {
     
     window._lastRevealedState = isRevealed;
 
-    // Word Range
-
-        const format = document.getElementById('param-format');
-        if (format && (shouldUpdateLabels || !format.textContent)) {
-            format.textContent = window._displayedParams.fmt;
-        }
+    const format = document.getElementById('param-format');
+    if (format && (shouldUpdateLabels || !format.textContent)) {
+        format.textContent = window._displayedParams.fmt;
+    }
     } catch (err) {
         console.error('[play.js] Error in updateParameters:', err);
     }
