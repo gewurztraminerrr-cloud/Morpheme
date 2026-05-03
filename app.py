@@ -2478,7 +2478,8 @@ def get_room_state(room_id):
                 'bonus_word': room.bonus_word,
                 'bonus_cell': room.bonus_cell,
                 'all_words': words_to_return,
-                'total_words_count': (getattr(room, 'next_round_total_words_count', 0) if (is_intermission and is_revealed and getattr(room, 'next_round_total_words_count', 0) > 0) else (room.previous_total_words if is_intermission else actual_total)),
+                'total_words_count': (room.previous_total_words if is_intermission else actual_total),
+                'initial_total_words': getattr(room, 'initial_total_words', actual_total),
                 'total_points_count': (getattr(room, 'next_round_total_points', 0) if (is_intermission and is_revealed and getattr(room, 'next_round_total_points', 0) > 0) else (room.previous_total_points if is_intermission else room.total_points_count)),
                 'total_counts_by_len': (getattr(room, 'next_round_counts_by_len', {}) if (is_intermission and is_revealed and getattr(room, 'next_round_total_words_count', 0) > 0) else (room.previous_total_counts_by_len if is_intermission else getattr(room, 'total_counts_by_len', {}))),
                 'cell_density': (getattr(room, 'next_round_cell_density', []) if (is_intermission and is_revealed) else getattr(room, 'cell_density', [])),
@@ -2495,7 +2496,7 @@ def get_room_state(room_id):
                 'previous_added_words': getattr(room, 'previous_added_words', []),
                 'previous_bonus_word': getattr(room, 'previous_bonus_word', ''),
                 'spinner_params': room.spinner_params,
-                'current_min_word_length': (getattr(room, 'next_round_min_length', 3) if (is_intermission and is_revealed) else getattr(room, 'current_min_length', 3)),
+                'current_min_length': (getattr(room, 'next_round_min_length', 3) if (is_intermission and is_revealed) else getattr(room, 'current_min_length', 3)),
                 'current_board_format': (room.spinner_params.get('board_format', 'Normal') if (is_intermission and is_revealed) else getattr(room, 'current_board_format', 'Normal')),
                 'current_word_count_range': (room.spinner_params.get('word_count_range') if (is_intermission and is_revealed) else getattr(room, 'current_word_count_range', 'Random')),
                 'spinner_params_revealed': is_revealed,
@@ -4896,6 +4897,8 @@ def room_tick_worker():
                 if room.state == 'intermission':
                     milestone = room.get_next_round_milestone()
                     if milestone == 'spinner':
+                        room_manager.generate_spinner_params(room.room_id, reveal=False)
+                    elif milestone == 'reveal':
                         room_manager.generate_spinner_params(room.room_id, reveal=True)
                     elif milestone == 'search':
                         room_manager.start_board_search(room.room_id)

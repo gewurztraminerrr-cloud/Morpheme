@@ -976,7 +976,7 @@ class GameRoom:
                     return None
             return 'start'
             
-        # 2. Parameter Reveal (15s into intermission only)
+        # 2. Parameter Reveal (15s into intermission)
         if self.state == 'intermission':
             elapsed = now - self.intermission_start_time
             intermission_duration = 5 if self.time_limit >= 7200 else 60
@@ -985,12 +985,10 @@ class GameRoom:
                 return 'reveal'
 
         # 3. Proactive Parameter Generation (1s into ANY state)
-        # Use state start time depending on which state we are in
         state_start = self.intermission_start_time if self.state == 'intermission' else self.round_start_time
         state_elapsed = now - (state_start if state_start > 0 else now)
         
         if state_elapsed >= 1.0 and not getattr(self, 'spinner_params_generated', False):
-            # Only generate proactively if we haven't already started
             if not getattr(self, 'spinner_params_loading', False):
                 return 'spinner'
             
@@ -1544,7 +1542,8 @@ class RoomManager:
                         room.bonus_cell = e_bonus_c
                         room.current_board_format = e_fmt
                         room.current_round = 1
-                        room.current_min_word_length = min_l
+                        room.current_min_length = min_l
+                        room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
                         room.initialize_density(e_board, room.all_words_paths, e_fmt)
                         room.recalculate_total_points()
                         
@@ -2199,22 +2198,25 @@ class RoomManager:
             is_24h = (room.time_limit >= 7200)
             is_split = (room.game_type == 'split')
             
-            # Generate new parameters
-            new_params = SpinnerSet.generate_params(
-                room.board_dimensions, 
-                is_24h=is_24h, 
-                is_split=is_split, 
-                previous_params=room.spinner_params
-            )
-            
-            # Metadata: Ensure dimensions and time limits are included for the reveal animation
-            new_params['board_dimensions'] = room.board_dimensions
-            new_params['time_limit'] = room.time_limit
-
             with room._state_lock:
-                # 1. ALWAYS store the newly generated params systematically
-                room.next_spinner_params = dict(new_params)
-                room.spinner_params_generated = True
+                # USER REQUEST: Prevent re-rolling! Check lock state INSIDE the atomic block.
+                if getattr(room, 'spinner_params_generated', False) and room.next_spinner_params:
+                    new_params = dict(room.next_spinner_params)
+                    print(f"[RoomManager] Using EXISTING staged params for room {room_id} (Lock-protected)")
+                else:
+                    # Generate new parameters
+                    new_params = SpinnerSet.generate_params(
+                        room.board_dimensions, 
+                        is_24h=is_24h, 
+                        is_split=is_split, 
+                        previous_params=room.spinner_params
+                    )
+                    # Metadata: Ensure dimensions and time limits are included for the reveal animation
+                    new_params['board_dimensions'] = room.board_dimensions
+                    new_params['time_limit'] = room.time_limit
+                    
+                    room.next_spinner_params = dict(new_params)
+                    room.spinner_params_generated = True
 
                 if reveal:
                     # 2. PERFORM THE REVEAL (Making them visible to players)
@@ -2364,6 +2366,8 @@ class RoomManager:
                     search_min = params.get('min_word_length')
                     search_diff = params.get('difficulty')
                     
+                    print(f"[RoomManager] [DEBUG-GEN] Room {room_id} calling generate_board with search_min={search_min}, range={search_wc}")
+                    
                     # ROBUST CALL: The generator might return 6 or 7 values depending on the branch taken.
                     res = self.board_generator.generate_board(
                         room.board_dimensions,
@@ -2393,6 +2397,9 @@ class RoomManager:
                     room.next_round_bonus = bonus_word
                     room.next_round_format = updated_format
                     room.next_round_uniqueness = u_ratio
+                    # USER REQUEST: Absolute consistency. Bundle the EXACT params used for this board.
+                    room.next_round_spinner_params = dict(params)
+                    room.next_round_spinner_params['board_format'] = updated_format # In case generator changed it
                     # FAST INITIALIZATION: Length-based scores to avoid "0 point" flickering in UI
                     # (Refined in background scoring loop below)
                     is_valued = ('valued' in str(updated_format).lower())
@@ -2811,30 +2818,18 @@ class RoomManager:
                     # Fallback for hidden params
                     room.spinner_params = room.next_spinner_params
                     room.spinner_params_revealed = True
-
-                if getattr(room, 'spinner_params_revealed', False):
-                    # Favor the fact (actual board) over the intent (revealed label) if they differ
-                    room.current_board_format = room.next_round_format or room.spinner_params.get('board_format', 'Normal')
-                    
-                    wc_range = room.spinner_params.get('word_count_range')
-                    if not wc_range:
-                         wc_range = SpinnerSet._spin_word_count(room.spinner_params.get('dictionary', 'NWL'), room.spinner_params.get('min_word_length', 3), room.spinner_params.get('difficulty', 'Medium'), room.board_dimensions)
-                    room.current_word_count_range = wc_range
-                    
-                    room.current_difficulty = room.spinner_params.get('difficulty', 'Medium')
-                    room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
-                    raw_min = room.spinner_params.get('min_word_length', 3)
-                else:
-                    room.current_board_format = room.next_round_format or room.spinner_params.get('board_format', 'Normal')
-                    
-                    wc_range = room.spinner_params.get('word_count_range')
-                    if not wc_range:
-                         wc_range = SpinnerSet._spin_word_count(room.spinner_params.get('dictionary', 'NWL'), 3, 'Medium', room.board_dimensions)
-                    room.current_word_count_range = wc_range
-                    
-                    room.current_difficulty = room.spinner_params.get('difficulty', 'Medium')
-                    room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
-                    raw_min = getattr(room, 'next_round_min_length', 3)
+                
+                # USER REQUEST: Ensure UI range matches board EXACTLY by using the params used for generation
+                # CRITICAL: Use 'or' to handle cases where next_round_spinner_params is explicitly None
+                active_params = getattr(room, 'next_round_spinner_params', None) or room.spinner_params or {}
+                room.current_board_format = room.next_round_format or active_params.get('board_format', 'Normal')
+                room.current_word_count_range = active_params.get('word_count_range', '100-200')
+                room.current_difficulty = active_params.get('difficulty', 'Medium')
+                room.current_dictionary = active_params.get('dictionary', 'NWL')
+                raw_min = active_params.get('min_word_length', 3)
+                
+                # Update spinner_params to match the actual board being used
+                room.spinner_params = dict(active_params) if active_params else {}
 
                 room.current_uniqueness = getattr(room, 'next_round_uniqueness', room.current_uniqueness)
                 try:
@@ -2895,6 +2890,7 @@ class RoomManager:
                 # USER REQUEST: Total count should reflect scorable words only.
                 if hasattr(room, 'next_round_total_words_count') and room.next_round_total_words_count > 0:
                     room.total_words_count = room.next_round_total_words_count
+                    room.initial_total_words = room.total_words_count
                 else:
                     room.total_words_count = sum(1 for w in (room.next_round_words or []) if len(w) >= room.current_min_length)
                 
@@ -3030,6 +3026,7 @@ class RoomManager:
                 room.spinner_params_revealed = False
                 room.spinner_params_loading = False
                 room.next_spinner_params = None
+                room.next_round_spinner_params = None
                 
                 # Reset Round counters
                 room.current_round += 1

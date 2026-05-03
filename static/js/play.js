@@ -386,35 +386,18 @@ async function updateGameState(incomingState = null) {
             const wordInput = document.getElementById('word-input');
             const chatInput = document.getElementById('chat-input');
             
-            // User Request: Prevent typists from spillover chatting for 2s, but mousers get immediate focus
-            if (currentInputMethod === 'keyboard') {
-                if (chatInput) {
-                    chatInput.disabled = true;
-                    const originalPlaceholder = chatInput.placeholder;
-                    chatInput.placeholder = "Typists: Chat disabled for 2s...";
-                    
-                    // Clear word input immediately so they see it's over
-                    if (wordInput) {
-                        wordInput.value = '';
-                        wordInput.blur();
-                    }
-                    
-                    if (window.chatFocusTimeout) clearTimeout(window.chatFocusTimeout);
-                    window.chatFocusTimeout = setTimeout(() => {
-                        chatInput.disabled = false;
-                        chatInput.placeholder = originalPlaceholder || "Type message...";
-                        // Ensure we are still in intermission before stealing focus from potentially new round input
-                        if (window.lastGameState && window.lastGameState.state === 'intermission') {
-                            chatInput.focus();
-                        }
-                    }, 2000);
-                }
-            } else {
-                // If mousing/touching, set focus immediately
+            // User Request: Prevent ALL users from spillover chatting for 2s
+            if (chatInput) {
+                chatInput.disabled = true;
+                const originalPlaceholder = chatInput.placeholder;
+                chatInput.placeholder = "Chat disabled for 2s...";
+                
+                // Clear word input immediately so they see it's over
                 if (wordInput) {
                     wordInput.value = '';
                     wordInput.blur();
                 }
+
                 // Reset mouse selection state if it was active
                 if (typeof mouseState !== 'undefined') {
                     mouseState.isDown = false;
@@ -422,17 +405,17 @@ async function updateGameState(incomingState = null) {
                     if (mouseState.visitedCells) mouseState.visitedCells.clear();
                 }
                 
-                if (chatInput) {
-                    // Slight delay to ensure UI transition is smooth
-                    if (window.chatFocusTimeout) clearTimeout(window.chatFocusTimeout);
-                    window.chatFocusTimeout = setTimeout(() => {
-                        // Ensure we are still in intermission
-                        if (window.lastGameState && window.lastGameState.state === 'intermission') {
-                            chatInput.focus();
-                        }
-                    }, 150);
-                }
+                if (window.chatFocusTimeout) clearTimeout(window.chatFocusTimeout);
+                window.chatFocusTimeout = setTimeout(() => {
+                    chatInput.disabled = false;
+                    chatInput.placeholder = originalPlaceholder || "Type message...";
+                    // Ensure we are still in intermission before stealing focus from potentially new round input
+                    if (window.lastGameState && window.lastGameState.state === 'intermission') {
+                        chatInput.focus();
+                    }
+                }, 2000);
             }
+
 
             // AUTO-SCROLL TO BOTTOM ON INTERMISSION START (Only if currently on play page)
             const playPage = document.getElementById('page-play');
@@ -1013,7 +996,7 @@ async function updateGameState(incomingState = null) {
                 // INTERMISSION: Show ALL words
 
                 // 1. Calculate Global Stats (All players)
-                const totalWords = state.total_words_count || allWords.length;
+                const totalWords = state.initial_total_words || state.total_words_count || allWords.length;
                 const globalUnique = new Set(allPlayerFoundStrs).size;
                 const globalPercentage = totalWords > 0 ? Math.round((globalUnique / totalWords) * 100) : 0;
 
@@ -1085,7 +1068,7 @@ async function updateGameState(incomingState = null) {
 
 
                 // 2. Personal Stats Only (Active)
-                const totalWords = state.total_words_count || allWords.length;
+                const totalWords = state.initial_total_words || state.total_words_count || allWords.length;
                 const uniqueFound = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase())).size;
                 const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
 
@@ -1172,7 +1155,7 @@ async function updateGameState(incomingState = null) {
                     });
                 }
 
-                const totalWords = state.total_words_count || allWords.length;
+                const totalWords = state.initial_total_words || state.total_words_count || allWords.length;
                 const uniqueFound = new Set(allFoundWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase())).size;
                 const percentage = totalWords > 0 ? Math.round((uniqueFound / totalWords) * 100) : 0;
                 let totalPoints = state.total_points_count || 0;
@@ -1310,7 +1293,7 @@ async function updateGameState(incomingState = null) {
             }
 
             let html = '<table id="remaining-words-table">';
-            const minLen = state.current_min_word_length || 3;
+            const minLen = state.current_min_length || 3;
             for (let i = minLen; i <= 30; i++) {
                 // Show rows from minLen to 20
                 html += `<tr><td class="len-cell">${i}LW</td><td class="count-cell">${countsByLen[i] || 0}</td></tr>`;
