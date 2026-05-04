@@ -726,7 +726,7 @@ async function updateGameState(incomingState = null) {
             // ONLY gray out if we are specifically in intermission
             const isIntermission = state.state === 'intermission';
             const is3D = state.game_type === '3d' || (state.board && state.board.length === 6 && Array.isArray(state.board[0]) && Array.isArray(state.board[0][0]));
-            renderBoard(state.board, isIntermission, is3D);
+            renderBoard(state.board, isIntermission, is3D, state);
         }
 
         // Update players (pass full state for context if needed)
@@ -2369,7 +2369,7 @@ function updateSpecialMatchTimer(seconds) {
     }
 }
 
-function renderBoard(board, grayed = false, is3D = false) {
+function renderBoard(board, grayed = false, is3D = false, state = null) {
     const boardEl = document.getElementById('game-board');
     if (!boardEl || !board) return;
 
@@ -2492,14 +2492,13 @@ function renderBoard(board, grayed = false, is3D = false) {
 
                     // 3D Bonus Highlight Detection
                     let bonusClass = "";
-                    if (window.lastGameState && window.lastGameState.bonus_cell) {
-                        const bc = window.lastGameState.bonus_cell;
+                        const bc = (state && state.bonus_cell) ? state.bonus_cell : (window.lastGameState ? window.lastGameState.bonus_cell : null);
                         if (Array.isArray(bc) && bc.length === 3) {
-                            if (bc[0] === f && bc[1] === r && bc[2] === c) bonusClass = " bonus-highlight";
-                        } else if (typeof bc === 'object' && bc.f !== undefined) {
-                             if (bc.f === f && bc.r === r && bc.c === c) bonusClass = " bonus-highlight";
+                            if (Number(bc[0]) === f && Number(bc[1]) === r && Number(bc[2]) === c) {
+                                bonusClass = " bonus-highlight";
+                                tileHtml += `<span class="bonus-star">★</span>`;
+                            }
                         }
-                    }
                     
                     // Valued Letters support for 3D
                     let tileValue = "";
@@ -2530,6 +2529,11 @@ function renderBoard(board, grayed = false, is3D = false) {
                                  densityStyle = `background: hsl(0, 0%, ${grayVal}%) !important; color: ${textColor} !important; transition: background 0.4s ease, color 0.4s ease;`;
                              }
                          }
+                    }
+                    
+                    // USER REQUEST: If this is the bonus cell, do NOT apply density shading to the background.
+                    if (bonusClass.includes('bonus-highlight')) {
+                        densityStyle = '';
                     }
 
                     html += `<div class="cube-cell board-cell tile-cell${bonusClass}" data-f="${f}" data-r="${r}" data-c="${c}" data-letter="${char}" style="${densityStyle}">${tileHtml}${tileValue}</div>`;
@@ -2564,14 +2568,14 @@ function renderBoard(board, grayed = false, is3D = false) {
                 for (let c = cols - 1; c >= 0; c--) {
                     const existing = currentCells[idx++];
                     // Update only if necessary
-                    updateBoardCell(existing, r, c, board[r][c], grayed);
+                    updateBoardCell(existing, r, c, board[r][c], grayed, undefined, state);
                 }
             }
         } else {
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
                     const existing = currentCells[idx++];
-                    updateBoardCell(existing, r, c, board[r][c], grayed);
+                    updateBoardCell(existing, r, c, board[r][c], grayed, undefined, state);
                 }
             }
         }
@@ -2581,14 +2585,14 @@ function renderBoard(board, grayed = false, is3D = false) {
         if (isBoardRotated) {
             for (let r = rows - 1; r >= 0; r--) {
                 for (let c = cols - 1; c >= 0; c--) {
-                    const cell = createBoardCell(r, c, board[r][c], grayed);
+                    const cell = createBoardCell(r, c, board[r][c], grayed, undefined, state);
                     boardEl.appendChild(cell);
                 }
             }
         } else {
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
-                    const cell = createBoardCell(r, c, board[r][c], grayed);
+                    const cell = createBoardCell(r, c, board[r][c], grayed, undefined, state);
                     boardEl.appendChild(cell);
                 }
             }
@@ -2823,7 +2827,7 @@ const LETTER_VALUES = {
     'A': 2, 'B': 4, 'C': 4, 'D': 3, 'E': 1, 'F': 5, 'G': 3, 'H': 5, 'I': 2, 'J': 10, 'K': 6, 'L': 3, 'M': 4, 'N': 2, 'O': 2, 'P': 4, 'Q': 10, 'R': 2, 'S': 2, 'T': 2, 'U': 4, 'V': 5, 'W': 5, 'X': 10, 'Y': 5, 'Z': 10
 };
 
-function updateBoardCell(cell, r, c, letter, grayed, f) {
+function updateBoardCell(cell, r, c, letter, grayed, f, state = null) {
     if (!cell) return;
     
     // Update basic classes
@@ -2837,7 +2841,7 @@ function updateBoardCell(cell, r, c, letter, grayed, f) {
     // Check if letter OR format changed (to ensure point badges are cleared/added correctly)
     const currentLetter = cell.dataset.letter;
     const currentFormat = cell.dataset.renderedFormat;
-    const boardFormat = (window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : 'Normal';
+    const boardFormat = (state && state.current_board_format) ? state.current_board_format : ((window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : 'Normal');
     
     if (currentLetter !== letter || currentFormat !== boardFormat || cell.children.length <= 1) {
         cell.dataset.letter = letter;
@@ -2879,28 +2883,63 @@ function updateBoardCell(cell, r, c, letter, grayed, f) {
         hitbox.className = 'cell-hitbox';
         cell.appendChild(hitbox);
         
+        // USER REQUEST: If this is the bonus cell, add a persistent star icon to make it "Appear"
+        const bonusCell = (state && state.bonus_cell) ? state.bonus_cell : (window.lastGameState ? window.lastGameState.bonus_cell : null);
+        let isBonusMatch = false;
+        if (bonusCell) {
+            if (Array.isArray(bonusCell)) {
+                if (bonusCell.length === 3) {
+                    if (typeof f !== 'undefined' && Number(bonusCell[0]) === f && Number(bonusCell[1]) === r && Number(bonusCell[2]) === c) isBonusMatch = true;
+                } else if (bonusCell.length === 2) {
+                    if (Number(bonusCell[0]) === r && Number(bonusCell[1]) === c) isBonusMatch = true;
+                }
+            } else if (typeof bonusCell === 'object') {
+                if (bonusCell.f !== undefined) {
+                    if (typeof f !== 'undefined' && Number(bonusCell.f) === f && Number(bonusCell.r) === r && Number(bonusCell.c) === c) isBonusMatch = true;
+                } else if (bonusCell.r !== undefined) {
+                    if (Number(bonusCell.r) === r && Number(bonusCell.c) === c) isBonusMatch = true;
+                }
+            }
+        }
+
         // Tooltip suppression fix
         cell.removeAttribute('title');
         hitbox.removeAttribute('title');
     }
 
     // Update Special Highlights (Bonus Cell)
-    const bonusCell = (window.lastGameState) ? window.lastGameState.bonus_cell : null;
+    const activeBonusCell = (state && state.bonus_cell) ? state.bonus_cell : (window.lastGameState ? window.lastGameState.bonus_cell : null);
     let isMatch = false;
-    if (bonusCell) {
-        if (Array.isArray(bonusCell)) {
-            if (bonusCell.length === 3) {
-                if (typeof f !== 'undefined' && Number(bonusCell[0]) === f && Number(bonusCell[1]) === r && Number(bonusCell[2]) === c) isMatch = true;
-            } else if (bonusCell.length === 2) {
-                if (Number(bonusCell[0]) === r && Number(bonusCell[1]) === c) isMatch = true;
+    
+    if (activeBonusCell) {
+        if (Array.isArray(activeBonusCell)) {
+            if (activeBonusCell.length === 3) {
+                if (typeof f !== 'undefined' && Number(activeBonusCell[0]) === f && Number(activeBonusCell[1]) === r && Number(activeBonusCell[2]) === c) {
+                    isMatch = true;
+                }
+            } else if (activeBonusCell.length === 2) {
+                if (Number(activeBonusCell[0]) === r && Number(activeBonusCell[1]) === c) {
+                    isMatch = true;
+                }
             }
-        } else if (typeof bonusCell === 'object') {
-            if (bonusCell.f !== undefined) {
-                if (typeof f !== 'undefined' && Number(bonusCell.f) === f && Number(bonusCell.r) === r && Number(bonusCell.c) === c) isMatch = true;
-            } else {
-                if (Number(bonusCell.r) === r && Number(bonusCell.c) === c) isMatch = true;
+        } else if (typeof activeBonusCell === 'object') {
+            if (activeBonusCell.f !== undefined) {
+                if (typeof f !== 'undefined' && Number(activeBonusCell.f) === f && Number(activeBonusCell.r) === r && Number(activeBonusCell.c) === c) isMatch = true;
+            } else if (activeBonusCell.r !== undefined) {
+                if (Number(activeBonusCell.r) === r && Number(activeBonusCell.c) === c) isMatch = true;
             }
         }
+    }
+
+    // STAR MANAGEMENT: Ensure star is present/absent based on live isMatch
+    const existingStar = cell.querySelector('.bonus-star');
+    if (isMatch && !existingStar) {
+        const star = document.createElement('span');
+        star.className = 'bonus-star';
+        star.textContent = '★';
+        cell.appendChild(star);
+    } else if (!isMatch && existingStar) {
+        existingStar.remove();
     }
     
     if (isMatch || (boardFormat.toLowerCase().includes('either') && letter.includes('/'))) {
@@ -2910,14 +2949,24 @@ function updateBoardCell(cell, r, c, letter, grayed, f) {
     }
 
     // Apply Density (This is the DYNAMIC part!)
-    applyDensityToCell(cell, r, c, f);
+    applyDensityToCell(cell, r, c, f, state);
 }
 
-function applyDensityToCell(cell, r, c, f) {
-    const densityData = window.lastGameState && window.lastGameState.cell_density;
+function applyDensityToCell(cell, r, c, f, state = null) {
+    const densityData = (state && state.cell_density) ? state.cell_density : (window.lastGameState && window.lastGameState.cell_density);
     const hasDensityData = densityData && Array.isArray(densityData) && densityData.length > 0;
-    const boardFormat = (window.lastGameState && window.lastGameState.current_board_format) || 'Normal';
+    const boardFormat = (state && state.current_board_format) ? state.current_board_format : (window.lastGameState && window.lastGameState.current_board_format) || 'Normal';
     
+    // USER REQUEST: If this is the bonus cell, do NOT apply density shading to the background.
+    // The green .bonus-highlight must take absolute precedence.
+    if (cell.classList.contains('bonus-highlight')) {
+        cell.style.background = '';
+        cell.style.backgroundColor = '';
+        cell.style.color = '';
+        cell.style.boxShadow = '';
+        return;
+    }
+
     if (hasDensityData) {
          const grid = densityData;
          const maxD = Math.max(1, window.lastGameState.max_cell_density || 1);
@@ -2970,11 +3019,10 @@ function applyDensityToCell(cell, r, c, f) {
     }
 }
 
-// Helper to create a board cell
-function createBoardCell(r, c, letter, grayed, f) {
+function createBoardCell(r, c, letter, grayed, f, state = null) {
     const cell = document.createElement('div');
     cell.dataset.letter = letter;
-    updateBoardCell(cell, r, c, letter, grayed, f);
+    updateBoardCell(cell, r, c, letter, grayed, f, state);
     return cell;
 }
 

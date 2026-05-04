@@ -429,25 +429,30 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
             }
         }
 
-        // Recalculate combined ratings and Apply Filter
+        // Recalculate average ratings and Apply Filter
         const ratingFilterInput = document.getElementById('rating-filter');
-        const minCombinedRating = ratingFilterInput ? (parseInt(ratingFilterInput.value) || 0) : 0;
+        const minAvgRating = ratingFilterInput ? (parseInt(ratingFilterInput.value) || 0) : 0;
 
         const filteredRooms = rooms.filter(room => {
-            // Recalculate combined rating: Guests = 0
-            let calculatedCombined = 0;
+            // Recalculate average rating: Guests = 0, ignore spectators (they aren't in room.players)
+            let totalRating = 0;
+            let pCount = 0;
             if (room.players && Array.isArray(room.players)) {
-                calculatedCombined = room.players.reduce((sum, p) => {
+                pCount = room.players.length;
+                totalRating = room.players.reduce((sum, p) => {
                     const isGuest = p.username.startsWith('Guest_');
                     const rating = isGuest ? 0 : (p.rating || 0);
                     return sum + rating;
                 }, 0);
             }
+            
+            const avgRating = pCount > 0 ? Math.round(totalRating / pCount) : 0;
+            
             // Store it for display
-            room.display_combined_rating = calculatedCombined;
+            room.display_average_rating = avgRating;
 
             // Filter
-            return calculatedCombined >= minCombinedRating;
+            return avgRating >= minAvgRating;
         });
 
         if (filteredRooms.length === 0) {
@@ -481,10 +486,8 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                 if (room.room_id === window.currentRoomId) {
                     actionButtons = `<button class="join-room-btn return-mode" data-room="${room.room_id}" style="background: #e67e22;">Return to Game</button>`;
                 } else {
-                    // Spectate Button (Only for FCFS/Split)
-                    if (room.game_type !== 'accumulative') {
-                        actionButtons += `<button class="join-room-btn watch-mode" data-room="${room.room_id}" data-spectator="true" style="background: #34495e; margin-right: 5px;">Spectate</button>`;
-                    }
+                    // Spectate Button - Always allowed for public rooms
+                    actionButtons += `<button class="join-room-btn watch-mode" data-room="${room.room_id}" data-spectator="true" style="background: #34495e; margin-right: 5px;">Spectate</button>`;
 
                     let ratingText = '';
                     if (roomMin > 0 || roomMax < 9999) {
@@ -511,7 +514,7 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                     <div class="room-header-row">
                         <div class="room-status ${room.state}">${room.state.toUpperCase()}</div>
                         <div class="room-meta">
-                            <span>Rating: ${room.display_combined_rating}</span> 
+                            <span>Avg Rating: ${room.display_average_rating}</span> 
                             ${hasLimits ? `<span class="rating-req-badge" style="background: rgba(231, 76, 60, 0.2); color: #e74c3c; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; border: 1px solid rgba(231, 76, 60, 0.3);">Req: ${ratingRangeText}</span>` : ''}
                         </div>
                     </div>

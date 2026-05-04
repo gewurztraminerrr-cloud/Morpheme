@@ -2264,16 +2264,17 @@ def list_rooms():
             if len(humans) == 0 and len(room.spectators) == 0 and not is_daily:
                 continue
             
-            # Calculate combined rating
-            combined_rating = sum(p.rating for p in room.players)
+            # Calculate average rating
+            p_count = len(room.players)
+            avg_rating = round(sum(p.rating for p in room.players) / p_count) if p_count > 0 else 0
             
             active_rooms.append({
                 'room_id': room.room_id,
-                'player_count': len(room.players),
+                'player_count': p_count,
                 'max_players': room.max_players,
                 'min_rating': room.min_rating,
                 'max_rating': room.max_rating,
-                'combined_rating': combined_rating,
+                'average_rating': avg_rating,
                 'state': room.state,
                 'current_round': room.current_round,
                 'players': [{'username': p.username, 'rating': p.rating, 'user_id': p.user_id} for p in room.players]
@@ -2461,6 +2462,9 @@ def get_room_state(room_id):
             if is_active and is_fcfs:
                 actual_total = max(0, room.total_words_count - len(global_found))
 
+            raw_fmt = getattr(room, 'current_board_format', 'Normal')
+            is_bonus_format = ('bonus letter' in str(raw_fmt).lower() or 'either' in str(raw_fmt).lower())
+            
             return jsonify({
                 'room_id': room.room_id,
                 'game_type': room.game_type,
@@ -2476,7 +2480,7 @@ def get_room_state(room_id):
                 'board': room.board,
                 'board_dimensions': room.board_dimensions,
                 'bonus_word': room.bonus_word,
-                'bonus_cell': room.bonus_cell,
+                'bonus_cell': room.bonus_cell if 'bonus letter' in str(raw_fmt).lower() else None,
                 'all_words': words_to_return,
                 'total_words_count': (room.previous_total_words if is_intermission else actual_total),
                 'initial_total_words': getattr(room, 'initial_total_words', actual_total),
@@ -4520,20 +4524,21 @@ def create_solo_match():
     board_format = parameters.get('board_format', 'Normal')
     from spinner_set import SpinnerSet
 
-    # Point range / word count: allow user to specify, else spin a default
-    custom_word_count_range = parameters.get('word_count_range', 'random')
-    if custom_word_count_range == 'random':
-        from spinner_set import SpinnerSet
-        wc_range = SpinnerSet._spin_word_count(dict_name)
-    else:
-        # Use custom range provided by user
-        wc_range = custom_word_count_range
-
     # First-round difficulty randomization
     target_difficulty = parameters.get('difficulty', 'random')
     if target_difficulty == 'random':
         from spinner_set import SpinnerSet
         target_difficulty = SpinnerSet._spin_difficulty()
+
+    # Point range / word count: allow user to specify, else spin a default
+    custom_word_count_range = parameters.get('word_count_range', 'random')
+    min_word_len = int(parameters.get('min_word_length', 3))
+    if custom_word_count_range == 'random':
+        from spinner_set import SpinnerSet
+        wc_range = SpinnerSet._spin_word_count(dict_name, min_word_len, target_difficulty, board_dimensions)
+    else:
+        # Use custom range provided by user
+        wc_range = custom_word_count_range
 
     # Check if the user wants randomization per round
     room.randomize_spinner = (

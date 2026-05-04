@@ -1884,7 +1884,7 @@ class RoomManager:
             if not has_prev and room.all_words:
                 # USER REQUEST: Absolute filter for history. 
                 # Display Floor is 4L, but must also respect round minimum (e.g. 5L).
-                display_min_hist = min_len
+                display_min_hist = getattr(room, 'current_min_length', 3)
                 words_list = [w for w in room.all_words if len(w) >= display_min_hist]
                 room.previous_all_words = {w: {} for w in words_list} # Dict format for scores compatibility
                 room.previous_board = [list(row) for row in room.board]
@@ -1980,6 +1980,7 @@ class RoomManager:
             
             # CRITICAL: Preserve special cell metadata (Bonus Letter / Either/Or)
             # generate_board returns 'bonus_cell' coordinate as the 3rd element.
+            room.board = board
             room.bonus_cell = bonus_cell
 
             if final_bonus_word:
@@ -2026,10 +2027,6 @@ class RoomManager:
             except Exception as e:
                 print(f"[Density-Diag] Failed to initialize: {e}")
             
-            # Double Lockdown
-            f_low = str(updated_format).lower()
-            if 'bonus letter' not in f_low and 'either' not in f_low:
-                room.bonus_cell = None
                 
             # FAST INITIALIZATION: Length-based scores to avoid "0 point" flickering in UI
             # (Ensures all paths have points immediately while detailed solver runs)
@@ -2909,6 +2906,7 @@ class RoomManager:
 
                 # ATOMIC PROMOTION: Carry staging data to active room state
                 room.board = room.next_round_board
+                room.current_board_format = getattr(room, 'next_round_format', 'Normal')
                 
                 # USER REQUEST: Absolute consistency. Only include words that meet the round's scorable minimum.
                 # HARD FLOOR: Always exclude 3-letter words from the 'All Words' list (User Request: "NOT 3 letter wrods")
@@ -3044,11 +3042,6 @@ class RoomManager:
                 # Update word counts by length for the new round
                 room.update_counts_by_len()
                 
-                # Robust Format Check
-                f_low_current = str(room.current_board_format).lower()
-                is_special_fmt = ('bonus letter' in f_low_current or 'either' in f_low_current)
-                if not is_special_fmt:
-                    room.bonus_cell = None
                 
                 # --- FINAL CLEARANCE & NEXT LOG CHAIN ---
                 # Clear staging data immediately to prevent stale exclusion or duplicate promotion

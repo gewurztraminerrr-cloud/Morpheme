@@ -167,6 +167,10 @@
                 if (window.navigateToPage) {
                     window.navigateToPage('play');
                 }
+                // USER REQUEST FIX: Explicitly start polling so the board actually loads
+                if (window.startGamePolling) {
+                    window.startGamePolling();
+                }
             } else {
                 alert(data.error);
             }

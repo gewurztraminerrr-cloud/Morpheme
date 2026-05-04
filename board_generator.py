@@ -587,10 +587,11 @@ class BoardGenerator:
             weights = LETTER_FREQ_SUPER_DENSITY if is_super_dense else (LETTER_FREQ_EASY if (min_words >= 100 or attempts > 3) else LETTER_FREQ_USER)
             
             # --- BOARD CREATION ---
-            is_checkerboard = "checkerboard" in board_format.lower()
+            safe_format = str(board_format or "").lower()
+            is_checkerboard = "checkerboard" in safe_format
             if is_checkerboard:
                 board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
-            elif "either/or" in board_format.lower():
+            elif "either/or" in safe_format:
                 # User Request: Support Either/Or tiles (e.g. A/B)
                 board = self._create_either_or_board(rows, cols, weights)
             else:
@@ -666,14 +667,17 @@ class BoardGenerator:
                 u_count = sum(1 for w in all_words_dict if w.upper() in unique_set)
                 ratio = u_count / count if count > 0 else 0
                 
-                # PICK BONUS WORD
-                suitable = [w for w in all_words_dict if 6 <= len(w) <= 10]
-                if not suitable: suitable = [w for w in all_words_dict if len(w) >= 6]
-                actual_bonus = sorted(suitable, key=len, reverse=True)[0] if suitable else None
-                bonus_cell = all_words_dict[actual_bonus][0] if actual_bonus else None
+                # PICK BONUS WORD (Only if format supports it)
+                actual_bonus = None
+                bonus_cell = None
+                if "bonus letter" in safe_format or "either" in safe_format:
+                    suitable = [w for w in all_words_dict if 6 <= len(w) <= 10]
+                    if not suitable: suitable = [w for w in all_words_dict if len(w) >= 6]
+                    actual_bonus = sorted(suitable, key=len, reverse=True)[0] if suitable else None
+                    bonus_cell = all_words_dict[actual_bonus][0] if actual_bonus else None
                 
                 # USER REQUEST: If format is Bonus Letter, we MUST have a bonus cell even if no long word found.
-                if not bonus_cell and "bonus letter" in board_format.lower():
+                if not bonus_cell and "bonus letter" in safe_format:
                     # Pick a random cell
                     bonus_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
                     if depth > 1: bonus_cell = (random.randint(0, depth-1), bonus_cell[0], bonus_cell[1])
@@ -740,12 +744,13 @@ class BoardGenerator:
                 
                 # USER REQUEST: Ensure Bonus Letter exists in emergency boards too
                 bonus_cell = None
-                if "bonus letter" in board_format.lower():
+                safe_format = str(board_format or "").lower()
+                if "bonus letter" in safe_format:
                     # Pick a random cell
                     bonus_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
                     if depth > 1: bonus_cell = (random.randint(0, depth-1), bonus_cell[0], bonus_cell[1])
                 
-                return (board, sorted(list(final_solve.keys())), bonus_cell, board_format + " (Emergency)", final_solve, ratio, None)
+                return (board, sorted(list(final_solve.keys())), bonus_cell, board_format, final_solve, ratio, None)
             else:
                 print(f"[BoardGen] ✗ EMERGENCY ATTEMPT {(_attempt + 1)} FAILED: {count} words is not in {min_words}-{max_words}")
         
@@ -2075,7 +2080,7 @@ class BoardGenerator:
                     continue  # PRUNED!
 
                 new_word = current_word + char
-                new_path = current_path + [(f, r, c)] if store_paths else []
+                new_path = current_path + ([(f, r, c)] if depth_val > 1 else [(r, c)]) if store_paths else []
                 
                 # Check if we've hit the target tile
                 new_uses_target = uses_target or (must_include and (f, r, c) == (must_include[0] if len(must_include)==3 else 0, must_include[-2], must_include[-1]))
