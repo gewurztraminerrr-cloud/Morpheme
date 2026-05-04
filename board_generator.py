@@ -597,7 +597,18 @@ class BoardGenerator:
             else:
                 board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty)
             
-            # Special formats (Mania, etc)
+            # --- BONUS WORD EMBEDDING ---
+            embedded_path = None
+            if bonus_word:
+                if depth > 1:
+                    embedded_path = self._embed_bonus_word_cube(board, bonus_word, is_checkerboard=is_checkerboard)
+                else:
+                    embedded_path = self._embed_bonus_word(board, bonus_word, is_checkerboard=is_checkerboard)
+                
+                if not embedded_path:
+                    # If embedding fails, we retry the whole board attempt
+                    print(f"[BoardGen] ATTEMPT {attempts}: Failed to embed bonus word '{bonus_word}'. Retrying...")
+                    continue
             all_excluded = set()
             if "mania" in board_format.lower():
                 mania_letter = board_format.split()[0].upper()
@@ -647,10 +658,10 @@ class BoardGenerator:
             # --- DYNAMIC CORRECTION (Push-Pull) ---
             if count < min_words:
                 # SPARSE: Add letters to increase count
-                board = self._perform_rescue_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, rescue_depth=final_depth)
+                board = self._perform_rescue_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, rescue_depth=final_depth, protected_path=embedded_path)
             elif count > max_words:
                 # OVER-DENSE: Remove letters to decrease count
-                board = self._perform_decimation_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, rescue_depth=final_depth)
+                board = self._perform_decimation_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, rescue_depth=final_depth, protected_path=embedded_path)
 
             # Re-solve after sweeps for final confirmation
             all_words_dict = self._solve_board(
@@ -667,14 +678,25 @@ class BoardGenerator:
                 u_count = sum(1 for w in all_words_dict if w.upper() in unique_set)
                 ratio = u_count / count if count > 0 else 0
                 
-                # PICK BONUS WORD (Only if format supports it)
+                # PICK BONUS WORD
                 actual_bonus = None
                 bonus_cell = None
-                if "bonus letter" in safe_format or "either" in safe_format:
+                
+                # USER REQUEST: Absolute Parity. Verify the bonus word survived the sweeps.
+                if bonus_word and embedded_path and bonus_word.upper() in [w.upper() for w in all_words_dict]:
+                    # We have a successfully embedded word that survived the sweeps
+                    actual_bonus = bonus_word
+                    bonus_cell = all_words_dict[actual_bonus.upper() if actual_bonus.upper() in all_words_dict else actual_bonus][0]
+                else:
+                    # Pick a "Natural" bonus word from the board (MANDATORY for all formats)
+                    # Use all_words_dict because it's the verified post-sweep solution
                     suitable = [w for w in all_words_dict if 6 <= len(w) <= 10]
                     if not suitable: suitable = [w for w in all_words_dict if len(w) >= 6]
+                    if not suitable: suitable = [w for w in all_words_dict if len(w) >= 3] # Absolute fallback
+                    
                     actual_bonus = sorted(suitable, key=len, reverse=True)[0] if suitable else None
-                    bonus_cell = all_words_dict[actual_bonus][0] if actual_bonus else None
+                    if actual_bonus:
+                        bonus_cell = all_words_dict[actual_bonus][0]
                 
                 # USER REQUEST: If format is Bonus Letter, we MUST have a bonus cell even if no long word found.
                 if not bonus_cell and "bonus letter" in safe_format:
@@ -742,15 +764,16 @@ class BoardGenerator:
                 u_count = sum(1 for w in final_solve if w.upper() in unique_set)
                 ratio = u_count / count if count > 0 else 0
                 
-                # USER REQUEST: Ensure Bonus Letter exists in emergency boards too
-                bonus_cell = None
-                safe_format = str(board_format or "").lower()
-                if "bonus letter" in safe_format:
-                    # Pick a random cell
-                    bonus_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
-                    if depth > 1: bonus_cell = (random.randint(0, depth-1), bonus_cell[0], bonus_cell[1])
+                # USER REQUEST: Ensure every board in every format has a Bonus Word
+                suitable = [w for w in final_solve if 6 <= len(w) <= 10]
+                if not suitable: suitable = [w for w in final_solve if len(w) >= 6]
+                if not suitable: suitable = [w for w in final_solve if len(w) >= 3]
                 
-                return (board, sorted(list(final_solve.keys())), bonus_cell, board_format, final_solve, ratio, None)
+                final_bonus = sorted(suitable, key=len, reverse=True)[0] if suitable else None
+                if final_bonus and not bonus_cell:
+                    bonus_cell = final_solve[final_bonus][0]
+
+                return (board, sorted(list(final_solve.keys())), bonus_cell, board_format, final_solve, ratio, final_bonus)
             else:
                 print(f"[BoardGen] ✗ EMERGENCY ATTEMPT {(_attempt + 1)} FAILED: {count} words is not in {min_words}-{max_words}")
         
@@ -843,6 +866,8 @@ class BoardGenerator:
         # Fallback if no 6-10L words found (unlikely in high density, but for safety)
         if not suitable_bonus:
             suitable_bonus = [w for w in found_list if len(w) >= 6]
+        if not suitable_bonus:
+            suitable_bonus = [w for w in found_list if len(w) >= 3] # Absolute fallback
         
         final_bonus_word = None
         bonus_cell = None
@@ -1532,18 +1557,27 @@ class BoardGenerator:
 
         return board
 
-    def _perform_decimation_sweep(self, board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, excluded, difficulty, rescue_depth=15):
+    def _perform_decimation_sweep(self, board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, excluded, difficulty, rescue_depth=15, protected_path=None):
         """
         USER REQUEST: Reduce word count by replacing high-density cells with 'dead' letters.
         """
         import time
         start_time = time.time()
+        
+        # Flatten protected cells
+        protected_cells = set()
+        if protected_path:
+            for cell in protected_path:
+                if isinstance(cell, (list, tuple)):
+                    protected_cells.add(tuple(cell))
+
         positions = []
         for f in range(depth):
             for r in range(rows):
                 for c in range(cols):
                     pos = (f, r, c) if depth > 1 else (r, c)
-                    if pos not in excluded: positions.append(pos)
+                    if pos not in excluded and pos not in protected_cells:
+                        positions.append(pos)
         random.shuffle(positions)
         
         current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=False)
@@ -1583,18 +1617,27 @@ class BoardGenerator:
                 break
         return board
 
-    def _perform_rescue_sweep(self, board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, excluded, difficulty, rescue_depth=15):
+    def _perform_rescue_sweep(self, board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, excluded, difficulty, rescue_depth=15, protected_path=None):
         """
         USER REQUEST: Perform IO operations on random locations until desired word count is reached.
         """
         import time
         start_time = time.time()
+        
+        # Flatten protected cells
+        protected_cells = set()
+        if protected_path:
+            for cell in protected_path:
+                if isinstance(cell, (list, tuple)):
+                    protected_cells.add(tuple(cell))
+
         positions = []
         for f in range(depth):
             for r in range(rows):
                 for c in range(cols):
                     pos = (f, r, c) if depth > 1 else (r, c)
-                    if pos not in excluded: positions.append(pos)
+                    if pos not in excluded and pos not in protected_cells:
+                        positions.append(pos)
         random.shuffle(positions)
         current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=False)
         current_count = len(current_solve)

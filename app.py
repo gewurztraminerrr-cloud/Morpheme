@@ -2319,6 +2319,8 @@ def get_room_state(room_id):
             room.update_player_activity(uid)
     
     room = room_manager.get_room(room_id)
+    if room:
+        print(f"[get_room_state] Room: {room_id} | State: {room.state} | PrevBonus: {getattr(room, 'previous_bonus_word', 'None')} | CurrBonus: {room.bonus_word}")
     try:
         if not room:
             # User Request: STABILITY. Public hubs (pub_...) should be recreated on demand if they vanish (e.g. server restart)
@@ -2483,9 +2485,10 @@ def get_room_state(room_id):
                 'bonus_cell': room.bonus_cell if 'bonus letter' in str(raw_fmt).lower() else None,
                 'all_words': words_to_return,
                 'total_words_count': (room.previous_total_words if is_intermission else actual_total),
+                'next_round_total_words_count': getattr(room, 'next_round_total_words_count', 0),
                 'initial_total_words': getattr(room, 'initial_total_words', actual_total),
                 'total_points_count': (getattr(room, 'next_round_total_points', 0) if (is_intermission and is_revealed and getattr(room, 'next_round_total_points', 0) > 0) else (room.previous_total_points if is_intermission else room.total_points_count)),
-                'total_counts_by_len': (getattr(room, 'next_round_counts_by_len', {}) if (is_intermission and is_revealed and getattr(room, 'next_round_total_words_count', 0) > 0) else (room.previous_total_counts_by_len if is_intermission else getattr(room, 'total_counts_by_len', {}))),
+                'total_counts_by_len': (room.previous_total_counts_by_len if is_intermission else getattr(room, 'total_counts_by_len', {})),
                 'cell_density': (getattr(room, 'next_round_cell_density', []) if (is_intermission and is_revealed) else getattr(room, 'cell_density', [])),
                 'max_cell_density': (getattr(room, 'next_round_max_cell_density', 0) if (is_intermission and is_revealed) else getattr(room, 'max_cell_density', 0)),
                 'all_word_scores': word_scores_to_return,
@@ -2500,9 +2503,9 @@ def get_room_state(room_id):
                 'previous_added_words': getattr(room, 'previous_added_words', []),
                 'previous_bonus_word': getattr(room, 'previous_bonus_word', ''),
                 'spinner_params': room.spinner_params,
-                'current_min_length': (getattr(room, 'next_round_min_length', 3) if (is_intermission and is_revealed) else getattr(room, 'current_min_length', 3)),
-                'current_board_format': (room.spinner_params.get('board_format', 'Normal') if (is_intermission and is_revealed) else getattr(room, 'current_board_format', 'Normal')),
-                'current_word_count_range': (room.spinner_params.get('word_count_range') if (is_intermission and is_revealed) else getattr(room, 'current_word_count_range', 'Random')),
+                'current_min_length': getattr(room, 'current_min_length', 3),
+                'current_board_format': getattr(room, 'current_board_format', 'Normal'),
+                'current_word_count_range': getattr(room, 'current_word_count_range', 'Random'),
                 'spinner_params_revealed': is_revealed,
                 'players': [
                     {
@@ -2535,6 +2538,7 @@ def get_room_state(room_id):
                 ] if hasattr(room, 'spectators') else [],
                 'chat_messages': getattr(room, 'chat_messages', []),
                 'winners_history': getattr(room, 'winners_history', []),
+                'previous_day_history': getattr(room, 'previous_day_history', {}),
                 'your_username': session.get('username')
             })
             

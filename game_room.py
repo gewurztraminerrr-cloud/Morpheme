@@ -1030,6 +1030,14 @@ class GameRoom:
                         self.previous_board = [list(row) for row in self.board] if self.board else None
                         self.previous_min_length = getattr(self, 'current_min_length', 3)
                         self.previous_all_words = getattr(self, 'solved_words_with_scores', {}) if self.solved_words_with_scores else {w: {} for w in self.all_words} # Dict for scoring fallback
+                        
+                        # PERSISTENCE: Snapshot current player findings for the "Previous Day" tab
+                        self.previous_day_history = {
+                            str(p.user_id): {
+                                'username': p.username,
+                                'found_words': [w['word'] for w in p.submitted_words]
+                            } for p in self.players
+                        }
 
         # 2. Transition ACTIVE -> INTERMISSION
         if self.state == 'active' and should_end:
@@ -1951,16 +1959,19 @@ class RoomManager:
             room.bonus_word = bonus_word
             
             # Generate board
-            board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio, final_bonus_word = self.board_generator.generate_board(
-                room.board_dimensions,
-                bonus_word,
-                room.spinner_params['word_count_range'],
-                room.spinner_params['dictionary'],
-                room.spinner_params['board_format'],
-                room.spinner_params.get('min_word_length', 3),
-                room.spinner_params.get('difficulty', 'Medium'),
+            # Signature: dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length=3, difficulty="Medium", is_emergency=False
+            res = self.board_generator.generate_board(
+                dimensions=room.board_dimensions,
+                bonus_word=bonus_word,
+                word_count_range=room.spinner_params['word_count_range'],
+                dictionary=room.spinner_params['dictionary'],
+                board_format=room.spinner_params['board_format'],
+                min_word_length=room.spinner_params.get('min_word_length', 3),
+                difficulty=room.spinner_params.get('difficulty', 'Medium'),
                 is_emergency=True # SPEED: For the very first user in a room, prioritize instant start
             )
+            
+            board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio, final_bonus_word = res
             
             if board is None:
                 print(f"[RoomManager] ERROR: Board generation failed!")
@@ -2365,15 +2376,15 @@ class RoomManager:
                     
                     print(f"[RoomManager] [DEBUG-GEN] Room {room_id} calling generate_board with search_min={search_min}, range={search_wc}")
                     
-                    # ROBUST CALL: The generator might return 6 or 7 values depending on the branch taken.
+                    # ROBUST CALL: Use keyword arguments to prevent positional mismatch
                     res = self.board_generator.generate_board(
-                        room.board_dimensions,
-                        bonus_word,
-                        search_wc,
-                        search_dict,
-                        search_fmt,
-                        search_min,
-                        search_diff
+                        dimensions=room.board_dimensions,
+                        bonus_word=bonus_word,
+                        word_count_range=search_wc,
+                        dictionary=search_dict,
+                        board_format=search_fmt,
+                        min_word_length=search_min,
+                        difficulty=search_diff
                     )
                     
                     # ROBUST UNPACKING: Support legacy 6-tuple or modern 7-tuple
@@ -2383,9 +2394,15 @@ class RoomManager:
                         board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio = res
                         final_bonus_word = bonus_word
                     
-                    # Update word to the ACTUAL embedded word if different
+                    # Update word to the ACTUAL embedded word if different (MANDATORY consistency)
                     if final_bonus_word:
                         bonus_word = final_bonus_word
+                    else:
+                        # Safety: If generator somehow returned None, we MUST NOT use the stale requested word
+                        # instead, we pick the longest scorable word from the board as a hard fallback.
+                        scorable = [w for w in all_words if len(w) >= 6]
+                        if not scorable: scorable = list(all_words)
+                        bonus_word = sorted(scorable, key=len, reverse=True)[0] if scorable else None
                     
                     # ATOMIC STAGING PROMOTION: Set metadata FIRST and board LAST to prevent stale data race
                     room.next_round_words = all_words
@@ -2418,6 +2435,17 @@ class RoomManager:
                     
                     room.next_round_word_scores = scored_dict
                     room.next_round_total_points = sum(pts['total'] for pts in scored_dict.values())
+                    room.next_round_total_words_count = len(all_words or [])
+                    
+                    # USER REQUEST: Pre-calculate counts for the Remaining tab update
+                    next_counts = {i: 0 for i in range(1, 31)}
+                    display_min = params.get('min_word_length', 3)
+                    for word in (all_words or []):
+                        l = len(word)
+                        if display_min <= l <= 30:
+                            next_counts[l] += 1
+                    next_counts['_round'] = room.current_round + 1
+                    room.next_round_counts_by_len = next_counts
                     
                     # RE-VERIFY: Ensure we are still updating the ACTIVE room instance
                     # (Prevents data loss if the room was reconstructed during search)
@@ -2840,10 +2868,10 @@ class RoomManager:
                     print(f"[REMAINING-STABILIZER] Staging empty for {room_id} at promotion. Forcing emergency fallbackboard.")
                     from board_generator import BoardGenerator
                     bg = BoardGenerator()
-                    # CORRECTION: The method is generate_board, and it MUST receive the intended range to properly constrain results
+                    # CORRECTION: Use keyword arguments to match BoardGenerator signature
                     target_range = room.spinner_params.get('word_count_range', '100-200')
                     e_results = bg.generate_board(
-                        room.board_dimensions, 
+                        dimensions=room.board_dimensions, 
                         bonus_word=getattr(room, 'next_round_bonus', ''),
                         word_count_range=target_range,
                         dictionary=room.current_dictionary,

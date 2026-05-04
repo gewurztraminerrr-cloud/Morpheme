@@ -458,6 +458,9 @@ async function updateGameState(incomingState = null) {
             const isForCurrentRound = latest && latest.round === state.current_round;
             hasActualWinner = isForCurrentRound && (latest.score || 0) > 0;
 
+            const bonusText = state.previous_bonus_word || state.bonus_word;
+            const bonusHtml = bonusText ? `<div style="font-size: 0.85rem; color: #fff; opacity: 0.8; margin: 4px 0;">Bonus Word: <span style="color: #ffd700; font-weight: 800; letter-spacing: 1px;">${bonusText.toUpperCase()}</span></div>` : '';
+
             if (hasActualWinner && defContent && !isViewingDefinition) {
                 // If not already showing this round's winner
                 const winnerTextIdentifier = `WINNER_R${latest.round}`;
@@ -486,6 +489,7 @@ async function updateGameState(incomingState = null) {
                             <h2 style="font-size: 1.2rem; color: #fff; text-shadow: 0 0 10px rgba(255,215,0,0.5); font-weight: 950; margin: 3px 0; line-height: 1; flex-shrink: 0;">CONGRATULATIONS</h2>
                             <div style="font-size: 1.15rem; color: #ffd700; font-weight: 800; text-shadow: 0 0 8px rgba(0,0,0,0.7); max-width: 95%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0;">${winnersList.toUpperCase()}</div>
                             <div style="font-size: 0.75rem; opacity: 0.95; margin-top: 3px; font-style: italic; flex-shrink: 0;">1st Place with ${latest.score || 0} pts</div>
+                            ${bonusHtml}
                             ${joinButtonHtml}
                         </div>
                     `;
@@ -524,12 +528,13 @@ async function updateGameState(incomingState = null) {
                         }, 50);
                     }
                 }
-            } else if (!hasActualWinner && defContent && !isViewingDefinition && defContent.innerHTML.includes('CONGRATULATIONS')) {
+            } else if (!hasActualWinner && defContent && !isViewingDefinition && (defContent.innerHTML.includes('CONGRATULATIONS') || defContent.innerHTML.includes('placeholder'))) {
                 // CLEAR the previous winner announcement if current round had no winner
                 defContent.innerHTML = `
-                    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100%; text-align: center; opacity: 0.6;">
-                        <div style="font-size: 0.8rem; color: var(--text-primary);">Round Ended</div>
-                        <div style="font-size: 1rem; color: var(--accent-color); font-weight: 700;">No Scoring Words Found</div>
+                    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100%; text-align: center; opacity: 0.9;">
+                        <div style="font-size: 0.8rem; color: var(--text-primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Round Ended</div>
+                        <div style="font-size: 1.1rem; color: #fff; font-weight: 700; margin-bottom: 5px;">No Scoring Words Found</div>
+                        ${bonusHtml}
                     </div>
                 `;
                 if (defPanel) defPanel.classList.remove('winner-flash');
@@ -1249,9 +1254,7 @@ async function updateGameState(incomingState = null) {
                 const totalByLen = state.total_counts_by_len || {};
                 
                 // ROUND SYNC: If the server provided a round tag, verify it matches the current round.
-                // WE ALLOW +1 if in revelation phase (Teaser data for next round)
-                const isLateIntermission = state.state === 'intermission' && state.spinner_params_revealed;
-                const expectedRound = isLateIntermission ? (state.current_round + 1) : state.current_round;
+                const expectedRound = state.current_round;
                 
                 if (totalByLen._round !== undefined && totalByLen._round !== expectedRound) {
                     console.warn(`[Remaining-Sync] Mismatch (Counts Round: ${totalByLen._round}, Expected: ${expectedRound}).`);
@@ -1914,6 +1917,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWords = [], allWordScores = {}, cswOnlyWords = [], addedWords = []) {
+    console.log(`[displayAllWords] RENDERING. BonusWord: "${bonusWord}" | Words count: ${allWords ? allWords.length : 0}`);
     const listEl = document.getElementById('submitted-words-list');
     const titleEl = document.getElementById('words-panel-title');
     if (titleEl && activeWordsTab === 'found') {
@@ -1933,16 +1937,22 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     // Sort: Length desc, then Alpha
     // Sort: Color Priority, then Length desc, then Alpha
     // Priority: Red/Orange (Bonus) > Purple (Added) > Blue (Found) > Gold (CSW) > Black/Gray (Missed/Unfound)
+    if (bonusWord && allWords) {
+        const bonusIdx = allWords.findIndex(w => (typeof w === 'object' ? (w.word || '') : w).toUpperCase() === bonusWord.toUpperCase());
+        console.log(`[displayAllWords] BonusWord search: "${bonusWord}" found at index: ${bonusIdx}`);
+    }
     console.log(`[displayAllWords] Added words for highlight:`, addedUpper);
     const sortedWords = [...allWords].sort((a, b) => {
         const wordA = (typeof a === 'object' ? (a.word || '') : a).toUpperCase();
         const wordB = (typeof b === 'object' ? (b.word || '') : b).toUpperCase();
-        const bonusUpper = bonusWord ? bonusWord.toUpperCase() : null;
+        const bonusUpper = bonusWord ? bonusWord.toUpperCase().trim() : null;
 
         // 0. Bonus Word (Absolute Top Priority)
         if (bonusUpper) {
-            if (wordA === bonusUpper) return -1;
-            if (wordB === bonusUpper) return 1;
+            const wordAUpper = wordA.trim();
+            const wordBUpper = wordB.trim();
+            if (wordAUpper === bonusUpper) return -1;
+            if (wordBUpper === bonusUpper) return 1;
         }
 
         // 1. Length (Desc) - Primary sort
@@ -1993,7 +2003,8 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     listEl.innerHTML = sortedWords.map(entry => {
         const word = (typeof entry === 'object' ? (entry.word || '') : entry);
         const wordUpper = word.toUpperCase();
-        const isBonus = bonusWord && wordUpper === bonusWord.toUpperCase();
+        const bonusUpper = bonusWord ? bonusWord.toUpperCase().trim() : null;
+        const isBonus = bonusUpper && wordUpper.trim() === bonusUpper;
         const isCSWOnly = cswOnlyUpper.includes(wordUpper);
         const isAddedWord = addedUpper.includes(wordUpper);
         const isTargetFound = targetWordsUpper.includes(wordUpper);
@@ -2502,11 +2513,8 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
                     
                     // Valued Letters support for 3D
                     let tileValue = "";
-                    let bFormat = (window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : null;
-                    if (!bFormat && window.lastGameState && window.lastGameState.spinner_params) {
-                        bFormat = window.lastGameState.spinner_params.board_format || 'Normal';
-                    }
-                    if (bFormat && bFormat.toLowerCase().includes('valued') && !char.includes('/')) {
+                    let bFormat = (state && state.current_board_format) ? state.current_board_format : ((window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : 'Normal');
+                    if (bFormat.toLowerCase().includes('valued') && !char.includes('/')) {
                         const val = LETTER_VALUES[char.toUpperCase()] || 1;
                         tileValue = `<span class="tile-value">${val}</span>`;
                     }
@@ -2870,8 +2878,7 @@ function updateBoardCell(cell, r, c, letter, grayed, f, state = null) {
         }
         
         // Valued Letters support (Points in corner)
-        let bFormat = (window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : 'Normal';
-        if (bFormat.toLowerCase().includes('valued') && !letter.includes('/')) {
+        if (boardFormat.toLowerCase().includes('valued') && !letter.includes('/')) {
             const valSpan = document.createElement('span');
             valSpan.className = 'tile-value';
             valSpan.textContent = LETTER_VALUES[letter.toUpperCase()] || 1;

@@ -55,7 +55,7 @@ class SpinnerSet:
                 if wc_range == '500+' or wc_range == '200+':
                     if min_word_length >= 5:
                         # Keep Either/Or, Checkerboard, and Density as they are highly requested/stable
-                        if board_format not in ['Either/Or', 'Checkerboard', 'Density']:
+                        if board_format not in ['Either/Or', 'Checkerboard', 'Density', 'Valued Letters']:
                             board_format = 'Normal'
                 if board_format == 'IO-Checkerboard':
                     wc_range = random.choice(['100-200', '200-300'])
