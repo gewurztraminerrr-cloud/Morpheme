@@ -9,8 +9,14 @@ import datetime
 import threading
 from dataclasses import dataclass, field
 from typing import List, Dict
-import sqlite3
-import json
+import os
+import fcntl
+
+# GLOBAL WORD TALLY CONTROLLER
+# Absolute path ensures consistency across Gunicorn/Flask environments
+STATS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'word_stats.json')
+# STATS_LOCK (Memory-based) is insufficient for multi-worker environments. 
+# We use file-based locking (fcntl) inside the I/O methods instead.
 from spinner_set import SpinnerSet
 from board_generator import BoardGenerator
 from scoring import calculate_word_score
@@ -2834,6 +2840,20 @@ class RoomManager:
             ghost_min_len = getattr(room, 'current_min_length', 3)
             ghost_players = [p for p in room.players]
             
+            # USER REQUEST: Word Tally. Capture unique words found by each player in this round.
+            # We must do this BEFORE promotion resets p.submitted_words.
+            ghost_player_words = {p.username: list(p.submitted_words) for p in ghost_players}
+            
+            # DIAGNOSTIC: Log the capture
+            total_captured = sum(len(words) for words in ghost_player_words.values())
+            print(f"[WordTally-Diag] Captured {total_captured} words from {len(ghost_players)} players for room {room.room_id}")
+            for u, ws in ghost_player_words.items():
+                # ws is a list of dicts: [{'word': '...', 'points': ...}, ...]
+                submitted_strings = [w.get('word', '').upper() for w in ws]
+                print(f"[WordTally-Diag] User {u} found: {submitted_strings}")
+                if any(target in submitted_strings for target in ["STAR", "MICE", "STORE"]):
+                    print(f"[WordTally-Diag] ALERT: Target word found in {u}'s submissions!")
+            
             # 2. STATE TRANSITION LOCK: Perform the atomic board swap
             with room._state_lock:
                 # CLEAR BOARD & WORDS IMMEDIATELY if we are about to generate a new one
@@ -3112,13 +3132,10 @@ class RoomManager:
                 # USER REQUEST: Ensure this happens AFTER all cleanup to avoid race conditions.
                 threading.Thread(target=self.pre_generate_next_round, args=(room_id,), daemon=True).start()
                 
-                return True
-                
                 # IMPORTANT: CLEAR STARTING LOCK
                 room.starting_round = False
                 
                 print(f"[TRANSITION] Room {room_id}: INTERMISSION -> ACTIVE (Round {room.current_round}, Time: {room.round_start_time})")
-                return True
 
             print(f"[RoomManager] SUCCESS: Transitioned room {room_id} to Round {room.current_round}")
             
@@ -3128,6 +3145,9 @@ class RoomManager:
                 try:
                     # Save history to DB
                     self.save_round_history(room, board=ghost_prev_board, all_words=ghost_source_words, bonus_word=ghost_bonus)
+                    
+                    # USER REQUEST: Word Tally logging (CSW words only)
+                    self.log_word_tally(room, ghost_player_words)
                     
                     # Update moderator-only boards or tournament stats if needed
                     # (Standard rooms just move on)
@@ -3327,6 +3347,81 @@ class RoomManager:
             print(f"[RoomManager] Saved round history for room {room.room_id} (Round {room.current_round})")
         except Exception as e:
             print(f"[RoomManager] Error saving round history: {e}")
+
+    def log_word_tally(self, room, player_words):
+        """
+        Tally how many users found each CSW word and log it to a central file.
+        Also maintains a global cumulative tally in word_stats.json.
+        """
+        try:
+            import collections
+            import json
+            import datetime
+            import os
+            from word_validator import word_validator
+            
+            # 1. Efficient Tally: Number of unique USERS who found each word in THIS round
+            word_counts = collections.Counter()
+            for words in player_words.values():
+                unique_words_for_user = set()
+                for entry in words:
+                    w = entry.get('word', '').upper() if isinstance(entry, dict) else str(entry).upper()
+                    if w and word_validator.is_valid_word(w, 'CSW'):
+                        unique_words_for_user.add(w)
+                
+                for w in unique_words_for_user:
+                    word_counts[w] += 1
+            
+            if not word_counts:
+                return
+
+            # 2. Append per-round entry to audit log
+            log_entry = {
+                'timestamp': datetime.datetime.now().isoformat(),
+                'room_id': room.room_id,
+                'round': room.current_round,
+                'tally': dict(word_counts)
+            }
+            
+            log_path = '/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/word_tally.log'
+            with open(log_path, 'a') as f:
+                f.write(json.dumps(log_entry) + '\n')
+                
+            # 3. Update GLOBAL Cumulative Tally (word_stats.json)
+            # Use File-based Lock (fcntl) to prevent cross-process race conditions in Gunicorn
+            try:
+                stats_file = open(STATS_PATH, 'r+')
+                fcntl.flock(stats_file, fcntl.LOCK_EX) # Exclusive Lock
+                try:
+                    global_stats = json.load(stats_file)
+                except:
+                    global_stats = {}
+                
+                # Merge new counts into global totals
+                for word, count in word_counts.items():
+                    if word in ["STAR", "MICE", "ARITIES"]:
+                        print(f"[WordTally-Diag] Writing target word '{word}' (Count: {count}) to global stats.")
+                    global_stats[word] = global_stats.get(word, 0) + count
+                
+                # Write back the updated totals
+                stats_file.seek(0)
+                stats_file.truncate()
+                json.dump(global_stats, stats_file)
+                stats_file.flush()
+                os.fsync(stats_file.fileno()) # Force write to disk
+                fcntl.flock(stats_file, fcntl.LOCK_UN) # Release
+                stats_file.close()
+                
+                # USER REQUEST: Track in trace log as well
+                with open(TRACE_PATH, 'a') as trace:
+                    trace.write(f"[{datetime.datetime.now()}] ROUND_SYNC: Room {room.room_id} added {len(word_counts)} unique words\n")
+                
+                print(f"[WordTally] SUCCESS: Updated stats for room {room.room_id} (Words: {len(word_counts)})")
+            except Exception as stats_err:
+                print(f"[WordTally] File Lock Error: {stats_err}")
+                
+        except Exception as e:
+            print(f"[WordTally] Error logging word tally for {room.room_id}: {e}")
 
     def start_complete_solving(self, room_id):
         """

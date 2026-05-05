@@ -1,4 +1,4 @@
-print(f"[Main] SERVER STARTING - VERSION: 2026-05-05_00:42 (Rare Letter Lockdown)")
+print(f"[Main] SERVER STARTING - VERSION: 2026-05-05_04:00 (Tally Hardened)")
 
 from flask import Flask, request, jsonify, session, send_from_directory, g, redirect, url_for, render_template
 from functools import wraps
@@ -27,12 +27,66 @@ from tournament_logic import tournament_manager
 from private_match_logic import private_match_manager
 from word_validator import word_validator
 from scoring import calculate_word_score
-from game_room import room_manager
+from game_room import room_manager, STATS_PATH
+import fcntl
 
 # MODERATOR SYSTEM
 MODS_FILE = os.path.join(os.path.dirname(__file__), 'dictionaries', 'mods.txt')
 ADDED_WORDS_FILE = os.path.join(os.path.dirname(__file__), 'dictionaries', 'added_words.txt')
 
+
+# GLOBAL WORD TALLY CONTROLLER
+# Absolute path ensures consistency across Gunicorn/Flask environments
+STATS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'word_stats.json')
+TRACE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'stats_trace.log')
+
+def _update_word_stats(word, action="add"):
+    """
+    Centralized thread-safe and process-safe stats updater.
+    action: 'add' (initialize at 0) or 'remove' (delete key)
+    """
+    try:
+        with open(TRACE_PATH, 'a') as trace:
+            trace.write(f"[{datetime.datetime.now()}] {action.upper()}_START: '{word}'\n")
+            
+            if not os.path.exists(STATS_PATH):
+                trace.write(f"[{datetime.datetime.now()}] WARN: Creating missing stats file\n")
+                with open(STATS_PATH, 'w') as f: json.dump({}, f)
+            
+            # Using 'r+' requires the file to exist.
+            stats_file = open(STATS_PATH, 'r+')
+            fcntl.flock(stats_file, fcntl.LOCK_EX)
+            
+            try:
+                global_stats = json.load(stats_file)
+            except:
+                global_stats = {}
+            
+            changed = False
+            if action == "add":
+                if word not in global_stats:
+                    global_stats[word] = 0
+                    changed = True
+                    trace.write(f"[{datetime.datetime.now()}] SUCCESS: Initialized '{word}'\n")
+            elif action == "remove":
+                if word in global_stats:
+                    del global_stats[word]
+                    changed = True
+                    trace.write(f"[{datetime.datetime.now()}] SUCCESS: Removed '{word}'\n")
+            
+            if changed:
+                stats_file.seek(0)
+                stats_file.truncate()
+                json.dump(global_stats, stats_file)
+                stats_file.flush()
+                os.fsync(stats_file.fileno())
+            
+            fcntl.flock(stats_file, fcntl.LOCK_UN)
+            stats_file.close()
+    except Exception as e:
+        with open(TRACE_PATH, 'a') as trace:
+            trace.write(f"[{datetime.datetime.now()}] FATAL_ERROR: {e}\n")
+        print(f"[StatsSync] Fatal synchronization error: {e}")
 
 _MODS_CACHE = None
 _MODS_CACHE_TIME = 0
@@ -329,6 +383,9 @@ def add_added_word_api():
     word = request.json.get('word', '').strip().upper()
     if not word: return jsonify({'error': 'Word required'}), 400
     
+    # Sync with Global Tally immediately (Self-healing)
+    _update_word_stats(word, "add")
+
     # Check authoritative dictionaries
     if word_validator.is_valid_word_authoritative(word):
         dict_name = "NWL" if word in word_validator.nwl_words else "CSW" if word in word_validator.csw_words else "Long Words"
@@ -371,6 +428,7 @@ def add_added_word_api():
                 
         word_validator.reload_added_words()
         print(f"[Mods] Successfully added NEW word '{word}' to top of list.")
+
         return jsonify({
             'success': True, 
             'message': f'New word "{word}" added to Added Words list successfully.',
@@ -407,6 +465,10 @@ def remove_added_word():
             
             if word_validator:
                 word_validator.reload_added_words()
+
+            # Sync with Global Tally
+            _update_word_stats(word, "remove")
+
             return jsonify({'success': True, 'message': f'Word "{word}" removed.'})
         
         return jsonify({'error': 'Word not found in the list.'}), 404
@@ -488,7 +550,11 @@ def submit_dictionary_words():
                 for w in filtered_added:
                     f.write(w + '\n')
         
-        # 5. Reload Word Validator
+        # 5. Initialize counts in word_stats.json for the new words
+        for w in new_words:
+            _update_word_stats(w, "add")
+
+        # 6. Reload Word Validator
         if word_validator:
             word_validator._load_dictionaries()
             
