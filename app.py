@@ -37,8 +37,8 @@ ADDED_WORDS_FILE = os.path.join(os.path.dirname(__file__), 'dictionaries', 'adde
 
 # GLOBAL WORD TALLY CONTROLLER
 # Absolute path ensures consistency across Gunicorn/Flask environments
-STATS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'word_stats.json')
-TRACE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'stats_trace.log')
+STATS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'word_stats.json')
+TRACE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'stats_trace.log')
 
 def _update_word_stats(word, action="add"):
     """

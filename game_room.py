@@ -14,7 +14,7 @@ import fcntl
 
 # GLOBAL WORD TALLY CONTROLLER
 # Absolute path ensures consistency across Gunicorn/Flask environments
-STATS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'word_stats.json')
+STATS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'word_stats.json')
 # STATS_LOCK (Memory-based) is insufficient for multi-worker environments. 
 # We use file-based locking (fcntl) inside the I/O methods instead.
 from spinner_set import SpinnerSet
