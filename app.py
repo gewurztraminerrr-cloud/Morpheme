@@ -3020,17 +3020,29 @@ def calculate_morpheme_metric(source, target):
         else: j -= 1
     matched_s_indices.reverse()
     
-    # 3. Metric Calculations
-    lis_len = get_lis(matched_s_indices)
-    relocations = len(matched_s_indices) - lis_len
+    # 3. Dynamic Span Optimization
+    # We find the sub-range of the LCS that minimizes (Insertions + Relocations + Paid Deletions)
+    # This allows skipping expensive gaps in the source word if a partial match is cheaper.
+    best_mp = t_len # Default: All characters as insertions
     
-    first_idx = matched_s_indices[0]
-    last_idx = matched_s_indices[-1]
-    # paid_deletions = (total letters between first and last match) - (letters in matches)
-    paid_deletions = (last_idx - first_idx + 1) - len(matched_s_indices)
-    insertions = t_len - len(matched_s_indices)
+    for i in range(len(matched_s_indices)):
+        for j in range(i, len(matched_s_indices)):
+            sub = matched_s_indices[i:j+1]
+            m_len = len(sub)
+            f_idx = sub[0]
+            l_idx = sub[-1]
+            
+            # Metric components for this sub-range
+            sub_lis = get_lis(sub)
+            relocations = m_len - sub_lis
+            paid_deletions = (l_idx - f_idx + 1) - m_len
+            insertions = t_len - m_len
+            
+            total_mp = relocations + paid_deletions + insertions
+            if total_mp < best_mp:
+                best_mp = total_mp
     
-    return relocations + paid_deletions + insertions, linearity
+    return best_mp, linearity
 
 
 def check_and_add_mp(mp_groups, source_len, target_len, mp, word):
