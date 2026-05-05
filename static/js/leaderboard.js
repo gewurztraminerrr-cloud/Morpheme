@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ...currentFilters
             });
 
-            const response = await fetch(`/api/leaderboard?${params}`);
+            const response = await fetch(`/api/leaderboard?${params}&t=${Date.now()}`);
             const data = await response.json();
 
             // Process JSON strings into objects so Replay tool can read them

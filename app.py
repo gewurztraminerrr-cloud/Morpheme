@@ -39,6 +39,7 @@ ADDED_WORDS_FILE = os.path.join(os.path.dirname(__file__), 'dictionaries', 'adde
 # Absolute path ensures consistency across Gunicorn/Flask environments
 STATS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'word_stats.json')
 TRACE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'stats_trace.log')
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
 
 def _update_word_stats(word, action="add"):
     """
@@ -676,7 +677,7 @@ def ban_user_api():
     if username.lower() == 'jeffbabiak':
         return jsonify({'error': 'Cannot ban the ultimate authority jeffbabiak'}), 403
 
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     try:
         # Get user ID
@@ -772,7 +773,7 @@ ADDED_WORDS_CACHE = None
 
 # Initialize database
 def init_db():
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.executescript('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1221,7 +1222,7 @@ def update_setting():
     if not key or value is None:
         return jsonify({'error': 'Missing key or value'}), 400
         
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         conn.execute('''
             INSERT INTO user_settings (user_id, setting_key, setting_value)
@@ -1241,7 +1242,7 @@ def get_settings():
     if 'user_id' not in session:
         return jsonify({'settings': {}}) # Return empty for guests/unauthed
     
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     cursor = conn.execute('SELECT setting_key, setting_value FROM user_settings WHERE user_id = ?', (session['user_id'],))
     rows = cursor.fetchall()
     conn.close()
@@ -1251,7 +1252,7 @@ def get_settings():
 
 @app.route('/api/stats/user_count', methods=['GET'])
 def get_user_count():
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         # Count all users who are NOT guests (guests have usernames starting with Guest_)
         # AND check against guests created in guest_login if needed, but existing guest filter by name is good enough strictly speaking
@@ -1318,7 +1319,7 @@ def register():
         return jsonify({'error': 'Password must be 6+ characters'}), 400
     
     try:
-        conn = sqlite3.connect('morpheme.db', timeout=30)
+        conn = sqlite3.connect(DB_PATH, timeout=30)
         password_hash = generate_password_hash(password, method='pbkdf2:sha256')
         conn.execute('INSERT INTO users (username, password_hash, email) VALUES (?, ?, ?)',
                     (username, password_hash, email))
@@ -1350,7 +1351,7 @@ def login():
     password = data.get('password')
     
     try:
-        conn = sqlite3.connect('morpheme.db', timeout=30)
+        conn = sqlite3.connect(DB_PATH, timeout=30)
         cursor = conn.execute('SELECT id, password_hash, email FROM users WHERE username = ?', (username,))
         user = cursor.fetchone()
         conn.close()
@@ -1403,7 +1404,7 @@ def guest_login():
     dummy_password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
     password_hash = generate_password_hash(dummy_password, method='pbkdf2:sha256')
     
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         cursor = conn.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)',
                              (guest_username, password_hash))
@@ -1427,7 +1428,7 @@ def get_session():
         
         # Fetch fresh rating from DB
         try:
-            conn = sqlite3.connect('morpheme.db')
+            conn = sqlite3.connect(DB_PATH)
             cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
             rating_row = cursor.fetchone()
             rating = rating_row[0] if rating_row else 0
@@ -1461,7 +1462,7 @@ def update_flag():
         return jsonify({'error': 'No flag provided'}), 400
         
     try:
-        conn = sqlite3.connect('morpheme.db', timeout=30)
+        conn = sqlite3.connect(DB_PATH, timeout=30)
         conn.execute('UPDATE users SET country_flag = ? WHERE id = ?', (flag, session['user_id']))
         conn.commit()
         conn.close()
@@ -1486,7 +1487,7 @@ def update_profile():
         return jsonify({'error': 'No valid fields provided'}), 400
         
     try:
-        conn = sqlite3.connect('morpheme.db', timeout=30)
+        conn = sqlite3.connect(DB_PATH, timeout=30)
         set_clause = ", ".join([f"{k} = ?" for k in updates.keys()])
         values = list(updates.values())
         values.append(session['user_id'])
@@ -1503,7 +1504,7 @@ def update_profile():
 def get_public_profile(username):
     if 'user_id' in session:
         room_manager.update_presence(session['user_id'])
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/morpheme.db', timeout=30)
     cursor = conn.execute('''
         SELECT id, username, rating, games_played, avatar_url, country_flag, 
                full_name, age, gender, location, quote, description, proof_url, wins,
@@ -1566,7 +1567,7 @@ def get_public_profile(username):
                wpm, total_words_avail, board_dimensions
         FROM round_history
         WHERE user_id = ? {time_filter}
-        ORDER BY timestamp DESC
+        ORDER BY timestamp DESC, id DESC
     ''', (user_id,))
     all_rows = cursor_all.fetchall()
     
@@ -1692,7 +1693,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     from flask import request
     period = request.args.get('period', 'all').lower()
     
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     cursor = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (username,))
     user = cursor.fetchone()
     if not user:
@@ -1939,7 +1940,7 @@ def upload_avatar():
             avatar_url = f"/static/uploads/avatars/{new_filename}"
             
             # Update DB
-            conn = sqlite3.connect('morpheme.db', timeout=30)
+            conn = sqlite3.connect(DB_PATH, timeout=30)
             # First, get old avatar to delete if exists? (Optional cleanup)
             # For now just update
             conn.execute('UPDATE users SET avatar_url = ? WHERE id = ?', (avatar_url, session['user_id']))
@@ -2024,7 +2025,7 @@ def apply_leave_penalty(user_id, room):
     display_game_type = room.game_type.replace('solo_', '')
     config_key = f"{display_game_type}|{room.board_dimensions}|{room.time_limit}"
     
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         # Subtract from leaver
         conn.execute('''
@@ -2143,7 +2144,7 @@ def create_room():
     if session.get('is_guest', False):
         rating = 0
     else:
-        conn = sqlite3.connect('morpheme.db', timeout=30)
+        conn = sqlite3.connect(DB_PATH, timeout=30)
         cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
                             (session['user_id'], config_key))
         row = cursor.fetchone()
@@ -2160,7 +2161,7 @@ def create_room():
     games_played = 0
     country_flag = '🏳️'
     if not session.get('is_guest', False):
-        conn = sqlite3.connect('morpheme.db', timeout=30)
+        conn = sqlite3.connect(DB_PATH, timeout=30)
         try:
              cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (session['user_id'],))
              row = cur.fetchone()
@@ -2204,7 +2205,7 @@ def join_room(room_id):
     if session.get('is_guest', False):
         rating = 0
     else:
-        conn = sqlite3.connect('morpheme.db', timeout=30)
+        conn = sqlite3.connect(DB_PATH, timeout=30)
         cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
                             (session['user_id'], config_key))
         row = cursor.fetchone()
@@ -2259,7 +2260,7 @@ def join_room(room_id):
     has_exceptional = False # User request: Do not give trophy on join
     
     if not session.get('is_guest', False):
-        conn = sqlite3.connect('morpheme.db', timeout=30)
+        conn = sqlite3.connect(DB_PATH, timeout=30)
         try:
              # Basic Stats
              cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (user_id,))
@@ -2912,15 +2913,29 @@ def load_tools_dictionary(dict_name):
     if cache_key in TOOLS_DICT_CACHE:
         return TOOLS_DICT_CACHE[cache_key]
 
-    dict_path = os.path.join(os.path.dirname(__file__), 'dictionaries', f'{dict_name}.txt')
-    try:
-        print(f"[Tools] Loading dictionary: {dict_path}")
-        with open(dict_path, 'r') as f:
-            words = set(word.strip().upper() for word in f)
-        print(f"[Tools] Loaded {len(words)} words from {dict_name}")
-    except FileNotFoundError:
-        print(f"[Tools] Dictionary file not found: {dict_path}")
+    if dict_name == 'ALL':
         words = set()
+        for d in ['NWL', 'CSW']:
+            p = os.path.join(os.path.dirname(__file__), 'dictionaries', f'{d}.txt')
+            if os.path.exists(p):
+                with open(p, 'r') as f:
+                    words.update(line.strip().upper() for line in f if line.strip())
+        # Add manually added words
+        words.update(word_validator.added_words)
+        print(f"[Tools] Loaded ALL dictionary: {len(words)} unique words")
+    elif dict_name == 'added_words':
+        words = word_validator.added_words.copy()
+        print(f"[Tools] Loaded Added Words dictionary: {len(words)} unique words")
+    else:
+        dict_path = os.path.join(os.path.dirname(__file__), 'dictionaries', f'{dict_name}.txt')
+        try:
+            print(f"[Tools] Loading dictionary: {dict_path}")
+            with open(dict_path, 'r') as f:
+                words = set(word.strip().upper() for word in f)
+            print(f"[Tools] Loaded {len(words)} words from {dict_name}")
+        except FileNotFoundError:
+            print(f"[Tools] Dictionary file not found: {dict_path}")
+            words = set()
 
     # Merge supplementary 16+ word list
     long_path = os.path.join(os.path.dirname(__file__), 'dictionaries', '16plus.txt')
@@ -2951,6 +2966,7 @@ def load_tools_dictionary(dict_name):
     
     result = {
         'words': word_list,
+        'set': words,
         'matrix': matrix,
         'lens': lens,
         'masks': masks
@@ -3362,8 +3378,7 @@ def tools_sequence_search():
         
     results = []
     seq_rev = sequence[::-1]
-    
-    for word in dictionary:
+    for word in dictionary['words']:
         # 1. Length Filter
         if target_len is not None and len(word) != target_len:
             continue
@@ -3407,7 +3422,7 @@ def tools_subanagrams():
     input_counter = Counter(input_text)
     
     results = []
-    for word in dictionary:
+    for word in dictionary['words']:
         if len(word) > len(input_text):
             continue
             
@@ -3442,7 +3457,7 @@ def tools_validate_word():
     if not dictionary:
         return jsonify({'error': f'Dictionary {dict_name} not found'}), 404
         
-    is_valid = word in dictionary
+    is_valid = word in dictionary['set']
     
     # Try to get definition and pronunciation if valid
     definition = None
@@ -3479,7 +3494,7 @@ def tools_unscramble_random():
         return jsonify({'error': f'Dictionary {dict_name} not found'}), 404
         
     # Filter dictionary for words of exactly this length and containing must_have
-    eligible_words = [w for w in dictionary if len(w) == length]
+    eligible_words = [w for w in dictionary['words'] if len(w) == length]
     if must_have:
         eligible_words = [w for w in eligible_words if must_have in w]
     
@@ -3520,7 +3535,7 @@ def send_private_message():
     if len(message_text) > 500:
         message_text = message_text[:500]
         
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         # Get IDs (Case-insensitive)
         sender = conn.execute('SELECT id, username FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
@@ -3559,7 +3574,7 @@ def get_conversation(target_username):
     if 'username' not in session:
         return jsonify({'error': 'Login required'}), 401
         
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         # Get IDs (Case-insensitive)
         me = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
@@ -3609,7 +3624,7 @@ def clear_private_messages(target_username):
     if 'username' not in session:
         return jsonify({'error': 'Login required'}), 401
     
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         me = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
         them = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (target_username,)).fetchone()
@@ -3633,7 +3648,7 @@ def get_unread_count():
     if 'username' not in session:
         return jsonify({'count': 0})
         
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         user = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
         if not user: return jsonify({'count': 0})
@@ -3736,7 +3751,7 @@ def tools_random_word():
         except ValueError:
             pass
             
-    filtered_words = list(dictionary)
+    filtered_words = dictionary['words']
     if target_len:
         filtered_words = [w for w in filtered_words if len(w) == target_len]
         
@@ -3777,7 +3792,7 @@ def tools_wotd():
         return jsonify({'error': 'Dictionary not available'}), 500
         
     # Filter 6-10 letters
-    eligible_words = sorted([w for w in dictionary if 6 <= len(w) <= 10])
+    eligible_words = sorted([w for w in dictionary['words'] if 6 <= len(w) <= 10])
     
     if not eligible_words:
         return jsonify({'error': 'No eligible words found'}), 500
@@ -3818,7 +3833,7 @@ def add_friend():
     if friend_username == session['username']:
         return jsonify({'error': 'Cannot add yourself as a friend'}), 400
         
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         user = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
         friend = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (friend_username,)).fetchone()
@@ -3853,7 +3868,7 @@ def remove_friend():
     data = request.json
     friend_username = data.get('username')
     
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         user = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
         friend = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (friend_username,)).fetchone()
@@ -3873,7 +3888,7 @@ def get_friend_status(username):
     if 'username' not in session:
         return jsonify({'is_friend': False})
         
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         user = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
         friend = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (username,)).fetchone()
@@ -3896,7 +3911,7 @@ def get_friends_list():
     # Mark user as online
     room_manager.update_presence(session.get('user_id'))
     
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     try:
         user = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
@@ -3927,7 +3942,7 @@ def get_friends_list():
 
 @app.route('/api/forum/categories', methods=['GET'])
 def get_forum_categories():
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     try:
         # Include last_content_at by checking latest post OR latest comment in each category
@@ -3960,7 +3975,7 @@ def get_forum_categories():
 
 @app.route('/api/forum/posts/<int:category_id>', methods=['GET'])
 def get_forum_posts(category_id):
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     try:
         rows = conn.execute('''
@@ -3977,7 +3992,7 @@ def get_forum_posts(category_id):
 
 @app.route('/api/forum/posts/user/<username>', methods=['GET'])
 def get_forum_user_posts(username):
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     try:
         rows = conn.execute('''
@@ -3994,7 +4009,7 @@ def get_forum_user_posts(username):
 
 @app.route('/api/forum/post/<int:post_id>', methods=['GET'])
 def get_forum_post_detail(post_id):
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     try:
         post = conn.execute('''
@@ -4033,7 +4048,7 @@ def delete_forum_post(post_id):
     if not session.get('username') or not is_mod(session.get('username')):
         return jsonify({'error': 'Unauthorized'}), 403
     
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         # Delete associated comments first to maintain referential integrity
         conn.execute('DELETE FROM forum_comments WHERE post_id = ?', (post_id,))
@@ -4052,7 +4067,7 @@ def delete_forum_comment(comment_id):
     if not session.get('username') or not is_mod(session.get('username')):
         return jsonify({'error': 'Unauthorized'}), 403
     
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         conn.execute('DELETE FROM forum_comments WHERE id = ?', (comment_id,))
         conn.commit()
@@ -4086,7 +4101,7 @@ def create_forum_post():
             file.save(os.path.join(app.config['FORUM_UPLOAD_FOLDER'], filename))
             image_url = f"/static/uploads/forum/{filename}"
             
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         # [Restriction]: Only mods can post in 'News'
         cur = conn.execute('SELECT name FROM forum_categories WHERE id = ?', (category_id,))
@@ -4128,7 +4143,7 @@ def create_forum_comment():
             file.save(os.path.join(app.config['FORUM_UPLOAD_FOLDER'], filename))
             image_url = f"/static/uploads/forum/{filename}"
 
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         conn.execute('''
             INSERT INTO forum_comments (post_id, user_id, content, image_url)
@@ -4143,7 +4158,7 @@ def create_forum_comment():
 
 @app.route('/api/leaderboard', methods=['GET'])
 def get_leaderboard_data():
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     try:
         # Params
@@ -4368,7 +4383,7 @@ def get_tournament_status():
     
     if t and 'user_id' in session and not session.get('is_guest'):
         user_id = session['user_id']
-        conn = sqlite3.connect('morpheme.db', timeout=30)
+        conn = sqlite3.connect(DB_PATH, timeout=30)
         conn.row_factory = sqlite3.Row
         p = conn.execute('SELECT * FROM tournament_participants WHERE tournament_id = ? AND user_id = ?', 
                         (t['id'], user_id)).fetchone()
@@ -4385,7 +4400,7 @@ def get_tournament_status():
     # Get round end time if active
     round_end_time = 0
     if t and t['status'] == 'active':
-        conn = sqlite3.connect('morpheme.db', timeout=30)
+        conn = sqlite3.connect(DB_PATH, timeout=30)
         r = conn.execute('SELECT end_time FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?',
                         (t['id'], t['current_round'])).fetchone()
         conn.close()
@@ -4399,7 +4414,7 @@ def get_tournament_status():
                 rs['submitted_words'] = json.loads(rs['submitted_words'])
             round_scores.append(rs)
 
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     total_participants = conn.execute('SELECT COUNT(*) FROM tournament_participants WHERE tournament_id = ?', (t['id'],)).fetchone()[0]
     
     params = json.loads(t['parameters'])
@@ -4443,7 +4458,7 @@ def join_tournament():
         return jsonify({'error': 'Signup period is over'}), 400
         
     user_id = session['user_id']
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         conn.execute('''
             INSERT OR IGNORE INTO tournament_participants (tournament_id, user_id, joined_at)
@@ -4489,7 +4504,7 @@ def get_tournament_game_state():
     if not tournament_manager.has_user_turn(t['id'], user_id):
         return jsonify({'error': 'Not your turn or already played'}), 403
         
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     r = conn.execute('SELECT * FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?',
                     (t['id'], t['current_round'])).fetchone()
@@ -4549,7 +4564,7 @@ def submit_tournament_score():
         return jsonify({'error': 'Invalid turn or already submitted'}), 403
         
     # FETCH ROUND DATA for validation
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     t = conn.execute('SELECT * FROM tournaments WHERE id = ?', (tid,)).fetchone()
     r = conn.execute('SELECT * FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?',
@@ -4643,7 +4658,7 @@ def submit_tournament_score():
             total_score += pts
             
     total_score = max(0, total_score)
-    conn = sqlite3.connect('morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         conn.execute('''
             INSERT INTO tournament_scores (tournament_id, round_number, user_id, score, submitted_words, submitted_at, round_start_time)
@@ -4729,7 +4744,7 @@ def create_solo_match():
     rating = 1200
     if not session.get('is_guest'):
         try:
-            conn = sqlite3.connect('morpheme.db', timeout=30)
+            conn = sqlite3.connect(DB_PATH, timeout=30)
             # Use mode-specific rating for initial entry to avoid global rating bleed
             display_game_type = game_type.replace('solo_', '')
             config_key = f"{display_game_type}|{board_dimensions}|{time_limit}"

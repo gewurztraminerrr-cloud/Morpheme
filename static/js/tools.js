@@ -515,6 +515,14 @@ function setupProfileTool() {
             }
         });
     });
+
+    const refreshBtn = document.getElementById('profile-refresh-btn');
+    if (refreshBtn) {
+        refreshBtn.onclick = () => {
+            console.log("[Profile] Manual refresh triggered");
+            window.refreshProfileTool(true);
+        };
+    }
 }
 
 // Full Country Flag List (ISO 3166-1)
@@ -912,7 +920,7 @@ async function performProfileSearch(username, activeTab = null, period = 'all') 
     }
 
     try {
-        const response = await fetch(`/api/profile/${encodeURIComponent(username)}?period=${period}`);
+        const response = await fetch(`/api/profile/${encodeURIComponent(username)}?period=${period}&t=${Date.now()}`);
         const data = await response.json();
 
         if (data.error) {
@@ -1279,7 +1287,7 @@ async function renderProfile(user) {
         if (!user.recent_rounds || user.recent_rounds.length === 0) {
             historyList.innerHTML = '<p class="placeholder">No recently tracked rounds.</p>';
         } else {
-            const displayRounds = user.recent_rounds.slice(0, 10);
+            const displayRounds = user.recent_rounds.slice(0, 50);
             historyList.innerHTML = window.roundGridHeader + displayRounds.map(r => window.renderRoundGridItem(r)).join('');
         }
     }
@@ -2543,11 +2551,13 @@ async function runSequenceSearch() {
     const inputEl = document.getElementById('seq-input');
     const modeEl = document.getElementById('seq-mode');
     const lengthEl = document.getElementById('seq-length');
+    const dictEl = document.getElementById('seq-dict');
     const resultsContainer = document.getElementById('seq-results-container');
 
     const seq = inputEl.value.trim();
     const mode = modeEl.value;
     const length = lengthEl.value;
+    const dictionary = dictEl ? dictEl.value : 'NWL';
 
     if (!seq) {
         resultsContainer.innerHTML = '<div class="seq-results-placeholder">Please enter a sequence.</div>';
@@ -2564,7 +2574,7 @@ async function runSequenceSearch() {
                 sequence: seq,
                 mode: mode,
                 length: length,
-                dictionary: 'NWL' // Defaulting to NWL for now, could add selector later
+                dictionary: dictionary
             })
         });
 

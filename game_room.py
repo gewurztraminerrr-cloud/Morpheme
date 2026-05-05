@@ -15,6 +15,7 @@ import fcntl
 # GLOBAL WORD TALLY CONTROLLER
 # Absolute path ensures consistency across Gunicorn/Flask environments
 STATS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'word_stats.json')
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
 # STATS_LOCK (Memory-based) is insufficient for multi-worker environments. 
 # We use file-based locking (fcntl) inside the I/O methods instead.
 from spinner_set import SpinnerSet
@@ -1140,7 +1141,7 @@ class GameRoom:
                             rating_changes = calculate_proportional_rating_change(participants, is_private=self.is_private)
                             
                             import sqlite3
-                            conn_p = sqlite3.connect('morpheme.db', timeout=30)
+                            conn_p = sqlite3.connect(DB_PATH, timeout=30)
                             for p in self.players + self.round_quitters:
                                 if p.user_id in rating_changes:
                                     p.rating_change = rating_changes[p.user_id]
@@ -1565,6 +1566,7 @@ class RoomManager:
                         room.state = 'active'
                         room.round_start_time = time.time()
                         room.current_round = 1
+                        room.last_saved_round = -1 # Reset save counter for fresh session
                         
                         room.initialize_density(e_board, room.all_words_paths, e_fmt)
                         room.recalculate_total_points()
@@ -1600,7 +1602,7 @@ class RoomManager:
         import json
         import datetime
         try:
-            conn = sqlite3.connect('morpheme.db', timeout=30)
+            conn = sqlite3.connect(DB_PATH, timeout=30)
             room_id = room.room_id
             
             # ROBUST HISTORY FETCH: Find the most recent round for this room that is NOT the current one
@@ -1618,7 +1620,7 @@ class RoomManager:
                     SELECT user_id, words_json, round_number, timestamp, board_json, bonus_word, bonus_cell, board_format, all_solutions_json, all_words_paths
                     FROM round_history 
                     WHERE room_id = ? AND timestamp >= ?
-                    ORDER BY timestamp DESC, round_number DESC
+                    ORDER BY timestamp DESC, id DESC
                 ''', (room_id, thirty_six_hours_ago))
             else:
                 cursor = conn.execute('''
@@ -2688,10 +2690,6 @@ class RoomManager:
             room.starting_round = True
             room._round_start_init_time = time.time()
              
-        # Log to debug_flow.log for observability
-        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
-             f.write(f"[{time.time()}] [RoomManager] start_next_round beginning for room {room_id}\n")
-        
         print(f"[RoomManager] start_next_round processing for room {room_id}")
         
         try:
@@ -2838,21 +2836,34 @@ class RoomManager:
             ghost_source_words = list(room.complete_words) if (getattr(room, 'complete_words', None) and len(room.complete_words) > 0) else list(room.all_words)
             ghost_bonus = (room.bonus_word.upper() if room.bonus_word else None)
             ghost_min_len = getattr(room, 'current_min_length', 3)
-            ghost_players = [p for p in room.players]
+            ghost_round_num = room.current_round # CAPTURE NOW before it increments
+            ghost_all_words_paths = dict(getattr(room, 'all_words_paths', {}))
+            
+            # SNAPSHOT PLAYERS: We MUST deep-copy the data because player objects are reset in the main thread
+            # while the history saver runs in the background.
+            ghost_player_snapshots = []
+            for p in room.players:
+                if p.user_id > 0 and (p.score > 0 or p.submitted_words or p.invalid_words):
+                    ghost_player_snapshots.append({
+                        'user_id': p.user_id,
+                        'username': p.username,
+                        'score': p.score,
+                        'submitted_words': [dict(w) for w in p.submitted_words],
+                        'invalid_words': list(p.invalid_words),
+                        'rating': getattr(p, 'rating', 1200),
+                        'performance_efficiency': getattr(p, 'performance_efficiency', 0)
+                    })
             
             # USER REQUEST: Word Tally. Capture unique words found by each player in this round.
             # We must do this BEFORE promotion resets p.submitted_words.
-            ghost_player_words = {p.username: list(p.submitted_words) for p in ghost_players}
+            ghost_player_words = {p['username']: [w['word'] for w in p['submitted_words']] for p in ghost_player_snapshots}
             
             # DIAGNOSTIC: Log the capture
-            total_captured = sum(len(words) for words in ghost_player_words.values())
-            print(f"[WordTally-Diag] Captured {total_captured} words from {len(ghost_players)} players for room {room.room_id}")
+            total_captured = sum(len(ws) for ws in ghost_player_words.values())
+            print(f"[RoomManager] Snapshot captured for {room.room_id}: {total_captured} words, {len(ghost_player_snapshots)} players, Round {ghost_round_num}")
             for u, ws in ghost_player_words.items():
-                # ws is a list of dicts: [{'word': '...', 'points': ...}, ...]
-                submitted_strings = [w.get('word', '').upper() for w in ws]
-                print(f"[WordTally-Diag] User {u} found: {submitted_strings}")
-                if any(target in submitted_strings for target in ["STAR", "MICE", "STORE"]):
-                    print(f"[WordTally-Diag] ALERT: Target word found in {u}'s submissions!")
+                # ws is a list of strings (the words)
+                submitted_strings = [w.upper() for w in ws]
             
             # 2. STATE TRANSITION LOCK: Perform the atomic board swap
             with room._state_lock:
@@ -3144,7 +3155,15 @@ class RoomManager:
                 # This is offloaded to avoid blocking the main server thread
                 try:
                     # Save history to DB
-                    self.save_round_history(room, board=ghost_prev_board, all_words=ghost_source_words, bonus_word=ghost_bonus)
+                    self.save_round_history(
+                        room, 
+                        board=ghost_prev_board, 
+                        all_words=ghost_source_words, 
+                        bonus_word=ghost_bonus, 
+                        player_snapshots=ghost_player_snapshots,
+                        round_num=ghost_round_num,
+                        all_words_paths=ghost_all_words_paths
+                    )
                     
                     # USER REQUEST: Word Tally logging (CSW words only)
                     self.log_word_tally(room, ghost_player_words)
@@ -3230,26 +3249,34 @@ class RoomManager:
             random.shuffle(valid_words)
         
         result = random.choice(valid_words).upper() if valid_words else 'A' * length
-        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
-            f.write(f"[game_room.py] _get_bonus_word SUCCESS: {result} (alternating={alternating}) at {time.time()}\n")
         return result
     
     
-    def save_round_history(self, room, board=None, all_words=None, bonus_word=None):
+    def save_round_history(self, room, board=None, all_words=None, bonus_word=None, player_snapshots=None, round_num=None, all_words_paths=None):
         """Save the results of the JUST COMPLETED round to the database"""
+        # Determine target round number (use snapshot if provided, otherwise room's current)
+        target_round = round_num if round_num is not None else room.current_round
+
         if room.is_solo:
             print(f"[RoomManager] SKIPPING history save for SOLO room {room.room_id}")
+            with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+                f.write(f"{debug_log} - ABORT (Solo)\n")
             return
             
         import sqlite3
         import json
         
-        # Guard against double saving
-        if getattr(room, 'last_saved_round', 0) >= room.current_round:
+        # Guard against double saving (Exact match check)
+        if getattr(room, 'last_saved_round', 0) == target_round:
+            print(f"[RoomManager] History for {room.room_id} Round {target_round} already saved. Skipping.")
+            with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+                f.write(f"{debug_log} - ABORT (Already saved)\n")
             return
         
         try:
-            conn = sqlite3.connect('morpheme.db', timeout=30)
+            conn = sqlite3.connect(DB_PATH, timeout=30)
+            with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+                f.write(f"{debug_log} - DB CONNECTED\n")
             
             # Use passed-in snapshots if provided (prevents stale data from being saved)
             actual_board = board if board is not None else room.board
@@ -3279,21 +3306,37 @@ class RoomManager:
             # Determine best data source (Room state might have already advanced to Next Round)
             actual_all_words = all_words if all_words is not None else room.all_words
             actual_bonus_word = bonus_word if bonus_word is not None else getattr(room, 'bonus_word', '')
+            actual_all_words_paths = all_words_paths if all_words_paths is not None else getattr(room, 'all_words_paths', {})
             
             # Identify registered players who actually made any attempt
-            participating_registered = [p for p in room.players if p.user_id > 0 and (p.score > 0 or p.submitted_words or p.invalid_words)]
+            # Use snapshots if available, otherwise fallback to current room players
+            if player_snapshots is not None:
+                participating_registered = player_snapshots
+            else:
+                participating_registered = [p for p in room.players if p.user_id > 0 and (p.score > 0 or p.submitted_words or p.invalid_words)]
             
             if not participating_registered:
-                print(f"[RoomManager] SKIPPING history save for room {room.room_id} - no participating registered users.")
+                print(f"[RoomManager] SKIPPING history save for room {room.room_id} Round {target_round} - no participating registered users.")
+                with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+                    p_details = [{'name': (p.username if hasattr(p, 'username') else p.get('username')), 'uid': (p.user_id if hasattr(p, 'user_id') else p.get('user_id')), 'score': (p.score if hasattr(p, 'score') else p.get('score'))} for p in room.players]
+                    f.write(f"{debug_log} - ABORT (No registered players). Details: {p_details}\n")
                 conn.close()
                 return
 
+            print(f"[RoomManager] Saving history for room {room.room_id} Round {target_round} ({len(participating_registered)} players)")
+
             for p in participating_registered:
-                # Use current submitted_words because we call this BEFORE clearing
+                # p is either a Player object or a dictionary snapshot
+                u_id = p.user_id if hasattr(p, 'user_id') else p['user_id']
+                u_name = p.username if hasattr(p, 'username') else p['username']
+                u_score = p.score if hasattr(p, 'score') else p['score']
+                u_submitted = p.submitted_words if hasattr(p, 'submitted_words') else p['submitted_words']
+                u_rating = getattr(p, 'rating', 1200) if hasattr(p, 'rating') else p.get('rating', 1200)
+                u_perf = getattr(p, 'performance_efficiency', 0) if hasattr(p, 'performance_efficiency') else p.get('performance_efficiency', 0)
                 
                 # NORMALIZE TIMESTAMPS: Ensure numeric s for replay
                 words_data = []
-                for w in p.submitted_words:
+                for w in u_submitted:
                     # Get raw time or fallback
                     raw_time = w.get('time')
                     if not raw_time or isinstance(raw_time, str):
@@ -3306,7 +3349,7 @@ class RoomManager:
                     })
                 
                 # Calculate Best Word
-                best_w_entry = max(p.submitted_words, key=lambda x: x.get('points', 0)) if p.submitted_words else None
+                best_w_entry = max(u_submitted, key=lambda x: x.get('points', 0)) if u_submitted else None
                 best_word_text = best_w_entry['word'] if best_w_entry else None
                 best_word_val = best_w_entry.get('points', 0) if best_w_entry else 0
 
@@ -3334,19 +3377,31 @@ class RoomManager:
                 # 2. SAVE: Optimization - Only store full solutions/paths for the FIRST player in the batch
                 is_first_player = (p == participating_registered[0])
                 solutions_payload = json.dumps(list(actual_all_words)) if is_first_player else None
-                paths_payload = json.dumps(getattr(room, 'all_words_paths', {})) if is_first_player else None # all_words_paths contains paths
+                paths_payload = json.dumps(actual_all_words_paths) if is_first_player else None 
 
                 conn.execute('''
                     INSERT INTO round_history (user_id, room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, timestamp, user_rating, performance_ratio, best_word, best_word_score, board_dimensions, wpm, total_words_avail, bonus_word, bonus_cell, board_format, all_solutions_json, all_words_paths)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (p.user_id, room.room_id, room.game_type, room.current_round, board_json, json.dumps(words_data), p.score, room.round_start_time, room.time_limit, timestamp, p.rating, p.performance_efficiency, best_word_text, best_word_val, room.board_dimensions, final_wpm, len(actual_all_words), actual_bonus_word, json.dumps(getattr(room, 'bonus_cell', None)), getattr(room, 'current_board_format', 'Normal'), solutions_payload, paths_payload))
-            
-            room.last_saved_round = room.current_round
+                ''', (
+                    u_id, room.room_id, room.game_type, target_round, board_json, 
+                    json.dumps(words_data), u_score, room.round_start_time, room.time_limit, 
+                    timestamp, u_rating, u_perf, best_word_text, best_word_val,
+                    room.board_dimensions, final_wpm, len(actual_all_words), 
+                    actual_bonus_word, json.dumps(room.bonus_cell), board_format,
+                    solutions_payload, paths_payload
+                ))
+                
             conn.commit()
             conn.close()
-            print(f"[RoomManager] Saved round history for room {room.room_id} (Round {room.current_round})")
+            
+            room.last_saved_round = target_round
+            print(f"[RoomManager] SUCCESS: Saved round history for room {room.room_id} Round {target_round}")
+            with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+                f.write(f"{debug_log} - SUCCESS: Saved to DB\n")
         except Exception as e:
             print(f"[RoomManager] Error saving round history: {e}")
+            with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+                f.write(f"{debug_log} - FATAL ERROR: {e}\n")
 
     def log_word_tally(self, room, player_words):
         """

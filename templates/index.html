@@ -1071,6 +1071,7 @@
                                                     Friend</button>
                                                 <button id="profile-follow-btn"
                                                     class="follow-btn hidden">Follow</button>
+                                                <button id="profile-refresh-btn" class="profile-refresh-btn" title="Refresh Profile and Round Reviews">🔄</button>
                                                 <input type="hidden" id="profile-current-room" value="">
                                             </div>
 
@@ -1393,8 +1394,10 @@
                                 </select>
                                 <label>Dict:</label>
                                 <select id="random-dict" style="width: 120px;">
+                                    <option value="ALL">ALL (Full)</option>
                                     <option value="NWL">NWL (US)</option>
-                                    <option value="CSW">CSW (Intl)</option>
+                                    <option value="CSW" selected>CSW (Intl)</option>
+                                    <option value="added_words">Added Words</option>
                                 </select>
                                 <button id="random-gen-btn">Generate Random Word</button>
                             </div>
@@ -1463,8 +1466,10 @@
                                 <input type="text" id="combo-input" placeholder="Enter letters to check..."
                                     autocomplete="off">
                                 <select id="combo-dict">
+                                    <option value="ALL">ALL (Full)</option>
                                     <option value="NWL">NWL (US)</option>
-                                    <option value="CSW">CSW (Intl)</option>
+                                    <option value="CSW" selected>CSW (Intl)</option>
+                                    <option value="added_words">Added Words</option>
                                 </select>
                                 <button id="combo-search-btn">Check</button>
                             </div>
@@ -1507,8 +1512,10 @@
                                 <input type="text" id="valid-input" placeholder="Enter word to check..."
                                     autocomplete="off" style="width: 250px;">
                                 <select id="valid-dict" style="width: 140px;">
+                                    <option value="ALL">ALL (Full)</option>
                                     <option value="NWL">NWL (US)</option>
                                     <option value="CSW">CSW (Intl)</option>
+                                    <option value="added_words">Added Words</option>
                                 </select>
                                 <button id="valid-check-btn">Validate</button>
                             </div>
@@ -1537,8 +1544,10 @@
                                 <input type="text" id="sub-input" placeholder="Enter letters (e.g. HELLO)..."
                                     autocomplete="off" style="width: 250px;">
                                 <select id="sub-dict" style="width: 140px;">
+                                    <option value="ALL">ALL (Full)</option>
                                     <option value="NWL">NWL (US)</option>
-                                    <option value="CSW">CSW (Intl)</option>
+                                    <option value="CSW" selected>CSW (Intl)</option>
+                                    <option value="added_words">Added Words</option>
                                 </select>
                                 <button id="sub-search-btn">Find Subanagrams</button>
                             </div>
@@ -1569,6 +1578,13 @@
                                     <option value="ends">Ends With</option>
                                     <option value="contains" selected>Contains (Fwd/Rev)
                                     </option>
+                                </select>
+
+                                <select id="seq-dict" style="width: 140px;">
+                                    <option value="ALL">ALL (Full)</option>
+                                    <option value="NWL">NWL (US)</option>
+                                    <option value="CSW" selected>CSW (Intl)</option>
+                                    <option value="added_words">Added Words</option>
                                 </select>
 
                                 <select id="seq-length" style="width: 120px;">
@@ -1725,9 +1741,11 @@
                                     <option value="21">Len: 21</option>
                                 </select>
                                 <select id="unscramble-dict" style="width: 140px;">
+                                    <option value="ALL">ALL (Full)</option>
                                     <option value="NWL">NWL (US)</option>
                                     <option value="CSW">CSW (Intl)</option>
                                     <option value="uniqueNWL">Uniques</option>
+                                    <option value="added_words">Added Words</option>
                                 </select>
                                 <span style="font-size: 0.8rem; color: rgba(255,255,255,0.4); font-weight: 700; text-transform: uppercase; margin-left: 10px;">Must Have:</span>
                                 <select id="unscramble-must-have" style="width: 100px;">
