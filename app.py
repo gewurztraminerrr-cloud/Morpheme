@@ -2932,8 +2932,31 @@ def load_tools_dictionary(dict_name):
     except FileNotFoundError:
         print(f"[Tools] 16plus.txt not found – skipping supplementary merge")
 
-    TOOLS_DICT_CACHE[cache_key] = words
-    return words
+    # --- OPTIMIZATION: PRE-CALCULATE FREQUENCY MATRIX ---
+    import numpy as np
+    word_list = sorted(list(words))
+    matrix = np.zeros((len(word_list), 26), dtype=np.uint8)
+    masks = np.zeros(len(word_list), dtype=np.uint32)
+    
+    for i, word in enumerate(word_list):
+        mask = 0
+        for char in word:
+            if 'A' <= char <= 'Z':
+                c_idx = ord(char) - ord('A')
+                matrix[i, c_idx] += 1
+                mask |= (1 << c_idx)
+        masks[i] = mask
+    
+    lens = np.array([len(w) for w in word_list], dtype=np.uint8)
+    
+    result = {
+        'words': word_list,
+        'matrix': matrix,
+        'lens': lens,
+        'masks': masks
+    }
+    TOOLS_DICT_CACHE[cache_key] = result
+    return result
 
 def get_lis(nums):
     """Calculates Longest Increasing Subsequence length."""
@@ -2950,15 +2973,43 @@ def get_lis(nums):
 
 def calculate_morpheme_metric(source, target):
     s_len, t_len = len(source), len(target)
-    # 1. LCS (Linearity)
+    if s_len == 0 or t_len == 0: return 99, 0
+    
+    # 1. Optimized LCS (Linearity) using sliding row
+    prev = [0] * (t_len + 1)
+    curr = [0] * (t_len + 1)
+    for char_s in source:
+        for j in range(1, t_len + 1):
+            if char_s == target[j-1]:
+                curr[j] = prev[j-1] + 1
+            else:
+                p_v = prev[j]
+                c_v = curr[j-1]
+                curr[j] = p_v if p_v > c_v else c_v
+        prev[:] = curr
+    
+    linearity = prev[t_len]
+    if linearity == 0: return 99, 0
+    
+    # mp >= target_len - linearity. If target_len - linearity > 6, exit.
+    if t_len - linearity > 6:
+        return 99, linearity
+
+    # 2. Backtrace (Only for high-linearity candidates)
+    # We use a single 2D array but only if necessary
     dp = [[0] * (t_len + 1) for _ in range(s_len + 1)]
     for i in range(1, s_len + 1):
+        s_i = source[i-1]
+        dp_prev = dp[i-1]
+        dp_curr = dp[i]
         for j in range(1, t_len + 1):
-            if source[i-1] == target[j-1]: dp[i][j] = dp[i-1][j-1] + 1
-            else: dp[i][j] = max(dp[i-1][j], dp[i][j-1])
-    linearity = dp[s_len][t_len]
-    if linearity == 0: return 99, 0
-    # Backtrace
+            if s_i == target[j-1]:
+                dp_curr[j] = dp_prev[j-1] + 1
+            else:
+                v1 = dp_prev[j]
+                v2 = dp_curr[j-1]
+                dp_curr[j] = v1 if v1 >= v2 else v2
+            
     matched_s_indices = []
     i, j = s_len, t_len
     while i > 0 and j > 0:
@@ -2968,79 +3019,62 @@ def calculate_morpheme_metric(source, target):
         elif dp[i-1][j] >= dp[i][j-1]: i -= 1
         else: j -= 1
     matched_s_indices.reverse()
-    # Relocations
+    
+    # 3. Metric Calculations
     lis_len = get_lis(matched_s_indices)
     relocations = len(matched_s_indices) - lis_len
-    # Extra Letters & Trimming
-    used_in_lcs = [False] * s_len
-    for idx in matched_s_indices: used_in_lcs[idx] = True
-    first_used = next((idx for idx, val in enumerate(used_in_lcs) if val), -1)
-    last_used = s_len - 1 - next((idx for idx, val in enumerate(reversed(used_in_lcs)) if val), -1) if first_used != -1 else -1
-    paid_deletions = sum(1 for idx, used in enumerate(used_in_lcs) if not used and first_used != -1 and idx > first_used and idx < last_used)
+    
+    first_idx = matched_s_indices[0]
+    last_idx = matched_s_indices[-1]
+    # paid_deletions = (total letters between first and last match) - (letters in matches)
+    paid_deletions = (last_idx - first_idx + 1) - len(matched_s_indices)
     insertions = t_len - len(matched_s_indices)
+    
     return relocations + paid_deletions + insertions, linearity
 
 
 def check_and_add_mp(mp_groups, source_len, target_len, mp, word):
     """Applies strict filtering logic from combos.java."""
-    # Check if word is already in this specific MP group
-    if word in mp_groups[mp]: 
-        return
-
+    # mp_groups is now a dict of sets
     added = False
     
     if source_len == 3:
-        # User requested 3-letter support. Loose logic inferred.
         if target_len >= 3: added = True
-        
     elif source_len == 4:
-        # User requested 4-letter support. Loose logic inferred.
         if target_len >= 4: added = True
-
     elif source_len == 5:
         if target_len >= 5 and mp <= 3:
             if mp >= 3:
                 if target_len >= 6: added = True
             else:
                 added = True
-                
     elif source_len == 6:
         if target_len >= 5 and mp <= 3:
             if mp >= 3:
                 if target_len >= 6: added = True
             else:
                 added = True
-
     elif source_len == 7:
         if target_len >= 5 and mp <= 4:
             if mp >= 4:
                 if target_len >= 8: added = True
             else:
                 added = True
-                
     elif source_len == 8:
         if target_len >= 5 and mp <= 4:
             added = True
-            
-    elif source_len == 9:
+    elif source_len >= 9:
         if target_len >= 6 and mp <= 5:
              if mp >= 5:
                  if target_len >= 8: added = True
              else:
                  added = True
-                 
-    elif source_len == 10:
-        if target_len >= 6 and mp <= 5:
-            if mp == 5:
-                if target_len >= 8: added = True
-            else:
-                added = True
     
     if added:
-        mp_groups[mp].append(word)
+        mp_groups[mp].add(word)
 
 def check_and_add_lic(lic_groups, count, target_len, word):
-    if count not in lic_groups: lic_groups[count] = []
+    if count not in lic_groups: lic_groups[count] = set()
     valid = False
     if count == 1: valid = (target_len < 3)
     elif count == 2: valid = (target_len < 4)
@@ -3051,7 +3085,7 @@ def check_and_add_lic(lic_groups, count, target_len, word):
     elif count == 7: valid = (target_len < 10)
     elif count >= 8: valid = (target_len < 11)
     if valid:
-        if word not in lic_groups[count]: lic_groups[count].append(word)
+        lic_groups[count].add(word)
 
 @app.route('/api/tools/combo', methods=['POST'])
 def tools_combo_check():
@@ -3065,53 +3099,92 @@ def tools_combo_check():
              return jsonify({'error': 'No search term provided'}), 400
         pass 
         
-    dictionary = load_tools_dictionary(dict_name)
-    if not dictionary:
+    dict_data = load_tools_dictionary(dict_name)
+    if not dict_data:
         return jsonify({'error': f'Dictionary {dict_name} not found'}), 404
 
-    from collections import Counter
+    import numpy as np
+    word_list = dict_data['words']
+    dict_matrix = dict_data['matrix']
+    dict_lens = dict_data['lens']
+    dict_masks = dict_data['masks']
+    
     source_len = len(search_term)
-    
-    # Initialize Groups
-    mp_groups = {i: [] for i in range(7)} # 0MP to 6MP
-    lic_groups = {}
-    
     search_term_rev = search_term[::-1]
     
-    for word in dictionary:
-        target_len = len(word)
-        if abs(source_len - target_len) > 6: continue
+    # Vectorized Search Vector & Mask
+    s_vec = np.zeros(26, dtype=np.uint8)
+    s_mask = 0
+    for char in search_term:
+        if 'A' <= char <= 'Z':
+            c_idx = ord(char) - ord('A')
+            s_vec[c_idx] += 1
+            s_mask |= (1 << c_idx)
+    
+    # 1. BITMASK FILTER (Extremely Fast Vectorized Bit Count)
+    mask_intersection = dict_masks & s_mask
+    
+    # Vectorized Population Count (NumPy native)
+    m = mask_intersection.astype(np.uint32)
+    m = (m & 0x55555555) + ((m >> 1) & 0x55555555)
+    m = (m & 0x33333333) + ((m >> 2) & 0x33333333)
+    m = (m & 0x0F0F0F0F) + ((m >> 4) & 0x0F0F0F0F)
+    m = (m & 0x00FF00FF) + ((m >> 8) & 0x00FF00FF)
+    m = (m & 0x0000FFFF) + ((m >> 16) & 0x0000FFFF)
+    passed_mask = (m >= 3)
+    
+    # 2. VECTORIZED PRUNING
+    shared_counts = np.minimum(dict_matrix, s_vec).sum(axis=1)
+    
+    # HEURISTIC TIGHTENING: For 7+ letter words, we need a high shared count
+    min_shared = 1
+    if source_len == 5: min_shared = 3
+    if source_len == 6: min_shared = 4 # TIGHTENED to 4
+    if source_len >= 7: min_shared = 5 # TIGHTENED to 5 for speed
+    
+    len_diffs = np.abs(dict_lens.astype(np.int16) - source_len)
+    candidates = np.where(
+        passed_mask & 
+        (len_diffs <= 6) & 
+        (shared_counts >= min_shared) &
+        (dict_lens.astype(np.int16) - shared_counts <= 6)
+    )[0]
+    
+    # Initialize Groups (Using sets to prevent O(N^2) search bottleneck)
+    mp_groups = {i: set() for i in range(7)} # 0MP to 6MP
+    lic_groups = {}
+    
+    # --- OPTIMIZED SINGLE-THREADED LOOP ---
+    for idx in candidates:
+        word = word_list[idx]
+        target_len = int(dict_lens[idx])
+        shared_count = int(shared_counts[idx])
         
-        # 4 Passes to find best alignment
-        best_mp, _ = calculate_morpheme_metric(search_term, word)
+        # 1-pass primary check
+        best_mp, linearity = calculate_morpheme_metric(search_term, word)
         
-        m2, _ = calculate_morpheme_metric(search_term, word[::-1])
-        best_mp = min(best_mp, m2)
-        
-        m3, _ = calculate_morpheme_metric(search_term_rev, word)
-        best_mp = min(best_mp, m3)
-        
-        m4, _ = calculate_morpheme_metric(search_term_rev, word[::-1])
-        best_mp = min(best_mp, m4)
+        # Subsequent passes only if promising
+        # Early Exit: If linearity is already very low, m2/m3 might not help much
+        # But we must be careful. For now, just optimize the calls.
+        if best_mp > 2:
+            # Mirror check (source vs target[::-1])
+            # Note: (source[::-1] vs target) is mathematically identical, so we skip m3.
+            m2, _ = calculate_morpheme_metric(search_term, word[::-1])
+            best_mp = min(best_mp, m2)
         
         if best_mp <= 6:
             check_and_add_mp(mp_groups, source_len, target_len, best_mp, word)
             
-        # LIC logic: letters in common
-        s_count = Counter(search_term)
-        w_count = Counter(word)
-        overlap = s_count & w_count
-        shared_count = sum(overlap.values())
-        
+        # LIC logic: uses the pre-calculated shared_count (Vectorized)
         if shared_count >= 1:
             check_and_add_lic(lic_groups, shared_count, target_len, word)
 
     # Sort Groups
     for k in mp_groups:
-        mp_groups[k] = sorted(list(set(mp_groups[k])), key=lambda x: (-len(x), x))
+        mp_groups[k] = sorted(list(mp_groups[k]), key=lambda x: (-len(x), x))
         
     for k in lic_groups:
-        lic_groups[k] = sorted(list(set(lic_groups[k])), key=lambda x: (len(x), x))
+        lic_groups[k] = sorted(list(lic_groups[k]), key=lambda x: (len(x), x))
     
     return jsonify({
         'mp_groups': mp_groups, 
