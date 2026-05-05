@@ -68,7 +68,7 @@ class GameRoom:
     starting_round: bool = False  # Prevents concurrent round starts
     last_saved_round: int = -1    # tracks which round was last saved to DB
     stats_recorded_round: int = -1 # tracks if stats were updated for this round
-    
+
     # Timer
     round_start_time: float = 0
     intermission_start_time: float = 0
@@ -1516,44 +1516,54 @@ class RoomManager:
                 is_split = (room.game_type == 'split')
                 room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split)
 
-                # INSTANT START: User Request - No wait on first entry for public hubs.
-                if room_id.startswith('pub_') and not is_24h:
-                    print(f"[RoomManager] {room_id}: First entry. Generating synchronous kickstart board...")
+                # INSTANT START: User Request - No wait on first entry for rooms (except 24h)
+                if not is_24h:
+                    print(f"[RoomManager] {room_id}: Kickstarting room immediately...")
                     # 1. Pick a bonus word
                     bw_l = room.spinner_params.get('bonus_word_length', 8)
                     b_word = self._get_bonus_word(length=bw_l, dictionary=room.spinner_params.get('dictionary', 'NWL'))
                     
-                    # 2. Generate board (Emergency mode for speed)
+                    # 2. Sync Metadata and Enforce floor for large grids
+                    m_len = room.spinner_params.get('min_word_length', 3)
+                    if ('6x8' in str(room.board_dimensions) or '3x3x3' in str(room.board_dimensions)) and m_len < 6:
+                        m_len = 6
+                        room.spinner_params['min_word_length'] = 6
+                    
+                    # 3. Generate board
                     e_results = self.board_generator.generate_board(
                         dimensions=room.board_dimensions,
                         bonus_word=b_word,
                         word_count_range=room.spinner_params.get('word_count_range', '100-200'), 
                         dictionary=room.spinner_params.get('dictionary', 'NWL'),
                         board_format=room.spinner_params.get('board_format', 'Normal'),
-                        min_word_length=room.spinner_params.get('min_word_length', 3),
+                        min_word_length=m_len,
                         is_emergency=True
                     )
                     
                     if e_results and len(e_results) >= 7:
                         e_board, e_words, e_bonus_c, e_fmt, e_dict, e_ratio, e_bonus_word = e_results[:7]
                         
-                        # 3. Promote to ACTIVE immediately
+                        room.board = e_board
+                        room.bonus_cell = e_bonus_c
+                        room.bonus_word = e_bonus_word or b_word
+                        room.current_min_length = m_len
+                        room.current_board_format = e_fmt
+                        room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
+                        room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
+                        room.current_uniqueness = e_ratio
+                        
+                        # Filter words for length lockdown and store paths
+                        room.all_words = {w for w in (e_words or []) if len(w) >= m_len}
+                        room.all_words_paths = {w: p for w, p in (e_dict or {}).items() if len(w) >= m_len}
+                        
                         room.state = 'active'
                         room.round_start_time = time.time()
-                        room.board = e_board
-                        # Filter words for length lockdown
-                        min_l = room.spinner_params.get('min_word_length', 3)
-                        display_min = min_l
-                        room.all_words = {w for w in (e_words or []) if len(w) >= display_min}
-                        room.all_words_paths = {w: p for w, p in (e_dict or {}).items() if len(w) >= display_min}
-                        room.bonus_word = e_bonus_word or b_word
-                        room.bonus_cell = e_bonus_c
-                        room.current_board_format = e_fmt
                         room.current_round = 1
-                        room.current_min_length = min_l
-                        room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
+                        
                         room.initialize_density(e_board, room.all_words_paths, e_fmt)
                         room.recalculate_total_points()
+                        
+                        print(f"[RoomManager] {room_id} kickstarted ACTIVE (Round 1, {m_len}L+)")
                         
                         # 4. Trigger PROACTIVE search for Round 2 in background
                         room.spinner_params_generated = True
@@ -2376,6 +2386,13 @@ class RoomManager:
                     
                     print(f"[RoomManager] [DEBUG-GEN] Room {room_id} calling generate_board with search_min={search_min}, range={search_wc}")
                     
+                    # USER REQUEST: Zero-latency 0:00 loading.
+                    # We MUST ensure background search times out BEFORE the round ends.
+                    # Target finish: 10s before round ends.
+                    search_timeout = max(10.0, float(room.time_limit) - 10.0)
+                    if room.time_limit >= 7200: search_timeout = 180.0 # 24h rooms get 3 mins
+                    else: search_timeout = min(search_timeout, 120.0) # Cap at 2 mins for standard rooms
+                    
                     # ROBUST CALL: Use keyword arguments to prevent positional mismatch
                     res = self.board_generator.generate_board(
                         dimensions=room.board_dimensions,
@@ -2384,7 +2401,8 @@ class RoomManager:
                         dictionary=search_dict,
                         board_format=search_fmt,
                         min_word_length=search_min,
-                        difficulty=search_diff
+                        difficulty=search_diff,
+                        timeout=search_timeout
                     )
                     
                     # ROBUST UNPACKING: Support legacy 6-tuple or modern 7-tuple

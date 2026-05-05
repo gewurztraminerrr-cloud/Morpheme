@@ -544,6 +544,7 @@ function setupModalListeners() {
 }
 
 function showPage(pageId) {
+    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
     // 0. Synchronize URL Hash (for Reload/Navigation consistency)
     if (window.location.hash !== "#" + pageId) {
         history.replaceState(null, null, "#" + pageId);
@@ -596,7 +597,7 @@ function showPage(pageId) {
     if (pageId === 'page-play') {
         renderGameColorBar(); // Render the rating color bar
         if (window.startGamePolling) {
-            console.log('Entering Play page - starting polling');
+            console.log('app.js fully loaded - version with UI optimizations');
             window.startGamePolling();
         }
 
@@ -643,7 +644,6 @@ function showPage(pageId) {
         }
     } else {
         if (window.stopGamePolling) {
-            console.log('Leaving Play page - stopping polling');
             window.stopGamePolling();
         }
     }
@@ -895,6 +895,13 @@ function updateAuthUI(rating = null) {
 
 
 async function handleLogout() {
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.textContent = 'Logging out...';
+        logoutBtn.style.opacity = '0.7';
+        logoutBtn.disabled = true;
+    }
+
     try {
         console.info('[Auth] Logout initiated. Preserving global markers...');
         await fetch('/api/logout', { method: 'POST' });
@@ -916,10 +923,18 @@ async function handleLogout() {
         if (userSettings) localStorage.setItem('morpheme_user_settings', userSettings);
         
         console.info('[Auth] Markers restored. Redirecting...');
-        window.location.href = '/';
+        // Use a short delay to ensure UI shows the 'Logging out' state briefly for feedback
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 100);
     } catch (error) {
         console.error('Logout error:', error);
-        window.location.href = '/';
+        if (logoutBtn) {
+            logoutBtn.textContent = 'Logout';
+            logoutBtn.style.opacity = '1';
+            logoutBtn.disabled = false;
+        }
+        alert('Logout failed. Please check your connection.');
     }
 }
 
@@ -1104,25 +1119,20 @@ window.showConfirmModal = function (title, message, onConfirm) {
 function renderGameColorBar() {
     const bar = document.getElementById('game-color-bar');
     if (!bar) return;
-
-    // Use global rating ranges
-    const ranges = RATING_RANGES;
-
-    bar.innerHTML = '';
-
-    ranges.forEach((range, index) => {
-        const segment = document.createElement('div');
-        segment.className = 'color-bar-segment';
-        segment.style.backgroundColor = range.color;
-        
-        // segment.style.backgroundColor = range.color; (already set above)
-
-        // TOOLTIP: Simplified to Rank and Rating Range only
-        segment.setAttribute('data-name', `${range.name.toUpperCase()}`);
-        segment.setAttribute('data-label', `${range.label}`);
-        segment.setAttribute('data-index', index);
-        bar.appendChild(segment);
+    
+    // Optimization: Build entire HTML string first to avoid DOM thrashing
+    let html = '';
+    RATING_RANGES.forEach(range => {
+        html += `<div class="color-bar-segment" 
+                      style="background-color: ${range.color};" 
+                      data-name="${range.name.toUpperCase()}" 
+                      data-label="${range.min}-${range.max === 9999 ? '∞' : range.max}">
+                 </div>`;
     });
+    
+    if (bar.innerHTML !== html) {
+        bar.innerHTML = html;
+    }
 }
 
 /**
@@ -1284,3 +1294,26 @@ window.checkLobbyNotice = async function() {
     }
 };
 
+
+// UI Feedback Helpers
+window.showLoadingOverlay = function(message = 'Loading...') {
+    let overlay = document.getElementById('global-loading-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'global-loading-overlay';
+        overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 99999; color: #fff; font-family: sans-serif;';
+        overlay.innerHTML = '<div class="loading-spinner" style="width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top-color: #e94560; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div><div id="loading-message" style="font-size: 1.2rem; font-weight: 600; letter-spacing: 1px;">' + message + '</div><style>@keyframes spin { to { transform: rotate(360deg); } }</style>';
+        document.body.appendChild(overlay);
+    } else {
+        const msgEl = overlay.querySelector('#loading-message');
+        if (msgEl) msgEl.textContent = message;
+        overlay.style.display = 'flex';
+    }
+};
+
+window.hideLoadingOverlay = function() {
+    const overlay = document.getElementById('global-loading-overlay');
+    if (overlay) overlay.style.display = 'none';
+};
+
+console.log('app.js fully loaded - version with UI optimizations');

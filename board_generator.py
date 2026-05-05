@@ -11,91 +11,91 @@ from word_validator import word_validator
 # Medium/Hard weights - CUSTOMIZED: Peak Connectivity for 7-10L words
 # User-provided frequencies for 4x4 (A-Z)
 LETTER_FREQ_USER = [
-    300,
-    95,
-    169,
-    136,
-    400,
-    61,
-    84,
-    104,
-    334,
-    9,
-    51,
-    247,
-    126,
-    225,
-    268,
-    122,
-    7,
-    279,
-    269,
-    240,
-    157,
-    41,
-    41,
-    16,
-    95,
-    18,
+    300, # A
+    95,  # B
+    200, # C
+    136, # D
+    400, # E
+    150, # F
+    120, # G
+    180, # H
+    334, # I
+    1,   # J (Drastic Reduction)
+    2,   # K (Drastic Reduction)
+    247, # L
+    180, # M
+    225, # N
+    268, # O
+    160, # P
+    1,   # Q (Drastic Reduction)
+    279, # R
+    269, # S
+    240, # T
+    157, # U
+    20,  # V (Reduced)
+    20,  # W (Reduced)
+    1,   # X (Drastic Reduction)
+    95,  # Y
+    1,   # Z (Drastic Reduction)
 ]
 
 # Easy weights (Sum = 10000) - CUSTOMIZED: Peak Density
 LETTER_FREQ_EASY = [
-    1050,
-    230,
-    360,
-    410,
-    1400,
-    150,
-    300,
-    240,
-    750,
-    20,
-    140,
-    560,
-    280,
-    580,
-    610,
-    290,
-    20,
-    730,
-    940,
-    570,
-    600,
-    100,
-    120,
-    30,
-    180,
-    40,
-]  # A=1050, E=1400, U=600
+    1050, # A
+    230,  # B
+    650,  # C (Boosted per user request)
+    410,  # D
+    1400, # E
+    450,  # F (Boosted per user request)
+    300,  # G
+    550,  # H (Boosted per user request)
+    750,  # I
+    1,    # J (Hardened)
+    2,    # K (Hardened)
+    560,  # L
+    580,  # M (Boosted per user request)
+    580,  # N
+    610,  # O
+    590,  # P (Boosted per user request)
+    1,    # Q (Hardened)
+    730,  # R
+    940,  # S
+    570,  # T
+    600,  # U
+    50,   # V
+    60,   # W
+    2,    # X (Hardened)
+    180,  # Y
+    1,    # Z (Hardened)
+]
 
 LETTER_FREQ_SUPER_DENSITY = [
     1200, # A
     150,  # B
-    250,  # C
+    350,  # C
     300,  # D
     1600, # E
-    100,  # F
+    250,  # F
     150,  # G
-    200,  # H
+    300,  # H
     1100, # I
-    10,   # J
-    50,   # K
+    1,    # J (Near Zero)
+    2,    # K (Near Zero)
     500,  # L
-    200,  # M
+    350,  # M
     600,  # N
     1000, # O
-    150,  # P
-    5,    # Q
+    250,  # P
+    1,    # Q (Near Zero)
     600,  # R
     800,  # S
     800,  # T
     400,  # U
-    30,   # V
-    40,   # W
-    10,   # X
+    10,   # V (Reduced)
+    15,   # W (Reduced)
+    1,    # X (Near Zero)
     100,  # Y
-    5,    # Z
+    1,    # Z (Near Zero)
 ]
 
 VOWELS = "AEIOU"
@@ -109,30 +109,30 @@ RARE_SET = "ZXQJKVWYPFBHCMAU" + "ETAOINSRHDLU" + "AEIOUAEIOU"  # Blend with comm
 LETTER_FREQ_SPARSE = [
     180,  # A (Increased)
     120,  # B
-    260,  # C (Increased)
+    360,  # C (Boosted per user request)
     110,  # D
     140,  # E
-    220,  # F (Increased)
+    320,  # F (Boosted per user request)
     120,  # G
-    220,  # H (Increased)
+    320,  # H (Boosted per user request)
     140,  # I (Increased)
-    5,    # J (Drastically Decreased)
+    5,    # J (Hardened)
     40,   # K (Decreased)
     140,  # L
-    240,  # M (Increased)
+    340,  # M (Boosted per user request)
     110,  # N
     140,  # O (Increased)
-    220,  # P (Increased)
-    2,    # Q (Drastically Decreased)
-    100,  # R
-    100,  # S
-    90,   # T
-    50,   # U
-    220,  # V (Increased)
-    210,  # W (Increased)
-    5,    # X (Drastically Decreased)
-    110,  # Y
-    5     # Z (Drastically Decreased)
+    320,  # P (Boosted per user request)
+    1,    # Q (Hardened)
+    730,  # R
+    940,  # S
+    570,  # T
+    600,  # U
+    20,   # V (Reduced)
+    30,   # W (Reduced)
+    2,    # X (Hardened)
+    180,  # Y
+    1,    # Z (Hardened)
 ]
 
 class BoardGenerator:
@@ -274,6 +274,61 @@ class BoardGenerator:
         # Check this in server.log to see the exact decision path.
         print(f"[BoardGen-Diff] FINAL RESULT: {res} | rat={rat:.4f} (Raw: {ratio}) | Grid: {r}x{c} ({total_tiles} tiles) | Large: {is_large}")
         return res
+
+    def _sanitize_rare_letters(self, board, depth=1, protected_positions=None):
+        """
+        USER MANDATE: Ironclad enforcement of rare letter distribution.
+        1. Max 1 of each super-rare (Q, Z, J, X, K).
+        2. Max 3 TOTAL super-rare letters per board (New Hardening).
+        """
+        rare_letters = {'Q', 'Z', 'J', 'X', 'K'}
+        found_counts = {rl: 0 for rl in rare_letters}
+        total_rares_found = 0
+        
+        rows = len(board) if depth == 1 else len(board[0])
+        cols = len(board[0]) if depth == 1 else len(board[0][0])
+        
+        # Protected set for bonus word
+        protected = set(protected_positions) if protected_positions else set()
+        
+        sanitized_count = 0
+        for f in range(depth):
+            for r in range(rows):
+                for c in range(cols):
+                    cell = str(board[f][r][c] if depth > 1 else board[r][c])
+                    
+                    # Check for ANY rare letter in the cell (handles "QU" or "Q")
+                    replaced_in_this_cell = False
+                    for rl in rare_letters:
+                        if rl in cell:
+                            # Is this letter redundant or exceeding total cap?
+                            is_redundant = (found_counts[rl] >= 1)
+                            is_over_total_cap = (total_rares_found >= 3)
+                            
+                            if is_redundant or is_over_total_cap:
+                                if (f, r, c) in protected or (r, c) in protected:
+                                    # Protected bonus word letters are ALWAYS kept
+                                    found_counts[rl] += 1
+                                    total_rares_found += 1
+                                    continue
+                                
+                                # REPLACE IT with a pool of playable mid-tier consonants or vowels
+                                replacements = ["F", "H", "C", "P", "M", "E", "A", "I", "R", "S", "T"]
+                                new_char = random.choice(replacements)
+                                if depth > 1: board[f][r][c] = new_char
+                                else: board[r][c] = new_char
+                                print(f"[BoardGen] 🛡️ Sanitizer: Replaced redundant/excess '{rl}' at {(f,r,c) if depth > 1 else (r,c)} with '{new_char}'")
+                                sanitized_count += 1
+                                replaced_in_this_cell = True
+                                break # Exit rl loop for this cell
+                            else:
+                                found_counts[rl] += 1
+                                total_rares_found += 1
+                    
+                    if replaced_in_this_cell:
+                        continue
+        if sanitized_count > 0:
+            print(f"[BoardGen] 🛡️ Sanitizer replaced {sanitized_count} redundant rare letters.")
 
     def _is_creating_forbidden_sequence(self, board, char, r, c, f, target_seq="ING", depth=1):
         """Highly optimized local check to see if placing 'char' at (r, c, f) creates forbidden sequence."""
@@ -545,7 +600,7 @@ class BoardGenerator:
         return "FastReRoll"
 
     def generate_board(
-        self, dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length=3, difficulty="Medium", is_emergency=False
+        self, dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length=3, difficulty="Medium", is_emergency=False, timeout=None
     ):
         """
         Generate a valid board that meets word count requirements (100-300).
@@ -570,7 +625,8 @@ class BoardGenerator:
         # We give a generous timeout for the "Ironclad" guarantee.
         # IO Optimization timeout: 4x4 boards need more time for high-density targets (100+)
         # USER MANDATE: Do not distribute until criteria is met. We increase timeout and attempts.
-        timeout = 120.0 if (not is_emergency and rows*cols <= 16 and min_words >= 100) else (90.0 if not is_emergency else 8.0)
+        if timeout is None:
+            timeout = 120.0 if (not is_emergency and rows*cols <= 16 and min_words >= 100) else (60.0 if not is_emergency else 8.0)
         attempts = 0
         
         while time.time() - start_time < timeout:
@@ -578,7 +634,38 @@ class BoardGenerator:
             print(f"[BoardGen] COMPLIANCE ATTEMPT {attempts} (Target: {min_words}-{max_words}, MinLen: {min_word_length})")
             
             # --- STRATEGY SELECTION ---
-            # We use StepwiseOptimization for high density targets (100+)
+            if min_words >= 500:
+                print(f"[BoardGen] ⚡️ EXTREME DENSITY DETECTED (500+). Using Brute Force IO on every tile.")
+                board = self._create_normal_board(rows, cols, LETTER_FREQ_SUPER_DENSITY, depth=depth, difficulty=difficulty)
+                all_positions = [(f, r, c) for f in range(depth) for r in range(rows) for c in range(cols)]
+                random.shuffle(all_positions)
+                for f_p, r_p, c_p in all_positions:
+                    old_char = board[f_p][r_p][c_p] if depth > 1 else board[r_p][c_p]
+                    best_char, best_count = old_char, 0
+                    for char in "ETAOINSRHDLUCMFYWGPBVKXQJZ":
+                        # USER REQUEST: Max 1 rare letter and Max 3 total rares
+                        if self._is_rare_limited(board, char, depth):
+                            # Allow if it's the SAME letter we are already testing (no increase)
+                            if char != (board[f_p][r_p][c_p] if depth > 1 else board[r_p][c_p]):
+                                continue
+                                
+                        if depth > 1: board[f_p][r_p][c_p] = char
+                        else: board[r_p][c_p] = char
+                        res = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=12, store_paths=False)
+                        if len(res) > best_count:
+                            best_count = len(res)
+                            best_char = char
+                    if depth > 1: board[f_p][r_p][c_p] = best_char
+                    else: board[r_p][c_p] = best_char
+                # Final verify and break loop
+                all_words_dict = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True)
+                count = len(all_words_dict)
+                
+                # USER REQUEST: Final Sanitization even for extreme density
+                self._sanitize_rare_letters(board, depth)
+                break
+
+            # Standard Strategies
             strategy = "StepwiseOptimization" if num_tiles >= 24 else "HighDensity"
             
             # Weighted frequencies for density
@@ -609,6 +696,11 @@ class BoardGenerator:
                     # If embedding fails, we retry the whole board attempt
                     print(f"[BoardGen] ATTEMPT {attempts}: Failed to embed bonus word '{bonus_word}'. Retrying...")
                     continue
+                
+                # Removed early sanitize (moved to end of attempt to catch optimization/sweeps)
+            else:
+                pass
+
             all_excluded = set()
             if "mania" in board_format.lower():
                 mania_letter = board_format.split()[0].upper()
@@ -648,7 +740,11 @@ class BoardGenerator:
                 )
 
             # --- SOLVE FOR INITIAL COUNT ---
-            final_depth = 25 if rows * cols <= 16 else 14
+            # PERFORMANCE: For Large/3D grids in emergency mode, depth 12 is enough to be rapid (Zero Wait)
+            if is_emergency and rows * cols >= 35:
+                final_depth = 12
+            else:
+                final_depth = 25 if rows * cols <= 16 else 14
             all_words_dict = self._solve_board(
                 board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=30.0
             )
@@ -663,7 +759,11 @@ class BoardGenerator:
                 # OVER-DENSE: Remove letters to decrease count
                 board = self._perform_decimation_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, rescue_depth=final_depth, protected_path=embedded_path)
 
-            # Re-solve after sweeps for final confirmation
+            # --- FINAL RARE LETTER SANITIZATION (User Request: Max 1 Q, Z, J, X, K) ---
+            # We do this AFTER all optimizations and sweeps to ensure compliance and clean board.
+            self._sanitize_rare_letters(board, depth, protected_positions=embedded_path)
+
+            # Re-solve after sweeps and sanitization for final confirmation
             all_words_dict = self._solve_board(
                 board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=30.0
             )
@@ -757,6 +857,9 @@ class BoardGenerator:
                 final_solve = self._solve_board(board, dictionary, (0, 99999), display_min, max_depth=25, store_paths=True, timeout=30.0)
                 count = len(final_solve)
             
+            # --- FINAL SANITIZATION (User Request: Max 1 Rare Letter) ---
+            self._sanitize_rare_letters(board, depth)
+            
             if min_words <= count <= max_words:
                 print(f"[BoardGen] ✓ EMERGENCY COMPLIANCE SUCCESS: {count} words after {(_attempt + 1)} emergency tries.")
                 # Fallback metadata
@@ -773,11 +876,16 @@ class BoardGenerator:
                 if final_bonus and not bonus_cell:
                     bonus_cell = final_solve[final_bonus][0]
 
+                # FINAL AUDIT
+                self._sanitize_rare_letters(board, depth)
+
                 return (board, sorted(list(final_solve.keys())), bonus_cell, board_format, final_solve, ratio, final_bonus)
             else:
                 print(f"[BoardGen] ✗ EMERGENCY ATTEMPT {(_attempt + 1)} FAILED: {count} words is not in {min_words}-{max_words}")
         
-        return None # Should never happen
+        # Absolute Fallback if all else fails (Rare but possible in tight constraints)
+        self._sanitize_rare_letters(board, depth)
+        return (board, [], None, board_format, {}, 0.0, None)
 
     def _generate_io_base_board_procedure(
         self, dimensions, bonus_word, word_count_range, dictionary, min_word_length, difficulty
@@ -827,6 +935,11 @@ class BoardGenerator:
                 test_board = [row[:] for row in base_board]
                 
                 for char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                    # USER REQUEST: Max 1 rare letter and Max 3 total rares
+                    if self._is_rare_limited(final_board, char):
+                        if char != final_board[r][c]:
+                            continue
+                    
                     test_board[r][c] = char
                     # Solve using the surgical must_include solver
                     words_dict = self._solve_board(
@@ -881,6 +994,8 @@ class BoardGenerator:
                 bonus_cell = bonus_path[0] # Use start of word as anchor
         
         print(f"[BoardGen] Selected Natural Bonus Word: {final_bonus_word} (Anchor: {bonus_cell})")
+        # FINAL AUDIT (User Request: Max 1 Rare Letter)
+        self._sanitize_rare_letters(final_board)
 
         return (
             final_board,
@@ -1388,7 +1503,13 @@ class BoardGenerator:
                                 # For Easy sparse boards, use a more balanced pool to keep uniqueness low
                                 test_pool = list("ETAOINSRDL") + list("BCUMFVGPH")
                             else:
-                                test_pool = list("ZXQJKVWYPFBHC") + [random.choice("ETAOINSR") for _ in range(2)]
+                                # USER REQUEST: Limit rare letters. We only add them to the pool if not already on board.
+                                rare_pool = []
+                                for rl in "ZXQJK":
+                                    # Use ironclad rare limit check (Max 1 each, Max 3 total)
+                                    if not self._is_rare_limited(board, rl, depth):
+                                        rare_pool.append(rl)
+                                test_pool = rare_pool + list("VWYPFBHC") + [random.choice("ETAOINSR") for _ in range(2)]
                         else:
                             # Limit density search to relevant letters for HUGE speedup
                             test_pool = list("ETAOINSRHDLU") + [
@@ -1595,8 +1716,13 @@ class BoardGenerator:
             best_char, best_score = old_char, current_count
             
             # Try dead letters to see which breaks the most words
-            for char in dead_chars:
+            for char in ["Z", "X", "Q", "J", "K", "V", "W", "G", "F", "B", "P", "M", "H"]:
                 if char == old_char: continue
+                # USER REQUEST: Max 1 rare letter and Max 3 total rares
+                if self._is_rare_limited(board, char, depth):
+                    if char != (board[f_p][r_p][c_p] if depth > 1 else board[r_p][c_p]):
+                        continue
+                    
                 if depth > 1: board[f_p][r_p][c_p] = char
                 else: board[r_p][c_p] = char
                 
@@ -1731,6 +1857,12 @@ class BoardGenerator:
             test_alphabet = alphabet
             
             for char in test_alphabet:
+                # USER REQUEST: Max 1 rare letter and Max 3 total rares
+                if self._is_rare_limited(board, char, depth):
+                    # Allow if it's the SAME letter we are already testing (no increase)
+                    if char != (board[f_t][r_t][c_t] if depth > 1 else board[r_t][c_t]):
+                        continue
+
                 if depth > 1: board[f_t][r_t][c_t] = char
                 else: board[r_t][c_t] = char
                 
@@ -2627,6 +2759,38 @@ class BoardGenerator:
 
         if repaired > 0:
             print(f"[BoardGen] Checkerboard Safeguard: Forced {repaired} letters to maintain alternation pattern.")
+
+    def _count_char_on_board(self, board, char, depth=1):
+        """Count instances of a specific character (or substring like 'QU') on the board."""
+        count = 0
+        rows = len(board) if depth == 1 else len(board[0])
+        cols = len(board[0]) if depth == 1 else len(board[0][0])
+        for f in range(depth):
+            for r in range(rows):
+                for c in range(cols):
+                    cell = board[f][r][c] if depth > 1 else board[r][c]
+                    if char in str(cell):
+                        count += 1
+        return count
+
+    def _is_rare_limited(self, board, char, depth=1):
+        """Helper for optimization loops to respect global rare limits (Max 1 per, Max 3 total)."""
+        rare_letters = {"Q", "Z", "J", "X", "K"}
+        if char not in rare_letters:
+            return False
+            
+        # 1. Per-letter limit (Max 1)
+        if self._count_char_on_board(board, char, depth) >= 1:
+            return True
+            
+        # 2. Total Cap limit (Max 3 TOTAL across all rares)
+        total_rares = 0
+        for rl in rare_letters:
+            total_rares += self._count_char_on_board(board, rl, depth)
+        if total_rares >= 3:
+            return True
+            
+        return False
 
     def _is_vowel(self, char):
         """Helper to check if a letter (or tile string) is a vowel"""

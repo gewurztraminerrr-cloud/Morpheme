@@ -1,4 +1,4 @@
-print(f"[Main] SERVER STARTING - VERSION: 2026-04-10_20:41 (Reload Confirm)")
+print(f"[Main] SERVER STARTING - VERSION: 2026-05-05_00:42 (Rare Letter Lockdown)")
 
 from flask import Flask, request, jsonify, session, send_from_directory, g, redirect, url_for, render_template
 from functools import wraps
@@ -34,22 +34,26 @@ MODS_FILE = os.path.join(os.path.dirname(__file__), 'dictionaries', 'mods.txt')
 ADDED_WORDS_FILE = os.path.join(os.path.dirname(__file__), 'dictionaries', 'added_words.txt')
 
 
+_MODS_CACHE = None
+_MODS_CACHE_TIME = 0
+
 def get_moderators():
-    print(f"[Mods] Reading mods from: {MODS_FILE}")
-    if not os.path.exists(MODS_FILE):
-        print(f"[Mods] MODS_FILE does not exist at {MODS_FILE}")
-        return set()
-    try:
-        if not os.path.exists(MODS_FILE):
-            return {'jeffbabiak'}
-        with open(MODS_FILE, 'r') as f:
-            lines = [line.strip().lower() for line in f if line.strip()]
-            mods = set(lines)
-            mods.add('jeffbabiak') # Always ensure jeffbabiak is mod
-            return mods
-    except Exception as e:
-        print(f"[Mods] Error reading {MODS_FILE}: {e}")
-        return {'jeffbabiak'}
+    global _MODS_CACHE, _MODS_CACHE_TIME
+    if _MODS_CACHE is not None and time.time() - _MODS_CACHE_TIME < 60:
+        return _MODS_CACHE
+
+    mods = {'jeffbabiak', 'system'}
+    if os.path.exists(MODS_FILE):
+        try:
+            with open(MODS_FILE, 'r') as f:
+                lines = [line.strip().lower() for line in f if line.strip()]
+                mods.update(lines)
+        except Exception as e:
+            print(f"[Mods] Error reading {MODS_FILE}: {e}")
+    
+    _MODS_CACHE = mods
+    _MODS_CACHE_TIME = time.time()
+    return mods
 
 
 def save_moderator(username):
@@ -146,6 +150,13 @@ def load_user():
         g.user = User(session['user_id'], session['username'])
     else:
         g.user = None
+
+@app.before_request
+def check_mod_status():
+    if 'username' in session:
+        m_status = is_mod(session['username'])
+        if session.get('is_mod') != m_status:
+            session['is_mod'] = m_status
 
 # Auth Helpers
 
@@ -2044,9 +2055,10 @@ def create_room():
     # is_long_running = (int(time_limit) >= 600) # User Request: even 45s rooms should be stable hubs
     
     if is_public:
-        # Use deterministic ID: pub_[game]_[dims]_[time]
-        generated_id = f"pub_{game_type}_{board_dimensions}_{time_limit}".replace(' ', '_').lower()
-        print(f"[app.py] Using stable ID for public room: {generated_id}")
+        # Use deterministic ID: pub_v2_[game]_[dims]_[time]
+        # v2: Forced reset for 6x8 compliance and rare letter lockdown.
+        generated_id = f"pub_v2_{game_type}_{board_dimensions}_{time_limit}".replace(' ', '_').lower()
+        print(f"[app.py] Using stable v2 ID for public room: {generated_id}")
     else:
         generated_id = str(uuid.uuid4())
         
@@ -2353,11 +2365,10 @@ def get_room_state(room_id):
                 print(f"[API] Room {room_id}: TR={room.time_remaining} - STARTING board search (synchronous)")
                 room_manager.start_board_search(room_id)
             elif milestone == 'start':
-                # ATOMIC GUARD: Only launch ONE transition thread
+                # ATOMIC GUARD: Only launch ONE transition
                 if not getattr(room, 'starting_round', False):
-                    print(f"[Milestone] 0s remaining - Starting next round for {room_id}")
-                    import threading
-                    threading.Thread(target=room_manager.start_next_round, args=(room_id,), daemon=True).start()
+                    print(f"[Milestone] 0s remaining - Starting next round for {room_id} (Synchronous API Trigger)")
+                    room_manager.start_next_round(room_id)
 
             # 2. Collect State Under Lock (Atomic Snapshot)
             is_revealed = room.spinner_params_revealed

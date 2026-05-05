@@ -2346,10 +2346,7 @@ function updateLocalTimer() {
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
         if (currentState === 'intermission') {
             console.log('[play.js] Intermission local timer reached 0:00 - Triggering immediate server poll for next round.');
-            // Small delay (200ms) to allow the server's background heartbeat (0.5s) to finalize the transition
-            setTimeout(() => {
-                updateGameState();
-            }, 200);
+            updateGameState();
         }
     }
 
@@ -2381,6 +2378,7 @@ function updateSpecialMatchTimer(seconds) {
 }
 
 function renderBoard(board, grayed = false, is3D = false, state = null) {
+    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
     const boardEl = document.getElementById('game-board');
     if (!boardEl || !board) return;
 

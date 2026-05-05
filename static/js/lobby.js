@@ -39,6 +39,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const boardDimensions = accBtn.dataset.board;
 
             console.log('Accumulative button clicked!', { gameType, timeLimit, boardDimensions });
+            
+            // UI FEEDBACK: Show immediate loading state
+            if (window.showLoadingOverlay) window.showLoadingOverlay('Creating Room...');
+            accBtn.style.opacity = '0.5';
+            accBtn.style.pointerEvents = 'none';
 
             // CLEAR SPECIAL MODES: We are entering a normal room
             localStorage.removeItem('tournament_play_active');
@@ -46,35 +51,66 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 let data = null;
-
                 // For ALL Accumulative rooms, check if one already exists and JOIN it
                 // This ensures all users share the same board/timer (Multiplayer)
-                if (true) {
-                    try {
-                        const listResp = await fetch(`/api/rooms?game_type=${gameType}&board_dimensions=${boardDimensions}&time_limit=${timeLimit}`);
-                        const listData = await listResp.json();
-                        if (listData.rooms && listData.rooms.length > 0) {
-                            // Join the first available room
-                            const existingId = listData.rooms[0].room_id;
-                            console.log('Found existing Accumulative room, joining:', existingId);
-                            const joinResp = await fetch(`/api/room/${existingId}/join`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({})
-                            });
-                            const joinData = await joinResp.json();
-                            if (joinData.success) {
-                                data = joinData;
-                                data.room_id = existingId;
-                            }
-                        }
-                    } catch (err) { console.error('Error checking for existing room:', err); }
+                const listResp = await fetch(`/api/rooms?game_type=${gameType}&board_dimensions=${boardDimensions}&time_limit=${timeLimit}`);
+                if (!listResp.ok) {
+                    const errText = await listResp.text();
+                    throw new Error(`Server returned ${listResp.status}: ${errText}`);
                 }
+                const listData = await listResp.json();
 
-                // If not joined (or not 24h), Create new
-                if (!data) {
-                    console.log('Creating new room...');
-                    const response = await fetch('/api/room/create', {
+                if (listData.rooms && listData.rooms.length > 0) {
+                    const existingId = listData.rooms[0].room_id;
+                    console.log('Found existing Accumulative room, joining:', existingId);
+                    const joinResp = await fetch(`/api/room/${existingId}/join`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ as_spectator: false })
+                    });
+
+                    if (!joinResp.ok) {
+                        const joinErr = await joinResp.text();
+                        throw new Error(`Join failed (${joinResp.status}): ${joinErr}`);
+                    }
+
+                    const joinData = await joinResp.json();
+                    if (joinData.success) {
+                        window.currentRoomId = existingId;
+                        localStorage.setItem('last_joined_room', existingId);
+                        
+                        // Enable Play button
+                        const playBtn = document.getElementById('play-btn');
+                        if (playBtn) {
+                            playBtn.disabled = false;
+                            playBtn.title = "";
+                        }
+                        if (window.updateManualToolState) window.updateManualToolState();
+                        if (joinData.joined_mid_round) {
+                            alert("You recently accessed the Manual tool. To maintain fair play, your score for this round will not count.");
+                        }
+
+                        showPage('page-play');
+
+                        setTimeout(() => {
+                            const input = document.getElementById('word-input');
+                            if (input) {
+                                input.disabled = false;
+                                input.focus();
+                            }
+                        }, 100);
+
+                        if (window.startGamePolling) window.startGamePolling();
+                    } else {
+                        alert(joinData.error || 'Failed to join existing room');
+                        startLobbyPolling();
+                        accBtn.style.pointerEvents = 'auto';
+                        accBtn.style.opacity = '1';
+                        return;
+                    }
+                } else {
+                    // No existing room, create one
+                    const createResp = await fetch('/api/room/create', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -83,60 +119,49 @@ document.addEventListener('DOMContentLoaded', () => {
                             board_dimensions: boardDimensions
                         })
                     });
-                    data = await response.json();
-                }
 
-                console.log('Room action response:', data);
-
-                if (data.success) {
-                    console.log('SUCCESS! Room ID:', data.room_id);
-                    // Store room ID globally for play.js
-                    window.currentRoomId = data.room_id;
-                    window.isSpectatorMode = false; // Creator is always player
-
-                    // Enable Play button
-                    const playBtn = document.getElementById('play-btn');
-                    if (playBtn) {
-                        playBtn.disabled = false;
-                        playBtn.title = "";
-                    }
-                    if (window.updateManualToolState) window.updateManualToolState();
-
-                    if (data.joined_mid_round) {
-                        alert("You recently accessed the Manual tool. To maintain fair play, your score for this round will not count.");
+                    if (!createResp.ok) {
+                        const createErr = await createResp.text();
+                        throw new Error(`Creation failed (${createResp.status}): ${createErr}`);
                     }
 
-                    // Navigate to Play
-                    console.log('Navigating to Play page...');
-                    showPage('page-play');
+                    const data = await createResp.json();
+                    if (data.success) {
+                        window.currentRoomId = data.room_id;
+                        localStorage.setItem('last_joined_room', data.room_id);
+                        window.isSpectatorMode = false;
 
-                    // FORCE FOCUS: Focus input immediately after navigation (User Click Context)
-                    // This is the most reliable way to handle "Join Game" focus
-                    setTimeout(() => {
-                        const input = document.getElementById('word-input');
-                        if (input) {
-                            input.disabled = false; // Ensure enabled
-                            input.focus();
-                            console.log('Lobby: Focused word-input');
+                        const playBtn = document.getElementById('play-btn');
+                        if (playBtn) {
+                            playBtn.disabled = false;
+                            playBtn.title = "";
                         }
-                    }, 100);
+                        if (window.updateManualToolState) window.updateManualToolState();
+                        showPage('page-play');
 
-                    // Start polling if play.js is loaded
-                    if (window.startGamePolling) {
-                        console.log('Starting game polling...');
-                        window.startGamePolling();
+                        setTimeout(() => {
+                            const input = document.getElementById('word-input');
+                            if (input) {
+                                input.disabled = false;
+                                input.focus();
+                            }
+                        }, 100);
+
+                        if (window.startGamePolling) window.startGamePolling();
                     } else {
-                        console.error('window.startGamePolling not found!');
+                        alert('Failed to create room: ' + (data.error || 'Unknown error'));
+                        accBtn.style.pointerEvents = 'auto';
+                        accBtn.style.opacity = '1';
                     }
-                } else {
-                    console.error('Room creation failed:', data.error);
-                    alert('Failed to create room: ' + (data.error || 'Unknown error'));
                 }
             } catch (error) {
-                console.error('Error creating room:', error);
+                console.error('Error in room discovery/join:', error);
                 alert('Network error: ' + error.message);
+                startLobbyPolling();
+                accBtn.style.pointerEvents = 'auto';
+                accBtn.style.opacity = '1';
             }
-            return; // Handled
+            return;
         }
 
         // Handle FCFS and Split buttons - update Active Rooms panel
@@ -173,9 +198,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Handle "Create Room" button click (inside the panel)
-        // Handle "Create Room" button click (inside the panel)
         const createBtn = target.closest('.confirm-create-room-btn');
         if (createBtn) {
+            if (window.showLoadingOverlay) window.showLoadingOverlay('Creating Room...');
             console.log('Create Room clicked. Config:', currentLobbyConfig);
 
             if (!currentLobbyConfig) {
@@ -223,12 +248,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         max_rating: maxRating
                     })
                 });
+                
+                if (!createResp.ok) {
+                    const createErr = await createResp.text();
+                    throw new Error(`Creation failed (${createResp.status}): ${createErr}`);
+                }
+
                 const data = await createResp.json();
 
                 if (data.success) {
                     console.log('Room Created, Joining:', data.room_id);
                     // Join and go to play page
                     window.currentRoomId = data.room_id;
+                    localStorage.setItem('last_joined_room', data.room_id);
                     window.isSpectatorMode = false; // Creator is always player
                     stopLobbyPolling();
                     const playBtn = document.getElementById('play-btn');
@@ -254,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (e) {
                 console.error('Creation error', e);
-                alert('Error creating room');
+                alert('Error creating room: ' + e.message);
             }
         }
 
@@ -262,6 +294,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Handle Join Room logic (dynamic button inside rooms-list)
         const joinBtn = target.closest('.join-room-btn');
         if (joinBtn) {
+            if (window.showLoadingOverlay) window.showLoadingOverlay('Joining Room...');
+            joinBtn.style.opacity = '0.5';
+            joinBtn.style.pointerEvents = 'none';
             const roomId = joinBtn.dataset.room;
             // SPECIAL CASE: Return to current room
             if (window.currentRoomId && roomId === window.currentRoomId) {
@@ -294,10 +329,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ as_spectator: isSpectator })
                 });
+                
+                if (!response.ok) {
+                    const err = await response.text();
+                    throw new Error(`Join failed (${response.status}): ${err}`);
+                }
+                
                 const data = await response.json();
 
                 if (data.success) {
                     window.currentRoomId = roomId;
+                    localStorage.setItem('last_joined_room', roomId);
                     if (data.role === 'spectator') {
                         window.isSpectatorMode = true;
                     } else {
@@ -332,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (error) {
                 console.error('Error joining room:', error);
-                alert('Network error joining room');
+                alert('Network error joining room: ' + error.message);
                 startLobbyPolling();
             }
             return; // Handled
@@ -386,6 +428,7 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
         // Fetch active rooms for this configuration
         const url = `/api/rooms?game_type=${gameType}&board_dimensions=${boardDimensions}&time_limit=${timeLimit}`;
         const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
         const data = await response.json();
 
         let rooms = (data && data.rooms) ? data.rooms : [];
@@ -526,7 +569,9 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                 `;
             }).join('');
 
-            roomsContainer.innerHTML = html;
+            if (roomsContainer.innerHTML !== html) {
+                roomsContainer.innerHTML = html;
+            }
         }
 
     } catch (error) {
@@ -652,6 +697,8 @@ if (lobbyPage) {
         if (isOnLobby()) {
             // Ensure we resume polling if coming back to lobby
             // If we navigate in app, 'isOnLobby' changes.
+            if (window.resetLobbyButtons) window.resetLobbyButtons();
+            
             if (currentLobbyConfig && !lobbyPollInterval) {
                 startLobbyPolling();
             }
@@ -678,5 +725,19 @@ function isOnLobby() {
     return lobbyPage && lobbyPage.classList.contains('active');
 }
 
-console.log('lobby.js fully loaded - version with polling');
+function resetLobbyButtons() {
+    console.log('Resetting lobby buttons...');
+    const accButtons = document.querySelectorAll('.acc-btn');
+    accButtons.forEach(btn => {
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+    });
+    const joinButtons = document.querySelectorAll('.join-room-btn');
+    joinButtons.forEach(btn => {
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+    });
+}
+window.resetLobbyButtons = resetLobbyButtons;
 
+console.log('lobby.js fully loaded - version with polling');

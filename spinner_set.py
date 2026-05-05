@@ -71,10 +71,12 @@ class SpinnerSet:
                 
                 if not previous_params:
                     # USER REQUEST: Specific initial state for the first round (Density Focused)
+                    # We must still respect dimension-based minimum lengths (especially for 6x8/3x3x3)
+                    initial_min = SpinnerSet._spin_min_word_length(board_dimensions)
                     return {
-                        'min_word_length': 3,
-                        'difficulty': 'Easy',
-                        'word_count_range': random.choice(['100-200', '200-300']),
+                        'min_word_length': initial_min,
+                        'difficulty': 'Easy' if initial_min < 5 else 'Hard',
+                        'word_count_range': random.choice(['100-200', '200-300', '300-400']),
                         'dictionary': 'NWL',
                         'board_format': 'Normal',
                         'generated_at': time.time()
@@ -110,7 +112,7 @@ class SpinnerSet:
             return {
                 'difficulty': random.choice(['Easy', 'Medium', 'Hard']),
                 'dictionary': random.choice(['NWL', 'CSW']),
-                'word_count_range': random.choice(['100-200', '200-300']),
+                'word_count_range': random.choice(['100-200', '200-300', '300-400']),
                 'board_format': 'Normal',
                 'min_word_length': 3,
                 'generated_at': time.time()
@@ -120,7 +122,7 @@ class SpinnerSet:
     @staticmethod
     def _spin_min_word_length(board_dimensions):
         """Based on board dimensions with specified percentages"""
-        dims = str(board_dimensions).lower()
+        dims = str(board_dimensions).lower().replace(" ", "")
         if '4x4' in dims:
             return random.choices([3, 4, 5], weights=[25, 50, 25])[0]
         elif '4x6' in dims:
@@ -128,8 +130,8 @@ class SpinnerSet:
         elif '5x7' in dims:
             return random.choices([5, 6, 7], weights=[25, 50, 25])[0]
         elif '6x8' in dims:
-            # User Request: Never exceed 7-letter minimum for 6x8 playability
-            return random.choices([6, 7], weights=[40, 60])[0]
+            # User Request: 25% 6LM, 50% 7LM, 25% 8LM for 6x8
+            return random.choices([6, 7, 8], weights=[25, 50, 25])[0]
         elif '3x3x3' in dims:
             # User Request: 25% 6LM, 50% 7LM, 25% 8LM for 3x3x3
             return random.choices([6, 7, 8], weights=[25, 50, 25])[0]
@@ -156,8 +158,10 @@ class SpinnerSet:
     
     @staticmethod
     def _spin_word_count(dictionary, min_word_length, difficulty, board_dimensions):
-        # USER REQUEST: 50% 100-200, 50% 200-300
-        return random.choices(['100-200', '200-300'], weights=[50, 50])[0]
+        # USER REQUEST: 1% 500+, 33% 100-200, 33% 200-300, 33% 300-400
+        choices = ['100-200', '200-300', '300-400', '500+']
+        weights = [33, 33, 33, 1]
+        return random.choices(choices, weights=weights)[0]
     
     @staticmethod
     def _spin_dictionary():
