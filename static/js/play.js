@@ -2212,7 +2212,7 @@ function updateParameters(state) {
             else if (diffLabel === 'Expert' || diffLabel === 'Difficult') diffLabel = 'Hard';
             else if (diffLabel === 'Beginner') diffLabel = 'Easy';
             
-            const uniquePct = (newUniq > 0 && !diffLabel.includes('(')) ? ` (${(newUniq * 100).toFixed(1)}%)` : "";
+            const uniquePct = (newUniq > 0 && !diffLabel.includes('(')) ? ` (${Math.round(newUniq * 100)}%)` : "";
             window._displayedParams.diff = diffLabel + uniquePct;
             
             if (typeof updateColorBarHighlight === 'function') {

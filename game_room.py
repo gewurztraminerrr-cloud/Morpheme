@@ -2027,7 +2027,8 @@ class RoomManager:
             r_num = int(dims[1] if len(dims) == 3 else dims[0])
             c_num = int(dims[2] if len(dims) == 3 else dims[1])
             achieved_diff = self.board_generator.get_difficulty_label(u_ratio, r_num, c_num, room.spinner_params.get('dictionary', 'NWL'), depth=d_num)
-            room.current_difficulty = room.spinner_params.get('difficulty', achieved_diff)
+            room.current_difficulty = achieved_diff
+            room.spinner_params['difficulty'] = achieved_diff
             room.current_uniqueness = u_ratio
             room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
             room.current_word_count_range = room.spinner_params.get('word_count_range', 'Varying...')
@@ -2316,7 +2317,8 @@ class RoomManager:
             # Fallback to spinner_params ONLY if it's the very first round (current_round == 1)
             params = getattr(room, 'next_spinner_params', None)
             if not params and room.current_round == 1:
-                params = getattr(room, 'spinner_params', {})
+                room.next_spinner_params = dict(getattr(room, 'spinner_params', {}))
+                params = room.next_spinner_params
             
             if not params:
                 # If still no params, we must wait or fail to avoid bleeding from previous round
@@ -2582,7 +2584,9 @@ class RoomManager:
                                 room.spinner_params['bonus_word_length'] = len(final_bonus_word)
                         if getattr(room, 'next_spinner_params', None):
                             room.next_spinner_params['uniqueness'] = u_ratio
-                        room.next_round_difficulty = room.next_spinner_params.get('difficulty', achieved_diff) if getattr(room, 'next_spinner_params', None) else achieved_diff
+                            room.next_spinner_params['difficulty'] = achieved_diff
+                            room.next_round_spinner_params = dict(room.next_spinner_params)
+                        room.next_round_difficulty = achieved_diff
                         
                         # Authoritative recount after truncation (if any)
                         min_len = room.next_spinner_params.get('min_word_length', 3) if getattr(room, 'next_spinner_params', None) else 3
@@ -2757,6 +2761,27 @@ class RoomManager:
                     room.next_round_bonus = e_bonus_word or b_word # Use the actually embedded word
                     room.next_round_uniqueness = e_ratio
                     
+                    try:
+                        e_dims = room.board_dimensions.split('x')
+                        e_rows = int(e_dims[0])
+                        e_cols = int(e_dims[1])
+                        e_depth = int(e_dims[2]) if len(e_dims) == 3 else 1
+                    except Exception:
+                        e_rows, e_cols, e_depth = 4, 4, 1
+                        
+                    room.next_round_difficulty = self.board_generator.get_difficulty_label(
+                        ratio=e_ratio,
+                        rows=e_rows,
+                        cols=e_cols,
+                        dictionary=params.get('dictionary', 'NWL'),
+                        depth=e_depth
+                    )
+                    
+                    if getattr(room, 'next_spinner_params', None):
+                        room.next_spinner_params['difficulty'] = room.next_round_difficulty
+                        room.next_spinner_params['uniqueness'] = e_ratio
+                        room.next_round_spinner_params = dict(room.next_spinner_params)
+                    
                     # --- INSTANT PROMOTION ---
                     # 1. Fast Metrics (Zero Latency)
                     is_valued_e = ('valued' in str(e_fmt).lower())
@@ -2905,7 +2930,9 @@ class RoomManager:
                 # Update spinner_params to match the actual board being used
                 room.spinner_params = dict(active_params) if active_params else {}
 
-                room.current_uniqueness = getattr(room, 'next_round_uniqueness', room.current_uniqueness)
+                next_uniq = getattr(room, 'next_round_uniqueness', None)
+                if next_uniq is not None:
+                    room.current_uniqueness = next_uniq
                 try:
                     room.current_min_length = int(raw_min)
                 except:
@@ -3049,7 +3076,9 @@ class RoomManager:
                 
                 # FINAL ACCURACY SYNC: Ensure the header labels exactly match the results
                 room.total_words_count = sum(1 for w in room.all_words if len(w) >= room.current_min_length)
-                room.current_difficulty = getattr(room, 'next_round_difficulty', room.current_difficulty)
+                next_diff = getattr(room, 'next_round_difficulty', None)
+                if next_diff is not None:
+                    room.current_difficulty = next_diff
 
                 room.cell_density = getattr(room, 'next_round_cell_density', [])
                 room.initial_cell_density = getattr(room, 'next_round_initial_cell_density', [])
@@ -3102,6 +3131,9 @@ class RoomManager:
                 room.spinner_params_loading = False
                 room.next_spinner_params = None
                 room.next_round_spinner_params = None
+                room.next_round_difficulty = None
+                room.next_round_uniqueness = None
+                room.board_search_started_actual = False
                 
                 # Reset Round counters
                 room.current_round += 1
@@ -3256,6 +3288,7 @@ class RoomManager:
         """Save the results of the JUST COMPLETED round to the database"""
         # Determine target round number (use snapshot if provided, otherwise room's current)
         target_round = round_num if round_num is not None else room.current_round
+        debug_log = f"[SAVE-ROUND-{room.room_id}-R{target_round}]"
 
         if room.is_solo:
             print(f"[RoomManager] SKIPPING history save for SOLO room {room.room_id}")
