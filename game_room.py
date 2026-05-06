@@ -16,6 +16,10 @@ import fcntl
 # Absolute path ensures consistency across Gunicorn/Flask environments
 STATS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'word_stats.json')
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
+RATING_AUDIT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rating_audit.log')
+DEBUG_FLOW_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'debug_flow.log')
+WORD_DEBUG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'word_debug.log')
+WORD_TALLY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'word_tally.log')
 # STATS_LOCK (Memory-based) is insufficient for multi-worker environments. 
 # We use file-based locking (fcntl) inside the I/O methods instead.
 from spinner_set import SpinnerSet
@@ -370,7 +374,7 @@ class GameRoom:
         # Track removal in audit logs
         if leaving_player:
             try:
-                with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
+                with open(RATING_AUDIT_PATH, 'a') as log:
                     log.write(f"[{time.time()}] Removal: User {username}, Score: {leaving_player.score}, Words: {len(leaving_player.submitted_words)}, Room: {self.room_id}, Round: {self.current_round}, State: {self.state}\n")
             except: pass
             
@@ -612,7 +616,7 @@ class GameRoom:
         if effective_len < min_len_req:
             return False, f"{word.upper()} is too short (Min: {min_len_req})", 0, None
 
-        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/word_debug.log', 'a') as debug:
+        with open(WORD_DEBUG_PATH, 'a') as debug:
             debug.write(f"[{time.time()}] Word: {word} | In Board: {is_in} | Min: {min_len_req} | Len: {len(word)} | Room: {self.room_id}\n")
 
         # Direct match check
@@ -834,7 +838,7 @@ class GameRoom:
                 fmt_low = str(self.spinner_params.get('board_format', '')).lower()
             
         # LOGGING START
-        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+        with open(DEBUG_FLOW_PATH, 'a') as f:
             f.write(f"[Density-Diag] Room: {self.room_id} | Format: {fmt_low} | Staging: {is_staging} | Board: {len(board) if board else 0} | Paths: {len(all_words_paths) if all_words_paths else 0} at {time.time()}\n")
 
         if 'density' not in fmt_low or not board:
@@ -1184,7 +1188,7 @@ class GameRoom:
                                         if not hasattr(target, 'bonus_notices'): target.bonus_notices = []
                                         target.bonus_notices.append(f"Received +{bonus} from round abandonment pool")
 
-                                        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
+                                        with open(RATING_AUDIT_PATH, 'a') as log:
                                             log.write(f"[{time.time()}] Round-End Bounty Payout: +{bonus} to {target.username} (Room: {self.room_id}, Pool: {self.abandonment_bounty})\n")
                                     
                                     # Reset pool AFTER successful distribution
@@ -2017,7 +2021,7 @@ class RoomManager:
                 room.spinner_params['bonus_word_length'] = len(final_bonus_word)
 
             print(f"[RoomManager] ROUND {room.current_round} START for {room_id}. Words found: {len(all_words)}")
-            with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+            with open(DEBUG_FLOW_PATH, 'a') as f:
                  f.write(f"[game_room.py] 24h START: {room_id} words={len(all_words)} dim={room.board_dimensions} at {time.time()}\n")
             
             room.current_round += 1
@@ -3137,6 +3141,11 @@ class RoomManager:
                 
                 # Reset Round counters
                 room.current_round += 1
+                
+                # FCFS: Clear shared found lists for the upcoming round
+                room.fcfs_found_words = []
+                room._fcfs_found_words_set = set()
+                
                 # USER REQUEST: Reset 24h rooms to [0] players at midnight transition
                 if room.time_limit >= 7200:
                     room.players = []
@@ -3292,7 +3301,7 @@ class RoomManager:
 
         if room.is_solo:
             print(f"[RoomManager] SKIPPING history save for SOLO room {room.room_id}")
-            with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+            with open(DEBUG_FLOW_PATH, 'a') as f:
                 f.write(f"{debug_log} - ABORT (Solo)\n")
             return
             
@@ -3302,13 +3311,13 @@ class RoomManager:
         # Guard against double saving (Exact match check)
         if getattr(room, 'last_saved_round', 0) == target_round:
             print(f"[RoomManager] History for {room.room_id} Round {target_round} already saved. Skipping.")
-            with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+            with open(DEBUG_FLOW_PATH, 'a') as f:
                 f.write(f"{debug_log} - ABORT (Already saved)\n")
             return
         
         try:
             conn = sqlite3.connect(DB_PATH, timeout=30)
-            with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+            with open(DEBUG_FLOW_PATH, 'a') as f:
                 f.write(f"{debug_log} - DB CONNECTED\n")
             
             # Use passed-in snapshots if provided (prevents stale data from being saved)
@@ -3350,7 +3359,7 @@ class RoomManager:
             
             if not participating_registered:
                 print(f"[RoomManager] SKIPPING history save for room {room.room_id} Round {target_round} - no participating registered users.")
-                with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+                with open(DEBUG_FLOW_PATH, 'a') as f:
                     p_details = [{'name': (p.username if hasattr(p, 'username') else p.get('username')), 'uid': (p.user_id if hasattr(p, 'user_id') else p.get('user_id')), 'score': (p.score if hasattr(p, 'score') else p.get('score'))} for p in room.players]
                     f.write(f"{debug_log} - ABORT (No registered players). Details: {p_details}\n")
                 conn.close()
@@ -3429,11 +3438,11 @@ class RoomManager:
             
             room.last_saved_round = target_round
             print(f"[RoomManager] SUCCESS: Saved round history for room {room.room_id} Round {target_round}")
-            with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+            with open(DEBUG_FLOW_PATH, 'a') as f:
                 f.write(f"{debug_log} - SUCCESS: Saved to DB\n")
         except Exception as e:
             print(f"[RoomManager] Error saving round history: {e}")
-            with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+            with open(DEBUG_FLOW_PATH, 'a') as f:
                 f.write(f"{debug_log} - FATAL ERROR: {e}\n")
 
     def log_word_tally(self, room, player_words):
@@ -3471,7 +3480,7 @@ class RoomManager:
                 'tally': dict(word_counts)
             }
             
-            log_path = '/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/word_tally.log'
+            log_path = WORD_TALLY_PATH
             with open(log_path, 'a') as f:
                 f.write(json.dumps(log_entry) + '\n')
                 
