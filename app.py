@@ -2852,6 +2852,35 @@ def get_definition():
     definition = DEFINITIONS_CACHE.get(word)
     pronunciation = PRONUNCIATIONS_CACHE.get(word)
     
+    # ONLINE FALLBACK: If definition is not found locally, try Free Dictionary API
+    if not definition:
+        try:
+            import urllib.request
+            import json
+            url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word.lower()}"
+            req = urllib.request.Request(
+                url, 
+                headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+            )
+            with urllib.request.urlopen(req, timeout=3.0) as response:
+                api_data = json.loads(response.read().decode('utf-8'))
+                if isinstance(api_data, list) and len(api_data) > 0:
+                    meanings = api_data[0].get('meanings', [])
+                    def_parts = []
+                    for m in meanings:
+                        part_of_speech = m.get('partOfSpeech', '')
+                        defs = m.get('definitions', [])
+                        if defs:
+                            first_def = defs[0].get('definition', '')
+                            if first_def:
+                                def_parts.append(f"({part_of_speech}) {first_def}")
+                    if def_parts:
+                        definition = "; ".join(def_parts)
+                        # Cache it to avoid repeated external API requests
+                        DEFINITIONS_CACHE[word] = definition
+        except Exception as e:
+            print(f"Online dictionary API fallback failed for '{word}': {e}")
+
     if definition or pronunciation:
         return jsonify({
             'word': word, 
