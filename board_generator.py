@@ -5,7 +5,10 @@ Generates boards with bonus word embedding and validation
 
 import random
 import time
+import os
 from word_validator import word_validator
+
+DEBUG_FLOW_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'debug_flow.log')
 
 # Letter frequency (A-Z)
 # Medium/Hard weights - CUSTOMIZED: Peak Connectivity for 7-10L words
@@ -148,12 +151,13 @@ class BoardGenerator:
         """Lazy-load and cache unique word sets for diff validation"""
         core_type = dictionary_type.upper()
         if core_type not in self.unique_sets:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
             if core_type.startswith("UNIQUE"):
-                path = f"/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/dictionaries/{core_type.lower()}.txt"
-                path_alt = f"/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/dictionaries/{core_type}.txt"
+                path = os.path.join(base_dir, 'dictionaries', f"{core_type.lower()}.txt")
+                path_alt = os.path.join(base_dir, 'dictionaries', f"{core_type}.txt")
             else:
-                path = f"/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/dictionaries/unique{core_type}.txt"
-                path_alt = f"/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/dictionaries/Unique{core_type}.txt"
+                path = os.path.join(base_dir, 'dictionaries', f"unique{core_type}.txt")
+                path_alt = os.path.join(base_dir, 'dictionaries', f"Unique{core_type}.txt")
 
             try:
                 with open(path, "r") as f:
@@ -2155,7 +2159,7 @@ class BoardGenerator:
 
         import time
 
-        with open("/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log", "a") as f:
+        with open(DEBUG_FLOW_PATH, "a") as f:
             f.write(f"[board_generator.py] _embed_bonus_word: Attempting to embed '{bonus_word}' at {time.time()}\n")
 
         for start_r, start_c in possible_starts:
@@ -2164,11 +2168,11 @@ class BoardGenerator:
                 # Embed the processed letters
                 for i, (r, c) in enumerate(path):
                     board[r][c] = processed_word[i]
-                with open("/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log", "a") as f:
+                with open(DEBUG_FLOW_PATH, "a") as f:
                     f.write(f"[board_generator.py] _embed_bonus_word: SUCCESS at {time.time()}\n")
                 return path
 
-        with open("/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log", "a") as f:
+        with open(DEBUG_FLOW_PATH, "a") as f:
             f.write(f"[board_generator.py] _embed_bonus_word: FAILED at {time.time()}\n")
         return None
 

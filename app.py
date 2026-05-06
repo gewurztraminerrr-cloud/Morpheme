@@ -40,6 +40,8 @@ ADDED_WORDS_FILE = os.path.join(os.path.dirname(__file__), 'dictionaries', 'adde
 STATS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'word_stats.json')
 TRACE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'stats_trace.log')
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
+RATING_AUDIT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rating_audit.log')
+DEBUG_FLOW_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'debug_flow.log')
 
 def _update_word_stats(word, action="add"):
     """
@@ -1504,7 +1506,7 @@ def update_profile():
 def get_public_profile(username):
     if 'user_id' in session:
         room_manager.update_presence(session['user_id'])
-    conn = sqlite3.connect('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/morpheme.db', timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     cursor = conn.execute('''
         SELECT id, username, rating, games_played, avatar_url, country_flag, 
                full_name, age, gender, location, quote, description, proof_url, wins,
@@ -1967,7 +1969,7 @@ def apply_leave_penalty(user_id, room):
 
     # 1. Broad Exemption: 24h Rooms (>= 2h time limit)
     if room.time_limit >= 7200:
-        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
+        with open(RATING_AUDIT_PATH, 'a') as log:
             log.write(f"[{time.time()}] Penalty SKIPPED for {player.username} in {room.room_id}: 24h room\n")
         return
 
@@ -1975,7 +1977,7 @@ def apply_leave_penalty(user_id, room):
     # If they have 0 score and 0 words, they are a passive leaver (Ghost).
     # If the room is in INTERMISSION, the round is over, so leaving is NOT abandonment.
     if getattr(room, 'state', '') == 'intermission':
-        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
+        with open(RATING_AUDIT_PATH, 'a') as log:
             log.write(f"[{time.time()}] Penalty SKIPPED for {player.username} in {room.room_id}: Intermission\n")
         return
 
@@ -1983,7 +1985,7 @@ def apply_leave_penalty(user_id, room):
     # We use a very strict check here to ensure NO ONE who joins late is penalized.
     is_late_joiner = getattr(player, 'joined_mid_round', False)
     if is_late_joiner:
-        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
+        with open(RATING_AUDIT_PATH, 'a') as log:
             log.write(f"[{time.time()}] Penalty SKIPPED for {player.username} in {room.room_id}: Joined mid-round (Flag check: {is_late_joiner})\n")
         return
 
@@ -1991,7 +1993,7 @@ def apply_leave_penalty(user_id, room):
     has_words = (len(player.submitted_words) > 0)
     
     if not (has_score or has_words):
-        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
+        with open(RATING_AUDIT_PATH, 'a') as log:
             log.write(f"[{time.time()}] Penalty SKIPPED for {player.username} in {room.room_id}: No activity (score={player.score}, words={len(player.submitted_words)})\n")
         return
 
@@ -2008,17 +2010,17 @@ def apply_leave_penalty(user_id, room):
     
     if not other_participants:
         num_humans = len([p for p in room.players if not p.is_ai])
-        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
+        with open(RATING_AUDIT_PATH, 'a') as log:
             log.write(f"[{time.time()}] Penalty SKIPPED: No other registered human STARTERS in {room.room_id}.\n")
         return
 
     # Diagnostic: Log EXACTLY who is causing the penalty to trigger
     others_names = ", ".join([f"{p.username}(Starter={not getattr(p, 'joined_mid_round', False)})" for p in other_participants])
-    with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
+    with open(RATING_AUDIT_PATH, 'a') as log:
         log.write(f"[{time.time()}] Penalty TRIGGERED by presence of: {others_names}\n")
 
     # 4. Apply the -16 Penalty to the leaver
-    with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
+    with open(RATING_AUDIT_PATH, 'a') as log:
         log.write(f"[{time.time()}] Penalty APPLYING to {player.username} in {room.room_id}: -16 points\n")
     
     # Update DB
@@ -2047,12 +2049,12 @@ def apply_leave_penalty(user_id, room):
         # USER MANDATE: Distribute at the end when results are shown.
         room.abandonment_bounty += 16
         
-        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
+        with open(RATING_AUDIT_PATH, 'a') as log:
             log.write(f"[{time.time()}] Bounty Collection: +16 added to {room.room_id} pool (Total: {room.abandonment_bounty})\n")
         
         conn.commit()
     except Exception as e:
-        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/rating_audit.log', 'a') as log:
+        with open(RATING_AUDIT_PATH, 'a') as log:
             log.write(f"[{time.time()}] Penalty ERROR for {player.username}: {e}\n")
     finally:
         conn.close()
@@ -2089,7 +2091,7 @@ def cleanup_user_rooms_entirely(user_id):
 
 @app.route('/api/room/create', methods=['POST'])
 def create_room():
-    with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+    with open(DEBUG_FLOW_PATH, 'a') as f:
         f.write(f"\n[app.py] create_room called at {time.time()}\n")
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
@@ -2723,7 +2725,7 @@ def submit_word(room_id):
             success, message, points, final_word = room.submit_word(user_id, word, path=path)
     except Exception as e:
         import traceback
-        with open('/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/debug_flow.log', 'a') as f:
+        with open(DEBUG_FLOW_PATH, 'a') as f:
             f.write(f"[Submit-Error] Room: {room_id} | Error: {e}\n{traceback.format_exc()}\n")
         return jsonify({'success': False, 'message': f'Server Error: {str(e)}'}), 500
     
@@ -4121,7 +4123,7 @@ def create_forum_post():
         return jsonify({'error': str(e)}), 500
     finally:
         conn.close()
-
+ 
 @app.route('/api/forum/comments', methods=['POST'])
 def create_forum_comment():
     if 'user_id' not in session or session.get('is_guest'):

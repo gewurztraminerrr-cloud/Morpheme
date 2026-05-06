@@ -3634,3 +3634,38 @@ input[type=range]::-moz-range-track {
 .found-indicator, .list-bonus-tag {
     flex-shrink: 0;
 }
+
+/* Tablet & Smaller Mac Device Scaling for Play Page */
+@media (max-width: 1200px) {
+    :root {
+        --cell-size: 50px !important; /* Scale board cells down gracefully on small displays */
+    }
+    .play-grid {
+        grid-template-columns: 320px 1fr 300px !important;
+    }
+}
+
+@media (max-width: 992px) {
+    :root {
+        --cell-size: 45px !important;
+    }
+    .play-grid {
+        grid-template-columns: 1fr !important; /* Stack panels vertically on tablet portraits */
+        overflow-y: auto !important;
+        height: auto !important;
+    }
+    #page-play.active {
+        height: auto !important;
+        overflow-y: auto !important;
+    }
+    .left-panel-container, .words-panel {
+        height: auto !important;
+    }
+    .players-panel, .words-table-box, .definitions-panel {
+        height: 350px !important;
+        max-height: 350px !important;
+    }
+    .board-panel {
+        height: auto !important;
+    }
+}

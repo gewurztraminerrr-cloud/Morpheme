@@ -766,3 +766,17 @@ body.theme-light-brown .field-hint {
 .buy-now-btn:hover {
     filter: brightness(1.1);
 }
+
+/* Tablet & Mobile Layout for Lobby Grid */
+@media (max-width: 900px) {
+    .lobby-grid {
+        grid-template-columns: 1fr !important;
+        height: auto !important;
+        gap: 15px !important;
+    }
+    
+    .game-types-panel,
+    .active-rooms-panel {
+        max-height: none !important;
+    }
+}
