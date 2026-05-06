@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let data = null;
                 // For ALL Accumulative rooms, check if one already exists and JOIN it
                 // This ensures all users share the same board/timer (Multiplayer)
-                const listResp = await fetch(`/api/rooms?game_type=${gameType}&board_dimensions=${boardDimensions}&time_limit=${timeLimit}`);
+                const listResp = await fetch(`/api/rooms?game_type=${gameType}&board_dimensions=${boardDimensions}&time_limit=${timeLimit}&_t=${Date.now()}`, { cache: 'no-store' });
                 if (!listResp.ok) {
                     const errText = await listResp.text();
                     throw new Error(`Server returned ${listResp.status}: ${errText}`);
@@ -425,9 +425,9 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
     }
 
     try {
-        // Fetch active rooms for this configuration
-        const url = `/api/rooms?game_type=${gameType}&board_dimensions=${boardDimensions}&time_limit=${timeLimit}`;
-        const response = await fetch(url);
+        // Fetch active rooms for this configuration with cache busting
+        const url = `/api/rooms?game_type=${gameType}&board_dimensions=${boardDimensions}&time_limit=${timeLimit}&_t=${Date.now()}`;
+        const response = await fetch(url, { cache: 'no-store' });
         if (!response.ok) throw new Error(`HTTP error ${response.status}`);
         const data = await response.json();
 
@@ -640,7 +640,7 @@ function stopStatsPolling() {
 
 async function fetchLobbyStats() {
     try {
-        const response = await fetch('/api/lobby-stats');
+        const response = await fetch(`/api/lobby-stats?_t=${Date.now()}`, { cache: 'no-store' });
         const data = await response.json();
 
         if (data.stats) {
