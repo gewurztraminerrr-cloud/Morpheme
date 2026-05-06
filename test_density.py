@@ -11,7 +11,7 @@ print("Starting 4x4 Ultra-Density Test...")
 best = 0
 for i in range(50):
     board, words, bonus, fmt, wd, ratio, fb = bg.generate_board(
-        (4, 4, 1),
+        "4x4",
         "EATING",
         "100-200",
         "NWL",

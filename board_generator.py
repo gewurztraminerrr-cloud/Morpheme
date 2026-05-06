@@ -917,7 +917,7 @@ class BoardGenerator:
             # Optimization: One quick pass at max density
             board = self._create_2000plus_board(
                 rows, cols, dictionary, False, board, set(), "Density",
-                min_word_length, max_words, min_words, 0, 1, depth=depth, weights=weights
+                min_word_length, max_words, min_words, 0, 1, depth=depth, difficulty=difficulty, weights=weights
             )
             
             # Final Rescue Sweep to hit the target floor
@@ -932,8 +932,10 @@ class BoardGenerator:
                 final_solve = self._solve_board(board, dictionary, (0, 99999), display_min, max_depth=25, store_paths=True, timeout=30.0)
                 count = len(final_solve)
             
-            # --- FINAL SANITIZATION (User Request: Max 1 Rare Letter) ---
+            # --- FINAL SANITIZATION (User Request: Max 1 Rare Letter & No forbidden sequences) ---
             self._sanitize_rare_letters(board, depth)
+            if difficulty in ["Medium", "Hard"]:
+                self._sanitize_forbidden_sequences(board, depth)
             
             if min_words <= count <= max_words:
                 print(f"[BoardGen] ✓ EMERGENCY COMPLIANCE SUCCESS: {count} words after {(_attempt + 1)} emergency tries.")
@@ -1074,9 +1076,9 @@ class BoardGenerator:
         
         print(f"[BoardGen] Selected Natural Bonus Word: {final_bonus_word} (Anchor: {bonus_cell})")
         # FINAL AUDIT (User Request: Max 1 Rare Letter)
-        self._sanitize_rare_letters(final_board)
+        self._sanitize_rare_letters(final_board, depth=1)
         if difficulty in ["Medium", "Hard"]:
-            self._sanitize_forbidden_sequences(final_board, protected_positions=[bonus_cell] if bonus_cell else None)
+            self._sanitize_forbidden_sequences(final_board, depth=1, protected_positions=[bonus_cell] if bonus_cell else None)
 
         return (
             final_board,

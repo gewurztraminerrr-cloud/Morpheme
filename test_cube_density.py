@@ -8,7 +8,7 @@ start = time.time()
 # 3x3x3, Bonus 'TESTING', 50-100, NWL, Normal, 3, Medium
 # Note: dimensions for 3x3x3 are '3x3x3' in some cases, or f, r, c
 # BoardGenerator.generate_board handles its own parsing
-board, words, bonus_cell, fmt, words_dict, u_ratio = gen.generate_board('3x3x3', 'TESTING', '100-200', 'NWL', 'Normal', 3, 'Medium')
+board, words, bonus_cell, fmt, words_dict, u_ratio, *extra = gen.generate_board('3x3x3', 'TESTING', '100-200', 'NWL', 'Normal', 3, 'Medium')
 duration = time.time() - start
 
 print(f"Results in {duration:.2f}s:")

@@ -6,7 +6,7 @@ gen = BoardGenerator()
 print("Starting Ironclad Test: 4x4, 100-200 target, CSW")
 start = time.time()
 # 4x4, Bonus 'TEST', 100-200, CSW, Normal, 3, Medium
-board, words, bonus_cell, fmt, words_dict, u_ratio = gen.generate_board('4x4', 'TEST', '100-200', 'CSW', 'Normal', 3, 'Medium')
+board, words, bonus_cell, fmt, words_dict, u_ratio, *extra = gen.generate_board('4x4', 'TEST', '100-200', 'CSW', 'Normal', 3, 'Medium')
 duration = time.time() - start
 
 print(f"Results in {duration:.2f}s:")
