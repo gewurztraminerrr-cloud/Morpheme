@@ -210,6 +210,57 @@ window.stopGamePolling = function () {
     stopPolling();
 };
 
+function clearGameUIAndCache() {
+    console.log('[play.js] Clearing Game UI and Caches from previous match');
+    
+    // 1. Reset Global state caches
+    window.lastGameState = null;
+    window.lastRenderedStateJSON = null;
+    window.lastRenderedBoardJSON = null;
+    window.lastPlayersHtml = null;
+    
+    // Reset all round-specific and mode-specific word/score lists
+    privateMatchWords = [];
+    privateMatchScore = 0;
+    tournamentWords = [];
+    tournamentScore = 0;
+    selectedPlayerUsername = null;
+    
+    // 2. Reset DOM elements to clean placeholders
+    const wordsList = document.getElementById('submitted-words-list');
+    if (wordsList) {
+        wordsList.innerHTML = '<p class="placeholder">Game active - Waiting for words...</p>';
+    }
+    
+    const wordsStats = document.getElementById('words-stats');
+    if (wordsStats) {
+        wordsStats.textContent = '';
+    }
+    
+    const wordInput = document.getElementById('word-input');
+    if (wordInput) {
+        wordInput.value = '';
+        wordInput.disabled = false;
+        wordInput.style.backgroundColor = '';
+    }
+    
+    const defContent = document.getElementById('definition-content');
+    if (defContent) {
+        defContent.innerHTML = '<p class="placeholder">Select a word to see its definition.</p>';
+    }
+    
+    const boardEl = document.getElementById('game-board');
+    if (boardEl) {
+        boardEl.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100%;color:var(--text-secondary);font-style:italic;">Loading board...</div>';
+    }
+    
+    const chatBox = document.getElementById('chat-messages');
+    if (chatBox) {
+        chatBox.innerHTML = '';
+    }
+}
+window.clearGameUIAndCache = clearGameUIAndCache;
+
 function startPolling() {
     console.log('[play.js] Starting Game Polling - Resetting Join Counter');
     joinAttemptCount = 0; // Reset counter for new room entry
@@ -220,11 +271,10 @@ function startPolling() {
     }
 
     // Reset UI and globals for new room
-    resetChat();
+    clearGameUIAndCache();
+    
     isPrivateMatchPlay = false;
     isTournamentPlay = false;
-    privateMatchWords = [];
-    privateMatchScore = 0;
     
     // Initial fetch to ensure we have state immediately
     updateGameState();
@@ -4054,7 +4104,7 @@ async function leaveCurrentRoom() {
     }
     if (window.updateManualToolState) window.updateManualToolState();
     stopPolling();
-    // clear UI
+    clearGameUIAndCache();
 }
 window.leaveCurrentRoom = leaveCurrentRoom;
 
@@ -4669,6 +4719,7 @@ function exitTournamentPlay() {
     localStorage.removeItem('tournament_play_active');
     isTournamentPlay = false;
     window.isTournamentPlay = false;
+    clearGameUIAndCache();
     if (window.navigateToPage) {
         window.navigateToPage('tournaments');
     } else {
@@ -4989,6 +5040,7 @@ async function finishPrivateMatchTurn() {
 function exitPrivateMatchPlay() {
     isPrivateMatchPlay = false;
     localStorage.removeItem('private_match_active');
+    clearGameUIAndCache();
 
     // Clean up timers
     if (window.privateMatchInterval) clearInterval(window.privateMatchInterval);
