@@ -99,6 +99,7 @@ async function ejectToLobby(reason = "inactivity") {
     // 2. Stop poll and clear state
     stopPolling();
     window.currentRoomId = null;
+    localStorage.removeItem('last_joined_room');
 
     // 3. Clear ANY other overlays that might block the explanation
     document.querySelectorAll('.modal-overlay, .board-overlay, .results-overlay').forEach(ov => {
@@ -577,11 +578,15 @@ async function updateGameState(incomingState = null) {
 
         // COMBINED EVICTION / 24H RESET LOGIC
         if (!amIPlayer && !amISpectator && currentUsername) {
-            // Was I in the room in the previous heartbeat?
-            const wasInBefore = previousState && (
-                previousState.players.some(p => p.username.toLowerCase() === currentUsername.toLowerCase()) ||
-                (previousState.spectators || []).some(s => s.username.toLowerCase() === currentUsername.toLowerCase())
-            );
+            window._emptyPlayersPollCount = (window._emptyPlayersPollCount || 0) + 1;
+            console.warn(`[play.js] EVICTION WARNING: User not found in state.players or state.spectators! Count: ${window._emptyPlayersPollCount}/3`);
+            
+            if (window._emptyPlayersPollCount >= 3) {
+                // Was I in the room in the previous heartbeat?
+                const wasInBefore = previousState && (
+                    previousState.players.some(p => p.username.toLowerCase() === currentUsername.toLowerCase()) ||
+                    (previousState.spectators || []).some(s => s.username.toLowerCase() === currentUsername.toLowerCase())
+                );
 
             // 24H Reset Logic: Only auto-rejoin IF the round has actually changed (e.g. midnight flip)
             // If the round is the same, then this was likely an individual inactivity kick.
@@ -593,8 +598,12 @@ async function updateGameState(incomingState = null) {
             }
 
             // Normal Eviction
-            ejectToLobby("inactivity");
-            return;
+                ejectToLobby("inactivity");
+                return;
+            }
+        } else {
+            // Reset counter if player is found
+            window._emptyPlayersPollCount = 0;
         }
 
         if (window.isSpectatorMode !== !amIPlayer) {
@@ -4036,6 +4045,7 @@ async function leaveCurrentRoom() {
     if (!roomId) return;
     try { await fetch(`/api/room/${roomId}/leave`, { method: 'POST' }); } catch (e) { }
     window.currentRoomId = null;
+    localStorage.removeItem('last_joined_room');
     const playBtn = document.getElementById('play-btn');
     if (playBtn) {
         playBtn.disabled = true;
@@ -4475,7 +4485,8 @@ async function initTournamentPlay() {
             board_dimensions: data.params.board_dimensions,
             time_limit: data.params.time_limit,
             current_board_format: data.params.board_format || 'Normal',
-            spinner_params: data.params
+            spinner_params: data.params,
+            bonus_word: data.bonus_word
         };
         window.lastGameState = tournamentGameState;
         lastRenderedBoardJSON = null; // Force re-render
@@ -4584,8 +4595,8 @@ async function handleTournamentWord(word) {
 
     // Bonus Word
     let isBonus = false;
-    if (window.tournamentParams && word.length === window.tournamentParams.bonus_word_length) {
-        pts += 10; // Simple bonus for now
+    if (window.lastGameState && window.lastGameState.bonus_word && word === window.lastGameState.bonus_word.toUpperCase()) {
+        pts += word.length;
         isBonus = true;
     }
 

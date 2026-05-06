@@ -11,7 +11,7 @@ def test_no_ing():
     
     print("Generating 5 Hard 4x4 boards and checking for ING sequences...")
     for i in range(5):
-        board, words, bonus_c, fmt, dict_full, ratio = gen.generate_board(
+        board, words, bonus_c, fmt, dict_full, ratio, _ = gen.generate_board(
             '4x4', 'MORPHEME', (50, 100), 'NWL', 'Normal', 3, 'Hard'
         )
         
@@ -20,7 +20,7 @@ def test_no_ing():
         
     print("\nGenerating 5 Easy 4x4 boards (should allow ING)...")
     for i in range(5):
-        board, words, bonus_c, fmt, dict_full, ratio = gen.generate_board(
+        board, words, bonus_c, fmt, dict_full, ratio, _ = gen.generate_board(
             '4x4', 'MORPHEME', (50, 100), 'NWL', 'Normal', 3, 'Easy'
         )
         has_ing = gen._has_forbidden_sequence(board, "ING")

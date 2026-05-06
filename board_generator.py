@@ -330,6 +330,73 @@ class BoardGenerator:
         if sanitized_count > 0:
             print(f"[BoardGen] 🛡️ Sanitizer replaced {sanitized_count} redundant rare letters.")
 
+    def _sanitize_forbidden_sequences(self, board, depth=1, protected_positions=None):
+        """
+        USER MANDATE: Break up any "ING" sequences on Medium/Hard boards.
+        """
+        is_3d = (depth > 1) or (len(board) == 6 and isinstance(board[0], list) and isinstance(board[0][0], list))
+        depth_val = 6 if (len(board) == 6 and is_3d) else depth
+        rows = len(board[0]) if is_3d else len(board)
+        cols = len(board[0][0]) if is_3d else len(board[0])
+        protected = set(protected_positions) if protected_positions else set()
+
+        sequence = "ING"
+        seq_len = len(sequence)
+
+        # Loop until no forbidden sequences are found
+        max_attempts = 10
+        sanitized_count = 0
+        for _ in range(max_attempts):
+            found_any = False
+            
+            def find_path(idx, r, c, f, current_path):
+                if idx == seq_len:
+                    return current_path
+                target = sequence[idx]
+                for df in ([-1, 0, 1] if is_3d else [0]):
+                    for dr in [-1, 0, 1]:
+                        for dc in [-1, 0, 1]:
+                            if df == 0 and dr == 0 and dc == 0:
+                                continue
+                            nf, nr, nc = f + df, r + dr, c + dc
+                            if 0 <= nf < depth_val and 0 <= nr < rows and 0 <= nc < cols:
+                                pos = (nf, nr, nc) if is_3d else (nr, nc)
+                                if pos not in current_path:
+                                    val = board[nf][nr][nc] if is_3d else board[nr][nc]
+                                    if val == target:
+                                        res = find_path(idx + 1, nr, nc, nf, current_path + [pos])
+                                        if res: return res
+                return None
+
+            for f in range(depth_val):
+                for r in range(rows):
+                    for c in range(cols):
+                        val = board[f][r][c] if is_3d else board[r][c]
+                        if val == sequence[0]:
+                            pos = (f, r, c) if is_3d else (r, c)
+                            path = find_path(1, r, c, f, [pos])
+                            if path:
+                                found_any = True
+                                replaced = False
+                                for p in path:
+                                    if p not in protected:
+                                        replacements = ["A", "E", "O", "S", "T", "R", "L", "C", "P"]
+                                        new_char = random.choice(replacements)
+                                        if is_3d: board[p[0]][p[1]][p[2]] = new_char
+                                        else: board[p[0]][p[1]] = new_char
+                                        replaced = True
+                                        print(f"[BoardGen] 🛡️ Sequence Sanitizer: Broke 'ING' by replacing '{sequence[path.index(p)]}' at {p} with '{new_char}'")
+                                        sanitized_count += 1
+                                        break
+                                if not replaced:
+                                    print(f"[BoardGen] ⚠️ Sequence Sanitizer: Could not break 'ING' because all tiles are protected!")
+                                break
+                    if found_any: break
+                if found_any: break
+            
+            if not found_any:
+                break
+
     def _is_creating_forbidden_sequence(self, board, char, r, c, f, target_seq="ING", depth=1):
         """Highly optimized local check to see if placing 'char' at (r, c, f) creates forbidden sequence."""
         # 1. Base check: is char even in the forbidden set?
@@ -663,6 +730,8 @@ class BoardGenerator:
                 
                 # USER REQUEST: Final Sanitization even for extreme density
                 self._sanitize_rare_letters(board, depth)
+                if difficulty in ["Medium", "Hard"]:
+                    self._sanitize_forbidden_sequences(board, depth)
                 break
 
             # Standard Strategies
@@ -762,6 +831,8 @@ class BoardGenerator:
             # --- FINAL RARE LETTER SANITIZATION (User Request: Max 1 Q, Z, J, X, K) ---
             # We do this AFTER all optimizations and sweeps to ensure compliance and clean board.
             self._sanitize_rare_letters(board, depth, protected_positions=embedded_path)
+            if difficulty in ["Medium", "Hard"]:
+                self._sanitize_forbidden_sequences(board, depth, protected_positions=embedded_path)
 
             # Re-solve after sweeps and sanitization for final confirmation
             all_words_dict = self._solve_board(
@@ -873,19 +944,23 @@ class BoardGenerator:
                 if not suitable: suitable = [w for w in final_solve if len(w) >= 3]
                 
                 final_bonus = sorted(suitable, key=len, reverse=True)[0] if suitable else None
-                if final_bonus and not bonus_cell:
+                bonus_cell = None
+                if final_bonus:
                     bonus_cell = final_solve[final_bonus][0]
-
-                # FINAL AUDIT
-                self._sanitize_rare_letters(board, depth)
 
                 return (board, sorted(list(final_solve.keys())), bonus_cell, board_format, final_solve, ratio, final_bonus)
             else:
                 print(f"[BoardGen] ✗ EMERGENCY ATTEMPT {(_attempt + 1)} FAILED: {count} words is not in {min_words}-{max_words}")
         
-        # Absolute Fallback if all else fails (Rare but possible in tight constraints)
-        self._sanitize_rare_letters(board, depth)
+        # Absolute Fallback if all else fails (Rare but possible)
+        self._final_rare_letter_polish(board, depth, difficulty=difficulty)
         return (board, [], None, board_format, {}, 0.0, None)
+
+    def _final_rare_letter_polish(self, board, depth, protected_positions=None, difficulty=None):
+        """Final audit to clean rare letters and forbidden sequences."""
+        self._sanitize_rare_letters(board, depth, protected_positions=protected_positions)
+        if difficulty in ["Medium", "Hard"]:
+            self._sanitize_forbidden_sequences(board, depth, protected_positions=protected_positions)
 
     def _generate_io_base_board_procedure(
         self, dimensions, bonus_word, word_count_range, dictionary, min_word_length, difficulty
@@ -996,6 +1071,8 @@ class BoardGenerator:
         print(f"[BoardGen] Selected Natural Bonus Word: {final_bonus_word} (Anchor: {bonus_cell})")
         # FINAL AUDIT (User Request: Max 1 Rare Letter)
         self._sanitize_rare_letters(final_board)
+        if difficulty in ["Medium", "Hard"]:
+            self._sanitize_forbidden_sequences(final_board, protected_positions=[bonus_cell] if bonus_cell else None)
 
         return (
             final_board,

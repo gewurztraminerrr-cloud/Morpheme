@@ -2580,7 +2580,7 @@ def get_room_state(room_id):
                 'previous_csw_only_words': getattr(room, 'previous_csw_only_words', []),
                 'previous_added_words': getattr(room, 'previous_added_words', []),
                 'previous_bonus_word': getattr(room, 'previous_bonus_word', ''),
-                'spinner_params': room.spinner_params,
+                'spinner_params': {**room.spinner_params, 'uniqueness': getattr(room, 'next_round_uniqueness', 0)} if getattr(room, 'spinner_params_revealed', False) else room.spinner_params,
                 'current_min_length': getattr(room, 'current_min_length', 3),
                 'current_board_format': getattr(room, 'current_board_format', 'Normal'),
                 'current_word_count_range': getattr(room, 'current_word_count_range', 'Random'),

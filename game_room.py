@@ -2027,13 +2027,13 @@ class RoomManager:
             r_num = int(dims[1] if len(dims) == 3 else dims[0])
             c_num = int(dims[2] if len(dims) == 3 else dims[1])
             achieved_diff = self.board_generator.get_difficulty_label(u_ratio, r_num, c_num, room.spinner_params.get('dictionary', 'NWL'), depth=d_num)
-            room.current_difficulty = achieved_diff
+            room.current_difficulty = room.spinner_params.get('difficulty', achieved_diff)
             room.current_uniqueness = u_ratio
             room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
             room.current_word_count_range = room.spinner_params.get('word_count_range', 'Varying...')
             
             # CRITICAL SYNC: Update the UI header slot with the ground truth
-            room.spinner_params['difficulty'] = achieved_diff
+            # room.spinner_params['difficulty'] = achieved_diff
             room.spinner_params['board_format'] = updated_format
             room.spinner_params['uniqueness'] = u_ratio
             room.spinner_params_revealed = True # Ensure they are shown
@@ -2557,7 +2557,7 @@ class RoomManager:
                         achieved_wc = self._get_factchecked_wc_range(len(all_words))
                         
                         if getattr(room, 'next_spinner_params', None):
-                            room.next_spinner_params['difficulty'] = achieved_diff
+                            # room.next_spinner_params['difficulty'] = achieved_diff
                             room.next_spinner_params['board_format'] = updated_format
                             # We intentionally DO NOT overwrite word_count_range here. 
                             # If the solver produces 105 words for a 50-100 target, we keep the 
@@ -2565,7 +2565,7 @@ class RoomManager:
                             
                             # If already revealed, update the active spinner_params too
                             if getattr(room, 'spinner_params_revealed', False):
-                                room.spinner_params['difficulty'] = achieved_diff
+                                # room.spinner_params['difficulty'] = achieved_diff
                                 room.spinner_params['board_format'] = updated_format
                         # REVEAL SYNC: Pre-calculate counts by length for the revelation phase
                         # This avoids the "Remaining tab lag" where it shows previous round stats
@@ -2582,7 +2582,7 @@ class RoomManager:
                                 room.spinner_params['bonus_word_length'] = len(final_bonus_word)
                         if getattr(room, 'next_spinner_params', None):
                             room.next_spinner_params['uniqueness'] = u_ratio
-                        room.next_round_difficulty = achieved_diff
+                        room.next_round_difficulty = room.next_spinner_params.get('difficulty', achieved_diff) if getattr(room, 'next_spinner_params', None) else achieved_diff
                         
                         # Authoritative recount after truncation (if any)
                         min_len = room.next_spinner_params.get('min_word_length', 3) if getattr(room, 'next_spinner_params', None) else 3
