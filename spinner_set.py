@@ -75,7 +75,7 @@ class SpinnerSet:
                     initial_min = SpinnerSet._spin_min_word_length(board_dimensions)
                     return {
                         'min_word_length': initial_min,
-                        'difficulty': 'Easy' if initial_min < 5 else 'Hard',
+                        'difficulty': SpinnerSet._spin_difficulty(board_dimensions, initial_min),
                         'word_count_range': random.choice(['50-100', '100-200', '200-300', '300-400']),
                         'dictionary': 'NWL',
                         'board_format': 'Normal',
@@ -141,19 +141,13 @@ class SpinnerSet:
     @staticmethod
     def _spin_difficulty(board_dimensions='4x4', min_word_length=3):
         """Balanced difficulty selection: 25% Easy, 50% Medium, 25% Hard.
-        For 4x4 rooms, we slightly boost Hard to 34% per user request.
         For 5L+ minimum length rounds, we force Hard as Easy uniqueness is physically impossible."""
         dims_str = str(board_dimensions)
         if min_word_length >= 5 and ('4x4' in dims_str or '4x6' in dims_str):
             return 'Hard'
 
         choices = ['Easy', 'Medium', 'Hard']
-        weights = [25, 50, 25] # Default for large/normal
-        
-        is_small = ('4x4' in dims_str) or ('4x6' in dims_str)
-        if is_small:
-            weights = [26, 40, 34] # Boosted Hard for small boards
-            
+        weights = [25, 50, 25] # Strictly 25% Easy, 50% Medium, 25% Hard
         return random.choices(choices, weights=weights)[0]
     
     @staticmethod
