@@ -1379,11 +1379,24 @@ def login():
 
 @app.route('/api/logout', methods=['POST'])
 def logout():
-    if 'user_id' in session:
-        # USER REQUEST: When logging out, remove them from ANY room entirely (including 24h)
-        cleanup_user_rooms_entirely(session['user_id'])
-        room_manager.remove_presence(session['user_id'])
-    session.clear()
+    try:
+        user_id = session.get('user_id')
+        if user_id:
+            # USER REQUEST: When logging out, remove them from ANY room entirely (including 24h)
+            try:
+                cleanup_user_rooms_entirely(user_id)
+            except Exception as e_rooms:
+                print(f"[LogoutError] Error cleaning up rooms for user {user_id}: {e_rooms}")
+                
+            try:
+                room_manager.remove_presence(user_id)
+            except Exception as e_pres:
+                print(f"[LogoutError] Error removing presence for user {user_id}: {e_pres}")
+    except Exception as e:
+        print(f"[LogoutError] Error during logout session retrieval: {e}")
+    finally:
+        session.clear()
+        
     return jsonify({'success': True})
 
 @app.route('/api/presence/leave', methods=['POST'])
@@ -2064,7 +2077,9 @@ def cleanup_user_rooms(user_id, exclude_room_id=None):
     for rid in list(room_manager.rooms.keys()):
         if str(rid) == str(exclude_room_id):
             continue
-        room = room_manager.rooms[rid]
+        room = room_manager.rooms.get(rid)
+        if not room:
+            continue
         
         # PERSISTENCE RULE: Keep users in Hubs and 24h rooms even if they join another
         is_hub = str(rid).startswith('pub_')
@@ -2080,7 +2095,9 @@ def cleanup_user_rooms(user_id, exclude_room_id=None):
 def cleanup_user_rooms_entirely(user_id):
     """FORCED removal from ALL rooms (skipping 24h skip for explicit Logout) - used for Logout"""
     for rid in list(room_manager.rooms.keys()):
-        room = room_manager.rooms[rid]
+        room = room_manager.rooms.get(rid)
+        if not room:
+            continue
         
         # Apply leave penalty if applicable (non-24h only, typically)
         if room.time_limit < 7200:
