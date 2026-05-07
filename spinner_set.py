@@ -57,7 +57,7 @@ class SpinnerSet:
                         # Keep Either/Or, Checkerboard, and Density as they are highly requested/stable
                         if board_format not in ['Either/Or', 'Checkerboard', 'Density', 'Valued Letters']:
                             board_format = 'Normal'
-                if board_format == 'IO-Checkerboard':
+                if board_format == 'Checkerboard':
                     wc_range = random.choice(['100-200', '200-300'])
                 
                 res = {
@@ -180,8 +180,8 @@ class SpinnerSet:
             return 'Normal'
             
         result = random.choices(
-            ['Normal', 'Checkerboard', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Density', 'IO-Checkerboard'],
-            weights=[78, 8, 2, 2, 2, 2, 2, 2, 2]
+            ['Normal', 'Checkerboard', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Density'],
+            weights=[78, 10, 2, 2, 2, 2, 2, 2]
         )[0]
         
         if result == 'Mania':
