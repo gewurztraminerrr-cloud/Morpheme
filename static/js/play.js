@@ -161,15 +161,24 @@ setInterval(() => {
 }, 5000);
 
 // Add global listeners for input detection
+let lastTouchTime = 0;
+
 document.addEventListener('keydown', () => {
     updateInputMethod('keyboard');
     resetIdleTimer();
 }, true);
+
 document.addEventListener('mousedown', () => {
+    // If a touch event was fired in the last 1500ms, ignore this mousedown as it is a simulated mobile event
+    if (Date.now() - lastTouchTime < 1500) {
+        return;
+    }
     updateInputMethod('mouse');
     resetIdleTimer();
 }, true);
+
 document.addEventListener('touchstart', () => {
+    lastTouchTime = Date.now();
     updateInputMethod('touch');
     resetIdleTimer();
 }, true);
@@ -1710,7 +1719,7 @@ function renderPlayers(players, currentUser = null, state = null) {
         // Input Method Icon
         let inputIcon = '🖱️';
         if (p.input_method === 'keyboard') inputIcon = '⌨️';
-        if (p.input_method === 'touch') inputIcon = '👆';
+        if (p.input_method === 'touch') inputIcon = '📱';
 
         // Trophy Logic (Exceptional Performance)
         const peVal = p.performance_efficiency || 1.0;
