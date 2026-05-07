@@ -1528,6 +1528,15 @@ body.theme-light-brown .word-item.missed {
     transform: none;
 }
 
+.manual-clear-btn {
+    background: linear-gradient(135deg, #f43f5e, #e11d48) !important;
+    box-shadow: 0 4px 10px rgba(244, 63, 94, 0.3) !important;
+}
+
+.manual-clear-btn:hover {
+    box-shadow: 0 6px 15px rgba(244, 63, 94, 0.4) !important;
+}
+
 .manual-results-hidden {
     display: none;
 }

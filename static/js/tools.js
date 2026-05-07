@@ -2638,6 +2638,13 @@ function setupManualTool() {
             };
         }
 
+        const clearBtn = document.getElementById('manual-clear-btn');
+        if (clearBtn) {
+            clearBtn.onclick = (e) => {
+                clearManualGrid();
+            };
+        }
+
         const dimSelect = document.getElementById('manual-dim');
         if (dimSelect) {
             dimSelect.onchange = (e) => renderManualGrid(e.target.value);
@@ -2645,6 +2652,25 @@ function setupManualTool() {
         }
     } catch (e) {
         console.error("Manual tool setup failed:", e);
+    }
+}
+
+function clearManualGrid() {
+    const gridEl = document.getElementById('manual-grid');
+    if (gridEl) {
+        const cells = gridEl.querySelectorAll('.manual-cell');
+        cells.forEach(cell => {
+            cell.value = '';
+        });
+        if (cells[0]) {
+            cells[0].focus();
+        }
+    }
+    
+    manualSolvedWords = [];
+    const res = document.getElementById('manual-results-container');
+    if (res) {
+        res.innerHTML = '<div class="seq-results-placeholder" style="padding: 20px; color: var(--muted-text);">Ready to solve...</div>';
     }
 }
 
