@@ -455,7 +455,7 @@ class GameRoom:
                 f.write(f"{datetime.datetime.now()} {log_msg}")
 
             # remove_player handles the abandonment rating penalty logic!
-            self.remove_player(uid)
+            self.remove_player(uid, force=True)
             players_removed = True
 
         # Check spectators
@@ -1753,7 +1753,8 @@ class RoomManager:
              
              # Re-check room occupancy
              humans = [p for p in room.players if not p.is_ai]
-             if len(humans) == 0 and len(room.spectators) == 0 and not is_daily:
+             is_public = ri.startswith('pub_')
+             if len(humans) == 0 and len(room.spectators) == 0 and not is_daily and not is_public:
                   print(f"[RoomManager] Immediate cleanup: Room {ri} is empty after user {user_id} left. Deleting.")
                   rooms_to_delete.append(ri)
                   
@@ -1876,7 +1877,8 @@ class RoomManager:
                 is_empty_of_humans = (len(humans) == 0)
                 is_daily = (room.time_limit >= 7200)
                 
-                if is_empty_of_humans and not is_daily:
+                is_public = room_id.startswith('pub_')
+                if is_empty_of_humans and not is_daily and not is_public:
                     # Grace Period: Don't delete rooms that are less than 10 minutes old
                     # This allows time for players to join newly created/reconstructed rooms.
                     room_uptime = time.time() - getattr(room, 'creation_time', time.time())
@@ -2689,11 +2691,8 @@ class RoomManager:
                      print(f"[RoomManager] Stale start detected (>12s) for {room_id}, resetting guard.")
                      room.starting_round = False
                 else:
-                     # IMPORTANT: Do NOT 'return False' here if we are the thread that was just launched!
-                     # The heartbeat/app.py logic sets room.starting_round = True BEFORE starting the thread.
-                     # We only return False if another thread is actually INSIDE the try...finally block (not yet implemented with thread id)
-                     # For now, we trust the launcher checked the guard.
-                     pass
+                     print(f"[RoomManager] Already starting a round for {room_id}. Skipping duplicate start.")
+                     return False
             
             room.starting_round = True
             room._round_start_init_time = time.time()

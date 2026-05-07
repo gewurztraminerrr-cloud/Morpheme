@@ -2309,8 +2309,8 @@ def leave_room(room_id):
         # USER REQUEST: Immediate cleanup if no humans left
         humans = [p for p in room.players if not p.is_ai]
         is_daily = (room.time_limit >= 7200)
-        
-        if len(humans) == 0 and not is_daily:
+        is_public = room_id.startswith('pub_')
+        if len(humans) == 0 and not is_daily and not is_public:
             # Kick remaining spectators if any (Double-down on game_room.py logic)
             room.is_closing = True
             room.spectators = []
@@ -2408,14 +2408,73 @@ def get_room_state(room_id):
             if room_id.startswith('pub_'):
                 try:
                     parts = room_id.split('_')
-                    if len(parts) >= 4:
-                        # Deterministic reconstruction: pub_[game]_[dims]_[time]
+                    if parts[1] == 'v2' and len(parts) >= 5:
+                        g_type = parts[2]
+                        dims = parts[3]
+                        t_limit = int(parts[4])
+                    elif len(parts) >= 4:
                         g_type = parts[1]
                         dims = parts[2]
                         t_limit = int(parts[3])
-                        print(f"[app.py] Reconstructing public singleton hub: {room_id}")
-                        # Re-create room (create_room method handles singleton logic already)
-                        room = room_manager.create_room(room_id, g_type, t_limit, dims, 0, 9999)
+                    else:
+                        raise ValueError("Invalid public room ID structure")
+                        
+                    print(f"[app.py] Reconstructing public singleton hub: {room_id} | Game: {g_type}, Dims: {dims}, Time: {t_limit}")
+                    # Re-create room (create_room method handles singleton logic already)
+                    room = room_manager.create_room(room_id, g_type, t_limit, dims, 0, 9999)
+                    if room:
+                        is_24h = (room.time_limit >= 7200)
+                        if not is_24h:
+                            # Start in intermission so the user has a graceful transition and doesn't jump midround!
+                            with room._state_lock:
+                                room.state = 'intermission'
+                                room.intermission_start_time = time.time() - 45  # 15s remaining
+                                room.spinner_params_generated = False
+                                if hasattr(room, '_transition_spinner_launched'): delattr(room, '_transition_spinner_launched')
+                                if hasattr(room, 'spinner_params_revealed'): delattr(room, 'spinner_params_revealed')
+                                if hasattr(room, 'board_search_started'): delattr(room, 'board_search_started')
+                                if hasattr(room, 'board_search_loading'): delattr(room, 'board_search_loading')
+                                if hasattr(room, 'starting_round'): delattr(room, 'starting_round')
+                        
+                        # Re-add the active polling user as player right away
+                        if 'user_id' in session:
+                            user_id = session['user_id']
+                            rating = 1200
+                            games_played = 0
+                            country_flag = '🏳️'
+                            is_guest = session.get('is_guest', False)
+                            
+                            if not is_guest:
+                                conn = sqlite3.connect(DB_PATH, timeout=30)
+                                try:
+                                    game_type_base = room.game_type.replace('solo_', '')
+                                    config_key = f"{game_type_base}|{room.board_dimensions}|{room.time_limit}"
+                                    cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
+                                                        (user_id, config_key))
+                                    row = cursor.fetchone()
+                                    if row:
+                                        rating = row[0]
+                                    else:
+                                        fallback_cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (user_id,))
+                                        fallback_row = fallback_cursor.fetchone()
+                                        if fallback_row:
+                                            rating = fallback_row[0]
+                                    
+                                    cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (user_id,))
+                                    row2 = cur.fetchone()
+                                    if row2:
+                                        games_played = row2[0]
+                                        if row2[1]:
+                                            country_flag = row2[1]
+                                except Exception as e:
+                                    print(f"Error fetching stats on reconstruction: {e}")
+                                finally:
+                                    conn.close()
+                            
+                            room.add_player(user_id, session['username'], rating, 
+                                            games_played=games_played, country_flag=country_flag, 
+                                            manual_accessed=False, is_guest=is_guest)
+                            room.update_player_activity(user_id)
                 except Exception as re_err:
                     print(f"[app.py] Could not reconstruct public hub {room_id}: {re_err}")
 

@@ -628,6 +628,33 @@ async function updateGameState(incomingState = null) {
 
         // COMBINED EVICTION / 24H RESET LOGIC
         if (!amIPlayer && !amISpectator && currentUsername) {
+            // SILENT AUTO-REJOIN HANDSHAKE: Before counting an eviction, try to rejoin
+            const roomId = window.currentRoomId || state.room_id;
+            if (roomId && !window._isRejoiningRoom) {
+                window._isRejoiningRoom = true;
+                console.warn(`[play.js] Silent auto-rejoin triggered for room ${roomId}`);
+                fetch(`/api/room/${roomId}/join`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ as_spectator: !!window.isSpectatorMode })
+                })
+                .then(resp => resp.json())
+                .then(data => {
+                    window._isRejoiningRoom = false;
+                    if (data.success) {
+                        console.log(`[play.js] Silent auto-rejoin successful! Role: ${data.role}`);
+                        // Force a state update to immediately fetch updated roster
+                        setTimeout(updateGameState, 100);
+                    } else {
+                        console.error(`[play.js] Silent auto-rejoin failed: ${data.error}`);
+                    }
+                })
+                .catch(err => {
+                    window._isRejoiningRoom = false;
+                    console.error('[play.js] Silent auto-rejoin error:', err);
+                });
+            }
+
             window._emptyPlayersPollCount = (window._emptyPlayersPollCount || 0) + 1;
             console.warn(`[play.js] EVICTION WARNING: User not found in state.players or state.spectators! Count: ${window._emptyPlayersPollCount}/3`);
             
@@ -638,16 +665,16 @@ async function updateGameState(incomingState = null) {
                     (previousState.spectators || []).some(s => s.username.toLowerCase() === currentUsername.toLowerCase())
                 );
 
-            // 24H Reset Logic: Only auto-rejoin IF the round has actually changed (e.g. midnight flip)
-            // If the round is the same, then this was likely an individual inactivity kick.
-            const roundChanged = previousState && state.current_round > previousState.current_round;
+                // 24H Reset Logic: Only auto-rejoin IF the round has actually changed (e.g. midnight flip)
+                // If the round is the same, then this was likely an individual inactivity kick.
+                const roundChanged = previousState && state.current_round > previousState.current_round;
 
-            if (is24H && wasInBefore && roundChanged) {
-                 ejectToLobby("daily_reset");
-                 return;
-            }
+                if (is24H && wasInBefore && roundChanged) {
+                     ejectToLobby("daily_reset");
+                     return;
+                }
 
-            // Normal Eviction
+                // Normal Eviction
                 ejectToLobby("inactivity");
                 return;
             }
@@ -913,6 +940,15 @@ async function updateGameState(incomingState = null) {
                 if (wordsList) {
                     wordsList.innerHTML = '<p class="placeholder">Game active - Waiting for words...</p>';
                 }
+
+                // Reset/clear player submission caches during transition to avoid frame leaks
+                if (state.players && Array.isArray(state.players)) {
+                    state.players.forEach(p => {
+                        p.submitted_words = [];
+                        p.score = 0;
+                    });
+                }
+                state.fcfs_found_words = [];
 
                 // Reset Highlighting
                 highlightedSplitWord = null;
@@ -1199,8 +1235,8 @@ async function updateGameState(incomingState = null) {
                 // Use dedicated shared list from server (The Authoritative Source)
                 let allFoundWords = [...(state.fcfs_found_words || [])];
                 
-                // If the server list is somehow empty but we have player words, use those as fallback
-                if (allFoundWords.length === 0 && state.players && Array.isArray(state.players)) {
+                // If the server list is missing entirely (undefined) but we have player words, use those as fallback
+                if (state.fcfs_found_words === undefined && state.players && Array.isArray(state.players)) {
                     state.players.forEach(p => {
                         const words = p.submitted_words || [];
                         words.forEach(w => {
@@ -1324,7 +1360,7 @@ async function updateGameState(incomingState = null) {
                 const foundByLen = {};
                 
                 const isFCFS = state.game_type === 'fcfs';
-                const sourceWords = (isFCFS && state.global_found_words) ? state.global_found_words : myFoundStrs;
+                const sourceWords = isFCFS ? (state.fcfs_found_words || []) : myFoundStrs;
                 
                 // CRITICAL SYNC: Only subtract VALID words from the board totals.
                 // Subtracting penalties or duplicates makes the Remaining tab inaccurate.

@@ -909,7 +909,11 @@ class BoardGenerator:
             parts = dimensions.split("x")
             depth, rows, cols = (map(int, parts) if len(parts) == 3 else (1, int(parts[0]), int(parts[1])))
         
-        for _attempt in range(1000): # High limit but safe
+        emergency_start = time.time()
+        for _attempt in range(15): # Max 15 attempts
+            if time.time() - emergency_start > 1.5:
+                print(f"[BoardGen] 🆘 EMERGENCY TIMEOUT: exceeding 1.5s limit after {_attempt} attempts. Breaking loop.")
+                break
             print(f"[BoardGen] 🆘 EMERGENCY LOOP ATTEMPT {(_attempt + 1)} (Target: {min_words}-{max_words})")
             weights = LETTER_FREQ_SUPER_DENSITY if min_word_length >= 4 else LETTER_FREQ_EASY
             board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty)
