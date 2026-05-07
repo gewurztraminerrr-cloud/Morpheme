@@ -3682,6 +3682,15 @@ input[type=range]::-moz-range-track {
         --right-panel-w: 420px !important;
         gap: 16px !important;
     }
+    .player-item {
+        padding: 10px 18px !important;
+        height: 68px !important;
+        gap: 6px !important;
+    }
+    #players-list {
+        gap: 10px !important;
+        max-height: 520px !important;
+    }
 }
 
 /* Big Desktop Monitors / Large Laptops (min-width: 1600px) */
@@ -3696,6 +3705,15 @@ input[type=range]::-moz-range-track {
         --right-panel-w: 460px !important;
         gap: 20px !important;
     }
+    .player-item {
+        padding: 12px 20px !important;
+        height: 74px !important;
+        gap: 8px !important;
+    }
+    #players-list {
+        gap: 12px !important;
+        max-height: 560px !important;
+    }
 }
 
 /* Extremely Large / Ultra-wide PC Monitors (min-width: 1920px) */
@@ -3709,5 +3727,15 @@ input[type=range]::-moz-range-track {
         --left-panel-w: 520px !important; /* Tons of space for users and scores */
         --right-panel-w: 500px !important; /* Massive space for words list and tabs */
         gap: 24px !important;
+    }
+    .player-item {
+        padding: 14px 24px !important;
+        height: 80px !important;
+        gap: 10px !important;
+        font-size: 1rem !important;
+    }
+    #players-list {
+        gap: 14px !important;
+        max-height: 600px !important;
     }
 }
