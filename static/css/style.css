@@ -5935,3 +5935,24 @@ body .tab-btn.active {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
+
+/* --- BULLETPROOF SELECT DROPDOWN CONTRAST & READABILITY --- */
+/* Native dropdown options do not render transparency well. We force solid background and crisp text colors matching the active theme class */
+select,
+.config-group select,
+.lb-filters select,
+.tool-pane select,
+.mod-section select {
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Force dropdown popup elements (option) to use solid theme background and high-contrast text color */
+select option,
+.config-group select option,
+.lb-filters select option,
+.tool-pane select option,
+.mod-section select option {
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+}
