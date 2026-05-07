@@ -923,6 +923,19 @@ body {
     max-width: 1800px; /* Increased from 1400px to use more screen width */
     width: 100%;
     margin: 0 auto;
+    transition: max-width 0.3s ease;
+}
+
+/* Widescreen and Ultra-wide Display Adjustments */
+@media (min-width: 1440px) {
+    .pages {
+        max-width: 95%; /* Stretch layout nicely on large laptop and desktop screens */
+    }
+}
+@media (min-width: 1920px) {
+    .pages {
+        max-width: 92%; /* Dynamic wide scaling for 1080p, 2K and 4K monitors */
+    }
 }
 
 .page {

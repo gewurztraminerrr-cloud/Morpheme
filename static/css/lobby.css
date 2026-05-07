@@ -6,6 +6,27 @@
     gap: 20px;
     height: calc(100vh - 100px);
     margin-top: 0;
+    transition: grid-template-columns 0.3s ease, gap 0.3s ease;
+}
+
+/* Widescreen balanced columns and expanded Active Rooms panel */
+@media (min-width: 1440px) {
+    .lobby-grid {
+        grid-template-columns: 1.6fr 1.2fr; /* Stretch active rooms horizontally */
+        gap: 24px;
+    }
+}
+@media (min-width: 1680px) {
+    .lobby-grid {
+        grid-template-columns: 1.5fr 1.3fr; /* Give even more room to the active rooms panel on ultra-wide */
+        gap: 32px;
+    }
+}
+@media (min-width: 1920px) {
+    .lobby-grid {
+        grid-template-columns: 1.4fr 1.4fr; /* Perfectly balanced panels on ultra-wide screens */
+        gap: 40px;
+    }
 }
 
 .game-types-panel {

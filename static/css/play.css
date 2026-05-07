@@ -3669,3 +3669,45 @@ input[type=range]::-moz-range-track {
         height: auto !important;
     }
 }
+
+/* Widescreen Desktop / PC scaling to stretch panels and board cells nicely */
+
+/* Standard Widescreen (min-width: 1400px) */
+@media (min-width: 1400px) {
+    :root {
+        --cell-size: 64px !important; /* Slightly larger board cells for better legibility */
+    }
+    .play-grid {
+        --left-panel-w: 440px !important;
+        --right-panel-w: 420px !important;
+        gap: 16px !important;
+    }
+}
+
+/* Big Desktop Monitors / Large Laptops (min-width: 1600px) */
+@media (min-width: 1600px) {
+    :root {
+        --cell-size: 68px !important; /* Prominent board cells */
+        --chat-font-size: 14px !important;
+        --def-font-size: 16px !important;
+    }
+    .play-grid {
+        --left-panel-w: 480px !important;
+        --right-panel-w: 460px !important;
+        gap: 20px !important;
+    }
+}
+
+/* Extremely Large / Ultra-wide PC Monitors (min-width: 1920px) */
+@media (min-width: 1920px) {
+    :root {
+        --cell-size: 72px !important; /* Large, gorgeous high-fidelity board */
+        --chat-font-size: 15px !important;
+        --def-font-size: 17px !important;
+    }
+    .play-grid {
+        --left-panel-w: 520px !important; /* Tons of space for users and scores */
+        --right-panel-w: 500px !important; /* Massive space for words list and tabs */
+        gap: 24px !important;
+    }
+}
