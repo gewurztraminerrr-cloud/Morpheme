@@ -3873,6 +3873,8 @@ document.addEventListener('keydown', (e) => {
 });
 
     // Real-time highlighting and "word declaration" while typing
+    let typingHighlightTimeout = null;
+
     wordInputEl.addEventListener('input', () => {
         const word = wordInputEl.value.trim();
         
@@ -3882,27 +3884,44 @@ document.addEventListener('keydown', (e) => {
             const chatInput = document.getElementById('chat-input');
             if (chatInput) setTimeout(() => chatInput.focus(), 150);
         }
-        const board = window.lastGameState ? window.lastGameState.board : null;
 
-        const isEnabled = window.userSettings && window.userSettings.highlight_typing !== false;
-        if (!isEnabled) {
+        // Fast path: if empty or too short, clear highlight instantly and cancel any pending search
+        if (!word || word.length < 3) {
+            if (typingHighlightTimeout) {
+                clearTimeout(typingHighlightTimeout);
+                typingHighlightTimeout = null;
+            }
             document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
             return;
         }
 
-        document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
-        if (!word || !board || (mouseState && mouseState.isDown)) return;
-
-        const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
-        const path = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
-        if (path) {
-            path.forEach(coord => {
-                let selector = `.board-cell[data-r="${coord.r}"][data-c="${coord.c}"]`;
-                if (coord.f !== undefined) selector = `.board-cell[data-f="${coord.f}"][data-r="${coord.r}"][data-c="${coord.c}"]`;
-                const cell = document.querySelector(selector);
-                if (cell) cell.classList.add('typing-highlight');
-            });
+        // Debounce pathfinding logic by 30ms so that typing characters renders with zero-latency
+        if (typingHighlightTimeout) {
+            clearTimeout(typingHighlightTimeout);
         }
+
+        typingHighlightTimeout = setTimeout(() => {
+            const board = window.lastGameState ? window.lastGameState.board : null;
+            const isEnabled = window.userSettings && window.userSettings.highlight_typing !== false;
+            if (!isEnabled) {
+                document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
+                return;
+            }
+
+            document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
+            if (!board || (mouseState && mouseState.isDown)) return;
+
+            const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
+            const path = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
+            if (path) {
+                path.forEach(coord => {
+                    let selector = `.board-cell[data-r="${coord.r}"][data-c="${coord.c}"]`;
+                    if (coord.f !== undefined) selector = `.board-cell[data-f="${coord.f}"][data-r="${coord.r}"][data-c="${coord.c}"]`;
+                    const cell = document.querySelector(selector);
+                    if (cell) cell.classList.add('typing-highlight');
+                });
+            }
+        }, 30);
     });
 }
 initWordSubmission();
