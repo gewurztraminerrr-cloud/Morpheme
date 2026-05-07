@@ -2640,9 +2640,13 @@ function setupManualTool() {
 
         const clearBtn = document.getElementById('manual-clear-btn');
         if (clearBtn) {
-            clearBtn.onclick = (e) => {
+            const handleClear = (e) => {
+                if (e) e.preventDefault();
+                console.log("[ManualSolver] Clear button clicked.");
                 clearManualGrid();
             };
+            clearBtn.onclick = handleClear;
+            clearBtn.addEventListener('click', handleClear);
         }
 
         const dimSelect = document.getElementById('manual-dim');
@@ -2656,15 +2660,21 @@ function setupManualTool() {
 }
 
 function clearManualGrid() {
+    console.log("[ManualSolver] clearManualGrid initiated.");
     const gridEl = document.getElementById('manual-grid');
     if (gridEl) {
-        const cells = gridEl.querySelectorAll('.manual-cell');
+        // Query both class and input tags for bulletproof lookup
+        const cells = gridEl.querySelectorAll('input, .manual-cell');
+        console.log(`[ManualSolver] Clearing ${cells.length} grid inputs.`);
         cells.forEach(cell => {
             cell.value = '';
+            cell.setAttribute('value', '');
         });
         if (cells[0]) {
             cells[0].focus();
         }
+    } else {
+        console.warn("[ManualSolver] #manual-grid element not found!");
     }
     
     manualSolvedWords = [];
