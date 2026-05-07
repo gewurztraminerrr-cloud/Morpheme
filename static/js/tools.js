@@ -2774,14 +2774,24 @@ function revealManualWords(forceShow = false) {
                 Found ${manualSolvedWords.length} words
             </div>
             <div style="flex: 1; overflow-y: auto; padding: 20px;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px;">
         `;
 
-        html += manualSolvedWords.map(w => `
-            <div title="${w}" style="padding: 10px 8px; background: rgba(var(--text-primary-rgb), 0.05); border: 1px solid rgba(var(--text-primary-rgb), 0.1); border-radius: 10px; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; text-align: center; font-size: 1.1rem; transition: all 0.2s; cursor: default; box-shadow: 0 2px 4px rgba(0,0,0,0.05); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                ${w}
-            </div>
-        `).join('');
+        html += manualSolvedWords.map(w => {
+            let fontSize = "1.1rem";
+            if (w.length >= 12) {
+                fontSize = "0.75rem";
+            } else if (w.length >= 10) {
+                fontSize = "0.85rem";
+            } else if (w.length >= 8) {
+                fontSize = "0.95rem";
+            }
+            return `
+                <div title="${w}" style="padding: 10px 6px; background: rgba(var(--text-primary-rgb), 0.05); border: 1px solid rgba(var(--text-primary-rgb), 0.1); border-radius: 10px; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; text-align: center; font-size: ${fontSize}; transition: all 0.2s; cursor: default; box-shadow: 0 2px 4px rgba(0,0,0,0.05); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    ${w}
+                </div>
+            `;
+        }).join('');
 
         html += `
                 </div>
