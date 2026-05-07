@@ -2940,6 +2940,41 @@ def get_definition():
         except Exception as e:
             print(f"Online dictionary API fallback failed for '{word}': {e}")
 
+    # SECONDARY ONLINE FALLBACK: If still not found, try English Wiktionary REST API
+    if not definition:
+        try:
+            import urllib.request
+            import json
+            import re
+            import html
+            url = f"https://en.wiktionary.org/api/rest_v1/page/definition/{word.lower()}"
+            req = urllib.request.Request(
+                url, 
+                headers={'User-Agent': 'MorphemeApp/1.0 (jeff@morpheme.games) Python-urllib'}
+            )
+            with urllib.request.urlopen(req, timeout=3.0) as response:
+                api_data = json.loads(response.read().decode('utf-8'))
+                if isinstance(api_data, dict) and "en" in api_data:
+                    def_parts = []
+                    for item in api_data["en"]:
+                        part_of_speech = item.get("partOfSpeech", "")
+                        for d in item.get("definitions", []):
+                            text = d.get("definition", "")
+                            # strip HTML tags
+                            text = re.sub(r"<[^>]+>", "", text)
+                            # replace multiple spaces
+                            text = re.sub(r"\s+", " ", text).strip()
+                            # unescape html entities
+                            text = html.unescape(text)
+                            if text:
+                                def_parts.append(f"({part_of_speech}) {text}")
+                    if def_parts:
+                        definition = "; ".join(def_parts)
+                        # Cache it
+                        DEFINITIONS_CACHE[word] = definition
+        except Exception as e:
+            print(f"Wiktionary API fallback failed for '{word}': {e}")
+
     if definition or pronunciation:
         return jsonify({
             'word': word, 
