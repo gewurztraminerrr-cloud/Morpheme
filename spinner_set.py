@@ -76,7 +76,7 @@ class SpinnerSet:
                     return {
                         'min_word_length': initial_min,
                         'difficulty': 'Easy' if initial_min < 5 else 'Hard',
-                        'word_count_range': random.choice(['100-200', '200-300', '300-400']),
+                        'word_count_range': random.choice(['50-100', '100-200', '200-300', '300-400']),
                         'dictionary': 'NWL',
                         'board_format': 'Normal',
                         'generated_at': time.time()
@@ -112,7 +112,7 @@ class SpinnerSet:
             return {
                 'difficulty': random.choice(['Easy', 'Medium', 'Hard']),
                 'dictionary': random.choice(['NWL', 'CSW']),
-                'word_count_range': random.choice(['100-200', '200-300', '300-400']),
+                'word_count_range': random.choice(['50-100', '100-200', '200-300', '300-400']),
                 'board_format': 'Normal',
                 'min_word_length': 3,
                 'generated_at': time.time()
@@ -158,9 +158,9 @@ class SpinnerSet:
     
     @staticmethod
     def _spin_word_count(dictionary, min_word_length, difficulty, board_dimensions):
-        # USER REQUEST: 1% 500+, 33% 100-200, 33% 200-300, 33% 300-400
-        choices = ['100-200', '200-300', '300-400', '500+']
-        weights = [33, 33, 33, 1]
+        # USER REQUEST: 17% 50-100, 33% 100-200, 33% 200-300, 17% 300-400
+        choices = ['50-100', '100-200', '200-300', '300-400']
+        weights = [17, 33, 33, 17]
         return random.choices(choices, weights=weights)[0]
     
     @staticmethod

@@ -348,9 +348,20 @@ class GameRoom:
         # Map specific labels to numeric ranges for internal logic
         if wc_range == '50-100': return (50, 100)
         if wc_range == '100-200': return (100, 200)
+        if wc_range == '200-300': return (200, 300)
+        if wc_range == '300-400': return (300, 400)
         if wc_range == '200+': return (200, 500)
         if wc_range == '500+': return (500, 99999)
         if wc_range in ['1500+', '2000+']: return (500, 99999) # Backward compatibility
+        
+        # Generic dash parsing fallback if present in string format
+        if '-' in str(wc_range):
+            try:
+                p = str(wc_range).split('-')
+                return (int(p[0]), int(p[1]))
+            except:
+                pass
+                
         return (0, 0)
     
     def remove_player(self, user_id, force=False):
@@ -3229,8 +3240,8 @@ class RoomManager:
     
     def _get_factchecked_wc_range(self, count):
         """Map actual word count to the closest standard spinner display range.
-           Matches the 100-200 and 200-300 targets defined in SpinnerSet."""
-        if count >= 300: return '200-300'
+           Matches the 50-100, 100-200, 200-300, and 300-400 targets defined in SpinnerSet."""
+        if count >= 300: return '300-400'
         if count >= 200: return '200-300'
         if count >= 100: return '100-200'
         return '50-100'
