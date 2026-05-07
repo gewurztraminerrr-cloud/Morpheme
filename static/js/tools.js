@@ -2774,11 +2774,11 @@ function revealManualWords(forceShow = false) {
                 Found ${manualSolvedWords.length} words
             </div>
             <div style="flex: 1; overflow-y: auto; padding: 20px;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px;">
         `;
 
         html += manualSolvedWords.map(w => `
-            <div style="padding: 12px 15px; background: rgba(var(--text-primary-rgb), 0.05); border: 1px solid rgba(var(--text-primary-rgb), 0.1); border-radius: 10px; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; text-align: center; font-size: 1.1rem; transition: all 0.2s; cursor: default; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <div title="${w}" style="padding: 10px 8px; background: rgba(var(--text-primary-rgb), 0.05); border: 1px solid rgba(var(--text-primary-rgb), 0.1); border-radius: 10px; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; text-align: center; font-size: 1.1rem; transition: all 0.2s; cursor: default; box-shadow: 0 2px 4px rgba(0,0,0,0.05); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                 ${w}
             </div>
         `).join('');
