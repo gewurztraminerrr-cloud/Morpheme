@@ -4542,11 +4542,12 @@ body .tab-btn.active {
         flex-direction: row !important;
         flex-wrap: nowrap !important; /* Force items to stay on a single swipeable row! */
         overflow-x: auto !important; /* Inner menu can scroll if buttons exceed width */
+        -webkit-overflow-scrolling: touch !important; /* iOS smooth scrolling momentum */
         scrollbar-width: none !important;
-        gap: 6px !important;
-        justify-content: center !important; /* Center-align the nav buttons in their swipe slide */
+        gap: 8px !important;
+        justify-content: flex-start !important; /* Start-align buttons to let user scroll natively! */
         align-items: center !important;
-        padding: 0 10px !important;
+        padding: 0 15px !important;
         box-sizing: border-box !important;
     }
     .nav::-webkit-scrollbar {
@@ -4564,9 +4565,10 @@ body .tab-btn.active {
         display: none !important; /* Hide pronunciation on small screens to save space */
     }
     .nav-btn {
-        padding: 5px 8px !important;
-        font-size: 0.75rem !important;
+        padding: 6px 12px !important; /* Larger touch targets on mobile viewports */
+        font-size: 0.8rem !important; /* Perfectly readable font sizing */
         white-space: nowrap !important; /* Prevent text wrapping inside buttons! */
+        flex-shrink: 0 !important; /* Crucial: prevent buttons from being squished! */
     }
     .pages {
         padding: 5px 10px !important;
@@ -4577,11 +4579,14 @@ body .tab-btn.active {
         padding-left: 0 !important;
         flex-direction: row !important;
         align-items: center !important;
-        gap: 6px !important;
+        gap: 8px !important;
+        flex-shrink: 0 !important; /* Prevent user box from being squished */
     }
     .logout-btn {
-        padding: 4px 8px !important;
-        font-size: 0.7rem !important;
+        padding: 5px 10px !important; /* Readable, non-squished logout button */
+        font-size: 0.75rem !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
     }
 }
 
