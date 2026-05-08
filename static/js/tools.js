@@ -1561,13 +1561,19 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
             const layoutMain = document.querySelector('.history-review-layout') || document.getElementById('integrated-replay-panel');
             if (!layoutMain) return;
 
-            const availWidth = boardContainer.parentElement.clientWidth * 0.6; // Board area usually gets ~60%
-            const availHeight = layoutMain.clientHeight - 80; // Minus header/padding padding
+            let availWidth = boardContainer.parentElement.clientWidth * 0.6; // Board area usually gets ~60%
+            let availHeight = layoutMain.clientHeight - 80; // Minus header/padding padding
+            let gap = 12;
+
+            if (window.innerWidth <= 900) {
+                availWidth = boardContainer.parentElement.clientWidth - 40; // Full width of stacked area
+                availHeight = 350; // Balanced vertical height on mobile
+                gap = 6; // Compact gap on mobile
+            }
 
             // Calculate max cell size to fit width and height constraints
-            const gap = 12;
-            const maxCellW = (availWidth - (cols - 1) * gap - 50) / cols;
-            const maxCellH = (availHeight - (rows - 1) * gap - 50) / rows;
+            const maxCellW = (availWidth - (cols - 1) * gap - 20) / cols;
+            const maxCellH = (availHeight - (rows - 1) * gap - 20) / rows;
 
             // Optimal cell size (capped for aesthetics on 4x4)
             const cellSize = Math.floor(Math.min(maxCellW, maxCellH, 120));

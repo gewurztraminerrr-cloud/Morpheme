@@ -3893,4 +3893,96 @@ input[type=range]::-moz-range-track {
     .chart-desc {
         font-size: 0.75rem !important;
     }
+
+    /* Leaderboard Times row placement on mobile */
+    .lb-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 15px !important;
+        margin-bottom: 20px !important;
+    }
+    .lb-tabs {
+        width: 100% !important;
+        overflow-x: auto !important; /* Allow scroll if extremely narrow */
+        white-space: nowrap !important;
+        scrollbar-width: none !important;
+        display: flex !important;
+    }
+    .lb-tabs::-webkit-scrollbar {
+        display: none !important;
+    }
+    .lb-tab {
+        flex: 1 !important;
+        text-align: center !important;
+        padding: 8px 10px !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Round Replay Overlay readability overhaul on mobile */
+    .history-review-modal {
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important;
+        border: none !important;
+    }
+
+    .history-review-layout {
+        overflow-y: auto !important;
+        display: block !important;
+        height: calc(100vh - 70px) !important;
+    }
+
+    .history-review-main {
+        display: flex !important;
+        flex-direction: column-reverse !important; /* Stack vertically with board at top and walkthrough at bottom */
+        padding: 15px !important;
+        gap: 20px !important;
+        overflow-y: visible !important;
+    }
+
+    .review-board-main {
+        width: 100% !important;
+        padding: 15px !important;
+        border-radius: 16px !important;
+        margin-bottom: 10px !important;
+    }
+
+    .history-walkthrough-section {
+        width: 100% !important;
+        height: auto !important;
+        flex: none !important;
+    }
+
+    .walkthrough-list {
+        max-height: none !important; /* Expand full list in vertical scroll */
+        min-height: auto !important;
+        overflow-y: visible !important;
+    }
+
+    .walkthrough-item {
+        padding: 12px 0 !important;
+        gap: 12px !important;
+    }
+
+    .walkthrough-time {
+        font-size: 0.85rem !important;
+        min-width: 55px !important;
+    }
+
+    .walkthrough-word {
+        font-size: 1.1rem !important;
+    }
+
+    .walkthrough-points {
+        font-size: 0.85rem !important;
+    }
+
+    .history-review-modal .overlay-header {
+        padding: 15px 20px !important;
+    }
+    
+    .header-main h2 {
+        font-size: 1.5rem !important;
+    }
 }
