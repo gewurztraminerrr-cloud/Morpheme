@@ -402,8 +402,8 @@ async function updateGameState(incomingState = null) {
 
         // Mobile Board Transposition: Turn landscape flat boards (rows < cols) into portrait (longest side runs vertically)
         if (window.innerWidth <= 900 && state.board && state.board.length > 0 && Array.isArray(state.board[0])) {
-            const is3D = state.board_dimensions === '3x3x3' || state.board.length === 6;
-            if (!is3D) {
+            const isBoard3D = state.board_dimensions === '3x3x3' || state.board.length === 6;
+            if (!isBoard3D) {
                 const rows = state.board.length;
                 const cols = state.board[0].length;
                 if (rows < cols) {
