@@ -400,6 +400,38 @@ async function updateGameState(incomingState = null) {
 
         if (!state) return;
 
+        // Mobile Board Transposition: Turn landscape flat boards (rows < cols) into portrait (longest side runs vertically)
+        if (window.innerWidth <= 900 && state.board && state.board.length > 0 && Array.isArray(state.board[0])) {
+            const is3D = state.board_dimensions === '3x3x3' || state.board.length === 6;
+            if (!is3D) {
+                const rows = state.board.length;
+                const cols = state.board[0].length;
+                if (rows < cols) {
+                    // Transpose Board letters array
+                    const transposedBoard = [];
+                    for (let c = 0; c < cols; c++) {
+                        transposedBoard[c] = [];
+                        for (let r = 0; r < rows; r++) {
+                            transposedBoard[c][r] = state.board[r][c];
+                        }
+                    }
+                    state.board = transposedBoard;
+
+                    // Transpose Cell Density grid array
+                    if (state.cell_density && state.cell_density.length > 0 && Array.isArray(state.cell_density[0])) {
+                        const transposedDensity = [];
+                        for (let c = 0; c < cols; c++) {
+                            transposedDensity[c] = [];
+                            for (let r = 0; r < rows; r++) {
+                                transposedDensity[c][r] = state.cell_density[r][c];
+                            }
+                        }
+                        state.cell_density = transposedDensity;
+                    }
+                }
+            }
+        }
+
         // Mobile Device Restriction: Cube is not allowed on mobile!
         const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const is3D = state.board_dimensions === '3x3x3' || (state.board && state.board.length === 6 && Array.isArray(state.board[0]));

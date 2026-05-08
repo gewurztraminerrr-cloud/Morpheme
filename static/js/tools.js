@@ -1553,6 +1553,25 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     // 3. Render Board with Dynamic Scaling
     const boardContainer = document.getElementById(`${prefix}-board-container`);
     if (boardContainer && round.board && round.board.length > 0) {
+        // Mobile Board Transposition: Turn landscape flat boards (rows < cols) into portrait (longest side runs vertically)
+        if (window.innerWidth <= 900 && Array.isArray(round.board[0])) {
+            const is3D = round.board.length === 6;
+            if (!is3D) {
+                const rows = round.board.length;
+                const cols = round.board[0].length;
+                if (rows < cols) {
+                    const transposed = [];
+                    for (let c = 0; c < cols; c++) {
+                        transposed[c] = [];
+                        for (let r = 0; r < rows; r++) {
+                            transposed[c][r] = round.board[r][c];
+                        }
+                    }
+                    round.board = transposed;
+                }
+            }
+        }
+
         const rows = round.board.length;
         const cols = round.board[0].length;
 
