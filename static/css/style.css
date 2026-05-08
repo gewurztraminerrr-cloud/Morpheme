@@ -4489,38 +4489,110 @@ body .tab-btn.active {
     }
 }
 
-/* For iPads in portrait and medium tablets (width <= 900px) */
+/* For iPads in portrait, medium tablets, and mobile devices (width <= 900px) */
 @media (max-width: 900px) {
     .header {
-        padding: 10px;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: flex-start !important;
+        align-items: center !important;
+        overflow-x: auto !important;
+        scroll-snap-type: x mandatory !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important; /* Hide scrollbar for clean UI */
+        padding: 10px 15px !important;
+        gap: 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
+    .header::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .logo {
+        min-width: 100% !important;
+        flex-shrink: 0 !important;
+        scroll-snap-align: start !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 8px !important;
+        box-sizing: border-box !important;
+        position: relative !important;
+    }
+
+    /* Add a subtle swipe indicator dot/arrow on mobile logo */
+    .logo::after {
+        content: 'Swipe for Menu ➔';
+        position: absolute;
+        bottom: -5px;
+        font-size: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        color: var(--accent-color);
+        opacity: 0.75;
+        animation: slideHint 1.5s infinite alternate;
+    }
+
+    .nav {
+        min-width: 100% !important;
+        flex-shrink: 0 !important;
+        scroll-snap-align: start !important;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important; /* Force items to stay on a single swipeable row! */
+        overflow-x: auto !important; /* Inner menu can scroll if buttons exceed width */
+        scrollbar-width: none !important;
+        gap: 6px !important;
+        justify-content: center !important; /* Center-align the nav buttons in their swipe slide */
+        align-items: center !important;
+        padding: 0 10px !important;
+        box-sizing: border-box !important;
+    }
+    .nav::-webkit-scrollbar {
+        display: none !important;
+    }
+
     .logo-text {
-        font-size: 1.3rem;
+        font-size: 1.3rem !important;
     }
     .logo-icon {
-        height: 30px;
-        width: 30px;
+        height: 30px !important;
+        width: 30px !important;
     }
     .logo .pronunciation {
-        display: none; /* Hide pronunciation on small screens to save space */
+        display: none !important; /* Hide pronunciation on small screens to save space */
     }
     .nav-btn {
-        padding: 4px 8px;
-        font-size: 0.75rem;
+        padding: 5px 8px !important;
+        font-size: 0.75rem !important;
+        white-space: nowrap !important; /* Prevent text wrapping inside buttons! */
     }
     .pages {
-        padding: 5px 10px;
+        padding: 5px 10px !important;
+    }
+    .user-display {
+        border-left: none !important;
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+    .logout-btn {
+        padding: 4px 8px !important;
+        font-size: 0.7rem !important;
     }
 }
 
-/* For mobile devices (width <= 600px) */
-@media (max-width: 600px) {
-    .nav {
-        gap: 4px;
+@keyframes slideHint {
+    from {
+        transform: translateX(-3px);
+        opacity: 0.5;
     }
-    .nav-btn {
-        padding: 4px 6px;
-        font-size: 0.7rem;
+    to {
+        transform: translateX(3px);
+        opacity: 1;
     }
 }
 

@@ -152,6 +152,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         adjustLobbyLayoutForDevice();
     }
 
+    // Mobile swipe listener for the top header navigation
+    if (typeof setupMobileHeaderSwipe === 'function') {
+        setupMobileHeaderSwipe();
+    }
+
     // 2. Single Instance Validation (Non-blocking for UI)
     const isSingle = await validateSingleInstance();
     if (!isSingle) return;
@@ -500,6 +505,62 @@ window.addEventListener('resize', () => {
         adjustLobbyLayoutForDevice();
     }
 });
+
+function setupMobileHeaderSwipe() {
+    const logo = document.querySelector('.logo');
+    const header = document.querySelector('.header');
+    
+    if (!logo || !header) return;
+    
+    let startX = 0;
+    let startY = 0;
+    
+    logo.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+    }, { passive: true });
+    
+    logo.addEventListener('touchend', (e) => {
+        const diffX = e.changedTouches[0].clientX - startX;
+        const diffY = e.changedTouches[0].clientY - startY;
+        
+        // Detect horizontal swipe left (threshold of 30px)
+        if (diffX < -30 && Math.abs(diffX) > Math.abs(diffY)) {
+            console.log('[Swipe] Swiped left on logo. Revealing navigation menu.');
+            header.scrollTo({
+                left: header.clientWidth,
+                behavior: 'smooth'
+            });
+        }
+    }, { passive: true });
+    
+    // Also, if they swipe right on the nav bar, allow them to swipe back to the logo!
+    const nav = document.querySelector('.nav');
+    if (nav) {
+        nav.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        }, { passive: true });
+        
+        nav.addEventListener('touchend', (e) => {
+            const diffX = e.changedTouches[0].clientX - startX;
+            const diffY = e.changedTouches[0].clientY - startY;
+            
+            // Detect horizontal swipe right (threshold of 30px)
+            if (diffX > 30 && Math.abs(diffX) > Math.abs(diffY)) {
+                // Only swipe back if they are scrolled to the nav menu start
+                if (header.scrollLeft > 50) {
+                    console.log('[Swipe] Swiped right on nav. Showing logo.');
+                    header.scrollTo({
+                        left: 0,
+                        behavior: 'smooth'
+                    });
+                }
+            }
+        }, { passive: true });
+    }
+}
+window.setupMobileHeaderSwipe = setupMobileHeaderSwipe;
 
 // Note: Private Match polling is handled via loadPrivateMatches in private_matches.js
 
@@ -957,6 +1018,17 @@ function updateAuthUI(rating = null) {
             modsBtn.style.display = isAuthorized ? 'block' : 'none';
         }
 
+        // Auto-scroll header to reveal the menu items when logged in on mobile devices
+        const header = document.querySelector('.header');
+        if (header && window.innerWidth <= 900) {
+            setTimeout(() => {
+                header.scrollTo({
+                    left: header.clientWidth,
+                    behavior: 'smooth'
+                });
+            }, 350); // Fluid delay to align with page routing rendering
+        }
+
     } else {
         if (loginNavBtn) loginNavBtn.classList.remove('hidden');
         if (userDisplay) userDisplay.classList.add('hidden');
@@ -966,6 +1038,15 @@ function updateAuthUI(rating = null) {
         // Hide Rating Bar when logged out
         const bar = document.getElementById('game-color-bar');
         if (bar) bar.innerHTML = '';
+
+        // Scroll back to logo on logout on mobile devices
+        const header = document.querySelector('.header');
+        if (header && window.innerWidth <= 900) {
+            header.scrollTo({
+                left: 0,
+                behavior: 'smooth'
+            });
+        }
     }
 }
 
