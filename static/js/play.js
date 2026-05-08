@@ -2806,12 +2806,27 @@ function checkBoardOverflow() {
     const availableForPanels = windowWidth - requiredBoardWidth - safetyMargin;
 
     // 4. Distribute Remaining Space Dynamically to fit the board snug
+    // Fetch adaptive default limits based on screen size (matching media queries)
     let maxLeft = isSixByEight ? 350 : 340;
     let maxRight = isSixByEight ? 330 : 320;
+
+    if (windowWidth >= 1920) {
+        maxLeft = 520;
+        maxRight = 500;
+    } else if (windowWidth >= 1600) {
+        maxLeft = 480;
+        maxRight = 460;
+    } else if (windowWidth >= 1400) {
+        maxLeft = 440;
+        maxRight = 420;
+    } else if (windowWidth < 1200) {
+        maxLeft = 320;
+        maxRight = 300;
+    }
     
     // Set a reasonable minimum boundary so sidebars remain readable/functional
-    const minLeft = 260;
-    const minRight = 260;
+    const minLeft = 200;
+    const minRight = 200;
 
     let newLeft = maxLeft;
     let newRight = maxRight;
@@ -2845,6 +2860,13 @@ function checkBoardOverflow() {
     // 5. Apply
     playPage.style.setProperty('--left-panel-w', `${newLeft}px`);
     playPage.style.setProperty('--right-panel-w', `${newRight}px`);
+
+    // CRITICAL: Apply directly to .play-grid to override CSS media queries specifying these vars on .play-grid
+    const playGrid = document.querySelector('.play-grid');
+    if (playGrid) {
+        playGrid.style.setProperty('--left-panel-w', `${newLeft}px`);
+        playGrid.style.setProperty('--right-panel-w', `${newRight}px`);
+    }
 
     // Maintain vertical scroll class
     if (boardPanel.scrollHeight > boardPanel.clientHeight) {
@@ -2920,6 +2942,12 @@ function checkBoardOverflow_OLD() {
     // 5. Apply
     playPage.style.setProperty('--left-panel-w', `${newLeft}px`);
     playPage.style.setProperty('--right-panel-w', `${newRight}px`);
+
+    const playGrid = document.querySelector('.play-grid');
+    if (playGrid) {
+        playGrid.style.setProperty('--left-panel-w', `${newLeft}px`);
+        playGrid.style.setProperty('--right-panel-w', `${newRight}px`);
+    }
 
     // Maintain vertical scroll class for potential other uses
     if (boardPanel.scrollHeight > boardPanel.clientHeight) {
