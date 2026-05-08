@@ -3747,3 +3747,45 @@ input[type=range]::-moz-range-track {
         max-width: 1400px !important; /* Expand settings panels horizontally on PC */
     }
 }
+
+/* Tools split-layout mobile responsiveness (sub-nav moves to top row, content spans full-width) */
+@media (max-width: 900px) {
+    .tools-split-layout {
+        flex-direction: column !important; /* Stack vertically instead of a side-by-side split layout! */
+        height: auto !important;
+        min-height: auto !important;
+        border: none !important;
+        background: transparent !important;
+    }
+
+    .tools-sidebar {
+        flex: 0 0 auto !important;
+        width: 100% !important;
+        flex-direction: row !important; /* Row orientation instead of vertical column! */
+        overflow-x: auto !important; /* Smooth horizontal scroll to browse tools! */
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important; /* Hide scrollbars for slick aesthetics */
+        border-right: none !important;
+        border-bottom: 1px solid var(--input-border) !important; /* Divider below the tools sub-nav */
+        padding: 8px 10px !important;
+        gap: 6px !important;
+        background: var(--bg-panel) !important;
+        box-sizing: border-box !important;
+    }
+    .tools-sidebar::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .tool-nav-btn {
+        flex-shrink: 0 !important; /* Never let the tool buttons squish! */
+        padding: 6px 12px !important; /* Compact premium size */
+        font-size: 0.85rem !important;
+        white-space: nowrap !important;
+    }
+
+    .tools-content {
+        width: 100% !important;
+        padding: 15px 0 !important; /* Give content full horizontal expansion! */
+        box-sizing: border-box !important;
+    }
+}
