@@ -1688,7 +1688,14 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
         }
 
         if (walkthroughList) {
-            walkthroughList.innerHTML = displayWords.map(w => renderWord(w)).join('');
+            let htmlContent = '';
+            if (window.innerWidth <= 900) {
+                // Newest at the top on mobile
+                htmlContent = displayWords.slice().reverse().map(w => renderWord(w)).join('');
+            } else {
+                htmlContent = displayWords.map(w => renderWord(w)).join('');
+            }
+            walkthroughList.innerHTML = htmlContent;
             if (sortedWords.length === 0) {
                 walkthroughList.innerHTML = '<p class="placeholder" style="color:rgba(255,255,255,0.2); text-align:center; padding:40px;">No words found in this round.</p>';
             }
@@ -1760,10 +1767,14 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
                         console.log(`[Review] Displaying word: ${word.word} (relative: ${relWordTime ? relWordTime.toFixed(1) : 'NaN'}s)`);
 
                         try {
-                            // Insert at BOTTOM (Chronological: Order Found)
+                            // Insert at TOP on mobile, or BOTTOM on desktop
                             if (walkthroughList) {
-                                walkthroughList.insertAdjacentHTML('beforeend', renderWord(word));
-                                walkthroughList.scrollTop = walkthroughList.scrollHeight;
+                                if (window.innerWidth <= 900) {
+                                    walkthroughList.insertAdjacentHTML('afterbegin', renderWord(word));
+                                } else {
+                                    walkthroughList.insertAdjacentHTML('beforeend', renderWord(word));
+                                    walkthroughList.scrollTop = walkthroughList.scrollHeight;
+                                }
                             }
 
                             currentScore += word.points;
