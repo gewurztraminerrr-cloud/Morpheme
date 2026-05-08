@@ -2289,7 +2289,7 @@ function updateParameters(state) {
     if (shouldUpdateLabels) {
         const newUniq = factUniq;
         const newDiff = factDiff;
-        const stringified = JSON.stringify([factBoardDims, factTimeLimit, factMinLen, factDict, factWordRange, factFmt, newDiff, newUniq]);
+        const stringified = JSON.stringify([factBoardDims, factTimeLimit, factMinLen, factDict, factWordRange, factFmt, newDiff, newUniq, factBonus]);
         
         if (window._lastParamString !== stringified) {
             window._lastParamString = stringified;
@@ -2300,6 +2300,7 @@ function updateParameters(state) {
             window._displayedParams.dict = factDict;
             window._displayedParams.range = factWordRange;
             window._displayedParams.fmt = factFmt;
+            window._displayedParams.bonus = factBonus + 'L';
             
             let diffLabel = factDiff;
             if (diffLabel === 'Varying...') diffLabel = 'Random';
@@ -2321,6 +2322,7 @@ function updateParameters(state) {
             if (document.getElementById('param-min')) document.getElementById('param-min').textContent = window._displayedParams.min;
             if (document.getElementById('param-dict')) document.getElementById('param-dict').textContent = window._displayedParams.dict;
             if (document.getElementById('param-range')) document.getElementById('param-range').textContent = window._displayedParams.range;
+            if (document.getElementById('param-bonus')) document.getElementById('param-bonus').textContent = window._displayedParams.bonus;
         }
     }
 
@@ -2338,6 +2340,10 @@ function updateParameters(state) {
     const format = document.getElementById('param-format');
     if (format && (shouldUpdateLabels || !format.textContent)) {
         format.textContent = window._displayedParams.fmt;
+    }
+    const pBonus = document.getElementById('param-bonus');
+    if (pBonus && (shouldUpdateLabels || !pBonus.textContent)) {
+        pBonus.textContent = window._displayedParams.bonus;
     }
     } catch (err) {
         console.error('[play.js] Error in updateParameters:', err);
