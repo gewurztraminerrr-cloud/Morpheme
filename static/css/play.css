@@ -3369,33 +3369,6 @@ input[type=range]::-moz-range-track {
     color: #ffffff !important;
     text-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
 }
-/* --- GLOBAL TOOLS UI ENHANCEMENT --- */
-.tool-pane input[type="text"],
-.tool-pane input[type="number"],
-.tool-pane select,
-.mod-section input[type="text"],
-.mod-section textarea,
-.mod-section select {
-    padding: 14px 20px !important;
-    font-size: 1.15rem !important;
-    border-radius: 12px !important;
-    height: auto !important;
-    background: rgba(var(--text-primary-rgb), 0.05) !important;
-    border: 1px solid rgba(var(--text-primary-rgb), 0.1) !important;
-    color: var(--text-primary) !important;
-}
-
-#valid-input, 
-#sub-input, 
-#seq-input {
-    width: 400px !important; /* Increase width for these specific ones */
-}
-
-/* Fix for Personal Timer inputs (they were already big, keeping them but ensuring they use the radius) */
-#timer-hours, #timer-minutes {
-    border-radius: 12px !important;
-}
-
 /* 3D Cube Styles */
 :root {
     --cube-face-size: 220px;
