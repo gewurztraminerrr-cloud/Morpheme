@@ -2929,6 +2929,9 @@ function checkBoardOverflow_OLD() {
     }
 }
 
+// Expose globally for app.js navigation and resize triggers
+window.checkBoardOverflow = checkBoardOverflow;
+
 // Initial Listener for Resize
 window.addEventListener('resize', () => {
     if (window.checkBoardOverflow) checkBoardOverflow();

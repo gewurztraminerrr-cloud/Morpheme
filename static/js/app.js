@@ -601,6 +601,11 @@ function showPage(pageId) {
             window.startGamePolling();
         }
 
+        // Trigger dynamic layout adjustment to fit board snugly on entry
+        if (typeof window.checkBoardOverflow === 'function') {
+            setTimeout(window.checkBoardOverflow, 50);
+        }
+
         // Auto-focus the input field
         setTimeout(() => {
             const input = document.getElementById('word-input');
