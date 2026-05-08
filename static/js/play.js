@@ -114,17 +114,27 @@ async function ejectToLobby(reason = "inactivity") {
 
     // 6. DELAYED SHOW: Stagger the modal so it appears AFTER the page switch
     setTimeout(() => {
-        const title = "Session Expired";
-        const message = `
+        let title = "Session Expired";
+        let message = `
             You have been returned to the lobby due to 10 minutes of inactivity. 
             <br><br>
             To keep room slots open for active players, matches are automatically cleared after prolonged idle periods. 
             Feel free to join a new match when you're ready!
         `;
         
+        if (reason === "mobile-cube-restriction") {
+            title = "Unsupported Device";
+            message = `
+                3D Cube mode is not supported on mobile devices. 
+                <br><br>
+                Please play on a desktop or laptop to enjoy Cube rooms! 
+                Feel free to join any other 2D match on your current device.
+            `;
+        }
+        
         if (window.showAlertModal) {
             window.showAlertModal(title, message, true); // priority=true ensures it isn't overwritten by lobby notices
-            console.log('[play.js] Displayed inactivity modal via showAlertModal.');
+            console.log('[play.js] Displayed modal via showAlertModal.');
         } else {
             // Fallback for extreme cases
             const modal = document.getElementById('generic-info-modal');
@@ -389,6 +399,15 @@ async function updateGameState(incomingState = null) {
         }
 
         if (!state) return;
+
+        // Mobile Device Restriction: Cube is not allowed on mobile!
+        const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const is3D = state.board_dimensions === '3x3x3' || (state.board && state.board.length === 6 && Array.isArray(state.board[0]));
+        if (isMobile && is3D) {
+            console.log('[Mobile] Cube rooms are not permitted on mobile devices. Kicking player to lobby.');
+            ejectToLobby("mobile-cube-restriction");
+            return;
+        }
 
         // --- BATTERY OPTIMIZATION: STATE CHANGE CHECK ---
         // If the state hasn't changed (excluding jittery fields like server_time/time_remaining), skip rendering
@@ -3428,7 +3447,7 @@ function reapplyBoardHighlights() {
     const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
 
     if (wordInputEl && wordInputEl.value.trim() && !(mouseState && mouseState.isDown)) {
-        const isEnabled = !(window.userSettings && window.userSettings.highlight_typing === false);
+        const isEnabled = window.userSettings && window.userSettings.highlight_typing !== false;
         if (isEnabled) {
             const word = wordInputEl.value.trim();
             const path = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
@@ -4634,6 +4653,16 @@ async function initTournamentPlay() {
             return;
         }
 
+        // Mobile Device Restriction: Cube is not allowed on mobile!
+        const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const is3D = data.params.board_dimensions === '3x3x3' || (data.board && data.board.length === 6 && Array.isArray(data.board[0]));
+        if (isMobile && is3D) {
+            console.log('[Mobile] Cube tournament matches are not permitted on mobile devices. Kicking player.');
+            localStorage.removeItem('tournament_play_active');
+            ejectToLobby("mobile-cube-restriction");
+            return;
+        }
+
         window.tournamentParams = data.params;
         const tournamentGameState = {
             board: data.board,
@@ -4848,6 +4877,16 @@ window.initPrivateMatchPlay = function () {
     const activeMatch = JSON.parse(localStorage.getItem('private_match_active'));
     if (!activeMatch) {
         exitPrivateMatchPlay();
+        return;
+    }
+
+    // Mobile Device Restriction: Cube is not allowed on mobile!
+    const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const is3D = activeMatch.parameters.board_dimensions === '3x3x3' || (activeMatch.board && activeMatch.board.length === 6 && Array.isArray(activeMatch.board[0]));
+    if (isMobile && is3D) {
+        console.log('[Mobile] Cube rooms are not permitted on mobile devices. Kicking player.');
+        localStorage.removeItem('private_match_active');
+        ejectToLobby("mobile-cube-restriction");
         return;
     }
 

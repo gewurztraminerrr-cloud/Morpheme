@@ -1066,3 +1066,13 @@
         text-shadow: none;
     }
 }
+
+/* PC Widescreen Horizonal Space Overrides */
+@media (min-width: 1400px) {
+    .modal-content-wrapper {
+        max-width: 1600px;
+    }
+    .faq-container {
+        max-width: 1400px;
+    }
+}

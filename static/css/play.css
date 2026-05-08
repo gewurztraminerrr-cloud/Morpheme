@@ -3722,3 +3722,28 @@ input[type=range]::-moz-range-track {
         max-height: 600px !important;
     }
 }
+
+/* PC Widescreen Horizonal Space Overrides */
+@media (min-width: 1400px) {
+    .tool-header,
+    .combo-control-panel,
+    .profile-container,
+    .profile-content-tabs,
+    .seq-results-container,
+    .combo-results-container,
+    .lists-container,
+    .random-word-container,
+    .wotd-container,
+    .manual-grid-scroll,
+    .manual-grid {
+        max-width: 1600px;
+    }
+    
+    .leaderboard-container {
+        max-width: 1600px;
+    }
+
+    .settings-grid {
+        max-width: 1400px !important; /* Expand settings panels horizontally on PC */
+    }
+}

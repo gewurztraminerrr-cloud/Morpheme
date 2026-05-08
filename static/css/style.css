@@ -5956,3 +5956,30 @@ select option,
     background-color: var(--bg-primary) !important;
     color: var(--text-primary) !important;
 }
+
+/* PC Widescreen Horizonal Space Overrides */
+@media (min-width: 1400px) {
+    .integrated-replay-container {
+        max-width: 1600px;
+    }
+    .lobby-container {
+        max-width: 1600px;
+    }
+    .store-container {
+        max-width: 1600px;
+    }
+    .tournament-layout {
+        max-width: 1600px;
+    }
+    .profile-card.premium {
+        max-width: 1200px !important; /* Significantly expand the profile card horizontal size on PC */
+    }
+}
+
+/* Hide 3D Cube selector on mobile screens */
+@media (max-width: 900px) {
+    .matrix-3d {
+        display: none !important;
+    }
+}
+

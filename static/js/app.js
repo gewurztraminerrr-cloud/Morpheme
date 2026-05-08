@@ -141,6 +141,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupModalListeners();
     setupAuth(); // Initialize auth listeners
     setupContactForm(); // Initialize contact form listeners
+    
+    // Mobile restriction: Hide/filter out Cube/3D options
+    if (typeof filterCubeOnMobile === 'function') {
+        filterCubeOnMobile();
+    }
 
     // 2. Single Instance Validation (Non-blocking for UI)
     const isSingle = await validateSingleInstance();
@@ -427,6 +432,38 @@ async function checkForumActivity() {
     }
 }
 window.checkForumActivity = checkForumActivity;
+
+function filterCubeOnMobile() {
+    const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (!isMobile) return;
+
+    console.log('[Mobile] Mobile device detected. Filtering out Cube/3D game options.');
+
+    // 1. Hide the Lobby 3D game matrix completely
+    const matrix3D = document.querySelector('.matrix-3d');
+    if (matrix3D) {
+        matrix3D.style.display = 'none';
+    }
+
+    // 2. Remove the 3x3x3 option from Solo & Friends dropdown in Lobby
+    const sfConfigDims = document.getElementById('sf-config-dims');
+    if (sfConfigDims) {
+        const cubeOption = sfConfigDims.querySelector('option[value="3x3x3"]');
+        if (cubeOption) {
+            cubeOption.remove();
+        }
+    }
+
+    // 3. Remove 3x3x3 option from rankings/leaderboard filter dropdown
+    const rankingsFilterDims = document.getElementById('rankings-filter-dims');
+    if (rankingsFilterDims) {
+        const cubeOption = rankingsFilterDims.querySelector('option[value="3x3x3"]');
+        if (cubeOption) {
+            cubeOption.remove();
+        }
+    }
+}
+window.filterCubeOnMobile = filterCubeOnMobile;
 
 // Note: Private Match polling is handled via loadPrivateMatches in private_matches.js
 
