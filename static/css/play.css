@@ -3647,7 +3647,7 @@ input[type=range]::-moz-range-track {
 /* Tablet & Smaller Mac Device Scaling for Play Page */
 @media (max-width: 1200px) {
     :root {
-        --cell-size: 50px !important; /* Scale board cells down gracefully on small displays */
+        --cell-size: 50px; /* Scale board cells down gracefully on small displays */
     }
     .play-grid {
         grid-template-columns: 320px 1fr 300px !important;
@@ -3656,7 +3656,7 @@ input[type=range]::-moz-range-track {
 
 @media (max-width: 992px) {
     :root {
-        --cell-size: 45px !important;
+        --cell-size: 45px;
     }
     .play-grid {
         grid-template-columns: 1fr !important; /* Stack panels vertically on tablet portraits */
@@ -3684,7 +3684,7 @@ input[type=range]::-moz-range-track {
 /* Standard Widescreen (min-width: 1400px) */
 @media (min-width: 1400px) {
     :root {
-        --cell-size: 64px !important; /* Slightly larger board cells for better legibility */
+        --cell-size: 64px; /* Slightly larger board cells for better legibility */
     }
     .play-grid {
         --left-panel-w: 440px !important;
@@ -3705,7 +3705,7 @@ input[type=range]::-moz-range-track {
 /* Big Desktop Monitors / Large Laptops (min-width: 1600px) */
 @media (min-width: 1600px) {
     :root {
-        --cell-size: 68px !important; /* Prominent board cells */
+        --cell-size: 68px; /* Prominent board cells */
         --chat-font-size: 14px !important;
         --def-font-size: 16px !important;
     }
@@ -3728,7 +3728,7 @@ input[type=range]::-moz-range-track {
 /* Extremely Large / Ultra-wide PC Monitors (min-width: 1920px) */
 @media (min-width: 1920px) {
     :root {
-        --cell-size: 72px !important; /* Large, gorgeous high-fidelity board */
+        --cell-size: 72px; /* Large, gorgeous high-fidelity board */
         --chat-font-size: 15px !important;
         --def-font-size: 17px !important;
     }
