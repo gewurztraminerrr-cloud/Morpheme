@@ -2805,33 +2805,41 @@ function checkBoardOverflow() {
     // The key difference: We start with Window and subtract Board
     const availableForPanels = windowWidth - requiredBoardWidth - safetyMargin;
 
-    // 4. Distribute Remaining Space
-    let newLeft = 0;
-    let newRight = 0;
+    // 4. Distribute Remaining Space Dynamically to fit the board snug
+    let maxLeft = isSixByEight ? 350 : 340;
+    let maxRight = isSixByEight ? 330 : 320;
+    
+    // Set a reasonable minimum boundary so sidebars remain readable/functional
+    const minLeft = 260;
+    const minRight = 260;
 
-    if (availableForPanels > 0) {
-        // Calculate proportional shares
-        const calculatedLeft = Math.floor(availableForPanels * 0.52);
-        const calculatedRight = Math.floor(availableForPanels * 0.48);
+    let newLeft = maxLeft;
+    let newRight = maxRight;
 
-        // CONDITIONAL CAPS
-        let maxLeft, maxRight;
+    // Total space requested by default maximum panels
+    const defaultTotalPanels = maxLeft + maxRight;
 
-        if (isSixByEight) {
-            // User Request: Near-standard panels to allow full board size
-            maxLeft = 350;   
-            maxRight = 330;  
-        } else {
-            // Standard/Balanced for smaller grids
-            maxLeft = 340;
-            maxRight = 320;
-        }
-
-        newLeft = Math.min(calculatedLeft, maxLeft);
-        newRight = Math.min(calculatedRight, maxRight);
+    if (availableForPanels >= defaultTotalPanels) {
+        // Plenty of room! Keep panels at their full gorgeous sizes
+        newLeft = maxLeft;
+        newRight = maxRight;
     } else {
-        newLeft = 0;
-        newRight = 0;
+        // The board is very large! We must shrink the side panels horizontally
+        // to make sure the board fits snugly in the middle.
+        if (availableForPanels >= (minLeft + minRight)) {
+            // We can distribute the constrained space proportionally!
+            const ratio = availableForPanels / defaultTotalPanels;
+            newLeft = Math.floor(maxLeft * ratio);
+            newRight = Math.floor(maxRight * ratio);
+            
+            // Enforce minimum limits
+            newLeft = Math.max(newLeft, minLeft);
+            newRight = Math.max(newRight, minRight);
+        } else {
+            // Under extreme constraints, use absolute minimal sizes
+            newLeft = minLeft;
+            newRight = minRight;
+        }
     }
 
     // 5. Apply

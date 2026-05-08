@@ -3623,7 +3623,8 @@ input[type=range]::-moz-range-track {
         --cell-size: 50px; /* Scale board cells down gracefully on small displays */
     }
     .play-grid {
-        grid-template-columns: 320px 1fr 300px !important;
+        --left-panel-w: 320px;
+        --right-panel-w: 300px;
     }
 }
 
@@ -3660,8 +3661,8 @@ input[type=range]::-moz-range-track {
         --cell-size: 64px; /* Slightly larger board cells for better legibility */
     }
     .play-grid {
-        --left-panel-w: 440px !important;
-        --right-panel-w: 420px !important;
+        --left-panel-w: 440px;
+        --right-panel-w: 420px;
         gap: 16px !important;
     }
     .player-item {
@@ -3683,8 +3684,8 @@ input[type=range]::-moz-range-track {
         --def-font-size: 16px !important;
     }
     .play-grid {
-        --left-panel-w: 480px !important;
-        --right-panel-w: 460px !important;
+        --left-panel-w: 480px;
+        --right-panel-w: 460px;
         gap: 20px !important;
     }
     .player-item {
@@ -3706,8 +3707,8 @@ input[type=range]::-moz-range-track {
         --def-font-size: 17px !important;
     }
     .play-grid {
-        --left-panel-w: 520px !important; /* Tons of space for users and scores */
-        --right-panel-w: 500px !important; /* Massive space for words list and tabs */
+        --left-panel-w: 520px; /* Tons of space for users and scores */
+        --right-panel-w: 500px; /* Massive space for words list and tabs */
         gap: 24px !important;
     }
     .player-item {
