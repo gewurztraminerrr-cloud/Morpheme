@@ -3788,4 +3788,109 @@ input[type=range]::-moz-range-track {
         padding: 15px 0 !important; /* Give content full horizontal expansion! */
         box-sizing: border-box !important;
     }
+
+    /* Responsive input rows for all tools */
+    .input-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        gap: 8px !important;
+    }
+    .input-row > input,
+    .input-row > select,
+    .input-row > button {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 12px !important;
+        height: auto !important;
+    }
+
+    /* Combo input padding fix */
+    #combo-input {
+        padding: 12px 15px !important;
+        font-size: 1.1rem !important;
+    }
+
+    /* Profile layout stack vertically on mobile */
+    .profile-layout {
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 20px !important;
+    }
+    .profile-left-column {
+        width: 100% !important;
+    }
+    .profile-avatar.large {
+        width: 120px !important;
+        height: 120px !important;
+        font-size: 3rem !important;
+        border-radius: 20px !important;
+    }
+    .profile-username-large {
+        font-size: 2.2rem !important;
+        text-align: center !important;
+    }
+    .profile-quote-minimal {
+        text-align: center !important;
+    }
+    .profile-metadata-row {
+        justify-content: center !important;
+        gap: 8px !important;
+        margin-bottom: 20px !important;
+    }
+
+    /* Profile stats grid responsive columns */
+    .profile-stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important; /* Stacks cleanly in pairs */
+        gap: 8px !important;
+    }
+    .stat-box {
+        padding: 10px !important;
+    }
+    .stat-num {
+        font-size: 1.1rem !important;
+    }
+
+    /* profile-tabs-header styling on mobile scroll */
+    .profile-tabs-header {
+        display: flex !important;
+        flex-direction: row !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        gap: 6px !important;
+        scrollbar-width: none !important;
+    }
+    .profile-tabs-header::-webkit-scrollbar {
+        display: none !important;
+    }
+    .profile-tab-toggle {
+        flex-shrink: 0 !important;
+        padding: 8px 12px !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Personal Timer numbers size */
+    #timer-hours, #timer-minutes {
+        width: 90px !important;
+        height: 65px !important;
+        font-size: 2rem !important;
+    }
+
+    /* Manual solver grid scale */
+    .manual-cell {
+        width: 42px !important;
+        height: 42px !important;
+        font-size: 1.4rem !important;
+    }
+    .manual-grid-scroll {
+        padding: 10px !important;
+    }
+
+    /* Chart descriptions and titles font sizes */
+    .result-section h3 {
+        font-size: 0.9rem !important;
+    }
+    .chart-desc {
+        font-size: 0.75rem !important;
+    }
 }
