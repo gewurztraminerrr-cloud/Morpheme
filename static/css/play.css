@@ -3642,7 +3642,7 @@ input[type=range]::-moz-range-track {
         overflow-y: auto !important;
     }
     .left-panel-container, .words-panel {
-        height: auto !important;
+        display: contents !important; /* Allow direct grid item behavior for children */
     }
     .players-panel, .words-table-box, .definitions-panel {
         height: 350px !important;
@@ -3650,6 +3650,22 @@ input[type=range]::-moz-range-track {
     }
     .board-panel {
         height: auto !important;
+    }
+    /* Explicit visual ordering: puts the chat box below definitions at the very bottom */
+    .players-panel {
+        order: 1 !important;
+    }
+    .board-panel {
+        order: 2 !important;
+    }
+    .words-table-box {
+        order: 3 !important;
+    }
+    .definitions-panel {
+        order: 4 !important;
+    }
+    .chat-panel {
+        order: 5 !important;
     }
 }
 
