@@ -442,7 +442,7 @@ async function updateGameState(incomingState = null) {
 
         // Mobile Device Restriction: Cube is not allowed on mobile!
         const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        const is3D = state.board_dimensions === '3x3x3' || (state.board && state.board.length === 6 && Array.isArray(state.board[0]));
+        const is3D = state.board_dimensions === '3x3x3' || (state.board && state.board.length === 6 && Array.isArray(state.board[0]) && Array.isArray(state.board[0][0]));
         if (isMobile && is3D) {
             console.log('[Mobile] Cube rooms are not permitted on mobile devices. Kicking player to lobby.');
             ejectToLobby("mobile-cube-restriction");
@@ -4695,7 +4695,7 @@ async function initTournamentPlay() {
 
         // Mobile Device Restriction: Cube is not allowed on mobile!
         const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        const is3D = data.params.board_dimensions === '3x3x3' || (data.board && data.board.length === 6 && Array.isArray(data.board[0]));
+        const is3D = data.params.board_dimensions === '3x3x3' || (data.board && data.board.length === 6 && Array.isArray(data.board[0]) && Array.isArray(data.board[0][0]));
         if (isMobile && is3D) {
             console.log('[Mobile] Cube tournament matches are not permitted on mobile devices. Kicking player.');
             localStorage.removeItem('tournament_play_active');
@@ -4921,7 +4921,7 @@ window.initPrivateMatchPlay = function () {
 
     // Mobile Device Restriction: Cube is not allowed on mobile!
     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const is3D = activeMatch.parameters.board_dimensions === '3x3x3' || (activeMatch.board && activeMatch.board.length === 6 && Array.isArray(activeMatch.board[0]));
+    const is3D = activeMatch.parameters.board_dimensions === '3x3x3' || (activeMatch.board && activeMatch.board.length === 6 && Array.isArray(activeMatch.board[0]) && Array.isArray(activeMatch.board[0][0]));
     if (isMobile && is3D) {
         console.log('[Mobile] Cube rooms are not permitted on mobile devices. Kicking player.');
         localStorage.removeItem('private_match_active');
