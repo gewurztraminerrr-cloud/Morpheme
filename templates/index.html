@@ -15,6 +15,53 @@
     <link rel="stylesheet" href="/css/play.css?v=49">
     <link rel="stylesheet" href="/css/howtoplay.css?v=7">
     <link rel="stylesheet" href="/css/forum.css?v=1">
+    <script>
+        (function() {
+            const errDiv = document.createElement('div');
+            errDiv.id = 'debug-err-overlay';
+            errDiv.style.position = 'fixed';
+            errDiv.style.bottom = '10px';
+            errDiv.style.right = '10px';
+            errDiv.style.maxHeight = '250px';
+            errDiv.style.overflowY = 'auto';
+            errDiv.style.background = 'rgba(0,0,0,0.9)';
+            errDiv.style.color = '#ff6b6b';
+            errDiv.style.padding = '10px';
+            errDiv.style.zIndex = '999999';
+            errDiv.style.fontFamily = 'monospace';
+            errDiv.style.fontSize = '12px';
+            errDiv.style.border = '2px solid red';
+            errDiv.style.borderRadius = '5px';
+            errDiv.style.whiteSpace = 'pre-wrap';
+            errDiv.style.maxWidth = '450px';
+            errDiv.style.boxShadow = '0 0 15px rgba(0,0,0,0.5)';
+            
+            function addErr(msg) {
+                if (!document.body) {
+                    setTimeout(() => addErr(msg), 100);
+                    return;
+                }
+                if (!document.getElementById('debug-err-overlay')) {
+                    document.body.appendChild(errDiv);
+                }
+                errDiv.textContent += msg + '\n';
+                errDiv.scrollTop = errDiv.scrollHeight;
+            }
+
+            window.addEventListener('error', function(e) {
+                addErr('ERR: ' + e.message + ' at ' + e.filename + ':' + e.lineno);
+            });
+            window.addEventListener('unhandledrejection', function(e) {
+                addErr('PROMISE_ERR: ' + e.reason);
+            });
+            
+            const orgError = console.error;
+            console.error = function() {
+                addErr('CONSOLE_ERR: ' + Array.from(arguments).map(x => typeof x === 'object' ? JSON.stringify(x) : x).join(' '));
+                orgError.apply(console, arguments);
+            };
+        })();
+    </script>
 </head>
 
 <body>

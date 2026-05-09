@@ -4721,7 +4721,6 @@ async function initTournamentPlay() {
 
         // Render Board
         console.log('[Tournament] Rendering tournament board. Format:', (data.params.board_format || 'Normal'));
-        const is3D = data.params.board_dimensions === '3x3x3' || (data.board && data.board.length === 6 && Array.isArray(data.board[0]));
         renderBoard(data.board, false, is3D);
         updateParameters(tournamentGameState);
         resetPlayUI();
