@@ -4945,7 +4945,6 @@ window.initPrivateMatchPlay = function () {
     lastRenderedBoardJSON = null; // Force re-render
 
     console.log('[play.js] Rendering private match board:', activeMatch.board);
-    const is3D = activeMatch.parameters.board_dimensions === '3x3x3' || (activeMatch.board && activeMatch.board.length === 6 && Array.isArray(activeMatch.board[0]));
     renderBoard(activeMatch.board, false, is3D);
 
     updateParameters(mockState);

@@ -171,8 +171,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Initial State Check
     requestAnimationFrame(() => {
-        checkNavVisibility();
-        checkForumActivity();
+        if (typeof checkNavVisibility === 'function') checkNavVisibility();
+        if (typeof checkForumActivity === 'function') checkForumActivity();
     });
 
     await checkSession();
