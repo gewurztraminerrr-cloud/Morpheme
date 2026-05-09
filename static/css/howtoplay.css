@@ -362,16 +362,15 @@
     .instructions-container {
         flex-direction: column;
         align-items: center;
-        overflow-y: auto;
-        padding-bottom: 40px;
-        max-height: 80vh;
-        /* Contain scroll within modal */
+        gap: 20px;
+        width: 100%;
     }
 
     .instruction-card {
         width: 100%;
         max-width: 500px;
         flex: none;
+        margin-bottom: 15px;
     }
 
     .close-modal-btn {
