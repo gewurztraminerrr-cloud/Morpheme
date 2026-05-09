@@ -3644,9 +3644,17 @@ input[type=range]::-moz-range-track {
     .left-panel-container, .words-panel {
         display: contents !important; /* Allow direct grid item behavior for children */
     }
-    .players-panel, .words-table-box, .definitions-panel {
+    .players-panel {
         height: 350px !important;
         max-height: 350px !important;
+    }
+    .words-table-box {
+        height: 480px !important;
+        max-height: 480px !important;
+    }
+    .definitions-panel {
+        height: 180px !important;
+        max-height: 180px !important;
     }
     .board-panel {
         height: auto !important;
