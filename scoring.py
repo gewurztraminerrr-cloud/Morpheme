@@ -87,7 +87,18 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
                 # Check for either explicit bonus coord or an Either/Or tile
                 if (nf, nx, ny) in special_coords:
                     used_bonus = True; break
-                cell_val = str(board[nf][nx][ny] if is_3d else board[nx][ny])
+                # Bounds check to prevent IndexError under any client-side path corruption
+                if is_3d:
+                    if 0 <= nf < len(board) and 0 <= nx < len(board[nf]) and 0 <= ny < len(board[nf][nx]):
+                        cell_val = str(board[nf][nx][ny])
+                    else:
+                        continue
+                else:
+                    if 0 <= nx < len(board) and 0 <= ny < len(board[nx]):
+                        cell_val = str(board[nx][ny])
+                    else:
+                        continue
+
                 if '/' in cell_val:
                     used_bonus = True; break
         
