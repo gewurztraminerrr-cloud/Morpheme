@@ -261,7 +261,10 @@ function handleLobbyMusicState() {
             // Set to start of loop section (3:25 = 205 seconds) if at 0
             if (lobbyMusic.currentTime < 1) lobbyMusic.currentTime = 205;
 
-            lobbyMusic.play().catch(e => console.log('Autoplay blocked:', e));
+            lobbyMusic.play().catch(e => {
+                console.log('Autoplay blocked, preparing music start on first interaction:', e);
+                setupFirstInteractionMusic();
+            });
 
             // Ensure loop logic is attached
             lobbyMusic.ontimeupdate = function () {
@@ -276,6 +279,37 @@ function handleLobbyMusicState() {
             lobbyMusic.pause();
         }
     }
+}
+
+// Modern Browser Autoplay bypass helpers
+function playMusicOnFirstInteraction() {
+    const onLobby = document.getElementById('page-lobby')?.classList.contains('active');
+    if (onLobby && window.userSettings && window.userSettings.lobby_music) {
+        const lobbyMusic = document.getElementById('lobby-music');
+        if (lobbyMusic && lobbyMusic.paused) {
+            if (lobbyMusic.currentTime < 1) lobbyMusic.currentTime = 205;
+            lobbyMusic.play()
+                .then(() => {
+                    console.log('Lobby music playback started successfully on first user interaction.');
+                    removeInteractionListeners();
+                })
+                .catch(e => console.log('Interactive play still blocked:', e));
+        }
+    }
+}
+
+function removeInteractionListeners() {
+    const events = ['click', 'keydown', 'mousedown', 'touchstart'];
+    events.forEach(evt => {
+        document.removeEventListener(evt, playMusicOnFirstInteraction, { capture: true });
+    });
+}
+
+function setupFirstInteractionMusic() {
+    const events = ['click', 'keydown', 'mousedown', 'touchstart'];
+    events.forEach(evt => {
+        document.addEventListener(evt, playMusicOnFirstInteraction, { once: true, capture: true });
+    });
 }
 
 // Setup contact form submission
