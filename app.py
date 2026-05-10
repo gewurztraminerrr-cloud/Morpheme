@@ -2470,11 +2470,6 @@ def get_room_state(room_id):
     if 'user_id' in session:
         uid = session['user_id']
         room_manager.update_presence(uid)
-        
-        # ALSO update room-specific activity to prevent accidental inactivity removal
-        room = room_manager.get_room(room_id)
-        if room:
-            room.update_player_activity(uid)
     
     room = room_manager.get_room(room_id)
     if room:
