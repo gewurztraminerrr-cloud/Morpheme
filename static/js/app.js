@@ -141,6 +141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupModalListeners();
     setupAuth(); // Initialize auth listeners
     setupContactForm(); // Initialize contact form listeners
+    setupFirstInteractionMusic(); // Active immediately for early loading clicks
     
     // Mobile restriction: Hide/filter out Cube/3D options
     if (typeof filterCubeOnMobile === 'function') {
@@ -296,7 +297,11 @@ function handleLobbyMusicState() {
 // Modern Browser Autoplay bypass helpers
 function playMusicOnFirstInteraction() {
     const onLobby = document.getElementById('page-lobby')?.classList.contains('active');
-    if (onLobby && window.userSettings && window.userSettings.lobby_music) {
+    const onLoading = document.getElementById('page-loading')?.classList.contains('active');
+    const onLogin = document.getElementById('page-login')?.classList.contains('active');
+
+    // Only attempt to play if we are in the lobby or loading, but NOT on the login page!
+    if ((onLobby || onLoading) && !onLogin && window.userSettings && window.userSettings.lobby_music) {
         const lobbyMusic = document.getElementById('lobby-music');
         if (lobbyMusic && lobbyMusic.paused) {
             if (lobbyMusic.currentTime < 1) {
@@ -330,9 +335,10 @@ function removeInteractionListeners() {
 }
 
 function setupFirstInteractionMusic() {
+    // Add event listeners without once: true so we don't prematurely delete them on early loading clicks!
     const events = ['click', 'keydown', 'mousedown', 'touchstart'];
     events.forEach(evt => {
-        document.addEventListener(evt, playMusicOnFirstInteraction, { once: true, capture: true });
+        document.addEventListener(evt, playMusicOnFirstInteraction, { capture: true });
     });
 }
 
