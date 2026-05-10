@@ -251,8 +251,9 @@ function handleLobbyMusicState() {
     }
 
     const onLobby = document.getElementById('page-lobby')?.classList.contains('active');
+    const onLoading = document.getElementById('page-loading')?.classList.contains('active');
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
-    const shouldPlay = onLobby && lobbyMusicSetting;
+    const shouldPlay = (onLobby || onLoading) && lobbyMusicSetting;
 
     console.log('[LobbyMusic] State assessment:', {
         onLobby,
