@@ -239,6 +239,15 @@
                 <form id="signin-form" class="auth-form active">
                     <input type="text" id="signin-username" placeholder="Username" required>
                     <input type="password" id="signin-password" placeholder="Password" required>
+                    
+                    <!-- CAPTCHA for Login -->
+                    <div class="captcha-container" style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <input type="text" id="signin-captcha" placeholder="Enter CAPTCHA" required autocomplete="off" style="flex: 1; margin-bottom: 0 !important; height: 42px;">
+                        <div class="captcha-image-box" style="cursor: pointer; display: flex; align-items: center;" title="Click to refresh CAPTCHA">
+                            <img class="captcha-img" src="/api/captcha" alt="CAPTCHA" style="height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); display: block;">
+                        </div>
+                    </div>
+
                     <div id="signin-error" class="error-message"></div>
                     <button type="submit">Login</button>
                     <button type="button" id="guest-login-btn" style="background: #555; margin-top: 10px;">Play as
@@ -251,6 +260,15 @@
                     <input type="email" id="signup-email" placeholder="Email" required>
                     <input type="password" id="signup-password" placeholder="Password (6+ characters)" required>
                     <input type="password" id="signup-password-confirm" placeholder="Confirm Password" required>
+
+                    <!-- CAPTCHA for Registration -->
+                    <div class="captcha-container" style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <input type="text" id="signup-captcha" placeholder="Enter CAPTCHA" required autocomplete="off" style="flex: 1; margin-bottom: 0 !important; height: 42px;">
+                        <div class="captcha-image-box" style="cursor: pointer; display: flex; align-items: center;" title="Click to refresh CAPTCHA">
+                            <img class="captcha-img" src="/api/captcha" alt="CAPTCHA" style="height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); display: block;">
+                        </div>
+                    </div>
+
                     <div id="signup-error" class="error-message"></div>
                     <button type="submit">Create Account</button>
                 </form>

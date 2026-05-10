@@ -183,8 +183,8 @@ def mod_required(f):
 
 @app.before_request
 def enforce_one_month_session():
-    # Skip static files, login/register, and presence beacon
-    if request.path.startswith('/static') or request.path in ['/api/login', '/api/register', '/api/presence/leave']:
+    # Skip static files, login/register, presence beacon, and captcha
+    if request.path.startswith('/static') or request.path in ['/api/login', '/api/register', '/api/presence/leave', '/api/captcha']:
         return
         
     if 'user_id' in session:
@@ -1291,13 +1291,76 @@ def static_files(path):
     return send_from_directory('static', path)
 
 # Authentication endpoints
+@app.route('/api/captcha', methods=['GET'])
+def get_captcha():
+    import random
+    chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    captcha_text = ''.join(random.choices(chars, k=5))
+    
+    session['captcha_text'] = captcha_text.upper()
+    
+    width = 150
+    height = 50
+    svg_parts = [
+        f'<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg" style="background: #1a1a2e; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;">'
+    ]
+    
+    # Noise lines
+    for _ in range(6):
+        x1 = random.randint(0, width)
+        y1 = random.randint(0, height)
+        x2 = random.randint(0, width)
+        y2 = random.randint(0, height)
+        color = random.choice(['#ff007f', '#00f0ff', '#ffaa00', '#00ff66', '#8800ff'])
+        svg_parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{color}" stroke-width="1.5" opacity="0.4"/>')
+        
+    # Noise dots
+    for _ in range(40):
+        cx = random.randint(0, width)
+        cy = random.randint(0, height)
+        r = random.uniform(1.0, 2.5)
+        color = random.choice(['#ffffff', '#ff007f', '#00f0ff'])
+        svg_parts.append(f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{color}" opacity="0.3"/>')
+        
+    # Text
+    font_families = ['sans-serif', 'monospace', 'serif']
+    for i, char in enumerate(captcha_text):
+        char_x = 15 + i * 26 + random.randint(-3, 3)
+        char_y = 35 + random.randint(-5, 5)
+        angle = random.randint(-25, 25)
+        font_size = random.randint(22, 28)
+        font_family = random.choice(font_families)
+        font_weight = random.choice(['bold', '900'])
+        color = random.choice(['#ffffff', '#00ffcc', '#ff007f', '#ffcc00', '#00f0ff'])
+        
+        svg_parts.append(
+            f'<text x="{char_x}" y="{char_y}" '
+            f'fill="{color}" font-size="{font_size}" font-family="{font_family}" font-weight="{font_weight}" '
+            f'transform="rotate({angle} {char_x} {char_y})" '
+            f'style="user-select: none;">{char}</text>'
+        )
+        
+    svg_parts.append('</svg>')
+    svg_data = ''.join(svg_parts)
+    
+    from flask import Response
+    return Response(svg_data, mimetype='image/svg+xml')
+
+
 @app.route('/api/register', methods=['POST'])
 def register():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
     email = data.get('email')
+    captcha_val = data.get('captcha', '')
     
+    session_captcha = session.get('captcha_text')
+    session.pop('captcha_text', None) # Clear immediately to prevent replay attacks
+    
+    if not session_captcha or captcha_val.upper() != session_captcha:
+        return jsonify({'error': 'Incorrect or expired CAPTCHA. Please click on the CAPTCHA image to refresh and try again.'}), 400
+        
     # Username validation: 1-16 chars, letters, numbers, underscores
     import re
     if not re.match(r'^[a-zA-Z0-9_]{1,16}$', username):
@@ -1342,7 +1405,14 @@ def login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
+    captcha_val = data.get('captcha', '')
     
+    session_captcha = session.get('captcha_text')
+    session.pop('captcha_text', None) # Clear immediately to prevent replay attacks
+    
+    if not session_captcha or captcha_val.upper() != session_captcha:
+        return jsonify({'error': 'Incorrect or expired CAPTCHA. Please click on the CAPTCHA image to refresh and try again.'}), 400
+        
     try:
         conn = sqlite3.connect(DB_PATH, timeout=30)
         cursor = conn.execute('SELECT id, password_hash, email FROM users WHERE username = ?', (username,))

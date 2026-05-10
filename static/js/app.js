@@ -838,6 +838,7 @@ function switchAuthTab(tab) {
 async function handleSignIn() {
     const username = document.getElementById('signin-username').value;
     const password = document.getElementById('signin-password').value;
+    const captcha = document.getElementById('signin-captcha').value;
     const errorEl = document.getElementById('signin-error');
 
     try {
@@ -846,7 +847,7 @@ async function handleSignIn() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password, captcha })
         });
 
         const data = await response.json();
@@ -874,12 +875,13 @@ async function handleSignIn() {
             window.lastPlayerRating = data.rating;
             navigateToLobby(data.rating);
         } else {
-
             errorEl.textContent = data.error || data.message;
+            if (typeof window.refreshCaptchas === 'function') window.refreshCaptchas();
         }
     } catch (error) {
         errorEl.textContent = 'An error occurred. Please try again.';
         console.error('Login error:', error);
+        if (typeof window.refreshCaptchas === 'function') window.refreshCaptchas();
     }
 }
 
@@ -888,6 +890,7 @@ async function handleSignUp() {
     const email = document.getElementById('signup-email').value;
     const password = document.getElementById('signup-password').value;
     const confirmPassword = document.getElementById('signup-password-confirm').value;
+    const captcha = document.getElementById('signup-captcha').value;
     const errorEl = document.getElementById('signup-error');
 
     // Validation
@@ -907,7 +910,7 @@ async function handleSignUp() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, password, email })
+            body: JSON.stringify({ username, password, email, captcha })
         });
 
         const data = await response.json();
@@ -922,10 +925,12 @@ async function handleSignUp() {
             navigateToLobby(data.rating);
         } else {
             errorEl.textContent = data.error || data.message;
+            if (typeof window.refreshCaptchas === 'function') window.refreshCaptchas();
         }
     } catch (error) {
         errorEl.textContent = 'An error occurred. Please try again.';
         console.error('Registration error:', error);
+        if (typeof window.refreshCaptchas === 'function') window.refreshCaptchas();
     }
 }
 
@@ -1129,12 +1134,34 @@ function setupMobileLogic() {
 
 // Setup authentication
 function setupAuth() {
+    // CAPTCHA helper logic
+    window.refreshCaptchas = function() {
+        document.querySelectorAll('.captcha-img').forEach(img => {
+            img.src = '/api/captcha?t=' + Date.now();
+        });
+        const signinCaptcha = document.getElementById('signin-captcha');
+        const signupCaptcha = document.getElementById('signup-captcha');
+        if (signinCaptcha) signinCaptcha.value = '';
+        if (signupCaptcha) signupCaptcha.value = '';
+    };
+
+    // Attach click handlers to refresh CAPTCHA on image container clicks
+    document.querySelectorAll('.captcha-image-box').forEach(box => {
+        box.addEventListener('click', () => {
+            window.refreshCaptchas();
+        });
+    });
+
+    // Initial CAPTCHA population
+    window.refreshCaptchas();
+
     // Tab switching
     const tabBtns = document.querySelectorAll('.tab-btn');
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const tab = btn.getAttribute('data-tab');
             switchAuthTab(tab);
+            window.refreshCaptchas(); // Automatically refresh when switching views
         });
     });
 
