@@ -251,13 +251,11 @@ function handleLobbyMusicState() {
     }
 
     const onLobby = document.getElementById('page-lobby')?.classList.contains('active');
-    const hasSettings = !!window.userSettings;
-    const lobbyMusicSetting = hasSettings ? window.userSettings.lobby_music : undefined;
-    const shouldPlay = onLobby && hasSettings && lobbyMusicSetting;
+    const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
+    const shouldPlay = onLobby && lobbyMusicSetting;
 
     console.log('[LobbyMusic] State assessment:', {
         onLobby,
-        hasSettings,
         lobbyMusicSetting,
         shouldPlay,
         paused: lobbyMusic.paused,
@@ -323,19 +321,19 @@ function playMusicOnFirstInteraction() {
     const onLobby = document.getElementById('page-lobby')?.classList.contains('active');
     const onLoading = document.getElementById('page-loading')?.classList.contains('active');
     const onLogin = document.getElementById('page-login')?.classList.contains('active');
-    const hasSettings = !!window.userSettings;
-    const lobbyMusicSetting = hasSettings ? window.userSettings.lobby_music : undefined;
+    const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
+    const shouldPlay = (onLobby || onLoading) && !onLogin && lobbyMusicSetting;
 
     console.log('[LobbyMusic] Gesture state evaluation:', {
         onLobby,
         onLoading,
         onLogin,
-        hasSettings,
-        lobbyMusicSetting
+        lobbyMusicSetting,
+        shouldPlay
     });
 
     // Only attempt to play if we are in the lobby or loading, but NOT on the login page!
-    if ((onLobby || onLoading) && !onLogin && hasSettings && lobbyMusicSetting) {
+    if (shouldPlay) {
         const lobbyMusic = document.getElementById('lobby-music');
         if (lobbyMusic) {
             console.log('[LobbyMusic] Found audio element on gesture:', {
