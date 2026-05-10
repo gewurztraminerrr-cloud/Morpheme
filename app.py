@@ -2551,7 +2551,7 @@ def get_room_state(room_id):
                     print(f"[app.py] Could not reconstruct public hub {room_id}: {re_err}")
 
         if not room:
-             return jsonify({'error': 'Room not found'}), 404
+             return jsonify({'error': 'Room not found (expired due to inactivity)'}), 404
             
         with room._state_lock:
             # 1. Heartbeat Trigger (If TR=0/45/Search)

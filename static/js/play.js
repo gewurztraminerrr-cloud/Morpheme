@@ -378,7 +378,12 @@ async function updateGameState(incomingState = null) {
                         errorMsg = errData.error || "";
                     } catch(e) {}
 
-                    if (errorMsg.toLowerCase().includes('inactivity') || errorMsg.toLowerCase().includes('removed') || errorMsg.toLowerCase().includes('idle')) {
+                    const isDescriptiveInactivity = errorMsg.toLowerCase().includes('inactivity') || 
+                                                    errorMsg.toLowerCase().includes('removed') || 
+                                                    errorMsg.toLowerCase().includes('idle') ||
+                                                    errorMsg.toLowerCase().includes('expired');
+
+                    if (window._wasEverInRoster || isDescriptiveInactivity) {
                         ejectToLobby("inactivity");
                     } else {
                         // RACE CONDITION PROTECTION: If we just joined, wait a few polls for server to sync
