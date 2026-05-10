@@ -849,6 +849,27 @@ body.theme-light-brown .field-hint {
         flex-direction: column !important;
         justify-content: space-between !important;
         gap: 15px !important;
+        overflow-y: auto !important; /* Enable inner text scrolling if content overflows max-height */
+    }
+
+    /* Premium styled scrollbars for the Store text panels */
+    .store-item-info::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .store-item-info::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.15);
+        border-radius: 10px;
+    }
+
+    .store-item-info::-webkit-scrollbar-thumb {
+        background: rgba(var(--text-primary-rgb), 0.15);
+        border-radius: 10px;
+        transition: background 0.3s ease;
+    }
+
+    .store-item-info::-webkit-scrollbar-thumb:hover {
+        background: var(--accent-color, #ff007f);
     }
 
     .store-item-features {
