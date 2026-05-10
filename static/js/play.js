@@ -696,43 +696,45 @@ async function updateGameState(incomingState = null) {
 
         // COMBINED EVICTION / 24H RESET LOGIC
         if (!amIPlayer && !amISpectator && currentUsername) {
-            // SILENT AUTO-REJOIN HANDSHAKE: Before counting an eviction, try to rejoin
-            const roomId = window.currentRoomId || state.room_id;
-            if (roomId && !window._isRejoiningRoom) {
-                window._isRejoiningRoom = true;
-                console.warn(`[play.js] Silent auto-rejoin triggered for room ${roomId}`);
-                fetch(`/api/room/${roomId}/join`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ as_spectator: !!window.isSpectatorMode })
-                })
-                .then(resp => resp.json())
-                .then(data => {
-                    window._isRejoiningRoom = false;
-                    if (data.success) {
-                        console.log(`[play.js] Silent auto-rejoin successful! Role: ${data.role}`);
-                        // Force a state update to immediately fetch updated roster
-                        setTimeout(updateGameState, 100);
-                    } else {
-                        console.error(`[play.js] Silent auto-rejoin failed: ${data.error}`);
-                    }
-                })
-                .catch(err => {
-                    window._isRejoiningRoom = false;
-                    console.error('[play.js] Silent auto-rejoin error:', err);
-                });
+            // Was I in the room in the previous heartbeat?
+            const wasInBefore = previousState && (
+                previousState.players.some(p => p.username.toLowerCase() === currentUsername.toLowerCase()) ||
+                (previousState.spectators || []).some(s => s.username.toLowerCase() === currentUsername.toLowerCase())
+            );
+
+            // SILENT AUTO-REJOIN HANDSHAKE: Before counting an eviction, try to rejoin ONLY if we weren't successfully in the room before (guards against initial join race conditions)
+            if (!wasInBefore) {
+                const roomId = window.currentRoomId || state.room_id;
+                if (roomId && !window._isRejoiningRoom) {
+                    window._isRejoiningRoom = true;
+                    console.warn(`[play.js] Silent auto-rejoin triggered for room ${roomId}`);
+                    fetch(`/api/room/${roomId}/join`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ as_spectator: !!window.isSpectatorMode })
+                    })
+                    .then(resp => resp.json())
+                    .then(data => {
+                        window._isRejoiningRoom = false;
+                        if (data.success) {
+                            console.log(`[play.js] Silent auto-rejoin successful! Role: ${data.role}`);
+                            // Force a state update to immediately fetch updated roster
+                            setTimeout(updateGameState, 100);
+                        } else {
+                            console.error(`[play.js] Silent auto-rejoin failed: ${data.error}`);
+                        }
+                    })
+                    .catch(err => {
+                        window._isRejoiningRoom = false;
+                        console.error('[play.js] Silent auto-rejoin error:', err);
+                    });
+                }
             }
 
             window._emptyPlayersPollCount = (window._emptyPlayersPollCount || 0) + 1;
             console.warn(`[play.js] EVICTION WARNING: User not found in state.players or state.spectators! Count: ${window._emptyPlayersPollCount}/3`);
             
             if (window._emptyPlayersPollCount >= 3) {
-                // Was I in the room in the previous heartbeat?
-                const wasInBefore = previousState && (
-                    previousState.players.some(p => p.username.toLowerCase() === currentUsername.toLowerCase()) ||
-                    (previousState.spectators || []).some(s => s.username.toLowerCase() === currentUsername.toLowerCase())
-                );
-
                 // 24H Reset Logic: Only auto-rejoin IF the round has actually changed (e.g. midnight flip)
                 // If the round is the same, then this was likely an individual inactivity kick.
                 const roundChanged = previousState && state.current_round > previousState.current_round;

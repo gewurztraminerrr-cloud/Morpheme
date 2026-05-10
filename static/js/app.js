@@ -708,6 +708,14 @@ function setupNavigation() {
                 return;
             }
 
+            // USER NAVIGATION LEAVE HARNESS: If navigating to lobby from another page, leave the current room
+            if (pageTarget === 'lobby') {
+                if (window.leaveCurrentRoom && (window.currentRoomId || localStorage.getItem('last_joined_room'))) {
+                    console.log('[setupNavigation] Leaving current room on Lobby navigation click.');
+                    await window.leaveCurrentRoom();
+                }
+            }
+
             // Default Page Navigation
             const pageId = 'page-' + pageTarget;
             showPage(pageId);
