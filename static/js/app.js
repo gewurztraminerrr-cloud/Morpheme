@@ -241,7 +241,7 @@ async function fetchUserCount() {
 }
 
 
-// // Helper to start/stop music based on Page AND Setting
+// Helper to start/stop music based on Page AND Setting
 function handleLobbyMusicState() {
     console.log('[LobbyMusic] handleLobbyMusicState() triggered.');
     const lobbyMusic = document.getElementById('lobby-music');
@@ -259,32 +259,22 @@ function handleLobbyMusicState() {
         lobbyMusicSetting,
         shouldPlay,
         paused: lobbyMusic.paused,
-        currentTime: lobbyMusic.currentTime,
-        readyState: lobbyMusic.readyState
+        currentTime: lobbyMusic.currentTime
     });
 
     if (shouldPlay) {
-        if (lobbyMusic.paused) {
-            if (lobbyMusic.currentTime < 1) {
-                try {
-                    if (lobbyMusic.readyState >= 1) {
-                        lobbyMusic.currentTime = 205;
-                        console.log('[LobbyMusic] Direct seek to 205 succeeded (readyState >= 1).');
-                    } else {
-                        console.log('[LobbyMusic] readyState < 1, binding loadedmetadata seek hook.');
-                        lobbyMusic.addEventListener('loadedmetadata', () => {
-                            try { 
-                                lobbyMusic.currentTime = 205; 
-                                console.log('[LobbyMusic] Deferred seek to 205 succeeded on loadedmetadata.');
-                            } catch(err) { console.warn('[LobbyMusic] Deferred seek failed:', err); }
-                        }, { once: true });
-                    }
-                } catch (e) {
-                    console.warn('[LobbyMusic] Seeking failed, postponing seek until ready:', e);
-                }
+        // Enforce loop boundaries and startup seek instantly on timeupdate
+        lobbyMusic.ontimeupdate = function () {
+            if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
+                try { 
+                    lobbyMusic.currentTime = 205; 
+                    console.log('[LobbyMusic] Time boundary constraint enforced: snapped to 205.');
+                } catch(err) {}
             }
+        };
 
-            console.log('[LobbyMusic] Attempting programatic .play()...');
+        if (lobbyMusic.paused) {
+            console.log('[LobbyMusic] Attempting programmatic .play()...');
             lobbyMusic.play()
                 .then(() => {
                     console.log('[LobbyMusic] Programatic play() resolved successfully!');
@@ -293,18 +283,6 @@ function handleLobbyMusicState() {
                     console.log('[LobbyMusic] Programatic play() blocked by browser:', e.message);
                     setupFirstInteractionMusic();
                 });
-
-            // Ensure loop logic is attached
-            lobbyMusic.ontimeupdate = function () {
-                if (lobbyMusic.currentTime >= 295) { // 4:55 = 295 seconds
-                    try { 
-                        lobbyMusic.currentTime = 205; 
-                        console.log('[LobbyMusic] Loop section boundary reached, rewound to 205.');
-                    } catch(err) { console.warn('[LobbyMusic] Loop rewinding failed:', err); }
-                }
-            };
-        } else {
-            console.log('[LobbyMusic] Music is already playing.');
         }
     } else {
         console.log('[LobbyMusic] shouldPlay is false, ensuring audio is paused.');
@@ -336,29 +314,16 @@ function playMusicOnFirstInteraction() {
     if (shouldPlay) {
         const lobbyMusic = document.getElementById('lobby-music');
         if (lobbyMusic) {
-            console.log('[LobbyMusic] Found audio element on gesture:', {
-                paused: lobbyMusic.paused,
-                currentTime: lobbyMusic.currentTime,
-                readyState: lobbyMusic.readyState
-            });
-            if (lobbyMusic.currentTime < 1) {
-                try {
-                    if (lobbyMusic.readyState >= 1) {
-                        lobbyMusic.currentTime = 205;
-                        console.log('[LobbyMusic] Gesture seek to 205 succeeded (readyState >= 1).');
-                    } else {
-                        console.log('[LobbyMusic] Gesture readyState < 1, binding loadedmetadata seek hook.');
-                        lobbyMusic.addEventListener('loadedmetadata', () => {
-                            try { 
-                                lobbyMusic.currentTime = 205; 
-                                console.log('[LobbyMusic] Gesture deferred seek to 205 succeeded.');
-                            } catch(err) { console.warn(err); }
-                        }, { once: true });
-                    }
-                } catch (e) {
-                    console.warn('[LobbyMusic] Gesture seeking failed:', e);
+            // Enforce loop boundaries and startup seek instantly on timeupdate
+            lobbyMusic.ontimeupdate = function () {
+                if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
+                    try { 
+                        lobbyMusic.currentTime = 205; 
+                        console.log('[LobbyMusic] Time boundary constraint enforced on gesture: snapped to 205.');
+                    } catch(err) {}
                 }
-            }
+            };
+
             console.log('[LobbyMusic] Attempting play() on gesture to unlock/unmute stream...');
             lobbyMusic.play()
                 .then(() => {
