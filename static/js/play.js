@@ -237,6 +237,7 @@ function clearGameUIAndCache() {
     window.lastRenderedStateJSON = null;
     window.lastRenderedBoardJSON = null;
     window.lastPlayersHtml = null;
+    window._wasEverInRoster = false;
     
     // Reset all round-specific and mode-specific word/score lists
     privateMatchWords = [];
@@ -692,18 +693,21 @@ async function updateGameState(incomingState = null) {
             return match;
         });
 
+        if (amIPlayer || amISpectator) {
+            window._wasEverInRoster = true;
+        }
+
         const is24H = (state.time_limit >= 7200);
 
         // COMBINED EVICTION / 24H RESET LOGIC
         if (!amIPlayer && !amISpectator && currentUsername) {
-            // Was I in the room in the previous heartbeat?
             const wasInBefore = previousState && (
                 previousState.players.some(p => p.username.toLowerCase() === currentUsername.toLowerCase()) ||
                 (previousState.spectators || []).some(s => s.username.toLowerCase() === currentUsername.toLowerCase())
             );
 
-            // SILENT AUTO-REJOIN HANDSHAKE: Before counting an eviction, try to rejoin ONLY if we weren't successfully in the room before (guards against initial join race conditions)
-            if (!wasInBefore) {
+            // SILENT AUTO-REJOIN HANDSHAKE: Before counting an eviction, try to rejoin ONLY if we haven't been successfully established in the room roster before
+            if (!window._wasEverInRoster) {
                 const roomId = window.currentRoomId || state.room_id;
                 if (roomId && !window._isRejoiningRoom) {
                     window._isRejoiningRoom = true;
