@@ -16,6 +16,7 @@ import datetime
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'morpheme-secret-key-2024'
 app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(days=30)
 
 # --- DONATION ROUTES REMOVED ---
 
@@ -181,25 +182,28 @@ def mod_required(f):
     return decorated_function
 
 @app.before_request
-def enforce_idle_timeout():
+def enforce_one_month_session():
     # Skip static files, login/register, and presence beacon
     if request.path.startswith('/static') or request.path in ['/api/login', '/api/register', '/api/presence/leave']:
         return
         
     if 'user_id' in session:
         now = time.time()
-        last_activity = session.get('_morpheme_last_active', now)
-        if (now - last_activity) > 86400:
-            print(f"[Auth] Idle session expired for user {session.get('username')} ({int(now - last_activity)}s)")
+        # Retrieve login time, defaulting to now for older sessions to migrate smoothly
+        login_time = session.get('_morpheme_login_time')
+        if login_time is None:
+            session['_morpheme_login_time'] = now
+            login_time = now
+            
+        # 30 days in seconds = 30 * 24 * 3600 = 2,592,000 seconds (1 month)
+        if (now - login_time) > 2592000:
+            print(f"[Auth] 1-month session expired for user {session.get('username')} (logged in {int(now - login_time)}s ago)")
             from game_room import room_manager
             room_manager.remove_presence(session['user_id'])
             session.clear()
             if request.path.startswith('/api/'):
                  return jsonify({'error': 'Session expired. Please log in again.'}), 401
             return redirect('/')
-            
-        # Update active timestamp
-        session['_morpheme_last_active'] = now
 
 @app.before_request
 def load_user():
@@ -1276,23 +1280,8 @@ def get_user_count():
 
 @app.route('/')
 def index():
-    # USER REQUEST: If a user refreshes (re-enters root while logged in), 
-    # completely cut ties (logout) and send back to login.
-    if 'user_id' in session:
-        user_id = session['user_id']
-        username = session.get('username', 'Unknown')
-        print(f"[RefreshLogout] User {username} ({user_id}) refreshed. Severing ties.")
-        
-        # Penalty/Room logic handled here
-        cleanup_user_rooms_entirely(user_id)
-        room_manager.remove_presence(user_id)
-        
-        # Clear session
-        session.clear()
-        
-        # Redirect back to root to trigger a clean login page state
-        return redirect('/')
-        
+    # USER REQUEST: once the user logs in, entering "morpheme.games" (or refreshing root)
+    # should automatically take them to the lobby without having to login again.
     return render_template('index.html')
 
 @app.route('/<path:path>')
@@ -1334,6 +1323,8 @@ def register():
         session['username'] = username
         session['email'] = email
         session.pop('is_guest', None) # Clear guest flag if present
+        session['_morpheme_login_time'] = time.time()
+        session.permanent = True
         
         return jsonify({'success': True, 'username': username, 'email': email})
     except sqlite3.IntegrityError:
@@ -1365,6 +1356,8 @@ def login():
         session['username'] = username
         session['email'] = user[2]
         session.pop('is_guest', None) # Clear guest flag if present
+        session['_morpheme_login_time'] = time.time()
+        session.permanent = True
         
         return jsonify({
             'success': True, 
@@ -1429,6 +1422,8 @@ def guest_login():
         session['user_id'] = new_user_id
         session['username'] = guest_username
         session['is_guest'] = True
+        session['_morpheme_login_time'] = time.time()
+        session.permanent = True
         
         return jsonify({'success': True, 'username': guest_username})
     except Exception as e:
