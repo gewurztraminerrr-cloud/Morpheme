@@ -197,7 +197,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (navBtn) updateActiveNav(navBtn);
         } else {
             // Default to lobby for authenticated users (even if hash is empty, #page-login or #page-lobby)
-            completeLoadingTransition('page-lobby', '.nav-btn[data-page="lobby"]');
+            showPage('page-lobby');
+            const lobbyBtn = document.querySelector('.nav-btn[data-page="lobby"]');
+            if (lobbyBtn) updateActiveNav(lobbyBtn);
+            handleLobbyMusicState();
             // Clean up URL if it was stuck on #page-login
             if (hash === '#page-login') {
                 history.replaceState(null, null, '#page-lobby');
@@ -340,33 +343,31 @@ function playMusicOnFirstInteraction() {
                 currentTime: lobbyMusic.currentTime,
                 readyState: lobbyMusic.readyState
             });
-            if (lobbyMusic.paused) {
-                if (lobbyMusic.currentTime < 1) {
-                    try {
-                        if (lobbyMusic.readyState >= 1) {
-                            lobbyMusic.currentTime = 205;
-                            console.log('[LobbyMusic] Gesture seek to 205 succeeded (readyState >= 1).');
-                        } else {
-                            console.log('[LobbyMusic] Gesture readyState < 1, binding loadedmetadata seek hook.');
-                            lobbyMusic.addEventListener('loadedmetadata', () => {
-                                try { 
-                                    lobbyMusic.currentTime = 205; 
-                                    console.log('[LobbyMusic] Gesture deferred seek to 205 succeeded.');
-                                } catch(err) { console.warn(err); }
-                            }, { once: true });
-                        }
-                    } catch (e) {
-                        console.warn('[LobbyMusic] Gesture seeking failed:', e);
+            if (lobbyMusic.currentTime < 1) {
+                try {
+                    if (lobbyMusic.readyState >= 1) {
+                        lobbyMusic.currentTime = 205;
+                        console.log('[LobbyMusic] Gesture seek to 205 succeeded (readyState >= 1).');
+                    } else {
+                        console.log('[LobbyMusic] Gesture readyState < 1, binding loadedmetadata seek hook.');
+                        lobbyMusic.addEventListener('loadedmetadata', () => {
+                            try { 
+                                lobbyMusic.currentTime = 205; 
+                                console.log('[LobbyMusic] Gesture deferred seek to 205 succeeded.');
+                            } catch(err) { console.warn(err); }
+                        }, { once: true });
                     }
+                } catch (e) {
+                    console.warn('[LobbyMusic] Gesture seeking failed:', e);
                 }
-                console.log('[LobbyMusic] Attempting play() on gesture...');
-                lobbyMusic.play()
-                    .then(() => {
-                        console.log('[LobbyMusic] Lobby music playback started successfully on user gesture!');
-                        removeInteractionListeners();
-                    })
-                    .catch(e => console.log('[LobbyMusic] Gesture play() still blocked:', e.message));
             }
+            console.log('[LobbyMusic] Attempting play() on gesture to unlock/unmute stream...');
+            lobbyMusic.play()
+                .then(() => {
+                    console.log('[LobbyMusic] Lobby music playback started/unlocked successfully on user gesture!');
+                    removeInteractionListeners();
+                })
+                .catch(e => console.log('[LobbyMusic] Gesture play() still blocked:', e.message));
         } else {
             console.warn('[LobbyMusic] #lobby-music element not found on gesture.');
         }
@@ -386,106 +387,6 @@ function setupFirstInteractionMusic() {
     events.forEach(evt => {
         document.addEventListener(evt, playMusicOnFirstInteraction, { capture: true });
     });
-}
-
-function completeLoadingTransition(targetPageId, navButtonSelector) {
-    console.log('[LobbyMusic] completeLoadingTransition() triggered for target page:', targetPageId);
-    const lobbyMusic = document.getElementById('lobby-music');
-    
-    function doTransition() {
-        console.log('[LobbyMusic] Transitioning to page:', targetPageId);
-        showPage(targetPageId);
-        if (navButtonSelector) {
-            const btn = document.querySelector(navButtonSelector);
-            if (btn) updateActiveNav(btn);
-        }
-        // Restore loading page element visibility to normal for any future load overlays
-        const spinner = document.getElementById('loading-spinner');
-        const text = document.getElementById('loading-text');
-        const enterContainer = document.getElementById('loading-enter-container');
-        if (spinner) spinner.style.display = 'block';
-        if (text) {
-            text.style.display = 'block';
-            text.textContent = 'Loading...';
-        }
-        if (enterContainer) enterContainer.style.display = 'none';
-    }
-
-    // If lobby music is disabled in settings, transition immediately
-    const hasSettings = !!window.userSettings;
-    const lobbyMusicSetting = hasSettings ? window.userSettings.lobby_music : undefined;
-    if (!hasSettings || !lobbyMusicSetting) {
-        console.log('[LobbyMusic] Lobby music disabled in settings, transitioning instantly.');
-        doTransition();
-        return;
-    }
-
-    // Try playing the lobby music programmatically
-    if (lobbyMusic) {
-        // Ensure loops logic is set up
-        lobbyMusic.ontimeupdate = function () {
-            if (lobbyMusic.currentTime >= 295) {
-                try { 
-                    lobbyMusic.currentTime = 205; 
-                    console.log('[LobbyMusic] Loop section boundary reached, rewound to 205.');
-                } catch(err) { console.warn(err); }
-            }
-        };
-        
-        // Ensure starting location is set
-        if (lobbyMusic.currentTime < 1) {
-            try {
-                if (lobbyMusic.readyState >= 1) {
-                    lobbyMusic.currentTime = 205;
-                    console.log('[LobbyMusic] Transition seek to 205 succeeded.');
-                } else {
-                    lobbyMusic.addEventListener('loadedmetadata', () => {
-                        try { 
-                            lobbyMusic.currentTime = 205; 
-                            console.log('[LobbyMusic] Transition deferred seek to 205 succeeded.');
-                        } catch(err) {}
-                    }, { once: true });
-                }
-            } catch(e) {}
-        }
-
-        console.log('[LobbyMusic] Attempting programmatic play to verify autoplay permission...');
-        lobbyMusic.play()
-            .then(() => {
-                console.log('[LobbyMusic] Autoplay permission granted! Seamless direct transition.');
-                doTransition();
-            })
-            .catch(e => {
-                console.log('[LobbyMusic] Autoplay blocked, presenting premium Enter Lobby button.');
-                
-                // Show Enter Lobby button on loading page
-                const spinner = document.getElementById('loading-spinner');
-                const text = document.getElementById('loading-text');
-                const enterContainer = document.getElementById('loading-enter-container');
-                const enterBtn = document.getElementById('loading-enter-btn');
-
-                if (spinner) spinner.style.display = 'none';
-                if (text) text.style.display = 'none';
-                if (enterContainer) enterContainer.style.display = 'flex';
-                
-                if (enterBtn) {
-                    enterBtn.onclick = null;
-                    enterBtn.onclick = () => {
-                        console.log('[LobbyMusic] Enter Lobby button clicked! Firing playback gesture.');
-                        lobbyMusic.play()
-                            .then(() => {
-                                console.log('[LobbyMusic] Playback started successfully on Enter Lobby click.');
-                                removeInteractionListeners();
-                            })
-                            .catch(err => console.warn('[LobbyMusic] Playback failed on Enter Lobby click:', err));
-                        doTransition();
-                    };
-                }
-            });
-    } else {
-        console.warn('[LobbyMusic] #lobby-music element not found on transition.');
-        doTransition();
-    }
 }
 
 // Setup contact form submission
