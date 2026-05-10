@@ -1284,11 +1284,6 @@ def index():
     # should automatically take them to the lobby without having to login again.
     return render_template('index.html')
 
-@app.route('/<path:path>')
-def static_files(path):
-    if path.startswith('api/'):
-        return jsonify({'error': 'Resource not found'}), 404
-    return send_from_directory('static', path)
 
 # Authentication endpoints
 @app.route('/api/captcha', methods=['GET'])
@@ -5309,6 +5304,12 @@ def room_tick_worker():
             time.sleep(10) # Wait longer on error
             
         time.sleep(2) # Polling every 2s for better response
+
+@app.route('/<path:path>')
+def static_files(path):
+    if path.startswith('api/'):
+        return jsonify({'error': 'Resource not found'}), 404
+    return send_from_directory('static', path)
 
 if __name__ == '__main__':
     # Background room advancer is now handled by RoomManager's internal thread
