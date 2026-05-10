@@ -259,7 +259,19 @@ function handleLobbyMusicState() {
         // If already playing, do nothing. If paused, play.
         if (lobbyMusic.paused) {
             // Set to start of loop section (3:25 = 205 seconds) if at 0
-            if (lobbyMusic.currentTime < 1) lobbyMusic.currentTime = 205;
+            if (lobbyMusic.currentTime < 1) {
+                try {
+                    if (lobbyMusic.readyState >= 1) {
+                        lobbyMusic.currentTime = 205;
+                    } else {
+                        lobbyMusic.addEventListener('loadedmetadata', () => {
+                            try { lobbyMusic.currentTime = 205; } catch(err) { console.warn(err); }
+                        }, { once: true });
+                    }
+                } catch (e) {
+                    console.warn('Seeking failed in handleLobbyMusicState, postponing seek until ready:', e);
+                }
+            }
 
             lobbyMusic.play().catch(e => {
                 console.log('Autoplay blocked, preparing music start on first interaction:', e);
@@ -269,7 +281,7 @@ function handleLobbyMusicState() {
             // Ensure loop logic is attached
             lobbyMusic.ontimeupdate = function () {
                 if (lobbyMusic.currentTime >= 295) { // 4:55 = 295 seconds
-                    lobbyMusic.currentTime = 205; // Loop back to 3:25
+                    try { lobbyMusic.currentTime = 205; } catch(err) { console.warn(err); }
                 }
             };
         }
@@ -287,7 +299,19 @@ function playMusicOnFirstInteraction() {
     if (onLobby && window.userSettings && window.userSettings.lobby_music) {
         const lobbyMusic = document.getElementById('lobby-music');
         if (lobbyMusic && lobbyMusic.paused) {
-            if (lobbyMusic.currentTime < 1) lobbyMusic.currentTime = 205;
+            if (lobbyMusic.currentTime < 1) {
+                try {
+                    if (lobbyMusic.readyState >= 1) {
+                        lobbyMusic.currentTime = 205;
+                    } else {
+                        lobbyMusic.addEventListener('loadedmetadata', () => {
+                            try { lobbyMusic.currentTime = 205; } catch(err) { console.warn(err); }
+                        }, { once: true });
+                    }
+                } catch (e) {
+                    console.warn('Interactive seeking failed, postponing:', e);
+                }
+            }
             lobbyMusic.play()
                 .then(() => {
                     console.log('Lobby music playback started successfully on first user interaction.');
