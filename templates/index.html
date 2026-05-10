@@ -231,12 +231,39 @@
                 align-items: center;
                 min-height: calc(100vh - 100px);
             }
+            #loading-enter-btn {
+                background: linear-gradient(135deg, #ff007f, #7f00ff);
+                border: none;
+                padding: 14px 40px;
+                border-radius: 30px;
+                color: white;
+                font-weight: 800;
+                font-size: 1.1rem;
+                cursor: pointer;
+                box-shadow: 0 0 20px rgba(255,0,127,0.5);
+                transition: all 0.3s ease;
+                text-transform: uppercase;
+                letter-spacing: 1.5px;
+            }
+            #loading-enter-btn:hover {
+                transform: scale(1.05);
+                box-shadow: 0 0 30px rgba(255,0,127,0.8);
+            }
+            #loading-enter-btn:active {
+                transform: scale(0.98);
+            }
         </style>
 
         <!-- Loading Page -->
         <div id="page-loading" class="page" style="color: #fff; font-family: 'Inter', sans-serif;">
-            <div class="morpheme-spinner" style="width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.1); border-top-color: var(--accent-color, #ff007f); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
-            <div style="font-size: 1.2rem; font-weight: 600; letter-spacing: 1.5px; color: var(--accent-color, #ff007f); text-shadow: 0 0 10px rgba(255,0,127,0.4);">Loading...</div>
+            <div id="loading-spinner" class="morpheme-spinner" style="width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.1); border-top-color: var(--accent-color, #ff007f); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
+            <div id="loading-text" style="font-size: 1.2rem; font-weight: 600; letter-spacing: 1.5px; color: var(--accent-color, #ff007f); text-shadow: 0 0 10px rgba(255,0,127,0.4);">Loading...</div>
+            <div id="loading-enter-container" style="display: none; flex-direction: column; align-items: center; justify-content: center; margin-top: 20px;">
+                <button id="loading-enter-btn">
+                    Enter Lobby
+                </button>
+                <div style="font-size: 0.85rem; color: #aaa; margin-top: 15px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase;">to enable lobby music</div>
+            </div>
         </div>
 
         <!-- Login Page -->
@@ -3553,7 +3580,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=5"></script>
     <script src="/js/forum.js?v=30"></script>
-    <script src="/js/app.js?v=12"></script>
+    <script src="/js/app.js?v=13"></script>
     <script src="/js/lobby.js?v=2"></script>
     <script src="/js/play.js?v=30"></script>
     <script src="/js/tournaments.js?v=2"></script>
