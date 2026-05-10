@@ -196,14 +196,65 @@ document.addEventListener('DOMContentLoaded', async () => {
             const navBtn = document.querySelector(`.nav-btn[data-page="${pageName}"]`);
             if (navBtn) updateActiveNav(navBtn);
         } else {
-            // Default to lobby for authenticated users (even if hash is empty, #page-login or #page-lobby)
-            showPage('page-lobby');
-            const lobbyBtn = document.querySelector('.nav-btn[data-page="lobby"]');
-            if (lobbyBtn) updateActiveNav(lobbyBtn);
-            handleLobbyMusicState();
-            // Clean up URL if it was stuck on #page-login
-            if (hash === '#page-login') {
-                history.replaceState(null, null, '#page-lobby');
+            const gatewayBtn = document.getElementById('btn-enter-lobby-gateway');
+            const spinnerCont = document.getElementById('loading-spinner-container');
+            const gatewayCont = document.getElementById('loading-gateway-container');
+
+            if (gatewayBtn && spinnerCont && gatewayCont) {
+                // Keep the page on loading screen, hide spinner, and show gateway button
+                showPage('page-loading');
+                spinnerCont.style.display = 'none';
+                gatewayCont.style.display = 'flex';
+
+                // Customize button text based on destination
+                let targetPageId = 'page-lobby';
+                let targetNavName = 'lobby';
+                if (hash && hash.startsWith('#page-') && hash !== '#page-play' && hash !== '#page-login') {
+                    targetPageId = hash.substring(1);
+                    targetNavName = targetPageId.replace('page-', '');
+                    gatewayBtn.textContent = 'ENTER ' + targetNavName.toUpperCase();
+                } else {
+                    gatewayBtn.textContent = 'ENTER LOBBY';
+                }
+
+                gatewayBtn.onclick = () => {
+                    // 1. Play the music
+                    const lobbyMusic = document.getElementById('lobby-music');
+                    if (lobbyMusic) {
+                        lobbyMusic.ontimeupdate = function () {
+                            if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
+                                try { 
+                                    lobbyMusic.currentTime = 205; 
+                                } catch(err) {}
+                            }
+                        };
+                        console.log('[LobbyMusic] Playing lobby music via gateway button click.');
+                        lobbyMusic.play()
+                            .then(() => {
+                                console.log('[LobbyMusic] Gateway playback succeeded.');
+                                removeInteractionListeners();
+                            })
+                            .catch(e => console.warn('[LobbyMusic] Gateway play failed:', e));
+                    }
+
+                    // 2. Perform the page transition
+                    showPage(targetPageId);
+                    const navBtn = document.querySelector(`.nav-btn[data-page="${targetNavName}"]`);
+                    if (navBtn) updateActiveNav(navBtn);
+                    handleLobbyMusicState();
+                    if (hash === '#page-login') {
+                        history.replaceState(null, null, '#page-lobby');
+                    }
+                };
+            } else {
+                // Fallback if elements not in DOM
+                showPage('page-lobby');
+                const lobbyBtn = document.querySelector('.nav-btn[data-page="lobby"]');
+                if (lobbyBtn) updateActiveNav(lobbyBtn);
+                handleLobbyMusicState();
+                if (hash === '#page-login') {
+                    history.replaceState(null, null, '#page-lobby');
+                }
             }
         }
     } else {
