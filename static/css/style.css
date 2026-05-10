@@ -6099,7 +6099,7 @@ select option,
 }
 
 /* PC/Desktop Widescreen Login Layout Overrides */
-@media (min-width: 1440px) {
+@media (min-width: 1800px) {
     .auth-container {
         max-width: 620px !important;
         padding: 50px 60px !important;
