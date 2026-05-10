@@ -390,6 +390,7 @@ async function checkSession() {
         const data = await response.json();
 
         if (data.authenticated) {
+            localStorage.setItem('morpheme_logged_in', 'true');
             currentUser = data.username;
             window.currentUser = currentUser;  // Expose globally
             currentUserEmail = data.email;
@@ -434,10 +435,12 @@ async function checkSession() {
             } catch (e) { console.warn('Error checking current room', e); }
 
         } else {
+            localStorage.removeItem('morpheme_logged_in');
             updateAuthUI();
         }
     } catch (error) {
         console.error('Session check failed:', error);
+        localStorage.removeItem('morpheme_logged_in');
         updateAuthUI();
     }
 }
@@ -911,6 +914,7 @@ async function handleSignIn() {
         const data = await response.json();
 
         if (data.success) {
+            localStorage.setItem('morpheme_logged_in', 'true');
             currentUser = data.username;
             window.currentUser = currentUser;
             currentUserEmail = data.email;
@@ -974,6 +978,7 @@ async function handleSignUp() {
         const data = await response.json();
 
         if (data.success) {
+            localStorage.setItem('morpheme_logged_in', 'true');
             currentUser = data.username;
             window.currentUser = currentUser;
             currentUserEmail = email; // From the signup form
@@ -1004,6 +1009,7 @@ async function handleGuestLogin() {
         const data = await response.json();
 
         if (data.success) {
+            localStorage.setItem('morpheme_logged_in', 'true');
             currentUser = data.username;
             window.currentUser = currentUser;
             window.currentUserIsGuest = true;

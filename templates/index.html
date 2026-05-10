@@ -283,6 +283,25 @@
             </div>
         </div>
 
+        <script>
+            (function() {
+                try {
+                    const loggedIn = localStorage.getItem('morpheme_logged_in') === 'true';
+                    const pageLoading = document.getElementById('page-loading');
+                    const pageLogin = document.getElementById('page-login');
+                    if (loggedIn) {
+                        if (pageLoading) pageLoading.classList.add('active');
+                        if (pageLogin) pageLogin.classList.remove('active');
+                    } else {
+                        if (pageLoading) pageLoading.classList.remove('active');
+                        if (pageLogin) pageLogin.classList.add('active');
+                    }
+                } catch(e) {
+                    console.warn('LocalStorage check failed:', e);
+                }
+            })();
+        </script>
+
         <!-- How to Play Page -->
 
 
@@ -3523,7 +3542,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=5"></script>
     <script src="/js/forum.js?v=30"></script>
-    <script src="/js/app.js?v=10"></script>
+    <script src="/js/app.js?v=11"></script>
     <script src="/js/lobby.js?v=2"></script>
     <script src="/js/play.js?v=30"></script>
     <script src="/js/tournaments.js?v=2"></script>
