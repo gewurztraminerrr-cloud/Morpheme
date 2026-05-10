@@ -6098,4 +6098,12 @@ select option,
     }
 }
 
+/* PC/Desktop Widescreen Login Layout Overrides */
+@media (min-width: 900px) {
+    .auth-container {
+        max-width: 620px !important;
+        padding: 50px 60px !important;
+    }
+}
+
 
