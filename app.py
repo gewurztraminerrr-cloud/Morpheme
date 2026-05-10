@@ -1297,7 +1297,7 @@ def get_captcha():
     width = 150
     height = 50
     svg_parts = [
-        f'<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg" style="background: #1a1a2e; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;">'
+        f'<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg" style="background: #1a1a2e; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;">'
     ]
     
     # Noise lines
