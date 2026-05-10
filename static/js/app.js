@@ -211,35 +211,56 @@ document.addEventListener('DOMContentLoaded', async () => {
                     gatewayBtn.textContent = 'ENTER LOBBY';
                 }
 
-                gatewayBtn.onclick = () => {
-                    // 1. Play the music
-                    const lobbyMusic = document.getElementById('lobby-music');
-                    if (lobbyMusic) {
-                        lobbyMusic.ontimeupdate = function () {
-                            if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
-                                try { 
-                                    lobbyMusic.currentTime = 205; 
-                                } catch(err) {}
-                            }
-                        };
-                        console.log('[LobbyMusic] Playing lobby music via gateway button click.');
-                        lobbyMusic.play()
-                            .then(() => {
-                                console.log('[LobbyMusic] Gateway playback succeeded.');
-                                removeInteractionListeners();
-                            })
-                            .catch(e => console.warn('[LobbyMusic] Gateway play failed:', e));
+                let gatewayClicked = false;
+                const handleGatewayTransition = (e) => {
+                    if (gatewayClicked) return;
+                    gatewayClicked = true;
+
+                    if (e && e.type === 'touchstart') {
+                        try { e.preventDefault(); } catch(err) {}
                     }
 
-                    // 2. Perform the page transition
-                    showPage(targetPageId);
-                    const navBtn = document.querySelector(`.nav-btn[data-page="${targetNavName}"]`);
-                    if (navBtn) updateActiveNav(navBtn);
-                    handleLobbyMusicState();
-                    if (hash === '#page-login') {
-                        history.replaceState(null, null, '#page-lobby');
+                    console.log(`[Gateway] Transitioning via event: ${e ? e.type : 'manual'}`);
+
+                    // 1. Play the music inside a completely isolated, non-blocking try-catch block
+                    try {
+                        const lobbyMusic = document.getElementById('lobby-music');
+                        if (lobbyMusic) {
+                            lobbyMusic.ontimeupdate = function () {
+                                if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
+                                    try { 
+                                        lobbyMusic.currentTime = 205; 
+                                    } catch(err) {}
+                                }
+                            };
+                            console.log('[LobbyMusic] Playing lobby music via gateway button click.');
+                            lobbyMusic.play()
+                                .then(() => {
+                                    console.log('[LobbyMusic] Gateway playback succeeded.');
+                                    removeInteractionListeners();
+                                })
+                                .catch(err => console.warn('[LobbyMusic] Gateway play rejected:', err));
+                        }
+                    } catch (audioErr) {
+                        console.error('[LobbyMusic] Exception during gateway play initialization:', audioErr);
+                    }
+
+                    // 2. Perform the page transition (ALWAYS runs independently of audio success)
+                    try {
+                        showPage(targetPageId);
+                        const navBtn = document.querySelector(`.nav-btn[data-page="${targetNavName}"]`);
+                        if (navBtn) updateActiveNav(navBtn);
+                        handleLobbyMusicState();
+                        if (hash === '#page-login') {
+                            history.replaceState(null, null, '#page-lobby');
+                        }
+                    } catch (transitionErr) {
+                        console.error('[Gateway] Exception performing page transition:', transitionErr);
                     }
                 };
+
+                gatewayBtn.onclick = handleGatewayTransition;
+                gatewayBtn.ontouchstart = handleGatewayTransition;
             } else {
                 // Fallback if elements not in DOM
                 showPage('page-lobby');
