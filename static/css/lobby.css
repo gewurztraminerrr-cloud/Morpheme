@@ -821,3 +821,38 @@ body.theme-light-brown .field-hint {
         filter: drop-shadow(0 0 25px rgba(255, 255, 255, 0.25));
     }
 }
+
+/* PC Widescreen Horizontal Store Item Card Overrides */
+@media (min-width: 900px) {
+    .store-grid {
+        grid-template-columns: 1fr !important;
+        gap: 35px !important;
+    }
+
+    .store-item {
+        flex-direction: row !important;
+        align-items: stretch !important;
+        min-height: 280px !important;
+        max-height: 340px !important;
+    }
+
+    .store-item-image {
+        width: 340px !important;
+        min-width: 340px !important;
+        height: 100% !important;
+    }
+
+    .store-item-info {
+        flex: 1 !important;
+        padding: 30px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        gap: 15px !important;
+    }
+
+    .store-item-features {
+        grid-template-columns: repeat(4, 1fr) !important; /* Spread features horizontally across 4 columns */
+        gap: 12px !important;
+    }
+}
