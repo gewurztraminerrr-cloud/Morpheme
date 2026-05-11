@@ -2884,6 +2884,7 @@ class RoomManager:
             # --- START TRANSITION ---
             # ATOMIC REFERENCE CAPTURE: Since we replace the board object, a reference is safe and instant.
             ghost_prev_board = room.board 
+            ghost_round_start_time = room.round_start_time
             
             ghost_source_words = list(room.complete_words) if (getattr(room, 'complete_words', None) and len(room.complete_words) > 0) else list(room.all_words)
             ghost_bonus = (room.bonus_word.upper() if room.bonus_word else None)
@@ -3226,7 +3227,8 @@ class RoomManager:
                         bonus_word=ghost_bonus, 
                         player_snapshots=ghost_player_snapshots,
                         round_num=ghost_round_num,
-                        all_words_paths=ghost_all_words_paths
+                        all_words_paths=ghost_all_words_paths,
+                        round_start_time=ghost_round_start_time
                     )
                     
                     # USER REQUEST: Word Tally logging (CSW words only)
@@ -3316,7 +3318,7 @@ class RoomManager:
         return result
     
     
-    def save_round_history(self, room, board=None, all_words=None, bonus_word=None, player_snapshots=None, round_num=None, all_words_paths=None):
+    def save_round_history(self, room, board=None, all_words=None, bonus_word=None, player_snapshots=None, round_num=None, all_words_paths=None, round_start_time=None):
         """Save the results of the JUST COMPLETED round to the database"""
         # Determine target round number (use snapshot if provided, otherwise room's current)
         target_round = round_num if round_num is not None else room.current_round
@@ -3401,11 +3403,12 @@ class RoomManager:
                 
                 # NORMALIZE TIMESTAMPS: Ensure numeric s for replay
                 words_data = []
+                actual_start_time = round_start_time if round_start_time is not None else (room.round_start_time or time.time())
                 for w in u_submitted:
                     # Get raw time or fallback
                     raw_time = w.get('time')
                     if not raw_time or isinstance(raw_time, str):
-                        raw_time = room.round_start_time or time.time()
+                        raw_time = actual_start_time
                     
                     words_data.append({
                         'word': w['word'],
@@ -3449,7 +3452,7 @@ class RoomManager:
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     u_id, room.room_id, room.game_type, target_round, board_json, 
-                    json.dumps(words_data), u_score, room.round_start_time, room.time_limit, 
+                    json.dumps(words_data), u_score, actual_start_time, room.time_limit, 
                     timestamp, u_rating, u_perf, best_word_text, best_word_val,
                     room.board_dimensions, final_wpm, len(actual_all_words), 
                     actual_bonus_word, json.dumps(room.bonus_cell), board_format,
