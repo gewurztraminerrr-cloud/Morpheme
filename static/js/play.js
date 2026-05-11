@@ -90,7 +90,9 @@ async function ejectToLobby(reason = "inactivity") {
     // 1. Notify server immediately so lobby counts decrease
     if (window.leaveCurrentRoom) {
         try {
-            await window.leaveCurrentRoom();
+            // Fire-and-forget: Do NOT await this so the client UI redirects instantaneously
+            // and is never blocked by a slow/throttled network request
+            window.leaveCurrentRoom();
         } catch (e) {
             console.error('[play.js] Failed to notify server of leave during ejection:', e);
         }
@@ -710,6 +712,20 @@ async function updateGameState(incomingState = null) {
                 previousState.players.some(p => p.username.toLowerCase() === currentUsername.toLowerCase()) ||
                 (previousState.spectators || []).some(s => s.username.toLowerCase() === currentUsername.toLowerCase())
             );
+
+            // INSTANTANEOUS EVICTION: If we were previously established in the roster, kick immediately
+            if (window._wasEverInRoster) {
+                console.warn('[play.js] Authoritative eviction detected: User missing from roster. Ejecting instantaneously.');
+                const roundChanged = previousState && state.current_round > previousState.current_round;
+
+                if (is24H && wasInBefore && roundChanged) {
+                     ejectToLobby("daily_reset");
+                     return;
+                }
+
+                ejectToLobby("inactivity");
+                return;
+            }
 
             // SILENT AUTO-REJOIN HANDSHAKE: Before counting an eviction, try to rejoin ONLY if we haven't been successfully established in the room roster before
             if (!window._wasEverInRoster) {
@@ -4262,7 +4278,7 @@ function showValidationFeedback(message, isValid) {
     }, 3000);
 }
 
-async function leaveCurrentRoom() {
+function leaveCurrentRoom() {
     if (isTournamentPlay) {
         // We don't necessarily want to force forfeit on EVERY leave (e.g. browser refresh handles itself better)
         // but for the "Leave" button it is handled in the listener.
@@ -4272,7 +4288,10 @@ async function leaveCurrentRoom() {
     }
     const roomId = getCurrentRoomId();
     if (!roomId) return;
-    try { await fetch(`/api/room/${roomId}/leave`, { method: 'POST' }); } catch (e) { }
+
+    // 1. Clear local state and stop polling immediately (synchronous)
+    // This guarantees the UI updates/redirects and stops checking room state instantly
+    stopPolling();
     window.currentRoomId = null;
     localStorage.removeItem('last_joined_room');
     const playBtn = document.getElementById('play-btn');
@@ -4282,8 +4301,17 @@ async function leaveCurrentRoom() {
         playBtn.title = "Join a room to play.";
     }
     if (window.updateManualToolState) window.updateManualToolState();
-    stopPolling();
     clearGameUIAndCache();
+
+    // 2. Fire-and-forget network notification
+    // Use keepalive: true or sendBeacon so the browser does not cancel the request on unload/redirect,
+    // and do not block the thread awaiting it!
+    const url = `/api/room/${roomId}/leave`;
+    if (navigator.sendBeacon) {
+        navigator.sendBeacon(url);
+    } else {
+        fetch(url, { method: 'POST', keepalive: true }).catch(() => {});
+    }
 }
 window.leaveCurrentRoom = leaveCurrentRoom;
 

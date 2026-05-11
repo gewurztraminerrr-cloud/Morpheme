@@ -737,6 +737,11 @@ class PrivateMatchManager:
         # Format: game_type|dims|time
         config_key = f"{match_type_raw}|{board_dims}|{time_limit}"
         
+        is_24h = (int(time_limit) >= 7200)
+        if is_24h:
+            print(f"[PrivateMatch] 24-hour match: skipping rating updates.")
+            return
+            
         # Participants and turns
         players_rows = conn.execute('SELECT user_id, username, is_ai, ai_rating FROM private_match_players WHERE match_id = ?', (match_id,)).fetchall()
         turns_rows = conn.execute('SELECT user_id, score, submitted_words FROM private_match_turns WHERE match_id = ? AND round_number = ?', (match_id, round_number)).fetchall()
@@ -767,14 +772,12 @@ class PrivateMatchManager:
             if pr['is_ai']:
                 rating = pr['ai_rating']
             else:
-                # Resolve human rating (Global)
-                # First check config-specific, then global
+                # First check config-specific, then default to 1200
                 r_row = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', (uid, config_key)).fetchone()
                 if r_row:
                     rating = r_row[0]
                 else:
-                    g_row = conn.execute('SELECT rating FROM users WHERE id = ?', (uid,)).fetchone()
-                    if g_row: rating = g_row[0]
+                    rating = 1200
             
             players.append(MockPlayer(uid, pr['username'], rating, score, words, bool(pr['is_ai'])))
             

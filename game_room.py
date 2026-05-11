@@ -137,6 +137,7 @@ class GameRoom:
     previous_csw_only_words: List[str] = field(default_factory=list) # History
     previous_added_words: List[str] = field(default_factory=list) # History
     previous_bonus_word: str = '' # History
+    evicted_users: Dict = field(default_factory=dict) # user_id -> reason
     
     # Players
     players: List[Player] = field(default_factory=list)
@@ -467,6 +468,7 @@ class GameRoom:
 
             # remove_player handles the abandonment rating penalty logic!
             self.remove_player(uid, force=True)
+            self.evicted_users[str(uid)] = 'inactivity'
             players_removed = True
 
         # Check spectators
@@ -483,6 +485,7 @@ class GameRoom:
                 print(log_msg.strip())
                 with open('inactivity_debug.log', 'a') as f:
                     f.write(f"{datetime.datetime.now()} {log_msg}")
+                self.evicted_users[str(p.user_id)] = 'inactivity'
                 specs_removed = True
                 
         if specs_removed:
@@ -1146,67 +1149,77 @@ class GameRoom:
 
                         # Ratings logic...
                         try:
-                            from rating_logic import calculate_proportional_rating_change
-                            # USER MANDATE: Only change ratings for players who started the round from the beginning
-                            participants = [
-                                p for p in self.players + self.round_quitters 
-                                if (getattr(p, 'score', 0) > 0 or not getattr(p, 'is_ai', False)) 
-                                and not getattr(p, 'joined_mid_round', False)
-                            ]
-                            rating_changes = calculate_proportional_rating_change(participants, is_private=self.is_private)
-                            
-                            import sqlite3
-                            conn_p = sqlite3.connect(DB_PATH, timeout=30)
-                            for p in self.players + self.round_quitters:
-                                if p.user_id in rating_changes:
-                                    p.rating_change = rating_changes[p.user_id]
-                                    p.rating += p.rating_change
-                                    # Update Global Rating
-                                    conn_p.execute('UPDATE users SET rating = MAX(400, rating + ?) WHERE id = ?', (p.rating_change, p.user_id))
-                                    
-                                    # Update Config-Specific Rating
-                                    display_game_type = self.game_type.replace('solo_', '')
-                                    config_key = f"{display_game_type}|{self.board_dimensions}|{self.time_limit}"
-                                    conn_p.execute('''
-                                        UPDATE user_ratings 
-                                        SET rating = MAX(400, rating + ?) 
-                                        WHERE user_id = ? AND config_key = ?
-                                    ''', (p.rating_change, p.user_id, config_key))
+                            is_24h = (self.time_limit >= 7200)
+                            if is_24h:
+                                for p in self.players + self.round_quitters:
+                                    p.rating_change = 0
+                                print(f"[GameRoom] 24-hour room: skipping rating updates.")
+                            else:
+                                from rating_logic import calculate_proportional_rating_change
+                                # USER MANDATE: Only change ratings for players who started the round from the beginning
+                                participants = [
+                                    p for p in self.players + self.round_quitters 
+                                    if (getattr(p, 'score', 0) > 0 or not getattr(p, 'is_ai', False)) 
+                                    and not getattr(p, 'joined_mid_round', False)
+                                ]
+                                rating_changes = calculate_proportional_rating_change(participants, is_private=self.is_private)
+                                
+                                import sqlite3
+                                conn_p = sqlite3.connect(DB_PATH, timeout=30)
+                                for p in self.players + self.round_quitters:
+                                    if p.user_id in rating_changes:
+                                        p.rating_change = rating_changes[p.user_id]
+                                        p.rating += p.rating_change
+                                        # Update Global Rating
+                                        conn_p.execute('UPDATE users SET rating = MAX(400, rating + ?) WHERE id = ?', (p.rating_change, p.user_id))
+                                        
+                                        # Update Config-Specific Rating (using INSERT OR ON CONFLICT UPDATE upsert)
+                                        display_game_type = self.game_type.replace('solo_', '')
+                                        config_key = f"{display_game_type}|{self.board_dimensions}|{self.time_limit}"
+                                        conn_p.execute('''
+                                            INSERT INTO user_ratings (user_id, config_key, rating)
+                                            VALUES (?, ?, MAX(400, 1200 + ?))
+                                            ON CONFLICT(user_id, config_key) DO UPDATE SET rating = MAX(400, rating + ?)
+                                        ''', (p.user_id, config_key, p.rating_change, p.rating_change))
 
-                            # 5. Distribute Abandonment Bounty (User Request: At the end when results are shown)
-                            if self.abandonment_bounty > 0:
-                                eligible_receivers = [p for p in self.players if not p.is_ai and not getattr(p, 'is_guest', False) and not getattr(p, 'joined_mid_round', False)]
-                                if eligible_receivers:
-                                    count = len(eligible_receivers)
-                                    share = self.abandonment_bounty // count
-                                    remainder = self.abandonment_bounty % count
-                                    
-                                    config_key = f"{self.game_type.replace('solo_', '')}|{self.board_dimensions}|{self.time_limit}"
-                                    
-                                    for i, target in enumerate(eligible_receivers):
-                                        bonus = share + (1 if i < remainder else 0)
-                                        if bonus <= 0: continue
+                                # 5. Distribute Abandonment Bounty (User Request: At the end when results are shown)
+                                if self.abandonment_bounty > 0:
+                                    eligible_receivers = [p for p in self.players if not p.is_ai and not getattr(p, 'is_guest', False) and not getattr(p, 'joined_mid_round', False)]
+                                    if eligible_receivers:
+                                        count = len(eligible_receivers)
+                                        share = self.abandonment_bounty // count
+                                        remainder = self.abandonment_bounty % count
                                         
-                                        # Apply to DB
-                                        conn_p.execute('UPDATE users SET rating = rating + ? WHERE id = ?', (bonus, target.user_id))
-                                        conn_p.execute('UPDATE user_ratings SET rating = rating + ? WHERE user_id = ? AND config_key = ?', (bonus, target.user_id, config_key))
+                                        config_key = f"{self.game_type.replace('solo_', '')}|{self.board_dimensions}|{self.time_limit}"
                                         
-                                        # Apply in-memory (and ensure rating_change is updated for UI display)
-                                        target.rating += bonus
-                                        if not hasattr(target, 'rating_change'): target.rating_change = 0
-                                        target.rating_change = getattr(target, 'rating_change', 0) + bonus
+                                        for i, target in enumerate(eligible_receivers):
+                                            bonus = share + (1 if i < remainder else 0)
+                                            if bonus <= 0: continue
                                         
-                                        if not hasattr(target, 'bonus_notices'): target.bonus_notices = []
-                                        target.bonus_notices.append(f"Received +{bonus} from round abandonment pool")
+                                            # Apply to DB (using INSERT OR ON CONFLICT UPDATE upsert)
+                                            conn_p.execute('UPDATE users SET rating = rating + ? WHERE id = ?', (bonus, target.user_id))
+                                            conn_p.execute('''
+                                                INSERT INTO user_ratings (user_id, config_key, rating)
+                                                VALUES (?, ?, 1200 + ?)
+                                                ON CONFLICT(user_id, config_key) DO UPDATE SET rating = rating + ?
+                                            ''', (target.user_id, config_key, bonus, bonus))
+                                        
+                                            # Apply in-memory (and ensure rating_change is updated for UI display)
+                                            target.rating += bonus
+                                            if not hasattr(target, 'rating_change'): target.rating_change = 0
+                                            target.rating_change = getattr(target, 'rating_change', 0) + bonus
+                                        
+                                            if not hasattr(target, 'bonus_notices'): target.bonus_notices = []
+                                            target.bonus_notices.append(f"Received +{bonus} from round abandonment pool")
 
-                                        with open(RATING_AUDIT_PATH, 'a') as log:
-                                            log.write(f"[{time.time()}] Round-End Bounty Payout: +{bonus} to {target.username} (Room: {self.room_id}, Pool: {self.abandonment_bounty})\n")
+                                            with open(RATING_AUDIT_PATH, 'a') as log:
+                                                log.write(f"[{time.time()}] Round-End Bounty Payout: +{bonus} to {target.username} (Room: {self.room_id}, Pool: {self.abandonment_bounty})\n")
                                     
-                                    # Reset pool AFTER successful distribution
-                                    self.abandonment_bounty = 0
-                                    
-                            conn_p.commit()
-                            conn_p.close()
+                                        # Reset pool AFTER successful distribution
+                                        self.abandonment_bounty = 0
+                                        
+                                    conn_p.commit()
+                                    conn_p.close()
                         except Exception as e:
                             import traceback
                             traceback.print_exc()

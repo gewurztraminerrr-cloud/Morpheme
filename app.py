@@ -1705,6 +1705,9 @@ def get_public_profile(username):
     for cfg_key, rating in config_ratings.items():
         try:
             gtype, dims, dur = cfg_key.split('|')
+            # 24-hour configurations exception: load global rating from users table
+            if int(dur) >= 7200:
+                rating = user[2]
             matching = [p for p in processed_all if p['game_type'] == gtype and p['dimensions'] == dims and p['round_duration'] == int(dur)]
             config_stats[cfg_key] = {
                 'rating': rating,
@@ -1952,9 +1955,17 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     best_words = sorted(unique_word_list, key=lambda x: x['points'], reverse=True)[:50]
 
     # Get config rating
-    cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', (user_id, config_key))
-    rating_row = cursor.fetchone()
-    rating = rating_row[0] if rating_row else 1200
+    # 24-hour configurations exception: load global rating from users table
+    parts = config_key.split('|')
+    is_24h = (len(parts) >= 3 and int(parts[2]) >= 7200)
+    if is_24h:
+        cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (user_id,))
+        rating_row = cursor.fetchone()
+        rating = rating_row[0] if rating_row else 1200
+    else:
+        cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', (user_id, config_key))
+        rating_row = cursor.fetchone()
+        rating = rating_row[0] if rating_row else 1200
 
     conn.close()
     
@@ -2104,9 +2115,9 @@ def apply_leave_penalty(user_id, room):
     try:
         # Subtract from leaver
         conn.execute('''
-            UPDATE user_ratings 
-            SET rating = MAX(400, rating - 16) 
-            WHERE user_id = ? AND config_key = ?
+            INSERT INTO user_ratings (user_id, config_key, rating)
+            VALUES (?, ?, MAX(400, 1200 - 16))
+            ON CONFLICT(user_id, config_key) DO UPDATE SET rating = MAX(400, rating - 16)
         ''', (user_id, config_key))
         
         conn.execute('''
@@ -2224,16 +2235,24 @@ def create_room():
         rating = 0
     else:
         conn = sqlite3.connect(DB_PATH, timeout=30)
-        cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
-                            (session['user_id'], config_key))
-        row = cursor.fetchone()
-        if row:
-            rating = row[0]
+        # 24-hour rooms exception: load global rating from users table
+        is_24h = (int(time_limit) >= 7200)
+        if is_24h:
+            cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
+            row = cursor.fetchone()
+            if row:
+                rating = row[0]
+            else:
+                rating = 1200
         else:
-            # If no specific rating exists, fallback to legacy global rating from users table
-            fallback_cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
-            fallback_row = fallback_cursor.fetchone()
-            rating = fallback_row[0] if fallback_row else 1200
+            cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
+                                (session['user_id'], config_key))
+            row = cursor.fetchone()
+            if row:
+                rating = row[0]
+            else:
+                # Every room starts the user at 1200, completely unique to this room configuration
+                rating = 1200
         conn.close()
 
     # Get extra stats (games_played, country_flag)
@@ -2285,16 +2304,24 @@ def join_room(room_id):
         rating = 0
     else:
         conn = sqlite3.connect(DB_PATH, timeout=30)
-        cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
-                            (session['user_id'], config_key))
-        row = cursor.fetchone()
-        if row:
-            rating = row[0]
+        # 24-hour rooms exception: load global rating from users table
+        is_24h = (room.time_limit >= 7200)
+        if is_24h:
+            cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
+            row = cursor.fetchone()
+            if row:
+                rating = row[0]
+            else:
+                rating = 1200
         else:
-            # Fallback to global user rating
-            fallback_cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
-            fallback_row = fallback_cursor.fetchone()
-            rating = fallback_row[0] if fallback_row else 1200
+            cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
+                                (session['user_id'], config_key))
+            row = cursor.fetchone()
+            if row:
+                rating = row[0]
+            else:
+                # Every room starts the user at 1200, completely unique to this room configuration
+                rating = 1200
         conn.close()
         
     # Ensure user is not in any other room
@@ -2474,6 +2501,12 @@ def get_room_state(room_id):
     room = room_manager.get_room(room_id)
     if room:
         print(f"[get_room_state] Room: {room_id} | State: {room.state} | PrevBonus: {getattr(room, 'previous_bonus_word', 'None')} | CurrBonus: {room.bonus_word}")
+        if 'user_id' in session:
+            uid = session['user_id']
+            if str(uid) in getattr(room, 'evicted_users', {}):
+                reason = room.evicted_users.pop(str(uid), 'inactivity')
+                print(f"[get_room_state] User {uid} detected in room.evicted_users! Returning 403 eviction response.")
+                return jsonify({'error': f'You have been evicted for inactivity: {reason}', 'evicted': True, 'reason': reason}), 403
     try:
         if not room:
             # User Request: STABILITY. Public hubs (pub_...) should be recreated on demand if they vanish (e.g. server restart)
@@ -2521,16 +2554,23 @@ def get_room_state(room_id):
                                 try:
                                     game_type_base = room.game_type.replace('solo_', '')
                                     config_key = f"{game_type_base}|{room.board_dimensions}|{room.time_limit}"
-                                    cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
-                                                        (user_id, config_key))
-                                    row = cursor.fetchone()
-                                    if row:
-                                        rating = row[0]
+                                    # 24-hour rooms exception: load global rating from users table
+                                    if is_24h:
+                                        cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (user_id,))
+                                        row = cursor.fetchone()
+                                        if row:
+                                            rating = row[0]
+                                        else:
+                                            rating = 1200
                                     else:
-                                        fallback_cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (user_id,))
-                                        fallback_row = fallback_cursor.fetchone()
-                                        if fallback_row:
-                                            rating = fallback_row[0]
+                                        cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
+                                                            (user_id, config_key))
+                                        row = cursor.fetchone()
+                                        if row:
+                                            rating = row[0]
+                                        else:
+                                            # Every room starts the user at 1200, completely unique to this room configuration
+                                            rating = 1200
                                     
                                     cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (user_id,))
                                     row2 = cur.fetchone()
@@ -4476,16 +4516,20 @@ def get_leaderboard_data():
             elif dims != 'all': rating_pattern = f"{game_type}|{dims}|%"
             elif time_limit != 'all': rating_pattern = f"{game_type}|%|{time_limit}"
 
+            # 24-hour configurations exception: load global rating from users table
+            is_24h_filter = (time_limit != 'all' and int(time_limit) >= 7200)
+            rating_subquery = "u.rating" if is_24h_filter else "COALESCE((SELECT MAX(rating) FROM user_ratings WHERE user_id = u.id AND config_key LIKE ?), 1200)"
+
             m_sql = f"""SELECT u.username, u.country_flag, u.avatar_url, MAX(rh.timestamp) as last_active,
                                COUNT(rh.id) as game_count,
-                               COALESCE((SELECT MAX(rating) FROM user_ratings WHERE user_id = u.id AND config_key LIKE ?), 1200) as rating,
+                               {rating_subquery} as rating,
                                rh.game_type
                         FROM round_history rh 
                         JOIN users u ON rh.user_id = u.id 
                         WHERE {base_where} 
                         GROUP BY u.id 
                         ORDER BY game_count DESC LIMIT 50"""
-            m_params = [rating_pattern] + params
+            m_params = [rating_pattern] + params if not is_24h_filter else params
         else:
             # For 'All Game Types', show the highest rating among modes actually played in this period
             m_sql = f"""SELECT u.username, u.country_flag, u.avatar_url, MAX(rh.timestamp) as last_active,
@@ -4947,16 +4991,24 @@ def create_solo_match():
             # Use mode-specific rating for initial entry to avoid global rating bleed
             display_game_type = game_type.replace('solo_', '')
             config_key = f"{display_game_type}|{board_dimensions}|{time_limit}"
-            cur = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
-                             (session['user_id'], config_key))
-            row = cur.fetchone()
-            if row: 
-                rating = row[0]
+            # 24-hour rooms exception: load global rating from users table
+            is_24h = (time_limit >= 7200)
+            if is_24h:
+                cur = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
+                row = cur.fetchone()
+                if row:
+                    rating = row[0]
+                else:
+                    rating = 1200
             else:
-                 # Fallback to global only if no mode-specific rating exists yet
-                 cur_g = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
-                 row_g = cur_g.fetchone()
-                 if row_g: rating = row_g[0]
+                cur = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
+                                 (session['user_id'], config_key))
+                row = cur.fetchone()
+                if row: 
+                    rating = row[0]
+                else:
+                     # Every room starts the user at 1200, completely unique to this room configuration
+                     rating = 1200
             conn.close()
         except Exception as e:
             print(f"[app.py] DB Error fetching rating for solo: {e}")
