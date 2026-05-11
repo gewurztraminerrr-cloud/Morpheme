@@ -226,6 +226,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     try {
                         const lobbyMusic = document.getElementById('lobby-music');
                         if (lobbyMusic) {
+                            try {
+                                lobbyMusic.currentTime = 205;
+                            } catch(err) {}
                             lobbyMusic.ontimeupdate = function () {
                                 if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
                                     try { 
@@ -342,6 +345,9 @@ function handleLobbyMusicState() {
 
         if (lobbyMusic.paused) {
             console.log('[LobbyMusic] Attempting programmatic .play()...');
+            try {
+                lobbyMusic.currentTime = 205;
+            } catch(err) {}
             lobbyMusic.play()
                 .then(() => {
                     console.log('[LobbyMusic] Programatic play() resolved successfully!');
@@ -392,6 +398,9 @@ function playMusicOnFirstInteraction() {
             };
 
             console.log('[LobbyMusic] Attempting play() on gesture to unlock/unmute stream...');
+            try {
+                lobbyMusic.currentTime = 205;
+            } catch(err) {}
             lobbyMusic.play()
                 .then(() => {
                     console.log('[LobbyMusic] Lobby music playback started/unlocked successfully on user gesture!');
