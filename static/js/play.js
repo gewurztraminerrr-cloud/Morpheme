@@ -221,14 +221,30 @@ function getCurrentRoomId() {
 // Expose for lobby.js to call
 window.startGamePolling = function () {
     console.log('[play.js] window.startGamePolling called');
-    if (localStorage.getItem('tournament_play_active')) {
-        initTournamentPlay();
+    
+    const isTournamentActive = !!localStorage.getItem('tournament_play_active');
+    const isPrivateActive = !!localStorage.getItem('private_match_active');
+    
+    if (isTournamentActive) {
+        if (!isTournamentPlay || !window.lastGameState) {
+            initTournamentPlay();
+        } else {
+            console.log('[play.js] Returning to active tournament round. Preserving board and state.');
+            setTimeout(checkBoardOverflow, 50);
+        }
         return;
     }
-    if (localStorage.getItem('private_match_active')) {
-        initPrivateMatchPlay();
+    
+    if (isPrivateActive) {
+        if (!isPrivateMatchPlay || !window.lastGameState) {
+            initPrivateMatchPlay();
+        } else {
+            console.log('[play.js] Returning to active private match. Preserving board and state.');
+            setTimeout(checkBoardOverflow, 50);
+        }
         return;
     }
+    
     isTournamentPlay = false;
     isPrivateMatchPlay = false;
     startPolling();
@@ -301,8 +317,15 @@ function startPolling() {
         clearInterval(pollInterval);
     }
 
-    // Reset UI and globals for new room
-    clearGameUIAndCache();
+    // ONLY clear UI and cache if we are actually switching rooms or if we don't have a lastGameState!
+    const activeRoomId = getCurrentRoomId();
+    const isSameRoom = window.lastGameState && (window.lastGameState.room_id === activeRoomId);
+
+    if (!isSameRoom) {
+        clearGameUIAndCache();
+    } else {
+        console.log('[play.js] Returning to same active room. Preserving board and state.');
+    }
     
     isPrivateMatchPlay = false;
     isTournamentPlay = false;
