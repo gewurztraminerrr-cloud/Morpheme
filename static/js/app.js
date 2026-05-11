@@ -1069,12 +1069,12 @@ async function handleSignIn() {
 }
 
 async function handleSignUp() {
-    const username = document.getElementById('signup-username').value;
-    const email = document.getElementById('signup-email').value;
+    const username = document.getElementById('signup-username').value.trim();
+    const email = document.getElementById('signup-email').value.trim();
     const password = document.getElementById('signup-password').value;
     const confirmPassword = document.getElementById('signup-password-confirm').value;
-    const code = document.getElementById('signup-verification-code').value;
-    const captcha = document.getElementById('signup-captcha').value;
+    const code = document.getElementById('signup-verification-code').value.trim();
+    const captcha = document.getElementById('signup-captcha').value.trim();
     const errorEl = document.getElementById('signup-error');
 
     // Validation
