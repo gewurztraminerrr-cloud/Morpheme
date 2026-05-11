@@ -2619,6 +2619,28 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     const boardEl = document.getElementById('game-board');
     if (!boardEl || !board) return;
 
+    // Determine dimensions early
+    let rows = 0;
+    let cols = 0;
+    if (board && board.length > 0) {
+        rows = (is3D && Array.isArray(board[0])) ? board[0].length : board.length;
+        cols = (is3D && Array.isArray(board[0])) ? board[0][0].length : (board[0] ? board[0].length : 0);
+    }
+
+    if (cols > 0 && rows > 0) {
+        boardEl.style.setProperty('--board-cols', cols);
+        boardEl.style.setProperty('--board-rows', rows);
+    }
+
+    const boardPanel = boardEl.closest('.board-panel');
+    if (boardPanel) {
+        if (is3D || !board || board.length === 0) {
+            boardPanel.classList.remove('full-bleed-mobile');
+        } else {
+            boardPanel.classList.add('full-bleed-mobile');
+        }
+    }
+
     // Toggle 3D hint below word input
     const rotateHint = document.getElementById('cube-rotate-hint');
     if (rotateHint) {
@@ -2673,9 +2695,6 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         boardEl.style.gridTemplateRows = '';
         return;
     }
-
-    const rows = (is3D && Array.isArray(board[0])) ? board[0].length : board.length;
-    const cols = (is3D && Array.isArray(board[0])) ? board[0][0].length : (board[0] ? board[0].length : 0);
 
     // Optimization: Skip if board hasn't changed
     const densityJSON = JSON.stringify((window.lastGameState && window.lastGameState.cell_density) || []);
