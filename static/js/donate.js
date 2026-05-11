@@ -111,15 +111,48 @@
     };
 
     function loadRecentDonations() {
-        const hofGrid = document.querySelector('.hof-grid');
-        if (!hofGrid) return;
+        const topList = document.getElementById('top-supporters-list');
+        const recentList = document.getElementById('recent-supporters-list');
+        if (!topList || !recentList) return;
 
         fetch('/api/donations/recent')
             .then(res => res.json())
             .then(data => {
-                if (data.donations && data.donations.length > 0) {
-                    // Render actual donations from DB
-                    hofGrid.innerHTML = data.donations.map(donation => {
+                // 1. Render Top Lifetime Supporters
+                if (data.top && data.top.length > 0) {
+                    topList.innerHTML = data.top.map(donation => {
+                        const amount = parseFloat(donation.amount);
+                        let tierClass = 'bronze-tier';
+                        let tierName = 'Bronze Lifetime';
+                        let avatar = '🛡️';
+
+                        if (amount >= 30) {
+                            tierClass = 'gold-tier';
+                            tierName = 'Gold Lifetime';
+                            avatar = '👑';
+                        } else if (amount >= 15) {
+                            tierClass = 'silver-tier';
+                            tierName = 'Silver Lifetime';
+                            avatar = '✨';
+                        }
+
+                        return `
+                            <div class="hof-item">
+                                <div class="hof-avatar">${avatar}</div>
+                                <div class="hof-info">
+                                    <div class="hof-name">${escapeHTML(donation.donor_name)}</div>
+                                    <div class="hof-tier ${tierClass}">${tierName} • $${amount}</div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    topList.innerHTML = getEmptyPlaceholderHTML("Become a Top Supporter!");
+                }
+
+                // 2. Render Recent Support Activity
+                if (data.recent && data.recent.length > 0) {
+                    recentList.innerHTML = data.recent.map(donation => {
                         const amount = parseFloat(donation.amount);
                         let tierClass = 'bronze-tier';
                         let tierName = 'Bronze Supporter';
@@ -139,7 +172,7 @@
                         let dateStr = '';
                         try {
                             const date = new Date(donation.timestamp);
-                            dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                            dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
                         } catch (e) {
                             dateStr = donation.timestamp;
                         }
@@ -156,21 +189,24 @@
                         `;
                     }).join('');
                 } else {
-                    // If DB has no records, show premium placeholder instructions
-                    hofGrid.innerHTML = `
-                        <div class="hof-item" style="grid-column: 1 / -1; justify-content: center; padding: 25px; border-style: dashed; border-color: rgba(255,255,255,0.15); background: rgba(0,0,0,0.15);">
-                            <div style="text-align: center;">
-                                <div style="font-size: 1.5rem; margin-bottom: 8px;">🤝</div>
-                                <div style="font-weight: 700; color: #fff; margin-bottom: 4px;">No Donations Yet</div>
-                                <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0;">Be the very first player to support Morpheme and claim your spot on the Hall of Fame!</p>
-                            </div>
-                        </div>
-                    `;
+                    recentList.innerHTML = getEmptyPlaceholderHTML("Be the first to donate!");
                 }
             })
             .catch(err => {
                 console.error('[donate.js] Error loading donations:', err);
             });
+    }
+
+    function getEmptyPlaceholderHTML(subtext) {
+        return `
+            <div class="hof-item" style="grid-column: 1 / -1; justify-content: center; padding: 25px; border-style: dashed; border-color: rgba(255,255,255,0.15); background: rgba(0,0,0,0.15);">
+                <div style="text-align: center;">
+                    <div style="font-size: 1.5rem; margin-bottom: 8px;">🤝</div>
+                    <div style="font-weight: 700; color: #fff; margin-bottom: 4px;">No Donations Yet</div>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0;">${subtext}</p>
+                </div>
+            </div>
+        `;
     }
 
     // Helper to escape HTML to prevent XSS

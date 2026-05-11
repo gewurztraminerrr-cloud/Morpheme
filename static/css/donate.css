@@ -407,14 +407,30 @@
     box-shadow: 0 4px 15px rgba(0, 112, 186, 0.35);
 }
 
-/* Supporter Hall of Fame */
-.hall-of-fame h3 {
-    margin: 0 0 20px 0;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #fff;
+/* Supporter Hall of Fame columns structure */
+.hof-columns-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
 }
 
+.hof-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.hof-column h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 750;
+    color: #fff;
+    border-bottom: 1.5px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+/* Supporter Hall of Fame items styling */
 .hof-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

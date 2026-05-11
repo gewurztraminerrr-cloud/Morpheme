@@ -1305,22 +1305,45 @@ def get_recent_donations():
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     try:
-        cursor = conn.execute("""
+        # 1. Top Lifetime Supporters (highest summed amount DESC)
+        cursor_top = conn.execute("""
+            SELECT donor_name, SUM(amount) as total_amount, MAX(is_anonymous) as is_anonymous, MAX(timestamp) as timestamp 
+            FROM donations 
+            WHERE status = 'confirmed' 
+            GROUP BY donor_name 
+            ORDER BY total_amount DESC 
+            LIMIT 10
+        """)
+        rows_top = cursor_top.fetchall()
+        top_list = []
+        for r in rows_top:
+            top_list.append({
+                'donor_name': "Anonymous" if r['is_anonymous'] else r['donor_name'],
+                'amount': r['total_amount'],
+                'timestamp': r['timestamp']
+            })
+
+        # 2. Recent Supporters (newest timestamp DESC)
+        cursor_recent = conn.execute("""
             SELECT donor_name, amount, is_anonymous, timestamp 
             FROM donations 
             WHERE status = 'confirmed' 
             ORDER BY timestamp DESC 
             LIMIT 10
         """)
-        rows = cursor.fetchall()
-        donations_list = []
-        for r in rows:
-            donations_list.append({
+        rows_recent = cursor_recent.fetchall()
+        recent_list = []
+        for r in rows_recent:
+            recent_list.append({
                 'donor_name': "Anonymous" if r['is_anonymous'] else r['donor_name'],
                 'amount': r['amount'],
                 'timestamp': r['timestamp']
             })
-        return jsonify({'donations': donations_list})
+
+        return jsonify({
+            'top': top_list,
+            'recent': recent_list
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
