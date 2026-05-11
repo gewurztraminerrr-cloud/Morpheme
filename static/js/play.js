@@ -4506,6 +4506,7 @@ function updateWordInputFromPath() {
 function handleCellMouseDown(e) {
     if (e.button !== 0) return; // Only left click
     if (window.isSpectatorMode) return;
+    if (Date.now() - lastTouchTime < 1500) return; // Ignore simulated mouse events on touch devices
 
     const cell = e.target.closest('.board-cell');
     if (!cell || cell.classList.contains('grayed')) return;
@@ -4566,6 +4567,7 @@ function handleCellMouseOver(e) {
 
 function handleCellTouchStart(e) {
     if (window.isSpectatorMode) return;
+    if (mouseState.isDown) return; // Prevent double touch/accidental brushes from erasing path
 
     const touch = e.touches[0];
     const target = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -4593,12 +4595,14 @@ function handleCellTouchMove(e) {
     if (!mouseState.isDown) return;
     if (window.isSpectatorMode) return;
 
+    // Prevent mobile scrolling unconditionally during an active board swipe
+    e.preventDefault();
+
     const touch = e.touches[0];
     const target = document.elementFromPoint(touch.clientX, touch.clientY);
     const cell = target && target.closest('.board-cell');
 
     if (cell && !cell.classList.contains('grayed')) {
-        e.preventDefault();
         const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
         const r = parseInt(cell.dataset.r || cell.dataset.row);
         const c = parseInt(cell.dataset.c || cell.dataset.col);
