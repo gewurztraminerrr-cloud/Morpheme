@@ -194,6 +194,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Start polling
             startLobbyPolling();
+
+            // Mobile redirection: Scroll smoothly to Active Rooms panel
+            const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile) {
+                const roomsPanel = document.querySelector('.active-rooms-panel');
+                if (roomsPanel) {
+                    roomsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+
             return; // Handled
         }
 
