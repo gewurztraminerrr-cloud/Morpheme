@@ -826,11 +826,20 @@ body.theme-light-brown .field-hint {
     }
 
     .game-btn {
-        padding: 6px 4px !important;
+        padding: 5px 2px !important;
         font-size: 0.65rem !important;
         border-radius: 6px !important;
-        white-space: nowrap !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        line-height: 1.15 !important;
         text-align: center !important;
+        display: inline-flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-height: 46px !important;
+        box-sizing: border-box !important;
     }
 
     /* Style the room player pills beautifully to wrap snuggly on mobile screens */
