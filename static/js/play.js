@@ -134,6 +134,15 @@ async function ejectToLobby(reason = "inactivity") {
             `;
         }
         
+        if (reason === "daily_reset") {
+            title = "Daily Reset";
+            message = `
+                The 24-hour Daily Room has reset for the new day!
+                <br><br>
+                A fresh daily board has been generated. Head back in to start finding words and climb the leaderboard!
+            `;
+        }
+        
         if (window.showAlertModal) {
             window.showAlertModal(title, message, true); // priority=true ensures it isn't overwritten by lobby notices
             console.log('[play.js] Displayed modal via showAlertModal.');
@@ -1556,7 +1565,14 @@ async function updateGameState(incomingState = null) {
         // --- PREVIOUS DAY TAB (24H Only) ---
         const prevListEl = document.getElementById('previous-words-list');
         if (prevListEl && activeWordsTab === 'previous') {
-            const prevAll = state.previous_all_words || [];
+            let prevAll = [];
+            if (state.previous_all_words) {
+                if (Array.isArray(state.previous_all_words)) {
+                    prevAll = state.previous_all_words;
+                } else {
+                    prevAll = Object.keys(state.previous_all_words);
+                }
+            }
 
             if (prevAll.length === 0) {
                 prevListEl.innerHTML = '<p class="placeholder">No previous data.</p>';
@@ -1621,7 +1637,7 @@ async function updateGameState(incomingState = null) {
                     let statusClass = isFound ? 'player-word' : 'missed';
                     if (!isFound && isCSWOnly) statusClass += ' csw-only';
                     const icon = isFound ? '✓' : '✗';
-                    const details = state.previous_all_words && state.previous_all_words[w];
+                    const details = state.previous_all_word_scores && state.previous_all_word_scores[w];
                     let ptsDisplay = '';
                     if (details) {
                         const total = details.total || 0;

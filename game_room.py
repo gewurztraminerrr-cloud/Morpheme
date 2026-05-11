@@ -1054,7 +1054,8 @@ class GameRoom:
                         self.midnight_reset_occurred = True
                         self.previous_board = [list(row) for row in self.board] if self.board else None
                         self.previous_min_length = getattr(self, 'current_min_length', 3)
-                        self.previous_all_words = getattr(self, 'solved_words_with_scores', {}) if self.solved_words_with_scores else {w: {} for w in self.all_words} # Dict for scoring fallback
+                        self.previous_all_words = list(self.all_words) if self.all_words else []
+                        self.previous_all_word_scores = getattr(self, 'solved_words_with_scores', {}) if self.solved_words_with_scores else {w: {} for w in self.all_words} # Dict for scoring fallback
                         
                         # PERSISTENCE: Snapshot current player findings for the "Previous Day" tab
                         self.previous_day_history = {
@@ -1718,7 +1719,8 @@ class RoomManager:
                 
                 # USE STORED SOLUTIONS (Prevents dictionary mismatch issues)
                 if recovered_solutions:
-                     room.previous_all_words = recovered_solutions
+                     room.previous_all_words = list(recovered_solutions.keys())
+                     room.previous_all_word_scores = recovered_solutions
                      print(f"[RoomManager] Recovered {len(recovered_solutions)} words from DB solutions.")
                 else:
                     # Fallback solve (NWL)
@@ -1731,9 +1733,11 @@ class RoomManager:
                         room.previous_all_words = [w for w in all_solutions if (len(w) >= min_len or (bonus_upper and w.upper() == bonus_upper))]
                         if bonus_upper and bonus_upper not in room.previous_all_words:
                             room.previous_all_words.append(bonus_upper)
+                        room.previous_all_word_scores = {w: {} for w in room.previous_all_words}
                     except Exception as e:
                         print(f"[RoomManager] Error solving recovered board: {e}")
                         room.previous_all_words = []
+                        room.previous_all_word_scores = {}
 
             return history
         except Exception as e:
@@ -3024,13 +3028,16 @@ class RoomManager:
                     room.total_words_count = sum(1 for w in (room.next_round_words or []) if len(w) >= room.current_min_length)
                 
                 # --- 4. HISTORY PROMOTION ---
-                room.previous_min_length = getattr(room, 'current_min_length', 3)
-                room.previous_board = list(room.board) if room.board else []
-                # USER REQUEST: Ensure intermission list matches round rules
-                display_min_prev = getattr(room, 'current_min_length', 3)
-                room.previous_all_words = [w for w in (room.all_words or []) if len(w) >= display_min_prev]
-                room.previous_csw_only_words = list(room.csw_only_words) if room.csw_only_words else []
-                room.previous_added_words = list(room.added_words) if room.added_words else []
+                # For 24-hour rooms, we do NOT overwrite these variables since the midnight transition
+                # in check_and_update_state already captured the precise yesterday snapshots.
+                if room.time_limit < 7200:
+                    room.previous_min_length = getattr(room, 'current_min_length', 3)
+                    room.previous_board = list(room.board) if room.board else []
+                    # USER REQUEST: Ensure intermission list matches round rules
+                    display_min_prev = getattr(room, 'current_min_length', 3)
+                    room.previous_all_words = [w for w in (room.all_words or []) if len(w) >= display_min_prev]
+                    room.previous_csw_only_words = list(room.csw_only_words) if room.csw_only_words else []
+                    room.previous_added_words = list(room.added_words) if room.added_words else []
                 
                 # Update current active counts
                 room.csw_only_words = getattr(room, 'next_round_csw_only_words', [])

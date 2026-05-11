@@ -4493,15 +4493,12 @@ body .tab-btn.active {
 @media (max-width: 900px) {
     .header {
         display: flex !important;
-        flex-direction: row !important;
-        justify-content: flex-start !important;
+        flex-direction: column !important; /* Single panel: stacked layout */
+        justify-content: center !important;
         align-items: center !important;
-        overflow-x: auto !important;
-        scroll-snap-type: x mandatory !important;
-        -webkit-overflow-scrolling: touch !important;
-        scrollbar-width: none !important; /* Hide scrollbar for clean UI */
-        padding: 10px 15px !important;
-        gap: 0 !important;
+        overflow-x: hidden !important; /* No horizontal scrolling at all */
+        padding: 12px 15px !important;
+        gap: 12px !important; /* Space between logo and buttons grid */
         width: 100% !important;
         box-sizing: border-box !important;
     }
@@ -4510,9 +4507,9 @@ body .tab-btn.active {
     }
 
     .logo {
-        min-width: 100% !important;
-        flex-shrink: 0 !important;
-        scroll-snap-align: start !important;
+        min-width: auto !important;
+        width: 100% !important;
+        flex-shrink: 1 !important;
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
@@ -4521,33 +4518,23 @@ body .tab-btn.active {
         position: relative !important;
     }
 
-    /* Add a subtle swipe indicator dot/arrow on mobile logo */
+    /* Swipe indicator no longer needed, they are on the same panel! */
     .logo::after {
-        content: 'Swipe for Menu ➔';
-        position: absolute;
-        bottom: -5px;
-        font-size: 0.65rem;
-        font-weight: 800;
-        letter-spacing: 0.5px;
-        color: var(--accent-color);
-        opacity: 0.75;
-        animation: slideHint 1.5s infinite alternate;
+        display: none !important;
     }
 
     .nav {
-        min-width: 100% !important;
-        flex-shrink: 0 !important;
-        scroll-snap-align: start !important;
+        min-width: auto !important;
+        width: 100% !important;
+        flex-shrink: 1 !important;
         display: flex !important;
         flex-direction: row !important;
-        flex-wrap: nowrap !important; /* Force items to stay on a single swipeable row! */
-        overflow-x: auto !important; /* Inner menu can scroll if buttons exceed width */
-        -webkit-overflow-scrolling: touch !important; /* iOS smooth scrolling momentum */
-        scrollbar-width: none !important;
-        gap: 8px !important;
-        justify-content: flex-start !important; /* Start-align buttons to let user scroll natively! */
+        flex-wrap: wrap !important; /* Force items to wrap nicely to ensure all buttons are fully visible! */
+        overflow-x: visible !important;
+        gap: 6px 8px !important; /* Compact vertical and horizontal gap */
+        justify-content: center !important; /* Center-align buttons beautifully on mobile */
         align-items: center !important;
-        padding: 0 15px !important;
+        padding: 0 !important;
         box-sizing: border-box !important;
     }
     .nav::-webkit-scrollbar {
