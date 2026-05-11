@@ -1073,6 +1073,20 @@ async function updateGameState(incomingState = null) {
                         wordInput.value = '';
                         wordInput.focus();
                     }
+
+                    // Mobile Device: Scroll user back to view the entire board immediately above the timer
+                    const isMobile = window.innerWidth <= 900;
+                    if (isMobile) {
+                        setTimeout(() => {
+                            const timerDisplay = document.querySelector('.timer-display');
+                            if (timerDisplay) {
+                                const rect = timerDisplay.getBoundingClientRect();
+                                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                                const targetY = rect.top + scrollTop - 10;
+                                window.scrollTo({ top: targetY, behavior: 'smooth' });
+                            }
+                        }, 250); // Delay slightly to allow the virtual keyboard to fully settle
+                    }
                 }, 150);
             }
             // NO assignment to previousState constant. window.lastGameState update at top handles tracking.
