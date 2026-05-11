@@ -1291,9 +1291,18 @@ function setupMobileLogic() {
 function setupAuth() {
     // CAPTCHA helper logic
     window.refreshCaptchas = function() {
-        document.querySelectorAll('.captcha-img').forEach(img => {
-            img.src = '/api/captcha?t=' + Date.now();
-        });
+        const isSigninActive = document.getElementById('signin-form') && document.getElementById('signin-form').classList.contains('active');
+        const isSignupActive = document.getElementById('signup-form') && document.getElementById('signup-form').classList.contains('active');
+        const activeFormId = isSignupActive ? 'signup-form' : 'signin-form';
+        
+        const formEl = document.getElementById(activeFormId);
+        if (formEl) {
+            const img = formEl.querySelector('.captcha-img');
+            if (img) {
+                img.src = '/api/captcha?t=' + Date.now();
+            }
+        }
+        
         const signinCaptcha = document.getElementById('signin-captcha');
         const signupCaptcha = document.getElementById('signup-captcha');
         if (signinCaptcha) signinCaptcha.value = '';
