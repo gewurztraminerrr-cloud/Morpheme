@@ -2358,7 +2358,8 @@ function updateParameters(state) {
         'split': 'Split Points',
         '3d': 'Cube',
         'private': 'With Friends',
-        'tournament': 'Tournament'
+        'tournament': 'Tournament',
+        'solo_accumulative': 'Solo'
     };
 
     const timerVal = document.getElementById('timer-value');
