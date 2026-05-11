@@ -1078,14 +1078,23 @@ async function updateGameState(incomingState = null) {
                         if (wordInput) wordInput.focus();
                     } else {
                         // Mobile Device: Do NOT auto-focus the textbox (prevents keyboard from popping up and blocking board).
-                        // Instead, smoothly scroll to center the timer and board in the viewport.
+                        // Instead, scroll the viewport instantly/smoothly so that the board and timer are fully visible.
                         setTimeout(() => {
                             const timerDisplay = document.querySelector('.timer-display');
                             if (timerDisplay) {
                                 const rect = timerDisplay.getBoundingClientRect();
                                 const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                                const targetY = rect.top + scrollTop - 10;
-                                window.scrollTo({ top: targetY, behavior: 'smooth' });
+                                const targetY = Math.max(0, rect.top + scrollTop - 15);
+                                // 1. Immediate scroll jump to prevent layout lag
+                                window.scrollTo(0, targetY);
+                                
+                                // 2. Smooth correction scroll after browser layout fully settles
+                                setTimeout(() => {
+                                    const rectFresh = timerDisplay.getBoundingClientRect();
+                                    const scrollTopFresh = window.pageYOffset || document.documentElement.scrollTop;
+                                    const targetYFresh = Math.max(0, rectFresh.top + scrollTopFresh - 15);
+                                    window.scrollTo({ top: targetYFresh, behavior: 'smooth' });
+                                }, 100);
                             }
                         }, 50); // Small delay to let board rendering settle for accurate coordinates
                     }
