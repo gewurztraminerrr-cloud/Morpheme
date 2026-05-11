@@ -1300,6 +1300,33 @@ def get_user_count():
         conn.close()
 
 
+@app.route('/api/donations/recent', methods=['GET'])
+def get_recent_donations():
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
+    try:
+        cursor = conn.execute("""
+            SELECT donor_name, amount, is_anonymous, timestamp 
+            FROM donations 
+            WHERE status = 'confirmed' 
+            ORDER BY timestamp DESC 
+            LIMIT 10
+        """)
+        rows = cursor.fetchall()
+        donations_list = []
+        for r in rows:
+            donations_list.append({
+                'donor_name': "Anonymous" if r['is_anonymous'] else r['donor_name'],
+                'amount': r['amount'],
+                'timestamp': r['timestamp']
+            })
+        return jsonify({'donations': donations_list})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
 @app.route('/')
 def index():
     # USER REQUEST: once the user logs in, entering "morpheme.games" (or refreshing root)
