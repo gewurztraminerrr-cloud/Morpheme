@@ -3290,7 +3290,7 @@ function applyDensityToCell(cell, r, c, f, state = null) {
         return;
     }
 
-    if (hasDensityData) {
+    if (hasDensityData && boardFormat.toLowerCase().includes('density')) {
          const grid = densityData;
          const maxD = Math.max(1, window.lastGameState.max_cell_density || 1);
          let cur = -1;
