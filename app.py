@@ -877,6 +877,28 @@ def init_db():
         except sqlite3.OperationalError:
             pass
 
+    # MIGRATION: Add email verification columns
+    try:
+        conn.execute('ALTER TABLE users ADD COLUMN is_verified INTEGER DEFAULT 1')
+        conn.commit()
+        print("Migrated DB: Added is_verified column to users")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        conn.execute('ALTER TABLE users ADD COLUMN verification_code TEXT')
+        conn.commit()
+        print("Migrated DB: Added verification_code column to users")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        conn.execute('ALTER TABLE users ADD COLUMN verification_expires_at REAL')
+        conn.commit()
+        print("Migrated DB: Added verification_expires_at column to users")
+    except sqlite3.OperationalError:
+        pass
+
     # TOURNAMENTS TABLES
     conn.executescript('''
         CREATE TABLE IF NOT EXISTS tournaments (
@@ -1342,12 +1364,188 @@ def get_captcha():
     return Response(svg_data, mimetype='image/svg+xml')
 
 
+def send_verification_email(user_email, username, code):
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
+    subject = f"Your MORPHEME Verification Code: {code}"
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body {{
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                background-color: #0b0c10;
+                color: #c5c6c7;
+                padding: 40px 20px;
+                margin: 0;
+            }}
+            .card {{
+                max-width: 500px;
+                margin: 0 auto;
+                background: #1f2833;
+                border: 2px solid #ff007f;
+                border-radius: 16px;
+                padding: 30px;
+                box-shadow: 0 8px 32px rgba(255, 0, 127, 0.15);
+                text-align: center;
+            }}
+            .logo {{
+                font-size: 24px;
+                font-weight: 800;
+                letter-spacing: 2px;
+                color: #ffffff;
+                margin-bottom: 20px;
+            }}
+            .logo span {{
+                color: #ff007f;
+            }}
+            .title {{
+                font-size: 20px;
+                font-weight: 600;
+                color: #ffffff;
+                margin-bottom: 15px;
+            }}
+            .instructions {{
+                font-size: 14px;
+                line-height: 1.6;
+                margin-bottom: 25px;
+                color: #8f94a5;
+            }}
+            .code-box {{
+                display: inline-block;
+                background: rgba(0, 0, 0, 0.4);
+                border: 1px dashed #ff007f;
+                border-radius: 12px;
+                padding: 15px 40px;
+                font-size: 32px;
+                font-weight: 800;
+                letter-spacing: 6px;
+                color: #ffffff;
+                text-shadow: 0 0 10px rgba(255, 0, 127, 0.5);
+                margin: 15px 0;
+            }}
+            .footer {{
+                font-size: 11px;
+                color: #555866;
+                margin-top: 30px;
+                line-height: 1.4;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="logo">M<span>ORPHEME</span></div>
+            <div class="title">Verify Your Account</div>
+            <p class="instructions">Hello <strong>{username}</strong>,<br>Welcome to Morpheme! Use the 6-digit verification code below to activate your account and start climbing the leaderboard:</p>
+            <div class="code-box">{code}</div>
+            <p class="instructions" style="margin-top: 25px; font-size: 12px;">This code is valid for 15 minutes. If you did not sign up for Morpheme, please ignore this email.</p>
+            <div class="footer">
+                &copy; 2026 Morpheme Games. All rights reserved.<br>
+                This is an automated system email. Please do not reply.
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    # Print to logs first as fallback / reference
+    print("\n" + "="*80)
+    print(f" [EMAIL VERIFICATION] To: {user_email} | Username: {username}")
+    print(f" [CODE]: {code}")
+    print("="*80 + "\n")
+
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From'] = "noreply@morpheme.games"
+    msg['To'] = user_email
+    
+    part1 = MIMEText(f"Hello {username},\n\nYour Morpheme verification code is: {code}\n\nThis code expires in 15 minutes.", 'plain')
+    part2 = MIMEText(html_content, 'html')
+    msg.attach(part1)
+    msg.attach(part2)
+
+    smtp_servers = [
+        # 1. Try local Postfix/Sendmail on localhost
+        {"host": "localhost", "port": 25, "use_tls": False, "auth": False},
+        # 2. Try GoDaddy's direct outbound relay
+        {"host": "smtp-out.secureserver.net", "port": 25, "use_tls": False, "auth": False},
+        # 3. Try standard cPanel default SMTP on localhost
+        {"host": "127.0.0.1", "port": 25, "use_tls": False, "auth": False},
+    ]
+
+    sent = False
+    for server_cfg in smtp_servers:
+        try:
+            print(f"[Email] Attempting to send via {server_cfg['host']}:{server_cfg['port']}...")
+            server = smtplib.SMTP(server_cfg['host'], server_cfg['port'], timeout=5)
+            server.sendmail("noreply@morpheme.games", [user_email], msg.as_string())
+            server.quit()
+            print(f"[Email] Successfully sent email to {user_email} via {server_cfg['host']}")
+            sent = True
+            break
+        except Exception as smtp_err:
+            print(f"[Email] Failed via {server_cfg['host']}: {smtp_err}")
+            
+    if not sent:
+        print("[Email] Warning: Could not deliver verification email over SMTP. Code printed to logs.")
+
+
+@app.route('/api/send-signup-verification', methods=['POST'])
+def send_signup_verification():
+    data = request.get_json()
+    username = data.get('username', '').strip()
+    email = data.get('email', '').strip()
+    
+    if not username or not email:
+        return jsonify({'error': 'Username and email are required'}), 400
+        
+    import re
+    if not re.match(r'^[a-zA-Z0-9_]{1,16}$', username):
+        return jsonify({'error': 'Username must be 1-16 characters (letters, numbers, underscores only)'}), 400
+        
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=30)
+        cursor = conn.execute('SELECT id FROM users WHERE username = ?', (username,))
+        if cursor.fetchone():
+            return jsonify({'error': 'Username already exists'}), 400
+            
+        cursor = conn.execute('SELECT id FROM users WHERE email = ?', (email,))
+        if cursor.fetchone():
+            return jsonify({'error': 'Email is already registered'}), 400
+    except Exception as e:
+        print(f"[SendVerificationCheckError] {e}")
+        return jsonify({'error': 'Database error. Please try again.'}), 500
+    finally:
+        if 'conn' in locals():
+            conn.close()
+            
+    # Generate 6-digit verification code
+    import random
+    code = str(random.randint(100000, 999999))
+    session['signup_code'] = code
+    session['signup_email'] = email
+    session['signup_username'] = username
+    session['signup_code_expires'] = time.time() + 900 # 15 minutes
+    
+    # Send verification email in a background thread
+    import threading
+    threading.Thread(target=send_verification_email, args=(email, username, code), daemon=True).start()
+    
+    return jsonify({'success': True, 'message': 'Verification code sent to your email.'})
+
+
 @app.route('/api/register', methods=['POST'])
 def register():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
     email = data.get('email')
+    code = data.get('code', '').strip()
     captcha_val = data.get('captcha', '')
     
     session_captcha = session.get('captcha_text')
@@ -1356,7 +1554,7 @@ def register():
     if not session_captcha or captcha_val.upper() != session_captcha:
         return jsonify({'error': 'Incorrect or expired CAPTCHA. Please click on the CAPTCHA image to refresh and try again.'}), 400
         
-    # Username validation: 1-16 chars, letters, numbers, underscores
+    # Username validation
     import re
     if not re.match(r'^[a-zA-Z0-9_]{1,16}$', username):
         return jsonify({'error': 'Username must be 1-16 characters (letters, numbers, underscores only)'}), 400
@@ -1366,25 +1564,48 @@ def register():
 
     if len(password) < 6:
         return jsonify({'error': 'Password must be 6+ characters'}), 400
+        
+    # Verify the code from session
+    saved_code = session.get('signup_code')
+    saved_email = session.get('signup_email')
+    saved_expires = session.get('signup_code_expires', 0)
+    
+    if not saved_code or saved_code != code:
+        return jsonify({'error': 'Incorrect email verification code. Please request a new email or check the code.'}), 400
+        
+    if not saved_email or saved_email.lower() != email.lower():
+        return jsonify({'error': 'The entered email does not match the verification code destination.'}), 400
+        
+    if time.time() > saved_expires:
+        return jsonify({'error': 'Verification code has expired. Please send the email again.'}), 400
     
     try:
         conn = sqlite3.connect(DB_PATH, timeout=30)
         password_hash = generate_password_hash(password, method='pbkdf2:sha256')
-        conn.execute('INSERT INTO users (username, password_hash, email) VALUES (?, ?, ?)',
+        
+        # Insert user cleanly
+        conn.execute('INSERT INTO users (username, password_hash, email, is_verified) VALUES (?, ?, ?, 1)',
                     (username, password_hash, email))
         conn.commit()
         
         cursor = conn.execute('SELECT id, rating FROM users WHERE username = ?', (username,))
         user = cursor.fetchone()
         
+        # Clear the verification session data
+        session.pop('signup_code', None)
+        session.pop('signup_email', None)
+        session.pop('signup_username', None)
+        session.pop('signup_code_expires', None)
+        
+        # Automatically log the user in!
         session['user_id'] = user[0]
         session['username'] = username
         session['email'] = email
-        session.pop('is_guest', None) # Clear guest flag if present
+        session.pop('is_guest', None)
         session['_morpheme_login_time'] = time.time()
         session.permanent = True
         
-        return jsonify({'success': True, 'username': username, 'email': email})
+        return jsonify({'success': True, 'username': username, 'email': email, 'rating': user[1]})
     except sqlite3.IntegrityError:
         return jsonify({'error': 'Username already exists'}), 400
     except Exception as e:
@@ -2594,6 +2815,13 @@ def get_room_state(room_id):
              return jsonify({'error': 'Room not found (expired due to inactivity)'}), 404
             
         with room._state_lock:
+            # LAZY LOAD YESTERDAY'S HISTORY FOR 24H ROOMS:
+            if room.time_limit >= 7200 and (not getattr(room, 'previous_day_history', None) or len(room.previous_day_history) == 0):
+                try:
+                    room_manager.get_yesterdays_history(room, room.current_round)
+                except Exception as e:
+                    print(f"[app.py] Error lazy-loading yesterday's history for room {room_id}: {e}")
+
             # 1. Heartbeat Trigger (If TR=0/45/Search)
             milestone = room.get_next_round_milestone()
             if milestone == 'spinner':

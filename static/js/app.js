@@ -655,6 +655,9 @@ window.addEventListener('resize', () => {
 });
 
 function setupMobileHeaderSwipe() {
+    // Single-panel stacked layout on mobile: swipe-and-snap gesture is not needed
+    if (window.innerWidth <= 900) return;
+
     const logo = document.querySelector('.logo');
     const header = document.querySelector('.header');
     
@@ -971,11 +974,17 @@ function updateActiveNav(activeBtn) {
 // Setup authentication listeners (Handled by second definition below)
 
 function switchAuthTab(tab) {
+    const verifyForm = document.getElementById('verify-form');
+    if (verifyForm) verifyForm.style.display = 'none';
+    const tabsContainer = document.querySelector('.auth-tabs');
+    if (tabsContainer) tabsContainer.style.display = 'flex';
+
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     document.querySelectorAll('.auth-form').forEach(form => {
         form.classList.remove('active');
+        form.style.display = ''; // restore default display
     });
 
     if (tab === 'signin') {
@@ -986,9 +995,26 @@ function switchAuthTab(tab) {
         document.getElementById('signup-form').classList.add('active');
     }
 
-    // Clear errors
+    // Clear errors & states
     document.getElementById('signin-error').textContent = '';
     document.getElementById('signup-error').textContent = '';
+    
+    const signupStatus = document.getElementById('signup-email-status');
+    if (signupStatus) signupStatus.textContent = '';
+    
+    const signupVerifyBox = document.getElementById('signup-verification-box');
+    if (signupVerifyBox) signupVerifyBox.style.display = 'none';
+    
+    const signupSubmitBtn = document.getElementById('signup-submit-btn');
+    if (signupSubmitBtn) {
+        signupSubmitBtn.disabled = true;
+        signupSubmitBtn.style.opacity = '0.6';
+    }
+    
+    const sendEmailBtn = document.getElementById('signup-send-email-btn');
+    if (sendEmailBtn) {
+        sendEmailBtn.textContent = 'Send Email';
+    }
 }
 
 async function handleSignIn() {
@@ -1047,6 +1073,7 @@ async function handleSignUp() {
     const email = document.getElementById('signup-email').value;
     const password = document.getElementById('signup-password').value;
     const confirmPassword = document.getElementById('signup-password-confirm').value;
+    const code = document.getElementById('signup-verification-code').value;
     const captcha = document.getElementById('signup-captcha').value;
     const errorEl = document.getElementById('signup-error');
 
@@ -1061,13 +1088,18 @@ async function handleSignUp() {
         return;
     }
 
+    if (!code || code.length !== 6) {
+        errorEl.textContent = 'Please request and enter your 6-digit verification code';
+        return;
+    }
+
     try {
         const response = await fetch('/api/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, password, email, captcha })
+            body: JSON.stringify({ username, password, email, captcha, code })
         });
 
         const data = await response.json();
@@ -1362,6 +1394,80 @@ function setupAuth() {
     if (guestBtn) {
         guestBtn.addEventListener('click', async () => {
             await handleGuestLogin();
+        });
+    }
+
+    // Signup Send Email button
+    const sendEmailBtn = document.getElementById('signup-send-email-btn');
+    if (sendEmailBtn) {
+        sendEmailBtn.addEventListener('click', async () => {
+            const username = document.getElementById('signup-username').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            const errorEl = document.getElementById('signup-error');
+            const statusEl = document.getElementById('signup-email-status');
+            const verificationBox = document.getElementById('signup-verification-box');
+            const signupSubmitBtn = document.getElementById('signup-submit-btn');
+
+            errorEl.textContent = '';
+            statusEl.textContent = '';
+            statusEl.style.color = '#c5c6c7';
+
+            if (!username) {
+                errorEl.textContent = 'Please enter a username first';
+                return;
+            }
+            if (!email) {
+                errorEl.textContent = 'Please enter an email first';
+                return;
+            }
+
+            sendEmailBtn.disabled = true;
+            sendEmailBtn.textContent = 'Sending...';
+
+            try {
+                const response = await fetch('/api/send-signup-verification', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    statusEl.textContent = 'Verification code sent to your email!';
+                    statusEl.style.color = '#00ff66';
+                    
+                    // Reveal the 6-digit box
+                    if (verificationBox) {
+                        verificationBox.style.display = 'flex';
+                    }
+                    
+                    // Enable the main signup submit button
+                    if (signupSubmitBtn) {
+                        signupSubmitBtn.disabled = false;
+                        signupSubmitBtn.style.opacity = '1';
+                    }
+
+                    // Change button to Resend Email
+                    sendEmailBtn.textContent = 'Resend Email';
+                    
+                    // Focus on the code input
+                    const codeInput = document.getElementById('signup-verification-code');
+                    if (codeInput) {
+                        codeInput.value = '';
+                        codeInput.focus();
+                    }
+                } else {
+                    errorEl.textContent = data.error || 'Failed to send verification code.';
+                    sendEmailBtn.textContent = 'Send Email';
+                }
+            } catch (err) {
+                errorEl.textContent = 'An error occurred. Please try again.';
+                console.error(err);
+                sendEmailBtn.textContent = 'Send Email';
+            } finally {
+                sendEmailBtn.disabled = false;
+            }
         });
     }
 }
