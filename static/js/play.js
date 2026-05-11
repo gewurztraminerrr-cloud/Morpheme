@@ -4521,8 +4521,33 @@ function handleCellMouseDown(e) {
     const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
     const r = parseInt(cell.dataset.r || cell.dataset.row);
     const c = parseInt(cell.dataset.c || cell.dataset.col);
-    const letter = cell.dataset.letter;
+    const letter = getLetterFromCellAndEvent(cell, e);
     selectCell(r, c, letter, cell, f);
+}
+
+function getLetterFromCellAndEvent(cell, e) {
+    const letter = cell.dataset.letter;
+    if (letter && letter.includes('/')) {
+        const rect = cell.getBoundingClientRect();
+        const centerY = rect.top + rect.height / 2;
+        let clientY = null;
+        if (e) {
+            if (e.touches && e.touches.length > 0) {
+                clientY = e.touches[0].clientY;
+            } else if (e.changedTouches && e.changedTouches.length > 0) {
+                clientY = e.changedTouches[0].clientY;
+            } else if (typeof e.clientY === 'number') {
+                clientY = e.clientY;
+            }
+        }
+        if (clientY !== null) {
+            const [top, bottom] = letter.split('/');
+            const selectedLetter = (clientY < centerY) ? top : bottom;
+            console.log(`[EitherOr] Resolved coords split: clientY=${clientY} centerY=${centerY} -> selected: ${selectedLetter}`);
+            return selectedLetter;
+        }
+    }
+    return letter;
 }
 
 function handleCellMouseOver(e) {
@@ -4535,7 +4560,7 @@ function handleCellMouseOver(e) {
     const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
     const r = parseInt(cell.dataset.r || cell.dataset.row);
     const c = parseInt(cell.dataset.c || cell.dataset.col);
-    const letter = cell.dataset.letter;
+    const letter = getLetterFromCellAndEvent(cell, e);
     selectCell(r, c, letter, cell, f);
 }
 
@@ -4559,7 +4584,7 @@ function handleCellTouchStart(e) {
         const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
         const r = parseInt(cell.dataset.r || cell.dataset.row);
         const c = parseInt(cell.dataset.c || cell.dataset.col);
-        const letter = cell.dataset.letter;
+        const letter = getLetterFromCellAndEvent(cell, e);
         selectCell(r, c, letter, cell, f);
     }
 }
@@ -4577,7 +4602,7 @@ function handleCellTouchMove(e) {
         const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
         const r = parseInt(cell.dataset.r || cell.dataset.row);
         const c = parseInt(cell.dataset.c || cell.dataset.col);
-        const letter = cell.dataset.letter;
+        const letter = getLetterFromCellAndEvent(cell, e);
         selectCell(r, c, letter, cell, f);
     }
 }
