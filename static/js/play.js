@@ -1071,12 +1071,14 @@ async function updateGameState(incomingState = null) {
                     const wordInput = document.getElementById('word-input');
                     if (wordInput) {
                         wordInput.value = '';
-                        wordInput.focus();
                     }
 
-                    // Mobile Device: Scroll user back to view the entire board immediately above the timer
                     const isMobile = window.innerWidth <= 900;
-                    if (isMobile) {
+                    if (!isMobile) {
+                        if (wordInput) wordInput.focus();
+                    } else {
+                        // Mobile Device: Do NOT auto-focus the textbox (prevents keyboard from popping up and blocking board).
+                        // Instead, smoothly scroll to center the timer and board in the viewport.
                         setTimeout(() => {
                             const timerDisplay = document.querySelector('.timer-display');
                             if (timerDisplay) {
@@ -1085,7 +1087,7 @@ async function updateGameState(incomingState = null) {
                                 const targetY = rect.top + scrollTop - 10;
                                 window.scrollTo({ top: targetY, behavior: 'smooth' });
                             }
-                        }, 250); // Delay slightly to allow the virtual keyboard to fully settle
+                        }, 50); // Small delay to let board rendering settle for accurate coordinates
                     }
                 }, 150);
             }
