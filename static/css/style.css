@@ -6093,4 +6093,20 @@ select option,
     }
 }
 
+/* Mobile responsive fixes for Friends Invite panel */
+@media (max-width: 600px) {
+    .friends-invite-header {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    .friends-invite-header input {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .friends-invite-header button {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+}
+
 
