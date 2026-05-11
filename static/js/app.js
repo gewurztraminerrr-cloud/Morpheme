@@ -226,13 +226,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     try {
                         const lobbyMusic = document.getElementById('lobby-music');
                         if (lobbyMusic) {
-                            lobbyMusic.ontimeupdate = function () {
-                                if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
-                                    try { 
-                                        lobbyMusic.currentTime = 205; 
-                                    } catch(err) {}
-                                }
-                            };
                             console.log('[LobbyMusic] Playing lobby music via gateway button click.');
                             lobbyMusic.play()
                                 .then(() => {
@@ -330,16 +323,6 @@ function handleLobbyMusicState() {
     });
 
     if (shouldPlay) {
-        // Enforce loop boundaries and startup seek instantly on timeupdate
-        lobbyMusic.ontimeupdate = function () {
-            if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
-                try { 
-                    lobbyMusic.currentTime = 205; 
-                    console.log('[LobbyMusic] Time boundary constraint enforced: snapped to 205.');
-                } catch(err) {}
-            }
-        };
-
         if (lobbyMusic.paused) {
             console.log('[LobbyMusic] Attempting programmatic .play()...');
             lobbyMusic.play()
@@ -381,16 +364,6 @@ function playMusicOnFirstInteraction() {
     if (shouldPlay) {
         const lobbyMusic = document.getElementById('lobby-music');
         if (lobbyMusic) {
-            // Enforce loop boundaries and startup seek instantly on timeupdate
-            lobbyMusic.ontimeupdate = function () {
-                if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
-                    try { 
-                        lobbyMusic.currentTime = 205; 
-                        console.log('[LobbyMusic] Time boundary constraint enforced on gesture: snapped to 205.');
-                    } catch(err) {}
-                }
-            };
-
             console.log('[LobbyMusic] Attempting play() on gesture to unlock/unmute stream...');
             lobbyMusic.play()
                 .then(() => {
