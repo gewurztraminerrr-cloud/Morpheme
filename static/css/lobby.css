@@ -868,6 +868,26 @@ body.theme-light-brown .field-hint {
         border-radius: 50%;
         animation: pulseLogo 3s infinite ease-in-out;
     }
+
+    /* Constrain the Create Room rating inputs to fit snuggly and avoid iOS auto-zoom */
+    .create-room-panel {
+        padding: 10px !important;
+        margin-bottom: 15px !important;
+    }
+
+    .rating-inputs-row {
+        gap: 6px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .rating-input {
+        width: 100% !important;
+        min-width: 0 !important;
+        font-size: 16px !important; /* Prevent iOS browser auto-zoom layout stretching */
+        padding: 8px 4px !important;
+        box-sizing: border-box !important;
+    }
 }
 
 @keyframes pulseLogo {
