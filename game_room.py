@@ -628,6 +628,9 @@ class GameRoom:
         # Boggle usually treats 'Q' as 'QU', so check if length would be sufficient even with expansion
         effective_len = len(word.replace('Q', 'QU')) if 'Q' in word else len(word)
         if effective_len < min_len_req:
+            is_valid = word_validator.word_validator.is_valid_word(word, getattr(self, 'current_dictionary', 'NWL'))
+            if not is_valid:
+                return False, "Sequence is not a word and is too small", 0, None
             return False, f"{word.upper()} is too short (Min: {min_len_req})", 0, None
 
         with open(WORD_DEBUG_PATH, 'a') as debug:

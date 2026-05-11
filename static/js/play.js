@@ -4947,6 +4947,7 @@ async function handleTournamentWord(word) {
 
     // Check dictionary
     const dict = window.tournamentParams ? window.tournamentParams.dictionary : 'NWL';
+    let is_valid_dict = false;
     try {
         const resp = await fetch('/api/tools/validate', {
             method: 'POST',
@@ -4954,16 +4955,23 @@ async function handleTournamentWord(word) {
             body: JSON.stringify({ word, dictionary: dict })
         });
         const data = await resp.json();
-        if (!data.is_valid) {
-            showValidationFeedback(`${word} is invalid.`, false);
-            return;
-        }
+        is_valid_dict = data.is_valid;
     } catch (e) {
         console.error('Validation error', e);
     }
 
-    // Check length
+    // Check length and dictionary validity
     const minLen = window.tournamentParams ? window.tournamentParams.min_word_length : 3;
+    if (word.length < minLen && !is_valid_dict) {
+        showValidationFeedback("Sequence is not a word and is too small", false);
+        return;
+    }
+
+    if (!is_valid_dict) {
+        showValidationFeedback(`${word} is invalid.`, false);
+        return;
+    }
+
     if (word.length < minLen) {
         showValidationFeedback(`${word} is invalid.`, false);
         return;
@@ -5215,7 +5223,11 @@ async function handlePrivateMatchWord(word) {
 
     const minLen = privateMatchParams ? privateMatchParams.min_word_length : 3;
     if (word.length < minLen) {
-        showValidationFeedback(`Too short (min ${minLen})`, false);
+        if (!isDictionaryValid) {
+            showValidationFeedback("Sequence is not a word and is too small", false);
+        } else {
+            showValidationFeedback(`Too short (min ${minLen})`, false);
+        }
         return;
     }
 
