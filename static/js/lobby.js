@@ -200,7 +200,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isMobile) {
                 const roomsPanel = document.querySelector('.active-rooms-panel');
                 if (roomsPanel) {
-                    roomsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Calculate precise vertical offset relative to document to avoid browser-level horizontal alignment shifts
+                    const rect = roomsPanel.getBoundingClientRect();
+                    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                    const targetY = rect.top + scrollTop - 10; // slightly offset for premium spacing margin
+                    window.scrollTo({
+                        top: targetY,
+                        behavior: 'smooth'
+                    });
                 }
             }
 
