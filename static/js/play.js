@@ -298,7 +298,12 @@ function clearGameUIAndCache() {
     
     const boardEl = document.getElementById('game-board');
     if (boardEl) {
-        boardEl.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100%;color:var(--text-secondary);font-style:italic;">Loading board...</div>';
+        boardEl.innerHTML = `
+            <div class="board-loader-container">
+                <div class="board-loader-spinner"></div>
+                <div class="board-loader-text">CONNECTING TO MATRIX...</div>
+            </div>
+        `;
     }
     
     const chatBox = document.getElementById('chat-messages');
@@ -325,6 +330,9 @@ function startPolling() {
         clearGameUIAndCache();
     } else {
         console.log('[play.js] Returning to same active room. Preserving board and state.');
+        if (window.lastGameState) {
+            updateGameState(window.lastGameState);
+        }
     }
     
     isPrivateMatchPlay = false;

@@ -4171,3 +4171,50 @@ input[type=range]::-moz-range-track {
         aspect-ratio: 1 / 1 !important;
     }
 }
+
+/* --- PREMIUM BOARD LOADER STYLING --- */
+.board-loader-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    color: var(--text-secondary);
+    gap: 20px;
+    font-style: normal;
+    text-align: center;
+    padding: 40px 20px;
+    box-sizing: border-box;
+}
+
+.board-loader-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3.5px solid rgba(244, 63, 94, 0.1);
+    border-top: 3.5px solid var(--accent-color, #f43f5e);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    box-shadow: 0 0 20px rgba(244, 63, 94, 0.3), inset 0 0 10px rgba(244, 63, 94, 0.1);
+}
+
+.board-loader-text {
+    font-size: 0.9rem;
+    font-weight: 850;
+    letter-spacing: 3px;
+    color: var(--text-secondary, #94a3b8);
+    text-transform: uppercase;
+    animation: boardLoaderPulse 1.5s ease-in-out infinite alternate;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+}
+
+@keyframes boardLoaderPulse {
+    0% {
+        opacity: 0.45;
+        transform: scale(0.96);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1.04);
+    }
+}
