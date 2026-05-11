@@ -2916,6 +2916,12 @@ body.theme-light-brown .word-item.missed {
     flex-direction: row !important;
     justify-content: space-between !important;
     align-items: center !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.setting-header:has(.toggle-switch):hover {
+    opacity: 0.85;
 }
 
 /* Custom Toggle Switch Styles */
