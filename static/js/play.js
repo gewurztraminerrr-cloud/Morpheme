@@ -4511,6 +4511,9 @@ function handleCellMouseDown(e) {
     const cell = e.target.closest('.board-cell');
     if (!cell || cell.classList.contains('grayed')) return;
 
+    // Prevent native browser drag/selection behavior from interrupting our swipe
+    e.preventDefault();
+
     // Reset path
     mouseState.isDown = true;
     mouseState.selectedPath = [];
