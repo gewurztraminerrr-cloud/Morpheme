@@ -791,20 +791,70 @@ body.theme-light-brown .field-hint {
 /* Tablet & Mobile Layout for Lobby Grid */
 @media (max-width: 900px) {
     .lobby-grid {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: minmax(0, 1fr) !important;
         height: auto !important;
         gap: 15px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
     }
     
     .game-types-panel,
     .active-rooms-panel {
         max-height: none !important;
+        padding: 12px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Snug styling for game config matrices on mobile screen */
+    .matrix-header,
+    .matrix-row {
+        grid-template-columns: 45px repeat(4, 1fr) !important;
+        gap: 4px !important;
+    }
+
+    .corner-cell,
+    .dim-label,
+    .time-label {
+        width: auto !important;
+        padding: 4px !important;
+        font-size: 0.72rem !important;
+        border-radius: 4px !important;
+        text-align: center !important;
+    }
+
+    .game-btn {
+        padding: 6px 4px !important;
+        font-size: 0.65rem !important;
+        border-radius: 6px !important;
+        white-space: nowrap !important;
+        text-align: center !important;
+    }
+
+    /* Style the room player pills beautifully to wrap snuggly on mobile screens */
+    .room-players-row {
+        gap: 4px !important;
+    }
+
+    .room-player-pill {
+        display: inline-flex !important;
+        align-items: center !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        padding: 3px 6px !important;
+        border-radius: 5px !important;
+        font-size: 0.75rem !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        word-break: break-all !important;
     }
 
     #rooms-list .placeholder-icon {
-        width: 260px !important;
-        max-width: 85% !important;
-        margin: 25px auto !important;
+        width: 200px !important;
+        max-width: 75% !important;
+        margin: 20px auto !important;
         filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.15));
         border-radius: 50%;
         animation: pulseLogo 3s infinite ease-in-out;
