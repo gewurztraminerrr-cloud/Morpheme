@@ -26,7 +26,26 @@ class SpinnerSet:
 
     @staticmethod
     def generate_params(board_dimensions, is_24h=False, is_split=False, previous_params=None):
-        """Generate granular spinner parameters given dimensions"""
+        """Generate granular spinner parameters, enforcing Valued Letters for 24h matches."""
+        try:
+            res = SpinnerSet._generate_params_raw(board_dimensions, is_24h, is_split, previous_params)
+            if is_24h and isinstance(res, dict):
+                res['board_format'] = 'Valued Letters'
+            return res
+        except Exception as e:
+            print(f"[SpinnerSet] CRITICAL WRAPPER ERROR: {e}")
+            return {
+                'difficulty': random.choice(['Easy', 'Medium', 'Hard']),
+                'dictionary': random.choice(['NWL', 'CSW']),
+                'word_count_range': random.choice(['50-100', '100-200', '200-300', '300-400']),
+                'board_format': 'Valued Letters' if is_24h else 'Normal',
+                'min_word_length': 3,
+                'generated_at': time.time()
+            }
+
+    @staticmethod
+    def _generate_params_raw(board_dimensions, is_24h=False, is_split=False, previous_params=None):
+        """Generate granular spinner parameters given dimensions (raw implementation)"""
         try:
             # Loop to ensure parameters are DIFFERENT from previous (User Request)
             # We allow up to 30 attempts to find a unique combination
