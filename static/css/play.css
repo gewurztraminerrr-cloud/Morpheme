@@ -4092,10 +4092,20 @@ input[type=range]::-moz-range-track {
     #page-play {
         padding-left: 0 !important;
         padding-right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
     }
 
     .play-grid {
         gap: 12px 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
     }
 
     /* Keep side spacing for non-board panels so content is snug and elegant */
@@ -4114,29 +4124,45 @@ input[type=range]::-moz-range-track {
         padding-left: 0 !important;
         padding-right: 0 !important;
         border-radius: 0 !important;
-        width: 100vw !important;
-        max-width: 100vw !important;
+        width: 100% !important;
+        max-width: 100% !important;
         box-sizing: border-box !important;
         overflow-x: hidden !important;
         background: rgba(0, 0, 0, 0.15) !important; /* Premium subtle row dark theme */
         border-left: none !important;
         border-right: none !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    /* Keep non-board sub-controls inside board panel snug and aligned */
+    .board-panel.full-bleed-mobile .timer-display,
+    .board-panel.full-bleed-mobile .validation-status,
+    .board-panel.full-bleed-mobile .word-input-section,
+    .board-panel.full-bleed-mobile .cube-rotate-hint {
+        margin-left: 10px !important;
+        margin-right: 10px !important;
+        width: calc(100% - 20px) !important;
+        box-sizing: border-box !important;
     }
 
     .board-panel.full-bleed-mobile .game-board {
-        width: 100vw !important;
-        max-width: 100vw !important;
+        width: 100% !important;
+        max-width: 100% !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
         padding-top: 10px !important;
         padding-bottom: 10px !important;
         border-radius: 0 !important;
         gap: 3px !important; /* Elegant thin boundaries */
+        display: grid !important;
         grid-template-columns: repeat(var(--board-cols, 4), 1fr) !important;
         grid-template-rows: repeat(var(--board-rows, 4), auto) !important;
         box-sizing: border-box !important;
         background: transparent !important;
         border: none !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
     }
 
     .board-panel.full-bleed-mobile .game-board .board-cell {
