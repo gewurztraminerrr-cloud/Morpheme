@@ -216,10 +216,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (gatewayClicked) return;
                     gatewayClicked = true;
 
-                    if (e && e.type === 'touchstart') {
-                        try { e.preventDefault(); } catch(err) {}
-                    }
-
                     console.log(`[Gateway] Transitioning via event: ${e ? e.type : 'manual'}`);
 
                     // 1. Play the music inside a completely isolated, non-blocking try-catch block
@@ -263,7 +259,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 };
 
                 gatewayBtn.onclick = handleGatewayTransition;
-                gatewayBtn.ontouchstart = handleGatewayTransition;
             } else {
                 // Fallback if elements not in DOM
                 showPage('page-lobby');
