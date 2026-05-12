@@ -412,6 +412,14 @@ async function updateGameState(incomingState = null) {
             // Optimization: Skip fetching if tab has been hidden for a while but not yet reached the 15s pulse
             // This is just extra safety, the refreshPollInterval handles the bulk of it.
             const response = await fetch(`/api/room/${roomId}/state`, { cache: 'no-store' });
+            
+            // Check if user left or switched rooms while the network fetch was in-flight
+            let activeRoomId = getCurrentRoomId();
+            if (activeRoomId !== roomId) {
+                console.log(`[play.js] updateGameState: User left or switched rooms (current: ${activeRoomId}, target: ${roomId}) while fetch was in-flight. Ignoring response.`);
+                return;
+            }
+
             if (!response.ok) {
                 if (response.status === 404 || response.status === 403 || response.status === 401) {
                     let errorMsg = "";
@@ -444,6 +452,13 @@ async function updateGameState(incomingState = null) {
                 return;
             }
             state = await response.json();
+
+            // Check again after parsing the json response
+            activeRoomId = getCurrentRoomId();
+            if (activeRoomId !== roomId) {
+                console.log(`[play.js] updateGameState: User left or switched rooms during JSON parsing. Ignoring state update.`);
+                return;
+            }
         }
 
         if (!state) return;
