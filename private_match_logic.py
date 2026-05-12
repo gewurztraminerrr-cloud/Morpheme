@@ -226,10 +226,6 @@ class PrivateMatchManager:
             
         from spinner_set import SpinnerSet
         
-        target_range = parameters.get('word_count_range', 'random')
-        if target_range == 'random':
-            target_range = SpinnerSet._spin_word_count(dict_name)
-            
         target_difficulty = parameters.get('difficulty', 'random')
         if target_difficulty == 'random':
             target_difficulty = SpinnerSet._spin_difficulty()
@@ -237,6 +233,10 @@ class PrivateMatchManager:
         # Randomize dictionary for each round if it's not fixed
         if dict_name == 'random':
             dict_name = SpinnerSet._spin_dictionary()
+
+        target_range = parameters.get('word_count_range', 'random')
+        if target_range == 'random':
+            target_range = SpinnerSet._spin_word_count(dict_name, min_len, target_difficulty, dims)
         
         fmt_check = target_format.lower()
         if bonus_len > 0:
