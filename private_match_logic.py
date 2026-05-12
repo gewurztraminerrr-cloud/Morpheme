@@ -246,8 +246,8 @@ class PrivateMatchManager:
             if potential_dict_words:
                 bonus_word = random.choice(potential_dict_words)
         
-        # Generate board (now returns paths dictionary as 5th value)
-        board, all_words_on_board, bonus_cell, updated_format, all_words_dict = bg.generate_board(
+        # Generate board
+        res = bg.generate_board(
             dimensions=dims,
             bonus_word=bonus_word,
             word_count_range=target_range,
@@ -256,6 +256,7 @@ class PrivateMatchManager:
             min_word_length=min_len,
             difficulty=target_difficulty
         )
+        board, all_words_on_board, bonus_cell, updated_format, all_words_dict = res[0], res[1], res[2], res[3], res[4]
         # Use the updated format (e.g. "X Mania" instead of just "Mania")
         target_format = updated_format
         
