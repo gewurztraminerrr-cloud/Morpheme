@@ -142,6 +142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupAuth(); // Initialize auth listeners
     setupContactForm(); // Initialize contact form listeners
     setupFirstInteractionMusic(); // Active immediately for early loading clicks
+    if (window.loadFAQUserCounts) window.loadFAQUserCounts();
     
     // Mobile restriction: Hide/filter out Cube/3D options
     if (typeof filterCubeOnMobile === 'function') {
