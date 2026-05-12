@@ -2668,10 +2668,12 @@
                             <h3>Custom Support Amount</h3>
                             <p style="margin-bottom: 20px;">Enter any custom amount you'd like to support the project with:</p>
                         </div>
-                        <div class="custom-amount-input-group">
-                            <span class="currency-prefix">$</span>
-                            <input type="number" id="custom-donate-amount" min="1" placeholder="Enter amount" value="10">
-                            <button id="custom-donate-submit" class="custom-submit-btn">Support</button>
+                        <div class="custom-amount-input-group" style="display: flex; flex-direction: column; gap: 15px; width: 100%; box-sizing: border-box;">
+                            <div style="display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box;">
+                                <span class="currency-prefix">$</span>
+                                <input type="number" id="custom-donate-amount" min="1" placeholder="Enter amount" value="10" style="width: 100%; flex: 1;">
+                            </div>
+                            <button id="custom-donate-submit" class="custom-submit-btn" style="width: 100%; box-sizing: border-box; text-align: center;">Support</button>
                         </div>
                     </div>
 
