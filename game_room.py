@@ -1222,8 +1222,8 @@ class GameRoom:
                                         # Reset pool AFTER successful distribution
                                         self.abandonment_bounty = 0
                                         
-                                    conn_p.commit()
-                                    conn_p.close()
+                                conn_p.commit()
+                                conn_p.close()
                         except Exception as e:
                             import traceback
                             traceback.print_exc()
