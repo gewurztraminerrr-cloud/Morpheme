@@ -924,6 +924,7 @@ class BoardGenerator:
         """
         USER MANDATE: NEVER return a non-compliant board. 
         We will loop indefinitely until the target is met.
+        We also strictly respect board formats (Mania, Checkerboard, Either/Or) in the emergency path.
         """
         min_words, max_words = self._parse_word_count_range(word_count_range)
         
@@ -933,40 +934,76 @@ class BoardGenerator:
             parts = dimensions.split("x")
             depth, rows, cols = (map(int, parts) if len(parts) == 3 else (1, int(parts[0]), int(parts[1])))
         
-        emergency_start = time.time()
-        for _attempt in range(15): # Max 15 attempts
-            if time.time() - emergency_start > 1.5:
-                print(f"[BoardGen] 🆘 EMERGENCY TIMEOUT: exceeding 1.5s limit after {_attempt} attempts. Breaking loop.")
-                break
-            print(f"[BoardGen] 🆘 EMERGENCY LOOP ATTEMPT {(_attempt + 1)} (Target: {min_words}-{max_words})")
-            weights = LETTER_FREQ_SUPER_DENSITY if min_word_length >= 4 else LETTER_FREQ_EASY
-            board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty)
+        _attempt = 0
+        while True:
+            _attempt += 1
+            print(f"[BoardGen] 🆘 EMERGENCY LOOP ATTEMPT {_attempt} (Target: {min_words}-{max_words})")
             
-            # Optimization: One quick pass at max density
+            # 1. Handle Mania letter selection and dynamic letter rotation if attempts are failing
+            if "mania" in str(board_format).lower():
+                parts = str(board_format).strip().split()
+                if len(parts) < 2 or len(parts[0]) != 1 or not parts[0].isalpha() or (_attempt > 2 and _attempt % 2 == 0):
+                    import random
+                    if random.random() < 0.33:
+                        mania_letter = random.choice('AEIOU')
+                    else:
+                        mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')
+                    board_format = f"{mania_letter} Mania"
+                    print(f"[BoardGen] [Emergency] Chosen/Rotated Mania letter to '{mania_letter}' on attempt {_attempt}")
+                else:
+                    mania_letter = parts[0].upper()
+            else:
+                mania_letter = None
+
+            # 2. Setup Board based on format
+            safe_format = str(board_format or "").lower()
+            is_checkerboard = "checkerboard" in safe_format
+            weights = LETTER_FREQ_SUPER_DENSITY if min_word_length >= 4 else LETTER_FREQ_EASY
+            
+            if is_checkerboard:
+                board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
+            elif "either/or" in safe_format:
+                board = self._create_either_or_board(rows, cols, weights)
+            else:
+                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty)
+                
+            # 3. Apply Mania abundance and register cells as excluded to protect them
+            all_excluded = set()
+            if mania_letter:
+                self._apply_mania_to_board(board, mania_letter, all_excluded, is_checkerboard=is_checkerboard)
+                # Protect these positions from future sweeps or optimizations
+                for f in range(depth):
+                    for r in range(rows):
+                        for c in range(cols):
+                            cell = board[f][r][c] if depth > 1 else board[r][c]
+                            if cell == mania_letter:
+                                all_excluded.add((f, r, c) if depth > 1 else (r, c))
+
+            # Optimization: One quick pass at max density (respecting protected cells)
             board = self._create_2000plus_board(
-                rows, cols, dictionary, False, board, set(), "Density",
+                rows, cols, dictionary, is_checkerboard, board, all_excluded, "Density",
                 min_word_length, max_words, min_words, 0, 1, depth=depth, difficulty=difficulty, weights=weights
             )
             
-            # Final Rescue Sweep to hit the target floor
-            board = self._perform_rescue_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, set(), difficulty)
+            # Final Rescue Sweep to hit the target floor (protecting format tiles)
+            board = self._perform_rescue_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty)
             
             display_min = min_word_length
             final_solve = self._solve_board(board, dictionary, (0, 99999), display_min, max_depth=25, store_paths=True, timeout=30.0)
             count = len(final_solve)
             
             if count > max_words:
-                board = self._perform_decimation_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, set(), difficulty)
+                board = self._perform_decimation_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty)
                 final_solve = self._solve_board(board, dictionary, (0, 99999), display_min, max_depth=25, store_paths=True, timeout=30.0)
                 count = len(final_solve)
             
-            # --- FINAL SANITIZATION (User Request: Max 1 Rare Letter & No forbidden sequences) ---
-            self._sanitize_rare_letters(board, depth)
+            # --- FINAL SANITIZATION (protecting format tiles) ---
+            self._sanitize_rare_letters(board, depth, protected_positions=all_excluded)
             if difficulty in ["Medium", "Hard"]:
-                self._sanitize_forbidden_sequences(board, depth)
+                self._sanitize_forbidden_sequences(board, depth, protected_positions=all_excluded)
             
             if min_words <= count <= max_words:
-                print(f"[BoardGen] ✓ EMERGENCY COMPLIANCE SUCCESS: {count} words after {(_attempt + 1)} emergency tries.")
+                print(f"[BoardGen] ✓ EMERGENCY COMPLIANCE SUCCESS: {count} words after {_attempt} emergency tries.")
                 # Fallback metadata
                 unique_set = self._get_difficulty_set(dictionary)
                 u_count = sum(1 for w in final_solve if w.upper() in unique_set)
@@ -981,14 +1018,10 @@ class BoardGenerator:
                 bonus_cell = None
                 if final_bonus:
                     bonus_cell = final_solve[final_bonus][0]
-
+ 
                 return (board, sorted(list(final_solve.keys())), bonus_cell, board_format, final_solve, ratio, final_bonus)
             else:
-                print(f"[BoardGen] ✗ EMERGENCY ATTEMPT {(_attempt + 1)} FAILED: {count} words is not in {min_words}-{max_words}")
-        
-        # Absolute Fallback if all else fails (Rare but possible)
-        self._final_rare_letter_polish(board, depth, difficulty=difficulty)
-        return (board, [], None, board_format, {}, 0.0, None)
+                print(f"[BoardGen] ✗ EMERGENCY ATTEMPT {_attempt} FAILED: {count} words is not in {min_words}-{max_words}")
 
     def _final_rare_letter_polish(self, board, depth, protected_positions=None, difficulty=None):
         """Final audit to clean rare letters and forbidden sequences."""

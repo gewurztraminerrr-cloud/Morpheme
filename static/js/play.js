@@ -2701,9 +2701,16 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     }
     
     // IF board is empty OR has no letters, show loading spinner
-    if (board.length === 0 || !hasLetters) {
-        const loadingMsg = "";
-        const subMsg = "";
+    if (!hasLetters) {
+        let loadingMsg = "CONNECTING TO MATRIX...";
+        let subMsg = "Constructing the temporal vortex...";
+        if (state && state.current_board_format) {
+            loadingMsg = `CALIBRATING ${state.current_board_format.toUpperCase()}...`;
+            subMsg = "Aligning format parameters and rules...";
+        } else if (window.lastGameState && window.lastGameState.current_board_format) {
+            loadingMsg = `CALIBRATING ${window.lastGameState.current_board_format.toUpperCase()}...`;
+            subMsg = "Aligning format parameters and rules...";
+        }
         
         boardEl.innerHTML = `
             <style>

@@ -1576,8 +1576,8 @@ class RoomManager:
                 is_split = (room.game_type == 'split')
                 room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split)
 
-                # INSTANT START: User Request - No wait on first entry for rooms (except 24h)
-                if not is_24h:
+                # INSTANT START: User Request - No wait on first entry for standard rooms (except 24h and solo/private matches)
+                if not is_24h and not is_private and not room.is_solo:
                     print(f"[RoomManager] {room_id}: Kickstarting room immediately...")
                     # 1. Pick a bonus word
                     bw_l = room.spinner_params.get('bonus_word_length', 8)

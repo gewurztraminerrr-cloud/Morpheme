@@ -4,6 +4,17 @@
 # Navigate to script directory
 cd "$(dirname "$0")"
 
+LOCKFILE="run_morpheme.lock"
+if [ -f "$LOCKFILE" ]; then
+    LAST_PID=$(cat "$LOCKFILE")
+    if kill -0 "$LAST_PID" 2>/dev/null; then
+        echo "Morpheme launcher is already running with PID $LAST_PID. Exiting."
+        exit 1
+    fi
+fi
+echo $$ > "$LOCKFILE"
+trap "rm -f $LOCKFILE" EXIT
+
 # Configure Logging
 MAIN_LOG="server.log"
 BOGGLE_LOG="boggle_server_console.log"
@@ -41,7 +52,7 @@ while true; do
 
     # Kill any existing processes on port 5001
     echo "Cleaning up existing Morpheme processes..."
-    PIDS=$(lsof -t -i:5001)
+    PIDS=$(lsof -t -i :5001)
     if [ ! -z "$PIDS" ]; then
         kill -9 $PIDS
         sleep 3
