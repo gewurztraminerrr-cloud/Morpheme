@@ -266,6 +266,12 @@ function clearGameUIAndCache() {
     window.lastPlayersHtml = null;
     window._wasEverInRoster = false;
     
+    // Reset local module render caches to force re-render on next entry
+    lastRenderedBoardJSON = null;
+    lastRenderedGrayed = null;
+    lastRenderedRotation = null;
+    lastRenderedDensityJSON = null;
+    
     // Reset all round-specific and mode-specific word/score lists
     privateMatchWords = [];
     privateMatchScore = 0;
