@@ -11,6 +11,10 @@
     font-family: 'Inter', sans-serif;
 }
 
+.donate-container > * {
+    flex-shrink: 0;
+}
+
 /* Glass panel style mirroring store and settings */
 .donate-container .glass-panel {
     background: rgba(255, 255, 255, 0.03);
@@ -137,6 +141,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 25px;
+    min-height: min-content;
 }
 
 .donate-card {
@@ -297,6 +302,7 @@
     gap: 15px;
     width: 100%;
     align-items: center;
+    flex-wrap: wrap;
     box-sizing: border-box;
 }
 
@@ -485,6 +491,7 @@
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 30px;
     margin-top: 15px;
+    min-height: min-content;
 }
 
 /* Responsive adjustments */
