@@ -2000,7 +2000,7 @@ def get_public_profile(username):
     exceptional_rounds = sorted([p for p in processed_all if 
                                (p['performance_value'] > config_stats.get(f"{p['game_type']}|{p['dimensions']}|{p['round_duration']}", {}).get('avg_perf', 0))
                                or (p['total_score'] >= 100)], 
-                               key=lambda x: x['performance_value'], reverse=True)[:50]
+                               key=lambda x: x['timestamp'], reverse=True)[:50]
 
     conn.close()
     session_info = room_manager.find_user_session(user[0])

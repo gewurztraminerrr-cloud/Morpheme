@@ -2250,12 +2250,13 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         // 1. Exceptional Performances
         const tablePerf = document.getElementById('ach-table-perf');
         if (tablePerf && stats.exceptional_rounds) {
-            // Sort by Ratio (Impressiveness) DESC, then Timestamp DESC
-            const sortedByRatio = [...stats.exceptional_rounds].sort((a, b) => {
-                if (b.ratio !== a.ratio) return b.ratio - a.ratio;
-                return new Date(b.timestamp) - new Date(a.timestamp);
+            // Sort chronologically (Conveyor Belt): Timestamp DESC, then Ratio DESC
+            const sortedByTimestamp = [...stats.exceptional_rounds].sort((a, b) => {
+                const dateDiff = new Date(b.timestamp) - new Date(a.timestamp);
+                if (dateDiff !== 0) return dateDiff;
+                return b.ratio - a.ratio;
             });
-            tablePerf.innerHTML = sortedByRatio.map(r => renderAchRow(r, [
+            tablePerf.innerHTML = sortedByTimestamp.map(r => renderAchRow(r, [
                 { val: r.performance_value, style: 'font-weight: 800; color: #60a5fa;' },
                 { val: r.ratio + 'x', style: 'color: rgba(255,255,255,0.6);' },
                 { val: r.total_score, style: 'font-weight: 700;' },
