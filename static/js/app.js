@@ -732,6 +732,7 @@ function setupNavigation() {
                 if (modal) {
                     modal.classList.add('forced-show');
                     modal.classList.remove('hidden');
+                    if (window.loadFAQUserCounts) window.loadFAQUserCounts();
                 }
                 return;
             }
@@ -1774,6 +1775,21 @@ window.showLoadingOverlay = function(message = 'Loading...') {
 window.hideLoadingOverlay = function() {
     const overlay = document.getElementById('global-loading-overlay');
     if (overlay) overlay.style.display = 'none';
+};
+
+window.loadFAQUserCounts = async function() {
+    try {
+        const response = await fetch('/api/stats/user_count');
+        if (response.ok) {
+            const data = await response.json();
+            const regCountEl = document.getElementById('faq-reg-count');
+            const onlineCountEl = document.getElementById('faq-online-count');
+            if (regCountEl) regCountEl.textContent = data.count || 0;
+            if (onlineCountEl) onlineCountEl.textContent = data.online_count || 0;
+        }
+    } catch (e) {
+        console.error('[loadFAQUserCounts] Error fetching user counts:', e);
+    }
 };
 
 console.log('app.js fully loaded - version with UI optimizations');
