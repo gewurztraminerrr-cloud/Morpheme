@@ -796,9 +796,9 @@ class GameRoom:
             for p in reg_players:
                 expected = (p.rating / reg_rating_sum) * reg_score_sum
                 p.performance_efficiency = p.score / expected if expected > 0 else 0.0
-                # Remarkable: Winner AND (Unusually high PE >= 4 & Score >= 40, or raw excellence Score >= 100)
+                # Remarkable: Winner AND (Unusually high PE >= 2.0 & Score >= 40, or raw excellence Score >= 100)
                 p.has_exceptional_round = multiple_players and p.score > 0 and p.score == max_score and \
-                                         ((p.performance_efficiency >= 4.0 and p.score >= 40) or p.score >= 100)
+                                         ((p.performance_efficiency >= 2.0 and p.score >= 40) or p.score >= 100)
 
         # 2. Guests: Use solo baseline (PE=1.0) so they don't affect pool but can still earn trophies on raw score
         for p in guest_players:
