@@ -2961,19 +2961,28 @@ function checkBoardOverflow() {
     
     // User Request: Settings-true board size (Remove 6x8 override)
     let cellSize = baseCellSize;
-    playPage.style.setProperty('--cell-size', `${cellSize}px`);
-
-    window.cachedCellSize = cellSize; // Store for other listeners if needed
 
     // 2. Calculate Required Width for Board
     // Width = (Cols * Size) + Gap + Padding + Scrollbar
     const boardGap = 4 * (cols - 1);
-    const boardPadding = 40; // Standard padding
+    const isMobileView = window.innerWidth <= 900;
+    const boardPadding = isMobileView ? 16 : 40; // Full-bleed padding on mobile vs standard
     let requiredBoardWidth = (cols * cellSize) + boardGap + boardPadding;
 
     // Add Scrollbar Width if present
     const scrollbarWidth = boardPanel.offsetWidth - boardPanel.clientWidth;
     requiredBoardWidth += scrollbarWidth;
+
+    // Constrain cell size on small screens so the board ALWAYS fits snugly without horizontal overflow
+    const maxAllowedWidth = window.innerWidth - 20; // 10px margin on each side
+    if (requiredBoardWidth > maxAllowedWidth) {
+        const targetCellSize = Math.floor((maxAllowedWidth - boardGap - boardPadding - scrollbarWidth) / cols);
+        cellSize = Math.max(25, targetCellSize); // Prevent shrinking below readable 25px
+        requiredBoardWidth = (cols * cellSize) + boardGap + boardPadding + scrollbarWidth;
+    }
+
+    playPage.style.setProperty('--cell-size', `${cellSize}px`);
+    window.cachedCellSize = cellSize; // Store for other listeners if needed
 
     // 3. Calculate Available Space
     const windowWidth = window.innerWidth;
