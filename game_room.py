@@ -77,6 +77,7 @@ class GameRoom:
     state: str = 'waiting'  # 'waiting', 'active', 'intermission', 'finished'
     current_round: int = 0
     starting_round: bool = False  # Prevents concurrent round starts
+    midnight_reset_occurred: bool = False # Track if midnight reset has occurred for 24h rooms
     last_saved_round: int = -1    # tracks which round was last saved to DB
     stats_recorded_round: int = -1 # tracks if stats were updated for this round
 
@@ -1706,9 +1707,12 @@ class RoomManager:
                 uid, words_json, round_num, ts, b_json, b_word, b_cell_json, b_format, sols_json, paths_json = row
                 uid_str = str(uid)
                 if uid_str not in history:
-                    u_cursor = conn.execute("SELECT username FROM users WHERE id = ?", (uid,))
-                    u_row = u_cursor.fetchone()
-                    uname = u_row[0] if u_row else f"User {uid}"
+                    if uid == -1:
+                        uname = "System"
+                    else:
+                        u_cursor = conn.execute("SELECT username FROM users WHERE id = ?", (uid,))
+                        u_row = u_cursor.fetchone()
+                        uname = u_row[0] if u_row else f"User {uid}"
                     
                     history[uid_str] = {
                         'username': uname,
@@ -2334,16 +2338,6 @@ class RoomManager:
             print(f"[RoomManager] ERROR: Room {room_id} not found")
             return False
             
-        # 1. 24H ROOMS: Board generation is synchronous or triggered at midnight, 
-        # so we don't start a background thread here to avoid potential race conditions with app.py reset.
-        if room.time_limit >= 7200: 
-            print(f"[RoomManager] 24h room {room_id}: Tracking search started for UI sync.")
-            room.board_search_started = True 
-            if not hasattr(room, '_last_search_start_time'):
-                room._last_search_start_time = time.time()
-            room.board_search_loading = False # Release stall flag
-            return True
-
         # TRACK search start time to handle timeouts in start_next_round (if not already set)
         if not hasattr(room, '_last_search_start_time'):
             room._last_search_start_time = time.time()
@@ -3228,6 +3222,7 @@ class RoomManager:
                 # ATOMIC PROMOTION: Set state to active
                 room.state = 'active'
                 room.round_start_time = time.time()
+                room.midnight_reset_occurred = False # Reset midnight reset flag for 24h rooms
                 
                 room.custom_end_time = 0 
                 
@@ -3410,12 +3405,23 @@ class RoomManager:
                 participating_registered = [p for p in room.players if p.user_id > 0 and (p.score > 0 or p.submitted_words or p.invalid_words)]
             
             if not participating_registered:
-                print(f"[RoomManager] SKIPPING history save for room {room.room_id} Round {target_round} - no participating registered users.")
-                with open(DEBUG_FLOW_PATH, 'a') as f:
-                    p_details = [{'name': (p.username if hasattr(p, 'username') else p.get('username')), 'uid': (p.user_id if hasattr(p, 'user_id') else p.get('user_id')), 'score': (p.score if hasattr(p, 'score') else p.get('score'))} for p in room.players]
-                    f.write(f"{debug_log} - ABORT (No registered players). Details: {p_details}\n")
-                conn.close()
-                return
+                if room.time_limit >= 7200:
+                    print(f"[RoomManager] No registered players participated in 24h room {room.room_id}. Creating system placeholder to preserve board & solutions.")
+                    participating_registered = [{
+                        'user_id': -1,
+                        'username': 'System',
+                        'score': 0,
+                        'submitted_words': [],
+                        'rating': 1200,
+                        'performance_efficiency': 0.0
+                    }]
+                else:
+                    print(f"[RoomManager] SKIPPING history save for room {room.room_id} Round {target_round} - no participating registered users.")
+                    with open(DEBUG_FLOW_PATH, 'a') as f:
+                        p_details = [{'name': (p.username if hasattr(p, 'username') else p.get('username')), 'uid': (p.user_id if hasattr(p, 'user_id') else p.get('user_id')), 'score': (p.score if hasattr(p, 'score') else p.get('score'))} for p in room.players]
+                        f.write(f"{debug_log} - ABORT (No registered players). Details: {p_details}\n")
+                    conn.close()
+                    return
 
             print(f"[RoomManager] Saving history for room {room.room_id} Round {target_round} ({len(participating_registered)} players)")
 
