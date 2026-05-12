@@ -198,8 +198,8 @@ class SpinnerSet:
         )[0]
         
         if result == 'Mania':
-            # User Request: 35% vowels, 65% consonants for Mania formats
-            if random.random() < 0.35:
+            # User Request: 33% vowels, 67% consonants for Mania formats
+            if random.random() < 0.33:
                 mania_letter = random.choice('AEIOU')
             else:
                 mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')

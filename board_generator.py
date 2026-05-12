@@ -677,6 +677,19 @@ class BoardGenerator:
         Generate a valid board that meets word count requirements (100-300).
         RESTARTED: Simplified logic with ironclad compliance.
         """
+        # Ensure Mania has a valid single-letter prefix
+        if "mania" in str(board_format).lower():
+            parts = str(board_format).strip().split()
+            # If it doesn't have a single-letter prefix
+            if len(parts) < 2 or len(parts[0]) != 1 or not parts[0].isalpha():
+                import random
+                if random.random() < 0.33:
+                    mania_letter = random.choice('AEIOU')
+                else:
+                    mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')
+                board_format = f"{mania_letter} Mania"
+                print(f"[BoardGen] Normalized naked Mania format to '{board_format}'")
+
         # USER REQUEST: Parse word count range from spinner instead of hardcoding
         min_words, max_words = self._parse_word_count_range(word_count_range)
         print(f"[BoardGen] generate_board called for {dimensions} | Range: {word_count_range} ({min_words}-{max_words}) | MinLen: {min_word_length}L")
@@ -703,6 +716,17 @@ class BoardGenerator:
         while time.time() - start_time < timeout:
             attempts += 1
             print(f"[BoardGen] COMPLIANCE ATTEMPT {attempts} (Target: {min_words}-{max_words}, MinLen: {min_word_length})")
+
+            # If we are in Mania format and failing to find a compliant board,
+            # dynamically rotate the mania letter to a different one to aid compliance!
+            if "mania" in str(board_format).lower() and attempts > 3:
+                import random
+                if random.random() < 0.33:
+                    mania_letter = random.choice('AEIOU')
+                else:
+                    mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')
+                board_format = f"{mania_letter} Mania"
+                print(f"[BoardGen] Rotated Mania letter to '{mania_letter}' on attempt {attempts} to find compliant board.")
             
             # --- STRATEGY SELECTION ---
             if min_words >= 500:

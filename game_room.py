@@ -1009,6 +1009,9 @@ class GameRoom:
             'start' - At 0s remaining in intermission, time to start round
             None - No milestone reached yet
         """
+        if getattr(self, 'starting_round', False):
+            return None
+            
         now = time.time()
         
         # 1. Start Milestone: Threshold is TR=0 during intermission
@@ -2427,8 +2430,8 @@ class RoomManager:
                     room.bonus_word_history.pop(0)
             
             print(f"[RoomManager] Bonus word selected for next round: '{bonus_word}'")
-            
             room.board_search_started = True
+            search_round = room.current_round
             
             # Start board generation in background thread
             def generate_in_background():
@@ -2531,6 +2534,13 @@ class RoomManager:
                          print(f"[RoomManager] Search complete for {room_id}, but room was reconstructed. Redirecting to active instance.")
                          target_room = active_room
 
+                    # STALE BOARD SEARCH PROTECTION:
+                    # If target_room's current_round is greater than search_round,
+                    # then the round transition has already occurred and this background board is stale.
+                    if target_room.current_round > search_round:
+                        print(f"[RoomManager] Stale board search discarded for {room_id} (search_round: {search_round}, current_round: {target_room.current_round})")
+                        return
+
                     target_room.next_round_board = board # SIGNAL READY IMMEDIATELY!
                     
                     # FIRST ROUND / LATE SYNC: If the round started while we were searching,
@@ -2546,6 +2556,9 @@ class RoomManager:
                     from scoring import calculate_word_score
                     def refine_scores():
                         try:
+                            # Stale refinement check
+                            if target_room.current_round > search_round:
+                                return
                             refined = {}
                             for word in (all_words or []):
                                 refined[word] = calculate_word_score(

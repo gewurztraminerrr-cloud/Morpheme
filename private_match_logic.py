@@ -215,10 +215,10 @@ class PrivateMatchManager:
         # Check if the format allows a bonus word
         target_format = parameters.get('board_format', 'Normal')
         
-        # 0. Handle "Mania" without a prefix (ensure 30% vowels, 70% consonants)
+        # 0. Handle "Mania" without a prefix (ensure 33% vowels, 67% consonants)
         if target_format.strip() == 'Mania':
             import random
-            if random.random() < 0.30:
+            if random.random() < 0.33:
                 mania_letter = random.choice('AEIOU')
             else:
                 mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')
