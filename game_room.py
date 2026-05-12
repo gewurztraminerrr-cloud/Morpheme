@@ -2293,12 +2293,49 @@ class RoomManager:
                     print(f"[RoomManager] Using EXISTING staged params for room {room_id} (Lock-protected)")
                 else:
                     # Generate new parameters
-                    new_params = SpinnerSet.generate_params(
-                        room.board_dimensions, 
-                        is_24h=is_24h, 
-                        is_split=is_split, 
-                        previous_params=room.spinner_params
-                    )
+                    if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
+                        initial_solo_params = room.initial_solo_params
+                        dict_choice = initial_solo_params.get('dictionary', 'random')
+                        min_word_len = int(initial_solo_params.get('min_word_length', 3))
+                        bonus_word_len = int(initial_solo_params.get('bonus_word_length', 8))
+                        board_fmt = initial_solo_params.get('board_format', 'Normal')
+                        difficulty_choice = initial_solo_params.get('difficulty', 'random')
+                        wc_choice = initial_solo_params.get('word_count_range', 'random')
+                        
+                        # 1. Resolve Dictionary
+                        if dict_choice == 'random':
+                            dictionary = SpinnerSet._spin_dictionary()
+                        else:
+                            dictionary = dict_choice
+                            
+                        # 2. Resolve Difficulty
+                        if difficulty_choice == 'random':
+                            difficulty = SpinnerSet._spin_difficulty(room.board_dimensions, min_word_len)
+                        else:
+                            difficulty = difficulty_choice
+                            
+                        # 3. Resolve Word Count Range
+                        if wc_choice == 'random':
+                            wc_range = SpinnerSet._spin_word_count(dictionary, min_word_len, difficulty, room.board_dimensions)
+                        else:
+                            wc_range = wc_choice
+                            
+                        new_params = {
+                            'min_word_length': min_word_len,
+                            'difficulty': difficulty,
+                            'word_count_range': wc_range,
+                            'dictionary': dictionary,
+                            'board_format': board_fmt,
+                            'bonus_word_length': bonus_word_len,
+                            'generated_at': time.time()
+                        }
+                    else:
+                        new_params = SpinnerSet.generate_params(
+                            room.board_dimensions, 
+                            is_24h=is_24h, 
+                            is_split=is_split, 
+                            previous_params=room.spinner_params
+                        )
                     # Metadata: Ensure dimensions and time limits are included for the reveal animation
                     new_params['board_dimensions'] = room.board_dimensions
                     new_params['time_limit'] = room.time_limit

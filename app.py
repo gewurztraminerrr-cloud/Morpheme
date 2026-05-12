@@ -5216,6 +5216,7 @@ def create_solo_match():
     
     room = room_manager.create_room(room_id, game_type, time_limit, board_dimensions, is_private=True)
     room.is_solo = True # Disables history and statistics
+    room.initial_solo_params = dict(parameters)
     
     # 2. Configure Parameters (Randomize by default if not strictly specified)
     dict_name = parameters.get('dictionary')
