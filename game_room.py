@@ -791,14 +791,31 @@ class GameRoom:
         # Room must have more than 1 player to earn a trophy
         multiple_players = (len(reg_players) + len(guest_players)) > 1
 
+        # Determine dynamic PE threshold based on active players count (Registered + Guests)
+        num_players = len(reg_players) + len(guest_players)
+        if num_players <= 2:
+            pe_threshold = 1.4
+        elif num_players == 3:
+            pe_threshold = 1.6
+        elif num_players == 4:
+            pe_threshold = 1.8
+        elif num_players == 5:
+            pe_threshold = 2.0
+        elif num_players <= 10:
+            pe_threshold = 2.5
+        elif num_players <= 20:
+            pe_threshold = 3.0
+        else:
+            pe_threshold = 4.0
+
         max_score = max(p.score for p in self.players) if self.players else 0
         if reg_rating_sum > 0:
             for p in reg_players:
                 expected = (p.rating / reg_rating_sum) * reg_score_sum
                 p.performance_efficiency = p.score / expected if expected > 0 else 0.0
-                # Remarkable: Winner AND (Unusually high PE >= 2.0 & Score >= 40, or raw excellence Score >= 100)
+                # Remarkable: Winner AND (Unusually high dynamic PE threshold & Score >= 40, or raw excellence Score >= 100)
                 p.has_exceptional_round = multiple_players and p.score > 0 and p.score == max_score and \
-                                         ((p.performance_efficiency >= 2.0 and p.score >= 40) or p.score >= 100)
+                                         ((p.performance_efficiency >= pe_threshold and p.score >= 40) or p.score >= 100)
 
         # 2. Guests: Use solo baseline (PE=1.0) so they don't affect pool but can still earn trophies on raw score
         for p in guest_players:
