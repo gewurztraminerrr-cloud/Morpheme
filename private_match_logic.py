@@ -98,6 +98,18 @@ class PrivateMatchManager:
         except sqlite3.OperationalError:
             pass # Column likely already exists
             
+        try:
+            conn.execute('ALTER TABLE private_match_rounds ADD COLUMN dictionary TEXT')
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass # Column likely already exists
+
+        try:
+            conn.execute('ALTER TABLE private_match_rounds ADD COLUMN difficulty TEXT')
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass # Column likely already exists
+            
         conn.close()
 
     def get_db(self):
@@ -278,9 +290,9 @@ class PrivateMatchManager:
 
         try:
             conn.execute('''
-                INSERT INTO private_match_rounds (match_id, round_number, board_data, bonus_word, bonus_cell, word_count_range, all_words, start_time, end_time, board_format)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (match_id, round_number, json.dumps(board), bonus_word, json.dumps(bonus_cell) if bonus_cell else None, json.dumps(target_range), json.dumps(all_words_dict), now, end_time, target_format))
+                INSERT INTO private_match_rounds (match_id, round_number, board_data, bonus_word, bonus_cell, word_count_range, all_words, start_time, end_time, board_format, dictionary, difficulty)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (match_id, round_number, json.dumps(board), bonus_word, json.dumps(bonus_cell) if bonus_cell else None, json.dumps(target_range), json.dumps(all_words_dict), now, end_time, target_format, dict_name, target_difficulty))
         except Exception as e:
             print(f"FAILED TO INSERT ROUND: {e}")
             print(f"DEBUG LOCALS: board={ 'board' in locals() }, bonus_cell={ 'bonus_cell' in locals() }, target_format={ 'target_format' in locals() }")
@@ -327,7 +339,7 @@ class PrivateMatchManager:
             
             # Check round timing and get round-specific parameters
             round_info = conn.execute('''
-                SELECT end_time, word_count_range FROM private_match_rounds 
+                SELECT end_time, word_count_range, dictionary, difficulty FROM private_match_rounds 
                 WHERE match_id = ? AND round_number = ?
             ''', (match_id, curr_round)).fetchone()
             
@@ -370,6 +382,14 @@ class PrivateMatchManager:
             if round_info and round_info['word_count_range']:
                 try:
                     match_data['parameters']['word_count_range'] = json.loads(round_info['word_count_range'])
+                except:
+                    pass
+            if round_info:
+                try:
+                    if 'dictionary' in round_info.keys() and round_info['dictionary']:
+                        match_data['parameters']['dictionary'] = round_info['dictionary']
+                    if 'difficulty' in round_info.keys() and round_info['difficulty']:
+                        match_data['parameters']['difficulty'] = round_info['difficulty']
                 except:
                     pass
                     
@@ -516,7 +536,7 @@ class PrivateMatchManager:
             submissions = conn.execute('SELECT user_id FROM private_match_turns WHERE match_id = ? AND round_number = ?', (match_id, round_number)).fetchall()
             submitted_ids = [s['user_id'] for s in submissions]
             
-            all_done = all(p['user_id'] in submitted_ids for p in players)
+            all_done = all(p['user_id'] in submitted_ids for p in players) and len(invites) == 0
             
             if all_done:
                 # --- SPLIT POINTS RECALCULATION (Private Match) ---

@@ -5401,6 +5401,16 @@ def get_private_match_status(match_id):
             pass
     if r['board_format']:
         params['board_format'] = r['board_format']
+    try:
+        if 'dictionary' in r.keys() and r['dictionary']:
+            params['dictionary'] = r['dictionary']
+    except:
+        pass
+    try:
+        if 'difficulty' in r.keys() and r['difficulty']:
+            params['difficulty'] = r['difficulty']
+    except:
+        pass
 
     # NEW: Record/Retrieve the persistent turn start time for this user
     # This prevents them from resetting the timer by leaving and re-entering the match.
@@ -5433,7 +5443,7 @@ def submit_private_match_turn():
         # RECALCULATE SCORE on the server for safety and consistency with scoring.py
         conn = private_match_manager.get_db()
         m = conn.execute('SELECT parameters FROM private_matches WHERE id = ?', (match_id,)).fetchone()
-        r = conn.execute('SELECT board_data, bonus_word, bonus_cell FROM private_match_rounds WHERE match_id = ? AND round_number = ?', (match_id, round_number)).fetchone()
+        r = conn.execute('SELECT board_data, bonus_word, bonus_cell, dictionary FROM private_match_rounds WHERE match_id = ? AND round_number = ?', (match_id, round_number)).fetchone()
         conn.close()
         
         if not m or not r:
@@ -5451,6 +5461,11 @@ def submit_private_match_turn():
         
         # Dictionary for validation
         dict_name = params.get('dictionary', 'NWL')
+        try:
+            if 'dictionary' in r.keys() and r['dictionary']:
+                dict_name = r['dictionary']
+        except:
+            pass
         official_dict = word_validator.load_dictionary(dict_name)
         
         for item in words_data:

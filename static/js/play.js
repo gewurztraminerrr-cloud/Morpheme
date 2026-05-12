@@ -4908,6 +4908,11 @@ async function initTournamentPlay() {
         localEndTime = (Date.now() / 1000) + data.params.time_limit;
 
         if (timerInterval) clearInterval(timerInterval);
+        
+        // Update immediately to prevent initial visual delay of 1s (showing stale values)
+        const initialDiff = Math.max(0, Math.ceil(localEndTime - (Date.now() / 1000)));
+        updateSpecialMatchTimer(initialDiff);
+
         timerInterval = setInterval(() => {
             const current = Date.now() / 1000;
             const diff = Math.max(0, Math.ceil(localEndTime - current));
@@ -5187,7 +5192,8 @@ function startPrivateMatchTimer(endTime) {
     const timerEl = document.getElementById('timer-value');
     console.log('[play.js] Starting private match timer for endTime:', endTime);
 
-    timerInterval = setInterval(() => {
+    // Update immediately to prevent initial visual delay of 1s
+    const updateImmediate = () => {
         const now = Date.now() / 1000;
         const remaining = Math.max(0, Math.floor(endTime - now));
         const mins = Math.floor(remaining / 60);
@@ -5195,10 +5201,25 @@ function startPrivateMatchTimer(endTime) {
         if (timerEl) {
             timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
         }
+        return remaining;
+    };
+
+    const initialRemaining = updateImmediate();
+    if (initialRemaining <= 0) {
+        console.log('[play.js] Private match timer already expired! Triggering auto-finish immediately.');
+        setTimeout(() => {
+            finishPrivateMatchTurn();
+        }, 500);
+        return;
+    }
+
+    timerInterval = setInterval(() => {
+        const remaining = updateImmediate();
 
         if (remaining <= 0) {
             console.log('[play.js] Private match timer reached 0! Triggering auto-finish.');
             clearInterval(timerInterval);
+            timerInterval = null;
 
             // Tiny delay to ensure user actually sees the 0:00
             setTimeout(() => {
