@@ -3001,12 +3001,10 @@ function checkBoardOverflow() {
 
     if (isMobileView) {
         if (!window.userManuallyOverrodeBoardSize) {
-            // Sub-pixel precise auto-scaler: Calculates exact floating-point tile size so the right side of the tiles touches the right edge of the screen perfectly! ZERO PADDING.
-            const gapCount = cols - 1;
-            const totalGapsWidth = gapCount * 3; // 3px gap in play.css
-            const mobileTargetSize = (window.innerWidth - totalGapsWidth) / cols;
-            cellSize = Number(mobileTargetSize.toFixed(2));
-            requiredBoardWidth = window.innerWidth;
+            // User Request: On mobile devices, regardless of board dimensions, always ensure the board fits perfectly onto the screen from one end to the other by changing tile size. ZERO PADDING.
+            const mobileTargetSize = Math.floor((window.innerWidth - boardGap) / cols);
+            cellSize = Math.max(20, mobileTargetSize);
+            requiredBoardWidth = (cols * cellSize) + boardGap;
         }
     } else {
         // Constrain cell size on small desktop screens so the board ALWAYS fits snugly without horizontal overflow
