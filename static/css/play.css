@@ -4160,13 +4160,16 @@ input[type=range]::-moz-range-track {
         gap: 3px !important; /* Elegant thin boundaries */
         display: grid !important;
         justify-content: start !important;
+        align-content: start !important;
         overflow-x: auto !important;
         grid-template-columns: repeat(var(--board-cols, 4), var(--cell-size, 50px)) !important;
         grid-template-rows: repeat(var(--board-rows, 4), var(--cell-size, 50px)) !important;
         box-sizing: border-box !important;
         background: transparent !important;
         border: none !important;
-        margin: 0 auto !important;
+        margin: 0 !important;
+        margin-left: 0 !important;
+        float: left !important;
     }
 
     .board-panel .game-board .board-cell,
