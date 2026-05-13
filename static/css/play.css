@@ -4089,6 +4089,15 @@ input[type=range]::-moz-range-track {
 
 /* Mobile full-bleed board styling */
 @media (max-width: 992px) {
+    body, html {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
     #page-play {
         padding-left: 0 !important;
         padding-right: 0 !important;
@@ -4098,7 +4107,8 @@ input[type=range]::-moz-range-track {
         overflow-x: hidden !important;
     }
 
-    .play-grid {
+    .play-grid,
+    .left-panel-container {
         gap: 12px 0 !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
