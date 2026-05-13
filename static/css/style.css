@@ -6248,6 +6248,48 @@ select option,
         padding: 8px 4px !important;
         font-size: 0.8rem !important;
     }
+    
+    /* Mods Panel Mobile Overrides */
+    .mods-container {
+        margin: 10px auto !important;
+        padding: 15px !important;
+        border-radius: 16px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .mod-section {
+        padding: 15px !important;
+    }
+    .mod-add-section {
+        flex-direction: column !important;
+        padding: 12px !important;
+        gap: 12px !important;
+    }
+    .mod-add-section input, .mod-add-section textarea {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .mod-add-section.pron-layout .input-row {
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+    .mod-action-buttons {
+        flex-direction: column !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+    .mod-full-btn, .add-mod-btn {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        white-space: normal !important;
+        padding: 12px !important;
+        font-size: 0.95rem !important;
+    }
+    .dict-upload-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
 }
 
 
