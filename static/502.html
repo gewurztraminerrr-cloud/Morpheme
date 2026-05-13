@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morpheme is updating...</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0a14;
+            --purple-glow: rgba(124, 58, 237, 0.15);
+            --text-color: #ffffff;
+            --accent-color: #8b5cf6;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at center, #131326 0%, var(--bg-dark) 100%);
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 500px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 40px var(--purple-glow);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo-box {
+            font-size: 2.8rem;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            background: linear-gradient(135deg, #ffffff 30%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+
+        .spinner-container {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 30px;
+        }
+
+        .spinner {
+            box-sizing: border-box;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 4px solid rgba(139, 92, 246, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--accent-color);
+            animation: spin 1s linear infinite;
+        }
+
+        .spinner-pulse {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border: 2px dashed rgba(139, 92, 246, 0.3);
+            border-radius: 50%;
+            animation: pulse-spin 2s linear infinite reverse;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse-spin {
+            0% { transform: rotate(0deg) scale(1); opacity: 0.5; }
+            50% { transform: rotate(-180deg) scale(1.1); opacity: 0.9; }
+            100% { transform: rotate(-360deg) scale(1); opacity: 0.5; }
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0 0 15px 0;
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+        }
+
+        p {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #94a3b8;
+            margin: 0 0 25px 0;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            color: #a78bfa;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-color);
+            animation: glow 1.5s infinite alternate;
+        }
+
+        @keyframes glow {
+            from { transform: scale(0.9); opacity: 0.6; box-shadow: 0 0 5px var(--accent-color); }
+            to { transform: scale(1.1); opacity: 1; box-shadow: 0 0 12px var(--accent-color); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-box">Morpheme</div>
+        <div class="spinner-container">
+            <div class="spinner"></div>
+            <div class="spinner-pulse"></div>
+        </div>
+        <h1>Morpheme is updating...</h1>
+        <p>We are deploying some exciting new gameplay enhancements and reloading our vocabulary. Hang tight—this usually takes less than 15 seconds!</p>
+        <div class="status-badge">
+            <div class="status-dot"></div>
+            Reconnecting in background
+        </div>
+    </div>
+
+    <script>
+        // Automatic background polling to detect when the Flask app comes back online
+        async function checkServer() {
+            try {
+                // Try fetching a light, public endpoint
+                const response = await fetch('/api/lobby-stats', { cache: 'no-store' });
+                // If it returns a valid status (like 200), refresh the main page!
+                if (response.status === 200) {
+                    window.location.reload();
+                }
+            } catch (err) {
+                // Ignore network errors while server is offline
+            }
+        }
+
+        // Poll every 2 seconds
+        setInterval(checkServer, 2000);
+        // Initial check
+        checkServer();
+    </script>
+</body>
+</html>
