@@ -1556,7 +1556,7 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
         // Mobile Board Transposition: Turn landscape flat boards (rows < cols) into portrait (longest side runs vertically)
         try {
             if (window.innerWidth <= 900 && Array.isArray(round.board[0])) {
-                const isReplay3D = round.board.length === 6;
+                const isReplay3D = round.board.length === 6 && Array.isArray(round.board[0]) && Array.isArray(round.board[0][0]);
                 if (!isReplay3D) {
                     const rows = round.board.length;
                     const cols = round.board[0].length;
