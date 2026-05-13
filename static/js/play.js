@@ -2999,7 +2999,16 @@ function checkBoardOverflow() {
     const scrollbarWidth = boardPanel.offsetWidth - boardPanel.clientWidth;
     requiredBoardWidth += scrollbarWidth;
 
-    if (!isMobileView) {
+    if (isMobileView) {
+        if (!window.userManuallyOverrodeBoardSize) {
+            // Sub-pixel precise auto-scaler: Calculates exact floating-point tile size so the right side of the tiles touches the right edge of the screen perfectly! ZERO PADDING.
+            const gapCount = cols - 1;
+            const totalGapsWidth = gapCount * 3; // 3px gap in play.css
+            const mobileTargetSize = (window.innerWidth - totalGapsWidth) / cols;
+            cellSize = Number(mobileTargetSize.toFixed(2));
+            requiredBoardWidth = window.innerWidth;
+        }
+    } else {
         // Constrain cell size on small desktop screens so the board ALWAYS fits snugly without horizontal overflow
         const maxAllowedWidth = window.innerWidth - 20; // 10px margin on each side
         if (requiredBoardWidth > maxAllowedWidth) {
