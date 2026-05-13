@@ -4169,16 +4169,15 @@ input[type=range]::-moz-range-track {
         min-height: 0 !important;
         margin: 0 !important;
         box-sizing: border-box !important;
-        container-type: inline-size !important;
-        font-size: 50cqw !important;
-        line-height: 1 !important;
+        font-size: calc(var(--cell-size) * 0.6) !important;
+        line-height: normal !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
     }
 
     .board-panel.full-bleed-mobile .game-board .board-cell .dual-letter-container span {
-        font-size: 26cqw !important;
+        font-size: 0.52em !important;
         line-height: 1 !important;
     }
 }
