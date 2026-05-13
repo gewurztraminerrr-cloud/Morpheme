@@ -2977,6 +2977,8 @@ function checkBoardOverflow() {
 
     const isSixByEight = (cols === 6 && rows === 8) || (cols === 8 && rows === 6);
     console.log(`[LayoutCheck] Dimensions: ${cols}x${rows}. Is 6x8 target? ${isSixByEight}`);
+    boardEl.style.setProperty('--board-cols', cols);
+    boardEl.style.setProperty('--board-rows', rows);
 
     // Get Cell Size (Always fetch to ensure sync with User Settings)
     const computedStyle = getComputedStyle(document.documentElement);

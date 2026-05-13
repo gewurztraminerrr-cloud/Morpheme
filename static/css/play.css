@@ -4149,15 +4149,13 @@ input[type=range]::-moz-range-track {
     .board-panel.full-bleed-mobile .game-board {
         width: 100% !important;
         max-width: 100% !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        padding-top: 10px !important;
-        padding-bottom: 10px !important;
+        padding: 10px !important;
         border-radius: 0 !important;
         gap: 3px !important; /* Elegant thin boundaries */
         display: grid !important;
-        grid-template-columns: repeat(var(--board-cols, 4), 1fr) !important;
-        grid-template-rows: repeat(var(--board-rows, 4), auto) !important;
+        justify-content: center !important;
+        grid-template-columns: repeat(var(--board-cols, 4), var(--cell-size, 50px)) !important;
+        grid-template-rows: repeat(var(--board-rows, 4), var(--cell-size, 50px)) !important;
         box-sizing: border-box !important;
         background: transparent !important;
         border: none !important;
@@ -4166,8 +4164,8 @@ input[type=range]::-moz-range-track {
     }
 
     .board-panel.full-bleed-mobile .game-board .board-cell {
-        width: 100% !important;
-        height: auto !important;
+        width: var(--cell-size, 50px) !important;
+        height: var(--cell-size, 50px) !important;
         aspect-ratio: 1 / 1 !important;
     }
 }
