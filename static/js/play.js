@@ -2557,13 +2557,8 @@ function syncTimerWithServer(state) {
         localEndTime = endTime - stableServerTimeOffset;
     }
 
-    // SPECIAL CASE: 24h Rooms align to LOCAL MIDNIGHT for display
+    // SPECIAL CASE: 24h Rooms align to authoritative server midnight boundary
     if (state.time_limit >= 7200) {
-        const now = new Date();
-        const tomorrow = new Date(now);
-        tomorrow.setDate(now.getDate() + 1);
-        tomorrow.setHours(0, 0, 0, 0);
-        localEndTime = tomorrow.getTime() / 1000;
         timerFormatIs24h = true;
     }
 
@@ -2634,8 +2629,9 @@ function updateLocalTimer() {
 
         // User Request: Automatic/instant transition at 0:00
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
-        if (currentState === 'intermission') {
-            console.log('[play.js] Intermission local timer reached 0:00 - Triggering immediate server poll for next round.');
+        const is24H = window.lastGameState && window.lastGameState.time_limit >= 7200;
+        if (currentState === 'intermission' || (is24H && currentState === 'active')) {
+            console.log('[play.js] Local timer reached 0:00 - Triggering immediate server poll.');
             updateGameState();
         }
     }

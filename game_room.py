@@ -451,9 +451,8 @@ class GameRoom:
             age = now - p.last_active
             if age >= timeout and not p.is_ai:
                 # PERSISTENCE: Never remove players from 24h rooms for inactivity
-                # User Request: Enforce inactivity removal even for 24h rooms to keep lobby counts accurate
-                # if is_daily:
-                #    continue 
+                if is_daily:
+                    continue 
                 to_remove_ids.append(p.user_id)
 
         players_removed = False
@@ -1080,6 +1079,9 @@ class GameRoom:
                         self.previous_min_length = getattr(self, 'current_min_length', 3)
                         self.previous_all_words = list(self.all_words) if self.all_words else []
                         self.previous_all_word_scores = getattr(self, 'solved_words_with_scores', {}) if self.solved_words_with_scores else {w: {} for w in self.all_words} # Dict for scoring fallback
+                        self.previous_csw_only_words = list(self.csw_only_words) if self.csw_only_words else []
+                        self.previous_added_words = list(self.added_words) if self.added_words else []
+                        self.previous_bonus_word = getattr(self, 'bonus_word', '')
                         
                         # PERSISTENCE: Snapshot current player findings for the "Previous Day" tab
                         self.previous_day_history = {
@@ -1728,13 +1730,17 @@ class RoomManager:
                             p.previous_submitted_words = history[uid_str]['found_words']
 
                 # Store board metadata from most recent record
-                if not recovered_board:
+                if b_json and not recovered_board:
                     recovered_board = json.loads(b_json)
                     recovered_bonus_word = b_word
                     recovered_bonus_cell = json.loads(b_cell_json) if b_cell_json else None
                     recovered_format = b_format
-                    recovered_solutions = json.loads(sols_json) if sols_json else None
-                    recovered_paths = json.loads(paths_json) if paths_json else None
+                
+                if sols_json and not recovered_solutions:
+                    recovered_solutions = json.loads(sols_json)
+                    
+                if paths_json and not recovered_paths:
+                    recovered_paths = json.loads(paths_json)
 
             conn.close()
             
@@ -1743,16 +1749,30 @@ class RoomManager:
                 print(f"[RoomManager] Recovering board for room {room_id} from DB Fallback")
                 room.previous_board = recovered_board
                 room.previous_day_history = history # Cache for next call
+                room.previous_bonus_word = recovered_bonus_word
                 
                 # USE STORED SOLUTIONS (Prevents dictionary mismatch issues)
                 if recovered_solutions:
                      room.previous_all_words = list(recovered_solutions.keys())
                      room.previous_all_word_scores = recovered_solutions
+                     
+                     # Recover min length from solutions
+                     word_lengths = [len(w) for w in room.previous_all_words if len(w) >= 3]
+                     room.previous_min_length = min(word_lengths) if word_lengths else (4 if room.board_dimensions == '6x8' else 3)
+                     
+                     if hasattr(word_validator, 'word_validator'):
+                         room.previous_csw_only_words = [w for w in room.previous_all_words if word_validator.word_validator.is_csw_only(w)]
+                         room.previous_added_words = [w for w in room.previous_all_words if word_validator.word_validator.is_added_word(w)]
+                     else:
+                         room.previous_csw_only_words = []
+                         room.previous_added_words = []
+                         
                      print(f"[RoomManager] Recovered {len(recovered_solutions)} words from DB solutions.")
                 else:
                     # Fallback solve (NWL)
                     from board_generator import solve_board
-                    min_len = 3 
+                    min_len = 4 if room.board_dimensions == '6x8' else 3
+                    room.previous_min_length = min_len
                     dictionary = 'NWL'
                     try:
                         all_solutions = solve_board(recovered_board, dictionary)
@@ -1761,10 +1781,19 @@ class RoomManager:
                         if bonus_upper and bonus_upper not in room.previous_all_words:
                             room.previous_all_words.append(bonus_upper)
                         room.previous_all_word_scores = {w: {} for w in room.previous_all_words}
+                        
+                        if hasattr(word_validator, 'word_validator'):
+                            room.previous_csw_only_words = [w for w in room.previous_all_words if word_validator.word_validator.is_csw_only(w)]
+                            room.previous_added_words = [w for w in room.previous_all_words if word_validator.word_validator.is_added_word(w)]
+                        else:
+                            room.previous_csw_only_words = []
+                            room.previous_added_words = []
                     except Exception as e:
                         print(f"[RoomManager] Error solving recovered board: {e}")
                         room.previous_all_words = []
                         room.previous_all_word_scores = {}
+                        room.previous_csw_only_words = []
+                        room.previous_added_words = []
 
             return history
         except Exception as e:
