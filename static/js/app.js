@@ -1129,12 +1129,23 @@ async function handleSignUp() {
 }
 
 async function handleGuestLogin() {
+    const captchaInput = document.getElementById('signin-captcha');
+    const errorEl = document.getElementById('signin-error');
+    const captcha = captchaInput ? captchaInput.value.trim() : '';
+    
+    if (!captcha) {
+        if (errorEl) errorEl.textContent = 'Please complete the CAPTCHA first to play as a guest.';
+        if (captchaInput) captchaInput.focus();
+        return;
+    }
+
     try {
         const response = await fetch('/api/guest-login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify({ captcha })
         });
 
         const data = await response.json();
@@ -1146,11 +1157,13 @@ async function handleGuestLogin() {
             window.currentUserIsGuest = true;
             navigateToLobby();
         } else {
-            alert('Failed to login as guest. Please try again.');
+            if (errorEl) errorEl.textContent = data.error || data.message || 'Failed to login as guest.';
+            if (typeof window.refreshCaptchas === 'function') window.refreshCaptchas();
         }
     } catch (error) {
-        alert('An error occurred. Please try again.');
+        if (errorEl) errorEl.textContent = 'An error occurred. Please try again.';
         console.error('Guest login error:', error);
+        if (typeof window.refreshCaptchas === 'function') window.refreshCaptchas();
     }
 }
 

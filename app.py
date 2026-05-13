@@ -1737,6 +1737,15 @@ def presence_leave():
 
 @app.route('/api/guest-login', methods=['POST'])
 def guest_login():
+    data = request.get_json() or {}
+    captcha_val = data.get('captcha', '')
+    
+    session_captcha = session.get('captcha_text')
+    session.pop('captcha_text', None) # Clear immediately to prevent replay attacks
+    
+    if not session_captcha or captcha_val.upper() != session_captcha:
+        return jsonify({'error': 'Incorrect or expired CAPTCHA. Please click on the CAPTCHA image to refresh and try again.'}), 400
+
     import random
     import string
     # Generate unique guest username
