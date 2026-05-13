@@ -2981,38 +2981,36 @@ function checkBoardOverflow() {
     boardEl.style.setProperty('--board-rows', rows);
 
     // Get Cell Size (Always fetch to ensure sync with User Settings)
-    let baseCellSize = 54;
     const currentDim = `${cols}x${rows}`;
+    let savedSettingSize = null;
 
-    if (window.userManuallyOverrodeBoardSize && window.cachedCellSize) {
-        baseCellSize = parseInt(window.cachedCellSize);
+    // 1. First, consult dimension-specific configurations from userSettings / localStorage
+    if (window.userSettings && window.userSettings.board_sizes && window.userSettings.board_sizes[currentDim]) {
+        savedSettingSize = parseInt(window.userSettings.board_sizes[currentDim]);
     } else {
-        let savedSettingSize = null;
-        if (window.userSettings && window.userSettings.board_sizes && window.userSettings.board_sizes[currentDim]) {
-            savedSettingSize = parseInt(window.userSettings.board_sizes[currentDim]);
-        } else {
-            const stored = localStorage.getItem('morpheme_settings') || localStorage.getItem('user_settings');
-            if (stored) {
-                try {
-                    const parsed = JSON.parse(stored);
-                    if (parsed.board_sizes && parsed.board_sizes[currentDim]) {
-                        savedSettingSize = parseInt(parsed.board_sizes[currentDim]);
-                    } else if (parsed.board_size) {
-                        savedSettingSize = parseInt(parsed.board_size);
-                    }
-                } catch (e) {}
-            }
-        }
-
-        // Default fallbacks for each dimension if not customized yet
-        const defaultForDim = currentDim === '6x8' ? 40 : (currentDim === '5x7' ? 45 : (currentDim === '4x6' ? 50 : 54));
-        baseCellSize = savedSettingSize || defaultForDim;
-
-        if (savedSettingSize) {
-            window.userManuallyOverrodeBoardSize = true;
-            window.cachedCellSize = baseCellSize;
+        const stored = localStorage.getItem('morpheme_settings') || localStorage.getItem('user_settings');
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                if (parsed.board_sizes && parsed.board_sizes[currentDim]) {
+                    savedSettingSize = parseInt(parsed.board_sizes[currentDim]);
+                } else if (parsed.board_size) {
+                    savedSettingSize = parseInt(parsed.board_size);
+                }
+            } catch (e) {}
         }
     }
+
+    // 2. If the user is actively dragging the primary slider in Settings right now, allow that to preview live
+    if (window.userManuallyOverrodeBoardSize && window.cachedCellSize) {
+        if (document.getElementById('page-settings')?.classList.contains('active') || !savedSettingSize) {
+            savedSettingSize = parseInt(window.cachedCellSize);
+        }
+    }
+
+    // Default fallbacks for each dimension if not customized yet
+    const defaultForDim = currentDim === '6x8' ? 40 : (currentDim === '5x7' ? 45 : (currentDim === '4x6' ? 50 : 54));
+    let baseCellSize = savedSettingSize || defaultForDim;
 
     // User Request: Settings-true board size
     let cellSize = baseCellSize;
