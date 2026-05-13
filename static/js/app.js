@@ -900,7 +900,6 @@ function showPage(pageId) {
 
         // Trigger dynamic layout adjustment to fit board snugly on entry
         if (typeof window.checkBoardOverflow === 'function') {
-            window.userManuallyOverrodeBoardSize = false; // Reset manual override on entering room
             setTimeout(window.checkBoardOverflow, 50);
         }
 

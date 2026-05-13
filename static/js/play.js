@@ -2981,11 +2981,25 @@ function checkBoardOverflow() {
     boardEl.style.setProperty('--board-rows', rows);
 
     // Get Cell Size (Always fetch to ensure sync with User Settings)
-    const computedStyle = getComputedStyle(document.documentElement);
-    const cellSizeVar = computedStyle.getPropertyValue('--cell-size').trim();
-    let baseCellSize = parseInt(cellSizeVar) || 60;
-    
-    // User Request: Settings-true board size (Remove 6x8 override)
+    let savedSettingSize = 60;
+    if (window.userSettings && window.userSettings.board_size) {
+        savedSettingSize = parseInt(window.userSettings.board_size);
+    } else {
+        const stored = localStorage.getItem('user_settings');
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                if (parsed.board_size) savedSettingSize = parseInt(parsed.board_size);
+            } catch (e) {}
+        }
+    }
+
+    let baseCellSize = savedSettingSize || 60;
+    if (baseCellSize !== 60) {
+        window.userManuallyOverrodeBoardSize = true;
+    }
+
+    // User Request: Settings-true board size
     let cellSize = baseCellSize;
 
     // 2. Calculate Required Width for Board
