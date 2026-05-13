@@ -4695,6 +4695,12 @@ function handleCellMouseOver(e) {
 
 function handleCellTouchStart(e) {
     if (window.isSpectatorMode) return;
+
+    // Unconditionally prevent browser default gestures/scrolling when touching anywhere on the board container
+    if (e.cancelable !== false) {
+        e.preventDefault();
+    }
+
     if (mouseState.isDown) return; // Prevent double touch/accidental brushes from erasing path
 
     const touch = e.touches[0];
@@ -4702,8 +4708,6 @@ function handleCellTouchStart(e) {
     const cell = target && target.closest('.board-cell');
 
     if (cell && !cell.classList.contains('grayed')) {
-        e.preventDefault();
-
         mouseState.isDown = true;
         mouseState.selectedPath = [];
         mouseState.visitedCells = new Set();
@@ -4723,8 +4727,10 @@ function handleCellTouchMove(e) {
     if (!mouseState.isDown) return;
     if (window.isSpectatorMode) return;
 
-    // Prevent mobile scrolling unconditionally during an active board swipe
-    e.preventDefault();
+    // Prevent mobile scrolling/gestures unconditionally during an active board swipe
+    if (e.cancelable !== false) {
+        e.preventDefault();
+    }
 
     const touch = e.touches[0];
     const target = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -4739,8 +4745,14 @@ function handleCellTouchMove(e) {
     }
 }
 
-function finishDragSelection() {
+function finishDragSelection(e) {
     if (!mouseState.isDown) return;
+    
+    // If this was triggered by a touchend/touchcancel but the user is still pressing the screen with another touch point, do NOT terminate the swipe!
+    if (e && e.touches && e.touches.length > 0) {
+        return;
+    }
+
     mouseState.isDown = false;
 
     const path = mouseState.selectedPath;
@@ -4792,6 +4804,7 @@ function finishDragSelection() {
     // Release: commit word
     document.addEventListener('mouseup', finishDragSelection);
     document.addEventListener('touchend', finishDragSelection);
+    document.addEventListener('touchcancel', finishDragSelection);
 })();
 
 // Word Tabs Switching
