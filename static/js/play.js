@@ -2981,7 +2981,7 @@ function checkBoardOverflow() {
     boardEl.style.setProperty('--board-rows', rows);
 
     // Get Cell Size (Always fetch to ensure sync with User Settings)
-    let baseCellSize = 60;
+    let baseCellSize = 54;
     const currentDim = `${cols}x${rows}`;
 
     if (window.userManuallyOverrodeBoardSize && window.cachedCellSize) {
@@ -3005,7 +3005,7 @@ function checkBoardOverflow() {
         }
 
         // Default fallbacks for each dimension if not customized yet
-        const defaultForDim = currentDim === '6x8' ? 40 : (currentDim === '5x7' ? 45 : (currentDim === '4x6' ? 55 : 60));
+        const defaultForDim = currentDim === '6x8' ? 40 : (currentDim === '5x7' ? 45 : (currentDim === '4x6' ? 50 : 54));
         baseCellSize = savedSettingSize || defaultForDim;
 
         if (savedSettingSize) {

@@ -18,8 +18,8 @@ function debounce(func, wait) {
         lobby_music: true,
         chat_font_size: 13,
         def_font_size: 15,
-        board_size: 60,
-        board_sizes: { '4x4': 60, '4x6': 55, '5x7': 45, '6x8': 40 },
+        board_size: 54,
+        board_sizes: { '4x4': 54, '4x6': 50, '5x7': 45, '6x8': 40 },
         cube_size: 220,
         highlight_typing: true,
         highlight_mouse: true,
@@ -76,7 +76,7 @@ function debounce(func, wait) {
         if (settings.board_sizes) {
             let sizes = settings.board_sizes;
             if (typeof sizes === 'string') {
-                try { sizes = JSON.parse(sizes); } catch (e) { sizes = { '4x4': 60, '4x6': 55, '5x7': 45, '6x8': 40 }; }
+                try { sizes = JSON.parse(sizes); } catch (e) { sizes = { '4x4': 54, '4x6': 50, '5x7': 45, '6x8': 40 }; }
             }
             if (!window.userSettings) window.userSettings = {};
             window.userSettings.board_sizes = sizes;
@@ -371,7 +371,7 @@ function debounce(func, wait) {
             if (valEl) valEl.textContent = `${val}px`;
 
             if (!window.userSettings) window.userSettings = {};
-            if (!window.userSettings.board_sizes) window.userSettings.board_sizes = { '4x4': 60, '4x6': 55, '5x7': 45, '6x8': 40 };
+            if (!window.userSettings.board_sizes) window.userSettings.board_sizes = { '4x4': 54, '4x6': 50, '5x7': 45, '6x8': 40 };
             window.userSettings.board_sizes[dim] = parseInt(val);
 
             localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
