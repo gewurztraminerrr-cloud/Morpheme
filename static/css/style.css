@@ -6235,6 +6235,19 @@ select option,
         text-align: right !important;
         font-size: 1.15rem !important;
     }
+    
+    /* FAQ Table Mobile Overrides */
+    .faq-table-container {
+        overflow-x: visible !important;
+    }
+    .faq-scoring-table {
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+    .faq-scoring-table th, .faq-scoring-table td {
+        padding: 8px 4px !important;
+        font-size: 0.8rem !important;
+    }
 }
 
 
