@@ -4098,9 +4098,31 @@ input[type=range]::-moz-range-track {
         padding: 0 !important;
     }
 
-    #page-play {
+    #page-play,
+    #page-settings {
         padding-left: 0 !important;
         padding-right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+    }
+
+    #page-settings {
+        padding: 15px !important;
+    }
+
+    .settings-grid {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+    }
+
+    .setting-panel {
+        padding: 20px !important;
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
