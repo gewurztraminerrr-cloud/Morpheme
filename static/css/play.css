@@ -4134,6 +4134,9 @@ input[type=range]::-moz-range-track {
         border-right: none !important;
         margin-left: 0 !important;
         margin-right: 0 !important;
+        align-items: flex-start !important;
+        justify-content: flex-start !important;
+        justify-self: start !important;
     }
 
     /* Keep non-board sub-controls inside board panel snug and aligned */
