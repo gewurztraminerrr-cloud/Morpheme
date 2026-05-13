@@ -4088,7 +4088,7 @@ input[type=range]::-moz-range-track {
 }
 
 /* Mobile full-bleed board styling */
-@media (max-width: 900px) {
+@media (max-width: 992px) {
     #page-play {
         padding-left: 0 !important;
         padding-right: 0 !important;
@@ -4149,7 +4149,7 @@ input[type=range]::-moz-range-track {
     .board-panel.full-bleed-mobile .game-board {
         width: 100% !important;
         max-width: 100% !important;
-        padding: 10px !important;
+        padding: 0 !important;
         border-radius: 0 !important;
         gap: 3px !important; /* Elegant thin boundaries */
         display: grid !important;
@@ -4167,6 +4167,8 @@ input[type=range]::-moz-range-track {
         width: var(--cell-size, 50px) !important;
         height: var(--cell-size, 50px) !important;
         aspect-ratio: 1 / 1 !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
     }
 }
 

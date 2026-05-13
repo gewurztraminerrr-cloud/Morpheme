@@ -2991,8 +2991,8 @@ function checkBoardOverflow() {
     // 2. Calculate Required Width for Board
     // Width = (Cols * Size) + Gap + Padding + Scrollbar
     const boardGap = 4 * (cols - 1);
-    const isMobileView = window.innerWidth <= 900;
-    const boardPadding = isMobileView ? 16 : 40; // Full-bleed padding on mobile vs standard
+    const isMobileView = window.innerWidth <= 992;
+    const boardPadding = isMobileView ? 0 : 40; // ZERO padding on mobile
     let requiredBoardWidth = (cols * cellSize) + boardGap + boardPadding;
 
     // Add Scrollbar Width if present
@@ -3000,20 +3000,21 @@ function checkBoardOverflow() {
     requiredBoardWidth += scrollbarWidth;
 
     if (isMobileView) {
-        // User Request: On mobile devices, regardless of board dimensions, always ensure the board fits perfectly onto the screen from one end to the other by changing tile size.
-        const mobileTargetSize = Math.floor((window.innerWidth - 24 - boardGap) / cols);
-        cellSize = Math.max(25, mobileTargetSize);
-        requiredBoardWidth = (cols * cellSize) + boardGap + 24;
+        // User Request: On mobile devices, regardless of board dimensions, always ensure the board fits perfectly onto the screen from one end to the other by changing tile size. ZERO PADDING.
+        const mobileTargetSize = Math.floor((window.innerWidth - boardGap) / cols);
+        cellSize = Math.max(20, mobileTargetSize);
+        requiredBoardWidth = (cols * cellSize) + boardGap;
     } else {
-        // Constrain cell size on small desktop/tablet screens so the board ALWAYS fits snugly without horizontal overflow
+        // Constrain cell size on small desktop screens so the board ALWAYS fits snugly without horizontal overflow
         const maxAllowedWidth = window.innerWidth - 20; // 10px margin on each side
         if (requiredBoardWidth > maxAllowedWidth) {
             const targetCellSize = Math.floor((maxAllowedWidth - boardGap - boardPadding - scrollbarWidth) / cols);
-            cellSize = Math.max(25, targetCellSize); // Prevent shrinking below readable 25px
+            cellSize = Math.max(20, targetCellSize);
             requiredBoardWidth = (cols * cellSize) + boardGap + boardPadding + scrollbarWidth;
         }
     }
 
+    document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
     playPage.style.setProperty('--cell-size', `${cellSize}px`);
     boardEl.style.setProperty('--cell-size', `${cellSize}px`);
     window.cachedCellSize = cellSize; // Store for other listeners if needed
