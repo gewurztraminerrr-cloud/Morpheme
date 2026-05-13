@@ -4120,6 +4120,7 @@ input[type=range]::-moz-range-track {
     }
 
     /* Full bleed styling for 2D board panel and grid cells */
+    .board-panel,
     .board-panel.full-bleed-mobile {
         padding-left: 0 !important;
         padding-right: 0 !important;
@@ -4136,6 +4137,10 @@ input[type=range]::-moz-range-track {
     }
 
     /* Keep non-board sub-controls inside board panel snug and aligned */
+    .board-panel .timer-display,
+    .board-panel .validation-status,
+    .board-panel .word-input-section,
+    .board-panel .cube-rotate-hint,
     .board-panel.full-bleed-mobile .timer-display,
     .board-panel.full-bleed-mobile .validation-status,
     .board-panel.full-bleed-mobile .word-input-section,
