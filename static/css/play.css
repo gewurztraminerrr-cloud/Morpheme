@@ -4146,6 +4146,7 @@ input[type=range]::-moz-range-track {
         box-sizing: border-box !important;
     }
 
+    .board-panel .game-board,
     .board-panel.full-bleed-mobile .game-board {
         width: 100% !important;
         max-width: 100vw !important;
@@ -4161,6 +4162,7 @@ input[type=range]::-moz-range-track {
         margin: 0 auto !important;
     }
 
+    .board-panel .game-board .board-cell,
     .board-panel.full-bleed-mobile .game-board .board-cell {
         width: 100% !important;
         height: auto !important;
@@ -4176,6 +4178,7 @@ input[type=range]::-moz-range-track {
         justify-content: center !important;
     }
 
+    .board-panel .game-board .board-cell .dual-letter-container span,
     .board-panel.full-bleed-mobile .game-board .board-cell .dual-letter-container span {
         font-size: 0.52em !important;
         line-height: 1 !important;
