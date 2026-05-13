@@ -55,7 +55,9 @@ function debounce(func, wait) {
         if (settings.board_size) {
             const size = parseInt(settings.board_size);
             if (!isNaN(size) && boardSizeSlider) {
-                document.documentElement.style.setProperty('--cell-size', `${size}px`);
+                if (window.innerWidth > 992) {
+                    document.documentElement.style.setProperty('--cell-size', `${size}px`);
+                }
                 boardSizeSlider.value = size;
                 if (boardSizeVal) boardSizeVal.textContent = `${size}px`;
 
@@ -327,7 +329,9 @@ function debounce(func, wait) {
     if (boardSizeSlider) {
         boardSizeSlider.addEventListener('input', (e) => {
             const val = e.target.value;
-            document.documentElement.style.setProperty('--cell-size', `${val}px`);
+            if (window.innerWidth > 992) {
+                document.documentElement.style.setProperty('--cell-size', `${val}px`);
+            }
             if (boardSizeVal) boardSizeVal.textContent = `${val}px`;
             window.dispatchEvent(new Event('resize'));
             saveSettingDebounced('board_size', val);
