@@ -19,6 +19,7 @@ function debounce(func, wait) {
         chat_font_size: 13,
         def_font_size: 15,
         board_size: 60,
+        board_sizes: { '4x4': 60, '4x6': 55, '5x7': 45, '6x8': 40 },
         cube_size: 220,
         highlight_typing: true,
         highlight_mouse: true,
@@ -69,6 +70,23 @@ function debounce(func, wait) {
                     else playPage.classList.remove('layout-huge-board');
                 }
             }
+        }
+
+        // Dimension Specific Board Sizes
+        if (settings.board_sizes) {
+            let sizes = settings.board_sizes;
+            if (typeof sizes === 'string') {
+                try { sizes = JSON.parse(sizes); } catch (e) { sizes = { '4x4': 60, '4x6': 55, '5x7': 45, '6x8': 40 }; }
+            }
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.board_sizes = sizes;
+
+            Object.keys(sizes).forEach(dim => {
+                const slider = document.querySelector(`.dim-size-slider[data-dim="${dim}"]`);
+                const valEl = document.getElementById(`val-dim-${dim}`);
+                if (slider) slider.value = sizes[dim];
+                if (valEl) valEl.textContent = `${sizes[dim]}px`;
+            });
         }
 
         // Cube Size (3D)
@@ -253,7 +271,7 @@ function debounce(func, wait) {
     // 3. Update Helpers
     const saveSettingDebounced = debounce(async (key, value) => {
         let saveVal = value;
-        if (key === 'letter_colors') {
+        if (key === 'letter_colors' || key === 'board_sizes') {
             saveVal = JSON.stringify(value);
         }
         console.log(`[settings.js] Saving ${key}: ${saveVal}`);
@@ -343,6 +361,38 @@ function debounce(func, wait) {
             saveSettingDebounced('board_size', val);
         });
     }
+
+    const dimSliders = document.querySelectorAll('.dim-size-slider');
+    dimSliders.forEach(slider => {
+        slider.addEventListener('input', (e) => {
+            const dim = e.target.getAttribute('data-dim');
+            const val = e.target.value;
+            const valEl = document.getElementById(`val-dim-${dim}`);
+            if (valEl) valEl.textContent = `${val}px`;
+
+            if (!window.userSettings) window.userSettings = {};
+            if (!window.userSettings.board_sizes) window.userSettings.board_sizes = { '4x4': 60, '4x6': 55, '5x7': 45, '6x8': 40 };
+            window.userSettings.board_sizes[dim] = parseInt(val);
+
+            localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
+            saveSettingDebounced('board_sizes', window.userSettings.board_sizes);
+
+            // If active room matches this dimension, apply instantly
+            if (window.location.hash === '#page-play' && typeof window.checkBoardOverflow === 'function') {
+                const boardEl = document.getElementById('game-board');
+                if (boardEl) {
+                    const cols = boardEl.getAttribute('data-cols') || boardEl.style.getPropertyValue('--board-cols').trim();
+                    const rows = boardEl.getAttribute('data-rows') || boardEl.style.getPropertyValue('--board-rows').trim();
+                    if (`${cols}x${rows}` === dim || (!cols && dim === '4x4')) {
+                        window.userManuallyOverrodeBoardSize = true;
+                        window.cachedCellSize = val;
+                        document.documentElement.style.setProperty('--cell-size', `${val}px`);
+                        window.dispatchEvent(new Event('resize'));
+                    }
+                }
+            }
+        });
+    });
 
     const chatSizeSlider = document.getElementById('setting-chat-size');
     if (chatSizeSlider) {

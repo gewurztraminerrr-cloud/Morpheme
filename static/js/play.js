@@ -2982,23 +2982,33 @@ function checkBoardOverflow() {
 
     // Get Cell Size (Always fetch to ensure sync with User Settings)
     let baseCellSize = 60;
+    const currentDim = `${cols}x${rows}`;
+
     if (window.userManuallyOverrodeBoardSize && window.cachedCellSize) {
         baseCellSize = parseInt(window.cachedCellSize);
     } else {
-        let savedSettingSize = 60;
-        if (window.userSettings && window.userSettings.board_size) {
-            savedSettingSize = parseInt(window.userSettings.board_size);
+        let savedSettingSize = null;
+        if (window.userSettings && window.userSettings.board_sizes && window.userSettings.board_sizes[currentDim]) {
+            savedSettingSize = parseInt(window.userSettings.board_sizes[currentDim]);
         } else {
-            const stored = localStorage.getItem('user_settings');
+            const stored = localStorage.getItem('morpheme_settings') || localStorage.getItem('user_settings');
             if (stored) {
                 try {
                     const parsed = JSON.parse(stored);
-                    if (parsed.board_size) savedSettingSize = parseInt(parsed.board_size);
+                    if (parsed.board_sizes && parsed.board_sizes[currentDim]) {
+                        savedSettingSize = parseInt(parsed.board_sizes[currentDim]);
+                    } else if (parsed.board_size) {
+                        savedSettingSize = parseInt(parsed.board_size);
+                    }
                 } catch (e) {}
             }
         }
-        baseCellSize = savedSettingSize || 60;
-        if (baseCellSize !== 60) {
+
+        // Default fallbacks for each dimension if not customized yet
+        const defaultForDim = currentDim === '6x8' ? 40 : (currentDim === '5x7' ? 45 : (currentDim === '4x6' ? 55 : 60));
+        baseCellSize = savedSettingSize || defaultForDim;
+
+        if (savedSettingSize) {
             window.userManuallyOverrodeBoardSize = true;
             window.cachedCellSize = baseCellSize;
         }

@@ -2173,7 +2173,42 @@
                             <div class="board-cell">M</div>
                             <div class="board-cell">N</div>
                             <div class="board-cell">O</div>
-                            <div class="board-cell">P</div>
+                        </div>
+                    </div>
+
+                    <!-- Dimension-Specific Board Size Configurations -->
+                    <div class="dimension-sizes-section" style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                        <div class="setting-title" style="font-size: 1.1rem; margin-bottom: 5px;">Dimension-Specific Sizes</div>
+                        <div class="setting-desc" style="margin-bottom: 15px;">Set distinct tile scales so you don't have to adjust the slider each time you change rooms.</div>
+                        <div class="dimension-sliders-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
+                            <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="font-weight: 600;">4x4 Grid</span>
+                                    <span id="val-dim-4x4" style="color: var(--primary); font-weight: bold;">60px</span>
+                                </div>
+                                <input type="range" class="dim-size-slider" data-dim="4x4" min="30" max="110" value="60" style="width: 100%;">
+                            </div>
+                            <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="font-weight: 600;">4x6 Grid</span>
+                                    <span id="val-dim-4x6" style="color: var(--primary); font-weight: bold;">55px</span>
+                                </div>
+                                <input type="range" class="dim-size-slider" data-dim="4x6" min="30" max="110" value="55" style="width: 100%;">
+                            </div>
+                            <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="font-weight: 600;">5x7 Grid</span>
+                                    <span id="val-dim-5x7" style="color: var(--primary); font-weight: bold;">45px</span>
+                                </div>
+                                <input type="range" class="dim-size-slider" data-dim="5x7" min="30" max="110" value="45" style="width: 100%;">
+                            </div>
+                            <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="font-weight: 600;">6x8 Grid</span>
+                                    <span id="val-dim-6x8" style="color: var(--primary); font-weight: bold;">40px</span>
+                                </div>
+                                <input type="range" class="dim-size-slider" data-dim="6x8" min="30" max="110" value="40" style="width: 100%;">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3694,11 +3729,11 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=10"></script>
+    <script src="/js/settings.js?v=11"></script>
     <script src="/js/forum.js?v=31"></script>
     <script src="/js/app.js?v=33"></script>
     <script src="/js/lobby.js?v=4"></script>
-    <script src="/js/play.js?v=61"></script>
+    <script src="/js/play.js?v=62"></script>
     <script src="/js/tournaments.js?v=2"></script>
     <script src="/js/leaderboard.js?v=2"></script>
     <script src="/js/tools.js?v=29"></script>
