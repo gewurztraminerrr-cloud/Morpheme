@@ -332,6 +332,7 @@ function debounce(func, wait) {
         boardSizeSlider.addEventListener('input', (e) => {
             const val = e.target.value;
             window.userManuallyOverrodeBoardSize = true;
+            window.cachedCellSize = val;
             document.documentElement.style.setProperty('--cell-size', `${val}px`);
             const previewBoard = document.getElementById('preview-board');
             if (previewBoard) {

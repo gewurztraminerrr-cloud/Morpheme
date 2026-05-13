@@ -2981,22 +2981,27 @@ function checkBoardOverflow() {
     boardEl.style.setProperty('--board-rows', rows);
 
     // Get Cell Size (Always fetch to ensure sync with User Settings)
-    let savedSettingSize = 60;
-    if (window.userSettings && window.userSettings.board_size) {
-        savedSettingSize = parseInt(window.userSettings.board_size);
+    let baseCellSize = 60;
+    if (window.userManuallyOverrodeBoardSize && window.cachedCellSize) {
+        baseCellSize = parseInt(window.cachedCellSize);
     } else {
-        const stored = localStorage.getItem('user_settings');
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored);
-                if (parsed.board_size) savedSettingSize = parseInt(parsed.board_size);
-            } catch (e) {}
+        let savedSettingSize = 60;
+        if (window.userSettings && window.userSettings.board_size) {
+            savedSettingSize = parseInt(window.userSettings.board_size);
+        } else {
+            const stored = localStorage.getItem('user_settings');
+            if (stored) {
+                try {
+                    const parsed = JSON.parse(stored);
+                    if (parsed.board_size) savedSettingSize = parseInt(parsed.board_size);
+                } catch (e) {}
+            }
         }
-    }
-
-    let baseCellSize = savedSettingSize || 60;
-    if (baseCellSize !== 60) {
-        window.userManuallyOverrodeBoardSize = true;
+        baseCellSize = savedSettingSize || 60;
+        if (baseCellSize !== 60) {
+            window.userManuallyOverrodeBoardSize = true;
+            window.cachedCellSize = baseCellSize;
+        }
     }
 
     // User Request: Settings-true board size
