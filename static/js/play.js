@@ -2999,12 +2999,7 @@ function checkBoardOverflow() {
     const scrollbarWidth = boardPanel.offsetWidth - boardPanel.clientWidth;
     requiredBoardWidth += scrollbarWidth;
 
-    if (isMobileView) {
-        // User Request: On mobile devices, regardless of board dimensions, always ensure the board fits perfectly onto the screen from one end to the other by changing tile size. ZERO PADDING.
-        const mobileTargetSize = Math.floor((window.innerWidth - boardGap) / cols);
-        cellSize = Math.max(20, mobileTargetSize);
-        requiredBoardWidth = (cols * cellSize) + boardGap;
-    } else {
+    if (!isMobileView) {
         // Constrain cell size on small desktop screens so the board ALWAYS fits snugly without horizontal overflow
         const maxAllowedWidth = window.innerWidth - 20; // 10px margin on each side
         if (requiredBoardWidth > maxAllowedWidth) {

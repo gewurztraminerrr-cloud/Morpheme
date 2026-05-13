@@ -55,9 +55,7 @@ function debounce(func, wait) {
         if (settings.board_size) {
             const size = parseInt(settings.board_size);
             if (!isNaN(size) && boardSizeSlider) {
-                if (window.innerWidth > 992) {
-                    document.documentElement.style.setProperty('--cell-size', `${size}px`);
-                }
+                document.documentElement.style.setProperty('--cell-size', `${size}px`);
                 const previewBoard = document.getElementById('preview-board');
                 if (previewBoard) {
                     previewBoard.style.setProperty('--cell-size', `${size}px`);
@@ -333,9 +331,7 @@ function debounce(func, wait) {
     if (boardSizeSlider) {
         boardSizeSlider.addEventListener('input', (e) => {
             const val = e.target.value;
-            if (window.innerWidth > 992) {
-                document.documentElement.style.setProperty('--cell-size', `${val}px`);
-            }
+            document.documentElement.style.setProperty('--cell-size', `${val}px`);
             const previewBoard = document.getElementById('preview-board');
             if (previewBoard) {
                 previewBoard.style.setProperty('--cell-size', `${val}px`);
