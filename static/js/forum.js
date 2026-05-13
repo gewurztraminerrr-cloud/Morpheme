@@ -93,8 +93,8 @@ const Forum = {
         
         listEl.innerHTML = this.categories.map(cat => {
             const lastContent = cat.last_content_at ? new Date(cat.last_content_at).getTime() : 0;
-            // Force numeric comparison
-            const lastView = Number(lastViewed[cat.id]) || 0;
+            // Use sessionStartTime as default so that ancient posts do not highlight for new sessions
+            const lastView = Number(lastViewed[cat.id]) || window.sessionStartTime || Date.now();
             const hasNew = lastContent > lastView;
             
             if (hasNew) {

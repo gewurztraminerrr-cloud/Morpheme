@@ -16,6 +16,8 @@ const pages = {
 let currentUser = null;
 let currentUserEmail = null;
 let selectedRoom = null;
+let sessionStartTime = Date.now();
+window.sessionStartTime = sessionStartTime;
 
 // Define standardized rating ranges globaly for reuse
 const RATING_RANGES = [
@@ -572,8 +574,8 @@ async function checkForumActivity() {
 
         data.categories.forEach(cat => {
             const lastContent = cat.last_content_at ? new Date(cat.last_content_at).getTime() : 0;
-            // Coerce to number and check for 0
-            const lastView = Number(lastViewed[cat.id]) || 0;
+            // Use sessionStartTime as default so that ancient posts do not highlight for new sessions
+            const lastView = Number(lastViewed[cat.id]) || window.sessionStartTime || Date.now();
             const hasNew = lastContent > lastView;
             if (hasNew) {
                 hasNewGlobally = true;
