@@ -3021,6 +3021,14 @@ function checkBoardOverflow() {
     boardEl.style.setProperty('--cell-size', `${cellSize}px`);
     window.cachedCellSize = cellSize; // Store for other listeners if needed
 
+    // Synchronize UI Settings Slider so Settings perfectly reflects the size of tiles in the room
+    const boardSizeSlider = document.getElementById('setting-board-size');
+    const boardSizeVal = document.getElementById('setting-board-size-val');
+    if (boardSizeSlider) boardSizeSlider.value = cellSize;
+    if (boardSizeVal) boardSizeVal.textContent = `${cellSize}px`;
+    const previewBoard = document.getElementById('preview-board');
+    if (previewBoard) previewBoard.style.setProperty('--cell-size', `${cellSize}px`);
+
     // 3. Calculate Available Space
     const windowWidth = window.innerWidth;
     // Safety Margin: Standard
