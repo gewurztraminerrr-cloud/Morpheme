@@ -2999,15 +2999,23 @@ function checkBoardOverflow() {
     const scrollbarWidth = boardPanel.offsetWidth - boardPanel.clientWidth;
     requiredBoardWidth += scrollbarWidth;
 
-    // Constrain cell size on small screens so the board ALWAYS fits snugly without horizontal overflow
-    const maxAllowedWidth = window.innerWidth - 20; // 10px margin on each side
-    if (requiredBoardWidth > maxAllowedWidth) {
-        const targetCellSize = Math.floor((maxAllowedWidth - boardGap - boardPadding - scrollbarWidth) / cols);
-        cellSize = Math.max(25, targetCellSize); // Prevent shrinking below readable 25px
-        requiredBoardWidth = (cols * cellSize) + boardGap + boardPadding + scrollbarWidth;
+    if (isMobileView) {
+        // User Request: On mobile devices, regardless of board dimensions, always ensure the board fits perfectly onto the screen from one end to the other by changing tile size.
+        const mobileTargetSize = Math.floor((window.innerWidth - 24 - boardGap) / cols);
+        cellSize = Math.max(25, mobileTargetSize);
+        requiredBoardWidth = (cols * cellSize) + boardGap + 24;
+    } else {
+        // Constrain cell size on small desktop/tablet screens so the board ALWAYS fits snugly without horizontal overflow
+        const maxAllowedWidth = window.innerWidth - 20; // 10px margin on each side
+        if (requiredBoardWidth > maxAllowedWidth) {
+            const targetCellSize = Math.floor((maxAllowedWidth - boardGap - boardPadding - scrollbarWidth) / cols);
+            cellSize = Math.max(25, targetCellSize); // Prevent shrinking below readable 25px
+            requiredBoardWidth = (cols * cellSize) + boardGap + boardPadding + scrollbarWidth;
+        }
     }
 
     playPage.style.setProperty('--cell-size', `${cellSize}px`);
+    boardEl.style.setProperty('--cell-size', `${cellSize}px`);
     window.cachedCellSize = cellSize; // Store for other listeners if needed
 
     // 3. Calculate Available Space
