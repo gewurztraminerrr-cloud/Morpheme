@@ -5421,7 +5421,7 @@ async function handlePrivateMatchWord(word) {
     const minLen = privateMatchParams ? privateMatchParams.min_word_length : 3;
     if (word.length < minLen) {
         if (!isDictionaryValid) {
-            showValidationFeedback("Sequence is not a word and is too small", false);
+            showValidationFeedback("Sequence not a word and too small", false);
         } else {
             showValidationFeedback(`Too short (min ${minLen})`, false);
         }
