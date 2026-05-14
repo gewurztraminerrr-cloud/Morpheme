@@ -358,6 +358,150 @@
 
             <div class="lobby-grid">
                 <!-- Left Panel: Game Types -->
+                <!-- Solo / Friends Panel -->
+                    <div class="solo-friends-panel" id="mobile-panel-solo">
+                        <button class="mobile-nav-btn return-to-main-right" onclick="document.getElementById('mobile-panel-main').scrollIntoView({behavior: 'smooth'})">Go Back to Lobby ➜</button>
+<!-- Solo and With Friends Section -->
+                    <div class="game-section solo-friends-section">
+                        <h3 class="game-title">Play Solo or With Friends</h3>
+                        <div class="sf-config-grid">
+                            <div class="config-group">
+                                <label>Board Size</label>
+                                <select id="sf-config-dims">
+                                    <option value="4x4">4x4 Standard</option>
+                                    <option value="4x6">4x6 Extended</option>
+                                    <option value="5x7">5x7 Large</option>
+                                    <option value="6x8">6x8 Massive</option>
+                                    <option value="3x3x3">3x3x3 Cube</option>
+                                </select>
+                            </div>
+                            <div class="config-group">
+                                <label>Time Limit</label>
+                                <select id="sf-config-time">
+                                    <option value="45">45 Seconds</option>
+                                    <option value="60">1 Minute</option>
+                                    <option value="120">2 Minutes</option>
+                                    <option value="180">3 Minutes</option>
+                                    <option value="300">5 Minutes</option>
+                                </select>
+                            </div>
+                            <div class="config-group">
+                                <label>Dictionary</label>
+                                <select id="sf-config-dict">
+                                    <option value="random" selected>Random (50/50)</option>
+                                    <option value="NWL">NWL (North American)</option>
+                                    <option value="CSW">CSW (International)</option>
+                                </select>
+                            </div>
+                            <div class="config-group">
+                                <label>Min Word Len</label>
+                                <select id="sf-config-min-len">
+                                    <option value="3">3 Letters</option>
+                                    <option value="4">4 Letters</option>
+                                    <option value="5">5 Letters</option>
+                                </select>
+                            </div>
+                            <div class="config-group">
+                                <label>Bonus Word</label>
+                                <select id="sf-config-bonus">
+                                    <option value="0">None</option>
+                                    <option value="6">6 Letters</option>
+                                    <option value="7">7 Letters</option>
+                                    <option value="8">8 Letters</option>
+                                    <option value="9">9+ Letters</option>
+                                </select>
+                            </div>
+                            <div class="config-group">
+                                <label>Difficulty</label>
+                                <select id="sf-config-difficulty">
+                                     <option value="random" selected>Random (25/50/25)</option>
+                                    <option value="Easy">Easy (25%)</option>
+                                    <option value="Medium">Medium (50%)</option>
+                                    <option value="Hard">Hard (25%)</option>
+                                </select>
+                            </div>
+                            <div class="config-group">
+                                <label>Board Format</label>
+                                <select id="sf-config-format">
+                                    <option value="Normal">Normal</option>
+                                    <option value="Checkerboard">Checkerboard</option>
+                                    <option value="Density">Density</option>
+                                    <option value="Penalty">Penalty</option>
+                                    <option value="Mania">Mania</option>
+                                    <option value="Either/Or">Either/Or</option>
+                                    <option value="Bonus Letter">Bonus Letter</option>
+                                    <option value="Valued Letters">Valued Letters</option>
+                                </select>
+                            </div>
+                            <div class="config-group">
+                                <label>Word Count Range</label>
+                                <select id="sf-config-range">
+                                     <option value="random" selected>Random (24/50/25/1)</option>
+                                    <option value="50-100">50-100 (24%)</option>
+                                    <option value="100-200">100-200 (50%)</option>
+                                    <option value="200-500">200-500 (25%)</option>
+                                    <option value="500-99999">500+ (1%)</option>
+                                </select>
+                            </div>
+                            <div class="config-group bot-toggle-group">
+                                <label>AI Bots</label>
+                                <button id="add-bot-btn" class="sf-action-btn">+ Add Bot</button>
+                            </div>
+                        </div>
+
+                        <div id="solo-bots-list" class="bots-container">
+                            <!-- Bot entries added here -->
+                        </div>
+
+                        <div class="sf-tabs">
+                            <button class="sf-tab-btn active" data-sf-tab="solo">Solo</button>
+                            <button class="sf-tab-btn" data-sf-tab="friends">With Friends <span id="friends-tab-badge"
+                                    class="badge hidden"></span></button>
+                        </div>
+
+                        <!-- Solo Tab Content -->
+                        <div id="sf-tab-solo" class="sf-tab-content">
+                            <button id="start-solo-btn" class="sf-primary-btn">Start Solo Match</button>
+                        </div>
+
+                        <!-- With Friends Tab Content -->
+                        <div id="sf-tab-friends" class="sf-tab-content hidden">
+                            <div class="friends-invite-header">
+                                <input type="text" id="friends-invite-input"
+                                    placeholder="Enter username(s) separated by comma">
+                                <button id="invite-friends-btn" class="sf-action-btn">Send
+                                    Invite</button>
+                            </div>
+
+                            <div class="friends-subtabs">
+                                <button class="sf-subtab-btn active" data-friends-subtab="your-turn">Your Turn <span
+                                        id="your-turn-badge" class="badge hidden"></span></button>
+                                <button class="sf-subtab-btn" data-friends-subtab="their-turn">Their Turn</button>
+                                <button class="sf-subtab-btn" data-friends-subtab="invites">Invites <span
+                                        id="invite-count-badge" class="badge hidden"></span></button>
+                                <button class="sf-subtab-btn" data-friends-subtab="history">History</button>
+                            </div>
+
+                            <div id="friends-list-your-turn" class="friends-matches-list">
+                                <!-- List of matches needing your move -->
+                                <p class="placeholder">No active matches needing your turn.</p>
+                            </div>
+                            <div id="friends-list-their-turn" class="friends-matches-list hidden">
+                                <!-- List of matches waiting for them -->
+                                <p class="placeholder">No pending turns from others.</p>
+                            </div>
+                            <div id="friends-list-invites" class="friends-matches-list hidden">
+                                <!-- Pending Invitations -->
+                                <p class="placeholder">No pending invitations.</p>
+                            </div>
+                            <div id="friends-list-history" class="friends-matches-list hidden">
+                                <!-- Match history -->
+                                <p class="placeholder">No completed matches yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="game-types-panel" id="mobile-panel-main">
                     <!-- Global Filters/Settings -->
 
@@ -522,151 +666,7 @@
 
                     </div> <!-- End of game-types-panel -->
 
-                    <!-- Solo / Friends Panel -->
-                    <div class="solo-friends-panel" id="mobile-panel-solo">
-                        <button class="mobile-nav-btn return-to-main-right" onclick="document.getElementById('mobile-panel-main').scrollIntoView({behavior: 'smooth'})">Go Back to Lobby ➜</button>
-<!-- Solo and With Friends Section -->
-                    <div class="game-section solo-friends-section">
-                        <h3 class="game-title">Play Solo or With Friends</h3>
-                        <div class="sf-config-grid">
-                            <div class="config-group">
-                                <label>Board Size</label>
-                                <select id="sf-config-dims">
-                                    <option value="4x4">4x4 Standard</option>
-                                    <option value="4x6">4x6 Extended</option>
-                                    <option value="5x7">5x7 Large</option>
-                                    <option value="6x8">6x8 Massive</option>
-                                    <option value="3x3x3">3x3x3 Cube</option>
-                                </select>
-                            </div>
-                            <div class="config-group">
-                                <label>Time Limit</label>
-                                <select id="sf-config-time">
-                                    <option value="45">45 Seconds</option>
-                                    <option value="60">1 Minute</option>
-                                    <option value="120">2 Minutes</option>
-                                    <option value="180">3 Minutes</option>
-                                    <option value="300">5 Minutes</option>
-                                </select>
-                            </div>
-                            <div class="config-group">
-                                <label>Dictionary</label>
-                                <select id="sf-config-dict">
-                                    <option value="random" selected>Random (50/50)</option>
-                                    <option value="NWL">NWL (North American)</option>
-                                    <option value="CSW">CSW (International)</option>
-                                </select>
-                            </div>
-                            <div class="config-group">
-                                <label>Min Word Len</label>
-                                <select id="sf-config-min-len">
-                                    <option value="3">3 Letters</option>
-                                    <option value="4">4 Letters</option>
-                                    <option value="5">5 Letters</option>
-                                </select>
-                            </div>
-                            <div class="config-group">
-                                <label>Bonus Word</label>
-                                <select id="sf-config-bonus">
-                                    <option value="0">None</option>
-                                    <option value="6">6 Letters</option>
-                                    <option value="7">7 Letters</option>
-                                    <option value="8">8 Letters</option>
-                                    <option value="9">9+ Letters</option>
-                                </select>
-                            </div>
-                            <div class="config-group">
-                                <label>Difficulty</label>
-                                <select id="sf-config-difficulty">
-                                     <option value="random" selected>Random (25/50/25)</option>
-                                    <option value="Easy">Easy (25%)</option>
-                                    <option value="Medium">Medium (50%)</option>
-                                    <option value="Hard">Hard (25%)</option>
-                                </select>
-                            </div>
-                            <div class="config-group">
-                                <label>Board Format</label>
-                                <select id="sf-config-format">
-                                    <option value="Normal">Normal</option>
-                                    <option value="Checkerboard">Checkerboard</option>
-                                    <option value="Density">Density</option>
-                                    <option value="Penalty">Penalty</option>
-                                    <option value="Mania">Mania</option>
-                                    <option value="Either/Or">Either/Or</option>
-                                    <option value="Bonus Letter">Bonus Letter</option>
-                                    <option value="Valued Letters">Valued Letters</option>
-                                </select>
-                            </div>
-                            <div class="config-group">
-                                <label>Word Count Range</label>
-                                <select id="sf-config-range">
-                                     <option value="random" selected>Random (24/50/25/1)</option>
-                                    <option value="50-100">50-100 (24%)</option>
-                                    <option value="100-200">100-200 (50%)</option>
-                                    <option value="200-500">200-500 (25%)</option>
-                                    <option value="500-99999">500+ (1%)</option>
-                                </select>
-                            </div>
-                            <div class="config-group bot-toggle-group">
-                                <label>AI Bots</label>
-                                <button id="add-bot-btn" class="sf-action-btn">+ Add Bot</button>
-                            </div>
-                        </div>
-
-                        <div id="solo-bots-list" class="bots-container">
-                            <!-- Bot entries added here -->
-                        </div>
-
-                        <div class="sf-tabs">
-                            <button class="sf-tab-btn active" data-sf-tab="solo">Solo</button>
-                            <button class="sf-tab-btn" data-sf-tab="friends">With Friends <span id="friends-tab-badge"
-                                    class="badge hidden"></span></button>
-                        </div>
-
-                        <!-- Solo Tab Content -->
-                        <div id="sf-tab-solo" class="sf-tab-content">
-                            <button id="start-solo-btn" class="sf-primary-btn">Start Solo Match</button>
-                        </div>
-
-                        <!-- With Friends Tab Content -->
-                        <div id="sf-tab-friends" class="sf-tab-content hidden">
-                            <div class="friends-invite-header">
-                                <input type="text" id="friends-invite-input"
-                                    placeholder="Enter username(s) separated by comma">
-                                <button id="invite-friends-btn" class="sf-action-btn">Send
-                                    Invite</button>
-                            </div>
-
-                            <div class="friends-subtabs">
-                                <button class="sf-subtab-btn active" data-friends-subtab="your-turn">Your Turn <span
-                                        id="your-turn-badge" class="badge hidden"></span></button>
-                                <button class="sf-subtab-btn" data-friends-subtab="their-turn">Their Turn</button>
-                                <button class="sf-subtab-btn" data-friends-subtab="invites">Invites <span
-                                        id="invite-count-badge" class="badge hidden"></span></button>
-                                <button class="sf-subtab-btn" data-friends-subtab="history">History</button>
-                            </div>
-
-                            <div id="friends-list-your-turn" class="friends-matches-list">
-                                <!-- List of matches needing your move -->
-                                <p class="placeholder">No active matches needing your turn.</p>
-                            </div>
-                            <div id="friends-list-their-turn" class="friends-matches-list hidden">
-                                <!-- List of matches waiting for them -->
-                                <p class="placeholder">No pending turns from others.</p>
-                            </div>
-                            <div id="friends-list-invites" class="friends-matches-list hidden">
-                                <!-- Pending Invitations -->
-                                <p class="placeholder">No pending invitations.</p>
-                            </div>
-                            <div id="friends-list-history" class="friends-matches-list hidden">
-                                <!-- Match history -->
-                                <p class="placeholder">No completed matches yet.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right Panel: Active Rooms -->
+                    <!-- Right Panel: Active Rooms -->
                 <div class="active-rooms-panel" id="mobile-panel-rooms">
                     <button class="mobile-nav-btn return-to-main-left" onclick="document.getElementById('mobile-panel-main').scrollIntoView({behavior: 'smooth'})">⟵ Go Back to Lobby</button>
                     <h3>Active Rooms</h3>

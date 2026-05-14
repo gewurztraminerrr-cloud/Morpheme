@@ -834,16 +834,12 @@ body.theme-light-brown .field-hint {
         flex: 0 0 100% !important;
         width: 100% !important;
         scroll-snap-align: center !important;
+        scroll-snap-stop: always !important; /* Prevent skipping panels on fast swipe */
         max-height: none !important;
         padding: 12px !important;
         box-sizing: border-box !important;
         overflow-y: auto !important;
     }
-
-    /* Force the swipe order: Solo (Left) <- Main (Center) -> Rooms (Right) */
-    #mobile-panel-solo { order: 1 !important; }
-    #mobile-panel-main { order: 2 !important; }
-    #mobile-panel-rooms { order: 3 !important; }
 
     .mobile-nav-btn {
         display: block !important;

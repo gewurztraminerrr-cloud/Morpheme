@@ -5604,11 +5604,7 @@ body .tab-btn.active {
 
 /* Solo and With Friends Styles */
 .solo-friends-section {
-    margin-top: 40px;
-    background: rgba(var(--text-primary-rgb), 0.02);
-    border-radius: 20px;
-    padding: 25px;
-    border: 1px solid rgba(var(--text-primary-rgb), 0.05);
+    margin-top: 10px;
 }
 
 .sf-tabs {
