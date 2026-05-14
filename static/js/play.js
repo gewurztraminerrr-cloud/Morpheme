@@ -4816,6 +4816,9 @@ function handleCellMouseMove(e) {
     const letter = getLetterFromCellAndEvent(cell, e);
     selectCell(r, c, letter, cell, f);
 }
+// High-performance touch tracking state to eliminate mobile swiping lag
+let lastTouchX = -1;
+let lastTouchY = -1;
 
 function handleCellTouchStart(e) {
     if (window.isSpectatorMode) return;
@@ -4828,6 +4831,9 @@ function handleCellTouchStart(e) {
     if (mouseState.isDown) return; // Prevent double touch/accidental brushes from erasing path
 
     const touch = e.touches[0];
+    lastTouchX = touch.clientX;
+    lastTouchY = touch.clientY;
+    
     const target = document.elementFromPoint(touch.clientX, touch.clientY);
     const cell = target && target.closest('.board-cell');
 
@@ -4857,6 +4863,14 @@ function handleCellTouchMove(e) {
     }
 
     const touch = e.touches[0];
+    
+    // PERFORMANCE THROTTLE: Skip expensive DOM calculation if the finger hasn't moved a meaningful distance
+    if (Math.abs(touch.clientX - lastTouchX) < 10 && Math.abs(touch.clientY - lastTouchY) < 10) {
+        return;
+    }
+    lastTouchX = touch.clientX;
+    lastTouchY = touch.clientY;
+
     const target = document.elementFromPoint(touch.clientX, touch.clientY);
     const cell = target && target.closest('.board-cell');
 
