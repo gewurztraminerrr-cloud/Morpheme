@@ -4751,6 +4751,21 @@ function handleCellMouseOver(e) {
     selectCell(r, c, letter, cell, f);
 }
 
+function handleCellMouseMove(e) {
+    if (!mouseState.isDown) return;
+    if (window.isSpectatorMode) return;
+
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    const cell = target && target.closest('.board-cell');
+    if (!cell || cell.classList.contains('grayed')) return;
+
+    const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
+    const r = parseInt(cell.dataset.r || cell.dataset.row);
+    const c = parseInt(cell.dataset.c || cell.dataset.col);
+    const letter = getLetterFromCellAndEvent(cell, e);
+    selectCell(r, c, letter, cell, f);
+}
+
 function handleCellTouchStart(e) {
     if (window.isSpectatorMode) return;
 
@@ -4854,8 +4869,10 @@ function finishDragSelection(e) {
     const boardEl = document.getElementById('game-board');
     if (!boardEl) return;
 
+    boardEl.addEventListener('dragstart', (e) => e.preventDefault());
     boardEl.addEventListener('mousedown', handleCellMouseDown);
     boardEl.addEventListener('mouseover', handleCellMouseOver);
+    document.addEventListener('mousemove', handleCellMouseMove, { passive: true });
     boardEl.addEventListener('touchstart', handleCellTouchStart, { passive: false });
     boardEl.addEventListener('touchmove', handleCellTouchMove, { passive: false });
 
