@@ -4875,32 +4875,26 @@ function finishDragSelection(e) {
         }).join('');
         const serverPath = path.map(p => (p.face !== null && p.face !== undefined) ? [p.face, p.row, p.col] : [p.row, p.col]);
 
-        if (word.length >= 3) {
-            submitWord(word, serverPath);
-
-            // ONLY clear visual state if word was successfully submitted!
-            document.querySelectorAll('.board-cell.selected, .board-cell.current').forEach(c => {
-                c.classList.remove('selected', 'current');
-            });
-            mouseState.selectedPath = [];
-            mouseState.visitedCells = new Set();
-        }
-        // If word.length < 3, keep visual state intact so trackpad/click-by-click users can continue adding letters!
+        // Submit word unconditionally upon release
+        submitWord(word, serverPath);
     }
+
+    // Unconditionally clear visual board state and input box upon release
+    document.querySelectorAll('.board-cell.selected, .board-cell.current').forEach(c => {
+        c.classList.remove('selected', 'current');
+    });
+    mouseState.selectedPath = [];
+    mouseState.visitedCells = new Set();
 
     // UX: If round ended while we were dragging, refocus chat now that we're released
     const inputEl = document.getElementById('word-input');
     if (window.refocusChatPending) {
-        const typingInProgress = (inputEl && inputEl.value.trim().length > 0);
-        
-        if (!typingInProgress) {
-            window.refocusChatPending = false;
-            const chatInput = document.getElementById('chat-input');
-            if (chatInput) setTimeout(() => chatInput.focus(), 150);
-        }
+        window.refocusChatPending = false;
+        const chatInput = document.getElementById('chat-input');
+        if (chatInput) setTimeout(() => chatInput.focus(), 150);
     }
 
-    if (inputEl && mouseState.selectedPath.length === 0) {
+    if (inputEl) {
         inputEl.value = '';
     }
 }
