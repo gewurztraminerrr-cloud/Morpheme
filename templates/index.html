@@ -358,7 +358,7 @@
 
             <div class="lobby-grid">
                 <!-- Left Panel: Game Types -->
-                <div class="game-types-panel">
+                <div class="game-types-panel" id="mobile-panel-main">
                     <!-- Global Filters/Settings -->
 
 
@@ -520,7 +520,12 @@
                         </div>
                     </div>
 
-                    <!-- Solo and With Friends Section -->
+                    </div> <!-- End of game-types-panel -->
+
+                    <!-- Solo / Friends Panel -->
+                    <div class="solo-friends-panel" id="mobile-panel-solo">
+                        <button class="mobile-nav-btn return-to-main-right" onclick="document.getElementById('mobile-panel-main').scrollIntoView({behavior: 'smooth'})">Go Back to Lobby ➜</button>
+<!-- Solo and With Friends Section -->
                     <div class="game-section solo-friends-section">
                         <h3 class="game-title">Play Solo or With Friends</h3>
                         <div class="sf-config-grid">
@@ -662,7 +667,8 @@
                 </div>
 
                 <!-- Right Panel: Active Rooms -->
-                <div class="active-rooms-panel">
+                <div class="active-rooms-panel" id="mobile-panel-rooms">
+                    <button class="mobile-nav-btn return-to-main-left" onclick="document.getElementById('mobile-panel-main').scrollIntoView({behavior: 'smooth'})">⟵ Go Back to Lobby</button>
                     <h3>Active Rooms</h3>
                     <div id="selected-game-info">Select a game type</div>
                     <input type="number" id="rating-filter" placeholder="Filter by average rating" min="0" step="100">

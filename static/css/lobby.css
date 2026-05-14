@@ -3,10 +3,36 @@
 .lobby-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
+    grid-template-rows: auto 1fr;
     gap: 20px;
     height: calc(100vh - 100px);
     margin-top: 0;
     transition: grid-template-columns 0.3s ease, gap 0.3s ease;
+}
+
+#mobile-panel-main {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+#mobile-panel-solo {
+    grid-column: 1;
+    grid-row: 2;
+    background: var(--bg-panel);
+    border-radius: 12px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--input-border);
+}
+
+#mobile-panel-rooms {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+}
+
+/* Hide mobile navigation buttons on desktop */
+.mobile-nav-btn {
+    display: none;
 }
 
 /* Widescreen balanced columns and expanded Active Rooms panel */
@@ -791,21 +817,46 @@ body.theme-light-brown .field-hint {
 /* Tablet & Mobile Layout for Lobby Grid */
 @media (max-width: 900px) {
     .lobby-grid {
-        grid-template-columns: minmax(0, 1fr) !important;
-        height: auto !important;
-        gap: 15px !important;
+        display: flex !important;
+        flex-direction: row !important;
+        overflow-x: auto !important;
+        scroll-snap-type: x mandatory !important;
+        -webkit-overflow-scrolling: touch !important;
+        scroll-behavior: smooth !important;
+        gap: 0 !important;
         width: 100% !important;
-        max-width: 100% !important;
         box-sizing: border-box !important;
-        overflow-x: hidden !important;
     }
     
     .game-types-panel,
-    .active-rooms-panel {
+    .active-rooms-panel,
+    .solo-friends-panel {
+        flex: 0 0 100% !important;
+        width: 100% !important;
+        scroll-snap-align: center !important;
         max-height: none !important;
         padding: 12px !important;
-        width: 100% !important;
         box-sizing: border-box !important;
+        overflow-y: auto !important;
+    }
+
+    /* Force the swipe order: Solo (Left) <- Main (Center) -> Rooms (Right) */
+    #mobile-panel-solo { order: 1 !important; }
+    #mobile-panel-main { order: 2 !important; }
+    #mobile-panel-rooms { order: 3 !important; }
+
+    .mobile-nav-btn {
+        display: block !important;
+        width: 100%;
+        padding: 15px;
+        margin-bottom: 15px;
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border: 1px solid var(--input-border);
+        color: var(--text-primary);
+        font-weight: 800;
+        border-radius: 12px;
+        text-transform: uppercase;
+        cursor: pointer;
     }
 
     /* Snug styling for game config matrices on mobile screen */

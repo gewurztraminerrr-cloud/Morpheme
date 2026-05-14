@@ -195,19 +195,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Start polling
             startLobbyPolling();
 
-            // Mobile redirection: Scroll smoothly to Active Rooms panel
+            // Mobile redirection: Swipe smoothly to Active Rooms panel in the carousel
             const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
             if (isMobile) {
-                const roomsPanel = document.querySelector('.active-rooms-panel');
+                const roomsPanel = document.getElementById('mobile-panel-rooms');
                 if (roomsPanel) {
-                    // Calculate precise vertical offset relative to document to avoid browser-level horizontal alignment shifts
-                    const rect = roomsPanel.getBoundingClientRect();
-                    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                    const targetY = rect.top + scrollTop - 10; // slightly offset for premium spacing margin
-                    window.scrollTo({
-                        top: targetY,
-                        behavior: 'smooth'
-                    });
+                    roomsPanel.scrollIntoView({ behavior: 'smooth', inline: 'start' });
                 }
             }
 
@@ -403,6 +396,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start stats polling if we land on lobby
     if (isOnLobby()) {
         startStatsPolling();
+
+        // Mobile layout: Snap to center panel on load
+        const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+            setTimeout(() => {
+                const mainPanel = document.getElementById('mobile-panel-main');
+                if (mainPanel) mainPanel.scrollIntoView({ behavior: 'auto', inline: 'start' });
+            }, 100);
+        }
     }
 });
 
@@ -723,6 +725,15 @@ if (lobbyPage) {
             // Always start stats polling when entering lobby
             if (!lobbyStatsInterval) {
                 startStatsPolling();
+            }
+
+            // Mobile layout: Snap to center panel on load
+            const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile) {
+                setTimeout(() => {
+                    const mainPanel = document.getElementById('mobile-panel-main');
+                    if (mainPanel) mainPanel.scrollIntoView({ behavior: 'auto', inline: 'start' });
+                }, 100);
             }
 
         } else {
