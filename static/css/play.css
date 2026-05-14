@@ -4136,6 +4136,7 @@ input[type=range]::-moz-range-track {
         padding-right: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
+        min-width: 0 !important;
         box-sizing: border-box !important;
         overflow-x: hidden !important;
     }
@@ -4148,7 +4149,61 @@ input[type=range]::-moz-range-track {
         margin-left: 10px !important;
         margin-right: 10px !important;
         width: calc(100% - 20px) !important;
+        max-width: calc(100% - 20px) !important;
+        min-width: 0 !important;
         box-sizing: border-box !important;
+    }
+
+    .players-panel {
+        overflow-x: hidden !important;
+    }
+
+    .player-actions-row {
+        gap: 4px !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    .player-actions-row .find-me-btn {
+        font-size: 0.7rem !important;
+        padding: 6px 2px !important;
+        letter-spacing: 0 !important;
+        white-space: normal !important;
+        line-height: 1.1 !important;
+        height: auto !important;
+        min-height: 28px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+    }
+
+    #players-list {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+    }
+
+    .player-item {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+        padding: 6px 10px !important;
+        overflow: hidden !important;
+    }
+
+    .player-row-top,
+    .player-row-bottom {
+        min-width: 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .player-username {
+        min-width: 0 !important;
     }
 
     /* Full bleed styling for 2D board panel and grid cells */
