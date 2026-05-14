@@ -4550,7 +4550,8 @@ body .tab-btn.active {
         width: 30px !important;
     }
     .logo .pronunciation {
-        display: none !important; /* Hide pronunciation on small screens to save space */
+        font-size: 0.6rem !important; /* Slightly smaller for mobile to prevent overflow */
+        display: inline-block !important;
     }
     .nav-btn {
         padding: 6px 12px !important; /* Larger touch targets on mobile viewports */
