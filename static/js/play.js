@@ -2983,27 +2983,28 @@ function checkBoardOverflow() {
     // Get Cell Size (Always fetch to ensure sync with User Settings)
     const currentDim = `${cols}x${rows}`;
     let savedSettingSize = null;
+    let storedSettingsObj = window.userSettings;
 
-    // 1. First, consult dimension-specific configurations from userSettings / localStorage
-    if (window.userSettings && window.userSettings.board_sizes && window.userSettings.board_sizes[currentDim]) {
-        savedSettingSize = parseInt(window.userSettings.board_sizes[currentDim]);
-    } else {
-        const stored = localStorage.getItem('morpheme_settings') || localStorage.getItem('user_settings');
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored);
-                if (parsed.board_sizes && parsed.board_sizes[currentDim]) {
-                    savedSettingSize = parseInt(parsed.board_sizes[currentDim]);
-                } else if (parsed.board_size) {
-                    savedSettingSize = parseInt(parsed.board_size);
-                }
-            } catch (e) {}
+    try {
+        const storedStr = localStorage.getItem('morpheme_settings') || localStorage.getItem('user_settings');
+        if (storedStr) {
+            storedSettingsObj = JSON.parse(storedStr);
+            if (window.userSettings && storedSettingsObj.board_sizes) {
+                window.userSettings.board_sizes = storedSettingsObj.board_sizes;
+            }
         }
+    } catch (e) {}
+
+    // 1. First, consult dimension-specific configurations
+    if (storedSettingsObj && storedSettingsObj.board_sizes && storedSettingsObj.board_sizes[currentDim]) {
+        savedSettingSize = parseInt(storedSettingsObj.board_sizes[currentDim]);
+    } else if (storedSettingsObj && storedSettingsObj.board_size) {
+        savedSettingSize = parseInt(storedSettingsObj.board_size);
     }
 
-    // 2. If the user is actively dragging the primary slider in Settings right now, allow that to preview live
+    // 2. If user is actively dragging the primary slider in Settings right now, allow live preview
     if (window.userManuallyOverrodeBoardSize && window.cachedCellSize) {
-        if (document.getElementById('page-settings')?.classList.contains('active') || !savedSettingSize) {
+        if (document.getElementById('page-settings')?.classList.contains('active')) {
             savedSettingSize = parseInt(window.cachedCellSize);
         }
     }
@@ -3011,6 +3012,12 @@ function checkBoardOverflow() {
     // Default fallbacks for each dimension if not customized yet
     const defaultForDim = currentDim === '6x8' ? 40 : (currentDim === '5x7' ? 45 : (currentDim === '4x6' ? 50 : 54));
     let baseCellSize = savedSettingSize || defaultForDim;
+
+    // CRITICAL: Set userManuallyOverrodeBoardSize = true so mobile/laptop layout constraints don't override the user's explicit setting
+    if (savedSettingSize) {
+        window.userManuallyOverrodeBoardSize = true;
+        window.cachedCellSize = baseCellSize;
+    }
 
     // User Request: Settings-true board size
     let cellSize = baseCellSize;
