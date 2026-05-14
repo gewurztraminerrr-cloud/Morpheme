@@ -4251,6 +4251,18 @@ input[type=range]::-moz-range-track {
         justify-self: start !important;
     }
 
+    .board-panel.low-time-warning,
+    .board-panel.full-bleed-mobile.low-time-warning {
+        background: rgba(255, 30, 30, 0.65) !important; /* Deep, vivid red background */
+        box-shadow: inset 0 0 40px rgba(255, 0, 0, 0.8) !important;
+        animation: mobileRedPulse 1s infinite alternate ease-in-out !important;
+    }
+
+    @keyframes mobileRedPulse {
+        from { background: rgba(255, 30, 30, 0.55) !important; box-shadow: inset 0 0 30px rgba(255, 0, 0, 0.7) !important; }
+        to { background: rgba(255, 0, 0, 0.85) !important; box-shadow: inset 0 0 60px rgba(255, 0, 0, 0.95) !important; }
+    }
+
     /* Keep non-board sub-controls inside board panel snug and aligned */
     .board-panel .timer-display,
     .board-panel .validation-status,
