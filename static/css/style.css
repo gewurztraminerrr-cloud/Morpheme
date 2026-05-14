@@ -4529,12 +4529,13 @@ body .tab-btn.active {
         flex-shrink: 1 !important;
         display: flex !important;
         flex-direction: row !important;
-        flex-wrap: wrap !important; /* Force items to wrap nicely to ensure all buttons are fully visible! */
-        overflow-x: visible !important;
-        gap: 6px 8px !important; /* Compact vertical and horizontal gap */
-        justify-content: center !important; /* Center-align buttons beautifully on mobile */
+        flex-wrap: nowrap !important; /* Force single row */
+        overflow-x: auto !important; /* Enable horizontal scrolling */
+        -webkit-overflow-scrolling: touch !important; /* Smooth momentum scrolling */
+        gap: 10px !important; 
+        justify-content: flex-start !important; /* Start from the left so scrolling works */
         align-items: center !important;
-        padding: 0 !important;
+        padding: 0 5px 8px 5px !important; /* Add padding for scroll space */
         box-sizing: border-box !important;
     }
     .nav::-webkit-scrollbar {
