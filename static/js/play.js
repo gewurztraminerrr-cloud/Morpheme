@@ -4634,35 +4634,6 @@ function selectCell(row, col, letter, cellEl, face = null) {
     const key = face !== null ? `${face},${row},${col}` : `${row},${col}`;
     const pathLen = mouseState.selectedPath.length;
 
-    // Check for backtracking
-    if (pathLen >= 2) {
-        const secondToLast = mouseState.selectedPath[pathLen - 2];
-        const match = face !== null ?
-            (secondToLast.face === face && secondToLast.row === row && secondToLast.col === col) :
-            (secondToLast.row === row && secondToLast.col === col);
-
-        if (match) {
-            const lastCell = mouseState.selectedPath.pop();
-            const lastKey = lastCell.face !== null ? `${lastCell.face},${lastCell.row},${lastCell.col}` : `${lastCell.row},${lastCell.col}`;
-            mouseState.visitedCells.delete(lastKey);
-
-            let oldSelector = `.board-cell[data-r="${lastCell.row}"][data-c="${lastCell.col}"]`;
-            if (lastCell.face !== null && lastCell.face !== undefined) {
-                oldSelector = `.board-cell[data-f="${lastCell.face}"][data-r="${lastCell.row}"][data-c="${lastCell.col}"]`;
-            }
-            const oldCellEl = document.querySelector(oldSelector);
-            if (oldCellEl) oldCellEl.classList.remove('selected', 'current');
-
-            if (cellEl) {
-                document.querySelectorAll('.board-cell.current').forEach(c => c.classList.remove('current'));
-                cellEl.classList.add('current');
-            }
-
-            updateWordInputFromPath();
-            return;
-        }
-    }
-
     if (mouseState.visitedCells.has(key)) return;
 
     // Enforce strict grid adjacency during drag/mouse selection
@@ -4875,20 +4846,18 @@ function finishDragSelection(e) {
         }).join('');
         const serverPath = path.map(p => (p.face !== null && p.face !== undefined) ? [p.face, p.row, p.col] : [p.row, p.col]);
 
-        if (word.length >= 3) {
-            submitWord(word, serverPath);
-
-            // ONLY clear visual state if word was successfully submitted!
-            document.querySelectorAll('.board-cell.selected, .board-cell.current').forEach(c => {
-                c.classList.remove('selected', 'current');
-            });
-            mouseState.selectedPath = [];
-            mouseState.visitedCells = new Set();
-        }
-        // If word.length < 3, keep visual state intact so trackpad/click-by-click users can continue adding letters!
+        // Unconditionally submit word
+        submitWord(word, serverPath);
     }
 
-    // UX: If round ended while we were dragging, refocus chat now that we're released
+    // Unconditionally clear visual board state and input box upon release
+    document.querySelectorAll('.board-cell.selected, .board-cell.current').forEach(c => {
+        c.classList.remove('selected', 'current');
+    });
+    mouseState.selectedPath = [];
+    mouseState.visitedCells = new Set();
+
+    // UX: Refocus chat if pending
     const inputEl = document.getElementById('word-input');
     if (window.refocusChatPending) {
         window.refocusChatPending = false;
@@ -4896,7 +4865,7 @@ function finishDragSelection(e) {
         if (chatInput) setTimeout(() => chatInput.focus(), 150);
     }
 
-    if (inputEl && mouseState.selectedPath.length === 0) {
+    if (inputEl) {
         inputEl.value = '';
     }
 }
