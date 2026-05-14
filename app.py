@@ -4698,11 +4698,12 @@ def get_leaderboard_data():
              where_clauses.append("rh.round_duration = ?")
              params.append(time_limit)
         else:
-             # Exclude 10m (600) and 24h (86400) from generic aggregated views for Accumulative 
-             # Only apply this exclusion if NO game_type filter is present or if filtering for Accumulative
-             # This ensures that selecting "Cube" as game type correctly shows 10m/24h Cube rounds in "All Speeds"
+             # Universally exclude 24h (86400) from all generic aggregated views
+             where_clauses.append("rh.round_duration != 86400")
+             
+             # Exclude 10m (600) from generic aggregated views for Accumulative 
              if game_type == 'all' or game_type == 'accumulative':
-                where_clauses.append("(rh.game_type != 'accumulative' OR rh.round_duration NOT IN (600, 86400))")
+                where_clauses.append("(rh.game_type != 'accumulative' OR rh.round_duration != 600)")
 
         # Time Filter - Calendar Day logic
         period_clause = "1=1"

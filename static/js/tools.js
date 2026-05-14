@@ -2002,7 +2002,7 @@ function renderRatingsGrid(configRatings, user = null) {
 
     const modes = ['accumulative', 'fcfs', 'split', '3d'];
     const boards = ['4x4', '4x6', '5x7', '6x8', '3x3x3'];
-    const accTimes = [45, 180, 300, 600, 86400];
+    const accTimes = [45, 180, 300, 600];
     const otherTimes = [45, 180, 300, 600];
 
     const formatTimeShort = (s) => {
@@ -2010,7 +2010,6 @@ function renderRatingsGrid(configRatings, user = null) {
         if (s === 180) return '3m';
         if (s === 300) return '5m';
         if (s === 600) return '10m';
-        if (s === 86400) return '24h';
         return s + 's';
     };
 
@@ -2030,8 +2029,8 @@ function renderRatingsGrid(configRatings, user = null) {
             times.forEach(time => {
                 if (filterTime !== 'all' && String(time) !== filterTime) return;
 
-                // COMPATIBILITY FILTER: No 45s or 24h for Cube
-                if (mode === '3d' && (time === 45 || time === 86400)) return;
+                // COMPATIBILITY FILTER: No 45s for Cube
+                if (mode === '3d' && time === 45) return;
 
                 const configKey = `${mode}|${board}|${time}`;
                 const configData = ratings[configKey] || { rating: 1200, avg_score: 0, avg_perf: 0 };
