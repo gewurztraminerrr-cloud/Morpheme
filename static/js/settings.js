@@ -19,6 +19,7 @@ function debounce(func, wait) {
         chat_font_size: 13,
         def_font_size: 15,
         board_size: 54,
+        corner_cutoff: 30,
         board_sizes: { '4x4': 54, '4x6': 50, '5x7': 45, '6x8': 40 },
         cube_size: 220,
         highlight_typing: true,
@@ -101,6 +102,22 @@ function debounce(func, wait) {
                 if (slider) slider.value = size;
                 const label = document.getElementById('setting-cube-size-val');
                 if (label) label.textContent = `${size}px`;
+            }
+        }
+
+        // Corner Cutoff (Octagon vs Diamond Selectable Space)
+        if (settings.corner_cutoff !== undefined) {
+            const val = parseInt(settings.corner_cutoff);
+            if (!isNaN(val)) {
+                document.documentElement.style.setProperty('--corner-cutoff', `${val}%`);
+                const slider = document.getElementById('setting-corner-cutoff');
+                if (slider) slider.value = val;
+                const label = document.getElementById('setting-corner-cutoff-val');
+                if (label) label.textContent = `${val}%`;
+                const shape = document.getElementById('preview-hitbox-shape');
+                if (shape) {
+                    shape.style.clipPath = `polygon(${val}% 0%, calc(100% - ${val}%) 0%, 100% ${val}%, 100% calc(100% - ${val}%), calc(100% - ${val}%) 100%, ${val}% 100%, 0% calc(100% - ${val}%), 0% ${val}%)`;
+                }
             }
         }
 
@@ -443,6 +460,24 @@ function debounce(func, wait) {
             const label = document.getElementById('setting-cube-size-val');
             if (label) label.textContent = `${val}px`;
             saveSettingDebounced('cube_size', val);
+        });
+    }
+
+    const cutoffSlider = document.getElementById('setting-corner-cutoff');
+    if (cutoffSlider) {
+        cutoffSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            document.documentElement.style.setProperty('--corner-cutoff', `${val}%`);
+            const label = document.getElementById('setting-corner-cutoff-val');
+            if (label) label.textContent = `${val}%`;
+            const shape = document.getElementById('preview-hitbox-shape');
+            if (shape) {
+                shape.style.clipPath = `polygon(${val}% 0%, calc(100% - ${val}%) 0%, 100% ${val}%, 100% calc(100% - ${val}%), calc(100% - ${val}%) 100%, ${val}% 100%, 0% calc(100% - ${val}%), 0% ${val}%)`;
+            }
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.corner_cutoff = val;
+            localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
+            saveSettingDebounced('corner_cutoff', val);
         });
     }
 
