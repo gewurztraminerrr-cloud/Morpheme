@@ -5512,7 +5512,8 @@ body .tab-btn.active {
 
 @media (max-width: 992px) {
     .tournament-layout {
-        padding: 10px !important;
+        padding: 5px 0 !important;
+        margin: 0 !important;
         gap: 15px !important;
         width: 100% !important;
         max-width: 100vw !important;
@@ -5529,10 +5530,11 @@ body .tab-btn.active {
     }
 
     .tournament-card {
-        padding: 15px !important;
+        padding: 20px 15px !important;
         width: 100% !important;
         box-sizing: border-box !important;
         min-width: 0 !important;
+        border-radius: 16px !important;
     }
 
     .tournament-params-grid {
