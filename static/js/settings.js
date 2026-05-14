@@ -381,9 +381,11 @@ function debounce(func, wait) {
             if (typeof window.checkBoardOverflow === 'function') {
                 const boardEl = document.getElementById('game-board');
                 if (boardEl) {
-                    const cols = boardEl.getAttribute('data-cols') || boardEl.style.getPropertyValue('--board-cols').trim() || '4';
-                    const rows = boardEl.getAttribute('data-rows') || boardEl.style.getPropertyValue('--board-rows').trim() || '4';
-                    if (`${cols}x${rows}` === dim) {
+                    const cols = parseInt(boardEl.getAttribute('data-cols') || boardEl.style.getPropertyValue('--board-cols').trim() || '4');
+                    const rows = parseInt(boardEl.getAttribute('data-rows') || boardEl.style.getPropertyValue('--board-rows').trim() || '4');
+                    const minDim = Math.min(cols, rows);
+                    const maxDim = Math.max(cols, rows);
+                    if (`${minDim}x${maxDim}` === dim) {
                         window.userManuallyOverrodeBoardSize = true;
                         window.cachedCellSize = val;
                         document.documentElement.style.setProperty('--cell-size', `${val}px`);

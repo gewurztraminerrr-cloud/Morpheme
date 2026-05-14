@@ -2982,7 +2982,9 @@ function checkBoardOverflow() {
     boardEl.style.setProperty('--board-rows', rows);
 
     // Get Cell Size (Always fetch to ensure sync with User Settings)
-    const currentDim = `${cols}x${rows}`;
+    const minDim = Math.min(cols, rows);
+    const maxDim = Math.max(cols, rows);
+    const currentDim = `${minDim}x${maxDim}`;
     let savedSettingSize = null;
     let storedSettingsObj = window.userSettings;
 
