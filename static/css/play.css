@@ -4070,6 +4070,24 @@ input[type=range]::-moz-range-track {
         font-size: 1.1rem !important;
     }
 
+    /* Combo Checker MP Tables Vertical Height Fix for Mobile */
+    .combo-results-container {
+        overflow-y: visible !important;
+        height: auto !important;
+    }
+    .result-section,
+    .result-section:first-child,
+    .result-section:nth-child(1),
+    .result-section:nth-child(2) {
+        flex: 0 0 auto !important;
+        min-height: 420px !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+    .horizontal-scroll-container {
+        min-height: 240px !important;
+    }
+
     /* Profile layout stack vertically on mobile */
     .profile-layout {
         flex-direction: column !important;
