@@ -3389,6 +3389,157 @@ input[type=range]::-moz-range-track {
     margin-left: 5px;
 }
 
+@media (max-width: 992px) {
+    .lb-grid {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+    }
+
+    .lb-card {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        height: auto !important;
+        max-height: 450px !important;
+    }
+
+    .lb-card-header {
+        padding: 12px 10px !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+    }
+
+    .lb-card-header-text {
+        width: 100% !important;
+        white-space: normal !important;
+        line-height: 1.2 !important;
+    }
+
+    .lb-card-search {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+        justify-content: space-between !important;
+        flex-wrap: wrap !important;
+    }
+
+    .lb-local-input {
+        width: 120px !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        font-size: 16px !important; /* Prevent iOS Safari Zoom on Focus */
+    }
+
+    .lb-table-wrapper {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+        overflow-x: auto !important; /* Guarantee internal table scroll if needed, but table fits perfectly */
+    }
+
+    .lb-table {
+        width: 100% !important;
+        table-layout: auto !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+    }
+
+    .lb-table td {
+        padding: 8px 6px !important;
+        font-size: 0.85rem !important;
+        box-sizing: border-box !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    .lb-table td.col-rank {
+        width: 30px !important;
+        min-width: 30px !important;
+    }
+
+    .lb-table td.col-user {
+        max-width: 120px !important;
+    }
+
+    .lb-table td.col-user .username {
+        max-width: 80px !important;
+        display: inline-block !important;
+        vertical-align: middle !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+    }
+
+    .lb-table td.col-val {
+        font-size: 0.9rem !important;
+        max-width: 80px !important;
+    }
+
+    .lb-table td.col-meta {
+        width: 50px !important;
+        font-size: 0.75rem !important;
+    }
+
+    .lb-table td.col-date {
+        width: 50px !important;
+        font-size: 0.7rem !important;
+        padding-left: 4px !important;
+    }
+
+    .lb-table td.col-action {
+        width: 25px !important;
+    }
+
+    .lb-controls-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+    }
+
+    .lb-filters {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+    }
+
+    .lb-filters select {
+        flex: 1 1 30% !important;
+        min-width: 0 !important;
+        padding: 8px 10px !important;
+        font-size: 0.8rem !important;
+        box-sizing: border-box !important;
+    }
+
+    .lb-search {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+    }
+
+    .lb-search input {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+        font-size: 16px !important; /* Prevent iOS Safari Zoom */
+    }
+}
+
 /* Personal Timer /* Winner Celebration Pulse (Golden) */
 @keyframes winnerAlertPulse {
     0% {
