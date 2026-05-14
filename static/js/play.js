@@ -4697,7 +4697,37 @@ function handleCellMouseDown(e) {
     // Prevent native browser drag/selection behavior from interrupting our swipe
     e.preventDefault();
 
-    // Reset path
+    const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
+    const r = parseInt(cell.dataset.r || cell.dataset.row);
+    const c = parseInt(cell.dataset.c || cell.dataset.col);
+    const letter = getLetterFromCellAndEvent(cell, e);
+    const key = f !== null ? `${f},${r},${c}` : `${r},${c}`;
+
+    // If we already have an active path started (e.g. trackpad relaxed pressure momentarily)
+    if (mouseState.selectedPath.length > 0) {
+        const lastCell = mouseState.selectedPath[mouseState.selectedPath.length - 1];
+        const lastKey = lastCell.face !== null ? `${lastCell.face},${lastCell.row},${lastCell.col}` : `${lastCell.row},${lastCell.col}`;
+        
+        // If clicking exact same cell, keep state active
+        if (lastKey === key) {
+            mouseState.isDown = true;
+            return;
+        }
+
+        // Check if adjacent to lastCell
+        const isAdjacent = (f !== null && lastCell.face !== null) ?
+            (Math.abs(lastCell.row - r) <= 1 && Math.abs(lastCell.col - c) <= 1) :
+            (Math.abs(lastCell.row - r) <= 1 && Math.abs(lastCell.col - c) <= 1);
+
+        if (isAdjacent && !mouseState.visitedCells.has(key)) {
+            // Flawless continuation!
+            mouseState.isDown = true;
+            selectCell(r, c, letter, cell, f);
+            return;
+        }
+    }
+
+    // Otherwise (brand new sequence or clicked non-adjacent starting tile): reset path
     mouseState.isDown = true;
     mouseState.selectedPath = [];
     mouseState.visitedCells = new Set();
@@ -4705,10 +4735,6 @@ function handleCellMouseDown(e) {
         c.classList.remove('selected', 'current');
     });
 
-    const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
-    const r = parseInt(cell.dataset.r || cell.dataset.row);
-    const c = parseInt(cell.dataset.c || cell.dataset.col);
-    const letter = getLetterFromCellAndEvent(cell, e);
     selectCell(r, c, letter, cell, f);
 }
 
@@ -4838,15 +4864,16 @@ function finishDragSelection(e) {
 
         if (word.length >= 3) {
             submitWord(word, serverPath);
-        }
-    }
 
-    // Clear visual state
-    document.querySelectorAll('.board-cell.selected, .board-cell.current').forEach(c => {
-        c.classList.remove('selected', 'current');
-    });
-    mouseState.selectedPath = [];
-    mouseState.visitedCells = new Set();
+            // ONLY clear visual state if word was successfully submitted!
+            document.querySelectorAll('.board-cell.selected, .board-cell.current').forEach(c => {
+                c.classList.remove('selected', 'current');
+            });
+            mouseState.selectedPath = [];
+            mouseState.visitedCells = new Set();
+        }
+        // If word.length < 3, keep visual state intact so trackpad/click-by-click users can continue adding letters!
+    }
 
     // UX: If round ended while we were dragging, refocus chat now that we're released
     const inputEl = document.getElementById('word-input');
@@ -4860,8 +4887,9 @@ function finishDragSelection(e) {
         }
     }
 
-    // ALWAYS clear live input display after selection is committed
-    if (inputEl) inputEl.value = '';
+    if (inputEl && mouseState.selectedPath.length === 0) {
+        inputEl.value = '';
+    }
 }
 
 // Wire board events via delegation on the static board wrapper
