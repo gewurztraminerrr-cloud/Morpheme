@@ -5510,6 +5510,95 @@ body .tab-btn.active {
     border-color: #ffd700;
 }
 
+@media (max-width: 992px) {
+    .tournament-layout {
+        padding: 10px !important;
+        gap: 15px !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+    }
+
+    .tournament-grid {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+    }
+
+    .tournament-card {
+        padding: 15px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+    }
+
+    .tournament-params-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    .param-item {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    .t-matchups-list {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+    }
+
+    .t-matchup-item {
+        padding: 10px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    .t-matchup-item .participant {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+    }
+
+    .t-matchup-item .participant .username {
+        max-width: 150px !important;
+    }
+
+    .guest-msg-card {
+        padding: 20px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .t-leaderboard-item {
+        padding: 10px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+    }
+
+    .t-leaderboard-item .score-group {
+        width: 100% !important;
+        justify-content: space-between !important;
+        box-sizing: border-box !important;
+    }
+}
+
 /* Solo and With Friends Styles */
 .solo-friends-section {
     margin-top: 40px;
