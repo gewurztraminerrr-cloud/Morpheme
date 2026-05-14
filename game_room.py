@@ -1090,6 +1090,7 @@ class GameRoom:
                                 'found_words': [w['word'] for w in p.submitted_words]
                             } for p in self.players
                         }
+                        self._apply_daily_reset(self)
 
         # 2. Transition ACTIVE -> INTERMISSION
         if self.state == 'active' and should_end:
@@ -1753,8 +1754,12 @@ class RoomManager:
                 
                 # USE STORED SOLUTIONS (Prevents dictionary mismatch issues)
                 if recovered_solutions:
-                     room.previous_all_words = list(recovered_solutions.keys())
-                     room.previous_all_word_scores = recovered_solutions
+                     if isinstance(recovered_solutions, dict):
+                         room.previous_all_words = list(recovered_solutions.keys())
+                         room.previous_all_word_scores = recovered_solutions
+                     elif isinstance(recovered_solutions, list):
+                         room.previous_all_words = list(recovered_solutions)
+                         room.previous_all_word_scores = {w: {} for w in recovered_solutions}
                      
                      # Recover min length from solutions
                      word_lengths = [len(w) for w in room.previous_all_words if len(w) >= 3]
@@ -1767,7 +1772,7 @@ class RoomManager:
                          room.previous_csw_only_words = []
                          room.previous_added_words = []
                          
-                     print(f"[RoomManager] Recovered {len(recovered_solutions)} words from DB solutions.")
+                     print(f"[RoomManager] Recovered {len(room.previous_all_words)} words from DB solutions.")
                 else:
                     # Fallback solve (NWL)
                     from board_generator import solve_board

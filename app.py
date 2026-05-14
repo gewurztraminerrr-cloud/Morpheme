@@ -3295,27 +3295,23 @@ def load_pronunciations():
         print(f"Error loading pronunciations: {e}")
         PRONUNCIATIONS_CACHE = {}
 
-@app.route('/api/definition', methods=['GET'])
-def get_definition():
-    word = request.args.get('word', '').upper()
-    if not word:
-        return jsonify({'error': 'Word parameter required'}), 400
-
-    # Always try to load if cache is empty
+def lookup_word_definition_and_pronunciation(word):
+    global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
     if not DEFINITIONS_CACHE:
         load_definitions()
     if PRONUNCIATIONS_CACHE is None:
         load_pronunciations()
 
-    definition = DEFINITIONS_CACHE.get(word)
-    pronunciation = PRONUNCIATIONS_CACHE.get(word)
+    word_upper = word.upper().strip()
+    definition = DEFINITIONS_CACHE.get(word_upper)
+    pronunciation = PRONUNCIATIONS_CACHE.get(word_upper)
     
     # ONLINE FALLBACK: If definition is not found locally, try Free Dictionary API
     if not definition:
         try:
             import urllib.request
             import json
-            url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word.lower()}"
+            url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word_upper.lower()}"
             req = urllib.request.Request(
                 url, 
                 headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
@@ -3334,10 +3330,9 @@ def get_definition():
                                 def_parts.append(f"({part_of_speech}) {first_def}")
                     if def_parts:
                         definition = "; ".join(def_parts)
-                        # Cache it to avoid repeated external API requests
-                        DEFINITIONS_CACHE[word] = definition
+                        DEFINITIONS_CACHE[word_upper] = definition
         except Exception as e:
-            print(f"Online dictionary API fallback failed for '{word}': {e}")
+            print(f"Online dictionary API fallback failed for '{word_upper}': {e}")
 
     # SECONDARY ONLINE FALLBACK: If still not found, try English Wiktionary REST API
     if not definition:
@@ -3346,7 +3341,7 @@ def get_definition():
             import json
             import re
             import html
-            url = f"https://en.wiktionary.org/api/rest_v1/page/definition/{word.lower()}"
+            url = f"https://en.wiktionary.org/api/rest_v1/page/definition/{word_upper.lower()}"
             req = urllib.request.Request(
                 url, 
                 headers={'User-Agent': 'MorphemeApp/1.0 (jeff@morpheme.games) Python-urllib'}
@@ -3359,20 +3354,26 @@ def get_definition():
                         part_of_speech = item.get("partOfSpeech", "")
                         for d in item.get("definitions", []):
                             text = d.get("definition", "")
-                            # strip HTML tags
                             text = re.sub(r"<[^>]+>", "", text)
-                            # replace multiple spaces
                             text = re.sub(r"\s+", " ", text).strip()
-                            # unescape html entities
                             text = html.unescape(text)
                             if text:
                                 def_parts.append(f"({part_of_speech}) {text}")
                     if def_parts:
                         definition = "; ".join(def_parts)
-                        # Cache it
-                        DEFINITIONS_CACHE[word] = definition
+                        DEFINITIONS_CACHE[word_upper] = definition
         except Exception as e:
-            print(f"Wiktionary API fallback failed for '{word}': {e}")
+            print(f"Wiktionary API fallback failed for '{word_upper}': {e}")
+
+    return definition, pronunciation
+
+@app.route('/api/definition', methods=['GET'])
+def get_definition():
+    word = request.args.get('word', '').upper()
+    if not word:
+        return jsonify({'error': 'Word parameter required'}), 400
+
+    definition, pronunciation = lookup_word_definition_and_pronunciation(word)
 
     if definition or pronunciation:
         return jsonify({
@@ -3989,13 +3990,9 @@ def tools_validate_word():
     definition = None
     pronunciation = None
     if is_valid:
-        global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
-        if not DEFINITIONS_CACHE:
-            load_definitions()
-        if PRONUNCIATIONS_CACHE is None:
-            load_pronunciations()
-        definition = DEFINITIONS_CACHE.get(word)
-        pronunciation = PRONUNCIATIONS_CACHE.get(word)
+        definition, pronunciation = lookup_word_definition_and_pronunciation(word)
+        if not definition:
+            definition = "No definition available for this word."
         
     return jsonify({
         'word': word,
@@ -4288,13 +4285,9 @@ def tools_random_word():
     random_word = random.choice(filtered_words)
     
     # Get definition and pronunciation
-    global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
-    if not DEFINITIONS_CACHE:
-        load_definitions()
-    if PRONUNCIATIONS_CACHE is None:
-        load_pronunciations()
-    definition = DEFINITIONS_CACHE.get(random_word, "No definition available for this word.")
-    pronunciation = PRONUNCIATIONS_CACHE.get(random_word)
+    definition, pronunciation = lookup_word_definition_and_pronunciation(random_word)
+    if not definition:
+        definition = "No definition available for this word."
     
     return jsonify({
         'word': random_word,
@@ -4328,13 +4321,9 @@ def tools_wotd():
     wotd = eligible_words[idx]
     
     # Get definition and pronunciation
-    global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
-    if not DEFINITIONS_CACHE:
-        load_definitions()
-    if PRONUNCIATIONS_CACHE is None:
-        load_pronunciations()
-    definition = DEFINITIONS_CACHE.get(wotd, "No definition available for this word.")
-    pronunciation = PRONUNCIATIONS_CACHE.get(wotd)
+    definition, pronunciation = lookup_word_definition_and_pronunciation(wotd)
+    if not definition:
+        definition = "No definition available for this word."
     
     return jsonify({
         'word': wotd,

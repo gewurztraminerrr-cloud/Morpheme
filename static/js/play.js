@@ -774,16 +774,37 @@ async function updateGameState(incomingState = null) {
                 (previousState.spectators || []).some(s => s.username.toLowerCase() === currentUsername.toLowerCase())
             );
 
-            // INSTANTANEOUS EVICTION: If we were previously established in the roster, kick immediately
+            // 24H RESET AUTO-REJOIN: If we are in a 24H room, the user count resets to 0 at midnight.
+            // Active users sitting in the room MUST NOT be kicked out to the lobby! They should silently auto-rejoin.
+            const roundChanged = previousState && state.current_round > previousState.current_round;
+            if (is24H && (roundChanged || window._wasEverInRoster)) {
+                const roomId = window.currentRoomId || state.room_id;
+                if (roomId && !window._isRejoiningRoom) {
+                    window._isRejoiningRoom = true;
+                    console.warn(`[play.js] Daily reset detected in 24h room ${roomId}. Performing silent auto-rejoin.`);
+                    fetch(`/api/room/${roomId}/join`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ as_spectator: !!window.isSpectatorMode })
+                    })
+                    .then(resp => resp.json())
+                    .then(data => {
+                        window._isRejoiningRoom = false;
+                        if (data.success) {
+                            console.log(`[play.js] Silent auto-rejoin successful! Role: ${data.role}`);
+                            setTimeout(updateGameState, 100);
+                        }
+                    })
+                    .catch(err => {
+                        window._isRejoiningRoom = false;
+                    });
+                }
+                return;
+            }
+
+            // INSTANTANEOUS EVICTION: If we were previously established in the roster in a non-24h room, kick immediately
             if (window._wasEverInRoster) {
                 console.warn('[play.js] Authoritative eviction detected: User missing from roster. Ejecting instantaneously.');
-                const roundChanged = previousState && state.current_round > previousState.current_round;
-
-                if (is24H && wasInBefore && roundChanged) {
-                     ejectToLobby("daily_reset");
-                     return;
-                }
-
                 ejectToLobby("inactivity");
                 return;
             }
@@ -821,15 +842,6 @@ async function updateGameState(incomingState = null) {
             console.warn(`[play.js] EVICTION WARNING: User not found in state.players or state.spectators! Count: ${window._emptyPlayersPollCount}/3`);
             
             if (window._emptyPlayersPollCount >= 3) {
-                // 24H Reset Logic: Only auto-rejoin IF the round has actually changed (e.g. midnight flip)
-                // If the round is the same, then this was likely an individual inactivity kick.
-                const roundChanged = previousState && state.current_round > previousState.current_round;
-
-                if (is24H && wasInBefore && roundChanged) {
-                     ejectToLobby("daily_reset");
-                     return;
-                }
-
                 // Normal Eviction
                 ejectToLobby("inactivity");
                 return;
