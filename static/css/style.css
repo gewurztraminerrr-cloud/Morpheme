@@ -6383,5 +6383,39 @@ select option,
     }
 }
 
+/* ==========================================================================
+   MOBILE WEBVIEW HARDWARE ACCELERATION & TOUCH OPTIMIZATIONS
+   ========================================================================== */
 
+/* 1. Force buttery smooth hardware-accelerated scrolling everywhere */
+* {
+    -webkit-overflow-scrolling: touch !important;
+}
 
+/* 2. Force the GPU to render scrollable areas for instant frame rates */
+.lobby-container,
+.rooms-list,
+.chat-messages,
+.players-list,
+.words-list-container,
+.tab-content,
+.tools-content,
+.tools-sidebar,
+.manual-grid-scroll {
+    transform: translateZ(0);
+    will-change: transform, scroll-position;
+}
+
+/* 3. Hardware Accelerate the Boggle Board for Instant Touch Highlights */
+.play-grid {
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+.cell {
+    /* Put each cell in its own GPU layer so changing background color is instant */
+    transform: translateZ(0);
+    will-change: background-color, border-color, color, transform;
+    /* Prevent the browser from trying to handle touch dragging over the board */
+    touch-action: none !important;
+}
