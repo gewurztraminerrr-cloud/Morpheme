@@ -378,15 +378,18 @@ function debounce(func, wait) {
             saveSettingDebounced('board_sizes', window.userSettings.board_sizes);
 
             // If active room matches this dimension, apply instantly
-            if (window.location.hash === '#page-play' && typeof window.checkBoardOverflow === 'function') {
+            if (typeof window.checkBoardOverflow === 'function') {
                 const boardEl = document.getElementById('game-board');
                 if (boardEl) {
-                    const cols = boardEl.getAttribute('data-cols') || boardEl.style.getPropertyValue('--board-cols').trim();
-                    const rows = boardEl.getAttribute('data-rows') || boardEl.style.getPropertyValue('--board-rows').trim();
-                    if (`${cols}x${rows}` === dim || (!cols && dim === '4x4')) {
+                    const cols = boardEl.getAttribute('data-cols') || boardEl.style.getPropertyValue('--board-cols').trim() || '4';
+                    const rows = boardEl.getAttribute('data-rows') || boardEl.style.getPropertyValue('--board-rows').trim() || '4';
+                    if (`${cols}x${rows}` === dim) {
                         window.userManuallyOverrodeBoardSize = true;
                         window.cachedCellSize = val;
                         document.documentElement.style.setProperty('--cell-size', `${val}px`);
+                        const playPage = document.getElementById('page-play');
+                        if (playPage) playPage.style.setProperty('--cell-size', `${val}px`);
+                        boardEl.style.setProperty('--cell-size', `${val}px`);
                         window.dispatchEvent(new Event('resize'));
                     }
                 }

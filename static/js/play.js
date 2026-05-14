@@ -2761,6 +2761,7 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         isBoardRotated === lastRenderedRotation && 
         boardEl.classList.contains('game-board')) {
         reapplyBoardHighlights();
+        if (typeof checkBoardOverflow === 'function') checkBoardOverflow();
         return;
     }
     lastRenderedBoardJSON = boardJSON;
