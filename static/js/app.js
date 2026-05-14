@@ -627,26 +627,7 @@ function filterCubeOnMobile() {
 window.filterCubeOnMobile = filterCubeOnMobile;
 
 function adjustLobbyLayoutForDevice() {
-    const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const soloFriends = document.querySelector('.solo-friends-section');
-    const lobbyGrid = document.querySelector('.lobby-grid');
-    const gameTypesPanel = document.querySelector('.game-types-panel');
-    
-    if (!soloFriends || !lobbyGrid || !gameTypesPanel) return;
-    
-    if (isMobile) {
-        // Move Solo & Friends section to be the last direct child of lobbyGrid (after active-rooms-panel)
-        if (soloFriends.parentNode !== lobbyGrid) {
-            console.log('[Layout] Moving Solo & Friends section to the end of lobby-grid for mobile.');
-            lobbyGrid.appendChild(soloFriends);
-        }
-    } else {
-        // Restore Solo & Friends section to be inside gameTypesPanel for desktop
-        if (soloFriends.parentNode !== gameTypesPanel) {
-            console.log('[Layout] Restoring Solo & Friends section inside game-types-panel for desktop.');
-            gameTypesPanel.appendChild(soloFriends);
-        }
-    }
+    // Obsolete: CSS Flexbox and Grid now natively handle the 3-panel layout across all devices.
 }
 window.adjustLobbyLayoutForDevice = adjustLobbyLayoutForDevice;
 
