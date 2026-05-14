@@ -3292,6 +3292,17 @@
                 </div>
             </div>
         </div>
+        <!-- Color Tier Info Modal -->
+        <div id="color-tier-modal" class="mini-profile-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+            <div class="mini-profile-card" style="max-width: 380px; text-align: center; padding: 30px 25px;">
+                <button class="mini-profile-close" onclick="document.getElementById('color-tier-modal').classList.add('hidden')">&times;</button>
+                <div id="color-tier-icon" style="font-size: 3rem; margin-bottom: 15px; filter: drop-shadow(0 0 10px currentColor);">💎</div>
+                <h3 id="color-tier-title" style="font-size: 1.8rem; font-weight: 900; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">TIER NAME</h3>
+                <div id="color-tier-range" style="font-family: monospace; font-size: 1.2rem; font-weight: 700; opacity: 0.8; margin-bottom: 20px;">0 - 1000</div>
+                <div id="color-tier-desc" style="font-size: 0.95rem; line-height: 1.5; color: var(--muted-text); margin-bottom: 25px;">This rating tier represents players achieving this specific skill bracket across Morpheme game rooms.</div>
+                <div id="color-tier-swatch" style="height: 12px; width: 100%; border-radius: 6px; box-shadow: inset 0 0 5px rgba(0,0,0,0.3);"></div>
+            </div>
+        </div>
         <!-- Mini Profile Modal -->
         <div id="mini-profile-modal" class="mini-profile-overlay hidden">
             <div class="mini-profile-card">
@@ -3735,7 +3746,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=14"></script>
     <script src="/js/forum.js?v=31"></script>
-    <script src="/js/app.js?v=33"></script>
+    <script src="/js/app.js?v=34"></script>
     <script src="/js/lobby.js?v=4"></script>
     <script src="/js/play.js?v=67"></script>
     <script src="/js/tournaments.js?v=2"></script>

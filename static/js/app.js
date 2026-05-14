@@ -1318,14 +1318,19 @@ function setupGlobalProfileLogic() {
     if (bar) {
         bar.addEventListener('click', (e) => {
             const segment = e.target.closest('.color-bar-segment');
-            if (segment && window.showMiniProfile) {
-                // If it's the user-rating-segment, we might show current user, 
-                // but usually the user wants to see their stats.
-                // For now, let's look for any user whose rating might be clicked? 
-                // Actually, the request says "colored square representing rating does not open a brief profile".
-                // We'll show the current user's mini profile as a default if none selected.
-                if (window.currentUser) {
-                    window.showMiniProfile(window.currentUser);
+            if (segment) {
+                const tierName = segment.getAttribute('data-name') || 'Rating Tier';
+                const tierLabel = segment.getAttribute('data-label') || '';
+                const bgColor = segment.style.backgroundColor || '#fff';
+                
+                const modal = document.getElementById('color-tier-modal');
+                if (modal) {
+                    document.getElementById('color-tier-title').textContent = tierName;
+                    document.getElementById('color-tier-title').style.color = bgColor;
+                    document.getElementById('color-tier-icon').style.color = bgColor;
+                    document.getElementById('color-tier-range').textContent = `Rating Range: ${tierLabel}`;
+                    document.getElementById('color-tier-swatch').style.backgroundColor = bgColor;
+                    modal.classList.remove('hidden');
                 }
             }
         });
