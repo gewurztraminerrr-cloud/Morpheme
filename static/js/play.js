@@ -4634,6 +4634,35 @@ function selectCell(row, col, letter, cellEl, face = null) {
     const key = face !== null ? `${face},${row},${col}` : `${row},${col}`;
     const pathLen = mouseState.selectedPath.length;
 
+    // Check for backtracking (mousing back to the second-to-last letter)
+    if (pathLen >= 2) {
+        const secondToLast = mouseState.selectedPath[pathLen - 2];
+        const match = face !== null ?
+            (secondToLast.face === face && secondToLast.row === row && secondToLast.col === col) :
+            (secondToLast.row === row && secondToLast.col === col);
+
+        if (match) {
+            const lastCell = mouseState.selectedPath.pop();
+            const lastKey = lastCell.face !== null ? `${lastCell.face},${lastCell.row},${lastCell.col}` : `${lastCell.row},${lastCell.col}`;
+            mouseState.visitedCells.delete(lastKey);
+
+            let oldSelector = `.board-cell[data-r="${lastCell.row}"][data-c="${lastCell.col}"]`;
+            if (lastCell.face !== null && lastCell.face !== undefined) {
+                oldSelector = `.board-cell[data-f="${lastCell.face}"][data-r="${lastCell.row}"][data-c="${lastCell.col}"]`;
+            }
+            const oldCellEl = document.querySelector(oldSelector);
+            if (oldCellEl) oldCellEl.classList.remove('selected', 'current');
+
+            if (cellEl) {
+                document.querySelectorAll('.board-cell.current').forEach(c => c.classList.remove('current'));
+                cellEl.classList.add('selected', 'current');
+            }
+
+            updateWordInputFromPath();
+            return;
+        }
+    }
+
     if (mouseState.visitedCells.has(key)) return;
 
     // Enforce strict grid adjacency during drag/mouse selection
