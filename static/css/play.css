@@ -4206,6 +4206,31 @@ input[type=range]::-moz-range-track {
         min-width: 0 !important;
     }
 
+    .chat-panel {
+        width: calc(100% - 20px) !important;
+        max-width: calc(100% - 20px) !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+        overflow-x: hidden !important;
+    }
+
+    .chat-input-section {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+    }
+
+    #chat-input,
+    #chat-input:focus,
+    #chat-input:active,
+    #word-input,
+    #word-input:focus,
+    #word-input:active {
+        font-size: 16px !important; /* CRITICAL: PREVENTS IOS SAFARI FROM AUTOMATICALLY ZOOMING IN WHEN PUT INTO FOCUS */
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+    }
+
     /* Full bleed styling for 2D board panel and grid cells */
     .board-panel,
     .board-panel.full-bleed-mobile {
