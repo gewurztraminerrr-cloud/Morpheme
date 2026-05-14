@@ -3,7 +3,6 @@
 .lobby-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    grid-template-rows: auto 1fr;
     gap: 20px;
     height: calc(100vh - 100px);
     margin-top: 0;
@@ -17,7 +16,6 @@
 
 #mobile-panel-solo {
     grid-column: 1;
-    grid-row: 2;
     background: var(--bg-panel);
     border-radius: 12px;
     padding: 20px;
@@ -27,7 +25,6 @@
 
 #mobile-panel-rooms {
     grid-column: 2;
-    grid-row: 1 / span 2;
 }
 
 /* Hide mobile navigation buttons on desktop */
