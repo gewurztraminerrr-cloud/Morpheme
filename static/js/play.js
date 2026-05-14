@@ -4665,6 +4665,19 @@ function selectCell(row, col, letter, cellEl, face = null) {
 
     if (mouseState.visitedCells.has(key)) return;
 
+    // Enforce strict grid adjacency during drag/mouse selection
+    if (pathLen > 0) {
+        const lastCell = mouseState.selectedPath[pathLen - 1];
+        const isAdjacent = (face !== null && lastCell.face !== null) ?
+            (Math.abs(lastCell.row - row) <= 1 && Math.abs(lastCell.col - col) <= 1) :
+            (Math.abs(lastCell.row - row) <= 1 && Math.abs(lastCell.col - col) <= 1);
+
+        if (!isAdjacent) {
+            console.log(`[play.js] Rejecting non-adjacent tile selection: (${row},${col}) from (${lastCell.row},${lastCell.col})`);
+            return;
+        }
+    }
+
     mouseState.visitedCells.add(key);
     mouseState.selectedPath.push({ row, col, letter, face });
 
