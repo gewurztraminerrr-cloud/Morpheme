@@ -663,30 +663,48 @@ class PrivateMatchManager:
         # Sort by points descending
         word_scores.sort(key=lambda x: x[1], reverse=True)
         
-        selected_words = []
+        # Sort by points descending to partition
+        word_scores.sort(key=lambda x: x[1], reverse=True)
         
+        # Partition words into Hard (top 20%), Medium (next 30%), Easy (bottom 50%)
+        num_hard = max(1, int(len(word_scores) * 0.2))
+        num_med = max(1, int(len(word_scores) * 0.3))
+        
+        hard_pool = word_scores[:num_hard]
+        med_pool = word_scores[num_hard:num_hard+num_med]
+        easy_pool = word_scores[num_hard+num_med:]
+        if not easy_pool: easy_pool = word_scores # Fallback if very few words
+        
+        # Determine human-like find ratios based on AI rating
         if r >= 2400:
-            # Elite bots: Pick from the absolute top words (best 10% or top 30)
-            pool_size = max(30, int(len(word_scores) * 0.15))
-            pool = word_scores[:pool_size]
-            # Take mostly from the top, some random from the pool
-            selected_words = random.sample(pool, min(count, len(pool)))
+            easy_pct, med_pct, hard_pct = 0.40, 0.40, 0.20
         elif r >= 1800:
-            # Advanced bots: Pick from top 40%
-            pool_size = max(50, int(len(word_scores) * 0.4))
-            pool = word_scores[:pool_size]
-            selected_words = random.sample(pool, min(count, len(pool)))
+            easy_pct, med_pct, hard_pct = 0.55, 0.35, 0.10
         elif r >= 1200:
-            # Average bots: Pick from entire list but skewed toward the top half
-            pool_size = max(20, int(len(word_scores) * 0.7))
-            pool = word_scores[:pool_size]
-            selected_words = random.sample(pool, min(count, len(pool)))
+            easy_pct, med_pct, hard_pct = 0.75, 0.20, 0.05
         else:
-            # Low rating: Pick from bottom 70% (skipping the absolute best words)
-            start_idx = max(5, int(len(word_scores) * 0.3))
-            pool = word_scores[start_idx:]
-            if not pool: pool = word_scores # Fallback
-            selected_words = random.sample(pool, min(count, len(pool)))
+            easy_pct, med_pct, hard_pct = 0.90, 0.10, 0.00
+            
+        selected_words = []
+        unpicked = list(word_scores)
+        
+        for _ in range(count):
+            if not unpicked: break
+            roll = random.random()
+            
+            if roll < hard_pct and hard_pool and any(w in unpicked for w in hard_pool):
+                valid = [w for w in hard_pool if w in unpicked]
+                word = random.choice(valid)
+            elif roll < hard_pct + med_pct and med_pool and any(w in unpicked for w in med_pool):
+                valid = [w for w in med_pool if w in unpicked]
+                word = random.choice(valid)
+            else:
+                valid = [w for w in easy_pool if w in unpicked]
+                if not valid: valid = unpicked # Fallback if empty
+                word = random.choice(valid)
+                
+            selected_words.append(word)
+            unpicked.remove(word)
         
         # Bonus word chance (scales with rating)
         bonus_chance = max(0, min(0.95, (r - 600) / 1800))

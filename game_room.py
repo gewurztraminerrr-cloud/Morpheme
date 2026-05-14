@@ -3310,6 +3310,9 @@ class RoomManager:
                 
                 room.custom_end_time = 0 
                 
+                # LAUNCH AI BOT SIMULATIONS
+                room.generate_ai_turns()
+                
                 # START PRE-GENERATION FOR N+2 NOW (Safe since all R+1 staging is cleared)
                 # USER REQUEST: Ensure this happens AFTER all cleanup to avoid race conditions.
                 threading.Thread(target=self.pre_generate_next_round, args=(room_id,), daemon=True).start()

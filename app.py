@@ -2978,23 +2978,42 @@ def get_room_state(room_id):
                 v_words = []
                 v_score = 0
                 f_bonus = False
+                
+                is_me = (str(p.user_id) == str(user_id))
+                is_shared_mode = (is_fcfs or not is_cur_active)
+                
                 for w in p.submitted_words:
-                    # Privacy: If it's a HUMAN player in a standard competitive mode (Accumulative), 
-                    # do NOT show their words to other players until the round is over.
-                    # EXCEPT in FCFS mode, where all findings MUST be public immediately.
-                    is_me = (str(p.user_id) == str(user_id))
-                    is_shared_mode = (is_fcfs or not is_active)
+                    # 1. TIME CHECK: Has the bot "found" this word yet?
+                    if w.get('time', 0) > now:
+                        continue # In the future, skip entirely
+                        
+                    # 2. Add to score and bonus status since it has been found
+                    pts = w.get('points', 0)
+                    if pts > 0:
+                         v_score += pts
                     
-                    if is_me or is_shared_mode or p.is_ai or not is_cur_active or w.get('time', 0) <= now:
-                        v_score += w.get('points', 0)
-                        if v_score < 0: v_score = 0
-                        is_b = (room.bonus_word and w['word'].upper() == room.bonus_word.upper())
-                        if is_b: f_bonus = True
-                        if is_fcfs and w.get('is_penalty'): continue
-                        w_copy = dict(w)
-                        w_copy['is_bonus'] = is_b
-                        w_copy['finder'] = p.username # Guarantee finder name is attached
-                        v_words.append(w_copy)
+                    is_b = (room.bonus_word and w['word'].upper() == room.bonus_word.upper())
+                    if is_b: f_bonus = True
+                    if is_fcfs and w.get('is_penalty'): continue
+                    
+                    # 3. VISIBILITY CHECK: Can the current user see the actual text of this word right now?
+                    # - If it's me: YES
+                    # - If the round is over or it's FCFS: YES
+                    # - If it's a bot (or opponent) in an active Accumulative round: NO
+                    can_see_text = is_me or is_shared_mode
+                    
+                    w_copy = dict(w)
+                    w_copy['is_bonus'] = is_b
+                    w_copy['finder'] = p.username # Guarantee finder name is attached
+                    
+                    if not can_see_text:
+                        # Obfuscate the word so the client knows they scored, but can't see what they found
+                        # The client uses '?' to render obfuscated words if we mask it here, or we can just omit 'word'
+                        w_copy['word'] = '?' * len(w['word'])
+                        w_copy['obfuscated'] = True
+                        
+                    v_words.append(w_copy)
+                    
                 return (v_words, v_score, f_bonus)
 
             # In FCFS, total_words_count should reflect what's left globally
