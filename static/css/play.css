@@ -849,8 +849,16 @@ body.theme-light-brown .player-score-val {
     pointer-events: auto !important;
     touch-action: none !important;
     /* Only this layer talks to the JS */
-    /* 30% corner cutoffs create a nearly perfect octagon */
-    clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    clip-path: polygon(
+        var(--corner-cutoff, 30%) 0%, 
+        calc(100% - var(--corner-cutoff, 30%)) 0%, 
+        100% var(--corner-cutoff, 30%), 
+        100% calc(100% - var(--corner-cutoff, 30%)), 
+        calc(100% - var(--corner-cutoff, 30%)) 100%, 
+        var(--corner-cutoff, 30%) 100%, 
+        0% calc(100% - var(--corner-cutoff, 30%)), 
+        0% var(--corner-cutoff, 30%)
+    );
     cursor: pointer;
 }
 
