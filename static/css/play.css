@@ -4080,12 +4080,22 @@ input[type=range]::-moz-range-track {
     .result-section:nth-child(1),
     .result-section:nth-child(2) {
         flex: 0 0 auto !important;
-        min-height: 420px !important;
         height: auto !important;
+        min-height: auto !important;
         overflow: visible !important;
     }
     .horizontal-scroll-container {
-        min-height: 240px !important;
+        height: 260px !important;
+        min-height: 260px !important;
+    }
+    .group-column {
+        height: 100% !important;
+        max-height: 240px !important;
+    }
+    .group-table-container {
+        max-height: 200px !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 
     /* Profile layout stack vertically on mobile */
