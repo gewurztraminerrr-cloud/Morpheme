@@ -3927,6 +3927,10 @@ input[type=range]::-moz-range-track {
         /* Prevent sub-pixel bleeding on iOS */
         -webkit-backface-visibility: hidden;
         backface-visibility: hidden;
+        
+        /* Force flex column layout to allow stretching children */
+        display: flex !important;
+        flex-direction: column !important;
     }
 
     /* Mobile Header Cleanup */
@@ -3953,8 +3957,9 @@ input[type=range]::-moz-range-track {
         max-height: none !important;
     }
     .words-table-box {
-        height: 600px !important; /* Expanded now that chat is gone from this pane */
-        max-height: 600px !important;
+        height: auto !important; /* Allow it to flex */
+        flex: 1 !important; /* Take remaining space */
+        max-height: none !important;
     }
     .chat-panel {
         height: auto !important; /* Allow it to flex */
