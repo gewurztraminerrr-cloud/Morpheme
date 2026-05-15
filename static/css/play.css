@@ -3891,6 +3891,12 @@ input[type=range]::-moz-range-track {
     :root {
         --cell-size: 45px;
     }
+    /* Extra safety for very narrow screens (e.g. iPhone SE) */
+    @media (max-width: 380px) {
+        :root {
+            --cell-size: 40px;
+        }
+    }
     .play-grid {
         display: flex !important;
         flex-direction: row !important;
@@ -3927,9 +3933,11 @@ input[type=range]::-moz-range-track {
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important;
         box-sizing: border-box !important;
+        overflow-x: hidden !important; /* Ironclad fix for bleeding letters */
         overflow-y: auto !important;
         height: calc(100vh - 100px) !important; /* Adjusted for no-padding layout */
         padding: 10px !important; /* Apply padding INSIDE the panes instead */
+        position: relative !important;
     }
 
     .players-panel {
