@@ -1,0 +1,26 @@
+--- templates/index.html
++++ templates/index.html
+@@ -32,1 +32,1 @@
+-    <link rel="stylesheet" href="/css/play.css?v=66">
++    <link rel="stylesheet" href="/css/play.css?v=77">
+@@ -701,3 +701,4 @@
+-            <div class="play-grid">
++            <div class="play-grid" id="play-grid-carousel">
+                 <!-- Left Panel: Players -->
+-                <div class="left-panel-container">
++                <div class="left-panel-container" id="play-panel-players">
++                    <button class="mobile-nav-btn return-to-main-right" onclick="document.getElementById('play-panel-board').scrollIntoView({behavior: 'smooth'})">Go Back to Board ➜</button>
+@@ -730,1 +731,5 @@
+-                <div class="board-panel">
++                <div class="board-panel" id="play-panel-board">
++                    <div class="mobile-carousel-nav">
++                        <button class="mobile-nav-btn nav-to-left" onclick="document.getElementById('play-panel-players').scrollIntoView({behavior: 'smooth'})">⇠ Players/Chat</button>
++                        <button class="mobile-nav-btn nav-to-right" onclick="document.getElementById('play-panel-words').scrollIntoView({behavior: 'smooth'})">Words ⇢</button>
++                    </div>
+@@ -746,1 +751,2 @@
+-                <div class="words-panel">
++                <div class="words-panel" id="play-panel-words">
++                    <button class="mobile-nav-btn return-to-main-left" onclick="document.getElementById('play-panel-board').scrollIntoView({behavior: 'smooth'})">⇠ Go Back to Board</button>
+@@ -3810,1 +3816,1 @@
+-    <script src="/js/play.js?v=76"></script>
++    <script src="/js/play.js?v=77"></script>
