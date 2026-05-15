@@ -230,8 +230,13 @@ class BoardGenerator:
 
         return count_unique / count_relevant if count_relevant > 0 else 0.0
 
-    def get_difficulty_label(self, ratio, rows=4, cols=4, dictionary="NWL", depth=1):
+    def get_difficulty_label(self, ratio, rows=4, cols=4, dictionary="NWL", depth=1, board=None):
         """Derive difficulty label from actual uniqueness ratio achieved."""
+        # USER REQUEST: Ensure ING sequences NEVER appear in Medium/Hard. If board is provided and has ING, force Easy.
+        if board and self._has_forbidden_sequence(board, sequence="ING", depth=depth):
+            print(f"[BoardGen-Diff] Forcing 'Easy' because 'ING' sequence was found.")
+            return "Easy"
+            
         # Defensive casting to ensure math logic works
         try:
             # ROBUST PARSING: handles '0.14', '14.0', or '14%'
