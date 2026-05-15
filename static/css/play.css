@@ -108,7 +108,7 @@
 .words-panel {
     display: flex;
     flex-direction: column;
-    gap: 15px; /* Tighter gap for the new triple-stack */
+    gap: 20px;
     min-height: 0;
     height: 100%;
     box-sizing: border-box;
@@ -3909,17 +3909,17 @@ input[type=range]::-moz-range-track {
         max-height: none !important;
     }
     .words-table-box {
-        height: 400px !important; /* Slightly reduced to fit chat/defs more elegantly */
-        max-height: 400px !important;
+        height: 600px !important; /* Expanded now that chat is gone from this pane */
+        max-height: 600px !important;
     }
     .chat-panel {
-        height: 250px !important; /* More space for chat on mobile */
+        height: 300px !important; /* Generous chat space in Pane 1 */
         max-height: none !important;
         margin-top: 15px !important;
     }
     .definitions-panel {
         height: auto !important;
-        min-height: 120px !important;
+        min-height: 140px !important;
         max-height: none !important;
         margin-top: 15px !important;
     }
