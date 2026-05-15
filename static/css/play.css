@@ -18,6 +18,31 @@
     position: relative;
 }
 
+/* Branding Swap Logic */
+/* Hide global logo when in play room to satisfy 'board-only' request */
+body:has(#page-play.active) .header .logo {
+    display: none !important;
+}
+
+/* Ensure global nav still looks good without logo */
+body:has(#page-play.active) .header {
+    justify-content: center !important;
+    padding: 10px !important;
+}
+
+.board-brand-header {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+    margin-bottom: 10px;
+    background: var(--bg-panel);
+    border-radius: 12px;
+}
+
+.board-brand-header .logo {
+    transform: scale(0.9);
+}
+
 /* ... existing header styles ... */
 
 
