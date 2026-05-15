@@ -3941,17 +3941,27 @@ input[type=range]::-moz-range-track {
         
         /* Use Grid to strictly control rows */
         display: grid !important;
-        grid-template-columns: 1fr auto !important; /* Title takes left, button takes right */
+        grid-template-columns: 1fr auto !important; /* Title group takes left, button takes right */
         grid-template-rows: auto auto !important; /* Row 1 and Row 2 */
         gap: 8px !important;
         align-items: center !important;
     }
-    .play-header h2 {
-        font-size: 1rem !important;
+    .header-title-group {
         grid-column: 1 / 2 !important;
         grid-row: 1 / 2 !important;
-        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
         justify-self: start !important;
+    }
+    .header-title-group h2 {
+        font-size: 1rem !important;
+        margin: 0 !important;
+    }
+    .header-meta {
+        font-size: 0.9rem !important;
+        opacity: 0.8 !important;
+        white-space: nowrap !important;
     }
     .play-header .return-btn {
         grid-column: 2 / 3 !important;
