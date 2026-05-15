@@ -5678,11 +5678,11 @@ if __name__ == '__main__':
     # Background room advancer is now handled by RoomManager's internal thread
     print("[Main] Background Room Advancer consolidated into RoomManager.")
 
-    print('Morpheme server running on http://localhost:5001')
+    print('Morpheme server running on http://localhost:3000')
     try:
-        app.run(host='0.0.0.0', port=5001, debug=False, use_reloader=False)
+        app.run(host='0.0.0.0', port=3000, debug=False, use_reloader=False)
     except Exception as e:
         print(f"Server startup error: {e}. Attempting fallback (No Reloader)...")
         # Retry without reloader if it failed due to termios/EINTR issues
-        app.run(host='0.0.0.0', port=5001, debug=False, use_reloader=False)
+        app.run(host='0.0.0.0', port=3000, debug=False, use_reloader=False)
 
