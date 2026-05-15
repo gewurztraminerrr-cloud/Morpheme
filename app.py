@@ -3591,8 +3591,8 @@ def calculate_morpheme_metric(source, target):
         for j in range(i, len(matched_s_indices)):
             sub = matched_s_indices[i:j+1]
             m_len = len(sub)
-            f_idx = sub[0]
-            l_idx = sub[-1]
+            f_idx = min(sub)
+            l_idx = max(sub)
             
             # Metric components for this sub-range
             sub_lis = get_lis(sub)
@@ -3740,11 +3740,15 @@ def tools_combo_check():
         # Subsequent passes only if promising
         # Early Exit: If linearity is already very low, m2/m3 might not help much
         # But we must be careful. For now, just optimize the calls.
-        if best_mp > 2:
+        if best_mp > 1:
             # Mirror check (source vs target[::-1])
-            # Note: (source[::-1] vs target) is mathematically identical, so we skip m3.
             m2, _ = calculate_morpheme_metric(search_term, word[::-1])
             best_mp = min(best_mp, m2)
+        if best_mp > 1:
+            # Reverse-Source check (source[::-1] vs target)
+            # Note: These are NOT identical due to how paid_deletions/span are calculated.
+            m3, _ = calculate_morpheme_metric(search_term[::-1], word)
+            best_mp = min(best_mp, m3)
         
         if best_mp <= 6:
             check_and_add_mp(mp_groups, source_len, target_len, best_mp, word)

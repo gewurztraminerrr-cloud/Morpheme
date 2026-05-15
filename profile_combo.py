@@ -82,14 +82,23 @@ def calculate_morpheme_metric(source, target):
         else: j -= 1
     matched_s_indices.reverse()
     
-    lis_len = get_lis(matched_s_indices)
-    relocations = len(matched_s_indices) - lis_len
-    first_idx = matched_s_indices[0]
-    last_idx = matched_s_indices[-1]
-    paid_deletions = (last_idx - first_idx + 1) - len(matched_s_indices)
-    insertions = t_len - len(matched_s_indices)
+    # 3. Dynamic Span Optimization
+    best_mp = t_len 
+    for i in range(len(matched_s_indices)):
+        for j in range(i, len(matched_s_indices)):
+            sub = matched_s_indices[i:j+1]
+            m_len = len(sub)
+            f_idx = min(sub)
+            l_idx = max(sub)
+            sub_lis = get_lis(sub)
+            relocations = m_len - sub_lis
+            paid_deletions = (l_idx - f_idx + 1) - m_len
+            insertions = t_len - m_len
+            mp = relocations + paid_deletions + insertions
+            if mp < best_mp:
+                best_mp = mp
     
-    return relocations + paid_deletions + insertions, linearity
+    return best_mp, linearity
 
 def profile_combo(search_term):
     print(f"Profiling word: {search_term} with OPTIMIZED logic")
@@ -159,7 +168,7 @@ def profile_combo(search_term):
         if best_mp > 1:
             m2, _ = calculate_morpheme_metric(search_term, word[::-1])
             best_mp = min(best_mp, m2)
-        if best_mp > 2:
+        if best_mp > 1:
             m3, _ = calculate_morpheme_metric(search_term_rev, word)
             best_mp = min(best_mp, m3)
             
