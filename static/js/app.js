@@ -908,6 +908,14 @@ function showPage(pageId) {
             const input = document.getElementById('word-input');
             if (input && !input.disabled) {
                 input.focus();
+    if (window.innerWidth <= 768 && !window.hasCenteredBoard) {
+        window.hasCenteredBoard = true;
+        setTimeout(() => {
+            const board = document.getElementById('play-panel-board');
+            if (board) board.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'start' });
+        }, 500);
+    }
+    
             }
         }, 100);
     } else if (pageId === 'page-mods') {
