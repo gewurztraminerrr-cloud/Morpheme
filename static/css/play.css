@@ -3958,6 +3958,9 @@ input[type=range]::-moz-range-track {
         padding: 10px !important;
         margin: 0 !important;
         position: relative !important;
+        box-shadow: none !important; /* Remove shadows that bleed into next panel */
+        border: none !important;
+        clip-path: inset(0); /* Aggressive clipping to ensure no spill-over */
     }
 
     .players-panel {
