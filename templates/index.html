@@ -3811,6 +3811,36 @@
     <script src="/js/mods.js?v=1"></script>
     <script src="/js/private_matches.js?v=2"></script>
     <script src="/js/donate.js?v=1"></script>
+    
+    <!-- Script to handle mobile-only header placement -->
+    <script>
+        function adjustPlayHeaderForDevice() {
+            const header = document.querySelector('.play-header');
+            const boardPanel = document.querySelector('.board-panel');
+            const pagePlay = document.getElementById('page-play');
+            
+            if (!header || !boardPanel || !pagePlay) return;
+            
+            if (window.innerWidth <= 992) {
+                // Mobile: Move inside board panel so it swipes with it
+                if (header.parentElement !== boardPanel) {
+                    boardPanel.prepend(header);
+                }
+            } else {
+                // Desktop: Move back to the top of the page
+                if (header.parentElement !== pagePlay) {
+                    pagePlay.prepend(header);
+                }
+            }
+        }
+
+        // Run on load and on resize
+        window.addEventListener('load', adjustPlayHeaderForDevice);
+        window.addEventListener('resize', adjustPlayHeaderForDevice);
+        
+        // Also run when switching to the play page (if handled by app.js)
+        document.addEventListener('DOMContentLoaded', adjustPlayHeaderForDevice);
+    </script>
 </body>
 
 </html>
