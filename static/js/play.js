@@ -471,7 +471,7 @@ async function updateGameState(incomingState = null) {
 
         // Mobile Board Transposition: Turn landscape flat boards (rows < cols) into portrait (longest side runs vertically)
         try {
-            if (window.innerWidth <= 900 && state.board && state.board.length > 0 && Array.isArray(state.board[0])) {
+            if (window.innerWidth <= 992 && state.board && state.board.length > 0 && Array.isArray(state.board[0])) {
                 const isBoard3D = state.board_dimensions === '3x3x3' || (state.board.length === 6 && Array.isArray(state.board[0]) && Array.isArray(state.board[0][0]));
                 if (!isBoard3D) {
                     const rows = state.board.length;
@@ -510,7 +510,7 @@ async function updateGameState(incomingState = null) {
         }
 
         // Mobile Device Restriction: Cube is not allowed on mobile!
-        const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isMobile = (window.innerWidth <= 992) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const is3D = state.board_dimensions === '3x3x3' || (state.board && state.board.length === 6 && Array.isArray(state.board[0]) && Array.isArray(state.board[0][0]));
         if (isMobile && is3D) {
             console.log('[Mobile] Cube rooms are not permitted on mobile devices. Kicking player to lobby.');
@@ -599,7 +599,8 @@ async function updateGameState(incomingState = null) {
                     chatInput.placeholder = originalPlaceholder || "Type message...";
                     // Ensure we are still in intermission before stealing focus from potentially new round input
                     if (window.lastGameState && window.lastGameState.state === 'intermission') {
-                        chatInput.focus();
+                        const isMobile = window.innerWidth <= 992;
+                        if (!isMobile) chatInput.focus();
                     }
                 }, 2000);
             }
@@ -612,7 +613,8 @@ async function updateGameState(incomingState = null) {
             
             if (isShowingPlay) {
                 requestAnimationFrame(() => {
-                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+                    window.scrollTo({ top: document.body.scrollHeight, left: scrollLeft, behavior: 'smooth' });
                 });
             }
 
@@ -1146,7 +1148,7 @@ async function updateGameState(incomingState = null) {
                         wordInput.value = '';
                     }
 
-                    const isMobile = window.innerWidth <= 900;
+                    const isMobile = window.innerWidth <= 992;
                     if (!isMobile) {
                         if (wordInput) wordInput.focus();
                     } else {
@@ -1158,15 +1160,22 @@ async function updateGameState(incomingState = null) {
                                 const rect = timerDisplay.getBoundingClientRect();
                                 const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
                                 const targetY = Math.max(0, rect.top + scrollTop - 15);
-                                // 1. Immediate scroll jump to prevent layout lag
-                                window.scrollTo(0, targetY);
+                                // 1. Immediate scroll jump (Preserve horizontal carousel position)
+                                const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+                                if (Math.abs(scrollTop - targetY) > 5) {
+                                    window.scrollTo({ top: targetY, left: scrollLeft });
+                                }
                                 
                                 // 2. Smooth correction scroll after browser layout fully settles
                                 setTimeout(() => {
                                     const rectFresh = timerDisplay.getBoundingClientRect();
                                     const scrollTopFresh = window.pageYOffset || document.documentElement.scrollTop;
+                                    const scrollLeftFresh = window.pageXOffset || document.documentElement.scrollLeft;
                                     const targetYFresh = Math.max(0, rectFresh.top + scrollTopFresh - 15);
-                                    window.scrollTo({ top: targetYFresh, behavior: 'smooth' });
+                                    
+                                    if (Math.abs(scrollTopFresh - targetYFresh) > 5) {
+                                        window.scrollTo({ top: targetYFresh, left: scrollLeftFresh, behavior: 'smooth' });
+                                    }
                                 }, 100);
                             }
                         }, 50); // Small delay to let board rendering settle for accurate coordinates
@@ -1806,7 +1815,8 @@ async function updateGameState(incomingState = null) {
         // Auto-focus check
         if (isActive && !previousState) {
             const inputField = document.getElementById('word-input');
-            if (inputField) {
+            const isMobile = window.innerWidth <= 992;
+            if (inputField && !isMobile) {
                 setTimeout(() => inputField.focus(), 50);
             }
         }
@@ -4217,7 +4227,8 @@ document.addEventListener('keydown', (e) => {
         if (window.refocusChatPending && word.length === 0 && (!mouseState || !mouseState.isDown)) {
             window.refocusChatPending = false;
             const chatInput = document.getElementById('chat-input');
-            if (chatInput) setTimeout(() => chatInput.focus(), 150);
+            const isMobile = window.innerWidth <= 992;
+            if (chatInput && !isMobile) setTimeout(() => chatInput.focus(), 150);
         }
 
         // Fast path: if empty or too short, clear highlight instantly and cancel any pending search
@@ -4917,7 +4928,8 @@ function finishDragSelection(e) {
     if (window.refocusChatPending) {
         window.refocusChatPending = false;
         const chatInput = document.getElementById('chat-input');
-        if (chatInput) setTimeout(() => chatInput.focus(), 150);
+        const isMobile = window.innerWidth <= 992;
+        if (chatInput && !isMobile) setTimeout(() => chatInput.focus(), 150);
     }
 
     if (inputEl) {
@@ -4982,7 +4994,10 @@ function resetPlayUI() {
         wordInput.disabled = false;
         wordInput.value = '';
         wordInput.style.display = '';
-        setTimeout(() => wordInput.focus(), 150);
+        const isMobile = window.innerWidth <= 992;
+        if (!isMobile) {
+            setTimeout(() => wordInput.focus(), 150);
+        }
     }
     if (submitBtn) {
         submitBtn.disabled = false;

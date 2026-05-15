@@ -108,8 +108,7 @@
 .words-panel {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    /* Match left side gap */
+    gap: 15px; /* Tighter gap for the new triple-stack */
     min-height: 0;
     height: 100%;
     box-sizing: border-box;
@@ -3868,47 +3867,73 @@ input[type=range]::-moz-range-track {
         --cell-size: 45px;
     }
     .play-grid {
-        grid-template-columns: 1fr !important; /* Stack panels vertically on tablet portraits */
-        overflow-y: auto !important;
+        display: flex !important;
+        flex-direction: row !important;
+        grid-template-columns: none !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        scroll-snap-type: x mandatory !important;
+        -webkit-overflow-scrolling: touch !important;
+        scroll-behavior: smooth !important;
+        gap: 0 !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
         height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
+
     #page-play.active {
         height: auto !important;
+        overflow-y: hidden !important;
+        padding: 0 !important;
+    }
+
+    .left-panel-container, 
+    .board-panel, 
+    .words-panel {
+        flex: 0 0 100vw !important;
+        width: 100vw !important;
+        min-width: 100vw !important;
+        max-width: 100vw !important;
+        scroll-snap-align: center !important;
+        scroll-snap-stop: always !important;
+        box-sizing: border-box !important;
         overflow-y: auto !important;
+        height: calc(100vh - 120px) !important; /* Account for header and padding */
+        padding: 10px !important;
     }
-    .left-panel-container, .words-panel {
-        display: contents !important; /* Allow direct grid item behavior for children */
-    }
+
     .players-panel {
-        height: 350px !important;
-        max-height: 350px !important;
+        height: auto !important;
+        max-height: none !important;
     }
     .words-table-box {
-        height: 480px !important;
-        max-height: 480px !important;
+        height: 400px !important; /* Slightly reduced to fit chat/defs more elegantly */
+        max-height: 400px !important;
+    }
+    .chat-panel {
+        height: 250px !important; /* More space for chat on mobile */
+        max-height: none !important;
+        margin-top: 15px !important;
     }
     .definitions-panel {
-        height: 180px !important;
-        max-height: 180px !important;
+        height: auto !important;
+        min-height: 120px !important;
+        max-height: none !important;
+        margin-top: 15px !important;
     }
     .board-panel {
         height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
     }
-    /* Explicit visual ordering: puts the chat box below definitions at the very bottom */
-    .players-panel {
-        order: 1 !important;
-    }
-    .board-panel {
-        order: 2 !important;
-    }
-    .words-table-box {
-        order: 3 !important;
-    }
-    .definitions-panel {
-        order: 4 !important;
-    }
-    .chat-panel {
-        order: 5 !important;
+
+    /* Remove the vertical stacking order as we are now a horizontal carousel */
+    .players-panel, .board-panel, .words-table-box, .definitions-panel, .chat-panel {
+        order: unset !important;
     }
 }
 
@@ -4285,7 +4310,15 @@ input[type=range]::-moz-range-track {
         padding: 0 !important;
     }
 
-    #page-play,
+    #page-play {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: visible !important;
+    }
+
     #page-settings {
         padding-left: 0 !important;
         padding-right: 0 !important;
@@ -4293,9 +4326,6 @@ input[type=range]::-moz-range-track {
         max-width: 100% !important;
         box-sizing: border-box !important;
         overflow-x: hidden !important;
-    }
-
-    #page-settings {
         padding: 15px !important;
     }
 
@@ -4316,21 +4346,10 @@ input[type=range]::-moz-range-track {
         overflow-x: hidden !important;
     }
 
-    .play-grid,
-    .left-panel-container {
-        gap: 12px 0 !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        min-width: 0 !important;
-        box-sizing: border-box !important;
-        overflow-x: hidden !important;
-    }
+    /* Carousel panels already defined above */
 
     /* Keep side spacing for non-board panels so content is snug and elegant */
     .players-panel,
-    .words-panel,
     .definitions-panel,
     .chat-panel {
         margin-left: 10px !important;
@@ -4423,11 +4442,13 @@ input[type=range]::-moz-range-track {
     .board-panel.full-bleed-mobile {
         padding-left: 0 !important;
         padding-right: 0 !important;
+        scroll-snap-align: center !important;
+        scroll-snap-stop: always !important;
         border-radius: 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
         box-sizing: border-box !important;
-        overflow-x: hidden !important;
+        overflow-x: visible !important;
         background: rgba(0, 0, 0, 0.15) !important; /* Premium subtle row dark theme */
         border-left: none !important;
         border-right: none !important;
@@ -4471,9 +4492,9 @@ input[type=range]::-moz-range-track {
         max-width: none !important;
         padding: 0 !important;
         border-radius: 0 !important;
-        gap: 3px !important; /* Elegant thin boundaries */
+        gap: 3px !important;
         display: grid !important;
-        justify-content: start !important;
+        justify-content: center !important;
         align-content: start !important;
         overflow-x: auto !important;
         grid-template-columns: repeat(var(--board-cols, 4), var(--cell-size, 50px)) !important;
@@ -4481,9 +4502,8 @@ input[type=range]::-moz-range-track {
         box-sizing: border-box !important;
         background: transparent !important;
         border: none !important;
-        margin: 0 !important;
-        margin-left: 0 !important;
-        float: left !important;
+        margin: 0 auto !important;
+        float: none !important;
     }
 
     .board-panel .game-board .board-cell,

@@ -903,10 +903,11 @@ function showPage(pageId) {
             setTimeout(window.checkBoardOverflow, 50);
         }
 
-        // Auto-focus the input field
+        // Auto-focus the input field (Desktop only to prevent mobile carousel snap-back)
         setTimeout(() => {
             const input = document.getElementById('word-input');
-            if (input && !input.disabled) {
+            const isMobile = window.innerWidth <= 992;
+            if (input && !input.disabled && !isMobile) {
                 input.focus();
     if (window.innerWidth <= 768 && !window.hasCenteredBoard) {
         window.hasCenteredBoard = true;
@@ -916,6 +917,15 @@ function showPage(pageId) {
         }, 500);
     }
     
+            }
+
+            // Mobile carousel: Ensure board is centered by default
+            if (window.innerWidth <= 992) {
+                const boardPanel = document.querySelector('.board-panel');
+                if (boardPanel) {
+                    console.log('[app.js] Centering board panel in mobile carousel.');
+                    boardPanel.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+                }
             }
         }, 100);
     } else if (pageId === 'page-mods') {
