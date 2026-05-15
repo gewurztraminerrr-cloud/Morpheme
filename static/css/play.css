@@ -3918,17 +3918,15 @@ input[type=range]::-moz-range-track {
         overflow-x: hidden !important;
         overflow-y: auto !important;
         height: calc(100vh - 100px) !important;
-        padding: 15px !important; /* Slightly more padding */
+        padding: 10px !important;
         margin: 0 !important;
         position: relative !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: flex-start !important; /* Align to left to prevent cutting off */
-    }
-
-    /* Keep board panel centered specifically */
-    .board-panel {
-        align-items: center !important;
+        box-shadow: none !important;
+        border: none !important;
+        clip-path: inset(0);
+        /* Prevent sub-pixel bleeding on iOS */
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
     }
 
     /* Mobile Header Cleanup */
