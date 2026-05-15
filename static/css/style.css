@@ -6417,3 +6417,11 @@ select option,
     /* Prevent the browser from trying to handle touch dragging over the board */
     touch-action: none !important;
 }
+
+/* Absolute horizontal containment for the entire app */
+html, body {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
