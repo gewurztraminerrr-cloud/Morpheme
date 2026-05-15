@@ -3041,9 +3041,14 @@ function checkBoardOverflow() {
 
     if (isMobileView) {
         if (!window.userManuallyOverrodeBoardSize) {
-            // User Request: On mobile devices, regardless of board dimensions, always ensure the board fits perfectly onto the screen from one end to the other by changing tile size. ZERO PADDING.
-            const mobileTargetSize = Math.floor((window.innerWidth - boardGap) / cols);
-            cellSize = Math.max(20, mobileTargetSize);
+            // User Request: On mobile devices, ensure the board fits perfectly onto the screen in both width and height.
+            const mobileTargetSizeWidth = Math.floor((window.innerWidth - boardGap - 30) / cols); // 30px safety margin for padding
+            const availableHeight = window.innerHeight - 180; // Leave space for header, timer, and input
+            const mobileTargetSizeHeight = Math.floor((availableHeight - boardGap) / rows);
+            
+            // Use the smaller of the two to ensure it fits in both dimensions
+            cellSize = Math.min(mobileTargetSizeWidth, mobileTargetSizeHeight);
+            cellSize = Math.max(20, cellSize);
             requiredBoardWidth = (cols * cellSize) + boardGap;
         }
     } else {
