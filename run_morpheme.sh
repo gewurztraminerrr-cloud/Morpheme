@@ -36,7 +36,7 @@ kill_port 5005
 
 # Start Boggle-Gen History Service (Port 5005) in background
 echo "Starting Boggle-Gen service on http://localhost:5005..."
-nohup python3 boggle-gen/web/app.py >> "$BOGGLE_LOG" 2>&1 &
+nohup venv/bin/python3 boggle-gen/web/app.py >> "$BOGGLE_LOG" 2>&1 &
 BOGGLE_PID=$!
 
 # Start Main Morpheme Server (Port 5001) with Auto-Restart Loop
@@ -47,7 +47,7 @@ while true; do
     # Ensure Boggle-Gen service is running
     if ! pgrep -f "boggle-gen/web/app.py" > /dev/null; then
         echo "Boggle-Gen service is offline. Restarting..." | tee -a "$BOGGLE_LOG"
-        nohup python3 boggle-gen/web/app.py >> "$BOGGLE_LOG" 2>&1 &
+        nohup venv/bin/python3 boggle-gen/web/app.py >> "$BOGGLE_LOG" 2>&1 &
     fi
 
     # Kill any existing processes on port 5001
@@ -60,7 +60,7 @@ while true; do
 
     # Run the server and CAPTURE its completion/crash
     echo "Starting Morpheme Server (app.py)..."
-    python3 app.py 2>&1 | tee server.log
+    venv/bin/python3 app.py 2>&1 | tee server.log
     
     echo "Main server crashed or stopped. Checking for termios issues..."
     if grep -q "termios.error" "$MAIN_LOG"; then
