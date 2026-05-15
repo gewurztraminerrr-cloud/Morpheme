@@ -3940,15 +3940,26 @@ input[type=range]::-moz-range-track {
         margin-bottom: 10px !important;
         flex-wrap: wrap !important;
         justify-content: space-between !important;
+        align-items: center !important;
         border-radius: 12px !important;
         height: auto !important;
+        display: flex !important;
     }
     .play-header h2 {
         font-size: 1rem !important;
+        order: 1 !important; /* First row, left */
+        margin: 0 !important;
+    }
+    .play-header .return-btn {
+        order: 2 !important; /* First row, right */
+        margin: 0 !important;
     }
     .game-params {
         font-size: 0.85rem !important;
-        text-align: left !important;
+        text-align: center !important;
+        order: 3 !important; /* Second row */
+        width: 100% !important; /* Force to its own line */
+        margin-top: 5px !important;
     }
 
     .players-panel {
