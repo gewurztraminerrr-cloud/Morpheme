@@ -5158,7 +5158,7 @@ async function handleTournamentWord(word) {
     // Check length and dictionary validity
     const minLen = window.tournamentParams ? window.tournamentParams.min_word_length : 3;
     if (word.length < minLen && !is_valid_dict) {
-        showValidationFeedback("Sequence is not a word and is too small", false);
+        showValidationFeedback("Sequence not a word and too small", false);
         return;
     }
 
