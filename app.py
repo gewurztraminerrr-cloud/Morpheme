@@ -184,7 +184,7 @@ def mod_required(f):
 @app.before_request
 def enforce_one_month_session():
     # Skip static files, login/register, presence beacon, and captcha
-    if request.path.startswith('/static') or request.path in ['/api/login', '/api/register', '/api/presence/leave', '/api/captcha']:
+    if request.path.startswith('/static') or request.path in ['/api/login', '/api/register', '/api/presence/leave', '/api/captcha', '/api/guest-login']:
         return
         
     if 'user_id' in session:
