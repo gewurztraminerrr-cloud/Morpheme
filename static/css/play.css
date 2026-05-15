@@ -3917,7 +3917,7 @@ input[type=range]::-moz-range-track {
         box-sizing: border-box !important;
         overflow-x: hidden !important;
         overflow-y: auto !important;
-        height: calc(100vh - 100px) !important;
+        height: calc(100dvh - 70px) !important; /* Taller to reach the bottom */
         padding: 10px !important;
         margin: 0 !important;
         position: relative !important;
