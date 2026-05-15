@@ -3908,10 +3908,10 @@ input[type=range]::-moz-range-track {
     .left-panel-container, 
     .board-panel, 
     .words-panel {
-        flex: 0 0 100vw !important;
-        width: 100vw !important;
-        min-width: 100vw !important;
-        max-width: 100vw !important;
+        flex: 0 0 100% !important;
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
         scroll-snap-align: start !important;
         scroll-snap-stop: always !important;
         box-sizing: border-box !important;
