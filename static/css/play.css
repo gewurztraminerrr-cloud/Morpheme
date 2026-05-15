@@ -3960,6 +3960,10 @@ input[type=range]::-moz-range-track {
         order: 3 !important; /* Second row */
         width: 100% !important; /* Force to its own line */
         margin-top: 5px !important;
+        display: flex !important;
+        flex-wrap: wrap !important; /* Allow wrapping to prevent horizontal push */
+        justify-content: center !important;
+        gap: 4px 8px !important; /* Row gap and column gap */
     }
 
     .players-panel {
