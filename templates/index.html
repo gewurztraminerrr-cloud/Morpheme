@@ -3819,6 +3819,9 @@
             const header = document.querySelector('.play-header');
             const boardPanel = document.querySelector('.board-panel');
             const pagePlay = document.getElementById('page-play');
+            const timerDisplay = document.querySelector('.timer-display');
+            const rotateBtn = document.getElementById('rotate-board-btn');
+            const wordInputSection = document.querySelector('.word-input-section');
             
             if (!header || !boardPanel || !pagePlay) return;
             
@@ -3827,10 +3830,18 @@
                 if (header.parentElement !== boardPanel) {
                     boardPanel.prepend(header);
                 }
+                // Move Rotate button to the right of the timer
+                if (timerDisplay && rotateBtn && rotateBtn.parentElement !== timerDisplay) {
+                    timerDisplay.appendChild(rotateBtn);
+                }
             } else {
                 // Desktop: Move back to the top of the page
                 if (header.parentElement !== pagePlay) {
                     pagePlay.prepend(header);
+                }
+                // Move Rotate button back to input section
+                if (wordInputSection && rotateBtn && rotateBtn.parentElement !== wordInputSection) {
+                    wordInputSection.appendChild(rotateBtn);
                 }
             }
         }

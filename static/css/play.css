@@ -4012,6 +4012,23 @@ input[type=range]::-moz-range-track {
         align-items: center !important;
         justify-content: flex-start !important;
     }
+    /* Hide word input section on mobile as requested */
+    .word-input-section {
+        display: none !important;
+    }
+
+    /* Style the rotate button when it is inside the timer on mobile */
+    .timer-display .rotate-btn {
+        margin: 0 0 0 10px !important; /* Push it to the right slightly */
+        padding: 4px 10px !important;
+        font-size: 0.8rem !important;
+        height: auto !important;
+        border-radius: 6px !important;
+        background: rgba(var(--text-primary-rgb), 0.2) !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.3) !important;
+        color: var(--text-primary) !important;
+        cursor: pointer !important;
+    }
 
     /* Remove the vertical stacking order as we are now a horizontal carousel */
     .players-panel, .board-panel, .words-table-box, .definitions-panel, .chat-panel {
