@@ -688,20 +688,35 @@ class PrivateMatchManager:
         selected_words = []
         unpicked = list(word_scores)
         
+        from word_validator import word_validator
+        def get_human_weight(w_str):
+            w_u = w_str.upper()
+            weight = 100.0
+            if len(w_u) > 5: weight *= (0.8 ** (len(w_u) - 5))
+            rare_letters = {'Z': 0.1, 'Q': 0.1, 'X': 0.2, 'J': 0.2, 'K': 0.5, 'V': 0.5}
+            for char in w_u:
+                if char in rare_letters: weight *= rare_letters[char]
+            if hasattr(word_validator, 'is_csw_only') and word_validator.is_csw_only(w_u):
+                weight *= 0.05
+            return max(0.1, weight)
+        
         for _ in range(count):
             if not unpicked: break
             roll = random.random()
             
             if roll < hard_pct and hard_pool and any(w in unpicked for w in hard_pool):
                 valid = [w for w in hard_pool if w in unpicked]
-                word = random.choice(valid)
             elif roll < hard_pct + med_pct and med_pool and any(w in unpicked for w in med_pool):
                 valid = [w for w in med_pool if w in unpicked]
-                word = random.choice(valid)
             else:
                 valid = [w for w in easy_pool if w in unpicked]
                 if not valid: valid = unpicked # Fallback if empty
-                word = random.choice(valid)
+                
+            if valid:
+                weights = [get_human_weight(x[0]) for x in valid]
+                word = random.choices(valid, weights=weights, k=1)[0]
+            else:
+                word = random.choice(unpicked)
                 
             selected_words.append(word)
             unpicked.remove(word)

@@ -2206,6 +2206,9 @@ class RoomManager:
                     
                     # 4. Trigger Pre-Generation for Round 2
                     self.pre_generate_next_round(room_id)
+                    
+                    # 5. Pre-generate AI turns for this first round
+                    room.generate_ai_turns()
                 except Exception as e:
                     print(f"[RoomManager] Background start error for {room_id}: {e}")
                 finally:
