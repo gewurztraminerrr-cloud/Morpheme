@@ -1152,33 +1152,14 @@ async function updateGameState(incomingState = null) {
                     if (!isMobile) {
                         if (wordInput) wordInput.focus();
                     } else {
-                        // Mobile Device: Do NOT auto-focus the textbox (prevents keyboard from popping up and blocking board).
-                        // Instead, scroll the viewport instantly/smoothly so that the board and timer are fully visible.
+                        // Mobile Device: Do NOT auto-focus the textbox (prevents keyboard from popping up).
+                        // Instead, scroll the timer into view at the very top of the panel.
                         setTimeout(() => {
                             const timerDisplay = document.querySelector('.timer-display');
                             if (timerDisplay) {
-                                const rect = timerDisplay.getBoundingClientRect();
-                                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                                const targetY = Math.max(0, rect.top + scrollTop - 15);
-                                // 1. Immediate scroll jump (Preserve horizontal carousel position)
-                                const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-                                if (Math.abs(scrollTop - targetY) > 5) {
-                                    window.scrollTo({ top: targetY, left: scrollLeft });
-                                }
-                                
-                                // 2. Smooth correction scroll after browser layout fully settles
-                                setTimeout(() => {
-                                    const rectFresh = timerDisplay.getBoundingClientRect();
-                                    const scrollTopFresh = window.pageYOffset || document.documentElement.scrollTop;
-                                    const scrollLeftFresh = window.pageXOffset || document.documentElement.scrollLeft;
-                                    const targetYFresh = Math.max(0, rectFresh.top + scrollTopFresh - 15);
-                                    
-                                    if (Math.abs(scrollTopFresh - targetYFresh) > 5) {
-                                        window.scrollTo({ top: targetYFresh, left: scrollLeftFresh, behavior: 'smooth' });
-                                    }
-                                }, 100);
+                                timerDisplay.scrollIntoView({ behavior: 'smooth', block: 'start' });
                             }
-                        }, 50); // Small delay to let board rendering settle for accurate coordinates
+                        }, 100); // Small delay to let board rendering settle
                     }
                 }, 150);
             }
