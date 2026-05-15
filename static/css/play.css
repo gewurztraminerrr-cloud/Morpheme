@@ -3884,9 +3884,11 @@ input[type=range]::-moz-range-track {
     }
 
     #page-play.active {
-        height: auto !important;
+        height: 100vh !important;
+        height: 100dvh !important;
         overflow-y: hidden !important;
-        padding: 0 !important;
+        padding: 0 !important; /* Remove padding to prevent horizontal spill-over */
+        margin: 0 !important;
     }
 
     .left-panel-container, 
@@ -3900,8 +3902,8 @@ input[type=range]::-moz-range-track {
         scroll-snap-stop: always !important;
         box-sizing: border-box !important;
         overflow-y: auto !important;
-        height: calc(100vh - 120px) !important; /* Account for header and padding */
-        padding: 10px !important;
+        height: calc(100vh - 100px) !important; /* Adjusted for no-padding layout */
+        padding: 10px !important; /* Apply padding INSIDE the panes instead */
     }
 
     .players-panel {
