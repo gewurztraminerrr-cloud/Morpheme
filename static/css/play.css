@@ -3985,9 +3985,11 @@ input[type=range]::-moz-range-track {
 
     .players-panel {
         height: auto !important;
-        min-height: 250px !important; /* Ensure it takes space and pushes chat down */
+        min-height: 300px !important; /* Ensure it takes space and pushes chat down */
         max-height: none !important;
+        flex: 1.2 !important; /* Give it slightly more space than the chat */
     }
+
     .words-table-box {
         height: auto !important; /* Allow it to flex */
         flex: 1 !important; /* Take remaining space */
