@@ -4011,23 +4011,23 @@ tant;
 
     .words-table-box {
         height: auto !important; /* Allow it to flex */
-        flex: 1 !important; /* Take remaining space */
+        flex: 1 1 0% !important; /* Allow it to shrink if needed */
         max-height: none !important;
     }
     .chat-panel {
         height: auto !important; /* Allow it to flex */
-        flex: 1 !important; /* Take remaining space */
+        flex: 0 0 100px !important; /* Fixed size instead of expanding */
         max-height: none !important;
         margin-top: 15px !important;
         display: flex !important;
         flex-direction: column !important;
     }
     .definitions-panel {
-        height: auto !important;
-        min-height: 140px !important;
+        flex: 0 0 140px !important; /* Force visibility and fixed size */
         max-height: none !important;
         margin-top: 15px !important;
     }
+
     .board-panel {
         height: auto !important;
         display: flex !important;
