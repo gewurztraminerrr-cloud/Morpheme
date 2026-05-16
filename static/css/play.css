@@ -4039,7 +4039,7 @@ tant;
         max-height: none !important;
     }
     .chat-panel {
-        height: 150px !important; /* Fixed height on mobile */
+        height: 250px !important; /* Made larger as requested */
         flex: none !important;
         max-height: none !important;
         margin-top: 15px !important;
