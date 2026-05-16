@@ -3868,8 +3868,14 @@
                 if (wordInputSection && rotateBtn && rotateBtn.parentElement !== wordInputSection) {
                     wordInputSection.appendChild(rotateBtn);
                 }
+                // Move Color Chart (Color Bar) above the header
+                const colorBar = document.getElementById('game-color-bar');
+                if (colorBar && pagePlay && colorBar.parentElement !== pagePlay) {
+                    pagePlay.prepend(colorBar); // This will be above header because header was prepended first!
+                }
             }
         }
+
 
 
 
