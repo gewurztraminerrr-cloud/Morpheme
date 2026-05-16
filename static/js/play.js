@@ -4274,20 +4274,7 @@ async function submitWord(wordParam = null, pathParam = null) {
         return;
     }
 
-    // Instant visual feedback for mobile/slow networks
-    const pagePlay = document.getElementById('page-play');
-    const shouldFlash = window.userSettings ? (window.userSettings.word_flash !== false) : true;
-    if (pagePlay && shouldFlash) {
-        pagePlay.classList.add('flash-yellow');
-        setTimeout(() => {
-            pagePlay.classList.remove('flash-yellow');
-        }, 500);
-    }
-    const statusEl = document.getElementById('word-validation-status');
-    if (statusEl) {
-        statusEl.textContent = 'Processing...';
-        statusEl.className = 'validation-status';
-    }
+
 
     // 1. PATH RESOLUTION
     let finalPath = pathParam;
@@ -4345,7 +4332,9 @@ async function submitWord(wordParam = null, pathParam = null) {
         const data = await response.json();
 
         // Show validation feedback
-        showValidationFeedback(data.message || (data.success ? 'Valid Word' : 'Invalid Word'), data.success);
+        const currentState = window.lastGameState;
+        const isBonus = data.success && currentState && currentState.bonus_word && data.word && data.word.toUpperCase() === currentState.bonus_word.toUpperCase();
+        showValidationFeedback(data.message || (data.success ? 'Valid Word' : 'Invalid Word'), data.success, isBonus);
 
         if (input) {
             input.style.backgroundColor = data.success ? 'rgba(0, 255, 0, 0.1)' : 'rgba(255, 0, 0, 0.1)';
@@ -4463,7 +4452,7 @@ async function submitWord(wordParam = null, pathParam = null) {
     }
 }
 
-function showValidationFeedback(message, isValid) {
+function showValidationFeedback(message, isValid, isBonus = false) {
     const statusEl = document.getElementById('word-validation-status');
     if (!statusEl) return;
 
@@ -4478,7 +4467,10 @@ function showValidationFeedback(message, isValid) {
     const pagePlay = document.getElementById('page-play');
     const shouldFlash = window.userSettings ? (window.userSettings.word_flash !== false) : true;
     if (pagePlay && shouldFlash) {
-        const flashClass = isValid ? 'flash-green' : 'flash-red';
+        let flashClass = 'flash-red';
+        if (isValid) {
+            flashClass = isBonus ? 'flash-green' : 'flash-blue';
+        }
         pagePlay.classList.add(flashClass);
         setTimeout(() => {
             pagePlay.classList.remove(flashClass);
