@@ -1331,8 +1331,10 @@ async function handleLogout() {
         if (forumViewed) localStorage.setItem('forum_last_viewed', forumViewed);
         if (userSettings) localStorage.setItem('morpheme_user_settings', userSettings);
         
-        console.info('[Auth] Markers restored. Redirecting...');
-        window.location.href = '/';
+        console.info('[Auth] Markers restored. Redirecting in 500ms...');
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 500);
     } catch (error) {
         console.error('Logout error:', error);
         if (logoutBtn) {
