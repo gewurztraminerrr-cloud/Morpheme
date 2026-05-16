@@ -3868,6 +3868,10 @@
                 if (wordInputSection && rotateBtn && rotateBtn.parentElement !== wordInputSection) {
                     wordInputSection.appendChild(rotateBtn);
                 }
+                // Move Timer above the board (prepend to boardPanel)
+                if (timerDisplay && boardPanel && timerDisplay.parentElement !== boardPanel) {
+                    boardPanel.prepend(timerDisplay);
+                }
                 // Move Color Chart (Color Bar) above the header
                 const colorBar = document.getElementById('game-color-bar');
                 if (colorBar && pagePlay && colorBar.parentElement !== pagePlay) {
