@@ -1311,7 +1311,9 @@ async function handleLogout() {
 
     try {
         console.info('[Auth] Logout initiated. Preserving global markers...');
-        await fetch('/api/logout', { method: 'POST' });
+        
+        // Use sendBeacon to ensure the request is sent and completed without waiting for response
+        navigator.sendBeacon('/api/logout');
         
         // Preserve global "read" states (Notices, Forum markers) across login sessions
         const noticeId = localStorage.getItem('morpheme_read_notice_id');
@@ -1330,10 +1332,7 @@ async function handleLogout() {
         if (userSettings) localStorage.setItem('morpheme_user_settings', userSettings);
         
         console.info('[Auth] Markers restored. Redirecting...');
-        // Use a short delay to ensure UI shows the 'Logging out' state briefly for feedback
-        setTimeout(() => {
-            window.location.href = '/';
-        }, 100);
+        window.location.href = '/';
     } catch (error) {
         console.error('Logout error:', error);
         if (logoutBtn) {
