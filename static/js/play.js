@@ -4457,13 +4457,13 @@ function showValidationFeedback(message, isValid) {
     statusEl.textContent = message;
     statusEl.className = 'validation-status ' + (isValid ? 'status-valid' : 'status-invalid');
 
-    // Flash background of the board panel
-    const boardPanel = document.querySelector('.board-panel');
-    if (boardPanel) {
+    // Flash background of the play page (Full-screen overlay)
+    const pagePlay = document.getElementById('page-play');
+    if (pagePlay) {
         const flashClass = isValid ? 'flash-green' : 'flash-red';
-        boardPanel.classList.add(flashClass);
+        pagePlay.classList.add(flashClass);
         setTimeout(() => {
-            boardPanel.classList.remove(flashClass);
+            pagePlay.classList.remove(flashClass);
         }, 500); // Match CSS animation duration (0.5s)
     }
 
