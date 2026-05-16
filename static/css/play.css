@@ -2399,7 +2399,7 @@ body.theme-light-brown .word-item.missed {
         width: 100% !important;
     }
     .notepad-list {
-        overflow-y: visible !important;
+        overflow-y: hidden !important;
         touch-action: pan-y !important;
     }
 }
