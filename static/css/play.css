@@ -2385,13 +2385,16 @@ body.theme-light-brown .word-item.missed {
     .split-notepads-container {
         grid-template-columns: 1fr !important;
         max-height: none !important;
+        touch-action: pan-y !important;
     }
     .user-notepad {
         height: auto !important;
         min-height: 300px !important;
+        touch-action: pan-y !important;
     }
     .notepad-list {
         overflow-y: visible !important;
+        touch-action: pan-y !important;
     }
 }
 
