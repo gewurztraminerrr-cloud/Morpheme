@@ -217,7 +217,9 @@ const Forum = {
     },
 
     renderPosts: function (posts) {
+        console.log("[Forum] renderPosts received:", posts);
         const postsList = document.getElementById('forum-posts-list');
+
         if (posts.length === 0) {
             postsList.innerHTML = `
                 <div class="forum-placeholder">
