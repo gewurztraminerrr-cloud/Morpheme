@@ -1729,7 +1729,7 @@ def login():
     try:
         data = request.get_json()
         if not data:
-            return jsonify({'error': 'Invalid request data'}), 400
+            return jsonify({'success': False, 'error': 'Invalid request data'}), 200
             
         username = data.get('username')
         password = data.get('password')
@@ -1739,7 +1739,7 @@ def login():
         session.pop('captcha_text', None) # Clear immediately to prevent replay attacks
         
         if not session_captcha or captcha_val.upper() != session_captcha:
-            return jsonify({'error': 'Incorrect or expired CAPTCHA. Please click on the CAPTCHA image to refresh and try again.'}), 400
+            return jsonify({'success': False, 'error': 'Incorrect or expired CAPTCHA. Please click on the CAPTCHA image to refresh and try again.'}), 200
             
         conn = sqlite3.connect(DB_PATH, timeout=30)
         cursor = conn.execute('SELECT id, password_hash, email FROM users WHERE username = ?', (username,))
@@ -1747,7 +1747,7 @@ def login():
         conn.close()
         
         if not user or not check_password_hash(user[1], password):
-            return jsonify({'error': 'Invalid username or password'}), 401
+            return jsonify({'success': False, 'error': 'Invalid username or password'}), 200
         
         session['user_id'] = user[0]
         session['username'] = username
@@ -1764,7 +1764,7 @@ def login():
         })
     except Exception as e:
         print(f"[LoginError] {e}")
-        return jsonify({'error': f'Server error: {e}'}), 500
+        return jsonify({'success': False, 'error': f'Server error: {e}'}), 200
 
 
 @app.route('/api/logout', methods=['POST'])
