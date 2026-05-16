@@ -4670,8 +4670,9 @@ tant;
         box-sizing: border-box !important;
         background: transparent !important;
         border: none !important;
-        margin: 0 auto !important;
+        margin: -10px auto 0 auto !important; /* Move up and center */
         float: none !important;
+
     }
 
     .board-panel .game-board .board-cell,
