@@ -3950,12 +3950,14 @@ input[type=range]::-moz-range-track {
     }
     .header-title-group {
         display: flex !important;
+
         align-items: center !important;
         gap: 8px !important;
         justify-content: center !important;
         width: 100% !important;
         padding-right: 100px !important; /* Leave space for return button on right */
         box-sizing: border-box !important;
+        order: 1 !important; /* Force first */
     }
     .header-title-group h2 {
         font-size: 1rem !important;
@@ -3973,6 +3975,7 @@ input[type=range]::-moz-range-track {
         margin: 0 !important;
         font-size: 0.8rem !important;
         padding: 5px 10px !important;
+        z-index: 5 !important;
     }
     .timer-display {
         display: flex !important;
@@ -3981,6 +3984,7 @@ input[type=range]::-moz-range-track {
         gap: 8px !important;
         width: 100% !important;
         margin: 0 !important;
+        order: 2 !important; /* Force second (below spinner set) */
     }
     .game-params {
         font-size: 0.85rem !important;
@@ -3989,6 +3993,10 @@ input[type=range]::-moz-range-track {
         flex-wrap: wrap !important;
         justify-content: center !important;
         gap: 4px 8px !important;
+        width: 100% !important;
+        order: 3 !important; /* Force third */
+    }
+tant;
         width: 100% !important;
     }
 
