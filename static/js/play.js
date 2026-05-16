@@ -4274,6 +4274,21 @@ async function submitWord(wordParam = null, pathParam = null) {
         return;
     }
 
+    // Instant visual feedback for mobile/slow networks
+    const pagePlay = document.getElementById('page-play');
+    const shouldFlash = window.userSettings ? (window.userSettings.word_flash !== false) : true;
+    if (pagePlay && shouldFlash) {
+        pagePlay.classList.add('flash-yellow');
+        setTimeout(() => {
+            pagePlay.classList.remove('flash-yellow');
+        }, 500);
+    }
+    const statusEl = document.getElementById('word-validation-status');
+    if (statusEl) {
+        statusEl.textContent = 'Processing...';
+        statusEl.className = 'validation-status';
+    }
+
     // 1. PATH RESOLUTION
     let finalPath = pathParam;
     const board = window.lastGameState ? window.lastGameState.board : null;
