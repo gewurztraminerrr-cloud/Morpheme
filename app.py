@@ -1509,14 +1509,10 @@ def send_verification_email(user_email, username, code):
     print(f" [CODE]: {code}")
     print("="*80 + "\n")
 
-    import urllib.request
+    import subprocess
     import json
+    import time
 
-    url = "https://api.resend.com/emails"
-    headers = {
-        "Authorization": "Bearer re_JZxa2joE_5Gu6cYT9KiaDkK4YtJdnky2Q",
-        "Content-Type": "application/json"
-    }
     data = {
         "from": "Morpheme <noreply@morpheme.games>",
         "to": [user_email],
@@ -1524,19 +1520,28 @@ def send_verification_email(user_email, username, code):
         "html": html_content
     }
     
-    import time
+    curl_command = [
+        "curl", "-s", "-X", "POST", "https://api.resend.com/emails",
+        "-H", "Authorization: Bearer re_JZxa2joE_5Gu6cYT9KiaDkK4YtJdnky2Q",
+        "-H", "Content-Type: application/json",
+        "-d", json.dumps(data)
+    ]
+    
     try:
-        print(f"[Email] Attempting to send via Resend...")
-        req = urllib.request.Request(url, data=json.dumps(data).encode('utf-8'), headers=headers, method='POST')
-        with urllib.request.urlopen(req) as response:
-            res_body = response.read().decode('utf-8')
-            print(f"[Email] Successfully sent email to {user_email} via Resend: {res_body}")
-            with open("email_error.log", "a") as f:
-                f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Success sending to {user_email}: {res_body}\n")
-    except Exception as e:
-        print(f"[Email] Failed to send email via Resend: {e}")
+        print(f"[Email] Attempting to send via Curl subprocess...")
+        result = subprocess.run(curl_command, capture_output=True, text=True, check=True)
+        print(f"[Email] Successfully sent email via Curl: {result.stdout}")
         with open("email_error.log", "a") as f:
-            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Failed to send to {user_email}: {e}\n")
+            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Success sending to {user_email}: {result.stdout}\n")
+    except subprocess.CalledProcessError as e:
+        print(f"[Email] Failed via Curl: {e.stderr}")
+        with open("email_error.log", "a") as f:
+            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Failed to send to {user_email} via Curl: {e.stderr}\n")
+        print("[Email] Warning: Could not deliver verification email over Resend. Code printed to logs.")
+    except Exception as e:
+        print(f"[Email] Failed via Curl: {e}")
+        with open("email_error.log", "a") as f:
+            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Failed to send to {user_email} via Curl: {e}\n")
         print("[Email] Warning: Could not deliver verification email over Resend. Code printed to logs.")
 
 
