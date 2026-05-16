@@ -2388,6 +2388,7 @@ body.theme-light-brown .word-item.missed {
     }
     .user-notepad {
         height: auto !important;
+        min-height: 300px !important;
     }
     .notepad-list {
         overflow-y: visible !important;
