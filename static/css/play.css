@@ -958,6 +958,13 @@ body.theme-light-brown .player-score-val {
     /* Prevent wrapping */
 }
 
+@media (min-width: 993px) {
+    .word-input-section {
+        display: flex !important;
+    }
+}
+
+
 .validation-status {
     min-height: 24px;
     font-size: 0.9rem;
