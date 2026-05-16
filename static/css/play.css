@@ -4054,7 +4054,7 @@ tant;
 
 
     .definitions-panel {
-        flex: 0 0 150px !important; /* Force visibility and fixed size */
+        flex: 0 0 100px !important; /* Made smaller to give more space to words panel */
         max-height: none !important;
         margin-top: 15px !important;
     }
