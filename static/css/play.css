@@ -4819,7 +4819,15 @@ tant;
         align-items: center;
         gap: 5px;
         font-weight: 500;
+        background: none;
+        border: none;
+        color: inherit;
+        font-family: inherit;
+        font-size: inherit;
+        cursor: pointer;
+        padding: 0;
     }
+
     .mobile-nav-indicators .nav-right {
         margin-left: auto; /* Push to right if only one */
     }

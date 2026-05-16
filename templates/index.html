@@ -711,7 +711,8 @@
 
             <div class="play-grid">
                 <!-- Left Panel: Players -->
-                <div class="left-panel-container">
+                <div class="left-panel-container" id="play-panel-players">
+
                     <div id="game-color-bar" class="global-rating-bar" style="display: none;"></div>
                     <div class="players-panel">
                         <h3 id="players-heading">Players</h3>
@@ -743,7 +744,8 @@
                 </div>
 
                 <!-- Center Panel: Board -->
-                <div class="board-panel">
+                <div class="board-panel" id="play-panel-board">
+
                     <div id="game-board" class="game-board"></div>
                     <div id="word-validation-status" class="validation-status"></div>
                     <div class="word-input-section">
@@ -753,13 +755,16 @@
                     </div>
                     <div id="cube-rotate-hint" class="cube-rotate-hint hidden">ARROWS TO ROTATE</div>
                     <div class="mobile-nav-indicators">
-                        <span class="nav-arrow nav-left">← Players</span>
-                        <span class="nav-arrow nav-right">Words →</span>
+                        <button class="nav-arrow nav-left" onclick="document.getElementById('play-panel-players').scrollIntoView({behavior: 'smooth'})"><span style="display: inline-block; transform: scaleX(-1);">➜</span> Players</button>
+                        <span class="nav-current-label">Board</span>
+                        <button class="nav-arrow nav-right" onclick="document.getElementById('play-panel-words').scrollIntoView({behavior: 'smooth'})">Words ➜</button>
                     </div>
+
                 </div>
 
                 <!-- Right Panel: Submitted Words and Definitions -->
-                <div class="words-panel">
+                <div class="words-panel" id="play-panel-words">
+
                     <div class="words-table-box">
                         <div class="words-tabs" id="words-tabs-container">
                             <button class="word-tab active" data-tab="found">Words</button>
