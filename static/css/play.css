@@ -4622,11 +4622,9 @@ tant;
     }
 
     /* Keep non-board sub-controls inside board panel snug and aligned */
-    .board-panel .timer-display,
     .board-panel .validation-status,
     .board-panel .word-input-section,
     .board-panel .cube-rotate-hint,
-    .board-panel.full-bleed-mobile .timer-display,
     .board-panel.full-bleed-mobile .validation-status,
     .board-panel.full-bleed-mobile .word-input-section,
     .board-panel.full-bleed-mobile .cube-rotate-hint {
@@ -4636,11 +4634,18 @@ tant;
         box-sizing: border-box !important;
     }
 
-    /* Make timer smaller on mobile */
+
+    /* Make timer smaller on mobile and fit contents */
     .board-panel .timer-display {
-        padding: 8px 15px !important;
+        padding: 5px 15px !important; /* Tight fit */
         gap: 6px !important;
+        width: auto !important; /* Force auto width */
+        margin: 5px auto !important; /* Center the box */
+        display: flex !important; /* Ensure flex for alignment */
+        justify-content: center !important;
+        align-items: center !important;
     }
+
     .board-panel .timer-display .timer-label {
         font-size: 0.85rem !important;
     }
