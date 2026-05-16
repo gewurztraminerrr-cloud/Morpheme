@@ -1633,6 +1633,12 @@ def register():
     
     try:
         conn = sqlite3.connect(DB_PATH, timeout=30)
+        
+        # Check if email already exists
+        cursor = conn.execute('SELECT id FROM users WHERE email = ?', (email,))
+        if cursor.fetchone():
+            return jsonify({'error': 'Email is already registered'}), 400
+            
         password_hash = generate_password_hash(password, method='pbkdf2:sha256')
         
         # Insert user cleanly
