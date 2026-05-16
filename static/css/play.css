@@ -3941,20 +3941,21 @@ input[type=range]::-moz-range-track {
         border-radius: 12px !important;
         height: auto !important;
         
-        /* Use Grid to strictly control rows */
-        display: grid !important;
-        grid-template-columns: 1fr auto !important; /* Title group takes left, button takes right */
-        grid-template-rows: auto auto auto !important; /* Row 1, 2 and 3 */
-        gap: 8px !important;
+        /* Use Flex Column to strictly enforce stacking order */
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
         align-items: center !important;
+        position: relative !important; /* For absolute positioning of return button */
     }
     .header-title-group {
-        grid-column: 1 / 2 !important;
-        grid-row: 1 / 2 !important;
         display: flex !important;
         align-items: center !important;
-        gap: 4px !important;
-        justify-self: start !important;
+        gap: 8px !important;
+        justify-content: center !important;
+        width: 100% !important;
+        padding-right: 100px !important; /* Leave space for return button on right */
+        box-sizing: border-box !important;
     }
     .header-title-group h2 {
         font-size: 1rem !important;
@@ -3966,31 +3967,31 @@ input[type=range]::-moz-range-track {
         white-space: nowrap !important;
     }
     .play-header .return-btn {
-        grid-column: 2 / 3 !important;
-        grid-row: 1 / 2 !important;
+        position: absolute !important;
+        top: 8px !important;
+        right: 8px !important;
         margin: 0 !important;
-        justify-self: end !important;
+        font-size: 0.8rem !important;
+        padding: 5px 10px !important;
     }
     .timer-display {
-        grid-column: 1 / 3 !important; /* Span full width */
-        grid-row: 2 / 3 !important;
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
         gap: 8px !important;
-        margin-top: 5px !important;
+        width: 100% !important;
+        margin: 0 !important;
     }
     .game-params {
         font-size: 0.85rem !important;
-        grid-column: 1 / 3 !important; /* Span full width */
-        grid-row: 3 / 4 !important;
         text-align: center !important;
-        margin-top: 5px !important;
         display: flex !important;
         flex-wrap: wrap !important;
         justify-content: center !important;
         gap: 4px 8px !important;
+        width: 100% !important;
     }
+
 
 
     .players-panel {
