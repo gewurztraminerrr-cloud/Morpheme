@@ -236,7 +236,9 @@
 .chat-input-section {
     display: flex;
     gap: 4px;
+    flex-shrink: 0; /* Ensure it never shrinks to 0 height */
 }
+
 
 #chat-input {
     flex: 1;
