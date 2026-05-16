@@ -3940,7 +3940,7 @@ input[type=range]::-moz-range-track {
         overflow-x: hidden !important;
         overflow-y: auto !important;
         height: calc(100dvh - 70px) !important; /* Taller to reach the bottom */
-        padding: 10px !important;
+        padding: 10px 10px 0 10px !important; /* Remove bottom padding to let buttons touch bottom */
         margin: 0 !important;
         position: relative !important;
         box-shadow: none !important;
@@ -4039,8 +4039,8 @@ tant;
         max-height: none !important;
     }
     .chat-panel {
-        height: 200px !important; /* Force height to 200px as requested */
-        flex: none !important;
+        height: auto !important; /* Allow it to flex */
+        flex: 1 !important; /* Grow to fill space */
         max-height: none !important;
         margin-top: 15px !important;
         display: flex !important;
