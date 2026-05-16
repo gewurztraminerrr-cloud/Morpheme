@@ -676,11 +676,10 @@ body.theme-light-brown .player-score-val {
         0.5px 0.5px 0 #000,
         0px 0px 1px #000;
     
-    /* DYNAMIC FEEDBACK: Smoothly transition density shading */
-    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
-                color 0.4s ease, 
-                transform 0.2s ease, 
-                box-shadow 0.4s ease;
+    /* DYNAMIC FEEDBACK: Transitions removed for instantaneous highlight */
+    transition: none !important;
+    
+
     
     display: flex;
     align-items: center;
@@ -893,6 +892,9 @@ body.theme-light-brown .player-score-val {
     transform: scale(1.05);
     z-index: 10;
     color: #000 !important;
+    transition: none !important;
+}
+
 }
 
 .board-cell.bonus-highlight {
