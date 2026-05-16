@@ -4595,10 +4595,11 @@ tant;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important;
         border-radius: 0 !important;
-        width: 100vw !important;
-        max-width: 100vw !important;
+        width: 100% !important;
+        max-width: 100% !important;
         box-sizing: border-box !important;
-        overflow-x: visible !important;
+        overflow-x: hidden !important; /* Prevent horizontal wiggle */
+
         background: rgba(0, 0, 0, 0.15) !important; /* Premium subtle row dark theme */
         border-left: none !important;
         border-right: none !important;
