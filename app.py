@@ -1668,6 +1668,24 @@ def register():
             conn.close()
 
 
+@app.route('/api/admin/delete-user-by-email', methods=['GET'])
+def delete_user_by_email():
+    email = request.args.get('email')
+    if not email:
+        return "Email parameter is required", 400
+        
+    try:
+        import sqlite3
+        conn = sqlite3.connect(DB_PATH, timeout=30)
+        cursor = conn.execute('DELETE FROM users WHERE email = ?', (email,))
+        conn.commit()
+        count = cursor.rowcount
+        conn.close()
+        return f"Successfully deleted {count} accounts with email {email}"
+    except Exception as e:
+        return f"Error: {e}", 500
+
+
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
