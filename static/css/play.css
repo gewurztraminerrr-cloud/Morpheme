@@ -33,6 +33,11 @@
     text-align: center;
 }
 
+#param-bonus {
+    color: #32cd32 !important; /* Lime green */
+    font-weight: 700;
+}
+
 .game-params.reveal-new {
     animation: fadeGoldToNormal 4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
