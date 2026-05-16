@@ -1719,6 +1719,11 @@ def view_logs():
                 output.append("\n=== email_error.log ===\n")
                 output.extend(f.readlines()[-lines:])
                 
+        if os.path.exists('login_debug.log'):
+            with open('login_debug.log', 'r') as f:
+                output.append("\n=== login_debug.log ===\n")
+                output.extend(f.readlines()[-lines:])
+                
         return "<pre>" + "".join(output) + "</pre>"
     except Exception as e:
         return f"Error: {e}", 500
@@ -1727,6 +1732,13 @@ def view_logs():
 @app.route('/api/login', methods=['POST'])
 def login():
     try:
+        # Debug log to see if mobile request reaches the server
+        try:
+            with open('login_debug.log', 'a') as f:
+                f.write(f"[{time.time()}] Login call. Data: {request.data.decode('utf-8', errors='ignore')}\n")
+        except Exception as e_log:
+            print(f"Debug log error: {e_log}")
+            
         data = request.get_json()
         if not data:
             return jsonify({'success': False, 'error': 'Invalid request data'}), 200
