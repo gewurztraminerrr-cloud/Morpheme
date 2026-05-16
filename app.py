@@ -5771,9 +5771,9 @@ if __name__ == '__main__':
 
     print('Morpheme server running on http://localhost:5001')
     try:
-        app.run(host='0.0.0.0', port=5001, debug=False, use_reloader=False)
+        app.run(host='0.0.0.0', port=5001, debug=False, use_reloader=False, threaded=True)
     except Exception as e:
         print(f"Server startup error: {e}. Attempting fallback (No Reloader)...")
         # Retry without reloader if it failed due to termios/EINTR issues
-        app.run(host='0.0.0.0', port=5001, debug=False, use_reloader=False)
+        app.run(host='0.0.0.0', port=5001, debug=False, use_reloader=False, threaded=True)
 
