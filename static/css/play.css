@@ -4736,19 +4736,26 @@ input[type=range]::-moz-range-track {
         display: flex !important;
         justify-content: space-between;
         align-items: center;
-        padding: 8px 15px;
-        background: rgba(var(--text-primary-rgb), 0.1);
-        backdrop-filter: blur(5px);
-        border-top: 1px solid rgba(var(--text-primary-rgb), 0.1);
-        font-size: 0.85rem;
-        color: var(--text-primary);
-        position: sticky;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        z-index: 100;
-        box-sizing: border-box;
+        padding: 10px 15px !important;
+        background: rgba(var(--text-primary-rgb), 0.15) !important;
+        backdrop-filter: blur(10px) !important;
+        border-top: 1px solid rgba(var(--text-primary-rgb), 0.15) !important;
+        font-size: 0.9rem !important;
+        color: var(--text-primary) !important;
+        position: sticky !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 100 !important;
+        box-sizing: border-box !important;
+        
+        /* Force spanning the full screen width by canceling parent 10px padding */
+        margin-left: -10px !important;
+        margin-right: -10px !important;
+        width: calc(100% + 20px) !important;
+        margin-top: auto !important; /* Push to the very bottom if flex container has space */
     }
+
     .mobile-nav-indicators .nav-arrow {
         display: flex;
         align-items: center;
