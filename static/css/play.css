@@ -2384,7 +2384,7 @@ body.theme-light-brown .word-item.missed {
 @media (max-width: 992px) {
     .split-notepads-container {
         grid-template-columns: 1fr !important;
-        max-height: 400px !important;
+        max-height: none !important;
     }
     .user-notepad {
         height: auto !important;
