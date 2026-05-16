@@ -4039,8 +4039,8 @@ tant;
         max-height: none !important;
     }
     .chat-panel {
-        height: 200px !important; /* Force height to 200px as requested */
-        flex: none !important;
+        height: auto !important; /* Allow it to flex */
+        flex: 1 !important; /* Grow to fill space and share with players */
         max-height: none !important;
         margin-top: 15px !important;
         display: flex !important;
@@ -4849,12 +4849,5 @@ tant;
 
     .mobile-nav-indicators .nav-right {
         margin-left: auto; /* Push to right if only one */
-    }
-}
-
-/* Force word input section visibility on devices with hover capability (desktops/laptops) */
-@media (hover: hover) {
-    .word-input-section {
-        display: flex !important;
     }
 }
