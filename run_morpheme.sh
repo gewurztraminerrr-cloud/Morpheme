@@ -60,7 +60,7 @@ while true; do
 
     # Run the server and CAPTURE its completion/crash
     echo "Starting Morpheme Server (app.py)..."
-    venv/bin/python3 app.py 2>&1 | tee server.log
+    venv/bin/python3 -u app.py 2>&1 | tee -a server.log
     
     echo "Main server crashed or stopped. Checking for termios issues..."
     if grep -q "termios.error" "$MAIN_LOG"; then
