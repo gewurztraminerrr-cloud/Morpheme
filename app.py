@@ -4533,16 +4533,18 @@ def get_forum_user_posts(username):
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     try:
-        rows = conn.execute('''
+        # Fetch posts created by user
+        posts_rows = conn.execute('''
             SELECT 'post' as type, p.id as id, p.id as post_id, p.title, p.content, p.image_url, p.timestamp,
             (SELECT COUNT(*) FROM forum_comments WHERE post_id = p.id) as comment_count,
             u.username, u.avatar_url, u.country_flag
             FROM forum_posts p
             JOIN users u ON p.user_id = u.id
             WHERE LOWER(u.username) = LOWER(?)
+        ''', (username,)).fetchall()
 
-            UNION ALL
-
+        # Fetch comments made by user
+        comments_rows = conn.execute('''
             SELECT 'comment' as type, c.id as id, c.post_id as post_id, p.title, c.content, c.image_url, c.timestamp,
             0 as comment_count,
             u.username, u.avatar_url, u.country_flag
@@ -4550,17 +4552,23 @@ def get_forum_user_posts(username):
             JOIN forum_posts p ON c.post_id = p.id
             JOIN users u ON c.user_id = u.id
             WHERE LOWER(u.username) = LOWER(?)
+        ''', (username,)).fetchall()
 
-            ORDER BY timestamp DESC
-        ''', (username, username)).fetchall()
+        posts = [dict(row) for row in posts_rows]
+        comments = [dict(row) for row in comments_rows]
         
-        print(f"[Forum] User search for '{username}' returned {len(rows)} items.")
+        print(f"[Forum] User search for '{username}' found {len(posts)} threads and {len(comments)} replies.")
         
-        res = jsonify({'posts': [dict(row) for row in rows]})
+        # Combine and sort by timestamp DESC
+        all_items = posts + comments
+        all_items.sort(key=lambda x: x['timestamp'] or '', reverse=True)
+        
+        res = jsonify({'posts': all_items})
         res.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         res.headers["Pragma"] = "no-cache"
         res.headers["Expires"] = "0"
         return res
+
     finally:
         conn.close()
 
