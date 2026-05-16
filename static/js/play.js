@@ -2400,10 +2400,9 @@ function updateParameters(state) {
     // Update Title
     const titleEl = document.getElementById('game-title');
     if (titleEl) {
-        const dims = state.board_dimensions || '4x4';
-        const time = state.time_limit || 60;
-        titleEl.textContent = `${typeMap[state.game_type] || 'Morpheme'} ${dims} | ${time}s`;
+        titleEl.textContent = typeMap[state.game_type] || 'Morpheme';
     }
+
 
 
     // Update Header Title (legacy, if still present)
