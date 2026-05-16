@@ -2385,7 +2385,8 @@ body.theme-light-brown .word-item.missed {
     .split-notepads-container {
         display: flex !important;
         flex-direction: column !important;
-        max-height: none !important;
+        max-height: 450px !important;
+        overflow-y: auto !important;
         touch-action: pan-y !important;
         gap: 20px !important;
         width: 100% !important;
@@ -2400,9 +2401,6 @@ body.theme-light-brown .word-item.missed {
     .notepad-list {
         overflow-y: visible !important;
         touch-action: pan-y !important;
-    }
-    .board-panel {
-        overflow-y: auto !important;
     }
 }
 
