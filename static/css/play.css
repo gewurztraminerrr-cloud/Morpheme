@@ -4851,3 +4851,8 @@ tant;
         margin-left: auto; /* Push to right if only one */
     }
 }
+
+/* Force word input section visibility on laptops and desktops */
+body.is-desktop .word-input-section {
+    display: flex !important;
+}

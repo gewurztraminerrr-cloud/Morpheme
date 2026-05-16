@@ -3852,6 +3852,12 @@
     
     <!-- Script to handle mobile-only header placement -->
     <script>
+        // Detect if device is a laptop/desktop (not mobile/tablet)
+        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (!isMobileDevice) {
+            document.body.classList.add('is-desktop');
+        }
+
         function adjustPlayHeaderForDevice() {
             const header = document.querySelector('.play-header');
             const boardPanel = document.querySelector('.board-panel');
@@ -3862,7 +3868,7 @@
             
             if (!header || !boardPanel || !pagePlay) return;
             
-            if (window.innerWidth <= 992) {
+            if (window.innerWidth <= 992 && isMobileDevice) {
                 // Mobile: Move inside board panel so it swipes with it
                 if (header.parentElement !== boardPanel) {
                     boardPanel.prepend(header);
