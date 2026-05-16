@@ -1692,6 +1692,33 @@ def delete_user_by_email():
         return f"Error: {e}", 500
 
 
+@app.route('/api/admin/logs', methods=['GET'])
+def view_logs():
+    import os
+    try:
+        lines = 100
+        output = []
+        
+        if os.path.exists('server.log'):
+            with open('server.log', 'r') as f:
+                output.append("=== server.log ===\n")
+                output.extend(f.readlines()[-lines:])
+                
+        if os.path.exists('boggle_server_console.log'):
+            with open('boggle_server_console.log', 'r') as f:
+                output.append("\n=== boggle_server_console.log ===\n")
+                output.extend(f.readlines()[-lines:])
+                
+        if os.path.exists('email_error.log'):
+            with open('email_error.log', 'r') as f:
+                output.append("\n=== email_error.log ===\n")
+                output.extend(f.readlines()[-lines:])
+                
+        return "<pre>" + "".join(output) + "</pre>"
+    except Exception as e:
+        return f"Error: {e}", 500
+
+
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
