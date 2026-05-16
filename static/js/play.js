@@ -4457,6 +4457,16 @@ function showValidationFeedback(message, isValid) {
     statusEl.textContent = message;
     statusEl.className = 'validation-status ' + (isValid ? 'status-valid' : 'status-invalid');
 
+    // Flash background of the board panel
+    const boardPanel = document.querySelector('.board-panel');
+    if (boardPanel) {
+        const flashClass = isValid ? 'flash-green' : 'flash-red';
+        boardPanel.classList.add(flashClass);
+        setTimeout(() => {
+            boardPanel.classList.remove(flashClass);
+        }, 600); // Match CSS animation duration
+    }
+
     // Reset after 3 seconds
     validationTimeout = setTimeout(() => {
         statusEl.textContent = '';
