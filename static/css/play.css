@@ -160,8 +160,9 @@
     background: var(--bg-panel);
     border-radius: 12px;
     padding: 10px;
-    height: 200px; /* Restored for snug fit */
+    height: 200px; /* Restored to previous value */
     flex-shrink: 0;
+
     /* Protect chat */
     display: flex;
     flex-direction: column;
@@ -514,7 +515,7 @@ body.theme-light-brown .player-score-val {
     background: var(--bg-panel);
     border-radius: 12px;
     padding: 12px 15px;
-    height: 140px; /* Reduced from 200px to grow the Words table above it */
+    height: 200px; /* Restored to previous value */
     flex-shrink: 0;
     border-top: none;
     /* Removed redundant border since it's now a separate box */
