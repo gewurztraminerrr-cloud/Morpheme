@@ -333,10 +333,12 @@
     flex-direction: column;
     gap: 6px; /* Tighter gap */
     overflow-y: auto;
-    max-height: 480px; /* Increased to fit +1 row */
+    max-height: none !important; /* Remove restriction to fill space */
+    flex: 1 !important; /* Expand to fill available space */
     min-height: 0;
     padding-right: 5px;
 }
+
 
 .player-item {
     background: rgba(var(--text-primary-rgb), 0.1);
@@ -4058,7 +4060,7 @@ input[type=range]::-moz-range-track {
     }
     #players-list {
         gap: 10px !important;
-        max-height: 520px !important;
+        max-height: none !important;
     }
 }
 
@@ -4081,7 +4083,7 @@ input[type=range]::-moz-range-track {
     }
     #players-list {
         gap: 12px !important;
-        max-height: 560px !important;
+        max-height: none !important;
     }
 }
 
