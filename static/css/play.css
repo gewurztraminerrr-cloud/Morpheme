@@ -3993,10 +3993,12 @@ input[type=range]::-moz-range-track {
         justify-content: center !important;
         align-items: center !important;
         gap: 8px !important;
-        width: 100% !important;
-        margin: 0 !important;
+        width: auto !important; /* Take natural width instead of 100% */
+        margin: 5px auto !important; /* Center the box itself and add small margin */
+        padding: 5px 15px !important; /* Smaller padding for a tight fit */
         order: 3 !important; /* Force third (below params) */
     }
+
 
     .game-params {
         font-size: 0.85rem !important;
