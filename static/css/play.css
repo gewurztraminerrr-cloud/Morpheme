@@ -4029,13 +4029,14 @@ tant;
     }
     .chat-panel {
         height: auto !important; /* Allow it to flex */
-        flex: 0 0 150px !important; /* Force height to fit input and history */
+        flex: 0 0 250px !important; /* Made larger on mobile as requested */
         max-height: none !important;
         margin-top: 15px !important;
         display: flex !important;
         flex-direction: column !important;
         overflow: hidden !important; /* Prevent content from overflowing or stretching the box */
     }
+
 
 
 
