@@ -1524,14 +1524,19 @@ def send_verification_email(user_email, username, code):
         "html": html_content
     }
     
+    import time
     try:
         print(f"[Email] Attempting to send via Resend...")
         req = urllib.request.Request(url, data=json.dumps(data).encode('utf-8'), headers=headers, method='POST')
         with urllib.request.urlopen(req) as response:
             res_body = response.read().decode('utf-8')
             print(f"[Email] Successfully sent email to {user_email} via Resend: {res_body}")
+            with open("email_error.log", "a") as f:
+                f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Success sending to {user_email}: {res_body}\n")
     except Exception as e:
         print(f"[Email] Failed to send email via Resend: {e}")
+        with open("email_error.log", "a") as f:
+            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Failed to send to {user_email}: {e}\n")
         print("[Email] Warning: Could not deliver verification email over Resend. Code printed to logs.")
 
 
