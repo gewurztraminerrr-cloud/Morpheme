@@ -3995,8 +3995,9 @@ input[type=range]::-moz-range-track {
         gap: 8px !important;
         width: 100% !important;
         margin: 0 !important;
-        order: 2 !important; /* Force second (below spinner set) */
+        order: 3 !important; /* Force third (below params) */
     }
+
     .game-params {
         font-size: 0.85rem !important;
         text-align: center !important;
@@ -4005,8 +4006,9 @@ input[type=range]::-moz-range-track {
         justify-content: center !important;
         gap: 4px 8px !important;
         width: 100% !important;
-        order: 3 !important; /* Force third */
+        order: 2 !important; /* Force second (below title) */
     }
+
 tant;
         width: 100% !important;
     }
