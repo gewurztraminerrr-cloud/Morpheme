@@ -3862,7 +3862,8 @@
             
             if (!header || !boardPanel || !pagePlay) return;
             
-            if (window.innerWidth <= 992) {
+            const isMobileLayout = window.innerWidth <= 992 && !window.matchMedia('(hover: hover)').matches;
+            if (isMobileLayout) {
                 // Mobile: Move inside board panel so it swipes with it
                 if (header.parentElement !== boardPanel) {
                     boardPanel.prepend(header);

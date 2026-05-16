@@ -4851,3 +4851,10 @@ tant;
         margin-left: auto; /* Push to right if only one */
     }
 }
+
+/* Force word input section visibility on devices with hover capability (desktops/laptops) */
+@media (hover: hover) {
+    .word-input-section {
+        display: flex !important;
+    }
+}
