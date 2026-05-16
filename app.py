@@ -1509,40 +1509,30 @@ def send_verification_email(user_email, username, code):
     print(f" [CODE]: {code}")
     print("="*80 + "\n")
 
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = subject
-    msg['From'] = "noreply@morpheme.games"
-    msg['To'] = user_email
+    import urllib.request
+    import json
+
+    url = "https://api.resend.com/emails"
+    headers = {
+        "Authorization": "Bearer re_JZxa2joE_5Gu6cYT9KiaDkK4YtJdnky2Q",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "from": "Morpheme <noreply@send.morpheme.games>",
+        "to": [user_email],
+        "subject": subject,
+        "html": html_content
+    }
     
-    part1 = MIMEText(f"Hello {username},\n\nYour Morpheme verification code is: {code}\n\nThis code expires in 15 minutes.", 'plain')
-    part2 = MIMEText(html_content, 'html')
-    msg.attach(part1)
-    msg.attach(part2)
-
-    smtp_servers = [
-        # 1. Try local Postfix/Sendmail on localhost
-        {"host": "localhost", "port": 25, "use_tls": False, "auth": False},
-        # 2. Try GoDaddy's direct outbound relay
-        {"host": "smtp-out.secureserver.net", "port": 25, "use_tls": False, "auth": False},
-        # 3. Try standard cPanel default SMTP on localhost
-        {"host": "127.0.0.1", "port": 25, "use_tls": False, "auth": False},
-    ]
-
-    sent = False
-    for server_cfg in smtp_servers:
-        try:
-            print(f"[Email] Attempting to send via {server_cfg['host']}:{server_cfg['port']}...")
-            server = smtplib.SMTP(server_cfg['host'], server_cfg['port'], timeout=5)
-            server.sendmail("noreply@morpheme.games", [user_email], msg.as_string())
-            server.quit()
-            print(f"[Email] Successfully sent email to {user_email} via {server_cfg['host']}")
-            sent = True
-            break
-        except Exception as smtp_err:
-            print(f"[Email] Failed via {server_cfg['host']}: {smtp_err}")
-            
-    if not sent:
-        print("[Email] Warning: Could not deliver verification email over SMTP. Code printed to logs.")
+    try:
+        print(f"[Email] Attempting to send via Resend...")
+        req = urllib.request.Request(url, data=json.dumps(data).encode('utf-8'), headers=headers, method='POST')
+        with urllib.request.urlopen(req) as response:
+            res_body = response.read().decode('utf-8')
+            print(f"[Email] Successfully sent email to {user_email} via Resend: {res_body}")
+    except Exception as e:
+        print(f"[Email] Failed to send email via Resend: {e}")
+        print("[Email] Warning: Could not deliver verification email over Resend. Code printed to logs.")
 
 
 @app.route('/api/send-signup-verification', methods=['POST'])
@@ -1550,6 +1540,8 @@ def send_signup_verification():
     data = request.get_json()
     username = data.get('username', '').strip()
     email = data.get('email', '').strip()
+    
+    print(f"[Route] /api/send-signup-verification hit for '{username}' <{email}>")
     
     if not username or not email:
         return jsonify({'error': 'Username and email are required'}), 400
