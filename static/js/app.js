@@ -1312,8 +1312,8 @@ async function handleLogout() {
     try {
         console.info('[Auth] Logout initiated. Preserving global markers...');
         
-        // Use sendBeacon to ensure the request is sent and completed without waiting for response
-        navigator.sendBeacon('/api/logout');
+        // Use fetch and await to ensure session is cleared before we reload the page!
+        await fetch('/api/logout', { method: 'POST' });
         
         // Preserve global "read" states (Notices, Forum markers) across login sessions
         const noticeId = localStorage.getItem('morpheme_read_notice_id');
