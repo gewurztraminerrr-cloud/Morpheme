@@ -2149,7 +2149,8 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
     // Set titles
     document.getElementById('achievement-title').textContent = `${username}'s Achievements`;
     document.getElementById('achievement-subtitle').textContent =
-        `${mode.charAt(0).toUpperCase() + mode.slice(1)} | ${board} | ${time < 300 ? time + 's' : (time / 60) + 'm'}`;
+        `${mode.charAt(0).toUpperCase() + mode.slice(1)} ${board} | ${time < 300 ? time + 's' : (time / 60) + 'm'}`;
+
 
     // Show loading state
     modal.classList.remove('hidden');

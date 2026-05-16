@@ -2400,8 +2400,11 @@ function updateParameters(state) {
     // Update Title
     const titleEl = document.getElementById('game-title');
     if (titleEl) {
-        titleEl.textContent = typeMap[state.game_type] || 'Morpheme';
+        const dims = state.board_dimensions || '4x4';
+        const time = state.time_limit || 60;
+        titleEl.textContent = `${typeMap[state.game_type] || 'Morpheme'} ${dims} | ${time}s`;
     }
+
 
     // Update Header Title (legacy, if still present)
     const headerTitle = document.querySelector('.play-header h2');
