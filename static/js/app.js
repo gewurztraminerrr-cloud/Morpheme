@@ -1124,7 +1124,15 @@ async function handleSignUp() {
             body: JSON.stringify({ username, password, email, captcha, code })
         });
 
-        const data = await response.json();
+        const responseText = await response.text();
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error('Failed to parse JSON response:', responseText);
+            errorEl.textContent = 'Server returned an invalid response. Please try again.';
+            return;
+        }
 
         if (data.success) {
             localStorage.setItem('morpheme_logged_in', 'true');
@@ -1136,7 +1144,7 @@ async function handleSignUp() {
             window.lastPlayerRating = data.rating;
             navigateToLobby(data.rating);
         } else {
-            errorEl.textContent = data.error || data.message;
+            errorEl.textContent = data.error || data.message || 'Failed to register.';
             if (typeof window.refreshCaptchas === 'function') window.refreshCaptchas();
         }
     } catch (error) {
