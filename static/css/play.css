@@ -167,7 +167,7 @@
     background: var(--bg-panel);
     border-radius: 12px;
     padding: 10px;
-    height: 120px; /* Force height to fit input and history */
+    height: 100px; /* Force height to fit input and history */
     flex-shrink: 0;
     overflow: hidden; /* Prevent content from overflowing or stretching the box */
 
