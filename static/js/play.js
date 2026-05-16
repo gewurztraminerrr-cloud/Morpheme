@@ -4464,7 +4464,7 @@ function showValidationFeedback(message, isValid) {
         boardPanel.classList.add(flashClass);
         setTimeout(() => {
             boardPanel.classList.remove(flashClass);
-        }, 600); // Match CSS animation duration
+        }, 500); // Match CSS animation duration (0.5s)
     }
 
     // Reset after 3 seconds
