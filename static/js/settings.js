@@ -25,7 +25,8 @@ function debounce(func, wait) {
         highlight_typing: true,
         highlight_mouse: true,
         next_round_bell_enabled: true,
-        letter_colors: {}
+        letter_colors: {},
+        word_flash: true
     };
 
     // DOM Elements
@@ -192,6 +193,20 @@ function debounce(func, wait) {
             if (!window.userSettings) window.userSettings = {};
             window.userSettings.highlight_typing = val;
         }
+
+        // Word Flash Effect
+        if (settings.word_flash !== undefined) {
+            let val = settings.word_flash;
+            if (val === 'true' || val === 'True' || val === true) val = true;
+            else if (val === 'false' || val === 'False' || val === false) val = false;
+
+            const flashToggle = document.getElementById('setting-word-flash');
+            if (flashToggle) flashToggle.checked = val;
+
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.word_flash = val;
+        }
+
 
         // Highlight typing color
         if (settings.highlight_typing_color) {
@@ -497,6 +512,15 @@ function debounce(func, wait) {
             const val = e.target.checked;
             window.userSettings.highlight_typing = val;
             saveSettingDebounced('highlight_typing', val);
+        });
+    }
+ 
+    const flashToggle = document.getElementById('setting-word-flash');
+    if (flashToggle) {
+        flashToggle.addEventListener('change', (e) => {
+            const val = e.target.checked;
+            window.userSettings.word_flash = val;
+            saveSettingDebounced('word_flash', val);
         });
     }
 

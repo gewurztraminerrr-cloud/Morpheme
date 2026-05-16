@@ -4459,13 +4459,15 @@ function showValidationFeedback(message, isValid) {
 
     // Flash background of the play page (Full-screen overlay)
     const pagePlay = document.getElementById('page-play');
-    if (pagePlay) {
+    const shouldFlash = window.userSettings ? (window.userSettings.word_flash !== false) : true;
+    if (pagePlay && shouldFlash) {
         const flashClass = isValid ? 'flash-green' : 'flash-red';
         pagePlay.classList.add(flashClass);
         setTimeout(() => {
             pagePlay.classList.remove(flashClass);
         }, 500); // Match CSS animation duration (0.5s)
     }
+
 
     // Reset after 3 seconds
     validationTimeout = setTimeout(() => {
