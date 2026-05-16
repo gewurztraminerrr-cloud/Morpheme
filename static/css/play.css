@@ -160,8 +160,9 @@
     background: var(--bg-panel);
     border-radius: 12px;
     padding: 10px;
-    height: 200px; /* Restored to previous value */
+    height: 100px; /* Reduced to 100px to match media query and be small */
     flex-shrink: 0;
+
 
     /* Protect chat */
     display: flex;
