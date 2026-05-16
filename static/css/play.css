@@ -4184,7 +4184,14 @@ tant;
 
 /* Tools split-layout mobile responsiveness (sub-nav moves to top row, content spans full-width) */
 @media (max-width: 900px) {
+    .faq-scoring-table th,
+    .faq-scoring-table td {
+        padding: 6px 8px !important;
+        font-size: 0.8em !important;
+    }
+
     .tools-split-layout {
+
         flex-direction: column !important; /* Stack vertically instead of a side-by-side split layout! */
         height: auto !important;
         min-height: auto !important;
