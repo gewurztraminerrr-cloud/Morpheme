@@ -118,8 +118,8 @@
     padding: 15px;
     display: flex;
     flex-direction: column;
-    flex: 1;
-    min-height: 0;
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
     overflow: hidden;
 }
 
@@ -160,7 +160,7 @@
     background: var(--bg-panel);
     border-radius: 12px;
     padding: 10px;
-    height: 200px; /* Restored to previous value */
+    height: 120px; /* Made smaller as requested */
     flex-shrink: 0;
 
     /* Protect chat */
@@ -515,8 +515,7 @@ body.theme-light-brown .player-score-val {
     background: var(--bg-panel);
     border-radius: 12px;
     padding: 12px 15px;
-    height: 200px; /* Restored to previous value */
-    flex-shrink: 0;
+    flex: 0 0 150px !important; /* Force visibility and fixed size */
     border-top: none;
     /* Removed redundant border since it's now a separate box */
     margin-top: 0;
