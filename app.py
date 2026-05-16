@@ -1518,7 +1518,7 @@ def send_verification_email(user_email, username, code):
         "Content-Type": "application/json"
     }
     data = {
-        "from": "Morpheme <noreply@send.morpheme.games>",
+        "from": "Morpheme <noreply@morpheme.games>",
         "to": [user_email],
         "subject": subject,
         "html": html_content
