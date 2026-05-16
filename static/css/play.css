@@ -124,7 +124,7 @@
     padding: 15px;
     display: flex;
     flex-direction: column;
-    flex: 1.2; /* Give it slightly more space than definitions */
+    flex: 1;
     min-height: 0;
     overflow-y: auto; /* Allow scrolling inside the box */
 }
@@ -157,7 +157,7 @@
     border-radius: 12px;
     padding: 15px;
     overflow: hidden;
-    flex: 1.2; /* Give it slightly more space than chat */
+    flex: 1;
     /* Restore to take up remaining vertical space */
     min-height: 0;
     min-width: 0;
@@ -167,8 +167,8 @@
     background: var(--bg-panel);
     border-radius: 12px;
     padding: 10px;
-    flex: 1; /* Grow to fill space and share with players */
-    min-height: 100px; /* Ensure it doesn't disappear */
+    height: 150px; /* Force height to fit input and history */
+    flex-shrink: 0;
     overflow: hidden; /* Prevent content from overflowing or stretching the box */
 
 
@@ -526,8 +526,7 @@ body.theme-light-brown .player-score-val {
     background: var(--bg-panel);
     border-radius: 12px;
     padding: 12px 15px;
-    flex: 1; /* Grow to fill space and share with words */
-    min-height: 100px; /* Ensure it doesn't disappear */
+    flex: 0 0 150px !important; /* Force visibility and fixed size */
     border-top: none;
     /* Removed redundant border since it's now a separate box */
     margin-top: 0;
