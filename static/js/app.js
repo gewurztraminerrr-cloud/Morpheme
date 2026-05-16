@@ -1623,12 +1623,15 @@ function renderGameColorBar() {
     // Optimization: Build entire HTML string first to avoid DOM thrashing
     let html = '';
     RATING_RANGES.forEach(range => {
+        const rangeText = `${range.min}-${range.max === 9999 ? '∞' : range.max}`;
         html += `<div class="color-bar-segment" 
                       style="background-color: ${range.color};" 
                       data-name="${range.name.toUpperCase()}" 
-                      data-label="${range.min}-${range.max === 9999 ? '∞' : range.max}">
+                      data-label="${rangeText}"
+                      title="${range.name.toUpperCase()} (${rangeText})">
                  </div>`;
     });
+
     
     if (bar.innerHTML !== html) {
         bar.innerHTML = html;
