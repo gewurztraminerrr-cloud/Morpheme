@@ -2393,7 +2393,7 @@ body.theme-light-brown .word-item.missed {
     }
     .user-notepad {
         height: auto !important;
-        min-height: 300px !important;
+        min-height: 200px !important;
         touch-action: pan-y !important;
         flex-shrink: 0 !important;
         width: 100% !important;

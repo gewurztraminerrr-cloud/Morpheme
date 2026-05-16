@@ -3864,6 +3864,24 @@ function renderSplitNotepads(players, state) {
         const list = document.createElement('div');
         list.className = 'notepad-list';
 
+        // Add touch listener to manually scroll container
+        let touchStartY = 0;
+        list.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        list.addEventListener('touchmove', (e) => {
+            const touchEndY = e.touches[0].clientY;
+            const deltaY = touchStartY - touchEndY;
+            if (Math.abs(deltaY) > 5) {
+                const container = document.querySelector('.split-notepads-container');
+                if (container) {
+                    container.scrollTop += deltaY;
+                    touchStartY = touchEndY;
+                }
+            }
+        }, { passive: true });
+
         // Scroll Controls
         const scrollControls = document.createElement('div');
         scrollControls.className = 'notepad-scroll-controls';
@@ -4060,6 +4078,24 @@ function renderFCFSNotepads(players, state) {
         list.className = 'notepad-list';
         list.style.marginTop = '10px';
         list.style.height = '100%'; // Fill parent
+
+        // Add touch listener to manually scroll container
+        let touchStartY = 0;
+        list.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        list.addEventListener('touchmove', (e) => {
+            const touchEndY = e.touches[0].clientY;
+            const deltaY = touchStartY - touchEndY;
+            if (Math.abs(deltaY) > 5) {
+                const container = document.querySelector('.split-notepads-container');
+                if (container) {
+                    container.scrollTop += deltaY;
+                    touchStartY = touchEndY;
+                }
+            }
+        }, { passive: true });
 
         // Scroll Controls
         const scrollControls = document.createElement('div');
