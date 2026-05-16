@@ -99,6 +99,12 @@
     /* Important for scrolling children */
 }
 
+/* Prevent grid items from expanding the grid row height */
+.play-grid > div {
+    min-height: 0;
+}
+
+
 
 
 
@@ -120,8 +126,9 @@
     flex-direction: column;
     flex: 1;
     min-height: 0;
-    overflow: hidden;
+    overflow-y: auto; /* Allow scrolling inside the box */
 }
+
 
 .words-header-group {
     display: flex;
