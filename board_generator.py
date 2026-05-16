@@ -783,6 +783,9 @@ class BoardGenerator:
             elif "either/or" in safe_format:
                 # User Request: Support Either/Or tiles (e.g. A/B)
                 board = self._create_either_or_board(rows, cols, weights)
+                if self._has_either_or_ambiguity(board, dictionary):
+                    print(f"[BoardGen] ATTEMPT {attempts}: Either/Or board has ambiguity. Retrying...")
+                    continue
             else:
                 board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty)
             
