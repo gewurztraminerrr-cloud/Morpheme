@@ -4553,9 +4553,18 @@ def get_forum_user_posts(username):
 
             ORDER BY timestamp DESC
         ''', (username, username)).fetchall()
-        return jsonify({'posts': [dict(row) for row in rows]})
+        
+        print(f"[Forum] User search for '{username}' returned {len(rows)} items.")
+        
+        res = jsonify({'posts': [dict(row) for row in rows]})
+        res.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        res.headers["Pragma"] = "no-cache"
+        res.headers["Expires"] = "0"
+        return res
     finally:
         conn.close()
+
+
 
 
 @app.route('/api/forum/post/<int:post_id>', methods=['GET'])
