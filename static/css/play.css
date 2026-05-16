@@ -2383,14 +2383,17 @@ body.theme-light-brown .word-item.missed {
 
 @media (max-width: 992px) {
     .split-notepads-container {
-        grid-template-columns: 1fr !important;
+        display: flex !important;
+        flex-direction: column !important;
         max-height: none !important;
         touch-action: pan-y !important;
+        gap: 20px !important;
     }
     .user-notepad {
         height: auto !important;
         min-height: 300px !important;
         touch-action: pan-y !important;
+        flex-shrink: 0 !important;
     }
     .notepad-list {
         overflow-y: visible !important;
