@@ -2388,16 +2388,21 @@ body.theme-light-brown .word-item.missed {
         max-height: none !important;
         touch-action: pan-y !important;
         gap: 20px !important;
+        width: 100% !important;
     }
     .user-notepad {
         height: auto !important;
         min-height: 300px !important;
         touch-action: pan-y !important;
         flex-shrink: 0 !important;
+        width: 100% !important;
     }
     .notepad-list {
         overflow-y: visible !important;
         touch-action: pan-y !important;
+    }
+    .board-panel {
+        overflow-y: auto !important;
     }
 }
 
