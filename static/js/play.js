@@ -3769,6 +3769,7 @@ function renderSplitNotepads(players, state) {
 
     // Capture scroll positions before clearing
     const scrollMap = {};
+    const containerScrollTop = boardEl.scrollTop;
     document.querySelectorAll('.user-notepad').forEach(el => {
         const username = el.dataset.username;
         const list = el.querySelector('.notepad-list');
@@ -4017,6 +4018,9 @@ function renderSplitNotepads(players, state) {
             list.scrollTop = scrollMap[p.username];
         }
     });
+
+    // Restore container scroll position
+    boardEl.scrollTop = containerScrollTop;
 }
 
 function renderFCFSNotepads(players, state) {
@@ -4032,6 +4036,9 @@ function renderFCFSNotepads(players, state) {
             scrollMap[username] = list.scrollTop;
         }
     });
+
+    // Capture container scroll position before clearing
+    const containerScrollTop = boardEl.scrollTop;
 
     // Sort players by score
     const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
@@ -4177,6 +4184,9 @@ function renderFCFSNotepads(players, state) {
             list.scrollTop = scrollMap[p.username];
         }
     });
+
+    // Restore container scroll position
+    boardEl.scrollTop = containerScrollTop;
 }
 
 
