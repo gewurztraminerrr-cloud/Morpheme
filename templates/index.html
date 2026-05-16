@@ -3872,11 +3872,12 @@
                 if (timerDisplay && boardPanel && timerDisplay.parentElement !== boardPanel) {
                     boardPanel.prepend(timerDisplay);
                 }
-                // Move Color Chart (Color Bar) above the header
+                // Move Color Chart (Color Bar) below the header
                 const colorBar = document.getElementById('game-color-bar');
-                if (colorBar && pagePlay && colorBar.parentElement !== pagePlay) {
-                    pagePlay.prepend(colorBar); // This will be above header because header was prepended first!
+                if (colorBar && header && colorBar.parentElement !== pagePlay) {
+                    header.insertAdjacentElement('afterend', colorBar);
                 }
+
             }
         }
 
