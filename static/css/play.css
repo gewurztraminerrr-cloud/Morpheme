@@ -169,6 +169,7 @@
     padding: 10px;
     height: 150px; /* Force height to fit input and history */
     flex-shrink: 0;
+    overflow: hidden; /* Prevent content from overflowing or stretching the box */
 
 
     /* Protect chat */
@@ -4031,7 +4032,10 @@ tant;
         margin-top: 15px !important;
         display: flex !important;
         flex-direction: column !important;
+        overflow: hidden !important; /* Prevent content from overflowing or stretching the box */
     }
+
+
 
     .definitions-panel {
         flex: 0 0 150px !important; /* Force visibility and fixed size */
