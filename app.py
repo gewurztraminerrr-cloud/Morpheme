@@ -1771,17 +1771,17 @@ def login():
 def logout():
     try:
         user_id = session.get('user_id')
-        if user_id:
-            # USER REQUEST: When logging out, remove them from ANY room entirely (including 24h)
-            try:
-                cleanup_user_rooms_entirely(user_id)
-            except Exception as e_rooms:
-                print(f"[LogoutError] Error cleaning up rooms for user {user_id}: {e_rooms}")
-                
-            try:
-                room_manager.remove_presence(user_id)
-            except Exception as e_pres:
-                print(f"[LogoutError] Error removing presence for user {user_id}: {e_pres}")
+        # Temporarily disable cleanup to debug logout crash
+        # if user_id:
+        #     try:
+        #         cleanup_user_rooms_entirely(user_id)
+        #     except Exception as e_rooms:
+        #         print(f"[LogoutError] Error cleaning up rooms for user {user_id}: {e_rooms}")
+        #         
+        #     try:
+        #         room_manager.remove_presence(user_id)
+        #     except Exception as e_pres:
+        #         print(f"[LogoutError] Error removing presence for user {user_id}: {e_pres}")
     except Exception as e:
         print(f"[LogoutError] Error during logout session retrieval: {e}")
     finally:
