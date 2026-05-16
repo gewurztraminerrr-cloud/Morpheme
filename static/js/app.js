@@ -1474,7 +1474,7 @@ function setupAuth() {
                 const data = await response.json();
 
                 if (data.success) {
-                    statusEl.textContent = 'Verification code sent to your email!';
+                    statusEl.textContent = 'Verification code sent to your email! Please check your Junk email in 1 or 2 minutes if you do not see it.';
                     statusEl.style.color = '#00ff66';
                     
                     // Reveal the 6-digit box

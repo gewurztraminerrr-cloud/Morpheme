@@ -1586,7 +1586,7 @@ def send_signup_verification():
     import threading
     threading.Thread(target=send_verification_email, args=(email, username, code), daemon=True).start()
     
-    return jsonify({'success': True, 'message': 'Verification code sent to your email.'})
+    return jsonify({'success': True, 'message': 'Verification code sent to your email. Please check your Junk email in 1 or 2 minutes if you do not see it.'})
 
 
 @app.route('/api/register', methods=['POST'])
