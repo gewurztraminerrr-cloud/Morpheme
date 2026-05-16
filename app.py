@@ -4534,16 +4534,29 @@ def get_forum_user_posts(username):
     conn.row_factory = sqlite3.Row
     try:
         rows = conn.execute('''
-            SELECT p.*, u.username, u.avatar_url, u.country_flag,
-            (SELECT COUNT(*) FROM forum_comments WHERE post_id = p.id) as comment_count
+            SELECT 'post' as type, p.id as id, p.id as post_id, p.title, p.content, p.image_url, p.timestamp,
+            (SELECT COUNT(*) FROM forum_comments WHERE post_id = p.id) as comment_count,
+            u.username, u.avatar_url, u.country_flag
             FROM forum_posts p
             JOIN users u ON p.user_id = u.id
             WHERE LOWER(u.username) = LOWER(?)
-            ORDER BY p.timestamp DESC
-        ''', (username,)).fetchall()
+
+            UNION ALL
+
+            SELECT 'comment' as type, c.id as id, c.post_id as post_id, p.title, c.content, c.image_url, c.timestamp,
+            0 as comment_count,
+            u.username, u.avatar_url, u.country_flag
+            FROM forum_comments c
+            JOIN forum_posts p ON c.post_id = p.id
+            JOIN users u ON c.user_id = u.id
+            WHERE LOWER(u.username) = LOWER(?)
+
+            ORDER BY timestamp DESC
+        ''', (username, username)).fetchall()
         return jsonify({'posts': [dict(row) for row in rows]})
     finally:
         conn.close()
+
 
 @app.route('/api/forum/post/<int:post_id>', methods=['GET'])
 def get_forum_post_detail(post_id):

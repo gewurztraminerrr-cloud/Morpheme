@@ -232,23 +232,27 @@ const Forum = {
         postsList.innerHTML = posts.map(post => {
             const date = new Date(post.timestamp);
             const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const isComment = post.type === 'comment';
+            const postId = post.post_id || post.id;
+            
             return `
-                <div class="forum-post-card" data-id="${post.id}">
+                <div class="forum-post-card" data-id="${postId}">
                     <div class="post-card-header">
-                        <span class="post-card-title">${this.escapeHtml(post.title)}</span>
+                        <span class="post-card-title">${isComment ? 'Re: ' : ''}${this.escapeHtml(post.title)}</span>
                         <span class="post-card-meta">
-                            <span>Posted by <strong>${post.username}</strong></span>
+                            <span>${isComment ? 'Replied' : 'Posted'} by <strong>${post.username}</strong></span>
                             <span>${dateStr}</span>
                         </span>
                     </div>
                     <div class="post-card-excerpt">${this.escapeHtml(post.content)}</div>
                     <div class="post-stats">
-                        <div class="stat-item">💬 ${post.comment_count} comments</div>
+                        ${isComment ? '' : `<div class="stat-item">💬 ${post.comment_count} comments</div>`}
                         ${post.image_url ? '<div class="stat-item">🖼️ Includes image</div>' : ''}
                     </div>
                 </div>
             `;
         }).join('');
+
 
         // Attach listeners
         postsList.querySelectorAll('.forum-post-card').forEach(card => {
