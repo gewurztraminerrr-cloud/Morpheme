@@ -1704,6 +1704,11 @@ def view_logs():
                 output.append("=== server.log ===\n")
                 output.extend(f.readlines()[-lines:])
                 
+        if os.path.exists('server_debug_test.log'):
+            with open('server_debug_test.log', 'r') as f:
+                output.append("\n=== server_debug_test.log ===\n")
+                output.extend(f.readlines()[-lines:])
+                
         if os.path.exists('boggle_server_console.log'):
             with open('boggle_server_console.log', 'r') as f:
                 output.append("\n=== boggle_server_console.log ===\n")
