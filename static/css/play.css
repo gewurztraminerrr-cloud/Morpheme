@@ -4029,13 +4029,14 @@ tant;
     }
     .chat-panel {
         height: auto !important; /* Allow it to flex */
-        flex: 0 0 150px !important; /* Force height to fit input and history */
+        flex: 1 !important; /* Grow to fill space and share with players */
         max-height: none !important;
         margin-top: 15px !important;
         display: flex !important;
         flex-direction: column !important;
         overflow: hidden !important; /* Prevent content from overflowing or stretching the box */
     }
+
 
 
 
@@ -4542,12 +4543,10 @@ tant;
         width: 100% !important;
         box-sizing: border-box !important;
         min-width: 0 !important;
-        padding: 10px 15px !important; /* Larger padding to use space */
+        padding: 6px 10px !important;
         overflow: hidden !important;
-        height: auto !important;
-        flex: 1 1 0% !important; /* Grow to fill space */
-        max-height: 100px !important; /* But don't become giant */
     }
+
 
 
     .player-row-top,
