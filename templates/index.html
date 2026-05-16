@@ -739,8 +739,9 @@
                         </div>
                     </div>
                     <div class="mobile-nav-indicators">
-                        <span class="nav-arrow nav-right">Board →</span>
+                        <button class="nav-arrow nav-right" onclick="document.getElementById('play-panel-board').scrollIntoView({behavior: 'smooth'})">Board ➜</button>
                     </div>
+
                 </div>
 
                 <!-- Center Panel: Board -->
@@ -838,8 +839,9 @@
                         </div>
                     </div>
                     <div class="mobile-nav-indicators">
-                        <span class="nav-arrow nav-left">← Board</span>
+                        <button class="nav-arrow nav-left" onclick="document.getElementById('play-panel-board').scrollIntoView({behavior: 'smooth'})"><span style="display: inline-block; transform: scaleX(-1);">➜</span> Board</button>
                     </div>
+
                 </div> <!-- End Words Panel -->
             </div>
         </div>
