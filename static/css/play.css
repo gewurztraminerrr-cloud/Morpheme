@@ -2381,6 +2381,13 @@ body.theme-light-brown .word-item.missed {
     -webkit-overflow-scrolling: touch;
 }
 
+@media (max-width: 992px) {
+    .split-notepads-container {
+        grid-template-columns: 1fr !important;
+        max-height: 400px;
+    }
+}
+
 /* Individual User Notepad */
 .user-notepad {
     background: rgba(var(--text-primary-rgb), 0.05);
