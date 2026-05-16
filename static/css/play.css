@@ -2387,7 +2387,10 @@ body.theme-light-brown .word-item.missed {
         max-height: 400px !important;
     }
     .user-notepad {
-        height: 180px !important;
+        height: auto !important;
+    }
+    .notepad-list {
+        overflow-y: visible !important;
     }
 }
 
