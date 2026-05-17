@@ -7,8 +7,12 @@ from scoring import calculate_word_score
 from rating_logic import calculate_proportional_rating_change
 
 class PrivateMatchManager:
-    def __init__(self, db_path='morpheme.db'):
-        self.db_path = db_path
+    def __init__(self, db_path=None):
+        if db_path is None:
+            import os
+            self.db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
+        else:
+            self.db_path = db_path
         self._init_db()
 
     def _init_db(self):
