@@ -4034,12 +4034,12 @@ input[type=range]::-moz-range-track {
     }
     .timer-display {
         display: flex !important;
-        justify-content: center !important;
+        justify-content: space-between !important; /* Space elements apart */
         align-items: center !important;
-        gap: 20px !important; /* Spaced apart elements */
-        width: auto !important; /* Take natural width instead of 100% */
+        min-width: 280px !important; /* Make it longer horizontally */
+        width: auto !important;
         margin: 5px auto !important; /* Center the box itself and add small margin */
-        padding: 5px 30px !important; /* Extended padding for a wider look */
+        padding: 5px 15px !important;
         order: 3 !important; /* Force third (below params) */
     }
     .timer-display .timer-value {
