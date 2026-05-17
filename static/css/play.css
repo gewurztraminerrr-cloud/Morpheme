@@ -877,7 +877,7 @@ body.theme-light-brown .player-score-val {
 }
 
 .board-cell.grayed {
-    background: #5e5e5e; /* Slightly brighter dark grey for intermission */
+    background: #8c8c8c; /* Medium grey for intermission */
     color: #ffffff; /* White text for contrast */
     cursor: default;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
