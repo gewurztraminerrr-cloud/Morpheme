@@ -2515,7 +2515,6 @@ body.theme-light-brown .word-item.missed {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    scroll-behavior: smooth;
 }
 
 .notepad-main-content {
