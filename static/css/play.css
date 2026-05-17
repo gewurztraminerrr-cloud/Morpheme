@@ -4245,6 +4245,7 @@ tant;
         flex: 0 0 auto !important;
         width: 100% !important;
         flex-direction: row !important; /* Row orientation instead of vertical column! */
+        flex-wrap: nowrap !important; /* Prevent wrapping so scrolling works! */
         overflow-x: auto !important; /* Smooth horizontal scroll to browse tools! */
         -webkit-overflow-scrolling: touch !important;
         scrollbar-width: none !important; /* Hide scrollbars for slick aesthetics */
