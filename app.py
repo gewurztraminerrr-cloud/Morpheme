@@ -5733,6 +5733,19 @@ def static_files(path):
         return jsonify({'error': 'Resource not found'}), 404
     return send_from_directory('static', path)
 
+def preload_dictionaries():
+    print("[Preload] Starting dictionary preloading...")
+    try:
+        load_tools_dictionary('ALL')
+        load_tools_dictionary('NWL')
+        load_tools_dictionary('CSW')
+        print("[Preload] Dictionary preloading complete.")
+    except Exception as e:
+        print(f"[Preload] Error preloading dictionaries: {e}")
+
+import threading
+threading.Thread(target=preload_dictionaries, daemon=True).start()
+
 if __name__ == '__main__':
     # Background room advancer is now handled by RoomManager's internal thread
     print("[Main] Background Room Advancer consolidated into RoomManager.")
