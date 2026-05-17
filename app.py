@@ -4326,7 +4326,7 @@ def tools_random_word():
     load_definitions() # Ensure definitions are loaded to prevent slow API fallbacks
     filtered_words = dictionary['words']
     if target_len:
-        filtered_words = [w for w in filtered_words if len(w) == target_len and w in DEFINITIONS_CACHE]
+        filtered_words = [w for w in filtered_words if len(w) == target_len]
     else:
         filtered_words = [w for w in filtered_words if w in DEFINITIONS_CACHE]
         
