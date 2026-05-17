@@ -3853,6 +3853,12 @@ function renderSplitNotepads(players, state) {
                 splitNotepadState[p.username] = tabName;
                 updateGameState(); // Re-render
             };
+            btn.ontouchstart = (e) => {
+                e.preventDefault();
+                e.stopPropagation(); // Prevent notepad selection logic
+                splitNotepadState[p.username] = tabName;
+                updateGameState(); // Re-render
+            };
             tabs.appendChild(btn);
         });
         notepad.appendChild(tabs);
