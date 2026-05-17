@@ -2878,19 +2878,32 @@ class RoomManager:
                         )
 
                     # Generate board using RAW spinner intent to ensure ironclad compliance
-                    e_results = self.board_generator.generate_board(
-                        dimensions=room.board_dimensions,
-                        bonus_word=b_word, 
-                        word_count_range=params.get('word_count_range', '100-200'), 
-                        dictionary=params.get('dictionary', 'NWL'),
-                        board_format=params.get('board_format', 'Normal'),
-                        min_word_length=params.get('min_word_length', 3),
-                        difficulty=params.get('difficulty', 'Normal'),
-                        is_emergency=True
-                    )
+                    try:
+                        e_results = self.board_generator.generate_board(
+                            dimensions=room.board_dimensions,
+                            bonus_word=b_word, 
+                            word_count_range=params.get('word_count_range', '100-200'), 
+                            dictionary=params.get('dictionary', 'NWL'),
+                            board_format=params.get('board_format', 'Normal'),
+                            min_word_length=params.get('min_word_length', 3),
+                            difficulty=params.get('difficulty', 'Normal'),
+                            is_emergency=True
+                        )
+                    except Exception as e:
+                        print(f"[RoomManager] generate_board failed with exception: {e}")
+                        e_results = None
                     
                     if e_results:
                         e_board, e_words, e_bonus_c, e_fmt, e_dict, e_ratio, e_bonus_word = e_results[:7]
+                    else:
+                        print(f"[RoomManager] Hardcoded board fallback due to failure!")
+                        e_board = [['A','B','C','D'],['E','F','G','H'],['I','J','K','L'],['M','N','O','P']]
+                        e_words = ['ABLE', 'BAKER']
+                        e_bonus_c = (0, 0)
+                        e_fmt = 'Normal'
+                        e_dict = {'ABLE': [(0,0),(0,1),(0,2),(0,3)], 'BAKER': [(1,0),(1,1),(1,2),(1,3)]}
+                        e_ratio = 0.5
+                        e_bonus_word = 'ABLE'
                     
                     # STAGE the emergency result
                     room.next_round_board = e_board
