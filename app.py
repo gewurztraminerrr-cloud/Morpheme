@@ -4354,8 +4354,8 @@ def tools_manual_solve():
             for room in room_manager.rooms.values():
                 if room.board:
                     # Solve the active room's board
-                    active_dict = getattr(room, 'dictionary', 'NWL')
-                    active_min = getattr(room, 'min_word_length', 3)
+                    active_dict = getattr(room, 'current_dictionary', 'NWL')
+                    active_min = getattr(room, 'current_min_length', 3)
                     active_words_dict = room_manager.board_generator._solve_board(room.board, active_dict, (0, float('inf')), active_min)
                     active_words = set(active_words_dict.keys())
                     
