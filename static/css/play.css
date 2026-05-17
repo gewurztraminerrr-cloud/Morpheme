@@ -4039,7 +4039,7 @@ input[type=range]::-moz-range-track {
         gap: 8px !important;
         width: auto !important; /* Take natural width instead of 100% */
         margin: 5px auto !important; /* Center the box itself and add small margin */
-        padding: 5px 15px !important; /* Smaller padding for a tight fit */
+        padding: 5px 30px !important; /* Extended padding for a wider look */
         order: 3 !important; /* Force third (below params) */
     }
     .timer-display .timer-value {
