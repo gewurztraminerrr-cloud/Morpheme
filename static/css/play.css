@@ -4252,6 +4252,7 @@ tant;
         border-right: none !important;
         border-bottom: 1px solid var(--input-border) !important; /* Divider below the tools sub-nav */
         padding: 8px 10px !important;
+        padding-right: 50px !important; /* Safety buffer at the end of horizontal scroll */
         gap: 6px !important;
         background: var(--bg-panel) !important;
         box-sizing: border-box !important;
