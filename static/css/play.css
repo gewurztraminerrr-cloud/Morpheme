@@ -4302,6 +4302,39 @@ tant;
         font-size: 1rem !important;
     }
 
+    /* Unscramble Tool Mobile Fixes */
+    #tool-unscramble .input-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        gap: 8px !important;
+    }
+    #tool-unscramble .input-row > input,
+    #tool-unscramble .input-row > select,
+    #tool-unscramble .input-row > button {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .unscramble-container {
+        flex-direction: column !important;
+        height: auto !important;
+        gap: 20px !important;
+    }
+    #unscramble-found-container {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 300px !important;
+    }
+    .unscramble-game-area {
+        width: 100% !important;
+        height: auto !important;
+        padding: 20px !important;
+    }
+    #unscramble-jumbled {
+        font-size: 2.5rem !important;
+        letter-spacing: 5px !important;
+    }
+
     /* Combo input padding fix */
     #combo-input {
         padding: 12px 15px !important;
