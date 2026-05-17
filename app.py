@@ -4356,6 +4356,7 @@ def tools_manual_solve():
         max_overlap = 0.0
         # CHEAT PREVENTION: Compare with active rooms' word lists
         try:
+            print(f"[ManualSolve] Checking against {len(room_manager.rooms)} public rooms")
             for room in room_manager.rooms.values():
                 if room.board:
                     # Solve the active room's board
@@ -4387,6 +4388,7 @@ def tools_manual_solve():
                 JOIN private_match_rounds r ON m.id = r.match_id AND m.current_round = r.round_number
                 WHERE m.status != 'completed' AND m.status != 'expired'
             ''').fetchall()
+            print(f"[ManualSolve] Checking against {len(active_rounds)} private matches")
             
             for row in active_rounds:
                 # 1. Board Similarity Check
