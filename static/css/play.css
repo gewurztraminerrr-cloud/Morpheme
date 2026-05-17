@@ -4036,7 +4036,7 @@ input[type=range]::-moz-range-track {
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        gap: 8px !important;
+        gap: 20px !important; /* Spaced apart elements */
         width: auto !important; /* Take natural width instead of 100% */
         margin: 5px auto !important; /* Center the box itself and add small margin */
         padding: 5px 30px !important; /* Extended padding for a wider look */
