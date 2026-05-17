@@ -3097,7 +3097,7 @@ def get_room_state(room_id):
             raw_fmt = getattr(room, 'current_board_format', 'Normal')
             is_bonus_format = ('bonus letter' in str(raw_fmt).lower() or 'either' in str(raw_fmt).lower())
             
-            return jsonify({
+            resp = jsonify({
                 'room_id': room.room_id,
                 'game_type': room.game_type,
                 'state': room.state,

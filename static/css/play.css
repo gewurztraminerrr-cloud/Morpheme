@@ -910,8 +910,6 @@ body.theme-light-brown .player-score-val {
     transition: none !important;
 }
 
-}
-
 .board-cell.bonus-highlight {
     background: #32cd32 !important;
     /* Lime green */
@@ -4062,10 +4060,6 @@ input[type=range]::-moz-range-track {
         gap: 4px 8px !important;
         width: 100% !important;
         order: 2 !important; /* Force second (below title) */
-    }
-
-tant;
-        width: 100% !important;
     }
 
 
