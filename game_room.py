@@ -1030,7 +1030,29 @@ class GameRoom:
             
         # 1. Start Milestone: Threshold is TR=0 during intermission
         if self.state == 'intermission' and self.time_remaining <= 0:
+            # Watchdog for stuck intermission
+            if not hasattr(self, 'intermission_stuck_time'):
+                self.intermission_stuck_time = now
+            elif now - self.intermission_stuck_time > 15:
+                print(f"[Watchdog] Intermission stuck for >15s on {self.room_id}. Forcing active state.")
+                self.state = 'active'
+                self.round_start_time = now
+                # Set a dummy board if empty
+                if not getattr(self, 'board', None):
+                    self.board = [['A','B','C','D'],['E','F','G','H'],['I','J','K','L'],['M','N','O','P']]
+                    self.all_words = {'ABLE', 'BAKER'}
+                    self.complete_words = ['ABLE', 'BAKER']
+                    self.solved_words_with_scores = {'ABLE': {'total': 1, 'base': 1}, 'BAKER': {'total': 2, 'base': 2}}
+                    self.current_min_length = 3
+                    self.total_words_count = 2
+                    self.total_counts_by_len = {'_round': self.current_round, '4': 1, '5': 1}
+                # Reset stuck time
+                delattr(self, 'intermission_stuck_time')
+                return None
             return 'start'
+        elif hasattr(self, 'intermission_stuck_time'):
+            # Reset if we are no longer in intermission or time_remaining > 0
+            delattr(self, 'intermission_stuck_time')
             
         # 2. Parameter Reveal (15s into intermission)
         if self.state == 'intermission':
