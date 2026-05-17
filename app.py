@@ -4325,10 +4325,13 @@ def tools_random_word():
             
     load_definitions() # Ensure definitions are loaded to prevent slow API fallbacks
     filtered_words = dictionary['words']
+    print(f"[RandomWord] target_len: {target_len}, total words in dict: {len(filtered_words)}")
     if target_len:
         filtered_words = [w for w in filtered_words if len(w) == target_len]
+        print(f"[RandomWord] filtered words count: {len(filtered_words)}")
     else:
         filtered_words = [w for w in filtered_words if w in DEFINITIONS_CACHE]
+        print(f"[RandomWord] filtered words count (with definitions): {len(filtered_words)}")
         
     if not filtered_words:
         return jsonify({'error': 'No words found for the specified criteria'}), 404
