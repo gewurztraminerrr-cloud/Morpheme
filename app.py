@@ -4358,9 +4358,9 @@ def tools_manual_solve():
                     active_words_dict = room_manager.board_generator._solve_board(room.board, active_dict, (0, float('inf')), active_min)
                     active_words = set(active_words_dict.keys())
                     
-                    if len(submitted_words) > 0:
-                        overlap = len(submitted_words.intersection(active_words)) / len(submitted_words)
-                        if overlap > 0.5: # 50% similarity threshold
+                    if len(submitted_words) > 0 and len(active_words) > 0:
+                        overlap = len(submitted_words.intersection(active_words)) / min(len(submitted_words), len(active_words))
+                        if overlap > 0.4: # 40% overlap coefficient threshold
                             print(f"[ManualSolve] Board words are similar to active room {room.room_id} (overlap: {overlap:.2f}) — blocking results")
                             return jsonify({
                                 'board_matches_active_room': True,
@@ -4386,9 +4386,9 @@ def tools_manual_solve():
                     active_words_dict = json.loads(row['all_words'])
                     active_words = set(active_words_dict.keys())
                     
-                    if len(submitted_words) > 0:
-                        overlap = len(submitted_words.intersection(active_words)) / len(submitted_words)
-                        if overlap > 0.5: # 50% similarity threshold
+                    if len(submitted_words) > 0 and len(active_words) > 0:
+                        overlap = len(submitted_words.intersection(active_words)) / min(len(submitted_words), len(active_words))
+                        if overlap > 0.4: # 40% overlap coefficient threshold
                             print(f"[ManualSolve] Board words are similar to active private match {row['match_id']} (overlap: {overlap:.2f}) — blocking results")
                             return jsonify({
                                 'board_matches_active_room': True,
