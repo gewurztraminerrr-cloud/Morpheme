@@ -206,6 +206,11 @@ class GameRoom:
         """Add player to room"""
         is_daily = self.time_limit >= 7200
         
+        # Clear eviction flag if they are re-joining
+        if str(user_id) in self.evicted_users:
+            del self.evicted_users[str(user_id)]
+            print(f"[GameRoom] Cleared eviction flag for {username} on join.")
+            
         # NOTE: Abandonment penalty is fixed at exit; re-joining does not remove from quitters list.
 
 
@@ -320,6 +325,11 @@ class GameRoom:
 
     def add_spectator(self, user_id, username, rating):
         """Add spectator to room"""
+        # Clear eviction flag if they are re-joining
+        if str(user_id) in self.evicted_users:
+            del self.evicted_users[str(user_id)]
+            print(f"[GameRoom] Cleared eviction flag for spectator {username} on join.")
+            
         # Disable spectating for 24h rooms or closing rooms
         if self.time_limit >= 7200 or self.is_closing:
              return False
