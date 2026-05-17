@@ -4770,14 +4770,14 @@ input[type=range]::-moz-range-track {
 
     .board-panel.low-time-warning,
     .board-panel.full-bleed-mobile.low-time-warning {
-        background: rgba(150, 0, 0, 0.3) !important;
+        background: rgba(0, 0, 0, 0.8) !important;
         box-shadow: inset 0 0 20px rgba(150, 0, 0, 0.4) !important;
         animation: mobileRedPulse 2s infinite alternate ease-in-out !important;
     }
 
     @keyframes mobileRedPulse {
-        from { background: rgba(150, 0, 0, 0.2) !important; box-shadow: inset 0 0 15px rgba(150, 0, 0, 0.3) !important; }
-        to { background: rgba(150, 0, 0, 0.5) !important; box-shadow: inset 0 0 35px rgba(150, 0, 0, 0.6) !important; }
+        from { background: rgba(0, 0, 0, 0.8) !important; box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5) !important; }
+        to { background: rgba(150, 0, 0, 0.6) !important; box-shadow: inset 0 0 35px rgba(150, 0, 0, 0.7) !important; }
     }
 
     /* Keep non-board sub-controls inside board panel snug and aligned */
