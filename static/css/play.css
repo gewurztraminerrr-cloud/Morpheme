@@ -4301,6 +4301,14 @@ tant;
         max-width: 100% !important;
         font-size: 1rem !important;
     }
+    #random-word-definition .pronunciation {
+        font-size: 1.1rem !important;
+        letter-spacing: 1px !important;
+    }
+    #random-word-definition .definition-text {
+        font-size: 1rem !important;
+        max-width: 100% !important;
+    }
 
     /* Unscramble Tool Mobile Fixes */
     #tool-unscramble .input-row {
