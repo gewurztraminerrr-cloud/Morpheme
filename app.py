@@ -4346,6 +4346,31 @@ def tools_manual_solve():
             min_word_length = int(min_word_length_raw)
             
         all_words_dict = room_manager.board_generator._solve_board(board, dictionary, (0, float('inf')), min_word_length)
+        submitted_words = set(all_words_dict.keys())
+
+        # CHEAT PREVENTION: Compare with active rooms' word lists
+        try:
+            for room in room_manager.rooms.values():
+                if room.state == 'active' and room.board:
+                    # Solve the active room's board
+                    active_dict = getattr(room, 'dictionary', 'NWL')
+                    active_min = getattr(room, 'min_word_length', 3)
+                    active_words_dict = room_manager.board_generator._solve_board(room.board, active_dict, (0, float('inf')), active_min)
+                    active_words = set(active_words_dict.keys())
+                    
+                    if len(submitted_words) > 0:
+                        overlap = len(submitted_words.intersection(active_words)) / len(submitted_words)
+                        if overlap > 0.8: # 80% similarity threshold
+                            print(f"[ManualSolve] Board words are similar to active room {room.room_id} (overlap: {overlap:.2f}) — blocking results")
+                            return jsonify({
+                                'board_matches_active_room': True,
+                                'results': [],
+                                'count': 0,
+                                'message': 'Cheat prevention triggered. Results similar to an active game.'
+                            })
+        except Exception as check_err:
+            print(f"[ManualSolve] Error during room word list check (non-fatal): {check_err}")
+
         
         # Sort by largest first (Length DESC, then Alpha ASC)
         all_words = sorted(list(all_words_dict.keys()), key=lambda x: (-len(x), x))
