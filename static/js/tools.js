@@ -2038,8 +2038,8 @@ function renderRatingsGrid(configRatings, user = null) {
                 // COMPATIBILITY FILTER: No 45s for Cube
                 if (mode === '3d' && time === 45) return;
 
-                // COMPATIBILITY FILTER: FCFS does not support 5m (300) and 10m (600)
-                if (mode === 'fcfs' && (time === 300 || time === 600)) return;
+                // COMPATIBILITY FILTER: FCFS and Split do not support 5m (300) and 10m (600)
+                if ((mode === 'fcfs' || mode === 'split') && (time === 300 || time === 600)) return;
 
                 const configKey = `${mode}|${board}|${time}`;
                 const configData = ratings[configKey] || { rating: 1200, avg_score: 0, avg_perf: 0 };
