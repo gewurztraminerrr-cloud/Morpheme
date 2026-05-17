@@ -4471,6 +4471,17 @@ tant;
     #timer-countdown-display {
         font-size: 3rem !important;
     }
+    #tool-timer .input-row:first-child {
+        flex-direction: row !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 15px !important;
+    }
+    #tool-timer .input-row:first-child > div {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+    }
 
     /* Manual solver grid scale */
     .manual-cell {
