@@ -4342,7 +4342,8 @@ def tools_manual_solve():
                             'board_matches_active_room': True,
                             'results': [],
                             'count': 0,
-                            'message': 'Cheat prevention triggered. Board is similar to an active game.'
+                            'message': 'Cheat prevention triggered. Board is similar to an active game.',
+                            'active_boards_checked': len(active_boards)
                         })
     except Exception as check_err:
         print(f"[ManualSolve] Error during room board check (non-fatal): {check_err}")
@@ -4429,7 +4430,8 @@ def tools_manual_solve():
                                 'board_matches_active_room': True,
                                 'results': [],
                                 'count': 0,
-                                'message': f'Cheat prevention triggered. Results similar to an active game (Overlap: {overlap:.2f}).'
+                                'message': f'Cheat prevention triggered. Results similar to an active game (Overlap: {overlap:.2f}).',
+                                'active_boards_checked': len(active_boards)
                             })
         except Exception as check_err:
             print(f"[ManualSolve] Error during private match check (non-fatal): {check_err}")
@@ -4441,7 +4443,8 @@ def tools_manual_solve():
             'results': all_words,
             'count': len(all_words),
             'board_matches_active_room': False,
-            'max_overlap': max_overlap
+            'max_overlap': max_overlap,
+            'active_boards_checked': len(active_boards)
         })
     except Exception as e:
         print(f"Error solving manual board: {e}")
