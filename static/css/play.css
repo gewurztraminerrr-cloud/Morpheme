@@ -642,6 +642,10 @@ body.theme-light-brown .player-score-val {
     justify-self: center !important;
 }
 
+.spinner-set-label {
+    display: none !important;
+}
+
 .timer-label {
     font-size: 1.1rem;
     font-weight: 600;
@@ -4038,6 +4042,9 @@ input[type=range]::-moz-range-track {
         font-size: 0.8rem !important;
         padding: 5px 10px !important;
         z-index: 5 !important;
+    }
+    .spinner-set-label {
+        display: block !important;
     }
     .timer-display {
         display: grid !important;
