@@ -615,23 +615,14 @@ body.theme-light-brown .player-score-val {
 }
 
 @keyframes low-time-pulse {
-    0% {
-        background-color: rgba(80, 0, 0, 0.15);
-        box-shadow: inset 0 0 15px rgba(80, 0, 0, 0.2);
-    }
-    50% {
-        background-color: rgba(80, 0, 0, 0.35);
-        box-shadow: inset 0 0 30px rgba(80, 0, 0, 0.5);
-    }
-    100% {
-        background-color: rgba(80, 0, 0, 0.15);
-        box-shadow: inset 0 0 15px rgba(80, 0, 0, 0.2);
-    }
+    0% { background-color: rgba(255, 107, 107, 0.15); box-shadow: inset 0 0 15px rgba(255, 50, 50, 0.1); }
+    50% { background-color: rgba(255, 107, 107, 0.35); box-shadow: inset 0 0 30px rgba(255, 50, 50, 0.3); }
+    100% { background-color: rgba(255, 107, 107, 0.15); box-shadow: inset 0 0 15px rgba(255, 50, 50, 0.1); }
 }
 
 .board-panel.low-time-warning {
     animation: low-time-pulse 3s infinite ease-in-out;
-    border: 1px solid rgba(80, 0, 0, 0.4);
+    border: 1px solid rgba(255, 100, 100, 0.3);
     will-change: background-color, box-shadow;
 }
 
@@ -4768,28 +4759,14 @@ input[type=range]::-moz-range-track {
         justify-self: start !important;
     }
 
-    .board-panel.low-time-warning,
-    .board-panel.full-bleed-mobile.low-time-warning {
-        position: relative !important;
-    }
-
-    .board-panel.low-time-warning::after,
-    .board-panel.full-bleed-mobile.low-time-warning::after {
-        content: '' !important;
-        display: block !important;
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        pointer-events: none !important;
-        z-index: 1000 !important; /* Above everything */
-        animation: mobileRedPulse 3s infinite alternate ease-in-out !important;
+    .board-panel.low-time-warning .board-cell,
+    .board-panel.full-bleed-mobile.low-time-warning .board-cell {
+        animation: mobileRedPulse 2s infinite alternate ease-in-out !important;
     }
 
     @keyframes mobileRedPulse {
-        from { background: rgba(0, 0, 0, 0.4) !important; }
-        to { background: rgba(150, 0, 0, 0.35) !important; }
+        from { box-shadow: 0 0 5px rgba(255, 0, 0, 0.3) !important; border-color: rgba(255, 0, 0, 0.3) !important; }
+        to { box-shadow: 0 0 20px rgba(255, 0, 0, 0.8) !important; border-color: rgba(255, 0, 0, 0.8) !important; }
     }
 
     /* Keep non-board sub-controls inside board panel snug and aligned */
