@@ -4360,7 +4360,7 @@ def tools_manual_solve():
                     
                     if len(submitted_words) > 0 and len(active_words) > 0:
                         overlap = len(submitted_words.intersection(active_words)) / min(len(submitted_words), len(active_words))
-                        if overlap > 0.4: # 40% overlap coefficient threshold
+                        if overlap > 0.2: # 20% overlap coefficient threshold
                             print(f"[ManualSolve] Board words are similar to active room {room.room_id} (overlap: {overlap:.2f}) — blocking results")
                             return jsonify({
                                 'board_matches_active_room': True,
@@ -4388,7 +4388,7 @@ def tools_manual_solve():
                     
                     if len(submitted_words) > 0 and len(active_words) > 0:
                         overlap = len(submitted_words.intersection(active_words)) / min(len(submitted_words), len(active_words))
-                        if overlap > 0.4: # 40% overlap coefficient threshold
+                        if overlap > 0.2: # 20% overlap coefficient threshold
                             print(f"[ManualSolve] Board words are similar to active private match {row['match_id']} (overlap: {overlap:.2f}) — blocking results")
                             return jsonify({
                                 'board_matches_active_room': True,
