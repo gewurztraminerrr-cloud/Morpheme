@@ -1793,6 +1793,7 @@ body {
 .profile-history-section {
     margin-top: 10px;
     margin-bottom: 30px;
+    overflow-x: auto;
 }
 
 .history-list {
