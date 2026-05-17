@@ -4348,6 +4348,7 @@ def tools_manual_solve():
         all_words_dict = room_manager.board_generator._solve_board(board, dictionary, (0, float('inf')), min_word_length)
         submitted_words = set(all_words_dict.keys())
 
+        max_overlap = 0.0
         # CHEAT PREVENTION: Compare with active rooms' word lists
         try:
             for room in room_manager.rooms.values():
@@ -4360,13 +4361,14 @@ def tools_manual_solve():
                     
                     if len(submitted_words) > 0 and len(active_words) > 0:
                         overlap = len(submitted_words.intersection(active_words)) / min(len(submitted_words), len(active_words))
+                        max_overlap = max(max_overlap, overlap)
                         if overlap > 0.2: # 20% overlap coefficient threshold
                             print(f"[ManualSolve] Board words are similar to active room {room.room_id} (overlap: {overlap:.2f}) — blocking results")
                             return jsonify({
                                 'board_matches_active_room': True,
                                 'results': [],
                                 'count': 0,
-                                'message': 'Cheat prevention triggered. Results similar to an active game.'
+                                'message': f'Cheat prevention triggered. Results similar to an active game (Overlap: {overlap:.2f}).'
                             })
         except Exception as check_err:
             print(f"[ManualSolve] Error during room word list check (non-fatal): {check_err}")
@@ -4388,13 +4390,14 @@ def tools_manual_solve():
                     
                     if len(submitted_words) > 0 and len(active_words) > 0:
                         overlap = len(submitted_words.intersection(active_words)) / min(len(submitted_words), len(active_words))
+                        max_overlap = max(max_overlap, overlap)
                         if overlap > 0.2: # 20% overlap coefficient threshold
                             print(f"[ManualSolve] Board words are similar to active private match {row['match_id']} (overlap: {overlap:.2f}) — blocking results")
                             return jsonify({
                                 'board_matches_active_room': True,
                                 'results': [],
                                 'count': 0,
-                                'message': 'Cheat prevention triggered. Results similar to an active game.'
+                                'message': f'Cheat prevention triggered. Results similar to an active game (Overlap: {overlap:.2f}).'
                             })
         except Exception as check_err:
             print(f"[ManualSolve] Error during private match check (non-fatal): {check_err}")
@@ -4405,7 +4408,8 @@ def tools_manual_solve():
         return jsonify({
             'results': all_words,
             'count': len(all_words),
-            'board_matches_active_room': False
+            'board_matches_active_room': False,
+            'max_overlap': max_overlap
         })
     except Exception as e:
         print(f"Error solving manual board: {e}")
