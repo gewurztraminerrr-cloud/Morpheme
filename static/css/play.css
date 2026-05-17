@@ -4749,7 +4749,7 @@ input[type=range]::-moz-range-track {
         box-sizing: border-box !important;
         overflow-x: hidden !important; /* Prevent horizontal wiggle */
 
-        background: rgba(0, 0, 0, 0.15) !important; /* Premium subtle row dark theme */
+        background: rgba(0, 0, 0, 0.15); /* Premium subtle row dark theme */
         border-left: none !important;
         border-right: none !important;
         margin-left: 0 !important;
