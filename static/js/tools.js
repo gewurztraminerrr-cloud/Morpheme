@@ -43,6 +43,9 @@ window.showTool = function(toolId) {
     if (toolId === 'wotd') {
         if (typeof updateWotd === 'function') updateWotd();
     }
+    if (toolId === 'manual') {
+        fetch('/api/tools/flag_manual', { method: 'POST' }).catch(e => console.error(e));
+    }
 };
 
 function setupToolsNavigation() {
