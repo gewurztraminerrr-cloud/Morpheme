@@ -4335,6 +4335,17 @@ tant;
         letter-spacing: 5px !important;
     }
 
+    /* Word of the Day Mobile Fixes */
+    .wotd-gold-showy {
+        font-size: 2.5rem !important;
+        letter-spacing: 2px !important;
+    }
+    .wotd-definition {
+        font-size: 1rem !important;
+        max-width: 100% !important;
+        margin-top: 15px !important;
+    }
+
     /* Combo input padding fix */
     #combo-input {
         padding: 12px 15px !important;
