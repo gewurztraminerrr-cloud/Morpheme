@@ -4352,7 +4352,7 @@ def tools_manual_solve():
         # CHEAT PREVENTION: Compare with active rooms' word lists
         try:
             for room in room_manager.rooms.values():
-                if room.state == 'active' and room.board:
+                if room.board:
                     # Solve the active room's board
                     active_dict = getattr(room, 'dictionary', 'NWL')
                     active_min = getattr(room, 'min_word_length', 3)
@@ -4380,7 +4380,7 @@ def tools_manual_solve():
                 SELECT r.all_words, m.id as match_id
                 FROM private_matches m
                 JOIN private_match_rounds r ON m.id = r.match_id AND m.current_round = r.round_number
-                WHERE m.status = 'active'
+                WHERE m.status != 'completed' AND m.status != 'expired'
             ''').fetchall()
             
             for row in active_rounds:
