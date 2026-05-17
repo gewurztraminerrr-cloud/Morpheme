@@ -1010,8 +1010,11 @@ class BoardGenerator:
             if difficulty in ["Medium", "Hard"]:
                 self._sanitize_forbidden_sequences(board, depth, protected_positions=all_excluded)
             
-            if min_words <= count <= max_words:
-                print(f"[BoardGen] ✓ EMERGENCY COMPLIANCE SUCCESS: {count} words after {_attempt} emergency tries.")
+            if min_words <= count <= max_words or _attempt >= 5:
+                if _attempt >= 5:
+                    print(f"[BoardGen] ⚠️ EMERGENCY LOOP TIMEOUT: Failed to hit target after 5 attempts. Returning best effort with {count} words.")
+                else:
+                    print(f"[BoardGen] ✓ EMERGENCY COMPLIANCE SUCCESS: {count} words after {_attempt} emergency tries.")
                 # Fallback metadata
                 unique_set = self._get_difficulty_set(dictionary)
                 u_count = sum(1 for w in final_solve if w.upper() in unique_set)
