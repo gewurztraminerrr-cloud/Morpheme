@@ -1734,13 +1734,9 @@ window.updateManualToolState = function () {
         // Also check if Play button is active (implies potential room session, though primarily currentRoomId matters)
         // Restoring strict disable if in room:
         if (inRoom) {
-            manualBtn.disabled = true;
-            manualBtn.title = "Manual tool is disabled while you are in a room.";
-            manualBtn.classList.add('disabled');
+            manualBtn.style.display = 'none';
         } else {
-            manualBtn.disabled = false;
-            manualBtn.title = "";
-            manualBtn.classList.remove('disabled');
+            manualBtn.style.display = '';
         }
     }
 };

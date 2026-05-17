@@ -165,7 +165,8 @@ async function ejectToLobby(reason = "inactivity") {
 // Check for idle logout every 5 seconds
 setInterval(() => {
     // Optimization: Skip idle check if tab is hidden to save battery
-    if (document.hidden) return;
+    // Removed to ensure mobile devices are sent back to lobby even if screen is off or app in background
+    // if (document.hidden) return;
 
     const roomId = getCurrentRoomId();
     if (roomId) {
