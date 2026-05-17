@@ -323,6 +323,7 @@ window.clearGameUIAndCache = clearGameUIAndCache;
 function startPolling() {
     console.log('[play.js] Starting Game Polling - Resetting Join Counter');
     joinAttemptCount = 0; // Reset counter for new room entry
+    window._wasEverInRoster = false; // Reset roster flag to prevent instantaneous eviction on re-entry
     resetIdleTimer();
     
     if (pollInterval) {
