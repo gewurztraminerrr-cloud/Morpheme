@@ -4033,8 +4033,8 @@ input[type=range]::-moz-range-track {
         z-index: 5 !important;
     }
     .timer-display {
-        display: flex !important;
-        justify-content: space-between !important; /* Space elements apart */
+        display: grid !important;
+        grid-template-columns: 1fr auto 1fr !important; /* True centering for middle item */
         align-items: center !important;
         min-width: 280px !important; /* Make it longer horizontally */
         width: auto !important;
@@ -4042,9 +4042,16 @@ input[type=range]::-moz-range-track {
         padding: 5px 15px !important;
         order: 3 !important; /* Force third (below params) */
     }
+    .timer-display .timer-label {
+        justify-self: start !important;
+    }
     .timer-display .timer-value {
+        justify-self: center !important;
         min-width: auto !important; /* Remove the large 220px min-width on mobile */
         font-size: 1.5rem !important; /* Slightly smaller but still readable */
+    }
+    .timer-display .rotate-btn {
+        justify-self: end !important;
     }
 
 
