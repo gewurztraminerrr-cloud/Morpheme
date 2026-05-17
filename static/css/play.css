@@ -4083,7 +4083,7 @@ input[type=range]::-moz-range-track {
 
 
     .definitions-panel {
-        flex: 0 0 200px !important; /* Give more space to definitions panel */
+        flex: 0 0 150px !important; /* Give more space to definitions panel */
         max-height: none !important;
         margin-top: 15px !important;
     }
