@@ -3896,11 +3896,25 @@ function renderSplitNotepads(players, state) {
             const rowHeight = firstItem ? firstItem.offsetHeight + 4 : 29; // height + 4px gap
             list.scrollTop -= rowHeight;
         };
+        btnUp.ontouchstart = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const firstItem = list.querySelector('.notepad-item');
+            const rowHeight = firstItem ? firstItem.offsetHeight + 4 : 29; // height + 4px gap
+            list.scrollTop -= rowHeight;
+        };
 
         const btnDown = document.createElement('button');
         btnDown.className = 'notepad-scroll-btn down';
         btnDown.innerHTML = '▼';
         btnDown.onclick = (e) => {
+            e.stopPropagation();
+            const firstItem = list.querySelector('.notepad-item');
+            const rowHeight = firstItem ? firstItem.offsetHeight + 4 : 29; // height + 4px gap
+            list.scrollTop += rowHeight;
+        };
+        btnDown.ontouchstart = (e) => {
+            e.preventDefault();
             e.stopPropagation();
             const firstItem = list.querySelector('.notepad-item');
             const rowHeight = firstItem ? firstItem.offsetHeight + 4 : 29; // height + 4px gap
@@ -4117,11 +4131,25 @@ function renderFCFSNotepads(players, state) {
             const rowHeight = firstItem ? firstItem.offsetHeight + 4 : 29; // height + 4px gap
             list.scrollTop -= rowHeight;
         };
+        btnUp.ontouchstart = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const firstItem = list.querySelector('.notepad-item');
+            const rowHeight = firstItem ? firstItem.offsetHeight + 4 : 29; // height + 4px gap
+            list.scrollTop -= rowHeight;
+        };
 
         const btnDown = document.createElement('button');
         btnDown.className = 'notepad-scroll-btn down';
         btnDown.innerHTML = '▼';
         btnDown.onclick = (e) => {
+            e.stopPropagation();
+            const firstItem = list.querySelector('.notepad-item');
+            const rowHeight = firstItem ? firstItem.offsetHeight + 4 : 29; // height + 4px gap
+            list.scrollTop += rowHeight;
+        };
+        btnDown.ontouchstart = (e) => {
+            e.preventDefault();
             e.stopPropagation();
             const firstItem = list.querySelector('.notepad-item');
             const rowHeight = firstItem ? firstItem.offsetHeight + 4 : 29; // height + 4px gap
