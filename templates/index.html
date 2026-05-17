@@ -1111,7 +1111,7 @@
                     <button class="tool-nav-btn" data-tool="lists" onclick="window.showTool('lists')">Lists</button>
                     <button class="tool-nav-btn" data-tool="sequence" onclick="window.showTool('sequence')">Sequence</button>
                     <button class="tool-nav-btn" data-tool="subanagrams" onclick="window.showTool('subanagrams')">Subanagrams</button>
-                    <button class="tool-nav-btn" data-tool="manual" onclick="window.showTool('manual')">Manual</button>
+                    <button class="tool-nav-btn" data-tool="manual" onclick="document.querySelectorAll('.tool-pane').forEach(p => p.classList.remove('active')); document.getElementById('tool-manual').classList.add('active'); document.querySelectorAll('.tool-nav-btn').forEach(b => b.classList.remove('active')); this.classList.add('active');">Manual</button>
                     <button class="tool-nav-btn" data-tool="random" onclick="window.showTool('random')">Random Word</button>
                     <button class="tool-nav-btn" data-tool="wotd" onclick="window.showTool('wotd')">Word of the Day</button>
                     <button class="tool-nav-btn" data-tool="unscramble" onclick="window.showTool('unscramble')">Unscramble</button>
