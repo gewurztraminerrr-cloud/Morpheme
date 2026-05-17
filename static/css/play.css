@@ -4759,14 +4759,11 @@ input[type=range]::-moz-range-track {
         justify-self: start !important;
     }
 
-    .board-panel.low-time-warning .board-cell,
-    .board-panel.full-bleed-mobile.low-time-warning .board-cell {
-        animation: mobileRedPulse 2s infinite alternate ease-in-out !important;
-    }
-
-    @keyframes mobileRedPulse {
-        from { box-shadow: 0 0 5px rgba(255, 0, 0, 0.3) !important; border-color: rgba(255, 0, 0, 0.3) !important; }
-        to { box-shadow: 0 0 20px rgba(255, 0, 0, 0.8) !important; border-color: rgba(255, 0, 0, 0.8) !important; }
+    .board-panel.low-time-warning,
+    .board-panel.full-bleed-mobile.low-time-warning {
+        animation: low-time-pulse 3s infinite ease-in-out !important;
+        border: 1px solid rgba(255, 100, 100, 0.3) !important;
+        will-change: background-color, box-shadow !important;
     }
 
     /* Keep non-board sub-controls inside board panel snug and aligned */
