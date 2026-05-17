@@ -2827,6 +2827,7 @@ class RoomManager:
 
     def start_next_round(self, room_id):
         """Start next round with pre-generated board (called at 0s remaining)"""
+        import time
         room = self.get_room(room_id)
         if not room:
             print(f"[RoomManager] ERROR: Room {room_id} not found")
@@ -2889,6 +2890,17 @@ class RoomManager:
                         self.generate_spinner_params(room_id)
                     
                     params = room.next_spinner_params
+                    if params is None:
+                        print(f"[RoomManager] Failed to generate spinner params in emergency for {room_id}. Using fallbacks.")
+                        params = room.spinner_params or {
+                            'min_word_length': 3,
+                            'difficulty': 'Medium',
+                            'word_count_range': '100-200',
+                            'dictionary': 'NWL',
+                            'board_format': 'Normal',
+                            'bonus_word_length': 8
+                        }
+                        room.next_spinner_params = params
                     
                     # DYNAMIC BONUS WORD: Pick a fresh random word instead of a hardcoded fallback
                     b_word = getattr(room, 'next_round_bonus', None)
