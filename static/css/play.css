@@ -2402,6 +2402,9 @@ body.theme-light-brown .word-item.missed {
         overflow-y: hidden !important;
         touch-action: pan-y !important;
     }
+    .fcfs-mode .notepad-list {
+        height: 180px !important;
+    }
 }
 
 /* Individual User Notepad */

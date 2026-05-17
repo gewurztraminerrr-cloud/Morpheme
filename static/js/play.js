@@ -4044,7 +4044,7 @@ function renderFCFSNotepads(players, state) {
     const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
 
     // Reuse Split Points container styles
-    boardEl.className = 'split-notepads-container';
+    boardEl.className = 'split-notepads-container fcfs-mode';
     // Clear inline grid styles from renderBoard
     boardEl.style.gridTemplateColumns = '';
     boardEl.style.gridTemplateRows = '';
