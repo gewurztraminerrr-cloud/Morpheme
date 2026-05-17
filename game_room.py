@@ -3101,22 +3101,36 @@ class RoomManager:
                     bg = BoardGenerator()
                     # CORRECTION: Use keyword arguments to match BoardGenerator signature
                     target_range = room.spinner_params.get('word_count_range', '100-200')
-                    e_results = bg.generate_board(
-                        dimensions=room.board_dimensions, 
-                        bonus_word=getattr(room, 'next_round_bonus', ''),
-                        word_count_range=target_range,
-                        dictionary=room.current_dictionary,
-                        board_format=room.current_board_format,
-                        min_word_length=room.current_min_length,
-                        difficulty=room.current_difficulty,
-                        is_emergency=True
-                    )
+                    try:
+                        e_results = bg.generate_board(
+                            dimensions=room.board_dimensions, 
+                            bonus_word=getattr(room, 'next_round_bonus', ''),
+                            word_count_range=target_range,
+                            dictionary=room.current_dictionary,
+                            board_format=room.current_board_format,
+                            min_word_length=room.current_min_length,
+                            difficulty=room.current_difficulty,
+                            is_emergency=True
+                        )
+                    except Exception as e:
+                        print(f"[RoomManager] Emergency generate_board at promotion failed: {e}")
+                        e_results = None
+                        
                     # Robust Unpacking: Support both 6-tuple and 7-tuple returns
-                    if len(e_results) == 7:
-                        e_board, e_words, e_bonus_c, _, e_paths, e_ratio, e_bonus_word = e_results
+                    if e_results:
+                        if len(e_results) == 7:
+                            e_board, e_words, e_bonus_c, _, e_paths, e_ratio, e_bonus_word = e_results
+                        else:
+                            e_board, e_words, e_bonus_c, _, e_paths, e_ratio = e_results
+                            e_bonus_word = getattr(room, 'next_round_bonus', '')
                     else:
-                        e_board, e_words, e_bonus_c, _, e_paths, e_ratio = e_results
-                        e_bonus_word = getattr(room, 'next_round_bonus', '')
+                        print(f"[RoomManager] Hardcoded board fallback in emergency promotion!")
+                        e_board = [['A','B','C','D'],['E','F','G','H'],['I','J','K','L'],['M','N','O','P']]
+                        e_words = ['ABLE', 'BAKER']
+                        e_bonus_c = (0, 0)
+                        e_paths = {'ABLE': [(0,0),(0,1),(0,2),(0,3)], 'BAKER': [(1,0),(1,1),(1,2),(1,3)]}
+                        e_ratio = 0.5
+                        e_bonus_word = 'ABLE'
                     
                     room.next_round_board = e_board
                     room.next_round_words = e_words
