@@ -4247,7 +4247,7 @@ input[type=range]::-moz-range-track {
         flex-wrap: nowrap !important; /* Prevent wrapping so scrolling works! */
         overflow-x: auto !important; /* Smooth horizontal scroll to browse tools! */
         -webkit-overflow-scrolling: touch !important;
-        scrollbar-width: none !important; /* Hide scrollbars for slick aesthetics */
+        scrollbar-width: thin !important; /* Show scrollbars so user knows they can scroll! */
         border-right: none !important;
         border-bottom: 1px solid var(--input-border) !important; /* Divider below the tools sub-nav */
         padding: 8px 10px !important;
@@ -4257,7 +4257,12 @@ input[type=range]::-moz-range-track {
         box-sizing: border-box !important;
     }
     .tools-sidebar::-webkit-scrollbar {
-        display: none !important;
+        display: block !important;
+        height: 4px !important;
+    }
+    .tools-sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3) !important;
+        border-radius: 2px !important;
     }
 
     .tool-nav-btn {
