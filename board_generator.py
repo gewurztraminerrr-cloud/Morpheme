@@ -1986,14 +1986,14 @@ class BoardGenerator:
         random.shuffle(io_positions)
         
         # Solve depth optimization
-        solve_depth = 10 if (rows * cols >= 35) else 12
-        timeout_cell = 0.08 if (rows * cols >= 35) else 0.15
+        solve_depth = 6 if (rows * cols >= 35) else 12
+        timeout_cell = 0.05 if (rows * cols >= 35) else 0.15
         
         alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         
         for idx, pos in enumerate(io_positions):
-            # Global timeout check (Stage 2 shouldn't exceed 15s)
-            if time.time() - start_time > 15:
+            # Global timeout check (Stage 2 shouldn't exceed 5s)
+            if time.time() - start_time > 5:
                 print(f"[BoardGen] !! Stage 2 Global Timeout. Stopping at cell {idx}/{len(io_positions)}.")
                 break
                 
