@@ -4370,9 +4370,12 @@ def tools_random_word():
         except ValueError:
             pass
             
+    load_definitions() # Ensure definitions are loaded to prevent slow API fallbacks
     filtered_words = dictionary['words']
     if target_len:
-        filtered_words = [w for w in filtered_words if len(w) == target_len]
+        filtered_words = [w for w in filtered_words if len(w) == target_len and w in DEFINITIONS_CACHE]
+    else:
+        filtered_words = [w for w in filtered_words if w in DEFINITIONS_CACHE]
         
     if not filtered_words:
         return jsonify({'error': 'No words found for the specified criteria'}), 404
