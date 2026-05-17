@@ -86,9 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             playBtn.title = "";
                         }
                         if (window.updateManualToolState) window.updateManualToolState();
-                        if (joinData.joined_mid_round) {
-                            alert("You recently accessed the Manual tool. To maintain fair play, your score for this round will not count.");
-                        }
+
 
                         showPage('page-play');
 
@@ -363,9 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     if (window.updateManualToolState) window.updateManualToolState();
 
-                    if (data.joined_mid_round) {
-                        alert("You recently accessed the Manual tool. To maintain fair play, your score for this round will not count.");
-                    }
+
 
                     showPage('page-play');
                     // FORCE FOCUS

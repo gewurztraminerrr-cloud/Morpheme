@@ -2733,11 +2733,10 @@ def join_room(room_id):
             conn.close()
     
     # Try to join as player
-    manual_accessed = session.pop('manual_accessed', False)
     # Pass has_exceptional_round
     success = room.add_player(user_id, session['username'], rating, 
                              games_played=games_played, country_flag=country_flag, 
-                             manual_accessed=manual_accessed, is_guest=session.get('is_guest', False))
+                             manual_accessed=False, is_guest=session.get('is_guest', False))
     if success:
         p = room.players[-1] # Valid since we just added or updated
         p.has_exceptional_round = has_exceptional 
@@ -2749,7 +2748,7 @@ def join_room(room_id):
         return jsonify({'error': msg}), 409
     
     room.update_player_activity(user_id)
-    return jsonify({'success': True, 'role': 'player', 'max_players': room.max_players, 'joined_mid_round': manual_accessed})
+    return jsonify({'success': True, 'role': 'player', 'max_players': room.max_players, 'joined_mid_round': False})
 
 @app.route('/api/room/<room_id>/leave', methods=['POST'])
 def leave_room(room_id):
@@ -4293,11 +4292,7 @@ def get_unread_count():
     finally:
         conn.close()
 
-@app.route('/api/tools/flag_manual', methods=['POST'])
-def tools_flag_manual():
-    """Flags the current session as having accessed the Manual tool."""
-    session['manual_accessed'] = True
-    return jsonify({'success': True})
+
 
         
 
