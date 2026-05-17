@@ -4371,6 +4371,33 @@ def tools_manual_solve():
         except Exception as check_err:
             print(f"[ManualSolve] Error during room word list check (non-fatal): {check_err}")
 
+        # CHEAT PREVENTION: Compare with active private matches
+        try:
+            conn = private_match_manager.get_db()
+            active_rounds = conn.execute('''
+                SELECT r.all_words, m.id as match_id
+                FROM private_matches m
+                JOIN private_match_rounds r ON m.id = r.match_id AND m.current_round = r.round_number
+                WHERE m.status = 'active'
+            ''').fetchall()
+            
+            for row in active_rounds:
+                if row['all_words']:
+                    active_words_dict = json.loads(row['all_words'])
+                    active_words = set(active_words_dict.keys())
+                    
+                    if len(submitted_words) > 0:
+                        overlap = len(submitted_words.intersection(active_words)) / len(submitted_words)
+                        if overlap > 0.5: # 50% similarity threshold
+                            print(f"[ManualSolve] Board words are similar to active private match {row['match_id']} (overlap: {overlap:.2f}) — blocking results")
+                            return jsonify({
+                                'board_matches_active_room': True,
+                                'results': [],
+                                'count': 0,
+                                'message': 'Cheat prevention triggered. Results similar to an active game.'
+                            })
+        except Exception as check_err:
+            print(f"[ManualSolve] Error during private match check (non-fatal): {check_err}")
         
         # Sort by largest first (Length DESC, then Alpha ASC)
         all_words = sorted(list(all_words_dict.keys()), key=lambda x: (-len(x), x))
