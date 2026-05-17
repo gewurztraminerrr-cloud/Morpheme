@@ -46,36 +46,39 @@ window.showTool = function(toolId) {
 };
 
 function setupToolsNavigation() {
-    const navBtns = document.querySelectorAll('.tool-nav-btn');
-    const panes = document.querySelectorAll('.tool-pane');
+    const sidebar = document.querySelector('.tools-sidebar');
+    if (!sidebar) return;
 
-    navBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            // Update buttons
-            navBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+    sidebar.addEventListener('click', (e) => {
+        const btn = e.target.closest('.tool-nav-btn');
+        if (!btn) return;
 
-            // Show pane
-            const toolId = btn.dataset.tool; // e.g. "combo"
-            panes.forEach(p => p.classList.remove('active'));
-            const targetPane = document.getElementById(`tool-${toolId}`);
-            if (targetPane) targetPane.classList.add('active');
+        const navBtns = sidebar.querySelectorAll('.tool-nav-btn');
+        const panes = document.querySelectorAll('.tool-pane');
 
-            // Trigger fetch for Lists if selected (lazy load)
-            if (toolId === 'profile') {
-                refreshProfileTool();
-            }
-            if (toolId === 'lists') {
-                fetchListsData();
-            }
-            if (toolId === 'manual') {
-                fetch('/api/tools/flag_manual', { method: 'POST' });
-            }
+        // Update buttons
+        navBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
 
-            if (toolId === 'wotd') {
-                updateWotd();
-            }
-        });
+        // Show pane
+        const toolId = btn.dataset.tool; // e.g. "combo"
+        panes.forEach(p => p.classList.remove('active'));
+        const targetPane = document.getElementById(`tool-${toolId}`);
+        if (targetPane) targetPane.classList.add('active');
+
+        // Trigger fetch for Lists if selected (lazy load)
+        if (toolId === 'profile') {
+            refreshProfileTool();
+        }
+        if (toolId === 'lists') {
+            fetchListsData();
+        }
+        if (toolId === 'manual') {
+            fetch('/api/tools/flag_manual', { method: 'POST' });
+        }
+        if (toolId === 'wotd') {
+            updateWotd();
+        }
     });
 }
 
