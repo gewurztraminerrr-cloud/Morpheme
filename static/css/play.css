@@ -630,9 +630,16 @@ body.theme-light-brown .player-score-val {
     background: rgba(var(--text-primary-rgb), 0.15);
     padding: 15px 30px;
     border-radius: 10px;
-    display: flex;
+    display: grid !important;
+    grid-template-columns: 1fr auto 1fr !important; /* True centering for middle item */
     align-items: center;
-    gap: 10px;
+    min-width: 200px !important; /* Give it some width to allow centering */
+}
+.timer-display .timer-label {
+    justify-self: start !important;
+}
+.timer-display .timer-value {
+    justify-self: center !important;
 }
 
 .timer-label {
