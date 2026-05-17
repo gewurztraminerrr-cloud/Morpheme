@@ -882,8 +882,11 @@ class GameRoom:
                 fmt_low = str(self.spinner_params.get('board_format', '')).lower()
             
         # LOGGING START
-        with open(DEBUG_FLOW_PATH, 'a') as f:
-            f.write(f"[Density-Diag] Room: {self.room_id} | Format: {fmt_low} | Staging: {is_staging} | Board: {len(board) if board else 0} | Paths: {len(all_words_paths) if all_words_paths else 0} at {time.time()}\n")
+        try:
+            with open(DEBUG_FLOW_PATH, 'a') as f:
+                f.write(f"[Density-Diag] Room: {self.room_id} | Format: {fmt_low} | Staging: {is_staging} | Board: {len(board) if board else 0} | Paths: {len(all_words_paths) if all_words_paths else 0} at {time.time()}\n")
+        except Exception as e:
+            print(f"[Density-Diag] Failed to write to log: {e}")
 
         if 'density' not in fmt_low or not board:
             if is_staging:
@@ -3432,8 +3435,11 @@ class RoomManager:
             print(f"[RoomManager] CRITICAL ERROR during start_next_round for room {room_id}: {transition_err}")
             import traceback
             traceback.print_exc()
-            with open(DEBUG_FLOW_PATH, 'a') as f:
-                f.write(f"[CRITICAL] start_next_round failed for {room_id}: {transition_err}\n{traceback.format_exc()}\n")
+            try:
+                with open(DEBUG_FLOW_PATH, 'a') as f:
+                    f.write(f"[CRITICAL] start_next_round failed for {room_id}: {transition_err}\n{traceback.format_exc()}\n")
+            except Exception as log_err:
+                print(f"[RoomManager] Failed to write to debug_flow.log: {log_err}")
             return False
 
         finally:
