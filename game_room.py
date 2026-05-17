@@ -1018,20 +1018,18 @@ class GameRoom:
             'start' - At 0s remaining in intermission, time to start round
             None - No milestone reached yet
         """
-        if getattr(self, 'starting_round', False):
-            return None
-            
         now = time.time()
         
+        if getattr(self, 'starting_round', False):
+            start_init = getattr(self, '_round_start_init_time', 0)
+            if start_init > 0 and (now - start_init > 12.0):
+                self.starting_round = False
+                print(f"[RoomManager] STALE starting_round detected for {self.room_id} (>12s). Resetting.")
+            else:
+                return None
+            
         # 1. Start Milestone: Threshold is TR=0 during intermission
         if self.state == 'intermission' and self.time_remaining <= 0:
-            if getattr(self, 'starting_round', False):
-                start_init = getattr(self, '_round_start_init_time', 0)
-                if start_init > 0 and (now - start_init > 12.0):
-                    self.starting_round = False
-                    print(f"[RoomManager] STALE starting_round detected for {self.room_id} (>12s). Resetting.")
-                else:
-                    return None
             return 'start'
             
         # 2. Parameter Reveal (15s into intermission)
