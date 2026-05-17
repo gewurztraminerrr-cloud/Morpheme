@@ -2731,8 +2731,17 @@ function renderManualGrid(dims) {
 
     try {
         const [rows, cols] = dims.split('x').map(Number);
-        gridEl.style.gridTemplateColumns = `repeat(${cols}, 55px)`;
-        gridEl.style.gridTemplateRows = `repeat(${rows}, 55px)`;
+        if (window.innerWidth <= 900) {
+            gridEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            gridEl.style.gridTemplateRows = `repeat(${rows}, auto)`;
+            gridEl.style.width = '100%';
+            gridEl.style.maxWidth = `${cols * 45}px`;
+        } else {
+            gridEl.style.gridTemplateColumns = `repeat(${cols}, 55px)`;
+            gridEl.style.gridTemplateRows = `repeat(${rows}, 55px)`;
+            gridEl.style.width = 'auto';
+            gridEl.style.maxWidth = 'none';
+        }
         gridEl.innerHTML = '';
 
         for (let r = 0; r < rows; r++) {

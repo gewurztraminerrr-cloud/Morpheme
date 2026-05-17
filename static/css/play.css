@@ -4455,9 +4455,12 @@ tant;
 
     /* Manual solver grid scale */
     .manual-cell {
-        width: 42px !important;
-        height: 42px !important;
+        width: 100% !important;
+        height: auto !important;
+        aspect-ratio: 1 !important;
         font-size: 1.4rem !important;
+        padding: 0 !important;
+        text-align: center !important;
     }
     .manual-grid-scroll {
         padding: 10px !important;

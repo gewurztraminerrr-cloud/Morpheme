@@ -4337,7 +4337,14 @@ def tools_manual_solve():
         word_validator.get_use_added_words()
 
         # We use the board_generator from the global room_manager instance
-        min_word_length = int(data.get('min_word_length', 3))
+        min_word_length_raw = data.get('min_word_length', 3)
+        if isinstance(min_word_length_raw, str):
+            # Extract digits only (handles cases like '4L')
+            digits = ''.join(c for c in min_word_length_raw if c.isdigit())
+            min_word_length = int(digits) if digits else 3
+        else:
+            min_word_length = int(min_word_length_raw)
+            
         all_words_dict = room_manager.board_generator._solve_board(board, dictionary, (0, float('inf')), min_word_length)
         
         # Sort by largest first (Length DESC, then Alpha ASC)
