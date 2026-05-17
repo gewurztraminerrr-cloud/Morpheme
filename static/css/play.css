@@ -4316,7 +4316,7 @@ tant;
         box-sizing: border-box !important;
     }
     .unscramble-container {
-        flex-direction: column !important;
+        flex-direction: column-reverse !important;
         height: auto !important;
         gap: 20px !important;
     }
