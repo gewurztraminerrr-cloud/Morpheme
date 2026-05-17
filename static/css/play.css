@@ -4765,10 +4765,10 @@ tant;
     }
 
     .board-panel .timer-display .timer-label {
-        font-size: 0.85rem !important;
+        font-size: 1rem !important;
     }
     .board-panel .timer-display .timer-value {
-        font-size: 1.1rem !important;
+        font-size: 1.3rem !important;
     }
 
     .board-panel .game-board,
