@@ -1114,7 +1114,7 @@
                     <button class="tool-nav-btn" data-tool="random" onclick="window.showTool('random')">Random Word</button>
                     <button class="tool-nav-btn" data-tool="wotd" onclick="window.showTool('wotd')">Word of the Day</button>
                     <button class="tool-nav-btn" data-tool="unscramble" onclick="window.showTool('unscramble')">Unscramble</button>
-                    <a href="#" class="tool-nav-btn" data-tool="manual" onclick="document.querySelectorAll('.tool-pane').forEach(p => p.classList.remove('active')); document.getElementById('tool-manual').classList.add('active'); document.querySelectorAll('.tool-nav-btn').forEach(b => b.classList.remove('active')); this.classList.add('active'); return false;">Manual</a>
+
                     <button class="tool-nav-btn" data-tool="timer" onclick="window.showTool('timer')">Personal Timer</button>
                     <!-- Future tools go here -->
                 </div>
@@ -1542,44 +1542,7 @@
                         </div>
                     </div>
 
-                    <!-- Manual Tool Interface -->
-                    <div id="tool-manual" class="tool-pane">
-                        <div class="tool-header">
-                            <h2>Manual Solver</h2>
-                            <p>Enter a custom board and solve it independently.</p>
-                        </div>
 
-                        <div class="combo-control-panel">
-                            <div class="input-row">
-                                <select id="manual-dim" style="width: 140px;">
-                                    <option value="4x4">4x4</option>
-                                    <option value="4x6">4x6</option>
-                                    <option value="5x7">5x7</option>
-                                    <option value="6x8" selected>6x8</option>
-                                </select>
-                                <select id="manual-dict" style="width: 140px;">
-                                    <option value="NWL">NWL (US)</option>
-                                    <option value="CSW">CSW (Intl)</option>
-                                </select>
-                                <button id="direct-solve-btn" class="manual-action-btn">Solve</button>
-                                <button type="button" id="manual-clear-btn" class="manual-action-btn manual-clear-btn">Clear</button>
-                                <button id="manual-reveal-btn" style="display: none;">Reveal
-                                    Words</button>
-                            </div>
-                        </div>
-
-                        <div class="manual-workspace">
-                            <div class="manual-grid-scroll">
-                                <div id="manual-grid" class="manual-grid">
-                                    <!-- Grid inputs injected via JS -->
-                                </div>
-                            </div>
-
-                            <div id="manual-results-container" class="seq-results-container" style="display: none;">
-                                <!-- Results injected via JS -->
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- ... omitted combo/list content to match target ... -->
 

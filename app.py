@@ -4299,156 +4299,16 @@ def tools_flag_manual():
     session['manual_accessed'] = True
     return jsonify({'success': True})
 
-@app.route('/api/tools/manual_solve', methods=['POST'])
-def tools_manual_solve():
-    """Solves a custom board provided by the user.
-    Blocks results if the submitted board matches any currently active live room board.
-    """
-    data = request.json
-    board = data.get('board') # 2D list of letters
-    dictionary = data.get('dictionary', 'NWL')
-    
-    if not board or not isinstance(board, list):
-        return jsonify({'error': 'No board provided or invalid format'}), 400
-    
-    # Flatten submitted board to a comparable string: "A|B|C|D\nE|F|G|H\n..."
-    def flatten_board(b):
-        return '\n'.join('|'.join(row) for row in b)
-    
-    submitted_flat = flatten_board(board)
-    
-    # Check against all active live rooms (Stored in DB for multi-worker support)
-    active_boards = []
-    try:
-        conn = private_match_manager.get_db()
-        active_boards = conn.execute('''
-            SELECT room_id, board_data, all_words
-            FROM active_boards
-        ''').fetchall()
         
-        for row in active_boards:
-            if row['board_data']:
-                r_board = json.loads(row['board_data'])
-                # 1. Direct Board Check
-                if len(board) == len(r_board) and len(board[0]) == len(r_board[0]):
-                    diff = 0
-                    for r in range(len(board)):
-                        for c in range(len(board[0])):
-                            if str(board[r][c]).upper() != str(r_board[r][c]).upper():
-                                diff += 1
-                    if diff <= 2:
-                        print(f"[ManualSolve] Board is similar to active room {row['room_id']} (diff: {diff}) — blocking results")
-                        return jsonify({
-                            'board_matches_active_room': True,
-                            'results': [],
-                            'count': 0,
-                            'message': 'Cheat prevention triggered. Board is similar to an active game.',
-                            'active_boards_checked': len(active_boards)
-                        })
-    except Exception as check_err:
-        print(f"[ManualSolve] Error during room board check (non-fatal): {check_err}")
-        
-    try:
-        # SYNC: Ensure dictionary state is fresh for this process
-        word_validator.get_use_added_words()
 
-        # We use the board_generator from the global room_manager instance
-        min_word_length_raw = data.get('min_word_length', 3)
-        if isinstance(min_word_length_raw, str):
-            # Extract digits only (handles cases like '4L')
-            digits = ''.join(c for c in min_word_length_raw if c.isdigit())
-            min_word_length = int(digits) if digits else 3
-        else:
-            min_word_length = int(min_word_length_raw)
-            
-        all_words_dict = room_manager.board_generator._solve_board(board, dictionary, (0, float('inf')), min_word_length)
-        submitted_words = set(all_words_dict.keys())
 
-        max_overlap = 0.0
-        # CHEAT PREVENTION: Compare with active rooms' word lists (DB based)
-        try:
-            print(f"[ManualSolve] Checking against {len(active_boards)} public rooms (DB)")
-            for row in active_boards:
-                if row['all_words']:
-                    active_words = set(json.loads(row['all_words']))
-                    
-                    if len(submitted_words) > 0 and len(active_words) > 0:
-                        overlap = len(submitted_words.intersection(active_words)) / min(len(submitted_words), len(active_words))
-                        max_overlap = max(max_overlap, overlap)
-                        if overlap > 0.2: # 20% overlap coefficient threshold
-                            print(f"[ManualSolve] Board words are similar to active room {row['room_id']} (overlap: {overlap:.2f}) — blocking results")
-                            return jsonify({
-                                'board_matches_active_room': True,
-                                'results': [],
-                                'count': 0,
-                                'message': f'Cheat prevention triggered. Results similar to an active game (Overlap: {overlap:.2f}).'
-                            })
-        except Exception as check_err:
-            print(f"[ManualSolve] Error during room word list check (non-fatal): {check_err}")
 
-        # CHEAT PREVENTION: Compare with active private matches
-        try:
-            conn = private_match_manager.get_db()
-            active_rounds = conn.execute('''
-                SELECT r.all_words, r.board_data, m.id as match_id
-                FROM private_matches m
-                JOIN private_match_rounds r ON m.id = r.match_id AND m.current_round = r.round_number
-                WHERE m.status != 'completed' AND m.status != 'expired'
-            ''').fetchall()
-            print(f"[ManualSolve] Checking against {len(active_rounds)} private matches")
-            
-            for row in active_rounds:
-                # 1. Board Similarity Check
-                if 'board_data' in row.keys() and row['board_data']:
-                    r_board = json.loads(row['board_data'])
-                    if len(board) == len(r_board) and len(board[0]) == len(r_board[0]):
-                        diff = 0
-                        for r in range(len(board)):
-                            for c in range(len(board[0])):
-                                if str(board[r][c]).upper() != str(r_board[r][c]).upper():
-                                    diff += 1
-                        if diff <= 2:
-                            print(f"[ManualSolve] Board is similar to active private match {row['match_id']} (diff: {diff}) — blocking results")
-                            return jsonify({
-                                'board_matches_active_room': True,
-                                'results': [],
-                                'count': 0,
-                                'message': 'Cheat prevention triggered. Board is similar to an active game.'
-                            })
 
-                # 2. Word List Overlap Check (Fallback)
-                if row['all_words']:
-                    active_words_dict = json.loads(row['all_words'])
-                    active_words = set(active_words_dict.keys())
-                    
-                    if len(submitted_words) > 0 and len(active_words) > 0:
-                        overlap = len(submitted_words.intersection(active_words)) / min(len(submitted_words), len(active_words))
-                        max_overlap = max(max_overlap, overlap)
-                        if overlap > 0.2: # 20% overlap coefficient threshold
-                            print(f"[ManualSolve] Board words are similar to active private match {row['match_id']} (overlap: {overlap:.2f}) — blocking results")
-                            return jsonify({
-                                'board_matches_active_room': True,
-                                'results': [],
-                                'count': 0,
-                                'message': f'Cheat prevention triggered. Results similar to an active game (Overlap: {overlap:.2f}).',
-                                'active_boards_checked': len(active_boards)
-                            })
-        except Exception as check_err:
-            print(f"[ManualSolve] Error during private match check (non-fatal): {check_err}")
-        
-        # Sort by largest first (Length DESC, then Alpha ASC)
-        all_words = sorted(list(all_words_dict.keys()), key=lambda x: (-len(x), x))
-        
-        return jsonify({
-            'results': all_words,
-            'count': len(all_words),
-            'board_matches_active_room': False,
-            'max_overlap': max_overlap,
-            'active_boards_checked': len(active_boards)
-        })
-    except Exception as e:
-        print(f"Error solving manual board: {e}")
-        return jsonify({'error': str(e)}), 500
+
+
+
+
+
 
 @app.route('/api/tools/random_word', methods=['GET'])
 def tools_random_word():
