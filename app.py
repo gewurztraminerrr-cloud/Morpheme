@@ -4360,7 +4360,7 @@ def tools_manual_solve():
                     
                     if len(submitted_words) > 0:
                         overlap = len(submitted_words.intersection(active_words)) / len(submitted_words)
-                        if overlap > 0.8: # 80% similarity threshold
+                        if overlap > 0.5: # 50% similarity threshold
                             print(f"[ManualSolve] Board words are similar to active room {room.room_id} (overlap: {overlap:.2f}) — blocking results")
                             return jsonify({
                                 'board_matches_active_room': True,
