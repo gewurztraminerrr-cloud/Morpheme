@@ -4317,23 +4317,34 @@ def tools_manual_solve():
     
     submitted_flat = flatten_board(board)
     
-    # Check against all active live rooms
+    # Check against all active live rooms (Stored in DB for multi-worker support)
+    active_boards = []
     try:
-        for room in room_manager.rooms.values():
-            if room.board and len(board) == len(room.board) and len(board[0]) == len(room.board[0]):
-                diff = 0
-                for r in range(len(board)):
-                    for c in range(len(board[0])):
-                        if str(board[r][c]).upper() != str(room.board[r][c]).upper():
-                            diff += 1
-                if diff <= 2:
-                    print(f"[ManualSolve] Board is similar to active room {room.room_id} (diff: {diff}) — blocking results")
-                    return jsonify({
-                        'board_matches_active_room': True,
-                        'results': [],
-                        'count': 0,
-                        'message': 'Cheat prevention triggered. Board is similar to an active game.'
-                    })
+        conn = private_match_manager.get_db()
+        active_boards = conn.execute('''
+            SELECT room_id, board_data, all_words
+            FROM active_boards
+            WHERE updated_at > ?
+        ''', (time.time() - 3600,)).fetchall() # Only check boards from the last hour
+        
+        for row in active_boards:
+            if row['board_data']:
+                r_board = json.loads(row['board_data'])
+                # 1. Direct Board Check
+                if len(board) == len(r_board) and len(board[0]) == len(r_board[0]):
+                    diff = 0
+                    for r in range(len(board)):
+                        for c in range(len(board[0])):
+                            if str(board[r][c]).upper() != str(r_board[r][c]).upper():
+                                diff += 1
+                    if diff <= 2:
+                        print(f"[ManualSolve] Board is similar to active room {row['room_id']} (diff: {diff}) — blocking results")
+                        return jsonify({
+                            'board_matches_active_room': True,
+                            'results': [],
+                            'count': 0,
+                            'message': 'Cheat prevention triggered. Board is similar to an active game.'
+                        })
     except Exception as check_err:
         print(f"[ManualSolve] Error during room board check (non-fatal): {check_err}")
         
@@ -4354,22 +4365,18 @@ def tools_manual_solve():
         submitted_words = set(all_words_dict.keys())
 
         max_overlap = 0.0
-        # CHEAT PREVENTION: Compare with active rooms' word lists
+        # CHEAT PREVENTION: Compare with active rooms' word lists (DB based)
         try:
-            print(f"[ManualSolve] Checking against {len(room_manager.rooms)} public rooms")
-            for room in room_manager.rooms.values():
-                if room.board:
-                    # Solve the active room's board
-                    active_dict = getattr(room, 'current_dictionary', 'NWL')
-                    active_min = getattr(room, 'current_min_length', 3)
-                    active_words_dict = room_manager.board_generator._solve_board(room.board, active_dict, (0, float('inf')), active_min)
-                    active_words = set(active_words_dict.keys())
+            print(f"[ManualSolve] Checking against {len(active_boards)} public rooms (DB)")
+            for row in active_boards:
+                if row['all_words']:
+                    active_words = set(json.loads(row['all_words']))
                     
                     if len(submitted_words) > 0 and len(active_words) > 0:
                         overlap = len(submitted_words.intersection(active_words)) / min(len(submitted_words), len(active_words))
                         max_overlap = max(max_overlap, overlap)
                         if overlap > 0.2: # 20% overlap coefficient threshold
-                            print(f"[ManualSolve] Board words are similar to active room {room.room_id} (overlap: {overlap:.2f}) — blocking results")
+                            print(f"[ManualSolve] Board words are similar to active room {row['room_id']} (overlap: {overlap:.2f}) — blocking results")
                             return jsonify({
                                 'board_matches_active_room': True,
                                 'results': [],

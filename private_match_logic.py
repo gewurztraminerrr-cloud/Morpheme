@@ -76,6 +76,15 @@ class PrivateMatchManager:
                 start_time REAL,
                 PRIMARY KEY(match_id, round_number, user_id)
             );
+
+            CREATE TABLE IF NOT EXISTS active_boards (
+                room_id TEXT PRIMARY KEY,
+                board_data TEXT, -- JSON
+                all_words TEXT, -- JSON
+                dictionary TEXT,
+                min_length INTEGER,
+                updated_at REAL
+            );
         ''')
         conn.commit()
         

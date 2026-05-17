@@ -3157,6 +3157,22 @@ class RoomManager:
                 room.all_words_paths = {w: p for w, p in (room.next_round_word_paths or {}).items() if len(w) >= display_min}
                 room.solved_words_with_scores = getattr(room, 'next_round_word_scores', {})
                 
+                # Save to DB for cheat prevention across workers
+                try:
+                    import sqlite3
+                    import json
+                    import time
+                    import os
+                    conn = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db'))
+                    conn.execute('''
+                        INSERT OR REPLACE INTO active_boards (room_id, board_data, all_words, dictionary, min_length, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    ''', (room.room_id, json.dumps(room.board), json.dumps(list(room.all_words)), room.current_dictionary, room.current_min_length, time.time()))
+                    conn.commit()
+                    conn.close()
+                except Exception as db_err:
+                    print(f"[RoomManager] Error saving board to DB: {db_err}")
+                
                 # USER REQUEST: Ensure Bonus Word is ironclad (highlighted in green at end)
                 # If for any reason next_round_bonus is empty (e.g. emergency stall), pick a fresh one now
                 current_bw = getattr(room, 'next_round_bonus', '')
