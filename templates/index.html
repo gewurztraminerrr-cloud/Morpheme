@@ -1106,12 +1106,12 @@
                 <!-- Sidebar (1/3) -->
                 <div class="tools-sidebar">
                     <button class="tool-nav-btn active" data-tool="profile" onclick="window.showTool('profile')">Profile</button>
+                    <button class="tool-nav-btn" data-tool="manual" onclick="document.querySelectorAll('.tool-pane').forEach(p => p.classList.remove('active')); document.getElementById('tool-manual').classList.add('active'); document.querySelectorAll('.tool-nav-btn').forEach(b => b.classList.remove('active')); this.classList.add('active');">Manual</button>
                     <button class="tool-nav-btn" data-tool="combo" onclick="window.showTool('combo')">Combo Checker</button>
                     <button class="tool-nav-btn" data-tool="is-valid" onclick="window.showTool('is-valid')">Is Valid</button>
                     <button class="tool-nav-btn" data-tool="lists" onclick="window.showTool('lists')">Lists</button>
                     <button class="tool-nav-btn" data-tool="sequence" onclick="window.showTool('sequence')">Sequence</button>
                     <button class="tool-nav-btn" data-tool="subanagrams" onclick="window.showTool('subanagrams')">Subanagrams</button>
-                    <button class="tool-nav-btn" data-tool="manual" onclick="document.querySelectorAll('.tool-pane').forEach(p => p.classList.remove('active')); document.getElementById('tool-manual').classList.add('active'); document.querySelectorAll('.tool-nav-btn').forEach(b => b.classList.remove('active')); this.classList.add('active');">Manual</button>
                     <button class="tool-nav-btn" data-tool="random" onclick="window.showTool('random')">Random Word</button>
                     <button class="tool-nav-btn" data-tool="wotd" onclick="window.showTool('wotd')">Word of the Day</button>
                     <button class="tool-nav-btn" data-tool="unscramble" onclick="window.showTool('unscramble')">Unscramble</button>
