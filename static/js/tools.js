@@ -1245,7 +1245,7 @@ async function renderProfile(user) {
         }
 
         return `
-        <div class="history-grid-item" onclick="watchRoundHistory('${round.room_id}', ${round.round_number}, true, ${round.game_id || 'null'})" style="display: grid; grid-template-columns: 80px 50px 80px 60px 80px 80px 100px 1fr 100px 50px; gap:8px; padding: 10px 15px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 8px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden;">
+        <div class="history-grid-item" onclick="watchRoundHistory('${round.room_id}', ${round.round_number}, true, ${round.game_id || 'null'})" style="display: grid; grid-template-columns: 80px 50px 80px 60px 100px 120px 150px 100px; gap:8px; padding: 10px 15px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 8px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden;">
             <div class="history-mode-tag ${typeClass}" style="font-size: 0.65rem; padding: 3px 6px; border-radius: 6px; text-align: center; width: fit-content; font-weight: 800; text-transform: uppercase;">${gameTypeLabel}</div>
             
             <!-- Mini Board Preview Column -->
@@ -1260,9 +1260,9 @@ async function renderProfile(user) {
                 <span style="color: #fff; font-size: 0.7rem; font-weight: 700;">${round.num_words} words</span>
                 <span style="color: rgba(255,255,255,0.3); font-size: 0.6rem;">Avg: ${round.avg_len}</span>
             </div>
-            <div style="color: #ffd700; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.5px;" title="${round.top_word}">${round.top_word}</div>
+            <div style="color: #ffd700; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;" title="${round.top_word}">${round.top_word}</div>
             <div style="display: flex; flex-direction: column; gap: 1px;">
-                <span style="font-size: 0.7rem; color: #60a5fa; font-weight: 700; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">${round.room_id}</span>
+                <span style="font-size: 0.7rem; color: #60a5fa; font-weight: 700; opacity: 0.8;">${round.room_id}</span>
                 <span style="font-size: 0.6rem; color: rgba(255,255,255,0.3); font-weight: 600;">Str: ${round.room_strength || '-'}</span>
             </div>
             
@@ -1273,7 +1273,7 @@ async function renderProfile(user) {
     };
 
     window.roundGridHeader = `
-        <div class="history-grid-header" style="display: grid; grid-template-columns: 80px 50px 80px 60px 80px 80px 100px 1fr 100px 50px; gap:8px; padding: 12px 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 12px; font-size: 0.7rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+        <div class="history-grid-header" style="display: grid; grid-template-columns: 80px 50px 80px 60px 100px 120px 150px 100px; gap:8px; padding: 12px 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 12px; font-size: 0.7rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
             <div>Mode</div>
             <div style="text-align: center;">Board</div>
             <div>Score</div>
