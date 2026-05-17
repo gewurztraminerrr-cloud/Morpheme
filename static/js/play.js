@@ -4017,7 +4017,7 @@ function renderSplitNotepads(players, state) {
                 
                 // Add split multiplier indicator for shared words
                 if (w.shared_count > 1) {
-                    ptsDisplay += ` <small style="opacity:0.7;">(÷${w.shared_count})</small>`;
+                    ptsDisplay += ` <small style="opacity:0.7;">(${w.shared_count})</small>`;
                 }
 
                 const isBonusWord = w.is_bonus || (state.bonus_word && w.word.toUpperCase() === state.bonus_word.toUpperCase());
