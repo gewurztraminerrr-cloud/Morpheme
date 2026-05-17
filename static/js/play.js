@@ -2505,6 +2505,12 @@ function updateParameters(state) {
             // Apply to DOM
             if (document.getElementById('param-board')) document.getElementById('param-board').textContent = window._displayedParams.dims;
             if (document.getElementById('param-time')) document.getElementById('param-time').textContent = window._displayedParams.time;
+            
+            // Populate the new label above Spinner Set
+            if (document.getElementById('label-game-type')) document.getElementById('label-game-type').textContent = document.getElementById('game-title').textContent;
+            if (document.getElementById('label-board')) document.getElementById('label-board').textContent = window._displayedParams.dims;
+            if (document.getElementById('label-time')) document.getElementById('label-time').textContent = window._displayedParams.time;
+
             if (document.getElementById('param-diff')) document.getElementById('param-diff').textContent = window._displayedParams.diff;
             if (document.getElementById('param-min')) document.getElementById('param-min').textContent = window._displayedParams.min;
             if (document.getElementById('param-dict')) document.getElementById('param-dict').textContent = window._displayedParams.dict;
