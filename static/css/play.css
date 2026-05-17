@@ -4776,13 +4776,14 @@ input[type=range]::-moz-range-track {
     .board-panel.low-time-warning::after,
     .board-panel.full-bleed-mobile.low-time-warning::after {
         content: '' !important;
+        display: block !important;
         position: absolute !important;
         top: 0 !important;
         left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
         pointer-events: none !important;
-        z-index: 20 !important; /* Above cells and board */
+        z-index: 1000 !important; /* Above everything */
         animation: mobileRedPulse 3s infinite alternate ease-in-out !important;
     }
 
