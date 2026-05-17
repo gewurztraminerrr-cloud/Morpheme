@@ -4288,6 +4288,20 @@ tant;
         height: auto !important;
     }
 
+    /* Random Word / Is Valid Mobile Fixes */
+    .random-word-large {
+        font-size: 2.5rem !important;
+        letter-spacing: 1px !important;
+    }
+    .random-word-container {
+        padding: 15px !important;
+        min-height: auto !important;
+    }
+    #valid-definition-display {
+        max-width: 100% !important;
+        font-size: 1rem !important;
+    }
+
     /* Combo input padding fix */
     #combo-input {
         padding: 12px 15px !important;
