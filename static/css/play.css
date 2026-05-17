@@ -877,15 +877,11 @@ body.theme-light-brown .player-score-val {
 }
 
 .board-cell.grayed {
-    background: #c0c0c0;
-    /* Distinct grey for intermission */
-    color: #555555;
-    /* Dimmer text */
+    background: #555555; /* Dark grey for intermission */
+    color: #ffffff; /* White text for contrast */
     cursor: default;
-    /* Not allowed but without the red circle if they are just viewing */
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
-    /* Flat/pressed look */
-    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    border-color: rgba(0, 0, 0, 0.2);
 }
 
 /* Mouse selection visual feedback — all tiles in path look identical */
