@@ -2378,6 +2378,12 @@ body.theme-light-brown .word-item.missed {
 }
 
 @media (max-width: 992px) {
+    .play-header .header-title-group,
+    .play-header .game-params,
+    .play-header #return-lobby-btn {
+        display: none !important;
+    }
+
     .split-notepads-container {
         display: flex !important;
         flex-direction: column !important;
