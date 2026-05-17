@@ -3894,7 +3894,7 @@ function renderSplitNotepads(players, state) {
             e.stopPropagation();
             const firstItem = list.querySelector('.notepad-item');
             const rowHeight = firstItem ? firstItem.offsetHeight + 4 : 29; // height + 4px gap
-            list.scrollBy({ top: -rowHeight, behavior: 'smooth' });
+            list.scrollTop -= rowHeight;
         };
 
         const btnDown = document.createElement('button');
@@ -3904,7 +3904,7 @@ function renderSplitNotepads(players, state) {
             e.stopPropagation();
             const firstItem = list.querySelector('.notepad-item');
             const rowHeight = firstItem ? firstItem.offsetHeight + 4 : 29; // height + 4px gap
-            list.scrollBy({ top: rowHeight, behavior: 'smooth' });
+            list.scrollTop += rowHeight;
         };
 
         scrollControls.appendChild(btnUp);
@@ -4115,7 +4115,7 @@ function renderFCFSNotepads(players, state) {
             e.stopPropagation();
             const firstItem = list.querySelector('.notepad-item');
             const rowHeight = firstItem ? firstItem.offsetHeight + 4 : 29; // height + 4px gap
-            list.scrollBy({ top: -rowHeight, behavior: 'smooth' });
+            list.scrollTop -= rowHeight;
         };
 
         const btnDown = document.createElement('button');
@@ -4125,7 +4125,7 @@ function renderFCFSNotepads(players, state) {
             e.stopPropagation();
             const firstItem = list.querySelector('.notepad-item');
             const rowHeight = firstItem ? firstItem.offsetHeight + 4 : 29; // height + 4px gap
-            list.scrollBy({ top: rowHeight, behavior: 'smooth' });
+            list.scrollTop += rowHeight;
         };
 
         scrollControls.appendChild(btnUp);
