@@ -4324,8 +4324,7 @@ def tools_manual_solve():
         active_boards = conn.execute('''
             SELECT room_id, board_data, all_words
             FROM active_boards
-            WHERE updated_at > ?
-        ''', (time.time() - 3600,)).fetchall() # Only check boards from the last hour
+        ''').fetchall()
         
         for row in active_boards:
             if row['board_data']:
