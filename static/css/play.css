@@ -3993,6 +3993,8 @@ input[type=range]::-moz-range-track {
         margin-bottom: 10px !important;
         border-radius: 12px !important;
         height: auto !important;
+        width: 100% !important; /* Expand horizontally to full width */
+        box-sizing: border-box !important;
         
         /* Use Flex Column to strictly enforce stacking order */
         display: flex !important;
@@ -4039,6 +4041,10 @@ input[type=range]::-moz-range-track {
         margin: 5px auto !important; /* Center the box itself and add small margin */
         padding: 5px 15px !important; /* Smaller padding for a tight fit */
         order: 3 !important; /* Force third (below params) */
+    }
+    .timer-display .timer-value {
+        min-width: auto !important; /* Remove the large 220px min-width on mobile */
+        font-size: 1.5rem !important; /* Slightly smaller but still readable */
     }
 
 
