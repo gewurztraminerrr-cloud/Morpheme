@@ -4320,14 +4320,19 @@ def tools_manual_solve():
     # Check against all active live rooms
     try:
         for room in room_manager.rooms.values():
-            if room.state == 'active' and room.board:
-                room_flat = flatten_board(room.board)
-                if submitted_flat == room_flat:
-                    print(f"[ManualSolve] Board matches active room {room.room_id} — blocking results")
+            if room.board and len(board) == len(room.board) and len(board[0]) == len(room.board[0]):
+                diff = 0
+                for r in range(len(board)):
+                    for c in range(len(board[0])):
+                        if str(board[r][c]).upper() != str(room.board[r][c]).upper():
+                            diff += 1
+                if diff <= 2:
+                    print(f"[ManualSolve] Board is similar to active room {room.room_id} (diff: {diff}) — blocking results")
                     return jsonify({
                         'board_matches_active_room': True,
                         'results': [],
-                        'count': 0
+                        'count': 0,
+                        'message': 'Cheat prevention triggered. Board is similar to an active game.'
                     })
     except Exception as check_err:
         print(f"[ManualSolve] Error during room board check (non-fatal): {check_err}")
@@ -4377,13 +4382,32 @@ def tools_manual_solve():
         try:
             conn = private_match_manager.get_db()
             active_rounds = conn.execute('''
-                SELECT r.all_words, m.id as match_id
+                SELECT r.all_words, r.board_data, m.id as match_id
                 FROM private_matches m
                 JOIN private_match_rounds r ON m.id = r.match_id AND m.current_round = r.round_number
                 WHERE m.status != 'completed' AND m.status != 'expired'
             ''').fetchall()
             
             for row in active_rounds:
+                # 1. Board Similarity Check
+                if 'board_data' in row.keys() and row['board_data']:
+                    r_board = json.loads(row['board_data'])
+                    if len(board) == len(r_board) and len(board[0]) == len(r_board[0]):
+                        diff = 0
+                        for r in range(len(board)):
+                            for c in range(len(board[0])):
+                                if str(board[r][c]).upper() != str(r_board[r][c]).upper():
+                                    diff += 1
+                        if diff <= 2:
+                            print(f"[ManualSolve] Board is similar to active private match {row['match_id']} (diff: {diff}) — blocking results")
+                            return jsonify({
+                                'board_matches_active_room': True,
+                                'results': [],
+                                'count': 0,
+                                'message': 'Cheat prevention triggered. Board is similar to an active game.'
+                            })
+
+                # 2. Word List Overlap Check (Fallback)
                 if row['all_words']:
                     active_words_dict = json.loads(row['all_words'])
                     active_words = set(active_words_dict.keys())
