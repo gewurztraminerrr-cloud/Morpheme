@@ -3410,6 +3410,8 @@ class RoomManager:
             print(f"[RoomManager] CRITICAL ERROR during start_next_round for room {room_id}: {transition_err}")
             import traceback
             traceback.print_exc()
+            with open(DEBUG_FLOW_PATH, 'a') as f:
+                f.write(f"[CRITICAL] start_next_round failed for {room_id}: {transition_err}\n{traceback.format_exc()}\n")
             return False
 
         finally:
