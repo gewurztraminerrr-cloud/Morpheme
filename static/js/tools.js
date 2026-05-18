@@ -2220,6 +2220,8 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             if (document.getElementById('ach-table-words')) document.getElementById('ach-table-words').innerHTML = '';
             if (document.getElementById('ach-table-scores')) document.getElementById('ach-table-scores').innerHTML = '';
             if (document.getElementById('ach-table-wordcounts')) document.getElementById('ach-table-wordcounts').innerHTML = '';
+            if (document.getElementById('ach-table-pcts')) document.getElementById('ach-table-pcts').innerHTML = '';
+            if (document.getElementById('ach-table-obscure')) document.getElementById('ach-table-obscure').innerHTML = '';
             return;
         }
 
@@ -2335,6 +2337,28 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             tableWordCounts.innerHTML = sortedByCount.map(r => renderAchRow(r, [
                 { val: r.num_words, style: 'font-weight: 800; color: #a5b4fc;' },
                 { val: `${r.avg_len} len | ${r.pct_found || 0}%`, style: 'color: rgba(255,255,255,0.6);' },
+                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+            ])).join('');
+        }
+
+        // 5b. Best Percentages
+        const tablePcts = document.getElementById('ach-table-pcts');
+        if (tablePcts && stats.best_pcts) {
+            const sortedByPct = [...stats.best_pcts].sort((a, b) => b.pct_found - a.pct_found);
+            tablePcts.innerHTML = sortedByPct.map(r => renderAchRow(r, [
+                { val: `${r.pct_found}%`, style: 'font-weight: 800; color: #ff4a4a;' },
+                { val: `Pts: ${r.total_score}`, style: 'color: rgba(255,255,255,0.6);' },
+                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+            ])).join('');
+        }
+
+        // 5c. Best Obscure Counts
+        const tableObscure = document.getElementById('ach-table-obscure');
+        if (tableObscure && stats.best_obscure) {
+            const sortedByObscure = [...stats.best_obscure].sort((a, b) => b.obscure_count - a.obscure_count);
+            tableObscure.innerHTML = sortedByObscure.map(r => renderAchRow(r, [
+                { val: r.obscure_count, style: 'font-weight: 800; color: #60a5fa;' },
+                { val: `Pts: ${r.total_score}`, style: 'color: rgba(255,255,255,0.6);' },
                 { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
             ])).join('');
         }

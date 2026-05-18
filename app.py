@@ -2276,6 +2276,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             avg_l = round(total_l / num_words, 1)
         twa = row[9] if len(row) > 9 else 0
         pct_found = round(num_words / twa * 100, 1) if twa > 0 else 0
+        obscure_count = sum(1 for w in words if isinstance(w, dict) and w.get('word', '').upper() in word_validator.unique_csw_words) if words else 0
         processed = {
             'game_id': g_id, 'room_id': r_id, 'round_number': r_num, 'timestamp': ts,
             'total_score': my_score, 'num_words': len(words), 'is_win': is_win,
@@ -2285,7 +2286,8 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             'all_players': room_entries,
             'words': words,
             'board': json.loads(row[5]),
-            'pct_found': pct_found
+            'pct_found': pct_found,
+            'obscure_count': obscure_count
         }
         performance_list.append(processed)
 
@@ -2335,6 +2337,9 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     avg_pct_found = round(sum(p['pct_found'] for p in matching_valid) / len(matching_valid), 1) if matching_valid else 0
     max_pct_found = round(max([p['pct_found'] for p in matching_valid]) if matching_valid else 0, 1)
 
+    best_pcts = sorted(performance_list, key=lambda x: (x.get('pct_found', 0), x['timestamp']), reverse=True)[:50]
+    best_obscure = sorted([x for x in performance_list if x.get('obscure_count', 0) > 0], key=lambda x: (x.get('obscure_count', 0), x['timestamp']), reverse=True)[:50]
+
     return jsonify({
         'username': username,
         'rating': rating,
@@ -2356,6 +2361,8 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             'winning_rounds': winning,
             'best_scores': best_scores,
             'best_word_counts': best_counts,
+            'best_pcts': best_pcts,
+            'best_obscure': best_obscure,
             'recent_rounds': recent,
             'best_words': best_words
         }
