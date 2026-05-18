@@ -625,8 +625,8 @@ class GameRoom:
             
             if valid_path:
                 # Find which of the possible interpreted words from the path actually exists on the board
-                valid_options = [w for w in possible_words if w in self.all_words]
-                if len(valid_options) == 1:
+                valid_options = [w for w in possible_words if word_validator.word_validator.is_valid_word(w, getattr(self, 'current_dictionary', 'NWL'))]
+                if len(valid_options) >= 1:
                     word = valid_options[0]  # Auto-correct the submission to the valid Either/Or letter
                     matched_word = word
                 elif len(possible_words) > 0:
