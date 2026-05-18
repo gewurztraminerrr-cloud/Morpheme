@@ -1307,20 +1307,7 @@ async function updateGameState(incomingState = null) {
 
                 // Display Both
                 let finderButtonHtml = '';
-                if (highlightedFoundWord) {
-                    const finders = state.players.filter(p =>
-                        p.submitted_words && p.submitted_words.some(sw =>
-                            (typeof sw === 'object' ? sw.word : sw).toUpperCase() === highlightedFoundWord
-                        )
-                    );
-                    if (finders.length > 0) {
-                        finderButtonHtml = `
-                            <button id="view-finders-btn" class="secondary" onclick="window.showFinderModal('${highlightedFoundWord}')" style="margin-top: 8px; font-size: 0.75rem; padding: 4px 10px; width: 100%; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); cursor: pointer; transition: all 0.2s;">
-                                View all finders [${finders.length}]
-                            </button>
-                        `;
-                    }
-                }
+                // Old finders button removed per user request
 
                 let totalPointsValue = state.total_points_count || 0;
                 // Cache from all_word_scores during intermission (populated server-side)
@@ -2251,11 +2238,16 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
                     p.submitted_words && p.submitted_words.some(sw =>
                         (typeof sw === 'object' ? sw.word : sw).toUpperCase() === highlightedFoundWord
                     )
-                ).map(p => p.username);
+                ).sort((a, b) => (b.rating || 0) - (a.rating || 0));
             }
             
-            const findersText = finders.length > 0 ? finders.join(', ') : 'None';
-            findersBtn.textContent = `Finders: ${findersText}`;
+            const findersNames = finders.map(p => p.username).join(', ') || 'None';
+            const findersCount = finders.length;
+            
+            findersBtn.innerHTML = `
+                <span>Finders: ${findersNames}</span>
+                <span style="font-weight: bold;">[${findersCount}]</span>
+            `;
             
             findersBtn.onclick = () => {
                 window.showFinderModal(highlightedFoundWord);
