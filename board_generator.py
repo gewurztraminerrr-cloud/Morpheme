@@ -1197,7 +1197,7 @@ class BoardGenerator:
             final_board,
             sorted(found_list),
             bonus_cell,
-            "Checkerboard",
+            "IO-Checkerboard",
             final_words_dict,
             1.0,
             final_bonus_word.upper() if final_bonus_word else None,
