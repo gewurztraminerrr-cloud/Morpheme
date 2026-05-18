@@ -1016,14 +1016,14 @@ class BoardGenerator:
             )
             
             # Final Rescue Sweep to hit the target floor (protecting format tiles)
-            board = self._perform_rescue_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty)
+            board = self._perform_rescue_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, is_checkerboard=is_checkerboard)
             
             display_min = min_word_length
             final_solve = self._solve_board(board, dictionary, (0, 99999), display_min, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=30.0)
             count = len(final_solve)
             
             if count > max_words:
-                board = self._perform_decimation_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty)
+                board = self._perform_decimation_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, is_checkerboard=is_checkerboard)
                 final_solve = self._solve_board(board, dictionary, (0, 99999), display_min, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=30.0)
                 count = len(final_solve)
             
@@ -1869,7 +1869,7 @@ class BoardGenerator:
 
         return board
 
-    def _perform_decimation_sweep(self, board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, excluded, difficulty, rescue_depth=15, protected_path=None):
+    def _perform_decimation_sweep(self, board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, excluded, difficulty, rescue_depth=15, protected_path=None, is_checkerboard=False):
         """
         USER REQUEST: Reduce word count by replacing high-density cells with 'dead' letters.
         """
@@ -1903,6 +1903,11 @@ class BoardGenerator:
             if time.time() - start_time > 20.0: break # Hard time limit
             f_p, r_p, c_p = (pos[0], pos[1], pos[2]) if depth > 1 else (0, pos[0], pos[1])
             
+            if is_checkerboard:
+                target_is_vowel = (f_p + r_p + c_p) % 2 != 0 if depth > 1 else (r_p + c_p) % 2 != 0
+                if target_is_vowel:
+                    continue # Skip vowel cells since we don't have dead vowels!
+            
             old_char = board[f_p][r_p][c_p] if depth > 1 else board[r_p][c_p]
             best_char, best_score = old_char, current_count
             
@@ -1934,7 +1939,7 @@ class BoardGenerator:
                 break
         return board
 
-    def _perform_rescue_sweep(self, board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, excluded, difficulty, rescue_depth=15, protected_path=None):
+    def _perform_rescue_sweep(self, board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, excluded, difficulty, rescue_depth=15, protected_path=None, is_checkerboard=False):
         """
         USER REQUEST: Perform IO operations on random locations until desired word count is reached.
         """
@@ -1968,6 +1973,12 @@ class BoardGenerator:
             old_char = board[f_p][r_p][c_p] if depth > 1 else board[r_p][c_p]
             best_char, max_score = old_char, current_count
             test_chars = ["S", "E", "R", "T", "A", "I", "O", "N", "L", "C", "D", "U", "H", "P", "B", "M", "G", "F", "W", "Y"]
+            if is_checkerboard:
+                target_is_vowel = (f_p + r_p + c_p) % 2 != 0 if depth > 1 else (r_p + c_p) % 2 != 0
+                if target_is_vowel:
+                    test_chars = [c for c in test_chars if self._is_vowel(c)]
+                else:
+                    test_chars = [c for c in test_chars if not self._is_vowel(c)]
             for char in list(set(test_chars)):
                 if char == old_char: continue
                 if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, char, r_p, c_p, f_p, depth=depth):
