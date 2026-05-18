@@ -4979,7 +4979,7 @@ function finishDragSelection(e) {
     const path = mouseState.selectedPath;
     if (path.length >= 1) {
         const word = path.map(p => {
-            const L = p.letter.includes('/') ? p.letter.split('/')[0] : p.letter;
+            const L = p.letter;
             return L === 'Q' ? 'QU' : L;
         }).join('');
         const serverPath = path.map(p => (p.face !== null && p.face !== undefined) ? [p.face, p.row, p.col] : [p.row, p.col]);
