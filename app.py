@@ -4900,6 +4900,72 @@ def get_leaderboard_data():
             LIMIT 50
         """, params).fetchall()
 
+        # 7. Highest number of Obscure words found (Max 1 per user)
+        cursor_obscure = conn.execute(f"""
+            SELECT rh.total_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id, rh.game_type
+            FROM round_history rh
+            JOIN users u ON rh.user_id = u.id
+            WHERE {base_where}
+        """, params).fetchall()
+        
+        obscure_processed = []
+        for r in cursor_obscure:
+            d = dict(r)
+            try:
+                words_list = json.loads(d.get('words_json', '[]'))
+                obscure_count = sum(1 for w in words_list if w.get('word', '').upper() in word_validator.unique_csw_words)
+                d['obscure_count'] = obscure_count
+            except:
+                d['obscure_count'] = 0
+            obscure_processed.append(d)
+            
+        user_obscure = {}
+        for d in obscure_processed:
+            user = d['username']
+            if user not in user_obscure or d['obscure_count'] > user_obscure[user]['obscure_count']:
+                user_obscure[user] = d
+                
+        best_obscure = sorted([x for x in user_obscure.values() if x['obscure_count'] > 0], key=lambda x: x['obscure_count'], reverse=True)[:50]
+
+        # 8. Avg Percentage of Words Found (Avg per user, Min 1 game)
+        cursor_avg_pct = conn.execute(f"""
+            SELECT rh.total_score, u.username, u.country_flag, u.avatar_url, rh.total_words_avail, rh.words_json
+            FROM round_history rh
+            JOIN users u ON rh.user_id = u.id
+            WHERE {base_where} AND rh.total_words_avail > 0
+        """, params).fetchall()
+        
+        user_pcts = {}
+        for r in cursor_avg_pct:
+            d = dict(r)
+            user = d['username']
+            try:
+                words_list = json.loads(d.get('words_json', '[]'))
+                num_words = len(words_list)
+                twa = d.get('total_words_avail', 0)
+                pct = num_words / twa if twa > 0 else 0
+                if user not in user_pcts:
+                    user_pcts[user] = []
+                user_pcts[user].append(pct)
+            except:
+                pass
+                
+        avg_pcts = []
+        for user, pcts in user_pcts.items():
+            if len(pcts) >= 1:
+                avg_pct = sum(pcts) / len(pcts) * 100
+                last_entry = next(r for r in reversed(cursor_avg_pct) if dict(r)['username'] == user)
+                d = dict(last_entry)
+                avg_pcts.append({
+                    'username': user,
+                    'country_flag': d['country_flag'],
+                    'avatar_url': d['avatar_url'],
+                    'avg_pct': round(avg_pct, 1),
+                    'games': len(pcts)
+                })
+                
+        best_avg_pcts = sorted(avg_pcts, key=lambda x: x['avg_pct'], reverse=True)[:50]
+
         # 6. Most Games Played (Activity Leaderboard)
         # Showing the rating for the specific mode if filtered, else global
         if game_type != 'all':
@@ -5017,7 +5083,9 @@ def get_leaderboard_data():
             'best_ratings': to_list(ratings),
             'avg_scores': to_list(avgs),
             'current_ratings': to_list(current_ratings),
-            'most_games': to_list(most_games)
+            'most_games': to_list(most_games),
+            'best_avg_pcts': best_avg_pcts,
+            'best_obscure': best_obscure
         })
 
     except Exception as e:
