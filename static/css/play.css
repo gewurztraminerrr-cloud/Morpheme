@@ -4061,7 +4061,7 @@ input[type=range]::-moz-range-track {
         display: grid !important;
         grid-template-columns: 1fr auto 1fr !important; /* True centering for middle item */
         align-items: center !important;
-        min-width: 280px !important; /* Make it longer horizontally */
+        min-width: 320px !important; /* Make it longer horizontally */
         width: auto !important;
         margin: 5px auto !important; /* Center the box itself and add small margin */
         padding: 5px 15px !important;
