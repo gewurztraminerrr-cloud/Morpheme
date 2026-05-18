@@ -2312,11 +2312,11 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     for w in all_period_words:
         word_text = w.get('word')
         points = int(w.get('points', 0))
-        if word_text not in unique_words or points > unique_words[word_text]['points']:
+        if word_text not in unique_words or points >= unique_words[word_text]['points']:
              unique_words[word_text] = {'word': word_text, 'points': points, 'timestamp': w.get('timestamp'), 'game_id': w.get('game_id')}
     
     unique_word_list = list(unique_words.values())
-    best_words = sorted(unique_word_list, key=lambda x: x['points'], reverse=True)[:50]
+    best_words = sorted(unique_word_list, key=lambda x: (x['points'], x['timestamp']), reverse=True)[:50]
 
     # Get config rating
     # 24-hour configurations exception: load global rating from users table
@@ -4830,13 +4830,13 @@ def get_leaderboard_data():
         scores = conn.execute(f"""
             SELECT * FROM (
                 SELECT rh.total_score, rh.user_rating, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id, rh.game_type,
-                ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.total_score DESC) as rn
+                ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.total_score DESC, rh.timestamp DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
                 WHERE {base_where}
             ) sub
             WHERE rn = 1
-            ORDER BY total_score DESC
+            ORDER BY total_score DESC, timestamp DESC
             LIMIT 50
         """, params).fetchall()
         
@@ -4844,13 +4844,13 @@ def get_leaderboard_data():
         words = conn.execute(f"""
             SELECT * FROM (
                 SELECT rh.best_word, rh.best_word_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id, rh.game_type,
-                ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.best_word_score DESC) as rn
+                ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.best_word_score DESC, rh.timestamp DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
                 WHERE {base_where} AND rh.best_word IS NOT NULL
             ) sub
             WHERE rn = 1
-            ORDER BY best_word_score DESC
+            ORDER BY best_word_score DESC, timestamp DESC
             LIMIT 50
         """, params).fetchall()
         
@@ -4858,13 +4858,13 @@ def get_leaderboard_data():
         pes = conn.execute(f"""
             SELECT * FROM (
                 SELECT rh.performance_ratio, rh.total_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id, rh.game_type, rh.total_words_avail,
-                ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.performance_ratio DESC) as rn
+                ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.performance_ratio DESC, rh.timestamp DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
                 WHERE {base_where} AND rh.performance_ratio > 0
             ) sub
             WHERE rn = 1
-            ORDER BY performance_ratio DESC
+            ORDER BY performance_ratio DESC, timestamp DESC
             LIMIT 50
         """, params).fetchall()
         
@@ -4892,7 +4892,7 @@ def get_leaderboard_data():
         user_pcts_list = {}
         for d in pcts_processed_all:
             user = d['username']
-            if user not in user_pcts_max or d['pct_found'] > user_pcts_max[user]['pct_found']:
+            if user not in user_pcts_max or d['pct_found'] > user_pcts_max[user]['pct_found'] or (d['pct_found'] == user_pcts_max[user]['pct_found'] and d['timestamp'] > user_pcts_max[user]['timestamp']):
                 user_pcts_max[user] = d
             if user not in user_pcts_list:
                 user_pcts_list[user] = []
@@ -4903,7 +4903,7 @@ def get_leaderboard_data():
             avg_pct = sum(pcts) / len(pcts) if pcts else 0
             d['avg_pct'] = round(avg_pct, 1)
                 
-        best_pcts = sorted(user_pcts_max.values(), key=lambda x: x['pct_found'], reverse=True)[:50]
+        best_pcts = sorted(user_pcts_max.values(), key=lambda x: (x['pct_found'], x['timestamp']), reverse=True)[:50]
 
         # 4. Best Ratings Achieved (Max achieved in period - One per user)
         # Note: We group by user_id to get one entry per user
@@ -4951,10 +4951,10 @@ def get_leaderboard_data():
         user_obscure = {}
         for d in obscure_processed:
             user = d['username']
-            if user not in user_obscure or d['obscure_count'] > user_obscure[user]['obscure_count']:
+            if user not in user_obscure or d['obscure_count'] > user_obscure[user]['obscure_count'] or (d['obscure_count'] == user_obscure[user]['obscure_count'] and d['timestamp'] > user_obscure[user]['timestamp']):
                 user_obscure[user] = d
                 
-        best_obscure = sorted([x for x in user_obscure.values() if x['obscure_count'] > 0], key=lambda x: x['obscure_count'], reverse=True)[:50]
+        best_obscure = sorted([x for x in user_obscure.values() if x['obscure_count'] > 0], key=lambda x: (x['obscure_count'], x['timestamp']), reverse=True)[:50]
 
         # 8. Avg Percentage of Words Found (Avg per user, Min 1 game)
         cursor_avg_pct = conn.execute(f"""
