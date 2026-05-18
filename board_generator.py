@@ -52,7 +52,7 @@ LETTER_FREQ_EASY = [
     450,  # F (Boosted per user request)
     300,  # G
     550,  # H (Boosted per user request)
-    750,  # I
+    500,  # I (Reduced per user request)
     1,    # J (Hardened)
     2,    # K (Hardened)
     560,  # L
@@ -81,7 +81,7 @@ LETTER_FREQ_SUPER_DENSITY = [
     250,  # F
     150,  # G
     300,  # H
-    1100, # I
+    700,  # I (Reduced per user request)
     1,    # J (Near Zero)
     2,    # K (Near Zero)
     500,  # L
