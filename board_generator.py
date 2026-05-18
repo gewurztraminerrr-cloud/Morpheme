@@ -1154,8 +1154,8 @@ class BoardGenerator:
                     print(f"[BoardGen] Hit max spot limit (3). Proceeding with current board.")
                     break
             
-            if min_words <= final_count <= max_words:
-                print(f"[BoardGen] ✓ IO-Base Compliance: {final_count} words (Range: {min_words}-{max_words})")
+            if min_w <= final_count <= max_w:
+                print(f"[BoardGen] ✓ IO-Base Compliance: {final_count} words (Range: {min_w}-{max_w})")
                 break
             else:
                 print(f"[BoardGen] ✗ IO-Base Non-Compliance: {final_count} words. Retrying...")
