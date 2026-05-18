@@ -2247,6 +2247,11 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             }
         }
 
+        const achAvgPctHeaderEl = document.getElementById('ach-avg-pct-header');
+        if (achAvgPctHeaderEl) {
+            achAvgPctHeaderEl.textContent = (stats.avg_pct_found || 0) + '%';
+        }
+
         const renderAchRow = (r, cols) => {
             // Cache if not present or upgrade if better data available
             if (!window.lastRenderedRounds) window.lastRenderedRounds = [];

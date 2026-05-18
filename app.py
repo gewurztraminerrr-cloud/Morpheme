@@ -2179,7 +2179,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     elif period == 'year': time_filter = "AND date(timestamp, 'localtime') >= date('now', '-365 days', 'localtime')"
         
     query = f'''
-        SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions
+        SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions, total_words_avail
         FROM round_history
         WHERE user_id = ? AND game_type = ? AND board_dimensions = ? AND round_duration = ? {time_filter}
         ORDER BY timestamp DESC
