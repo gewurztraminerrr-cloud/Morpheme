@@ -2142,7 +2142,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     
     # 1. Get Matching Rounds (using the board_dimensions column)
     query_all = '''
-        SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions
+        SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions, total_words_avail
         FROM round_history
         WHERE user_id = ? AND game_type = ? AND board_dimensions = ? AND round_duration = ?
         ORDER BY timestamp DESC
@@ -2274,6 +2274,8 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         if num_words > 0:
             total_l = sum(len(str(w.get('word', ''))) for w in words if isinstance(w, dict))
             avg_l = round(total_l / num_words, 1)
+        twa = row[9] if len(row) > 9 else 0
+        pct_found = round(num_words / twa * 100, 1) if twa > 0 else 0
         processed = {
             'game_id': g_id, 'room_id': r_id, 'round_number': r_num, 'timestamp': ts,
             'total_score': my_score, 'num_words': len(words), 'is_win': is_win,
@@ -2282,7 +2284,8 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             'top_word': top_word,
             'all_players': room_entries,
             'words': words,
-            'board': json.loads(row[5])
+            'board': json.loads(row[5]),
+            'pct_found': pct_found
         }
         performance_list.append(processed)
 
@@ -2328,6 +2331,10 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
 
     conn.close()
     
+    matching_valid = [p for p in performance_list if p.get('pct_found', 0) > 0]
+    avg_pct_found = round(sum(p['pct_found'] for p in matching_valid) / len(matching_valid), 1) if matching_valid else 0
+    max_pct_found = round(max([p['pct_found'] for p in matching_valid]) if matching_valid else 0, 1)
+
     return jsonify({
         'username': username,
         'rating': rating,
@@ -2335,6 +2342,8 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         'stats': {
             'total_score': total_period_score,
             'total_words': total_period_words,
+            'avg_pct_found': avg_pct_found,
+            'max_pct_found': max_pct_found,
             'games_played': len(period_matching),
             'wins': period_wins,
             'win_rate': round((period_wins / len(period_matching))*100, 1) if period_matching else 0,

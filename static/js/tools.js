@@ -2232,6 +2232,19 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         document.getElementById('ach-avg-score').textContent = (stats.avg_score || 0).toLocaleString();
         document.getElementById('ach-avg-words').textContent = stats.avg_words || '0';
         document.getElementById('ach-avg-word-pts').textContent = stats.avg_word_pts || '0';
+        
+        const achAvgPctEl = document.getElementById('ach-avg-pct');
+        if (achAvgPctEl) {
+            achAvgPctEl.textContent = (stats.avg_pct_found || 0) + '%';
+            if (stats.max_pct_found > 50) {
+                achAvgPctEl.textContent += ` (Max: ${stats.max_pct_found}%)`;
+                achAvgPctEl.style.color = '#ff4a4a';
+                achAvgPctEl.style.fontWeight = '800';
+            } else {
+                achAvgPctEl.style.color = '#60a5fa'; // Reset color
+                achAvgPctEl.style.fontWeight = '800';
+            }
+        }
 
         const renderAchRow = (r, cols) => {
             // Cache if not present or upgrade if better data available
