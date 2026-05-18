@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
             data.best_scores = processList(data.best_scores);
             data.best_words = processList(data.best_words);
             data.best_pes = processList(data.best_pes);
-            // etc if other replayable lists are added
+            data.best_pcts = processList(data.best_pcts);
 
             leaderboardData = data;
 
@@ -150,7 +150,8 @@ document.addEventListener('DOMContentLoaded', () => {
             window.lastRenderedRounds = [
                 ...(data.best_scores || []),
                 ...(data.best_words || []),
-                ...(data.best_pes || [])
+                ...(data.best_pes || []),
+                ...(data.best_pcts || [])
             ];
 
             renderLeaderboard(data);
@@ -230,6 +231,22 @@ document.addEventListener('DOMContentLoaded', () => {
                   <td class="col-action">
                     ${renderReplayBtn(row)}
                 </td>
+            `;
+        });
+
+        createTableCard(contentArea, "Highest Percentage of Words Found", data.best_pcts, (row, i) => {
+            return `
+                 <td class="col-rank">#${i + 1}</td>
+                 <td class="col-user">
+                      ${renderUserLink(row)}
+                      ${renderTypeBadge(row.game_type)}
+                 </td>
+                 <td class="col-val highlight" style="${row.pct_found > 50 ? 'color: #ff4a4a;' : ''}">${row.pct_found || 0}%</td>
+                 <td class="col-meta">Pts: ${row.total_score}</td>
+                 <td class="col-date">${formatDate(row.timestamp)}</td>
+                  <td class="col-action">
+                     ${renderReplayBtn(row)}
+                 </td>
             `;
         });
 

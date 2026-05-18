@@ -4861,6 +4861,21 @@ def get_leaderboard_data():
             LIMIT 50
         """, params).fetchall()
         
+        # 5. Best Percentage of Words Found (Max 1 per user)
+        pcts = conn.execute(f"""
+            SELECT * FROM (
+                SELECT rh.total_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id, rh.game_type, rh.total_words_avail,
+                (CAST(json_array_length(rh.words_json) AS FLOAT) / rh.total_words_avail) as pct_val,
+                ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY (CAST(json_array_length(rh.words_json) AS FLOAT) / rh.total_words_avail) DESC) as rn
+                FROM round_history rh
+                JOIN users u ON rh.user_id = u.id
+                WHERE {base_where} AND rh.total_words_avail > 0
+            ) sub
+            WHERE rn = 1
+            ORDER BY pct_val DESC
+            LIMIT 50
+        """, params).fetchall()
+
         # 4. Best Ratings Achieved (Max achieved in period - One per user)
         # Note: We group by user_id to get one entry per user
         ratings = conn.execute(f"""
@@ -4982,10 +4997,23 @@ def get_leaderboard_data():
                 d['pct_found'] = 0
             pes_processed.append(d)
 
+        pcts_processed = []
+        for r in pcts:
+            d = dict(r)
+            try:
+                words_list = json.loads(d.get('words_json', '[]'))
+                num_words = len(words_list)
+                twa = d.get('total_words_avail', 0)
+                d['pct_found'] = round(num_words / twa * 100, 1) if twa > 0 else 0
+            except:
+                d['pct_found'] = 0
+            pcts_processed.append(d)
+
         return jsonify({
             'best_scores': to_list(scores),
             'best_words': to_list(words),
             'best_pes': pes_processed,
+            'best_pcts': pcts_processed,
             'best_ratings': to_list(ratings),
             'avg_scores': to_list(avgs),
             'current_ratings': to_list(current_ratings),

@@ -2334,7 +2334,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             const sortedByCount = [...stats.best_word_counts].sort((a, b) => b.num_words - a.num_words);
             tableWordCounts.innerHTML = sortedByCount.map(r => renderAchRow(r, [
                 { val: r.num_words, style: 'font-weight: 800; color: #a5b4fc;' },
-                { val: r.avg_len + ' len', style: 'color: rgba(255,255,255,0.6);' },
+                { val: `${r.avg_len} len | ${r.pct_found || 0}%`, style: 'color: rgba(255,255,255,0.6);' },
                 { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
             ])).join('');
         }
