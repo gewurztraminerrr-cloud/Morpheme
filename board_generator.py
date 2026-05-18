@@ -1149,9 +1149,9 @@ class BoardGenerator:
                     print(f"[BoardGen] Found compliant board after optimizing {optimized_count} spots!")
                     break
                 
-                # Safety break if taking too long (max 6 spots!)
-                if optimized_count >= 6:
-                    print(f"[BoardGen] Hit max spot limit (6). Proceeding with current board.")
+                # Safety break if taking too long (max 3 spots!)
+                if optimized_count >= 3:
+                    print(f"[BoardGen] Hit max spot limit (3). Proceeding with current board.")
                     break
             
             if min_words <= final_count <= max_words:
