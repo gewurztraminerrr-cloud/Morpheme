@@ -262,21 +262,21 @@ class BoardGenerator:
         
         # Use a unified threshold system
         if is_large:
-            # Large Grids (6x8, 5x7, 3x3x3): Easy <= 25%, Medium 26-44%, Hard >= 45%
-            if rat >= 0.45: return "Hard"
-            if rat >= 0.26: return "Medium"
+            # Large Grids (6x8, 5x7, 3x3x3): Optimized for lower uniqueness on large grids
+            if rat >= 0.36: return "Hard"
+            if rat >= 0.21: return "Medium"
             return "Easy"
         else:
             # Small Grids (4x4, 4x6)
             if dict_upper == "CSW":
-                # CSW Small: Easy <= 44%, Medium 45-64%, Hard >= 65%
-                if rat >= 0.65: return "Hard"
-                if rat >= 0.45: return "Medium"
+                # CSW Small: Shifted higher because CSW has more obscure words
+                if rat >= 0.56: return "Hard"
+                if rat >= 0.41: return "Medium"
                 return "Easy"
             else:
-                # NWL Small: Easy <= 25%, Medium 26-44%, Hard >= 45%
-                if rat >= 0.45: return "Hard"
-                if rat >= 0.26: return "Medium"
+                # NWL Small: Following User's 30/40/41 rule
+                if rat >= 0.41: return "Hard"
+                if rat >= 0.31: return "Medium"
                 return "Easy"
         
         # CRITICAL DEBUG: This helps explain WHY a label was chosen in the logs.

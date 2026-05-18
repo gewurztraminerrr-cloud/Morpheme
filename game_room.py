@@ -2158,8 +2158,8 @@ class RoomManager:
             r_num = int(dims[1] if len(dims) == 3 else dims[0])
             c_num = int(dims[2] if len(dims) == 3 else dims[1])
             achieved_diff = self.board_generator.get_difficulty_label(u_ratio, r_num, c_num, room.spinner_params.get('dictionary', 'NWL'), depth=d_num, board=room.board)
-            room.current_difficulty = achieved_diff
-            room.spinner_params['difficulty'] = achieved_diff
+            room.current_difficulty = f"{achieved_diff} ({int(u_ratio * 100)}%)"
+            room.spinner_params['difficulty'] = room.current_difficulty
             room.current_uniqueness = u_ratio
             room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
             room.current_word_count_range = room.spinner_params.get('word_count_range', 'Varying...')
@@ -3864,9 +3864,9 @@ class RoomManager:
                     room.solving_complete = True # STOPS SERVER SEARCH
                     
                     # Sync UI
-                    room.spinner_params['difficulty'] = achieved_diff
+                    room.current_difficulty = f"{achieved_diff} ({int(u_ratio * 100)}%)"
+                    room.spinner_params['difficulty'] = room.current_difficulty
                     room.spinner_params['uniqueness'] = u_ratio
-                    room.current_difficulty = achieved_diff
                     room.current_uniqueness = u_ratio
                     
                     self.trigger_room_update(room_id)
