@@ -4004,10 +4004,10 @@ input[type=range]::-moz-range-track {
         gap: 0 !important;
     }
     .words-panel .words-table-box {
-        border-radius: 12px 12px 0 0 !important;
+        border-radius: 12px !important;
     }
     .words-panel .definitions-panel {
-        border-radius: 0 0 12px 12px !important;
+        border-radius: 12px !important;
     }
 
     .play-header {
