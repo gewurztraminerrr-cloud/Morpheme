@@ -709,7 +709,7 @@ class BoardGenerator:
         num_tiles = rows * cols * depth
         
         # USER REQUEST: Use special Checkerboard IO and Base procedure for large boards unless pure Checkerboard is requested
-        if rows * cols >= 35 and "checkerboard" not in str(board_format).lower():
+        if rows * cols >= 35 and "checkerboard" not in str(board_format).lower() and "base" not in str(board_format).lower():
             print(f"[BoardGen] Calling special procedure: Checkerboard IO and Base (Otherwise)")
             return self._generate_io_base_board_procedure(
                 dimensions, bonus_word, word_count_range, dictionary, min_word_length, difficulty
@@ -1096,7 +1096,7 @@ class BoardGenerator:
                 bonus_word="", 
                 word_count_range=base_target,
                 dictionary=dictionary,
-                board_format="Normal",
+                board_format="Normal_Base",
                 min_word_length=min_word_length,
                 difficulty=difficulty,
             )
