@@ -244,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
                       ${renderTypeBadge(row.game_type)}
                  </td>
                  <td class="col-val highlight" style="${row.pct_found > 50 ? 'color: #ff4a4a;' : ''}">${row.pct_found || 0}%</td>
-                 <td class="col-meta">Pts: ${row.total_score}</td>
+                 <td class="col-meta">Pts: ${row.total_score}<br>User Avg: ${row.avg_pct}%</td>
                  <td class="col-date">${formatDate(row.timestamp)}</td>
                   <td class="col-action">
                      ${renderReplayBtn(row)}

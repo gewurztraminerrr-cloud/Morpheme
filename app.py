@@ -4889,10 +4889,19 @@ def get_leaderboard_data():
             pcts_processed_all.append(d)
             
         user_pcts_max = {}
+        user_pcts_list = {}
         for d in pcts_processed_all:
             user = d['username']
             if user not in user_pcts_max or d['pct_found'] > user_pcts_max[user]['pct_found']:
                 user_pcts_max[user] = d
+            if user not in user_pcts_list:
+                user_pcts_list[user] = []
+            user_pcts_list[user].append(d['pct_found'])
+            
+        for user, d in user_pcts_max.items():
+            pcts = user_pcts_list.get(user, [])
+            avg_pct = sum(pcts) / len(pcts) if pcts else 0
+            d['avg_pct'] = round(avg_pct, 1)
                 
         best_pcts = sorted(user_pcts_max.values(), key=lambda x: x['pct_found'], reverse=True)[:50]
 
