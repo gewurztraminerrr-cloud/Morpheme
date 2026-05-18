@@ -1104,7 +1104,7 @@ class BoardGenerator:
             elif max_w <= 300:
                 base_val = 100
             else:
-                base_val = 150
+                base_val = 200
                 
             base_target = (base_val - 10, base_val + 10) if attempt == 0 else (base_val - 20, base_val + 5)
             
