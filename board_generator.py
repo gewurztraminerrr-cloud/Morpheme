@@ -799,7 +799,7 @@ class BoardGenerator:
                             flat_letters.extend(cell.split('/'))
                 
                 a_count = sum(1 for char in flat_letters if char == 'A')
-                max_as = max(5, int(rows * cols * 0.12)) # Max 12% or at least 5
+                max_as = 6 if rows * cols >= 48 else 5 # Max 6 for 6x8, 5 for 5x7
                 if a_count > max_as:
                     print(f"[BoardGen] ATTEMPT {attempts}: Too many A's ({a_count} > {max_as}). Retrying...")
                     continue
