@@ -2055,11 +2055,10 @@ function renderRatingsGrid(configRatings, user = null) {
                     <div class="rating-box-info" style="flex: 1;">
                         <div class="rating-box-mode" style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800;">${mode === '3d' ? 'CUBE' : mode}</div>
                         <div class="rating-box-config" style="font-weight: 700;">${board} | ${formatTimeShort(time)}</div>
-                        <div style="display: flex; gap: 10px; margin-top: 4px; font-size: 0.65rem; color: rgba(255,255,255,0.3); font-weight: 700;">
-                           <span>AVG S: <span style="color: #fff;">${configData.avg_score}</span></span>
-                           <span>AVG P: <span style="color: #fff;">${configData.avg_perf}</span></span>
-                           <span>AVG %: <span style="color: #fff;">${configData.avg_pct_found || 0}%</span></span>
-                           ${configData.max_pct_found > 50 ? `<span>MAX %: <span style="color: #ff4a4a;">${configData.max_pct_found}%</span></span>` : ''}
+                        <div style="display: flex; flex-direction: column; gap: 2px; margin-top: 4px; font-size: 0.65rem; color: rgba(255,255,255,0.3); font-weight: 700;">
+                           <div>AVG S: <span style="color: #fff;">${configData.avg_score}</span> | AVG P: <span style="color: #fff;">${configData.avg_perf}</span></div>
+                           <div>Avg Words Found: <span style="color: #fff;">${configData.avg_pct_found || 0}%</span></div>
+                           ${configData.max_pct_found > 50 ? `<div>Max Words Found: <span style="color: #ff4a4a;">${configData.max_pct_found}%</span></div>` : ''}
                         </div>
                     </div>
                     <div class="rating-box-value" style="color: ${rColor}; font-size: 1.25rem; font-weight: 900; margin: 0 15px;">${rating}</div>
@@ -2237,7 +2236,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         if (achAvgPctEl) {
             achAvgPctEl.textContent = (stats.avg_pct_found || 0) + '%';
             if (stats.max_pct_found > 50) {
-                achAvgPctEl.textContent += ` (Max: ${stats.max_pct_found}%)`;
+                achAvgPctEl.textContent += ` (Max Words Found: ${stats.max_pct_found}%)`;
                 achAvgPctEl.style.color = '#ff4a4a';
                 achAvgPctEl.style.fontWeight = '800';
             } else {
