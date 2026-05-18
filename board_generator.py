@@ -1109,15 +1109,12 @@ class BoardGenerator:
             base_target = (base_val - 10, base_val + 10) if attempt == 0 else (base_val - 20, base_val + 5)
             
             print(f"[BoardGen] Procedure: IO-Base Checkerboard (Attempt {attempt}). Base target: {base_target}")
-            base_board, base_words, _, _, base_dict, _, _ = self.generate_board(
-                dimensions=dimensions,
-                bonus_word="", 
-                word_count_range=base_target,
-                dictionary=dictionary,
-                board_format="Checkerboard_Base",
-                min_word_length=min_word_length,
-                difficulty=difficulty,
-            )
+            weights = LETTER_FREQ_SUPER_DENSITY if min_word_length >= 4 else LETTER_FREQ_EASY
+            base_board = self._create_checkerboard(rows, cols, weights, depth=1, difficulty=difficulty)
+            print(f"[BoardGen] Pure Checkerboard base generated directly.")
+            
+            final_solve = self._solve_board(base_board, dictionary, (0, 99999), min_word_length, max_depth=10, store_paths=True, timeout=10.0)
+            base_words = list(final_solve.keys())
 
             # 2. IO Optimization
             print(f"[BoardGen] Optimizing IO tiles (Random Walk)...")
