@@ -1299,6 +1299,23 @@ def get_user_count():
     finally:
         conn.close()
 
+@app.route('/api/word_tally/<word>', methods=['GET'])
+def get_word_tally_api(word):
+    word = word.upper()
+    total = 0
+    try:
+        with open('word_tally.log', 'r') as f:
+            for line in f:
+                try:
+                    data = json.loads(line)
+                    tally = data.get('tally', {})
+                    total += tally.get(word, 0)
+                except json.JSONDecodeError:
+                    continue
+    except FileNotFoundError:
+        pass
+    return jsonify({'word': word, 'count': total})
+
 
 @app.route('/api/donations/recent', methods=['GET'])
 def get_recent_donations():

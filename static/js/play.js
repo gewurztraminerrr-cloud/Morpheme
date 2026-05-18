@@ -6066,27 +6066,50 @@ window.showFinderModal = function (word) {
             p.submitted_words && p.submitted_words.some(sw =>
                 (typeof sw === 'object' ? sw.word : sw).toUpperCase() === wordUpper
             )
-        );
+        ).sort((a, b) => (b.rating || 0) - (a.rating || 0));
 
-        if (finders.length === 0) {
-            body.innerHTML = '<p class="placeholder" style="padding: 20px; text-align: center;">No one has found this word yet.</p>';
-        } else {
-            body.innerHTML = finders.map(p => {
-                const rating = p.rating || 0;
-                const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#fff';
-                return `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); margin-bottom: 4px; border-radius: 6px;">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="width: 14px; height: 14px; background: ${rColor}; border-radius: 3px; box-shadow: 0 0 10px ${rColor}22;"></div>
-                            <span style="font-weight: 700; font-size: 0.95rem;">${p.username}</span>
-                        </div>
-                        <span style="opacity: 0.5; font-size: 0.8rem; font-weight: 600;">${rating}</span>
+        const findersCount = finders.length;
+
+        // Fetch tally
+        body.innerHTML = '<p class="placeholder" style="padding: 20px; text-align: center;">Loading tally...</p>';
+        
+        fetch(`/api/word_tally/${wordUpper}`)
+            .then(res => res.json())
+            .then(data => {
+                const totalTally = data.count || 0;
+                
+                let html = `
+                    <div style="padding: 10px; font-size: 0.9rem; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
+                        <strong>${wordUpper}</strong> has been found <strong>${totalTally}</strong> times now. The ${findersCount} of the ${totalTally} were these users:
                     </div>
                 `;
-            }).join('');
-        }
+                
+                if (findersCount === 0) {
+                    html += '<p class="placeholder" style="padding: 20px; text-align: center;">No one has found this word yet.</p>';
+                } else {
+                    html += finders.map(p => {
+                        const rating = p.rating || 0;
+                        const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#fff';
+                        return `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); margin-bottom: 4px; border-radius: 6px;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="width: 14px; height: 14px; background: ${rColor}; border-radius: 3px; box-shadow: 0 0 10px ${rColor}22;"></div>
+                                    <span style="font-weight: 700; font-size: 0.95rem;">${p.username}</span>
+                                </div>
+                                <span style="opacity: 0.5; font-size: 0.8rem; font-weight: 600;">${rating}</span>
+                            </div>
+                        `;
+                    }).join('');
+                }
+                
+                body.innerHTML = html;
+            })
+            .catch(err => {
+                console.error('[showFinderModal] Error fetching tally:', err);
+                body.innerHTML = '<p class="placeholder" style="padding: 20px; text-align: center;">Error loading tally.</p>';
+            });
 
         modal.classList.remove('hidden');
-        modal.style.display = 'flex'; // Ensure it's visible despite any other classes
+        modal.style.display = 'flex';
     }
 };
