@@ -788,6 +788,21 @@ class BoardGenerator:
                     continue
             else:
                 board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty)
+
+            # USER REQUEST: Limit the number of A's on large boards (5x7, 6x8)
+            if rows * cols >= 35:
+                flat_letters = []
+                for f in range(len(board)):
+                    for r in range(len(board[f])):
+                        for c in range(len(board[f][r])):
+                            cell = str(board[f][r][c])
+                            flat_letters.extend(cell.split('/'))
+                
+                a_count = sum(1 for char in flat_letters if char == 'A')
+                max_as = max(5, int(rows * cols * 0.12)) # Max 12% or at least 5
+                if a_count > max_as:
+                    print(f"[BoardGen] ATTEMPT {attempts}: Too many A's ({a_count} > {max_as}). Retrying...")
+                    continue
             
             # --- BONUS WORD EMBEDDING ---
             embedded_path = None
