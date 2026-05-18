@@ -583,6 +583,7 @@ async function updateGameState(incomingState = null) {
 
         // Detect transition to intermission (round end)
         if (previousState && previousState.state === 'active' && state.state === 'intermission') {
+            stopRotatingLetters();
             const wordInput = document.getElementById('word-input');
             const chatInput = document.getElementById('chat-input');
             const isMobile = window.innerWidth <= 992;
@@ -1110,6 +1111,14 @@ async function updateGameState(incomingState = null) {
         const isNewRound = (state.state === 'active' && (lastStateStr !== 'active' || (previousState && state.current_round !== previousState.current_round)));
         if (lastStateStr !== state.state || isNewRound) {
             if (isNewRound) {
+                // Handle Rotating Letters format
+                const bFormat = state.current_board_format || '';
+                if (bFormat.toLowerCase().includes('rotating')) {
+                    startRotatingLetters();
+                } else {
+                    stopRotatingLetters();
+                }
+
                 // Clear any winner announcement from Definitions Panel
                 const defContent = document.getElementById('definition-content');
                 const defHeader = document.getElementById('definition-header');
@@ -3381,17 +3390,20 @@ function updateBoardCell(cell, r, c, letter, grayed, f, state = null) {
             const container = document.createElement('div');
             container.className = 'dual-letter-container';
             const topEl = document.createElement('span');
+            topEl.className = 'letter-content';
             topEl.textContent = (top === 'Q' ? 'QU' : top);
             container.appendChild(topEl);
             const divider = document.createElement('div');
             divider.className = 'dual-divider';
             container.appendChild(divider);
             const bottomEl = document.createElement('span');
+            bottomEl.className = 'letter-content';
             bottomEl.textContent = (bottom === 'Q' ? 'QU' : bottom);
             container.appendChild(bottomEl);
             cell.appendChild(container);
         } else {
             const letterSpan = document.createElement('span');
+            letterSpan.className = 'letter-content';
             letterSpan.textContent = letter === 'Q' ? 'QU' : letter;
             cell.appendChild(letterSpan);
         }
@@ -3550,6 +3562,41 @@ function createBoardCell(r, c, letter, grayed, f, state = null) {
     cell.dataset.letter = letter;
     updateBoardCell(cell, r, c, letter, grayed, f, state);
     return cell;
+}
+
+function startRotatingLetters() {
+    if (window.rotatingLettersInterval) clearInterval(window.rotatingLettersInterval);
+    
+    // Initial rotation
+    rotateLettersRandomly();
+    
+    window.rotatingLettersInterval = setInterval(() => {
+        rotateLettersRandomly();
+    }, 4000); // Rotate every 4 seconds
+}
+
+function rotateLettersRandomly() {
+    const letters = document.querySelectorAll('.board-cell .letter-content');
+    letters.forEach(el => {
+        const angles = [0, 90, 180, 270];
+        const angle = angles[Math.floor(Math.random() * angles.length)];
+        el.style.transform = `rotate(${angle}deg)`;
+        el.style.transition = 'transform 0.5s ease'; // Smooth rotation
+        el.style.display = 'inline-block'; // Ensure transform works on spans!
+    });
+}
+
+function stopRotatingLetters() {
+    if (window.rotatingLettersInterval) {
+        clearInterval(window.rotatingLettersInterval);
+        window.rotatingLettersInterval = null;
+    }
+    // Reset rotations
+    const letters = document.querySelectorAll('.board-cell .letter-content');
+    letters.forEach(el => {
+        el.style.transform = '';
+        el.style.transition = '';
+    });
 }
 
 /**

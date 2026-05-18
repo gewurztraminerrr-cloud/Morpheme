@@ -193,8 +193,8 @@ class SpinnerSet:
             return 'Normal'
             
         result = random.choices(
-            ['Normal', 'Checkerboard', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Density'],
-            weights=[80, 8, 2, 2, 2, 2, 2, 2]
+            ['Normal', 'Checkerboard', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Density', 'Rotating Letters'],
+            weights=[78, 8, 2, 2, 2, 2, 2, 2, 2]
         )[0]
         
         if result == 'Mania':
