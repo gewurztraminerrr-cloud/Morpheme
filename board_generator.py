@@ -1056,9 +1056,17 @@ class BoardGenerator:
             d_upper = str(dictionary).upper()
             unique_dict_name = "UniqueNWL" if d_upper == "NWL" else "UniqueCSW"
 
-            # 1. Generate Base Board (Target ~100 words) - NO EMBEDDING
-            # We target a tight range for the base to leave room for optimization
-            base_target = (85, 95) if attempt == 0 else (70, 85)
+            # 1. Generate Base Board - NO EMBEDDING
+            # USER REQUEST: Scale base board words based on Spinner Set target
+            min_w, max_w = self._parse_word_count_range(word_count_range)
+            if max_w <= 200:
+                base_val = 50
+            elif max_w <= 300:
+                base_val = 100
+            else:
+                base_val = 150
+                
+            base_target = (base_val - 10, base_val + 10) if attempt == 0 else (base_val - 20, base_val + 5)
             
             print(f"[BoardGen] Procedure: IO-Base Checkerboard (Attempt {attempt}). Base target: {base_target}")
             base_board, base_words, _, _, base_dict, _, _ = self.generate_board(
