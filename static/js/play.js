@@ -2244,12 +2244,16 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         // Save current selection
         const prevSelection = window.selectedAllWordsLength || 'all';
         
-        // Populate dropdown
-        let optionsHtml = '<option value="all">All Lengths</option>';
-        availableLengths.forEach(len => {
-            optionsHtml += `<option value="${len}">${len}LW</option>`;
-        });
-        filterDropdown.innerHTML = optionsHtml;
+        // Populate dropdown only if lengths have changed
+        const currentLengthsStr = availableLengths.join(',');
+        if (filterDropdown.dataset.currentLengths !== currentLengthsStr) {
+            let optionsHtml = '<option value="all">All Lengths</option>';
+            availableLengths.forEach(len => {
+                optionsHtml += `<option value="${len}">${len}LW</option>`;
+            });
+            filterDropdown.innerHTML = optionsHtml;
+            filterDropdown.dataset.currentLengths = currentLengthsStr;
+        }
         
         // Restore selection if it's still available
         if (availableLengths.includes(parseInt(prevSelection)) || prevSelection === 'all') {
