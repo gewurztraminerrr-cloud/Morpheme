@@ -2383,6 +2383,9 @@ class BoardGenerator:
         word_validator.get_use_added_words()
         
         d_upper = str(dictionary).upper()
+        if d_upper in ["UNIQUECSW", "CSW"]:
+            word_validator.ensure_csw_loaded()
+            
         if d_upper == "UNIQUENWL":
             trie_root = word_validator.unique_nwl_trie
         elif d_upper == "UNIQUECSW":
@@ -3043,6 +3046,10 @@ class BoardGenerator:
         
         # Determine the correct starting Trie
         from word_validator import word_validator
+        d_upper = str(dictionary).upper()
+        if d_upper in ["UNIQUECSW", "CSW"]:
+            word_validator.ensure_csw_loaded()
+            
         if dictionary == 'UniqueNWL':
             start_trie = word_validator.unique_nwl_trie
         elif dictionary == 'UniqueCSW':
