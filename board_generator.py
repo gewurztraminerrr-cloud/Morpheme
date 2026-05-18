@@ -1096,7 +1096,7 @@ class BoardGenerator:
                 bonus_word="", 
                 word_count_range=base_target,
                 dictionary=dictionary,
-                board_format="Normal_Base",
+                board_format="Checkerboard_Base",
                 min_word_length=min_word_length,
                 difficulty=difficulty,
             )
@@ -1192,7 +1192,7 @@ class BoardGenerator:
             final_board,
             sorted(found_list),
             bonus_cell,
-            "IO-Checkerboard",
+            "Checkerboard",
             final_words_dict,
             1.0,
             final_bonus_word.upper() if final_bonus_word else None,
