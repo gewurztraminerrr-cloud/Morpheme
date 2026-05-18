@@ -6078,9 +6078,11 @@ window.showFinderModal = function (word) {
             .then(data => {
                 const totalTally = data.count || 0;
                 
+                const totalCombined = totalTally + findersCount;
+                
                 let html = `
                     <div style="padding: 10px; font-size: 0.9rem; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
-                        <strong>${wordUpper}</strong> has been found <strong>${totalTally}</strong> times now. The ${findersCount} of the ${totalTally} were these users:
+                        <strong>${wordUpper}</strong> has been found <strong>${totalCombined}</strong> times total since Morpheme began.
                     </div>
                 `;
                 
