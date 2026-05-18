@@ -1064,9 +1064,16 @@ class BoardGenerator:
                 count = len(final_solve)
             
             # --- FINAL SANITIZATION (protecting format tiles) ---
-            self._sanitize_rare_letters(board, depth, protected_positions=all_excluded)
+            self._sanitize_rare_letters(board, depth, protected_positions=all_excluded, is_checkerboard=is_checkerboard)
             if difficulty in ["Medium", "Hard"]:
-                self._sanitize_forbidden_sequences(board, depth, protected_positions=all_excluded)
+                self._sanitize_forbidden_sequences(board, depth, protected_positions=all_excluded, is_checkerboard=is_checkerboard)
+            
+            # USER REQUEST: Re-solve after sweeps and sanitization for final confirmation
+            # This ensures the bonus word and all words in the list are ACTUALLY on the board!
+            final_solve = self._solve_board(
+                board, dictionary, (0, 99999), display_min, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=30.0
+            )
+            count = len(final_solve)
             
             if min_words <= count <= max_words or _attempt >= 5:
                 if _attempt >= 5:
