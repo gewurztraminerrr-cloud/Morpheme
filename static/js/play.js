@@ -575,25 +575,13 @@ async function updateGameState(incomingState = null) {
         if (previousState && previousState.state === 'active' && state.state === 'intermission') {
             const wordInput = document.getElementById('word-input');
             const chatInput = document.getElementById('chat-input');
+            const isMobile = window.innerWidth <= 992;
             
-            // User Request: Prevent ALL users from spillover chatting for 2s
-            if (chatInput) {
+            // User Request: Prevent ALL users from spillover chatting for 2s (Skip for mobile!)
+            if (chatInput && !isMobile) {
                 chatInput.disabled = true;
                 const originalPlaceholder = chatInput.placeholder;
                 chatInput.placeholder = "Chat disabled for 2s...";
-                
-                // Clear word input immediately so they see it's over
-                if (wordInput) {
-                    wordInput.value = '';
-                    wordInput.blur();
-                }
-
-                // Reset mouse selection state if it was active
-                if (typeof mouseState !== 'undefined') {
-                    mouseState.isDown = false;
-                    mouseState.selectedPath = [];
-                    if (mouseState.visitedCells) mouseState.visitedCells.clear();
-                }
                 
                 if (window.chatFocusTimeout) clearTimeout(window.chatFocusTimeout);
                 window.chatFocusTimeout = setTimeout(() => {
@@ -601,10 +589,22 @@ async function updateGameState(incomingState = null) {
                     chatInput.placeholder = originalPlaceholder || "Type message...";
                     // Ensure we are still in intermission before stealing focus from potentially new round input
                     if (window.lastGameState && window.lastGameState.state === 'intermission') {
-                        const isMobile = window.innerWidth <= 992;
-                        if (!isMobile) chatInput.focus();
+                        chatInput.focus();
                     }
                 }, 2000);
+            }
+            
+            // Clear word input immediately so they see it's over
+            if (wordInput) {
+                wordInput.value = '';
+                wordInput.blur();
+            }
+
+            // Reset mouse selection state if it was active
+            if (typeof mouseState !== 'undefined') {
+                mouseState.isDown = false;
+                mouseState.selectedPath = [];
+                if (mouseState.visitedCells) mouseState.visitedCells.clear();
             }
 
 
