@@ -27,6 +27,16 @@ let localEndTime = 0;
 let stableServerTimeOffset = null; // Persistent offset to prevent jitter
 let timerFormatIs24h = false;     // Cached format to prevent flashing between HH:MM:SS and M:SS
 
+// Global audio object to bypass mobile autoplay restrictions
+window.intermissionBellAudio = new Audio();
+document.addEventListener('click', () => {
+    if (window.intermissionBellAudio && !window.intermissionBellAudio.src) {
+        const bellType = (window.userSettings && window.userSettings.next_round_bell_type) || 'bell1';
+        window.intermissionBellAudio.src = `/static/audio/${bellType}.wav`;
+        window.intermissionBellAudio.load();
+    }
+}, { once: true });
+
 // Mouse selection state
 let mouseState = {
     isDown: false,
@@ -2656,8 +2666,16 @@ function updateLocalTimer() {
 
         if (isEnabled && seconds === 10 && !hasPlayedIntermissionBell) {
             console.log(`[play.js] Playing intermission bell: ${bellType}`);
-            const audio = new Audio(`/static/audio/${bellType}.wav`);
-            audio.play().catch(e => console.warn('Bell audio failed:', e));
+            const audio = window.intermissionBellAudio;
+            if (audio) {
+                if (!audio.src || !audio.src.includes(bellType)) {
+                    audio.src = `/static/audio/${bellType}.wav`;
+                }
+                audio.play().catch(e => console.warn('Bell audio failed:', e));
+            } else {
+                const fallbackAudio = new Audio(`/static/audio/${bellType}.wav`);
+                fallbackAudio.play().catch(e => console.warn('Bell audio fallback failed:', e));
+            }
             hasPlayedIntermissionBell = true;
         }
     } else {
