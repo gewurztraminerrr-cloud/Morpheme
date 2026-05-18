@@ -854,7 +854,7 @@ class BoardGenerator:
                 # if the target difficulty is Medium or Hard.
                 board = self._create_2000plus_board(
                     rows, cols, dictionary, is_checkerboard, board, all_excluded, "Density",
-                    min_word_length, max_words, min_words, 0, 1, depth=depth, difficulty=difficulty, weights=LETTER_FREQ_EASY
+                    min_word_length, max_words, min_words, 0, 1, depth=depth, difficulty=difficulty, weights=weights
                 )
                 # Stage 2: IO and B Uniqueness
                 board = self._apply_io_b_uniqueness_optimization(
@@ -863,7 +863,7 @@ class BoardGenerator:
             else:
                 board = self._create_2000plus_board(
                     rows, cols, dictionary, is_checkerboard, board, all_excluded, "Density",
-                    min_word_length, max_words, min_words, 0, 1, depth=depth, difficulty=difficulty, weights=LETTER_FREQ_EASY
+                    min_word_length, max_words, min_words, 0, 1, depth=depth, difficulty=difficulty, weights=weights
                 )
 
             # --- SOLVE FOR INITIAL COUNT ---
