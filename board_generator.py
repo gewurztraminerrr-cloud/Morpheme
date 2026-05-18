@@ -1102,51 +1102,57 @@ class BoardGenerator:
             )
 
             # 2. IO Optimization
-            print(f"[BoardGen] Optimizing IO tiles using {unique_dict_name} (Independent Pass)...")
+            print(f"[BoardGen] Optimizing IO tiles (Random Walk)...")
             final_board = [row[:] for row in base_board]
-            best_letters = {} # (r, c): letter
-
+            
             # Checkerboard pattern: (r + c) % 2 == 1 (odd tiles) are IO
             io_positions = [(r, c) for r in range(rows) for c in range(cols) if (r + c) % 2 == 1]
-
+            import random
+            random.shuffle(io_positions)
+            
+            optimized_count = 0
+            final_words_dict = {}
+            final_count = 0
+            
             for r, c in io_positions:
                 best_letter = final_board[r][c]
                 max_unique_at_loc = 0
-
-                # Test all 26 letters against the ORIGINAL base board (Independent Optimization)
-                # This prevents word-count explosion by ignoring synergies between optimized tiles.
-                test_board = [row[:] for row in base_board]
                 
+                # Test all 26 letters at this spot
                 for char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                    # USER REQUEST: Max 1 rare letter and Max 3 total rares
                     if self._is_rare_limited(final_board, char):
                         if char != final_board[r][c]:
                             continue
                     
-                    test_board[r][c] = char
+                    final_board[r][c] = char
                     # Solve using the surgical must_include solver
                     words_dict = self._solve_board(
-                        test_board, unique_dict_name, (0, 99999), min_word_length, max_depth=10, store_paths=False, must_include=(r, c)
+                        final_board, unique_dict_name, (0, 99999), min_word_length, max_depth=10, store_paths=False, must_include=(r, c)
                     )
-                    
                     unique_count_at_loc = len(words_dict)
 
                     if unique_count_at_loc > max_unique_at_loc:
                         max_unique_at_loc = unique_count_at_loc
                         best_letter = char
-
-                best_letters[(r, c)] = best_letter
-
-            # Apply all best letters at once
-            for (r, c), letter in best_letters.items():
-                final_board[r][c] = letter
-
-            # 3. Final Solve
-            print(f"[BoardGen] IO-Base Optimization complete. Final Board Solved.")
-            final_words_dict = self._solve_board(
-                final_board, dictionary, (0, 99999), min_word_length, max_depth=12, store_paths=True
-            )
-            final_count = len(final_words_dict)
+                
+                final_board[r][c] = best_letter
+                optimized_count += 1
+                
+                # Check if board meets criteria
+                final_words_dict = self._solve_board(
+                    final_board, dictionary, (0, 99999), min_word_length, max_depth=12, store_paths=True
+                )
+                final_count = len(final_words_dict)
+                
+                print(f"[BoardGen] Optimized {optimized_count} spots. Current count: {final_count}")
+                if min_w <= final_count <= max_w:
+                    print(f"[BoardGen] Found compliant board after optimizing {optimized_count} spots!")
+                    break
+                
+                # Safety break if taking too long (max 6 spots!)
+                if optimized_count >= 6:
+                    print(f"[BoardGen] Hit max spot limit (6). Proceeding with current board.")
+                    break
             
             if min_words <= final_count <= max_words:
                 print(f"[BoardGen] ✓ IO-Base Compliance: {final_count} words (Range: {min_words}-{max_words})")
