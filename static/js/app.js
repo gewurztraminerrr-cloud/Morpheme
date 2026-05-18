@@ -475,6 +475,11 @@ function setupContactForm() {
 
 // Check if user is already logged in
 async function checkSession() {
+    if (localStorage.getItem('morpheme_logged_out') === 'true') {
+        console.info('[Auth] User explicitly logged out. Skipping session check.');
+        updateAuthUI();
+        return;
+    }
     try {
         const response = await fetch('/api/session');
         const data = await response.json();
@@ -1066,6 +1071,7 @@ async function handleSignIn() {
         }
 
         if (data.success) {
+            localStorage.removeItem('morpheme_logged_out');
             localStorage.setItem('morpheme_logged_in', 'true');
             currentUser = data.username;
             window.currentUser = currentUser;
@@ -1186,6 +1192,7 @@ async function handleGuestLogin() {
         const data = await response.json();
 
         if (data.success) {
+            localStorage.removeItem('morpheme_logged_out');
             localStorage.setItem('morpheme_logged_in', 'true');
             currentUser = data.username;
             window.currentUser = currentUser;
@@ -1325,6 +1332,9 @@ async function handleLogout() {
         // Clear only session-specific or sensitive data
         localStorage.clear();
         sessionStorage.clear();
+        
+        // Set logged out flag to prevent auto-login on mobile
+        localStorage.setItem('morpheme_logged_out', 'true');
         
         // Restore non-sensitive global markers
         if (noticeId) localStorage.setItem('morpheme_read_notice_id', noticeId);
