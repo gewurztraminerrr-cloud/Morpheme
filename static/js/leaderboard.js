@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
              `;
         });
 
-        createTableCard(contentArea, "Highest number of Obscure words found", data.best_obscure, (row, i) => {
+        createTableCard(contentArea, "Highest number of Hard words found", data.best_obscure, (row, i) => {
             return `
                  <td class="col-rank">#${i + 1}</td>
                  <td class="col-user">
