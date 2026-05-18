@@ -3999,6 +3999,17 @@ input[type=range]::-moz-range-track {
         flex-direction: column !important;
     }
 
+    /* USER REQUEST: Make Words and Definitions panels touch on mobile */
+    .words-panel {
+        gap: 0 !important;
+    }
+    .words-panel .words-table-box {
+        border-radius: 12px 12px 0 0 !important;
+    }
+    .words-panel .definitions-panel {
+        border-radius: 0 0 12px 12px !important;
+    }
+
     .play-header {
         padding: 8px 12px !important;
         margin-bottom: 10px !important;
