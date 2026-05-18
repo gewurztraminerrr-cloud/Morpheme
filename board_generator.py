@@ -994,7 +994,7 @@ class BoardGenerator:
                 board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
                 print(f"[BoardGen] Pure Checkerboard generated. Skipping optimization to guarantee layout.")
                 
-                final_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=10 if rows * cols >= 35 else 25, store_paths=True, timeout=10.0)
+                final_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=30.0)
                 found_list = list(final_solve.keys())
                 
                 suitable_bonus = [w for w in found_list if 6 <= len(w) <= 10]
@@ -1113,7 +1113,7 @@ class BoardGenerator:
             base_board = self._create_normal_board(rows, cols, weights, depth=1, difficulty=difficulty)
             print(f"[BoardGen] Normal base generated directly for special procedure.")
             
-            final_solve = self._solve_board(base_board, dictionary, (0, 99999), min_word_length, max_depth=10, store_paths=True, timeout=10.0)
+            final_solve = self._solve_board(base_board, dictionary, (0, 99999), min_word_length, max_depth=12, store_paths=True, timeout=30.0)
             base_words = list(final_solve.keys())
 
             # 2. IO Optimization
