@@ -1137,10 +1137,8 @@ class BoardGenerator:
                 max_unique_at_loc = 0
                 
                 # Test pool of letters (Respect Checkerboard if needed)
-                test_pool = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-                if "checkerboard" in str(board_format).lower():
-                    target_is_vowel = (r + c) % 2 != 0
-                    test_pool = list(VOWELS) if target_is_vowel else list(CONSONANTS)
+                target_is_vowel = (r + c) % 2 != 0
+                test_pool = list(VOWELS) if target_is_vowel else list(CONSONANTS)
                 
                 for char in test_pool:
                     if self._is_rare_limited(final_board, char):
