@@ -1072,6 +1072,8 @@ async function updateGameState(incomingState = null) {
             window.lastSolvingComplete = false;
             const filterContainer = document.getElementById('length-filter-container');
             if (filterContainer) filterContainer.style.display = 'none';
+            const findersContainer = document.getElementById('finders-button-container');
+            if (findersContainer) findersContainer.style.display = 'none';
         }
 
         // --- HEADER PARAMETER REVEAL ANIMATION (Gold Fade) ---
@@ -2235,6 +2237,34 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     // Calculate available lengths
     const availableLengths = [...new Set(allWords.map(w => (typeof w === 'object' ? (w.word || '') : w).length))].sort((a, b) => a - b);
     
+    const findersContainer = document.getElementById('finders-button-container');
+    const findersBtn = document.getElementById('view-finders-btn-top');
+    
+    if (findersContainer && findersBtn) {
+        if (highlightedFoundWord) {
+            findersContainer.style.display = 'block';
+            
+            const s = window.lastGameState;
+            let finders = [];
+            if (s && s.players) {
+                finders = s.players.filter(p =>
+                    p.submitted_words && p.submitted_words.some(sw =>
+                        (typeof sw === 'object' ? sw.word : sw).toUpperCase() === highlightedFoundWord
+                    )
+                ).map(p => p.username);
+            }
+            
+            const findersText = finders.length > 0 ? finders.join(', ') : 'None';
+            findersBtn.textContent = `Finders: ${findersText}`;
+            
+            findersBtn.onclick = () => {
+                window.showFinderModal(highlightedFoundWord);
+            };
+        } else {
+            findersContainer.style.display = 'none';
+        }
+    }
+
     const filterContainer = document.getElementById('length-filter-container');
     const filterDropdown = document.getElementById('length-filter-dropdown');
     
