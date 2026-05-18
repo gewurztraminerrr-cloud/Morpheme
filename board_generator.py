@@ -996,7 +996,17 @@ class BoardGenerator:
             # 2. Setup Board based on format
             safe_format = str(board_format or "").lower()
             is_checkerboard = "checkerboard" in safe_format
-            weights = LETTER_FREQ_SUPER_DENSITY if min_word_length >= 4 else LETTER_FREQ_EASY
+            
+            if min_word_length >= 4:
+                weights = LETTER_FREQ_SUPER_DENSITY
+                # USER REQUEST: If we are forced to use Super Density frequencies in emergency mode,
+                # update the format to 'Density' so the Spinner Set doesn't abruptly change to a different
+                # format (like Bonus Letter) at the start of the round.
+                if "density" not in safe_format:
+                    board_format = "Density"
+                    safe_format = "density"
+            else:
+                weights = LETTER_FREQ_EASY
             
             if is_checkerboard:
                 board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
