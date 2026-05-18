@@ -4010,6 +4010,17 @@ input[type=range]::-moz-range-track {
         border-radius: 12px !important;
     }
 
+    /* USER REQUEST: Make Players and Chat panels touch on mobile */
+    .left-panel-container {
+        gap: 0 !important;
+    }
+    .left-panel-container .players-panel {
+        border-radius: 12px !important;
+    }
+    .left-panel-container .chat-panel {
+        border-radius: 12px !important;
+    }
+
     .play-header {
         padding: 8px 12px !important;
         margin-bottom: 10px !important;
