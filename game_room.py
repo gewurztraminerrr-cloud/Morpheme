@@ -2867,186 +2867,28 @@ class RoomManager:
         
         try:
             # 1. PRE-CHECK: If search skipped or missed (e.g. server load), handle it here
-            if not getattr(room, 'next_round_board', None):
-                # Check for stale search (loading > 45s) to prevent 'zombie' room locks.
-                last_start = getattr(room, '_last_search_start_time', 0)
-                is_stale = (time.time() - last_start > 45.0) if last_start > 0 else False
-
-                if not getattr(room, 'board_search_loading', False) or is_stale:
-                    if is_stale:
-                        print(f"[RoomManager] STALE board search detected (>45s) for {room_id}. Forcing emergency re-trigger.")
-                    else:
-                        print(f"[RoomManager] Board MISSING for {room_id} at transition. Resetting and triggering emergency search.")
-                    with room._state_lock:
-                         room.board_search_started = False
-                         room.board_search_loading = False # Clear stall flag
-                    self.start_board_search(room_id)
+            # Wait up to 15 seconds for the board to be ready (User Request)
+            start_wait = time.time()
+            while not getattr(room, 'next_round_board', None) and (time.time() - start_wait < 15.0):
+                time.sleep(0.5)
                 
-                # INSTANT RECOVERY: USER MANDATE - ZERO WAIT at 0:00.
-                # If background search is still loading, it's taking too long. 
-                # We abandon the wait and generate an optimized board INSTANTLY (<500ms).
-                if not getattr(room, 'next_round_board', None):
-                    print(f"[RoomManager] INSTANT EMERGENCY: Synchronous 1-pass generation for {room_id} (Zero wait).")
-                    
-                    # Ensure we have some params
-                    if not getattr(room, 'next_spinner_params', None):
-                        self.generate_spinner_params(room_id)
-                    
-                    params = room.next_spinner_params
-                    if params is None:
-                        print(f"[RoomManager] Failed to generate spinner params in emergency for {room_id}. Using fallbacks.")
-                        params = room.spinner_params or {
-                            'min_word_length': 3,
-                            'difficulty': 'Medium',
-                            'word_count_range': '100-200',
-                            'dictionary': 'NWL',
-                            'board_format': 'Normal',
-                            'bonus_word_length': 8
-                        }
-                        room.next_spinner_params = params
-                    
-                    # DYNAMIC BONUS WORD: Pick a fresh random word instead of a hardcoded fallback
-                    b_word = getattr(room, 'next_round_bonus', None)
-                    if not b_word:
-                        print(f"[RoomManager] Emergency: Picking random bonus word for {room_id}")
-                        b_word = self._get_bonus_word(
-                            length=params.get('bonus_word_length', 8),
-                            dictionary=params.get('dictionary', 'NWL'),
-                            alternating=('checkerboard' in str(params.get('board_format')).lower()),
-                            difficulty=params.get('difficulty', 'Medium'),
-                            exclude=getattr(room, 'bonus_word_history', [])
-                        )
-
-                    # Generate board using RAW spinner intent to ensure ironclad compliance
-                    try:
-                        e_results = self.board_generator.generate_board(
-                            dimensions=room.board_dimensions,
-                            bonus_word=b_word, 
-                            word_count_range=params.get('word_count_range', '100-200'), 
-                            dictionary=params.get('dictionary', 'NWL'),
-                            board_format=params.get('board_format', 'Normal'),
-                            min_word_length=params.get('min_word_length', 3),
-                            difficulty=params.get('difficulty', 'Normal'),
-                            is_emergency=True
-                        )
-                    except Exception as e:
-                        print(f"[RoomManager] generate_board failed with exception: {e}")
-                        e_results = None
-                    
-                    if e_results:
-                        e_board, e_words, e_bonus_c, e_fmt, e_dict, e_ratio, e_bonus_word = e_results[:7]
-                    else:
-                        print(f"[RoomManager] Hardcoded board fallback due to failure!")
-                        e_board = [['A','B','C','D'],['E','F','G','H'],['I','J','K','L'],['M','N','O','P']]
-                        e_words = ['ABLE', 'BAKER']
-                        e_bonus_c = (0, 0)
-                        e_fmt = 'Normal'
-                        e_dict = {'ABLE': [(0,0),(0,1),(0,2),(0,3)], 'BAKER': [(1,0),(1,1),(1,2),(1,3)]}
-                        e_ratio = 0.5
-                        e_bonus_word = 'ABLE'
-                    
-                    # STAGE the emergency result
-                    room.next_round_board = e_board
-                    room.next_round_words = e_words
-                    room.next_round_word_paths = e_dict
-                    room.next_round_bonus_cell = e_bonus_c
-                    room.next_round_format = e_fmt
-                    room.next_round_bonus = e_bonus_word or b_word # Use the actually embedded word
-                    room.next_round_uniqueness = e_ratio
-                    
-                    try:
-                        e_dims = room.board_dimensions.split('x')
-                        e_rows = int(e_dims[0])
-                        e_cols = int(e_dims[1])
-                        e_depth = int(e_dims[2]) if len(e_dims) == 3 else 1
-                    except Exception:
-                        e_rows, e_cols, e_depth = 4, 4, 1
-                        
-                    room.next_round_difficulty = self.board_generator.get_difficulty_label(
-                        ratio=e_ratio,
-                        rows=e_rows,
-                        cols=e_cols,
-                        dictionary=params.get('dictionary', 'NWL'),
-                        depth=e_depth,
-                        board=e_board
-                    )
-                    
-                    if getattr(room, 'next_spinner_params', None):
-                        room.next_spinner_params['difficulty'] = room.next_round_difficulty
-                        room.next_spinner_params['uniqueness'] = e_ratio
-                        room.next_round_spinner_params = dict(room.next_spinner_params)
-                    
-                    # --- INSTANT PROMOTION ---
-                    # 1. Fast Metrics (Zero Latency)
-                    is_valued_e = ('valued' in str(e_fmt).lower())
-                    e_scored_dict = {}
-                    for word in (e_words or []):
-                        if is_valued_e: e_scored_dict[word] = {'total': len(word), 'base': len(word)}
-                        else:
-                            length = len(word)
-                            s = 0
-                            if length <= 2: s = 0
-                            elif length <= 4: s = 1
-                            elif length == 5: s = 2
-                            elif length == 6: s = 3
-                            elif length == 7: s = 5
-                            elif length >= 8: s = 11
-                            else: s = 1 # Absolute fallback for length 3/4 if above check misses
-                            e_scored_dict[word] = {'total': max(1, s), 'base': max(1, s)}
-                    
-                    room.next_round_word_scores = e_scored_dict
-                    room.next_round_total_points = sum(pts['total'] for pts in e_scored_dict.values())
-                    
-                    # SYNCHRONOUS COUNTS FOR EMERGENCY (Ensures Remaining Tab is accurate at 0s mark)
-                    # We must set current_min_length on the room if it's about to be promoted
-                    room.current_min_length = params.get('min_word_length', 3)
-                    filtered_e_words = [w for w in (e_words or []) if len(w) >= room.current_min_length]
-                    
-                    room.next_round_counts_by_len = {str(l): sum(1 for w in (e_words or []) if len(w) == l) for l in range(1, 31)}
-                    room.next_round_total_words_count = len(filtered_e_words)
-                    room.next_round_total_points = sum(pts['total'] if isinstance(pts, dict) else pts for pts in e_scored_dict.values())
-                    
-                    room.next_round_board = e_board # PROMPT SIGNALING
-
-                    # 2. Background Refinement
-                    from scoring import calculate_word_score
-                    def refine_emergency_scores():
-                        try:
-                            refined_e = {}
-                            for w in (e_words or []):
-                                refined_e[w] = calculate_word_score(
-                                    w, (e_bonus_word or b_word), path=e_dict.get(w),
-                                    board_format=e_fmt, bonus_cell=e_bonus_c,
-                                    board=e_board, return_details=True
-                                )
-                            room.next_round_word_scores = refined_e
-                            
-                            # (Counts already calculated synchronously at start for speed)
-
-                            # Active Sync
-                            if room.board == e_board:
-                                room.solved_words_with_scores = refined_e
-                                room.recalculate_total_points()
-                        except: pass
-                    
-                    threading.Thread(target=refine_emergency_scores, daemon=True).start()
-
-                    # FACT-CHECK labels for UI
-                    from word_validator import word_validator
-                    # We NO LONGER overwrite word_count_range here to prevent "Intent Flipping"
-                    # If players saw 50-100, we keep that label even if emergency found 105 words.
-                    if getattr(room, 'next_spinner_params', None):
-                        room.next_spinner_params['board_format'] = e_fmt
-                    room.spinner_params['board_format'] = e_fmt
-                    room.current_board_format = e_fmt
-                    
-                    room.next_round_csw_only_words = [w for w in e_words if word_validator.is_csw_only(w)]
-                    room.next_round_added_words = [w for w in e_words if word_validator.is_added_word(w)]
-
-                    # Density for Emergency
-                    room.initialize_density(e_board, e_dict, e_fmt, is_staging=True)
-                    
-                    print(f"[RoomManager] INSTANT generation complete for {room_id} (Word: {b_word}). Transitioning NOW.")
+            if not getattr(room, 'next_round_board', None):
+                print(f"[RoomManager] Board search timed out (>15s) for {room_id}. Changing spinner and starting again.")
+                # Force new parameters by clearing flags
+                with room._state_lock:
+                    room.spinner_params_revealed = False
+                    room.spinner_params_generated = False
+                    room.next_spinner_params = None
+                
+                # Change Spinner Set (triggers golden fade on client)
+                self.generate_spinner_params(room_id, reveal=True)
+                # Start search again
+                self.start_board_search(room_id)
+                
+                # Release the starting_round lock so it can try again
+                with room._state_lock:
+                    room.starting_round = False
+                return False
             
             # --- START TRANSITION ---
             # ATOMIC REFERENCE CAPTURE: Since we replace the board object, a reference is safe and instant.
