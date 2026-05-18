@@ -2062,10 +2062,16 @@ def get_public_profile(username):
             if int(dur) >= 7200:
                 rating = user[2]
             matching = [p for p in processed_all if p['game_type'] == gtype and p['dimensions'] == dims and p['round_duration'] == int(dur)]
+            matching_valid = [p for p in matching if p.get('total_words_avail', 0) > 0]
+            avg_pct_found = round(sum(p['num_words'] / p['total_words_avail'] * 100 for p in matching_valid) / len(matching_valid), 1) if matching_valid else 0
+            max_pct_found = round(max([p['num_words'] / p['total_words_avail'] * 100 for p in matching_valid]) if matching_valid else 0, 1)
+
             config_stats[cfg_key] = {
                 'rating': rating,
                 'avg_score': round(sum(p['total_score'] for p in matching) / len(matching), 1) if matching else 0,
-                'avg_perf': round(sum(p['performance_value'] for p in matching) / len(matching), 1) if matching else 0
+                'avg_perf': round(sum(p['performance_value'] for p in matching) / len(matching), 1) if matching else 0,
+                'avg_pct_found': avg_pct_found,
+                'max_pct_found': max_pct_found
             }
         except:
             config_stats[cfg_key] = {'rating': rating, 'avg_score': 0, 'avg_perf': 0}
@@ -4835,7 +4841,7 @@ def get_leaderboard_data():
         # 3. Best PE (Highest Performance Efficiency - Max 1 per user)
         pes = conn.execute(f"""
             SELECT * FROM (
-                SELECT rh.performance_ratio, rh.total_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id, rh.game_type,
+                SELECT rh.performance_ratio, rh.total_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id, rh.game_type, rh.total_words_avail,
                 ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.performance_ratio DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
@@ -4955,10 +4961,22 @@ def get_leaderboard_data():
         def to_list(rows):
             return [dict(r) for r in rows]
 
+        pes_processed = []
+        for r in pes:
+            d = dict(r)
+            try:
+                words_list = json.loads(d.get('words_json', '[]'))
+                num_words = len(words_list)
+                twa = d.get('total_words_avail', 0)
+                d['pct_found'] = round(num_words / twa * 100, 1) if twa > 0 else 0
+            except:
+                d['pct_found'] = 0
+            pes_processed.append(d)
+
         return jsonify({
             'best_scores': to_list(scores),
             'best_words': to_list(words),
-            'best_pes': to_list(pes),
+            'best_pes': pes_processed,
             'best_ratings': to_list(ratings),
             'avg_scores': to_list(avgs),
             'current_ratings': to_list(current_ratings),

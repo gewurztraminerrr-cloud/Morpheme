@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
                       ${renderTypeBadge(row.game_type)}
                  </td>
                  <td class="col-val highlight">${parseFloat(row.performance_ratio).toFixed(2)}x</td>
-                 <td class="col-meta">(${row.total_score} pts)</td>
+                 <td class="col-meta">(${row.total_score} pts | <span style="${row.pct_found > 50 ? 'color: #ff4a4a; font-weight: 800;' : ''}">${row.pct_found || 0}%</span>)</td>
                  <td class="col-date">${formatDate(row.timestamp)}</td>
                   <td class="col-action">
                     ${renderReplayBtn(row)}

@@ -2058,6 +2058,8 @@ function renderRatingsGrid(configRatings, user = null) {
                         <div style="display: flex; gap: 10px; margin-top: 4px; font-size: 0.65rem; color: rgba(255,255,255,0.3); font-weight: 700;">
                            <span>AVG S: <span style="color: #fff;">${configData.avg_score}</span></span>
                            <span>AVG P: <span style="color: #fff;">${configData.avg_perf}</span></span>
+                           <span>AVG %: <span style="color: #fff;">${configData.avg_pct_found || 0}%</span></span>
+                           ${configData.max_pct_found > 50 ? `<span>MAX %: <span style="color: #ff4a4a;">${configData.max_pct_found}%</span></span>` : ''}
                         </div>
                     </div>
                     <div class="rating-box-value" style="color: ${rColor}; font-size: 1.25rem; font-weight: 900; margin: 0 15px;">${rating}</div>
