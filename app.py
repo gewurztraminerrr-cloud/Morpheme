@@ -2238,6 +2238,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         is_win = (my_score == max_s and max_s > 0)
         if is_win: period_wins += 1
 
+        word_validator.ensure_csw_loaded()
         # Calculate Performance Efficiency (PE) using Rating-Based Expected Share
         # FAQ: "Expected Score... based on your current rating relative to your opponents"
         
@@ -4937,6 +4938,7 @@ def get_leaderboard_data():
             WHERE {base_where}
         """, params).fetchall()
         
+        word_validator.ensure_csw_loaded()
         obscure_processed = []
         for r in cursor_obscure:
             d = dict(r)
