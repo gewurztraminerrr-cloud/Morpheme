@@ -712,7 +712,7 @@ class BoardGenerator:
         if rows * cols >= 35 and "checkerboard" not in str(board_format).lower() and "base" not in str(board_format).lower():
             print(f"[BoardGen] Calling special procedure: Checkerboard IO and Base (Otherwise)")
             return self._generate_io_base_board_procedure(
-                dimensions, bonus_word, word_count_range, dictionary, min_word_length, difficulty
+                dimensions, bonus_word, word_count_range, dictionary, min_word_length, difficulty, board_format
             )
         
         # 2. Setup Loop
@@ -1063,7 +1063,7 @@ class BoardGenerator:
             self._sanitize_forbidden_sequences(board, depth, protected_positions=protected_positions)
 
     def _generate_io_base_board_procedure(
-        self, dimensions, bonus_word, word_count_range, dictionary, min_word_length, difficulty
+        self, dimensions, bonus_word, word_count_range, dictionary, min_word_length, difficulty, board_format="Normal"
     ):
         """
         Special Procedure: Checkerboard IO and Base
