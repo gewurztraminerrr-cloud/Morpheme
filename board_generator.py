@@ -994,7 +994,7 @@ class BoardGenerator:
                 board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
                 print(f"[BoardGen] Pure Checkerboard generated. Skipping optimization to guarantee layout.")
                 
-                final_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=30.0)
+                final_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=10 if rows * cols >= 35 else 25, store_paths=True, timeout=10.0)
                 found_list = list(final_solve.keys())
                 
                 suitable_bonus = [w for w in found_list if 6 <= len(w) <= 10]
