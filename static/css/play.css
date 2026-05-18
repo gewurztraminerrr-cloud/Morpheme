@@ -117,7 +117,7 @@
 .words-panel {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 0;
     min-height: 0;
     height: 100%;
     box-sizing: border-box;
@@ -125,7 +125,7 @@
 
 .words-table-box {
     background: var(--bg-panel);
-    border-radius: 12px;
+    border-radius: 12px 12px 0 0;
     padding: 15px;
     display: flex;
     flex-direction: column;
@@ -529,7 +529,7 @@ body.theme-light-brown .player-score-val {
 
 .definitions-panel {
     background: var(--bg-panel);
-    border-radius: 12px;
+    border-radius: 0 0 12px 12px;
     padding: 12px 15px;
     flex: 0 0 150px !important; /* Force visibility and fixed size */
     border-top: none;
@@ -3997,17 +3997,6 @@ input[type=range]::-moz-range-track {
         /* Force flex column layout to allow stretching children */
         display: flex !important;
         flex-direction: column !important;
-    }
-
-    /* USER REQUEST: Make Words and Definitions panels touch on mobile */
-    .words-panel {
-        gap: 0 !important;
-    }
-    .words-panel .words-table-box {
-        border-radius: 12px 12px 0 0 !important;
-    }
-    .words-panel .definitions-panel {
-        border-radius: 0 0 12px 12px !important;
     }
 
     .play-header {
