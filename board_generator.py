@@ -284,7 +284,7 @@ class BoardGenerator:
         print(f"[BoardGen-Diff] FINAL RESULT: {res} | rat={rat:.4f} (Raw: {ratio}) | Grid: {r}x{c} ({total_tiles} tiles) | Large: {is_large}")
         return res
 
-    def _sanitize_rare_letters(self, board, depth=1, protected_positions=None):
+    def _sanitize_rare_letters(self, board, depth=1, protected_positions=None, is_checkerboard=False):
         """
         USER MANDATE: Ironclad enforcement of rare letter distribution.
         1. Max 1 of each super-rare (Q, Z, J, X, K).
@@ -322,7 +322,11 @@ class BoardGenerator:
                                     continue
                                 
                                 # REPLACE IT with a pool of playable mid-tier consonants or vowels
-                                replacements = ["F", "H", "C", "P", "M", "E", "A", "I", "R", "S", "T"]
+                                # If checkerboard, only replace consonants with consonants!
+                                if is_checkerboard:
+                                    replacements = ["F", "H", "C", "P", "M", "R", "S", "T"]
+                                else:
+                                    replacements = ["F", "H", "C", "P", "M", "E", "A", "I", "R", "S", "T"]
                                 new_char = random.choice(replacements)
                                 if depth > 1: board[f][r][c] = new_char
                                 else: board[r][c] = new_char
@@ -339,7 +343,7 @@ class BoardGenerator:
         if sanitized_count > 0:
             print(f"[BoardGen] 🛡️ Sanitizer replaced {sanitized_count} redundant rare letters.")
 
-    def _sanitize_forbidden_sequences(self, board, depth=1, protected_positions=None):
+    def _sanitize_forbidden_sequences(self, board, depth=1, protected_positions=None, is_checkerboard=False):
         """
         USER MANDATE: Break up any "ING" sequences on Medium/Hard boards.
         """
@@ -389,7 +393,16 @@ class BoardGenerator:
                                 replaced = False
                                 for p in path:
                                     if p not in protected:
-                                        replacements = ["A", "E", "O", "S", "T", "R", "L", "C", "P"]
+                                        if is_checkerboard:
+                                            # Keep the same vowel/consonant type!
+                                            orig_char = sequence[path.index(p)]
+                                            is_v = orig_char in "AEIOU"
+                                            if is_v:
+                                                replacements = ["A", "E", "O", "U"]
+                                            else:
+                                                replacements = ["S", "T", "R", "L", "C", "P"]
+                                        else:
+                                            replacements = ["A", "E", "O", "S", "T", "R", "L", "C", "P"]
                                         new_char = random.choice(replacements)
                                         if is_3d: board[p[0]][p[1]][p[2]] = new_char
                                         else: board[p[0]][p[1]] = new_char
@@ -764,9 +777,9 @@ class BoardGenerator:
                 count = len(all_words_dict)
                 
                 # USER REQUEST: Final Sanitization even for extreme density
-                self._sanitize_rare_letters(board, depth)
+                self._sanitize_rare_letters(board, depth, is_checkerboard=is_checkerboard)
                 if difficulty in ["Medium", "Hard"]:
-                    self._sanitize_forbidden_sequences(board, depth)
+                    self._sanitize_forbidden_sequences(board, depth, is_checkerboard=is_checkerboard)
                 break
 
             # Standard Strategies
@@ -883,9 +896,9 @@ class BoardGenerator:
 
             # --- FINAL RARE LETTER SANITIZATION (User Request: Max 1 Q, Z, J, X, K) ---
             # We do this AFTER all optimizations and sweeps to ensure compliance and clean board.
-            self._sanitize_rare_letters(board, depth, protected_positions=embedded_path)
+            self._sanitize_rare_letters(board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
             if difficulty in ["Medium", "Hard"]:
-                self._sanitize_forbidden_sequences(board, depth, protected_positions=embedded_path)
+                self._sanitize_forbidden_sequences(board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
 
             # Re-solve after sweeps and sanitization for final confirmation
             all_words_dict = self._solve_board(
