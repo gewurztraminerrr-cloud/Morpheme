@@ -1110,8 +1110,8 @@ class BoardGenerator:
             
             print(f"[BoardGen] Procedure: IO-Base Checkerboard (Attempt {attempt}). Base target: {base_target}")
             weights = LETTER_FREQ_SUPER_DENSITY if min_word_length >= 4 else LETTER_FREQ_EASY
-            base_board = self._create_checkerboard(rows, cols, weights, depth=1, difficulty=difficulty)
-            print(f"[BoardGen] Pure Checkerboard base generated directly.")
+            base_board = self._create_normal_board(rows, cols, weights, depth=1, difficulty=difficulty)
+            print(f"[BoardGen] Normal base generated directly for special procedure.")
             
             final_solve = self._solve_board(base_board, dictionary, (0, 99999), min_word_length, max_depth=10, store_paths=True, timeout=10.0)
             base_words = list(final_solve.keys())
