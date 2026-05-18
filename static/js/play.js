@@ -2699,8 +2699,8 @@ function updateLocalTimer() {
             cachedTimerValueEl.style.fontVariantNumeric = 'tabular-nums';
         }
 
-        // Freeze detection
-        if (Date.now() - lastServerUpdate > 5000) {
+        // Low time visual for text (User Request)
+        if (remaining <= 10 && remaining > 0) {
             cachedTimerValueEl.style.color = '#ff6b6b';
         } else {
             cachedTimerValueEl.style.color = '';
