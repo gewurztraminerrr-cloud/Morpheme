@@ -4866,26 +4866,8 @@ function handleCellMouseDown(e) {
 
 function getLetterFromCellAndEvent(cell, e) {
     const letter = cell.dataset.letter;
-    if (letter && letter.includes('/')) {
-        const rect = cell.getBoundingClientRect();
-        const centerY = rect.top + rect.height / 2;
-        let clientY = null;
-        if (e) {
-            if (e.touches && e.touches.length > 0) {
-                clientY = e.touches[0].clientY;
-            } else if (e.changedTouches && e.changedTouches.length > 0) {
-                clientY = e.changedTouches[0].clientY;
-            } else if (typeof e.clientY === 'number') {
-                clientY = e.clientY;
-            }
-        }
-        if (clientY !== null) {
-            const [top, bottom] = letter.split('/');
-            const selectedLetter = (clientY < centerY) ? top : bottom;
-            console.log(`[EitherOr] Resolved coords split: clientY=${clientY} centerY=${centerY} -> selected: ${selectedLetter}`);
-            return selectedLetter;
-        }
-    }
+    // USER REQUEST: Do not split Either/Or letters based on touch position.
+    // Return the full string (e.g. "G/O") and let the server resolve the valid word from the path.
     return letter;
 }
 
