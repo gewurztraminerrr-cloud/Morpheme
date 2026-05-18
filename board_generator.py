@@ -14,7 +14,7 @@ DEBUG_FLOW_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'debu
 # Medium/Hard weights - CUSTOMIZED: Peak Connectivity for 7-10L words
 # User-provided frequencies for 4x4 (A-Z)
 LETTER_FREQ_USER = [
-    100, # A
+    50,  # A
     95,  # B
     200, # C
     136, # D
@@ -22,7 +22,7 @@ LETTER_FREQ_USER = [
     150, # F
     120, # G
     180, # H
-    600, # I
+    700, # I
     1,   # J (Drastic Reduction)
     2,   # K (Drastic Reduction)
     247, # L
@@ -44,15 +44,15 @@ LETTER_FREQ_USER = [
 
 # Easy weights (Sum = 10000) - CUSTOMIZED: Peak Density
 LETTER_FREQ_EASY = [
-    300, # A
+    200, # A
     230,  # B
     650,  # C (Boosted per user request)
     410,  # D
     1400, # E
-    450,  # F (Boosted per user request)
+    450,  # F (Boosted per request)
     300,  # G
-    550,  # H (Boosted per user request)
-    1200, # I
+    550,  # H (Boosted per request)
+    1400, # I
     1,    # J (Hardened)
     2,    # K (Hardened)
     560,  # L
@@ -73,7 +73,7 @@ LETTER_FREQ_EASY = [
 ]
 
 LETTER_FREQ_SUPER_DENSITY = [
-    400, # A
+    250, # A
     150,  # B
     350,  # C
     300,  # D
@@ -81,7 +81,7 @@ LETTER_FREQ_SUPER_DENSITY = [
     250,  # F
     150,  # G
     300,  # H
-    1300, # I
+    1500, # I
     1,    # J (Near Zero)
     2,    # K (Near Zero)
     500,  # L
