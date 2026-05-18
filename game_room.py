@@ -629,6 +629,9 @@ class GameRoom:
                 if len(valid_options) == 1:
                     word = valid_options[0]  # Auto-correct the submission to the valid Either/Or letter
                     matched_word = word
+                elif len(possible_words) > 0:
+                    # Fallback: Use the first possible word if none are valid (prevents outputting "F/U" in word)
+                    word = possible_words[0]
         
         # 2. Logic Check
         is_in = word in self.all_words
