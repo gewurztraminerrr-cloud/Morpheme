@@ -2252,6 +2252,12 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             achAvgPctHeaderEl.textContent = (stats.avg_pct_found || 0) + '%';
         }
 
+        const parseDate = (isoStr) => {
+            if (!isoStr) return new Date();
+            const dateStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr.replace(' ', 'T') : isoStr.replace(' ', 'T') + 'Z';
+            return new Date(dateStr);
+        };
+
         const renderAchRow = (r, cols) => {
             // Cache if not present or upgrade if better data available
             if (!window.lastRenderedRounds) window.lastRenderedRounds = [];
@@ -2291,7 +2297,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
                 { val: r.ratio + 'x', style: 'color: rgba(255,255,255,0.6);' },
                 { val: r.total_score, style: 'font-weight: 700;' },
                 { val: `<div style="font-size: 0.75rem;">${r.num_words} words</div><div style="font-size: 0.6rem; color: rgba(255,255,255,0.3);">${r.top_word}</div>` },
-                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
             ])).join('');
         }
 
@@ -2307,7 +2313,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
                 { val: r.total_score, style: 'font-weight: 800; color: #4ade80;' },
                 { val: r.performance_value, style: 'font-weight: 700;' },
                 { val: r.all_players.length, style: 'color: rgba(255,255,255,0.5);' },
-                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
             ])).join('');
         }
 
@@ -2320,7 +2326,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
                 { val: r.total_score, style: 'font-weight: 700;' },
                 { val: r.ratio + 'x', style: 'color: rgba(255,255,255,0.4); font-size: 0.75rem;' },
                 { val: r.is_win ? '<span style="color:#4ade80">WIN</span>' : '<span style="color:rgba(255,255,255,0.3)">-</span>', style: 'font-weight: 800;' },
-                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
             ])).join('');
         }
 
@@ -2331,7 +2337,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             tableScores.innerHTML = sortedByScore.map(r => renderAchRow(r, [
                 { val: r.total_score, style: 'font-weight: 800; color: #ffd700;' },
                 { val: r.performance_value, style: 'font-weight: 700;' },
-                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
             ])).join('');
         }
 
@@ -2342,7 +2348,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             tableWordCounts.innerHTML = sortedByCount.map(r => renderAchRow(r, [
                 { val: r.num_words, style: 'font-weight: 800; color: #a5b4fc;' },
                 { val: `${r.avg_len} len | ${r.pct_found || 0}%`, style: 'color: rgba(255,255,255,0.6);' },
-                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
             ])).join('');
         }
 
@@ -2353,7 +2359,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             tablePcts.innerHTML = sortedByPct.map(r => renderAchRow(r, [
                 { val: `${r.pct_found}%`, style: 'font-weight: 800; color: #ff4a4a;' },
                 { val: `Pts: ${r.total_score}`, style: 'color: rgba(255,255,255,0.6);' },
-                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
             ])).join('');
         }
 
@@ -2364,7 +2370,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             tableObscure.innerHTML = sortedByObscure.map(r => renderAchRow(r, [
                 { val: r.obscure_count, style: 'font-weight: 800; color: #60a5fa;' },
                 { val: `Pts: ${r.total_score}`, style: 'color: rgba(255,255,255,0.6);' },
-                { val: dateToShort(new Date(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
             ])).join('');
         }
 

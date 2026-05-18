@@ -424,7 +424,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function formatDate(isoStr) {
         if (!isoStr) return '-';
         // Handle "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DDTHH:MM:SS"
-        const dateStr = isoStr.replace(' ', 'T');
+        // Force UTC if no timezone specified
+        const dateStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr.replace(' ', 'T') : isoStr.replace(' ', 'T') + 'Z';
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) return isoStr; // Fallback
 
