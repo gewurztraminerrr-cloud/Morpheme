@@ -1070,6 +1070,8 @@ async function updateGameState(incomingState = null) {
         } else if (state.state !== 'intermission') {
             window.lastRenderedIntermissionWords = null;
             window.lastSolvingComplete = false;
+            const filterContainer = document.getElementById('length-filter-container');
+            if (filterContainer) filterContainer.style.display = 'none';
         }
 
         // --- HEADER PARAMETER REVEAL ANIMATION (Gold Fade) ---
@@ -2227,6 +2229,47 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         return;
     }
 
+    // Save arguments for re-rendering on filter change
+    window.lastDisplayAllWordsArgs = [allWords, bonusWord, targetUserWords, allFoundWords, allWordScores, cswOnlyWords, addedWords];
+
+    // Calculate available lengths
+    const availableLengths = [...new Set(allWords.map(w => (typeof w === 'object' ? (w.word || '') : w).length))].sort((a, b) => a - b);
+    
+    const filterContainer = document.getElementById('length-filter-container');
+    const filterDropdown = document.getElementById('length-filter-dropdown');
+    
+    if (filterContainer && filterDropdown) {
+        filterContainer.style.display = 'block';
+        
+        // Save current selection
+        const prevSelection = window.selectedAllWordsLength || 'all';
+        
+        // Populate dropdown
+        let optionsHtml = '<option value="all">All Lengths</option>';
+        availableLengths.forEach(len => {
+            optionsHtml += `<option value="${len}">${len}LW</option>`;
+        });
+        filterDropdown.innerHTML = optionsHtml;
+        
+        // Restore selection if it's still available
+        if (availableLengths.includes(parseInt(prevSelection)) || prevSelection === 'all') {
+            filterDropdown.value = prevSelection;
+            window.selectedAllWordsLength = prevSelection;
+        } else {
+            filterDropdown.value = 'all';
+            window.selectedAllWordsLength = 'all';
+        }
+        
+        // Add change listener (if not already added)
+        if (!filterDropdown.dataset.listenerAdded) {
+            filterDropdown.addEventListener('change', (e) => {
+                window.selectedAllWordsLength = e.target.value;
+                displayAllWords(...window.lastDisplayAllWordsArgs);
+            });
+            filterDropdown.dataset.listenerAdded = 'true';
+        }
+    }
+
     const targetWordsUpper = targetUserWords.map(w => (typeof w === 'object' ? (w.word || '') : w).toUpperCase());
     const allFoundUpper = allFoundWords.map(w => (typeof w === 'object' ? (w.word || '') : w).toUpperCase());
     const cswOnlyUpper = (cswOnlyWords || []).map(w => w.toUpperCase());
@@ -2298,7 +2341,10 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         listEl.hasScoringListener = true;
     }
 
-    listEl.innerHTML = sortedWords.map(entry => {
+    const selectedLength = window.selectedAllWordsLength || 'all';
+    const filteredWords = selectedLength === 'all' ? sortedWords : sortedWords.filter(entry => (typeof entry === 'object' ? (entry.word || '') : entry).length.toString() === selectedLength);
+
+    listEl.innerHTML = filteredWords.map(entry => {
         const word = (typeof entry === 'object' ? (entry.word || '') : entry);
         const wordUpper = word.toUpperCase();
         const bonusUpper = bonusWord ? bonusWord.toUpperCase().trim() : null;
