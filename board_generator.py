@@ -1394,6 +1394,8 @@ class BoardGenerator:
         # Get words from dictionary of length 5-10 (Excluding ING words as requested!)
         valid_words = []
         if dictionary:
+            if isinstance(dictionary, str):
+                dictionary = self._get_difficulty_set(dictionary)
             valid_words = [w for w in dictionary if 5 <= len(w) <= 10 and not w.upper().endswith("ING") and not w.upper().endswith("INGS")]
             
         if not valid_words:
