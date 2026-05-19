@@ -1371,12 +1371,29 @@ class BoardGenerator:
         valid_words = []
         if dictionary:
             if isinstance(dictionary, str):
-                loaded_dict = self._get_difficulty_set(dictionary)
-                if loaded_dict:
-                    dictionary = loaded_dict
+                dict_name = dictionary.upper()
+                import os
+                if difficulty in ["Medium", "Hard"]:
+                    # Load unique set for Medium/Hard (e.g. uniqueNWL.txt)
+                    loaded_dict = self._get_difficulty_set(dict_name)
+                    if loaded_dict:
+                        dictionary = loaded_dict
+                        print(f"[BoardGen] Using UNIQUE dictionary (unique{dict_name}.txt) for {difficulty} Word Soup.")
+                    else:
+                        print(f"[BoardGen] ⚠️ Failed to load unique set for {dict_name}. Using fallback words.")
+                        dictionary = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
                 else:
-                    print(f"[BoardGen] ⚠️ Failed to load difficulty set for {dictionary}. Using fallback words.")
-                    dictionary = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
+                    # Load full dictionary for Easy (e.g. NWL.txt)
+                    base_dir = os.path.dirname(os.path.abspath(__file__))
+                    path = os.path.join(base_dir, 'dictionaries', f"{dict_name}.txt")
+                    try:
+                        with open(path, "r") as f:
+                            dictionary = [line.strip().upper() for line in f if line.strip()]
+                        print(f"[BoardGen] Using FULL dictionary ({dict_name}.txt) for Easy Word Soup.")
+                    except Exception as e:
+                        print(f"[BoardGen] Error loading full dictionary {dict_name}: {e}. Using fallback words.")
+                        dictionary = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
+                        
             valid_words = [w for w in dictionary if 5 <= len(w) <= 10 and not w.upper().endswith("ING") and not w.upper().endswith("INGS")]
             
         if not valid_words:
