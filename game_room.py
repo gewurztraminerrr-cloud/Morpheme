@@ -2361,7 +2361,10 @@ class RoomManager:
             
             with room._state_lock:
                 # USER REQUEST: Prevent re-rolling! Check lock state INSIDE the atomic block.
-                if getattr(room, 'spinner_params_generated', False) and room.next_spinner_params:
+                # In Solo mode, we always prefer the user's initial settings over background pre-gen!
+                if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
+                    pass 
+                elif getattr(room, 'spinner_params_generated', False) and room.next_spinner_params:
                     new_params = dict(room.next_spinner_params)
                     print(f"[RoomManager] Using EXISTING staged params for room {room_id} (Lock-protected)")
                 else:
