@@ -700,7 +700,6 @@ class BoardGenerator:
             parts = str(board_format).strip().split()
             # If it doesn't have a single-letter prefix
             if len(parts) < 2 or len(parts[0]) != 1 or not parts[0].isalpha():
-                import random
                 if random.random() < 0.33:
                     mania_letter = random.choice('AEIOU')
                 else:
@@ -740,7 +739,6 @@ class BoardGenerator:
             # If we are in Mania format and failing to find a compliant board,
             # dynamically rotate the mania letter to a different one to aid compliance!
             if "mania" in str(board_format).lower() and attempts > 3:
-                import random
                 if random.random() < 0.33:
                     mania_letter = random.choice('AEIOU')
                 else:
