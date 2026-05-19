@@ -904,6 +904,34 @@ class BoardGenerator:
             if is_checkerboard:
                 self._verify_checkerboard_safeguard(board, weights, set(embedded_path) if embedded_path else set())
 
+            # --- FINAL A'S SANITIZATION FOR LARGE BOARDS ---
+            if rows * cols >= 35 and depth == 1:
+                max_as = 6 if rows * cols >= 48 else 5
+                
+                # Find all positions of 'A'
+                a_positions = []
+                for r in range(rows):
+                    for c in range(cols):
+                        if board[r][c] == 'A':
+                            a_positions.append((r, c))
+                
+                if len(a_positions) > max_as:
+                    print(f"[BoardGen] Excess A's detected after optimization ({len(a_positions)} > {max_as}). Sanitizing...")
+                    random.shuffle(a_positions)
+                    protected = set(embedded_path) if embedded_path else set()
+                    
+                    for r, c in a_positions[:]:
+                        if len(a_positions) <= max_as:
+                            break
+                        if (r, c) in protected:
+                            continue
+                            
+                        # Replace with another vowel to maintain checkerboard or vowel status
+                        replacements = ["E", "O", "I"]
+                        board[r][c] = random.choice(replacements)
+                        a_positions.remove((r, c))
+                        print(f"[BoardGen] Replaced excess 'A' at ({r}, {c}) with '{board[r][c]}'")
+
             # Re-solve after sweeps and sanitization for final confirmation
             all_words_dict = self._solve_board(
                 board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=30.0
