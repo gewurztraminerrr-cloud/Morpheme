@@ -2946,28 +2946,11 @@ class RoomManager:
         
         try:
             # 1. PRE-CHECK: If search skipped or missed (e.g. server load), handle it here
-            # Wait up to 15 seconds for the board to be ready (User Request)
+            # Wait up to 1.5 seconds for the board to be ready (CPU friendly short wait)
             start_wait = time.time()
-            while not getattr(room, 'next_round_board', None) and (time.time() - start_wait < 15.0):
-                time.sleep(0.5)
-                
-            if not getattr(room, 'next_round_board', None):
-                print(f"[RoomManager] Board search timed out (>15s) for {room_id}. Changing spinner and starting again.")
-                # Force new parameters by clearing flags
-                with room._state_lock:
-                    room.spinner_params_revealed = False
-                    room.spinner_params_generated = False
-                    room.next_spinner_params = None
-                
-                # Change Spinner Set (triggers golden fade on client)
-                self.generate_spinner_params(room_id, reveal=True)
-                # Start search again
-                self.start_board_search(room_id)
-                
-                # Release the starting_round lock so it can try again
-                with room._state_lock:
-                    room.starting_round = False
-                return False
+            while not getattr(room, 'next_round_board', None) and (time.time() - start_wait < 1.5):
+                time.sleep(0.1)
+
             
             # --- START TRANSITION ---
             # ATOMIC REFERENCE CAPTURE: Since we replace the board object, a reference is safe and instant.
@@ -3062,6 +3045,17 @@ class RoomManager:
                     bg = BoardGenerator()
                     target_range = room.spinner_params.get('word_count_range', '100-200')
                     
+                    # Ensure next_round_bonus is populated for the generator
+                    e_bonus = getattr(room, 'next_round_bonus', '')
+                    if not e_bonus:
+                        bw_l = room.spinner_params.get('bonus_word_length', 8)
+                        e_bonus = self._get_bonus_word(
+                            length=bw_l,
+                            dictionary=room.current_dictionary,
+                            alternating=('checkerboard' in str(room.current_board_format).lower())
+                        )
+                        room.next_round_bonus = e_bonus
+                        
                     e_attempts = 0
                     e_results = None
                     while e_attempts < 4:
@@ -3071,7 +3065,7 @@ class RoomManager:
                         try:
                             e_results = bg.generate_board(
                                 dimensions=room.board_dimensions, 
-                                bonus_word=getattr(room, 'next_round_bonus', ''),
+                                bonus_word=e_bonus,
                                 word_count_range=target_range,
                                 dictionary=room.current_dictionary,
                                 board_format=room.current_board_format,
