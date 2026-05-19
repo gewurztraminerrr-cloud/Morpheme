@@ -40,6 +40,7 @@ class SpinnerSet:
                 'word_count_range': random.choice(['50-100', '100-200', '200-300', '300-400']),
                 'board_format': 'Valued Letters' if is_24h else 'Normal',
                 'min_word_length': 3,
+                'bonus_word_length': 8,
                 'generated_at': time.time()
             }
 
@@ -78,12 +79,17 @@ class SpinnerSet:
                 if board_format == 'Checkerboard':
                     wc_range = random.choice(['100-200', '200-300'])
                 
+                bw_len = random.choice([6, 7, 8, 9, 10])
+                if bw_len < min_word_length:
+                    bw_len = min_word_length
+                
                 res = {
                     'min_word_length': min_word_length,
                     'difficulty': difficulty,
                     'word_count_range': wc_range or SpinnerSet._spin_word_count(dictionary, min_word_length, difficulty, board_dimensions),
                     'dictionary': dictionary,
                     'board_format': board_format,
+                    'bonus_word_length': bw_len,
                     'generated_at': time.time()
                 }
                 
@@ -97,6 +103,7 @@ class SpinnerSet:
                         'word_count_range': random.choice(['50-100', '100-200', '200-300', '300-400']),
                         'dictionary': 'NWL',
                         'board_format': 'Normal',
+                        'bonus_word_length': max(8, initial_min),
                         'generated_at': time.time()
                     }
                 
@@ -133,6 +140,7 @@ class SpinnerSet:
                 'word_count_range': random.choice(['50-100', '100-200', '200-300', '300-400']),
                 'board_format': 'Normal',
                 'min_word_length': 3,
+                'bonus_word_length': 8,
                 'generated_at': time.time()
             }
     
