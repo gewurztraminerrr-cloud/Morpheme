@@ -2865,10 +2865,10 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
                 .loading-spinner { animation: spin 0.8s linear infinite !important; }
                 .optimizing-text { animation: pulse 2s ease-in-out infinite; }
             </style>
-            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:350px; color:var(--text-primary); background: rgba(0,0,0,0.2); border-radius: 12px; backdrop-filter: blur(5px);">
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:350px; color:var(--text-primary); background: rgba(0,0,0,0.3); border-radius: 12px; backdrop-filter: blur(5px); padding: 20px; box-sizing: border-box;">
                 <div class="loading-spinner" style="margin-bottom:20px; width:60px; height:60px; border:5px solid rgba(var(--text-primary-rgb),0.1); border-top:5px solid var(--accent-color); border-radius:50%;"></div>
-                <div class="optimizing-text" style="font-weight:800; font-size:1.5rem; text-transform:uppercase; letter-spacing:2px; color:var(--text-primary); text-shadow: 0 0 10px var(--accent-color);">${loadingMsg}</div>
-                <div style="font-size:1rem; opacity:0.9; margin-top:12px; text-align:center; max-width:80%; font-weight: 500;">${subMsg}</div>
+                <div class="optimizing-text" style="font-weight:800; font-size:1.1rem; text-transform:uppercase; letter-spacing:2px; color:var(--text-primary); text-shadow: 0 0 10px var(--accent-color); text-align:center; padding:0 15px; box-sizing:border-box;">${loadingMsg}</div>
+                <div style="font-size:0.9rem; opacity:0.8; margin-top:12px; text-align:center; max-width:85%; font-weight: 500; color:var(--text-secondary);">${subMsg}</div>
             </div>
         `;
         boardEl.className = 'game-board';

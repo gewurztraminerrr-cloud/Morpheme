@@ -4930,13 +4930,15 @@ input[type=range]::-moz-range-track {
 }
 
 .board-loader-text {
-    font-size: 0.9rem;
-    font-weight: 850;
-    letter-spacing: 3px;
-    color: var(--text-secondary, #94a3b8);
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--text-primary, #ffffff);
     text-transform: uppercase;
     animation: boardLoaderPulse 1.5s ease-in-out infinite alternate;
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+    text-shadow: 0 0 10px var(--accent-color, #f43f5e);
+    padding: 0 15px;
+    box-sizing: border-box;
 }
 
 @keyframes boardLoaderPulse {
