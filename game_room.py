@@ -3063,15 +3063,16 @@ class RoomManager:
                     # Robust Unpacking: Support both 6-tuple and 7-tuple returns
                     if e_results:
                         if len(e_results) == 7:
-                            e_board, e_words, e_bonus_c, _, e_paths, e_ratio, e_bonus_word = e_results
+                            e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio, e_bonus_word = e_results
                         else:
-                            e_board, e_words, e_bonus_c, _, e_paths, e_ratio = e_results
+                            e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio = e_results
                             e_bonus_word = getattr(room, 'next_round_bonus', '')
                     else:
                         print(f"[RoomManager] Hardcoded board fallback in emergency promotion!")
                         e_board = [['A','B','C','D'],['E','F','G','H'],['I','J','K','L'],['M','N','O','P']]
                         e_words = ['ABLE', 'BAKER']
                         e_bonus_c = (0, 0)
+                        e_fmt = 'Normal'
                         e_paths = {'ABLE': [(0,0),(0,1),(0,2),(0,3)], 'BAKER': [(1,0),(1,1),(1,2),(1,3)]}
                         e_ratio = 0.5
                         e_bonus_word = 'ABLE'
@@ -3081,6 +3082,7 @@ class RoomManager:
                     room.next_round_word_paths = e_paths
                     room.next_round_total_words_count = len(e_words)
                     room.next_round_bonus = e_bonus_word
+                    room.next_round_format = e_fmt
                     
                     # USER REQUEST: Ensure Total Points is never 0.
                     # Fast-apply length based scores for the emergency board immediately.
@@ -3113,7 +3115,8 @@ class RoomManager:
                 # in check_and_update_state already captured the precise yesterday snapshots.
                 if room.time_limit < 7200:
                     room.previous_min_length = getattr(room, 'current_min_length', 3)
-                    room.previous_board = list(room.board) if room.board else []
+                    import copy
+                    room.previous_board = copy.deepcopy(room.board) if room.board else []
                     # USER REQUEST: Ensure intermission list matches round rules
                     display_min_prev = getattr(room, 'current_min_length', 3)
                     room.previous_all_words = [w for w in (room.all_words or []) if len(w) >= display_min_prev]

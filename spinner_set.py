@@ -112,8 +112,8 @@ class SpinnerSet:
                 # up to the loop limit to find a different experience.
                 # NOTE: We allow 'Normal' to repeat to maintain its intended 80% frequency.
                 if res.get('board_format') == previous_params.get('board_format'):
-                     if res.get('board_format') != 'Normal' and _ < 25:
-                         continue
+                     if res.get('board_format') not in ['Normal', 'Either/Or'] and _ < 25:
+                          continue
 
                 # Uniqueness Check: Ensure at least one major parameter changed
                 major_keys = ['difficulty', 'min_word_length', 'word_count_range', 'dictionary', 'board_format']
@@ -194,4 +194,16 @@ class SpinnerSet:
         if '3x3x3' in str(dimensions):
             return 'Normal'
             
-        return 'Either/Or'
+        result = random.choices(
+            ['Normal', 'Checkerboard', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Density', 'Rotating Letters'],
+            weights=[14, 8, 2, 2, 70, 1, 1, 1, 1]
+        )[0]
+        
+        if result == 'Mania':
+            # User Request: 33% vowels, 67% consonants for Mania formats
+            if random.random() < 0.33:
+                mania_letter = random.choice('AEIOU')
+            else:
+                mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')
+            return f'{mania_letter} Mania'
+        return result

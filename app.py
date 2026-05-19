@@ -3156,7 +3156,7 @@ def get_room_state(room_id):
                 'board': room.board,
                 'board_dimensions': room.board_dimensions,
                 'bonus_word': room.bonus_word,
-                'bonus_cell': room.bonus_cell if ('bonus letter' in str(raw_fmt).lower() or 'either' in str(raw_fmt).lower()) else None,
+                'bonus_cell': room.bonus_cell if ('bonus letter' in str(raw_fmt).lower()) else None,
                 'all_words': words_to_return,
                 'total_words_count': (room.previous_total_words if is_intermission else actual_total),
                 'next_round_total_words_count': getattr(room, 'next_round_total_words_count', 0),
