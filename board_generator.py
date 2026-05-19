@@ -749,38 +749,8 @@ class BoardGenerator:
                 print(f"[BoardGen] Rotated Mania letter to '{mania_letter}' on attempt {attempts} to find compliant board.")
             
             # --- STRATEGY SELECTION ---
-            if min_words >= 500:
-                print(f"[BoardGen] ⚡️ EXTREME DENSITY DETECTED (500+). Using Brute Force IO on every tile.")
-                board = self._create_normal_board(rows, cols, LETTER_FREQ_SUPER_DENSITY, depth=depth, difficulty=difficulty)
-                all_positions = [(f, r, c) for f in range(depth) for r in range(rows) for c in range(cols)]
-                random.shuffle(all_positions)
-                for f_p, r_p, c_p in all_positions:
-                    old_char = board[f_p][r_p][c_p] if depth > 1 else board[r_p][c_p]
-                    best_char, best_count = old_char, 0
-                    for char in "ETAOINSRHDLUCMFYWGPBVKXQJZ":
-                        # USER REQUEST: Max 1 rare letter and Max 3 total rares
-                        if self._is_rare_limited(board, char, depth):
-                            # Allow if it's the SAME letter we are already testing (no increase)
-                            if char != (board[f_p][r_p][c_p] if depth > 1 else board[r_p][c_p]):
-                                continue
-                                
-                        if depth > 1: board[f_p][r_p][c_p] = char
-                        else: board[r_p][c_p] = char
-                        res = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=12, store_paths=False)
-                        if len(res) > best_count:
-                            best_count = len(res)
-                            best_char = char
-                    if depth > 1: board[f_p][r_p][c_p] = best_char
-                    else: board[r_p][c_p] = best_char
-                # Final verify and break loop
-                all_words_dict = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True)
-                count = len(all_words_dict)
-                
-                # USER REQUEST: Final Sanitization even for extreme density
-                self._sanitize_rare_letters(board, depth, is_checkerboard=is_checkerboard)
-                if difficulty in ["Medium", "Hard"]:
-                    self._sanitize_forbidden_sequences(board, depth, is_checkerboard=is_checkerboard)
-                break
+            # USER REQUEST: Use Word Soup for everything, removing the slow brute-force block for 500+ density
+            pass
 
             # --- BOARD CREATION ---
             safe_format = str(board_format or "").lower()
