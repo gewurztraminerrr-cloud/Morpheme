@@ -900,6 +900,10 @@ class BoardGenerator:
             if difficulty in ["Medium", "Hard"]:
                 self._sanitize_forbidden_sequences(board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
 
+            # Final check to ensure the board strictly alternates C/V in checkerboard mode
+            if is_checkerboard:
+                self._verify_checkerboard_safeguard(board, weights, set(embedded_path) if embedded_path else set())
+
             # Re-solve after sweeps and sanitization for final confirmation
             all_words_dict = self._solve_board(
                 board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=30.0
@@ -2987,7 +2991,7 @@ class BoardGenerator:
             for f in range(depth_val):
                 for r in range(rows):
                     for c in range(cols):
-                        if "/" in str(board[f][r][c]): continue
+                        if "/" in str(board[f][r][c]) or (f, r, c) in bonus_cells_set: continue
                         expected_vowel = (f + r + c) % 2 != 0
                         current_val = board[f][r][c]
                         is_actual_vowel = self._is_vowel(current_val)
@@ -3001,7 +3005,7 @@ class BoardGenerator:
             rows, cols = len(board), len(board[0])
             for r in range(rows):
                 for c in range(cols):
-                    if "/" in str(board[r][c]): continue
+                    if "/" in str(board[r][c]) or (r, c) in bonus_cells_set: continue
                     expected_vowel = (r + c) % 2 != 0
                     current_val = board[r][c]
                     is_actual_vowel = self._is_vowel(current_val)
