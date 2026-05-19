@@ -385,11 +385,18 @@ document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
         // Tab became visible: Update immediately and restore fast polling
         console.log('[play.js] Tab visible: Restoring fast polling.');
+        
+        // Instant Feedback: Show syncing state to let the user know we are instantly fetching current state
+        const timerVal = document.getElementById('timer-value');
+        if (timerVal) {
+            timerVal.textContent = "...";
+        }
+
         updateGameState();
         refreshPollInterval();
         
-        // Re-sync timer if needed
-        if (window.lastGameState) {
+        // Re-sync timer if needed (ONLY if lastGameState is fresh, within 5 seconds)
+        if (window.lastGameState && window._lastGameStateFetchedTime && (Date.now() - window._lastGameStateFetchedTime < 5000)) {
             syncTimerWithServer(window.lastGameState);
             updateLocalTimer(); // Instantly update timer display
         }
@@ -417,6 +424,20 @@ function stopPolling() {
     }
 }
 
+// Helper to fetch with timeout, allowing rapid recovery from dead socket connections
+async function fetchWithTimeout(url, options = {}, timeoutMs = 1200) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(id);
+        return response;
+    } catch (error) {
+        clearTimeout(id);
+        throw error;
+    }
+}
+
 async function updateGameState(incomingState = null) {
     const roomId = getCurrentRoomId();
     if (!roomId) {
@@ -427,10 +448,20 @@ async function updateGameState(incomingState = null) {
         let state;
         if (incomingState) {
             state = incomingState;
+            window._lastGameStateFetchedTime = Date.now();
         } else {
             // Optimization: Skip fetching if tab has been hidden for a while but not yet reached the 15s pulse
             // This is just extra safety, the refreshPollInterval handles the bulk of it.
-            const response = await fetch(`/api/room/${roomId}/state`, { cache: 'no-store' });
+            
+            // Mobile/Wake-up instant response: If a request takes >1200ms (common on suspended mobile tabs due to dead HTTP sockets),
+            // abort it and retry immediately. The retry forces a fresh TCP/SSL socket and completes instantly!
+            let response;
+            try {
+                response = await fetchWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' }, 1200);
+            } catch (err) {
+                console.log(`[play.js] Wake-up state fetch timed out or failed, retrying immediately with fresh socket...`);
+                response = await fetch(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' });
+            }
             
             // Check if user left or switched rooms while the network fetch was in-flight
             let activeRoomId = getCurrentRoomId();
@@ -471,6 +502,7 @@ async function updateGameState(incomingState = null) {
                 return;
             }
             state = await response.json();
+            window._lastGameStateFetchedTime = Date.now();
 
             // Check again after parsing the json response
             activeRoomId = getCurrentRoomId();
