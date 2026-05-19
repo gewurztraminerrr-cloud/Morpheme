@@ -881,11 +881,8 @@ class BoardGenerator:
             if is_checkerboard:
                 board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
             elif "either/or" in safe_format:
-                # User Request: Support Either/Or tiles (e.g. A/B)
-                board = self._create_either_or_board(rows, cols, weights)
-                if self._has_either_or_ambiguity(board, dictionary):
-                    print(f"[BoardGen] ATTEMPT {attempts}: Either/Or board has ambiguity. Retrying...")
-                    continue
+                # Support Either/Or tiles (e.g. A/B) by creating a normal board first
+                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary)
             else:
                 board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary)
 
@@ -922,6 +919,17 @@ class BoardGenerator:
                 pass
 
             all_excluded = set()
+            special_cells = []
+            
+            if "either/or" in board_format.lower():
+                # Pick Either/Or tile coordinates
+                protected = set(embedded_path) if embedded_path else set()
+                selectable_cells = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in protected]
+                eo_cell = random.choice(selectable_cells) if selectable_cells else (0, 0)
+                special_cells.append(eo_cell)
+                all_excluded.add(eo_cell)
+                print(f"[BoardGen] Selected and protected Either/Or coordinate: {eo_cell}")
+
             if "mania" in board_format.lower():
                 mania_letter = board_format.split()[0].upper()
                 self._apply_mania_to_board(board, mania_letter, all_excluded, is_checkerboard=is_checkerboard)
@@ -931,14 +939,6 @@ class BoardGenerator:
                         for c in range(cols):
                             cell = board[f][r][c] if depth > 1 else board[r][c]
                             if cell == mania_letter: all_excluded.add((f, r, c) if depth > 1 else (r, c))
-            
-            # Protect Either/Or tiles from optimization
-            if "either/or" in board_format.lower():
-                for f in range(depth):
-                    for r in range(rows):
-                        for c in range(cols):
-                            cell = board[f][r][c] if depth > 1 else board[r][c]
-                            if "/" in cell: all_excluded.add((f, r, c) if depth > 1 else (r, c))
 
             # --- OPTIMIZATION ---
             if strategy == "StepwiseOptimization":
@@ -1017,6 +1017,23 @@ class BoardGenerator:
                         board[r][c] = random.choice(replacements)
                         a_positions.remove((r, c))
                         print(f"[BoardGen] Replaced excess 'A' at ({r}, {c}) with '{board[r][c]}'")
+
+            # --- APPLY SPECIAL TILES (Either/Or slash format) AFTER ALL BOARD MANIPULATIONS ---
+            if "either/or" in board_format.lower():
+                for sc in special_cells:
+                    r, c = sc
+                    orig = board[r][c]
+                    if '/' not in str(orig):
+                        others = [l for l in self.letters if l != orig]
+                        other_weights = [weights[self.letters.index(l)] for l in others]
+                        other = random.choices(others, weights=other_weights, k=1)[0]
+                        board[r][c] = f"{sorted([orig, other])[0]}/{sorted([orig, other])[1]}"
+                        print(f"[BoardGen] * Successfully applied Either/Or dual-letters {board[r][c]} to cell ({r}, {c})")
+                
+                # Check for ambiguity and reject/retry attempt if present
+                if self._has_either_or_ambiguity(board, dictionary):
+                    print(f"[BoardGen] ATTEMPT {attempts}: Either/Or board has ambiguity. Retrying...")
+                    continue
 
             # Re-solve after sweeps and sanitization for final confirmation
             all_words_dict = self._solve_board(
@@ -1155,14 +1172,14 @@ class BoardGenerator:
                     final_bonus_word.upper() if final_bonus_word else None,
                 )
             all_excluded = set()
+            special_cells = []
             if "either/or" in safe_format:
-                board = self._create_either_or_board(rows, cols, weights)
-                # Find the Either/Or tile and add it to all_excluded to protect it from optimization
-                for r in range(rows):
-                    for c in range(cols):
-                        if "/" in str(board[r][c]):
-                            all_excluded.add((r, c))
-                            print(f"[BoardGen] Protected Either/Or tile at ({r}, {c})")
+                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty)
+                # Pick Either/Or tile coordinates
+                eo_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
+                special_cells.append(eo_cell)
+                all_excluded.add(eo_cell)
+                print(f"[BoardGen] Selected and protected Either/Or coordinate in emergency loop: {eo_cell}")
             else:
                 board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty)
                 
@@ -1202,6 +1219,18 @@ class BoardGenerator:
             if difficulty in ["Medium", "Hard"]:
                 self._sanitize_forbidden_sequences(board, depth, protected_positions=all_excluded, is_checkerboard=is_checkerboard)
             
+            # --- APPLY SPECIAL TILES (Either/Or slash format) AFTER ALL BOARD MANIPULATIONS ---
+            if "either/or" in safe_format:
+                for sc in special_cells:
+                    r, c = sc
+                    orig = board[r][c]
+                    if '/' not in str(orig):
+                        others = [l for l in self.letters if l != orig]
+                        other_weights = [weights[self.letters.index(l)] for l in others]
+                        other = random.choices(others, weights=other_weights, k=1)[0]
+                        board[r][c] = f"{sorted([orig, other])[0]}/{sorted([orig, other])[1]}"
+                        print(f"[BoardGen] * Successfully applied Either/Or dual-letters {board[r][c]} to cell ({r}, {c})")
+
             # USER REQUEST: Re-solve after sweeps and sanitization for final confirmation
             # This ensures the bonus word and all words in the list are ACTUALLY on the board!
             final_solve = self._solve_board(
