@@ -353,6 +353,107 @@ class BoardGenerator:
         if sanitized_count > 0:
             print(f"[BoardGen] 🛡️ Sanitizer replaced {sanitized_count} redundant rare letters.")
 
+    def _sanitize_letter_abundances(self, board, depth=1, board_format="Normal", protected_positions=None, is_checkerboard=False):
+        """
+        USER MANDATE: Ironclad enforcement that NO letter may have an abundance (high count)
+        on the board unless the round's format is specifically that letter's Mania format (e.g. "S Mania").
+        
+        This prevents weird high-density clusters of consonants like 'W' or 'S' on Normal/Non-Mania boards.
+        """
+        # Determine current Mania letter if any
+        safe_format = str(board_format or "Normal").strip().upper()
+        mania_letter = None
+        if "MANIA" in safe_format:
+            parts = safe_format.split()
+            if len(parts) >= 2 and len(parts[0]) == 1 and parts[0].isalpha():
+                mania_letter = parts[0]
+
+        rows = len(board) if depth == 1 else len(board[0])
+        cols = len(board[0]) if depth == 1 else len(board[0][0])
+        grid_size = rows * cols
+        protected = set(protected_positions) if protected_positions else set()
+
+        total_cells = grid_size * depth
+        
+        letter_counts = {}
+        for f in range(depth):
+            for r in range(rows):
+                for c in range(cols):
+                    cell = board[f][r][c] if depth > 1 else board[r][c]
+                    for char in cell:
+                        if char.isalpha():
+                            letter_counts[char.upper()] = letter_counts.get(char.upper(), 0) + 1
+
+        sanitized_count = 0
+        
+        VOWELS = {"A", "E", "I", "O", "U"}
+        COMMON_CONSONANTS = {"S", "T", "R", "N", "L", "D"}
+        
+        def get_limit(letter):
+            if letter == mania_letter:
+                return 9999
+            if letter in VOWELS:
+                return max(4, int(total_cells * 0.18))
+            if letter in COMMON_CONSONANTS:
+                return max(3, int(total_cells * 0.12))
+            return max(2, int(total_cells * 0.09))
+
+        consonants_pool = [c for c in "BCDFGHJKLMNPQRSTVWXYZ" if c != mania_letter]
+        vowels_pool = [v for v in "AEIOU" if v != mania_letter]
+
+        for letter, count in list(letter_counts.items()):
+            limit = get_limit(letter)
+            if count > limit:
+                positions = []
+                for f in range(depth):
+                    for r in range(rows):
+                        for c in range(cols):
+                            cell = board[f][r][c] if depth > 1 else board[r][c]
+                            if cell == letter:
+                                pos = (f, r, c) if depth > 1 else (r, c)
+                                if pos not in protected:
+                                    positions.append(pos)
+                
+                random.shuffle(positions)
+                
+                excess = count - limit
+                to_replace = positions[:excess]
+                
+                for pos in to_replace:
+                    new_char = None
+                    is_vowel = (letter in VOWELS)
+                    
+                    for _ in range(50):
+                        if is_checkerboard or is_vowel:
+                            if is_vowel:
+                                cand = random.choice(vowels_pool)
+                            else:
+                                cand = random.choice(consonants_pool)
+                        else:
+                            cand = random.choice(vowels_pool + consonants_pool)
+                            
+                        if letter_counts.get(cand, 0) < get_limit(cand):
+                            new_char = cand
+                            break
+                            
+                    if not new_char:
+                        new_char = random.choice(vowels_pool if is_vowel else consonants_pool)
+                        
+                    if depth > 1:
+                        f, r, c = pos
+                        board[f][r][c] = new_char
+                    else:
+                        r, c = pos
+                        board[r][c] = new_char
+                        
+                    letter_counts[letter] -= 1
+                    letter_counts[new_char] = letter_counts.get(new_char, 0) + 1
+                    sanitized_count += 1
+                    print(f"[BoardGen] 🛡️ Sanitizer: Replaced excess '{letter}' ({count}/{limit}) at {pos} with '{new_char}'")
+
+        if sanitized_count > 0:
+            print(f"[BoardGen] 🛡️ Sanitizer: Replaced a total of {sanitized_count} excess letters to enforce non-abundance.")
+
     def _sanitize_forbidden_sequences(self, board, depth=1, protected_positions=None, is_checkerboard=False):
         """
         USER MANDATE: Break up any "ING" sequences on Medium/Hard boards.
@@ -873,14 +974,15 @@ class BoardGenerator:
             # --- DYNAMIC CORRECTION (Push-Pull) ---
             if count < min_words:
                 # SPARSE: Add letters to increase count
-                board = self._perform_rescue_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, rescue_depth=final_depth, protected_path=embedded_path, is_checkerboard=is_checkerboard)
+                board = self._perform_rescue_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, rescue_depth=final_depth, protected_path=embedded_path, is_checkerboard=is_checkerboard, board_format=board_format)
             elif count > max_words:
                 # OVER-DENSE: Remove letters to decrease count
-                board = self._perform_decimation_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, rescue_depth=final_depth, protected_path=embedded_path, is_checkerboard=is_checkerboard)
+                board = self._perform_decimation_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, rescue_depth=final_depth, protected_path=embedded_path, is_checkerboard=is_checkerboard, board_format=board_format)
 
             # --- FINAL RARE LETTER SANITIZATION (User Request: Max 1 Q, Z, J, X, K) ---
             # We do this AFTER all optimizations and sweeps to ensure compliance and clean board.
             self._sanitize_rare_letters(board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
+            self._sanitize_letter_abundances(board, depth, board_format=board_format, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
             if difficulty in ["Medium", "Hard"]:
                 self._sanitize_forbidden_sequences(board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
 
@@ -1078,23 +1180,25 @@ class BoardGenerator:
             # Optimization: One quick pass at max density (respecting protected cells)
             board = self._create_2000plus_board(
                 rows, cols, dictionary, is_checkerboard, board, all_excluded, "Density",
-                min_word_length, max_words, min_words, 0, 1, depth=depth, difficulty=difficulty, weights=weights
+                min_word_length, max_words, min_words, 0, 1, depth=depth, difficulty=difficulty, weights=weights,
+                board_format=board_format
             )
             
             # Final Rescue Sweep to hit the target floor (protecting format tiles)
-            board = self._perform_rescue_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, is_checkerboard=is_checkerboard)
+            board = self._perform_rescue_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, is_checkerboard=is_checkerboard, board_format=board_format)
             
             display_min = min_word_length
             final_solve = self._solve_board(board, dictionary, (0, 99999), display_min, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=30.0)
             count = len(final_solve)
             
             if count > max_words:
-                board = self._perform_decimation_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, is_checkerboard=is_checkerboard)
+                board = self._perform_decimation_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, is_checkerboard=is_checkerboard, board_format=board_format)
                 final_solve = self._solve_board(board, dictionary, (0, 99999), display_min, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=30.0)
                 count = len(final_solve)
             
             # --- FINAL SANITIZATION (protecting format tiles) ---
             self._sanitize_rare_letters(board, depth, protected_positions=all_excluded, is_checkerboard=is_checkerboard)
+            self._sanitize_letter_abundances(board, depth, board_format=board_format, protected_positions=all_excluded, is_checkerboard=is_checkerboard)
             if difficulty in ["Medium", "Hard"]:
                 self._sanitize_forbidden_sequences(board, depth, protected_positions=all_excluded, is_checkerboard=is_checkerboard)
             
@@ -1570,6 +1674,7 @@ class BoardGenerator:
         difficulty="Medium",
         bonus_word="",
         weights=None,
+        board_format="Normal"
     ):
         """
         Iterative Optimization (IO)
@@ -1873,6 +1978,10 @@ class BoardGenerator:
                 test_pool = test_pool[:sample_size]
 
                 for char in test_pool:
+                    # Enforce letter abundance limits except in specialized Mania formats
+                    if self._is_abundance_limited(board, char, board_format=board_format, depth=depth):
+                        continue
+
                     # User Request: Highly localized checks for forbidden sequences (like ING) during optimization
                     # to prevent them from leaking into the final board.
                     if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(
@@ -2013,7 +2122,7 @@ class BoardGenerator:
 
         return board
 
-    def _perform_decimation_sweep(self, board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, excluded, difficulty, rescue_depth=15, protected_path=None, is_checkerboard=False):
+    def _perform_decimation_sweep(self, board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, excluded, difficulty, rescue_depth=15, protected_path=None, is_checkerboard=False, board_format="Normal"):
         """
         USER REQUEST: Reduce word count by replacing high-density cells with 'dead' letters.
         """
@@ -2062,6 +2171,8 @@ class BoardGenerator:
                 if self._is_rare_limited(board, char, depth):
                     if char != (board[f_p][r_p][c_p] if depth > 1 else board[r_p][c_p]):
                         continue
+                if self._is_abundance_limited(board, char, board_format=board_format, depth=depth):
+                    continue
                     
                 if depth > 1: board[f_p][r_p][c_p] = char
                 else: board[r_p][c_p] = char
@@ -2083,7 +2194,7 @@ class BoardGenerator:
                 break
         return board
 
-    def _perform_rescue_sweep(self, board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, excluded, difficulty, rescue_depth=15, protected_path=None, is_checkerboard=False):
+    def _perform_rescue_sweep(self, board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, excluded, difficulty, rescue_depth=15, protected_path=None, is_checkerboard=False, board_format="Normal"):
         """
         USER REQUEST: Perform IO operations on random locations until desired word count is reached.
         """
@@ -2126,6 +2237,8 @@ class BoardGenerator:
             for char in list(set(test_chars)):
                 if char == old_char: continue
                 if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, char, r_p, c_p, f_p, depth=depth):
+                    continue
+                if self._is_abundance_limited(board, char, board_format=board_format, depth=depth):
                     continue
                 if depth > 1: board[f_p][r_p][c_p] = char
                 else: board[r_p][c_p] = char
@@ -3125,6 +3238,36 @@ class BoardGenerator:
                     if char in str(cell):
                         count += 1
         return count
+
+    def _is_abundance_limited(self, board, char, board_format="Normal", depth=1):
+        """Helper to ensure letters do not exceed abundance limits during sweeps/optimization."""
+        # Active Mania letter has no limit
+        safe_format = str(board_format or "Normal").strip().upper()
+        if "MANIA" in safe_format:
+            parts = safe_format.split()
+            if len(parts) >= 2 and len(parts[0]) == 1 and parts[0].isalpha():
+                if char.upper() == parts[0]:
+                    return False
+
+        # Calculate total cells
+        rows = len(board) if depth == 1 else len(board[0])
+        cols = len(board[0]) if depth == 1 else len(board[0][0])
+        total_cells = rows * cols * depth
+
+        # Letter type limits
+        VOWELS = {"A", "E", "I", "O", "U"}
+        COMMON_CONSONANTS = {"S", "T", "R", "N", "L", "D"}
+
+        upper_char = char.upper()
+        if upper_char in VOWELS:
+            limit = max(4, int(total_cells * 0.18))
+        elif upper_char in COMMON_CONSONANTS:
+            limit = max(3, int(total_cells * 0.12))
+        else:
+            limit = max(2, int(total_cells * 0.09))
+
+        current_count = self._count_char_on_board(board, upper_char, depth)
+        return current_count >= limit
 
     def _is_rare_limited(self, board, char, depth=1):
         """Helper for optimization loops to respect global rare limits (Max 1 per, Max 3 total)."""
