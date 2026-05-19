@@ -3678,6 +3678,59 @@ class RoomManager:
             if len(proposed_board) != r_num or len(proposed_board[0]) != c_num:
                  return {"error": "Dimension mismatch", "success": False}
                  
+            # 4. Enforce Ironclad Sanitization and Abundance Rules for Client Proposals
+            rare_letters = {"Q", "Z", "J", "X", "K"}
+            rare_counts = {rl: 0 for rl in rare_letters}
+            total_rares = 0
+            
+            letter_counts = {}
+            for row in proposed_board:
+                for cell in row:
+                    cell_str = str(cell).upper()
+                    # Handle Either/Or cell slash formats
+                    parts = cell_str.split('/')
+                    for part in parts:
+                        if part:
+                            letter_counts[part] = letter_counts.get(part, 0) + 1
+                            if part in rare_letters:
+                                rare_counts[part] += 1
+                                total_rares += 1
+                                
+            # Check rare limits (max 1 of each, max 3 total)
+            for rl, rc in rare_counts.items():
+                if rc > 1:
+                    return {"error": f"Too many rare letters: '{rl}' occurs {rc} times (Max 1)", "success": False}
+            if total_rares > 3:
+                return {"error": f"Too many total rare letters: {total_rares} (Max 3)", "success": False}
+                
+            # Check standard abundance limits on non-Mania formats
+            board_format = target.get('format', 'Normal')
+            safe_format = str(board_format or "Normal").strip().upper()
+            is_mania = "MANIA" in safe_format
+            mania_letter = None
+            if is_mania:
+                parts = safe_format.split()
+                if len(parts) >= 2 and len(parts[0]) == 1 and parts[0].isalpha():
+                    mania_letter = parts[0]
+                    
+            total_cells = r_num * c_num
+            VOWELS = {"A", "E", "I", "O", "U"}
+            COMMON_CONSONANTS = {"S", "T", "R", "N", "L", "D"}
+            
+            for char, count in letter_counts.items():
+                if is_mania and char == mania_letter:
+                    continue  # Mania letter has no limit
+                    
+                if char in VOWELS:
+                    limit = max(4, int(total_cells * 0.18))
+                elif char in COMMON_CONSONANTS:
+                    limit = max(3, int(total_cells * 0.12))
+                else:
+                    limit = max(2, int(total_cells * 0.09))
+                    
+                if count > limit:
+                    return {"error": f"Letter '{char}' exceeded abundance cap ({count}/{limit})", "success": False}
+                 
             # Extract criteria
             dict_name = target.get('dictionary', 'NWL')
             wc_range = room._get_wc_tuple(target.get('word_count_range', '100-200'))
@@ -3692,6 +3745,11 @@ class RoomManager:
             
             all_words = list(all_words_dict.keys())
             total_count = len(all_words)
+            
+            d_num = int(b_dims[0]) if len(b_dims) == 3 else 1
+            u_ratio = self.board_generator.get_uniqueness_ratio(
+                proposed_board, all_words, r_num, c_num, dict_name, depth=d_num
+            )
             
             # Check Compliance
             is_compliant = wc_range[0] <= total_count <= wc_range[1]
