@@ -1822,6 +1822,17 @@ async function updateGameState(incomingState = null) {
             }
         }
 
+        // Rapid retry if server is lagged (stayed in active state but time is up)
+        if (state && state.state === 'active' && state.time_remaining <= 0) {
+            console.warn('[play.js] Server state is active with 0s left. Scheduling rapid state check in 200ms...');
+            if (!window._rapidPollCount || window._rapidPollCount < 15) {
+                window._rapidPollCount = (window._rapidPollCount || 0) + 1;
+                setTimeout(() => updateGameState(), 200);
+            }
+        } else {
+            window._rapidPollCount = 0;
+        }
+
     } catch (error) {
         console.error('Error updating game state:', error);
     }
@@ -2750,11 +2761,12 @@ function updateLocalTimer() {
 
         // User Request: Automatic/instant transition at 0:00
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
-        const is24H = window.lastGameState && window.lastGameState.time_limit >= 7200;
-        if (currentState === 'intermission' || (is24H && currentState === 'active')) {
-            console.log('[play.js] Local timer reached 0:00 - Triggering immediate server poll.');
+        console.log(`[play.js] Local timer reached 0:00 in ${currentState} state - Scheduling rapid server poll.`);
+        
+        // Use a short 250ms buffer to allow the server to register the transition, then poll
+        setTimeout(() => {
             updateGameState();
-        }
+        }, 250);
     }
 
     // -- Next Round Bell Logic --
