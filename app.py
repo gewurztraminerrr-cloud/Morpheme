@@ -5476,6 +5476,8 @@ def create_solo_match():
     
     board_format = parameters.get('board_format', 'Normal')
     from spinner_set import SpinnerSet
+    if board_format == 'random':
+        board_format = SpinnerSet._spin_board_format(is_24h=False, dimensions=board_dimensions)
 
     # First-round difficulty randomization
     target_difficulty = parameters.get('difficulty', 'random')
@@ -5497,7 +5499,8 @@ def create_solo_match():
     room.randomize_spinner = (
         parameters.get('dictionary') == 'random' or
         parameters.get('difficulty', 'random') == 'random' or
-        parameters.get('word_count_range', 'random') == 'random'
+        parameters.get('word_count_range', 'random') == 'random' or
+        parameters.get('board_format', 'random') == 'random'
     )
 
     room.spinner_params = {

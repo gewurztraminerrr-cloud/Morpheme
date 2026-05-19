@@ -2408,12 +2408,18 @@ class RoomManager:
                         else:
                             wc_range = wc_choice
                             
+                        # 4. Resolve Board Format
+                        if board_fmt == 'random':
+                            resolved_board_format = SpinnerSet._spin_board_format(is_24h=False, dimensions=room.board_dimensions)
+                        else:
+                            resolved_board_format = board_fmt
+                            
                         new_params = {
                             'min_word_length': min_word_len,
                             'difficulty': difficulty,
                             'word_count_range': wc_range,
                             'dictionary': dictionary,
-                            'board_format': board_fmt,
+                            'board_format': resolved_board_format,
                             'bonus_word_length': bonus_word_len,
                             'generated_at': time.time()
                         }

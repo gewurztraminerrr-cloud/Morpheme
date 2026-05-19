@@ -239,6 +239,9 @@ class PrivateMatchManager:
         bonus_word = ""
         # Check if the format allows a bonus word
         target_format = parameters.get('board_format', 'Normal')
+        from spinner_set import SpinnerSet
+        if target_format == 'random':
+            target_format = SpinnerSet._spin_board_format(is_24h=False, dimensions=dims)
         
         # 0. Handle "Mania" without a prefix (ensure 33% vowels, 67% consonants)
         if target_format.strip() == 'Mania':
@@ -249,7 +252,7 @@ class PrivateMatchManager:
                 mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')
             target_format = f"{mania_letter} Mania"
             
-        from spinner_set import SpinnerSet
+        # Already imported above, keep it clean
         
         target_difficulty = parameters.get('difficulty', 'random')
         if target_difficulty == 'random':
