@@ -3025,22 +3025,40 @@ class RoomManager:
                     print(f"[REMAINING-STABILIZER] Staging empty for {room_id} at promotion. Forcing emergency fallbackboard.")
                     from board_generator import BoardGenerator
                     bg = BoardGenerator()
-                    # CORRECTION: Use keyword arguments to match BoardGenerator signature
                     target_range = room.spinner_params.get('word_count_range', '100-200')
-                    try:
-                        e_results = bg.generate_board(
-                            dimensions=room.board_dimensions, 
-                            bonus_word=getattr(room, 'next_round_bonus', ''),
-                            word_count_range=target_range,
-                            dictionary=room.current_dictionary,
-                            board_format=room.current_board_format,
-                            min_word_length=room.current_min_length,
-                            difficulty=room.current_difficulty,
-                            is_emergency=True
-                        )
-                    except Exception as e:
-                        print(f"[RoomManager] Emergency generate_board at promotion failed: {e}")
-                        e_results = None
+                    
+                    e_attempts = 0
+                    e_results = None
+                    while e_attempts < 4:
+                        import random
+                        random.seed()
+                        
+                        try:
+                            e_results = bg.generate_board(
+                                dimensions=room.board_dimensions, 
+                                bonus_word=getattr(room, 'next_round_bonus', ''),
+                                word_count_range=target_range,
+                                dictionary=room.current_dictionary,
+                                board_format=room.current_board_format,
+                                min_word_length=room.current_min_length,
+                                difficulty=room.current_difficulty,
+                                is_emergency=True
+                            )
+                        except Exception as e:
+                            print(f"[RoomManager] Emergency generate_board at promotion failed: {e}")
+                            e_results = None
+                            
+                        if e_results:
+                            if len(e_results) == 7:
+                                e_board = e_results[0]
+                            else:
+                                e_board = e_results[0]
+                                
+                            # Compare to current board and previous round board to guarantee uniqueness
+                            if getattr(room, 'board', None) != e_board and getattr(room, 'previous_board', None) != e_board:
+                                break
+                            print(f"[RoomManager] WARNING: Fallback generated board is IDENTICAL to current/previous board. Retrying...")
+                        e_attempts += 1
                         
                     # Robust Unpacking: Support both 6-tuple and 7-tuple returns
                     if e_results:
