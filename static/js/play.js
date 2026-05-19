@@ -4952,6 +4952,9 @@ function updateWordInputFromPath() {
     if (wordInputEl) {
         wordInputEl.value = mouseState.selectedPath.map(p => {
             const L = p.letter; // Show full letter string (e.g. "L/T")
+            if (L && L.includes('/')) {
+                return `[${L}]`;
+            }
             return L === 'Q' ? 'QU' : L;
         }).join('');
     }
