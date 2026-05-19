@@ -3517,7 +3517,7 @@ function updateBoardCell(cell, r, c, letter, grayed, f, state = null) {
         cell.appendChild(hitbox);
         
         // USER REQUEST: If this is the bonus cell, add a persistent star icon to make it "Appear"
-        const bonusCell = (state && state.bonus_cell) ? state.bonus_cell : (window.lastGameState ? window.lastGameState.bonus_cell : null);
+        const bonusCell = (state && typeof state.bonus_cell !== 'undefined') ? state.bonus_cell : (window.lastGameState ? window.lastGameState.bonus_cell : null);
         let isBonusMatch = false;
         if (bonusCell) {
             if (Array.isArray(bonusCell)) {
@@ -3541,7 +3541,7 @@ function updateBoardCell(cell, r, c, letter, grayed, f, state = null) {
     }
 
     // Update Special Highlights (Bonus Cell)
-    const activeBonusCell = (state && state.bonus_cell) ? state.bonus_cell : (window.lastGameState ? window.lastGameState.bonus_cell : null);
+    const activeBonusCell = (state && typeof state.bonus_cell !== 'undefined') ? state.bonus_cell : (window.lastGameState ? window.lastGameState.bonus_cell : null);
     let isMatch = false;
     
     if (activeBonusCell) {
@@ -3564,18 +3564,19 @@ function updateBoardCell(cell, r, c, letter, grayed, f, state = null) {
         }
     }
 
-    // STAR MANAGEMENT: Ensure star is present/absent based on live isMatch
+    // STAR MANAGEMENT: Ensure star is present/absent based on live isMatch and format
     const existingStar = cell.querySelector('.bonus-star');
-    if (isMatch && !existingStar) {
+    const isBonusLetterFormat = boardFormat.toLowerCase().includes('bonus letter');
+    if (isMatch && isBonusLetterFormat && !existingStar) {
         const star = document.createElement('span');
         star.className = 'bonus-star';
         star.textContent = '★';
         cell.appendChild(star);
-    } else if (!isMatch && existingStar) {
+    } else if ((!isMatch || !isBonusLetterFormat) && existingStar) {
         existingStar.remove();
     }
     
-    if (isMatch || (boardFormat.toLowerCase().includes('either') && letter.includes('/'))) {
+    if ((isMatch && isBonusLetterFormat) || (boardFormat.toLowerCase().includes('either') && letter.includes('/'))) {
         cell.classList.add('bonus-highlight');
     } else {
         cell.classList.remove('bonus-highlight');
