@@ -665,6 +665,7 @@ async function fetchLobbyStats() {
         console.error('Error fetching lobby stats:', error);
     }
 }
+window.fetchLobbyStats = fetchLobbyStats;
 
 function updateLobbyButtons(stats) {
     // Stats format: "game_type|board|time": count

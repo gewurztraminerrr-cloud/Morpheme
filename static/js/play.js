@@ -4752,7 +4752,7 @@ function showValidationFeedback(message, isValid, isBonus = false) {
     }, 3000);
 }
 
-function leaveCurrentRoom() {
+async function leaveCurrentRoom() {
     if (isTournamentPlay) {
         // We don't necessarily want to force forfeit on EVERY leave (e.g. browser refresh handles itself better)
         // but for the "Leave" button it is handled in the listener.
@@ -4777,14 +4777,21 @@ function leaveCurrentRoom() {
     if (window.updateManualToolState) window.updateManualToolState();
     clearGameUIAndCache();
 
-    // 2. Fire-and-forget network notification
-    // Use keepalive: true or sendBeacon so the browser does not cancel the request on unload/redirect,
-    // and do not block the thread awaiting it!
+    // 2. Await network notification to guarantee no race conditions with lobby stats
     const url = `/api/room/${roomId}/leave`;
-    if (navigator.sendBeacon) {
-        navigator.sendBeacon(url);
-    } else {
-        fetch(url, { method: 'POST', keepalive: true }).catch(() => {});
+    try {
+        await fetch(url, { method: 'POST' });
+    } catch (e) {
+        console.warn("Failed to notify server of leaving room:", e);
+    }
+
+    // 3. Immediately refresh lobby stats if available
+    if (typeof window.fetchLobbyStats === 'function') {
+        try {
+            await window.fetchLobbyStats();
+        } catch (e) {
+            console.warn("Failed to refresh lobby stats after leaving room:", e);
+        }
     }
 }
 window.leaveCurrentRoom = leaveCurrentRoom;
