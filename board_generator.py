@@ -782,17 +782,20 @@ class BoardGenerator:
                     self._sanitize_forbidden_sequences(board, depth, is_checkerboard=is_checkerboard)
                 break
 
+            # --- BOARD CREATION ---
+            safe_format = str(board_format or "").lower()
+            is_checkerboard = "checkerboard" in safe_format
+
             # Standard Strategies
-            strategy = "StepwiseOptimization" if num_tiles >= 24 else "HighDensity"
+            if num_tiles >= 24 and depth == 1 and not is_checkerboard and "either/or" not in safe_format:
+                strategy = "WordSoup"
+            else:
+                strategy = "StepwiseOptimization" if num_tiles >= 24 else "HighDensity"
             
             # Weighted frequencies for density
             # USER REQUEST: If target is high density or high min length, use Super Density weights
             is_super_dense = (min_words >= 200 or (min_word_length >= 4 and rows*cols <= 24))
             weights = LETTER_FREQ_SUPER_DENSITY if is_super_dense else (LETTER_FREQ_EASY if (min_words >= 100 or attempts > 3) else LETTER_FREQ_USER)
-            
-            # --- BOARD CREATION ---
-            safe_format = str(board_format or "").lower()
-            is_checkerboard = "checkerboard" in safe_format
             if is_checkerboard:
                 board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
             elif "either/or" in safe_format:
@@ -1399,7 +1402,7 @@ class BoardGenerator:
             
         # Determine number of words to embed based on grid size
         num_cells = rows * cols
-        num_words_to_embed = 25 if num_cells >= 48 else (15 if num_cells >= 35 else 7)
+        num_words_to_embed = 45 if num_cells >= 48 else (30 if num_cells >= 35 else 15)
         
         selected_words = random.sample(valid_words, min(num_words_to_embed, len(valid_words)))
         
