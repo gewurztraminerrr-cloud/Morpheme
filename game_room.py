@@ -625,7 +625,14 @@ class GameRoom:
             
             if valid_path:
                 # Find which of the possible interpreted words from the path actually exists on the board
-                valid_options = [w for w in possible_words if w in self.all_words]
+                # USER REQUEST: Use dictionary validation instead of just all_words to match Solo mode!
+                import word_validator
+                valid_options = []
+                for w in possible_words:
+                    if w in self.all_words:
+                        valid_options.append(w)
+                    elif word_validator.word_validator.is_valid_word(w, getattr(self, 'current_dictionary', 'NWL')):
+                        valid_options.append(w)
                 if len(valid_options) >= 1:
                     word = valid_options[0]  # Auto-correct the submission to the valid Either/Or letter
                     matched_word = word
