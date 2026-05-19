@@ -357,9 +357,9 @@ class BoardGenerator:
         seq_len = len(sequence)
 
         # Loop until no forbidden sequences are found
-        max_attempts = 10
+        max_attempts = 200
         sanitized_count = 0
-        for _ in range(max_attempts):
+        for attempt_idx in range(max_attempts):
             found_any = False
             
             def find_path(idx, r, c, f, current_path):
@@ -418,6 +418,9 @@ class BoardGenerator:
             
             if not found_any:
                 break
+                
+        if attempt_idx == max_attempts - 1:
+            print(f"[BoardGen] ⚠️ Sequence Sanitizer reached max attempts ({max_attempts}). Some ING sequences may remain.")
 
     def _is_creating_forbidden_sequence(self, board, char, r, c, f, target_seq="ING", depth=1):
         """Highly optimized local check to see if placing 'char' at (r, c, f) creates forbidden sequence."""
