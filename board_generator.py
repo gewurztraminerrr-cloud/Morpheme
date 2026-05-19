@@ -1391,14 +1391,14 @@ class BoardGenerator:
 
         board = [[' ' for _ in range(cols)] for _ in range(rows)]
         
-        # Get words from dictionary of length 5-10
+        # Get words from dictionary of length 5-10 (Excluding ING words as requested!)
         valid_words = []
         if dictionary:
-            valid_words = [w for w in dictionary if 5 <= len(w) <= 10]
+            valid_words = [w for w in dictionary if 5 <= len(w) <= 10 and not w.upper().endswith("ING")]
             
         if not valid_words:
             # Fallback if no dictionary passed or no words of that length
-            valid_words = ["EXAMPLE", "TESTING", "BOARDS", "PUZZLE", "BOGGLE"]
+            valid_words = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
             
         # Determine number of words to embed based on grid size
         num_cells = rows * cols
