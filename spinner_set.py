@@ -65,9 +65,8 @@ class SpinnerSet:
                 wc_range = SpinnerSet._spin_word_count(dictionary, min_word_length, difficulty, board_dimensions)
                 
                 # RE-SYNC: High density on 4x4 ALWAYS results in high uniqueness (Hard).
-                # If we rolled 200+ or 500+ on a 4x4, we must promote the difficulty to Hard.
-                if wc_range in ['200+', '500+'] and ('4x4' in str(board_dimensions) or '4x6' in str(board_dimensions)):
-                    difficulty = 'Hard'
+                # (We allow the spinner's selection to persist to preserve the 25%/50%/25% distribution)
+                pass
                 
                 # Determine format (Allow Either/Or to persist at high density)
                 board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions)
@@ -159,12 +158,7 @@ class SpinnerSet:
     
     @staticmethod
     def _spin_difficulty(board_dimensions='4x4', min_word_length=3):
-        """Balanced difficulty selection: 25% Easy, 50% Medium, 25% Hard.
-        For 5L+ minimum length rounds, we force Hard as Easy uniqueness is physically impossible."""
-        dims_str = str(board_dimensions)
-        if min_word_length >= 5 and ('4x4' in dims_str or '4x6' in dims_str):
-            return 'Hard'
-
+        """Balanced difficulty selection: 25% Easy, 50% Medium, 25% Hard."""
         choices = ['Easy', 'Medium', 'Hard']
         weights = [25, 50, 25] # Strictly 25% Easy, 50% Medium, 25% Hard
         return random.choices(choices, weights=weights)[0]
