@@ -2251,11 +2251,19 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             const s = window.lastGameState;
             let finders = [];
             if (s && s.players) {
+                const sortedAll = [...s.players].sort((a, b) => (b.score - a.score) || (b.rating - a.rating));
+                const rankMap = new Map();
+                sortedAll.forEach((p, idx) => rankMap.set(p.username, idx + 1));
+
                 finders = s.players.filter(p =>
                     p.submitted_words && p.submitted_words.some(sw =>
                         (typeof sw === 'object' ? sw.word : sw).toUpperCase() === highlightedFoundWord
                     )
-                ).sort((a, b) => (b.rating || 0) - (a.rating || 0));
+                ).sort((a, b) => {
+                    const rA = rankMap.get(a.username) || 999;
+                    const rB = rankMap.get(b.username) || 999;
+                    return rA - rB;
+                });
             }
             
             const findersNames = finders.map(p => p.username).join(', ') || 'None';
@@ -6209,11 +6217,22 @@ window.showFinderModal = function (word) {
             return;
         }
 
+        // Sort all players to establish round placement
+        const sortedAllPlayers = [...window.lastGameState.players].sort((a, b) => (b.score - a.score) || (b.rating - a.rating));
+        const playerRankMap = new Map();
+        sortedAllPlayers.forEach((p, idx) => {
+            playerRankMap.set(p.username, idx + 1);
+        });
+
         const finders = window.lastGameState.players.filter(p =>
             p.submitted_words && p.submitted_words.some(sw =>
                 (typeof sw === 'object' ? sw.word : sw).toUpperCase() === wordUpper
             )
-        ).sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        ).sort((a, b) => {
+            const rankA = playerRankMap.get(a.username) || 999;
+            const rankB = playerRankMap.get(b.username) || 999;
+            return rankA - rankB;
+        });
 
         const findersCount = finders.length;
 
@@ -6238,14 +6257,48 @@ window.showFinderModal = function (word) {
                 } else {
                     html += finders.map(p => {
                         const rating = p.rating || 0;
+                        const score = p.score || 0;
+                        const rank = playerRankMap.get(p.username) || 999;
                         const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#fff';
+                        
+                        // Placement Badge Styling
+                        let badgeBg = 'rgba(255,255,255,0.05)';
+                        let badgeColor = 'var(--text-secondary)';
+                        let rankText = `#${rank}`;
+                        if (rank === 1) {
+                            badgeBg = 'rgba(255, 215, 0, 0.15)';
+                            badgeColor = '#FFD700';
+                            rankText = '1st';
+                        } else if (rank === 2) {
+                            badgeBg = 'rgba(192, 192, 192, 0.15)';
+                            badgeColor = '#E0E0E0';
+                            rankText = '2nd';
+                        } else if (rank === 3) {
+                            badgeBg = 'rgba(205, 127, 50, 0.15)';
+                            badgeColor = '#CD7F32';
+                            rankText = '3rd';
+                        } else {
+                            const j = rank % 10, k = rank % 100;
+                            let suffix = "th";
+                            if (j === 1 && k !== 11) suffix = "st";
+                            else if (j === 2 && k !== 12) suffix = "nd";
+                            else if (j === 3 && k !== 13) suffix = "rd";
+                            rankText = rank + suffix;
+                        }
+                        
                         return `
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); margin-bottom: 4px; border-radius: 6px;">
                                 <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="display: flex; align-items: center; justify-content: center; width: 36px; height: 22px; background: ${badgeBg}; color: ${badgeColor}; border-radius: 4px; font-size: 0.75rem; font-weight: 800;">
+                                        ${rankText}
+                                    </div>
                                     <div style="width: 14px; height: 14px; background: ${rColor}; border-radius: 3px; box-shadow: 0 0 10px ${rColor}22;"></div>
                                     <span style="font-weight: 700; font-size: 0.95rem;">${p.username}</span>
                                 </div>
-                                <span style="opacity: 0.5; font-size: 0.8rem; font-weight: 600;">${rating}</span>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color, #a855f7);">${score} pts</span>
+                                    <span style="opacity: 0.4; font-size: 0.8rem; font-weight: 600;">⭐ ${rating}</span>
+                                </div>
                             </div>
                         `;
                     }).join('');
