@@ -482,6 +482,7 @@ async function updateGameState(incomingState = null) {
 
         if (!state) return;
 
+        window.isBoardTransposed = false;
         // Mobile Board Transposition: Turn landscape flat boards (rows < cols) into portrait (longest side runs vertically)
         try {
             if (window.innerWidth <= 992 && state.board && state.board.length > 0 && Array.isArray(state.board[0])) {
@@ -490,6 +491,7 @@ async function updateGameState(incomingState = null) {
                     const rows = state.board.length;
                     const cols = state.board[0].length;
                     if (rows < cols) {
+                        window.isBoardTransposed = true;
                         // Transpose Board letters array safely
                         const transposedBoard = [];
                         for (let c = 0; c < cols; c++) {
@@ -4545,6 +4547,16 @@ async function submitWord(wordParam = null, pathParam = null) {
             });
         }
     }
+    
+    // Proactively untranspose coordinate paths if the board was transposed on mobile
+    if (finalPath && window.isBoardTransposed) {
+        finalPath = finalPath.map(p => {
+            if (p.length === 3) {
+                return [p[0], p[2], p[1]]; // [face, col, row]
+            }
+            return [p[1], p[0]]; // [col, row]
+        });
+    }
 
     // Define currentUser for consistency in local updates
     let currentUser = window.currentUser || (window.lastGameState && window.lastGameState.your_username) || localStorage.getItem('morpheme_username') || '';
@@ -5151,7 +5163,12 @@ function finishDragSelection(e) {
             const L = p.letter;
             return L === 'Q' ? 'QU' : L;
         }).join('');
-        const serverPath = path.map(p => (p.face !== null && p.face !== undefined) ? [p.face, p.row, p.col] : [p.row, p.col]);
+        const serverPath = path.map(p => {
+            if (p.face !== null && p.face !== undefined) {
+                return [p.face, p.row, p.col];
+            }
+            return window.isBoardTransposed ? [p.col, p.row] : [p.row, p.col];
+        });
 
         // Unconditionally submit word
         submitWord(word, serverPath);
