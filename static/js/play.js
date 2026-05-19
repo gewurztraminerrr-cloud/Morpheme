@@ -413,6 +413,25 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
+// Window Focus Listener: Provides robust mobile wake-up when focus is gained
+window.addEventListener('focus', () => {
+    if (!document.hidden) {
+        console.log('[play.js] Window focus gained: Checking wake-up update.');
+        const timerVal = document.getElementById('timer-value');
+        if (timerVal && timerVal.textContent !== '...') {
+            timerVal.textContent = "...";
+        }
+
+        updateGameState();
+        refreshPollInterval();
+
+        if (window.lastGameState && window._lastGameStateFetchedTime && (Date.now() - window._lastGameStateFetchedTime < 5000)) {
+            syncTimerWithServer(window.lastGameState);
+            updateLocalTimer();
+        }
+    }
+});
+
 function stopPolling() {
     if (pollInterval) {
         clearInterval(pollInterval);
@@ -453,11 +472,11 @@ async function updateGameState(incomingState = null) {
             // Optimization: Skip fetching if tab has been hidden for a while but not yet reached the 15s pulse
             // This is just extra safety, the refreshPollInterval handles the bulk of it.
             
-            // Mobile/Wake-up instant response: If a request takes >1200ms (common on suspended mobile tabs due to dead HTTP sockets),
+            // Mobile/Wake-up instant response: If a request takes >800ms (common on suspended mobile tabs due to dead HTTP sockets),
             // abort it and retry immediately. The retry forces a fresh TCP/SSL socket and completes instantly!
             let response;
             try {
-                response = await fetchWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' }, 1200);
+                response = await fetchWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' }, 800);
             } catch (err) {
                 console.log(`[play.js] Wake-up state fetch timed out or failed, retrying immediately with fresh socket...`);
                 response = await fetch(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' });
@@ -581,6 +600,7 @@ async function updateGameState(incomingState = null) {
             
             // If visible, we still need to sync the timer reference, but we can skip heavy DOM re-renders
             syncTimerWithServer(state);
+            updateLocalTimer(); // Instantly update the timer display on identical-state resume!
             return;
         }
         window.lastRenderedStateJSON = stateJSON;
@@ -2737,6 +2757,18 @@ function syncTimerWithServer(state) {
 }
 
 function updateLocalTimer() {
+    // Thread Freeze Detection: If the JavaScript thread locks/freezes (e.g. mobile lock screen/app minimized)
+    // and thaws later without clean visibility events, instantly trigger a state update.
+    const tickTime = Date.now();
+    if (window._lastLocalTimerTickTime) {
+        const gap = tickTime - window._lastLocalTimerTickTime;
+        if (gap > 2200) {
+            console.log(`[play.js] updateLocalTimer: Thawed after freeze gap of ${gap}ms. Requesting instant update.`);
+            updateGameState();
+        }
+    }
+    window._lastLocalTimerTickTime = tickTime;
+
     if (!localEndTime) return;
 
     if (!cachedTimerValueEl) cachedTimerValueEl = document.getElementById('timer-value');
