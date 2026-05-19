@@ -814,7 +814,7 @@ class BoardGenerator:
                             flat_letters.extend(cell.split('/'))
                 
                 a_count = sum(1 for char in flat_letters if char == 'A')
-                max_as = 6 if rows * cols >= 48 else 5 # Max 6 for 6x8, 5 for 5x7
+                max_as = 9 if rows * cols >= 48 else 7 # Max 9 for 6x8, 7 for 5x7
                 if a_count > max_as:
                     print(f"[BoardGen] ATTEMPT {attempts}: Too many A's ({a_count} > {max_as}). Retrying...")
                     continue
@@ -906,7 +906,7 @@ class BoardGenerator:
 
             # --- FINAL A'S SANITIZATION FOR LARGE BOARDS ---
             if rows * cols >= 35 and depth == 1:
-                max_as = 6 if rows * cols >= 48 else 5
+                max_as = 9 if rows * cols >= 48 else 7
                 
                 # Find all positions of 'A'
                 a_positions = []
