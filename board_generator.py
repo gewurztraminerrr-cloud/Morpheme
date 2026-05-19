@@ -850,7 +850,7 @@ class BoardGenerator:
                 )
                 # Stage 2: IO and B Uniqueness
                 board = self._apply_io_b_uniqueness_optimization(
-                    board, rows, cols, dictionary, all_excluded, min_word_length, depth=depth, difficulty=difficulty, max_words=max_words
+                    board, rows, cols, dictionary, all_excluded, min_word_length, depth=depth, difficulty=difficulty, max_words=max_words, is_checkerboard=is_checkerboard
                 )
             else:
                 board = self._create_2000plus_board(
@@ -873,10 +873,10 @@ class BoardGenerator:
             # --- DYNAMIC CORRECTION (Push-Pull) ---
             if count < min_words:
                 # SPARSE: Add letters to increase count
-                board = self._perform_rescue_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, rescue_depth=final_depth, protected_path=embedded_path)
+                board = self._perform_rescue_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, rescue_depth=final_depth, protected_path=embedded_path, is_checkerboard=is_checkerboard)
             elif count > max_words:
                 # OVER-DENSE: Remove letters to decrease count
-                board = self._perform_decimation_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, rescue_depth=final_depth, protected_path=embedded_path)
+                board = self._perform_decimation_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, rescue_depth=final_depth, protected_path=embedded_path, is_checkerboard=is_checkerboard)
 
             # --- FINAL RARE LETTER SANITIZATION (User Request: Max 1 Q, Z, J, X, K) ---
             # We do this AFTER all optimizations and sweeps to ensure compliance and clean board.
@@ -2144,7 +2144,7 @@ class BoardGenerator:
                 break
         return board
 
-    def _apply_io_b_uniqueness_optimization(self, board, rows, cols, dictionary, excluded_cells, min_word_length, depth=1, difficulty="Medium", max_words=200):
+    def _apply_io_b_uniqueness_optimization(self, board, rows, cols, dictionary, excluded_cells, min_word_length, depth=1, difficulty="Medium", max_words=200, is_checkerboard=False):
         """
         USER MANDATE: Stage 2 of 200+ Optimization. 
         Implements specific "IO and B" checkerboard where:
@@ -2200,7 +2200,11 @@ class BoardGenerator:
             is_easy = (str(difficulty).lower() == "easy")
             
             # Solve for each letter to pick the winning candidate
-            test_alphabet = alphabet
+            if is_checkerboard:
+                target_is_vowel = (f_t + r_t + c_t) % 2 != 0 if depth > 1 else (r_t + c_t) % 2 != 0
+                test_alphabet = list(VOWELS) if target_is_vowel else list(CONSONANTS)
+            else:
+                test_alphabet = alphabet
             
             for char in test_alphabet:
                 # USER REQUEST: Max 1 rare letter and Max 3 total rares
