@@ -3084,7 +3084,7 @@ class RoomManager:
 
                 # ATOMIC PROMOTION: Carry staging data to active room state
                 room.board = room.next_round_board
-                room.current_board_format = getattr(room, 'next_round_format', 'Normal')
+                room.current_board_format = getattr(room, 'next_round_format', None) or active_params.get('board_format', 'Normal')
                 
                 # USER REQUEST: Absolute consistency. Only include words that meet the round's scorable minimum.
                 # HARD FLOOR: Always exclude 3-letter words from the 'All Words' list (User Request: "NOT 3 letter wrods")
