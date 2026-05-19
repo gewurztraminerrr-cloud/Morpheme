@@ -802,7 +802,7 @@ class BoardGenerator:
                     print(f"[BoardGen] ATTEMPT {attempts}: Either/Or board has ambiguity. Retrying...")
                     continue
             else:
-                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty)
+                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary)
 
             # USER REQUEST: Limit the number of A's on large boards (5x7, 6x8)
             if rows * cols >= 35:
@@ -1378,26 +1378,71 @@ class BoardGenerator:
         else:
             return LETTER_FREQ_USER
 
-    def _create_normal_board(self, rows, cols, weights, depth=1, difficulty="Easy"):
-        """Create board with weighted random letters, avoiding redundant U next to Q"""
+    def _create_normal_board(self, rows, cols, weights, depth=1, difficulty="Easy", dictionary=None):
+        """Create board using Overwriting Word Soup method for 2D, or random letters for 3D"""
         if depth > 1:
             return [
                 [[random.choices(self.letters, weights=weights, k=1)[0] for _ in range(cols)] for _ in range(rows)]
                 for _ in range(depth)
             ]
 
-        board = [[None for _ in range(cols)] for _ in range(rows)]
+        board = [[' ' for _ in range(cols)] for _ in range(rows)]
+        
+        # Get words from dictionary of length 5-10
+        valid_words = []
+        if dictionary:
+            valid_words = [w for w in dictionary if 5 <= len(w) <= 10]
+            
+        if not valid_words:
+            # Fallback if no dictionary passed or no words of that length
+            valid_words = ["EXAMPLE", "TESTING", "BOARDS", "PUZZLE", "BOGGLE"]
+            
+        # Determine number of words to embed based on grid size
+        num_cells = rows * cols
+        num_words_to_embed = 25 if num_cells >= 48 else (15 if num_cells >= 35 else 7)
+        
+        selected_words = random.sample(valid_words, min(num_words_to_embed, len(valid_words)))
+        
+        def get_neighbors(r, c):
+            neighbors = []
+            for dr in [-1, 0, 1]:
+                for dc in [-1, 0, 1]:
+                    if dr == 0 and dc == 0: continue
+                    nr, nc = r + dr, c + dc
+                    if 0 <= nr < rows and 0 <= nc < cols:
+                        neighbors.append((nr, nc))
+            return neighbors
+
+        def find_random_path(length):
+            start_r = random.randint(0, rows - 1)
+            start_c = random.randint(0, cols - 1)
+            path = [(start_r, start_c)]
+            for _ in range(length - 1):
+                curr_r, curr_c = path[-1]
+                neighbors = get_neighbors(curr_r, curr_c)
+                valid_neighbors = [n for n in neighbors if n not in path]
+                if not valid_neighbors: return None
+                path.append(random.choice(valid_neighbors))
+            return path
+
+        print(f"[BoardGen] Word Soup: Embedding {len(selected_words)} words on {rows}x{cols} grid...")
+        for word in selected_words:
+            path = None
+            for _ in range(10): # Try 10 times to find a path
+                path = find_random_path(len(word))
+                if path:
+                    break
+            if path:
+                for i, (r, c) in enumerate(path):
+                    board[r][c] = word[i]
+                    
+        # Fill remaining empty cells with random letters
         for r in range(rows):
             for c in range(cols):
-                # Try a few times to avoid forbidden sequences (ING) in Medium/Hard
-                for _ in range(3):
-                    char = random.choices(self.letters, weights=weights, k=1)[0]
-                    if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, char, r, c, 0, depth=1):
-                        continue
-                    board[r][c] = char
-                    break
-                if board[r][c] is None:
+                if board[r][c] == ' ':
                     board[r][c] = random.choices(self.letters, weights=weights, k=1)[0]
+                    
+        return board
         
         # USER REQUEST: Vowel Density Floor
         # If the random board has < 25% vowels, it's likely a "dead board" for high-min words.
