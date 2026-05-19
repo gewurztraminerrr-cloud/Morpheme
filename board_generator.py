@@ -966,7 +966,15 @@ class BoardGenerator:
                     if not suitable: suitable = [w for w in all_words_dict if len(w) >= 6]
                     if not suitable: suitable = [w for w in all_words_dict if len(w) >= 3] # Absolute fallback
                     
-                    actual_bonus = sorted(suitable, key=len, reverse=True)[0] if suitable else None
+                    # USER REQUEST: Prefer requested length if available in the natural fallback
+                    requested_length = len(bonus_word) if bonus_word else 8
+                    suitable_exact = [w for w in suitable if len(w) == requested_length]
+                    
+                    if suitable_exact:
+                        actual_bonus = random.choice(suitable_exact)
+                    else:
+                        actual_bonus = sorted(suitable, key=len, reverse=True)[0] if suitable else None
+                        
                     if actual_bonus:
                         bonus_cell = all_words_dict[actual_bonus][0]
                 
