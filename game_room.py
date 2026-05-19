@@ -2122,20 +2122,31 @@ class RoomManager:
             # Synchronize room object early to avoid any desync in background/async layers
             room.bonus_word = bonus_word
             
-            # Generate board
-            # Signature: dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length=3, difficulty="Medium", is_emergency=False
-            res = self.board_generator.generate_board(
-                dimensions=room.board_dimensions,
-                bonus_word=bonus_word,
-                word_count_range=room.spinner_params['word_count_range'],
-                dictionary=room.spinner_params['dictionary'],
-                board_format=room.spinner_params['board_format'],
-                min_word_length=room.spinner_params.get('min_word_length', 3),
-                difficulty=room.spinner_params.get('difficulty', 'Medium'),
-                is_emergency=True # SPEED: For the very first user in a room, prioritize instant start
-            )
-            
-            board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio, final_bonus_word = res
+            # Anti-duplicate board protection loop
+            board_attempts = 0
+            while board_attempts < 4:
+                import random
+                random.seed()
+                
+                res = self.board_generator.generate_board(
+                    dimensions=room.board_dimensions,
+                    bonus_word=bonus_word,
+                    word_count_range=room.spinner_params['word_count_range'],
+                    dictionary=room.spinner_params['dictionary'],
+                    board_format=room.spinner_params['board_format'],
+                    min_word_length=room.spinner_params.get('min_word_length', 3),
+                    difficulty=room.spinner_params.get('difficulty', 'Medium'),
+                    is_emergency=True # SPEED: For the very first user in a room, prioritize instant start
+                )
+                
+                board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio, final_bonus_word = res
+                
+                # Compare to current board and previous round board to guarantee uniqueness
+                if getattr(room, 'board', None) != board and getattr(room, 'previous_board', None) != board:
+                    break
+                
+                print(f"[RoomManager] WARNING: Generated board in start_next_round for room {room_id} is IDENTICAL to current/previous round board. Retrying...")
+                board_attempts += 1
             
             if board is None:
                 print(f"[RoomManager] ERROR: Board generation failed!")
@@ -2585,24 +2596,37 @@ class RoomManager:
                     if room.time_limit >= 7200: search_timeout = 180.0 # 24h rooms get 3 mins
                     else: search_timeout = min(search_timeout, 120.0) # Cap at 2 mins for standard rooms
                     
-                    # ROBUST CALL: Use keyword arguments to prevent positional mismatch
-                    res = self.board_generator.generate_board(
-                        dimensions=room.board_dimensions,
-                        bonus_word=bonus_word,
-                        word_count_range=search_wc,
-                        dictionary=search_dict,
-                        board_format=search_fmt,
-                        min_word_length=search_min,
-                        difficulty=search_diff,
-                        timeout=search_timeout
-                    )
-                    
-                    # ROBUST UNPACKING: Support legacy 6-tuple or modern 7-tuple
-                    if len(res) == 7:
-                        board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio, final_bonus_word = res
-                    else:
-                        board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio = res
-                        final_bonus_word = bonus_word
+                    # Anti-duplicate board protection loop
+                    board_attempts = 0
+                    while board_attempts < 4:
+                        import random
+                        random.seed()
+                        
+                        # ROBUST CALL: Use keyword arguments to prevent positional mismatch
+                        res = self.board_generator.generate_board(
+                            dimensions=room.board_dimensions,
+                            bonus_word=bonus_word,
+                            word_count_range=search_wc,
+                            dictionary=search_dict,
+                            board_format=search_fmt,
+                            min_word_length=search_min,
+                            difficulty=search_diff,
+                            timeout=search_timeout
+                        )
+                        
+                        # ROBUST UNPACKING: Support legacy 6-tuple or modern 7-tuple
+                        if len(res) == 7:
+                            board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio, final_bonus_word = res
+                        else:
+                            board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio = res
+                            final_bonus_word = bonus_word
+                        
+                        # Compare to current board and previous round board to guarantee uniqueness
+                        if getattr(room, 'board', None) != board and getattr(room, 'previous_board', None) != board:
+                            break
+                        
+                        print(f"[RoomManager] WARNING: Generated board for room {room_id} is IDENTICAL to current/previous round board. Retrying...")
+                        board_attempts += 1
                     
                     # Update word to the ACTUAL embedded word if different (MANDATORY consistency)
                     if final_bonus_word:

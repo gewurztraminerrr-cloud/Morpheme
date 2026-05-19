@@ -809,6 +809,10 @@ class BoardGenerator:
         Generate a valid board that meets word count requirements (100-300).
         RESTARTED: Simplified logic with ironclad compliance.
         """
+        # FOR UNCONDITIONAL UNIQUENESS: Re-seed random from system randomness
+        # This breaks any process-level determinism from forks/seeds
+        import random
+        random.seed()
         # Ensure Mania has a valid single-letter prefix
         if "mania" in str(board_format).lower():
             parts = str(board_format).strip().split()
