@@ -4612,8 +4612,8 @@ async function submitWord(wordParam = null, pathParam = null) {
         }
     }
     
-    // Proactively untranspose coordinate paths if the board was transposed on mobile
-    if (finalPath && window.isBoardTransposed) {
+    // Proactively untranspose coordinate paths if they were generated locally from the client-transposed board
+    if (finalPath && window.isBoardTransposed && !pathParam) {
         finalPath = finalPath.map(p => {
             if (p.length === 3) {
                 return [p[0], p[2], p[1]]; // [face, col, row]
@@ -5232,7 +5232,10 @@ function finishDragSelection(e) {
     if (path.length >= 1) {
         const word = path.map(p => {
             const L = p.letter;
-            return L === 'Q' ? 'QU' : L;
+            // For Either/Or slash letters, use the first character option as a clean representation.
+            // The server's path reconstruction will auto-correct to the valid dictionary option.
+            const cleanL = (L && L.includes('/')) ? L.split('/')[0] : L;
+            return cleanL === 'Q' ? 'QU' : cleanL;
         }).join('');
         const serverPath = path.map(p => {
             if (p.face !== null && p.face !== undefined) {
