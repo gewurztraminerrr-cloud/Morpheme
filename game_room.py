@@ -626,7 +626,6 @@ class GameRoom:
             if valid_path:
                 # Find which of the possible interpreted words from the path actually exists on the board
                 # USER REQUEST: Use dictionary validation instead of just all_words to match Solo mode!
-                import word_validator
                 
                 submitted_word_upper = word.upper()
                 
