@@ -5765,7 +5765,6 @@ async function handlePrivateMatchWord(word, path = null) {
     }
 
     // 2. Format & Bonus Info
-    const fmt = privateMatchParams ? privateMatchParams.board_format : 'Normal';
     const fmtLower = fmt.toLowerCase();
     const activeMatch = JSON.parse(localStorage.getItem('private_match_active'));
     const bonusCell = activeMatch ? activeMatch.bonus_cell : null;
