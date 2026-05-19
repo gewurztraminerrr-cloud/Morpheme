@@ -3057,10 +3057,15 @@ def get_room_state(room_id):
                 display_floor = cur_min
                 words_to_return = [w for w in (room.all_words or []) if len(w) >= display_floor]
                 
-                # RE-SYNC: Ensure re-categorized lists also respect this floor
+                # RE-SYNC: Ensure re-categorized lists also respect this floor using pre-cached, self-healing lists
                 if hasattr(word_validator, 'word_validator'):
-                    room.csw_only_words = [w for w in words_to_return if word_validator.word_validator.is_csw_only(w)]
-                    room.added_words = [w for w in words_to_return if word_validator.word_validator.is_added_word(w)]
+                    if not getattr(room, 'csw_only_words', None) and room.all_words:
+                        room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
+                    room.csw_only_words = [w for w in (room.csw_only_words or []) if len(w) >= display_floor]
+
+                    if not getattr(room, 'added_words', None) and room.all_words:
+                        room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
+                    room.added_words = [w for w in (room.added_words or []) if len(w) >= display_floor]
                 
                 word_scores_to_return = getattr(room, 'solved_words_with_scores', {})
                 # Purge scores as well
@@ -3163,8 +3168,8 @@ def get_room_state(room_id):
                 'all_word_scores': word_scores_to_return,
                 'global_found_words': global_found,
                 'fcfs_found_words': list(getattr(room, 'fcfs_found_words', [])) if (is_active and is_fcfs) else [],
-                'added_words': [w for w in words_to_return if word_validator.get_use_added_words() and word_validator.is_added_word(w)],
-                'csw_only_words': [w for w in words_to_return if word_validator.is_csw_only(w)],
+                'added_words': list(room.added_words) if (getattr(room, 'added_words', None) and word_validator.get_use_added_words()) else [],
+                'csw_only_words': list(room.csw_only_words) if getattr(room, 'csw_only_words', None) else [],
                 'previous_all_words': [w for w in (getattr(room, 'previous_all_words', []) or []) if len(w) >= getattr(room, 'previous_min_length', 3)],
                 'previous_all_word_scores': {w: v for w, v in (getattr(room, 'previous_all_word_scores', {}) or {}).items() if len(w) >= getattr(room, 'previous_min_length', 3)},
                 'previous_board': getattr(room, 'previous_board', []),
