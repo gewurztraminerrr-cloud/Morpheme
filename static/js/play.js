@@ -4537,7 +4537,7 @@ async function submitWord(wordParam = null, pathParam = null) {
     }
 
     if (isPrivateMatchPlay) {
-        await handlePrivateMatchWord(word);
+        await handlePrivateMatchWord(word, finalPath);
         return;
     }
 
@@ -5627,13 +5627,8 @@ function startPrivateMatchTimer(endTime) {
     }, 1000);
 }
 
-async function handlePrivateMatchWord(word) {
+async function handlePrivateMatchWord(word, path = null) {
     if (!word) return;
-
-    if (privateMatchWords.find(w => w.word === word)) {
-        showValidationFeedback('Already found!', false);
-        return;
-    }
 
     // Check if word is on board
     const board = window.lastGameState ? window.lastGameState.board : null;
@@ -5643,11 +5638,106 @@ async function handlePrivateMatchWord(word) {
     }
 
     const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
-    const path = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
-    if (!path) {
-        showValidationFeedback('Not on board!', false);
+    const fmt = privateMatchParams ? privateMatchParams.board_format : 'Normal';
+    const isEO = fmt.toLowerCase().includes('either');
+
+    let resolvedWord = word.toUpperCase();
+    let resolvedPath = path;
+
+    if (resolvedPath && isEO) {
+        // Reconstruct all possible words from the path
+        let possibleWords = [''];
+        let validPath = true;
+
+        for (const node of resolvedPath) {
+            let cellVal = '';
+            if (node.length === 3) {
+                const [f, r, c] = node;
+                if (f >= 0 && f < board.length && r >= 0 && r < board[f].length && c >= 0 && c < board[f][r].length) {
+                    cellVal = String(board[f][r][c]);
+                } else {
+                    validPath = false;
+                    break;
+                }
+            } else {
+                const [r, c] = node;
+                if (r >= 0 && r < board.length && c >= 0 && c < board[0].length) {
+                    cellVal = String(board[r][c]);
+                } else {
+                    validPath = false;
+                    break;
+                }
+            }
+
+            if (cellVal.includes('/')) {
+                const options = cellVal.split('/');
+                let newWords = [];
+                for (const prefix of possibleWords) {
+                    for (const opt of options) {
+                        newWords.push(prefix + opt);
+                    }
+                }
+                possibleWords = newWords;
+            } else {
+                for (let i = 0; i < possibleWords.length; i++) {
+                    possibleWords[i] += cellVal;
+                }
+            }
+        }
+
+        if (validPath) {
+            const dict = privateMatchParams ? privateMatchParams.dictionary : 'NWL';
+            let validOptions = [];
+
+            // Check dictionary validity for each possible word
+            for (const w of possibleWords) {
+                let isVal = false;
+                try {
+                    const resp = await fetch('/api/tools/validate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ word: w, dictionary: dict })
+                    });
+                    const data = await resp.json();
+                    isVal = data.is_valid;
+                } catch (e) {
+                    console.error('Validation error', e);
+                }
+                if (isVal) {
+                    validOptions.push(w);
+                }
+            }
+
+            // Find which option to select
+            // Check if the submitted word matches one of the valid options (clean version)
+            let submittedClean = resolvedWord.replace(/\//g, '');
+            if (validOptions.includes(submittedClean)) {
+                resolvedWord = submittedClean;
+            } else if (validOptions.length >= 1) {
+                resolvedWord = validOptions[0];
+            } else if (possibleWords.includes(submittedClean)) {
+                resolvedWord = submittedClean;
+            } else if (possibleWords.length > 0) {
+                resolvedWord = possibleWords[0];
+            }
+        }
+    } else {
+        // If not Either/Or or no path, validate the path using findWordPath
+        const p = is3D ? findWordPathOnCube(resolvedWord, board) : findWordPathOnBoard(resolvedWord, board);
+        if (!p) {
+            showValidationFeedback('Not on board!', false);
+            return;
+        }
+        resolvedPath = p;
+    }
+
+    if (privateMatchWords.find(w => w.word === resolvedWord)) {
+        showValidationFeedback('Already found!', false);
         return;
     }
+
+    // Set word to the resolved clean word for dictionary check and subsequent scoring
+    word = resolvedWord;
 
     // 1. Initial Checks (Dictionary & Min Length)
     const dict = privateMatchParams ? privateMatchParams.dictionary : 'NWL';
