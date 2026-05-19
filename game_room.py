@@ -1670,6 +1670,22 @@ class RoomManager:
                         room.all_words = {w for w in (e_words or []) if len(w) >= m_len}
                         room.all_words_paths = {w: p for w, p in (e_dict or {}).items() if len(w) >= m_len}
                         
+                        is_valued_kick = ('valued' in str(e_fmt).lower())
+                        kick_scores = {}
+                        for w in room.all_words:
+                            if is_valued_kick: kick_scores[w] = {'total': len(w), 'base': len(w)}
+                            else:
+                                length = len(w)
+                                s = 0
+                                if length <= 2: s = 0
+                                elif length <= 4: s = 1
+                                elif length == 5: s = 2
+                                elif length == 6: s = 3
+                                elif length == 7: s = 5
+                                elif length >= 8: s = 11
+                                kick_scores[w] = {'total': s, 'base': s}
+                        room.solved_words_with_scores = kick_scores
+                        
                         room.state = 'active'
                         room.round_start_time = time.time()
                         room.current_round = 1
@@ -1677,6 +1693,25 @@ class RoomManager:
                         
                         room.initialize_density(e_board, room.all_words_paths, e_fmt)
                         room.recalculate_total_points()
+                        
+                        # Detailed background scoring refinement for kickstarted Round 1
+                        def refine_kickstart_scores():
+                            try:
+                                from scoring import calculate_word_score
+                                refined = {}
+                                for word in room.all_words:
+                                    refined[word] = calculate_word_score(
+                                        word, room.bonus_word, path=room.all_words_paths.get(word),
+                                        board_format=room.current_board_format, bonus_cell=room.bonus_cell,
+                                        board=room.board, return_details=True
+                                    )
+                                room.solved_words_with_scores = refined
+                                room.recalculate_total_points()
+                                print(f"[RoomManager] Kickstart scoring refinement complete for {room_id}")
+                            except Exception as e:
+                                print(f"[RoomManager] Kickstart refinement error for {room_id}: {e}")
+                        
+                        threading.Thread(target=refine_kickstart_scores, daemon=True).start()
                         
                         print(f"[RoomManager] {room_id} kickstarted ACTIVE (Round 1, {m_len}L+)")
                         
