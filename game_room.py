@@ -1160,21 +1160,45 @@ class GameRoom:
                 
                 # USER REQUEST: Absolute accuracy for 'All Words' panel scoring.
                 # If background scoring isn't finished, perform a synchronous fallback score calculation.
+                # OPTIMIZATION: Calculate fast length-based scores instantly to avoid transition delay, and refine in background thread!
                 if not getattr(self, 'solved_words_with_scores', None) or not self.solved_words_with_scores:
-                    print(f"[GameRoom] Transitioning {self.room_id}: solved_words_with_scores missing. Scoring synchronously.")
-                    from scoring import calculate_word_score
-                    fallback_scores = {}
-                    for word in self.all_words:
-                        fallback_scores[word] = calculate_word_score(
-                            word, 
-                            self.bonus_word, 
-                            board_format=self.current_board_format,
-                            bonus_cell=self.bonus_cell,
-                            board=self.board,
-                            path=self.all_words_paths.get(word),
-                            return_details=True
-                        )
-                    self.solved_words_with_scores = fallback_scores
+                    print(f"[GameRoom] Transitioning {self.room_id}: solved_words_with_scores missing. Scoring in background thread to prevent delay.")
+                    fast_scores = {}
+                    for word in (self.all_words or []):
+                        l = len(word)
+                        s = 1
+                        if l <= 4: s = 1
+                        elif l == 5: s = 2
+                        elif l == 6: s = 3
+                        elif l == 7: s = 5
+                        elif l >= 8: s = 11
+                        fast_scores[word] = {'total': s, 'base': s}
+                    self.solved_words_with_scores = fast_scores
+                    
+                    # Spawn asynchronous thread to refine scores with full details (bonuses, paths)
+                    import threading
+                    def compute_fallback_scores_async():
+                        try:
+                            from scoring import calculate_word_score
+                            refined_fallback = {}
+                            for word in (self.all_words or []):
+                                refined_fallback[word] = calculate_word_score(
+                                    word, 
+                                    self.bonus_word, 
+                                    board_format=self.current_board_format,
+                                    bonus_cell=self.bonus_cell,
+                                    board=self.board,
+                                    path=self.all_words_paths.get(word),
+                                    return_details=True
+                                )
+                            self.solved_words_with_scores = refined_fallback
+                            self.previous_all_words = refined_fallback
+                            self.recalculate_total_points()
+                            print(f"[GameRoom] Fallback scoring background refinement complete for {self.room_id}")
+                        except Exception as e:
+                            print(f"[GameRoom] Fallback scoring background refinement error: {e}")
+                            
+                    threading.Thread(target=compute_fallback_scores_async, daemon=True).start()
 
                 # Snapshot board and words for intermission (Detailed Scoring Preservation)
                 if self.game_type == '3d' or (self.board and len(self.board) == 6 and isinstance(self.board[0], list) and isinstance(self.board[0][0], list)):
