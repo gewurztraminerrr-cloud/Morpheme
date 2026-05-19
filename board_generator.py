@@ -1028,13 +1028,19 @@ class BoardGenerator:
                     1.0,
                     final_bonus_word.upper() if final_bonus_word else None,
                 )
-            elif "either/or" in safe_format:
+            all_excluded = set()
+            if "either/or" in safe_format:
                 board = self._create_either_or_board(rows, cols, weights)
+                # Find the Either/Or tile and add it to all_excluded to protect it from optimization
+                for r in range(rows):
+                    for c in range(cols):
+                        if "/" in str(board[r][c]):
+                            all_excluded.add((r, c))
+                            print(f"[BoardGen] Protected Either/Or tile at ({r}, {c})")
             else:
                 board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty)
                 
             # 3. Apply Mania abundance and register cells as excluded to protect them
-            all_excluded = set()
             if mania_letter:
                 self._apply_mania_to_board(board, mania_letter, all_excluded, is_checkerboard=is_checkerboard)
                 # Protect these positions from future sweeps or optimizations
