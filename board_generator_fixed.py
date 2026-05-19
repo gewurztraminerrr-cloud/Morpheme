@@ -367,13 +367,7 @@ class BoardGenerator:
                 selectable_cells = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in bonus_cells_set and (r, c) not in special_cells]
                 eo_cell = random.choice(selectable_cells) if selectable_cells else (0, 0)
                 special_cells.append(eo_cell)
-                r, c = eo_cell
-                orig = board[r][c]
-                others = [l for l in self.letters if l != orig]
-                other_weights = [weights[self.letters.index(l)] for l in others]
-                other = random.choices(others, weights=other_weights, k=1)[0]
-                board[r][c] = f"{sorted([orig, other])[0]}/{sorted([orig, other])[1]}"
-                print(f"[BoardGen] * Either/Or cell: {eo_cell}")
+                print(f"[BoardGen] * Selected Either/Or cell: {eo_cell}")
 
                 # Define the PRIMARY bonus_cell for room metadata (used for the badge)
             # Either/Or takes priority for metadata badge if both exist
@@ -425,6 +419,18 @@ class BoardGenerator:
             # User Request Sync: Ensure bonus word tiles AND special format tiles are never overwritten
             if strategy not in ['DensityOptimization', 'HardOptimization', 'StepwiseOptimization']:
                 self._enforce_vowel_minimum(board, weights, is_checkerboard=is_checkerboard_fmt, excluded_cells=all_excluded)
+            
+            # --- APPLY SPECIAL TILES (Either/Or slash format) AFTER ALL BOARD MANIPULATIONS ---
+            if 'either/or' in fmt_lower or 'either' in fmt_lower:
+                for sc in special_cells:
+                    r, c = sc
+                    orig = board[r][c]
+                    if '/' not in str(orig):
+                        others = [l for l in self.letters if l != orig]
+                        other_weights = [weights[self.letters.index(l)] for l in others]
+                        other = random.choices(others, weights=other_weights, k=1)[0]
+                        board[r][c] = f"{sorted([orig, other])[0]}/{sorted([orig, other])[1]}"
+                        print(f"[BoardGen] * Successfully applied Either/Or dual-letters {board[r][c]} to cell ({r}, {c})")
             
             if 'either/or' in fmt_lower or 'either' in fmt_lower:
                 if self._has_either_or_ambiguity(board, dictionary):
