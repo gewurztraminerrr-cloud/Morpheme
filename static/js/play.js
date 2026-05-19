@@ -391,6 +391,7 @@ document.addEventListener('visibilitychange', () => {
         // Re-sync timer if needed
         if (window.lastGameState) {
             syncTimerWithServer(window.lastGameState);
+            updateLocalTimer(); // Instantly update timer display
         }
     } else {
         // Tab hidden: Enter battery-saving mode
@@ -1130,6 +1131,13 @@ async function updateGameState(incomingState = null) {
                     defPanel.classList.remove('winner-flash');
                 }
                 window.userViewingDefinitionIntermission = false;
+
+                // Reset mouse selection state on new round to prevent stale swipes
+                if (typeof mouseState !== 'undefined') {
+                    mouseState.isDown = false;
+                    mouseState.selectedPath = [];
+                    if (mouseState.visitedCells) mouseState.visitedCells.clear();
+                }
 
                 const wordsList = document.getElementById('submitted-words-list');
                 if (wordsList) {
