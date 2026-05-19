@@ -1024,19 +1024,37 @@ class BoardGenerator:
 
             # --- APPLY SPECIAL TILES (Either/Or slash format) AFTER ALL BOARD MANIPULATIONS ---
             if "either/or" in board_format.lower():
-                for sc in special_cells:
-                    r, c = sc
-                    orig = board[r][c]
-                    if '/' not in str(orig):
-                        others = [l for l in self.letters if l != orig]
-                        other_weights = [weights[self.letters.index(l)] for l in others]
-                        other = random.choices(others, weights=other_weights, k=1)[0]
-                        board[r][c] = f"{sorted([orig, other])[0]}/{sorted([orig, other])[1]}"
-                        print(f"[BoardGen] * Successfully applied Either/Or dual-letters {board[r][c]} to cell ({r}, {c})")
+                ambiguity_resolved = False
+                protected = set(embedded_path) if embedded_path else set()
+                candidate_cells = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in protected]
+                random.shuffle(candidate_cells)
                 
-                # Check for ambiguity and reject/retry attempt if present
-                if self._has_either_or_ambiguity(board, dictionary):
-                    print(f"[BoardGen] ATTEMPT {attempts}: Either/Or board has ambiguity. Retrying...")
+                # Try up to 30 different cells, and up to 5 alternate letters each, to find a non-ambiguous combination
+                for r, c in candidate_cells[:30]:
+                    orig = board[r][c]
+                    if '/' in str(orig): continue
+                    
+                    others = [l for l in self.letters if l != orig]
+                    other_weights = [weights[self.letters.index(l)] for l in others]
+                    sampled_others = random.choices(others, weights=other_weights, k=5)
+                    
+                    found_valid = False
+                    for other in sampled_others:
+                        board[r][c] = f"{sorted([orig, other])[0]}/{sorted([orig, other])[1]}"
+                        
+                        if not self._has_either_or_ambiguity(board, dictionary):
+                            print(f"[BoardGen] * Successfully applied NON-AMBIGUOUS Either/Or dual-letters {board[r][c]} to cell ({r}, {c})")
+                            found_valid = True
+                            ambiguity_resolved = True
+                            break
+                        else:
+                            board[r][c] = orig # Revert and try another letter
+                            
+                    if found_valid:
+                        break
+                        
+                if not ambiguity_resolved:
+                    print(f"[BoardGen] ATTEMPT {attempts}: Either/Or board has ambiguity across all tested combinations. Retrying...")
                     continue
 
             # Re-solve after sweeps and sanitization for final confirmation
@@ -1225,15 +1243,38 @@ class BoardGenerator:
             
             # --- APPLY SPECIAL TILES (Either/Or slash format) AFTER ALL BOARD MANIPULATIONS ---
             if "either/or" in safe_format:
-                for sc in special_cells:
-                    r, c = sc
+                ambiguity_resolved = False
+                protected = set(all_excluded) if all_excluded else set()
+                candidate_cells = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in protected]
+                random.shuffle(candidate_cells)
+                
+                # Try up to 30 different cells, and up to 5 alternate letters each, to find a non-ambiguous combination
+                for r, c in candidate_cells[:30]:
                     orig = board[r][c]
-                    if '/' not in str(orig):
-                        others = [l for l in self.letters if l != orig]
-                        other_weights = [weights[self.letters.index(l)] for l in others]
-                        other = random.choices(others, weights=other_weights, k=1)[0]
+                    if '/' in str(orig): continue
+                    
+                    others = [l for l in self.letters if l != orig]
+                    other_weights = [weights[self.letters.index(l)] for l in others]
+                    sampled_others = random.choices(others, weights=other_weights, k=5)
+                    
+                    found_valid = False
+                    for other in sampled_others:
                         board[r][c] = f"{sorted([orig, other])[0]}/{sorted([orig, other])[1]}"
-                        print(f"[BoardGen] * Successfully applied Either/Or dual-letters {board[r][c]} to cell ({r}, {c})")
+                        
+                        if not self._has_either_or_ambiguity(board, dictionary):
+                            print(f"[BoardGen] * Successfully applied NON-AMBIGUOUS Either/Or dual-letters {board[r][c]} to cell ({r}, {c})")
+                            found_valid = True
+                            ambiguity_resolved = True
+                            break
+                        else:
+                            board[r][c] = orig # Revert and try another letter
+                            
+                    if found_valid:
+                        break
+                        
+                if not ambiguity_resolved:
+                    print(f"[BoardGen] ATTEMPT {_attempt}: Either/Or board has ambiguity across all tested combinations. Retrying...")
+                    continue
 
             # USER REQUEST: Re-solve after sweeps and sanitization for final confirmation
             # This ensures the bonus word and all words in the list are ACTUALLY on the board!
@@ -2597,12 +2638,6 @@ class BoardGenerator:
         depth_val = len(board) if is_3d else 1
         rows, cols = (len(board[0]), len(board[0][0])) if is_3d else (len(board), len(board[0]))
         
-        # Bypass ambiguity check for large boards (5x7 and larger) 
-        # because ambiguity is mathematically inevitable on large dense boards, 
-        # and the game logic handles it by auto-correcting to the first valid word.
-        if (rows * cols >= 25):
-            return False
-            
         eo_pos = None
         if is_3d:
             for f in range(depth_val):
