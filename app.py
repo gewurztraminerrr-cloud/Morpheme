@@ -2896,9 +2896,74 @@ def get_room_state(room_id):
         if 'user_id' in session:
             uid = session['user_id']
             if str(uid) in getattr(room, 'evicted_users', {}):
-                reason = room.evicted_users.pop(str(uid), 'inactivity')
-                print(f"[get_room_state] User {uid} detected in room.evicted_users! Returning 403 eviction response.")
-                return jsonify({'error': f'You have been evicted for inactivity: {reason}', 'evicted': True, 'reason': reason}), 403
+                reason = room.evicted_users.get(str(uid), 'inactivity')
+                if reason == 'inactivity':
+                    # User returned from inactivity backgrounding! Clear their eviction and restore them!
+                    room.evicted_users.pop(str(uid), None)
+                    print(f"[get_room_state] Restoring user {uid} who returned from inactivity backgrounding.")
+                else:
+                    room.evicted_users.pop(str(uid), None)
+                    print(f"[get_room_state] User {uid} detected in room.evicted_users! Returning 403 eviction response.")
+                    return jsonify({'error': f'You have been evicted for inactivity: {reason}', 'evicted': True, 'reason': reason}), 403
+            
+            # Automatically update their player activity in the room so they don't get evicted again
+            room.update_player_activity(uid)
+
+            # Check if they are already in the players or spectators list
+            is_player = any(str(p.user_id) == str(uid) for p in room.players)
+            is_spectator = any(str(s.user_id) == str(uid) for s in room.spectators) if hasattr(room, 'spectators') else False
+
+            if not is_player and not is_spectator:
+                # Re-add player automatically!
+                try:
+                    game_type_base = room.game_type.replace('solo_', '')
+                    config_key = f"{game_type_base}|{room.board_dimensions}|{room.time_limit}"
+                    rating = 1200
+                    
+                    is_guest = session.get('is_guest', False)
+                    if not is_guest:
+                        conn = sqlite3.connect(DB_PATH, timeout=30)
+                        try:
+                            # 24-hour rooms exception: load global rating from users table
+                            is_24h = (room.time_limit >= 7200)
+                            if is_24h:
+                                cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (uid,))
+                                row = cursor.fetchone()
+                                if row:
+                                    rating = row[0]
+                            else:
+                                cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
+                                                    (uid, config_key))
+                                row = cursor.fetchone()
+                                if row:
+                                    rating = row[0]
+                        except Exception as e:
+                            print(f"[get_room_state] Error loading rating for auto-add: {e}")
+                        finally:
+                            conn.close()
+
+                    games_played = 0
+                    country_flag = '🏳️'
+                    if not is_guest:
+                        conn = sqlite3.connect(DB_PATH, timeout=30)
+                        try:
+                            cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (uid,))
+                            row = cur.fetchone()
+                            if row:
+                                games_played = row[0]
+                                if row[1]: country_flag = row[1]
+                        except Exception as e:
+                            print(f"[get_room_state] Error checking stats for auto-add: {e}")
+                        finally:
+                            conn.close()
+                    
+                    # Add them back to room players!
+                    print(f"[get_room_state] Auto-re-adding player {session.get('username')} (ID={uid}) to room {room_id}")
+                    room.add_player(uid, session['username'], rating, 
+                                    games_played=games_played, country_flag=country_flag, 
+                                    manual_accessed=False, is_guest=is_guest)
+                except Exception as auto_add_err:
+                    print(f"[get_room_state] Failed to auto-re-add player {uid}: {auto_add_err}")
     try:
         if not room:
             # User Request: STABILITY. Public hubs (pub_...) should be recreated on demand if they vanish (e.g. server restart)
