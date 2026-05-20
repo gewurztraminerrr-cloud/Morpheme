@@ -380,6 +380,19 @@ function refreshPollInterval() {
     pollInterval = setInterval(updateGameState, delay);
 }
 
+function setTimerWaitingState(isWaiting) {
+    const timerVal = document.getElementById('timer-value');
+    const timerLabel = document.querySelector('.timer-label');
+    if (isWaiting) {
+        if (timerVal) timerVal.textContent = "WAIT. . .";
+        if (timerLabel) timerLabel.textContent = "";
+    } else {
+        if (timerLabel && timerLabel.textContent !== "Time:") {
+            timerLabel.textContent = "Time:";
+        }
+    }
+}
+
 // Global Visibility Listener to handle battery management
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
@@ -387,10 +400,7 @@ document.addEventListener('visibilitychange', () => {
         console.log('[play.js] Tab visible: Restoring fast polling.');
         
         // Instant Feedback: Show syncing state to let the user know we are instantly fetching current state
-        const timerVal = document.getElementById('timer-value');
-        if (timerVal) {
-            timerVal.textContent = "...";
-        }
+        setTimerWaitingState(true);
 
         // Add a small 80ms delay before fetching to let the mobile OS restore cellular/Wi-Fi connectivity
         setTimeout(() => {
@@ -422,10 +432,7 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('focus', () => {
     if (!document.hidden) {
         console.log('[play.js] Window focus gained: Checking wake-up update.');
-        const timerVal = document.getElementById('timer-value');
-        if (timerVal && timerVal.textContent !== '...') {
-            timerVal.textContent = "...";
-        }
+        setTimerWaitingState(true);
 
         // Add a small 80ms delay to let the network stack settle
         setTimeout(() => {
@@ -2800,6 +2807,7 @@ function updateLocalTimer() {
         const gap = tickTime - window._lastLocalTimerTickTime;
         if (gap > 2200) {
             console.log(`[play.js] updateLocalTimer: Thawed after freeze gap of ${gap}ms. Requesting delayed wake-up update.`);
+            setTimerWaitingState(true);
             setTimeout(() => {
                 updateGameState();
                 refreshPollInterval();
@@ -2840,6 +2848,7 @@ function updateLocalTimer() {
             cachedTimerValueEl.textContent = display;
             cachedTimerValueEl.style.fontVariantNumeric = 'tabular-nums';
         }
+        setTimerWaitingState(false);
 
         // Low time visual for text (User Request)
         if (remaining <= 10 && remaining > 0) {
@@ -2906,6 +2915,7 @@ function updateSpecialMatchTimer(seconds) {
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+        setTimerWaitingState(false);
     }
 }
 
@@ -5861,6 +5871,7 @@ function startPrivateMatchTimer(endTime) {
         const secs = remaining % 60;
         if (timerEl) {
             timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            setTimerWaitingState(false);
         }
         return remaining;
     };
