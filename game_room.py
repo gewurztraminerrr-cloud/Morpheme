@@ -1145,7 +1145,12 @@ class GameRoom:
                                 'found_words': [w['word'] for w in p.submitted_words]
                             } for p in self.players
                         }
-                        self._apply_daily_reset(self)
+                        
+                        # Direct room resets instead of invalid method call
+                        self.custom_end_time = 0
+                        self.solving_complete = False
+                        self.complete_words = []
+                        self.midnight_reset_occurred = True
 
         # 2. Transition ACTIVE -> INTERMISSION
         if self.state == 'active' and should_end:
@@ -1180,7 +1185,6 @@ class GameRoom:
                     self.solved_words_with_scores = fast_scores
                     
                     # Spawn asynchronous thread to refine scores with full details (bonuses, paths)
-                    import threading
                     def compute_fallback_scores_async():
                         try:
                             from scoring import calculate_word_score
@@ -3051,7 +3055,7 @@ class RoomManager:
                 # USER REQUEST: Ensure UI range matches board EXACTLY by using the params used for generation
                 # CRITICAL: Use 'or' to handle cases where next_round_spinner_params is explicitly None
                 active_params = getattr(room, 'next_round_spinner_params', None) or room.spinner_params or {}
-                room.current_board_format = room.next_round_format or active_params.get('board_format', 'Normal')
+                room.current_board_format = getattr(room, 'next_round_format', None) or active_params.get('board_format', 'Normal')
                 room.current_word_count_range = active_params.get('word_count_range', '100-200')
                 room.current_difficulty = active_params.get('difficulty', 'Medium')
                 room.current_dictionary = active_params.get('dictionary', 'NWL')
