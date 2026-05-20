@@ -5989,8 +5989,8 @@ def preload_dictionaries():
     except Exception as e:
         print(f"[Preload] Error preloading dictionaries: {e}")
 
-import threading
-threading.Thread(target=preload_dictionaries, daemon=True).start()
+# Disable memory-intensive preloading in container environment
+# threading.Thread(target=preload_dictionaries, daemon=True).start()
 
 if __name__ == '__main__':
     # Background room advancer is now handled by RoomManager's internal thread

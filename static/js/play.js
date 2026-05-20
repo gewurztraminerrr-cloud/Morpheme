@@ -4808,10 +4808,7 @@ async function submitWord(wordParam = null, pathParam = null) {
         const isBonus = data.success && currentState && currentState.bonus_word && data.word && data.word.toUpperCase() === currentState.bonus_word.toUpperCase();
         showValidationFeedback(data.message || (data.success ? 'Valid Word' : 'Invalid Word'), data.success, isBonus);
 
-        if (input) {
-            input.style.backgroundColor = data.success ? 'rgba(0, 255, 0, 0.1)' : 'rgba(255, 0, 0, 0.1)';
-            setTimeout(() => { if (input) input.style.backgroundColor = ''; }, 1000);
-        }
+
 
         if (data.success) {
             const currentState = window.lastGameState;
@@ -4842,12 +4839,12 @@ async function submitWord(wordParam = null, pathParam = null) {
                             <span style="opacity:0.8">${data.points}</span>
                         </div>`;
                         listEl.insertAdjacentHTML('afterbegin', html);
+                    }
 
-                        const me = currentState.players.find(p => p.username.toLowerCase() === (currentUser || "").toLowerCase().trim());
-                        if (me) {
-                            me.score = Math.max(0, data.new_score);
-                            renderPlayers(currentState.players, currentUser, currentState);
-                        }
+                    const me = currentState.players.find(p => p.username.toLowerCase() === (currentUser || "").toLowerCase().trim());
+                    if (me) {
+                        me.score = Math.max(0, data.new_score);
+                        renderPlayers(currentState.players, currentUser, currentState);
                     }
 
                     if (wordsStats && data.points > 0) {
@@ -4931,16 +4928,19 @@ function showValidationFeedback(message, isValid, isBonus = false) {
     // Clear existing timeout
     if (validationTimeout) clearTimeout(validationTimeout);
 
+    const isPenalty = message && message.toUpperCase().includes('PENALTY');
+    const isActuallyValid = isValid && !isPenalty;
+
     // Set text and class
     statusEl.textContent = message;
-    statusEl.className = 'validation-status ' + (isValid ? 'status-valid' : 'status-invalid');
+    statusEl.className = 'validation-status ' + (isActuallyValid ? 'status-valid' : 'status-invalid');
 
     // Flash background of the play page (Full-screen overlay)
     const pagePlay = document.getElementById('page-play');
     const shouldFlash = window.userSettings ? (window.userSettings.word_flash !== false) : true;
     if (pagePlay && shouldFlash) {
         let flashClass = 'flash-red';
-        if (isValid) {
+        if (isActuallyValid) {
             flashClass = isBonus ? 'flash-green' : 'flash-blue';
         }
         pagePlay.classList.add(flashClass);
@@ -4949,6 +4949,12 @@ function showValidationFeedback(message, isValid, isBonus = false) {
         }, 500); // Match CSS animation duration (0.5s)
     }
 
+    // Flash word input background
+    const input = document.getElementById('word-input');
+    if (input) {
+        input.style.backgroundColor = isActuallyValid ? 'rgba(0, 255, 0, 0.1)' : 'rgba(255, 0, 0, 0.1)';
+        setTimeout(() => { if (input) input.style.backgroundColor = ''; }, 1000);
+    }
 
     // Reset after 3 seconds
     validationTimeout = setTimeout(() => {

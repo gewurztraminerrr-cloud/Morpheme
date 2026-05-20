@@ -52,6 +52,15 @@ class Player:
     ai_rating: int = 1200
     has_abandoned: bool = False
 
+    @property
+    def is_registered(self) -> bool:
+        if getattr(self, "is_guest", False) or getattr(self, "is_ai", False):
+            return False
+        try:
+            return int(self.user_id) > 0
+        except (ValueError, TypeError):
+            return False
+
 @dataclass
 class GameRoom:
     room_id: str
@@ -812,8 +821,8 @@ class GameRoom:
     def update_live_pe(self):
         """Calculates performance efficiency in real-time for UI trophy"""
         # Split into Registered and Guest pools to ensure isolation
-        reg_players = [p for p in self.players if p.user_id > 0 and not p.is_guest and (p.score > 0 or len(p.submitted_words) > 0 or len(p.invalid_words) > 0)]
-        guest_players = [p for p in self.players if (p.is_guest or p.user_id <= 0) and (p.score > 0 or len(p.submitted_words) > 0 or len(p.invalid_words) > 0)]
+        reg_players = [p for p in self.players if p.is_registered and (p.score > 0 or len(p.submitted_words) > 0 or len(p.invalid_words) > 0)]
+        guest_players = [p for p in self.players if not p.is_registered and (p.score > 0 or len(p.submitted_words) > 0 or len(p.invalid_words) > 0)]
         
         # 1. Registered Players: Compete only against other registered players
         reg_score_sum = sum(p.score for p in reg_players)
@@ -3002,7 +3011,7 @@ class RoomManager:
             # while the history saver runs in the background.
             ghost_player_snapshots = []
             for p in room.players:
-                if p.user_id > 0 and (p.score > 0 or p.submitted_words or p.invalid_words):
+                if p.is_registered and (p.score > 0 or p.submitted_words or p.invalid_words):
                     ghost_player_snapshots.append({
                         'user_id': p.user_id,
                         'username': p.username,
@@ -3560,7 +3569,7 @@ class RoomManager:
             if player_snapshots is not None:
                 participating_registered = player_snapshots
             else:
-                participating_registered = [p for p in room.players if p.user_id > 0 and (p.score > 0 or p.submitted_words or p.invalid_words)]
+                participating_registered = [p for p in room.players if p.is_registered and (p.score > 0 or p.submitted_words or p.invalid_words)]
             
             if not participating_registered:
                 if room.time_limit >= 7200:
