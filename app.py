@@ -3177,8 +3177,9 @@ def get_room_state(room_id):
                         
                     # 2. Add to score and bonus status since it has been found
                     pts = w.get('points', 0)
-                    if pts > 0:
-                         v_score += pts
+                    v_score += pts
+                    if v_score < 0:
+                        v_score = 0
                     
                     is_b = (room.bonus_word and w['word'].upper() == room.bonus_word.upper())
                     if is_b: f_bonus = True
