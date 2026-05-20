@@ -19,7 +19,7 @@ LETTER_VALUES = {
     'U': 4, 'V': 5, 'W': 5, 'X': 10, 'Y': 5, 'Z': 10
 }
 
-def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None, bonus_cell=None, board=None, return_details=False, **kwargs):
+def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None, bonus_cell=None, board=None, return_details=False, strict_path=False, **kwargs):
     """
     Calculate points for a word. (OPTIMIZED for high-speed batch processing)
     """
@@ -105,8 +105,13 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
         # B. Fallback: If no path provided OR provided path missed the bonus, 
         # do a full search to see if ANY path hits the bonus.
         if not used_bonus and is_spec_bonus_fmt:
-            word_target = word.upper()
-            if not (is_3d and len(word_target) > 12):
+            if strict_path and path:
+                # If strict pathing is required, we do NOT fall back to searching the board.
+                # The provided path missed the bonus, so they don't get the bonus points.
+                pass
+            else:
+                word_target = word.upper()
+                if not (is_3d and len(word_target) > 12):
                 bx, by, bf = -1, -1, -1
                 if bonus_cell:
                     if isinstance(bonus_cell, dict):

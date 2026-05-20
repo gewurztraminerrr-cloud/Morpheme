@@ -5729,19 +5729,22 @@ def submit_private_match_turn():
         
         for item in words_data:
             word = item.get('word', '').strip().upper()
+            path = item.get('path', None)
             if not word or word in [v['word'] for v in valid_words]:
                 continue
             
             # Basic validation
             if len(word) < params.get('min_word_length', 3):
                 continue
+            
+            # MANDATORY: Always verify the word is actually on the board using server-side logic
             is_on_board = word_validator.find_word_on_board(board, word)
                 
             pts = 0
             is_bonus = False
             details = None
             if word in official_dict and is_on_board:
-                res = calculate_word_score(word, bonus_word=bonus_word, board_format=fmt, board=board, bonus_cell=bonus_cell, is_private=True, return_details=True)
+                res = calculate_word_score(word, bonus_word=bonus_word, board_format=fmt, board=board, path=path, bonus_cell=bonus_cell, is_private=True, return_details=True, strict_path=True)
                 pts = res['total']
                 details = res
                 is_bonus = (bonus_word and word == bonus_word.upper())

@@ -748,7 +748,8 @@ class GameRoom:
             bonus_cell=self.bonus_cell, 
             board=self.board, 
             return_details=True,
-            is_private=self.is_private
+            is_private=self.is_private,
+            strict_path=True
         )
         points = points_data['total']
         
