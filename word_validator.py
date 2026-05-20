@@ -285,7 +285,10 @@ class WordValidator:
     
     def is_csw_only(self, word):
         """Check if word is in CSW but not NWL"""
-        self.ensure_csw_loaded()
+        # PERFORMANCE FIX: Do not force a 20-second lazy-load of the CSW dictionary 
+        # just to check a word in an NWL room (which will never be CSW-only anyway).
+        if not getattr(self, 'csw_loaded', False):
+            return False
         return word.upper() in self.csw_only
         
     def is_added_word(self, word):
