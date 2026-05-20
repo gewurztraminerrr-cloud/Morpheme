@@ -617,11 +617,13 @@ class GameRoom:
                     new_words = []
                     for prefix in possible_words:
                         for opt in options:
-                            new_words.append(prefix + opt)
+                            expanded_opt = 'QU' if opt == 'Q' else opt
+                            new_words.append(prefix + expanded_opt)
                     possible_words = new_words
                 else:
+                    expanded_cell = 'QU' if cell_val == 'Q' else cell_val
                     for i in range(len(possible_words)):
-                        possible_words[i] += cell_val
+                        possible_words[i] += expanded_cell
             
             if valid_path:
                 # Find which of the possible interpreted words from the path actually exists on the board
