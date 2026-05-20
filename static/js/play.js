@@ -392,8 +392,13 @@ document.addEventListener('visibilitychange', () => {
             timerVal.textContent = "...";
         }
 
-        updateGameState();
-        refreshPollInterval();
+        // Add a small 80ms delay before fetching to let the mobile OS restore cellular/Wi-Fi connectivity
+        setTimeout(() => {
+            if (!document.hidden) {
+                updateGameState();
+                refreshPollInterval();
+            }
+        }, 80);
         
         // Re-sync timer if needed (ONLY if lastGameState is fresh, within 5 seconds)
         if (window.lastGameState && window._lastGameStateFetchedTime && (Date.now() - window._lastGameStateFetchedTime < 5000)) {
@@ -422,8 +427,13 @@ window.addEventListener('focus', () => {
             timerVal.textContent = "...";
         }
 
-        updateGameState();
-        refreshPollInterval();
+        // Add a small 80ms delay to let the network stack settle
+        setTimeout(() => {
+            if (!document.hidden) {
+                updateGameState();
+                refreshPollInterval();
+            }
+        }, 80);
 
         if (window.lastGameState && window._lastGameStateFetchedTime && (Date.now() - window._lastGameStateFetchedTime < 5000)) {
             syncTimerWithServer(window.lastGameState);
@@ -457,10 +467,22 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 1200) {
     }
 }
 
+let lastStateFetchTime = 0;
+
 async function updateGameState(incomingState = null) {
     const roomId = getCurrentRoomId();
     if (!roomId) {
         return;
+    }
+
+    // Micro-debounce to prevent duplicate parallel fetches within 150ms (common on simultaneous focus/visibility events)
+    const now = Date.now();
+    if (!incomingState && now - lastStateFetchTime < 150) {
+        console.log('[play.js] updateGameState: Suppressing duplicate concurrent state fetch.');
+        return;
+    }
+    if (!incomingState) {
+        lastStateFetchTime = now;
     }
 
     try {
@@ -472,14 +494,20 @@ async function updateGameState(incomingState = null) {
             // Optimization: Skip fetching if tab has been hidden for a while but not yet reached the 15s pulse
             // This is just extra safety, the refreshPollInterval handles the bulk of it.
             
-            // Mobile/Wake-up instant response: If a request takes >800ms (common on suspended mobile tabs due to dead HTTP sockets),
+            // Mobile/Wake-up instant response: If a request takes >600ms (common on suspended mobile tabs due to dead HTTP sockets),
             // abort it and retry immediately. The retry forces a fresh TCP/SSL socket and completes instantly!
             let response;
             try {
-                response = await fetchWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' }, 800);
+                response = await fetchWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' }, 600);
             } catch (err) {
                 console.log(`[play.js] Wake-up state fetch timed out or failed, retrying immediately with fresh socket...`);
-                response = await fetch(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' });
+                try {
+                    // Try again with a slightly longer timeout (1800ms) to ensure it doesn't block indefinitely
+                    response = await fetchWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}&retry=true`, { cache: 'no-store' }, 1800);
+                } catch (retryErr) {
+                    console.log(`[play.js] Wake-up retry fetch also failed:`, retryErr);
+                    return; // Let the next scheduled poll handle it
+                }
             }
             
             // Check if user left or switched rooms while the network fetch was in-flight
@@ -2771,8 +2799,11 @@ function updateLocalTimer() {
     if (window._lastLocalTimerTickTime) {
         const gap = tickTime - window._lastLocalTimerTickTime;
         if (gap > 2200) {
-            console.log(`[play.js] updateLocalTimer: Thawed after freeze gap of ${gap}ms. Requesting instant update.`);
-            updateGameState();
+            console.log(`[play.js] updateLocalTimer: Thawed after freeze gap of ${gap}ms. Requesting delayed wake-up update.`);
+            setTimeout(() => {
+                updateGameState();
+                refreshPollInterval();
+            }, 80);
         }
     }
     window._lastLocalTimerTickTime = tickTime;
