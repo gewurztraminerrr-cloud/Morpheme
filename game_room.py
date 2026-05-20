@@ -1014,7 +1014,8 @@ class GameRoom:
                     bonus_cell=self.bonus_cell,
                     board=self.board,
                     return_details=True,
-                    is_private=self.is_private
+                    is_private=self.is_private,
+                    strict_path=True
                 )
                 points = points_details['total']
                 # Record it for future iterations (prevents redundant calls/overwrites)
@@ -1190,7 +1191,8 @@ class GameRoom:
                                     bonus_cell=self.bonus_cell,
                                     board=self.board,
                                     path=self.all_words_paths.get(word),
-                                    return_details=True
+                                    return_details=True,
+                                    strict_path=True
                                 )
                             self.solved_words_with_scores = refined_fallback
                             self.previous_all_words = refined_fallback
@@ -1402,7 +1404,8 @@ class GameRoom:
                 bonus_cell=self.bonus_cell, 
                 board=self.board, 
                 return_details=True,
-                is_private=self.is_private
+                is_private=self.is_private,
+                strict_path=True
             )
             base_points = res['total']
             
@@ -1728,7 +1731,7 @@ class RoomManager:
                                     refined[word] = calculate_word_score(
                                         word, room.bonus_word, path=room.all_words_paths.get(word),
                                         board_format=room.current_board_format, bonus_cell=room.bonus_cell,
-                                        board=room.board, return_details=True
+                                        board=room.board, return_details=True, strict_path=True
                                     )
                                 room.solved_words_with_scores = refined
                                 room.recalculate_total_points()
@@ -2318,7 +2321,8 @@ class RoomManager:
                             bonus_cell=room.bonus_cell,
                             board=room.board,
                             path=room.all_words_paths.get(word),
-                            return_details=True
+                            return_details=True,
+                            strict_path=True
                         )
                     room.solved_words_with_scores = final_scores
                     room.complete_words = room.all_words
@@ -2779,7 +2783,7 @@ class RoomManager:
                                 refined[word] = calculate_word_score(
                                     word, bonus_word, path=all_words_dict.get(word),
                                     board_format=updated_format, bonus_cell=bonus_cell,
-                                    board=board, return_details=True
+                                    board=board, return_details=True, strict_path=True
                                 )
                             # Sync both staging and active (if round started during refinement)
                             if room.next_round_board == board:
