@@ -2041,6 +2041,9 @@ function renderRatingsGrid(configRatings, user = null) {
                 // COMPATIBILITY FILTER: FCFS and Split do not support 5m (300) and 10m (600)
                 if ((mode === 'fcfs' || mode === 'split') && (time === 300 || time === 600)) return;
 
+                // COMPATIBILITY FILTER: 2D rooms do not support 5m (300)
+                if (mode !== '3d' && time === 300) return;
+
                 const configKey = `${mode}|${board}|${time}`;
                 const configData = ratings[configKey] || { rating: 1200, avg_score: 0, avg_perf: 0 };
                 const rating = configData.rating;
