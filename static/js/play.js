@@ -384,7 +384,7 @@ function setTimerWaitingState(isWaiting) {
     const timerVal = document.getElementById('timer-value');
     const timerLabel = document.querySelector('.timer-label');
     if (isWaiting) {
-        if (timerVal) timerVal.textContent = "WAIT. . .";
+        if (timerVal) timerVal.textContent = "WAIT...";
         if (timerLabel) timerLabel.textContent = "";
     } else {
         if (timerLabel && timerLabel.textContent !== "Time:") {
