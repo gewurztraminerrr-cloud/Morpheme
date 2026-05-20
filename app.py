@@ -2985,6 +2985,12 @@ def get_room_state(room_id):
         if not room:
              return jsonify({'error': 'Room not found (expired due to inactivity)'}), 404
             
+        # USER REQUEST: Ensure the server transitions EXACTLY when the client hits 0:00.
+        # By calling check_and_update_state synchronously here, the moment the client
+        # sends its rapid state poll at 0:00, the server instantly evaluates timer expiry
+        # and transitions to intermission, bypassing any background loop polling delays!
+        room.check_and_update_state()
+            
         with room._state_lock:
             # LAZY LOAD YESTERDAY'S HISTORY FOR 24H ROOMS:
             if room.time_limit >= 7200 and (not getattr(room, 'previous_day_history', None) or len(room.previous_day_history) == 0):
