@@ -41,11 +41,11 @@ const RATING_RANGES = [
     { min: 1300, max: 1399, color: '#0000ff', label: '1300 - 1399', name: 'Grandmaster' },
 
     // --- THE HEAT (1400 - 2499) ---
-    // Yellows
-    { min: 1400, max: 1499, color: '#d4b200', label: '1400 - 1499', name: 'Elite' },
-    { min: 1500, max: 1599, color: '#ffea00', label: '1500 - 1599', name: 'Champion' },
-    { min: 1600, max: 1699, color: '#ffc400', label: '1600 - 1699', name: 'Titan' },
-    { min: 1700, max: 1799, color: '#ffa200', label: '1700 - 1799', name: 'Paragon' },
+    // Yellows → light-to-dark progression into oranges
+    { min: 1400, max: 1499, color: '#ffff99', label: '1400 - 1499', name: 'Elite' },      // Pale lemon yellow
+    { min: 1500, max: 1599, color: '#ffff00', label: '1500 - 1599', name: 'Champion' },   // True pure yellow
+    { min: 1600, max: 1699, color: '#ffd700', label: '1600 - 1699', name: 'Titan' },      // Rich golden yellow
+    { min: 1700, max: 1799, color: '#ffaa00', label: '1700 - 1799', name: 'Paragon' },    // Deep amber
 
     // Oranges
     { min: 1800, max: 1899, color: '#ff8800', label: '1800 - 1899', name: 'Sovereign' },
