@@ -4510,11 +4510,12 @@ body .tab-btn.active {
     .logo {
         min-width: auto !important;
         width: 100% !important;
-        flex-shrink: 1 !important;
+        flex-shrink: 0 !important;
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        gap: 8px !important;
+        flex-wrap: nowrap !important; /* Strictly prevent logo from wrapping to second line */
+        gap: 6px !important; /* Slightly snugger spacing on mobile */
         box-sizing: border-box !important;
         position: relative !important;
     }
@@ -4544,15 +4545,20 @@ body .tab-btn.active {
     }
 
     .logo-text {
-        font-size: 1.3rem !important;
+        font-size: 1.2rem !important; /* Extremely neat and compact logo text */
+        flex-shrink: 0 !important;
     }
     .logo-icon {
-        height: 30px !important;
-        width: 30px !important;
+        height: 24px !important; /* Neat 24px diameter for modern responsive look */
+        width: 24px !important;
+        flex-shrink: 0 !important;
     }
     .logo .pronunciation {
-        font-size: 0.6rem !important; /* Slightly smaller for mobile to prevent overflow */
+        font-size: 0.65rem !important; /* Perfectly proportional font size */
         display: inline-block !important;
+        margin-right: 0 !important; /* Purge desktop right margin to prevent spacing leakage */
+        margin-bottom: 0 !important;
+        flex-shrink: 0 !important;
     }
     .nav-btn {
         padding: 6px 12px !important; /* Larger touch targets on mobile viewports */
