@@ -1,5 +1,5 @@
 
-print("[Scoring] SCORING.PY LOADED - VERSION 8:44 PM")
+print("[Scoring] SCORING.PY LOADED - QU-tile fix for Valued Letters format")
 import json
 import logging
 
@@ -36,8 +36,17 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
     is_valued_format = ('valued' in fmt_lower or 'value' in fmt_lower)
     
     if is_valued_format:
-        for char in word.upper():
-            score += LETTER_VALUES.get(char, 1)
+        chars = list(word.upper())
+        i = 0
+        while i < len(chars):
+            char = chars[i]
+            # QU is a single Boggle tile — count it as Q's value only, skip the U
+            if char == 'Q' and i + 1 < len(chars) and chars[i + 1] == 'U':
+                score += LETTER_VALUES.get('Q', 10)
+                i += 2  # Skip both Q and U
+            else:
+                score += LETTER_VALUES.get(char, 1)
+                i += 1
     else:
         # Standard Boggle Base Scoring
         if length <= 2: score = 0
