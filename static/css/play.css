@@ -4014,6 +4014,15 @@ input[type=range]::-moz-range-track {
     .left-panel-container {
         gap: 0 !important;
     }
+    /* Sleek premium rating bar inside mobile left panel */
+    .left-panel-container #game-color-bar {
+        margin-bottom: 10px !important;
+        border-radius: 6px !important;
+        overflow: hidden !important;
+        height: 14px !important;
+        border: none !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+    }
     .left-panel-container .players-panel {
         border-radius: 12px !important;
     }
