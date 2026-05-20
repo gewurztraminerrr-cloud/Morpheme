@@ -1106,6 +1106,11 @@ class BoardGenerator:
                     bonus_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
                     if depth > 1: bonus_cell = (random.randint(0, depth-1), bonus_cell[0], bonus_cell[1])
                 
+                if bonus_cell:
+                    all_words_dict = self._solve_board(
+                        board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=10.0, bonus_cell=bonus_cell
+                    )
+
                 return (
                     board,
                     sorted(list(all_words_dict.keys())),
@@ -1302,6 +1307,10 @@ class BoardGenerator:
                 bonus_cell = None
                 if final_bonus:
                     bonus_cell = final_solve[final_bonus][0]
+                if bonus_cell:
+                    final_solve = self._solve_board(
+                        board, dictionary, (0, 99999), display_min, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=10.0, bonus_cell=bonus_cell
+                    )
  
                 return (board, sorted(list(final_solve.keys())), bonus_cell, board_format, final_solve, ratio, final_bonus)
             else:
@@ -2734,7 +2743,7 @@ class BoardGenerator:
         return False
 
     def _solve_board(
-        self, board, dictionary="NWL", word_count_range=(0, 99999), min_word_length=3, max_depth=12, store_paths=True, timeout=10.0, must_include=None
+        self, board, dictionary="NWL", word_count_range=(0, 99999), min_word_length=3, max_depth=12, store_paths=True, timeout=10.0, must_include=None, bonus_cell=None
     ):
         """Find all valid words on the board using high-speed node-based DFS traversal."""
         # Support 3D detect
@@ -2747,6 +2756,25 @@ class BoardGenerator:
             rows, cols = len(board), len(board[0])
 
         found_words = {}  # {word: path_sample}
+
+        # Collect all bonus coordinates
+        bonus_coords = set()
+        if bonus_cell:
+            if isinstance(bonus_cell, dict):
+                bonus_coords.add((int(bonus_cell.get('f', -1)), int(bonus_cell.get('r', 0)), int(bonus_cell.get('c', 0))))
+            elif isinstance(bonus_cell, (list, tuple)):
+                if len(bonus_cell) == 3: bonus_coords.add((int(bonus_cell[0]), int(bonus_cell[1]), int(bonus_cell[2])))
+                else: bonus_coords.add((-1, int(bonus_cell[0]), int(bonus_cell[1])))
+        
+        # Collect Either/Or coordinates
+        for f in range(depth_val):
+            for r in range(rows):
+                for c in range(cols):
+                    cell = board[f][r][c] if depth_val > 1 else board[r][c]
+                    if '/' in cell:
+                        bonus_coords.add((f if depth_val > 1 else -1, r, c))
+
+        found_words_uses_bonus = {}  # {word: bool}
 
         # High-speed visitor tracking
         if depth_val == 1:
@@ -2777,7 +2805,7 @@ class BoardGenerator:
         else:
             trie_root = word_validator.nwl_trie
 
-        def dfs(f, r, c, current_d, current_word, current_node, current_path, uses_target=False):
+        def dfs(f, r, c, current_d, current_word, current_node, current_path, uses_target=False, uses_bonus=False):
             if current_d > max_depth:
                 return
 
@@ -2787,6 +2815,9 @@ class BoardGenerator:
 
             cell = board[f][r][c] if depth_val > 1 else board[r][c]
             letters = cell.split("/") if "/" in cell else [cell]
+
+            coord_to_check = (f if depth_val > 1 else -1, r, c)
+            new_uses_bonus = uses_bonus or (coord_to_check in bonus_coords)
 
             for char in letters:
                 # 1. Trie Advancement
@@ -2806,10 +2837,14 @@ class BoardGenerator:
                     if not must_include or new_uses_target:
                         if new_word not in found_words:
                             found_words[new_word] = new_path if store_paths else True
+                            found_words_uses_bonus[new_word] = new_uses_bonus
                             # PERFORMANCE GUARD: Exit solver if word count explodes (especially in 3D)
                             # We allow a buffer above max_words for scoring and selection variety.
                             if len(found_words) > 1500:
                                 return
+                        elif new_uses_bonus and not found_words_uses_bonus.get(new_word, False):
+                            found_words[new_word] = new_path if store_paths else True
+                            found_words_uses_bonus[new_word] = True
 
                 # Prune and continue using Trie
                 if len(new_word) < max_depth:
@@ -2819,14 +2854,14 @@ class BoardGenerator:
                             for dc in [-1, 0, 1]:
                                 nr, nc = r + dr, c + dc
                                 if 0 <= nr < rows and 0 <= nc < cols and not visited[nr][nc]:
-                                    dfs(0, nr, nc, current_d + 1, new_word, next_node, new_path, new_uses_target)
+                                    dfs(0, nr, nc, current_d + 1, new_word, next_node, new_path, new_uses_target, new_uses_bonus)
                         visited[r][c] = False
                     else:
                         # 3D CUBE SUPPORT: 26-way adjacency
                         visited[r][c][f] = True
                         for nf, nr, nc in self._get_cube_neighbors(f, r, c):
                             if not visited[nr][nc][nf]:
-                                dfs(nf, nr, nc, current_d + 1, new_word, next_node, new_path, new_uses_target)
+                                dfs(nf, nr, nc, current_d + 1, new_word, next_node, new_path, new_uses_target, new_uses_bonus)
                         visited[r][c][f] = False
 
                 # Qu Logic (only if not Either/Or for simplicity)
@@ -2837,6 +2872,10 @@ class BoardGenerator:
                         if len(q_word) >= min_word_length and u_node.is_word:
                             if q_word not in found_words:
                                 found_words[q_word] = new_path if store_paths else True
+                                found_words_uses_bonus[q_word] = new_uses_bonus
+                            elif new_uses_bonus and not found_words_uses_bonus.get(q_word, False):
+                                found_words[q_word] = new_path if store_paths else True
+                                found_words_uses_bonus[q_word] = True
 
                         if len(q_word) < max_depth:
                             if depth_val == 1:
@@ -2845,13 +2884,13 @@ class BoardGenerator:
                                     for dc in [-1, 0, 1]:
                                         nr, nc = r + dr, c + dc
                                         if 0 <= nr < rows and 0 <= nc < cols and not visited[nr][nc]:
-                                            dfs(0, nr, nc, current_d + 1, q_word, u_node, new_path, new_uses_target)
+                                            dfs(0, nr, nc, current_d + 1, q_word, u_node, new_path, new_uses_target, new_uses_bonus)
                                 visited[r][c] = False
                             else:
                                 visited[r][c][f] = True
                                 for nf, nr, nc in self._get_cube_neighbors(f, r, c):
                                     if not visited[nr][nc][nf]:
-                                        dfs(nf, nr, nc, current_d + 1, q_word, u_node, new_path, new_uses_target)
+                                        dfs(nf, nr, nc, current_d + 1, q_word, u_node, new_path, new_uses_target, new_uses_bonus)
                                 visited[r][c][f] = False
 
         # Wrapper to handle timeout exception and return partially found words
@@ -2862,7 +2901,7 @@ class BoardGenerator:
                     for ci in range(cols):
                         if time.time() - solver_start_time > solver_timeout:
                             break
-                        dfs(fi, ri, ci, 1, "", trie_root, [])
+                        dfs(fi, ri, ci, 1, "", trie_root, [], False, False)
         except Exception as e:
             print(f"[Solver] CRITICAL ERROR: {e}")
             

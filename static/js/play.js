@@ -1765,10 +1765,18 @@ async function updateGameState(incomingState = null) {
                     let statusClass = isFound ? 'player-word' : 'missed';
                     if (!isFound && isCSWOnly) statusClass += ' csw-only';
                     const icon = isFound ? '✓' : '✗';
-                    const details = state.previous_all_word_scores && state.previous_all_word_scores[w];
+                    
+                    const playerWordObj = myPrevWords.find(pw => (typeof pw === 'string' ? pw : pw.word).toUpperCase() === w.toUpperCase());
+                    const details = (playerWordObj && playerWordObj.score_details)
+                        ? playerWordObj.score_details
+                        : (state.previous_all_word_scores && state.previous_all_word_scores[w]);
+                    const totalPoints = (playerWordObj && playerWordObj.points !== undefined)
+                        ? playerWordObj.points
+                        : (details ? (details.total || 0) : 0);
+
                     let ptsDisplay = '';
                     if (details) {
-                        const total = details.total || 0;
+                        const total = totalPoints;
                         const base = details.base || 0;
                         const bonus = (details.bonus_word_points || 0) + (details.bonus_letter_points || 0) + (details.either_or_points || 0);
                         if (bonus > 0) {
@@ -3551,7 +3559,9 @@ function updateBoardCell(cell, r, c, letter, grayed, f, state = null) {
                     isMatch = true;
                 }
             } else if (activeBonusCell.length === 2) {
-                if (Number(activeBonusCell[0]) === r && Number(activeBonusCell[1]) === c) {
+                const targetR = window.isBoardTransposed ? Number(activeBonusCell[1]) : Number(activeBonusCell[0]);
+                const targetC = window.isBoardTransposed ? Number(activeBonusCell[0]) : Number(activeBonusCell[1]);
+                if (targetR === r && targetC === c) {
                     isMatch = true;
                 }
             }
@@ -3559,7 +3569,11 @@ function updateBoardCell(cell, r, c, letter, grayed, f, state = null) {
             if (activeBonusCell.f !== undefined) {
                 if (typeof f !== 'undefined' && Number(activeBonusCell.f) === f && Number(activeBonusCell.r) === r && Number(activeBonusCell.c) === c) isMatch = true;
             } else if (activeBonusCell.r !== undefined) {
-                if (Number(activeBonusCell.r) === r && Number(activeBonusCell.c) === c) isMatch = true;
+                const targetR = window.isBoardTransposed ? Number(activeBonusCell.c) : Number(activeBonusCell.r);
+                const targetC = window.isBoardTransposed ? Number(activeBonusCell.r) : Number(activeBonusCell.c);
+                if (targetR === r && targetC === c) {
+                    isMatch = true;
+                }
             }
         }
     }
@@ -3706,6 +3720,39 @@ function findWordPathOnBoard(word, board, targetCoord = null) {
     const cols = board[0].length;
     const upperWord = word.toUpperCase();
 
+    // Identify all potential bonus coordinates
+    const specialCoords = new Set();
+    
+    // 1. Add Either/Or tiles directly from the current board
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            if (board[r][c] && board[r][c].includes('/')) {
+                specialCoords.add(`${r},${c}`);
+            }
+        }
+    }
+
+    // 2. Add transposed/untransposed bonus letter coordinate
+    let bc = targetCoord;
+    if (!bc) {
+        bc = (window.lastGameState && window.lastGameState.bonus_cell) ? window.lastGameState.bonus_cell : null;
+    }
+    if (bc) {
+        if (Array.isArray(bc)) {
+            if (bc.length === 2) {
+                const targetR = window.isBoardTransposed ? Number(bc[1]) : Number(bc[0]);
+                const targetC = window.isBoardTransposed ? Number(bc[0]) : Number(bc[1]);
+                specialCoords.add(`${targetR},${targetC}`);
+            }
+        } else if (typeof bc === 'object') {
+            if (bc.r !== undefined) {
+                const targetR = window.isBoardTransposed ? Number(bc.c) : Number(bc.r);
+                const targetC = window.isBoardTransposed ? Number(bc.r) : Number(bc.c);
+                specialCoords.add(`${targetR},${targetC}`);
+            }
+        }
+    }
+
     function dfs(r, c, index, currentPath, visited, hasHitTarget) {
         if (r < 0 || r >= rows || c < 0 || c >= cols) return null;
         if (visited.has(`${r},${c}`)) return null;
@@ -3739,21 +3786,11 @@ function findWordPathOnBoard(word, board, targetCoord = null) {
         newVisited.add(`${r},${c}`);
         const newPath = [...currentPath, { r, c }];
         
-        // Track hit
-        let nowHit = hasHitTarget;
-        if (targetCoord) {
-            if (Array.isArray(targetCoord)) {
-                if (r === targetCoord[0] && c === targetCoord[1]) nowHit = true;
-            } else if (typeof targetCoord === 'object') {
-                if (r === targetCoord.r && c === targetCoord.c) nowHit = true;
-            }
-        }
+        let nowHit = hasHitTarget || specialCoords.has(`${r},${c}`);
 
         const nextIndex = index + matchLength;
         if (nextIndex >= upperWord.length) {
-            // If we are searching for a specific target cell, enforce the hit.
-            // Otherwise (standard typing), return the path.
-            if (targetCoord && !nowHit) return null;
+            if (specialCoords.size > 0 && !nowHit) return null;
             return newPath;
         }
 
@@ -3768,8 +3805,8 @@ function findWordPathOnBoard(word, board, targetCoord = null) {
         return null;
     }
 
-    // Try starting from all possible cells to find a path that hits the target
-    if (targetCoord) {
+    // Try starting from all possible cells to find a path that hits a special tile
+    if (specialCoords.size > 0) {
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
                 const path = dfs(r, c, 0, [], new Set(), false);
@@ -3778,7 +3815,7 @@ function findWordPathOnBoard(word, board, targetCoord = null) {
         }
     }
     
-    // If no bonus-hitting path found or no target, return any valid path
+    // If no bonus-hitting path found or no special tiles, fallback to finding ANY valid path
     function dfsBasic(r, c, index, currentPath, visited) {
         if (r < 0 || r >= rows || c < 0 || c >= cols) return null;
         if (visited.has(`${r},${c}`)) return null;
@@ -3807,6 +3844,7 @@ function findWordPathOnBoard(word, board, targetCoord = null) {
         }
         return null;
     }
+
     for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
             const result = dfsBasic(r, c, 0, [], new Set());
@@ -3816,9 +3854,34 @@ function findWordPathOnBoard(word, board, targetCoord = null) {
     return null;
 }
 
-window.findWordPathOnCube = function(word, board) {
+window.findWordPathOnCube = function(word, board, targetCoord = null) {
     if (!word || !board || board.length !== 6) return null;
     const upperWord = word.toUpperCase();
+
+    // Identify all potential bonus coordinates on this 3D board
+    const specialCoords = new Set();
+    
+    // 1. Add Either/Or tiles directly from the current board
+    for (let f = 0; f < 6; f++) {
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+                if (board[f][r][c] && board[f][r][c].includes('/')) {
+                    specialCoords.add(`${f},${r},${c}`);
+                }
+            }
+        }
+    }
+
+    // 2. Add bonus letter coordinate
+    let bc = targetCoord;
+    if (!bc) {
+        bc = (window.lastGameState && window.lastGameState.bonus_cell) ? window.lastGameState.bonus_cell : null;
+    }
+    if (bc && Array.isArray(bc) && bc.length === 3) {
+        specialCoords.add(`${bc[0]},${bc[1]},${bc[2]}`);
+    } else if (bc && typeof bc === 'object' && bc.f !== undefined) {
+        specialCoords.add(`${bc.f},${bc.r},${bc.c}`);
+    }
 
     function getCubeNeighbors(f, r, c) {
         const res = [];
@@ -3864,7 +3927,54 @@ window.findWordPathOnCube = function(word, board) {
         return res.filter(n => n.f >= 0 && n.f < 6 && n.r >= 0 && n.r < 3 && n.c >= 0 && n.c < 3);
     }
 
-    function dfs(f, r, c, index, currentPath, visited) {
+    function dfs(f, r, c, index, currentPath, visited, hasHitTarget) {
+        if (index >= upperWord.length) return currentPath;
+        if (visited.has(`${f},${r},${c}`)) return null;
+
+        const cellValue = board[f][r][c].toUpperCase();
+        let matchLength = 0;
+        if (cellValue === 'Q') {
+            if (upperWord.substring(index, index + 2) === 'QU') matchLength = 2;
+            else if (upperWord[index] === 'Q') matchLength = 1;
+        } else if (upperWord[index] === cellValue) {
+            matchLength = 1;
+        }
+
+        if (matchLength === 0) return null;
+
+        const newVisited = new Set(visited);
+        newVisited.add(`${f},${r},${c}`);
+        const newPath = [...currentPath, { f, r, c }];
+
+        let nowHit = hasHitTarget || specialCoords.has(`${f},${r},${c}`);
+
+        const nextIndex = index + matchLength;
+        if (nextIndex >= upperWord.length) {
+            if (specialCoords.size > 0 && !nowHit) return null;
+            return newPath;
+        }
+
+        for (const n of getCubeNeighbors(f, r, c)) {
+            const result = dfs(n.f, n.r, n.c, nextIndex, newPath, newVisited, nowHit);
+            if (result) return result;
+        }
+        return null;
+    }
+
+    // Try starting from all possible cells to find a path that hits a special coordinate
+    if (specialCoords.size > 0) {
+        for (let f = 0; f < 6; f++) {
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 3; c++) {
+                    const path = dfs(f, r, c, 0, [], new Set(), false);
+                    if (path) return path;
+                }
+            }
+        }
+    }
+
+    // Fallback to standard DFS
+    function dfsBasic(f, r, c, index, currentPath, visited) {
         if (index >= upperWord.length) return currentPath;
         if (visited.has(`${f},${r},${c}`)) return null;
 
@@ -3887,7 +3997,7 @@ window.findWordPathOnCube = function(word, board) {
         if (nextIndex >= upperWord.length) return newPath;
 
         for (const n of getCubeNeighbors(f, r, c)) {
-            const result = dfs(n.f, n.r, n.c, nextIndex, newPath, newVisited);
+            const result = dfsBasic(n.f, n.r, n.c, nextIndex, newPath, newVisited);
             if (result) return result;
         }
         return null;
@@ -3896,7 +4006,7 @@ window.findWordPathOnCube = function(word, board) {
     for (let f = 0; f < 6; f++) {
         for (let r = 0; r < 3; r++) {
             for (let c = 0; c < 3; c++) {
-                const path = dfs(f, r, c, 0, [], new Set());
+                const path = dfsBasic(f, r, c, 0, [], new Set());
                 if (path) return path;
             }
         }
@@ -5931,14 +6041,17 @@ async function handlePrivateMatchWord(word, path = null) {
                     
                     if (!bonusCell) return false;
 
+                    let targetR, targetC;
                     if (Array.isArray(bonusCell)) {
                         if (is3D && bonusCell.length === 3) return coord.f === bonusCell[0] && coord.r === bonusCell[1] && coord.c === bonusCell[2];
-                        return coord.r === bonusCell[0] && coord.c === bonusCell[1];
+                        targetR = window.isBoardTransposed ? bonusCell[1] : bonusCell[0];
+                        targetC = window.isBoardTransposed ? bonusCell[0] : bonusCell[1];
                     } else if (typeof bonusCell === 'object') {
                         if (is3D && bonusCell.f !== undefined) return coord.f === bonusCell.f && coord.r === bonusCell.r && coord.c === bonusCell.c;
-                        return coord.r === bonusCell.r && coord.c === bonusCell.c;
+                        targetR = window.isBoardTransposed ? bonusCell.c : bonusCell.r;
+                        targetC = window.isBoardTransposed ? bonusCell.r : bonusCell.c;
                     }
-                    return false;
+                    return coord.r === Number(targetR) && coord.c === Number(targetC);
                 });
                 if (hitsBonus) {
                     pts += 3;
