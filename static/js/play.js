@@ -81,27 +81,27 @@ function updateInputMethod(method) {
     }
 }
 
-// --- EVICTION / KICK LOGIC ---
-let lastActivityTime = Date.now();
+// --- IDLE TRACKING ---
+// Reset only on play-page interactions. mousemove excluded. Other tabs do not count.
+let lastGameInteractionTime = Date.now();
+
 function resetIdleTimer() {
-    lastActivityTime = Date.now();
+    lastGameInteractionTime = Date.now();
 }
 
-// Global activity listeners
-window.addEventListener('mousemove', resetIdleTimer, { passive: true });
-window.addEventListener('mousedown', resetIdleTimer, { passive: true });
-window.addEventListener('keydown', resetIdleTimer, { passive: true });
-window.addEventListener('touchstart', resetIdleTimer, { passive: true });
-window.addEventListener('scroll', resetIdleTimer, { passive: true });
+function isOnPlayPage() {
+    const playPage = document.getElementById('page-play');
+    if (!playPage) return false;
+    const style = window.getComputedStyle(playPage);
+    return style.display !== 'none' && !playPage.classList.contains('hidden');
+}
 
 async function ejectToLobby(reason = "inactivity") {
     console.warn(`[play.js] EVICTING USER. Reason: ${reason}`);
-    
+
     // 1. Notify server immediately so lobby counts decrease
     if (window.leaveCurrentRoom) {
         try {
-            // Fire-and-forget: Do NOT await this so the client UI redirects instantaneously
-            // and is never blocked by a slow/throttled network request
             window.leaveCurrentRoom();
         } catch (e) {
             console.error('[play.js] Failed to notify server of leave during ejection:', e);
@@ -119,101 +119,98 @@ async function ejectToLobby(reason = "inactivity") {
         ov.style.display = 'none';
     });
 
-    // 4. Redirect to Lobby
-    if (window.navigateToPage) window.navigateToPage('lobby');
-    else if (window.showPage) window.showPage('page-lobby');
-    else window.location.href = '#page-lobby';
+    // 4. Build message
+    let title = "Session Expired";
+    let message = `
+        You have been returned to the lobby due to 10 minutes of inactivity. 
+        <br><br>
+        To keep room slots open for active players, matches are automatically cleared after prolonged idle periods. 
+        Feel free to join a new match when you're ready!
+    `;
 
-    // 6. DELAYED SHOW: Stagger the modal so it appears AFTER the page switch
-    setTimeout(() => {
-        let title = "Session Expired";
-        let message = `
-            You have been returned to the lobby due to 10 minutes of inactivity. 
+    if (reason === "mobile-cube-restriction") {
+        title = "Unsupported Device";
+        message = `
+            3D Cube mode is not supported on mobile devices. 
             <br><br>
-            To keep room slots open for active players, matches are automatically cleared after prolonged idle periods. 
-            Feel free to join a new match when you're ready!
+            Please play on a desktop or laptop to enjoy Cube rooms! 
+            Feel free to join any other 2D match on your current device.
         `;
-        
-        if (reason === "mobile-cube-restriction") {
-            title = "Unsupported Device";
-            message = `
-                3D Cube mode is not supported on mobile devices. 
-                <br><br>
-                Please play on a desktop or laptop to enjoy Cube rooms! 
-                Feel free to join any other 2D match on your current device.
-            `;
+    }
+
+    if (reason === "daily_reset") {
+        title = "Daily Reset";
+        message = `
+            The 24-hour Daily Room has reset for the new day!
+            <br><br>
+            A fresh daily board has been generated. Head back in to start finding words and climb the leaderboard!
+        `;
+    }
+
+    // 5. SHOW MODAL FIRST — over whatever page the user is currently on (Tools, Profile, etc.)
+    //    so they always see the notice regardless of which tab they were in.
+    if (window.showAlertModal) {
+        window.showAlertModal(title, message, true);
+        console.log('[play.js] Displayed eviction modal before redirect.');
+    } else {
+        const modal = document.getElementById('generic-info-modal');
+        const titleEl = document.getElementById('generic-modal-title');
+        const bodyEl = document.getElementById('generic-modal-body');
+        if (modal && titleEl && bodyEl) {
+            titleEl.textContent = title;
+            bodyEl.innerHTML = `<p style="padding: 30px; text-align: center; color: var(--text-primary);">${message}</p>`;
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            modal.style.zIndex = '100001';
         }
-        
-        if (reason === "daily_reset") {
-            title = "Daily Reset";
-            message = `
-                The 24-hour Daily Room has reset for the new day!
-                <br><br>
-                A fresh daily board has been generated. Head back in to start finding words and climb the leaderboard!
-            `;
-        }
-        
-        if (window.showAlertModal) {
-            window.showAlertModal(title, message, true); // priority=true ensures it isn't overwritten by lobby notices
-            console.log('[play.js] Displayed modal via showAlertModal.');
-        } else {
-            // Fallback for extreme cases
-            const modal = document.getElementById('generic-info-modal');
-            const titleEl = document.getElementById('generic-modal-title');
-            const bodyEl = document.getElementById('generic-modal-body');
-            if (modal && titleEl && bodyEl) {
-                titleEl.textContent = title;
-                bodyEl.innerHTML = `<p style="padding: 30px; text-align: center; color: var(--text-primary);">${message}</p>`;
-                modal.classList.remove('hidden');
-                modal.style.display = 'flex';
-                modal.style.zIndex = '100001';
-            }
-        }
-    }, 800); // Increased delay to 800ms for more stability across all devices
+    }
+
+    // 6. THEN navigate to lobby after a short delay so the modal is visible first
+    setTimeout(() => {
+        if (window.navigateToPage) window.navigateToPage('lobby');
+        else if (window.showPage) window.showPage('page-lobby');
+        else window.location.href = '#page-lobby';
+    }, 400);
 }
 
-// Check for idle logout every 5 seconds
-setInterval(() => {
-    // Optimization: Skip idle check if tab is hidden to save battery
-    // Removed to ensure mobile devices are sent back to lobby even if screen is off or app in background
-    // if (document.hidden) return;
-
-    const roomId = getCurrentRoomId();
-    if (roomId) {
-        // EXEMPTION: No idle limit for 24h rooms
-        const is24h = window.lastGameState && window.lastGameState.game_type === 'accumulative' && window.lastGameState.time_limit >= 7200;
-        if (is24h) return;
-
-        const idleTime = Date.now() - lastActivityTime;
-        if (idleTime > 10 * 60 * 1000) { // 10 minutes
-            console.warn('[play.js] 10m Idle reached. EVICTING.');
-            ejectToLobby("inactivity");
-        }
-    }
-}, 5000);
-
-// Add global listeners for input detection
+// Reset idle timer only on interactions that happen WHILE on the Play page.
+// Nav button clicks and interactions on other tabs (Tools, Profile, etc.) do NOT count.
+// mousemove intentionally excluded — fires constantly on desktop, masking true idle.
 let lastTouchTime = 0;
 
-document.addEventListener('keydown', () => {
-    updateInputMethod('keyboard');
-    resetIdleTimer();
-}, true);
-
-document.addEventListener('mousedown', () => {
-    // If a touch event was fired in the last 1500ms, ignore this mousedown as it is a simulated mobile event
-    if (Date.now() - lastTouchTime < 1500) {
-        return;
-    }
+document.addEventListener('mousedown', (e) => {
+    if (Date.now() - lastTouchTime < 1500) return; // ignore ghost mouse from touch
     updateInputMethod('mouse');
-    resetIdleTimer();
+    if (isOnPlayPage()) resetIdleTimer(); // only count play-page clicks
 }, true);
 
 document.addEventListener('touchstart', () => {
     lastTouchTime = Date.now();
     updateInputMethod('touch');
-    resetIdleTimer();
+    if (isOnPlayPage()) resetIdleTimer(); // only count play-page taps
 }, true);
+
+document.addEventListener('keydown', () => {
+    updateInputMethod('keyboard');
+    if (isOnPlayPage()) resetIdleTimer(); // only count play-page keystrokes
+}, true);
+
+// Check for idle logout every 5 seconds.
+// Single clock: no play-page interaction in 10 min = eject, regardless of which tab they are on.
+setInterval(() => {
+    const roomId = getCurrentRoomId();
+    if (!roomId) return;
+
+    // EXEMPTION: No idle limit for 24h rooms
+    const is24h = window.lastGameState && window.lastGameState.game_type === 'accumulative' && window.lastGameState.time_limit >= 7200;
+    if (is24h) return;
+
+    const idleMs = Date.now() - lastGameInteractionTime;
+    if (idleMs > 10 * 60 * 1000) { // 10 minutes
+        console.warn('[play.js] 10m idle from Play page (' + Math.round(idleMs/1000) + 's). EVICTING.');
+        ejectToLobby("inactivity");
+    }
+}, 5000);
 
 function getCurrentRoomId() {
     let rid = window.currentRoomId;
