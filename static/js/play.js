@@ -3504,7 +3504,7 @@ if (window.ResizeObserver) {
 
 // Letter values for "Valued Letters" format
 const LETTER_VALUES = {
-    'A': 2, 'B': 4, 'C': 4, 'D': 3, 'E': 1, 'F': 5, 'G': 3, 'H': 5, 'I': 2, 'J': 10, 'K': 6, 'L': 3, 'M': 4, 'N': 2, 'O': 2, 'P': 4, 'Q': 10, 'R': 2, 'S': 2, 'T': 2, 'U': 4, 'V': 5, 'W': 5, 'X': 10, 'Y': 5, 'Z': 10
+    'A': 2, 'B': 4, 'C': 4, 'D': 3, 'E': 1, 'F': 5, 'G': 3, 'H': 5, 'I': 2, 'J': 10, 'K': 6, 'L': 3, 'M': 4, 'N': 2, 'O': 2, 'P': 4, 'Q': 10, 'R': 2, 'S': 2, 'T': 2, 'U': 4, 'V': 5, 'W': 5, 'X': 8, 'Y': 5, 'Z': 8
 };
 
 function updateBoardCell(cell, r, c, letter, grayed, f, state = null) {
@@ -6052,7 +6052,7 @@ async function handlePrivateMatchWord(word, path = null) {
             const letterValues = {
                 'A': 2, 'B': 4, 'C': 4, 'D': 3, 'E': 1, 'F': 5, 'G': 3, 'H': 5, 'I': 2, 'J': 10,
                 'K': 6, 'L': 3, 'M': 4, 'N': 2, 'O': 2, 'P': 4, 'Q': 10, 'R': 2, 'S': 2, 'T': 2,
-                'U': 4, 'V': 5, 'W': 5, 'X': 9, 'Y': 5, 'Z': 9
+                'U': 4, 'V': 5, 'W': 5, 'X': 8, 'Y': 5, 'Z': 8
             };
             for (let char of word.toUpperCase()) {
                 pts += letterValues[char] || 1;
