@@ -4537,8 +4537,16 @@ body .tab-btn.active {
         gap: 10px !important; 
         justify-content: flex-start !important; /* Start from the left so scrolling works */
         align-items: center !important;
-        padding: 0 5px 8px 5px !important; /* Add padding for scroll space */
+        padding: 4px 5px 8px 5px !important; /* top padding prevents translateY clip */
         box-sizing: border-box !important;
+        /* Ensure active button glow renders above the logo row */
+        position: relative !important;
+        z-index: 2 !important;
+    }
+    /* Disable upward shift on mobile — overflow-x:auto clips it at the container top */
+    .nav .nav-btn:hover,
+    .nav .nav-btn:active {
+        transform: none !important;
     }
     .nav::-webkit-scrollbar {
         display: none !important;

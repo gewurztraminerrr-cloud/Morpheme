@@ -1201,9 +1201,9 @@ async function updateGameState(incomingState = null) {
         const isNewRound = (state.state === 'active' && (lastStateStr !== 'active' || (previousState && state.current_round !== previousState.current_round)));
         if (lastStateStr !== state.state || isNewRound) {
             if (isNewRound) {
-                // Handle Rotating Letters format
+                // Handle Rotation format
                 const bFormat = state.current_board_format || '';
-                if (bFormat.toLowerCase().includes('rotating')) {
+                if (bFormat.toLowerCase().includes('rotat')) {
                     startRotatingLetters();
                 } else {
                     stopRotatingLetters();

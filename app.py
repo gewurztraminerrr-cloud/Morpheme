@@ -18,7 +18,11 @@ app.secret_key = 'morpheme-secret-key-2024'
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(days=30)
 
-# --- DONATION ROUTES REMOVED ---
+# --- Leaderboard in-memory TTL cache ---
+_lb_cache = {}
+_lb_cache_expiry = {}
+_LB_CACHE_TTL = 45  # seconds
+
 
 @app.route('/api/ping')
 def ping_debug():
@@ -4875,304 +4879,282 @@ def create_forum_comment():
 
 @app.route('/api/leaderboard', methods=['GET'])
 def get_leaderboard_data():
+    import time as _t
+    # --- Params ---
+    period     = request.args.get('period', 'day')
+    game_type  = request.args.get('game_type', 'all')
+    dims       = request.args.get('board_dimensions', 'all')
+    time_limit = request.args.get('time_limit', 'all')
+
+    # --- TTL Cache check ---
+    cache_key = f"{period}|{game_type}|{dims}|{time_limit}"
+    now = _t.time()
+    if cache_key in _lb_cache and now < _lb_cache_expiry.get(cache_key, 0):
+        return jsonify(_lb_cache[cache_key])
+
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     try:
-        # Params
-        period = request.args.get('period', 'day')
-        game_type = request.args.get('game_type', 'all')
-        dims = request.args.get('board_dimensions', 'all') 
-        time_limit = request.args.get('time_limit', 'all')
-
         # Base filters
         params = []
-        # Exclude Guests from leaderboards
-        where_clauses = ["u.username NOT LIKE 'Guest_%'"] 
+        where_clauses = ["u.username NOT LIKE 'Guest_%'"]
 
         if game_type != 'all':
             where_clauses.append("rh.game_type = ?")
             params.append(game_type)
         if dims != 'all':
-             where_clauses.append("rh.board_dimensions = ?")
-             params.append(dims)
-             
+            where_clauses.append("rh.board_dimensions = ?")
+            params.append(dims)
         if time_limit != 'all':
-             where_clauses.append("rh.round_duration = ?")
-             params.append(time_limit)
+            where_clauses.append("rh.round_duration = ?")
+            params.append(time_limit)
         else:
-             # Universally exclude 24h (86400) from all generic aggregated views
-             where_clauses.append("rh.round_duration != 86400")
-             
-             # Exclude 10m (600) from generic aggregated views for Accumulative 
-             if game_type == 'all' or game_type == 'accumulative':
+            where_clauses.append("rh.round_duration != 86400")
+            if game_type == 'all' or game_type == 'accumulative':
                 where_clauses.append("(rh.game_type != 'accumulative' OR rh.round_duration != 600)")
 
-        # Time Filter - Calendar Day logic
         period_clause = "1=1"
         if period == 'day':
-             period_clause = "date(rh.timestamp, 'localtime') = date('now', 'localtime')"
+            period_clause = "date(rh.timestamp, 'localtime') = date('now', 'localtime')"
         elif period == 'week':
-             period_clause = "rh.timestamp >= datetime('now', '-7 days', 'localtime')"
+            period_clause = "rh.timestamp >= datetime('now', '-7 days', 'localtime')"
         elif period == 'month':
-             period_clause = "rh.timestamp >= datetime('now', '-30 days', 'localtime')"
+            period_clause = "rh.timestamp >= datetime('now', '-30 days', 'localtime')"
         elif period == 'year':
-             period_clause = "rh.timestamp >= datetime('now', '-365 days', 'localtime')"
-        
+            period_clause = "rh.timestamp >= datetime('now', '-365 days', 'localtime')"
+
         where_clauses.append(period_clause)
         base_where = " AND ".join(where_clauses)
-        
-        # 1. Best Scores (Highest total score in a round - Max 1 per user)
+
+        # Row cap: prevent unbounded full-table scans for Python-processed queries
+        # Larger periods need a higher cap to ensure top-50 accuracy
+        _row_cap = 500 if period == 'day' else (1000 if period == 'week' else 2000)
+
+        # 1. Best Scores
         scores = conn.execute(f"""
             SELECT * FROM (
-                SELECT rh.total_score, rh.user_rating, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id, rh.game_type,
-                ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.total_score DESC, rh.timestamp DESC) as rn
+                SELECT rh.total_score, rh.user_rating, u.username, u.country_flag, u.avatar_url,
+                       rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json,
+                       rh.round_duration, rh.id, rh.game_type,
+                       ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.total_score DESC, rh.timestamp DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
                 WHERE {base_where}
-            ) sub
-            WHERE rn = 1
-            ORDER BY total_score DESC, timestamp DESC
-            LIMIT 50
+            ) sub WHERE rn = 1
+            ORDER BY total_score DESC, timestamp DESC LIMIT 50
         """, params).fetchall()
-        
-        # 2. Best Words (Highest point single word - Max 1 per user)
+
+        # 2. Best Words
         words = conn.execute(f"""
             SELECT * FROM (
-                SELECT rh.best_word, rh.best_word_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id, rh.game_type,
-                ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.best_word_score DESC, rh.timestamp DESC) as rn
+                SELECT rh.best_word, rh.best_word_score, u.username, u.country_flag, u.avatar_url,
+                       rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json,
+                       rh.round_duration, rh.id, rh.game_type,
+                       ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.best_word_score DESC, rh.timestamp DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
                 WHERE {base_where} AND rh.best_word IS NOT NULL
-            ) sub
-            WHERE rn = 1
-            ORDER BY best_word_score DESC, timestamp DESC
-            LIMIT 50
+            ) sub WHERE rn = 1
+            ORDER BY best_word_score DESC, timestamp DESC LIMIT 50
         """, params).fetchall()
-        
-        # 3. Best PE (Highest Performance Efficiency - Max 1 per user)
+
+        # 3. Best PE
         pes = conn.execute(f"""
             SELECT * FROM (
-                SELECT rh.performance_ratio, rh.total_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id, rh.game_type, rh.total_words_avail,
-                ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.performance_ratio DESC, rh.timestamp DESC) as rn
+                SELECT rh.performance_ratio, rh.total_score, u.username, u.country_flag, u.avatar_url,
+                       rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json,
+                       rh.round_duration, rh.id, rh.game_type, rh.total_words_avail,
+                       ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.performance_ratio DESC, rh.timestamp DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
                 WHERE {base_where} AND rh.performance_ratio > 0
-            ) sub
-            WHERE rn = 1
-            ORDER BY performance_ratio DESC, timestamp DESC
-            LIMIT 50
+            ) sub WHERE rn = 1
+            ORDER BY performance_ratio DESC, timestamp DESC LIMIT 50
         """, params).fetchall()
-        
-        # 5. Best Percentage of Words Found (Max 1 per user)
+
+        # 4. Best Pct Found (capped to avoid full-table JSON scan)
         cursor_pcts = conn.execute(f"""
-            SELECT rh.total_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id, rh.game_type, rh.total_words_avail
+            SELECT rh.total_score, u.username, u.country_flag, u.avatar_url,
+                   rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json,
+                   rh.round_duration, rh.id, rh.game_type, rh.total_words_avail
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE {base_where} AND rh.total_words_avail > 0
+            ORDER BY rh.timestamp DESC
+            LIMIT {_row_cap}
         """, params).fetchall()
-        
+
         pcts_processed_all = []
         for r in cursor_pcts:
             d = dict(r)
             try:
                 words_list = json.loads(d.get('words_json', '[]'))
-                num_words = len(words_list)
                 twa = d.get('total_words_avail', 0)
-                d['pct_found'] = round(num_words / twa * 100, 1) if twa > 0 else 0
+                d['pct_found'] = round(len(words_list) / twa * 100, 1) if twa > 0 else 0
             except:
                 d['pct_found'] = 0
             pcts_processed_all.append(d)
-            
+
         user_pcts_max = {}
         user_pcts_list = {}
         for d in pcts_processed_all:
             user = d['username']
-            if user not in user_pcts_max or d['pct_found'] > user_pcts_max[user]['pct_found'] or (d['pct_found'] == user_pcts_max[user]['pct_found'] and d['timestamp'] > user_pcts_max[user]['timestamp']):
+            if user not in user_pcts_max or d['pct_found'] > user_pcts_max[user]['pct_found'] or (
+                    d['pct_found'] == user_pcts_max[user]['pct_found'] and d['timestamp'] > user_pcts_max[user]['timestamp']):
                 user_pcts_max[user] = d
-            if user not in user_pcts_list:
-                user_pcts_list[user] = []
-            user_pcts_list[user].append(d['pct_found'])
-            
+            user_pcts_list.setdefault(user, []).append(d['pct_found'])
+
         for user, d in user_pcts_max.items():
             pcts = user_pcts_list.get(user, [])
-            avg_pct = sum(pcts) / len(pcts) if pcts else 0
-            d['avg_pct'] = round(avg_pct, 1)
-                
+            d['avg_pct'] = round(sum(pcts) / len(pcts), 1) if pcts else 0
+
         best_pcts = sorted(user_pcts_max.values(), key=lambda x: (x['pct_found'], x['timestamp']), reverse=True)[:50]
 
-        # 4. Best Ratings Achieved (Max achieved in period - One per user)
-        # Note: We group by user_id to get one entry per user
+        # 5. Best Ratings
         ratings = conn.execute(f"""
-            SELECT MAX(rh.user_rating) as max_rating, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.timestamp, rh.game_type
+            SELECT MAX(rh.user_rating) as max_rating, u.username, u.country_flag, u.avatar_url,
+                   rh.room_id, rh.timestamp, rh.game_type
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE {base_where}
             GROUP BY u.id
-            ORDER BY max_rating DESC
-            LIMIT 50
+            ORDER BY max_rating DESC LIMIT 50
         """, params).fetchall()
-        
-        # 5. Avg Score (Avg per user, Min 3 games)
+
+        # 6. Avg Score
         avgs = conn.execute(f"""
-            SELECT AVG(rh.total_score) as avg_score, COUNT(*) as games, MAX(rh.timestamp) as last_active, u.username, u.country_flag, u.avatar_url
+            SELECT AVG(rh.total_score) as avg_score, COUNT(*) as games, MAX(rh.timestamp) as last_active,
+                   u.username, u.country_flag, u.avatar_url
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE {base_where}
             GROUP BY u.id
             HAVING games >= 1
-            ORDER BY avg_score DESC
-            LIMIT 50
+            ORDER BY avg_score DESC LIMIT 50
         """, params).fetchall()
 
-        # 7. Highest number of Obscure words found (Max 1 per user)
+        # 7. Obscure words (capped — high-scoring rounds are most likely candidates)
         cursor_obscure = conn.execute(f"""
-            SELECT rh.total_score, u.username, u.country_flag, u.avatar_url, rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json, rh.round_duration, rh.id, rh.game_type
+            SELECT rh.total_score, u.username, u.country_flag, u.avatar_url,
+                   rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json,
+                   rh.round_duration, rh.id, rh.game_type
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE {base_where}
+            ORDER BY rh.total_score DESC
+            LIMIT {_row_cap}
         """, params).fetchall()
-        
+
         word_validator.ensure_csw_loaded()
-        obscure_processed = []
+        user_obscure = {}
         for r in cursor_obscure:
             d = dict(r)
             try:
                 words_list = json.loads(d.get('words_json', '[]'))
-                obscure_count = sum(1 for w in words_list if w.get('word', '').upper() in word_validator.unique_csw_words)
-                d['obscure_count'] = obscure_count
+                d['obscure_count'] = sum(1 for w in words_list if w.get('word', '').upper() in word_validator.unique_csw_words)
             except:
                 d['obscure_count'] = 0
-            obscure_processed.append(d)
-            
-        user_obscure = {}
-        for d in obscure_processed:
             user = d['username']
-            if user not in user_obscure or d['obscure_count'] > user_obscure[user]['obscure_count'] or (d['obscure_count'] == user_obscure[user]['obscure_count'] and d['timestamp'] > user_obscure[user]['timestamp']):
+            if user not in user_obscure or d['obscure_count'] > user_obscure[user]['obscure_count'] or (
+                    d['obscure_count'] == user_obscure[user]['obscure_count'] and d['timestamp'] > user_obscure[user]['timestamp']):
                 user_obscure[user] = d
-                
-        best_obscure = sorted([x for x in user_obscure.values() if x['obscure_count'] > 0], key=lambda x: (x['obscure_count'], x['timestamp']), reverse=True)[:50]
 
-        # 8. Avg Percentage of Words Found (Avg per user, Min 1 game)
+        best_obscure = sorted([x for x in user_obscure.values() if x['obscure_count'] > 0],
+                              key=lambda x: (x['obscure_count'], x['timestamp']), reverse=True)[:50]
+
+        # 8. Avg Pct Found (capped)
         cursor_avg_pct = conn.execute(f"""
-            SELECT rh.total_score, u.username, u.country_flag, u.avatar_url, rh.total_words_avail, rh.words_json
+            SELECT rh.total_score, u.username, u.country_flag, u.avatar_url,
+                   rh.total_words_avail, rh.words_json
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE {base_where} AND rh.total_words_avail > 0
+            ORDER BY rh.timestamp DESC
+            LIMIT {_row_cap}
         """, params).fetchall()
-        
+
         user_pcts = {}
         for r in cursor_avg_pct:
             d = dict(r)
             user = d['username']
             try:
                 words_list = json.loads(d.get('words_json', '[]'))
-                num_words = len(words_list)
                 twa = d.get('total_words_avail', 0)
-                pct = num_words / twa if twa > 0 else 0
-                if user not in user_pcts:
-                    user_pcts[user] = []
-                user_pcts[user].append(pct)
+                pct = len(words_list) / twa if twa > 0 else 0
+                user_pcts.setdefault(user, {'pcts': [], 'last': d})
+                user_pcts[user]['pcts'].append(pct)
+                user_pcts[user]['last'] = d
             except:
                 pass
-                
+
         avg_pcts = []
-        for user, pcts in user_pcts.items():
-            if len(pcts) >= 1:
-                avg_pct = sum(pcts) / len(pcts) * 100
-                last_entry = next(r for r in reversed(cursor_avg_pct) if dict(r)['username'] == user)
-                d = dict(last_entry)
-                avg_pcts.append({
-                    'username': user,
-                    'country_flag': d['country_flag'],
-                    'avatar_url': d['avatar_url'],
-                    'avg_pct': round(avg_pct, 1),
-                    'games': len(pcts)
-                })
-                
+        for user, info in user_pcts.items():
+            pcts = info['pcts']
+            d = info['last']
+            avg_pcts.append({
+                'username': user,
+                'country_flag': d['country_flag'],
+                'avatar_url': d['avatar_url'],
+                'avg_pct': round(sum(pcts) / len(pcts) * 100, 1),
+                'games': len(pcts)
+            })
         best_avg_pcts = sorted(avg_pcts, key=lambda x: x['avg_pct'], reverse=True)[:50]
 
-        # 6. Most Games Played (Activity Leaderboard)
-        # Showing the rating for the specific mode if filtered, else global
+        # 9. Most Games Played
         if game_type != 'all':
             rating_pattern = f"{game_type}|%"
             if dims != 'all' and time_limit != 'all': rating_pattern = f"{game_type}|{dims}|{time_limit}"
             elif dims != 'all': rating_pattern = f"{game_type}|{dims}|%"
             elif time_limit != 'all': rating_pattern = f"{game_type}|%|{time_limit}"
-
-            # 24-hour configurations exception: load global rating from users table
             is_24h_filter = (time_limit != 'all' and int(time_limit) >= 7200)
             rating_subquery = "u.rating" if is_24h_filter else "COALESCE((SELECT MAX(rating) FROM user_ratings WHERE user_id = u.id AND config_key LIKE ?), 1200)"
-
             m_sql = f"""SELECT u.username, u.country_flag, u.avatar_url, MAX(rh.timestamp) as last_active,
-                               COUNT(rh.id) as game_count,
-                               {rating_subquery} as rating,
-                               rh.game_type
-                        FROM round_history rh 
-                        JOIN users u ON rh.user_id = u.id 
-                        WHERE {base_where} 
-                        GROUP BY u.id 
-                        ORDER BY game_count DESC LIMIT 50"""
+                               COUNT(rh.id) as game_count, {rating_subquery} as rating, rh.game_type
+                        FROM round_history rh JOIN users u ON rh.user_id = u.id
+                        WHERE {base_where} GROUP BY u.id ORDER BY game_count DESC LIMIT 50"""
             m_params = [rating_pattern] + params if not is_24h_filter else params
         else:
-            # For 'All Game Types', show the highest rating among modes actually played in this period
             m_sql = f"""SELECT u.username, u.country_flag, u.avatar_url, MAX(rh.timestamp) as last_active,
                                COUNT(rh.id) as game_count,
-                               (SELECT MAX(rating) FROM user_ratings 
-                                WHERE user_id = u.id 
+                               (SELECT MAX(rating) FROM user_ratings
+                                WHERE user_id = u.id
                                 AND config_key IN (
                                     SELECT DISTINCT (game_type || '|' || board_dimensions || '|' || round_duration)
-                                    FROM round_history 
-                                    WHERE user_id = u.id AND {period_clause}
+                                    FROM round_history WHERE user_id = u.id AND {period_clause}
                                 )) as rating,
                                rh.game_type
-                        FROM round_history rh 
-                        JOIN users u ON rh.user_id = u.id 
-                        WHERE {base_where} 
-                        GROUP BY u.id 
-                        ORDER BY game_count DESC LIMIT 50"""
+                        FROM round_history rh JOIN users u ON rh.user_id = u.id
+                        WHERE {base_where} GROUP BY u.id ORDER BY game_count DESC LIMIT 50"""
             m_params = params
-
         most_games = conn.execute(m_sql, m_params).fetchall()
-        
-        # 7. Current Ratings (Users active in period, sorted by CURRENT rating)
+
+        # 10. Current Ratings
         if game_type != 'all':
             rating_pattern = f"{game_type}|%"
             if dims != 'all' and time_limit != 'all': rating_pattern = f"{game_type}|{dims}|{time_limit}"
             elif dims != 'all': rating_pattern = f"{game_type}|{dims}|%"
             elif time_limit != 'all': rating_pattern = f"{game_type}|%|{time_limit}"
-
             current_ratings = conn.execute(f"""
                 SELECT u.username, u.country_flag, u.avatar_url, MAX(rh.timestamp) as last_active,
-                COALESCE((SELECT MAX(rating) FROM user_ratings WHERE user_id = u.id AND config_key LIKE ?), 1200) as rating,
-                rh.game_type
-                FROM round_history rh
-                JOIN users u ON rh.user_id = u.id
-                WHERE {base_where}
-                GROUP BY u.id
-                ORDER BY rating DESC
-                LIMIT 1000
+                       COALESCE((SELECT MAX(rating) FROM user_ratings WHERE user_id = u.id AND config_key LIKE ?), 1200) as rating,
+                       rh.game_type
+                FROM round_history rh JOIN users u ON rh.user_id = u.id
+                WHERE {base_where} GROUP BY u.id ORDER BY rating DESC LIMIT 1000
             """, [rating_pattern] + params).fetchall()
         else:
-            # For 'All Game Types', show the highest rating among modes actually played in this period
             current_ratings = conn.execute(f"""
                 SELECT u.username, u.country_flag, u.avatar_url, MAX(rh.timestamp) as last_active,
-                COALESCE((SELECT MAX(rating) FROM user_ratings 
-                 WHERE user_id = u.id 
-                 AND config_key IN (
-                     SELECT DISTINCT (game_type || '|' || board_dimensions || '|' || round_duration)
-                     FROM round_history 
-                     WHERE user_id = u.id AND {period_clause}
-                 )), 1200) as rating,
-                rh.game_type
-                FROM round_history rh
-                JOIN users u ON rh.user_id = u.id
-                WHERE {base_where}
-                GROUP BY u.id
-                ORDER BY rating DESC
-                LIMIT 1000
+                       COALESCE((SELECT MAX(rating) FROM user_ratings
+                        WHERE user_id = u.id
+                        AND config_key IN (
+                            SELECT DISTINCT (game_type || '|' || board_dimensions || '|' || round_duration)
+                            FROM round_history WHERE user_id = u.id AND {period_clause}
+                        )), 1200) as rating,
+                       rh.game_type
+                FROM round_history rh JOIN users u ON rh.user_id = u.id
+                WHERE {base_where} GROUP BY u.id ORDER BY rating DESC LIMIT 1000
             """, params).fetchall()
-        
-        # Helper to dict
+
         def to_list(rows):
             return [dict(r) for r in rows]
 
@@ -5181,27 +5163,30 @@ def get_leaderboard_data():
             d = dict(r)
             try:
                 words_list = json.loads(d.get('words_json', '[]'))
-                num_words = len(words_list)
                 twa = d.get('total_words_avail', 0)
-                d['pct_found'] = round(num_words / twa * 100, 1) if twa > 0 else 0
+                d['pct_found'] = round(len(words_list) / twa * 100, 1) if twa > 0 else 0
             except:
                 d['pct_found'] = 0
             pes_processed.append(d)
 
-        # best_pcts is already processed in Python above
-
-        return jsonify({
-            'best_scores': to_list(scores),
-            'best_words': to_list(words),
-            'best_pes': pes_processed,
-            'best_pcts': best_pcts,
-            'best_ratings': to_list(ratings),
-            'avg_scores': to_list(avgs),
+        result = {
+            'best_scores':    to_list(scores),
+            'best_words':     to_list(words),
+            'best_pes':       pes_processed,
+            'best_pcts':      best_pcts,
+            'best_ratings':   to_list(ratings),
+            'avg_scores':     to_list(avgs),
             'current_ratings': to_list(current_ratings),
-            'most_games': to_list(most_games),
-            'best_avg_pcts': best_avg_pcts,
-            'best_obscure': best_obscure
-        })
+            'most_games':     to_list(most_games),
+            'best_avg_pcts':  best_avg_pcts,
+            'best_obscure':   best_obscure
+        }
+
+        # Store in TTL cache
+        _lb_cache[cache_key] = result
+        _lb_cache_expiry[cache_key] = now + _LB_CACHE_TTL
+
+        return jsonify(result)
 
     except Exception as e:
         import traceback

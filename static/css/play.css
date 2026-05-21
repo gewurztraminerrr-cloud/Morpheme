@@ -3554,7 +3554,10 @@ input[type=range]::-moz-range-track {
 
     .lb-table td.col-val {
         font-size: 0.9rem !important;
-        max-width: 80px !important;
+        max-width: none !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
     }
 
     .lb-table td.col-meta {
