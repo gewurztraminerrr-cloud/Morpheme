@@ -2074,6 +2074,14 @@ function renderPlayers(players, currentUser = null, state = null) {
             } else {
                 selectedPlayerUsername = username;
             }
+            
+            // If in intermission state (end of round), open the notepad popup!
+            if (window.lastGameState && window.lastGameState.state === 'intermission') {
+                if (typeof window.showNotepadPopup === 'function') {
+                    window.showNotepadPopup(username);
+                }
+            }
+            
             // Trigger immediate update (or wait for next poll)
             // waiting for next poll (1s) is fine, or we can force it
             updateGameState();
@@ -6578,3 +6586,130 @@ window.showFinderModal = function (word) {
         modal.style.display = 'flex';
     }
 };
+
+/* ==========================================================================
+   Tactile Yellow Lined Notepad Modal for Round-End Word View
+   ========================================================================== */
+
+window.showNotepadPopup = function(username) {
+    console.log('[Notepad] Requesting notepad for:', username);
+
+    const state = window.lastGameState;
+    if (!state || !state.players) return;
+
+    const player = state.players.find(p => p.username === username);
+    if (!player) return;
+
+    // Get all valid submitted words
+    const words = player.submitted_words || [];
+
+    // Create notepad modal overlay if it doesn't already exist
+    let modal = document.getElementById('notepad-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'notepad-modal';
+        modal.className = 'notepad-overlay hidden';
+        document.body.appendChild(modal);
+    }
+
+    // Render beautiful lined legal pad structure
+    modal.innerHTML = `
+        <div class="notepad-card">
+            <div class="notepad-binder-rings">
+                <div class="binder-ring"></div>
+                <div class="binder-ring"></div>
+                <div class="binder-ring"></div>
+                <div class="binder-ring"></div>
+                <div class="binder-ring"></div>
+            </div>
+            <div class="notepad-header">
+                <span class="notepad-title">${username}'s Notepad</span>
+                <button class="notepad-close" title="Close Notepad">&times;</button>
+            </div>
+            <div class="notepad-body">
+                <div class="notepad-margin-line"></div>
+                <div class="notepad-words-container" id="notepad-words-scroller">
+                    ${words.length === 0 ? `
+                        <div class="notepad-word-line" style="font-style: italic; color: #93a1a1; font-size: 0.95rem; font-weight: normal;">
+                            <span>No words found</span>
+                        </div>
+                    ` : words.map((w, idx) => {
+                        const wordText = (typeof w === 'object' ? w.word : w) || '';
+                        const pts = (typeof w === 'object' ? w.points : 0) || 0;
+                        return `
+                            <div class="notepad-word-line">
+                                <span class="notepad-word"><span class="notepad-word-num">${idx + 1}.</span>${wordText}</span>
+                                <span class="notepad-word-points">${pts} pts</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+            <div class="notepad-controls">
+                <button class="notepad-scroll-btn" id="notepad-scroll-up" title="Scroll Up">&#9650;</button>
+                <button class="notepad-scroll-btn" id="notepad-scroll-down" title="Scroll Down">&#9660;</button>
+            </div>
+        </div>
+    `;
+
+    // Click outside or close button to close modal
+    const closeBtn = modal.querySelector('.notepad-close');
+    closeBtn.addEventListener('click', window.closeNotepadPopup);
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            window.closeNotepadPopup();
+        }
+    });
+
+    // Touch/click scrolling mechanics
+    const scroller = modal.querySelector('#notepad-words-scroller');
+    const scrollUp = modal.querySelector('#notepad-scroll-up');
+    const scrollDown = modal.querySelector('#notepad-scroll-down');
+
+    const updateScrollButtonsState = () => {
+        if (!scroller) return;
+        const isAtTop = scroller.scrollTop <= 1;
+        const isAtBottom = (scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight) <= 1.5;
+
+        if (isAtTop) {
+            scrollUp.classList.add('disabled');
+        } else {
+            scrollUp.classList.remove('disabled');
+        }
+
+        if (isAtBottom) {
+            scrollDown.classList.add('disabled');
+        } else {
+            scrollDown.classList.remove('disabled');
+        }
+    };
+
+    if (words.length <= 15) {
+        scrollUp.classList.add('disabled');
+        scrollDown.classList.add('disabled');
+    } else {
+        scrollUp.addEventListener('click', () => {
+            scroller.scrollBy({ top: -84, behavior: 'smooth' }); // Scroll by exactly 3 lines (28px * 3)
+        });
+
+        scrollDown.addEventListener('click', () => {
+            scroller.scrollBy({ top: 84, behavior: 'smooth' });
+        });
+
+        scroller.addEventListener('scroll', updateScrollButtonsState);
+        // Delay slightly for render layouts
+        setTimeout(updateScrollButtonsState, 80);
+    }
+
+    // Reveal Notepad with smooth transition
+    modal.classList.remove('hidden');
+};
+
+window.closeNotepadPopup = function() {
+    const modal = document.getElementById('notepad-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+};
+
