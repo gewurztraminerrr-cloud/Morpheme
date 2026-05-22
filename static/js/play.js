@@ -6600,8 +6600,13 @@ window.showNotepadPopup = function(username) {
     const player = state.players.find(p => p.username === username);
     if (!player) return;
 
-    // Get all valid submitted words
-    const words = player.submitted_words || [];
+    // Get all valid submitted words and sort by length descending (largest words first)
+    const rawWords = player.submitted_words || [];
+    const words = [...rawWords].sort((a, b) => {
+        const wordA = (typeof a === 'object' ? a.word : a) || '';
+        const wordB = (typeof b === 'object' ? b.word : b) || '';
+        return (wordB.length - wordA.length) || wordA.localeCompare(wordB);
+    });
 
     // Create notepad modal overlay if it doesn't already exist
     let modal = document.getElementById('notepad-modal');
