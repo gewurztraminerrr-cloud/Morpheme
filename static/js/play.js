@@ -2779,48 +2779,15 @@ window.adjustSpinnerSetFontSize = function() {
         return;
     }
 
-    // Guard: if element is hidden, exit early to avoid zero-coordinate calculations
-    if (gameParams.offsetHeight === 0) {
-        return;
-    }
+    // Clean up text content for accurate character length comparison
+    const txt = gameParams.textContent || "";
+    const cleanTxt = txt.replace(/\s+/g, ' ').trim();
 
-    const spans = [
-        document.getElementById('param-diff'),
-        document.getElementById('param-min'),
-        document.getElementById('param-dict'),
-        document.getElementById('param-range'),
-        document.getElementById('param-format'),
-        document.getElementById('param-bonus')
-    ].filter(Boolean);
-
-    if (spans.length === 0) return;
-
-    let fontSizeRem = 0.85; // Default mobile size
-    gameParams.style.fontSize = fontSizeRem + 'rem';
-
-    // Loop to shrink font size until the spans occupy at most 2 rows (unique Y-levels)
-    for (let step = 0; step < 15; step++) {
-        const tops = [];
-        spans.forEach(span => {
-            const top = span.getBoundingClientRect().top;
-            if (top > 0 && !tops.some(t => Math.abs(t - top) < 6)) {
-                tops.push(top);
-            }
-        });
-
-        // If it fits into 2 rows or less, break!
-        if (tops.length <= 2) {
-            break;
-        }
-
-        // Occupies 3 rows (or more), shrink font size
-        fontSizeRem -= 0.02;
-        if (fontSizeRem < 0.55) {
-            fontSizeRem = 0.55; // Floor limit for legibility
-            gameParams.style.fontSize = fontSizeRem + 'rem';
-            break;
-        }
-        gameParams.style.fontSize = fontSizeRem + 'rem';
+    // If the text length is long (80 characters or more), shrink font size
+    if (cleanTxt.length >= 80) {
+        gameParams.style.fontSize = '0.74rem'; // Slightly smaller font size
+    } else {
+        gameParams.style.fontSize = '0.85rem'; // Keep default mobile size
     }
 };
 
