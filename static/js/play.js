@@ -2779,12 +2779,22 @@ window.adjustSpinnerSetFontSize = function() {
         return;
     }
 
+    // CRITICAL FIX: If the element is hidden (e.g. lobby/auth visible), offsetHeight is 0.
+    // Avoid running calculations when height cannot be measured.
+    if (gameParams.offsetHeight === 0) {
+        return;
+    }
+
     let fontSizeRem = 0.85; // Default mobile size
     gameParams.style.fontSize = fontSizeRem + 'rem';
 
     // Loop to shrink font size until it fits cleanly in 2 rows or less (height <= 45px)
     for (let step = 0; step < 10; step++) {
         const currentHeight = gameParams.offsetHeight;
+        
+        // Safety guard: if layout returns 0 during reflow
+        if (currentHeight === 0) break;
+
         if (currentHeight <= 45) {
             break;
         }

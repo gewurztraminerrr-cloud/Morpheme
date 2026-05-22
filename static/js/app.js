@@ -908,6 +908,11 @@ function showPage(pageId) {
             setTimeout(window.checkBoardOverflow, 50);
         }
 
+        // Trigger dynamic Spinner Set layout adjustment once the page is fully active/visible
+        if (typeof window.adjustSpinnerSetFontSize === 'function') {
+            setTimeout(window.adjustSpinnerSetFontSize, 100);
+        }
+
         // Auto-focus the input field (Desktop only to prevent mobile carousel snap-back)
         setTimeout(() => {
             const input = document.getElementById('word-input');
