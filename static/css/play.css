@@ -5144,7 +5144,7 @@ body.is-desktop .word-input-section {
 
 /* Notepad Header (Legal Pad Binding Band) */
 .notepad-header {
-    background: #cb4b16; /* Bold terracotta/orange classic binding band */
+    background: #1a5fb4; /* Premium deep royal blue binding band */
     color: #fff;
     padding: 18px 15px 12px 15px;
     border-top-left-radius: 4px;
@@ -5152,7 +5152,7 @@ body.is-desktop .word-input-section {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 3px double #900;
+    border-bottom: 3px double #0d3a68;
     box-shadow: 0 2px 4px rgba(0,0,0,0.15);
 }
 
@@ -5184,7 +5184,7 @@ body.is-desktop .word-input-section {
 
 .notepad-close:hover {
     background: #fff;
-    color: #cb4b16;
+    color: #1a5fb4;
     transform: scale(1.1);
 }
 
@@ -5282,7 +5282,7 @@ body.is-desktop .word-input-section {
 .notepad-scroll-btn {
     width: 38px;
     height: 38px;
-    background: #cb4b16;
+    background: #1a5fb4;
     color: #fff;
     border: none;
     border-radius: 50%;
@@ -5291,7 +5291,7 @@ body.is-desktop .word-input-section {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 10px rgba(203, 75, 22, 0.4);
+    box-shadow: 0 4px 10px rgba(26, 95, 180, 0.4);
     transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
     user-select: none;
     outline: none;
@@ -5299,8 +5299,8 @@ body.is-desktop .word-input-section {
 
 .notepad-scroll-btn:hover:not(.disabled) {
     transform: translateY(-2px);
-    background: #b58900;
-    box-shadow: 0 6px 14px rgba(181, 137, 0, 0.55);
+    background: #3583e4;
+    box-shadow: 0 6px 14px rgba(53, 131, 228, 0.55);
 }
 
 .notepad-scroll-btn:active:not(.disabled) {
