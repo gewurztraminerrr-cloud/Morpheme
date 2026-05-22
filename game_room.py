@@ -662,10 +662,12 @@ class GameRoom:
         # 2. Logic Check
         is_in = word in self.all_words
         min_len_req = self.current_min_length
-        
+
         # EARLY EXIT: Check minimum length FIRST (User Request: Clearer feedback)
-        # Boggle usually treats 'Q' as 'QU', so check if length would be sufficient even with expansion
-        effective_len = len(word.replace('Q', 'QU')) if 'Q' in word else len(word)
+        # Boggle usually treats 'Q' as 'QU', so check if length would be sufficient even with expansion.
+        # Avoid overcounting if 'Q' is already followed by 'U' (e.g. "QUAKE" is length 5, not 6).
+        import re
+        effective_len = len(re.sub(r'Q(?!U)', 'QU', word))
         if effective_len < min_len_req:
             is_valid = word_validator.word_validator.is_valid_word(word, getattr(self, 'current_dictionary', 'NWL'))
             if not is_valid:
