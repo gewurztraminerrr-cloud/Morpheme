@@ -2780,33 +2780,17 @@ window.adjustSpinnerSetFontSize = function() {
             return;
         }
 
-        const items = gameParams.querySelectorAll('.param-item');
-        if (items.length === 0) return;
+        // Set default mobile font size first
+        gameParams.style.fontSize = '0.85rem';
 
-        let fontSizeRem = 0.85; // Default mobile size
-        gameParams.style.fontSize = fontSizeRem + 'rem';
-
-        for (let step = 0; step < 15; step++) {
-            const tops = [];
-            items.forEach(el => {
-                const top = el.getBoundingClientRect().top;
-                if (!tops.some(t => Math.abs(t - top) < 4)) {
-                    tops.push(top);
-                }
-            });
-
-            if (tops.length <= 2) {
-                break;
+        // Wait for layout update to inspect real height
+        requestAnimationFrame(() => {
+            // A single line height is around 18-20px; 2 lines is ~38-42px.
+            // If the element's offsetHeight > 45px, it has wrapped to 3 lines.
+            if (gameParams.offsetHeight > 45) {
+                gameParams.style.fontSize = '0.74rem'; // Slightly smaller font size so it sits cleanly on 2 rows
             }
-
-            fontSizeRem -= 0.03;
-            if (fontSizeRem < 0.55) {
-                fontSizeRem = 0.55; // Floor minimum font size
-                gameParams.style.fontSize = fontSizeRem + 'rem';
-                break;
-            }
-            gameParams.style.fontSize = fontSizeRem + 'rem';
-        }
+        });
     });
 };
 
