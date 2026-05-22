@@ -2759,10 +2759,62 @@ function updateParameters(state) {
     if (pBonus && (shouldUpdateLabels || !pBonus.textContent)) {
         pBonus.textContent = window._displayedParams.bonus;
     }
+
+    // Dynamic Spinner Set font autoscaler
+    if (typeof window.adjustSpinnerSetFontSize === 'function') {
+        window.adjustSpinnerSetFontSize();
+    }
+
     } catch (err) {
         console.error('[play.js] Error in updateParameters:', err);
     }
 }
+
+window.adjustSpinnerSetFontSize = function() {
+    requestAnimationFrame(() => {
+        const gameParams = document.querySelector('.game-params');
+        if (!gameParams) return;
+
+        if (window.innerWidth > 992) {
+            gameParams.style.fontSize = ''; // Reset to default on desktop
+            return;
+        }
+
+        const items = gameParams.querySelectorAll('.param-item');
+        if (items.length === 0) return;
+
+        let fontSizeRem = 0.85; // Default mobile size
+        gameParams.style.fontSize = fontSizeRem + 'rem';
+
+        for (let step = 0; step < 15; step++) {
+            const tops = [];
+            items.forEach(el => {
+                const top = el.getBoundingClientRect().top;
+                if (!tops.some(t => Math.abs(t - top) < 4)) {
+                    tops.push(top);
+                }
+            });
+
+            if (tops.length <= 2) {
+                break;
+            }
+
+            fontSizeRem -= 0.03;
+            if (fontSizeRem < 0.55) {
+                fontSizeRem = 0.55; // Floor minimum font size
+                gameParams.style.fontSize = fontSizeRem + 'rem';
+                break;
+            }
+            gameParams.style.fontSize = fontSizeRem + 'rem';
+        }
+    });
+};
+
+window.addEventListener('resize', () => {
+    if (typeof window.adjustSpinnerSetFontSize === 'function') {
+        window.adjustSpinnerSetFontSize();
+    }
+});
 
 function updateTimer(seconds) {
     // Legacy local timer update (called by interval)
