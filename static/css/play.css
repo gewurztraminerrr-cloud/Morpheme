@@ -674,6 +674,19 @@ body.theme-light-brown .player-score-val {
     min-width: 220px;
     text-align: center;
     display: inline-block;
+.header-title-group {
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease;
+    user-select: none;
+}
+
+.header-title-group:hover {
+    opacity: 0.95;
+    transform: scale(1.02);
+}
+
+.header-title-group:active {
+    transform: scale(0.98);
 }
 
 .game-board {

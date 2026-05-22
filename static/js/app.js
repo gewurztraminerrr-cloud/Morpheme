@@ -844,14 +844,27 @@ function setupModalListeners() {
         };
     }
 
-    // Spinner Set modal trigger
+    // Spinner Set modal trigger (Desktop header title, Mobile spinner label, and Parameter text)
     const gameParams = document.querySelector('.game-params');
+    const headerTitleGroup = document.querySelector('.header-title-group');
+    const spinnerLabel = document.querySelector('.spinner-set-label');
     const spinnerModal = document.getElementById('spinner-set-modal');
-    if (gameParams && spinnerModal) {
-        gameParams.addEventListener('click', () => {
+
+    if (spinnerModal) {
+        const openSpinnerModal = () => {
             spinnerModal.classList.remove('hidden');
-        });
-        
+        };
+
+        if (gameParams) {
+            gameParams.addEventListener('click', openSpinnerModal);
+        }
+        if (headerTitleGroup) {
+            headerTitleGroup.addEventListener('click', openSpinnerModal);
+        }
+        if (spinnerLabel) {
+            spinnerLabel.addEventListener('click', openSpinnerModal);
+        }
+
         // Escape key close support
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && !spinnerModal.classList.contains('hidden')) {
