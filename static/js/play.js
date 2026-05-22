@@ -2785,9 +2785,9 @@ window.adjustSpinnerSetFontSize = function() {
 
     // If the text length is long (80 characters or more), shrink font size
     if (cleanTxt.length >= 80) {
-        gameParams.style.fontSize = '0.68rem'; // Slightly smaller font size
+        gameParams.style.fontSize = '0.71rem'; // Slightly smaller font size
     } else {
-        gameParams.style.fontSize = '0.78rem'; // Keep default mobile size
+        gameParams.style.fontSize = '0.81rem'; // Keep default mobile size
     }
 };
 
