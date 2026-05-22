@@ -2771,27 +2771,33 @@ function updateParameters(state) {
 }
 
 window.adjustSpinnerSetFontSize = function() {
-    requestAnimationFrame(() => {
-        const gameParams = document.querySelector('.game-params');
-        if (!gameParams) return;
+    const gameParams = document.querySelector('.game-params');
+    if (!gameParams) return;
 
-        if (window.innerWidth > 992) {
-            gameParams.style.fontSize = ''; // Reset to default on desktop
-            return;
+    if (window.innerWidth > 992) {
+        gameParams.style.fontSize = ''; // Reset to default on desktop
+        return;
+    }
+
+    let fontSizeRem = 0.85; // Default mobile size
+    gameParams.style.fontSize = fontSizeRem + 'rem';
+
+    // Loop to shrink font size until it fits cleanly in 2 rows or less (height <= 45px)
+    for (let step = 0; step < 10; step++) {
+        const currentHeight = gameParams.offsetHeight;
+        if (currentHeight <= 45) {
+            break;
         }
 
-        // Set default mobile font size first
-        gameParams.style.fontSize = '0.85rem';
-
-        // Wait for layout update to inspect real height
-        requestAnimationFrame(() => {
-            // A single line height is around 18-20px; 2 lines is ~38-42px.
-            // If the element's offsetHeight > 45px, it has wrapped to 3 lines.
-            if (gameParams.offsetHeight > 45) {
-                gameParams.style.fontSize = '0.74rem'; // Slightly smaller font size so it sits cleanly on 2 rows
-            }
-        });
-    });
+        // Height is > 45px (meaning it has 3 rows or more), shrink font size
+        fontSizeRem -= 0.02;
+        if (fontSizeRem < 0.60) {
+            fontSizeRem = 0.60; // Floor limit for legibility
+            gameParams.style.fontSize = fontSizeRem + 'rem';
+            break;
+        }
+        gameParams.style.fontSize = fontSizeRem + 'rem';
+    }
 };
 
 window.addEventListener('resize', () => {
