@@ -4131,7 +4131,7 @@ input[type=range]::-moz-range-track {
 
 
     .game-params {
-        font-size: 0.85rem !important;
+        font-size: 0.78rem;
         text-align: center !important;
         display: flex !important;
         flex-wrap: wrap !important;
