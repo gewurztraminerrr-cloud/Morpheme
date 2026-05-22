@@ -3419,6 +3419,200 @@
                 <div id="color-tier-swatch" style="height: 12px; width: 100%; border-radius: 6px; box-shadow: inset 0 0 5px rgba(0,0,0,0.3);"></div>
             </div>
         </div>
+        <!-- Spinner Set Info Modal -->
+        <div id="spinner-set-modal" class="mini-profile-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+            <div class="mini-profile-card spinner-modal-card" style="max-width: 480px; padding: 25px; max-height: 85vh; overflow-y: auto;">
+                <button class="mini-profile-close" onclick="document.getElementById('spinner-set-modal').classList.add('hidden')">&times;</button>
+                
+                <h3 style="font-size: 1.5rem; font-weight: 800; margin: 0 0 10px 0; color: var(--text-primary); text-align: center; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    🎰 Spinner Set Odds
+                </h3>
+                <p style="font-size: 0.85rem; line-height: 1.5; color: var(--muted-text); text-align: center; margin: 0 0 20px 0;">
+                    Every game round, the server's spinner dynamically selects a random set of rules from these weighted probabilities.
+                </p>
+
+                <div class="spinner-odds-sections" style="display: flex; flex-direction: column; gap: 18px; text-align: left;">
+                    
+                    <!-- Difficulty -->
+                    <div class="odds-section">
+                        <h4 class="odds-title" style="font-size: 0.95rem; font-weight: 700; color: var(--accent-blue, #1a5fb4); margin: 0 0 8px 0; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1); padding-bottom: 4px;">
+                            Diff: Difficulty & Uniqueness
+                        </h4>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                                <span>🟢 Easy (0-25% unique words)</span>
+                                <span style="font-weight: 700;">25%</span>
+                            </div>
+                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
+                                <div style="width: 25%; height: 100%; background: #2ec27e; border-radius: 3px;"></div>
+                            </div>
+                            
+                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                                <span>🟡 Medium (26-40% unique words)</span>
+                                <span style="font-weight: 700;">50%</span>
+                            </div>
+                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
+                                <div style="width: 50%; height: 100%; background: #f5c211; border-radius: 3px;"></div>
+                            </div>
+                            
+                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                                <span>🔴 Hard (41%+ unique words)</span>
+                                <span style="font-weight: 700;">25%</span>
+                            </div>
+                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
+                                <div style="width: 25%; height: 100%; background: #e01b24; border-radius: 3px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Minimum Word Length -->
+                    <div class="odds-section">
+                        <h4 class="odds-title" style="font-size: 0.95rem; font-weight: 700; color: var(--accent-blue, #1a5fb4); margin: 0 0 8px 0; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1); padding-bottom: 4px;">
+                            Min: Minimum Word Length
+                        </h4>
+                        <p style="font-size: 0.75rem; color: var(--muted-text); margin: 0 0 8px 0; line-height: 1.4;">
+                            Weighted distribution (25% Low | 50% Med | 25% High) dynamically scales by board size:
+                        </p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.75rem;">
+                            <div style="background: rgba(var(--text-primary-rgb), 0.03); padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(var(--text-primary-rgb), 0.05);">
+                                <strong style="color: var(--text-primary);">4x4 Board:</strong><br>
+                                3L (25%) | 4L (50%) | 5L (25%)
+                            </div>
+                            <div style="background: rgba(var(--text-primary-rgb), 0.03); padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(var(--text-primary-rgb), 0.05);">
+                                <strong style="color: var(--text-primary);">4x6 Board:</strong><br>
+                                4L (25%) | 5L (50%) | 6L (25%)
+                            </div>
+                            <div style="background: rgba(var(--text-primary-rgb), 0.03); padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(var(--text-primary-rgb), 0.05);">
+                                <strong style="color: var(--text-primary);">5x7 Board:</strong><br>
+                                5L (25%) | 6L (50%) | 7L (25%)
+                            </div>
+                            <div style="background: rgba(var(--text-primary-rgb), 0.03); padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(var(--text-primary-rgb), 0.05);">
+                                <strong style="color: var(--text-primary);">6x8 & Cube:</strong><br>
+                                6L (25%) | 7L (50%) | 8L (25%)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dictionary -->
+                    <div class="odds-section">
+                        <h4 class="odds-title" style="font-size: 0.95rem; font-weight: 700; color: var(--accent-blue, #1a5fb4); margin: 0 0 8px 0; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1); padding-bottom: 4px;">
+                            Dict: Word Lists
+                        </h4>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                                <span>📘 NWL (North American Word List)</span>
+                                <span style="font-weight: 700;">50%</span>
+                            </div>
+                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
+                                <div style="width: 50%; height: 100%; background: #3583e4; border-radius: 3px;"></div>
+                            </div>
+                            
+                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                                <span>📕 CSW (Collins Scrabble Words)</span>
+                                <span style="font-weight: 700;">50%</span>
+                            </div>
+                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
+                                <div style="width: 50%; height: 100%; background: #e01b24; border-radius: 3px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Word Count Range -->
+                    <div class="odds-section">
+                        <h4 class="odds-title" style="font-size: 0.95rem; font-weight: 700; color: var(--accent-blue, #1a5fb4); margin: 0 0 8px 0; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1); padding-bottom: 4px;">
+                            Words: Total Board Words
+                        </h4>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                                <span>50 - 100 words</span>
+                                <span style="font-weight: 700;">16%</span>
+                            </div>
+                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
+                                <div style="width: 16%; height: 100%; background: var(--text-primary); opacity: 0.7; border-radius: 3px;"></div>
+                            </div>
+                            
+                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                                <span>100 - 200 words</span>
+                                <span style="font-weight: 700;">33%</span>
+                            </div>
+                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
+                                <div style="width: 33%; height: 100%; background: var(--text-primary); opacity: 0.7; border-radius: 3px;"></div>
+                            </div>
+                            
+                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                                <span>200 - 300 words</span>
+                                <span style="font-weight: 700;">33%</span>
+                            </div>
+                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
+                                <div style="width: 33%; height: 100%; background: var(--text-primary); opacity: 0.7; border-radius: 3px;"></div>
+                            </div>
+                            
+                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                                <span>300 - 400 words</span>
+                                <span style="font-weight: 700;">17%</span>
+                            </div>
+                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
+                                <div style="width: 17%; height: 100%; background: var(--text-primary); opacity: 0.7; border-radius: 3px;"></div>
+                            </div>
+                            
+                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                                <span>🚀 500+ words</span>
+                                <span style="font-weight: 700;">1%</span>
+                            </div>
+                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
+                                <div style="width: 1%; height: 100%; background: #e01b24; border-radius: 3px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Board Format -->
+                    <div class="odds-section">
+                        <h4 class="odds-title" style="font-size: 0.95rem; font-weight: 700; color: var(--accent-blue, #1a5fb4); margin: 0 0 8px 0; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1); padding-bottom: 4px;">
+                            Format: Board Modifiers
+                        </h4>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                                <span>⚪ Normal (No special mechanics)</span>
+                                <span style="font-weight: 700;">74%</span>
+                            </div>
+                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
+                                <div style="width: 74%; height: 100%; background: #3583e4; border-radius: 3px;"></div>
+                            </div>
+                            
+                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                                <span>🏁 Checkerboard (Color alternation constraint)</span>
+                                <span style="font-weight: 700;">12%</span>
+                            </div>
+                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
+                                <div style="width: 12%; height: 100%; background: #f5c211; border-radius: 3px;"></div>
+                            </div>
+                            
+                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--muted-text);">
+                                <span>🟨 Penalty | 🔥 Mania | ⚖️ Either/Or | 🟢 Bonus | 💎 Valued | ⬛ Density | 🔄 Rotation</span>
+                                <span style="font-weight: 700; color: var(--text-primary);">2% each</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bonus Word Length -->
+                    <div class="odds-section">
+                        <h4 class="odds-title" style="font-size: 0.95rem; font-weight: 700; color: var(--accent-blue, #1a5fb4); margin: 0 0 8px 0; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1); padding-bottom: 4px;">
+                            Bonus: Reward Word Threshold
+                        </h4>
+                        <p style="font-size: 0.75rem; color: var(--muted-text); margin: 0 0 4px 0; line-height: 1.4;">
+                            Equal **20%** probability for each size option:
+                        </p>
+                        <div style="font-family: monospace; font-size: 0.8rem; background: rgba(var(--text-primary-rgb), 0.03); padding: 8px; border-radius: 8px; border: 1px solid rgba(var(--text-primary-rgb), 0.05); text-align: center; font-weight: 700;">
+                            6L (20%) | 7L (20%) | 8L (20%) | 9L (20%) | 10L (20%)
+                        </div>
+                        <p style="font-size: 0.7rem; color: var(--muted-text); margin: 4px 0 0 0; text-align: center; font-style: italic;">
+                            (Note: Automatically capped to be at least equal to Min Length)
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
         <!-- Mini Profile Modal -->
         <div id="mini-profile-modal" class="mini-profile-overlay hidden">
             <div class="mini-profile-card">

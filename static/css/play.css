@@ -31,6 +31,19 @@
     font-weight: 500;
     flex: 1;
     text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease, text-shadow 0.2s ease;
+    user-select: none;
+}
+
+.game-params:hover {
+    opacity: 1;
+    text-shadow: 0 0 8px rgba(var(--text-primary-rgb), 0.15);
+    transform: scale(1.015);
+}
+
+.game-params:active {
+    transform: scale(0.98);
 }
 
 #param-bonus {

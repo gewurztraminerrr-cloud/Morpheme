@@ -843,6 +843,22 @@ function setupModalListeners() {
             if (e.target === genericModal) closeModal(); 
         };
     }
+
+    // Spinner Set modal trigger
+    const gameParams = document.querySelector('.game-params');
+    const spinnerModal = document.getElementById('spinner-set-modal');
+    if (gameParams && spinnerModal) {
+        gameParams.addEventListener('click', () => {
+            spinnerModal.classList.remove('hidden');
+        });
+        
+        // Escape key close support
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !spinnerModal.classList.contains('hidden')) {
+                spinnerModal.classList.add('hidden');
+            }
+        });
+    }
 }
 
 function showPage(pageId) {
