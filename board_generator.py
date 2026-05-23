@@ -173,36 +173,17 @@ class BoardGenerator:
         return self.unique_sets.get(core_type, set())
 
     def _get_uniqueness_range(self, difficulty, rows=4, cols=4, dictionary="NWL", depth=1):
-        """Get (min, max) ratio range for specified difficulty.
-        Calibrated for both Small (4x4, 4x6) and Large (6x8, 3x3x3) grids."""
-        
-        # 3x3x3 Cube has 54 tiles, 6x8 has 48. Both are Large.
-        # rows*cols for 3x3x3 is 9, but depth is 3.
-        total_tiles = int(rows) * int(cols) * int(depth)
-        is_large = (total_tiles >= 35)
-
-        if is_large:
-            # Huge grids (6x8, 5x7, 3x3x3): Higher connectivity lowers uniqueness perception thresholds.
-            # Updated: Easy <= 25%, Medium 26-44%, Hard >= 45%
-            ranges = {"Easy": (0.01, 0.25), "Medium": (0.26, 0.44), "Hard": (0.45, 1.0)}
-        else:
-            # Small grids (4x4, 4x6): Thresholds depend heavily on dictionary size.
-            dict_upper = str(dictionary).upper()
-            if dict_upper == "CSW":
-                # CSW (Massive vocabulary): High uniqueness is natural.
-                # Thresholds: Easy <= 44%, Medium 45-64%, Hard >= 65%
-                ranges = {"Easy": (0.01, 0.44), "Medium": (0.45, 0.64), "Hard": (0.65, 1.0)}
-            else:
-                # NWL (Strict vocabulary): Even a few unique words make it Medium/Hard.
-                # Thresholds: Easy <= 25%, Medium 26-44%, Hard >= 45% (Synced with Large NWL for simplicity)
-                ranges = {"Easy": (0.01, 0.25), "Medium": (0.26, 0.44), "Hard": (0.45, 1.0)}
-
-        return ranges.get(difficulty, (0, 1.0))
+        """Get (min, max) ratio range for specified difficulty target."""
+        ranges = {
+            "Easy": (0.0, 0.35),
+            "Medium": (0.36, 0.49),
+            "Hard": (0.50, 1.0)
+        }
+        return ranges.get(difficulty, (0.0, 1.0))
 
     def get_uniqueness_ratio(self, board, all_words, rows=4, cols=4, dictionary="NWL", depth=1):
         """Calculate the uniqueness ratio for a given board and word list.
-        User Requirement: For small boards (4x4, 4x6), ignore 3-letter and 4-letter words
-        to ensure the percentage isn't diluted by common filler.
+        User Requirement: Ratio of unique words (in the unique file) to all scorable words.
         """
         if not all_words:
             return 0.0
@@ -211,37 +192,13 @@ class BoardGenerator:
         if not unique_set:
             return 0.0
 
-        total_tiles = int(rows) * int(cols) * int(depth)
-        # Small grid criteria: < 35 cells (4x4=16, 4x6=24, 5x6=30)
-        is_small = (total_tiles < 35)
-
-        if is_small:
-            # IGNORE 3-letter and 4-letter words for uniqueness ratio (User Request)
-            relevant_words = [w for w in all_words if len(w) >= 5]
-            if not relevant_words:
-                # Fallback to all words ONLY if no 5L+ words exist (rare)
-                relevant_words = list(all_words)
-        else:
-            # Large grids/Cubes use all words of at least 3L
-            relevant_words = list(all_words)
-
-        count_relevant = len(relevant_words)
-        count_unique = sum(1 for w in relevant_words if w.upper() in unique_set)
+        count_relevant = len(all_words)
+        count_unique = sum(1 for w in all_words if w.upper() in unique_set)
 
         return count_unique / count_relevant if count_relevant > 0 else 0.0
 
     def get_difficulty_label(self, ratio, rows=4, cols=4, dictionary="NWL", depth=1, board=None, target_difficulty=None):
-        """Derive difficulty label from actual uniqueness ratio achieved, honoring target_difficulty if provided."""
-        # Clean target difficulty if it has percentages
-        if target_difficulty:
-            clean_diff = str(target_difficulty).split('(')[0].strip()
-            if clean_diff in ['Easy', 'Medium', 'Hard']:
-                # Respect the ING sequence rule which overrides Medium/Hard to Easy
-                if clean_diff != "Easy" and board and self._has_forbidden_sequence(board, sequence="ING", depth=depth):
-                    print(f"[BoardGen-Diff] Forcing 'Easy' because 'ING' sequence was found.")
-                    return "Easy"
-                return clean_diff
-
+        """Derive difficulty label from actual uniqueness ratio achieved, ignoring override to ensure absolute parity."""
         # USER REQUEST: Ensure ING sequences NEVER appear in Medium/Hard. If board is provided and has ING, force Easy.
         if board and self._has_forbidden_sequence(board, sequence="ING", depth=depth):
             print(f"[BoardGen-Diff] Forcing 'Easy' because 'ING' sequence was found.")
@@ -249,50 +206,24 @@ class BoardGenerator:
             
         # Defensive casting to ensure math logic works
         try:
-            # ROBUST PARSING: handles '0.14', '14.0', or '14%'
             rat_str = str(ratio).replace('%', '').strip()
             rat = float(rat_str) if rat_str else 0.0
             
             if rat > 1.0:
                 rat = rat / 100.0
-            
-            r = int(rows)
-            c = int(cols)
-            d = int(depth)
         except Exception as e:
             print(f"[BoardGen-Diff] ERROR parsing ratio '{ratio}': {e}")
             return "Easy" # Safe fallback
 
-        res = "Easy"
-        
-        total_tiles = r * c * d
-        is_large = (total_tiles >= 35)
-        
-        dict_upper = str(dictionary).upper()
-        
-        # Use a unified threshold system
-        if is_large:
-            # Large Grids (6x8, 5x7, 3x3x3): Optimized for lower uniqueness on large grids
-            if rat >= 0.36: return "Hard"
-            if rat >= 0.21: return "Medium"
-            return "Easy"
+        # Easy: 0-35%
+        # Medium: 36-49%
+        # Hard: 50%+
+        if rat >= 0.50:
+            return "Hard"
+        elif rat >= 0.36:
+            return "Medium"
         else:
-            # Small Grids (4x4, 4x6)
-            if dict_upper == "CSW":
-                # CSW Small: Shifted higher because CSW has more obscure words
-                if rat >= 0.56: return "Hard"
-                if rat >= 0.41: return "Medium"
-                return "Easy"
-            else:
-                # NWL Small: Following User's 30/40/41 rule
-                if rat >= 0.41: return "Hard"
-                if rat >= 0.31: return "Medium"
-                return "Easy"
-        
-        # CRITICAL DEBUG: This helps explain WHY a label was chosen in the logs.
-        # Check this in server.log to see the exact decision path.
-        print(f"[BoardGen-Diff] FINAL RESULT: {res} | rat={rat:.4f} (Raw: {ratio}) | Grid: {r}x{c} ({total_tiles} tiles) | Large: {is_large}")
-        return res
+            return "Easy"
 
     def _sanitize_rare_letters(self, board, depth=1, protected_positions=None, is_checkerboard=False):
         """
