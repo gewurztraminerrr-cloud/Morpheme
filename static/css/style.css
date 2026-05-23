@@ -1585,6 +1585,30 @@ body {
     display: block;
 }
 
+/* Mobile Flag Selector Popup Tweak */
+@media (max-width: 600px) {
+    .dropdown-menu {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 90vw !important;
+        max-width: 340px !important;
+        max-height: 80vh !important;
+        box-shadow: 0 25px 75px rgba(0, 0, 0, 0.95) !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.25) !important;
+        background: #151523 !important;
+    }
+    .dropdown-menu.active {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    .dropdown-list {
+        max-height: 50vh !important;
+        overflow-y: auto !important;
+    }
+}
+
 .dropdown-header {
     padding: 15px;
     background: rgba(var(--text-primary-rgb), 0.03);
