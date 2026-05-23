@@ -461,8 +461,9 @@ function setupProfileTool() {
     const flagDropdownSearch = document.getElementById('flag-dropdown-search');
 
     if (flagTrigger && flagDropdown) {
-        flagTrigger.addEventListener('click', (e) => {
-            console.log("Flag clicked!");
+        const handleFlagTrigger = (e) => {
+            console.log("Flag trigger event:", e.type);
+            e.preventDefault();
             e.stopPropagation();
 
             const isActive = flagDropdown.classList.contains('active');
@@ -484,7 +485,10 @@ function setupProfileTool() {
                 console.log("Closing dropdown...");
                 flagDropdown.classList.remove('active');
             }
-        });
+        };
+
+        flagTrigger.addEventListener('click', handleFlagTrigger);
+        flagTrigger.addEventListener('touchstart', handleFlagTrigger, { passive: false });
 
         if (flagDropdownSearch) {
             flagDropdownSearch.addEventListener('input', (e) => {
