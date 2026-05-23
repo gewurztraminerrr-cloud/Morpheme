@@ -461,9 +461,8 @@ function setupProfileTool() {
     const flagDropdownSearch = document.getElementById('flag-dropdown-search');
 
     if (flagTrigger && flagDropdown) {
-        const handleFlagTrigger = (e) => {
-            console.log("Flag trigger event:", e.type);
-            e.preventDefault();
+        flagTrigger.addEventListener('click', (e) => {
+            console.log("Flag clicked!");
             e.stopPropagation();
 
             const isActive = flagDropdown.classList.contains('active');
@@ -485,10 +484,7 @@ function setupProfileTool() {
                 console.log("Closing dropdown...");
                 flagDropdown.classList.remove('active');
             }
-        };
-
-        flagTrigger.addEventListener('click', handleFlagTrigger);
-        flagTrigger.addEventListener('touchstart', handleFlagTrigger, { passive: false });
+        });
 
         if (flagDropdownSearch) {
             flagDropdownSearch.addEventListener('input', (e) => {
@@ -499,10 +495,8 @@ function setupProfileTool() {
         }
 
         // Global click to close
-        window.addEventListener('click', (e) => {
-            if (!flagTrigger.contains(e.target) && !flagDropdown.contains(e.target)) {
-                flagDropdown.classList.remove('active');
-            }
+        window.addEventListener('click', () => {
+            flagDropdown.classList.remove('active');
         });
     }
 
