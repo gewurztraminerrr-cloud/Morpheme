@@ -1000,6 +1000,43 @@ class BoardGenerator:
             print(f"[BoardGen] ATTEMPT {attempts} POST-SWEEP VERIFICATION: Count={count} Target={min_words}-{max_words} MinLen={min_word_length}L")
             
             if min_words <= count <= max_words:
+                # USER MANDATE: Ensure no "ING" or "INGS" path sequences exist in Medium or Hard boards!
+                # If they do, toss the board and generate another one (continue)!
+                if difficulty in ["Medium", "Hard"]:
+                    def has_ing_sequence(b):
+                        R = len(b)
+                        C = len(b[0])
+                        def dfs(r, c, idx, visited):
+                            if idx == 3:
+                                return True
+                            for dr in [-1, 0, 1]:
+                                for dc in [-1, 0, 1]:
+                                    if dr == 0 and dc == 0: continue
+                                    nr, nc = r + dr, c + dc
+                                    if 0 <= nr < R and 0 <= nc < C and (nr, nc) not in visited:
+                                        cell_char = str(b[nr][nc]).upper()
+                                        options = cell_char.split('/')
+                                        if "ING"[idx] in options:
+                                            visited.add((nr, nc))
+                                            if dfs(nr, nc, idx + 1, visited):
+                                                return True
+                                            visited.remove((nr, nc))
+                            return False
+
+                        for r in range(R):
+                            for c in range(C):
+                                cell_char = str(b[r][c]).upper()
+                                options = cell_char.split('/')
+                                if 'I' in options:
+                                    visited = {(r, c)}
+                                    if dfs(r, c, 1, visited):
+                                        return True
+                        return False
+
+                    if depth == 1 and has_ing_sequence(board):
+                        print(f"[BoardGen] ❌ ATTEMPT {attempts}: Board has an 'ING'/'INGS' sequence on {difficulty} board. TOSSING board and generating another one...")
+                        continue
+
                 print(f"[BoardGen] ✓ IRONCLAD COMPLIANT BOARD FOUND ({count} words @ {min_word_length}L+) on attempt {attempts}")
                 
                 # RECALCULATE RATIO
