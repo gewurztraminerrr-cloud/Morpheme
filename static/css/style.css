@@ -1585,24 +1585,32 @@ body {
     display: block;
 }
 
-/* Mobile Flag Selector Popup Tweak */
+/* Mobile Flag Selector Premium Bottom Sheet */
 @media (max-width: 600px) {
     .dropdown-menu {
-        position: absolute !important;
-        top: calc(100% + 5px) !important;
+        position: fixed !important;
+        bottom: 0 !important;
+        top: auto !important;
         left: 50% !important;
         transform: translateX(-50%) !important;
-        width: 280px !important;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9) !important;
+        width: 100vw !important;
+        max-width: 420px !important;
+        height: 60vh !important;
+        max-height: 450px !important;
+        border-radius: 24px 24px 0 0 !important;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.9) !important;
         border: 1px solid rgba(var(--text-primary-rgb), 0.25) !important;
-        background: #151523 !important;
+        border-bottom: none !important;
+        background: #12121e !important;
         z-index: 999999 !important;
     }
     .dropdown-menu.active {
-        display: block !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
     .dropdown-list {
-        max-height: 200px !important;
+        flex: 1 !important;
+        max-height: none !important;
         overflow-y: auto !important;
     }
 }
