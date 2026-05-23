@@ -495,8 +495,10 @@ function setupProfileTool() {
         }
 
         // Global click to close
-        window.addEventListener('click', () => {
-            flagDropdown.classList.remove('active');
+        window.addEventListener('click', (e) => {
+            if (!flagTrigger.contains(e.target) && !flagDropdown.contains(e.target)) {
+                flagDropdown.classList.remove('active');
+            }
         });
     }
 
