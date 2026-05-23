@@ -476,7 +476,9 @@ function setupProfileTool() {
                 renderFlagDropdown();
                 if (flagDropdownSearch) {
                     flagDropdownSearch.value = '';
-                    setTimeout(() => flagDropdownSearch.focus(), 50);
+                    if (window.innerWidth > 600) {
+                        setTimeout(() => flagDropdownSearch.focus({ preventScroll: true }), 50);
+                    }
                 }
             } else {
                 console.log("Closing dropdown...");
