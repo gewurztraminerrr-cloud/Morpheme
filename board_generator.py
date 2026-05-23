@@ -1115,13 +1115,17 @@ class BoardGenerator:
                 if not suitable_bonus: suitable_bonus = [w for w in found_list if len(w) >= 3]
                 final_bonus_word = suitable_bonus[0] if suitable_bonus else None
                 
+                unique_set = self._get_difficulty_set(dictionary)
+                u_count = sum(1 for w in found_list if w.upper() in unique_set)
+                ratio = u_count / len(found_list) if found_list else 0.0
+                
                 return (
                     board,
                     sorted(found_list),
                     None,
                     "Checkerboard",
                     final_solve,
-                    1.0,
+                    ratio,
                     final_bonus_word.upper() if final_bonus_word else None,
                 )
             all_excluded = set()
@@ -1376,13 +1380,17 @@ class BoardGenerator:
         if difficulty in ["Medium", "Hard"]:
             self._sanitize_forbidden_sequences(final_board, depth=1, protected_positions=[bonus_cell] if bonus_cell else None)
 
+        unique_set = self._get_difficulty_set(dictionary)
+        u_count = sum(1 for w in found_list if w.upper() in unique_set)
+        ratio = u_count / len(found_list) if found_list else 0.0
+
         return (
             final_board,
             sorted(found_list),
             bonus_cell,
             board_format,
             final_words_dict,
-            1.0,
+            ratio,
             final_bonus_word.upper() if final_bonus_word else None,
         )
 
