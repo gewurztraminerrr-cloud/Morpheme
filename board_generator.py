@@ -192,8 +192,17 @@ class BoardGenerator:
         if not unique_set:
             return 0.0
 
-        count_relevant = len(all_words)
-        count_unique = sum(1 for w in all_words if w.upper() in unique_set)
+        # USER REQUEST: For 4x4 and 4x6 boards, only pay attention to words 5 letters or longer
+        if depth == 1 and ((rows == 4 and cols == 4) or (rows == 4 and cols == 6) or (rows == 6 and cols == 4)):
+            filtered_words = [w for w in all_words if len(w) >= 5]
+        else:
+            filtered_words = all_words
+
+        if not filtered_words:
+            return 0.0
+
+        count_relevant = len(filtered_words)
+        count_unique = sum(1 for w in filtered_words if w.upper() in unique_set)
 
         return count_unique / count_relevant if count_relevant > 0 else 0.0
 
@@ -994,9 +1003,7 @@ class BoardGenerator:
                 print(f"[BoardGen] ✓ IRONCLAD COMPLIANT BOARD FOUND ({count} words @ {min_word_length}L+) on attempt {attempts}")
                 
                 # RECALCULATE RATIO
-                unique_set = self._get_difficulty_set(dictionary)
-                u_count = sum(1 for w in all_words_dict if w.upper() in unique_set)
-                ratio = u_count / count if count > 0 else 0
+                ratio = self.get_uniqueness_ratio(board, list(all_words_dict.keys()), rows, cols, dictionary, depth)
                 
                 # PICK BONUS WORD
                 actual_bonus = None
@@ -1115,9 +1122,7 @@ class BoardGenerator:
                 if not suitable_bonus: suitable_bonus = [w for w in found_list if len(w) >= 3]
                 final_bonus_word = suitable_bonus[0] if suitable_bonus else None
                 
-                unique_set = self._get_difficulty_set(dictionary)
-                u_count = sum(1 for w in found_list if w.upper() in unique_set)
-                ratio = u_count / len(found_list) if found_list else 0.0
+                ratio = self.get_uniqueness_ratio(board, found_list, rows, cols, dictionary, depth)
                 
                 return (
                     board,
@@ -1224,9 +1229,7 @@ class BoardGenerator:
                 else:
                     print(f"[BoardGen] ✓ EMERGENCY COMPLIANCE SUCCESS: {count} words after {_attempt} emergency tries.")
                 # Fallback metadata
-                unique_set = self._get_difficulty_set(dictionary)
-                u_count = sum(1 for w in final_solve if w.upper() in unique_set)
-                ratio = u_count / count if count > 0 else 0
+                ratio = self.get_uniqueness_ratio(board, list(final_solve.keys()), rows, cols, dictionary, depth)
                 
                 # USER REQUEST: Ensure every board in every format has a Bonus Word
                 suitable = [w for w in final_solve if 6 <= len(w) <= 10]
@@ -1380,9 +1383,7 @@ class BoardGenerator:
         if difficulty in ["Medium", "Hard"]:
             self._sanitize_forbidden_sequences(final_board, depth=1, protected_positions=[bonus_cell] if bonus_cell else None)
 
-        unique_set = self._get_difficulty_set(dictionary)
-        u_count = sum(1 for w in found_list if w.upper() in unique_set)
-        ratio = u_count / len(found_list) if found_list else 0.0
+        ratio = self.get_uniqueness_ratio(final_board, found_list, rows, cols, dictionary, depth=1)
 
         return (
             final_board,
