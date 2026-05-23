@@ -1560,6 +1560,48 @@ class BoardGenerator:
                 if board[r][c] == ' ':
                     board[r][c] = random.choices(self.letters, weights=weights, k=1)[0]
                     
+        # Check and break up any "ING" sequences (no "ING" or "INGS" paths allowed)
+        def dfs_ing(r, c, idx, visited, path):
+            if idx == 3:
+                return True
+            for dr in [-1, 0, 1]:
+                for dc in [-1, 0, 1]:
+                    if dr == 0 and dc == 0: continue
+                    nr, nc = r + dr, c + dc
+                    if 0 <= nr < rows and 0 <= nc < cols and (nr, nc) not in visited:
+                        if board[nr][nc] == "ING"[idx]:
+                            visited.add((nr, nc))
+                            path.append((nr, nc))
+                            if dfs_ing(nr, nc, idx + 1, visited, path):
+                                return True
+                            path.pop()
+                            visited.remove((nr, nc))
+            return False
+
+        attempts = 0
+        while attempts < 15:
+            found_path = None
+            for r in range(rows):
+                for c in range(cols):
+                    if board[r][c] == 'I':
+                        visited = {(r, c)}
+                        path = [(r, c)]
+                        if dfs_ing(r, c, 1, visited, path):
+                            found_path = path
+                            break
+                if found_path:
+                    break
+            
+            if not found_path:
+                break
+            
+            # Found an "ING" path, let's break it up by replacing the 'G' tile with a non-I/N/G letter
+            gr, gc = found_path[2]
+            replacement_letters = [l for l in "ABCDEFHJKLMOPQRSTUVWXY" if l not in ['I', 'N', 'G']]
+            board[gr][gc] = random.choice(replacement_letters)
+            print(f"[BoardGen] Broke up ING sequence at {found_path} by replacing G with {board[gr][gc]}")
+            attempts += 1
+
         return board
         
         # USER REQUEST: Vowel Density Floor
