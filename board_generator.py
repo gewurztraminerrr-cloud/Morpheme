@@ -1111,31 +1111,11 @@ class BoardGenerator:
             else:
                 weights = LETTER_FREQ_EASY
             
-            if is_checkerboard:
-                board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
-                print(f"[BoardGen] Pure Checkerboard generated. Skipping optimization to guarantee layout.")
-                
-                final_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=30.0)
-                found_list = list(final_solve.keys())
-                
-                suitable_bonus = [w for w in found_list if 6 <= len(w) <= 10]
-                if not suitable_bonus: suitable_bonus = [w for w in found_list if len(w) >= 3]
-                final_bonus_word = suitable_bonus[0] if suitable_bonus else None
-                
-                ratio = self.get_uniqueness_ratio(board, found_list, rows, cols, dictionary, depth)
-                
-                return (
-                    board,
-                    sorted(found_list),
-                    None,
-                    "Checkerboard",
-                    final_solve,
-                    ratio,
-                    final_bonus_word.upper() if final_bonus_word else None,
-                )
             all_excluded = set()
             special_cells = []
-            if "either/or" in safe_format:
+            if is_checkerboard:
+                board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
+            elif "either/or" in safe_format:
                 board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty)
                 # Pick Either/Or tile coordinates
                 eo_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
@@ -1943,7 +1923,8 @@ class BoardGenerator:
                     if target_is_vowel:
                         test_pool = list(VOWELS)
                     else:
-                        test_pool = list(CONSONANTS)
+                        # Limit consonant pool for massive speedup on large grids
+                        test_pool = list("STRNLDC") + [random.choice("MPHBFGWY") for _ in range(3)]
                 else:
                     if target_type == "Density":
                         if min_words >= 200:
