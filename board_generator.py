@@ -175,9 +175,9 @@ class BoardGenerator:
     def _get_uniqueness_range(self, difficulty, rows=4, cols=4, dictionary="NWL", depth=1):
         """Get (min, max) ratio range for specified difficulty target."""
         ranges = {
-            "Easy": (0.0, 0.35),
-            "Medium": (0.36, 0.49),
-            "Hard": (0.50, 1.0)
+            "Easy": (0.0, 0.25),
+            "Medium": (0.26, 0.39),
+            "Hard": (0.40, 1.0)
         }
         return ranges.get(difficulty, (0.0, 1.0))
 
@@ -210,12 +210,12 @@ class BoardGenerator:
             print(f"[BoardGen-Diff] ERROR parsing ratio '{ratio}': {e}")
             return "Easy" # Safe fallback
 
-        # Easy: 0-35%
-        # Medium: 36-49%
-        # Hard: 50%+
-        if rat >= 0.50:
+        # Easy: 0-25%
+        # Medium: 26-39%
+        # Hard: 40%+
+        if rat >= 0.40:
             return "Hard"
-        elif rat >= 0.36:
+        elif rat >= 0.26:
             return "Medium"
         else:
             return "Easy"
