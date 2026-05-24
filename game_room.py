@@ -1715,6 +1715,13 @@ class RoomManager:
                         room.all_words = {w for w in (e_words or []) if len(w) >= m_len}
                         room.all_words_paths = {w: p for w, p in (e_dict or {}).items() if len(w) >= m_len}
                         
+                        if hasattr(word_validator, 'word_validator'):
+                            room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
+                            room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
+                        else:
+                            room.csw_only_words = []
+                            room.added_words = []
+                        
                         is_valued_kick = ('valued' in str(e_fmt).lower())
                         kick_scores = {}
                         for w in room.all_words:
