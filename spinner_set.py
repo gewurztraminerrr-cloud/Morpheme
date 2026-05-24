@@ -173,9 +173,9 @@ class SpinnerSet:
     
     @staticmethod
     def _spin_word_count(dictionary, min_word_length, difficulty, board_dimensions):
-        # USER REQUEST: 16% 50-100, 33% 100-200, 33% 200-300, 17% 300-400, 1% 500+
-        choices = ['50-100', '100-200', '200-300', '300-400', '500+']
-        weights = [16, 33, 33, 17, 1]
+        # USER REQUEST: 10% 50-100, 33% 100-200, 33% 200-300, 24% 300-400
+        choices = ['50-100', '100-200', '200-300', '300-400']
+        weights = [10, 33, 33, 24]
         return random.choices(choices, weights=weights)[0]
     
     @staticmethod
