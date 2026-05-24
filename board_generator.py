@@ -825,20 +825,37 @@ class BoardGenerator:
             else:
                 board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary)
 
-            # USER REQUEST: Limit the number of A's on large boards (5x7, 6x8)
-            if rows * cols >= 35:
-                flat_letters = []
-                for f in range(len(board)):
-                    for r in range(len(board[f])):
-                        for c in range(len(board[f][r])):
+            # UNIVERSAL LIMIT: Defend against "loads and loads of A's" across all board sizes (both 2D and 3D)
+            flat_letters = []
+            if depth > 1:
+                for f in range(depth):
+                    for r in range(rows):
+                        for c in range(cols):
                             cell = str(board[f][r][c])
                             flat_letters.extend(cell.split('/'))
+            else:
+                for r in range(rows):
+                    for c in range(cols):
+                        cell = str(board[r][c])
+                        flat_letters.extend(cell.split('/'))
+            
+            a_count = sum(1 for char in flat_letters if char == 'A')
+            num_cells = rows * cols * depth
+            
+            if num_cells <= 16:
+                max_as = 3
+            elif num_cells <= 25:
+                max_as = 4
+            elif num_cells <= 35:
+                max_as = 5
+            elif num_cells <= 48:
+                max_as = 6
+            else:
+                max_as = max(7, int(num_cells * 0.13))
                 
-                a_count = sum(1 for char in flat_letters if char == 'A')
-                max_as = 9 if rows * cols >= 48 else 7 # Max 9 for 6x8, 7 for 5x7
-                if a_count > max_as:
-                    print(f"[BoardGen] ATTEMPT {attempts}: Too many A's ({a_count} > {max_as}). Retrying...")
-                    continue
+            if a_count > max_as:
+                print(f"[BoardGen] ATTEMPT {attempts}: Too many A's on board ({a_count} > {max_as} for size {rows}x{cols}x{depth}). Retrying...")
+                continue
             
             # --- BONUS WORD EMBEDDING ---
             embedded_path = None
