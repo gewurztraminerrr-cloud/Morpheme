@@ -226,8 +226,8 @@ class GameRoom:
         
         # Check if player already exists (PERSISTENCE)
         existing_player = self.get_player(user_id)
-        if existing_player and is_daily:
-            print(f"[GameRoom] Persistence: Reusing existing player {username} in 24h room {self.room_id}")
+        if existing_player:
+            print(f"[GameRoom] Persistence: Reusing existing player {username} in room {self.room_id}")
             existing_player.last_active = time.time()
             existing_player.country_flag = country_flag # Update flag
             # CRITICAL: Always sync rating from DB even for persistent daily players
