@@ -811,7 +811,7 @@ class BoardGenerator:
             if num_tiles >= 24 and depth == 1 and not is_checkerboard and "either/or" not in safe_format:
                 strategy = "WordSoup"
             else:
-                strategy = "StepwiseOptimization" if num_tiles >= 24 else "HighDensity"
+                strategy = "StepwiseOptimization" if (num_tiles >= 24 or difficulty in ["Medium", "Hard"]) else "HighDensity"
             
             # Weighted frequencies for density
             # USER REQUEST: If target is high density or high min length, use Super Density weights
@@ -1185,14 +1185,14 @@ class BoardGenerator:
             if is_checkerboard:
                 board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
             elif "either/or" in safe_format:
-                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty)
+                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary)
                 # Pick Either/Or tile coordinates
                 eo_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
                 special_cells.append(eo_cell)
                 all_excluded.add(eo_cell)
                 print(f"[BoardGen] Selected and protected Either/Or coordinate in emergency loop: {eo_cell}")
             else:
-                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty)
+                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary)
                 
             # 3. Apply Mania abundance and register cells as excluded to protect them
             if mania_letter:
@@ -1342,7 +1342,7 @@ class BoardGenerator:
             
             print(f"[BoardGen] Procedure: IO-Base Checkerboard (Attempt {attempt}). Base target: {base_target}")
             weights = LETTER_FREQ_SUPER_DENSITY if min_word_length >= 4 else LETTER_FREQ_EASY
-            base_board = self._create_normal_board(rows, cols, weights, depth=1, difficulty=difficulty)
+            base_board = self._create_normal_board(rows, cols, weights, depth=1, difficulty=difficulty, dictionary=dictionary)
             print(f"[BoardGen] Normal base generated directly for special procedure.")
             
             final_solve = self._solve_board(base_board, dictionary, (0, 99999), min_word_length, max_depth=12, store_paths=True, timeout=30.0)
@@ -1822,9 +1822,9 @@ class BoardGenerator:
             weights = self._get_weights(difficulty) if difficulty else LETTER_FREQ_USER
         if board is None:
             if is_checkerboard:
-                board = self._create_checkerboard(rows, cols, weights)
+                board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
             else:
-                board = self._create_normal_board(rows, cols, weights)
+                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary)
 
         # Determine number of passes
         pass_count = 1
