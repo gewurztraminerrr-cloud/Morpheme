@@ -270,6 +270,7 @@ async function removeAddedWord() {
 }
 window.addAddedWord = addAddedWord;
 window.removeAddedWord = removeAddedWord;
+window.loadAddedWordsConfig = loadAddedWordsConfig;
 
 async function loadAddedWordsConfig() {
     const toggle = document.getElementById('toggle-use-added-words');

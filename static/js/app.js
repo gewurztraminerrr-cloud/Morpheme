@@ -917,6 +917,12 @@ function showPage(pageId) {
         }
     }
 
+    if (pageId === 'page-mods') {
+        if (typeof window.loadAddedWordsConfig === 'function') {
+            window.loadAddedWordsConfig();
+        }
+    }
+
     // NEW: Automatically update navigation button active state
     const pageName = pageId.replace('page-', '');
     const navBtn = document.querySelector(`.nav-btn[data-page="${pageName}"]`);
