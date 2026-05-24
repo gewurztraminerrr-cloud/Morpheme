@@ -1141,6 +1141,7 @@ async function updateGameState(incomingState = null) {
                     const myWords = state.players.find(p => p.username.toLowerCase().trim() === (state.your_username || currentUsername || '').toLowerCase().trim())?.submitted_words || [];
                     const allFound = state.players.reduce((acc, p) => acc.concat(p.submitted_words || []), []);
                     
+                    const addedForList = state.state === 'intermission' ? (state.previous_added_words || state.added_words) : state.added_words;
                     displayAllWords(
                         state.all_words, 
                         state.bonus_word, 
@@ -1148,7 +1149,7 @@ async function updateGameState(incomingState = null) {
                         allFound, 
                         state.all_word_scores || {}, 
                         state.csw_only_words || [], 
-                        state.added_words || []
+                        addedForList || []
                     );
                     window.lastRenderedIntermissionWords = currentRoundId;
                     window.lastSolvingComplete = state.solving_complete;
@@ -1446,7 +1447,8 @@ async function updateGameState(incomingState = null) {
                 const bonusForList = state.state === 'intermission' ? (state.previous_bonus_word || state.bonus_word) : state.bonus_word;
                 const cswForList = state.state === 'intermission' ? (state.previous_csw_only_words || state.csw_only_words) : state.csw_only_words;
                 
-                displayAllWords(allWords, bonusForList, targetWords, uniqueGlobalFound, state.all_word_scores, cswForList, state.added_words);
+                const addedForList = state.state === 'intermission' ? (state.previous_added_words || state.added_words) : state.added_words;
+                displayAllWords(allWords, bonusForList, targetWords, uniqueGlobalFound, state.all_word_scores, cswForList, addedForList);
                 if (state.game_type === 'split' || state.game_type === 'fcfs') addSplitViewBoardToggle();
 
             } else if (state.game_type !== 'fcfs') {
@@ -1487,7 +1489,8 @@ async function updateGameState(incomingState = null) {
                         const isBonus = state.bonus_word && wordUpper === state.bonus_word.toUpperCase();
                         const isCSWOnly = state.csw_only_words && state.csw_only_words.some(csw => csw.toUpperCase() === wordUpper);
 
-                        const isAddedWord = state.added_words && state.added_words.some(aw => aw.toUpperCase() === wordUpper);
+                        const activeAdded = state.state === 'intermission' ? (state.previous_added_words || state.added_words) : state.added_words;
+                        const isAddedWord = activeAdded && activeAdded.some(aw => aw.toUpperCase() === wordUpper);
 
                         let className = 'word-item player-word';
                         if (isBonus) {
@@ -1573,7 +1576,8 @@ async function updateGameState(incomingState = null) {
                         const indicator = isMe ? '<span class="found-indicator present">✓</span>' : (wObj.is_ai ? '<span>🤖</span>' : '<span>🔸</span>');
 
                         const isBonus = state.bonus_word && wordUpper === state.bonus_word.toUpperCase();
-                        const isAddedWord = state.added_words && state.added_words.some(aw => aw.toUpperCase() === wordUpper);
+                        const activeAdded = state.state === 'intermission' ? (state.previous_added_words || state.added_words) : state.added_words;
+                        const isAddedWord = activeAdded && activeAdded.some(aw => aw.toUpperCase() === wordUpper);
                         const isCSWOnly = state.csw_only_words && state.csw_only_words.some(csw => csw.toUpperCase() === wordUpper);
 
                         let className = 'word-item';
