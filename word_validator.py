@@ -297,6 +297,7 @@ class WordValidator:
 
     def is_valid_word_authoritative(self, word):
         """Check if word is in ANY official dictionary (excluding Added Words)"""
+        self.ensure_csw_loaded()
         w = word.upper()
         return w in self.nwl_words or w in self.csw_words or w in self.long_words
     
