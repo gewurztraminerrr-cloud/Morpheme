@@ -2720,6 +2720,13 @@ function updateParameters(state) {
             else if (diffLabel === 'Expert' || diffLabel === 'Difficult') diffLabel = 'Hard';
             else if (diffLabel === 'Beginner') diffLabel = 'Easy';
             
+            // Strictly derive difficulty label from uniqueness percentage if uniqueness is present to avoid UI mismatch
+            if (newUniq > 0) {
+                if (newUniq >= 0.40) diffLabel = 'Hard';
+                else if (newUniq >= 0.26) diffLabel = 'Medium';
+                else diffLabel = 'Easy';
+            }
+            
             const uniquePct = (newUniq > 0 && !diffLabel.includes('(')) ? ` (${Math.round(newUniq * 100)}%)` : "";
             window._displayedParams.diff = diffLabel + uniquePct;
             

@@ -47,3 +47,4 @@ eclipse-workspace/
 
 # Dynamic custom user dictionaries
 dictionaries/added_words.txt
+dictionaries/added_words_config.json
