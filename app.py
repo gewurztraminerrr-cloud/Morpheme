@@ -385,8 +385,13 @@ def get_added_words_config():
 def toggle_added_words():
     data = request.json
     enabled = data.get('enabled', True)
-    new_state = word_validator.toggle_added_words(enabled)
-    return jsonify({'success': True, 'use_added_words': new_state})
+    try:
+        new_state = word_validator.toggle_added_words(enabled)
+        return jsonify({'success': True, 'use_added_words': new_state})
+    except Exception as e:
+        import traceback
+        print(f"[API] Error toggling added words: {e}\n{traceback.format_exc()}")
+        return jsonify({'success': False, 'error': f"Failed to save configuration: {str(e)}"}), 500
 
 @app.route('/api/mods/added_words/add', methods=['POST'])
 @mod_required
@@ -396,11 +401,6 @@ def add_added_word_api():
     
     # Sync with Global Tally immediately (Self-healing)
     _update_word_stats(word, "add")
-
-    # Check authoritative dictionaries
-    if word_validator.is_valid_word_authoritative(word):
-        dict_name = "NWL" if word in word_validator.nwl_words else "CSW" if word in word_validator.csw_words else "Long Words"
-        return jsonify({'error': f"'{word}' already exists in {dict_name} dictionary."}), 400
 
         
     try:

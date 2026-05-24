@@ -41,17 +41,30 @@ class WordValidator:
                 with open(self.config_path, 'r') as f:
                     config = json.load(f)
                     self.use_added_words = config.get('use_added_words', True)
-            except:
+            except Exception as e:
+                import traceback
+                print(f"[WordValidator] Error loading config: {e}\n{traceback.format_exc()}")
                 self.use_added_words = True
 
     def _save_config(self):
-        """Save global config for added words"""
+        """Save global config for added words atomically"""
         try:
             import json
-            with open(self.config_path, 'w') as f:
-                json.dump({'use_added_words': self.use_added_words}, f)
-        except:
-            pass
+            import tempfile
+            # Atomic write to prevent concurrent read/write corruption
+            fd, temp_path = tempfile.mkstemp(dir=self.base_path, suffix='.tmp')
+            try:
+                with os.fdopen(fd, 'w') as f:
+                    json.dump({'use_added_words': self.use_added_words}, f)
+                os.replace(temp_path, self.config_path)
+            except Exception as e:
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+                raise e
+        except Exception as e:
+            import traceback
+            print(f"[WordValidator] Error saving config: {e}\n{traceback.format_exc()}")
+            raise e
 
     def toggle_added_words(self, enabled):
         """Toggle added words and REBUILD Tries for immediate game-wide effect"""
