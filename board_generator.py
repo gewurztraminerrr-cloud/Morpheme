@@ -1586,10 +1586,7 @@ class BoardGenerator:
                         print(f"[BoardGen] Error loading full dictionary {dict_name}: {e}. Using fallback words.")
                         dictionary = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
                         
-            if difficulty in ["Medium", "Hard"]:
-                valid_words = [w for w in dictionary if 5 <= len(w) <= 10 and not w.upper().endswith("ING") and not w.upper().endswith("INGS")]
-            else:
-                valid_words = [w for w in dictionary if 5 <= len(w) <= 10]
+            valid_words = [w for w in dictionary if 5 <= len(w) <= 10 and not w.upper().endswith("ING") and not w.upper().endswith("INGS")]
             
         if not valid_words:
             # Fallback if no dictionary passed or no words of that length
