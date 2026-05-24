@@ -190,7 +190,13 @@ document.addEventListener('touchstart', () => {
     if (isOnPlayPage()) resetIdleTimer(); // only count play-page taps
 }, true);
 
-document.addEventListener('keydown', () => {
+document.addEventListener('keydown', (e) => {
+    // If the event target is an INPUT or TEXTAREA, only toggle to keyboard if it's the game word-input!
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+        if (e.target.id !== 'word-input') {
+            return;
+        }
+    }
     updateInputMethod('keyboard');
     if (isOnPlayPage()) resetIdleTimer(); // only count play-page keystrokes
 }, true);
