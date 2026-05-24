@@ -399,6 +399,13 @@ def add_added_word_api():
     word = request.json.get('word', '').strip().upper()
     if not word: return jsonify({'error': 'Word required'}), 400
     
+    # Reject if already present in standard dictionaries (CSW, NWL, or 16plus)
+    if word_validator.is_valid_word_authoritative(word):
+        return jsonify({
+            'error': f"'{word}' is already a valid word in the official dictionaries (CSW/NWL/16plus).",
+            'is_authoritative': True
+        }), 400
+
     # Sync with Global Tally immediately (Self-healing)
     _update_word_stats(word, "add")
 

@@ -6,6 +6,10 @@ def main():
     trace_path = os.path.join(dict_dir, 'stats_trace.log')
     added_path = os.path.join(dict_dir, 'added_words.txt')
 
+    # Load WordValidator to filter out words that are in official dictionaries
+    print("[Restore] Initializing Word Validator to check official dictionaries...")
+    from word_validator import word_validator
+
     print(f"[Restore] Reading trace log: {trace_path}")
     
     # 1. Parse trace log for active additions
@@ -37,24 +41,36 @@ def main():
         with open(added_path, 'r') as f:
             current_words = [line.strip().upper() for line in f if line.strip()]
     
-    # 3. Determine which words are missing
-    new_to_inject = [w for w in sorted(active_words) if w not in current_words]
+    # 3. Combine both lists to get the full list of potential added words
+    combined = list(active_words) + current_words
     
-    if not new_to_inject:
-        print("[Restore] All words are already present in added_words.txt. No restore needed.")
-        return
+    # Remove duplicates while preserving order
+    unique_combined = []
+    seen = set()
+    for w in combined:
+        if w not in seen:
+            unique_combined.append(w)
+            seen.add(w)
+            
+    # 4. Filter out any words that are already in official dictionaries
+    clean_combined = []
+    filtered_words = []
+    for w in unique_combined:
+        if word_validator.is_valid_word_authoritative(w):
+            filtered_words.append(w)
+        else:
+            clean_combined.append(w)
 
-    print(f"[Restore] Restoring {len(new_to_inject)} missing words to added_words.txt...")
-    
-    # Prepend new words (preserving chronological reverse order style)
-    combined = new_to_inject + current_words
-    
+    print(f"[Restore] Filtered out {len(filtered_words)} words that are already valid in CSW/NWL/16plus.")
+    if len(filtered_words) > 0:
+        print(f"[Restore] Examples of filtered words: {filtered_words[:10]}")
+
     # Write back to file
     with open(added_path, 'w') as f:
-        for w in combined:
+        for w in clean_combined:
             f.write(f"{w}\n")
             
-    print(f"[Restore] SUCCESS! {len(new_to_inject)} words restored. Total words now: {len(combined)}")
+    print(f"[Restore] SUCCESS! Cleaned and updated added_words.txt. Total words now: {len(clean_combined)}")
 
 if __name__ == '__main__':
     main()
