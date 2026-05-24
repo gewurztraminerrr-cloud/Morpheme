@@ -1000,6 +1000,16 @@ class BoardGenerator:
             print(f"[BoardGen] ATTEMPT {attempts} POST-SWEEP VERIFICATION: Count={count} Target={min_words}-{max_words} MinLen={min_word_length}L")
             
             if min_words <= count <= max_words:
+                # USER REQUEST: Enforce uniqueness ratio match for the selected difficulty.
+                # To prevent timeouts, we only enforce this strictly for the first 8 attempts
+                # and when we have sufficient time remaining.
+                ratio = self.get_uniqueness_ratio(board, list(all_words_dict.keys()), rows, cols, dictionary, depth)
+                min_ratio, max_ratio = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth)
+                
+                if attempts <= 8 and (time.time() - start_time < timeout - 1.5):
+                    if not (min_ratio <= ratio <= max_ratio):
+                        print(f"[BoardGen] ATTEMPT {attempts}: Board uniqueness ratio {ratio:.2f} is outside range {min_ratio}-{max_ratio} for target {difficulty}. Retrying...")
+                        continue
                 # USER MANDATE: Ensure no "ING" or "INGS" path sequences exist in Medium or Hard boards!
                 # If they do, toss the board and generate another one (continue)!
                 if difficulty in ["Medium", "Hard"]:
@@ -1246,6 +1256,14 @@ class BoardGenerator:
             count = len(final_solve)
             
             if min_words <= count <= max_words or _attempt >= 5:
+                if min_words <= count <= max_words:
+                    # USER REQUEST: Enforce uniqueness ratio match for the selected difficulty inside emergency loop too.
+                    ratio = self.get_uniqueness_ratio(board, list(final_solve.keys()), rows, cols, dictionary, depth)
+                    min_ratio, max_ratio = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth)
+                    if _attempt <= 3:
+                        if not (min_ratio <= ratio <= max_ratio):
+                            print(f"[BoardGen] [Emergency] ATTEMPT {_attempt}: Uniqueness ratio {ratio:.2f} is outside range {min_ratio}-{max_ratio} for target {difficulty}. Retrying...")
+                            continue
                 if _attempt >= 5:
                     print(f"[BoardGen] ⚠️ EMERGENCY LOOP TIMEOUT: Failed to hit target after 5 attempts. Returning best effort with {count} words.")
                 else:
