@@ -44,3 +44,6 @@ eclipse-workspace/
 .git_history/
 .zsh_history
 .CFUserTextEncoding
+
+# Dynamic custom user dictionaries
+dictionaries/added_words.txt
