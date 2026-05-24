@@ -377,7 +377,7 @@ def list_added_words_api():
 @mod_required
 def get_added_words_config():
     return jsonify({
-        'use_added_words': word_validator.get_use_added_words()
+        'use_added_words': word_validator.get_use_added_words(force=True)
     })
 
 @app.route('/api/mods/added_words/toggle', methods=['POST'])

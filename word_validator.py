@@ -61,8 +61,15 @@ class WordValidator:
         self._load_dictionaries()
         return self.use_added_words
 
-    def get_use_added_words(self):
+    def get_use_added_words(self, force=False):
         """Actively read config and check for word list changes to sync across multiple Gunicorn workers"""
+        import time
+        now = time.time()
+        last_check = getattr(self, '_last_config_check', 0)
+        if not force and (now - last_check < 2.0):
+            return self.use_added_words
+        self._last_config_check = now
+
         old_val = getattr(self, 'use_added_words', True)
         self._load_config()
         
@@ -271,6 +278,7 @@ class WordValidator:
     
     def is_valid_word(self, word, dictionary='NWL'):
         """Check if word is valid using pre-merged sets."""
+        self.get_use_added_words()
         d_upper = str(dictionary).upper()
         if d_upper == 'UNIQUENWL':
             return word in self.unique_nwl_words or (self.use_added_words and word in self.added_words)
