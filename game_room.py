@@ -2247,6 +2247,8 @@ class RoomManager:
             if hasattr(word_validator, 'word_validator'):
                 room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
                 room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
+                if room.added_words:
+                    print(f"[GameRoom {room.room_id}] Round {room.current_round} generated {len(room.added_words)} custom added words: {room.added_words}")
             else:
                 room.csw_only_words = []
                 room.added_words = []
@@ -2919,6 +2921,8 @@ class RoomManager:
                     
                     room.next_round_csw_only_words = [w for w in filtered_all if word_validator.word_validator.is_csw_only(w)]
                     room.next_round_added_words = [w for w in filtered_all if word_validator.word_validator.is_added_word(w)]
+                    if room.next_round_added_words:
+                        print(f"[RoomManager {room.room_id}] Pre-gen Round {room.current_round + 1} generated {len(room.next_round_added_words)} custom added words: {room.next_round_added_words}")
                     
                     print(f"[RoomManager] Board found and params revealed! Words: {len(filtered_all)}")
                 except Exception as e:
