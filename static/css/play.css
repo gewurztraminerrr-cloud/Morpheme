@@ -4993,6 +4993,7 @@ input[type=range]::-moz-range-track {
 
 /* Word validation flash effects */
 /* Word validation flash effects (Full-screen overlay) */
+body.flash-red::after,
 #page-play.flash-red::after {
     content: '';
     position: fixed;
@@ -5001,12 +5002,13 @@ input[type=range]::-moz-range-track {
     right: 0;
     bottom: 0;
     pointer-events: none;
-    z-index: 9999;
+    z-index: 99999;
     background-color: rgba(255, 0, 0, 0.35) !important;
     box-shadow: inset 0 0 60px rgba(255, 0, 0, 0.6) !important;
     animation: flash-fade 0.5s ease-out forwards;
 }
 
+body.flash-green::after,
 #page-play.flash-green::after {
     content: '';
     position: fixed;
@@ -5015,12 +5017,13 @@ input[type=range]::-moz-range-track {
     right: 0;
     bottom: 0;
     pointer-events: none;
-    z-index: 9999;
+    z-index: 99999;
     background-color: rgba(0, 255, 0, 0.3) !important;
     box-shadow: inset 0 0 60px rgba(0, 255, 0, 0.6) !important;
     animation: flash-fade 0.5s ease-out forwards;
 }
 
+body.flash-blue::after,
 #page-play.flash-blue::after {
     content: '';
     position: fixed;
@@ -5029,7 +5032,7 @@ input[type=range]::-moz-range-track {
     right: 0;
     bottom: 0;
     pointer-events: none;
-    z-index: 9999;
+    z-index: 99999;
     background-color: rgba(0, 0, 255, 0.3) !important;
     box-shadow: inset 0 0 60px rgba(0, 0, 255, 0.6) !important;
     animation: flash-fade 0.5s ease-out forwards;
