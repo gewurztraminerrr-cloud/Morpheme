@@ -195,20 +195,19 @@ async function addAddedWord() {
         });
         const data = await response.json();
         
+        // UNCONDITIONALLY clear input and restore focus to facilitate rapid typing flow
+        if (wordInput) {
+            wordInput.value = '';
+            wordInput.focus();
+        }
+
         if (data.success) {
-            // Clear input and refocus (Only on success)
-            if (wordInput) {
-                wordInput.value = '';
-                wordInput.focus();
-            }
             const msg = data.message || `Word "${word}" added (V2 Success)`;
             showModStatus(msg, false, 'added-word-status-area');
             if (window.loadAddedWords) window.loadAddedWords('added');
         } else {
-            // DO NOT clear input on error (User wants to see the word and the red message)
             const errorMsg = data.error || "Failed to add word (V2 Error)";
             showModStatus(errorMsg, true, 'added-word-status-area');
-            if (wordInput) wordInput.focus();
         }
     } catch (err) {
         console.error("Error adding added word:", err);
@@ -446,6 +445,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const removeAddedWordBtn = document.getElementById('remove-added-word-btn');
     if (removeAddedWordBtn) {
         removeAddedWordBtn.addEventListener('click', removeAddedWord);
+    }
+
+    const addedWordInput = document.getElementById('added-word-input');
+    if (addedWordInput) {
+        addedWordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addAddedWord();
+            }
+        });
     }
 
     const toggleAddedWordsEl = document.getElementById('toggle-use-added-words');
