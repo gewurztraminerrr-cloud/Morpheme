@@ -1031,36 +1031,44 @@ class BoardGenerator:
                 # If they do, toss the board and generate another one (continue)!
                 if difficulty in ["Medium", "Hard"]:
                     def has_ing_sequence(b):
-                        R = len(b)
-                        C = len(b[0])
-                        def dfs(r, c, idx, visited):
+                        is_3d = (depth > 1) or (len(b) == 6 and isinstance(b[0], list) and isinstance(b[0][0], list))
+                        depth_val = 6 if (len(b) == 6 and is_3d) else depth
+                        R = len(b[0]) if is_3d else len(b)
+                        C = len(b[0][0]) if is_3d else len(b[0])
+
+                        def dfs(r, c, f, idx, visited):
                             if idx == 3:
                                 return True
-                            for dr in [-1, 0, 1]:
-                                for dc in [-1, 0, 1]:
-                                    if dr == 0 and dc == 0: continue
-                                    nr, nc = r + dr, c + dc
-                                    if 0 <= nr < R and 0 <= nc < C and (nr, nc) not in visited:
-                                        cell_char = str(b[nr][nc]).upper()
-                                        options = cell_char.split('/')
-                                        if "ING"[idx] in options:
-                                            visited.add((nr, nc))
-                                            if dfs(nr, nc, idx + 1, visited):
-                                                return True
-                                            visited.remove((nr, nc))
+                            for df in ([-1, 0, 1] if is_3d else [0]):
+                                for dr in [-1, 0, 1]:
+                                    for dc in [-1, 0, 1]:
+                                        if df == 0 and dr == 0 and dc == 0: continue
+                                        nf, nr, nc = f + df, r + dr, c + dc
+                                        if 0 <= nf < depth_val and 0 <= nr < R and 0 <= nc < C:
+                                            pos = (nf, nr, nc) if is_3d else (nr, nc)
+                                            if pos not in visited:
+                                                cell_char = str(b[nf][nr][nc] if is_3d else b[nr][nc]).upper()
+                                                options = cell_char.split('/')
+                                                if "ING"[idx] in options:
+                                                    visited.add(pos)
+                                                    if dfs(nr, nc, nf, idx + 1, visited):
+                                                        return True
+                                                    visited.remove(pos)
                             return False
 
-                        for r in range(R):
-                            for c in range(C):
-                                cell_char = str(b[r][c]).upper()
-                                options = cell_char.split('/')
-                                if 'I' in options:
-                                    visited = {(r, c)}
-                                    if dfs(r, c, 1, visited):
-                                        return True
+                        for f in range(depth_val):
+                            for r in range(R):
+                                for c in range(C):
+                                    cell_char = str(b[f][r][c] if is_3d else b[r][c]).upper()
+                                    options = cell_char.split('/')
+                                    if 'I' in options:
+                                        pos = (f, r, c) if is_3d else (r, c)
+                                        visited = {pos}
+                                        if dfs(r, c, f, 1, visited):
+                                            return True
                         return False
 
-                    if depth == 1 and has_ing_sequence(board):
+                    if has_ing_sequence(board):
                         print(f"[BoardGen] ❌ ATTEMPT {attempts}: Board has an 'ING'/'INGS' sequence on {difficulty} board. TOSSING board and generating another one...")
                         continue
 
