@@ -1229,6 +1229,7 @@ class GameRoom:
                 # USER REQUEST: Ensure 'All Words' list has full math breakdown in history
                 self.previous_all_words = getattr(self, 'solved_words_with_scores', {})
                 self.previous_csw_only_words = [w for w in (self.all_words or []) if word_validator.word_validator.is_csw_only(w)]
+                self.previous_added_words = [w for w in (self.all_words or []) if word_validator.word_validator.is_added_word(w)]
                 self.previous_bonus_word = self.bonus_word
                 
                 # Snapshot for persistence
