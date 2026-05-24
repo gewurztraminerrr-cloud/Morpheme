@@ -905,7 +905,7 @@ class BoardGenerator:
             else:
                 final_depth = 25 if rows * cols <= 16 else 14
             all_words_dict = self._solve_board(
-                board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=30.0
+                board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=False, timeout=30.0
             )
             count = len(all_words_dict)
             print(f"[BoardGen] ATTEMPT {attempts} PRE-SWEEP: Count={count} Target={min_words}-{max_words}")
@@ -994,7 +994,7 @@ class BoardGenerator:
 
             # Re-solve after sweeps and sanitization for final confirmation
             all_words_dict = self._solve_board(
-                board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=30.0
+                board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=False, timeout=30.0
             )
             count = len(all_words_dict)
             print(f"[BoardGen] ATTEMPT {attempts} POST-SWEEP VERIFICATION: Count={count} Target={min_words}-{max_words} MinLen={min_word_length}L")
@@ -1036,6 +1036,11 @@ class BoardGenerator:
                     if depth == 1 and has_ing_sequence(board):
                         print(f"[BoardGen] ❌ ATTEMPT {attempts}: Board has an 'ING'/'INGS' sequence on {difficulty} board. TOSSING board and generating another one...")
                         continue
+
+                # --- OFFICIAL ACCEPTANCE: RESOLVE PATHS NOW ---
+                all_words_dict = self._solve_board(
+                    board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=30.0
+                )
 
                 print(f"[BoardGen] ✓ IRONCLAD COMPLIANT BOARD FOUND ({count} words @ {min_word_length}L+) on attempt {attempts}")
                 
@@ -2774,8 +2779,12 @@ class BoardGenerator:
         # High-speed visitor tracking
         if depth_val == 1:
             visited = [[False for _ in range(cols)] for _ in range(rows)]
+            is_bonus_cell = [[(( -1, ri, ci) in bonus_coords) for ci in range(cols)] for ri in range(rows)]
+            pre_split_board = [[ (board[ri][ci].split("/") if "/" in board[ri][ci] else [board[ri][ci]]) for ci in range(cols)] for ri in range(rows)]
         else:
             visited = [[[False for _ in range(depth_val)] for _ in range(cols)] for _ in range(rows)]
+            is_bonus_cell = [[[((fi, ri, ci) in bonus_coords) for ci in range(cols)] for ri in range(rows)] for fi in range(depth_val)]
+            pre_split_board = [[[ (board[fi][ri][ci].split("/") if "/" in board[fi][ri][ci] else [board[fi][ri][ci]]) for ci in range(cols)] for ri in range(rows)] for fi in range(depth_val)]
 
         import time
 
@@ -2800,93 +2809,158 @@ class BoardGenerator:
         else:
             trie_root = word_validator.nwl_trie
 
-        def dfs(f, r, c, current_d, current_word, current_node, current_path, uses_target=False, uses_bonus=False):
-            if current_d > max_depth:
-                return
+        if not store_paths:
+            def dfs_no_path(f, r, c, current_d, current_word, current_node, uses_target=False, uses_bonus=False):
+                if current_d > max_depth:
+                    return
 
-            # HARD TIMEOUT: Stop searching if we've spent too long solving (Safety for 6x8 dense boards)
-            if time.time() - solver_start_time > solver_timeout:
-                return # Partial results are returned by the wrapper
+                # HARD TIMEOUT: Stop searching if we've spent too long solving (Safety for 6x8 dense boards)
+                if time.time() - solver_start_time > solver_timeout:
+                    return
 
-            cell = board[f][r][c] if depth_val > 1 else board[r][c]
-            letters = cell.split("/") if "/" in cell else [cell]
+                letters = pre_split_board[f][r][c] if depth_val > 1 else pre_split_board[r][c]
+                new_uses_bonus = uses_bonus or (is_bonus_cell[f][r][c] if depth_val > 1 else is_bonus_cell[r][c])
 
-            coord_to_check = (f if depth_val > 1 else -1, r, c)
-            new_uses_bonus = uses_bonus or (coord_to_check in bonus_coords)
+                for char in letters:
+                    next_node = current_node.children.get(char)
+                    if not next_node:
+                        continue
 
-            for char in letters:
-                # 1. Trie Advancement
-                next_node = current_node.children.get(char)
-                if not next_node:
-                    continue  # PRUNED!
+                    new_word = current_word + char
+                    new_uses_target = uses_target or (must_include and (f, r, c) == (must_include[0] if len(must_include)==3 else 0, must_include[-2], must_include[-1]))
 
-                new_word = current_word + char
-                new_path = current_path + ([(f, r, c)] if depth_val > 1 else [(r, c)]) if store_paths else []
-                
-                # Check if we've hit the target tile
-                new_uses_target = uses_target or (must_include and (f, r, c) == (must_include[0] if len(must_include)==3 else 0, must_include[-2], must_include[-1]))
+                    if len(new_word) >= min_word_length and next_node.is_word:
+                        if not must_include or new_uses_target:
+                            if new_word not in found_words:
+                                found_words[new_word] = True
+                                found_words_uses_bonus[new_word] = new_uses_bonus
+                                if len(found_words) > 1500:
+                                    return
+                            elif new_uses_bonus and not found_words_uses_bonus.get(new_word, False):
+                                found_words_uses_bonus[new_word] = True
 
-                # Check current word
-                if len(new_word) >= min_word_length and next_node.is_word:
-                    # If we are in "must_include" mode, only add if the path used the target
-                    if not must_include or new_uses_target:
-                        if new_word not in found_words:
-                            found_words[new_word] = new_path if store_paths else True
-                            found_words_uses_bonus[new_word] = new_uses_bonus
-                            # PERFORMANCE GUARD: Exit solver if word count explodes (especially in 3D)
-                            # We allow a buffer above max_words for scoring and selection variety.
-                            if len(found_words) > 1500:
-                                return
-                        elif new_uses_bonus and not found_words_uses_bonus.get(new_word, False):
-                            found_words[new_word] = new_path if store_paths else True
-                            found_words_uses_bonus[new_word] = True
+                    if len(new_word) < max_depth:
+                        if depth_val == 1:
+                            visited[r][c] = True
+                            for dr in [-1, 0, 1]:
+                                for dc in [-1, 0, 1]:
+                                    if dr == 0 and dc == 0: continue
+                                    nr, nc = r + dr, c + dc
+                                    if 0 <= nr < rows and 0 <= nc < cols and not visited[nr][nc]:
+                                        dfs_no_path(0, nr, nc, current_d + 1, new_word, next_node, new_uses_target, new_uses_bonus)
+                            visited[r][c] = False
+                        else:
+                            visited[r][c][f] = True
+                            for nf, nr, nc in self._get_cube_neighbors(f, r, c):
+                                if not visited[nr][nc][nf]:
+                                    dfs_no_path(nf, nr, nc, current_d + 1, new_word, next_node, new_uses_target, new_uses_bonus)
+                            visited[r][c][f] = False
 
-                # Prune and continue using Trie
-                if len(new_word) < max_depth:
-                    if depth_val == 1:
-                        visited[r][c] = True
-                        for dr in [-1, 0, 1]:
-                            for dc in [-1, 0, 1]:
-                                nr, nc = r + dr, c + dc
-                                if 0 <= nr < rows and 0 <= nc < cols and not visited[nr][nc]:
-                                    dfs(0, nr, nc, current_d + 1, new_word, next_node, new_path, new_uses_target, new_uses_bonus)
-                        visited[r][c] = False
-                    else:
-                        # 3D CUBE SUPPORT: 26-way adjacency
-                        visited[r][c][f] = True
-                        for nf, nr, nc in self._get_cube_neighbors(f, r, c):
-                            if not visited[nr][nc][nf]:
-                                dfs(nf, nr, nc, current_d + 1, new_word, next_node, new_path, new_uses_target, new_uses_bonus)
-                        visited[r][c][f] = False
+                    if char == "Q":
+                        u_node = next_node.children.get("U")
+                        if u_node:
+                            q_word = current_word + "QU"
+                            if len(q_word) >= min_word_length and u_node.is_word:
+                                if q_word not in found_words:
+                                    found_words[q_word] = True
+                                    found_words_uses_bonus[q_word] = new_uses_bonus
+                                elif new_uses_bonus and not found_words_uses_bonus.get(q_word, False):
+                                    found_words_uses_bonus[q_word] = True
 
-                # Qu Logic (only if not Either/Or for simplicity)
-                if char == "Q":
-                    u_node = next_node.children.get("U")
-                    if u_node:
-                        q_word = current_word + "QU"
-                        if len(q_word) >= min_word_length and u_node.is_word:
-                            if q_word not in found_words:
-                                found_words[q_word] = new_path if store_paths else True
-                                found_words_uses_bonus[q_word] = new_uses_bonus
-                            elif new_uses_bonus and not found_words_uses_bonus.get(q_word, False):
-                                found_words[q_word] = new_path if store_paths else True
-                                found_words_uses_bonus[q_word] = True
+                            if len(q_word) < max_depth:
+                                if depth_val == 1:
+                                    visited[r][c] = True
+                                    for dr in [-1, 0, 1]:
+                                        for dc in [-1, 0, 1]:
+                                            if dr == 0 and dc == 0: continue
+                                            nr, nc = r + dr, c + dc
+                                            if 0 <= nr < rows and 0 <= nc < cols and not visited[nr][nc]:
+                                                dfs_no_path(0, nr, nc, current_d + 1, q_word, u_node, new_uses_target, new_uses_bonus)
+                                    visited[r][c] = False
+                                else:
+                                    visited[r][c][f] = True
+                                    for nf, nr, nc in self._get_cube_neighbors(f, r, c):
+                                        if not visited[nr][nc][nf]:
+                                            dfs_no_path(nf, nr, nc, current_d + 1, q_word, u_node, new_uses_target, new_uses_bonus)
+                                    visited[r][c][f] = False
+        else:
+            def dfs(f, r, c, current_d, current_word, current_node, current_path, uses_target=False, uses_bonus=False):
+                if current_d > max_depth:
+                    return
 
-                        if len(q_word) < max_depth:
-                            if depth_val == 1:
-                                visited[r][c] = True
-                                for dr in [-1, 0, 1]:
-                                    for dc in [-1, 0, 1]:
-                                        nr, nc = r + dr, c + dc
-                                        if 0 <= nr < rows and 0 <= nc < cols and not visited[nr][nc]:
-                                            dfs(0, nr, nc, current_d + 1, q_word, u_node, new_path, new_uses_target, new_uses_bonus)
-                                visited[r][c] = False
-                            else:
-                                visited[r][c][f] = True
-                                for nf, nr, nc in self._get_cube_neighbors(f, r, c):
-                                    if not visited[nr][nc][nf]:
-                                        dfs(nf, nr, nc, current_d + 1, q_word, u_node, new_path, new_uses_target, new_uses_bonus)
-                                visited[r][c][f] = False
+                # HARD TIMEOUT: Stop searching if we've spent too long solving (Safety for 6x8 dense boards)
+                if time.time() - solver_start_time > solver_timeout:
+                    return
+
+                letters = pre_split_board[f][r][c] if depth_val > 1 else pre_split_board[r][c]
+                new_uses_bonus = uses_bonus or (is_bonus_cell[f][r][c] if depth_val > 1 else is_bonus_cell[r][c])
+
+                for char in letters:
+                    next_node = current_node.children.get(char)
+                    if not next_node:
+                        continue
+
+                    new_word = current_word + char
+                    new_path = current_path + ([(f, r, c)] if depth_val > 1 else [(r, c)])
+                    
+                    new_uses_target = uses_target or (must_include and (f, r, c) == (must_include[0] if len(must_include)==3 else 0, must_include[-2], must_include[-1]))
+
+                    if len(new_word) >= min_word_length and next_node.is_word:
+                        if not must_include or new_uses_target:
+                            if new_word not in found_words:
+                                found_words[new_word] = new_path
+                                found_words_uses_bonus[new_word] = new_uses_bonus
+                                if len(found_words) > 1500:
+                                    return
+                            elif new_uses_bonus and not found_words_uses_bonus.get(new_word, False):
+                                found_words[new_word] = new_path
+                                found_words_uses_bonus[new_word] = True
+
+                    if len(new_word) < max_depth:
+                        if depth_val == 1:
+                            visited[r][c] = True
+                            for dr in [-1, 0, 1]:
+                                for dc in [-1, 0, 1]:
+                                    if dr == 0 and dc == 0: continue
+                                    nr, nc = r + dr, c + dc
+                                    if 0 <= nr < rows and 0 <= nc < cols and not visited[nr][nc]:
+                                        dfs(0, nr, nc, current_d + 1, new_word, next_node, new_path, new_uses_target, new_uses_bonus)
+                            visited[r][c] = False
+                        else:
+                            visited[r][c][f] = True
+                            for nf, nr, nc in self._get_cube_neighbors(f, r, c):
+                                if not visited[nr][nc][nf]:
+                                    dfs(nf, nr, nc, current_d + 1, new_word, next_node, new_path, new_uses_target, new_uses_bonus)
+                            visited[r][c][f] = False
+
+                    if char == "Q":
+                        u_node = next_node.children.get("U")
+                        if u_node:
+                            q_word = current_word + "QU"
+                            if len(q_word) >= min_word_length and u_node.is_word:
+                                if q_word not in found_words:
+                                    found_words[q_word] = new_path
+                                    found_words_uses_bonus[q_word] = new_uses_bonus
+                                elif new_uses_bonus and not found_words_uses_bonus.get(q_word, False):
+                                    found_words[q_word] = new_path
+                                    found_words_uses_bonus[q_word] = True
+
+                            if len(q_word) < max_depth:
+                                if depth_val == 1:
+                                    visited[r][c] = True
+                                    for dr in [-1, 0, 1]:
+                                        for dc in [-1, 0, 1]:
+                                            if dr == 0 and dc == 0: continue
+                                            nr, nc = r + dr, c + dc
+                                            if 0 <= nr < rows and 0 <= nc < cols and not visited[nr][nc]:
+                                                dfs(0, nr, nc, current_d + 1, q_word, u_node, new_path, new_uses_target, new_uses_bonus)
+                                    visited[r][c] = False
+                                else:
+                                    visited[r][c][f] = True
+                                    for nf, nr, nc in self._get_cube_neighbors(f, r, c):
+                                        if not visited[nr][nc][nf]:
+                                            dfs(nf, nr, nc, current_d + 1, q_word, u_node, new_path, new_uses_target, new_uses_bonus)
+                                    visited[r][c][f] = False
 
         # Wrapper to handle timeout exception and return partially found words
         try:
@@ -2896,7 +2970,10 @@ class BoardGenerator:
                     for ci in range(cols):
                         if time.time() - solver_start_time > solver_timeout:
                             break
-                        dfs(fi, ri, ci, 1, "", trie_root, [], False, False)
+                        if not store_paths:
+                            dfs_no_path(fi, ri, ci, 1, "", trie_root, False, False)
+                        else:
+                            dfs(fi, ri, ci, 1, "", trie_root, [], False, False)
         except Exception as e:
             print(f"[Solver] CRITICAL ERROR: {e}")
             
