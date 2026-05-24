@@ -174,11 +174,18 @@ class BoardGenerator:
 
     def _get_uniqueness_range(self, difficulty, rows=4, cols=4, dictionary="NWL", depth=1):
         """Get (min, max) ratio range for specified difficulty target."""
-        ranges = {
-            "Easy": (0.0, 0.25),
-            "Medium": (0.26, 0.39),
-            "Hard": (0.40, 1.0)
-        }
+        if rows == 4 and cols == 4 and depth == 1:
+            ranges = {
+                "Easy": (0.0, 0.15),
+                "Medium": (0.16, 0.29),
+                "Hard": (0.30, 1.0)
+            }
+        else:
+            ranges = {
+                "Easy": (0.0, 0.25),
+                "Medium": (0.26, 0.39),
+                "Hard": (0.40, 1.0)
+            }
         return ranges.get(difficulty, (0.0, 1.0))
 
     def get_uniqueness_ratio(self, board, all_words, rows=4, cols=4, dictionary="NWL", depth=1):
@@ -219,15 +226,20 @@ class BoardGenerator:
             print(f"[BoardGen-Diff] ERROR parsing ratio '{ratio}': {e}")
             return "Easy" # Safe fallback
 
-        # Easy: 0-25%
-        # Medium: 26-39%
-        # Hard: 40%+
-        if rat >= 0.40:
-            return "Hard"
-        elif rat >= 0.26:
-            return "Medium"
+        if rows == 4 and cols == 4 and depth == 1:
+            if rat >= 0.30:
+                return "Hard"
+            elif rat >= 0.16:
+                return "Medium"
+            else:
+                return "Easy"
         else:
-            return "Easy"
+            if rat >= 0.40:
+                return "Hard"
+            elif rat >= 0.26:
+                return "Medium"
+            else:
+                return "Easy"
 
     def _sanitize_rare_letters(self, board, depth=1, protected_positions=None, is_checkerboard=False):
         """
