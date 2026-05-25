@@ -3460,7 +3460,8 @@ class RoomManager:
     
     def _get_factchecked_wc_range(self, count):
         """Map actual word count to the closest standard spinner display range.
-           Matches the 50-100, 100-200, 200-300, and 300-400 targets defined in SpinnerSet."""
+           Matches the 50-100, 100-200, 200-300, 300-400, and 500+ targets defined in SpinnerSet."""
+        if count >= 500: return '500+'
         if count >= 300: return '300-400'
         if count >= 200: return '200-300'
         if count >= 100: return '100-200'

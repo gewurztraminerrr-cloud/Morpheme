@@ -420,7 +420,7 @@
                         if (wr[1] > 900) return wr[0] + '+';
                         return wr[0] + '-' + wr[1];
                     }
-                    return wr === 'random' ? '50-100/100-200/200+' : (wr || '50-100');
+                    return wr === 'random' ? '100-200/200-300/300-400/500+' : (wr || '100-200');
                 })()}
                         ${isHistory && formattedDate ? `<br><strong>Completed:</strong> ${formattedDate}` : ''}
                     </p>
@@ -461,7 +461,7 @@
                     if (wr[1] > 900) return wr[0] + '+';
                     return wr[0] + '-' + wr[1];
                 }
-                return wr === 'random' ? '50-100/100-200/200+' : (wr || '50-100');
+                return wr === 'random' ? '100-200/200-300/300-400/500+' : (wr || '100-200');
             })()}
                     </p>
                 </div>

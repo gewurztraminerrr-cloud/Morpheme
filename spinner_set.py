@@ -31,13 +31,35 @@ class SpinnerSet:
             res = SpinnerSet._generate_params_raw(board_dimensions, is_24h, is_split, previous_params)
             if is_24h and isinstance(res, dict):
                 res['board_format'] = 'Valued Letters'
+                
+            # Ironclad validation to ensure 50-100 word count is strictly restricted to greatest minimum lengths
+            if isinstance(res, dict) and res.get('word_count_range') == '50-100':
+                dims = str(board_dimensions).lower().replace(" ", "")
+                min_word_length = res.get('min_word_length', 3)
+                
+                is_greatest = False
+                if '4x4' in dims and min_word_length >= 5:
+                    is_greatest = True
+                elif '4x6' in dims and min_word_length >= 6:
+                    is_greatest = True
+                elif '5x7' in dims and min_word_length >= 7:
+                    is_greatest = True
+                elif '6x8' in dims and min_word_length >= 8:
+                    is_greatest = True
+                elif '3x3x3' in dims and min_word_length >= 8:
+                    is_greatest = True
+                
+                if not is_greatest:
+                    # If it slipped through or was loaded from a stale state, upgrade the word count range to 100-200
+                    res['word_count_range'] = '100-200'
+                    print(f"[SpinnerSet] Ironclad corrected mismatched word_count_range for dims={board_dimensions}, min_len={min_word_length} from 50-100 to 100-200.")
             return res
         except Exception as e:
             print(f"[SpinnerSet] CRITICAL WRAPPER ERROR: {e}")
             return {
                 'difficulty': random.choice(['Easy', 'Medium', 'Hard']),
                 'dictionary': random.choice(['NWL', 'CSW']),
-                'word_count_range': random.choice(['50-100', '100-200', '200-300', '300-400']),
+                'word_count_range': random.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0],
                 'board_format': 'Valued Letters' if is_24h else 'Normal',
                 'min_word_length': 3,
                 'bonus_word_length': 8,
@@ -97,10 +119,11 @@ class SpinnerSet:
                     # USER REQUEST: Specific initial state for the first round (Density Focused)
                     # We must still respect dimension-based minimum lengths (especially for 6x8/3x3x3)
                     initial_min = SpinnerSet._spin_min_word_length(board_dimensions)
+                    initial_diff = SpinnerSet._spin_difficulty(board_dimensions, initial_min)
                     return {
                         'min_word_length': initial_min,
-                        'difficulty': SpinnerSet._spin_difficulty(board_dimensions, initial_min),
-                        'word_count_range': random.choice(['50-100', '100-200', '200-300', '300-400']),
+                        'difficulty': initial_diff,
+                        'word_count_range': SpinnerSet._spin_word_count('NWL', initial_min, initial_diff, board_dimensions),
                         'dictionary': 'NWL',
                         'board_format': 'Normal',
                         'bonus_word_length': max(8, initial_min),
@@ -137,7 +160,7 @@ class SpinnerSet:
             return {
                 'difficulty': random.choice(['Easy', 'Medium', 'Hard']),
                 'dictionary': random.choice(['NWL', 'CSW']),
-                'word_count_range': random.choice(['50-100', '100-200', '200-300', '300-400']),
+                'word_count_range': random.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0],
                 'board_format': 'Normal',
                 'min_word_length': 3,
                 'bonus_word_length': 8,
@@ -173,9 +196,31 @@ class SpinnerSet:
     
     @staticmethod
     def _spin_word_count(dictionary, min_word_length, difficulty, board_dimensions):
-        # USER REQUEST: 10% 50-100, 33% 100-200, 33% 200-300, 24% 300-400
-        choices = ['50-100', '100-200', '200-300', '300-400']
-        weights = [10, 33, 33, 24]
+        # Greatest minimum word length options for each board size:
+        # 4x4 -> 5L, 4x6 -> 6L, 5x7 -> 7L, 6x8 -> 8L, 3x3x3 -> 8L
+        dims = str(board_dimensions).lower().replace(" ", "")
+        is_greatest_length = False
+        
+        if '4x4' in dims and min_word_length >= 5:
+            is_greatest_length = True
+        elif '4x6' in dims and min_word_length >= 6:
+            is_greatest_length = True
+        elif '5x7' in dims and min_word_length >= 7:
+            is_greatest_length = True
+        elif '6x8' in dims and min_word_length >= 8:
+            is_greatest_length = True
+        elif '3x3x3' in dims and min_word_length >= 8:
+            is_greatest_length = True
+
+        if is_greatest_length:
+            # USER REQUEST: Bring the 50-100 word count back, 19%, only if greatest word count of the room (e.g. 5L for 4x4) is paired.
+            choices = ['50-100', '100-200', '200-300', '300-400', '500+']
+            weights = [19, 30, 30, 20, 1]
+        else:
+            # Standard rebalanced odds: 33% 100-200, 33% 200-300, 33% 300-400, 1% 500+
+            choices = ['100-200', '200-300', '300-400', '500+']
+            weights = [33, 33, 33, 1]
+            
         return random.choices(choices, weights=weights)[0]
     
     @staticmethod

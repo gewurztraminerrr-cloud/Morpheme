@@ -856,9 +856,21 @@ class BoardGenerator:
                 strategy = "StepwiseOptimization" if (num_tiles >= 24 or difficulty in ["Medium", "Hard"]) else "HighDensity"
             
             # Weighted frequencies for density
-            # USER REQUEST: If target is high density or high min length, use Super Density weights
-            is_super_dense = (min_words >= 200 or (min_word_length >= 4 and rows*cols <= 24))
-            weights = LETTER_FREQ_SUPER_DENSITY if is_super_dense else (LETTER_FREQ_EASY if (min_words >= 100 or attempts > 3) else LETTER_FREQ_USER)
+            # If target difficulty is Easy, we want natural/friendly frequencies, NOT super dense or rare letters!
+            if difficulty == "Easy":
+                # For Easy boards, always prioritize standard user frequencies unless repeatedly failing
+                weights = LETTER_FREQ_EASY if (min_words >= 300 or attempts > 3) else LETTER_FREQ_USER
+            else:
+                # For Medium/Hard boards:
+                # ONLY use Super Density if word count target is high (>= 200) OR board size is extremely small (<= 16) and min_word_length is high
+                is_super_dense = (min_words >= 200 or (min_word_length >= 4 and rows*cols <= 16))
+                
+                # If target is lower (like 50-100 or 100-200), let letters occur naturally with LETTER_FREQ_USER!
+                # Only use LETTER_FREQ_EASY if target is >= 200 or we are struggling (attempts > 3)
+                if is_super_dense:
+                    weights = LETTER_FREQ_SUPER_DENSITY
+                else:
+                    weights = LETTER_FREQ_EASY if (min_words >= 200 or attempts > 3) else LETTER_FREQ_USER
             if is_checkerboard:
                 board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
             elif "either/or" in safe_format:
@@ -1508,7 +1520,7 @@ class BoardGenerator:
             return word_count_range
 
         if not isinstance(word_count_range, str):
-            return (50, 100)
+            return (100, 200)
 
         import re
         
@@ -1532,7 +1544,7 @@ class BoardGenerator:
             val = int(nums[-1]) # Take the LAST number if all else fails
             return (val, val + 50)
 
-        return (50, 100) # Safety floor
+        return (100, 200) # Safety floor
 
         if word_count_range in ["1500+", "2000+"]:
             return (500, 99999)  # Backward compatibility
@@ -1636,16 +1648,32 @@ class BoardGenerator:
                         print(f"[BoardGen] Error loading full dictionary {dict_name}: {e}. Using fallback words.")
                         dictionary = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
                         
-            valid_words = [w for w in dictionary if 5 <= len(w) <= 10 and not w.upper().endswith("ING") and not w.upper().endswith("INGS")]
+        # Determine number of words and length range based on grid size
+        num_cells = rows * cols
+        if num_cells <= 16:  # 4x4
+            min_len, max_len = 5, 7
+            num_words_to_embed = random.randint(15, 20)
+        elif num_cells <= 24:  # 4x6
+            min_len, max_len = 5, 7
+            num_words_to_embed = random.randint(20, 25)
+        elif num_cells <= 35:  # 5x7
+            min_len, max_len = 7, 10
+            num_words_to_embed = 30
+        else:  # 6x8 / Cube
+            min_len, max_len = 7, 10
+            num_words_to_embed = 45
+
+        if dictionary:
+            valid_words = [w for w in dictionary if min_len <= len(w) <= max_len and not w.upper().endswith("ING") and not w.upper().endswith("INGS")]
+            if num_cells <= 24 and difficulty == "Easy":
+                uniques_nwl = self._get_difficulty_set("NWL")
+                uniques_csw = self._get_difficulty_set("CSW")
+                valid_words = [w for w in valid_words if w not in uniques_nwl and w not in uniques_csw]
             
         if not valid_words:
             # Fallback if no dictionary passed or no words of that length
             valid_words = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
             
-        # Determine number of words to embed based on grid size
-        num_cells = rows * cols
-        num_words_to_embed = 45 if num_cells >= 48 else (30 if num_cells >= 35 else 15)
-        
         selected_words = random.sample(valid_words, min(num_words_to_embed, len(valid_words)))
         
         def get_neighbors(r, c):

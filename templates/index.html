@@ -39,6 +39,28 @@
             color: #fff !important;
             box-shadow: 0 0 15px rgba(50, 205, 50, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.8) !important;
         }
+        /* Alternating backgrounds for Spinner Set Odds window sections to prevent confusion */
+        .odds-section {
+            padding: 16px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+        .odds-section:nth-child(odd) {
+            background: rgba(53, 131, 228, 0.04);
+            border: 1px solid rgba(53, 131, 228, 0.12);
+        }
+        .odds-section:nth-child(even) {
+            background: rgba(245, 194, 17, 0.03);
+            border: 1px solid rgba(245, 194, 17, 0.08);
+        }
+        .odds-section:nth-child(odd) .odds-title {
+            color: #3583e4 !important;
+            border-bottom-color: rgba(53, 131, 228, 0.2) !important;
+        }
+        .odds-section:nth-child(even) .odds-title {
+            color: #f5c211 !important;
+            border-bottom-color: rgba(245, 194, 17, 0.15) !important;
+        }
     </style>
 </head>
 
@@ -447,10 +469,10 @@
                             <div class="config-group">
                                 <label>Word Count Range</label>
                                 <select id="sf-config-range">
-                                     <option value="random" selected>Random (24/50/25/1)</option>
-                                    <option value="50-100">50-100 (24%)</option>
-                                    <option value="100-200">100-200 (50%)</option>
-                                    <option value="200-500">200-500 (25%)</option>
+                                     <option value="random" selected>Random (33/33/33/1)</option>
+                                    <option value="100-200">100-200 (33%)</option>
+                                    <option value="200-300">200-300 (33%)</option>
+                                    <option value="300-400">300-400 (33%)</option>
                                     <option value="500-99999">500+ (1%)</option>
                                 </select>
                             </div>
@@ -3576,18 +3598,21 @@
                         <h4 class="odds-title" style="font-size: 0.95rem; font-weight: 700; color: var(--accent-blue, #1a5fb4); margin: 0 0 8px 0; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1); padding-bottom: 4px;">
                             Words: Total Board Words
                         </h4>
+                        <p style="font-size: 0.75rem; color: var(--muted-text); margin: 0 0 10px 0; line-height: 1.4;">
+                            Standard odds are 33% | 33% | 33% | 1%. But if the round spins the <strong>greatest minimum word length</strong> of the board size (e.g. 5L for 4x4, 6L for 4x6, 7L for 5x7, 8L for 6x8/Cube), the <strong>50-100 range</strong> activates at <strong>19%</strong> odds (adjusting the others to 30% | 30% | 20% | 1%):
+                        </p>
                         <div style="display: flex; flex-direction: column; gap: 6px;">
                             <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
-                                <span>50 - 100 words</span>
-                                <span style="font-weight: 700;">10%</span>
+                                <span>50 - 100 words <span style="font-size: 0.7rem; color: var(--muted-text); font-style: italic;">(Greatest Min-Length Only)</span></span>
+                                <span style="font-weight: 700;">19%</span>
                             </div>
                             <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
-                                <div style="width: 10%; height: 100%; background: var(--text-primary); opacity: 0.7; border-radius: 3px;"></div>
+                                <div style="width: 19%; height: 100%; background: var(--text-primary); opacity: 0.7; border-radius: 3px;"></div>
                             </div>
-                            
+
                             <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
                                 <span>100 - 200 words</span>
-                                <span style="font-weight: 700;">33%</span>
+                                <span style="font-weight: 700;">33% / 30%</span>
                             </div>
                             <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
                                 <div style="width: 33%; height: 100%; background: var(--text-primary); opacity: 0.7; border-radius: 3px;"></div>
@@ -3595,7 +3620,7 @@
                             
                             <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
                                 <span>200 - 300 words</span>
-                                <span style="font-weight: 700;">33%</span>
+                                <span style="font-weight: 700;">33% / 30%</span>
                             </div>
                             <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
                                 <div style="width: 33%; height: 100%; background: var(--text-primary); opacity: 0.7; border-radius: 3px;"></div>
@@ -3603,10 +3628,18 @@
                             
                             <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
                                 <span>300 - 400 words</span>
-                                <span style="font-weight: 700;">24%</span>
+                                <span style="font-weight: 700;">33% / 20%</span>
                             </div>
                             <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
-                                <div style="width: 24%; height: 100%; background: var(--text-primary); opacity: 0.7; border-radius: 3px;"></div>
+                                <div style="width: 33%; height: 100%; background: var(--text-primary); opacity: 0.7; border-radius: 3px;"></div>
+                            </div>
+                            
+                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                                <span>500+ words</span>
+                                <span style="font-weight: 700;">1%</span>
+                            </div>
+                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
+                                <div style="width: 1%; height: 100%; background: var(--text-primary); opacity: 0.7; border-radius: 3px;"></div>
                             </div>
                         </div>
                     </div>
