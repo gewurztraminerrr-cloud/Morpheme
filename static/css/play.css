@@ -561,14 +561,21 @@ body.theme-light-brown .player-score-val {
     padding-bottom: 8px;
     margin-bottom: 8px;
     border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 #definition-content {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     font-size: 1em;
     line-height: 1.5;
     color: var(--text-primary);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .definition-word {
@@ -578,12 +585,19 @@ body.theme-light-brown .player-score-val {
     display: block;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .definition-text {
+    display: block;
     opacity: 0.9;
     font-style: italic;
     font-size: 1em;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 /* Board Panel */
