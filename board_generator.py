@@ -190,9 +190,9 @@ class BoardGenerator:
             }
         elif is_large:
             ranges = {
-                "Easy": (0.0, 0.35),
-                "Medium": (0.36, 0.50),
-                "Hard": (0.51, 1.0)
+                "Easy": (0.0, 0.30),
+                "Medium": (0.31, 0.44),
+                "Hard": (0.45, 1.0)
             }
         else:
             ranges = {
@@ -257,9 +257,9 @@ class BoardGenerator:
             else:
                 return "Easy"
         elif is_large:
-            if rat >= 0.51:
+            if rat >= 0.45:
                 return "Hard"
-            elif rat >= 0.36:
+            elif rat >= 0.31:
                 return "Medium"
             else:
                 return "Easy"
