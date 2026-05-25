@@ -2732,6 +2732,10 @@ function updateParameters(state) {
                     if (newUniq >= 0.30) diffLabel = 'Hard';
                     else if (newUniq >= 0.16) diffLabel = 'Medium';
                     else diffLabel = 'Easy';
+                } else if (factBoardDims === '4x6' || factBoardDims === '6x4') {
+                    if (newUniq >= 0.36) diffLabel = 'Hard';
+                    else if (newUniq >= 0.20) diffLabel = 'Medium';
+                    else diffLabel = 'Easy';
                 } else if (factBoardDims === '6x8' || factBoardDims === '3x3x3') {
                     if (newUniq >= 0.51) diffLabel = 'Hard';
                     else if (newUniq >= 0.36) diffLabel = 'Medium';

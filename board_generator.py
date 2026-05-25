@@ -175,11 +175,18 @@ class BoardGenerator:
     def _get_uniqueness_range(self, difficulty, rows=4, cols=4, dictionary="NWL", depth=1):
         """Get (min, max) ratio range for specified difficulty target."""
         is_large = (rows == 6 and cols == 8) or depth > 1
+        is_4x6 = (rows == 4 and cols == 6) or (rows == 6 and cols == 4)
         if rows == 4 and cols == 4 and depth == 1:
             ranges = {
                 "Easy": (0.0, 0.15),
                 "Medium": (0.16, 0.29),
                 "Hard": (0.30, 1.0)
+            }
+        elif is_4x6:
+            ranges = {
+                "Easy": (0.0, 0.19),
+                "Medium": (0.20, 0.35),
+                "Hard": (0.36, 1.0)
             }
         elif is_large:
             ranges = {
@@ -234,10 +241,18 @@ class BoardGenerator:
             return "Easy" # Safe fallback
 
         is_large = (rows == 6 and cols == 8) or depth > 1
+        is_4x6 = (rows == 4 and cols == 6) or (rows == 6 and cols == 4)
         if rows == 4 and cols == 4 and depth == 1:
             if rat >= 0.30:
                 return "Hard"
             elif rat >= 0.16:
+                return "Medium"
+            else:
+                return "Easy"
+        elif is_4x6:
+            if rat >= 0.36:
+                return "Hard"
+            elif rat >= 0.20:
                 return "Medium"
             else:
                 return "Easy"
