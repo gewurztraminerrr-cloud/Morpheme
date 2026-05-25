@@ -3437,29 +3437,48 @@
                         <h4 class="odds-title" style="font-size: 0.95rem; font-weight: 700; color: var(--accent-blue, #1a5fb4); margin: 0 0 8px 0; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1); padding-bottom: 4px;">
                             Diff: Difficulty & Uniqueness
                         </h4>
-                        <div style="display: flex; flex-direction: column; gap: 6px;">
-                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
-                                <span>🟢 Easy (0-15% on 4x4 | 0-19% on 4x6 | 0-25% on 5x7 | 0-30% on 6x8/Cube)</span>
-                                <span style="font-weight: 700;">25%</span>
-                            </div>
-                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
-                                <div style="width: 25%; height: 100%; background: #2ec27e; border-radius: 3px;"></div>
+                        <p style="font-size: 0.75rem; color: var(--muted-text); margin: 0 0 10px 0; line-height: 1.4;">
+                            Difficulty targets are spun at fixed rates (25% Easy | 50% Medium | 25% Hard), but natural layouts shift the <strong>Actual Labeled (Played)</strong> percentages dynamically by board size:
+                        </p>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <!-- Easy Row -->
+                            <div>
+                                <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; margin-bottom: 4px;">
+                                    <span style="font-weight: 600;">🟢 Easy <span style="font-weight: normal; color: var(--muted-text); font-size: 0.72rem; margin-left: 2px;">(0-15% on 4x4 | 0-19% on 4x6 | 0-25% on 5x7 | 0-30% on 6x8/Cube)</span></span>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; font-size: 0.75rem; background: rgba(var(--text-primary-rgb), 0.03); border-radius: 4px; padding: 4px 6px; border: 1px solid rgba(var(--text-primary-rgb), 0.05);">
+                                    <div><span style="color: var(--muted-text);">4x4:</span> <strong style="color: #2ec27e;">12.5%</strong></div>
+                                    <div><span style="color: var(--muted-text);">4x6:</span> <strong style="color: #2ec27e;">15.0%</strong></div>
+                                    <div><span style="color: var(--muted-text);">5x7:</span> <strong style="color: #2ec27e;">42.5%</strong></div>
+                                    <div><span style="color: var(--muted-text);">6x8/Cube:</span> <strong style="color: #2ec27e;">47.5%</strong></div>
+                                </div>
                             </div>
                             
-                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
-                                <span>🟡 Medium (16-29% on 4x4 | 20-35% on 4x6 | 26-39% on 5x7 | 31-44% on 6x8/Cube)</span>
-                                <span style="font-weight: 700;">50%</span>
-                            </div>
-                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
-                                <div style="width: 50%; height: 100%; background: #f5c211; border-radius: 3px;"></div>
+                            <!-- Medium Row -->
+                            <div>
+                                <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; margin-bottom: 4px;">
+                                    <span style="font-weight: 600;">🟡 Medium <span style="font-weight: normal; color: var(--muted-text); font-size: 0.72rem; margin-left: 2px;">(16-29% on 4x4 | 20-35% on 4x6 | 26-39% on 5x7 | 31-44% on 6x8/Cube)</span></span>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; font-size: 0.75rem; background: rgba(var(--text-primary-rgb), 0.03); border-radius: 4px; padding: 4px 6px; border: 1px solid rgba(var(--text-primary-rgb), 0.05);">
+                                    <div><span style="color: var(--muted-text);">4x4:</span> <strong style="color: #f5c211;">35.0%</strong></div>
+                                    <div><span style="color: var(--muted-text);">4x6:</span> <strong style="color: #f5c211;">62.5%</strong></div>
+                                    <div><span style="color: var(--muted-text);">5x7:</span> <strong style="color: #f5c211;">37.5%</strong></div>
+                                    <div><span style="color: var(--muted-text);">6x8/Cube:</span> <strong style="color: #f5c211;">42.5%</strong></div>
+                                </div>
                             </div>
                             
-                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
-                                <span>🔴 Hard (30%+ on 4x4 | 36%+ on 4x6 | 40%+ on 5x7 | 45%+ on 6x8/Cube)</span>
-                                <span style="font-weight: 700;">25%</span>
-                            </div>
-                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
-                                <div style="width: 25%; height: 100%; background: #e01b24; border-radius: 3px;"></div>
+                            <!-- Hard Row -->
+                            <div>
+                                <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; margin-bottom: 4px;">
+                                    <span style="font-weight: 600;">🔴 Hard <span style="font-weight: normal; color: var(--muted-text); font-size: 0.72rem; margin-left: 2px;">(30%+ on 4x4 | 36%+ on 4x6 | 40%+ on 5x7 | 45%+ on 6x8/Cube)</span></span>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; font-size: 0.75rem; background: rgba(var(--text-primary-rgb), 0.03); border-radius: 4px; padding: 4px 6px; border: 1px solid rgba(var(--text-primary-rgb), 0.05);">
+                                    <div><span style="color: var(--muted-text);">4x4:</span> <strong style="color: #e01b24;">52.5%</strong></div>
+                                    <div><span style="color: var(--muted-text);">4x6:</span> <strong style="color: #e01b24;">22.5%</strong></div>
+                                    <div><span style="color: var(--muted-text);">5x7:</span> <strong style="color: #e01b24;">20.0%</strong></div>
+                                    <div><span style="color: var(--muted-text);">6x8/Cube:</span> <strong style="color: #e01b24;">10.0%</strong></div>
+                                </div>
                             </div>
                         </div>
                     </div>
