@@ -6613,7 +6613,7 @@ window.showFinderModal = function (word) {
                 `;
                 
                 if (findersCount === 0) {
-                    html += '<p class="placeholder" style="padding: 20px; text-align: center;">No one has found this word yet.</p>';
+                    html += '<p class="placeholder" style="padding: 20px; text-align: center;">No one found this word on this round.</p>';
                 } else {
                     html += finders.map(p => {
                         const rating = p.rating || 0;
