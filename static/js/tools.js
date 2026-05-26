@@ -1556,6 +1556,12 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     }
     if (skipBtn) skipBtn.classList.add('hidden');
     if (progressUI) progressUI.classList.add('hidden');
+    if (progressBar) {
+        progressBar.style.transition = 'none';
+        progressBar.style.width = '0%';
+        progressBar.offsetHeight; // Force reflow
+        progressBar.style.transition = '';
+    }
     if (walkthroughList) walkthroughList.innerHTML = '<p class="placeholder" style="color:rgba(255,255,255,0.3); text-align:center; padding:40px; font-weight:700;">Ready to watch the walkthrough...</p>';
 
     // 3. Render Board with Dynamic Scaling
@@ -1781,6 +1787,12 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
             startBtn.innerText = "▶ Watch Replay"; // Reset text
         }
         if (progressUI) progressUI.classList.add('hidden');
+        if (progressBar) {
+            progressBar.style.transition = 'none';
+            progressBar.style.width = '0%';
+            progressBar.offsetHeight; // Force reflow
+            progressBar.style.transition = '';
+        }
 
         const currentScoreEl = document.getElementById(useOverlay ? 'replay-current-score' : 'integrated-current-score');
         if (currentScoreEl) currentScoreEl.innerText = `${round.total_score} pts`;
@@ -1800,6 +1812,13 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
             if (window.replayInterval) {
                 clearInterval(window.replayInterval);
                 window.replayInterval = null;
+            }
+
+            if (progressBar) {
+                progressBar.style.transition = 'none';
+                progressBar.style.width = '0%';
+                progressBar.offsetHeight; // Force reflow
+                progressBar.style.transition = '';
             }
 
             startBtn.classList.add('hidden');
