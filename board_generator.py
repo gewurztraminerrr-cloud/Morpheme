@@ -1435,17 +1435,17 @@ class BoardGenerator:
                 print(f"[BoardGen] ❌ [Emergency] ATTEMPT {_attempt}: Board has forbidden 'ING' sequence on {difficulty} board. Retrying...")
                 continue
             
-            if min_words <= count <= max_words or _attempt >= 5:
+            if min_words <= count <= max_words or _attempt >= 50:
                 if min_words <= count <= max_words:
                     # USER REQUEST: Enforce uniqueness ratio match for the selected difficulty inside emergency loop too.
                     ratio = self.get_uniqueness_ratio(board, list(final_solve.keys()), rows, cols, dictionary, depth)
                     min_ratio, max_ratio = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth)
-                    if _attempt <= 3:
+                    if _attempt <= 45:
                         if not (min_ratio <= ratio <= max_ratio):
                             print(f"[BoardGen] [Emergency] ATTEMPT {_attempt}: Uniqueness ratio {ratio:.2f} is outside range {min_ratio}-{max_ratio} for target {difficulty}. Retrying...")
                             continue
-                if _attempt >= 5:
-                    print(f"[BoardGen] ⚠️ EMERGENCY LOOP TIMEOUT: Failed to hit target after 5 attempts. Returning best effort with {count} words.")
+                if _attempt >= 50:
+                    print(f"[BoardGen] ⚠️ EMERGENCY LOOP TIMEOUT: Failed to hit target after 50 attempts. Returning best effort with {count} words.")
                 else:
                     print(f"[BoardGen] ✓ EMERGENCY COMPLIANCE SUCCESS: {count} words after {_attempt} emergency tries.")
                 # Fallback metadata
