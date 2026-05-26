@@ -520,6 +520,80 @@ class BoardGenerator:
         if attempt_idx == max_attempts - 1:
             print(f"[BoardGen] ⚠️ Sequence Sanitizer reached max attempts ({max_attempts}). Some ING sequences may remain.")
 
+    def _guarantee_no_ing(self, board, depth=1, protected_positions=None):
+        """Absolutely, ironclad guarantee that no 'ING' sequence remains on the board."""
+        is_3d = (depth > 1) or (len(board) == 6 and isinstance(board[0], list) and isinstance(board[0][0], list))
+        depth_val = 6 if (len(board) == 6 and is_3d) else depth
+        R = len(board[0]) if is_3d else len(board)
+        C = len(board[0][0]) if is_3d else len(board[0])
+        
+        protected = set()
+        if protected_positions:
+            for cell in protected_positions:
+                if isinstance(cell, (list, tuple)):
+                    protected.add(tuple(cell))
+
+        # If it has "ING" sequence, break it up by replacing one of the tiles (preferably unprotected, but force-replace if needed)
+        for _ in range(50):
+            if not self._has_ing_sequence(board, depth):
+                break
+                
+            # Scan and find the first ING path
+            found_path = None
+            
+            def find_path(idx, r, c, f, current_path):
+                if idx == 3:
+                    return current_path
+                target = "ING"[idx]
+                for df in ([-1, 0, 1] if is_3d else [0]):
+                    for dr in [-1, 0, 1]:
+                        for dc in [-1, 0, 1]:
+                            if df == 0 and dr == 0 and dc == 0:
+                                continue
+                            nf, nr, nc = f + df, r + dr, c + dc
+                            if 0 <= nf < depth_val and 0 <= nr < R and 0 <= nc < C:
+                                pos = (nf, nr, nc) if is_3d else (nr, nc)
+                                if pos not in current_path:
+                                    val = board[nf][nr][nc] if is_3d else board[nr][nc]
+                                    options = str(val).upper().split('/')
+                                    if target in options:
+                                        res = find_path(idx + 1, nr, nc, nf, current_path + [pos])
+                                        if res: return res
+                return None
+
+            for f in range(depth_val):
+                for r in range(R):
+                    for c in range(C):
+                        val = board[f][r][c] if is_3d else board[r][c]
+                        options = str(val).upper().split('/')
+                        if 'I' in options:
+                            pos = (f, r, c) if is_3d else (r, c)
+                            found_path = find_path(1, r, c, f, [pos])
+                            if found_path:
+                                break
+                    if found_path: break
+                if found_path: break
+                
+            if found_path:
+                # We have the path, let's break it!
+                # Try unprotected cells first, then fallback to any cell in the path
+                break_cell = None
+                for p in found_path:
+                    if p not in protected:
+                        break_cell = p
+                        break
+                if not break_cell:
+                    break_cell = found_path[-1] # Force replace the G tile as absolute fallback!
+                
+                # Replace with a safe, non-ING letter. Standard replacements: 'P', 'R', 'L', 'S'
+                new_char = random.choice(['P', 'R', 'L', 'S', 'T', 'C', 'M'])
+                # If Either/Or is used, keep it as a safe single character to avoid further complexity
+                if is_3d:
+                    board[break_cell[0]][break_cell[1]][break_cell[2]] = new_char
+                else:
+                    board[break_cell[0]][break_cell[1]] = new_char
+                print(f"[BoardGen] 🛡️ GUARANTEE: Force broke 'ING' sequence at {break_cell} with '{new_char}'")
+
     def _is_creating_forbidden_sequence(self, board, char, r, c, f, target_seq="ING", depth=1):
         """Highly optimized local check to see if placing 'char' at (r, c, f) creates forbidden sequence."""
         # 1. Base check: is char even in the forbidden set?
@@ -553,6 +627,13 @@ class BoardGenerator:
                 pass
             return None
 
+        def has_char(nf, nr, nc, target_char):
+            val = get_val(nf, nr, nc)
+            if val is None:
+                return False
+            options = str(val).upper().split('/')
+            return target_char.upper() in options
+
         # 2. Local neighborhood check for "ING" specifically
         # Case A: Placing 'I'
         if char == "I":
@@ -571,7 +652,7 @@ class BoardGenerator:
                                 neighbors.append((nf, nr, nc))
 
             for nf, nr, nc in neighbors:
-                if get_val(nf, nr, nc) == "N":
+                if has_char(nf, nr, nc, "N"):
                     # Search for G neighbor of THIS N
                     n2_neighbors = []
                     if depth_val == 6:
@@ -589,7 +670,7 @@ class BoardGenerator:
                     for n2f, n2r, n2c in n2_neighbors:
                         if (n2f, n2r, n2c) == (f, r, c):
                             continue  # Don't revisit 'I'
-                        if get_val(n2f, n2r, n2c) == "G":
+                        if has_char(n2f, n2r, n2c, "G"):
                             return True
         # Case B: Placing 'N'
         elif char == "N":
@@ -611,10 +692,9 @@ class BoardGenerator:
                                 neighbors.append((nf, nr, nc))
 
             for nf, nr, nc in neighbors:
-                val = get_val(nf, nr, nc)
-                if val == "I":
+                if has_char(nf, nr, nc, "I"):
                     has_i = True
-                if val == "G":
+                if has_char(nf, nr, nc, "G"):
                     has_g = True
                 if has_i and has_g:
                     return True
@@ -635,7 +715,7 @@ class BoardGenerator:
                                 neighbors.append((nf, nr, nc))
 
             for nf, nr, nc in neighbors:
-                if get_val(nf, nr, nc) == "N":
+                if has_char(nf, nr, nc, "N"):
                     n2_neighbors = []
                     if is_3d and depth_val == 6:
                         n2_neighbors = self._get_cube_neighbors(nf, nr, nc)
@@ -652,7 +732,7 @@ class BoardGenerator:
                     for n2f, n2r, n2c in n2_neighbors:
                         if (n2f, n2r, n2c) == (f, r, c):
                             continue
-                        if get_val(n2f, n2r, n2c) == "I":
+                        if has_char(n2f, n2r, n2c, "I"):
                             return True
 
         # PROSCRIBED SEQUENCES: SEX, FUCK, SHIT, etc. (Safety & Public Friendly boards)
@@ -676,10 +756,12 @@ class BoardGenerator:
                                 continue
                             nf, nr, nc = f + df, r + dr, c + dc
                             if 0 <= nf < depth_val and 0 <= nr < rows_val and 0 <= nc < cols_val:
-                                v = get_val(nf, nr, nc)
-                                if v == prev_t or v == next_t:
-                                    # High probability of forming the word. Block.
-                                    return True
+                                v_val = get_val(nf, nr, nc)
+                                if v_val:
+                                    v_opts = str(v_val).upper().split('/')
+                                    if (prev_t and prev_t in v_opts) or (next_t and next_t in v_opts):
+                                        # High probability of forming the word. Block.
+                                        return True
         return False
 
     def _has_forbidden_sequence(self, board, sequence="ING", depth=1):
@@ -1095,6 +1177,9 @@ class BoardGenerator:
                     
                     found_valid = False
                     for other in sampled_others:
+                        # Prevent creating forbidden sequence on Medium/Hard
+                        if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, other, r, c, 0, depth=depth):
+                            continue
                         board[r][c] = f"{sorted([orig, other])[0]}/{sorted([orig, other])[1]}"
                         
                         if not self._has_either_or_ambiguity(board, dictionary):
@@ -1182,6 +1267,9 @@ class BoardGenerator:
                     bonus_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
                     if depth > 1: bonus_cell = (random.randint(0, depth-1), bonus_cell[0], bonus_cell[1])
                 
+                if difficulty in ["Medium", "Hard"]:
+                    self._guarantee_no_ing(board, depth, protected_positions=embedded_path)
+
                 if bonus_cell:
                     all_words_dict = self._solve_board(
                         board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=10.0, bonus_cell=bonus_cell
@@ -1322,6 +1410,9 @@ class BoardGenerator:
                     
                     found_valid = False
                     for other in sampled_others:
+                        # Prevent creating forbidden sequence on Medium/Hard
+                        if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, other, r, c, 0, depth=depth):
+                            continue
                         board[r][c] = f"{sorted([orig, other])[0]}/{sorted([orig, other])[1]}"
                         
                         if not self._has_either_or_ambiguity(board, dictionary):
@@ -1375,6 +1466,9 @@ class BoardGenerator:
                 
                 final_bonus = sorted(suitable, key=len, reverse=True)[0] if suitable else None
                 bonus_cell = None
+                if difficulty in ["Medium", "Hard"]:
+                    self._guarantee_no_ing(board, depth, protected_positions=all_excluded)
+
                 if final_bonus:
                     bonus_cell = final_solve[final_bonus][0]
                 if bonus_cell:
@@ -2392,6 +2486,8 @@ class BoardGenerator:
                     if char != (board[f_p][r_p][c_p] if depth > 1 else board[r_p][c_p]):
                         continue
                 if self._is_abundance_limited(board, char, board_format=board_format, depth=depth):
+                    continue
+                if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, char, r_p, c_p, f_p, depth=depth):
                     continue
                     
                 if depth > 1: board[f_p][r_p][c_p] = char
