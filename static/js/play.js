@@ -59,7 +59,7 @@ let lastRenderedGrayed = null;
 let lastRenderedRotation = null;
 let lastRenderedDensityJSON = null;
 let hasPlayedIntermissionBell = false; // Flag for next round notification
-let findFriendsMode = false;
+let playersFilterMode = 'everyone'; // 'everyone', 'friends', 'me'
 let userFriendsCache = [];
 let lastSpinnerDataJSON = null; // Detect if parameters have actually changed
 
@@ -1255,12 +1255,8 @@ async function updateGameState(incomingState = null) {
                 const remainingList = document.getElementById('remaining-words-list');
                 if (remainingList) remainingList.innerHTML = '';
 
-                // Reset Find Friends mode
-                findFriendsMode = false;
-                const findFriendsBtn = document.getElementById('find-friends-btn');
-                if (findFriendsBtn) findFriendsBtn.classList.remove('active');
-                const showEveryoneBtn = document.getElementById('show-everyone-btn');
-                if (showEveryoneBtn) showEveryoneBtn.classList.remove('active');
+                // Reset Players Filter mode
+                playersFilterMode = 'everyone';
 
                 // Clear and Focus Word Input on Game Start
                 if (window.chatFocusTimeout) {
@@ -1956,6 +1952,11 @@ function renderPlayers(players, currentUser = null, state = null) {
         if (findMeBtn) findMeBtn.style.display = 'block';
         if (findFriendsBtn) findFriendsBtn.style.display = 'block';
         if (showEveryoneBtn) showEveryoneBtn.style.display = 'block';
+
+        // Update active highlight classes dynamically
+        if (findMeBtn) findMeBtn.classList.toggle('active', playersFilterMode === 'me');
+        if (findFriendsBtn) findFriendsBtn.classList.toggle('active', playersFilterMode === 'friends');
+        if (showEveryoneBtn) showEveryoneBtn.classList.toggle('active', playersFilterMode === 'everyone');
     } else {
         if (headingEl) headingEl.textContent = `Players`;
         if (findMeBtn) findMeBtn.style.display = 'none';
@@ -1978,10 +1979,14 @@ function renderPlayers(players, currentUser = null, state = null) {
     // For now, render ALL players (scrollable if > 8)
     let itemsToRender = sortedPlayers.map((p, idx) => ({ ...p, originalRank: idx + 1 }));
 
-    if (findFriendsMode && currentUser) {
+    if (playersFilterMode === 'friends' && currentUser) {
         itemsToRender = itemsToRender.filter(p =>
             p.username.toLowerCase() === (currentUser || "").toLowerCase() ||
             userFriendsCache.some(f => f.username.toLowerCase() === p.username.toLowerCase())
+        );
+    } else if (playersFilterMode === 'me' && currentUser) {
+        itemsToRender = itemsToRender.filter(p =>
+            p.username.toLowerCase() === (currentUser || "").toLowerCase()
         );
     }
 
@@ -2270,6 +2275,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const findMeBtn = document.getElementById('find-me-btn');
     if (findMeBtn) {
         findMeBtn.addEventListener('click', () => {
+            playersFilterMode = 'me';
+            
+            // Re-render players
+            if (window.lastGameState) {
+                const currentUsername = window.lastGameState.your_username || window.currentUser || localStorage.getItem('morpheme_username');
+                renderPlayers(window.lastGameState.players, currentUsername, window.lastGameState);
+            }
+
             const listEl = document.getElementById('players-list');
             const myCard = listEl.querySelector('.current-user');
             if (myCard) {
@@ -2298,8 +2311,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const findFriendsBtn = document.getElementById('find-friends-btn');
     if (findFriendsBtn) {
         findFriendsBtn.addEventListener('click', async () => {
-            if (!findFriendsMode) {
-                // Fetch friends list
+            playersFilterMode = 'friends';
+            
+            // Fetch friends list if not loaded
+            if (userFriendsCache.length === 0) {
                 try {
                     const resp = await fetch('/api/friends/list');
                     if (resp.ok) {
@@ -2312,8 +2327,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error('Failed to fetch friends for filtering:', e);
                 }
             }
-            findFriendsMode = !findFriendsMode;
-            findFriendsBtn.classList.toggle('active', findFriendsMode);
+            
             // Re-render players immediately
             if (window.lastGameState) {
                 const currentUsername = window.lastGameState.your_username || window.currentUser || localStorage.getItem('morpheme_username');
@@ -2325,10 +2339,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const showEveryoneBtn = document.getElementById('show-everyone-btn');
     if (showEveryoneBtn) {
         showEveryoneBtn.addEventListener('click', () => {
-            // Disable Find Friends Mode
-            findFriendsMode = false;
-            const ffBtn = document.getElementById('find-friends-btn');
-            if (ffBtn) ffBtn.classList.remove('active');
+            playersFilterMode = 'everyone';
 
             // Re-render players
             if (window.lastGameState) {
