@@ -174,6 +174,14 @@ class BoardGenerator:
 
     def _get_uniqueness_range(self, difficulty, rows=4, cols=4, dictionary="NWL", depth=1):
         """Get (min, max) ratio range for specified difficulty target."""
+        difficulty = str(difficulty).split()[0].strip()
+        if difficulty not in ["Easy", "Medium", "Hard"]:
+            if "easy" in difficulty.lower() or "beginner" in difficulty.lower():
+                difficulty = "Easy"
+            elif "hard" in difficulty.lower() or "expert" in difficulty.lower() or "difficult" in difficulty.lower():
+                difficulty = "Hard"
+            else:
+                difficulty = "Medium"
         is_large = (rows == 6 and cols == 8) or depth > 1
         is_4x6 = (rows == 4 and cols == 6) or (rows == 6 and cols == 4)
         if rows == 4 and cols == 4 and depth == 1:
@@ -915,6 +923,16 @@ class BoardGenerator:
         # This breaks any process-level determinism from forks/seeds
         import random
         random.seed()
+        
+        # Normalize and strip difficulty of any percent suffix (e.g., "Medium (39%)" -> "Medium")
+        difficulty = str(difficulty).split()[0].strip()
+        if difficulty not in ["Easy", "Medium", "Hard"]:
+            if "easy" in difficulty.lower() or "beginner" in difficulty.lower():
+                difficulty = "Easy"
+            elif "hard" in difficulty.lower() or "expert" in difficulty.lower() or "difficult" in difficulty.lower():
+                difficulty = "Hard"
+            else:
+                difficulty = "Medium"
         # Ensure Mania has a valid single-letter prefix
         if "mania" in str(board_format).lower():
             parts = str(board_format).strip().split()
