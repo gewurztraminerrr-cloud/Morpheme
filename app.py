@@ -2016,13 +2016,13 @@ def get_public_profile(username):
     cursor = conn.execute('SELECT config_key, rating FROM user_ratings WHERE user_id = ?', (user_id,))
     config_ratings = {row[0]: row[1] for row in cursor.fetchall()}
 
-    # Get matching rounds for calculations
+    # Get matching rounds for calculations (Excluding 24h rounds with duration >= 7200)
     cursor_all = conn.execute(f'''
         SELECT room_id, game_type, round_number, board_json, words_json, total_score, 
                round_start_time, round_duration, timestamp, user_rating, performance_ratio, id,
                wpm, total_words_avail, board_dimensions
         FROM round_history
-        WHERE user_id = ? {time_filter}
+        WHERE user_id = ? AND round_duration < 7200 {time_filter}
         ORDER BY timestamp DESC, id DESC
     ''', (user_id,))
     all_rows = cursor_all.fetchall()
