@@ -464,7 +464,8 @@ class BoardGenerator:
                                 pos = (nf, nr, nc) if is_3d else (nr, nc)
                                 if pos not in current_path:
                                     val = board[nf][nr][nc] if is_3d else board[nr][nc]
-                                    if val == target:
+                                    options = str(val).upper().split('/')
+                                    if target in options:
                                         res = find_path(idx + 1, nr, nc, nf, current_path + [pos])
                                         if res: return res
                 return None
@@ -473,7 +474,8 @@ class BoardGenerator:
                 for r in range(rows):
                     for c in range(cols):
                         val = board[f][r][c] if is_3d else board[r][c]
-                        if val == sequence[0]:
+                        options = str(val).upper().split('/')
+                        if sequence[0] in options:
                             pos = (f, r, c) if is_3d else (r, c)
                             path = find_path(1, r, c, f, [pos])
                             if path:
@@ -704,6 +706,45 @@ class BoardGenerator:
                     val = board[f][r][c] if depth_val > 1 else board[r][c]
                     if val == sequence[0]:
                         if find_next(1, r, c, f, {(f, r, c)}, depth_val):
+                            return True
+        return False
+
+    def _has_ing_sequence(self, b, depth=1):
+        """Highly optimized board-wide scan for 'ING' sequence supporting Either/Or formats."""
+        is_3d = (depth > 1) or (len(b) == 6 and isinstance(b[0], list) and isinstance(b[0][0], list))
+        depth_val = 6 if (len(b) == 6 and is_3d) else depth
+        R = len(b[0]) if is_3d else len(b)
+        C = len(b[0][0]) if is_3d else len(b[0])
+
+        def dfs(r, c, f, idx, visited):
+            if idx == 3:
+                return True
+            for df in ([-1, 0, 1] if is_3d else [0]):
+                for dr in [-1, 0, 1]:
+                    for dc in [-1, 0, 1]:
+                        if df == 0 and dr == 0 and dc == 0: continue
+                        nf, nr, nc = f + df, r + dr, c + dc
+                        if 0 <= nf < depth_val and 0 <= nr < R and 0 <= nc < C:
+                            pos = (nf, nr, nc) if is_3d else (nr, nc)
+                            if pos not in visited:
+                                cell_char = str(b[nf][nr][nc] if is_3d else b[nr][nc]).upper()
+                                options = cell_char.split('/')
+                                if "ING"[idx] in options:
+                                    visited.add(pos)
+                                    if dfs(nr, nc, nf, idx + 1, visited):
+                                        return True
+                                    visited.remove(pos)
+            return False
+
+        for f in range(depth_val):
+            for r in range(R):
+                for c in range(C):
+                    cell_char = str(b[f][r][c] if is_3d else b[r][c]).upper()
+                    options = cell_char.split('/')
+                    if 'I' in options:
+                        pos = (f, r, c) if is_3d else (r, c)
+                        visited = {pos}
+                        if dfs(r, c, f, 1, visited):
                             return True
         return False
 
@@ -1084,45 +1125,7 @@ class BoardGenerator:
                 # USER MANDATE: Ensure no "ING" or "INGS" path sequences exist in Medium or Hard boards!
                 # If they do, toss the board and generate another one (continue)!
                 if difficulty in ["Medium", "Hard"]:
-                    def has_ing_sequence(b):
-                        is_3d = (depth > 1) or (len(b) == 6 and isinstance(b[0], list) and isinstance(b[0][0], list))
-                        depth_val = 6 if (len(b) == 6 and is_3d) else depth
-                        R = len(b[0]) if is_3d else len(b)
-                        C = len(b[0][0]) if is_3d else len(b[0])
-
-                        def dfs(r, c, f, idx, visited):
-                            if idx == 3:
-                                return True
-                            for df in ([-1, 0, 1] if is_3d else [0]):
-                                for dr in [-1, 0, 1]:
-                                    for dc in [-1, 0, 1]:
-                                        if df == 0 and dr == 0 and dc == 0: continue
-                                        nf, nr, nc = f + df, r + dr, c + dc
-                                        if 0 <= nf < depth_val and 0 <= nr < R and 0 <= nc < C:
-                                            pos = (nf, nr, nc) if is_3d else (nr, nc)
-                                            if pos not in visited:
-                                                cell_char = str(b[nf][nr][nc] if is_3d else b[nr][nc]).upper()
-                                                options = cell_char.split('/')
-                                                if "ING"[idx] in options:
-                                                    visited.add(pos)
-                                                    if dfs(nr, nc, nf, idx + 1, visited):
-                                                        return True
-                                                    visited.remove(pos)
-                            return False
-
-                        for f in range(depth_val):
-                            for r in range(R):
-                                for c in range(C):
-                                    cell_char = str(b[f][r][c] if is_3d else b[r][c]).upper()
-                                    options = cell_char.split('/')
-                                    if 'I' in options:
-                                        pos = (f, r, c) if is_3d else (r, c)
-                                        visited = {pos}
-                                        if dfs(r, c, f, 1, visited):
-                                            return True
-                        return False
-
-                    if has_ing_sequence(board):
+                    if self._has_ing_sequence(board, depth):
                         print(f"[BoardGen] ❌ ATTEMPT {attempts}: Board has an 'ING'/'INGS' sequence on {difficulty} board. TOSSING board and generating another one...")
                         continue
 
@@ -1333,6 +1336,11 @@ class BoardGenerator:
                 board, dictionary, (0, 99999), display_min, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=30.0
             )
             count = len(final_solve)
+
+            # USER MANDATE: Ensure no "ING" or "INGS" path sequences exist in Medium or Hard boards inside emergency path too!
+            if difficulty in ["Medium", "Hard"] and self._has_ing_sequence(board, depth):
+                print(f"[BoardGen] ❌ [Emergency] ATTEMPT {_attempt}: Board has forbidden 'ING' sequence on {difficulty} board. Retrying...")
+                continue
             
             if min_words <= count <= max_words or _attempt >= 5:
                 if min_words <= count <= max_words:
