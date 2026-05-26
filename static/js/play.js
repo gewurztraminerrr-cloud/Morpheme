@@ -1947,8 +1947,17 @@ function renderPlayers(players, currentUser = null, state = null) {
     const showEveryoneBtn = document.getElementById('show-everyone-btn');
 
     if (state && state.game_type === 'accumulative') {
-        const totalPeople = (players ? players.length : 0) + (state.spectators ? state.spectators.length : 0);
-        if (headingEl) headingEl.textContent = `Players [${totalPeople}]`;
+        let activePlayerCount = 0;
+        if (state.state === 'intermission' || state.intermission === true) {
+            // Intermission: Count only players who actively participated (did not DNP)
+            activePlayerCount = players ? players.filter(p => 
+                p.words_count > 0 || p.score > 0 || (p.invalid_words && p.invalid_words.length > 0)
+            ).length : 0;
+        } else {
+            // Active: Count all active players currently in the room (excluding spectators)
+            activePlayerCount = players ? players.length : 0;
+        }
+        if (headingEl) headingEl.textContent = `Players [${activePlayerCount}]`;
         if (findMeBtn) findMeBtn.style.display = 'block';
         if (findFriendsBtn) findFriendsBtn.style.display = 'block';
         if (showEveryoneBtn) showEveryoneBtn.style.display = 'block';
