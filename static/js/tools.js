@@ -1659,28 +1659,67 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
 
     // 4. Playback Logic
     const rawWords = round.words || [];
-    // Ensure numeric timestamps (handle legacy string dates)
-    const processedWords = rawWords.map(w => ({
-        ...w,
-        timestamp: w.timestamp ? parseFloat(w.timestamp) : 0
-    }));
-
-    const sortedWords = processedWords.sort((a, b) => a.timestamp - b.timestamp);
     const roundDuration = round.round_duration || 60;
 
-    // START TIME LOGIC: 
+    // START TIME LOGIC:
     // Preferred: round_start_time (absolute s)
-    // Fallback 1: First word timestamp - 5s
+    // Fallback 1: First word timestamp - 2s
     // Fallback 2: Entry timestamp (converted to s)
     let startTime = 0;
     if (round.round_start_time) {
         startTime = parseFloat(round.round_start_time);
-    } else if (sortedWords.length > 0) {
-        startTime = sortedWords[0].timestamp - 2.0; // Start shortly before first word
-        if (startTime < 0) startTime = 0;
     } else {
         startTime = parseFloat(round.timestamp) / 1000 || (Date.now() / 1000);
     }
+
+    // Normalize and convert all timestamps to SECONDS relative to epoch
+    let processedWords = rawWords.map(w => {
+        let ts = 0;
+        // 1. Support multiple possible keys: timestamp, time, time_offset
+        if (w.timestamp !== undefined && w.timestamp !== null) {
+            ts = parseFloat(w.timestamp);
+        } else if (w.time !== undefined && w.time !== null) {
+            ts = parseFloat(w.time);
+        } else if (w.time_offset !== undefined && w.time_offset !== null) {
+            ts = startTime + parseFloat(w.time_offset);
+        } else {
+            ts = startTime; // Fallback to start
+        }
+
+        // 2. Detect millisecond vs second timestamps
+        if (ts > 1000000000000) {
+            ts = ts / 1000.0;
+        }
+
+        return {
+            ...w,
+            timestamp: ts
+        };
+    });
+
+    // Sort words chronologically
+    processedWords.sort((a, b) => a.timestamp - b.timestamp);
+
+    // 3. Fallback: If all words have nearly identical timestamps, distribute them evenly
+    // (e.g., if they were batch-submitted at the end of a round)
+    const allSameTime = processedWords.length > 1 && processedWords.every((w, idx, arr) => 
+        idx === 0 || Math.abs(w.timestamp - arr[0].timestamp) < 0.1
+    );
+
+    if (allSameTime || (processedWords.length === 1 && Math.abs(processedWords[0].timestamp - startTime) < 0.1)) {
+        console.log(`[Replay-Fallback] Batch/identical timestamps detected. Spacing ${processedWords.length} words evenly.`);
+        const N = processedWords.length;
+        processedWords = processedWords.map((w, idx) => {
+            // Distribute them evenly over the first 85% of the round duration so they don't hit the absolute end
+            const offset = (idx + 1) * ((roundDuration * 0.85) / (N + 1));
+            return {
+                ...w,
+                timestamp: startTime + offset
+            };
+        });
+    }
+
+    const sortedWords = processedWords;
 
     console.log(`[Review] Playback Setup: ${sortedWords.length} words, duration ${roundDuration}s, startTime ${startTime}`);
     if (sortedWords.length > 0) {
@@ -1756,6 +1795,13 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     if (startBtn) {
         startBtn.onclick = () => {
             console.log(`[Review] Starting Replay...`);
+            
+            // Bulletproof cleanup: Stop any currently running interval to prevent overlap
+            if (window.replayInterval) {
+                clearInterval(window.replayInterval);
+                window.replayInterval = null;
+            }
+
             startBtn.classList.add('hidden');
             if (skipBtn) skipBtn.classList.remove('hidden');
             if (progressUI) progressUI.classList.remove('hidden');
@@ -1770,7 +1816,6 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
             let elapsed = 0;
             let wordIndex = 0;
             const tick = 100;
-
 
             // Clear Highlights
             if (boardContainer) {
@@ -1791,7 +1836,7 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
                 // Append new words in order
                 while (wordIndex < sortedWords.length) {
                     const word = sortedWords[wordIndex];
-                    const wTimestamp = floatTimestamp(word.timestamp);
+                    const wTimestamp = parseFloat(word.timestamp) || 0;
                     const relWordTime = wTimestamp - startTime;
 
                     if (elapsed >= relWordTime || isNaN(relWordTime)) {
@@ -1878,11 +1923,6 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
             if (window.replayInterval) clearInterval(window.replayInterval);
             showAllWords();
         };
-    }
-
-    // Helper for timestamp
-    function floatTimestamp(ts) {
-        return ts ? parseFloat(ts) : 0;
     }
 };
 

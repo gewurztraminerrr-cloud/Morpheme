@@ -150,7 +150,7 @@ async function submitWord(word) {
         const data = await res.json();
 
         if (data.valid) {
-            gameState.foundWords.push({ word: word, points: data.points });
+            gameState.foundWords.push({ word: word, points: data.points, timestamp: Date.now() / 1000 });
             gameState.score += data.points;
             updateScoreUI();
             addFoundWordUI(word, data.points);
