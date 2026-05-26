@@ -1635,7 +1635,11 @@ class BoardGenerator:
             if isinstance(dictionary, str):
                 dict_name = dictionary.upper()
                 import os
-                if difficulty in ["Medium", "Hard"]:
+                
+                # Check if running on localhost
+                is_localhost = "/Users/jeffbabiak" in os.path.abspath(__file__)
+                
+                if difficulty in ["Medium", "Hard"] and not is_localhost:
                     # Load unique set for Medium/Hard (e.g. uniqueNWL.txt)
                     loaded_dict = self._get_difficulty_set(dict_name)
                     if loaded_dict:
@@ -1645,13 +1649,14 @@ class BoardGenerator:
                         print(f"[BoardGen] ⚠️ Failed to load unique set for {dict_name}. Using fallback words.")
                         dictionary = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
                 else:
-                    # Load full dictionary for Easy (e.g. NWL.txt)
+                    # Load full dictionary for Easy (e.g. NWL.txt) OR for Medium/Hard on localhost
                     base_dir = os.path.dirname(os.path.abspath(__file__))
                     path = os.path.join(base_dir, 'dictionaries', f"{dict_name}.txt")
                     try:
                         with open(path, "r") as f:
                             dictionary = [line.strip().upper() for line in f if line.strip()]
-                        print(f"[BoardGen] Using FULL dictionary ({dict_name}.txt) for Easy Word Soup.")
+                        source_desc = f"Localhost {difficulty}" if is_localhost else "Easy"
+                        print(f"[BoardGen] Using FULL dictionary ({dict_name}.txt) for {source_desc} Word Soup.")
                     except Exception as e:
                         print(f"[BoardGen] Error loading full dictionary {dict_name}: {e}. Using fallback words.")
                         dictionary = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
