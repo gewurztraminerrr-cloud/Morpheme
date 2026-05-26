@@ -213,9 +213,9 @@ class SpinnerSet:
             is_greatest_length = True
 
         if is_greatest_length:
-            # USER REQUEST: Bring the 50-100 word count back, 19%, only if greatest word count of the room (e.g. 5L for 4x4) is paired.
+            # USER REQUEST: 50-100 words (Greatest Min-Length Only) 9%
             choices = ['50-100', '100-200', '200-300', '300-400', '500+']
-            weights = [19, 30, 30, 20, 1]
+            weights = [9, 30, 30, 30, 1]
         else:
             # Standard rebalanced odds: 33% 100-200, 33% 200-300, 33% 300-400, 1% 500+
             choices = ['100-200', '200-300', '300-400', '500+']
