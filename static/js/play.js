@@ -1994,9 +1994,12 @@ function renderPlayers(players, currentUser = null, state = null) {
             userFriendsCache.some(f => f.username.toLowerCase() === p.username.toLowerCase())
         );
     } else if (playersFilterMode === 'me' && currentUser) {
-        itemsToRender = itemsToRender.filter(p =>
-            p.username.toLowerCase() === (currentUser || "").toLowerCase()
-        );
+        const myIdx = itemsToRender.findIndex(p => p.username.toLowerCase() === (currentUser || "").toLowerCase());
+        if (myIdx !== -1) {
+            const start = Math.max(0, myIdx - 2);
+            const end = Math.min(itemsToRender.length, myIdx + 3);
+            itemsToRender = itemsToRender.slice(start, end);
+        }
     }
 
     const html = itemsToRender.map((p) => {
