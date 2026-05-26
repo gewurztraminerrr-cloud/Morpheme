@@ -229,13 +229,7 @@ class BoardGenerator:
 
     def get_difficulty_label(self, ratio, rows=4, cols=4, dictionary="NWL", depth=1, board=None, target_difficulty=None):
         """Derive difficulty label strictly from the uniqueness ratio achieved to ensure absolute parity."""
-        # Check if running on localhost
-        import os
-        is_localhost = "/Users/jeffbabiak" in os.path.abspath(__file__)
-        if is_localhost and target_difficulty:
-            base_diff = str(target_difficulty).split(' ')[0]
-            if base_diff in ["Easy", "Medium", "Hard"]:
-                return base_diff
+        # Derive difficulty label strictly from the uniqueness ratio achieved to ensure absolute parity.
 
         # Defensive casting to ensure math logic works
         try:
@@ -1211,8 +1205,7 @@ class BoardGenerator:
                 ratio = self.get_uniqueness_ratio(board, list(all_words_dict.keys()), rows, cols, dictionary, depth)
                 min_ratio, max_ratio = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth)
                 
-                is_localhost = "/Users/jeffbabiak" in os.path.abspath(__file__)
-                if not is_localhost and attempts <= 8 and (time.time() - start_time < timeout - 1.5):
+                if attempts <= 8 and (time.time() - start_time < timeout - 1.5):
                     if not (min_ratio <= ratio <= max_ratio):
                         print(f"[BoardGen] ATTEMPT {attempts}: Board uniqueness ratio {ratio:.2f} is outside range {min_ratio}-{max_ratio} for target {difficulty}. Retrying...")
                         continue
@@ -1447,8 +1440,7 @@ class BoardGenerator:
                     # USER REQUEST: Enforce uniqueness ratio match for the selected difficulty inside emergency loop too.
                     ratio = self.get_uniqueness_ratio(board, list(final_solve.keys()), rows, cols, dictionary, depth)
                     min_ratio, max_ratio = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth)
-                    is_localhost = "/Users/jeffbabiak" in os.path.abspath(__file__)
-                    if not is_localhost and _attempt <= 3:
+                    if _attempt <= 3:
                         if not (min_ratio <= ratio <= max_ratio):
                             print(f"[BoardGen] [Emergency] ATTEMPT {_attempt}: Uniqueness ratio {ratio:.2f} is outside range {min_ratio}-{max_ratio} for target {difficulty}. Retrying...")
                             continue
@@ -1740,10 +1732,7 @@ class BoardGenerator:
                 dict_name = dictionary.upper()
                 import os
                 
-                # Check if running on localhost
-                is_localhost = "/Users/jeffbabiak" in os.path.abspath(__file__)
-                
-                if difficulty in ["Medium", "Hard"] and not is_localhost:
+                if difficulty in ["Medium", "Hard"]:
                     # Load unique set for Medium/Hard (e.g. uniqueNWL.txt)
                     loaded_dict = self._get_difficulty_set(dict_name)
                     if loaded_dict:
@@ -1753,14 +1742,13 @@ class BoardGenerator:
                         print(f"[BoardGen] ⚠️ Failed to load unique set for {dict_name}. Using fallback words.")
                         dictionary = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
                 else:
-                    # Load full dictionary for Easy (e.g. NWL.txt) OR for Medium/Hard on localhost
+                    # Load full dictionary for Easy (e.g. NWL.txt)
                     base_dir = os.path.dirname(os.path.abspath(__file__))
                     path = os.path.join(base_dir, 'dictionaries', f"{dict_name}.txt")
                     try:
                         with open(path, "r") as f:
                             dictionary = [line.strip().upper() for line in f if line.strip()]
-                        source_desc = f"Localhost {difficulty}" if is_localhost else "Easy"
-                        print(f"[BoardGen] Using FULL dictionary ({dict_name}.txt) for {source_desc} Word Soup.")
+                        print(f"[BoardGen] Using FULL dictionary ({dict_name}.txt) for Easy Word Soup.")
                     except Exception as e:
                         print(f"[BoardGen] Error loading full dictionary {dict_name}: {e}. Using fallback words.")
                         dictionary = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
