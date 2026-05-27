@@ -1773,18 +1773,32 @@ class BoardGenerator:
                         
         # Determine number of words and length range based on grid size
         num_cells = rows * cols
-        if num_cells <= 16:  # 4x4
-            min_len, max_len = 5, 7
-            num_words_to_embed = random.randint(15, 20)
-        elif num_cells <= 24:  # 4x6
-            min_len, max_len = 5, 7
-            num_words_to_embed = random.randint(20, 25)
-        elif num_cells <= 35:  # 5x7
-            min_len, max_len = 7, 10
-            num_words_to_embed = 30
-        else:  # 6x8 / Cube
-            min_len, max_len = 7, 10
-            num_words_to_embed = 45
+        if difficulty in ["Medium", "Hard"]:
+            if num_cells <= 16:  # 4x4
+                min_len, max_len = 5, 7
+                num_words_to_embed = 30
+            elif num_cells <= 24:  # 4x6
+                min_len, max_len = 5, 7
+                num_words_to_embed = 45
+            elif num_cells <= 35:  # 5x7
+                min_len, max_len = 6, 9
+                num_words_to_embed = 45
+            else:  # 6x8 / Cube
+                min_len, max_len = 6, 10
+                num_words_to_embed = 60
+        else:
+            if num_cells <= 16:  # 4x4
+                min_len, max_len = 5, 7
+                num_words_to_embed = random.randint(15, 20)
+            elif num_cells <= 24:  # 4x6
+                min_len, max_len = 5, 7
+                num_words_to_embed = random.randint(20, 25)
+            elif num_cells <= 35:  # 5x7
+                min_len, max_len = 7, 10
+                num_words_to_embed = 30
+            else:  # 6x8 / Cube
+                min_len, max_len = 7, 10
+                num_words_to_embed = 45
 
         if dictionary:
             valid_words = [w for w in dictionary if min_len <= len(w) <= max_len and not w.upper().endswith("ING") and not w.upper().endswith("INGS")]
