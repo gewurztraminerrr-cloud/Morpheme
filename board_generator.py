@@ -182,8 +182,10 @@ class BoardGenerator:
                 difficulty = "Hard"
             else:
                 difficulty = "Medium"
-        is_large = (rows == 6 and cols == 8) or depth > 1
+        is_5x7 = (rows == 5 and cols == 7) or (rows == 7 and cols == 5)
+        is_6x8 = (rows == 6 and cols == 8) or (rows == 8 and cols == 6)
         is_4x6 = (rows == 4 and cols == 6) or (rows == 6 and cols == 4)
+        is_cube = depth > 1
         if rows == 4 and cols == 4 and depth == 1:
             ranges = {
                 "Easy": (0.0, 0.15),
@@ -196,7 +198,13 @@ class BoardGenerator:
                 "Medium": (0.20, 0.35),
                 "Hard": (0.36, 1.0)
             }
-        elif is_large:
+        elif is_5x7 or is_6x8:
+            ranges = {
+                "Easy": (0.0, 0.39),
+                "Medium": (0.40, 0.59),
+                "Hard": (0.60, 1.0)
+            }
+        elif is_cube:
             ranges = {
                 "Easy": (0.0, 0.30),
                 "Medium": (0.31, 0.44),
@@ -250,8 +258,10 @@ class BoardGenerator:
             print(f"[BoardGen-Diff] ERROR parsing ratio '{ratio}': {e}")
             return "Easy" # Safe fallback
 
-        is_large = (rows == 6 and cols == 8) or depth > 1
+        is_5x7 = (rows == 5 and cols == 7) or (rows == 7 and cols == 5)
+        is_6x8 = (rows == 6 and cols == 8) or (rows == 8 and cols == 6)
         is_4x6 = (rows == 4 and cols == 6) or (rows == 6 and cols == 4)
+        is_cube = depth > 1
         if rows == 4 and cols == 4 and depth == 1:
             if rat >= 0.30:
                 return "Hard"
@@ -266,7 +276,14 @@ class BoardGenerator:
                 return "Medium"
             else:
                 return "Easy"
-        elif is_large:
+        elif is_5x7 or is_6x8:
+            if rat >= 0.60:
+                return "Hard"
+            elif rat >= 0.40:
+                return "Medium"
+            else:
+                return "Easy"
+        elif is_cube:
             if rat >= 0.45:
                 return "Hard"
             elif rat >= 0.31:

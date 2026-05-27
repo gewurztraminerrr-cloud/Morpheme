@@ -2764,7 +2764,11 @@ function updateParameters(state) {
                     if (newUniq >= 0.36) diffLabel = 'Hard';
                     else if (newUniq >= 0.20) diffLabel = 'Medium';
                     else diffLabel = 'Easy';
-                } else if (factBoardDims === '6x8' || factBoardDims === '3x3x3') {
+                } else if (factBoardDims === '5x7' || factBoardDims === '7x5' || factBoardDims === '6x8' || factBoardDims === '8x6') {
+                    if (newUniq >= 0.60) diffLabel = 'Hard';
+                    else if (newUniq >= 0.40) diffLabel = 'Medium';
+                    else diffLabel = 'Easy';
+                } else if (factBoardDims === '3x3x3') {
                     if (newUniq >= 0.45) diffLabel = 'Hard';
                     else if (newUniq >= 0.31) diffLabel = 'Medium';
                     else diffLabel = 'Easy';
