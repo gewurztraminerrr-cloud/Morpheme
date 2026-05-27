@@ -1123,6 +1123,10 @@ class BoardGenerator:
                 board = self._apply_io_b_uniqueness_optimization(
                     board, rows, cols, dictionary, all_excluded, min_word_length, depth=depth, difficulty=difficulty, max_words=max_words, is_checkerboard=is_checkerboard
                 )
+            elif strategy == "WordSoup":
+                # Do NOT optimize Word Soup boards with common letter Density sweeps!
+                # This preserves all embedded unique words and thematic structure intact.
+                pass
             else:
                 board = self._create_2000plus_board(
                     rows, cols, dictionary, is_checkerboard, board, all_excluded, "Density",
