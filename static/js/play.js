@@ -1379,6 +1379,11 @@ async function updateGameState(incomingState = null) {
             wordsStats.style.display = activeWordsTab === 'found' ? 'block' : 'none';
         }
 
+        // Toggle Definitions Panel Visibility (Confined to Found/Words tab on all devices)
+        if (defPanel) {
+            defPanel.style.display = activeWordsTab === 'found' ? '' : 'none';
+        }
+
         // 2. Render Tab Contents
 
         // --- Shared Found Words strings (for counting and highlighting) ---
@@ -5553,6 +5558,12 @@ document.addEventListener('click', (e) => {
             const tabId = content.id.replace('tab-content-', '');
             content.classList.toggle('active', activeWordsTab === tabId);
         });
+
+        // Toggle Definitions Panel Visibility (Confined to Found/Words tab on all devices)
+        const defPanel = document.querySelector('.definitions-panel');
+        if (defPanel) {
+            defPanel.style.display = activeWordsTab === 'found' ? '' : 'none';
+        }
 
         // Refresh state visualization
         if (window.lastGameState) {
