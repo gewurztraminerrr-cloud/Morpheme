@@ -57,7 +57,7 @@ class SpinnerSet:
         except Exception as e:
             print(f"[SpinnerSet] CRITICAL WRAPPER ERROR: {e}")
             return {
-                'difficulty': random.choice(['Easy', 'Medium', 'Hard']),
+                'difficulty': random.choices(['Easy', 'Medium', 'Hard'], weights=[25, 50, 25])[0],
                 'dictionary': random.choice(['NWL', 'CSW']),
                 'word_count_range': random.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0],
                 'board_format': 'Valued Letters' if is_24h else 'Normal',
@@ -158,7 +158,7 @@ class SpinnerSet:
             print(f"[SpinnerSet] CRITICAL GENERATOR ERROR: {e}")
             # Emergency dynamic fallback to avoid static repetition
             return {
-                'difficulty': random.choice(['Easy', 'Medium', 'Hard']),
+                'difficulty': random.choices(['Easy', 'Medium', 'Hard'], weights=[25, 50, 25])[0],
                 'dictionary': random.choice(['NWL', 'CSW']),
                 'word_count_range': random.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0],
                 'board_format': 'Normal',
