@@ -1729,7 +1729,7 @@ async function updateGameState(incomingState = null) {
                     `;
                 }).join('');
                 
-                cluesListEl.innerHTML = '<div class="clues-grid" style="grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px;">' + clueListHtml + '</div>';
+                cluesListEl.innerHTML = clueListHtml;
             }
         }
 
