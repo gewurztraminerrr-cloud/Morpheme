@@ -2900,7 +2900,7 @@ body.theme-light-brown .word-item.missed {
 /* Clues Grid & Items */
 .clues-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 10px;
     padding: 5px;
 }
