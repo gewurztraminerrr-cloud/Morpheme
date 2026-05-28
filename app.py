@@ -1320,6 +1320,7 @@ def get_dictionary_stats():
     nwl_words = word_validator.nwl_words | word_validator.long_words
     csw_words = word_validator.csw_words | word_validator.long_words
     aw_words = word_validator.added_words
+    long_words = word_validator.long_words
     
     def get_dist(w_set):
         dist = {str(i): 0 for i in range(2, 16)}
@@ -1335,9 +1336,11 @@ def get_dictionary_stats():
         'nwl_total': len(nwl_words),
         'csw_total': len(csw_words),
         'aw_total': len(aw_words),
+        'long_total': len(long_words),
         'nwl_dist': get_dist(nwl_words),
         'csw_dist': get_dist(csw_words),
-        'aw_dist': get_dist(aw_words)
+        'aw_dist': get_dist(aw_words),
+        'long_dist': get_dist(long_words)
     })
 
 @app.route('/api/word_tally/<word>', methods=['GET'])

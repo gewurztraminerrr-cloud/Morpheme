@@ -2947,11 +2947,12 @@
                     <div class="faq-item">
                         <div class="faq-question">What are the different dictionaries used?</div>
                         <div class="faq-answer">
-                            <p>Morpheme supports three distinct word lists/dictionaries that are dynamically spun or configured for each round:</p>
+                            <p>Morpheme supports three distinct word lists/dictionaries that are dynamically spun or configured for each round, alongside a supplementary list for long words:</p>
                             <ul style="margin-top: 10px; margin-bottom: 15px; padding-left: 20px; line-height: 1.5;">
                                 <li><strong>NWL (North American Word List):</strong> The primary dictionary used for standard tournaments and North American wordplay. It currently contains <strong id="faq-nwl-total">-</strong> words.</li>
                                 <li><strong>CSW (Collins Scrabble Words):</strong> The authoritative international Scrabble dictionary, containing <strong id="faq-csw-total">-</strong> words.</li>
                                 <li><strong>AW (Added Words):</strong> A custom moderator-curated dictionary allowing live, customized word additions for dynamic community-driven solving. It currently has <strong id="faq-aw-total">-</strong> words.</li>
+                                <li><strong>16+ List (Supplementary):</strong> A specialized collection of words containing 16 or more letters to support solving on larger grids (5x7, 6x8, and Cubes). It currently has <strong id="faq-long-total">-</strong> words.</li>
                             </ul>
                             <p style="margin-top: 15px; margin-bottom: 10px;">Below is the live distribution of word lengths (2 to 16+ letters) currently loaded in each dictionary:</p>
                             <div class="faq-table-container" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.1); margin-top: 10px; margin-bottom: 10px; overflow-x: auto;">
@@ -2962,11 +2963,12 @@
                                             <th style="padding: 10px; font-weight: 700; color: #60a5fa;">NWL</th>
                                             <th style="padding: 10px; font-weight: 700; color: #f87171;">CSW</th>
                                             <th style="padding: 10px; font-weight: 700; color: #c084fc;">AW</th>
+                                            <th style="padding: 10px; font-weight: 700; color: #fbbf24;">16+ List</th>
                                         </tr>
                                     </thead>
                                     <tbody id="faq-dict-stats-tbody">
                                         <tr>
-                                            <td colspan="4" style="padding: 20px; opacity: 0.6;">Loading live dictionary stats...</td>
+                                            <td colspan="5" style="padding: 20px; opacity: 0.6;">Loading live dictionary stats...</td>
                                         </tr>
                                     </tbody>
                                 </table>

@@ -1910,10 +1910,12 @@ window.loadFAQDictionaryStats = async function() {
             const nwlTotalEl = document.getElementById('faq-nwl-total');
             const cswTotalEl = document.getElementById('faq-csw-total');
             const awTotalEl = document.getElementById('faq-aw-total');
+            const longTotalEl = document.getElementById('faq-long-total');
             
             if (nwlTotalEl) nwlTotalEl.textContent = (data.nwl_total || 0).toLocaleString();
             if (cswTotalEl) cswTotalEl.textContent = (data.csw_total || 0).toLocaleString();
             if (awTotalEl) awTotalEl.textContent = (data.aw_total || 0).toLocaleString();
+            if (longTotalEl) longTotalEl.textContent = (data.long_total || 0).toLocaleString();
             
             // 2. Length breakdown table body
             const tbody = document.getElementById('faq-dict-stats-tbody');
@@ -1931,6 +1933,7 @@ window.loadFAQDictionaryStats = async function() {
                     const nwlCount = data.nwl_dist[len] || 0;
                     const cswCount = data.csw_dist[len] || 0;
                     const awCount = data.aw_dist[len] || 0;
+                    const longCount = data.long_dist[len] || 0;
                     
                     const lenLabel = len === '16+' ? '16+ Letters' : `${len} Letters`;
                     
@@ -1940,6 +1943,7 @@ window.loadFAQDictionaryStats = async function() {
                             <td style="padding: 8px 10px;">${nwlCount.toLocaleString()}</td>
                             <td style="padding: 8px 10px;">${cswCount.toLocaleString()}</td>
                             <td style="padding: 8px 10px; font-weight: ${awCount > 0 ? '700' : 'normal'}; color: ${awCount > 0 ? '#c084fc' : 'inherit'};">${awCount.toLocaleString()}</td>
+                            <td style="padding: 8px 10px; font-weight: ${longCount > 0 ? '700' : 'normal'}; color: ${longCount > 0 ? '#fbbf24' : 'inherit'};">${longCount.toLocaleString()}</td>
                         </tr>
                     `;
                 });
