@@ -1056,6 +1056,59 @@ class GameRoom:
         """
         now = time.time()
         
+        # stuck watchdog: check if intermission is stuck for > 10s at 0:00:00 (timer at 0 and state == intermission)
+        if self.state == 'intermission' and self.time_remaining <= 0:
+            if not hasattr(self, 'intermission_stuck_time'):
+                self.intermission_stuck_time = now
+            elif now - self.intermission_stuck_time > 10.0:
+                print(f"[Watchdog] Intermission stuck for >10s on {self.room_id} loading a board. Re-spinning Spinner Set parameters and starting anew!")
+                
+                # 1. Re-generate spinner parameters
+                from spinner_set import SpinnerSet
+                new_params = SpinnerSet.generate_params(
+                    self.board_dimensions,
+                    is_24h=(self.time_limit >= 7200),
+                    is_split=(self.game_type == 'split'),
+                    previous_params=self.spinner_params
+                )
+                new_params['board_dimensions'] = self.board_dimensions
+                new_params['time_limit'] = self.time_limit
+                
+                # If difficulty is Hard (which is most likely to stall), downgrade to Medium to ensure fast load
+                if new_params.get('difficulty') == 'Hard':
+                    new_params['difficulty'] = 'Medium'
+                
+                self.spinner_params = dict(new_params)
+                self.next_spinner_params = dict(new_params)
+                self.spinner_params_generated = True
+                self.spinner_params_revealed = True
+                self._reveal_sync_complete = True
+                
+                # 2. Reset staging and search flags
+                self.next_round_board = None
+                self.next_round_words = None
+                self.next_round_word_paths = None
+                self.next_round_word_scores = None
+                self.next_round_total_points = 0
+                self.next_round_total_words_count = 0
+                self.next_round_bonus = None
+                self.next_round_bonus_cell = None
+                self.next_round_format = None
+                self.next_round_uniqueness = None
+                
+                self.board_search_started = False
+                self.board_search_loading = False
+                self.starting_round = False
+                
+                # 3. Reset the watchdog stuck timer to give the new search thread a fresh 10s window
+                self.intermission_stuck_time = now
+                
+                # We return None so the heartbeat will proceed to see 'search' milestone next tick
+                return None
+        elif hasattr(self, 'intermission_stuck_time'):
+            # Reset stuck timer if we are no longer in intermission or time_remaining > 0
+            delattr(self, 'intermission_stuck_time')
+
         if getattr(self, 'starting_round', False):
             start_init = getattr(self, '_round_start_init_time', 0)
             if start_init > 0 and (now - start_init > 12.0):
@@ -1066,29 +1119,7 @@ class GameRoom:
             
         # 1. Start Milestone: Threshold is TR=0 during intermission
         if self.state == 'intermission' and self.time_remaining <= 0:
-            # Watchdog for stuck intermission
-            if not hasattr(self, 'intermission_stuck_time'):
-                self.intermission_stuck_time = now
-            elif now - self.intermission_stuck_time > 15:
-                print(f"[Watchdog] Intermission stuck for >15s on {self.room_id}. Forcing active state.")
-                self.state = 'active'
-                self.round_start_time = now
-                # Set a dummy board if empty
-                if not getattr(self, 'board', None):
-                    self.board = [['A','B','C','D'],['E','F','G','H'],['I','J','K','L'],['M','N','O','P']]
-                    self.all_words = {'ABLE', 'BAKER'}
-                    self.complete_words = ['ABLE', 'BAKER']
-                    self.solved_words_with_scores = {'ABLE': {'total': 1, 'base': 1}, 'BAKER': {'total': 2, 'base': 2}}
-                    self.current_min_length = 3
-                    self.total_words_count = 2
-                    self.total_counts_by_len = {'_round': self.current_round, '4': 1, '5': 1}
-                # Reset stuck time
-                delattr(self, 'intermission_stuck_time')
-                return None
             return 'start'
-        elif hasattr(self, 'intermission_stuck_time'):
-            # Reset if we are no longer in intermission or time_remaining > 0
-            delattr(self, 'intermission_stuck_time')
             
         # 2. Parameter Reveal (15s into intermission)
         if self.state == 'intermission':
@@ -3238,9 +3269,14 @@ class RoomManager:
                         )
                         room.next_round_bonus = e_bonus
                         
+                    e_params = dict(room.spinner_params)
                     e_attempts = 0
                     e_results = None
                     while e_attempts < 4:
+                        if room.spinner_params != e_params:
+                            print(f"[RoomManager] Aborting stale emergency board generation for {room_id}: Spinner parameters have changed.")
+                            room.starting_round = False
+                            return False
                         import random
                         random.seed()
                         
