@@ -2973,6 +2973,52 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Q_difficulty_differences -->
+                    <div class="faq-item">
+                        <div class="faq-question">What are the differences between Easy, Medium, and Hard, and why are they set up this way?</div>
+                        <div class="faq-answer">
+                            <p>Board difficulty in Morpheme is mathematically driven by the <strong>Uniqueness Ratio</strong>—the proportion of scorable words on a board that belong to the "Unique" dictionary subsets (words found in only one major dictionary, e.g., in NWL but not CSW, or vice versa). Obscure tournament vocabulary is highly unique, whereas highly common words are shared across dictionaries.</p>
+                            <p style="margin-top: 10px;">By strictly filtering boards based on this ratio and controlling letter frequencies, the system guarantees distinct playing experiences:</p>
+                            
+                            <div class="difficulty-explanation-container" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px; margin-bottom: 15px;">
+                                <!-- Easy -->
+                                <div style="background: rgba(74, 222, 128, 0.05); border-left: 4px solid #4ade80; padding: 12px 15px; border-radius: 4px;">
+                                    <h4 style="margin: 0 0 5px 0; color: #4ade80; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #4ade80;"></span>
+                                        Easy Difficulty
+                                    </h4>
+                                    <p style="margin: 0; font-size: 0.85rem; line-height: 1.5; opacity: 0.9;">
+                                        <strong>Uniqueness Range:</strong> 0% – 15% on standard 4x4 boards (up to 34% on 6x8/Cube grids).<br>
+                                        <strong>Setup & Rationale:</strong> Engineered with high-density vowel and common consonant distributions. These boards favor standard, high-frequency vocabulary. Because almost all words are common and shared across lists, they are highly accessible, easy to spot, and perfectly suited for beginners or fast-paced casual play.
+                                    </p>
+                                </div>
+
+                                <!-- Medium -->
+                                <div style="background: rgba(56, 189, 248, 0.05); border-left: 4px solid #38bdf8; padding: 12px 15px; border-radius: 4px;">
+                                    <h4 style="margin: 0 0 5px 0; color: #38bdf8; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #38bdf8;"></span>
+                                        Medium Difficulty
+                                    </h4>
+                                    <p style="margin: 0; font-size: 0.85rem; line-height: 1.5; opacity: 0.9;">
+                                        <strong>Uniqueness Range:</strong> 16% – 29% on standard 4x4 boards (35% – 49% on 6x8/Cube grids).<br>
+                                        <strong>Setup & Rationale:</strong> Uses balanced standard letter distributions. These boards offer the ultimate competitive sweet spot—blending highly familiar everyday words with a moderate sprinkling of dictionary-specific or tournament-grade anagrams to push intermediate players.
+                                    </p>
+                                </div>
+
+                                <!-- Hard -->
+                                <div style="background: rgba(244, 63, 94, 0.05); border-left: 4px solid #f43f5e; padding: 12px 15px; border-radius: 4px;">
+                                    <h4 style="margin: 0 0 5px 0; color: #f43f5e; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f43f5e;"></span>
+                                        Hard Difficulty
+                                    </h4>
+                                    <p style="margin: 0; font-size: 0.85rem; line-height: 1.5; opacity: 0.9;">
+                                        <strong>Uniqueness Range:</strong> 30% – 100% on standard 4x4 boards (50%+ on 6x8/Cube grids).<br>
+                                        <strong>Setup & Rationale:</strong> Generated using sparse letter frequencies and rare letter sets (incorporating tougher combinations like Z, X, J, K, etc.). These boards demand extensive specialized vocabulary and advanced anagram-scanning skills, populating the grid with complex roots, affixes, and rare tournament-exclusive words.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Q0 -->
                     <div class="faq-item">
                         <div class="faq-question">In what year was Morpheme launched?</div>
