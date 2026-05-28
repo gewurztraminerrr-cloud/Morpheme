@@ -39,7 +39,7 @@ This summary documents the stable state of the Morpheme application as of May 28
 
 ---
 
-**Stable Point Tag (snapshot-current)**: ebfda15 / fa05060  
-**Start Over Tag (START_OVER_POINT_MAY_28)**: fa05060  
+**Stable Point Tag (snapshot-current)**: a34b2c9  
+**Start Over Tag (START_OVER_POINT_MAY_28)**: a34b2c9  
 **GitHub Push**: Completed  
 **Status**: Stable / Production Ready / Synchronized
