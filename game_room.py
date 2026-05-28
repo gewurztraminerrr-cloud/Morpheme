@@ -1057,10 +1057,16 @@ class GameRoom:
         now = time.time()
         
         # stuck watchdog: check if intermission is stuck for > 10s at 0:00:00 (timer at 0 and state == intermission)
-        if self.state == 'intermission' and self.time_remaining <= 0:
-            if not hasattr(self, 'intermission_stuck_time'):
-                self.intermission_stuck_time = now
-            elif now - self.intermission_stuck_time > 10.0:
+        # Determine normal intermission duration
+        intermission_limit = 5 if self.time_limit >= 7200 else 60
+        is_at_or_past_zero = (self.state == 'intermission' and (now - self.intermission_start_time >= intermission_limit))
+        
+        if is_at_or_past_zero:
+            if not getattr(self, 'intermission_stuck_start_time', 0):
+                self.intermission_stuck_start_time = now
+        
+        if getattr(self, 'intermission_stuck_start_time', 0) > 0:
+            if now - self.intermission_stuck_start_time > 10.0:
                 print(f"[Watchdog] Intermission stuck for >10s on {self.room_id} loading a board. Re-spinning Spinner Set parameters and starting anew!")
                 
                 # 1. Re-generate spinner parameters
@@ -1101,13 +1107,10 @@ class GameRoom:
                 self.starting_round = False
                 
                 # 3. Reset the watchdog stuck timer to give the new search thread a fresh 10s window
-                self.intermission_stuck_time = now
+                self.intermission_stuck_start_time = now
                 
                 # We return None so the heartbeat will proceed to see 'search' milestone next tick
                 return None
-        elif hasattr(self, 'intermission_stuck_time'):
-            # Reset stuck timer if we are no longer in intermission or time_remaining > 0
-            delattr(self, 'intermission_stuck_time')
 
         if getattr(self, 'starting_round', False):
             start_init = getattr(self, '_round_start_init_time', 0)
@@ -3556,6 +3559,10 @@ class RoomManager:
                 room.state = 'active'
                 room.round_start_time = time.time()
                 room.midnight_reset_occurred = False # Reset midnight reset flag for 24h rooms
+                if hasattr(room, 'intermission_stuck_start_time'):
+                    delattr(room, 'intermission_stuck_start_time')
+                if hasattr(room, 'intermission_stuck_time'):
+                    delattr(room, 'intermission_stuck_time')
                 
                 room.custom_end_time = 0 
                 
