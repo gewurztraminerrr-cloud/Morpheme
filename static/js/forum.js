@@ -1,5 +1,12 @@
 /* Forum Module for Morpheme */
 
+const parseUTCTimestamp = (isoStr) => {
+    if (!isoStr) return new Date();
+    if (typeof isoStr === 'number') return new Date(isoStr);
+    const dateStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr.replace(' ', 'T') : isoStr.replace(' ', 'T') + 'Z';
+    return new Date(dateStr);
+};
+
 const Forum = {
     categories: [],
     currentCategoryId: null,
@@ -92,7 +99,7 @@ const Forum = {
         const lastViewed = JSON.parse(localStorage.getItem('forum_last_viewed') || '{}');
         
         listEl.innerHTML = this.categories.map(cat => {
-            const lastContent = cat.last_content_at ? new Date(cat.last_content_at).getTime() : 0;
+            const lastContent = cat.last_content_at ? parseUTCTimestamp(cat.last_content_at).getTime() : 0;
             // Use sessionStartTime as default so that ancient posts do not highlight for new sessions
             const lastView = Number(lastViewed[cat.id]) || window.sessionStartTime || Date.now();
             const hasNew = lastContent > lastView;
@@ -232,7 +239,7 @@ const Forum = {
         }
 
         postsList.innerHTML = posts.map(post => {
-            const date = new Date(post.timestamp);
+            const date = parseUTCTimestamp(post.timestamp);
             const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const isComment = post.type === 'comment';
             const postId = post.post_id || post.id;
@@ -323,7 +330,7 @@ const Forum = {
 
     renderPostDetail: function (post, comments) {
         const detailEl = document.getElementById('forum-post-detail');
-        const date = new Date(post.timestamp);
+        const date = parseUTCTimestamp(post.timestamp);
         const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         detailEl.innerHTML = `
@@ -365,8 +372,8 @@ const Forum = {
 
         // Sort comments by timestamp newest first to be absolutely sure
         const sortedComments = [...comments].sort((a, b) => {
-            const dateA = new Date(a.timestamp);
-            const dateB = new Date(b.timestamp);
+            const dateA = parseUTCTimestamp(a.timestamp);
+            const dateB = parseUTCTimestamp(b.timestamp);
             return dateB - dateA;
         });
 
@@ -374,7 +381,7 @@ const Forum = {
             commentsListEl.innerHTML = '<p class="forum-placeholder">No comments yet. Start the discussion!</p>';
         } else {
             commentsListEl.innerHTML = sortedComments.map(c => {
-                const cDate = new Date(c.timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' });
+                const cDate = parseUTCTimestamp(c.timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' });
                 return `
                     <div class="forum-comment">
                         <div class="comment-avatar">${c.username[0].toUpperCase()}</div>

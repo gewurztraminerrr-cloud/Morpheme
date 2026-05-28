@@ -171,7 +171,7 @@
                         // Format timestamp nicely
                         let dateStr = '';
                         try {
-                            const date = new Date(donation.timestamp);
+                            const date = (typeof window.parseUTCTimestamp === 'function') ? window.parseUTCTimestamp(donation.timestamp) : new Date(donation.timestamp);
                             dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
                         } catch (e) {
                             dateStr = donation.timestamp;

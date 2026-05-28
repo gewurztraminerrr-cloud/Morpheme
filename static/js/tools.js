@@ -16,6 +16,14 @@ document.addEventListener('DOMContentLoaded', () => {
     setupPersonalTimer();
 });
 
+// NEW: Global UTC Timestamp Parser to prevent local timezone offsets
+window.parseUTCTimestamp = function(isoStr) {
+    if (!isoStr) return new Date();
+    if (typeof isoStr === 'number') return new Date(isoStr);
+    const dateStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr.replace(' ', 'T') : isoStr.replace(' ', 'T') + 'Z';
+    return new Date(dateStr);
+};
+
 // NEW: Global Tool Switcher Helper
 window.showTool = function(toolId) {
     const navBtns = document.querySelectorAll('.tool-nav-btn');
@@ -1238,7 +1246,7 @@ async function renderProfile(user) {
         // Date Formatting
         let dateStr = '-';
         if (round.timestamp) {
-            const d = new Date(round.timestamp);
+            const d = window.parseUTCTimestamp(round.timestamp);
             try {
                 dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
             } catch (e) {
@@ -1496,7 +1504,7 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     const dateEl = document.getElementById('history-review-date');
     if (dateEl) {
         if (round.timestamp) {
-            const d = new Date(round.timestamp);
+            const d = window.parseUTCTimestamp(round.timestamp);
             try {
                 dateEl.innerText = d.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
             } catch (e) {
@@ -2352,7 +2360,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         if (tablePerf && stats.exceptional_rounds) {
             // Sort chronologically (Conveyor Belt): Timestamp DESC, then Ratio DESC
             const sortedByTimestamp = [...stats.exceptional_rounds].sort((a, b) => {
-                const dateDiff = new Date(b.timestamp) - new Date(a.timestamp);
+                const dateDiff = window.parseUTCTimestamp(b.timestamp) - window.parseUTCTimestamp(a.timestamp);
                 if (dateDiff !== 0) return dateDiff;
                 return b.ratio - a.ratio;
             });
@@ -2371,7 +2379,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             // Sort by Score DESC (Impressiveness), then Timestamp DESC
             const sortedWins = [...stats.winning_rounds].sort((a, b) => {
                 if (b.total_score !== a.total_score) return b.total_score - a.total_score;
-                return new Date(b.timestamp) - new Date(a.timestamp);
+                return window.parseUTCTimestamp(b.timestamp) - window.parseUTCTimestamp(a.timestamp);
             });
             tableWins.innerHTML = sortedWins.map(r => renderAchRow(r, [
                 { val: r.total_score, style: 'font-weight: 800; color: #4ade80;' },
@@ -2385,7 +2393,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         const tableRecent = document.getElementById('ach-table-recent');
         if (tableRecent && stats.recent_rounds) {
             // Sort by Timestamp (True Recency for "Recent" list)
-            const sortedRecent = [...stats.recent_rounds].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            const sortedRecent = [...stats.recent_rounds].sort((a, b) => window.parseUTCTimestamp(b.timestamp) - window.parseUTCTimestamp(a.timestamp));
             tableRecent.innerHTML = sortedRecent.map(r => renderAchRow(r, [
                 { val: r.total_score, style: 'font-weight: 700;' },
                 { val: r.ratio + 'x', style: 'color: rgba(255,255,255,0.4); font-size: 0.75rem;' },
