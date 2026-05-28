@@ -601,256 +601,238 @@
 
 /* Custom Cursor Animation for Multi-Word */
 .length-matters-cursor {
-    animation: moveCursorMulti 16s infinite ease-in-out;
+    animation: moveCursorMulti 30s infinite ease-in-out;
 }
 
 /* Custom Tile Animations */
 .length-matters-tile.tile-1 {
     /* P */
-    animation: highlightMulti1 16s infinite;
+    animation: highlightMulti1 30s infinite;
 }
 
 .length-matters-tile.tile-2 {
     /* L */
-    animation: highlightMulti2 16s infinite;
+    animation: highlightMulti2 30s infinite;
 }
 
 .length-matters-tile.tile-3 {
     /* A */
-    animation: highlightMulti3 16s infinite;
+    animation: highlightMulti3 30s infinite;
 }
 
 .length-matters-tile.tile-4 {
     /* Y */
-    animation: highlightMulti4 16s infinite;
+    animation: highlightMulti4 30s infinite;
 }
 
 /* Keyframes for Multi-Cursor Path 
-   Tiles: 1(28,28), 2(92,28), 3(28,92), 4(92,92)
+   Tiles: 1(P): (28,28), 2(L): (92,28), 3(A): (28,92), 4(Y): (92,92)
 */
 @keyframes moveCursorMulti {
+    /* --- WORD 1: PLAY (P->L->A->Y) [0-10%] --- */
+    0% { top: 28px; left: 28px; opacity: 0; }
+    0.5% { top: 28px; left: 28px; opacity: 1; }
+    2% { top: 28px; left: 92px; }
+    4.5% { top: 92px; left: 28px; }
+    7% { top: 92px; left: 92px; }
+    8.5% { opacity: 1; }
+    9% { opacity: 0; }
+    9.5%, 10% { top: 28px; left: 28px; opacity: 0; }
 
-    /* --- WORD 1: PLAY (1->2->3->4) [0-25%] --- */
-    0% {
-        top: 28px;
-        left: 28px;
-        opacity: 0;
-    }
+    /* --- WORD 2: PALY (P->A->L->Y) [10-20%] --- */
+    10% { top: 28px; left: 28px; opacity: 0; }
+    10.5% { top: 28px; left: 28px; opacity: 1; }
+    12% { top: 92px; left: 28px; }
+    14.5% { top: 28px; left: 92px; }
+    17% { top: 92px; left: 92px; }
+    18.5% { opacity: 1; }
+    19% { opacity: 0; }
+    19.5%, 20% { top: 92px; left: 92px; opacity: 0; }
 
-    /* Start P */
-    2% {
-        top: 28px;
-        left: 28px;
-        opacity: 1;
-    }
+    /* --- WORD 3: YAP (Y->A->P) [20-30%] --- */
+    20% { top: 92px; left: 92px; opacity: 0; }
+    20.5% { top: 92px; left: 92px; opacity: 1; }
+    22.5% { top: 92px; left: 28px; }
+    26% { top: 28px; left: 28px; }
+    28.5% { opacity: 1; }
+    29% { opacity: 0; }
+    29.5%, 30% { top: 28px; left: 28px; opacity: 0; }
 
-    6% {
-        top: 28px;
-        left: 92px;
-    }
+    /* --- WORD 4: PAY (P->A->Y) [30-40%] --- */
+    30% { top: 28px; left: 28px; opacity: 0; }
+    30.5% { top: 28px; left: 28px; opacity: 1; }
+    32.5% { top: 92px; left: 28px; }
+    36% { top: 92px; left: 92px; }
+    38.5% { opacity: 1; }
+    39% { opacity: 0; }
+    39.5%, 40% { top: 92px; left: 92px; opacity: 0; }
 
-    /* L */
-    12% {
-        top: 92px;
-        left: 28px;
-    }
+    /* --- WORD 5: PYA (P->Y->A) [40-50%] --- */
+    40% { top: 28px; left: 28px; opacity: 0; }
+    40.5% { top: 28px; left: 28px; opacity: 1; }
+    42.5% { top: 92px; left: 92px; }
+    46% { top: 92px; left: 28px; }
+    48.5% { opacity: 1; }
+    49% { opacity: 0; }
+    49.5%, 50% { top: 92px; left: 28px; opacity: 0; }
 
-    /* A */
-    18% {
-        top: 92px;
-        left: 92px;
-    }
+    /* --- WORD 6: PLY (P->L->Y) [50-60%] --- */
+    50% { top: 28px; left: 28px; opacity: 0; }
+    50.5% { top: 28px; left: 28px; opacity: 1; }
+    52.5% { top: 28px; left: 92px; }
+    56% { top: 92px; left: 92px; }
+    58.5% { opacity: 1; }
+    59% { opacity: 0; }
+    59.5%, 60% { top: 92px; left: 92px; opacity: 0; }
 
-    /* Y */
-    22% {
-        opacity: 1;
-    }
+    /* --- WORD 7: LAY (L->A->Y) [60-70%] --- */
+    60% { top: 28px; left: 92px; opacity: 0; }
+    60.5% { top: 28px; left: 92px; opacity: 1; }
+    62.5% { top: 92px; left: 28px; }
+    66% { top: 92px; left: 92px; }
+    68.5% { opacity: 1; }
+    69% { opacity: 0; }
+    69.5%, 70% { top: 92px; left: 92px; opacity: 0; }
 
-    24% {
-        opacity: 0;
-    }
+    /* --- WORD 8: LAP (L->A->P) [70-80%] --- */
+    70% { top: 28px; left: 92px; opacity: 0; }
+    70.5% { top: 28px; left: 92px; opacity: 1; }
+    72.5% { top: 92px; left: 28px; }
+    76% { top: 28px; left: 28px; }
+    78.5% { opacity: 1; }
+    79% { opacity: 0; }
+    79.5%, 80% { top: 28px; left: 28px; opacity: 0; }
 
-    /* --- WORD 2: PALY (1->3->2->4) [25-50%] --- */
-    25% {
-        top: 28px;
-        left: 28px;
-        opacity: 0;
-    }
+    /* --- WORD 9: PAL (P->A->L) [80-90%] --- */
+    80% { top: 28px; left: 28px; opacity: 0; }
+    80.5% { top: 28px; left: 28px; opacity: 1; }
+    82.5% { top: 92px; left: 28px; }
+    86% { top: 28px; left: 92px; }
+    88.5% { opacity: 1; }
+    89% { opacity: 0; }
+    89.5%, 90% { top: 28px; left: 28px; opacity: 0; }
 
-    /* Start P */
-    27% {
-        top: 28px;
-        left: 28px;
-        opacity: 1;
-    }
-
-    33% {
-        top: 92px;
-        left: 28px;
-    }
-
-    /* A */
-    39% {
-        top: 28px;
-        left: 92px;
-    }
-
-    /* L */
-    45% {
-        top: 92px;
-        left: 92px;
-    }
-
-    /* Y */
-    48% {
-        opacity: 1;
-    }
-
-    49% {
-        opacity: 0;
-    }
-
-    /* --- WORD 3: PAY (1->3->4) [50-75%] --- */
-    50% {
-        top: 28px;
-        left: 28px;
-        opacity: 0;
-    }
-
-    /* Start P */
-    52% {
-        top: 28px;
-        left: 28px;
-        opacity: 1;
-    }
-
-    60% {
-        top: 92px;
-        left: 28px;
-    }
-
-    /* A */
-    68% {
-        top: 92px;
-        left: 92px;
-    }
-
-    /* Y */
-    72% {
-        opacity: 1;
-    }
-
-    74% {
-        opacity: 0;
-    }
-
-    /* --- WORD 4: PLY (1->2->4) [75-100%] --- */
-    75% {
-        top: 28px;
-        left: 28px;
-        opacity: 0;
-    }
-
-    /* Start P */
-    77% {
-        top: 28px;
-        left: 28px;
-        opacity: 1;
-    }
-
-    85% {
-        top: 28px;
-        left: 92px;
-    }
-
-    /* L */
-    93% {
-        top: 92px;
-        left: 92px;
-    }
-
-    /* Y */
-    97% {
-        opacity: 1;
-    }
-
-    100% {
-        top: 92px;
-        left: 92px;
-        opacity: 0;
-    }
+    /* --- WORD 10: ALP (A->L->P) [90-100%] --- */
+    90% { top: 92px; left: 28px; opacity: 0; }
+    90.5% { top: 92px; left: 28px; opacity: 1; }
+    92.5% { top: 28px; left: 92px; }
+    96% { top: 28px; left: 28px; }
+    98.5% { opacity: 1; }
+    99% { opacity: 0; }
+    100% { top: 28px; left: 28px; opacity: 0; }
 }
 
-/* Keyframes for Tile Highlights */
-/* Common Active Style */
-/* We can't use a common mixin in pure CSS, so repeated properties */
-
 @keyframes highlightMulti1 {
-
-    /* P (Active in all 4 coords: Start) */
-    0%,
-    2%,
-    22% {
-        background: rgba(0, 255, 255, 0.2);
-        border-color: #00ffff;
-        color: var(--text-primary);
-        text-shadow: 0 0 10px #00ffff;
-    }
-
-    /* PLAY */
-    24%,
-    25% {
+    /* P (Active in 9 out of 10 words) */
+    0%, 9.5% {
         background: rgba(var(--text-primary-rgb), 0.05);
         border-color: rgba(var(--text-primary-rgb), 0.1);
         color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
-
-    27%,
-    48% {
+    0.5%, 9% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
         color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
-
-    /* PALY */
-    49%,
-    50% {
+    9.5%, 10.5% {
         background: rgba(var(--text-primary-rgb), 0.05);
         border-color: rgba(var(--text-primary-rgb), 0.1);
         color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
-
-    52%,
-    72% {
+    10.5%, 19% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
         color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
-
-    /* PAY */
-    74%,
-    75% {
+    19.5%, 25.5% {
         background: rgba(var(--text-primary-rgb), 0.05);
         border-color: rgba(var(--text-primary-rgb), 0.1);
         color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
-
-    77%,
-    97% {
+    26%, 29% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
         color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
-
-    /* PLY */
-    99%,
-    100% {
+    29.5%, 30.5% {
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
+        text-shadow: none;
+    }
+    30.5%, 39% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: var(--text-primary);
+        text-shadow: 0 0 10px #00ffff;
+    }
+    39.5%, 40.5% {
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
+        text-shadow: none;
+    }
+    40.5%, 49% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: var(--text-primary);
+        text-shadow: 0 0 10px #00ffff;
+    }
+    49.5%, 50.5% {
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
+        text-shadow: none;
+    }
+    50.5%, 59% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: var(--text-primary);
+        text-shadow: 0 0 10px #00ffff;
+    }
+    59.5%, 75.5% {
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
+        text-shadow: none;
+    }
+    76%, 79% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: var(--text-primary);
+        text-shadow: 0 0 10px #00ffff;
+    }
+    79.5%, 80.5% {
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
+        text-shadow: none;
+    }
+    80.5%, 89% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: var(--text-primary);
+        text-shadow: 0 0 10px #00ffff;
+    }
+    89.5%, 95.5% {
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
+        text-shadow: none;
+    }
+    96%, 99% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: var(--text-primary);
+        text-shadow: 0 0 10px #00ffff;
+    }
+    99.5%, 100% {
         background: rgba(var(--text-primary-rgb), 0.05);
         border-color: rgba(var(--text-primary-rgb), 0.1);
         color: rgba(var(--text-primary-rgb), 0.3);
@@ -859,63 +841,92 @@
 }
 
 @keyframes highlightMulti2 {
-
-    /* L (2nd in PLAY, 3rd in PALY, Not in PAY, 2nd in PLY) */
-    /* PLAY (2nd) ~6% */
-    0%,
-    5% {
+    /* L (Active in 7 out of 10 words) */
+    0%, 1.5% {
         background: rgba(var(--text-primary-rgb), 0.05);
         border-color: rgba(var(--text-primary-rgb), 0.1);
         color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
-
-    6%,
-    22% {
+    2%, 9% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
         color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
-
-    24%,
-    38% {
+    9.5%, 14% {
         background: rgba(var(--text-primary-rgb), 0.05);
         border-color: rgba(var(--text-primary-rgb), 0.1);
         color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
-
-    /* PALY (3rd) ~39% */
-    39%,
-    48% {
+    14.5%, 19% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
         color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
-
-    49%,
-    84% {
+    19.5%, 52% {
         background: rgba(var(--text-primary-rgb), 0.05);
         border-color: rgba(var(--text-primary-rgb), 0.1);
         color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
-
-    /* PAY (Skipped) */
-
-    /* PLY (2nd) ~85% */
-    85%,
-    97% {
+    52.5%, 59% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
         color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
-
-    99%,
-    100% {
+    59.5%, 60.5% {
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
+        text-shadow: none;
+    }
+    60.5%, 69% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: var(--text-primary);
+        text-shadow: 0 0 10px #00ffff;
+    }
+    69.5%, 70.5% {
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
+        text-shadow: none;
+    }
+    70.5%, 79% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: var(--text-primary);
+        text-shadow: 0 0 10px #00ffff;
+    }
+    79.5%, 85.5% {
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
+        text-shadow: none;
+    }
+    86%, 89% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: var(--text-primary);
+        text-shadow: 0 0 10px #00ffff;
+    }
+    89.5%, 92% {
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
+        text-shadow: none;
+    }
+    92.5%, 99% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: var(--text-primary);
+        text-shadow: 0 0 10px #00ffff;
+    }
+    99.5%, 100% {
         background: rgba(var(--text-primary-rgb), 0.05);
         border-color: rgba(var(--text-primary-rgb), 0.1);
         color: rgba(var(--text-primary-rgb), 0.3);
@@ -924,61 +935,116 @@
 }
 
 @keyframes highlightMulti3 {
-
-    /* A (3rd in PLAY, 2nd in PALY, 2nd in PAY, Not in PLY) */
-    /* PLAY (3rd) ~12% */
-    0%,
-    11% {
+    /* A (Active in 9 out of 10 words) */
+    0%, 4% {
         background: rgba(var(--text-primary-rgb), 0.05);
         border-color: rgba(var(--text-primary-rgb), 0.1);
         color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
-
-    12%,
-    22% {
+    4.5%, 9% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
         color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
-
-    24%,
-    32% {
+    9.5%, 11.5% {
         background: rgba(var(--text-primary-rgb), 0.05);
         border-color: rgba(var(--text-primary-rgb), 0.1);
         color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
-
-    /* PALY (2nd) ~33% */
-    33%,
-    48% {
+    12%, 19% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
         color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
-
-    49%,
-    59% {
+    19.5%, 22% {
         background: rgba(var(--text-primary-rgb), 0.05);
         border-color: rgba(var(--text-primary-rgb), 0.1);
         color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
-
-    /* PAY (2nd) ~60% */
-    60%,
-    72% {
+    22.5%, 29% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
         color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
-
-    74%,
-    100% {
+    29.5%, 32% {
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
+        text-shadow: none;
+    }
+    32.5%, 39% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: var(--text-primary);
+        text-shadow: 0 0 10px #00ffff;
+    }
+    39.5%, 45.5% {
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
+        text-shadow: none;
+    }
+    46%, 49% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: var(--text-primary);
+        text-shadow: 0 0 10px #00ffff;
+    }
+    49.5%, 62% {
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
+        text-shadow: none;
+    }
+    62.5%, 69% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: var(--text-primary);
+        text-shadow: 0 0 10px #00ffff;
+    }
+    69.5%, 72% {
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
+        text-shadow: none;
+    }
+    72.5%, 79% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: var(--text-primary);
+        text-shadow: 0 0 10px #00ffff;
+    }
+    79.5%, 82% {
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
+        text-shadow: none;
+    }
+    82.5%, 89% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: var(--text-primary);
+        text-shadow: 0 0 10px #00ffff;
+    }
+    89.5%, 90% {
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
+        text-shadow: none;
+    }
+    90.5%, 99% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: var(--text-primary);
+        text-shadow: 0 0 10px #00ffff;
+    }
+    99.5%, 100% {
         background: rgba(var(--text-primary-rgb), 0.05);
         border-color: rgba(var(--text-primary-rgb), 0.1);
         color: rgba(var(--text-primary-rgb), 0.3);
@@ -987,78 +1053,92 @@
 }
 
 @keyframes highlightMulti4 {
-
-    /* Y (4th in PLAY, 4th in PALY, 3rd in PAY, 3rd in PLY) -> Always Last */
-    /* PLAY (4th) ~18% */
-    0%,
-    17% {
+    /* Y (Active in 7 out of 10 words) */
+    0%, 6.5% {
         background: rgba(var(--text-primary-rgb), 0.05);
         border-color: rgba(var(--text-primary-rgb), 0.1);
         color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
-
-    18%,
-    22% {
+    7%, 9% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
         color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
-
-    24%,
-    44% {
+    9.5%, 16.5% {
         background: rgba(var(--text-primary-rgb), 0.05);
         border-color: rgba(var(--text-primary-rgb), 0.1);
         color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
-
-    /* PALY (4th) ~45% */
-    45%,
-    48% {
+    17%, 19% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
         color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
-
-    49%,
-    67% {
+    19.5%, 20% {
         background: rgba(var(--text-primary-rgb), 0.05);
         border-color: rgba(var(--text-primary-rgb), 0.1);
         color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
-
-    /* PAY (3rd) ~68% */
-    68%,
-    72% {
+    20.5%, 29% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
         color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
-
-    74%,
-    92% {
+    29.5%, 35.5% {
         background: rgba(var(--text-primary-rgb), 0.05);
         border-color: rgba(var(--text-primary-rgb), 0.1);
         color: rgba(var(--text-primary-rgb), 0.3);
         text-shadow: none;
     }
-
-    /* PLY (3rd) ~93% */
-    93%,
-    97% {
+    36%, 39% {
         background: rgba(0, 255, 255, 0.2);
         border-color: #00ffff;
         color: var(--text-primary);
         text-shadow: 0 0 10px #00ffff;
     }
-
-    99%,
-    100% {
+    39.5%, 42% {
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
+        text-shadow: none;
+    }
+    42.5%, 49% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: var(--text-primary);
+        text-shadow: 0 0 10px #00ffff;
+    }
+    49.5%, 55.5% {
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
+        text-shadow: none;
+    }
+    56%, 59% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: var(--text-primary);
+        text-shadow: 0 0 10px #00ffff;
+    }
+    59.5%, 65.5% {
+        background: rgba(var(--text-primary-rgb), 0.05);
+        border-color: rgba(var(--text-primary-rgb), 0.1);
+        color: rgba(var(--text-primary-rgb), 0.3);
+        text-shadow: none;
+    }
+    66%, 69% {
+        background: rgba(0, 255, 255, 0.2);
+        border-color: #00ffff;
+        color: var(--text-primary);
+        text-shadow: 0 0 10px #00ffff;
+    }
+    69.5%, 100% {
         background: rgba(var(--text-primary-rgb), 0.05);
         border-color: rgba(var(--text-primary-rgb), 0.1);
         color: rgba(var(--text-primary-rgb), 0.3);
