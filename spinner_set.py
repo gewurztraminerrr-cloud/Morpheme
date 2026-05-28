@@ -53,6 +53,23 @@ class SpinnerSet:
                     # If it slipped through or was loaded from a stale state, upgrade the word count range to 100-200
                     res['word_count_range'] = '100-200'
                     print(f"[SpinnerSet] Ironclad corrected mismatched word_count_range for dims={board_dimensions}, min_len={min_word_length} from 50-100 to 100-200.")
+            
+            # Ironclad validation to ensure 100-200 word count does not include forbidden lengths
+            if isinstance(res, dict) and res.get('word_count_range') == '100-200':
+                dims = str(board_dimensions).lower().replace(" ", "")
+                min_word_length = res.get('min_word_length', 3)
+                if '4x4' in dims and min_word_length == 3:
+                    res['min_word_length'] = random.choice([4, 5])
+                    print(f"[SpinnerSet] Wrapper adjusted 4x4 min_len for 100-200 words from 3 to {res['min_word_length']}")
+                elif '4x6' in dims and min_word_length == 4:
+                    res['min_word_length'] = random.choice([5, 6])
+                    print(f"[SpinnerSet] Wrapper adjusted 4x6 min_len for 100-200 words from 4 to {res['min_word_length']}")
+                elif '5x7' in dims and min_word_length == 5:
+                    res['min_word_length'] = random.choice([6, 7])
+                    print(f"[SpinnerSet] Wrapper adjusted 5x7 min_len for 100-200 words from 5 to {res['min_word_length']}")
+                elif '6x8' in dims and min_word_length == 6:
+                    res['min_word_length'] = random.choice([7, 8])
+                    print(f"[SpinnerSet] Wrapper adjusted 6x8 min_len for 100-200 words from 6 to {res['min_word_length']}")
             return res
         except Exception as e:
             print(f"[SpinnerSet] CRITICAL WRAPPER ERROR: {e}")
@@ -101,6 +118,18 @@ class SpinnerSet:
                 if board_format == 'Checkerboard':
                     wc_range = random.choice(['100-200', '200-300'])
                 
+                # Adjust min_word_length for 100-200 word count range to exclude forbidden lengths
+                dims = str(board_dimensions).lower().replace(" ", "")
+                if wc_range == '100-200':
+                    if '4x4' in dims and min_word_length == 3:
+                        min_word_length = random.choices([4, 5], weights=[67, 33])[0]
+                    elif '4x6' in dims and min_word_length == 4:
+                        min_word_length = random.choices([5, 6], weights=[67, 33])[0]
+                    elif '5x7' in dims and min_word_length == 5:
+                        min_word_length = random.choices([6, 7], weights=[67, 33])[0]
+                    elif '6x8' in dims and min_word_length == 6:
+                        min_word_length = random.choices([7, 8], weights=[67, 33])[0]
+
                 bw_len = random.choice([6, 7, 8, 9, 10])
                 if bw_len < min_word_length:
                     bw_len = min_word_length
@@ -120,10 +149,22 @@ class SpinnerSet:
                     # We must still respect dimension-based minimum lengths (especially for 6x8/3x3x3)
                     initial_min = SpinnerSet._spin_min_word_length(board_dimensions)
                     initial_diff = SpinnerSet._spin_difficulty(board_dimensions, initial_min)
+                    initial_wc = SpinnerSet._spin_word_count('NWL', initial_min, initial_diff, board_dimensions)
+                    
+                    if initial_wc == '100-200':
+                        if '4x4' in dims and initial_min == 3:
+                            initial_min = random.choice([4, 5])
+                        elif '4x6' in dims and initial_min == 4:
+                            initial_min = random.choice([5, 6])
+                        elif '5x7' in dims and initial_min == 5:
+                            initial_min = random.choice([6, 7])
+                        elif '6x8' in dims and initial_min == 6:
+                            initial_min = random.choice([7, 8])
+                            
                     return {
                         'min_word_length': initial_min,
                         'difficulty': initial_diff,
-                        'word_count_range': SpinnerSet._spin_word_count('NWL', initial_min, initial_diff, board_dimensions),
+                        'word_count_range': initial_wc,
                         'dictionary': 'NWL',
                         'board_format': 'Normal',
                         'bonus_word_length': max(8, initial_min),
