@@ -2697,7 +2697,8 @@ function updateParameters(state) {
     const factDiff = (preferSp ? (sp.difficulty || state.current_difficulty) : (state.current_difficulty || sp.difficulty)) || 'Medium';
     const factBonus = preferSp ? (sp.bonus_word_length || state.current_bonus_word_length || 0) : ((state.bonus_word ? state.bonus_word.length : state.current_bonus_word_length) || sp.bonus_word_length || 0);
     const factMinLen = (preferSp ? (sp.min_word_length || state.current_min_length) : (state.current_min_length || sp.min_word_length)) || 3;
-    const factDict = (preferSp ? (sp.dictionary || state.current_dictionary) : (state.current_dictionary || sp.dictionary)) || 'NWL';
+    const baseDict = (preferSp ? (sp.dictionary || state.current_dictionary) : (state.current_dictionary || sp.dictionary)) || 'NWL';
+    const factDict = (state.use_added_words === true) ? `${baseDict} + AW` : baseDict;
     const factWordRange = (preferSp ? (sp.word_count_range || state.current_word_count_range) : (state.current_word_count_range || sp.word_count_range)) || 'Random';
     
     let factUniq = 0; 
