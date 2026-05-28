@@ -198,11 +198,17 @@ class BoardGenerator:
                 "Medium": (0.20, 0.35),
                 "Hard": (0.36, 1.0)
             }
-        elif is_5x7 or is_6x8:
+        elif is_5x7:
             ranges = {
-                "Easy": (0.0, 0.39),
-                "Medium": (0.40, 0.59),
-                "Hard": (0.60, 1.0)
+                "Easy": (0.0, 0.29),
+                "Medium": (0.30, 0.44),
+                "Hard": (0.45, 1.0)
+            }
+        elif is_6x8:
+            ranges = {
+                "Easy": (0.0, 0.34),
+                "Medium": (0.35, 0.49),
+                "Hard": (0.50, 1.0)
             }
         elif is_cube:
             ranges = {
@@ -276,10 +282,17 @@ class BoardGenerator:
                 return "Medium"
             else:
                 return "Easy"
-        elif is_5x7 or is_6x8:
-            if rat >= 0.60:
+        elif is_5x7:
+            if rat >= 0.45:
                 return "Hard"
-            elif rat >= 0.40:
+            elif rat >= 0.30:
+                return "Medium"
+            else:
+                return "Easy"
+        elif is_6x8:
+            if rat >= 0.50:
+                return "Hard"
+            elif rat >= 0.35:
                 return "Medium"
             else:
                 return "Easy"
