@@ -1309,6 +1309,33 @@ def get_user_count():
         return jsonify({'error': str(e)}), 500
     finally:
         conn.close()
+@app.route('/api/stats/dictionary', methods=['GET'])
+def get_dictionary_stats():
+    from word_validator import word_validator
+    word_validator.ensure_csw_loaded()
+    
+    nwl_words = word_validator.nwl_words
+    csw_words = word_validator.csw_words
+    aw_words = word_validator.added_words
+    
+    def get_dist(w_set):
+        dist = {str(i): 0 for i in range(2, 16)}
+        dist["16+"] = 0
+        for w in w_set:
+            l = len(w)
+            if l < 2: continue
+            elif l >= 16: dist["16+"] += 1
+            else: dist[str(l)] += 1
+        return dist
+
+    return jsonify({
+        'nwl_total': len(nwl_words),
+        'csw_total': len(csw_words),
+        'aw_total': len(aw_words),
+        'nwl_dist': get_dist(nwl_words),
+        'csw_dist': get_dist(csw_words),
+        'aw_dist': get_dist(aw_words)
+    })
 
 @app.route('/api/word_tally/<word>', methods=['GET'])
 def get_word_tally_api(word):

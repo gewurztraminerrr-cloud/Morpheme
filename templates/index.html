@@ -2943,6 +2943,36 @@
                             <p>There are <strong id="faq-reg-count">[number]</strong> registered users, and <strong id="faq-online-count">[number]</strong> online users.</p>
                         </div>
                     </div>
+                    <!-- Q_dict_stats -->
+                    <div class="faq-item">
+                        <div class="faq-question">What are the different dictionaries used?</div>
+                        <div class="faq-answer">
+                            <p>Morpheme supports three distinct word lists/dictionaries that are dynamically spun or configured for each round:</p>
+                            <ul style="margin-top: 10px; margin-bottom: 15px; padding-left: 20px; line-height: 1.5;">
+                                <li><strong>NWL (North American Word List):</strong> The primary dictionary used for standard tournaments and North American wordplay. It currently contains <strong id="faq-nwl-total">-</strong> words.</li>
+                                <li><strong>CSW (Collins Scrabble Words):</strong> The authoritative international Scrabble dictionary, containing <strong id="faq-csw-total">-</strong> words.</li>
+                                <li><strong>AW (Added Words):</strong> A custom moderator-curated dictionary allowing live, customized word additions for dynamic community-driven solving. It currently has <strong id="faq-aw-total">-</strong> words.</li>
+                            </ul>
+                            <p style="margin-top: 15px; margin-bottom: 10px;">Below is the live distribution of word lengths (2 to 16+ letters) currently loaded in each dictionary:</p>
+                            <div class="faq-table-container" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.1); margin-top: 10px; margin-bottom: 10px; overflow-x: auto;">
+                                <table class="faq-scoring-table" id="faq-dict-stats-table" style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center;">
+                                    <thead>
+                                        <tr style="background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.15);">
+                                            <th style="padding: 10px; text-align: left; font-weight: 700;">Length</th>
+                                            <th style="padding: 10px; font-weight: 700; color: #60a5fa;">NWL</th>
+                                            <th style="padding: 10px; font-weight: 700; color: #f87171;">CSW</th>
+                                            <th style="padding: 10px; font-weight: 700; color: #c084fc;">AW</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="faq-dict-stats-tbody">
+                                        <tr>
+                                            <td colspan="4" style="padding: 20px; opacity: 0.6;">Loading live dictionary stats...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Q0 -->
                     <div class="faq-item">
                         <div class="faq-question">In what year was Morpheme launched?</div>

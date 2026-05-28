@@ -145,6 +145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupContactForm(); // Initialize contact form listeners
     setupFirstInteractionMusic(); // Active immediately for early loading clicks
     if (window.loadFAQUserCounts) window.loadFAQUserCounts();
+    if (window.loadFAQDictionaryStats) window.loadFAQDictionaryStats();
     
     // Mobile restriction: Hide/filter out Cube/3D options
     if (typeof filterCubeOnMobile === 'function') {
@@ -741,6 +742,7 @@ function setupNavigation() {
                     modal.classList.add('forced-show');
                     modal.classList.remove('hidden');
                     if (window.loadFAQUserCounts) window.loadFAQUserCounts();
+                    if (window.loadFAQDictionaryStats) window.loadFAQDictionaryStats();
                 }
                 return;
             }
@@ -1895,6 +1897,58 @@ window.loadFAQUserCounts = async function() {
         }
     } catch (e) {
         console.error('[loadFAQUserCounts] Error fetching user counts:', e);
+    }
+};
+
+window.loadFAQDictionaryStats = async function() {
+    try {
+        const response = await fetch('/api/stats/dictionary');
+        if (response.ok) {
+            const data = await response.json();
+            
+            // 1. Total counts
+            const nwlTotalEl = document.getElementById('faq-nwl-total');
+            const cswTotalEl = document.getElementById('faq-csw-total');
+            const awTotalEl = document.getElementById('faq-aw-total');
+            
+            if (nwlTotalEl) nwlTotalEl.textContent = (data.nwl_total || 0).toLocaleString();
+            if (cswTotalEl) cswTotalEl.textContent = (data.csw_total || 0).toLocaleString();
+            if (awTotalEl) awTotalEl.textContent = (data.aw_total || 0).toLocaleString();
+            
+            // 2. Length breakdown table body
+            const tbody = document.getElementById('faq-dict-stats-tbody');
+            if (tbody) {
+                let html = '';
+                
+                // Length ranges: 2 to 15, then 16+
+                const lengths = [];
+                for (let i = 2; i <= 15; i++) {
+                    lengths.push(String(i));
+                }
+                lengths.push('16+');
+                
+                lengths.forEach(len => {
+                    const nwlCount = data.nwl_dist[len] || 0;
+                    const cswCount = data.csw_dist[len] || 0;
+                    const awCount = data.aw_dist[len] || 0;
+                    
+                    const lenLabel = len === '16+' ? '16+ Letters' : `${len} Letters`;
+                    
+                    html += `
+                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                            <td style="padding: 8px 10px; text-align: left; font-weight: 600; opacity: 0.8;">${lenLabel}</td>
+                            <td style="padding: 8px 10px;">${nwlCount.toLocaleString()}</td>
+                            <td style="padding: 8px 10px;">${cswCount.toLocaleString()}</td>
+                            <td style="padding: 8px 10px; font-weight: ${awCount > 0 ? '700' : 'normal'}; color: ${awCount > 0 ? '#c084fc' : 'inherit'};">${awCount.toLocaleString()}</td>
+                        </tr>
+                    `;
+                });
+                
+                tbody.innerHTML = html;
+            }
+        }
+    } catch (e) {
+        console.error('[loadFAQDictionaryStats] Error fetching dictionary stats:', e);
     }
 };
 
