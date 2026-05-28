@@ -1314,11 +1314,10 @@ def get_dictionary_stats():
     from word_validator import word_validator
     word_validator.ensure_csw_loaded()
     
-    # Standard Scrabble lexicons (NWL/CSW) strictly cap at 15 letters.
-    # We union the 16+ supplementary list (16plus.txt) which is actively consulted
-    # by the game validator in both modes so the stats reflect actual gameplay allowances.
-    nwl_words = word_validator.nwl_words | word_validator.long_words
-    csw_words = word_validator.csw_words | word_validator.long_words
+    # Return pure counts for standard Scrabble lexicons (NWL/CSW)
+    # without unioning the supplementary 16+ list, keeping them strictly separated.
+    nwl_words = word_validator.nwl_words
+    csw_words = word_validator.csw_words
     aw_words = word_validator.added_words
     long_words = word_validator.long_words
     
