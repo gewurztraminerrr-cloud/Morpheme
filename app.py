@@ -606,7 +606,17 @@ def add_definition_api():
     if not words:
         return jsonify({'error': 'Word and definition required'}), 400
         
+    global DEFINITIONS_PATH
+    if not DEFINITIONS_PATH:
+        DEFINITIONS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'Definitions.txt')
+        
     try:
+        # Ensure definitions file and directory exist if we are writing to it
+        os.makedirs(os.path.dirname(DEFINITIONS_PATH), exist_ok=True)
+        if not os.path.exists(DEFINITIONS_PATH):
+            with open(DEFINITIONS_PATH, 'w', encoding='utf-8') as f:
+                pass
+                
         # Load all to memory to rewrite (needed for update/append logic)
         defs = {}
         if DEFINITIONS_PATH and os.path.exists(DEFINITIONS_PATH):
@@ -665,7 +675,17 @@ def remove_definition_api():
     if not words:
         return jsonify({'error': 'Word required'}), 400
         
+    global DEFINITIONS_PATH
+    if not DEFINITIONS_PATH:
+        DEFINITIONS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'Definitions.txt')
+        
     try:
+        # Ensure definitions file and directory exist if we are writing to it
+        os.makedirs(os.path.dirname(DEFINITIONS_PATH), exist_ok=True)
+        if not os.path.exists(DEFINITIONS_PATH):
+            with open(DEFINITIONS_PATH, 'w', encoding='utf-8') as f:
+                pass
+                
         defs = {}
         removed_words = []
         if DEFINITIONS_PATH and os.path.exists(DEFINITIONS_PATH):
@@ -3540,6 +3560,8 @@ def load_definitions():
 
     if not definitions_path:
         print(f"Definitions file not found. Searched: {search_paths}")
+        # Safeguard: set DEFINITIONS_PATH to a sensible default so writing works
+        DEFINITIONS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'Definitions.txt')
         return
 
     try:
