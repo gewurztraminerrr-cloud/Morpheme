@@ -530,12 +530,14 @@ class GameRoom:
             intermission_limit = 5 if self.time_limit >= 7200 else 60
             return max(0, intermission_limit - int(elapsed))
             
-        # 2. 24h Room ACTIVE: Align to real-world midnight boundary
+        # 2. 24h Room ACTIVE: Align to real-world midnight boundary (America/Chicago)
         if self.state == 'active' and self.time_limit >= 7200:
             import datetime
-            now = datetime.datetime.now()
-            next_midnight = datetime.datetime.combine(now.date() + datetime.timedelta(days=1), datetime.time.min)
-            delta = (next_midnight - now).total_seconds()
+            from zoneinfo import ZoneInfo
+            tz = ZoneInfo("America/Chicago")
+            now_tz = datetime.datetime.now(tz)
+            next_midnight = datetime.datetime.combine(now_tz.date() + datetime.timedelta(days=1), datetime.time.min, tzinfo=tz)
+            delta = (next_midnight - now_tz).total_seconds()
             return max(0, int(delta))
 
         if self.state == 'active':
@@ -551,11 +553,13 @@ class GameRoom:
     @property
     def round_end_time(self):
         """Get timestamp when current round ends (for client sync)"""
-        # 24h Room (>= 2h limit): Always align dynamically to real-world midnight boundary (LOCAL)
+        # 24h Room (>= 2h limit): Always align dynamically to real-world midnight boundary (America/Chicago)
         if self.time_limit >= 7200:
             import datetime
-            now = datetime.datetime.now()
-            next_midnight = datetime.datetime.combine(now.date() + datetime.timedelta(days=1), datetime.time.min)
+            from zoneinfo import ZoneInfo
+            tz = ZoneInfo("America/Chicago")
+            now_tz = datetime.datetime.now(tz)
+            next_midnight = datetime.datetime.combine(now_tz.date() + datetime.timedelta(days=1), datetime.time.min, tzinfo=tz)
             return next_midnight.timestamp()
 
         if self.state == 'active':
@@ -1170,8 +1174,11 @@ class GameRoom:
                 # 24H Reset Logic (Midnight Boundary)
                 if self.round_start_time > 0:
                     import datetime
-                    round_start_dt = datetime.datetime.fromtimestamp(self.round_start_time)
-                    if now > self.round_start_time and datetime.datetime.fromtimestamp(now).date() > round_start_dt.date():
+                    from zoneinfo import ZoneInfo
+                    tz = ZoneInfo("America/Chicago")
+                    round_start_dt = datetime.datetime.fromtimestamp(self.round_start_time, tz)
+                    now_dt = datetime.datetime.fromtimestamp(now, tz)
+                    if now > self.round_start_time and now_dt.date() > round_start_dt.date():
                         print(f"[GameRoom] Midnight Reset DETECTED for {self.room_id}")
                         should_end = True
                         self.midnight_reset_occurred = True
@@ -3720,8 +3727,10 @@ class RoomManager:
             actual_board = board if board is not None else room.board
             board_json = json.dumps(actual_board)
             
-            # Robust Timestamping for 24h rooms
-            now = datetime.datetime.now()
+            # Robust Timestamping for 24h rooms in America/Chicago timezone
+            from zoneinfo import ZoneInfo
+            tz = ZoneInfo("America/Chicago")
+            now = datetime.datetime.now(tz)
             # If a daily room ended just after midnight, the results belong to "Yesterday"
             if room.time_limit >= 7200 and now.hour == 0 and now.minute < 10:
                 yesterday = now - datetime.timedelta(days=1)
