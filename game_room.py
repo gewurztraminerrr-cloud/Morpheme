@@ -249,6 +249,8 @@ class GameRoom:
                 existing_player.joined_mid_round = True
             # Ensure they are removed from round_quitters if they were in there (REJOIN TRANSITION)
             self.round_quitters = [q for q in self.round_quitters if str(q.user_id) != str(user_id)]
+            if is_daily:
+                self.save_active_players()
             return True
         
         # Track if they were already in the room (to avoid mid-round flag on refresh)
@@ -265,6 +267,8 @@ class GameRoom:
             self.players.append(quitter)
             # CRITICAL: Remove from round_quitters so they aren't penalized as a quitter at round end
             self.round_quitters = [q for q in self.round_quitters if str(q.user_id) != str(user_id)]
+            if is_daily:
+                self.save_active_players()
             return True
 
         # Check if player exists in past_players
@@ -300,6 +304,8 @@ class GameRoom:
                       existing_player.joined_mid_round = True
             
             self.players.append(existing_player)
+            if is_daily:
+                self.save_active_players()
             return True
 
         # Ensure player is not already in the room (prevent duplicates)
@@ -330,6 +336,8 @@ class GameRoom:
         # System Notice
         self.add_chat_message("System", f"{username} has entered the room.", is_system=True)
         
+        if is_daily:
+            self.save_active_players()
         return True # Success
 
     def add_spectator(self, user_id, username, rating):
@@ -418,6 +426,9 @@ class GameRoom:
         # Remove from both lists
         self.players = [p for p in self.players if str(p.user_id) != uid_str]
         self.spectators = [p for p in self.spectators if str(p.user_id) != uid_str]
+        
+        if is_daily:
+            self.save_active_players()
         
         # USER REQUEST: Kick spectators if last human player leaves
         humans = [p for p in self.players if not p.is_ai]
@@ -574,6 +585,58 @@ class GameRoom:
         if self.state == 'intermission':
             return self.intermission_start_time + 60  # 60 second intermission
         return 0
+    
+    def save_active_players(self):
+        """Persist active players and their submissions for 24h rooms to DB"""
+        if self.time_limit < 7200:
+            return
+        try:
+            import sqlite3
+            import json
+            import os
+            
+            # Serialize active players
+            players_data = []
+            for p in self.players:
+                players_data.append({
+                    'user_id': p.user_id,
+                    'username': p.username,
+                    'rating': p.rating,
+                    'submitted_words': p.submitted_words,
+                    'invalid_words': p.invalid_words,
+                    'score': p.score,
+                    'previous_round_score': p.previous_round_score,
+                    'games_played': p.games_played,
+                    'previous_submitted_words': p.previous_submitted_words,
+                    'found_bonus_word': p.found_bonus_word,
+                    'last_active': p.last_active,
+                    'input_method': p.input_method,
+                    'country_flag': p.country_flag,
+                    'joined_mid_round': p.joined_mid_round,
+                    'has_exceptional_round': p.has_exceptional_round,
+                    'is_guest': p.is_guest,
+                    'is_ai': p.is_ai,
+                    'ai_rating': p.ai_rating,
+                    'has_abandoned': p.has_abandoned
+                })
+            players_json = json.dumps(players_data)
+            
+            db_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
+            conn = sqlite3.connect(db_file)
+            try:
+                # Ensure migration column exists
+                try: conn.execute('ALTER TABLE active_boards ADD COLUMN active_players_json TEXT')
+                except sqlite3.OperationalError: pass
+                conn.commit()
+                
+                conn.execute('''
+                    UPDATE active_boards SET active_players_json = ? WHERE room_id = ?
+                ''', (players_json, self.room_id))
+                conn.commit()
+            finally:
+                conn.close()
+        except Exception as e:
+            print(f"[GameRoom] Error saving active players to DB for {self.room_id}: {e}")
     
     def submit_word(self, user_id, word, path=None):
         """Submit word for player"""
@@ -819,8 +882,9 @@ class GameRoom:
                     points = w_obj['points']
                     break
 
-        # NEW: Update Live PE Calculation
-        self.update_live_pe()
+        # Persistence: Save active players for 24h rooms after successful submission
+        if self.time_limit >= 7200:
+            self.save_active_players()
 
         return True, f"{final_word} ACCEPTED", points, final_word
 
@@ -1859,16 +1923,19 @@ class RoomManager:
                         except sqlite3.OperationalError: pass
                         try: conn.execute('ALTER TABLE active_boards ADD COLUMN word_count_range TEXT')
                         except sqlite3.OperationalError: pass
+                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN active_players_json TEXT')
+                        except sqlite3.OperationalError: pass
                         conn.commit()
                         
                         cursor = conn.execute('''
                             SELECT board_data, all_words, dictionary, min_length, updated_at,
-                                   bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range
+                                   bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range,
+                                   active_players_json
                             FROM active_boards WHERE room_id = ?
                         ''', (room_id,))
                         row = cursor.fetchone()
                         if row:
-                            board_data_json, all_words_json, dictionary, min_length, updated_at, bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range = row
+                            board_data_json, all_words_json, dictionary, min_length, updated_at, bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range, active_players_json = row
                             
                             # Check if the board is from the same day
                             saved_dt = datetime.datetime.fromtimestamp(updated_at, tz)
@@ -1884,6 +1951,43 @@ class RoomManager:
                                 room.current_board_format = board_format or 'Normal'
                                 room.current_uniqueness = uniqueness or 0.0
                                 room.current_word_count_range = word_count_range or '100-200'
+                                
+                                # Deserialize and restore active players
+                                if active_players_json:
+                                    try:
+                                        players_data = json.loads(active_players_json)
+                                        restored_players = []
+                                        for d in players_data:
+                                            p = Player(
+                                                user_id=d.get('user_id'),
+                                                username=d.get('username'),
+                                                rating=d.get('rating', 1200)
+                                            )
+                                            p.submitted_words = d.get('submitted_words', [])
+                                            p.invalid_words = d.get('invalid_words', [])
+                                            p.score = d.get('score', 0)
+                                            p.previous_round_score = d.get('previous_round_score', 0)
+                                            p.games_played = d.get('games_played', 0)
+                                            p.previous_submitted_words = d.get('previous_submitted_words', [])
+                                            p.found_bonus_word = d.get('found_bonus_word', False)
+                                            p.last_active = d.get('last_active', time.time())
+                                            p.input_method = d.get('input_method', 'mouse')
+                                            p.country_flag = d.get('country_flag', '🏳️')
+                                            p.joined_mid_round = d.get('joined_mid_round', False)
+                                            p.has_exceptional_round = d.get('has_exceptional_round', False)
+                                            p.is_guest = d.get('is_guest', False)
+                                            p.is_ai = d.get('is_ai', False)
+                                            p.ai_rating = d.get('ai_rating', 1200)
+                                            p.has_abandoned = d.get('has_abandoned', False)
+                                            restored_players.append(p)
+                                        room.players = restored_players
+                                        
+                                        # Sync past_players and other mappings
+                                        for rp in restored_players:
+                                            room.past_players[str(rp.user_id)] = rp
+                                        print(f"[RoomManager] Restored {len(restored_players)} active players/words for 24h room {room_id}")
+                                    except Exception as p_err:
+                                        print(f"[RoomManager] Error restoring active players for {room_id}: {p_err}")
                                 
                                 # Set state to active
                                 room.state = 'active'
@@ -3588,14 +3692,43 @@ class RoomManager:
                         except sqlite3.OperationalError: pass
                         try: conn.execute('ALTER TABLE active_boards ADD COLUMN word_count_range TEXT')
                         except sqlite3.OperationalError: pass
+                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN active_players_json TEXT')
+                        except sqlite3.OperationalError: pass
                         conn.commit()
+                        
+                        # Serialize active players
+                        players_data = []
+                        for p in room.players:
+                            players_data.append({
+                                'user_id': p.user_id,
+                                'username': p.username,
+                                'rating': p.rating,
+                                'submitted_words': p.submitted_words,
+                                'invalid_words': p.invalid_words,
+                                'score': p.score,
+                                'previous_round_score': p.previous_round_score,
+                                'games_played': p.games_played,
+                                'previous_submitted_words': p.previous_submitted_words,
+                                'found_bonus_word': p.found_bonus_word,
+                                'last_active': p.last_active,
+                                'input_method': p.input_method,
+                                'country_flag': p.country_flag,
+                                'joined_mid_round': p.joined_mid_round,
+                                'has_exceptional_round': p.has_exceptional_round,
+                                'is_guest': p.is_guest,
+                                'is_ai': p.is_ai,
+                                'ai_rating': p.ai_rating,
+                                'has_abandoned': p.has_abandoned
+                            })
+                        players_json = json.dumps(players_data)
                         
                         conn.execute('''
                             INSERT OR REPLACE INTO active_boards (
                                 room_id, board_data, all_words, dictionary, min_length, updated_at,
-                                bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range
+                                bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range,
+                                active_players_json
                             )
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         ''', (
                             room.room_id,
                             json.dumps(room.board),
@@ -3607,7 +3740,8 @@ class RoomManager:
                             json.dumps(room.bonus_cell) if room.bonus_cell else None,
                             room.current_board_format or 'Normal',
                             room.current_uniqueness or 0.0,
-                            room.current_word_count_range or '100-200'
+                            room.current_word_count_range or '100-200',
+                            players_json
                         ))
                         conn.commit()
                         conn.close()
