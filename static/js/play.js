@@ -5439,8 +5439,6 @@ function updateWordInputFromPath() {
 
 function handleCellMouseDown(e) {
     if (e.button !== 0) return; // Only left click
-    if (window.isSpectatorMode) return;
-    if (Date.now() - lastTouchTime < 1500) return; // Ignore simulated mouse events on touch devices
 
     const cell = e.target.closest('.board-cell');
     if (!cell) return;
@@ -5455,6 +5453,9 @@ function handleCellMouseDown(e) {
         handleIntermissionTilePress(cell, r, c, f, letter);
         return;
     }
+
+    if (window.isSpectatorMode) return;
+    if (Date.now() - lastTouchTime < 1500) return; // Ignore simulated mouse events on touch devices
 
     if (cell.classList.contains('grayed')) return;
 
@@ -5542,8 +5543,6 @@ let lastTouchX = -1;
 let lastTouchY = -1;
 
 function handleCellTouchStart(e) {
-    if (window.isSpectatorMode) return;
-
     const touch = e.touches[0];
     const target = document.elementFromPoint(touch.clientX, touch.clientY);
     const cell = target && target.closest('.board-cell');
@@ -5561,6 +5560,8 @@ function handleCellTouchStart(e) {
         handleIntermissionTilePress(cell, r, c, f, letter);
         return;
     }
+
+    if (window.isSpectatorMode) return;
 
     // Unconditionally prevent browser default gestures/scrolling when touching anywhere on the board container
     if (e.cancelable !== false) {

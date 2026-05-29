@@ -3798,6 +3798,7 @@ input[type=range]::-moz-range-track {
     margin: 0 !important;
     color: #111;
     cursor: pointer;
+    pointer-events: auto !important;
     transition: all 0.2s ease;
     text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000 !important;
 }
