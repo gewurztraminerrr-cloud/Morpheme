@@ -398,10 +398,11 @@ class GameRoom:
         Note: Penalties are handled in app.py via apply_leave_penalty()
         """
         uid_str = str(user_id)
+        is_daily = (self.time_limit >= 7200)
         
         # PERSISTENCE: Never remove PLAYERS from 24h rooms unless forced (e.g. logout)
         # However, we ALWAYS allow removing spectators.
-        if self.time_limit >= 7200 and not force:
+        if is_daily and not force:
             self.spectators = [p for p in self.spectators if str(p.user_id) != uid_str]
             return
 
@@ -432,7 +433,6 @@ class GameRoom:
         
         # USER REQUEST: Kick spectators if last human player leaves
         humans = [p for p in self.players if not p.is_ai]
-        is_daily = (self.time_limit >= 7200)
         
         if not humans and self.spectators and not is_daily:
             print(f"[GameRoom] Last human player has left room {self.room_id}. CLOSING ROOM.")
