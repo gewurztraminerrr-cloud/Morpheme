@@ -958,6 +958,16 @@ body.theme-light-brown .player-score-val {
     transition: none !important;
 }
 
+/* Intermission tile click filter indicator style */
+.board-cell.intermission-highlight {
+    background: rgba(46, 204, 113, 0.45) !important;
+    border: 3px solid #2ecc71 !important;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.6) !important;
+    transform: scale(1.05);
+    z-index: 10;
+    color: #fff !important;
+}
+
 .board-cell.bonus-highlight {
     background: #32cd32 !important;
     /* Lime green */

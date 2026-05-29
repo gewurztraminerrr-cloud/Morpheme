@@ -54,6 +54,7 @@ let activeWordsTab = 'found'; // 'found' or 'remaining'
 let validationTimeout = null;
 let highlightedSplitWord = null; // Track word for shared highlighting in Split Points
 let highlightedFoundWord = null; // Track word from All Words list to highlight finders
+window.intermissionTileFilter = null;
 let lastRenderedBoardJSON = null;
 let lastRenderedGrayed = null;
 let lastRenderedRotation = null;
@@ -1257,6 +1258,11 @@ async function updateGameState(incomingState = null) {
 
                 // Reset Players Filter mode
                 playersFilterMode = 'everyone';
+
+                window.intermissionTileFilter = null;
+                document.querySelectorAll('.board-cell.intermission-highlight').forEach(el => {
+                    el.classList.remove('intermission-highlight');
+                });
 
                 // Clear and Focus Word Input on Game Start
                 if (window.chatFocusTimeout) {
@@ -2551,8 +2557,74 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         listEl.hasScoringListener = true;
     }
 
+    let displayWords = [...sortedWords];
+    if (window.intermissionTileFilter && window.lastGameState && window.lastGameState.all_words_paths) {
+        const { r, c, f } = window.intermissionTileFilter;
+        const paths = window.lastGameState.all_words_paths;
+        displayWords = displayWords.filter(entry => {
+            const w = (typeof entry === 'object' ? (entry.word || '') : entry).toUpperCase();
+            const path = paths[w];
+            if (!path) return false;
+            return path.some(node => {
+                let nf = -1, nr = -1, nc = -1;
+                if (Array.isArray(node)) {
+                    if (node.length === 3) {
+                        nf = node[0];
+                        nr = node[1];
+                        nc = node[2];
+                    } else {
+                        nr = node[0];
+                        nc = node[1];
+                    }
+                } else if (node && typeof node === 'object') {
+                    nf = node.f !== undefined ? node.f : -1;
+                    nr = node.r !== undefined ? node.r : -1;
+                    nc = node.c !== undefined ? node.c : -1;
+                }
+                if (f !== null && f !== -1) {
+                    return nf === f && nr === r && nc === c;
+                }
+                return nr === r && nc === c;
+            });
+        });
+    }
+
+    // Filter clear button handling
+    const existingFilterBtn = document.getElementById('intermission-filter-btn-container');
+    if (existingFilterBtn) {
+        existingFilterBtn.remove();
+    }
+
+    if (window.intermissionTileFilter) {
+        const filterBtnContainer = document.createElement('div');
+        filterBtnContainer.id = 'intermission-filter-btn-container';
+        filterBtnContainer.style.margin = '5px 0';
+        filterBtnContainer.style.width = '100%';
+        
+        filterBtnContainer.innerHTML = `
+            <button id="clear-intermission-filter-btn" style="width: 100%; padding: 8px 10px; font-size: 0.75rem; font-weight: 600; border-radius: 6px; background: rgba(46, 204, 113, 0.15); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.3); cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 6px; transition: all 0.2s ease;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                Show Full List Again (Filtered by Tile "${window.intermissionTileFilter.letter}")
+            </button>
+        `;
+        
+        listEl.parentNode.insertBefore(filterBtnContainer, listEl);
+        
+        const clearBtn = document.getElementById('clear-intermission-filter-btn');
+        clearBtn.addEventListener('click', () => {
+            window.intermissionTileFilter = null;
+            document.querySelectorAll('.board-cell.intermission-highlight').forEach(el => {
+                el.classList.remove('intermission-highlight');
+            });
+            displayAllWords(...window.lastDisplayAllWordsArgs);
+        });
+    }
+
     const selectedLength = window.selectedAllWordsLength || 'all';
-    const filteredWords = selectedLength === 'all' ? sortedWords : sortedWords.filter(entry => (typeof entry === 'object' ? (entry.word || '') : entry).length.toString() === selectedLength);
+    const filteredWords = selectedLength === 'all' ? displayWords : displayWords.filter(entry => (typeof entry === 'object' ? (entry.word || '') : entry).length.toString() === selectedLength);
 
     listEl.innerHTML = filteredWords.map(entry => {
         const word = (typeof entry === 'object' ? (entry.word || '') : entry);
@@ -4193,7 +4265,7 @@ function reapplyBoardHighlights() {
 
     // Clear PREVIOUS highlights of ALL types to avoid stale visuals
     document.querySelectorAll('.board-cell').forEach(cell => {
-        cell.classList.remove('selected', 'current', 'typing-highlight', 'review-highlight');
+        cell.classList.remove('selected', 'current', 'typing-highlight', 'review-highlight', 'intermission-highlight');
     });
 
     // 1. Reapply mouse selection highlights (drag)
@@ -4280,6 +4352,19 @@ function reapplyBoardHighlights() {
             const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : undefined;
             applyDensityToCell(cell, r, c, f);
         });
+    }
+
+    // 5. Reapply intermission tile click filter indicator
+    if (window.lastGameState && window.lastGameState.state === 'intermission' && window.intermissionTileFilter) {
+        const { r, c, f } = window.intermissionTileFilter;
+        let selector = `.board-cell[data-r="${r}"][data-c="${c}"]`;
+        if (f !== undefined && f !== null) {
+            selector = `.board-cell[data-f="${f}"][data-r="${r}"][data-c="${c}"]`;
+        }
+        const cell = document.querySelector(selector);
+        if (cell) {
+            cell.classList.add('intermission-highlight');
+        }
     }
 }
 
@@ -5564,6 +5649,58 @@ function finishDragSelection(e) {
 
     boardEl.addEventListener('dragstart', (e) => e.preventDefault());
     boardEl.addEventListener('mousedown', handleCellMouseDown);
+    boardEl.addEventListener('click', (e) => {
+        // Only run during intermission!
+        if (!window.lastGameState || window.lastGameState.state !== 'intermission') {
+            return;
+        }
+        
+        const cell = e.target.closest('.board-cell');
+        if (!cell || cell.classList.contains('grayed')) return;
+        
+        const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
+        const r = parseInt(cell.dataset.r || cell.dataset.row);
+        const c = parseInt(cell.dataset.c || cell.dataset.col);
+        const letter = cell.dataset.letter;
+        
+        console.log(`[IntermissionClick] Clicked tile at row=${r}, col=${c}, face=${f}, letter=${letter}`);
+        
+        // Toggle/Set the filter
+        if (window.intermissionTileFilter && 
+            window.intermissionTileFilter.r === r && 
+            window.intermissionTileFilter.c === c && 
+            window.intermissionTileFilter.f === f) {
+            // Clicking again clears the filter!
+            window.intermissionTileFilter = null;
+            cell.classList.remove('intermission-highlight');
+        } else {
+            // Remove highlight from any other cell
+            document.querySelectorAll('.board-cell.intermission-highlight').forEach(el => {
+                el.classList.remove('intermission-highlight');
+            });
+            
+            // Set the new filter
+            window.intermissionTileFilter = { r, c, f, letter };
+            cell.classList.add('intermission-highlight');
+            
+            // Automatically switch to 'found' (All Words) tab
+            const foundTabBtn = document.querySelector('.word-tab[data-tab="found"]');
+            if (foundTabBtn) {
+                foundTabBtn.click();
+            }
+            
+            // Scroll to the Words panel smoothly
+            const wordsPanel = document.getElementById('words-panel') || document.querySelector('.words-panel');
+            if (wordsPanel) {
+                wordsPanel.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        
+        // Re-display all words
+        if (window.lastDisplayAllWordsArgs) {
+            displayAllWords(...window.lastDisplayAllWordsArgs);
+        }
+    });
     boardEl.addEventListener('mouseover', handleCellMouseOver);
     document.addEventListener('mousemove', handleCellMouseMove, { passive: true });
     boardEl.addEventListener('touchstart', handleCellTouchStart, { passive: false });

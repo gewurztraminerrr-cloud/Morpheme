@@ -3336,6 +3336,7 @@ def get_room_state(room_id):
                 'cell_density': (getattr(room, 'next_round_cell_density', []) if (is_intermission and is_revealed) else getattr(room, 'cell_density', [])),
                 'max_cell_density': (getattr(room, 'next_round_max_cell_density', 0) if (is_intermission and is_revealed) else getattr(room, 'max_cell_density', 0)),
                 'all_word_scores': word_scores_to_return,
+                'all_words_paths': room.all_words_paths if is_intermission else {},
                 'global_found_words': global_found,
                 'fcfs_found_words': list(getattr(room, 'fcfs_found_words', [])) if (is_active and is_fcfs) else [],
                 'added_words': list(room.added_words) if (getattr(room, 'added_words', None) and word_validator.get_use_added_words()) else [],
