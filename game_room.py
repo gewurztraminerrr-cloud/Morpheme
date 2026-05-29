@@ -1632,6 +1632,128 @@ class RoomManager:
                 print(f"[Heartbeat] CRITICAL: {e}\n{traceback.format_exc()}")
                 time.sleep(5)
                 
+    def load_previous_day_data(self, room):
+        """
+        Load previous day (yesterday) data from the SQLite database
+        if the in-memory variables are empty/vanished (e.g. after server restart).
+        """
+        if getattr(room, 'previous_board', None) and getattr(room, 'previous_day_history', None):
+            return # Already has in-memory data
+            
+        import sqlite3
+        import json
+        
+        conn = sqlite3.connect(DB_PATH, timeout=30)
+        cursor = conn.cursor()
+        try:
+            # 1. Find the last completed round number
+            cursor.execute("SELECT MAX(round_number) FROM round_history WHERE room_id = ? AND round_number < ?", (room.room_id, room.current_round))
+            row = cursor.fetchone()
+            if not row or row[0] is None:
+                conn.close()
+                return
+                
+            last_round = row[0]
+            
+            # 2. Query all player entries for this round
+            cursor.execute('''
+                SELECT rh.user_id, u.username, rh.words_json, rh.board_json, rh.bonus_word, rh.bonus_cell, rh.board_format, rh.all_solutions_json, rh.all_words_paths, rh.board_dimensions
+                FROM round_history rh
+                LEFT JOIN users u ON rh.user_id = u.id
+                WHERE rh.room_id = ? AND rh.round_number = ?
+            ''', (room.room_id, last_round))
+            
+            rows = cursor.fetchall()
+            if not rows:
+                conn.close()
+                return
+                
+            # Parse common board/round attributes from the first entry
+            first_row = rows[0]
+            user_id, username, words_json, board_json, bonus_word, bonus_cell, board_format, all_solutions_json, all_words_paths, board_dimensions = first_row
+            
+            # Restore previous board
+            try:
+                room.previous_board = json.loads(board_json)
+            except Exception as e:
+                print(f"[Restore-Error] previous_board: {e}")
+                room.previous_board = []
+                
+            room.previous_bonus_word = bonus_word or ''
+            try:
+                room.previous_bonus_cell = json.loads(bonus_cell) if bonus_cell else None
+            except:
+                room.previous_bonus_cell = None
+                
+            # Restore solutions/all words
+            restored_solutions = []
+            restored_paths = {}
+            for r in rows:
+                # Look for the record that has solutions and paths
+                if r[7]: # all_solutions_json
+                    try:
+                        restored_solutions = json.loads(r[7])
+                    except: pass
+                if r[8]: # all_words_paths
+                    try:
+                        restored_paths = json.loads(r[8])
+                    except: pass
+                    
+            room.previous_all_words = restored_solutions
+            
+            # Reconstruct word scores for history
+            from scoring import calculate_word_score
+            restored_scores = {}
+            for w in restored_solutions:
+                w_upper = w.upper()
+                w_path = restored_paths.get(w_upper) or restored_paths.get(w)
+                restored_scores[w_upper] = calculate_word_score(
+                    w_upper,
+                    room.previous_bonus_word,
+                    board_format=board_format or 'Normal',
+                    bonus_cell=room.previous_bonus_cell,
+                    board=room.previous_board,
+                    path=w_path,
+                    return_details=True,
+                    strict_path=True
+                )
+            room.previous_all_word_scores = restored_scores
+            
+            # Filter CSW / Added words for yesterday
+            import word_validator
+            room.previous_csw_only_words = [w for w in restored_solutions if word_validator.word_validator.is_csw_only(w)]
+            room.previous_added_words = [w for w in restored_solutions if word_validator.word_validator.is_added_word(w)]
+            
+            # Restore previous day history (who found what)
+            history = {}
+            for r in rows:
+                u_id = r[0]
+                u_name = r[1] or ('System' if u_id == -1 else f"User_{u_id}")
+                w_json = r[2]
+                try:
+                    words_data = json.loads(w_json) if w_json else []
+                    found = []
+                    for w_item in words_data:
+                        if isinstance(w_item, dict):
+                            found.append(w_item.get('word', ''))
+                        else:
+                            found.append(str(w_item))
+                    history[str(u_id)] = {
+                        'username': u_name,
+                        'found_words': [w.upper() for w in found if w]
+                    }
+                except Exception as pe:
+                    print(f"[Restore-Error] player {u_name} history: {pe}")
+                    
+            room.previous_day_history = history
+            print(f"[RoomManager] Successfully restored previous day history for {room.room_id} Round {last_round} ({len(history)} players)")
+            
+        except Exception as ex:
+            import traceback
+            print(f"[RoomManager] Error restoring previous day data: {ex}\n{traceback.format_exc()}")
+        finally:
+            conn.close()
+
     def create_room(self, room_id, game_type, time_limit, board_dimensions, min_rating=0, max_rating=9999, is_private=False):
         """Create a new game room or return an existing singleton for the configuration"""
         try:

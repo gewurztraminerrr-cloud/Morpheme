@@ -2903,6 +2903,15 @@ def get_room_state(room_id):
     
     room = room_manager.get_room(room_id)
     if room:
+        # 1. On-demand state updates & next round transitions safeguard
+        room.check_and_update_state()
+        if room.state == 'intermission' and room.time_remaining <= 0:
+            room_manager.start_next_round(room.room_id)
+            
+        # 2. On-demand database backfill for previous day's board/history
+        if room.time_limit >= 7200:
+            room_manager.load_previous_day_data(room)
+            
         print(f"[get_room_state] Room: {room_id} | State: {room.state} | PrevBonus: {getattr(room, 'previous_bonus_word', 'None')} | CurrBonus: {room.bonus_word}")
         if 'user_id' in session:
             uid = session['user_id']
@@ -2919,12 +2928,13 @@ def get_room_state(room_id):
             
             # Automatically update their player activity in the room so they don't get evicted again
             room.update_player_activity(uid)
-
+ 
             # Check if they are already in the players or spectators list
             is_player = any(str(p.user_id) == str(uid) for p in room.players)
             is_spectator = any(str(s.user_id) == str(uid) for s in room.spectators) if hasattr(room, 'spectators') else False
-
-            if not is_player and not is_spectator:
+ 
+            # 3. Disable auto-readd for 24-hour rooms to allow player count resetting to 0 at midnight
+            if not is_player and not is_spectator and room.time_limit < 7200:
                 # Re-add player automatically!
                 try:
                     game_type_base = room.game_type.replace('solo_', '')
