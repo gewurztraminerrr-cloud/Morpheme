@@ -38,6 +38,11 @@ This summary documents the stable state of the Morpheme application as of May 29
   - **Hard**: Bold modern red (`#ff4d4d`)
 - **Premium Aesthetics**: Added `#param-diff` specific rules inside [play.css](file:///Users/jeffbabiak/static/css/play.css) to set a bold font-weight (`700`) and configure a smooth CSS transition (`transition: color 0.3s ease;`) for fluid UI state updates.
 
+### 6. Exclusion of 24h Room Words from Word Tally
+- **Precision Statistics**: Added an early exit rule to `log_word_tally()` in [game_room.py](file:///Users/jeffbabiak/game_room.py) to ensure words found by players in 24h rooms are completely skipped and not logged.
+- **Data Integrity**: This guarantees that 24h room gameplay does not skew the cumulative statistics or write redundant logs to `word_tally.log` and `word_stats.json`.
+- **Trace Logger Path Resolution**: Defined `TRACE_PATH` globally in [game_room.py](file:///Users/jeffbabiak/game_room.py) to resolve a latent bug where standard room word tallying crashed due to the missing path variable.
+
 ---
 
 ## 🛠 Active Features & Configuration
@@ -48,8 +53,8 @@ This summary documents the stable state of the Morpheme application as of May 29
 
 ---
 
-**Latest Stable Commit ID**: `d03bb72`  
-**Stable Point Tag (snapshot-current)**: `d03bb72`  
-**Start Over Tag (START_OVER_POINT_MAY_29)**: `d03bb72`  
+**Latest Stable Commit ID**: `aa77cde`  
+**Stable Point Tag (snapshot-current)**: `aa77cde`  
+**Start Over Tag (START_OVER_POINT_MAY_29)**: `aa77cde`  
 **GitHub Push**: Completed / Synchronized  
 **Status**: Stable / Production Ready / Synchronized
