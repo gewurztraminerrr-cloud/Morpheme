@@ -5543,9 +5543,12 @@ let lastTouchX = -1;
 let lastTouchY = -1;
 
 function handleCellTouchStart(e) {
-    const touch = e.touches[0];
-    const target = document.elementFromPoint(touch.clientX, touch.clientY);
-    const cell = target && target.closest('.board-cell');
+    let cell = e.target.closest('.board-cell');
+    if (!cell) {
+        const touch = e.touches[0];
+        const target = touch && document.elementFromPoint(touch.clientX, touch.clientY);
+        cell = target && target.closest('.board-cell');
+    }
     if (!cell) return;
 
     // INTERMISSION TILE PRESS FILTERS
