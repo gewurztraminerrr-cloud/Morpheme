@@ -20,6 +20,7 @@ RATING_AUDIT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ra
 DEBUG_FLOW_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'debug_flow.log')
 WORD_DEBUG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'word_debug.log')
 WORD_TALLY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'word_tally.log')
+TRACE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'stats_trace.log')
 # STATS_LOCK (Memory-based) is insufficient for multi-worker environments. 
 # We use file-based locking (fcntl) inside the I/O methods instead.
 from spinner_set import SpinnerSet
@@ -4134,6 +4135,11 @@ class RoomManager:
         Also maintains a global cumulative tally in word_stats.json.
         """
         try:
+            # USER REQUEST: Do not include words found in 24h rooms in the word tally file
+            if room.time_limit >= 7200:
+                print(f"[WordTally] Skipping tally for 24h room: {room.room_id}")
+                return
+
             import collections
             import json
             import datetime
