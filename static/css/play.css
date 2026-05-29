@@ -51,6 +51,11 @@
     font-weight: 700;
 }
 
+#param-diff {
+    font-weight: 700;
+    transition: color 0.3s ease;
+}
+
 .game-params.reveal-new {
     animation: fadeGoldToNormal 4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }

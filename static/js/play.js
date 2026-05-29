@@ -2808,7 +2808,21 @@ function updateParameters(state) {
             if (document.getElementById('label-board')) document.getElementById('label-board').textContent = window._displayedParams.dims;
             if (document.getElementById('label-time')) document.getElementById('label-time').textContent = window._displayedParams.time;
 
-            if (document.getElementById('param-diff')) document.getElementById('param-diff').textContent = window._displayedParams.diff;
+            const diffEl = document.getElementById('param-diff');
+            if (diffEl) {
+                diffEl.textContent = window._displayedParams.diff;
+                // Dynamically apply color based on difficulty (Easy -> emerald, Medium -> golden, Hard -> red)
+                const lowerDiff = diffLabel.toLowerCase();
+                if (lowerDiff.includes('easy') || lowerDiff.includes('beginner')) {
+                    diffEl.style.color = '#2ecc71'; // Dark green / emerald
+                } else if (lowerDiff.includes('medium') || lowerDiff.includes('normal')) {
+                    diffEl.style.color = '#f1c40f'; // Golden
+                } else if (lowerDiff.includes('hard') || lowerDiff.includes('expert') || lowerDiff.includes('difficult')) {
+                    diffEl.style.color = '#ff4d4d'; // Red
+                } else {
+                    diffEl.style.color = ''; // Reset/Default
+                }
+            }
             if (document.getElementById('param-min')) document.getElementById('param-min').textContent = window._displayedParams.min;
             if (document.getElementById('param-dict')) document.getElementById('param-dict').textContent = window._displayedParams.dict;
             if (document.getElementById('param-range')) document.getElementById('param-range').textContent = window._displayedParams.range;
