@@ -1833,114 +1833,216 @@ class RoomManager:
 
                 self.rooms[room_id] = room
                 
-                # ATOMIC INITIALIZATION
-                import threading
+                # PERSISTENCE FOR 24H ROOMS ON CREATION
+                restored_active = False
                 is_24h = (room.time_limit >= 7200)
                 is_split = (room.game_type == 'split')
-                room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split)
-
-                # INSTANT START: User Request - No wait on first entry for standard rooms (except 24h and solo/private matches)
-                if not is_24h and not is_private and not room.is_solo:
-                    print(f"[RoomManager] {room_id}: Kickstarting room immediately...")
-                    # 1. Pick a bonus word
-                    bw_l = room.spinner_params.get('bonus_word_length', 8)
-                    b_word = self._get_bonus_word(length=bw_l, dictionary=room.spinner_params.get('dictionary', 'NWL'))
+                
+                if is_24h:
+                    import sqlite3
+                    import json
+                    import time
+                    import os
+                    import datetime
+                    from zoneinfo import ZoneInfo
+                    tz = ZoneInfo("America/Chicago")
                     
-                    # 2. Sync Metadata and Enforce floor for large grids
-                    m_len = room.spinner_params.get('min_word_length', 3)
-                    if ('6x8' in str(room.board_dimensions) or '3x3x3' in str(room.board_dimensions)) and m_len < 6:
-                        m_len = 6
-                        room.spinner_params['min_word_length'] = 6
-                    
-                    # 3. Generate board
-                    e_results = self.board_generator.generate_board(
-                        dimensions=room.board_dimensions,
-                        bonus_word=b_word,
-                        word_count_range=room.spinner_params.get('word_count_range', '100-200'), 
-                        dictionary=room.spinner_params.get('dictionary', 'NWL'),
-                        board_format=room.spinner_params.get('board_format', 'Normal'),
-                        min_word_length=m_len,
-                        is_emergency=True
-                    )
-                    
-                    if e_results and len(e_results) >= 7:
-                        e_board, e_words, e_bonus_c, e_fmt, e_dict, e_ratio, e_bonus_word = e_results[:7]
+                    conn = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db'))
+                    try:
+                        # Ensure migrations columns exist
+                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN bonus_word TEXT')
+                        except sqlite3.OperationalError: pass
+                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN bonus_cell_json TEXT')
+                        except sqlite3.OperationalError: pass
+                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN board_format TEXT')
+                        except sqlite3.OperationalError: pass
+                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN uniqueness REAL')
+                        except sqlite3.OperationalError: pass
+                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN word_count_range TEXT')
+                        except sqlite3.OperationalError: pass
+                        conn.commit()
                         
-                        room.board = e_board
-                        room.bonus_cell = e_bonus_c
-                        room.bonus_word = e_bonus_word or b_word
-                        room.current_min_length = m_len
-                        room.current_board_format = e_fmt
-                        room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
-                        room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
-                        room.current_uniqueness = e_ratio
+                        cursor = conn.execute('''
+                            SELECT board_data, all_words, dictionary, min_length, updated_at,
+                                   bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range
+                            FROM active_boards WHERE room_id = ?
+                        ''', (room_id,))
+                        row = cursor.fetchone()
+                        if row:
+                            board_data_json, all_words_json, dictionary, min_length, updated_at, bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range = row
+                            
+                            # Check if the board is from the same day
+                            saved_dt = datetime.datetime.fromtimestamp(updated_at, tz)
+                            now_dt = datetime.datetime.fromtimestamp(time.time(), tz)
+                            if saved_dt.date() == now_dt.date():
+                                print(f"[RoomManager] Restoring active 24h board for {room_id} from DB (saved at {saved_dt})")
+                                room.board = json.loads(board_data_json)
+                                room.all_words = set(json.loads(all_words_json))
+                                room.current_dictionary = dictionary or 'NWL'
+                                room.current_min_length = min_length or 3
+                                room.bonus_word = bonus_word or ''
+                                room.bonus_cell = json.loads(bonus_cell_json) if bonus_cell_json else None
+                                room.current_board_format = board_format or 'Normal'
+                                room.current_uniqueness = uniqueness or 0.0
+                                room.current_word_count_range = word_count_range or '100-200'
+                                
+                                # Set state to active
+                                room.state = 'active'
+                                room.round_start_time = updated_at # Preserve round start time!
+                                room.current_round = 1
+                                
+                                room.spinner_params = {
+                                    'board_dimensions': room.board_dimensions,
+                                    'dictionary': room.current_dictionary,
+                                    'min_word_length': room.current_min_length,
+                                    'board_format': room.current_board_format,
+                                    'word_count_range': room.current_word_count_range,
+                                    'difficulty': getattr(room, 'current_difficulty', 'Medium'),
+                                    'bonus_word_length': len(room.bonus_word) if room.bonus_word else 8
+                                }
+                                room.spinner_params_generated = True
+                                
+                                # Re-generate word paths and scoring in background
+                                def async_rebuild_active_scoring():
+                                    try:
+                                        from board_generator import BoardGenerator
+                                        bg = BoardGenerator()
+                                        flat_board = room.board
+                                        # Re-solve the board to get paths
+                                        words_dict = bg._solve_board(flat_board, room.current_dictionary, room.current_min_length)
+                                        # Keep only words that are in all_words
+                                        room.all_words_paths = {w: p for w, p in words_dict.items() if w in room.all_words}
+                                        
+                                        # Recalculate scores
+                                        from scoring import calculate_word_score
+                                        refined = {}
+                                        for word in room.all_words:
+                                            refined[word] = calculate_word_score(
+                                                word, room.bonus_word, path=room.all_words_paths.get(word),
+                                                board_format=room.current_board_format, bonus_cell=room.bonus_cell,
+                                                board=room.board, return_details=True, strict_path=True
+                                            )
+                                        room.solved_words_with_scores = refined
+                                        room.recalculate_total_points()
+                                        print(f"[RoomManager] Active 24h board scoring/paths rebuilt successfully for {room_id}")
+                                    except Exception as ex:
+                                        print(f"[RoomManager] Error rebuilding scoring/paths for restored 24h room {room_id}: {ex}")
+                                        
+                                import threading
+                                threading.Thread(target=async_rebuild_active_scoring, daemon=True).start()
+                                restored_active = True
+                    except Exception as db_err:
+                        print(f"[RoomManager] Error checking/restoring active board from DB: {db_err}")
+                    finally:
+                        conn.close()
+                
+                if not restored_active:
+                    # ATOMIC INITIALIZATION
+                    import threading
+                    room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split)
+    
+                    # INSTANT START: User Request - No wait on first entry for standard rooms (except 24h and solo/private matches)
+                    if not is_24h and not is_private and not room.is_solo:
+                        print(f"[RoomManager] {room_id}: Kickstarting room immediately...")
+                        # 1. Pick a bonus word
+                        bw_l = room.spinner_params.get('bonus_word_length', 8)
+                        b_word = self._get_bonus_word(length=bw_l, dictionary=room.spinner_params.get('dictionary', 'NWL'))
                         
-                        # Filter words for length lockdown and store paths
-                        room.all_words = {w for w in (e_words or []) if len(w) >= m_len}
-                        room.all_words_paths = {w: p for w, p in (e_dict or {}).items() if len(w) >= m_len}
+                        # 2. Sync Metadata and Enforce floor for large grids
+                        m_len = room.spinner_params.get('min_word_length', 3)
+                        if ('6x8' in str(room.board_dimensions) or '3x3x3' in str(room.board_dimensions)) and m_len < 6:
+                            m_len = 6
+                            room.spinner_params['min_word_length'] = 6
                         
-                        if hasattr(word_validator, 'word_validator'):
-                            room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
-                            room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
-                        else:
-                            room.csw_only_words = []
-                            room.added_words = []
+                        # 3. Generate board
+                        e_results = self.board_generator.generate_board(
+                            dimensions=room.board_dimensions,
+                            bonus_word=b_word,
+                            word_count_range=room.spinner_params.get('word_count_range', '100-200'), 
+                            dictionary=room.spinner_params.get('dictionary', 'NWL'),
+                            board_format=room.spinner_params.get('board_format', 'Normal'),
+                            min_word_length=m_len,
+                            is_emergency=True
+                        )
                         
-                        is_valued_kick = ('valued' in str(e_fmt).lower())
-                        kick_scores = {}
-                        for w in room.all_words:
-                            if is_valued_kick: kick_scores[w] = {'total': len(w), 'base': len(w)}
+                        if e_results and len(e_results) >= 7:
+                            e_board, e_words, e_bonus_c, e_fmt, e_dict, e_ratio, e_bonus_word = e_results[:7]
+                            
+                            room.board = e_board
+                            room.bonus_cell = e_bonus_c
+                            room.bonus_word = e_bonus_word or b_word
+                            room.current_min_length = m_len
+                            room.current_board_format = e_fmt
+                            room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
+                            room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
+                            room.current_uniqueness = e_ratio
+                            
+                            # Filter words for length lockdown and store paths
+                            room.all_words = {w for w in (e_words or []) if len(w) >= m_len}
+                            room.all_words_paths = {w: p for w, p in (e_dict or {}).items() if len(w) >= m_len}
+                            
+                            if hasattr(word_validator, 'word_validator'):
+                                room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
+                                room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
                             else:
-                                length = len(w)
-                                s = 0
-                                if length <= 2: s = 0
-                                elif length <= 4: s = 1
-                                elif length == 5: s = 2
-                                elif length == 6: s = 3
-                                elif length == 7: s = 5
-                                elif length >= 8: s = 11
-                                kick_scores[w] = {'total': s, 'base': s}
-                        room.solved_words_with_scores = kick_scores
-                        
-                        room.state = 'active'
-                        room.round_start_time = time.time()
-                        room.current_round = 1
-                        room.last_saved_round = -1 # Reset save counter for fresh session
-                        
-                        room.initialize_density(e_board, room.all_words_paths, e_fmt)
-                        room.recalculate_total_points()
-                        
-                        # Detailed background scoring refinement for kickstarted Round 1
-                        def refine_kickstart_scores():
-                            try:
-                                from scoring import calculate_word_score
-                                refined = {}
-                                for word in room.all_words:
-                                    refined[word] = calculate_word_score(
-                                        word, room.bonus_word, path=room.all_words_paths.get(word),
-                                        board_format=room.current_board_format, bonus_cell=room.bonus_cell,
-                                        board=room.board, return_details=True, strict_path=True
-                                    )
-                                room.solved_words_with_scores = refined
-                                room.recalculate_total_points()
-                                print(f"[RoomManager] Kickstart scoring refinement complete for {room_id}")
-                            except Exception as e:
-                                print(f"[RoomManager] Kickstart refinement error for {room_id}: {e}")
-                        
-                        threading.Thread(target=refine_kickstart_scores, daemon=True).start()
-                        
-                        print(f"[RoomManager] {room_id} kickstarted ACTIVE (Round 1, {m_len}L+)")
-                        
-                        # 4. Trigger PROACTIVE search for Round 2 in background
-                        room.spinner_params_generated = True
-                        threading.Thread(target=self.start_board_search, args=(room_id,), daemon=True).start()
-                        print(f"[RoomManager] {room_id}: Kickstart complete. Round 1 started.")
-                else:
-                    # Default behavior: Intermission
-                    room.state = 'intermission'
-                    room.intermission_start_time = time.time() - 45 # 15s TR
-                    if room_id.startswith('pub_') and not is_24h:
-                         threading.Thread(target=self.start_board_search, args=(room_id,), daemon=True).start()
+                                room.csw_only_words = []
+                                room.added_words = []
+                            
+                            is_valued_kick = ('valued' in str(e_fmt).lower())
+                            kick_scores = {}
+                            for w in room.all_words:
+                                if is_valued_kick: kick_scores[w] = {'total': len(w), 'base': len(w)}
+                                else:
+                                    length = len(w)
+                                    s = 0
+                                    if length <= 2: s = 0
+                                    elif length <= 4: s = 1
+                                    elif length == 5: s = 2
+                                    elif length == 6: s = 3
+                                    elif length == 7: s = 5
+                                    elif length >= 8: s = 11
+                                    kick_scores[w] = {'total': s, 'base': s}
+                            room.solved_words_with_scores = kick_scores
+                            
+                            room.state = 'active'
+                            room.round_start_time = time.time()
+                            room.current_round = 1
+                            room.last_saved_round = -1 # Reset save counter for fresh session
+                            
+                            room.initialize_density(e_board, room.all_words_paths, e_fmt)
+                            room.recalculate_total_points()
+                            
+                            # Detailed background scoring refinement for kickstarted Round 1
+                            def refine_kickstart_scores():
+                                try:
+                                    from scoring import calculate_word_score
+                                    refined = {}
+                                    for word in room.all_words:
+                                        refined[word] = calculate_word_score(
+                                            word, room.bonus_word, path=room.all_words_paths.get(word),
+                                            board_format=room.current_board_format, bonus_cell=room.bonus_cell,
+                                            board=room.board, return_details=True, strict_path=True
+                                        )
+                                    room.solved_words_with_scores = refined
+                                    room.recalculate_total_points()
+                                    print(f"[RoomManager] Kickstart scoring refinement complete for {room_id}")
+                                except Exception as e:
+                                    print(f"[RoomManager] Kickstart refinement error for {room_id}: {e}")
+                            
+                            threading.Thread(target=refine_kickstart_scores, daemon=True).start()
+                            
+                            print(f"[RoomManager] {room_id} kickstarted ACTIVE (Round 1, {m_len}L+)")
+                            
+                            # 4. Trigger PROACTIVE search for Round 2 in background
+                            room.spinner_params_generated = True
+                            threading.Thread(target=self.start_board_search, args=(room_id,), daemon=True).start()
+                            print(f"[RoomManager] {room_id}: Kickstart complete. Round 1 started.")
+                    else:
+                        # Default behavior: Intermission
+                        room.state = 'intermission'
+                        room.intermission_start_time = time.time() - 45 # 15s TR
+                        if room_id.startswith('pub_') and not is_24h:
+                             threading.Thread(target=self.start_board_search, args=(room_id,), daemon=True).start()
 
                 return room
         except Exception as e:
@@ -3396,21 +3498,7 @@ class RoomManager:
                 room.all_words_paths = {w: p for w, p in (room.next_round_word_paths or {}).items() if len(w) >= display_min}
                 room.solved_words_with_scores = getattr(room, 'next_round_word_scores', {})
                 
-                # Save to DB for cheat prevention across workers
-                try:
-                    import sqlite3
-                    import json
-                    import time
-                    import os
-                    conn = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db'))
-                    conn.execute('''
-                        INSERT OR REPLACE INTO active_boards (room_id, board_data, all_words, dictionary, min_length, updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    ''', (room.room_id, json.dumps(room.board), json.dumps(list(room.all_words)), room.current_dictionary, room.current_min_length, time.time()))
-                    conn.commit()
-                    conn.close()
-                except Exception as db_err:
-                    print(f"[RoomManager] Error saving board to DB: {db_err}")
+                # Save to DB will occur at the end of promotion after all parameters are finalized
                 
                 # USER REQUEST: Ensure Bonus Word is ironclad (highlighted in green at end)
                 # If for any reason next_round_bonus is empty (e.g. emergency stall), pick a fresh one now
@@ -3481,6 +3569,51 @@ class RoomManager:
                 room.complete_words = list(room.all_words) 
                 room.update_counts_by_len()
                 room.recalculate_total_points()
+                
+                # Save to DB for cheat prevention across workers and 24h room persistence
+                if room.board and len(room.board) > 0:
+                    try:
+                        import sqlite3
+                        import json
+                        import time
+                        import os
+                        conn = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db'))
+                        # Ensure migration columns exist
+                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN bonus_word TEXT')
+                        except sqlite3.OperationalError: pass
+                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN bonus_cell_json TEXT')
+                        except sqlite3.OperationalError: pass
+                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN board_format TEXT')
+                        except sqlite3.OperationalError: pass
+                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN uniqueness REAL')
+                        except sqlite3.OperationalError: pass
+                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN word_count_range TEXT')
+                        except sqlite3.OperationalError: pass
+                        conn.commit()
+                        
+                        conn.execute('''
+                            INSERT OR REPLACE INTO active_boards (
+                                room_id, board_data, all_words, dictionary, min_length, updated_at,
+                                bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range
+                            )
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ''', (
+                            room.room_id,
+                            json.dumps(room.board),
+                            json.dumps(list(room.all_words)),
+                            room.current_dictionary,
+                            room.current_min_length,
+                            time.time(),
+                            room.bonus_word or '',
+                            json.dumps(room.bonus_cell) if room.bonus_cell else None,
+                            room.current_board_format or 'Normal',
+                            room.current_uniqueness or 0.0,
+                            room.current_word_count_range or '100-200'
+                        ))
+                        conn.commit()
+                        conn.close()
+                    except Exception as db_err:
+                        print(f"[RoomManager] Error saving board to DB: {db_err}")
                 
                 # FINAL VALIDATION: If the board is STILL empty, we cannot start the round.
                 # Revert to a 5-second emergency intermission to try again.
