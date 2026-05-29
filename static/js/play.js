@@ -5586,9 +5586,9 @@ let lastTouchX = -1;
 let lastTouchY = -1;
 
 function handleCellTouchStart(e) {
+    const touch = e.touches[0];
     let cell = e.target.closest('.board-cell');
     if (!cell) {
-        const touch = e.touches[0];
         const target = touch && document.elementFromPoint(touch.clientX, touch.clientY);
         cell = target && target.closest('.board-cell');
     }
