@@ -593,10 +593,17 @@ def add_definition_api():
         return jsonify({'error': 'Unauthorized'}), 403
     
     data = request.json
-    word = data.get('word', '').strip().upper()
+    word_input = data.get('word', '').strip()
     definition = data.get('definition', '').strip()
     
-    if not word or not definition:
+    if not word_input or not definition:
+        return jsonify({'error': 'Word and definition required'}), 400
+        
+    # Split by comma to support multiple words
+    words = [w.strip().upper() for w in word_input.split(',')]
+    words = [w for w in words if w]
+    
+    if not words:
         return jsonify({'error': 'Word and definition required'}), 400
         
     try:
@@ -609,8 +616,9 @@ def add_definition_api():
                     if len(parts) == 2:
                         defs[parts[0].strip().upper()] = parts[1].strip()
         
-        # Add or Replace
-        defs[word] = definition
+        # Add or Replace for each word
+        for word in words:
+            defs[word] = definition
         
         # Sort by key before writing (best practice for dictionaries)
         sorted_keys = sorted(defs.keys())
@@ -629,7 +637,12 @@ def add_definition_api():
         DEFINITIONS_CACHE = {} # Force reload
         load_definitions()
         
-        return jsonify({'success': True, 'message': f'Definition for {word} set.'})
+        if len(words) > 1:
+            msg = f"Definitions for {', '.join(words)} set."
+        else:
+            msg = f"Definition for {words[0]} set."
+            
+        return jsonify({'success': True, 'message': msg, 'words': words})
     except Exception as e:
         print(f"Error updating definitions: {e}")
         return jsonify({'error': str(e)}), 500
@@ -641,26 +654,33 @@ def remove_definition_api():
         return jsonify({'error': 'Unauthorized'}), 403
     
     data = request.json
-    word = data.get('word', '').strip().upper()
-    if not word:
+    word_input = data.get('word', '').strip()
+    if not word_input:
+        return jsonify({'error': 'Word required'}), 400
+        
+    # Split by comma to support multiple words
+    words = [w.strip().upper() for w in word_input.split(',')]
+    words = [w for w in words if w]
+    
+    if not words:
         return jsonify({'error': 'Word required'}), 400
         
     try:
         defs = {}
-        found = False
+        removed_words = []
         if DEFINITIONS_PATH and os.path.exists(DEFINITIONS_PATH):
             with open(DEFINITIONS_PATH, 'r', encoding='utf-8', errors='ignore') as f:
                 for line in f:
                     parts = line.split(' - ', 1)
                     if len(parts) == 2:
                         k = parts[0].strip().upper()
-                        if k == word:
-                            found = True
+                        if k in words:
+                            removed_words.append(k)
                             continue
                         defs[k] = parts[1].strip()
         
-        if not found:
-            return jsonify({'error': 'Definition not found for this word.'}), 404
+        if not removed_words:
+            return jsonify({'error': 'None of the specified words had definitions.'}), 404
             
         sorted_keys = sorted(defs.keys())
         temp_path = DEFINITIONS_PATH + '.tmp'
@@ -674,7 +694,12 @@ def remove_definition_api():
         DEFINITIONS_CACHE = {} # Force reload
         load_definitions()
         
-        return jsonify({'success': True, 'message': f'Definition for {word} removed.'})
+        if len(removed_words) > 1:
+            msg = f"Definitions for {', '.join(removed_words)} removed."
+        else:
+            msg = f"Definition for {removed_words[0]} removed."
+            
+        return jsonify({'success': True, 'message': msg, 'words': removed_words})
     except Exception as e:
         print(f"Error removing definition: {e}")
         return jsonify({'error': str(e)}), 500

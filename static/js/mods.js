@@ -575,8 +575,9 @@ async function addDefinition() {
         if (data.success) {
             if (wordInput) wordInput.value = '';
             if (textInput) textInput.value = '';
-            showModStatus(`Definition for "${word}" updated.`, false, 'def-status-area');
-            alert(`Success: Definition for "${word}" has been set.`);
+            const wordsStr = data.words ? data.words.join(', ') : word;
+            showModStatus(`Definition for "${wordsStr}" updated.`, false, 'def-status-area');
+            alert(`Success: Definition for "${wordsStr}" has been set.`);
         } else {
             alert("Error: " + (data.error || "Failed to set definition."));
         }
@@ -604,8 +605,9 @@ async function removeDefinition() {
         const data = await response.json();
         if (data.success) {
             if (wordInput) wordInput.value = '';
-            showModStatus(`Definition for "${word}" removed.`, false, 'def-status-area');
-            alert(`Success: Definition for "${word}" has been removed.`);
+            const wordsStr = data.words ? data.words.join(', ') : word;
+            showModStatus(`Definition for "${wordsStr}" removed.`, false, 'def-status-area');
+            alert(`Success: Definition for "${wordsStr}" has been removed.`);
         } else {
             alert("Error: " + (data.error || "Failed to remove definition."));
         }
