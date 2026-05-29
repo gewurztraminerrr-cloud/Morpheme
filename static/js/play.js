@@ -5689,10 +5689,13 @@ function finishDragSelection(e) {
                 foundTabBtn.click();
             }
             
-            // Scroll to the Words panel smoothly
-            const wordsPanel = document.getElementById('words-panel') || document.querySelector('.words-panel');
-            if (wordsPanel) {
-                wordsPanel.scrollIntoView({ behavior: 'smooth' });
+            // Scroll to the Words panel smoothly (Only on mobile devices to prevent viewport jumps on desktop)
+            const isMobile = window.innerWidth <= 992;
+            if (isMobile) {
+                const wordsPanel = document.getElementById('words-panel') || document.querySelector('.words-panel');
+                if (wordsPanel) {
+                    wordsPanel.scrollIntoView({ behavior: 'smooth' });
+                }
             }
         }
         
