@@ -5443,7 +5443,20 @@ function handleCellMouseDown(e) {
     if (Date.now() - lastTouchTime < 1500) return; // Ignore simulated mouse events on touch devices
 
     const cell = e.target.closest('.board-cell');
-    if (!cell || cell.classList.contains('grayed')) return;
+    if (!cell) return;
+
+    // INTERMISSION TILE PRESS FILTERS
+    if (window.lastGameState && window.lastGameState.state === 'intermission') {
+        e.preventDefault();
+        const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
+        const r = parseInt(cell.dataset.r || cell.dataset.row);
+        const c = parseInt(cell.dataset.c || cell.dataset.col);
+        const letter = cell.dataset.letter;
+        handleIntermissionTilePress(cell, r, c, f, letter);
+        return;
+    }
+
+    if (cell.classList.contains('grayed')) return;
 
     // Prevent native browser drag/selection behavior from interrupting our swipe
     e.preventDefault();
@@ -5531,6 +5544,24 @@ let lastTouchY = -1;
 function handleCellTouchStart(e) {
     if (window.isSpectatorMode) return;
 
+    const touch = e.touches[0];
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    const cell = target && target.closest('.board-cell');
+    if (!cell) return;
+
+    // INTERMISSION TILE PRESS FILTERS
+    if (window.lastGameState && window.lastGameState.state === 'intermission') {
+        if (e.cancelable !== false) {
+            e.preventDefault();
+        }
+        const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
+        const r = parseInt(cell.dataset.r || cell.dataset.row);
+        const c = parseInt(cell.dataset.c || cell.dataset.col);
+        const letter = cell.dataset.letter;
+        handleIntermissionTilePress(cell, r, c, f, letter);
+        return;
+    }
+
     // Unconditionally prevent browser default gestures/scrolling when touching anywhere on the board container
     if (e.cancelable !== false) {
         e.preventDefault();
@@ -5538,13 +5569,9 @@ function handleCellTouchStart(e) {
 
     if (mouseState.isDown) return; // Prevent double touch/accidental brushes from erasing path
 
-    const touch = e.touches[0];
     lastTouchX = touch.clientX;
     lastTouchY = touch.clientY;
     
-    const target = document.elementFromPoint(touch.clientX, touch.clientY);
-    const cell = target && target.closest('.board-cell');
-
     if (cell && !cell.classList.contains('grayed')) {
         mouseState.isDown = true;
         mouseState.selectedPath = [];
@@ -5649,61 +5676,48 @@ function finishDragSelection(e) {
 
     boardEl.addEventListener('dragstart', (e) => e.preventDefault());
     boardEl.addEventListener('mousedown', handleCellMouseDown);
-    boardEl.addEventListener('click', (e) => {
-        // Only run during intermission!
-        if (!window.lastGameState || window.lastGameState.state !== 'intermission') {
-            return;
+function handleIntermissionTilePress(cell, r, c, f, letter) {
+    console.log(`[IntermissionPress] Pressed tile at row=${r}, col=${c}, face=${f}, letter=${letter}`);
+    
+    // Toggle/Set the filter
+    if (window.intermissionTileFilter && 
+        window.intermissionTileFilter.r === r && 
+        window.intermissionTileFilter.c === c && 
+        window.intermissionTileFilter.f === f) {
+        // Clicking again clears the filter!
+        window.intermissionTileFilter = null;
+        cell.classList.remove('intermission-highlight');
+    } else {
+        // Remove highlight from any other cell
+        document.querySelectorAll('.board-cell.intermission-highlight').forEach(el => {
+            el.classList.remove('intermission-highlight');
+        });
+        
+        // Set the new filter
+        window.intermissionTileFilter = { r, c, f, letter };
+        cell.classList.add('intermission-highlight');
+        
+        // Automatically switch to 'found' (All Words) tab
+        const foundTabBtn = document.querySelector('.word-tab[data-tab="found"]');
+        if (foundTabBtn) {
+            foundTabBtn.click();
         }
         
-        const cell = e.target.closest('.board-cell');
-        if (!cell) return;
-        
-        const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
-        const r = parseInt(cell.dataset.r || cell.dataset.row);
-        const c = parseInt(cell.dataset.c || cell.dataset.col);
-        const letter = cell.dataset.letter;
-        
-        console.log(`[IntermissionClick] Clicked tile at row=${r}, col=${c}, face=${f}, letter=${letter}`);
-        
-        // Toggle/Set the filter
-        if (window.intermissionTileFilter && 
-            window.intermissionTileFilter.r === r && 
-            window.intermissionTileFilter.c === c && 
-            window.intermissionTileFilter.f === f) {
-            // Clicking again clears the filter!
-            window.intermissionTileFilter = null;
-            cell.classList.remove('intermission-highlight');
-        } else {
-            // Remove highlight from any other cell
-            document.querySelectorAll('.board-cell.intermission-highlight').forEach(el => {
-                el.classList.remove('intermission-highlight');
-            });
-            
-            // Set the new filter
-            window.intermissionTileFilter = { r, c, f, letter };
-            cell.classList.add('intermission-highlight');
-            
-            // Automatically switch to 'found' (All Words) tab
-            const foundTabBtn = document.querySelector('.word-tab[data-tab="found"]');
-            if (foundTabBtn) {
-                foundTabBtn.click();
-            }
-            
-            // Scroll to the Words panel smoothly (Only on mobile devices to prevent viewport jumps on desktop)
-            const isMobile = window.innerWidth <= 992;
-            if (isMobile) {
-                const wordsPanel = document.getElementById('words-panel') || document.querySelector('.words-panel');
-                if (wordsPanel) {
-                    wordsPanel.scrollIntoView({ behavior: 'smooth' });
-                }
+        // Scroll to the Words panel smoothly (Only on mobile devices to prevent viewport jumps on desktop)
+        const isMobile = window.innerWidth <= 992;
+        if (isMobile) {
+            const wordsPanel = document.getElementById('words-panel') || document.querySelector('.words-panel');
+            if (wordsPanel) {
+                wordsPanel.scrollIntoView({ behavior: 'smooth' });
             }
         }
-        
-        // Re-display all words
-        if (window.lastDisplayAllWordsArgs) {
-            displayAllWords(...window.lastDisplayAllWordsArgs);
-        }
-    });
+    }
+    
+    // Re-display all words
+    if (window.lastDisplayAllWordsArgs) {
+        displayAllWords(...window.lastDisplayAllWordsArgs);
+    }
+}
     boardEl.addEventListener('mouseover', handleCellMouseOver);
     document.addEventListener('mousemove', handleCellMouseMove, { passive: true });
     boardEl.addEventListener('touchstart', handleCellTouchStart, { passive: false });
