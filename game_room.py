@@ -1841,7 +1841,6 @@ class RoomManager:
                 if is_24h:
                     import sqlite3
                     import json
-                    import time
                     import os
                     import datetime
                     from zoneinfo import ZoneInfo
