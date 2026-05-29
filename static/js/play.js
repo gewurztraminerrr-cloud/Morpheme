@@ -5437,6 +5437,49 @@ function updateWordInputFromPath() {
     }
 }
 
+function handleIntermissionTilePress(cell, r, c, f, letter) {
+    console.log(`[IntermissionPress] Pressed tile at row=${r}, col=${c}, face=${f}, letter=${letter}`);
+    
+    // Toggle/Set the filter
+    if (window.intermissionTileFilter && 
+        window.intermissionTileFilter.r === r && 
+        window.intermissionTileFilter.c === c && 
+        window.intermissionTileFilter.f === f) {
+        // Clicking again clears the filter!
+        window.intermissionTileFilter = null;
+        cell.classList.remove('intermission-highlight');
+    } else {
+        // Remove highlight from any other cell
+        document.querySelectorAll('.board-cell.intermission-highlight').forEach(el => {
+            el.classList.remove('intermission-highlight');
+        });
+        
+        // Set the new filter
+        window.intermissionTileFilter = { r, c, f, letter };
+        cell.classList.add('intermission-highlight');
+        
+        // Automatically switch to 'found' (All Words) tab
+        const foundTabBtn = document.querySelector('.word-tab[data-tab="found"]');
+        if (foundTabBtn) {
+            foundTabBtn.click();
+        }
+        
+        // Scroll to the Words panel smoothly (Only on mobile devices to prevent viewport jumps on desktop)
+        const isMobile = window.innerWidth <= 992;
+        if (isMobile) {
+            const wordsPanel = document.getElementById('words-panel') || document.querySelector('.words-panel');
+            if (wordsPanel) {
+                wordsPanel.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    }
+    
+    // Re-display all words
+    if (window.lastDisplayAllWordsArgs) {
+        displayAllWords(...window.lastDisplayAllWordsArgs);
+    }
+}
+
 function handleCellMouseDown(e) {
     if (e.button !== 0) return; // Only left click
 
@@ -5680,48 +5723,7 @@ function finishDragSelection(e) {
 
     boardEl.addEventListener('dragstart', (e) => e.preventDefault());
     boardEl.addEventListener('mousedown', handleCellMouseDown);
-function handleIntermissionTilePress(cell, r, c, f, letter) {
-    console.log(`[IntermissionPress] Pressed tile at row=${r}, col=${c}, face=${f}, letter=${letter}`);
-    
-    // Toggle/Set the filter
-    if (window.intermissionTileFilter && 
-        window.intermissionTileFilter.r === r && 
-        window.intermissionTileFilter.c === c && 
-        window.intermissionTileFilter.f === f) {
-        // Clicking again clears the filter!
-        window.intermissionTileFilter = null;
-        cell.classList.remove('intermission-highlight');
-    } else {
-        // Remove highlight from any other cell
-        document.querySelectorAll('.board-cell.intermission-highlight').forEach(el => {
-            el.classList.remove('intermission-highlight');
-        });
-        
-        // Set the new filter
-        window.intermissionTileFilter = { r, c, f, letter };
-        cell.classList.add('intermission-highlight');
-        
-        // Automatically switch to 'found' (All Words) tab
-        const foundTabBtn = document.querySelector('.word-tab[data-tab="found"]');
-        if (foundTabBtn) {
-            foundTabBtn.click();
-        }
-        
-        // Scroll to the Words panel smoothly (Only on mobile devices to prevent viewport jumps on desktop)
-        const isMobile = window.innerWidth <= 992;
-        if (isMobile) {
-            const wordsPanel = document.getElementById('words-panel') || document.querySelector('.words-panel');
-            if (wordsPanel) {
-                wordsPanel.scrollIntoView({ behavior: 'smooth' });
-            }
-        }
-    }
-    
-    // Re-display all words
-    if (window.lastDisplayAllWordsArgs) {
-        displayAllWords(...window.lastDisplayAllWordsArgs);
-    }
-}
+
     boardEl.addEventListener('mouseover', handleCellMouseOver);
     document.addEventListener('mousemove', handleCellMouseMove, { passive: true });
     boardEl.addEventListener('touchstart', handleCellTouchStart, { passive: false });
