@@ -5656,7 +5656,7 @@ function finishDragSelection(e) {
         }
         
         const cell = e.target.closest('.board-cell');
-        if (!cell || cell.classList.contains('grayed')) return;
+        if (!cell) return;
         
         const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
         const r = parseInt(cell.dataset.r || cell.dataset.row);
