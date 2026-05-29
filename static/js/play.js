@@ -1703,6 +1703,8 @@ async function updateGameState(incomingState = null) {
         // --- CLUES TAB (24H Only) ---
         const cluesListEl = document.getElementById('clues-list');
         if (cluesListEl && activeWordsTab === 'clues') {
+            const oldScrollTop = cluesListEl.scrollTop;
+            
             const myPlayer = state.players.find(p => p.username.toLowerCase() === (currentUser || "").toLowerCase());
             const myWords = myPlayer ? myPlayer.submitted_words : [];
             const foundSet = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase()));
@@ -1731,11 +1733,15 @@ async function updateGameState(incomingState = null) {
                 
                 cluesListEl.innerHTML = clueListHtml;
             }
+            
+            cluesListEl.scrollTop = oldScrollTop;
         }
 
         // --- PREVIOUS DAY TAB (24H Only) ---
         const prevListEl = document.getElementById('previous-words-list');
         if (prevListEl && activeWordsTab === 'previous') {
+            const oldScrollTop = prevListEl.scrollTop;
+            
             let prevAll = [];
             if (state.previous_all_words) {
                 if (Array.isArray(state.previous_all_words)) {
@@ -1876,6 +1882,8 @@ async function updateGameState(incomingState = null) {
                     });
                 });
             }
+            
+            prevListEl.scrollTop = oldScrollTop;
         }
 
         // --- ROOM HISTORY TAB ---
