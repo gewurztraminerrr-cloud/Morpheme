@@ -1,6 +1,6 @@
 # Morpheme Stable State Summary - May 29, 2026
 
-This summary documents the stable state of the Morpheme application as of May 29, 2026. Today's work focused on Moderator Panel standardizations, multi-word Definition Management, dynamic parameter color-coding, ironclad board and player/word persistence for 24-hour accumulative game rooms, and resolving a critical shadowing scope bug in the room creation loader.
+This summary documents the stable state of the Morpheme application as of May 29, 2026. Today's work focused on Moderator Panel standardizations, multi-word Definition Management, dynamic parameter color-coding, ironclad board and player/word persistence for 24-hour accumulative game rooms, resolving a critical shadowing scope bug in the room creation loader, and a major 10-minute inactivity eviction synchronization bugfix.
 
 ## 🚀 Key Improvements & Bug Fixes
 
@@ -49,6 +49,14 @@ This summary documents the stable state of the Morpheme application as of May 29
 - **Data Integrity**: This guarantees that 24h room gameplay does not skew the cumulative statistics or write redundant logs to `word_tally.log` and `word_stats.json`.
 - **Trace Logger Path Resolution**: Defined `TRACE_PATH` globally in [game_room.py](file:///Users/jeffbabiak/game_room.py) to resolve a latent bug where standard room word tallying crashed due to the missing path variable.
 
+### 8. Ironclad Inactivity-Eviction Synchronization (10m Idle Bugfix)
+- **The Bug**: When a player minimized the Morpheme window on a mobile device for >10 minutes, client-side polling paused. The server's background thread correctly evicted them for inactivity and added them to `evicted_users`. However, upon returning to the window, the client woke up and immediately fetched `/api/room/{roomId}/state`. The server's state endpoint had a latent handler that cleared the `inactivity` eviction flag and automatically restored the user to the room's players list. A split second later, the client-side local timer detected the >10 minute inactivity, triggered the idle notice modal, and made a POST to `/api/room/{roomId}/leave` while redirecting to the Lobby. Due to the async page transition race condition and the server's auto-restoration, the user got stuck in the room's roster on the server, keeping the Lobby count at `Start [1]` until another 10 minutes of lobby inactivity passed.
+- **The Fix**: 
+  - Refactored `get_room_state` in [app.py](file:///Users/jeffbabiak/app.py) to **never auto-restore** or clear an eviction if a user is in `evicted_users` (including for `'inactivity'`). The server now always returns a clean `403` eviction response.
+  - Awaited the `window.leaveCurrentRoom()` execution inside `ejectToLobby()` in [play.js](file:///Users/jeffbabiak/static/js/play.js) to guarantee the network call completes successfully before local state is cleared and navigation to the Lobby page occurs.
+  - Incremented the script cache-busting version parameter to `play.js?v=87` in [index.html](file:///Users/jeffbabiak/templates/index.html).
+- **Result**: The player roster immediately drops to 0 on the server after 10 minutes, the Lobby button instantly reads `Start [0]`, and the returning user is cleanly redirected to the Lobby with the idle popup notice and zero stale room references.
+
 ---
 
 ## 🛠 Active Features & Configuration
@@ -59,8 +67,8 @@ This summary documents the stable state of the Morpheme application as of May 29
 
 ---
 
-**Latest Stable Commit ID**: `e60c0d9`  
-**Stable Point Tag (snapshot-current)**: `e60c0d9`  
-**Start Over Tag (START_OVER_POINT_MAY_29)**: `e60c0d9`  
+**Latest Stable Commit ID**: `e9b134c`  
+**Stable Point Tag (snapshot-current)**: `e9b134c`  
+**Start Over Tag (START_OVER_POINT_MAY_29)**: `e9b134c`  
 **GitHub Push**: Completed / Synchronized  
 **Status**: Stable / Production Ready / Synchronized
