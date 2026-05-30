@@ -1817,7 +1817,7 @@ class RoomManager:
                 restored_scores[w_upper] = calculate_word_score(
                     w_upper,
                     room.previous_bonus_word,
-                    board_format=board_format or 'Normal',
+                    board_format='Valued Letters' if room.time_limit >= 7200 else (board_format or 'Normal'),
                     bonus_cell=room.previous_bonus_cell,
                     board=room.previous_board,
                     path=w_path,
@@ -2265,10 +2265,46 @@ class RoomManager:
                 if recovered_solutions:
                      if isinstance(recovered_solutions, dict):
                          room.previous_all_words = list(recovered_solutions.keys())
-                         room.previous_all_word_scores = recovered_solutions
+                         if room.time_limit >= 7200:
+                             from scoring import calculate_word_score
+                             recalc_scores = {}
+                             for w in room.previous_all_words:
+                                 w_upper = w.upper()
+                                 w_path = recovered_paths.get(w_upper) or recovered_paths.get(w)
+                                 recalc_scores[w_upper] = calculate_word_score(
+                                     w_upper,
+                                     room.previous_bonus_word,
+                                     board_format='Valued Letters',
+                                     bonus_cell=recovered_bonus_cell,
+                                     board=room.previous_board,
+                                     path=w_path,
+                                     return_details=True,
+                                     strict_path=True
+                                 )
+                             room.previous_all_word_scores = recalc_scores
+                         else:
+                             room.previous_all_word_scores = recovered_solutions
                      elif isinstance(recovered_solutions, list):
                          room.previous_all_words = list(recovered_solutions)
-                         room.previous_all_word_scores = {w: {} for w in recovered_solutions}
+                         if room.time_limit >= 7200:
+                             from scoring import calculate_word_score
+                             recalc_scores = {}
+                             for w in room.previous_all_words:
+                                 w_upper = w.upper()
+                                 w_path = recovered_paths.get(w_upper) or recovered_paths.get(w)
+                                 recalc_scores[w_upper] = calculate_word_score(
+                                     w_upper,
+                                     room.previous_bonus_word,
+                                     board_format='Valued Letters',
+                                     bonus_cell=recovered_bonus_cell,
+                                     board=room.previous_board,
+                                     path=w_path,
+                                     return_details=True,
+                                     strict_path=True
+                                 )
+                             room.previous_all_word_scores = recalc_scores
+                         else:
+                             room.previous_all_word_scores = {w: {} for w in recovered_solutions}
                      
                      # Recover min length from solutions
                      word_lengths = [len(w) for w in room.previous_all_words if len(w) >= 3]
