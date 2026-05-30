@@ -1754,7 +1754,11 @@ class RoomManager:
         cursor = conn.cursor()
         try:
             # 1. Find the last completed round number
-            cursor.execute("SELECT MAX(round_number) FROM round_history WHERE room_id = ? AND round_number < ?", (room.room_id, room.current_round))
+            if room.current_round <= 2:
+                # On server startup/reset (round <= 2), find the absolute latest round in history
+                cursor.execute("SELECT MAX(round_number) FROM round_history WHERE room_id = ?", (room.room_id,))
+            else:
+                cursor.execute("SELECT MAX(round_number) FROM round_history WHERE room_id = ? AND round_number < ?", (room.room_id, room.current_round))
             row = cursor.fetchone()
             if not row or row[0] is None:
                 conn.close()
