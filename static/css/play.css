@@ -5461,6 +5461,8 @@ body .board-cell.tile-flash-blue {
 }
 body .board-cell.tile-flash-blue * {
     color: #ffffff !important;
+    transition: none !important;
+    animation: none !important;
 }
 
 body .board-cell.tile-flash-green {
@@ -5473,6 +5475,8 @@ body .board-cell.tile-flash-green {
 }
 body .board-cell.tile-flash-green * {
     color: #ffffff !important;
+    transition: none !important;
+    animation: none !important;
 }
 
 body .board-cell.tile-flash-red {
@@ -5485,6 +5489,8 @@ body .board-cell.tile-flash-red {
 }
 body .board-cell.tile-flash-red * {
     color: #ffffff !important;
+    transition: none !important;
+    animation: none !important;
 }
 
 

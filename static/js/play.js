@@ -5285,7 +5285,7 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
                     cell.classList.add(tileFlashClass);
                     setTimeout(() => {
                         cell.classList.remove(tileFlashClass);
-                    }, 150);
+                    }, 100);
                 }
             }
         });
