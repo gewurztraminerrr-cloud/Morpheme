@@ -2323,6 +2323,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (chatPanel) {
         chatPanel.addEventListener('click', (e) => {
+            // Do not expand if the user clicked the text input or input section controls
+            if (e.target.closest('.chat-input-section')) {
+                return;
+            }
+
             // Avoid re-expanding or stealing focus if already expanded
             if (chatPanel.classList.contains('expanded')) {
                 return;
