@@ -5112,7 +5112,7 @@ async function submitWord(wordParam = null, pathParam = null) {
         // Show validation feedback
         const currentState = window.lastGameState;
         const isBonus = data.success && currentState && currentState.bonus_word && data.word && data.word.toUpperCase() === currentState.bonus_word.toUpperCase();
-        showValidationFeedback(data.message || (data.success ? 'Valid Word' : 'Invalid Word'), data.success, isBonus);
+        showValidationFeedback(data.message || (data.success ? 'Valid Word' : 'Invalid Word'), data.success, isBonus, finalPath);
 
 
 
@@ -5227,7 +5227,7 @@ async function submitWord(wordParam = null, pathParam = null) {
     }
 }
 
-function showValidationFeedback(message, isValid, isBonus = false) {
+function showValidationFeedback(message, isValid, isBonus = false, path = null) {
     const statusEl = document.getElementById('word-validation-status');
     if (!statusEl) return;
 
@@ -5241,20 +5241,48 @@ function showValidationFeedback(message, isValid, isBonus = false) {
     statusEl.textContent = message;
     statusEl.className = 'validation-status ' + (isActuallyValid ? 'status-valid' : 'status-invalid');
 
-    // Flash background of the play page (Full-screen overlay)
-    const pagePlay = document.getElementById('page-play');
+    // Flash highlighted tiles that traced the word (instead of full-screen flash)
     const shouldFlash = window.userSettings ? (window.userSettings.word_flash !== false) : true;
-    if (shouldFlash) {
-        let flashClass = 'flash-red';
+    if (shouldFlash && path && path.length > 0) {
+        let tileFlashClass = 'tile-flash-red';
         if (isActuallyValid) {
-            flashClass = isBonus ? 'flash-green' : 'flash-blue';
+            tileFlashClass = isBonus ? 'tile-flash-green' : 'tile-flash-blue';
         }
-        if (pagePlay) pagePlay.classList.add(flashClass);
-        document.body.classList.add(flashClass);
-        setTimeout(() => {
-            if (pagePlay) pagePlay.classList.remove(flashClass);
-            document.body.classList.remove(flashClass);
-        }, 500); // Match CSS animation duration (0.5s)
+        
+        path.forEach(coord => {
+            let r, c, f;
+            if (Array.isArray(coord)) {
+                if (coord.length === 3) {
+                    f = coord[0];
+                    r = coord[1];
+                    c = coord[2];
+                } else if (coord.length === 2) {
+                    r = coord[0];
+                    c = coord[1];
+                }
+            } else if (coord && typeof coord === 'object') {
+                r = coord.r;
+                c = coord.c;
+                f = coord.f;
+            }
+            
+            if (r !== undefined && c !== undefined) {
+                let selector = `.board-cell[data-r="${r}"][data-c="${c}"]`;
+                if (f !== undefined) {
+                    selector = `.board-cell[data-f="${f}"][data-r="${r}"][data-c="${c}"]`;
+                }
+                const cell = document.querySelector(selector);
+                if (cell) {
+                    cell.classList.remove('tile-flash-blue', 'tile-flash-green', 'tile-flash-red');
+                    // Trigger reflow to restart animation if already playing
+                    void cell.offsetWidth; 
+                    cell.classList.add(tileFlashClass);
+                    setTimeout(() => {
+                        cell.classList.remove(tileFlashClass);
+                    }, 800);
+                }
+            }
+        });
     }
 
     // Flash word input background
@@ -6005,11 +6033,6 @@ async function initTournamentPlay() {
 async function handleTournamentWord(word) {
     if (!word) return;
 
-    if (tournamentWords.find(w => w.word === word)) {
-        showValidationFeedback('Already found!', false);
-        return;
-    }
-
     // Check if word is on board
     const board = window.lastGameState ? window.lastGameState.board : null;
     if (!board) {
@@ -6019,6 +6042,12 @@ async function handleTournamentWord(word) {
 
     const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
     const path = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
+
+    if (tournamentWords.find(w => w.word === word)) {
+        showValidationFeedback('Already found!', false, false, path);
+        return;
+    }
+
     if (!path) {
         showValidationFeedback(`${word} is invalid.`, false);
         return;
@@ -6042,17 +6071,17 @@ async function handleTournamentWord(word) {
     // Check length and dictionary validity
     const minLen = window.tournamentParams ? window.tournamentParams.min_word_length : 3;
     if (word.length < minLen && !is_valid_dict) {
-        showValidationFeedback("Sequence not a word and too small", false);
+        showValidationFeedback("Sequence not a word and too small", false, false, path);
         return;
     }
 
     if (!is_valid_dict) {
-        showValidationFeedback(`${word} is invalid.`, false);
+        showValidationFeedback(`${word} is invalid.`, false, false, path);
         return;
     }
 
     if (word.length < minLen) {
-        showValidationFeedback(`${word} is invalid.`, false);
+        showValidationFeedback(`${word} is invalid.`, false, false, path);
         return;
     }
 
@@ -6078,7 +6107,7 @@ async function handleTournamentWord(word) {
     tournamentScore += pts;
 
     // Show success feedback
-    showValidationFeedback(isBonus ? 'BONUS WORD!' : 'Valid Word', true);
+    showValidationFeedback(isBonus ? 'BONUS WORD!' : 'Valid Word', true, isBonus, path);
 
     // Update Score UI
     const scoreEl = document.querySelector('.player-card .score');
@@ -6385,7 +6414,7 @@ async function handlePrivateMatchWord(word, path = null) {
     }
 
     if (privateMatchWords.find(w => w.word === resolvedWord)) {
-        showValidationFeedback('Already found!', false);
+        showValidationFeedback('Already found!', false, false, resolvedPath);
         return;
     }
 
@@ -6410,9 +6439,9 @@ async function handlePrivateMatchWord(word, path = null) {
     const minLen = privateMatchParams ? privateMatchParams.min_word_length : 3;
     if (word.length < minLen) {
         if (!isDictionaryValid) {
-            showValidationFeedback("Sequence not a word and too small", false);
+            showValidationFeedback("Sequence not a word and too small", false, false, resolvedPath);
         } else {
-            showValidationFeedback(`Too short (min ${minLen})`, false);
+            showValidationFeedback(`Too short (min ${minLen})`, false, false, resolvedPath);
         }
         return;
     }
@@ -6450,9 +6479,9 @@ async function handlePrivateMatchWord(word, path = null) {
         // Hidden Bonus Word (+Length)
         if (activeMatch && activeMatch.bonus_word && activeMatch.bonus_word.toUpperCase() === word) {
             pts += word.length;
-            showValidationFeedback('BONUS WORD FOUND!', true);
+            showValidationFeedback('BONUS WORD FOUND!', true, true, resolvedPath);
         } else {
-            showValidationFeedback('Valid Word', true);
+            showValidationFeedback('Valid Word', true, false, resolvedPath);
         }
 
         // Format Bonus (+3 points for Either/Or or Bonus Letter tile)
@@ -6493,13 +6522,13 @@ async function handlePrivateMatchWord(word, path = null) {
             if (wordPath) {
                 pts = -3;
                 isPenalty = true;
-                showValidationFeedback('INVALID (PENALTY -3)', false);
+                showValidationFeedback('INVALID (PENALTY -3)', false, false, wordPath);
             } else {
-                showValidationFeedback('Not in dictionary!', false);
+                showValidationFeedback('Not in dictionary!', false, false, resolvedPath);
                 return;
             }
         } else {
-            showValidationFeedback('Not in dictionary!', false);
+            showValidationFeedback('Not in dictionary!', false, false, resolvedPath);
             return;
         }
     }
