@@ -70,10 +70,12 @@ class SpinnerSet:
                 elif '6x8' in dims and min_word_length == 6:
                     res['min_word_length'] = random.choice([7, 8])
                     print(f"[SpinnerSet] Wrapper adjusted 6x8 min_len for 100-200 words from 6 to {res['min_word_length']}")
+            # Apply our ironclad safety sanitizer
+            res = SpinnerSet.sanitize_params(res, board_dimensions)
             return res
         except Exception as e:
             print(f"[SpinnerSet] CRITICAL WRAPPER ERROR: {e}")
-            return {
+            fallback = {
                 'difficulty': random.choices(['Easy', 'Medium', 'Hard'], weights=[25, 50, 25])[0],
                 'dictionary': random.choice(['NWL', 'CSW']),
                 'word_count_range': random.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0],
@@ -82,6 +84,67 @@ class SpinnerSet:
                 'bonus_word_length': 8,
                 'generated_at': time.time()
             }
+            return SpinnerSet.sanitize_params(fallback, board_dimensions)
+
+    @staticmethod
+    def sanitize_params(res, board_dimensions):
+        """Ironclad density/min-length sanitization to prevent impossible board generator CPU hangs."""
+        if not isinstance(res, dict):
+            return res
+            
+        dims = str(board_dimensions).lower().replace(" ", "")
+        try:
+            min_word_length = int(res.get('min_word_length', 3))
+        except:
+            min_word_length = 3
+        wc_range = res.get('word_count_range', '100-200')
+        
+        # 1. 4x4 Grid Safety Caps
+        if '4x4' in dims:
+            if min_word_length >= 5:
+                # Max words for 5L+ on 4x4 is extremely small, cap at 100-200
+                if wc_range in ['200-300', '300-400', '500+']:
+                    res['word_count_range'] = '100-200'
+            elif min_word_length >= 4:
+                # Max words for 4L+ on 4x4 cannot comfortably hit 300-400 or 500+
+                if wc_range in ['300-400', '500+']:
+                    res['word_count_range'] = '200-300'
+            else: # min_word_length == 3
+                # Even 3L+ on 4x4 with high difficulty/rare letters cannot comfortably hit 500+
+                if wc_range == '500+':
+                    res['word_count_range'] = '300-400'
+                    
+        # 2. 4x6 Grid Safety Caps
+        elif '4x6' in dims:
+            if min_word_length >= 6:
+                if wc_range in ['200-300', '300-400', '500+']:
+                    res['word_count_range'] = '100-200'
+            elif min_word_length >= 5:
+                if wc_range in ['300-400', '500+']:
+                    res['word_count_range'] = '200-300'
+            elif min_word_length >= 4:
+                if wc_range == '500+':
+                    res['word_count_range'] = '300-400'
+                    
+        # 3. 5x7 Grid Safety Caps
+        elif '5x7' in dims:
+            if min_word_length >= 7:
+                if wc_range in ['200-300', '300-400', '500+']:
+                    res['word_count_range'] = '100-200'
+            elif min_word_length >= 6:
+                if wc_range in ['300-400', '500+']:
+                    res['word_count_range'] = '200-300'
+                    
+        # 4. 6x8 or 3x3x3 Grid Safety Caps
+        elif '6x8' in dims or '3x3x3' in dims:
+            if min_word_length >= 8:
+                if wc_range in ['200-300', '300-400', '500+']:
+                    res['word_count_range'] = '100-200'
+            elif min_word_length >= 7:
+                if wc_range in ['300-400', '500+']:
+                    res['word_count_range'] = '200-300'
+                    
+        return res
 
     @staticmethod
     def _generate_params_raw(board_dimensions, is_24h=False, is_split=False, previous_params=None):

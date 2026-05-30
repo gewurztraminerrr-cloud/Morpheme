@@ -2544,6 +2544,8 @@ class RoomManager:
                 is_split = (room.game_type == 'split')
                 room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split)
                 room.spinner_params_generated = True
+            from spinner_set import SpinnerSet
+            room.spinner_params = SpinnerSet.sanitize_params(room.spinner_params, room.board_dimensions)
             
             # GET BONUS WORD (Use override if available, else roll new)
             if bonus_word_override:
@@ -2974,6 +2976,9 @@ class RoomManager:
             if not params and room.current_round == 1:
                 room.next_spinner_params = dict(getattr(room, 'spinner_params', {}))
                 params = room.next_spinner_params
+            from spinner_set import SpinnerSet
+            params = SpinnerSet.sanitize_params(params, room.board_dimensions)
+            room.next_spinner_params = params
             
             if not params:
                 # If still no params, we must wait or fail to avoid bleeding from previous round
