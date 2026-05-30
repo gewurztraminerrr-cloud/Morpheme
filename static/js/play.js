@@ -5267,9 +5267,15 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
             }
             
             if (r !== undefined && c !== undefined) {
-                let selector = `.board-cell[data-r="${r}"][data-c="${c}"]`;
+                let visualR = r;
+                let visualC = c;
+                if (window.isBoardTransposed) {
+                    visualR = c;
+                    visualC = r;
+                }
+                let selector = `.board-cell[data-r="${visualR}"][data-c="${visualC}"]`;
                 if (f !== undefined) {
-                    selector = `.board-cell[data-f="${f}"][data-r="${r}"][data-c="${c}"]`;
+                    selector = `.board-cell[data-f="${f}"][data-r="${visualR}"][data-c="${visualC}"]`;
                 }
                 const cell = document.querySelector(selector);
                 if (cell) {
