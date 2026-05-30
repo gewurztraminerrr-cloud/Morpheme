@@ -1406,7 +1406,7 @@ class GameRoom:
                                     if (getattr(p, 'score', 0) > 0 or not getattr(p, 'is_ai', False)) 
                                     and not getattr(p, 'joined_mid_round', False)
                                 ]
-                                rating_changes = calculate_proportional_rating_change(participants, is_private=self.is_private)
+                                rating_changes = calculate_proportional_rating_change(participants, is_private=self.is_private, board_format=self.current_board_format)
                                 
                                 import sqlite3
                                 conn_p = sqlite3.connect(DB_PATH, timeout=30)

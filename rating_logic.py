@@ -13,14 +13,14 @@ def is_player_guest(player):
         return True
     return False
 
-def calculate_proportional_rating_change(players, is_private=False):
+def calculate_proportional_rating_change(players, is_private=False, board_format='Normal'):
     """
     Calculates rating changes based on relative performance.
     BOTS and GUESTS are excluded from calculations and do not influence human ratings.
     """
     changes = {p.user_id: 0 for p in players}
     
-    print(f"[RatingLogic] Calculating change for {len(players)} total players.")
+    print(f"[RatingLogic] Calculating change for {len(players)} total players. Format: {board_format}")
     for p in players:
         print(f"  - Player {getattr(p, 'username', 'N/A')}: id={p.user_id}, AI={getattr(p, 'is_ai', False)}, Guest={is_player_guest(p)}, MidRound={getattr(p, 'joined_mid_round', False)}")
 
@@ -78,6 +78,15 @@ def calculate_proportional_rating_change(players, is_private=False):
         
         # Clamp to -16/+16 as per existing behavior preference
         change = max(-16, min(16, change))
+        
+        # Apply Double/Triple multiplier if applicable (Exception to standard -16/+16 limits)
+        fmt_lower = str(board_format).lower()
+        if 'double' in fmt_lower:
+            change = change * 2
+            print(f"[RatingLogic] Double format: scaled rating change for {getattr(p, 'username', 'N/A')} from {max(-16, min(16, int(round(raw_change))))} to {change}")
+        elif 'triple' in fmt_lower:
+            change = change * 3
+            print(f"[RatingLogic] Triple format: scaled rating change for {getattr(p, 'username', 'N/A')} from {max(-16, min(16, int(round(raw_change))))} to {change}")
         
         changes[p.user_id] = change
         print(f"[RatingLogic] Player {getattr(p, 'username', 'Unknown')} ({p.user_id}): Score={the_score}, Rating={the_rating}, Actual={actual_ratio:.3f}, Expected={expected_ratio:.3f}, Change={change}")
