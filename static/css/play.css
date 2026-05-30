@@ -5375,3 +5375,79 @@ body.is-desktop .word-input-section {
     opacity: 0.4;
 }
 
+
+/* Responsive Dynamic Chatbox Enlargement Styles */
+.chat-panel {
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Close/Collapse Button positioning */
+.chat-collapse-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    border-radius: 50%;
+    color: var(--text-primary);
+    width: 28px;
+    height: 28px;
+    font-size: 20px;
+    line-height: 24px;
+    text-align: center;
+    cursor: pointer;
+    z-index: 10005;
+    transition: background 0.2s, transform 0.2s;
+    display: none;
+}
+
+.chat-collapse-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.chat-collapse-btn:active {
+    transform: scale(0.95);
+}
+
+/* Desktop layout overrides */
+@media (min-width: 993px) {
+    .left-panel-container.chat-expanded {
+        height: 100%;
+    }
+    .left-panel-container.chat-expanded .players-panel,
+    .left-panel-container.chat-expanded .definitions-panel {
+        display: none !important;
+    }
+    .chat-panel.expanded {
+        height: 100% !important;
+        flex: 1 !important;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    }
+}
+
+/* Mobile layout overrides (Full screen on click) */
+@media (max-width: 992px) {
+    .chat-panel.expanded {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        z-index: 99999 !important;
+        border-radius: 0 !important;
+        padding: 20px !important;
+        box-sizing: border-box !important;
+        background: var(--bg-panel) !important;
+        box-shadow: none !important;
+    }
+    
+    .chat-panel.expanded #chat-history {
+        margin-top: 25px;
+        flex: 1 !important;
+    }
+}
+
+

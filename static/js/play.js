@@ -2302,6 +2302,75 @@ document.addEventListener('DOMContentLoaded', () => {
         chatSend.addEventListener('click', sendChatMessage);
     }
 
+    // --- CHAT PANEL EXPAND / COLLAPSE SYSTEM ---
+    const chatPanel = document.querySelector('.chat-panel');
+    const leftPanelContainer = document.querySelector('.left-panel-container');
+    const collapseBtn = document.getElementById('chat-collapse-btn');
+
+    if (chatPanel) {
+        chatPanel.addEventListener('click', (e) => {
+            // Avoid re-expanding or stealing focus if already expanded
+            if (chatPanel.classList.contains('expanded')) {
+                return;
+            }
+
+            chatPanel.classList.add('expanded');
+            if (leftPanelContainer) {
+                leftPanelContainer.classList.add('chat-expanded');
+            }
+            if (collapseBtn) {
+                collapseBtn.style.display = 'block';
+            }
+
+            // Automatically focus input on expand if we didn't click inside it
+            if (chatInput && e.target !== chatInput) {
+                chatInput.focus();
+            }
+        });
+    }
+
+    if (collapseBtn) {
+        collapseBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent re-expanding
+            chatPanel.classList.remove('expanded');
+            if (leftPanelContainer) {
+                leftPanelContainer.classList.remove('chat-expanded');
+            }
+            collapseBtn.style.display = 'none';
+        });
+    }
+
+    // Collapse when clicking outside the chatbox
+    document.addEventListener('click', (e) => {
+        if (chatPanel && chatPanel.classList.contains('expanded')) {
+            if (!chatPanel.contains(e.target)) {
+                chatPanel.classList.remove('expanded');
+                if (leftPanelContainer) {
+                    leftPanelContainer.classList.remove('chat-expanded');
+                }
+                if (collapseBtn) {
+                    collapseBtn.style.display = 'none';
+                }
+            }
+        }
+    });
+
+    // Escape key listener to close chat panel
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && chatPanel && chatPanel.classList.contains('expanded')) {
+            chatPanel.classList.remove('expanded');
+            if (leftPanelContainer) {
+                leftPanelContainer.classList.remove('chat-expanded');
+            }
+            if (collapseBtn) {
+                collapseBtn.style.display = 'none';
+            }
+            if (chatInput) {
+                chatInput.blur();
+            }
+        }
+    });
+
     // Find Me button logic
     const findMeBtn = document.getElementById('find-me-btn');
     if (findMeBtn) {
