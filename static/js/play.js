@@ -2233,18 +2233,27 @@ function renderChat(messages) {
             </div>`;
         }
 
-        // Determine User Color from Rating Cache
+        // Determine User Color from Rating Cache or message property
+        let rating = msg.rating;
+        if (rating === undefined || rating === null) {
+            rating = playerRatingCache.get(username);
+        }
+
         let userColor = '#a8d5ff'; // Default blue-ish
         if (window.getRatingColor) {
-            const rating = playerRatingCache.get(username);
-            if (rating !== undefined) {
+            if (rating !== undefined && rating !== null) {
                 userColor = window.getRatingColor(rating);
             }
         }
 
+        let ratingSuffix = '';
+        if (rating !== undefined && rating !== null) {
+            ratingSuffix = ` (${rating})`;
+        }
+
         return `
         <div class="chat-message">
-            <span class="chat-user" style="color: ${userColor};">${username}:</span>
+            <span class="chat-user" data-username="${username}" style="color: ${userColor};">${username}${ratingSuffix}:</span>
             <span class="chat-text">${safeText}</span>
         </div>`;
     }).join('');
@@ -2256,9 +2265,14 @@ function renderChat(messages) {
         userEl.style.cursor = 'pointer';
         userEl.title = "View profile";
         userEl.onclick = () => {
-            const rawName = userEl.innerText.trim();
-            const cleanName = rawName.endsWith(':') ? rawName.slice(0, -1) : rawName;
-            if (window.showMiniProfile) window.showMiniProfile(cleanName);
+            const username = userEl.getAttribute('data-username');
+            if (window.showMiniProfile && username) {
+                window.showMiniProfile(username);
+            } else {
+                const rawName = userEl.innerText.trim();
+                const cleanName = rawName.endsWith(':') ? rawName.slice(0, -1) : rawName;
+                if (window.showMiniProfile) window.showMiniProfile(cleanName);
+            }
         };
     });
 

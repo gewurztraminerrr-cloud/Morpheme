@@ -197,8 +197,20 @@ class GameRoom:
         # INITIALIZE LOCKS
         self._state_lock = threading.RLock() # Reentrant to prevent deadlocks during transition
             
-    def add_chat_message(self, username, message, is_system=False, image=None, color=None, is_winner=False):
+    def add_chat_message(self, username, message, is_system=False, image=None, color=None, is_winner=False, rating=None):
         """Add chat message to room"""
+        if rating is None and not is_system and username and username.upper() != 'SYSTEM':
+            # Try to look up the user's rating from active players/spectators
+            for p in self.players:
+                if p.username == username:
+                    rating = p.rating
+                    break
+            if rating is None:
+                for s in self.spectators:
+                    if s.username == username:
+                        rating = s.rating
+                        break
+
         self.chat_messages.append({
             'username': username,
             'message': message,
@@ -206,7 +218,8 @@ class GameRoom:
             'is_system': is_system,
             'is_winner': is_winner,
             'color': color,
-            'time': time.time()
+            'time': time.time(),
+            'rating': rating
         })
         # Keep only last 30 messages
         if len(self.chat_messages) > 30:

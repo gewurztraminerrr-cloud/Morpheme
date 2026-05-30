@@ -3452,7 +3452,33 @@ def submit_chat_message(room_id):
     if image and len(image) > 2 * 1024 * 1024:
         return jsonify({'error': 'Image too large (max 1.5MB)'}), 400
         
-    room.add_chat_message(session['username'], message, image=image)
+    user_id = session.get('user_id')
+    rating = None
+    player = room.get_player(user_id)
+    if player:
+        rating = player.rating
+    else:
+        for s in getattr(room, 'spectators', []):
+            if str(s.user_id) == str(user_id):
+                rating = s.rating
+                break
+                
+    if rating is None:
+        try:
+            import sqlite3
+            conn = sqlite3.connect(DB_PATH, timeout=30)
+            cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (user_id,))
+            row = cursor.fetchone()
+            if row:
+                rating = row[0]
+            conn.close()
+        except Exception as e:
+            print(f"[Chat] Failed to query rating: {e}")
+            
+    if rating is None:
+        rating = 1200
+        
+    room.add_chat_message(session['username'], message, image=image, rating=rating)
     room.update_player_activity(session['user_id'])
     
     return jsonify({'success': True})
