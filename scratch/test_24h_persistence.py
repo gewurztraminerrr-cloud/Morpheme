@@ -256,5 +256,93 @@ class Test24hBoardPersistence(unittest.TestCase):
         
         print("🎉 24H VALUED LETTERS SCORING TEST PASSED SUCCESSFULLY!")
 
+    def test_24h_previous_day_retroactive_scoring(self):
+        print("\n=== STARTING 24H RETROACTIVE PREVIOUS DAY SCORING VERIFICATION ===")
+        import datetime
+        
+        # 1. Setup a clean room
+        room = self.room_manager.create_room(
+            self.room_id, 
+            game_type="accumulative", 
+            time_limit=86400, 
+            board_dimensions="4x4"
+        )
+        
+        # Ensure round_history is clear of our test room
+        conn = sqlite3.connect(self.db_path)
+        conn.execute("DELETE FROM round_history WHERE room_id = ?", (self.room_id,))
+        conn.commit()
+        
+        # 2. Insert mock yesterday history containing standard scoring (points=1)
+        mock_board = [['A','B','L','E'],['X','X','X','X'],['X','X','X','X'],['X','X','X','X']]
+        mock_solutions = ["ABLE"]
+        mock_paths = {"ABLE": [[0,0],[0,1],[0,2],[0,3]]}
+        mock_words_json = [{"word": "ABLE", "points": 1, "timestamp": time.time()}]
+        
+        conn.execute('''
+            INSERT INTO round_history (
+                user_id, room_id, game_type, round_number, board_json, words_json,
+                total_score, round_start_time, round_duration, timestamp,
+                board_dimensions, total_words_avail, bonus_word, bonus_cell,
+                board_format, all_solutions_json, all_words_paths
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            25, self.room_id, "accumulative", 1, json.dumps(mock_board), json.dumps(mock_words_json),
+            1, time.time() - 86400, 86400, (datetime.datetime.now() - datetime.timedelta(hours=12)).strftime('%Y-%m-%d %H:%M:%S'),
+            "4x4", 1, "", json.dumps(None),
+            "Normal", json.dumps(mock_solutions), json.dumps(mock_paths)
+        ))
+        conn.commit()
+        conn.close()
+        
+        # 3. Simulate client querying state and trigger get_yesterdays_history
+        room.previous_day_history = None
+        room.previous_board = None
+        room.previous_all_word_scores = None
+        room.current_round = 2
+        
+        history = self.room_manager.get_yesterdays_history(room, current_round=2)
+        
+        # Assertions for lazy-loaded history
+        self.assertIsNotNone(history)
+        self.assertIn("25", history)
+        jeffy_words = history["25"]["found_words"]
+        self.assertEqual(len(jeffy_words), 1)
+        self.assertEqual(jeffy_words[0]["word"], "ABLE")
+        # Retroactive check: MUST be 10 points instead of stored 1 point!
+        self.assertEqual(jeffy_words[0]["points"], 10, f"Expected 10 points for 'ABLE', got {jeffy_words[0]['points']}")
+        self.assertIsNotNone(jeffy_words[0]["score_details"])
+        self.assertEqual(jeffy_words[0]["score_details"]["total"], 10)
+        
+        # Assert general board scores recalculated
+        self.assertIn("ABLE", room.previous_all_word_scores)
+        self.assertEqual(room.previous_all_word_scores["ABLE"]["total"], 10)
+        
+        # 4. Now simulate load_previous_day_data (server restart restore)
+        room.previous_day_history = None
+        room.previous_board = None
+        room.previous_all_word_scores = None
+        
+        self.room_manager.load_previous_day_data(room)
+        
+        # Assertions for startup-restored data
+        self.assertIsNotNone(room.previous_day_history)
+        self.assertIn("25", room.previous_day_history)
+        jeffy_restored_words = room.previous_day_history["25"]["found_words"]
+        self.assertEqual(len(jeffy_restored_words), 1)
+        self.assertEqual(jeffy_restored_words[0]["word"], "ABLE")
+        self.assertEqual(jeffy_restored_words[0]["points"], 10)
+        self.assertIsNotNone(jeffy_restored_words[0]["score_details"])
+        
+        # Clean up history record
+        conn = sqlite3.connect(self.db_path)
+        conn.execute("DELETE FROM round_history WHERE room_id = ?", (self.room_id,))
+        conn.commit()
+        conn.close()
+        
+        print("🎉 24H RETROACTIVE PREVIOUS DAY SCORING TEST PASSED SUCCESSFULLY!")
+
+
 if __name__ == '__main__':
     unittest.main()

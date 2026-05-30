@@ -1839,16 +1839,52 @@ class RoomManager:
                 w_json = r[2]
                 try:
                     words_data = json.loads(w_json) if w_json else []
-                    found = []
-                    for w_item in words_data:
-                        if isinstance(w_item, dict):
-                            found.append(w_item.get('word', ''))
-                        else:
-                            found.append(str(w_item))
-                    history[str(u_id)] = {
-                        'username': u_name,
-                        'found_words': [w.upper() for w in found if w]
-                    }
+                    if room.time_limit >= 7200 and words_data and room.previous_board:
+                        from scoring import calculate_word_score
+                        recalculated_words = []
+                        for w_item in words_data:
+                            if isinstance(w_item, dict):
+                                word_str = w_item.get('word', '')
+                            else:
+                                word_str = str(w_item)
+                            
+                            word_upper = word_str.upper()
+                            w_path = None
+                            if restored_paths:
+                                w_path = restored_paths.get(word_upper) or restored_paths.get(word_str)
+                            
+                            details = calculate_word_score(
+                                word_upper,
+                                room.previous_bonus_word,
+                                board_format='Valued Letters',
+                                bonus_cell=room.previous_bonus_cell,
+                                board=room.previous_board,
+                                path=w_path,
+                                return_details=True,
+                                strict_path=True
+                            )
+                            
+                            recalculated_words.append({
+                                'word': word_str,
+                                'points': details.get('total', 0) if details else 0,
+                                'timestamp': w_item.get('timestamp') if isinstance(w_item, dict) else time.time(),
+                                'score_details': details
+                            })
+                        history[str(u_id)] = {
+                            'username': u_name,
+                            'found_words': recalculated_words
+                        }
+                    else:
+                        found = []
+                        for w_item in words_data:
+                            if isinstance(w_item, dict):
+                                found.append(w_item.get('word', ''))
+                            else:
+                                found.append(str(w_item))
+                        history[str(u_id)] = {
+                            'username': u_name,
+                            'found_words': [w.upper() for w in found if w]
+                        }
                 except Exception as pe:
                     print(f"[Restore-Error] player {u_name} history: {pe}")
                     
@@ -2218,6 +2254,26 @@ class RoomManager:
             recovered_paths = None
             history = {}
 
+            # First pass: extract board metadata
+            for row in rows:
+                uid, words_json, round_num, ts, b_json, b_word, b_cell_json, b_format, sols_json, paths_json = row
+                if b_json and not recovered_board:
+                    recovered_board = json.loads(b_json)
+                    recovered_bonus_word = b_word
+                    recovered_bonus_cell = json.loads(b_cell_json) if b_cell_json else None
+                    recovered_format = b_format
+                
+                if sols_json and not recovered_solutions:
+                    try:
+                        recovered_solutions = json.loads(sols_json)
+                    except: pass
+                    
+                if paths_json and not recovered_paths:
+                    try:
+                        recovered_paths = json.loads(paths_json)
+                    except: pass
+
+            # Second pass: construct player history with dynamic recalculation for 24h rooms
             for row in rows:
                 uid, words_json, round_num, ts, b_json, b_word, b_cell_json, b_format, sols_json, paths_json = row
                 uid_str = str(uid)
@@ -2229,28 +2285,52 @@ class RoomManager:
                         u_row = u_cursor.fetchone()
                         uname = u_row[0] if u_row else f"User {uid}"
                     
-                    history[uid_str] = {
-                        'username': uname,
-                        'found_words': json.loads(words_json) 
-                    }
+                    parsed_words = json.loads(words_json) if words_json else []
+                    if room.time_limit >= 7200 and parsed_words and recovered_board:
+                        from scoring import calculate_word_score
+                        recalculated_words = []
+                        for w_item in parsed_words:
+                            if isinstance(w_item, dict):
+                                word_str = w_item.get('word', '')
+                            else:
+                                word_str = str(w_item)
+                            
+                            word_upper = word_str.upper()
+                            w_path = None
+                            if recovered_paths:
+                                w_path = recovered_paths.get(word_upper) or recovered_paths.get(word_str)
+                            
+                            details = calculate_word_score(
+                                word_upper,
+                                recovered_bonus_word,
+                                board_format='Valued Letters',
+                                bonus_cell=recovered_bonus_cell,
+                                board=recovered_board,
+                                path=w_path,
+                                return_details=True,
+                                strict_path=True
+                            )
+                            
+                            recalculated_words.append({
+                                'word': word_str,
+                                'points': details.get('total', 0) if details else 0,
+                                'timestamp': w_item.get('timestamp') if isinstance(w_item, dict) else time.time(),
+                                'score_details': details
+                            })
+                        history[uid_str] = {
+                            'username': uname,
+                            'found_words': recalculated_words
+                        }
+                    else:
+                        history[uid_str] = {
+                            'username': uname,
+                            'found_words': parsed_words
+                        }
                     
                     # BACKWARD COMPATIBILITY: Also populate player objects if they are currently in the room
                     for p in room.players:
                         if p.user_id == uid:
                             p.previous_submitted_words = history[uid_str]['found_words']
-
-                # Store board metadata from most recent record
-                if b_json and not recovered_board:
-                    recovered_board = json.loads(b_json)
-                    recovered_bonus_word = b_word
-                    recovered_bonus_cell = json.loads(b_cell_json) if b_cell_json else None
-                    recovered_format = b_format
-                
-                if sols_json and not recovered_solutions:
-                    recovered_solutions = json.loads(sols_json)
-                    
-                if paths_json and not recovered_paths:
-                    recovered_paths = json.loads(paths_json)
 
             conn.close()
             
