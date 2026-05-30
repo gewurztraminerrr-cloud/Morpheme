@@ -1263,6 +1263,10 @@ async function updateGameState(incomingState = null) {
                 document.querySelectorAll('.board-cell.intermission-highlight').forEach(el => {
                     el.classList.remove('intermission-highlight');
                 });
+                const existingFilterBtn = document.getElementById('intermission-filter-btn-container');
+                if (existingFilterBtn) {
+                    existingFilterBtn.remove();
+                }
 
                 // Clear and Focus Word Input on Game Start
                 if (window.chatFocusTimeout) {
@@ -3208,6 +3212,13 @@ function updateSpecialMatchTimer(seconds) {
 }
 
 function renderBoard(board, grayed = false, is3D = false, state = null) {
+    if (!grayed) {
+        window.intermissionTileFilter = null;
+        const existingFilterBtn = document.getElementById('intermission-filter-btn-container');
+        if (existingFilterBtn) {
+            existingFilterBtn.remove();
+        }
+    }
     if (window.hideLoadingOverlay) window.hideLoadingOverlay();
     const boardEl = document.getElementById('game-board');
     if (!boardEl || !board) return;
