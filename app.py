@@ -2993,15 +2993,9 @@ def get_room_state(room_id):
         if 'user_id' in session:
             uid = session['user_id']
             if str(uid) in getattr(room, 'evicted_users', {}):
-                reason = room.evicted_users.get(str(uid), 'inactivity')
-                if reason == 'inactivity':
-                    # User returned from inactivity backgrounding! Clear their eviction and restore them!
-                    room.evicted_users.pop(str(uid), None)
-                    print(f"[get_room_state] Restoring user {uid} who returned from inactivity backgrounding.")
-                else:
-                    room.evicted_users.pop(str(uid), None)
-                    print(f"[get_room_state] User {uid} detected in room.evicted_users! Returning 403 eviction response.")
-                    return jsonify({'error': f'You have been evicted for inactivity: {reason}', 'evicted': True, 'reason': reason}), 403
+                reason = room.evicted_users.pop(str(uid), 'inactivity')
+                print(f"[get_room_state] User {uid} detected in room.evicted_users! Returning 403 eviction response (Reason: {reason}).")
+                return jsonify({'error': f'You have been evicted for inactivity: {reason}', 'evicted': True, 'reason': reason}), 403
             
             # Automatically update their player activity in the room so they don't get evicted again
             room.update_player_activity(uid)

@@ -103,7 +103,7 @@ async function ejectToLobby(reason = "inactivity") {
     // 1. Notify server immediately so lobby counts decrease
     if (window.leaveCurrentRoom) {
         try {
-            window.leaveCurrentRoom();
+            await window.leaveCurrentRoom();
         } catch (e) {
             console.error('[play.js] Failed to notify server of leave during ejection:', e);
         }
