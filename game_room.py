@@ -278,7 +278,7 @@ class GameRoom:
         
         if existing_player:
             last_p_round = getattr(existing_player, '_last_round_seen', -1)
-            if last_p_round != -1 and last_p_round != self.current_round:
+            if last_p_round != self.current_round:
                 # NEW ROUND: Clear all round-specific activity
                 existing_player.found_bonus_word = False
                 existing_player.has_abandoned = False
@@ -3803,6 +3803,36 @@ class RoomManager:
                 
                 # USER REQUEST: Reset 24h rooms to [0] players at midnight transition
                 if room.time_limit >= 7200:
+                    # Clear active stats and snapshot for all active players
+                    for p in room.players:
+                        if len(p.submitted_words) > 0:
+                            p.previous_round_score = p.score
+                            p.previous_submitted_words = [dict(w) for w in p.submitted_words]
+                        p.submitted_words = []
+                        p.invalid_words = []
+                        p.score = 0
+                        p.found_bonus_word = False
+                        p.joined_mid_round = False
+                        p.has_exceptional_round = False
+                        p.performance_efficiency = 0.0
+                        p.has_abandoned = False
+                        p._last_round_seen = room.current_round
+                    
+                    # Clear active stats and snapshot for all archive players in past_players
+                    for p in room.past_players.values():
+                        if len(p.submitted_words) > 0:
+                            p.previous_round_score = p.score
+                            p.previous_submitted_words = [dict(w) for w in p.submitted_words]
+                        p.submitted_words = []
+                        p.invalid_words = []
+                        p.score = 0
+                        p.found_bonus_word = False
+                        p.joined_mid_round = False
+                        p.has_exceptional_round = False
+                        p.performance_efficiency = 0.0
+                        p.has_abandoned = False
+                        p._last_round_seen = room.current_round
+                    
                     room.players = []
                     room.spectators = []
                 else:
