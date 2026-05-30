@@ -5440,7 +5440,7 @@ body.is-desktop .word-input-section {
         border-radius: 0 !important;
         padding: 20px !important;
         box-sizing: border-box !important;
-        background: var(--bg-panel) !important;
+        background: var(--bg-primary) !important;
         box-shadow: none !important;
     }
     
