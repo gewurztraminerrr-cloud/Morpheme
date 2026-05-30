@@ -31,6 +31,7 @@ class SpinnerSet:
             res = SpinnerSet._generate_params_raw(board_dimensions, is_24h, is_split, previous_params)
             if is_24h and isinstance(res, dict):
                 res['board_format'] = 'Valued Letters'
+                res['word_count_range'] = '200-300'
                 
             # Ironclad validation to ensure 50-100 word count is strictly restricted to greatest minimum lengths
             if isinstance(res, dict) and res.get('word_count_range') == '50-100':
@@ -78,7 +79,7 @@ class SpinnerSet:
             fallback = {
                 'difficulty': random.choices(['Easy', 'Medium', 'Hard'], weights=[25, 50, 25])[0],
                 'dictionary': random.choice(['NWL', 'CSW']),
-                'word_count_range': random.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0],
+                'word_count_range': '200-300' if is_24h else random.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0],
                 'board_format': 'Valued Letters' if is_24h else 'Normal',
                 'min_word_length': 3,
                 'bonus_word_length': 8,
