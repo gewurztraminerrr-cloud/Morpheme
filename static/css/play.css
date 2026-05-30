@@ -5453,67 +5453,67 @@ body.is-desktop .word-input-section {
 /* Premium Word Validation Tile-specific Pulse Flash Effects */
 @keyframes tile-flash-blue-anim {
     0% {
-        background-color: rgba(0, 136, 255, 0.7) !important;
-        box-shadow: 0 0 25px rgba(0, 136, 255, 0.9), inset 0 0 10px rgba(255, 255, 255, 0.5) !important;
-        border-color: #0088ff !important;
+        background: rgba(0, 136, 255, 0.85);
+        box-shadow: 0 0 25px rgba(0, 136, 255, 0.9), inset 0 0 10px rgba(255, 255, 255, 0.6);
+        border-color: #0088ff;
         transform: scale(1.08);
     }
     50% {
-        transform: scale(1.12);
+        transform: scale(1.15);
     }
     100% {
-        background-color: rgba(0, 136, 255, 0) !important;
-        box-shadow: 0 0 0 rgba(0, 136, 255, 0), inset 0 0 0 rgba(255, 255, 255, 0) !important;
+        background: rgba(0, 136, 255, 0);
+        box-shadow: 0 0 0 rgba(0, 136, 255, 0), inset 0 0 0 rgba(255, 255, 255, 0);
         transform: scale(1);
     }
 }
 
 @keyframes tile-flash-green-anim {
     0% {
-        background-color: rgba(46, 204, 113, 0.7) !important;
-        box-shadow: 0 0 25px rgba(46, 204, 113, 0.9), inset 0 0 10px rgba(255, 255, 255, 0.5) !important;
-        border-color: #2ecc71 !important;
+        background: rgba(46, 204, 113, 0.85);
+        box-shadow: 0 0 25px rgba(46, 204, 113, 0.9), inset 0 0 10px rgba(255, 255, 255, 0.6);
+        border-color: #2ecc71;
         transform: scale(1.08);
     }
     50% {
-        transform: scale(1.12);
+        transform: scale(1.15);
     }
     100% {
-        background-color: rgba(46, 204, 113, 0) !important;
-        box-shadow: 0 0 0 rgba(46, 204, 113, 0), inset 0 0 0 rgba(255, 255, 255, 0) !important;
+        background: rgba(46, 204, 113, 0);
+        box-shadow: 0 0 0 rgba(46, 204, 113, 0), inset 0 0 0 rgba(255, 255, 255, 0);
         transform: scale(1);
     }
 }
 
 @keyframes tile-flash-red-anim {
     0% {
-        background-color: rgba(231, 76, 60, 0.7) !important;
-        box-shadow: 0 0 25px rgba(231, 76, 60, 0.9), inset 0 0 10px rgba(255, 255, 255, 0.5) !important;
-        border-color: #e74c3c !important;
+        background: rgba(231, 76, 60, 0.85);
+        box-shadow: 0 0 25px rgba(231, 76, 60, 0.9), inset 0 0 10px rgba(255, 255, 255, 0.6);
+        border-color: #e74c3c;
         transform: scale(1.08);
     }
     50% {
-        transform: scale(1.12);
+        transform: scale(1.15);
     }
     100% {
-        background-color: rgba(231, 76, 60, 0) !important;
-        box-shadow: 0 0 0 rgba(231, 76, 60, 0), inset 0 0 0 rgba(255, 255, 255, 0) !important;
+        background: rgba(231, 76, 60, 0);
+        box-shadow: 0 0 0 rgba(231, 76, 60, 0), inset 0 0 0 rgba(255, 255, 255, 0);
         transform: scale(1);
     }
 }
 
-.board-cell.tile-flash-blue {
-    animation: tile-flash-blue-anim 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+body .board-cell.tile-flash-blue {
+    animation: tile-flash-blue-anim 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
     z-index: 100 !important;
 }
 
-.board-cell.tile-flash-green {
-    animation: tile-flash-green-anim 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+body .board-cell.tile-flash-green {
+    animation: tile-flash-green-anim 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
     z-index: 100 !important;
 }
 
-.board-cell.tile-flash-red {
-    animation: tile-flash-red-anim 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+body .board-cell.tile-flash-red {
+    animation: tile-flash-red-anim 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
     z-index: 100 !important;
 }
 
