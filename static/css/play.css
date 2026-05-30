@@ -5451,55 +5451,40 @@ body.is-desktop .word-input-section {
 }
 
 /* Premium Word Validation Tile-specific Pulse Flash Effects */
-@keyframes tile-flash-fade {
-    0% {
-        opacity: 1;
-        transform: scale(1.12);
-    }
-    100% {
-        opacity: 0;
-        transform: scale(1);
-    }
-}
-
-body .board-cell.tile-flash-blue::after,
-body .board-cell.tile-flash-green::after,
-body .board-cell.tile-flash-red::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border-radius: inherit;
-    z-index: -1 !important;
-    pointer-events: none;
-    animation: tile-flash-fade 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
-}
-
-body .board-cell.tile-flash-blue::after {
+body .board-cell.tile-flash-blue {
     background: #0088ff !important;
-    box-shadow: 0 0 20px rgba(0, 136, 255, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.5) !important;
-    border: 2px solid #0088ff !important;
-}
-
-body .board-cell.tile-flash-green::after {
-    background: #2ecc71 !important;
-    box-shadow: 0 0 20px rgba(46, 204, 113, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.5) !important;
-    border: 2px solid #2ecc71 !important;
-}
-
-body .board-cell.tile-flash-red::after {
-    background: #e74c3c !important;
-    box-shadow: 0 0 20px rgba(231, 76, 60, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.5) !important;
-    border: 2px solid #e74c3c !important;
-}
-
-body .board-cell.tile-flash-blue,
-body .board-cell.tile-flash-green,
-body .board-cell.tile-flash-red {
+    color: #ffffff !important;
+    box-shadow: 0 0 15px rgba(0, 136, 255, 0.8) !important;
+    border-color: #0088ff !important;
     z-index: 100 !important;
-    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+    transition: none !important;
+}
+body .board-cell.tile-flash-blue * {
+    color: #ffffff !important;
+}
+
+body .board-cell.tile-flash-green {
+    background: #2ecc71 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.8) !important;
+    border-color: #2ecc71 !important;
+    z-index: 100 !important;
+    transition: none !important;
+}
+body .board-cell.tile-flash-green * {
+    color: #ffffff !important;
+}
+
+body .board-cell.tile-flash-red {
+    background: #e74c3c !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 15px rgba(231, 76, 60, 0.8) !important;
+    border-color: #e74c3c !important;
+    z-index: 100 !important;
+    transition: none !important;
+}
+body .board-cell.tile-flash-red * {
+    color: #ffffff !important;
 }
 
 
