@@ -332,6 +332,7 @@ class GameRoom:
             player.joined_mid_round = True
             
         self.players.append(player)
+        self.past_players[str(user_id)] = player
         self.players.sort(key=lambda p: p.rating, reverse=True)
         
         # System Notice
@@ -3420,6 +3421,52 @@ class RoomManager:
             
             # 2. STATE TRANSITION LOCK: Perform the atomic board swap
             with room._state_lock:
+                # Reset players active stats and roster for the next round BEFORE database save
+                # FCFS: Clear shared found lists for the upcoming round
+                room.fcfs_found_words = []
+                room._fcfs_found_words_set = set()
+                
+                next_round_val = room.current_round + 1
+                if room.time_limit >= 7200:
+                    # Clear active stats and snapshot for all active players
+                    for p in room.players:
+                        if len(p.submitted_words) > 0:
+                            p.previous_round_score = p.score
+                            p.previous_submitted_words = [dict(w) for w in p.submitted_words]
+                        p.submitted_words = []
+                        p.invalid_words = []
+                        p.score = 0
+                        p.found_bonus_word = False
+                        p.joined_mid_round = False
+                        p.has_exceptional_round = False
+                        p.performance_efficiency = 0.0
+                        p.has_abandoned = False
+                        p._last_round_seen = next_round_val
+                    
+                    # Clear active stats and snapshot for all archive players in past_players
+                    for p in room.past_players.values():
+                        if len(p.submitted_words) > 0:
+                            p.previous_round_score = p.score
+                            p.previous_submitted_words = [dict(w) for w in p.submitted_words]
+                        p.submitted_words = []
+                        p.invalid_words = []
+                        p.score = 0
+                        p.found_bonus_word = False
+                        p.joined_mid_round = False
+                        p.has_exceptional_round = False
+                        p.performance_efficiency = 0.0
+                        p.has_abandoned = False
+                        p._last_round_seen = next_round_val
+                    
+                    room.players = []
+                    room.spectators = []
+                else:
+                    for p in room.players:
+                        p.submitted_words, p.invalid_words, p.score = [], [], 0
+                        p.found_bonus_word, p.has_abandoned = False, False
+                        p.joined_mid_round = False
+                        p._last_round_seen = next_round_val
+
                 # CLEAR BOARD & WORDS IMMEDIATELY if we are about to generate a new one
                 # This handles the fallback Case or any state where we want to avoid stale data
                 # ONLY DO THIS FOR 500+ (IO) rounds though, to avoid flickering for normal ones
@@ -3796,51 +3843,6 @@ class RoomManager:
                 
                 # Reset Round counters
                 room.current_round += 1
-                
-                # FCFS: Clear shared found lists for the upcoming round
-                room.fcfs_found_words = []
-                room._fcfs_found_words_set = set()
-                
-                # USER REQUEST: Reset 24h rooms to [0] players at midnight transition
-                if room.time_limit >= 7200:
-                    # Clear active stats and snapshot for all active players
-                    for p in room.players:
-                        if len(p.submitted_words) > 0:
-                            p.previous_round_score = p.score
-                            p.previous_submitted_words = [dict(w) for w in p.submitted_words]
-                        p.submitted_words = []
-                        p.invalid_words = []
-                        p.score = 0
-                        p.found_bonus_word = False
-                        p.joined_mid_round = False
-                        p.has_exceptional_round = False
-                        p.performance_efficiency = 0.0
-                        p.has_abandoned = False
-                        p._last_round_seen = room.current_round
-                    
-                    # Clear active stats and snapshot for all archive players in past_players
-                    for p in room.past_players.values():
-                        if len(p.submitted_words) > 0:
-                            p.previous_round_score = p.score
-                            p.previous_submitted_words = [dict(w) for w in p.submitted_words]
-                        p.submitted_words = []
-                        p.invalid_words = []
-                        p.score = 0
-                        p.found_bonus_word = False
-                        p.joined_mid_round = False
-                        p.has_exceptional_round = False
-                        p.performance_efficiency = 0.0
-                        p.has_abandoned = False
-                        p._last_round_seen = room.current_round
-                    
-                    room.players = []
-                    room.spectators = []
-                else:
-                    for p in room.players:
-                        p.submitted_words, p.invalid_words, p.score = [], [], 0
-                        p.found_bonus_word, p.has_abandoned = False, False
-                        p.joined_mid_round = False
-                        p._last_round_seen = room.current_round
                 
                 # Update word counts by length for the new round
                 room.update_counts_by_len()
