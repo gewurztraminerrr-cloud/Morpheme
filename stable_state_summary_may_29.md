@@ -38,7 +38,13 @@ This summary documents the stable state of the Morpheme application as of May 29
   - **Hard**: Bold modern red (`#ff4d4d`)
 - **Premium Aesthetics**: Added `#param-diff` specific rules inside [play.css](file:///Users/jeffbabiak/static/css/play.css) to set a bold font-weight (`700`) and configure a smooth CSS transition (`transition: color 0.3s ease;`) for fluid UI state updates.
 
-### 6. Exclusion of 24h Room Words from Word Tally
+### 6. Intermission Board Tile Click Filters & 3D Interactive Tiles
+- **Seamless Post-Round Filtering**: Bypassed standard Spectator Mode checks and touch-to-mouse delay checks by moving intermission tile press checks to the absolute top of `handleCellMouseDown()` and `handleCellTouchStart()` in [play.js](file:///Users/jeffbabiak/static/js/play.js). Now, both players and spectators can seamlessly press board cells during intermission to filter the solved word lists.
+- **Robust Touch Coordinates Tracking**: Resolved a critical touch scope bug where mobile round highlighting crashed with a `ReferenceError: touch is not defined` after returning early from intermission checks, by declaring `const touch = e.touches[0];` globally inside `handleCellTouchStart()`.
+- **Interactive 3D Cube Cells**: Configured `pointer-events: auto !important;` on `.cube-cell` in [play.css](file:///Users/jeffbabiak/static/css/play.css) to override the parent `.board-cell` class's default `pointer-events: none` property, enabling full hover, clicks, and intermission click-filtering in 3D matches.
+- **Cache-Busting Integration**: Incremented the style/script query version numbers to `play.css?v=75` and `play.js?v=86` in [index.html](file:///Users/jeffbabiak/templates/index.html) to force the client browser to immediately pull down the new JavaScript and CSS.
+
+### 7. Exclusion of 24h Room Words from Word Tally
 - **Precision Statistics**: Added an early exit rule to `log_word_tally()` in [game_room.py](file:///Users/jeffbabiak/game_room.py) to ensure words found by players in 24h rooms are completely skipped and not logged.
 - **Data Integrity**: This guarantees that 24h room gameplay does not skew the cumulative statistics or write redundant logs to `word_tally.log` and `word_stats.json`.
 - **Trace Logger Path Resolution**: Defined `TRACE_PATH` globally in [game_room.py](file:///Users/jeffbabiak/game_room.py) to resolve a latent bug where standard room word tallying crashed due to the missing path variable.
@@ -53,8 +59,8 @@ This summary documents the stable state of the Morpheme application as of May 29
 
 ---
 
-**Latest Stable Commit ID**: `aa77cde`  
-**Stable Point Tag (snapshot-current)**: `aa77cde`  
-**Start Over Tag (START_OVER_POINT_MAY_29)**: `aa77cde`  
+**Latest Stable Commit ID**: `e60c0d9`  
+**Stable Point Tag (snapshot-current)**: `e60c0d9`  
+**Start Over Tag (START_OVER_POINT_MAY_29)**: `e60c0d9`  
 **GitHub Push**: Completed / Synchronized  
 **Status**: Stable / Production Ready / Synchronized
