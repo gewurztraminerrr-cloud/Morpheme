@@ -134,7 +134,7 @@ class Test24hBoardPersistence(unittest.TestCase):
         self.assertEqual(room.current_min_length, mock_min_length)
         self.assertEqual(room.bonus_word, mock_bonus_word)
         self.assertEqual(room.bonus_cell, mock_bonus_cell)
-        self.assertEqual(room.current_board_format, mock_format)
+        self.assertEqual(room.current_board_format, 'Valued Letters')
         self.assertEqual(room.current_uniqueness, mock_uniqueness)
         self.assertEqual(room.current_word_count_range, mock_range)
         
@@ -218,6 +218,43 @@ class Test24hBoardPersistence(unittest.TestCase):
         conn.close()
         
         print("🎉 24H MIDNIGHT RESET DB CLEARING TEST PASSED SUCCESSFULLY!")
+        
+    def test_24h_valued_letters_scoring(self):
+        print("\n=== STARTING 24H VALUED LETTERS SCORING VERIFICATION ===")
+        
+        # 1. Create a 24h room
+        room = self.room_manager.create_room(
+            self.room_id, 
+            game_type="accumulative", 
+            time_limit=86400, 
+            board_dimensions="4x4"
+        )
+        
+        # 2. Add an active player
+        player_id = 88888
+        room.add_player(
+            user_id=player_id,
+            username="jeffy_scoring_test",
+            rating=1200
+        )
+        
+        # Force a board and valid words so we can submit
+        room.board = [['A','B','L','E'],['X','X','X','X'],['X','X','X','X'],['X','X','X','X']]
+        room.all_words = {'ABLE'}
+        room.all_words_paths = {'ABLE': [[0,0],[0,1],[0,2],[0,3]]}
+        room.current_board_format = 'Valued Letters'
+        
+        # 3. Submit word "ABLE" and assert it gets 10 points
+        # A=2, B=4, L=3, E=1 -> Total = 10 points
+        success, msg, points, details = room.submit_word(player_id, "ABLE", path=[[0,0],[0,1],[0,2],[0,3]])
+        self.assertTrue(success)
+        self.assertEqual(points, 10, f"Expected 10 points for 'ABLE' under Valued Letters, got {points} instead.")
+        
+        # Check that player score is correctly recalculated
+        player = room.get_player(player_id)
+        self.assertEqual(player.score, 10)
+        
+        print("🎉 24H VALUED LETTERS SCORING TEST PASSED SUCCESSFULLY!")
 
 if __name__ == '__main__':
     unittest.main()

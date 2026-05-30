@@ -1950,7 +1950,7 @@ class RoomManager:
                                 room.current_min_length = min_length or 3
                                 room.bonus_word = bonus_word or ''
                                 room.bonus_cell = json.loads(bonus_cell_json) if bonus_cell_json else None
-                                room.current_board_format = board_format or 'Normal'
+                                room.current_board_format = 'Valued Letters' if is_24h else (board_format or 'Normal')
                                 room.current_uniqueness = uniqueness or 0.0
                                 room.current_word_count_range = word_count_range or '100-200'
                                 
@@ -2077,7 +2077,7 @@ class RoomManager:
                             room.bonus_cell = e_bonus_c
                             room.bonus_word = e_bonus_word or b_word
                             room.current_min_length = m_len
-                            room.current_board_format = e_fmt
+                            room.current_board_format = 'Valued Letters' if is_24h else e_fmt
                             room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
                             room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
                             room.current_uniqueness = e_ratio
@@ -2213,7 +2213,7 @@ class RoomManager:
             recovered_board = None
             recovered_bonus_word = None
             recovered_bonus_cell = None
-            recovered_format = 'Normal'
+            recovered_format = 'Valued Letters' if room.time_limit >= 7200 else 'Normal'
             recovered_solutions = None
             recovered_paths = None
             history = {}
@@ -2664,7 +2664,7 @@ class RoomManager:
             print(f"[RoomManager]   > Word Range: {room.current_word_count_range}")
             
             room.current_min_length = room.spinner_params.get('min_word_length', 3)
-            room.current_board_format = updated_format
+            room.current_board_format = 'Valued Letters' if is_24h else updated_format
             # room.bonus_cell already set above
             room.all_words_paths = all_words_dict # ATOMIC SAVE: Crucial for optimized scoring
             
@@ -2980,7 +2980,12 @@ class RoomManager:
                 print(f"[RoomManager] WARNING: No next_spinner_params for {room_id}. Waiting for generation...")
                 return False
                 
-            fmt = params.get('board_format', 'Normal')
+            if room.time_limit >= 7200:
+                if params:
+                    params['board_format'] = 'Valued Letters'
+                fmt = 'Valued Letters'
+            else:
+                fmt = params.get('board_format', 'Normal')
             wc_range = params.get('word_count_range', '100-200')
             
             # AUTHORITATIVE INTEGER CASTING: User mandate - ensure lengths are never interpreted as strings
@@ -3496,7 +3501,7 @@ class RoomManager:
                 # USER REQUEST: Ensure UI range matches board EXACTLY by using the params used for generation
                 # CRITICAL: Use 'or' to handle cases where next_round_spinner_params is explicitly None
                 active_params = getattr(room, 'next_round_spinner_params', None) or room.spinner_params or {}
-                room.current_board_format = getattr(room, 'next_round_format', None) or active_params.get('board_format', 'Normal')
+                room.current_board_format = 'Valued Letters' if room.time_limit >= 7200 else (getattr(room, 'next_round_format', None) or active_params.get('board_format', 'Normal'))
                 room.current_word_count_range = active_params.get('word_count_range', '100-200')
                 room.current_difficulty = active_params.get('difficulty', 'Medium')
                 room.current_dictionary = active_params.get('dictionary', 'NWL')
@@ -3520,6 +3525,10 @@ class RoomManager:
                     from board_generator import BoardGenerator
                     bg = BoardGenerator()
                     target_range = room.spinner_params.get('word_count_range', '100-200')
+                    if room.time_limit >= 7200:
+                        room.current_board_format = 'Valued Letters'
+                        room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
+                        room.current_min_length = int(room.spinner_params.get('min_word_length', 3))
                     
                     # Ensure next_round_bonus is populated for the generator
                     e_bonus = getattr(room, 'next_round_bonus', '')
@@ -3582,7 +3591,7 @@ class RoomManager:
                         e_board = [['A','B','C','D'],['E','F','G','H'],['I','J','K','L'],['M','N','O','P']]
                         e_words = ['ABLE', 'BAKER']
                         e_bonus_c = (0, 0)
-                        e_fmt = 'Normal'
+                        e_fmt = 'Valued Letters' if room.time_limit >= 7200 else 'Normal'
                         e_paths = {'ABLE': [(0,0),(0,1),(0,2),(0,3)], 'BAKER': [(1,0),(1,1),(1,2),(1,3)]}
                         e_ratio = 0.5
                         e_bonus_word = 'ABLE'
@@ -3639,7 +3648,7 @@ class RoomManager:
 
                 # ATOMIC PROMOTION: Carry staging data to active room state
                 room.board = room.next_round_board
-                room.current_board_format = getattr(room, 'next_round_format', None) or active_params.get('board_format', 'Normal')
+                room.current_board_format = 'Valued Letters' if room.time_limit >= 7200 else (getattr(room, 'next_round_format', None) or active_params.get('board_format', 'Normal'))
                 
                 # USER REQUEST: Absolute consistency. Only include words that meet the round's scorable minimum.
                 # HARD FLOOR: Always exclude 3-letter words from the 'All Words' list (User Request: "NOT 3 letter wrods")
