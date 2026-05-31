@@ -5115,11 +5115,13 @@ async function submitWord(wordParam = null, pathParam = null) {
 
     console.log(`[play.js] Submitting word "${word}" to room ${roomId} via ${currentInputMethod}`);
 
-    // --- OPTIMISTIC INSTANT PRE-VALIDATION (single flash) ---
-    // Show the correct color IMMEDIATELY on tile release — zero hesitation.
-    // We track the optimistic color so the server response never triggers a second tile flash
-    // if the color is the same. Only one flash per submission, ever.
-    let optimisticColor = null; // 'red' | 'blue' | 'green' | null
+    // --- INSTANT PRE-VALIDATION (certainty-only) ---
+    // Only flash IMMEDIATELY when we are 100% certain of the result client-side.
+    // "Already found" is the only case we can be certain about without the server.
+    // For all other words (valid path or not) we wait for the single correct server response.
+    // This prevents the blue→red double-flash that occurs when we guess "valid" optimistically
+    // but the server says the word isn't in the dictionary.
+    let optimisticColor = null; // 'red' | null
     const preState = window.lastGameState;
     if (preState && finalPath && finalPath.length > 0) {
         const myPlayer = preState.players && preState.players.find(p =>
@@ -5129,15 +5131,12 @@ async function submitWord(wordParam = null, pathParam = null) {
             myPlayer.submitted_words.some(w => w.word && w.word.toUpperCase() === word);
 
         if (alreadyFound) {
-            // Definitively invalid — flash red immediately.
+            // 100% certain: already found this word — flash red immediately, no server wait.
             showValidationFeedback('Already found!', false, false, finalPath);
             optimisticColor = 'red';
-        } else {
-            // Optimistically valid — flash blue (or green for bonus) immediately.
-            const preIsBonus = preState.bonus_word && word === preState.bonus_word.toUpperCase();
-            showValidationFeedback(preIsBonus ? 'BONUS WORD!' : 'Valid Word', true, preIsBonus, finalPath);
-            optimisticColor = preIsBonus ? 'green' : 'blue';
         }
+        // For all other words: no optimistic flash. The server responds in ~50-150ms
+        // and fires exactly one flash with the definitive correct color.
     }
 
     try {
