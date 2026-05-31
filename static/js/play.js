@@ -5137,25 +5137,28 @@ async function submitWord(wordParam = null, pathParam = null) {
         } else if (finalPath && finalPath.length > 0) {
             // Check the word against the board's full local word list.
             const allWords = preState.all_words || [];
-            const isInWordList = allWords.some(w =>
-                (typeof w === 'object' ? (w.word || '') : w).toUpperCase() === word
-            );
 
-            if (isInWordList) {
-                // Word is valid for this board — flash the correct color immediately.
-                const isBonus = preState.bonus_word && word === preState.bonus_word.toUpperCase();
-                showValidationFeedback(isBonus ? 'BONUS WORD!' : 'Valid Word', true, isBonus, finalPath);
-                optimisticColor = isBonus ? 'green' : 'blue';
-            } else {
-                // Word traced on the board but not in the word list — flash red immediately.
-                showValidationFeedback('Invalid Word', false, false, finalPath);
-                optimisticColor = 'red';
+            if (allWords.length > 0) {
+                // Word list is populated and trustworthy — check locally.
+                const isInWordList = allWords.some(w =>
+                    (typeof w === 'object' ? (w.word || '') : w).toUpperCase() === word
+                );
+
+                if (isInWordList) {
+                    // Confirmed valid for this board — flash correct color immediately.
+                    const isBonus = preState.bonus_word && word === preState.bonus_word.toUpperCase();
+                    showValidationFeedback(isBonus ? 'BONUS WORD!' : 'Valid Word', true, isBonus, finalPath);
+                    optimisticColor = isBonus ? 'green' : 'blue';
+                } else {
+                    // Word traced on board but not in the (non-empty) word list — definitely invalid.
+                    showValidationFeedback('Invalid Word', false, false, finalPath);
+                    optimisticColor = 'red';
+                }
             }
-        } else {
-            // No valid path on the board — flash red immediately.
-            showValidationFeedback('Invalid Word', false, false, finalPath);
-            optimisticColor = 'red';
+            // If allWords is empty (not yet loaded), skip optimistic flash — wait for
+            // the server's single definitive response to avoid a wrong-color double-flash.
         }
+        // No valid path on the board and not already found — wait for server response.
     }
 
     try {
