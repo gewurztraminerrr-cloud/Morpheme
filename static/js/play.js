@@ -5047,11 +5047,10 @@ async function submitWord(wordParam = null, pathParam = null) {
     const word = wordParam ? wordParam.toUpperCase() : (input ? input.value.trim().toUpperCase() : '');
     const roomId = getCurrentRoomId();
     
-    // Visual Debug / Clear immediately
+    // Clear input immediately (no yellow tint — it's visual noise before validation color)
     if (input) {
         window.isProgrammaticClear = true;
         input.value = '';
-        input.style.backgroundColor = 'rgba(255, 255, 0, 0.1)'; // Yellow tint for "pending"
         input.dispatchEvent(new Event('input'));
         window.isProgrammaticClear = false;
     }
@@ -5116,22 +5115,58 @@ async function submitWord(wordParam = null, pathParam = null) {
 
     console.log(`[play.js] Submitting word "${word}" to room ${roomId} via ${currentInputMethod}`);
 
+    // --- OPTIMISTIC INSTANT PRE-VALIDATION (mobile speed) ---
+    // Show color feedback IMMEDIATELY before the network round-trip completes.
+    // This eliminates the perceptible delay between releasing tiles and seeing a result.
+    let optimisticShown = false;
+    const preState = window.lastGameState;
+    if (preState && finalPath && finalPath.length > 0) {
+        const myPlayer = preState.players && preState.players.find(p =>
+            p.username && currentUser && p.username.toLowerCase() === currentUser.toLowerCase()
+        );
+        const alreadyFound = myPlayer && myPlayer.submitted_words &&
+            myPlayer.submitted_words.some(w => w.word && w.word.toUpperCase() === word);
+
+        if (alreadyFound) {
+            // Definitively invalid: already found this word. Show red instantly.
+            showValidationFeedback('Already found!', false, false, finalPath);
+            optimisticShown = true;
+        } else {
+            // Show optimistic blue — server will confirm or we correct to red
+            const preIsBonus = preState.bonus_word && word === preState.bonus_word.toUpperCase();
+            showValidationFeedback(preIsBonus ? 'BONUS WORD!' : 'Checking...', true, preIsBonus, finalPath);
+            optimisticShown = true;
+        }
+    }
 
     try {
-        const response = await fetch(`/room/${roomId}/submit_word`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                word: word,
-                input_method: currentInputMethod,
-                path: finalPath
-            })
-        });
+        // Use a timeout + keepalive to handle mobile network stalls gracefully.
+        // keepalive ensures the request completes even if the page visibility changes mid-flight.
+        const controller = new AbortController();
+        const fetchTimeout = setTimeout(() => controller.abort(), 4000);
+        let response;
+        try {
+            response = await fetch(`/room/${roomId}/submit_word`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                keepalive: true,
+                signal: controller.signal,
+                body: JSON.stringify({
+                    word: word,
+                    input_method: currentInputMethod,
+                    path: finalPath
+                })
+            });
+        } finally {
+            clearTimeout(fetchTimeout);
+        }
         const data = await response.json();
 
         // Show validation feedback
         const currentState = window.lastGameState;
         const isBonus = data.success && currentState && currentState.bonus_word && data.word && data.word.toUpperCase() === currentState.bonus_word.toUpperCase();
+        // Always show final server feedback — it corrects the optimistic guess if needed,
+        // and refreshes the flash with the definitive message + correct color.
         showValidationFeedback(data.message || (data.success ? 'Valid Word' : 'Invalid Word'), data.success, isBonus, finalPath);
 
 
@@ -5319,9 +5354,11 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
                     // Trigger reflow to restart animation if already playing
                     void cell.offsetWidth; 
                     cell.classList.add(tileFlashClass);
+                    // Use 500ms on mobile (more impactful), 300ms on desktop
+                    const flashMs = (window.innerWidth <= 992) ? 500 : 300;
                     setTimeout(() => {
                         cell.classList.remove(tileFlashClass);
-                    }, 100);
+                    }, flashMs);
                 }
             }
         });
