@@ -5115,10 +5115,11 @@ async function submitWord(wordParam = null, pathParam = null) {
 
     console.log(`[play.js] Submitting word "${word}" to room ${roomId} via ${currentInputMethod}`);
 
-    // --- OPTIMISTIC INSTANT PRE-VALIDATION (mobile speed) ---
-    // Show color feedback IMMEDIATELY before the network round-trip completes.
-    // This eliminates the perceptible delay between releasing tiles and seeing a result.
-    let optimisticShown = false;
+    // --- OPTIMISTIC INSTANT PRE-VALIDATION (single flash) ---
+    // Show the correct color IMMEDIATELY on tile release — zero hesitation.
+    // We track the optimistic color so the server response never triggers a second tile flash
+    // if the color is the same. Only one flash per submission, ever.
+    let optimisticColor = null; // 'red' | 'blue' | 'green' | null
     const preState = window.lastGameState;
     if (preState && finalPath && finalPath.length > 0) {
         const myPlayer = preState.players && preState.players.find(p =>
@@ -5128,14 +5129,14 @@ async function submitWord(wordParam = null, pathParam = null) {
             myPlayer.submitted_words.some(w => w.word && w.word.toUpperCase() === word);
 
         if (alreadyFound) {
-            // Definitively invalid: already found this word. Show red instantly.
+            // Definitively invalid — flash red immediately.
             showValidationFeedback('Already found!', false, false, finalPath);
-            optimisticShown = true;
+            optimisticColor = 'red';
         } else {
-            // Show optimistic blue — server will confirm or we correct to red
+            // Optimistically valid — flash blue (or green for bonus) immediately.
             const preIsBonus = preState.bonus_word && word === preState.bonus_word.toUpperCase();
-            showValidationFeedback(preIsBonus ? 'BONUS WORD!' : 'Checking...', true, preIsBonus, finalPath);
-            optimisticShown = true;
+            showValidationFeedback(preIsBonus ? 'BONUS WORD!' : 'Valid Word', true, preIsBonus, finalPath);
+            optimisticColor = preIsBonus ? 'green' : 'blue';
         }
     }
 
@@ -5162,12 +5163,25 @@ async function submitWord(wordParam = null, pathParam = null) {
         }
         const data = await response.json();
 
-        // Show validation feedback
+        // Determine the server's actual color result.
         const currentState = window.lastGameState;
         const isBonus = data.success && currentState && currentState.bonus_word && data.word && data.word.toUpperCase() === currentState.bonus_word.toUpperCase();
-        // Always show final server feedback — it corrects the optimistic guess if needed,
-        // and refreshes the flash with the definitive message + correct color.
-        showValidationFeedback(data.message || (data.success ? 'Valid Word' : 'Invalid Word'), data.success, isBonus, finalPath);
+        const serverIsPenalty = data.message && data.message.toUpperCase().includes('PENALTY');
+        const serverIsActuallyValid = data.success && !serverIsPenalty;
+        const serverColor = serverIsActuallyValid ? (isBonus ? 'green' : 'blue') : 'red';
+
+        if (optimisticColor !== null && optimisticColor === serverColor) {
+            // Server confirmed our optimistic color — no second tile flash.
+            // Only update the status text quietly with the real message.
+            const statusEl = document.getElementById('word-validation-status');
+            if (statusEl) {
+                statusEl.textContent = data.message || (data.success ? 'Valid Word' : 'Invalid Word');
+            }
+        } else {
+            // Server result differs from our optimistic guess (e.g. we showed blue, word was invalid).
+            // Show one correction flash with the real color.
+            showValidationFeedback(data.message || (data.success ? 'Valid Word' : 'Invalid Word'), data.success, isBonus, finalPath);
+        }
 
 
 
