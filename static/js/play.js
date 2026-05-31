@@ -5004,7 +5004,9 @@ document.addEventListener('keydown', (e) => {
                 clearTimeout(typingHighlightTimeout);
                 typingHighlightTimeout = null;
             }
-            document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
+            if (!window.isProgrammaticClear) {
+                document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
+            }
             return;
         }
 
@@ -5047,9 +5049,11 @@ async function submitWord(wordParam = null, pathParam = null) {
     
     // Visual Debug / Clear immediately
     if (input) {
+        window.isProgrammaticClear = true;
         input.value = '';
         input.style.backgroundColor = 'rgba(255, 255, 0, 0.1)'; // Yellow tint for "pending"
         input.dispatchEvent(new Event('input'));
+        window.isProgrammaticClear = false;
     }
 
     console.log('[play.js] submitWord entering:', word, 'Room:', roomId);
@@ -5246,6 +5250,22 @@ async function submitWord(wordParam = null, pathParam = null) {
 function showValidationFeedback(message, isValid, isBonus = false, path = null) {
     const statusEl = document.getElementById('word-validation-status');
     if (!statusEl) return;
+
+    // Clear highlights, but keep active highlights if the user has already started a new swipe or typing sequence
+    const isSwipingNewWord = mouseState && mouseState.isDown;
+    const inputEl = document.getElementById('word-input');
+    const isUserTypingNewWord = inputEl && inputEl.value.trim().length > 0;
+
+    if (!isSwipingNewWord) {
+        document.querySelectorAll('.board-cell.selected, .board-cell.current').forEach(c => {
+            c.classList.remove('selected', 'current');
+        });
+    }
+    if (!isUserTypingNewWord) {
+        document.querySelectorAll('.board-cell.typing-highlight').forEach(c => {
+            c.classList.remove('typing-highlight');
+        });
+    }
 
     // Clear existing timeout
     if (validationTimeout) clearTimeout(validationTimeout);
@@ -5828,10 +5848,8 @@ function finishDragSelection(e) {
         submitWord(word, serverPath);
     }
 
-    // Unconditionally clear visual board state and input box upon release
-    document.querySelectorAll('.board-cell.selected, .board-cell.current').forEach(c => {
-        c.classList.remove('selected', 'current');
-    });
+    // Keep selected/current visual classes on cells for instantaneous transition to validation feedback.
+    // They will be cleared inside showValidationFeedback or when a new swipe begins.
     mouseState.selectedPath = [];
     mouseState.visitedCells = new Set();
 
