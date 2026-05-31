@@ -5115,28 +5115,47 @@ async function submitWord(wordParam = null, pathParam = null) {
 
     console.log(`[play.js] Submitting word "${word}" to room ${roomId} via ${currentInputMethod}`);
 
-    // --- INSTANT PRE-VALIDATION (certainty-only) ---
-    // Only flash IMMEDIATELY when we are 100% certain of the result client-side.
-    // "Already found" is the only case we can be certain about without the server.
-    // For all other words (valid path or not) we wait for the single correct server response.
-    // This prevents the blue→red double-flash that occurs when we guess "valid" optimistically
-    // but the server says the word isn't in the dictionary.
-    let optimisticColor = null; // 'red' | null
+    // --- INSTANT LOCAL VALIDATION (zero hesitation) ---
+    // Check the submitted word against the board's full word list (preState.all_words)
+    // which is already present in the client. This gives us the exact correct color
+    // IMMEDIATELY on release — no server round-trip needed to determine the flash color.
+    // The server response still runs in the background to officially record the word;
+    // it only triggers a correction flash if its result somehow differs (extremely rare).
+    let optimisticColor = null; // 'red' | 'blue' | 'green'
     const preState = window.lastGameState;
-    if (preState && finalPath && finalPath.length > 0) {
+    if (preState) {
         const myPlayer = preState.players && preState.players.find(p =>
             p.username && currentUser && p.username.toLowerCase() === currentUser.toLowerCase()
         );
         const alreadyFound = myPlayer && myPlayer.submitted_words &&
-            myPlayer.submitted_words.some(w => w.word && w.word.toUpperCase() === word);
+            myPlayer.submitted_words.some(w => (typeof w === 'object' ? (w.word || '') : w).toUpperCase() === word);
 
         if (alreadyFound) {
-            // 100% certain: already found this word — flash red immediately, no server wait.
+            // Definitively already found — flash red immediately.
             showValidationFeedback('Already found!', false, false, finalPath);
             optimisticColor = 'red';
+        } else if (finalPath && finalPath.length > 0) {
+            // Check the word against the board's full local word list.
+            const allWords = preState.all_words || [];
+            const isInWordList = allWords.some(w =>
+                (typeof w === 'object' ? (w.word || '') : w).toUpperCase() === word
+            );
+
+            if (isInWordList) {
+                // Word is valid for this board — flash the correct color immediately.
+                const isBonus = preState.bonus_word && word === preState.bonus_word.toUpperCase();
+                showValidationFeedback(isBonus ? 'BONUS WORD!' : 'Valid Word', true, isBonus, finalPath);
+                optimisticColor = isBonus ? 'green' : 'blue';
+            } else {
+                // Word traced on the board but not in the word list — flash red immediately.
+                showValidationFeedback('Invalid Word', false, false, finalPath);
+                optimisticColor = 'red';
+            }
+        } else {
+            // No valid path on the board — flash red immediately.
+            showValidationFeedback('Invalid Word', false, false, finalPath);
+            optimisticColor = 'red';
         }
-        // For all other words: no optimistic flash. The server responds in ~50-150ms
-        // and fires exactly one flash with the definitive correct color.
     }
 
     try {
@@ -5170,15 +5189,14 @@ async function submitWord(wordParam = null, pathParam = null) {
         const serverColor = serverIsActuallyValid ? (isBonus ? 'green' : 'blue') : 'red';
 
         if (optimisticColor !== null && optimisticColor === serverColor) {
-            // Server confirmed our optimistic color — no second tile flash.
-            // Only update the status text quietly with the real message.
+            // Server confirmed our local check — no second tile flash.
+            // Only update the status text with the real server message.
             const statusEl = document.getElementById('word-validation-status');
             if (statusEl) {
                 statusEl.textContent = data.message || (data.success ? 'Valid Word' : 'Invalid Word');
             }
         } else {
-            // Server result differs from our optimistic guess (e.g. we showed blue, word was invalid).
-            // Show one correction flash with the real color.
+            // Server result differs from local check — show correction flash.
             showValidationFeedback(data.message || (data.success ? 'Valid Word' : 'Invalid Word'), data.success, isBonus, finalPath);
         }
 
