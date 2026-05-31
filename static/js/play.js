@@ -5116,11 +5116,9 @@ async function submitWord(wordParam = null, pathParam = null) {
     console.log(`[play.js] Submitting word "${word}" to room ${roomId} via ${currentInputMethod}`);
 
     // --- INSTANT LOCAL VALIDATION (zero hesitation) ---
-    // Check the submitted word against the board's full word list (preState.all_words)
-    // which is already present in the client. This gives us the exact correct color
-    // IMMEDIATELY on release — no server round-trip needed to determine the flash color.
-    // The server response still runs in the background to officially record the word;
-    // it only triggers a correction flash if its result somehow differs (extremely rare).
+    // Use the word list already rendered in the words panel (window.lastDisplayAllWordsArgs[0])
+    // for an accurate instant flash. This is populated during active play via the words panel
+    // renderer, whereas preState.all_words is only sent by the server during intermission.
     let optimisticColor = null; // 'red' | 'blue' | 'green'
     const preState = window.lastGameState;
     if (preState) {
@@ -5135,30 +5133,30 @@ async function submitWord(wordParam = null, pathParam = null) {
             showValidationFeedback('Already found!', false, false, finalPath);
             optimisticColor = 'red';
         } else if (finalPath && finalPath.length > 0) {
-            // Check the word against the board's full local word list.
-            const allWords = preState.all_words || [];
+            // Source the word list from the words panel cache (populated during active play)
+            // or fall back to preState.all_words (available during intermission).
+            const panelWords = (window.lastDisplayAllWordsArgs && window.lastDisplayAllWordsArgs[0]) || [];
+            const allWords = panelWords.length > 0 ? panelWords : (preState.all_words || []);
 
             if (allWords.length > 0) {
-                // Word list is populated and trustworthy — check locally.
+                // Word list is populated and trustworthy — check locally for instant flash.
                 const isInWordList = allWords.some(w =>
                     (typeof w === 'object' ? (w.word || '') : w).toUpperCase() === word
                 );
 
                 if (isInWordList) {
-                    // Confirmed valid for this board — flash correct color immediately.
+                    // Confirmed valid — flash the correct color immediately.
                     const isBonus = preState.bonus_word && word === preState.bonus_word.toUpperCase();
                     showValidationFeedback(isBonus ? 'BONUS WORD!' : 'Valid Word', true, isBonus, finalPath);
                     optimisticColor = isBonus ? 'green' : 'blue';
                 } else {
-                    // Word traced on board but not in the (non-empty) word list — definitely invalid.
+                    // Not in the word list — flash red immediately.
                     showValidationFeedback('Invalid Word', false, false, finalPath);
                     optimisticColor = 'red';
                 }
             }
-            // If allWords is empty (not yet loaded), skip optimistic flash — wait for
-            // the server's single definitive response to avoid a wrong-color double-flash.
+            // Word list not yet available — server response will fire the single definitive flash.
         }
-        // No valid path on the board and not already found — wait for server response.
     }
 
     try {
