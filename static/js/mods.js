@@ -181,7 +181,14 @@ async function addAddedWord() {
     const word = wordInput ? wordInput.value.trim() : '';
 
     if (!word) {
-        alert("Word is required.");
+        showModStatus('Please enter a word.', true, 'added-word-status-area');
+        return;
+    }
+
+    // Letters only — reject anything with digits, spaces, punctuation, etc.
+    if (!/^[A-Za-z]+$/.test(word)) {
+        showModStatus('❌ Invalid entry: only letters (A–Z) are allowed. Please remove any numbers, spaces, or special characters.', true, 'added-word-status-area');
+        if (wordInput) wordInput.focus();
         return;
     }
 
@@ -225,7 +232,14 @@ async function removeAddedWord() {
     const word = wordInput ? wordInput.value.trim() : '';
 
     if (!word) {
-        alert("Word is required to remove.");
+        showModStatus('Please enter a word.', true, 'added-word-status-area');
+        return;
+    }
+
+    // Letters only — reject anything with digits, spaces, punctuation, etc.
+    if (!/^[A-Za-z]+$/.test(word)) {
+        showModStatus('❌ Invalid entry: only letters (A–Z) are allowed. Please remove any numbers, spaces, or special characters.', true, 'added-word-status-area');
+        if (wordInput) wordInput.focus();
         return;
     }
 
@@ -450,6 +464,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const addedWordInput = document.getElementById('added-word-input');
     if (addedWordInput) {
+        // Real-time: strip any non-letter characters as the user types.
+        addedWordInput.addEventListener('input', () => {
+            const before = addedWordInput.value;
+            const after = before.replace(/[^A-Za-z]/g, '');
+            if (before !== after) {
+                // Preserve cursor position after stripping
+                const sel = addedWordInput.selectionStart - (before.length - after.length);
+                addedWordInput.value = after;
+                addedWordInput.setSelectionRange(Math.max(0, sel), Math.max(0, sel));
+                showModStatus('❌ Only letters (A–Z) are allowed.', true, 'added-word-status-area');
+            }
+        });
         addedWordInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
