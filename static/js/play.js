@@ -5354,8 +5354,8 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
                     // Trigger reflow to restart animation if already playing
                     void cell.offsetWidth; 
                     cell.classList.add(tileFlashClass);
-                    // Brief flash effect: 150ms on all devices
-                    const flashMs = 150;
+                    // True flash effect: 80ms — visible but not lingering
+                    const flashMs = 80;
                     setTimeout(() => {
                         cell.classList.remove(tileFlashClass);
                     }, flashMs);
