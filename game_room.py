@@ -455,8 +455,8 @@ class GameRoom:
             self.spectators = []
             self.add_chat_message("System", "All players have left. Room is closing.", is_system=True)
 
-        # If forced (logout), clear from past_players archive
-        if force:
+        # If forced (logout), clear from past_players archive (except for 24h rooms where persistence is mandatory)
+        if force and not is_daily:
             if uid_str in self.past_players:
                 del self.past_players[uid_str]
                 print(f"[GameRoom] Cleared {username} from past_players (Logout/Force)")
@@ -612,7 +612,7 @@ class GameRoom:
             
             # Serialize active players
             players_data = []
-            for p in self.players:
+            for p in self.past_players.values():
                 players_data.append({
                     'user_id': p.user_id,
                     'username': p.username,
