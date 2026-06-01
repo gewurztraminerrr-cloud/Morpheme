@@ -5146,10 +5146,8 @@ async function submitWord(wordParam = null, pathParam = null) {
             showValidationFeedback('Already found!', false, false, finalPath);
             optimisticColor = 'red';
         } else if (finalPath && finalPath.length > 0) {
-            // Source the word list from the words panel cache (populated during active play)
-            // or fall back to preState.all_words (available during intermission).
-            const panelWords = (window.lastDisplayAllWordsArgs && window.lastDisplayAllWordsArgs[0]) || [];
-            const allWords = panelWords.length > 0 ? panelWords : (preState.all_words || []);
+            // Check dictionary validity locally using the authoritative all_words list from the game state
+            const allWords = preState.all_words || [];
 
             if (allWords.length > 0) {
                 // Word list is populated and trustworthy — check locally for instant flash.
