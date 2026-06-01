@@ -1057,6 +1057,11 @@ body.theme-light-brown .player-score-val {
     /* Red */
 }
 
+.status-already-found {
+    color: #a855f7;
+    /* Purple */
+}
+
 #word-input {
     flex: 1;
     min-width: 60px;
@@ -5488,6 +5493,20 @@ body .board-cell.tile-flash-red {
     transition: none !important;
 }
 body .board-cell.tile-flash-red * {
+    color: #ffffff !important;
+    transition: none !important;
+    animation: none !important;
+}
+
+body .board-cell.tile-flash-purple {
+    background: #8e44ad !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 15px rgba(142, 68, 173, 0.8) !important;
+    border-color: #8e44ad !important;
+    z-index: 100 !important;
+    transition: none !important;
+}
+body .board-cell.tile-flash-purple * {
     color: #ffffff !important;
     transition: none !important;
     animation: none !important;

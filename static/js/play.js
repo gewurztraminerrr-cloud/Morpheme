@@ -5147,9 +5147,9 @@ async function submitWord(wordParam = null, pathParam = null) {
             myPlayer.submitted_words.some(w => (typeof w === 'object' ? (w.word || '') : w).toUpperCase() === word);
 
         if (alreadyFound) {
-            // Definitively already found — flash red immediately.
+            // Definitively already found — flash purple immediately.
             showValidationFeedback('Already found!', false, false, finalPath);
-            optimisticColor = 'red';
+            optimisticColor = 'purple';
         } else if (finalPath && finalPath.length > 0) {
             // Check dictionary validity locally using the authoritative all_words list from the game state
             const allWords = preState.all_words || [];
@@ -5203,7 +5203,13 @@ async function submitWord(wordParam = null, pathParam = null) {
         const isBonus = data.success && currentState && currentState.bonus_word && data.word && data.word.toUpperCase() === currentState.bonus_word.toUpperCase();
         const serverIsPenalty = data.message && data.message.toUpperCase().includes('PENALTY');
         const serverIsActuallyValid = data.success && !serverIsPenalty;
-        const serverColor = serverIsActuallyValid ? (isBonus ? 'green' : 'blue') : 'red';
+        const serverIsAlreadyFound = data.message && data.message.toUpperCase().includes('ALREADY FOUND');
+        let serverColor = 'red';
+        if (serverIsAlreadyFound) {
+            serverColor = 'purple';
+        } else if (serverIsActuallyValid) {
+            serverColor = isBonus ? 'green' : 'blue';
+        }
 
         if (optimisticColor !== null && optimisticColor === serverColor) {
             // Server confirmed our local check — no second tile flash.
@@ -5355,16 +5361,23 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
 
     const isPenalty = message && message.toUpperCase().includes('PENALTY');
     const isActuallyValid = isValid && !isPenalty;
+    const isAlreadyFound = message && (message === 'Already found!' || message.toUpperCase().includes('ALREADY FOUND'));
 
     // Set text and class
     statusEl.textContent = message;
-    statusEl.className = 'validation-status ' + (isActuallyValid ? 'status-valid' : 'status-invalid');
+    if (isAlreadyFound) {
+        statusEl.className = 'validation-status status-already-found';
+    } else {
+        statusEl.className = 'validation-status ' + (isActuallyValid ? 'status-valid' : 'status-invalid');
+    }
 
     // Flash highlighted tiles that traced the word (instead of full-screen flash)
     const shouldFlash = window.userSettings ? (window.userSettings.word_flash !== false) : true;
     if (shouldFlash && path && path.length > 0) {
         let tileFlashClass = 'tile-flash-red';
-        if (isActuallyValid) {
+        if (isAlreadyFound) {
+            tileFlashClass = 'tile-flash-purple';
+        } else if (isActuallyValid) {
             tileFlashClass = isBonus ? 'tile-flash-green' : 'tile-flash-blue';
         }
         
@@ -5398,7 +5411,7 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
                 }
                 const cell = document.querySelector(selector);
                 if (cell) {
-                    cell.classList.remove('tile-flash-blue', 'tile-flash-green', 'tile-flash-red');
+                    cell.classList.remove('tile-flash-blue', 'tile-flash-green', 'tile-flash-red', 'tile-flash-purple');
                     // Trigger reflow to restart animation if already playing
                     void cell.offsetWidth; 
                     cell.classList.add(tileFlashClass);
@@ -5415,7 +5428,13 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
     // Flash word input background
     const input = document.getElementById('word-input');
     if (input) {
-        input.style.backgroundColor = isActuallyValid ? 'rgba(0, 255, 0, 0.1)' : 'rgba(255, 0, 0, 0.1)';
+        let bgColor = 'rgba(255, 0, 0, 0.1)'; // default invalid red
+        if (isAlreadyFound) {
+            bgColor = 'rgba(168, 85, 247, 0.15)'; // purple
+        } else if (isActuallyValid) {
+            bgColor = 'rgba(0, 255, 0, 0.1)';
+        }
+        input.style.backgroundColor = bgColor;
         setTimeout(() => { if (input) input.style.backgroundColor = ''; }, 1000);
     }
 
