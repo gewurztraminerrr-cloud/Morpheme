@@ -276,6 +276,7 @@ function clearGameUIAndCache() {
     
     // 1. Reset Global state caches
     window.lastGameState = null;
+    window.lastDisplayAllWordsArgs = null;
     window.lastRenderedStateJSON = null;
     window.lastRenderedBoardJSON = null;
     window.lastPlayersHtml = null;
@@ -1212,6 +1213,9 @@ async function updateGameState(incomingState = null) {
         const isNewRound = (state.state === 'active' && (lastStateStr !== 'active' || (previousState && state.current_round !== previousState.current_round)));
         if (lastStateStr !== state.state || isNewRound) {
             if (isNewRound) {
+                // Clear word panel render cache for new round to prevent stale pre-validation
+                window.lastDisplayAllWordsArgs = null;
+
                 // Handle Rotation format
                 const bFormat = state.current_board_format || '';
                 if (bFormat.toLowerCase().includes('rotat')) {
