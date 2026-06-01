@@ -1091,10 +1091,15 @@ async function updateGameState(incomingState = null) {
         } else if (isFCFSIntermission && !showBoardInSplitIntermission) {
             renderFCFSNotepads(state.players, state);
         } else {
-            // ONLY gray out if we are specifically in intermission
-            const isIntermission = state.state === 'intermission';
-            const is3D = state.game_type === '3d' || (state.board && state.board.length === 6 && Array.isArray(state.board[0]) && Array.isArray(state.board[0][0]));
-            renderBoard(state.board, isIntermission, is3D, state);
+            // Render previous day's board if the user is on the previous tab
+            let boardToRender = state.board;
+            let grayed = state.state === 'intermission';
+            if (activeWordsTab === 'previous' && state.previous_board && state.previous_board.length > 0) {
+                boardToRender = state.previous_board;
+                grayed = true; // Always gray out the previous day's board
+            }
+            const is3D = state.game_type === '3d' || (boardToRender && boardToRender.length === 6 && Array.isArray(boardToRender[0]) && Array.isArray(boardToRender[0][0]));
+            renderBoard(boardToRender, grayed, is3D, state);
         }
 
         // Update players (pass full state for context if needed)
@@ -4359,7 +4364,10 @@ window.findWordPathOnCube = function(word, board, targetCoord = null) {
  * Useful after the board DOM has been rebuilt.
  */
 function reapplyBoardHighlights() {
-    const board = window.lastGameState ? window.lastGameState.board : null;
+    let board = window.lastGameState ? window.lastGameState.board : null;
+    if (activeWordsTab === 'previous' && window.lastGameState && window.lastGameState.previous_board && window.lastGameState.previous_board.length > 0) {
+        board = window.lastGameState.previous_board;
+    }
     if (!board) return;
 
     // Clear PREVIOUS highlights of ALL types to avoid stale visuals
@@ -5478,10 +5486,14 @@ if (rotateBtnEl) {
         console.log('[play.js] Board rotation toggled. Rotated:', isBoardRotated);
         // Force re-render if we have state
         if (window.lastGameState && window.lastGameState.board) {
-            // Consistent with updateGameState: Only gray in intermission
-            const isIntermission = window.lastGameState.state === 'intermission';
-            const is3D = window.lastGameState.game_type === '3d' || (window.lastGameState.board && window.lastGameState.board.length === 6 && Array.isArray(window.lastGameState.board[0]) && Array.isArray(window.lastGameState.board[0][0]));
-            renderBoard(window.lastGameState.board, isIntermission, is3D);
+            let boardToRender = window.lastGameState.board;
+            let isIntermission = window.lastGameState.state === 'intermission';
+            if (activeWordsTab === 'previous' && window.lastGameState.previous_board && window.lastGameState.previous_board.length > 0) {
+                boardToRender = window.lastGameState.previous_board;
+                isIntermission = true;
+            }
+            const is3D = window.lastGameState.game_type === '3d' || (boardToRender && boardToRender.length === 6 && Array.isArray(boardToRender[0]) && Array.isArray(boardToRender[0][0]));
+            renderBoard(boardToRender, isIntermission, is3D);
         }
     });
 }
