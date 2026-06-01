@@ -1013,13 +1013,18 @@ body.theme-light-brown .field-hint {
     box-sizing: border-box;
     text-transform: uppercase;
     white-space: nowrap;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
 }
 
 @media (max-width: 900px) {
     .lobby-journey-message {
         font-size: 0.8rem;
         letter-spacing: 0.8px;
-        margin: 5px auto 15px auto;
+        margin: 10px auto 20px auto;
+        padding: 12px 10px;
     }
 }
 
@@ -1027,7 +1032,9 @@ body.theme-light-brown .field-hint {
     .lobby-journey-message {
         font-size: 0.65rem;
         letter-spacing: 0.5px;
-        margin: 5px auto 10px auto;
+        margin: 15px auto 25px auto;
+        padding: 16px 12px;
     }
 }
+
 
