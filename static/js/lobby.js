@@ -4,6 +4,7 @@
 let lobbyPollInterval = null;
 let lobbyStatsInterval = null;
 let currentLobbyConfig = null;
+window.activeRatingFilterValue = null;
 
 // Use event delegation on the lobby page container
 // This ensures clicks work even after navigating away and back
@@ -389,6 +390,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log('Lobby event delegation setup complete');
 
+    // Setup Rating Filter Handlers (Find button and Enter key)
+    function handleRatingFilterSearch() {
+        const input = document.getElementById('rating-filter');
+        if (input) {
+            const val = input.value.trim();
+            if (val === '') {
+                window.activeRatingFilterValue = null;
+            } else {
+                const parsed = parseInt(val);
+                window.activeRatingFilterValue = isNaN(parsed) ? null : parsed;
+            }
+            
+            console.log('[Lobby] Rating filter search executed. Value:', window.activeRatingFilterValue);
+            
+            // Trigger render/update of rooms immediately using current configuration
+            if (currentLobbyConfig) {
+                fetchAndRenderRooms(
+                    currentLobbyConfig.gameType,
+                    currentLobbyConfig.timeLimit,
+                    currentLobbyConfig.boardDimensions,
+                    false
+                );
+            }
+        }
+    }
+
+    const ratingFilterInput = document.getElementById('rating-filter');
+    if (ratingFilterInput) {
+        ratingFilterInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                handleRatingFilterSearch();
+            }
+        });
+    }
+
+    const findRatingBtn = document.getElementById('find-rating-btn');
+    if (findRatingBtn) {
+        findRatingBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleRatingFilterSearch();
+        });
+    }
+
     // Start stats polling if we land on lobby
     if (isOnLobby()) {
         startStatsPolling();
@@ -487,12 +532,8 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
             }
         }
 
-        // Recalculate average ratings and Apply Filter
-        const ratingFilterInput = document.getElementById('rating-filter');
-        const minAvgRating = ratingFilterInput ? (parseInt(ratingFilterInput.value) || 0) : 0;
-
-        const filteredRooms = rooms.filter(room => {
-            // Recalculate average rating: Guests = 0, ignore spectators (they aren't in room.players)
+        // Recalculate average ratings
+        rooms.forEach(room => {
             let totalRating = 0;
             let pCount = 0;
             if (room.players && Array.isArray(room.players)) {
@@ -503,15 +544,21 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                     return sum + rating;
                 }, 0);
             }
-            
             const avgRating = pCount > 0 ? Math.round(totalRating / pCount) : 0;
-            
-            // Store it for display
             room.display_average_rating = avgRating;
-
-            // Filter
-            return avgRating >= minAvgRating;
         });
+
+        // Apply Authoritative Rating Proximity Filter/Sort if "Find" or "Enter" has been executed
+        let filteredRooms = [...rooms];
+        const targetRating = window.activeRatingFilterValue;
+        if (targetRating !== null && !isNaN(targetRating)) {
+            // Sort rooms by closeness to entered average value (closest first)
+            filteredRooms.sort((a, b) => {
+                const diffA = Math.abs(a.display_average_rating - targetRating);
+                const diffB = Math.abs(b.display_average_rating - targetRating);
+                return diffA - diffB;
+            });
+        }
 
         if (filteredRooms.length === 0) {
             roomsContainer.innerHTML = '<p class="placeholder">No active rooms found matching criteria</p>';

@@ -28,7 +28,7 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css?v=27">
-    <link rel="stylesheet" href="/css/lobby.css?v=16">
+    <link rel="stylesheet" href="/css/lobby.css?v=17">
     <link rel="stylesheet" href="/css/play.css?v=82">
     <link rel="stylesheet" href="/css/howtoplay.css?v=8">
     <link rel="stylesheet" href="/css/forum.css?v=1">
@@ -769,7 +769,10 @@
 
                     <h3>Active Rooms</h3>
                     <div id="selected-game-info">Select a game type</div>
-                    <input type="number" id="rating-filter" placeholder="Filter by average rating" min="0" step="100">
+                    <div class="rating-filter-container">
+                        <input type="number" id="rating-filter" placeholder="Filter by average rating" min="0" step="100">
+                        <button id="find-rating-btn">Find</button>
+                    </div>
                     <div id="rooms-list">
                         <p class="placeholder">No "Show Rooms" selected</p>
                         <img src="/static/images/morpheme.png" class="placeholder-icon" alt="Morpheme Logo">
@@ -4338,7 +4341,7 @@
     <script src="/js/settings.js?v=15"></script>
     <script src="/js/forum.js?v=32"></script>
     <script src="/js/app.js?v=37"></script>
-    <script src="/js/lobby.js?v=4"></script>
+    <script src="/js/lobby.js?v=5"></script>
     <script src="/js/play.js?v=111"></script>
     <script src="/js/tournaments.js?v=2"></script>
     <script src="/js/leaderboard.js?v=2"></script>

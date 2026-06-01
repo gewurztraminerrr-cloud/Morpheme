@@ -188,13 +188,21 @@
     margin: 0;
 }
 
+.rating-filter-container {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
 #rating-filter {
+    flex: 1;
     padding: 12px;
     background: var(--input-bg);
     border: 2px solid var(--input-border);
     border-radius: 8px;
     color: var(--text-primary);
     font-size: 1rem;
+    min-width: 0;
 }
 
 #rating-filter::placeholder {
@@ -206,6 +214,30 @@
     border-color: var(--accent-color);
     background: var(--input-bg);
     filter: brightness(1.2);
+}
+
+#find-rating-btn {
+    padding: 12px 20px;
+    background: linear-gradient(135deg, var(--accent-color, #ff0844) 0%, #ffb199 100%);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+    white-space: nowrap;
+}
+
+#find-rating-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(255, 8, 68, 0.35);
+    filter: brightness(1.1);
+}
+
+#find-rating-btn:active {
+    transform: translateY(0);
 }
 
 #selected-game-info {
