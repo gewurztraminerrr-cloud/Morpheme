@@ -6163,19 +6163,20 @@ async function handleTournamentWord(word) {
         return;
     }
 
-    // Check dictionary
-    const dict = window.tournamentParams ? window.tournamentParams.dictionary : 'NWL';
+    // Check dictionary locally using all_words list
     let is_valid_dict = false;
-    try {
-        const resp = await fetch('/api/tools/validate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ word, dictionary: dict })
+    if (window.lastGameState && window.lastGameState.all_words) {
+        const allWordsState = window.lastGameState.all_words;
+        let wordList = [];
+        if (Array.isArray(allWordsState)) {
+            wordList = allWordsState;
+        } else if (allWordsState && typeof allWordsState === 'object') {
+            wordList = Object.keys(allWordsState);
+        }
+        is_valid_dict = wordList.some(w => {
+            const wText = (typeof w === 'string' ? w : (w.word || '')) || '';
+            return wText.toUpperCase() === word.toUpperCase();
         });
-        const data = await resp.json();
-        is_valid_dict = data.is_valid;
-    } catch (e) {
-        console.error('Validation error', e);
     }
 
     // Check length and dictionary validity
@@ -6483,20 +6484,21 @@ async function handlePrivateMatchWord(word, path = null) {
             const dict = privateMatchParams ? privateMatchParams.dictionary : 'NWL';
             let validOptions = [];
 
-            // Check dictionary validity for each possible word
-            for (const w of possibleWords) {
-                let isVal = false;
-                try {
-                    const resp = await fetch('/api/tools/validate', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ word: w, dictionary: dict })
-                    });
-                    const data = await resp.json();
-                    isVal = data.is_valid;
-                } catch (e) {
-                    console.error('Validation error', e);
+            // Check dictionary validity for each possible word locally
+            let pmWordList = [];
+            if (window.lastGameState && window.lastGameState.all_words) {
+                const allWordsState = window.lastGameState.all_words;
+                if (Array.isArray(allWordsState)) {
+                    pmWordList = allWordsState;
+                } else if (allWordsState && typeof allWordsState === 'object') {
+                    pmWordList = Object.keys(allWordsState);
                 }
+            }
+            for (const w of possibleWords) {
+                const isVal = pmWordList.some(item => {
+                    const wText = (typeof item === 'string' ? item : (item.word || '')) || '';
+                    return wText.toUpperCase() === w.toUpperCase();
+                });
                 if (isVal) {
                     validOptions.push(w);
                 }
@@ -6533,19 +6535,20 @@ async function handlePrivateMatchWord(word, path = null) {
     // Set word to the resolved clean word for dictionary check and subsequent scoring
     word = resolvedWord;
 
-    // 1. Initial Checks (Dictionary & Min Length)
-    const dict = privateMatchParams ? privateMatchParams.dictionary : 'NWL';
+    // 1. Initial Checks (Dictionary & Min Length) - Checked locally
     let isDictionaryValid = false;
-    try {
-        const resp = await fetch('/api/tools/validate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ word, dictionary: dict })
+    if (window.lastGameState && window.lastGameState.all_words) {
+        const allWordsState = window.lastGameState.all_words;
+        let pmWordList = [];
+        if (Array.isArray(allWordsState)) {
+            pmWordList = allWordsState;
+        } else if (allWordsState && typeof allWordsState === 'object') {
+            pmWordList = Object.keys(allWordsState);
+        }
+        isDictionaryValid = pmWordList.some(item => {
+            const wText = (typeof item === 'string' ? item : (item.word || '')) || '';
+            return wText.toUpperCase() === word.toUpperCase();
         });
-        const data = await resp.json();
-        isDictionaryValid = data.is_valid;
-    } catch (e) {
-        console.error('Validation error', e);
     }
 
     const minLen = privateMatchParams ? privateMatchParams.min_word_length : 3;
