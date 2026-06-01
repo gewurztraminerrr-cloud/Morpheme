@@ -7045,8 +7045,8 @@ window.showFinderModal = function (word) {
             .then(res => res.json())
             .then(data => {
                 const totalTally = data.count || 0;
-                
-                const totalCombined = totalTally + findersCount;
+                const is24H = window.lastGameState && window.lastGameState.time_limit >= 7200;
+                const totalCombined = is24H ? totalTally : (totalTally + findersCount);
                 
                 let html = `
                     <div style="padding: 10px; font-size: 0.9rem; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
