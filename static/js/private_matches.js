@@ -518,6 +518,7 @@
                 board: data.board,
                 bonus_word: data.bonus_word,
                 bonus_cell: data.bonus_cell,
+                all_words: data.all_words || [],
                 end_time: (data.time_remaining !== undefined) ? (Date.now() / 1000 + data.time_remaining) : (data.end_time || (Date.now() / 1000 + data.parameters.time_limit))
             }));
 

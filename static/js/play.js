@@ -6080,7 +6080,8 @@ async function initTournamentPlay() {
             time_limit: data.params.time_limit,
             current_board_format: data.params.board_format || 'Normal',
             spinner_params: data.params,
-            bonus_word: data.bonus_word
+            bonus_word: data.bonus_word,
+            all_words: data.all_words || []
         };
         window.lastGameState = tournamentGameState;
         lastRenderedBoardJSON = null; // Force re-render
@@ -6319,7 +6320,9 @@ window.initPrivateMatchPlay = function () {
         board_dimensions: activeMatch.parameters.board_dimensions,
         time_limit: activeMatch.parameters.time_limit,
         current_board_format: activeMatch.parameters.board_format || 'Normal',
-        spinner_params: activeMatch.parameters
+        spinner_params: activeMatch.parameters,
+        bonus_word: activeMatch.bonus_word,
+        all_words: activeMatch.all_words || []
     };
     window.lastGameState = mockState;
     lastRenderedBoardJSON = null; // Force re-render

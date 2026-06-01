@@ -3245,8 +3245,8 @@ def get_room_state(room_id):
                 # ACTIVE: Provide word scores for total-points calculation client-side
                 # (Avoids showing '0 total pts' when total_points_count hasn't been computed yet)
                 word_scores_to_return = getattr(room, 'solved_words_with_scores', {}) or {}
-                if is_fcfs or room.time_limit >= 7200:
-                    words_to_return = list(room.all_words)
+                # ALWAYS provide all_words for instant client-side validation
+                words_to_return = list(room.all_words)
 
             # Determine user visibility
             user_id = session.get('user_id')
@@ -5855,6 +5855,7 @@ def get_private_match_status(match_id):
         'board': json.loads(r['board_data']),
         'bonus_word': r['bonus_word'],
         'bonus_cell': json.loads(r['bonus_cell']) if r['bonus_cell'] else None,
+        'all_words': json.loads(r['all_words']) if r['all_words'] else [],
         'end_time': calculated_end_time,
         'time_remaining': time_remaining
     })
