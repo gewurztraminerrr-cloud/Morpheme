@@ -1868,16 +1868,21 @@ async function updateGameState(incomingState = null) {
                 const boardHtml = state.previous_board ? `<div id="prev-board-container"></div>` : '';
                 html += boardHtml;
 
-                // Found Section
-                html += `<div style="padding:10px; background:rgba(0,0,0,0.1); font-weight:bold; color:#4a90e2;">FOUND (${foundList.length})</div>`;
-                if (foundList.length > 0) {
-                    html += foundList.map(w => renderRow(w, true)).join('');
-                } else {
-                    html += `<div style="padding:15px; text-align:center; font-style:italic; opacity:0.6;">None</div>`;
+                const isDaily = state.time_limit >= 7200;
+
+                if (!isDaily) {
+                    // Found Section (only in standard/tournament non-24h rooms)
+                    html += `<div style="padding:10px; background:rgba(0,0,0,0.1); font-weight:bold; color:#4a90e2;">FOUND (${foundList.length})</div>`;
+                    if (foundList.length > 0) {
+                        html += foundList.map(w => renderRow(w, true)).join('');
+                    } else {
+                        html += `<div style="padding:15px; text-align:center; font-style:italic; opacity:0.6;">None</div>`;
+                    }
                 }
 
                 // Missed Section
-                html += `<div style="padding:10px; background:rgba(0,0,0,0.1); font-weight:bold; margin-top:10px; color:#888;">MISSED (${missedList.length})</div>`;
+                const missedMargin = isDaily ? '' : ' margin-top:10px;';
+                html += `<div style="padding:10px; background:rgba(0,0,0,0.1); font-weight:bold;${missedMargin} color:#888;">MISSED (${missedList.length})</div>`;
                 if (missedList.length > 0) {
                     html += missedList.map(w => renderRow(w, false)).join('');
                 } else {
