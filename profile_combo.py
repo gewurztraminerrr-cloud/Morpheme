@@ -58,46 +58,51 @@ def calculate_morpheme_metric(source, target):
     
     linearity = prev[t_len]
     if linearity == 0: return 99, 0
-    if t_len - linearity > 6: return 99, linearity
-
-    dp = [[0] * (t_len + 1) for _ in range(s_len + 1)]
-    for i in range(1, s_len + 1):
-        s_i = source[i-1]
-        dp_prev = dp[i-1]
-        dp_curr = dp[i]
-        for j in range(1, t_len + 1):
-            if s_i == target[j-1]: dp_curr[j] = dp_prev[j-1] + 1
-            else:
-                v1 = dp_prev[j]
-                v2 = dp_curr[j-1]
-                dp_curr[j] = v1 if v1 >= v2 else v2
+    
+    best_mp = t_len + s_len
+    
+    char_to_s_indices = {}
+    for idx, char in enumerate(source):
+        if char not in char_to_s_indices:
+            char_to_s_indices[char] = []
+        char_to_s_indices[char].append(idx)
+        
+    def backtrack(t_idx, used_mask, matched):
+        nonlocal best_mp
+        
+        m_len = len(matched)
+        if m_len > 0:
+            sub_lis = get_lis(matched)
+            current_relocations = m_len - sub_lis
+            current_paid_deletions = (max(matched) - min(matched) + 1) - m_len
+        else:
+            current_relocations = 0
+            current_paid_deletions = 0
             
-    matched_s_indices = []
-    i, j = s_len, t_len
-    while i > 0 and j > 0:
-        if source[i-1] == target[j-1]:
-            matched_s_indices.append(i-1)
-            i -= 1; j -= 1
-        elif dp[i-1][j] >= dp[i][j-1]: i -= 1
-        else: j -= 1
-    matched_s_indices.reverse()
+        current_insertions = t_len - m_len
+        min_possible_cost = current_relocations + current_paid_deletions + current_insertions
+        
+        if min_possible_cost >= best_mp:
+            return
+            
+        if t_idx == t_len:
+            if min_possible_cost < best_mp:
+                best_mp = min_possible_cost
+            return
+            
+        char = target[t_idx]
+        if char in char_to_s_indices:
+            for s_idx in char_to_s_indices[char]:
+                if not (used_mask & (1 << s_idx)):
+                    backtrack(t_idx + 1, used_mask | (1 << s_idx), matched + [s_idx])
+                    
+        backtrack(t_idx + 1, used_mask, matched)
+
+    backtrack(0, 0, [])
     
-    # 3. Dynamic Span Optimization
-    best_mp = t_len 
-    for i in range(len(matched_s_indices)):
-        for j in range(i, len(matched_s_indices)):
-            sub = matched_s_indices[i:j+1]
-            m_len = len(sub)
-            f_idx = min(sub)
-            l_idx = max(sub)
-            sub_lis = get_lis(sub)
-            relocations = m_len - sub_lis
-            paid_deletions = (l_idx - f_idx + 1) - m_len
-            insertions = t_len - m_len
-            mp = relocations + paid_deletions + insertions
-            if mp < best_mp:
-                best_mp = mp
-    
+    if best_mp > 6:
+        return 99, linearity
+        
     return best_mp, linearity
 
 def profile_combo(search_term):
