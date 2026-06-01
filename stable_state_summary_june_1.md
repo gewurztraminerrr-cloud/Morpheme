@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `057f24b` / `START_OVER_POINT_JUNE_1` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `057f24b` / `START_OVER_POINT_JUNE_1` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `057f24b` / `snapshot-current` | ✅ Fully Deployed & PM2 Reloaded |
+| **localhost** (`/Users/jeffbabiak/`) | `2839d90` / `START_OVER_POINT_JUNE_1` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `2839d90` / `START_OVER_POINT_JUNE_1` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `2839d90` / `snapshot-current` | ✅ Fully Deployed & PM2 Reloaded |
 
-**All environments are 100% synchronized at the latest stable commit `057f24b`.**
+**All environments are 100% synchronized at the latest stable commit `2839d90`.**
 The active recovery points `START_OVER_POINT_JUNE_1` and `snapshot-current` tags have been successfully created and pushed to remote.
 
 ---
@@ -17,7 +17,7 @@ The active recovery points `START_OVER_POINT_JUNE_1` and `snapshot-current` tags
 
 | File / Style | Version | Description |
 |--------------|---------|-------------|
-| `/js/play.js` | `v=110` | Instant tab swapping, previous board selection, and zero-hesitation local validation |
+| `/js/play.js` | `v=111` | Instant tab swapping, previous board selection, and zero-hesitation local validation |
 | `/css/lobby.css` | `v=16` | Responsive grid layouts and premium elements |
 | Inline `<style>` block | *Dynamic* | Mobile WebView cache bypass styling in `index.html` |
 
@@ -42,6 +42,12 @@ The active recovery points `START_OVER_POINT_JUNE_1` and `snapshot-current` tags
   * The recovered board and participating player scores/word lists are then asynchronously archived to `round_history` under the correct, non-overlapping index (`max_round + 1`).
   * The active room's round is then cleanly set to `max_round + 1` so today's daily round begins cleanly at `max_round + 2`, preserving the active play sequence.
 
+### 3. Exclude 24-Hour Room Finds from Global Word Tally
+* **Goal achieved:** Guarantees that finding words in a 24-hour daily room does not count or register in the global cumulative tallies (e.g. `SPORTIF` stays at 0 instead of showing 1), preventing UI count inconsistencies.
+* **Frontend Calculation Bypass (`play.js`):**
+  * Added a check for `window.lastGameState.time_limit >= 7200` (which signifies a 24-hour room) when displaying word findings.
+  * If the player is in a 24h room, the combined count `totalCombined` displays exactly the global `totalTally` from official standard games, rather than adding the current 24h round's `findersCount` in real time.
+
 ---
 
 ## Key Files Modified
@@ -49,8 +55,8 @@ The active recovery points `START_OVER_POINT_JUNE_1` and `snapshot-current` tags
 | File | Location | Purpose |
 |------|----------|---------|
 | `game_room.py` | Production + GitHub | Implement database max round startup querying and background archiving of outdated boards |
-| `static/js/play.js` | Production + GitHub | Implement active tab optimization bypass and 0ms cached local state redraws |
-| `templates/index.html` | Production + GitHub | Bump script tag to `play.js?v=110` to force mobile WebView cache-busting |
+| `static/js/play.js` | Production + GitHub | Implement active tab optimization bypass, 0ms cached local state redraws, and 24h tally exclusion |
+| `templates/index.html` | Production + GitHub | Bump script tag to `play.js?v=111` to force WebView cache-busting |
 
 ---
 
