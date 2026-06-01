@@ -630,7 +630,7 @@ async function updateGameState(incomingState = null) {
         delete stateToCompare.time_remaining;
         
         const stateJSON = JSON.stringify(stateToCompare);
-        if (window.lastRenderedStateJSON === stateJSON && !incomingState) {
+        if (window.lastRenderedStateJSON === stateJSON && window.lastRenderedTab === activeWordsTab && !incomingState) {
             // Optimization: Update server heartbeat timestamp even if state is identical
             lastServerUpdate = Date.now();
             
@@ -643,6 +643,7 @@ async function updateGameState(incomingState = null) {
             return;
         }
         window.lastRenderedStateJSON = stateJSON;
+        window.lastRenderedTab = activeWordsTab;
         
         // --- Distributed Board Generation (DBG) ---
         // If the server is searching, we help by probing random boards.
@@ -5990,7 +5991,7 @@ document.addEventListener('click', (e) => {
 
         // Refresh state visualization
         if (window.lastGameState) {
-            updateGameState();
+            updateGameState(window.lastGameState);
         }
     }
 });

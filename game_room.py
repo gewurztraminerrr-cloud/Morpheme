@@ -1952,6 +1952,24 @@ class RoomManager:
 
                 self.rooms[room_id] = room
                 
+                # Chronological sequence synchronization: Query absolute max completed round from history
+                max_round = 0
+                import sqlite3
+                import os
+                conn_r = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db'))
+                try:
+                    cursor_r = conn_r.cursor()
+                    cursor_r.execute("SELECT MAX(round_number) FROM round_history WHERE room_id = ?", (room_id,))
+                    last_round_row = cursor_r.fetchone()
+                    if last_round_row and last_round_row[0] is not None:
+                        max_round = last_round_row[0]
+                except Exception as r_err:
+                    print(f"[RoomManager] Error querying max round for initialization: {r_err}")
+                finally:
+                    conn_r.close()
+
+                room.current_round = max_round
+                
                 # PERSISTENCE FOR 24H ROOMS ON CREATION
                 restored_active = False
                 is_24h = (room.time_limit >= 7200)
@@ -2047,7 +2065,7 @@ class RoomManager:
                                 # Set state to active
                                 room.state = 'active'
                                 room.round_start_time = updated_at # Preserve round start time!
-                                room.current_round = 1
+                                room.current_round = max_round + 1
                                 
                                 room.spinner_params = {
                                     'board_dimensions': room.board_dimensions,
@@ -2089,6 +2107,66 @@ class RoomManager:
                                 import threading
                                 threading.Thread(target=async_rebuild_active_scoring, daemon=True).start()
                                 restored_active = True
+                            else:
+                                print(f"[RoomManager] Outdated 24h board found for {room_id} from {saved_dt} (Today is {now_dt}). Archiving to round_history.")
+                                try:
+                                    old_board = json.loads(board_data_json)
+                                    old_all_words = set(json.loads(all_words_json))
+                                    old_bonus_word = bonus_word or ''
+                                    old_bonus_cell = json.loads(bonus_cell_json) if bonus_cell_json else None
+                                    old_board_format = board_format or 'Normal'
+                                    old_min_len = min_length or 3
+                                    
+                                    # Solve board to reconstruct paths for history validation
+                                    from board_generator import BoardGenerator
+                                    bg = BoardGenerator()
+                                    old_paths = bg._solve_board(old_board, dictionary or 'NWL', old_min_len)
+                                    
+                                    # Restore active player snapshot data
+                                    old_players = []
+                                    if active_players_json:
+                                        try:
+                                            players_data = json.loads(active_players_json)
+                                            for d in players_data:
+                                                old_players.append({
+                                                    'user_id': d.get('user_id'),
+                                                    'username': d.get('username'),
+                                                    'score': d.get('score', 0),
+                                                    'submitted_words': d.get('submitted_words', []),
+                                                    'invalid_words': d.get('invalid_words', []),
+                                                    'rating': d.get('rating', 1200),
+                                                    'performance_efficiency': d.get('performance_efficiency', 0.0)
+                                                })
+                                        except Exception as pe:
+                                            print(f"[RoomManager] Error parsing old active players: {pe}")
+                                            
+                                    # Asynchronously archive to round_history
+                                    archive_round_num = max_round + 1
+                                    
+                                    def archive_old_board_async():
+                                        try:
+                                            self.save_round_history(
+                                                room,
+                                                board=old_board,
+                                                all_words=old_all_words,
+                                                bonus_word=old_bonus_word,
+                                                player_snapshots=old_players,
+                                                round_num=archive_round_num,
+                                                all_words_paths=old_paths,
+                                                round_start_time=updated_at
+                                            )
+                                            print(f"[RoomManager] Successfully archived outdated 24h board as Round {archive_round_num}")
+                                        except Exception as archive_err:
+                                            print(f"[RoomManager] Error archiving outdated 24h board: {archive_err}")
+                                            
+                                    import threading
+                                    threading.Thread(target=archive_old_board_async, daemon=True).start()
+                                    
+                                    # Advance current round index to accommodate the archived round
+                                    room.current_round = max_round + 1
+                                    
+                                except Exception as archive_outer_err:
+                                    print(f"[RoomManager] Error setting up archive for outdated board: {archive_outer_err}")
                     except Exception as db_err:
                         print(f"[RoomManager] Error checking/restoring active board from DB: {db_err}")
                     finally:
