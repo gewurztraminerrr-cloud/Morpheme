@@ -5062,7 +5062,7 @@ initWordSubmission();
 
 async function submitWord(wordParam = null, pathParam = null) {
     const input = document.getElementById('word-input');
-    const word = wordParam ? wordParam.toUpperCase() : (input ? input.value.trim().toUpperCase() : '');
+    let word = wordParam ? wordParam.toUpperCase() : (input ? input.value.trim().toUpperCase() : '');
     const roomId = getCurrentRoomId();
     
     // Clear input immediately (no yellow tint — it's visual noise before validation color)
@@ -5105,6 +5105,83 @@ async function submitWord(wordParam = null, pathParam = null) {
             }
             return [p[1], p[0]]; // [col, row]
         });
+    }
+
+    // --- EITHER/OR PATH RESOLUTION ---
+    const boardFormat = (window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : 'Normal';
+    const isEO = boardFormat.toLowerCase().includes('either');
+    if (finalPath && isEO && board) {
+        let possibleWords = [''];
+        let validPath = true;
+
+        for (const node of finalPath) {
+            let cellVal = '';
+            if (node.length === 3) {
+                const [f, r, c] = node;
+                if (f >= 0 && f < board.length && r >= 0 && r < board[f].length && c >= 0 && c < board[f][r].length) {
+                    cellVal = String(board[f][r][c]);
+                } else {
+                    validPath = false;
+                    break;
+                }
+            } else {
+                const [r, c] = node;
+                if (r >= 0 && r < board.length && c >= 0 && c < board[0].length) {
+                    cellVal = String(board[r][c]);
+                } else {
+                    validPath = false;
+                    break;
+                }
+            }
+
+            if (cellVal.includes('/')) {
+                const options = cellVal.split('/');
+                let newWords = [];
+                for (const prefix of possibleWords) {
+                    for (const opt of options) {
+                        newWords.push(prefix + opt);
+                    }
+                }
+                possibleWords = newWords;
+            } else {
+                for (let i = 0; i < possibleWords.length; i++) {
+                    possibleWords[i] += cellVal;
+                }
+            }
+        }
+
+        if (validPath) {
+            let validOptions = [];
+            let wordList = [];
+            if (window.lastGameState && window.lastGameState.all_words) {
+                const allWordsState = window.lastGameState.all_words;
+                if (Array.isArray(allWordsState)) {
+                    wordList = allWordsState;
+                } else if (allWordsState && typeof allWordsState === 'object') {
+                    wordList = Object.keys(allWordsState);
+                }
+            }
+            for (const w of possibleWords) {
+                const isVal = wordList.some(item => {
+                    const wText = (typeof item === 'string' ? item : (item.word || '')) || '';
+                    return wText.toUpperCase() === w.toUpperCase();
+                });
+                if (isVal) {
+                    validOptions.push(w);
+                }
+            }
+
+            let submittedClean = word.replace(/\//g, '');
+            if (validOptions.includes(submittedClean)) {
+                word = submittedClean;
+            } else if (validOptions.length >= 1) {
+                word = validOptions[0];
+            } else if (possibleWords.includes(submittedClean)) {
+                word = submittedClean;
+            } else if (possibleWords.length > 0) {
+                word = possibleWords[0];
+            }
+        }
     }
 
     // Define currentUser for consistency in local updates

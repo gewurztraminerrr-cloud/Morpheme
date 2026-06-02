@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `2366d92` / `START_OVER_POINT_JUNE_2` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `2366d92` / `START_OVER_POINT_JUNE_2` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `2366d92` / `snapshot-current` | ✅ Fully Deployed & PM2 Reloaded |
+| **localhost** (`/Users/jeffbabiak/`) | `597ccd8` / `START_OVER_POINT_JUNE_2` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `597ccd8` / `START_OVER_POINT_JUNE_2` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `597ccd8` / `snapshot-current` | ✅ Fully Deployed & PM2 Reloaded |
 
-**All environments are 100% synchronized at the latest stable commit `2366d92`.**
+**All environments are 100% synchronized at the latest stable commit `597ccd8`.**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_2` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -18,7 +18,7 @@ The active recovery points `START_OVER_POINT_JUNE_2` and `snapshot-current` tags
 
 | File / Style | Version | Description |
 |--------------|---------|-------------|
-| `/js/play.js` | `v=115` | Valid already found words purple highlights, daily rooms missed section only, and zero-hesitation |
+| `/js/play.js` | `v=116` | Fixed Either/Or tile flashing in public rooms, valid already found words purple highlights, daily rooms missed section only, and zero-hesitation |
 | `/css/play.css` | `v=83` | Added purple cell tile flash and status text styling classes |
 | `/js/lobby.js` | `v=5` | Rating filter proximity sorting and search listener registrations |
 | `/css/lobby.css` | `v=17` | Premium flex rating search bar layout and Find button style |
@@ -50,6 +50,10 @@ The active recovery points `START_OVER_POINT_JUNE_2` and `snapshot-current` tags
 ### 6. Hide FOUND Section in 24h Room Previous Day Tab
 * **Goal achieved:** Hides the FOUND section completely in daily 24h rooms under the "Previous Day" tab, displaying only the MISSED section.
 
+### 7. Either/Or Tile Flashing Fix in Public/Standard Rooms
+* **Goal achieved:** Entering a word that uses an Either/Or tile (e.g. `L/T`) in public/standard rooms via drag/mouse immediately flashes blue (valid) or green (bonus) without showing a brief red (invalid) flash first.
+* **Fix (`static/js/play.js`):** Replicated the private matches path resolution logic within `submitWord` in `play.js`. The client resolves the swipe path against `window.lastGameState.all_words` beforehand, allowing correct validation matching between local and remote checks.
+
 ---
 
 ## Key Files Tracked
@@ -59,9 +63,9 @@ The active recovery points `START_OVER_POINT_JUNE_2` and `snapshot-current` tags
 | `app.py` | Production + GitHub | Remove obsolete auto-readd player logic from `get_room_state`; update `calculate_morpheme_metric` with the backtracking relocation logic |
 | `profile_combo.py` | Production + GitHub | Update the standalone combo checker metric with the backtracking relocation logic |
 | `game_room.py` | Production + GitHub | Include guest players in snapshots and complete round saves for 24h rooms, and correctly map guest usernames |
-| `static/js/play.js` | Production + GitHub | Implement purple highlights for duplicates, direct authoritative validation checks, and hide FOUND section on daily rooms |
+| `static/js/play.js` | Production + GitHub | Client-side Either/Or path resolution in `submitWord()`, purple highlights for duplicates, direct authoritative validation checks, and hide FOUND section on daily rooms |
 | `static/css/play.css` | Production + GitHub | Added purple cell flash and status text highlight styling rules |
-| `templates/index.html` | Production + GitHub | Bump play.js version to `115` and play.css version to `83` for cache busting |
+| `templates/index.html` | Production + GitHub | Bump play.js version to `116` and play.css version to `83` for cache busting |
 
 ---
 
