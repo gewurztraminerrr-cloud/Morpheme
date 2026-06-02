@@ -404,6 +404,14 @@ document.addEventListener('visibilitychange', () => {
         // Tab became visible: Update immediately and restore fast polling
         console.log('[play.js] Tab visible: Restoring fast polling.');
         
+        // Force-abort any stale/stuck in-flight fetch and release lock to prevent queue clogging
+        if (window._activeStateFetchController) {
+            console.log('[play.js] Tab visible: Aborting stale in-flight state fetch.');
+            try { window._activeStateFetchController.abort(); } catch(e) {}
+            window._activeStateFetchController = null;
+        }
+        isFetchingState = false;
+        
         // Instant Feedback: Show ticking countdown if active, otherwise show "WAIT..."
         if (localEndTime && localEndTime > (Date.now() / 1000)) {
             if (!timerInterval) {
@@ -445,6 +453,14 @@ window.addEventListener('focus', () => {
     if (!document.hidden) {
         console.log('[play.js] Window focus gained: Checking wake-up update.');
         
+        // Force-abort any stale/stuck in-flight fetch and release lock to prevent queue clogging
+        if (window._activeStateFetchController) {
+            console.log('[play.js] Focus: Aborting stale in-flight state fetch.');
+            try { window._activeStateFetchController.abort(); } catch(e) {}
+            window._activeStateFetchController = null;
+        }
+        isFetchingState = false;
+        
         // Instant Feedback: Show ticking countdown if active, otherwise show "WAIT..."
         if (localEndTime && localEndTime > (Date.now() / 1000)) {
             if (!timerInterval) {
@@ -483,20 +499,37 @@ function stopPolling() {
 
 // Helper to fetch with timeout, allowing rapid recovery from dead socket connections
 async function fetchWithTimeout(url, options = {}, timeoutMs = 1200) {
+    if (window._activeStateFetchController) {
+        try {
+            window._activeStateFetchController.abort();
+        } catch (e) {}
+    }
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeoutMs);
+    window._activeStateFetchController = controller;
+    const id = setTimeout(() => {
+        try {
+            controller.abort();
+        } catch (e) {}
+    }, timeoutMs);
     try {
         const response = await fetch(url, { ...options, signal: controller.signal });
         clearTimeout(id);
+        if (window._activeStateFetchController === controller) {
+            window._activeStateFetchController = null;
+        }
         return response;
     } catch (error) {
         clearTimeout(id);
+        if (window._activeStateFetchController === controller) {
+            window._activeStateFetchController = null;
+        }
         throw error;
     }
 }
 
 let lastStateFetchTime = 0;
 let isFetchingState = false;
+window._activeStateFetchController = null;
 
 async function updateGameState(incomingState = null) {
     const roomId = getCurrentRoomId();
@@ -3140,7 +3173,9 @@ function updateLocalTimer() {
         const gap = tickTime - window._lastLocalTimerTickTime;
         if (gap > 2200) {
             console.log(`[play.js] updateLocalTimer: Thawed after freeze gap of ${gap}ms. Requesting delayed wake-up update.`);
-            setTimerWaitingState(true);
+            if (!localEndTime || localEndTime <= (Date.now() / 1000)) {
+                setTimerWaitingState(true);
+            }
             setTimeout(() => {
                 updateGameState();
                 refreshPollInterval();
