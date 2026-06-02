@@ -2995,7 +2995,7 @@ function updateParameters(state) {
                 if (lowerDiff.includes('easy') || lowerDiff.includes('beginner')) {
                     diffEl.style.color = '#2ecc71'; // Dark green / emerald
                 } else if (lowerDiff.includes('medium') || lowerDiff.includes('normal')) {
-                    diffEl.style.color = '#f1c40f'; // Golden
+                    diffEl.style.color = '#60a5fa'; // Blue (same as FAQ)
                 } else if (lowerDiff.includes('hard') || lowerDiff.includes('expert') || lowerDiff.includes('difficult')) {
                     diffEl.style.color = '#ff4d4d'; // Red
                 } else {

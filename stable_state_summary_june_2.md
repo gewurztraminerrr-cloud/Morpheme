@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `597ccd8` / `START_OVER_POINT_JUNE_2` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `597ccd8` / `START_OVER_POINT_JUNE_2` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `597ccd8` / `snapshot-current` | ✅ Fully Deployed & PM2 Reloaded |
+| **localhost** (`/Users/jeffbabiak/`) | `91d82dd` / `START_OVER_POINT_JUNE_2` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `91d82dd` / `START_OVER_POINT_JUNE_2` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `91d82dd` / `snapshot-current` | ✅ Fully Deployed & PM2 Reloaded |
 
-**All environments are 100% synchronized at the latest stable commit `597ccd8`.**
+**All environments are 100% synchronized at the latest stable commit `91d82dd`.**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_2` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -18,8 +18,8 @@ The active recovery points `START_OVER_POINT_JUNE_2` and `snapshot-current` tags
 
 | File / Style | Version | Description |
 |--------------|---------|-------------|
-| `/js/play.js` | `v=116` | Fixed Either/Or tile flashing in public rooms, valid already found words purple highlights, daily rooms missed section only, and zero-hesitation |
-| `/css/play.css` | `v=83` | Added purple cell tile flash and status text styling classes |
+| `/js/play.js` | `v=117` | Changed Medium difficulty color to FAQ blue, Either/Or path resolution in public rooms, valid already found words purple highlights, daily rooms missed section only, and zero-hesitation |
+| `/css/play.css` | `v=84` | Changed Medium difficulty color to FAQ blue, purple cell tile flash and status text styling classes |
 | `/js/lobby.js` | `v=5` | Rating filter proximity sorting and search listener registrations |
 | `/css/lobby.css` | `v=17` | Premium flex rating search bar layout and Find button style |
 | Inline `<style>` block | *Dynamic* | Mobile WebView cache bypass styling in `index.html` |
@@ -54,6 +54,9 @@ The active recovery points `START_OVER_POINT_JUNE_2` and `snapshot-current` tags
 * **Goal achieved:** Entering a word that uses an Either/Or tile (e.g. `L/T`) in public/standard rooms via drag/mouse immediately flashes blue (valid) or green (bonus) without showing a brief red (invalid) flash first.
 * **Fix (`static/js/play.js`):** Replicated the private matches path resolution logic within `submitWord` in `play.js`. The client resolves the swipe path against `window.lastGameState.all_words` beforehand, allowing correct validation matching between local and remote checks.
 
+### 8. Medium Difficulty Color Sync (Spinner Set & FAQ)
+* **Goal achieved:** Changed the Medium difficulty color inside the Spinner Set parameters and Spinner Odds modal to match the Vibrant Blue color (`#60a5fa`, emoji `🔵`) used in the FAQ section, instead of golden/yellow.
+
 ---
 
 ## Key Files Tracked
@@ -64,8 +67,8 @@ The active recovery points `START_OVER_POINT_JUNE_2` and `snapshot-current` tags
 | `profile_combo.py` | Production + GitHub | Update the standalone combo checker metric with the backtracking relocation logic |
 | `game_room.py` | Production + GitHub | Include guest players in snapshots and complete round saves for 24h rooms, and correctly map guest usernames |
 | `static/js/play.js` | Production + GitHub | Client-side Either/Or path resolution in `submitWord()`, purple highlights for duplicates, direct authoritative validation checks, and hide FOUND section on daily rooms |
-| `static/css/play.css` | Production + GitHub | Added purple cell flash and status text highlight styling rules |
-| `templates/index.html` | Production + GitHub | Bump play.js version to `116` and play.css version to `83` for cache busting |
+| `static/css/play.css` | Production + GitHub | Changed Medium difficulty color to Vibrant Blue, added purple cell flash and status text highlight styling rules |
+| `templates/index.html` | Production + GitHub | Changed Medium difficulty emoji and odds text color in the Spinner Set Odds modal; bump play.js to `v=117` and play.css to `v=84` |
 
 ---
 

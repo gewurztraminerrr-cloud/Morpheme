@@ -2298,10 +2298,10 @@ body.theme-light-brown .word-item.missed {
     border-color: rgba(16, 185, 129, 0.3);
 }
 .param-value.diff-medium {
-    color: #f59e0b !important;
-    text-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
-    background: rgba(245, 158, 11, 0.1);
-    border-color: rgba(245, 158, 11, 0.3);
+    color: #60a5fa !important;
+    text-shadow: 0 0 10px rgba(96, 165, 250, 0.4);
+    background: rgba(96, 165, 250, 0.1);
+    border-color: rgba(96, 165, 250, 0.3);
 }
 .param-value.diff-hard {
     color: #ef4444 !important;
