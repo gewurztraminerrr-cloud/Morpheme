@@ -5471,10 +5471,10 @@ body .board-cell.tile-flash-blue * {
 }
 
 body .board-cell.tile-flash-green {
-    background: #2ecc71 !important;
+    background: #32cd32 !important;
     color: #ffffff !important;
-    box-shadow: 0 0 15px rgba(46, 204, 113, 0.8) !important;
-    border-color: #2ecc71 !important;
+    box-shadow: 0 0 15px rgba(50, 205, 50, 0.8) !important;
+    border-color: #32cd32 !important;
     z-index: 100 !important;
     transition: none !important;
 }
