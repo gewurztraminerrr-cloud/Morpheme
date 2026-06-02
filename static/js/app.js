@@ -216,13 +216,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 let gatewayClicked = false;
-                const handleGatewayTransition = (e) => {
+                const handleGatewayTransition = async (e) => {
                     if (gatewayClicked) return;
                     gatewayClicked = true;
 
                     console.log(`[Gateway] Transitioning via event: ${e ? e.type : 'manual'}`);
 
-                    // 1. Play the music inside a completely isolated, non-blocking try-catch block
+                    // 1. Leave the room if we are not going to the play page
+                    if (targetNavName !== 'play') {
+                        if (window.leaveCurrentRoom && (window.currentRoomId || localStorage.getItem('last_joined_room'))) {
+                            console.log('[Gateway] Leaving current room on gateway transition.');
+                            try {
+                                await window.leaveCurrentRoom();
+                            } catch (err) {
+                                console.error('[Gateway] Failed to leave room during gateway transition:', err);
+                            }
+                        }
+                    }
+
+                    // 2. Play the music inside a completely isolated, non-blocking try-catch block
                     try {
                         const lobbyMusic = document.getElementById('lobby-music');
                         if (lobbyMusic) {
@@ -248,7 +260,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         console.error('[LobbyMusic] Exception during gateway play initialization:', audioErr);
                     }
 
-                    // 2. Perform the page transition (ALWAYS runs independently of audio success)
+                    // 3. Perform the page transition (ALWAYS runs independently of audio success)
                     try {
                         showPage(targetPageId);
                         const navBtn = document.querySelector(`.nav-btn[data-page="${targetNavName}"]`);
