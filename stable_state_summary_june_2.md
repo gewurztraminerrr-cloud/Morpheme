@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `16704c8` / `START_OVER_POINT_JUNE_2` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `16704c8` / `START_OVER_POINT_JUNE_2` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `16704c8` / `snapshot-current` | ✅ Fully Deployed & PM2 Reloaded |
+| **localhost** (`/Users/jeffbabiak/`) | `c69cbe5` / `START_OVER_POINT_JUNE_2` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `c69cbe5` / `START_OVER_POINT_JUNE_2` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `c69cbe5` / `snapshot-current` | ✅ Fully Deployed & PM2 Reloaded |
 
-**All environments are 100% synchronized at the latest stable commit `16704c8`.**
+**All environments are 100% synchronized at the latest commit `c69cbe5`.**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_2` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -19,6 +19,7 @@ The active recovery points `START_OVER_POINT_JUNE_2` and `snapshot-current` tags
 | File / Style | Version | Description |
 |--------------|---------|-------------|
 | `/js/play.js` | `v=118` | Standardized validation feedback to "[word] VALID", changed Medium difficulty color to FAQ blue, Either/Or path resolution in public rooms, valid already found words purple highlights, daily rooms missed section only, and zero-hesitation |
+| `/js/app.js` | `v=38` | Clear active room state immediately on gateway transition back to the lobby or other non-play pages to prevent stale player counts and idle timeouts |
 | `/css/play.css` | `v=84` | Changed Medium difficulty color to FAQ blue, purple cell tile flash and status text styling classes |
 | `/js/lobby.js` | `v=5` | Rating filter proximity sorting and search listener registrations |
 | `/css/lobby.css` | `v=17` | Premium flex rating search bar layout and Find button style |
@@ -61,6 +62,10 @@ The active recovery points `START_OVER_POINT_JUNE_2` and `snapshot-current` tags
 * **Goal achieved:** Unified all valid word submission messages to display `[word] VALID` instead of `Valid Word` or `[word] ACCEPTED` across all gameplay modes (standard, tournament, and private matches).
 * **Fix (`game_room.py` & `static/js/play.js`):** Modified the server success message to return `[word] VALID` and updated client local checks and fallbacks to construct and display the standardized text.
 
+### 10. Fix Session Eviction and Stale Player Count on Wake-up
+* **Goal achieved:** If a player suspends/minimizes the tab (causing a page reload and gateway transition on wake-up) and returns via the "ENTER LOBBY" button, the active room state on the server is immediately cleared (changing the lobby count to `[0]` immediately instead of waiting for a 10-minute timeout). This also prevents the 10-minute idle kick alert from triggering unexpectedly while the user is active in the lobby.
+* **Fix (`static/js/app.js` & `templates/index.html`):** Updated the gateway transition handler `handleGatewayTransition` to be `async` and call `window.leaveCurrentRoom()` when transitioning to any non-play page. Bumped `app.js` import to `v=38` in `templates/index.html`.
+
 ---
 
 ## Key Files Tracked
@@ -70,9 +75,10 @@ The active recovery points `START_OVER_POINT_JUNE_2` and `snapshot-current` tags
 | `app.py` | Production + GitHub | Remove obsolete auto-readd player logic from `get_room_state`; update `calculate_morpheme_metric` with the backtracking relocation logic |
 | `profile_combo.py` | Production + GitHub | Update the standalone combo checker metric with the backtracking relocation logic |
 | `game_room.py` | Production + GitHub | Return f"{final_word} VALID" on successful word submissions; include guest players in snapshots/saves and recover guest usernames |
+| `static/js/app.js` | Production + GitHub | Clear active room state immediately on gateway transitions to non-play pages |
 | `static/js/play.js` | Production + GitHub | Client-side Either/Or path resolution, standardize success feedback text to `[word] VALID`, purple highlights for duplicates, direct validation checks, and hide FOUND section on daily rooms |
 | `static/css/play.css` | Production + GitHub | Changed Medium difficulty color to Vibrant Blue, added purple cell flash and status text highlight styling rules |
-| `templates/index.html` | Production + GitHub | Changed Medium difficulty emoji and odds text color in the Spinner Set Odds modal; bump play.js to `v=118` and play.css to `v=84` |
+| `templates/index.html` | Production + GitHub | Changed Medium difficulty emoji and odds text color in the Spinner Set Odds modal; bump play.js to `v=118`, play.css to `v=84`, and app.js to `v=38` |
 
 ---
 
@@ -82,3 +88,4 @@ The active recovery points `START_OVER_POINT_JUNE_2` and `snapshot-current` tags
 * [May 31 Stable State Summary](file:///Users/jeffbabiak/stable_state_summary_may_31.md)
 * [May 30 Stable State Summary](file:///Users/jeffbabiak/stable_state_summary_may_30.md)
 * [May 29 Stable State Summary](file:///Users/jeffbabiak/stable_state_summary_may_29.md)
+
