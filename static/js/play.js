@@ -404,8 +404,15 @@ document.addEventListener('visibilitychange', () => {
         // Tab became visible: Update immediately and restore fast polling
         console.log('[play.js] Tab visible: Restoring fast polling.');
         
-        // Instant Feedback: Show syncing state to let the user know we are instantly fetching current state
-        setTimerWaitingState(true);
+        // Instant Feedback: Show ticking countdown if active, otherwise show "WAIT..."
+        if (localEndTime && localEndTime > (Date.now() / 1000)) {
+            if (!timerInterval) {
+                timerInterval = setInterval(updateLocalTimer, 500);
+            }
+            updateLocalTimer();
+        } else {
+            setTimerWaitingState(true);
+        }
 
         // Add a small 80ms delay before fetching to let the mobile OS restore cellular/Wi-Fi connectivity
         setTimeout(() => {
@@ -437,7 +444,16 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('focus', () => {
     if (!document.hidden) {
         console.log('[play.js] Window focus gained: Checking wake-up update.');
-        setTimerWaitingState(true);
+        
+        // Instant Feedback: Show ticking countdown if active, otherwise show "WAIT..."
+        if (localEndTime && localEndTime > (Date.now() / 1000)) {
+            if (!timerInterval) {
+                timerInterval = setInterval(updateLocalTimer, 500);
+            }
+            updateLocalTimer();
+        } else {
+            setTimerWaitingState(true);
+        }
 
         // Add a small 80ms delay to let the network stack settle
         setTimeout(() => {
@@ -480,6 +496,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 1200) {
 }
 
 let lastStateFetchTime = 0;
+let isFetchingState = false;
 
 async function updateGameState(incomingState = null) {
     const roomId = getCurrentRoomId();
@@ -494,6 +511,11 @@ async function updateGameState(incomingState = null) {
         return;
     }
     if (!incomingState) {
+        if (isFetchingState) {
+            console.log('[play.js] updateGameState: Fetch already in progress. Skipping.');
+            return;
+        }
+        isFetchingState = true;
         lastStateFetchTime = now;
     }
 
@@ -1973,6 +1995,10 @@ async function updateGameState(incomingState = null) {
 
     } catch (error) {
         console.error('Error updating game state:', error);
+    } finally {
+        if (!incomingState) {
+            isFetchingState = false;
+        }
     }
 }
 
