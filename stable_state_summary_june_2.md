@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `91d82dd` / `START_OVER_POINT_JUNE_2` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `91d82dd` / `START_OVER_POINT_JUNE_2` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `91d82dd` / `snapshot-current` | ✅ Fully Deployed & PM2 Reloaded |
+| **localhost** (`/Users/jeffbabiak/`) | `16704c8` / `START_OVER_POINT_JUNE_2` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `16704c8` / `START_OVER_POINT_JUNE_2` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `16704c8` / `snapshot-current` | ✅ Fully Deployed & PM2 Reloaded |
 
-**All environments are 100% synchronized at the latest stable commit `91d82dd`.**
+**All environments are 100% synchronized at the latest stable commit `16704c8`.**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_2` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -18,7 +18,7 @@ The active recovery points `START_OVER_POINT_JUNE_2` and `snapshot-current` tags
 
 | File / Style | Version | Description |
 |--------------|---------|-------------|
-| `/js/play.js` | `v=117` | Changed Medium difficulty color to FAQ blue, Either/Or path resolution in public rooms, valid already found words purple highlights, daily rooms missed section only, and zero-hesitation |
+| `/js/play.js` | `v=118` | Standardized validation feedback to "[word] VALID", changed Medium difficulty color to FAQ blue, Either/Or path resolution in public rooms, valid already found words purple highlights, daily rooms missed section only, and zero-hesitation |
 | `/css/play.css` | `v=84` | Changed Medium difficulty color to FAQ blue, purple cell tile flash and status text styling classes |
 | `/js/lobby.js` | `v=5` | Rating filter proximity sorting and search listener registrations |
 | `/css/lobby.css` | `v=17` | Premium flex rating search bar layout and Find button style |
@@ -57,6 +57,10 @@ The active recovery points `START_OVER_POINT_JUNE_2` and `snapshot-current` tags
 ### 8. Medium Difficulty Color Sync (Spinner Set & FAQ)
 * **Goal achieved:** Changed the Medium difficulty color inside the Spinner Set parameters and Spinner Odds modal to match the Vibrant Blue color (`#60a5fa`, emoji `🔵`) used in the FAQ section, instead of golden/yellow.
 
+### 9. Word Submission Validation Message Standardization
+* **Goal achieved:** Unified all valid word submission messages to display `[word] VALID` instead of `Valid Word` or `[word] ACCEPTED` across all gameplay modes (standard, tournament, and private matches).
+* **Fix (`game_room.py` & `static/js/play.js`):** Modified the server success message to return `[word] VALID` and updated client local checks and fallbacks to construct and display the standardized text.
+
 ---
 
 ## Key Files Tracked
@@ -65,10 +69,10 @@ The active recovery points `START_OVER_POINT_JUNE_2` and `snapshot-current` tags
 |------|----------|---------|
 | `app.py` | Production + GitHub | Remove obsolete auto-readd player logic from `get_room_state`; update `calculate_morpheme_metric` with the backtracking relocation logic |
 | `profile_combo.py` | Production + GitHub | Update the standalone combo checker metric with the backtracking relocation logic |
-| `game_room.py` | Production + GitHub | Include guest players in snapshots and complete round saves for 24h rooms, and correctly map guest usernames |
-| `static/js/play.js` | Production + GitHub | Client-side Either/Or path resolution in `submitWord()`, purple highlights for duplicates, direct authoritative validation checks, and hide FOUND section on daily rooms |
+| `game_room.py` | Production + GitHub | Return f"{final_word} VALID" on successful word submissions; include guest players in snapshots/saves and recover guest usernames |
+| `static/js/play.js` | Production + GitHub | Client-side Either/Or path resolution, standardize success feedback text to `[word] VALID`, purple highlights for duplicates, direct validation checks, and hide FOUND section on daily rooms |
 | `static/css/play.css` | Production + GitHub | Changed Medium difficulty color to Vibrant Blue, added purple cell flash and status text highlight styling rules |
-| `templates/index.html` | Production + GitHub | Changed Medium difficulty emoji and odds text color in the Spinner Set Odds modal; bump play.js to `v=117` and play.css to `v=84` |
+| `templates/index.html` | Production + GitHub | Changed Medium difficulty emoji and odds text color in the Spinner Set Odds modal; bump play.js to `v=118` and play.css to `v=84` |
 
 ---
 

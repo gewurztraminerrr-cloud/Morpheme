@@ -901,7 +901,7 @@ class GameRoom:
         if self.time_limit >= 7200:
             self.save_active_players()
 
-        return True, f"{final_word} ACCEPTED", points, final_word
+        return True, f"{final_word} VALID", points, final_word
 
     def update_live_pe(self):
         """Calculates performance efficiency in real-time for UI trophy"""

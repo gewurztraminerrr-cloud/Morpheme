@@ -5240,7 +5240,7 @@ async function submitWord(wordParam = null, pathParam = null) {
                 if (isInWordList) {
                     // Confirmed valid — flash the correct color immediately.
                     const isBonus = preState.bonus_word && word === preState.bonus_word.toUpperCase();
-                    showValidationFeedback(isBonus ? 'BONUS WORD!' : 'Valid Word', true, isBonus, finalPath);
+                    showValidationFeedback(isBonus ? 'BONUS WORD!' : `${word} VALID`, true, isBonus, finalPath);
                     optimisticColor = isBonus ? 'green' : 'blue';
                 } else {
                     // Not in the word list — flash red immediately.
@@ -5293,11 +5293,11 @@ async function submitWord(wordParam = null, pathParam = null) {
             // Only update the status text with the real server message.
             const statusEl = document.getElementById('word-validation-status');
             if (statusEl) {
-                statusEl.textContent = data.message || (data.success ? 'Valid Word' : 'Invalid Word');
+                statusEl.textContent = data.message || (data.success ? `${word} VALID` : 'Invalid Word');
             }
         } else {
             // Server result differs from local check — show correction flash.
-            showValidationFeedback(data.message || (data.success ? 'Valid Word' : 'Invalid Word'), data.success, isBonus, finalPath);
+            showValidationFeedback(data.message || (data.success ? `${word} VALID` : 'Invalid Word'), data.success, isBonus, finalPath);
         }
 
 
@@ -6334,7 +6334,7 @@ async function handleTournamentWord(word) {
     tournamentScore += pts;
 
     // Show success feedback
-    showValidationFeedback(isBonus ? 'BONUS WORD!' : 'Valid Word', true, isBonus, path);
+    showValidationFeedback(isBonus ? 'BONUS WORD!' : `${word.toUpperCase()} VALID`, true, isBonus, path);
 
     // Update Score UI
     const scoreEl = document.querySelector('.player-card .score');
@@ -6712,7 +6712,7 @@ async function handlePrivateMatchWord(word, path = null) {
             pts += word.length;
             showValidationFeedback('BONUS WORD FOUND!', true, true, resolvedPath);
         } else {
-            showValidationFeedback('Valid Word', true, false, resolvedPath);
+            showValidationFeedback(`${word.toUpperCase()} VALID`, true, false, resolvedPath);
         }
 
         // Format Bonus (+3 points for Either/Or or Bonus Letter tile)
