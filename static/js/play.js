@@ -389,7 +389,21 @@ function setTimerWaitingState(isWaiting) {
     const timerVal = document.getElementById('timer-value');
     const timerLabel = document.querySelector('.timer-label');
     if (isWaiting) {
-        if (timerVal) timerVal.textContent = "WAIT...";
+        if (timerVal) {
+            timerVal.innerHTML = '';
+            void timerVal.offsetHeight; // Force reflow
+            timerVal.innerHTML = 'WAIT<span class="wait-dot">.</span><span class="wait-dot">.</span><span class="wait-dot">.</span>';
+            
+            // Force animation restart on next frame to ensure it runs on mobile wake-up
+            requestAnimationFrame(() => {
+                timerVal.querySelectorAll('.wait-dot').forEach((el, index) => {
+                    el.style.animation = 'none';
+                    void el.offsetHeight; // trigger reflow
+                    el.style.animation = `wait-bounce 1.4s infinite ease-in-out`;
+                    el.style.animationDelay = `${index * 0.2}s`;
+                });
+            });
+        }
         if (timerLabel) timerLabel.textContent = "";
     } else {
         if (timerLabel && timerLabel.textContent !== "Time:") {
@@ -5309,6 +5323,9 @@ async function submitWord(wordParam = null, pathParam = null) {
     let optimisticColor = null; // 'red' | 'blue' | 'green'
     const preState = window.lastGameState;
     if (preState) {
+        const minLen = preState.current_min_length || (preState.spinner_params ? preState.spinner_params.min_word_length : 3) || 3;
+        const effectiveLen = word.replace(/Q(?!U)/g, 'QU').length;
+
         const myPlayer = preState.players && preState.players.find(p =>
             p.username && currentUser && p.username.toLowerCase() === currentUser.toLowerCase()
         );
@@ -5319,6 +5336,10 @@ async function submitWord(wordParam = null, pathParam = null) {
             // Definitively already found — flash purple immediately.
             showValidationFeedback('Already found!', false, false, finalPath);
             optimisticColor = 'purple';
+        } else if (effectiveLen < minLen) {
+            // Word is too short. Let the server validate it and return "ACTS IS TOO SHORT (MIN: 6L)" or similar
+            // to avoid showing "Invalid Word" (red flash) beforehand.
+            optimisticColor = null;
         } else if (finalPath && finalPath.length > 0) {
             // Check dictionary validity locally using the authoritative all_words list from the game state
             const allWords = preState.all_words || [];
@@ -6390,18 +6411,19 @@ async function handleTournamentWord(word) {
 
     // Check length and dictionary validity
     const minLen = window.tournamentParams ? window.tournamentParams.min_word_length : 3;
-    if (word.length < minLen && !is_valid_dict) {
+    const effectiveLen = word.replace(/Q(?!U)/g, 'QU').length;
+    if (effectiveLen < minLen && !is_valid_dict) {
         showValidationFeedback("Sequence not a word and too small", false, false, path);
         return;
     }
 
     if (!is_valid_dict) {
-        showValidationFeedback(`${word} is invalid.`, false, false, path);
+        showValidationFeedback(`${word.toUpperCase()} INVALID`, false, false, path);
         return;
     }
 
-    if (word.length < minLen) {
-        showValidationFeedback(`${word} is invalid.`, false, false, path);
+    if (effectiveLen < minLen) {
+        showValidationFeedback(`${word.toUpperCase()} IS TOO SHORT (MIN: ${minLen}L)`, false, false, path);
         return;
     }
 
@@ -6791,11 +6813,12 @@ async function handlePrivateMatchWord(word, path = null) {
     }
 
     const minLen = privateMatchParams ? privateMatchParams.min_word_length : 3;
-    if (word.length < minLen) {
+    const effectiveLen = word.replace(/Q(?!U)/g, 'QU').length;
+    if (effectiveLen < minLen) {
         if (!isDictionaryValid) {
             showValidationFeedback("Sequence not a word and too small", false, false, resolvedPath);
         } else {
-            showValidationFeedback(`Too short (min ${minLen})`, false, false, resolvedPath);
+            showValidationFeedback(`${word.toUpperCase()} IS TOO SHORT (MIN: ${minLen}L)`, false, false, resolvedPath);
         }
         return;
     }

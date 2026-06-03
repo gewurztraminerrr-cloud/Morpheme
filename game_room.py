@@ -754,7 +754,7 @@ class GameRoom:
             is_valid = word_validator.word_validator.is_valid_word(word, getattr(self, 'current_dictionary', 'NWL'))
             if not is_valid:
                 return False, "Sequence not a word and too small", 0, None
-            return False, f"{word.upper()} is too short (Min: {min_len_req})", 0, None
+            return False, f"{word.upper()} IS TOO SHORT (MIN: {min_len_req}L)", 0, None
 
         with open(WORD_DEBUG_PATH, 'a') as debug:
             debug.write(f"[{time.time()}] Word: {word} | In Board: {is_in} | Min: {min_len_req} | Len: {len(word)} | Room: {self.room_id}\n")
