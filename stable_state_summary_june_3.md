@@ -4,12 +4,12 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `ad70317` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `ad70317` / `snapshot-current` / `START_OVER_POINT_JUNE_3` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `ad70317` / `snapshot-current` | ✅ Fully Deployed & PM2 Reloaded |
+| **localhost** (`/Users/jeffbabiak/`) | `abbe149` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `abbe149` / `snapshot-current` / `START_OVER_POINT_JUNE_3` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `abbe149` / `snapshot-current` | ✅ Fully Deployed & PM2 Reloaded |
 
-**All environments are 100% synchronized at the latest commit `ad70317`.**
-The local modifications to `game_room.py`, `static/css/play.css`, and `static/js/play.js` have been committed, pushed to GitHub, and successfully deployed to the remote production environment via the `deploy.py` script. The active production tags `snapshot-current` and `START_OVER_POINT_JUNE_3` have been updated and pushed to remote.
+**All environments are 100% synchronized at the latest commit `abbe149`.**
+The local modifications to `templates/index.html` and `static/js/play.js` have been committed, pushed to GitHub, and successfully deployed to the remote production environment via the `deploy.py` script. The active production tags `snapshot-current` and `START_OVER_POINT_JUNE_3` have been updated and pushed to remote.
 
 ---
 
@@ -18,8 +18,9 @@ The local modifications to `game_room.py`, `static/css/play.css`, and `static/js
 | File | Version / State | Description |
 |------|-----------------|-------------|
 | `game_room.py` | Commit `ad70317` | Updated short valid word validation error message to return uppercase format: `f"{word.upper()} IS TOO SHORT (MIN: {min_len_req}L)"`. |
-| `static/js/play.js` | Commit `ad70317` | Bypassed local optimistic invalid validation for short words in standard play. Updated tournament and private match word validations to format messages correctly. Implemented robust wait dots bounce animation on mobile resume. |
+| `static/js/play.js` | Commit `abbe149` | Implemented 60% lightness contrast threshold for white text, linear scaling for lighter backgrounds, selection styling overrides, and wait dots animation. |
 | `static/css/play.css` | Commit `ad70317` | Added CSS styles and keyframes animation `wait-bounce` for wait-dots. |
+| `templates/index.html` | Commit `abbe149` | Bumped play.js query version tag to `?v=124` to prevent client-side cache issues. |
 | `board_generator.py` | Commit `e7a3740` | Resolved 3D cube neighbor transitions inside `_has_ing_sequence`, `_sanitize_forbidden_sequences`, and `_guarantee_no_ing`. Enforced ING sequence verification on both target and achieved difficulties. Supported 3D Either/Or layouts and added early-break optimization for protected tiles. |
 
 ---
@@ -43,6 +44,10 @@ The local modifications to `game_room.py`, `static/css/play.css`, and `static/js
 ### 5. Support 3D Either/Or Layouts
 * **Goal achieved:** Rewrote the Either/Or tile application block inside both `generate_board` and `_generate_emergency_compliant_board` to support 3D coordinates `(f, r, c)`.
 
+### 6. Density Format Text Contrast Adjustments
+* **Goal achieved:** Density format tiles have highly readable letters with good contrast regardless of background darkness, and transitions are smooth.
+* **Fix details:** Changed contrast logic to use a 60% background lightness threshold for white text, and linearly scale dark text lightness for lighter cells. Added version cache-busting.
+
 ---
 
 ## Key Files Tracked
@@ -50,6 +55,7 @@ The local modifications to `game_room.py`, `static/css/play.css`, and `static/js
 | File | Location | Purpose |
 |------|----------|---------|
 | `game_room.py` | Production + GitHub | Server-side validation and formatting of short valid words. |
-| `static/js/play.js` | Production + GitHub | Client-side validation logic, state polling wake-up handler, and wait dots formatting. |
+| `static/js/play.js` | Production + GitHub | Client-side validation logic, state polling wake-up handler, wait dots formatting, and density contrast colors. |
 | `static/css/play.css` | Production + GitHub | Styles for wait-dot animation. |
+| `templates/index.html` | Production + GitHub | Main client HTML containing versioned references to static assets. |
 | `board_generator.py` | Production + GitHub | Resolved 3D neighbor transition logic, enforced target/achieved difficulty checks, and supported 3D Either/Or layouts. |
