@@ -3516,7 +3516,7 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
                                  const ratio = Math.max(0, Math.min(1, cur / maxD));
                                  // 100% (white) to 0% (black)
                                  const grayVal = Math.round(100 - (ratio * 100));
-                                 const textColor = (grayVal < 50) ? '#ffffff' : '#000000';
+                                 const textColor = (grayVal < 65) ? '#ffffff' : '#000000';
                                  densityStyle = `background: hsl(0, 0%, ${grayVal}%) !important; color: ${textColor} !important; transition: background 0.4s ease, color 0.4s ease;`;
                              }
                          }
@@ -4116,12 +4116,12 @@ function applyDensityToCell(cell, r, c, f, state = null) {
              }
              cell.dataset.lastD = cur;
 
-             cell.style.setProperty('background', hslColor, 'important');
-             cell.style.setProperty('background-color', hslColor, 'important');
-             cell.style.setProperty('transition', 'background 0.4s ease, color 0.4s ease', 'important');
-             
-             const textColor = (grayLightness < 50) ? '#ffffff' : '#000000';
-             cell.style.setProperty('color', textColor, 'important');
+              cell.style.setProperty('background', hslColor, 'important');
+              cell.style.setProperty('background-color', hslColor, 'important');
+              cell.style.setProperty('transition', 'background 0.4s ease, color 0.4s ease', 'important');
+              
+              const textColor = (grayLightness < 65) ? '#ffffff' : '#000000';
+              cell.style.setProperty('color', textColor, 'important');
          }
     } else if (boardFormat.toLowerCase().includes('density')) {
         // We have no density data BUT we are in density mode. 
