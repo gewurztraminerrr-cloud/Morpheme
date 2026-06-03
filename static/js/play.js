@@ -4065,10 +4065,11 @@ function applyDensityToCell(cell, r, c, f, state = null) {
     // USER REQUEST: If this is the bonus cell, do NOT apply density shading to the background.
     // The green .bonus-highlight must take absolute precedence.
     if (cell.classList.contains('bonus-highlight')) {
-        cell.style.background = '';
-        cell.style.backgroundColor = '';
-        cell.style.color = '';
-        cell.style.boxShadow = '';
+        cell.style.removeProperty('background');
+        cell.style.removeProperty('background-color');
+        cell.style.removeProperty('color');
+        cell.style.removeProperty('box-shadow');
+        cell.style.removeProperty('transition');
         return;
     }
 
@@ -4116,10 +4117,11 @@ function applyDensityToCell(cell, r, c, f, state = null) {
         // This prevents the "brief flickers" during heartbeats.
     } else {
         // Reset ONLY if we are truly no longer in density format
-        cell.style.background = '';
-        cell.style.backgroundColor = '';
-        cell.style.color = '';
-        cell.style.boxShadow = '';
+        cell.style.removeProperty('background');
+        cell.style.removeProperty('background-color');
+        cell.style.removeProperty('color');
+        cell.style.removeProperty('box-shadow');
+        cell.style.removeProperty('transition');
         delete cell.dataset.lastD;
     }
 }
