@@ -233,8 +233,9 @@ window.showMiniProfile = async function (username) {
         if (winRateEl) {
             const games = data.games_played || 0;
             const wins = data.wins || 0;
-            const rate = games > 0 ? ((wins / games) * 100).toFixed(1) : '0.0';
-            winRateEl.innerText = `${rate}%`;
+            let rate = games > 0 ? ((wins / games) * 100) : 0;
+            if (rate > 100) rate = 100;
+            winRateEl.innerText = `${rate.toFixed(1)}%`;
         }
 
         const ptSumEl = document.getElementById('mini-profile-pt-sum');

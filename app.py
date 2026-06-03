@@ -2066,7 +2066,7 @@ def get_public_profile(username):
     # Calculate Period Stats (If 'all', we still calculate from round_history for consistency, 
     # but could use user table for performance if data volume is high)
     cursor_stats = conn.execute(f'''
-        SELECT COUNT(DISTINCT room_id || '_' || round_number), SUM(total_score)
+        SELECT COUNT(*), SUM(total_score)
         FROM round_history
         WHERE user_id = ? {time_filter}
     ''', (user_id,))
