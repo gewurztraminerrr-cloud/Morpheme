@@ -4062,9 +4062,21 @@ function applyDensityToCell(cell, r, c, f, state = null) {
     const hasDensityData = densityData && Array.isArray(densityData) && densityData.length > 0;
     const boardFormat = (state && state.current_board_format) ? state.current_board_format : (window.lastGameState && window.lastGameState.current_board_format) || 'Normal';
     
-    // USER REQUEST: If this is the bonus cell, do NOT apply density shading to the background.
-    // The green .bonus-highlight must take absolute precedence.
-    if (cell.classList.contains('bonus-highlight')) {
+    // USER REQUEST: If this is the bonus cell or has selection/flash highlights,
+    // do NOT apply density shading to the background.
+    // The highlight styles must take absolute precedence.
+    const isHighlighted = cell.classList.contains('selected') || 
+                          cell.classList.contains('current') || 
+                          cell.classList.contains('typing-highlight') || 
+                          cell.classList.contains('review-highlight') || 
+                          cell.classList.contains('intermission-highlight') || 
+                          cell.classList.contains('bonus-highlight') ||
+                          cell.classList.contains('tile-flash-blue') ||
+                          cell.classList.contains('tile-flash-green') ||
+                          cell.classList.contains('tile-flash-red') ||
+                          cell.classList.contains('tile-flash-purple');
+                          
+    if (isHighlighted) {
         cell.style.removeProperty('background');
         cell.style.removeProperty('background-color');
         cell.style.removeProperty('color');
@@ -4085,10 +4097,10 @@ function applyDensityToCell(cell, r, c, f, state = null) {
          }
          
          if (cur === 0) {
-             cell.style.setProperty('background', '#ffffff');
-             cell.style.setProperty('background-color', '#ffffff');
-             cell.style.setProperty('color', '#000000');
-             cell.style.setProperty('box-shadow', 'inset 0 0 10px rgba(0,0,0,0.1)');
+             cell.style.setProperty('background', '#ffffff', 'important');
+             cell.style.setProperty('background-color', '#ffffff', 'important');
+             cell.style.setProperty('color', '#000000', 'important');
+             cell.style.setProperty('box-shadow', 'inset 0 0 10px rgba(0,0,0,0.1)', 'important');
          } else if (cur > 0) {
              // HIGH CONTRAST GRAYSCALE: Linear ratio matching 3D implementation
              const ratio = Math.max(0, Math.min(1, cur / maxD));
@@ -4104,12 +4116,12 @@ function applyDensityToCell(cell, r, c, f, state = null) {
              }
              cell.dataset.lastD = cur;
 
-             cell.style.setProperty('background', hslColor);
-             cell.style.setProperty('background-color', hslColor);
-             cell.style.setProperty('transition', 'background 0.4s ease, color 0.4s ease');
+             cell.style.setProperty('background', hslColor, 'important');
+             cell.style.setProperty('background-color', hslColor, 'important');
+             cell.style.setProperty('transition', 'background 0.4s ease, color 0.4s ease', 'important');
              
              const textColor = (grayLightness < 50) ? '#ffffff' : '#000000';
-             cell.style.setProperty('color', textColor);
+             cell.style.setProperty('color', textColor, 'important');
          }
     } else if (boardFormat.toLowerCase().includes('density')) {
         // We have no density data BUT we are in density mode. 
