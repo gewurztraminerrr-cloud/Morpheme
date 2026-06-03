@@ -2747,10 +2747,17 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
                     nr = node.r !== undefined ? node.r : -1;
                     nc = node.c !== undefined ? node.c : -1;
                 }
-                if (f !== null && f !== -1) {
-                    return nf === f && nr === r && nc === c;
+                let matchR = nr;
+                let matchC = nc;
+                if (window.isBoardTransposed) {
+                    matchR = nc; // original column matches transposed row (r)
+                    matchC = nr; // original row matches transposed column (c)
                 }
-                return nr === r && nc === c;
+
+                if (f !== null && f !== -1) {
+                    return nf === f && matchR === r && matchC === c;
+                }
+                return matchR === r && matchC === c;
             });
         });
     }
