@@ -5360,7 +5360,7 @@ async function submitWord(wordParam = null, pathParam = null) {
                     optimisticColor = isBonus ? 'green' : 'blue';
                 } else {
                     // Not in the word list — flash red immediately.
-                    showValidationFeedback('Invalid Word', false, false, finalPath);
+                    showValidationFeedback(`${word} INVALID`, false, false, finalPath);
                     optimisticColor = 'red';
                 }
             }
@@ -5409,11 +5409,11 @@ async function submitWord(wordParam = null, pathParam = null) {
             // Only update the status text with the real server message.
             const statusEl = document.getElementById('word-validation-status');
             if (statusEl) {
-                statusEl.textContent = data.message || (data.success ? `${word} VALID` : 'Invalid Word');
+                statusEl.textContent = data.message || (data.success ? `${word} VALID` : `${word} INVALID`);
             }
         } else {
             // Server result differs from local check — show correction flash.
-            showValidationFeedback(data.message || (data.success ? `${word} VALID` : 'Invalid Word'), data.success, isBonus, finalPath);
+            showValidationFeedback(data.message || (data.success ? `${word} VALID` : `${word} INVALID`), data.success, isBonus, finalPath);
         }
 
 
