@@ -5881,6 +5881,7 @@ function handleIntermissionTilePress(cell, r, c, f, letter) {
 
 function handleCellMouseDown(e) {
     if (e.button !== 0) return; // Only left click
+    if (Date.now() - lastTouchTime < 1500) return; // Ignore simulated mouse events on touch devices
 
     const cell = e.target.closest('.board-cell');
     if (!cell) return;
@@ -5897,7 +5898,6 @@ function handleCellMouseDown(e) {
     }
 
     if (window.isSpectatorMode) return;
-    if (Date.now() - lastTouchTime < 1500) return; // Ignore simulated mouse events on touch devices
 
     if (cell.classList.contains('grayed')) return;
 
