@@ -2569,8 +2569,26 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     // Save arguments for re-rendering on filter change
     window.lastDisplayAllWordsArgs = [allWords, bonusWord, targetUserWords, allFoundWords, allWordScores, cswOnlyWords, addedWords];
 
+    // Normalize input words to avoid type and case transformations inside loops
+    const bonusUpper = bonusWord ? bonusWord.toUpperCase().trim() : null;
+    const cleanWords = allWords.map(entry => {
+        const w = typeof entry === 'object' ? (entry.word || '') : entry;
+        const wordUpper = w.toUpperCase();
+        return {
+            original: entry,
+            word: w,
+            wordUpper: wordUpper,
+            len: w.length,
+            isBonus: bonusUpper && (wordUpper.trim() === bonusUpper)
+        };
+    });
+
     // Calculate available lengths
-    const availableLengths = [...new Set(allWords.map(w => (typeof w === 'object' ? (w.word || '') : w).length))].sort((a, b) => a - b);
+    const lengthsSet = new Set();
+    for (let i = 0; i < cleanWords.length; i++) {
+        lengthsSet.add(cleanWords[i].len);
+    }
+    const availableLengths = [...lengthsSet].sort((a, b) => a - b);
     
     const findersContainer = document.getElementById('finders-button-container');
     const findersBtn = document.getElementById('view-finders-btn-top');
@@ -2657,37 +2675,82 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     const cswOnlyUpper = (cswOnlyWords || []).map(w => w.toUpperCase());
     const addedUpper = (addedWords || []).map(w => w.toUpperCase());
 
-    // Sort: Length desc, then Alpha
-    // Sort: Color Priority, then Length desc, then Alpha
-    // Priority: Red/Orange (Bonus) > Purple (Added) > Blue (Found) > Gold (CSW) > Black/Gray (Missed/Unfound)
+    const targetWordsSet = new Set(targetWordsUpper);
+    const allFoundSet = new Set(allFoundUpper);
+    const cswOnlySet = new Set(cswOnlyUpper);
+    const addedSet = new Set(addedUpper);
+
     if (bonusWord && allWords) {
         const bonusIdx = allWords.findIndex(w => (typeof w === 'object' ? (w.word || '') : w).toUpperCase() === bonusWord.toUpperCase());
         console.log(`[displayAllWords] BonusWord search: "${bonusWord}" found at index: ${bonusIdx}`);
     }
     console.log(`[displayAllWords] Added words for highlight:`, addedUpper);
-    const sortedWords = [...allWords].sort((a, b) => {
-        const wordA = (typeof a === 'object' ? (a.word || '') : a).toUpperCase();
-        const wordB = (typeof b === 'object' ? (b.word || '') : b).toUpperCase();
-        const bonusUpper = bonusWord ? bonusWord.toUpperCase().trim() : null;
 
+    // Filter first (by intermission tile filter)
+    let displayWords = cleanWords;
+    if (window.intermissionTileFilter && window.lastGameState && window.lastGameState.all_words_paths) {
+        const { r, c, f } = window.intermissionTileFilter;
+        const paths = window.lastGameState.all_words_paths;
+        const isTransposed = !!window.isBoardTransposed;
+        displayWords = displayWords.filter(entry => {
+            const path = paths[entry.wordUpper];
+            if (!path) return false;
+            for (let i = 0; i < path.length; i++) {
+                const node = path[i];
+                let nf = -1, nr = -1, nc = -1;
+                if (Array.isArray(node)) {
+                    if (node.length === 3) {
+                        nf = node[0];
+                        nr = node[1];
+                        nc = node[2];
+                    } else {
+                        nr = node[0];
+                        nc = node[1];
+                    }
+                } else if (node && typeof node === 'object') {
+                    nf = node.f !== undefined ? node.f : -1;
+                    nr = node.r !== undefined ? node.r : -1;
+                    nc = node.c !== undefined ? node.c : -1;
+                }
+                let matchR = nr;
+                let matchC = nc;
+                if (isTransposed) {
+                    matchR = nc; // original column matches transposed row (r)
+                    matchC = nr; // original row matches transposed column (c)
+                }
+
+                if (f !== null && f !== -1) {
+                    if (nf === f && matchR === r && matchC === c) return true;
+                } else {
+                    if (matchR === r && matchC === c) return true;
+                }
+            }
+            return false;
+        });
+    }
+
+    // Filter by length
+    const selectedLength = window.selectedAllWordsLength || 'all';
+    const filteredWords = selectedLength === 'all' 
+        ? displayWords 
+        : displayWords.filter(entry => entry.len.toString() === selectedLength);
+
+    // Sort the filtered subset only (using optimized comparator)
+    filteredWords.sort((a, b) => {
         // 0. Bonus Word (Absolute Top Priority)
-        if (bonusUpper) {
-            const wordAUpper = wordA.trim();
-            const wordBUpper = wordB.trim();
-            if (wordAUpper === bonusUpper) return -1;
-            if (wordBUpper === bonusUpper) return 1;
-        }
+        if (a.isBonus) return -1;
+        if (b.isBonus) return 1;
 
         // 1. Length (Desc) - Primary sort
-        const lenA = wordA.length;
-        const lenB = wordB.length;
-        if (lenA !== lenB) return lenB - lenA;
+        if (a.len !== b.len) return b.len - a.len;
 
-        // 2. Alphabetical (Asc) - Secondary sort
-        return wordA.localeCompare(wordB);
+        // 2. Alphabetical (Asc) - Secondary sort (ASCII operators are 10-20x faster than localeCompare)
+        if (a.wordUpper < b.wordUpper) return -1;
+        if (a.wordUpper > b.wordUpper) return 1;
+        return 0;
     });
 
-    console.log('[renderWordsList] Rendering words:', sortedWords.length);
+    console.log('[renderWordsList] Rendering words:', filteredWords.length);
 
     // PERFORMANCE: Use event delegation instead of 2000 individual listeners
     if (listEl && !listEl.hasScoringListener) {
@@ -2721,45 +2784,6 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             window.fetchDefinition(item.dataset.word);
         });
         listEl.hasScoringListener = true;
-    }
-
-    let displayWords = [...sortedWords];
-    if (window.intermissionTileFilter && window.lastGameState && window.lastGameState.all_words_paths) {
-        const { r, c, f } = window.intermissionTileFilter;
-        const paths = window.lastGameState.all_words_paths;
-        displayWords = displayWords.filter(entry => {
-            const w = (typeof entry === 'object' ? (entry.word || '') : entry).toUpperCase();
-            const path = paths[w];
-            if (!path) return false;
-            return path.some(node => {
-                let nf = -1, nr = -1, nc = -1;
-                if (Array.isArray(node)) {
-                    if (node.length === 3) {
-                        nf = node[0];
-                        nr = node[1];
-                        nc = node[2];
-                    } else {
-                        nr = node[0];
-                        nc = node[1];
-                    }
-                } else if (node && typeof node === 'object') {
-                    nf = node.f !== undefined ? node.f : -1;
-                    nr = node.r !== undefined ? node.r : -1;
-                    nc = node.c !== undefined ? node.c : -1;
-                }
-                let matchR = nr;
-                let matchC = nc;
-                if (window.isBoardTransposed) {
-                    matchR = nc; // original column matches transposed row (r)
-                    matchC = nr; // original row matches transposed column (c)
-                }
-
-                if (f !== null && f !== -1) {
-                    return nf === f && matchR === r && matchC === c;
-                }
-                return matchR === r && matchC === c;
-            });
-        });
     }
 
     // Filter clear button handling
@@ -2796,18 +2820,14 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         });
     }
 
-    const selectedLength = window.selectedAllWordsLength || 'all';
-    const filteredWords = selectedLength === 'all' ? displayWords : displayWords.filter(entry => (typeof entry === 'object' ? (entry.word || '') : entry).length.toString() === selectedLength);
-
     listEl.innerHTML = filteredWords.map(entry => {
-        const word = (typeof entry === 'object' ? (entry.word || '') : entry);
-        const wordUpper = word.toUpperCase();
-        const bonusUpper = bonusWord ? bonusWord.toUpperCase().trim() : null;
-        const isBonus = bonusUpper && wordUpper.trim() === bonusUpper;
-        const isCSWOnly = cswOnlyUpper.includes(wordUpper);
-        const isAddedWord = addedUpper.includes(wordUpper);
-        const isTargetFound = targetWordsUpper.includes(wordUpper);
-        const isFoundByAny = allFoundUpper.includes(wordUpper);
+        const word = entry.word;
+        const wordUpper = entry.wordUpper;
+        const isBonus = entry.isBonus;
+        const isCSWOnly = cswOnlySet.has(wordUpper);
+        const isAddedWord = addedSet.has(wordUpper);
+        const isTargetFound = targetWordsSet.has(wordUpper);
+        const isFoundByAny = allFoundSet.has(wordUpper);
         const pointsData = allWordScores[word] || allWordScores[wordUpper] || 0;
         let pointsText = pointsData;
 
