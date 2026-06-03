@@ -5171,6 +5171,7 @@ async function submitWord(wordParam = null, pathParam = null) {
 
     // 1. PATH RESOLUTION
     let finalPath = pathParam;
+    let usesEitherOrTile = false;
     const board = window.lastGameState ? window.lastGameState.board : null;
     if (!finalPath && word && board) {
         const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
@@ -5214,8 +5215,10 @@ async function submitWord(wordParam = null, pathParam = null) {
                 }
             } else {
                 const [r, c] = node;
-                if (r >= 0 && r < board.length && c >= 0 && c < board[0].length) {
-                    cellVal = String(board[r][c]);
+                const visualR = window.isBoardTransposed ? c : r;
+                const visualC = window.isBoardTransposed ? r : c;
+                if (visualR >= 0 && visualR < board.length && visualC >= 0 && visualC < board[0].length) {
+                    cellVal = String(board[visualR][visualC]);
                 } else {
                     validPath = false;
                     break;
@@ -5223,6 +5226,7 @@ async function submitWord(wordParam = null, pathParam = null) {
             }
 
             if (cellVal.includes('/')) {
+                usesEitherOrTile = true;
                 const options = cellVal.split('/');
                 let newWords = [];
                 for (const prefix of possibleWords) {
@@ -5328,7 +5332,8 @@ async function submitWord(wordParam = null, pathParam = null) {
                 if (isInWordList) {
                     // Confirmed valid — flash the correct color immediately.
                     const isBonus = preState.bonus_word && word === preState.bonus_word.toUpperCase();
-                    showValidationFeedback(isBonus ? 'BONUS WORD!' : `${word} VALID`, true, isBonus, finalPath);
+                    const showBonusMsg = isBonus && !usesEitherOrTile;
+                    showValidationFeedback(showBonusMsg ? 'BONUS WORD!' : `${word} VALID`, true, isBonus, finalPath);
                     optimisticColor = isBonus ? 'green' : 'blue';
                 } else {
                     // Not in the word list — flash red immediately.
@@ -6421,8 +6426,34 @@ async function handleTournamentWord(word) {
     });
     tournamentScore += pts;
 
+    // Check if the path uses Either/Or tile
+    let usesEitherOrTile = false;
+    if (path && board) {
+        for (const node of path) {
+            let cellVal = '';
+            if (node.length === 3) {
+                const [f, r, c] = node;
+                if (f >= 0 && f < board.length && r >= 0 && r < board[f].length && c >= 0 && c < board[f][r].length) {
+                    cellVal = String(board[f][r][c]);
+                }
+            } else {
+                const [r, c] = node;
+                const visualR = window.isBoardTransposed ? c : r;
+                const visualC = window.isBoardTransposed ? r : c;
+                if (visualR >= 0 && visualR < board.length && visualC >= 0 && visualC < board[0].length) {
+                    cellVal = String(board[visualR][visualC]);
+                }
+            }
+            if (cellVal && cellVal.includes('/')) {
+                usesEitherOrTile = true;
+                break;
+            }
+        }
+    }
+
     // Show success feedback
-    showValidationFeedback(isBonus ? 'BONUS WORD!' : `${word.toUpperCase()} VALID`, true, isBonus, path);
+    const showBonusMsg = isBonus && !usesEitherOrTile;
+    showValidationFeedback(showBonusMsg ? 'BONUS WORD!' : `${word.toUpperCase()} VALID`, true, isBonus, path);
 
     // Update Score UI
     const scoreEl = document.querySelector('.player-card .score');
@@ -6643,6 +6674,7 @@ async function handlePrivateMatchWord(word, path = null) {
     let resolvedWord = word.toUpperCase();
     let resolvedPath = path;
 
+    let usesEitherOrTile = false;
     if (resolvedPath && isEO) {
         // Reconstruct all possible words from the path
         let possibleWords = [''];
@@ -6660,8 +6692,10 @@ async function handlePrivateMatchWord(word, path = null) {
                 }
             } else {
                 const [r, c] = node;
-                if (r >= 0 && r < board.length && c >= 0 && c < board[0].length) {
-                    cellVal = String(board[r][c]);
+                const visualR = window.isBoardTransposed ? c : r;
+                const visualC = window.isBoardTransposed ? r : c;
+                if (visualR >= 0 && visualR < board.length && visualC >= 0 && visualC < board[0].length) {
+                    cellVal = String(board[visualR][visualC]);
                 } else {
                     validPath = false;
                     break;
@@ -6669,6 +6703,7 @@ async function handlePrivateMatchWord(word, path = null) {
             }
 
             if (cellVal.includes('/')) {
+                usesEitherOrTile = true;
                 const options = cellVal.split('/');
                 let newWords = [];
                 for (const prefix of possibleWords) {
@@ -6798,7 +6833,11 @@ async function handlePrivateMatchWord(word, path = null) {
         // Hidden Bonus Word (+Length)
         if (activeMatch && activeMatch.bonus_word && activeMatch.bonus_word.toUpperCase() === word) {
             pts += word.length;
-            showValidationFeedback('BONUS WORD FOUND!', true, true, resolvedPath);
+            if (usesEitherOrTile) {
+                showValidationFeedback(`${word.toUpperCase()} VALID`, true, true, resolvedPath);
+            } else {
+                showValidationFeedback('BONUS WORD FOUND!', true, true, resolvedPath);
+            }
         } else {
             showValidationFeedback(`${word.toUpperCase()} VALID`, true, false, resolvedPath);
         }
