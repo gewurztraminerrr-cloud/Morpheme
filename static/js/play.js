@@ -4085,10 +4085,10 @@ function applyDensityToCell(cell, r, c, f, state = null) {
          }
          
          if (cur === 0) {
-             cell.style.setProperty('background', '#ffffff', 'important');
-             cell.style.setProperty('background-color', '#ffffff', 'important');
-             cell.style.setProperty('color', '#000000', 'important');
-             cell.style.setProperty('box-shadow', 'inset 0 0 10px rgba(0,0,0,0.1)', 'important');
+             cell.style.setProperty('background', '#ffffff');
+             cell.style.setProperty('background-color', '#ffffff');
+             cell.style.setProperty('color', '#000000');
+             cell.style.setProperty('box-shadow', 'inset 0 0 10px rgba(0,0,0,0.1)');
          } else if (cur > 0) {
              // HIGH CONTRAST GRAYSCALE: Linear ratio matching 3D implementation
              const ratio = Math.max(0, Math.min(1, cur / maxD));
@@ -4104,12 +4104,12 @@ function applyDensityToCell(cell, r, c, f, state = null) {
              }
              cell.dataset.lastD = cur;
 
-             cell.style.setProperty('background', hslColor, 'important');
-             cell.style.setProperty('background-color', hslColor, 'important');
-             cell.style.setProperty('transition', 'background 0.4s ease, color 0.4s ease', 'important');
+             cell.style.setProperty('background', hslColor);
+             cell.style.setProperty('background-color', hslColor);
+             cell.style.setProperty('transition', 'background 0.4s ease, color 0.4s ease');
              
              const textColor = (grayLightness < 50) ? '#ffffff' : '#000000';
-             cell.style.setProperty('color', textColor, 'important');
+             cell.style.setProperty('color', textColor);
          }
     } else if (boardFormat.toLowerCase().includes('density')) {
         // We have no density data BUT we are in density mode. 

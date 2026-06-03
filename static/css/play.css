@@ -976,8 +976,8 @@ body.theme-light-brown .player-score-val {
 .board-cell.selected,
 .board-cell.current {
     background: var(--highlight-mouse-color, rgba(64, 156, 255, 0.5)) !important;
-    border: 3px solid #fff;
-    box-shadow: 0 0 15px var(--highlight-mouse-color, rgba(64, 156, 255, 0.6));
+    border: 3px solid #fff !important;
+    box-shadow: 0 0 15px var(--highlight-mouse-color, rgba(64, 156, 255, 0.6)) !important;
     transform: scale(1.05);
     z-index: 10;
     color: #000 !important;
@@ -998,8 +998,8 @@ body.theme-light-brown .player-score-val {
     background: #32cd32 !important;
     /* Lime green */
     color: #fff !important;
-    box-shadow: 0 0 15px rgba(50, 205, 50, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.8);
-    border: 2px solid #fff;
+    box-shadow: 0 0 15px rgba(50, 205, 50, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.8) !important;
+    border: 2px solid #fff !important;
     animation: bonusPulse 2s ease-in-out infinite;
     z-index: 5; /* Ensure it stays above other decorations */
 }
