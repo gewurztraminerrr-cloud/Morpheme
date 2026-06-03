@@ -479,7 +479,14 @@ class BoardGenerator:
         depth_val = 6 if (len(board) == 6 and is_3d) else depth
         rows = len(board[0]) if is_3d else len(board)
         cols = len(board[0][0]) if is_3d else len(board[0])
-        protected = set(protected_positions) if protected_positions else set()
+        
+        protected = set()
+        if protected_positions:
+            for cell in protected_positions:
+                if isinstance(cell, (list, tuple)):
+                    protected.add(tuple(cell))
+                else:
+                    protected.add(cell)
 
         sequence = "ING"
         seq_len = len(sequence)
@@ -489,25 +496,31 @@ class BoardGenerator:
         sanitized_count = 0
         for attempt_idx in range(max_attempts):
             found_any = False
+            made_progress = False
             
             def find_path(idx, r, c, f, current_path):
                 if idx == seq_len:
                     return current_path
                 target = sequence[idx]
-                for df in ([-1, 0, 1] if is_3d else [0]):
+                if is_3d:
+                    neighbors = self._get_cube_neighbors(f, r, c)
+                else:
+                    neighbors = []
                     for dr in [-1, 0, 1]:
                         for dc in [-1, 0, 1]:
-                            if df == 0 and dr == 0 and dc == 0:
+                            if dr == 0 and dc == 0:
                                 continue
-                            nf, nr, nc = f + df, r + dr, c + dc
-                            if 0 <= nf < depth_val and 0 <= nr < rows and 0 <= nc < cols:
-                                pos = (nf, nr, nc) if is_3d else (nr, nc)
-                                if pos not in current_path:
-                                    val = board[nf][nr][nc] if is_3d else board[nr][nc]
-                                    options = str(val).upper().split('/')
-                                    if target in options:
-                                        res = find_path(idx + 1, nr, nc, nf, current_path + [pos])
-                                        if res: return res
+                            nr, nc = r + dr, c + dc
+                            if 0 <= nr < rows and 0 <= nc < cols:
+                                neighbors.append((0, nr, nc))
+                for nf, nr, nc in neighbors:
+                    pos = (nf, nr, nc) if is_3d else (nr, nc)
+                    if pos not in current_path:
+                        val = board[nf][nr][nc] if is_3d else board[nr][nc]
+                        options = str(val).upper().split('/')
+                        if target in options:
+                            res = find_path(idx + 1, nr, nc, nf, current_path + [pos])
+                            if res: return res
                 return None
 
             for f in range(depth_val):
@@ -537,6 +550,7 @@ class BoardGenerator:
                                         if is_3d: board[p[0]][p[1]][p[2]] = new_char
                                         else: board[p[0]][p[1]] = new_char
                                         replaced = True
+                                        made_progress = True
                                         print(f"[BoardGen] 🛡️ Sequence Sanitizer: Broke 'ING' by replacing '{sequence[path.index(p)]}' at {p} with '{new_char}'")
                                         sanitized_count += 1
                                         break
@@ -546,7 +560,7 @@ class BoardGenerator:
                     if found_any: break
                 if found_any: break
             
-            if not found_any:
+            if not found_any or not made_progress:
                 break
                 
         if attempt_idx == max_attempts - 1:
@@ -577,20 +591,24 @@ class BoardGenerator:
                 if idx == 3:
                     return current_path
                 target = "ING"[idx]
-                for df in ([-1, 0, 1] if is_3d else [0]):
+                if is_3d:
+                    neighbors = self._get_cube_neighbors(f, r, c)
+                else:
+                    neighbors = []
                     for dr in [-1, 0, 1]:
                         for dc in [-1, 0, 1]:
-                            if df == 0 and dr == 0 and dc == 0:
-                                continue
-                            nf, nr, nc = f + df, r + dr, c + dc
-                            if 0 <= nf < depth_val and 0 <= nr < R and 0 <= nc < C:
-                                pos = (nf, nr, nc) if is_3d else (nr, nc)
-                                if pos not in current_path:
-                                    val = board[nf][nr][nc] if is_3d else board[nr][nc]
-                                    options = str(val).upper().split('/')
-                                    if target in options:
-                                        res = find_path(idx + 1, nr, nc, nf, current_path + [pos])
-                                        if res: return res
+                            if dr == 0 and dc == 0: continue
+                            nr, nc = r + dr, c + dc
+                            if 0 <= nr < R and 0 <= nc < C:
+                                neighbors.append((0, nr, nc))
+                for nf, nr, nc in neighbors:
+                    pos = (nf, nr, nc) if is_3d else (nr, nc)
+                    if pos not in current_path:
+                        val = board[nf][nr][nc] if is_3d else board[nr][nc]
+                        options = str(val).upper().split('/')
+                        if target in options:
+                            res = find_path(idx + 1, nr, nc, nf, current_path + [pos])
+                            if res: return res
                 return None
 
             for f in range(depth_val):
@@ -841,21 +859,26 @@ class BoardGenerator:
         def dfs(r, c, f, idx, visited):
             if idx == 3:
                 return True
-            for df in ([-1, 0, 1] if is_3d else [0]):
+            if is_3d:
+                neighbors = self._get_cube_neighbors(f, r, c)
+            else:
+                neighbors = []
                 for dr in [-1, 0, 1]:
                     for dc in [-1, 0, 1]:
-                        if df == 0 and dr == 0 and dc == 0: continue
-                        nf, nr, nc = f + df, r + dr, c + dc
-                        if 0 <= nf < depth_val and 0 <= nr < R and 0 <= nc < C:
-                            pos = (nf, nr, nc) if is_3d else (nr, nc)
-                            if pos not in visited:
-                                cell_char = str(b[nf][nr][nc] if is_3d else b[nr][nc]).upper()
-                                options = cell_char.split('/')
-                                if "ING"[idx] in options:
-                                    visited.add(pos)
-                                    if dfs(nr, nc, nf, idx + 1, visited):
-                                        return True
-                                    visited.remove(pos)
+                        if dr == 0 and dc == 0: continue
+                        nr, nc = r + dr, c + dc
+                        if 0 <= nr < R and 0 <= nc < C:
+                            neighbors.append((0, nr, nc))
+            for nf, nr, nc in neighbors:
+                pos = (nf, nr, nc) if is_3d else (nr, nc)
+                if pos not in visited:
+                    cell_char = str(b[nf][nr][nc] if is_3d else b[nr][nc]).upper()
+                    options = cell_char.split('/')
+                    if "ING"[idx] in options:
+                        visited.add(pos)
+                        if dfs(nr, nc, nf, idx + 1, visited):
+                            return True
+                        visited.remove(pos)
             return False
 
         for f in range(depth_val):
@@ -1208,13 +1231,29 @@ class BoardGenerator:
             # --- APPLY SPECIAL TILES (Either/Or slash format) AFTER ALL BOARD MANIPULATIONS ---
             if "either/or" in board_format.lower():
                 ambiguity_resolved = False
-                protected = set(embedded_path) if embedded_path else set()
-                candidate_cells = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in protected]
+                protected = set()
+                if embedded_path:
+                    for cell in embedded_path:
+                        if isinstance(cell, (list, tuple)):
+                            protected.add(tuple(cell))
+                
+                # Support 3D Either/Or
+                if depth > 1:
+                    candidate_cells = [(f, r, c) for f in range(depth) for r in range(rows) for c in range(cols) if (f, r, c) not in protected]
+                else:
+                    candidate_cells = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in protected]
                 random.shuffle(candidate_cells)
                 
                 # Try up to 30 different cells, and up to 5 alternate letters each, to find a non-ambiguous combination
-                for r, c in candidate_cells[:30]:
-                    orig = board[r][c]
+                for cell in candidate_cells[:30]:
+                    if depth > 1:
+                        f, r, c = cell
+                        orig = board[f][r][c]
+                    else:
+                        r, c = cell
+                        f = 0
+                        orig = board[r][c]
+                        
                     if '/' in str(orig): continue
                     
                     others = [l for l in self.letters if l != orig]
@@ -1224,17 +1263,25 @@ class BoardGenerator:
                     found_valid = False
                     for other in sampled_others:
                         # Prevent creating forbidden sequence on Medium/Hard
-                        if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, other, r, c, 0, depth=depth):
+                        if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, other, r, c, f, depth=depth):
                             continue
-                        board[r][c] = f"{sorted([orig, other])[0]}/{sorted([orig, other])[1]}"
+                        
+                        val = f"{sorted([orig, other])[0]}/{sorted([orig, other])[1]}"
+                        if depth > 1:
+                            board[f][r][c] = val
+                        else:
+                            board[r][c] = val
                         
                         if not self._has_either_or_ambiguity(board, dictionary):
-                            print(f"[BoardGen] * Successfully applied NON-AMBIGUOUS Either/Or dual-letters {board[r][c]} to cell ({r}, {c})")
+                            print(f"[BoardGen] * Successfully applied NON-AMBIGUOUS Either/Or dual-letters {val} to cell {cell}")
                             found_valid = True
                             ambiguity_resolved = True
                             break
                         else:
-                            board[r][c] = orig # Revert and try another letter
+                            if depth > 1:
+                                board[f][r][c] = orig # Revert and try another letter
+                            else:
+                                board[r][c] = orig
                             
                     if found_valid:
                         break
@@ -1261,11 +1308,15 @@ class BoardGenerator:
                     if not (min_ratio <= ratio <= max_ratio):
                         print(f"[BoardGen] ATTEMPT {attempts}: Board uniqueness ratio {ratio:.2f} is outside range {min_ratio}-{max_ratio} for target {difficulty}. Retrying...")
                         continue
+                
+                # Derive achieved difficulty label
+                achieved_diff = self.get_difficulty_label(ratio, rows, cols, dictionary, depth)
+                
                 # USER MANDATE: Ensure no "ING" or "INGS" path sequences exist in Medium or Hard boards!
                 # If they do, toss the board and generate another one (continue)!
-                if difficulty in ["Medium", "Hard"]:
+                if difficulty in ["Medium", "Hard"] or achieved_diff in ["Medium", "Hard"]:
                     if self._has_ing_sequence(board, depth):
-                        print(f"[BoardGen] ❌ ATTEMPT {attempts}: Board has an 'ING'/'INGS' sequence on {difficulty} board. TOSSING board and generating another one...")
+                        print(f"[BoardGen] ❌ ATTEMPT {attempts}: Board has an 'ING'/'INGS' sequence on {achieved_diff} (target {difficulty}) board. TOSSING board and generating another one...")
                         continue
 
                 # --- OFFICIAL ACCEPTANCE: RESOLVE PATHS NOW ---
@@ -1312,7 +1363,7 @@ class BoardGenerator:
                     bonus_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
                     if depth > 1: bonus_cell = (random.randint(0, depth-1), bonus_cell[0], bonus_cell[1])
                 
-                if difficulty in ["Medium", "Hard"]:
+                if difficulty in ["Medium", "Hard"] or achieved_diff in ["Medium", "Hard"]:
                     self._guarantee_no_ing(board, depth, protected_positions=embedded_path)
 
                 if bonus_cell:
@@ -1434,19 +1485,40 @@ class BoardGenerator:
             # --- FINAL SANITIZATION (protecting format tiles) ---
             self._sanitize_rare_letters(board, depth, protected_positions=all_excluded, is_checkerboard=is_checkerboard)
             self._sanitize_letter_abundances(board, depth, board_format=board_format, protected_positions=all_excluded, is_checkerboard=is_checkerboard)
-            if difficulty in ["Medium", "Hard"]:
+            
+            # Solve to get intermediate ratio for sanitization decision
+            inter_solve = self._solve_board(board, dictionary, (0, 99999), display_min, max_depth=12 if rows * cols >= 35 else 25, store_paths=False, timeout=10.0)
+            inter_ratio = self.get_uniqueness_ratio(board, list(inter_solve.keys()), rows, cols, dictionary, depth)
+            inter_diff = self.get_difficulty_label(inter_ratio, rows, cols, dictionary, depth)
+            if difficulty in ["Medium", "Hard"] or inter_diff in ["Medium", "Hard"]:
                 self._sanitize_forbidden_sequences(board, depth, protected_positions=all_excluded, is_checkerboard=is_checkerboard)
             
             # --- APPLY SPECIAL TILES (Either/Or slash format) AFTER ALL BOARD MANIPULATIONS ---
             if "either/or" in safe_format:
                 ambiguity_resolved = False
-                protected = set(all_excluded) if all_excluded else set()
-                candidate_cells = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in protected]
+                protected = set()
+                if all_excluded:
+                    for cell in all_excluded:
+                        if isinstance(cell, (list, tuple)):
+                            protected.add(tuple(cell))
+                
+                # Support 3D Either/Or
+                if depth > 1:
+                    candidate_cells = [(f, r, c) for f in range(depth) for r in range(rows) for c in range(cols) if (f, r, c) not in protected]
+                else:
+                    candidate_cells = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in protected]
                 random.shuffle(candidate_cells)
                 
                 # Try up to 30 different cells, and up to 5 alternate letters each, to find a non-ambiguous combination
-                for r, c in candidate_cells[:30]:
-                    orig = board[r][c]
+                for cell in candidate_cells[:30]:
+                    if depth > 1:
+                        f, r, c = cell
+                        orig = board[f][r][c]
+                    else:
+                        r, c = cell
+                        f = 0
+                        orig = board[r][c]
+                        
                     if '/' in str(orig): continue
                     
                     others = [l for l in self.letters if l != orig]
@@ -1456,17 +1528,25 @@ class BoardGenerator:
                     found_valid = False
                     for other in sampled_others:
                         # Prevent creating forbidden sequence on Medium/Hard
-                        if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, other, r, c, 0, depth=depth):
+                        if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, other, r, c, f, depth=depth):
                             continue
-                        board[r][c] = f"{sorted([orig, other])[0]}/{sorted([orig, other])[1]}"
+                        
+                        val = f"{sorted([orig, other])[0]}/{sorted([orig, other])[1]}"
+                        if depth > 1:
+                            board[f][r][c] = val
+                        else:
+                            board[r][c] = val
                         
                         if not self._has_either_or_ambiguity(board, dictionary):
-                            print(f"[BoardGen] * Successfully applied NON-AMBIGUOUS Either/Or dual-letters {board[r][c]} to cell ({r}, {c})")
+                            print(f"[BoardGen] * Successfully applied NON-AMBIGUOUS Either/Or dual-letters {val} to cell {cell}")
                             found_valid = True
                             ambiguity_resolved = True
                             break
                         else:
-                            board[r][c] = orig # Revert and try another letter
+                            if depth > 1:
+                                board[f][r][c] = orig # Revert and try another letter
+                            else:
+                                board[r][c] = orig
                             
                     if found_valid:
                         break
@@ -1483,9 +1563,12 @@ class BoardGenerator:
             count = len(final_solve)
 
             # USER MANDATE: Ensure no "ING" or "INGS" path sequences exist in Medium or Hard boards inside emergency path too!
-            if difficulty in ["Medium", "Hard"] and self._has_ing_sequence(board, depth):
-                print(f"[BoardGen] ❌ [Emergency] ATTEMPT {_attempt}: Board has forbidden 'ING' sequence on {difficulty} board. Retrying...")
-                continue
+            ratio = self.get_uniqueness_ratio(board, list(final_solve.keys()), rows, cols, dictionary, depth)
+            achieved_diff = self.get_difficulty_label(ratio, rows, cols, dictionary, depth)
+            if difficulty in ["Medium", "Hard"] or achieved_diff in ["Medium", "Hard"]:
+                if self._has_ing_sequence(board, depth):
+                    print(f"[BoardGen] ❌ [Emergency] ATTEMPT {_attempt}: Board has forbidden 'ING' sequence on {achieved_diff} (target {difficulty}) board. Retrying...")
+                    continue
             
             if min_words <= count <= max_words or _attempt >= 50:
                 if min_words <= count <= max_words:
@@ -1510,7 +1593,7 @@ class BoardGenerator:
                 
                 final_bonus = sorted(suitable, key=len, reverse=True)[0] if suitable else None
                 bonus_cell = None
-                if difficulty in ["Medium", "Hard"]:
+                if difficulty in ["Medium", "Hard"] or achieved_diff in ["Medium", "Hard"]:
                     self._guarantee_no_ing(board, depth, protected_positions=all_excluded)
 
                 if final_bonus:
