@@ -3516,7 +3516,13 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
                                  const ratio = Math.max(0, Math.min(1, cur / maxD));
                                  // 100% (white) to 0% (black)
                                  const grayVal = Math.round(100 - (ratio * 100));
-                                 const textColor = (grayVal < 65) ? '#ffffff' : '#000000';
+                                 let textColor;
+                                 if (grayVal <= 50) {
+                                     textColor = '#ffffff';
+                                 } else {
+                                     const textL = Math.round(20 * (100 - grayVal) / 50);
+                                     textColor = `hsl(0, 0%, ${textL}%)`;
+                                 }
                                  densityStyle = `background: hsl(0, 0%, ${grayVal}%) !important; color: ${textColor} !important; transition: background 0.4s ease, color 0.4s ease;`;
                              }
                          }
@@ -4120,7 +4126,13 @@ function applyDensityToCell(cell, r, c, f, state = null) {
               cell.style.setProperty('background-color', hslColor, 'important');
               cell.style.setProperty('transition', 'background 0.4s ease, color 0.4s ease', 'important');
               
-              const textColor = (grayLightness < 65) ? '#ffffff' : '#000000';
+              let textColor;
+              if (grayLightness <= 50) {
+                  textColor = '#ffffff';
+              } else {
+                  const textL = Math.round(20 * (100 - grayLightness) / 50);
+                  textColor = `hsl(0, 0%, ${textL}%)`;
+              }
               cell.style.setProperty('color', textColor, 'important');
          }
     } else if (boardFormat.toLowerCase().includes('density')) {
