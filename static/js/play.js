@@ -5869,20 +5869,20 @@ function handleIntermissionTilePress(cell, r, c, f, letter) {
         if (foundTabBtn) {
             foundTabBtn.click();
         }
-        
-        // Scroll to the Words panel smoothly (Only on mobile devices to prevent viewport jumps on desktop)
-        const isMobile = window.innerWidth <= 992;
-        if (isMobile) {
-            const wordsPanel = document.getElementById('words-panel') || document.querySelector('.words-panel');
-            if (wordsPanel) {
-                wordsPanel.scrollIntoView({ behavior: 'smooth' });
-            }
-        }
     }
     
-    // Re-display all words
+    // Re-display all words (Render instantly BEFORE scrolling)
     if (window.lastDisplayAllWordsArgs) {
         displayAllWords(...window.lastDisplayAllWordsArgs);
+    }
+
+    // Scroll to the Words panel instantly (Only on mobile devices to prevent viewport jumps on desktop)
+    const isMobile = window.innerWidth <= 992;
+    if (isMobile && window.intermissionTileFilter) {
+        const wordsPanel = document.getElementById('words-panel') || document.querySelector('.words-panel');
+        if (wordsPanel) {
+            wordsPanel.scrollIntoView({ behavior: 'auto' });
+        }
     }
 }
 
