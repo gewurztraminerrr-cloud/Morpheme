@@ -3032,6 +3032,23 @@ def get_room_state(room_id):
                                 if hasattr(room, 'board_search_started'): delattr(room, 'board_search_started')
                                 if hasattr(room, 'board_search_loading'): delattr(room, 'board_search_loading')
                                 if hasattr(room, 'starting_round'): delattr(room, 'starting_round')
+                                
+                                # Clear all next_round/staging attributes to prevent bleed/outdated data promotion
+                                room.next_round_board = None
+                                room.next_round_words = None
+                                room.next_round_word_paths = None
+                                room.next_round_word_scores = None
+                                room.next_round_bonus = None
+                                room.next_round_format = None
+                                room.next_round_total_words_count = 0
+                                room.next_round_counts_by_len = {}
+                                room.next_round_total_points = 0
+                                room.next_round_cell_density = None
+                                room.next_round_initial_cell_density = None
+                                room.next_spinner_params = None
+                                room.next_round_spinner_params = None
+                                room.next_round_difficulty = None
+                                room.next_round_uniqueness = None
                         
                         # Re-add the active polling user as player right away
                         if 'user_id' in session:

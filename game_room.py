@@ -1216,6 +1216,7 @@ class GameRoom:
                 self.next_round_bonus_cell = None
                 self.next_round_format = None
                 self.next_round_uniqueness = None
+                self.next_round_spinner_params = None
                 
                 self.board_search_started = False
                 self.board_search_loading = False
@@ -3096,7 +3097,7 @@ class RoomManager:
             with room._state_lock:
                 # USER REQUEST: Prevent re-rolling! Check lock state INSIDE the atomic block.
                 # In Solo mode, we always prefer the user's initial settings over background pre-gen!
-                if getattr(room, 'spinner_params_generated', False) and room.next_spinner_params and not getattr(room, 'is_solo', False):
+                if getattr(room, 'spinner_params_generated', False) and room.next_spinner_params:
                     new_params = dict(room.next_spinner_params)
                     print(f"[RoomManager] Using EXISTING staged params for room {room_id} (Lock-protected)")
                 else:
@@ -3224,6 +3225,7 @@ class RoomManager:
             from spinner_set import SpinnerSet
             params = SpinnerSet.sanitize_params(params, room.board_dimensions)
             room.next_spinner_params = params
+            launched_generated_at = params.get('generated_at') if params else None
             
             if not params:
                 # If still no params, we must wait or fail to avoid bleeding from previous round
@@ -3296,7 +3298,7 @@ class RoomManager:
             
             # Start board generation in background thread
             def generate_in_background():
-                nonlocal bonus_word, params
+                nonlocal bonus_word, params, launched_generated_at
                 try:
                     print(f"[RoomManager] Background board generation started for {room_id}...")
                     # Capture params locally for thread safety
@@ -3408,6 +3410,16 @@ class RoomManager:
                          print(f"[RoomManager] Search complete for {room_id}, but room was reconstructed. Redirecting to active instance.")
                          target_room = active_room
 
+                    # STALE PARAMETERS CHECK:
+                    # If parameters have been re-spun/changed since this search started, discard.
+                    if launched_generated_at is not None:
+                        curr_generated_at = None
+                        if target_room and getattr(target_room, 'next_spinner_params', None):
+                            curr_generated_at = target_room.next_spinner_params.get('generated_at')
+                        if curr_generated_at != launched_generated_at:
+                            print(f"[RoomManager] Stale board search discarded for {room_id} because parameters were re-spun (launched: {launched_generated_at}, current: {curr_generated_at})")
+                            return
+
                     # STALE BOARD SEARCH PROTECTION:
                     # If target_room's current_round is greater than search_round,
                     # then the round transition has already occurred and this background board is stale.
@@ -3430,6 +3442,14 @@ class RoomManager:
                     from scoring import calculate_word_score
                     def refine_scores():
                         try:
+                            # Stale parameter check
+                            if launched_generated_at is not None:
+                                curr_generated_at = None
+                                if target_room and getattr(target_room, 'next_spinner_params', None):
+                                    curr_generated_at = target_room.next_spinner_params.get('generated_at')
+                                if curr_generated_at != launched_generated_at:
+                                    return
+
                             # Stale refinement check
                             if target_room.current_round > search_round:
                                 return
@@ -3752,7 +3772,7 @@ class RoomManager:
                 
                 # USER REQUEST: Ensure UI range matches board EXACTLY by using the params used for generation
                 # CRITICAL: Use 'or' to handle cases where next_round_spinner_params is explicitly None
-                active_params = getattr(room, 'next_round_spinner_params', None) or room.spinner_params or {}
+                active_params = room.spinner_params or getattr(room, 'next_round_spinner_params', None) or {}
                 room.current_board_format = 'Valued Letters' if room.time_limit >= 7200 else (getattr(room, 'next_round_format', None) or active_params.get('board_format', 'Normal'))
                 room.current_word_count_range = '200-300' if room.time_limit >= 7200 else active_params.get('word_count_range', '100-200')
                 room.current_difficulty = active_params.get('difficulty', 'Medium')
@@ -4087,6 +4107,7 @@ class RoomManager:
                 room.next_round_word_paths = None
                 room.next_round_word_scores = None
                 room.next_round_bonus = None
+                room.next_round_format = None
                 room.next_round_total_words_count = 0
                 room.next_round_counts_by_len = {}
                 room.next_round_total_points = 0
@@ -4117,6 +4138,9 @@ class RoomManager:
                 room.next_round_word_paths = {}
                 room.next_round_word_scores = {}
                 room.next_round_bonus = None
+                room.next_round_format = None
+                room.next_round_difficulty = None
+                room.next_round_uniqueness = None
                 room.next_round_total_words_count = 0
                 room.next_round_counts_by_len = {}
                 room.next_round_total_points = 0
