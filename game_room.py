@@ -52,6 +52,7 @@ class Player:
     is_ai: bool = False
     ai_rating: int = 1200
     has_abandoned: bool = False
+    cell_density: List = field(default_factory=list)
 
     @property
     def is_registered(self) -> bool:
@@ -263,6 +264,8 @@ class GameRoom:
                 existing_player.joined_mid_round = True
             # Ensure they are removed from round_quitters if they were in there (REJOIN TRANSITION)
             self.round_quitters = [q for q in self.round_quitters if str(q.user_id) != str(user_id)]
+            if not getattr(existing_player, 'cell_density', None):
+                self._initialize_player_density_grid(existing_player)
             if is_daily:
                 self.save_active_players()
             return True
@@ -278,6 +281,8 @@ class GameRoom:
             quitter.last_active = time.time()
             quitter.country_flag = country_flag
             quitter.is_guest = is_guest
+            if not getattr(quitter, 'cell_density', None):
+                self._initialize_player_density_grid(quitter)
             self.players.append(quitter)
             # CRITICAL: Remove from round_quitters so they aren't penalized as a quitter at round end
             self.round_quitters = [q for q in self.round_quitters if str(q.user_id) != str(user_id)]
@@ -300,6 +305,7 @@ class GameRoom:
                 existing_player.invalid_words = []
                 existing_player.score = 0
                 existing_player.previous_round_score = 0
+                existing_player.cell_density = []
             
             existing_player._last_round_seen = self.current_round
             existing_player.last_active = time.time()
@@ -317,6 +323,8 @@ class GameRoom:
                  if (time.time() - existing_player.last_active) > 15:
                       existing_player.joined_mid_round = True
             
+            if not getattr(existing_player, 'cell_density', None):
+                self._initialize_player_density_grid(existing_player)
             self.players.append(existing_player)
             if is_daily:
                 self.save_active_players()
@@ -344,6 +352,7 @@ class GameRoom:
         elif (self.state == 'active' or getattr(self, 'starting_round', False)) and not is_daily:
             player.joined_mid_round = True
             
+        self._initialize_player_density_grid(player)
         self.players.append(player)
         self.past_players[str(user_id)] = player
         self.players.sort(key=lambda p: p.rating, reverse=True)
@@ -859,7 +868,7 @@ class GameRoom:
         
         # USER: Update Density (Only after word is fully validated and scored)
         try:
-            self.update_density_for_word(final_word, path)
+            self.update_density_for_word(player, final_word, path)
         except Exception as e:
             print(f"[Density-Error] Failed to update density: {e}")
         
@@ -947,39 +956,61 @@ class GameRoom:
             p.performance_efficiency = 1.0
             p.has_exceptional_round = multiple_players and p.score > 0 and p.score == max_score and (p.score >= 100)
     
-    def update_density_for_word(self, word, path=None):
-        """Decrement cell density for found words in Density format"""
+    def initialize_player_densities(self):
+        """Initializes or resets player-specific cell densities from the room's initial density grid."""
+        if not self.initial_cell_density:
+            return
+        is_3d = (self.board and isinstance(self.board[0], list) and len(self.board[0]) > 0 and isinstance(self.board[0][0], list))
+        for p in self.players:
+            p.cell_density = [row[:] for row in self.initial_cell_density] if not is_3d else [[row[:] for row in face] for face in self.initial_cell_density]
+
+    def _initialize_player_density_grid(self, player):
+        """Helper to safely initialize a player's density grid from the room's initial density."""
+        if self.initial_cell_density:
+            is_3d = (self.board and isinstance(self.board[0], list) and len(self.board[0]) > 0 and isinstance(self.board[0][0], list))
+            player.cell_density = [row[:] for row in self.initial_cell_density] if not is_3d else [[row[:] for row in face] for face in self.initial_cell_density]
+        else:
+            player.cell_density = []
+
+    def update_density_for_word(self, player, word, path=None):
+        """Decrement cell density for found words in Density format for the given player"""
         cur_fmt = str(self.current_board_format).lower()
-        if 'density' in cur_fmt:
+        if 'density' in cur_fmt and player:
             word_upper = word.upper()
-            if word_upper not in self.global_round_found_words:
-                 self.global_round_found_words.add(word_upper)
-                 # Get path (User path or pre-calculated path)
-                 word_path = path or (self.all_words_paths.get(word_upper) if hasattr(self, 'all_words_paths') else None)
-                 if word_path:
-                     # Handle 3D [f, r, c] vs 2D [r, c]
-                     is_3d = self.board and isinstance(self.board[0], list) and isinstance(self.board[0][0], list)
-                     for node in word_path:
-                         try:
-                             if is_3d:
-                                 coords = list(map(int, node))
-                                 if len(coords) == 3:
-                                     f, r, c = coords
-                                 elif len(coords) == 2:
-                                     f, r, c = 0, coords[0], coords[1]
-                                 else: continue
-                                 
-                                 if f < len(self.cell_density) and r < len(self.cell_density[f]) and c < len(self.cell_density[f][r]):
-                                     if self.cell_density[f][r][c] > 0:
-                                         self.cell_density[f][r][c] -= 1
-                             else:
-                                 coords = list(map(int, node))
-                                 r, c = coords[-2:]
-                                 if r < len(self.cell_density) and c < len(self.cell_density[r]):
-                                     if self.cell_density[r][c] > 0:
-                                         self.cell_density[r][c] -= 1
-                         except (IndexError, TypeError, ValueError): continue
-                     return True
+            
+            # Ensure player's density grid is initialized
+            if not getattr(player, 'cell_density', None):
+                self._initialize_player_density_grid(player)
+                
+            # Get path (User path or pre-calculated path)
+            word_path = path or (self.all_words_paths.get(word_upper) if hasattr(self, 'all_words_paths') else None)
+            if word_path and player.cell_density:
+                # Handle 3D [f, r, c] vs 2D [r, c]
+                is_3d = self.board and isinstance(self.board[0], list) and isinstance(self.board[0][0], list)
+                for node in word_path:
+                    try:
+                        if is_3d:
+                            coords = list(map(int, node))
+                            if len(coords) == 3:
+                                f, r, c = coords
+                            elif len(coords) == 2:
+                                f, r, c = 0, coords[0], coords[1]
+                            else: continue
+                            
+                            if f < len(player.cell_density) and r < len(player.cell_density[f]) and c < len(player.cell_density[f][r]):
+                                if player.cell_density[f][r][c] > 0:
+                                    player.cell_density[f][r][c] -= 1
+                        else:
+                            coords = list(map(int, node))
+                            r, c = coords[-2:]
+                            if r < len(player.cell_density) and c < len(player.cell_density[r]):
+                                if player.cell_density[r][c] > 0:
+                                    player.cell_density[r][c] -= 1
+                    except (IndexError, TypeError, ValueError): continue
+                
+                # Still track globally for FCFS/metrics
+                self.global_round_found_words.add(word_upper)
+                return True
         return False
 
     def initialize_density(self, board, all_words_paths, board_format, is_staging=False):
@@ -1070,6 +1101,7 @@ class GameRoom:
             self.cell_density = density_grid
             self.initial_cell_density = [row[:] for row in density_grid] if not is_3d else [[row[:] for row in face] for face in density_grid]
             self.max_cell_density = max_d
+            self.initialize_player_densities()
         
         print(f"[Density] Initialization complete. Max density: {max_d}")
     
@@ -3944,6 +3976,7 @@ class RoomManager:
                 room.initial_cell_density = getattr(room, 'next_round_initial_cell_density', [])
                 room.max_cell_density = getattr(room, 'next_round_max_cell_density', 0)
                 room.global_round_found_words = set()
+                room.initialize_player_densities()
                 
                 room.solving_complete = True 
                 room.complete_words = list(room.all_words) 

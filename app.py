@@ -3193,6 +3193,7 @@ def get_room_state(room_id):
 
             # Determine user visibility
             user_id = session.get('user_id')
+            requesting_player = room.get_player(user_id) if user_id else None
             
             def get_incremental_data(p):
                 """Helper to filter words and calculate score based on time for incremental bots"""
@@ -3270,7 +3271,10 @@ def get_room_state(room_id):
                 'initial_total_words': getattr(room, 'initial_total_words', actual_total),
                 'total_points_count': (getattr(room, 'next_round_total_points', 0) if (is_intermission and is_revealed and getattr(room, 'next_round_total_points', 0) > 0) else (room.previous_total_points if is_intermission else room.total_points_count)),
                 'total_counts_by_len': (room.previous_total_counts_by_len if is_intermission else getattr(room, 'total_counts_by_len', {})),
-                'cell_density': (getattr(room, 'next_round_cell_density', []) if (is_intermission and is_revealed) else getattr(room, 'cell_density', [])),
+                'cell_density': (
+                    getattr(room, 'next_round_cell_density', []) if (is_intermission and is_revealed)
+                    else (getattr(requesting_player, 'cell_density', []) if (requesting_player and getattr(requesting_player, 'cell_density', None)) else getattr(room, 'cell_density', []))
+                ),
                 'max_cell_density': (getattr(room, 'next_round_max_cell_density', 0) if (is_intermission and is_revealed) else getattr(room, 'max_cell_density', 0)),
                 'all_word_scores': word_scores_to_return,
                 'all_words_paths': room.all_words_paths if is_intermission else {},
@@ -3470,7 +3474,7 @@ def submit_word(room_id):
         'points': points,
         'word': final_word,
         'new_score': new_score,
-        'cell_density': getattr(room, 'cell_density', None),
+        'cell_density': (getattr(player, 'cell_density', None) if (player and getattr(player, 'cell_density', None)) else getattr(room, 'cell_density', None)),
         'max_cell_density': getattr(room, 'max_cell_density', 0)
     })
 
