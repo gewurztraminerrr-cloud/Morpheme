@@ -79,7 +79,7 @@ class SpinnerSet:
             fallback = {
                 'difficulty': random.choices(['Easy', 'Medium', 'Hard'], weights=[25, 50, 25])[0],
                 'dictionary': random.choice(['NWL', 'CSW']),
-                'word_count_range': '200-300' if is_24h else random.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0],
+                'word_count_range': '200-300' if is_24h else random.choices(['100-200', '200-300', '300-400', '500+'], weights=[30, 30, 30, 1])[0],
                 'board_format': 'Valued Letters' if is_24h else 'Normal',
                 'min_word_length': 3,
                 'bonus_word_length': 8,
@@ -265,7 +265,7 @@ class SpinnerSet:
             return {
                 'difficulty': random.choices(['Easy', 'Medium', 'Hard'], weights=[25, 50, 25])[0],
                 'dictionary': random.choice(['NWL', 'CSW']),
-                'word_count_range': random.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0],
+                'word_count_range': random.choices(['100-200', '200-300', '300-400', '500+'], weights=[30, 30, 30, 1])[0],
                 'board_format': 'Normal',
                 'min_word_length': 3,
                 'bonus_word_length': 8,
@@ -322,9 +322,9 @@ class SpinnerSet:
             choices = ['50-100', '100-200', '200-300', '300-400', '500+']
             weights = [9, 30, 30, 30, 1]
         else:
-            # Standard rebalanced odds: 33% 100-200, 33% 200-300, 33% 300-400, 1% 500+
+            # Standard rebalanced odds: 30% 100-200, 30% 200-300, 30% 300-400, 1% 500+
             choices = ['100-200', '200-300', '300-400', '500+']
-            weights = [33, 33, 33, 1]
+            weights = [30, 30, 30, 1]
             
         return random.choices(choices, weights=weights)[0]
     
