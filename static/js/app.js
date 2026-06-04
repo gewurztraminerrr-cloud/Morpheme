@@ -1952,10 +1952,10 @@ window.loadFAQDictionaryStats = async function() {
                     html += `
                         <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
                             <td style="padding: 8px 10px; text-align: left; font-weight: 600; opacity: 0.8;">${lenLabel}</td>
-                            <td style="padding: 8px 10px;">${nwlCount.toLocaleString()}</td>
-                            <td style="padding: 8px 10px;">${cswCount.toLocaleString()}</td>
+                            <td style="padding: 8px 10px; font-weight: ${nwlCount > 0 ? '700' : 'normal'}; color: ${nwlCount > 0 ? '#60a5fa' : 'inherit'};">${nwlCount.toLocaleString()}</td>
+                            <td style="padding: 8px 10px; font-weight: ${cswCount > 0 ? '700' : 'normal'}; color: ${cswCount > 0 ? '#fbbf24' : 'inherit'};">${cswCount.toLocaleString()}</td>
                             <td style="padding: 8px 10px; font-weight: ${awCount > 0 ? '700' : 'normal'}; color: ${awCount > 0 ? '#c084fc' : 'inherit'};">${awCount.toLocaleString()}</td>
-                            <td style="padding: 8px 10px; font-weight: ${longCount > 0 ? '700' : 'normal'}; color: ${longCount > 0 ? '#fbbf24' : 'inherit'};">${longCount.toLocaleString()}</td>
+                            <td style="padding: 8px 10px; font-weight: ${longCount > 0 ? '700' : 'normal'}; color: ${longCount > 0 ? '#f87171' : 'inherit'};">${longCount.toLocaleString()}</td>
                         </tr>
                     `;
                 });
