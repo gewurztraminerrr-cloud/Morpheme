@@ -1155,6 +1155,7 @@ async function updateGameState(incomingState = null) {
 
         // Sync local timer with server
         syncTimerWithServer(state);
+        updateLocalTimer();
 
         // Track last successful server update
         lastServerUpdate = Date.now();
