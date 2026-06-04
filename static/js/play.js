@@ -1211,37 +1211,12 @@ async function updateGameState(incomingState = null) {
         // --- POST-ROUND RESULTS RENDERING (Heartbeat Sync) ---
         if (state.state === 'intermission') {
             const currentRoundId = `${state.room_id}_${state.current_round}`;
-            const wordsListEl = document.getElementById('submitted-words-list');
-            
-            // OPTIMIZATION: Only render the massive word list once per round transition or when solving finishes.
-            // Rendering 2000+ words on every pulse (1s) can cause the browser main thread to hang.
-            const isTransition = !window.lastRenderedIntermissionWords || window.lastRenderedIntermissionWords !== currentRoundId;
-            const isEmpty = wordsListEl && (wordsListEl.innerHTML.includes('placeholder') || wordsListEl.children.length === 0);
-            const newlySolved = state.solving_complete && !window.lastSolvingComplete;
-            
-            if (isTransition || isEmpty || newlySolved) {
-                if (state.all_words) {
-                    const myWords = state.players.find(p => p.username.toLowerCase().trim() === (state.your_username || currentUsername || '').toLowerCase().trim())?.submitted_words || [];
-                    const allFound = state.players.reduce((acc, p) => acc.concat(p.submitted_words || []), []);
-                    
-                    const addedForList = state.state === 'intermission' ? (state.previous_added_words || state.added_words) : state.added_words;
-                    displayAllWords(
-                        state.all_words, 
-                        state.bonus_word, 
-                        myWords, 
-                        allFound, 
-                        state.all_word_scores || {}, 
-                        state.csw_only_words || [], 
-                        addedForList || []
-                    );
-                    window.lastRenderedIntermissionWords = currentRoundId;
-                    window.lastSolvingComplete = state.solving_complete;
-                }
-            }
-
+            window.lastRenderedIntermissionWords = currentRoundId;
+            window.lastSolvingComplete = state.solving_complete;
         } else if (state.state !== 'intermission') {
             window.lastRenderedIntermissionWords = null;
             window.lastSolvingComplete = false;
+            window.lastRenderedIntermissionKey = null; // Clear render cache key outside intermission
             const filterContainer = document.getElementById('length-filter-container');
             if (filterContainer) filterContainer.style.display = 'none';
             const findersContainer = document.getElementById('finders-button-container');
@@ -1542,9 +1517,17 @@ async function updateGameState(incomingState = null) {
                 const uniqueGlobalFound = [...new Set(allPlayerFoundStrs)];
                 const bonusForList = state.state === 'intermission' ? (state.previous_bonus_word || state.bonus_word) : state.bonus_word;
                 const cswForList = state.state === 'intermission' ? (state.previous_csw_only_words || state.csw_only_words) : state.csw_only_words;
-                
                 const addedForList = state.state === 'intermission' ? (state.previous_added_words || state.added_words) : state.added_words;
-                displayAllWords(allWords, bonusForList, targetWords, uniqueGlobalFound, state.all_word_scores, cswForList, addedForList);
+
+                const roundId = `${state.room_id}_${state.current_round}`;
+                const filterJSON = JSON.stringify(window.intermissionTileFilter || null);
+                const selectedLen = window.selectedAllWordsLength || 'all';
+                const currentRenderKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedPlayerUsername || ''}`;
+
+                if (window.lastRenderedIntermissionKey !== currentRenderKey) {
+                    displayAllWords(allWords, bonusForList, targetWords, uniqueGlobalFound, state.all_word_scores, cswForList, addedForList);
+                    window.lastRenderedIntermissionKey = currentRenderKey;
+                }
                 if (state.game_type === 'split' || state.game_type === 'fcfs') addSplitViewBoardToggle();
 
             } else if (state.game_type !== 'fcfs') {
@@ -2567,6 +2550,64 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+function rebuildTileToWordsMap() {
+    window.tileToWordsMap = {};
+    window.tileToWordsMapCacheKey = null;
+
+    if (!window.lastGameState || !window.lastGameState.all_words_paths) return;
+
+    const paths = window.lastGameState.all_words_paths;
+    const isTransposed = !!window.isBoardTransposed;
+    const roundId = `${window.lastGameState.room_id}_${window.lastGameState.current_round}`;
+    const cacheKey = `${roundId}_${isTransposed}`;
+
+    for (const [wordUpper, path] of Object.entries(paths)) {
+        if (!path) continue;
+        for (let i = 0; i < path.length; i++) {
+            const node = path[i];
+            let nf = -1, nr = -1, nc = -1;
+            if (Array.isArray(node)) {
+                if (node.length === 3) {
+                    nf = node[0];
+                    nr = node[1];
+                    nc = node[2];
+                } else {
+                    nr = node[0];
+                    nc = node[1];
+                }
+            } else if (node && typeof node === 'object') {
+                nf = node.f !== undefined ? node.f : -1;
+                nr = node.r !== undefined ? node.r : -1;
+                nc = node.c !== undefined ? node.c : -1;
+            }
+
+            let matchR = nr;
+            let matchC = nc;
+            if (isTransposed) {
+                matchR = nc;
+                matchC = nr;
+            }
+
+            const key = (nf !== -1) ? `${nf},${matchR},${matchC}` : `${matchR},${matchC}`;
+            if (!window.tileToWordsMap[key]) {
+                window.tileToWordsMap[key] = new Set();
+            }
+            window.tileToWordsMap[key].add(wordUpper);
+        }
+    }
+    window.tileToWordsMapCacheKey = cacheKey;
+    console.log(`[rebuildTileToWordsMap] Pre-mapped ${Object.keys(window.tileToWordsMap).length} tiles for round ${roundId}`);
+}
+
+function updateIntermissionRenderKey() {
+    if (!window.lastGameState) return;
+    const state = window.lastGameState;
+    const roundId = `${state.room_id}_${state.current_round}`;
+    const filterJSON = JSON.stringify(window.intermissionTileFilter || null);
+    const selectedLen = window.selectedAllWordsLength || 'all';
+    window.lastRenderedIntermissionKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedPlayerUsername || ''}`;
+}
+
 function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWords = [], allWordScores = {}, cswOnlyWords = [], addedWords = []) {
     console.log(`[displayAllWords] RENDERING. BonusWord: "${bonusWord}" | Words count: ${allWords ? allWords.length : 0}`);
     const listEl = document.getElementById('submitted-words-list');
@@ -2704,43 +2745,17 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     let displayWords = cleanWords;
     if (window.intermissionTileFilter && window.lastGameState && window.lastGameState.all_words_paths) {
         const { r, c, f } = window.intermissionTileFilter;
-        const paths = window.lastGameState.all_words_paths;
+        const roundId = window.lastGameState ? `${window.lastGameState.room_id}_${window.lastGameState.current_round}` : null;
         const isTransposed = !!window.isBoardTransposed;
-        displayWords = displayWords.filter(entry => {
-            const path = paths[entry.wordUpper];
-            if (!path) return false;
-            for (let i = 0; i < path.length; i++) {
-                const node = path[i];
-                let nf = -1, nr = -1, nc = -1;
-                if (Array.isArray(node)) {
-                    if (node.length === 3) {
-                        nf = node[0];
-                        nr = node[1];
-                        nc = node[2];
-                    } else {
-                        nr = node[0];
-                        nc = node[1];
-                    }
-                } else if (node && typeof node === 'object') {
-                    nf = node.f !== undefined ? node.f : -1;
-                    nr = node.r !== undefined ? node.r : -1;
-                    nc = node.c !== undefined ? node.c : -1;
-                }
-                let matchR = nr;
-                let matchC = nc;
-                if (isTransposed) {
-                    matchR = nc; // original column matches transposed row (r)
-                    matchC = nr; // original row matches transposed column (c)
-                }
+        const cacheKey = `${roundId}_${isTransposed}`;
 
-                if (f !== null && f !== -1) {
-                    if (nf === f && matchR === r && matchC === c) return true;
-                } else {
-                    if (matchR === r && matchC === c) return true;
-                }
-            }
-            return false;
-        });
+        if (!window.tileToWordsMap || window.tileToWordsMapCacheKey !== cacheKey) {
+            rebuildTileToWordsMap();
+        }
+
+        const filterKey = (f !== null && f !== undefined && f !== -1) ? `${f},${r},${c}` : `${r},${c}`;
+        const matchingWords = window.tileToWordsMap[filterKey] || new Set();
+        displayWords = displayWords.filter(entry => matchingWords.has(entry.wordUpper));
     }
 
     // Filter by length
@@ -2917,6 +2932,9 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             <span class="points-math">${pointsText}</span>
         </div>`;
     }).join('');
+
+    // Synchronize render cache key to prevent redundant heartbeat re-renders
+    updateIntermissionRenderKey();
 }
 
 // ... existing functions (updateParameters, renderBoard, etc) ...
@@ -5918,6 +5936,8 @@ function updateWordInputFromPath() {
 function handleIntermissionTilePress(cell, r, c, f, letter) {
     console.log(`[IntermissionPress] Pressed tile at row=${r}, col=${c}, face=${f}, letter=${letter}`);
     
+    let tabSwitched = false;
+    
     // Toggle/Set the filter
     if (window.intermissionTileFilter && 
         window.intermissionTileFilter.r === r && 
@@ -5936,15 +5956,18 @@ function handleIntermissionTilePress(cell, r, c, f, letter) {
         window.intermissionTileFilter = { r, c, f, letter };
         cell.classList.add('intermission-highlight');
         
-        // Automatically switch to 'found' (All Words) tab
-        const foundTabBtn = document.querySelector('.word-tab[data-tab="found"]');
-        if (foundTabBtn) {
-            foundTabBtn.click();
+        // Automatically switch to 'found' (All Words) tab if not already on it
+        if (activeWordsTab !== 'found') {
+            const foundTabBtn = document.querySelector('.word-tab[data-tab="found"]');
+            if (foundTabBtn) {
+                tabSwitched = true;
+                foundTabBtn.click();
+            }
         }
     }
     
-    // Re-display all words (Render instantly BEFORE scrolling)
-    if (window.lastDisplayAllWordsArgs) {
+    // Re-display all words (Render instantly BEFORE scrolling, unless tab click already did it)
+    if (!tabSwitched && window.lastDisplayAllWordsArgs) {
         displayAllWords(...window.lastDisplayAllWordsArgs);
     }
 
