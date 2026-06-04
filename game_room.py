@@ -2186,7 +2186,8 @@ class RoomManager:
                                                 player_snapshots=old_players,
                                                 round_num=archive_round_num,
                                                 all_words_paths=old_paths,
-                                                round_start_time=updated_at
+                                                round_start_time=updated_at,
+                                                board_format=old_board_format
                                             )
                                             print(f"[RoomManager] Successfully archived outdated 24h board as Round {archive_round_num}")
                                         except Exception as archive_err:
@@ -3663,6 +3664,7 @@ class RoomManager:
             # ATOMIC REFERENCE CAPTURE: Since we replace the board object, a reference is safe and instant.
             ghost_prev_board = room.board 
             ghost_round_start_time = room.round_start_time
+            ghost_board_format = room.current_board_format
             
             ghost_source_words = list(room.complete_words) if (getattr(room, 'complete_words', None) and len(room.complete_words) > 0) else list(room.all_words)
             ghost_bonus = (room.bonus_word.upper() if room.bonus_word else None)
@@ -3772,7 +3774,7 @@ class RoomManager:
                 
                 # USER REQUEST: Ensure UI range matches board EXACTLY by using the params used for generation
                 # CRITICAL: Use 'or' to handle cases where next_round_spinner_params is explicitly None
-                active_params = room.spinner_params or getattr(room, 'next_round_spinner_params', None) or {}
+                active_params = getattr(room, 'next_round_spinner_params', None) or room.spinner_params or {}
                 room.current_board_format = 'Valued Letters' if room.time_limit >= 7200 else (getattr(room, 'next_round_format', None) or active_params.get('board_format', 'Normal'))
                 room.current_word_count_range = '200-300' if room.time_limit >= 7200 else active_params.get('word_count_range', '100-200')
                 room.current_difficulty = active_params.get('difficulty', 'Medium')
@@ -4185,7 +4187,8 @@ class RoomManager:
                         player_snapshots=ghost_player_snapshots,
                         round_num=ghost_round_num,
                         all_words_paths=ghost_all_words_paths,
-                        round_start_time=ghost_round_start_time
+                        round_start_time=ghost_round_start_time,
+                        board_format=ghost_board_format
                     )
                     
                     # USER REQUEST: Word Tally logging (CSW words only)
@@ -4281,7 +4284,7 @@ class RoomManager:
         return result
     
     
-    def save_round_history(self, room, board=None, all_words=None, bonus_word=None, player_snapshots=None, round_num=None, all_words_paths=None, round_start_time=None):
+    def save_round_history(self, room, board=None, all_words=None, bonus_word=None, player_snapshots=None, round_num=None, all_words_paths=None, round_start_time=None, board_format=None):
         """Save the results of the JUST COMPLETED round to the database"""
         # Determine target round number (use snapshot if provided, otherwise room's current)
         target_round = round_num if round_num is not None else room.current_round
@@ -4323,7 +4326,7 @@ class RoomManager:
             else:
                 timestamp = now.strftime('%Y-%m-%d %H:%M:%S')
             
-            board_format = room.current_board_format
+            board_format = board_format if board_format is not None else room.current_board_format
             wc_range = room.spinner_params.get('word_count_range', (0, 0))
             wc_tuple = room._get_wc_tuple(wc_range)
             is_500plus = wc_tuple[0] >= 500
