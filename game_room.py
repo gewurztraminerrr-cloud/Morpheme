@@ -1219,6 +1219,7 @@ class GameRoom:
                 self.next_round_spinner_params = None
                 
                 self.board_search_started = False
+                self.board_search_started_actual = False
                 self.board_search_loading = False
                 self.starting_round = False
                 
@@ -3156,6 +3157,20 @@ class RoomManager:
                     new_params['board_dimensions'] = room.board_dimensions
                     new_params['time_limit'] = room.time_limit
                     
+                    # Clear staged board from previous parameters so it doesn't get promoted
+                    room.next_round_board = None
+                    room.next_round_words = None
+                    room.next_round_word_paths = None
+                    room.next_round_word_scores = None
+                    room.next_round_bonus = None
+                    room.next_round_format = None
+                    room.next_round_total_words_count = 0
+                    room.next_round_counts_by_len = {}
+                    room.next_round_total_points = 0
+                    room.board_search_started = False
+                    room.board_search_started_actual = False
+                    room.board_search_loading = False
+
                     room.next_spinner_params = dict(new_params)
                     room.spinner_params_generated = True
 

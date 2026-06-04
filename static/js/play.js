@@ -2020,10 +2020,10 @@ async function updateGameState(incomingState = null) {
             }
         }
 
-        // Rapid retry if server is lagged (stayed in active state but time is up)
-        if (state && state.state === 'active' && state.time_remaining <= 0) {
-            console.warn('[play.js] Server state is active with 0s left. Scheduling rapid state check in 200ms...');
-            if (!window._rapidPollCount || window._rapidPollCount < 15) {
+        // Rapid retry if server is lagged (stayed in active or intermission state but time is up)
+        if (state && (state.state === 'active' || state.state === 'intermission') && state.time_remaining <= 0) {
+            console.warn(`[play.js] Server state is ${state.state} with 0s left. Scheduling rapid state check in 200ms...`);
+            if (!window._rapidPollCount || window._rapidPollCount < 20) {
                 window._rapidPollCount = (window._rapidPollCount || 0) + 1;
                 setTimeout(() => updateGameState(), 200);
             }
