@@ -4,12 +4,12 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `abbe149` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `abbe149` / `snapshot-current` / `START_OVER_POINT_JUNE_3` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `abbe149` / `snapshot-current` | ✅ Fully Deployed & PM2 Reloaded |
+| **localhost** (`/Users/jeffbabiak/`) | `aad7cd2` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `aad7cd2` / `snapshot-current` / `START_OVER_POINT_JUNE_3` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `aad7cd2` / `snapshot-current` | ✅ Fully Deployed & PM2 Reloaded |
 
-**All environments are 100% synchronized at the latest commit `abbe149`.**
-The local modifications to `templates/index.html` and `static/js/play.js` have been committed, pushed to GitHub, and successfully deployed to the remote production environment via the `deploy.py` script. The active production tags `snapshot-current` and `START_OVER_POINT_JUNE_3` have been updated and pushed to remote.
+**All environments are 100% synchronized at the latest commit `aad7cd2`.**
+The local modifications to `templates/index.html` and `spinner_set.py` have been committed, pushed to GitHub, and successfully deployed to the remote production environment via the `deploy.py` script. The active production tags `snapshot-current` and `START_OVER_POINT_JUNE_3` have been updated and pushed to remote.
 
 ---
 
@@ -17,36 +17,31 @@ The local modifications to `templates/index.html` and `static/js/play.js` have b
 
 | File | Version / State | Description |
 |------|-----------------|-------------|
+| `spinner_set.py` | Commit `aad7cd2` | Updated word count range weights for standard / non-greatest configurations to `[30, 30, 30, 1]` to align with target distribution. |
+| `templates/index.html` | Commit `aad7cd2` | Updated FAQ Spinner Word Count Range Distribution list and bumped play.js cache-buster query tag to `?v=126`. |
+| `static/js/play.js` | Commit `63e9fe0` | Optimized intermission letter filtering performance: pre-built coordinate lookup maps (`O(1)` word lookup) and implemented render key cache checks to prevent redundant heartbeat rendering on mobile. |
 | `game_room.py` | Commit `ad70317` | Updated short valid word validation error message to return uppercase format: `f"{word.upper()} IS TOO SHORT (MIN: {min_len_req}L)"`. |
-| `static/js/play.js` | Commit `abbe149` | Implemented 60% lightness contrast threshold for white text, linear scaling for lighter backgrounds, selection styling overrides, and wait dots animation. |
 | `static/css/play.css` | Commit `ad70317` | Added CSS styles and keyframes animation `wait-bounce` for wait-dots. |
-| `templates/index.html` | Commit `abbe149` | Bumped play.js query version tag to `?v=124` to prevent client-side cache issues. |
 | `board_generator.py` | Commit `e7a3740` | Resolved 3D cube neighbor transitions inside `_has_ing_sequence`, `_sanitize_forbidden_sequences`, and `_guarantee_no_ing`. Enforced ING sequence verification on both target and achieved difficulties. Supported 3D Either/Or layouts and added early-break optimization for protected tiles. |
 
 ---
 
-## Work Completed Up To June 3, 2026
+## Work Completed on June 3, 2026
 
-### 1. Fix Short Valid Word Validation Feedback
-* **Goal achieved:** Prevented the client from displaying "Invalid Word" before replacing it with the server's "too short" validation message when a valid word is entered below the minimum length requirement.
-* **Fix details:** The client now skips optimistic validation for words below the minimum length. In tournament and private match modes, the validation output is correctly formatted as `[WORD] IS TOO SHORT (MIN: [MIN]L)`.
+### 1. Instant Intermission Letter Filtering on Mobile
+* **Goal achieved:** Optimized intermission letter-filtering loading performance to be instant on mobile devices.
+* **Fix details:** 
+  - Pre-built a coordinate-lookup map (`rebuildTileToWordsMap`) mapping tile coords to matching words.
+  - Cached the map per round, reducing coordinate traversal checks to direct `O(1)` lookups.
+  - Added an intermission render key cache check (`window.lastRenderedIntermissionKey`) to prevent full list re-rendering on heartbeat ticks when the active tab remains unchanged.
+  - Cleared redundant found tab click handlers.
 
-### 2. Bouncing WAIT... Dots & Mobile Wake-up Fix
-* **Goal achieved:** The waiting status message in rooms ("WAIT...") now features a wave-like sequential bouncing animation for the dots.
-* **Fix details:** The animation resets via a robust force-restart technique (clearing the element, forcing reflow, and toggling styles in `requestAnimationFrame`) upon tab focus/visibility events, ensuring animations never freeze on mobile wake-up.
-
-### 3. Fix 3D Cube Neighbor Resolution inside Sequence Checkers
-* **Goal achieved:** The "ING" sequence checkers (`_has_ing_sequence`, `_sanitize_forbidden_sequences`, and `_guarantee_no_ing`) now correctly use `_get_cube_neighbors(f, r, c)` when checking 3D cube layouts.
-
-### 4. Enforce ING Check on Promoted Boards
-* **Goal achieved:** If a board generated for an "Easy" target difficulty achieves a uniqueness ratio that places it in the "Medium" or "Hard" difficulty label range, the generator now detects the achieved difficulty and runs "ING" checks/sanitization.
-
-### 5. Support 3D Either/Or Layouts
-* **Goal achieved:** Rewrote the Either/Or tile application block inside both `generate_board` and `_generate_emergency_compliant_board` to support 3D coordinates `(f, r, c)`.
-
-### 6. Density Format Text Contrast Adjustments
-* **Goal achieved:** Density format tiles have highly readable letters with good contrast regardless of background darkness, and transitions are smooth.
-* **Fix details:** Changed contrast logic to use a 60% background lightness threshold for white text, and linearly scale dark text lightness for lighter cells. Added version cache-busting.
+### 2. Spinner Word Count Range Distribution Updates
+* **Goal achieved:** Updated the "Spinner Word Count Range Distribution" to reflect new percentages in both the FAQ and gameplay.
+* **Fix details:**
+  - FAQ list in `index.html` updated to show: 9% 50-100 words, 30% 100-200 words, 30% 200-300 words, 30% 300-400 words, 1% 500+ words.
+  - Configured `spinner_set.py` weights to `[30, 30, 30, 1]` for standard min-length configurations to match these exact percentages when the `50-100` range is excluded.
+  - Bumped play.js query string to `v=126` for cache invalidation.
 
 ---
 
@@ -54,8 +49,9 @@ The local modifications to `templates/index.html` and `static/js/play.js` have b
 
 | File | Location | Purpose |
 |------|----------|---------|
+| `spinner_set.py` | Production + GitHub | Gameplay spinner word count range generation and weights. |
+| `templates/index.html` | Production + GitHub | Main client HTML containing versioned references to static assets and static FAQ text. |
+| `static/js/play.js` | Production + GitHub | Client-side intermission letter filtering logic and cache render key checks. |
 | `game_room.py` | Production + GitHub | Server-side validation and formatting of short valid words. |
-| `static/js/play.js` | Production + GitHub | Client-side validation logic, state polling wake-up handler, wait dots formatting, and density contrast colors. |
 | `static/css/play.css` | Production + GitHub | Styles for wait-dot animation. |
-| `templates/index.html` | Production + GitHub | Main client HTML containing versioned references to static assets. |
 | `board_generator.py` | Production + GitHub | Resolved 3D neighbor transition logic, enforced target/achieved difficulty checks, and supported 3D Either/Or layouts. |
