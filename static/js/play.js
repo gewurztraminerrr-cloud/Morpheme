@@ -1530,7 +1530,7 @@ async function updateGameState(incomingState = null) {
                 const roundId = `${state.room_id}_${state.current_round}`;
                 const filterJSON = JSON.stringify(window.intermissionTileFilter || null);
                 const selectedLen = window.selectedAllWordsLength || 'all';
-                const currentRenderKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedPlayerUsername || ''}`;
+                const currentRenderKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}`;
 
                 if (window.lastRenderedIntermissionKey !== currentRenderKey) {
                     displayAllWords(allWords, bonusForList, targetWords, uniqueGlobalFound, state.all_word_scores, cswForList, addedForList);
@@ -2613,7 +2613,7 @@ function updateIntermissionRenderKey() {
     const roundId = `${state.room_id}_${state.current_round}`;
     const filterJSON = JSON.stringify(window.intermissionTileFilter || null);
     const selectedLen = window.selectedAllWordsLength || 'all';
-    window.lastRenderedIntermissionKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedPlayerUsername || ''}`;
+    window.lastRenderedIntermissionKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}`;
 }
 
 function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWords = [], allWordScores = {}, cswOnlyWords = [], addedWords = []) {
@@ -5403,20 +5403,34 @@ async function submitWord(wordParam = null, pathParam = null) {
         const minLen = preState.current_min_length || (preState.spinner_params ? preState.spinner_params.min_word_length : 3) || 3;
         const effectiveLen = word.replace(/Q(?!U)/g, 'QU').length;
 
-        const myPlayer = preState.players && preState.players.find(p =>
-            p.username && currentUser && p.username.toLowerCase() === currentUser.toLowerCase()
-        );
-        const alreadyFound = myPlayer && myPlayer.submitted_words &&
-            myPlayer.submitted_words.some(w => (typeof w === 'object' ? (w.word || '') : w).toUpperCase() === word);
+        let alreadyFound = false;
+        if (preState.game_type === 'fcfs') {
+            alreadyFound = preState.players && preState.players.some(p =>
+                p.submitted_words && p.submitted_words.some(w => (typeof w === 'object' ? (w.word || '') : w).toUpperCase() === word)
+            );
+        } else {
+            const myPlayer = preState.players && preState.players.find(p =>
+                p.username && currentUser && p.username.toLowerCase() === currentUser.toLowerCase()
+            );
+            alreadyFound = myPlayer && myPlayer.submitted_words &&
+                myPlayer.submitted_words.some(w => (typeof w === 'object' ? (w.word || '') : w).toUpperCase() === word);
+        }
 
         if (alreadyFound) {
             // Definitively already found — flash purple immediately.
             showValidationFeedback('Already found!', false, false, finalPath);
             optimisticColor = 'purple';
         } else if (effectiveLen < minLen) {
-            // Word is too short. Let the server validate it and return "ACTS IS TOO SHORT (MIN: 6L)" or similar
-            // to avoid showing "Invalid Word" (red flash) beforehand.
-            optimisticColor = null;
+            // Word is too short. Flash red immediately to avoid hesitation!
+            const allWords = preState.all_words || [];
+            const isInWordList = allWords.some(w =>
+                (typeof w === 'object' ? (w.word || '') : w).toUpperCase() === word
+            );
+            const msg = isInWordList 
+                ? `${word} IS TOO SHORT (MIN: ${minLen}L)` 
+                : `${word} INVALID`;
+            showValidationFeedback(msg, false, false, finalPath);
+            optimisticColor = 'red';
         } else if (finalPath && finalPath.length > 0) {
             // Check dictionary validity locally using the authoritative all_words list from the game state
             const allWords = preState.all_words || [];
@@ -5493,10 +5507,37 @@ async function submitWord(wordParam = null, pathParam = null) {
 
 
 
+        let isSpecialSkip = false;
+        const preState = window.lastGameState;
+        if (preState) {
+            const minLen = preState.current_min_length || (preState.spinner_params ? preState.spinner_params.min_word_length : 3) || 3;
+            const effectiveLen = word.replace(/Q(?!U)/g, 'QU').length;
+            
+            let alreadyFound = false;
+            if (preState.game_type === 'fcfs') {
+                alreadyFound = preState.players && preState.players.some(p =>
+                    p.submitted_words && p.submitted_words.some(w => (typeof w === 'object' ? (w.word || '') : w).toUpperCase() === word)
+                );
+            } else {
+                const myPlayer = preState.players && preState.players.find(p =>
+                    p.username && currentUser && p.username.toLowerCase() === currentUser.toLowerCase()
+                );
+                alreadyFound = myPlayer && myPlayer.submitted_words &&
+                    myPlayer.submitted_words.some(w => (typeof w === 'object' ? (w.word || '') : w).toUpperCase() === word);
+            }
+            
+            if (alreadyFound || effectiveLen < minLen) {
+                isSpecialSkip = true;
+            }
+        }
+        if (serverIsAlreadyFound) {
+            isSpecialSkip = true;
+        }
+
         if (data.success) {
-            recordGuessResult(true, true);
+            recordGuessResult(true, true, isSpecialSkip);
         } else {
-            recordGuessResult(false, finalPath && finalPath.length > 0);
+            recordGuessResult(false, finalPath && finalPath.length > 0, isSpecialSkip);
         }
 
         if (data.success) {
@@ -5610,7 +5651,8 @@ async function submitWord(wordParam = null, pathParam = null) {
     }
 }
 
-function recordGuessResult(isValid, isOnBoard) {
+function recordGuessResult(isValid, isOnBoard, isSpecialSkip = false) {
+    if (isSpecialSkip) return;
     if (isValid) {
         wrongGuessesOnBoardCount = 0;
     } else {
@@ -6124,6 +6166,19 @@ function updateWordInputFromPath() {
 }
 
 function handleIntermissionTilePress(cell, r, c, f, letter) {
+    // Do not allow a letter to be pressed on the board during intermission until 5 seconds into the intermission have elapsed
+    if (window.lastGameState && window.lastGameState.state === 'intermission') {
+        const intermission_duration = (window.lastGameState.time_limit >= 7200) ? 5 : 60;
+        const now = Date.now() / 1000;
+        const remaining = localEndTime ? Math.max(0, localEndTime - now) : (window.lastGameState.time_remaining || 0);
+        const elapsed = intermission_duration - remaining;
+        
+        if (elapsed < 5) {
+            console.log(`[IntermissionPress] Press ignored. Only ${elapsed.toFixed(1)}s elapsed in intermission (requires 5.0s).`);
+            return;
+        }
+    }
+
     console.log(`[IntermissionPress] Pressed tile at row=${r}, col=${c}, face=${f}, letter=${letter}`);
     
     let tabSwitched = false;
@@ -6629,7 +6684,7 @@ async function handleTournamentWord(word) {
 
     if (tournamentWords.find(w => w.word === word)) {
         showValidationFeedback('Already found!', false, false, path);
-        recordGuessResult(false, path && path.length > 0);
+        recordGuessResult(false, path && path.length > 0, true);
         return;
     }
 
@@ -6660,7 +6715,7 @@ async function handleTournamentWord(word) {
     const effectiveLen = word.replace(/Q(?!U)/g, 'QU').length;
     if (effectiveLen < minLen && !is_valid_dict) {
         showValidationFeedback("Sequence not a word and too small", false, false, path);
-        recordGuessResult(false, path && path.length > 0);
+        recordGuessResult(false, path && path.length > 0, true);
         return;
     }
 
@@ -6672,7 +6727,7 @@ async function handleTournamentWord(word) {
 
     if (effectiveLen < minLen) {
         showValidationFeedback(`${word.toUpperCase()} IS TOO SHORT (MIN: ${minLen}L)`, false, false, path);
-        recordGuessResult(false, path && path.length > 0);
+        recordGuessResult(false, path && path.length > 0, true);
         return;
     }
 
@@ -7041,7 +7096,7 @@ async function handlePrivateMatchWord(word, path = null) {
 
     if (privateMatchWords.find(w => w.word === resolvedWord)) {
         showValidationFeedback('Already found!', false, false, resolvedPath);
-        recordGuessResult(false, resolvedPath && resolvedPath.length > 0);
+        recordGuessResult(false, resolvedPath && resolvedPath.length > 0, true);
         return;
     }
 
@@ -7072,7 +7127,7 @@ async function handlePrivateMatchWord(word, path = null) {
         } else {
             showValidationFeedback(`${word.toUpperCase()} IS TOO SHORT (MIN: ${minLen}L)`, false, false, resolvedPath);
         }
-        recordGuessResult(false, resolvedPath && resolvedPath.length > 0);
+        recordGuessResult(false, resolvedPath && resolvedPath.length > 0, true);
         return;
     }
 
