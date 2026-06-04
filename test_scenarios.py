@@ -33,8 +33,8 @@ def scenario_1(difficulty_set, bonus_words, target_range=(50, 100), target_ratio
     while time.time() - start_time < 60:
         attempts += 1
         bonus = random.choice(bonus_words)
-        # Generate a board (Normal 4x4)
-        board, words, _, _, _ = gen.generate_board('4x4', bonus, target_range, 'NWL', 'Normal', 3)
+        res = gen.generate_board('4x4', bonus, target_range, 'NWL', 'Normal', 3)
+        board, words = res[0], res[1]
         
         all_found, unique_found = solve_for_uniques(board, difficulty_set)
         total = len(all_found)

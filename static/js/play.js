@@ -1,5 +1,7 @@
 let isTournamentPlay = false;
 let isPrivateMatchPlay = false;
+let wrongGuessesOnBoardCount = 0;
+window.isPopupVisible = false;
 let privateMatchWords = [];
 let privateMatchScore = 0;
 let privateMatchParams = null;
@@ -192,6 +194,11 @@ document.addEventListener('touchstart', () => {
 }, true);
 
 document.addEventListener('keydown', (e) => {
+    if (window.isPopupVisible) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+    }
     // If the event target is an INPUT or TEXTAREA, only toggle to keyboard if it's the game word-input!
     if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
         if (e.target.id !== 'word-input') {
@@ -1257,6 +1264,7 @@ async function updateGameState(incomingState = null) {
         const isNewRound = (state.state === 'active' && (lastStateStr !== 'active' || (previousState && state.current_round !== previousState.current_round)));
         if (lastStateStr !== state.state || isNewRound) {
             if (isNewRound) {
+                wrongGuessesOnBoardCount = 0;
                 // Clear word panel render cache for new round to prevent stale pre-validation
                 window.lastDisplayAllWordsArgs = null;
 
@@ -5141,6 +5149,11 @@ function initWordSubmission() {
 // DELEGATED GLOBAL LISTENER for Enter-key submission
 // This ensures it works even if the input element is re-created or swapped.
 document.addEventListener('keydown', (e) => {
+    if (window.isPopupVisible) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+    }
     if (e.target && e.target.id === 'word-input') {
         if (e.key === 'Enter' || e.key === 'Return') {
             e.preventDefault();
@@ -5481,6 +5494,12 @@ async function submitWord(wordParam = null, pathParam = null) {
 
 
         if (data.success) {
+            recordGuessResult(true, true);
+        } else {
+            recordGuessResult(false, finalPath && finalPath.length > 0);
+        }
+
+        if (data.success) {
             const currentState = window.lastGameState;
             if (currentState) {
                 // USER: INSTANT DENSITY UPDATE
@@ -5589,6 +5608,141 @@ async function submitWord(wordParam = null, pathParam = null) {
         const defContent = document.getElementById('definition-content');
         if (defContent) defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
     }
+}
+
+function recordGuessResult(isValid, isOnBoard) {
+    if (isValid) {
+        wrongGuessesOnBoardCount = 0;
+    } else {
+        if (isOnBoard) {
+            wrongGuessesOnBoardCount = (wrongGuessesOnBoardCount || 0) + 1;
+            if (wrongGuessesOnBoardCount >= 4) {
+                showGuessingPopup();
+            }
+        }
+    }
+}
+
+function showGuessingPopup() {
+    if (document.getElementById('guessing-popup')) return;
+
+    const popup = document.createElement('div');
+    popup.id = 'guessing-popup';
+    popup.innerHTML = `
+        <div class="guessing-popup-card">
+            <div class="guessing-popup-icon">⚠️</div>
+            <div class="guessing-popup-text">You're guessing!</div>
+        </div>
+    `;
+
+    popup.style.position = 'fixed';
+    popup.style.top = '0';
+    popup.style.left = '0';
+    popup.style.width = '100vw';
+    popup.style.height = '100vh';
+    popup.style.display = 'flex';
+    popup.style.justifyContent = 'center';
+    popup.style.alignItems = 'center';
+    popup.style.zIndex = '999999';
+    popup.style.backdropFilter = 'blur(8px)';
+    popup.style.webkitBackdropFilter = 'blur(8px)';
+    popup.style.background = 'rgba(0, 0, 0, 0.4)';
+    popup.style.opacity = '0';
+    popup.style.transition = 'opacity 0.25s ease';
+
+    if (!document.getElementById('guessing-popup-styles')) {
+        const style = document.createElement('style');
+        style.id = 'guessing-popup-styles';
+        style.textContent = `
+            .guessing-popup-card {
+                background: var(--card-bg, rgba(30, 30, 30, 0.85));
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                border-radius: 16px;
+                padding: 30px 50px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+                transform: scale(0.9);
+                transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+                color: var(--text-primary, #ffffff);
+            }
+            .guessing-popup-icon {
+                font-size: 3rem;
+                animation: popup-wiggle 1s ease infinite alternate;
+            }
+            .guessing-popup-text {
+                font-size: 1.6rem;
+                font-weight: 800;
+                letter-spacing: 0.5px;
+                text-align: center;
+                background: linear-gradient(135deg, #ff4e50, #f9d423);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                animation: text-pulse 1.5s ease-in-out infinite alternate;
+            }
+            @keyframes popup-wiggle {
+                0% { transform: rotate(-5deg); }
+                100% { transform: rotate(5deg); }
+            }
+            @keyframes text-pulse {
+                0% { opacity: 0.85; filter: drop-shadow(0 0 2px rgba(249, 212, 35, 0.3)); }
+                100% { opacity: 1; filter: drop-shadow(0 0 10px rgba(255, 78, 80, 0.5)); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    document.body.appendChild(popup);
+
+    popup.offsetHeight;
+    popup.style.opacity = '1';
+    popup.querySelector('.guessing-popup-card').style.transform = 'scale(1)';
+
+    window.isPopupVisible = true;
+
+    if (mouseState) {
+        mouseState.isDown = false;
+        mouseState.selectedPath = [];
+        mouseState.visitedCells = new Set();
+    }
+    document.querySelectorAll('.board-cell.selected, .board-cell.current, .board-cell.typing-highlight').forEach(c => {
+        c.classList.remove('selected', 'current', 'typing-highlight');
+        applyDensityToCell(c);
+    });
+
+    const wordInput = document.getElementById('word-input');
+    if (wordInput) {
+        wordInput.disabled = true;
+        wordInput.blur();
+    }
+    const boardPanel = document.querySelector('.board-panel') || document.getElementById('game-board');
+    if (boardPanel) {
+        boardPanel.style.pointerEvents = 'none';
+        boardPanel.style.userSelect = 'none';
+        boardPanel.style.webkitUserSelect = 'none';
+    }
+
+    setTimeout(() => {
+        popup.style.opacity = '0';
+        popup.querySelector('.guessing-popup-card').style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            popup.remove();
+            
+            window.isPopupVisible = false;
+            if (wordInput) {
+                wordInput.disabled = false;
+                const isMobile = window.innerWidth <= 992;
+                if (!isMobile) wordInput.focus();
+            }
+            if (boardPanel) {
+                boardPanel.style.pointerEvents = 'auto';
+            }
+        }, 250);
+    }, 3000);
 }
 
 function showValidationFeedback(message, isValid, isBonus = false, path = null) {
@@ -5886,6 +6040,7 @@ function createSpectatorPanel() {
 // ─────────── Mouse & Touch Board Interaction ───────────
 
 function selectCell(row, col, letter, cellEl, face = null) {
+    if (window.isPopupVisible) return;
     const key = face !== null ? `${face},${row},${col}` : `${row},${col}`;
     const pathLen = mouseState.selectedPath.length;
 
@@ -6017,6 +6172,7 @@ function handleIntermissionTilePress(cell, r, c, f, letter) {
 }
 
 function handleCellMouseDown(e) {
+    if (window.isPopupVisible) return;
     if (e.button !== 0) return; // Only left click
     if (Date.now() - lastTouchTime < 1500) return; // Ignore simulated mouse events on touch devices
 
@@ -6123,6 +6279,7 @@ let lastTouchX = -1;
 let lastTouchY = -1;
 
 function handleCellTouchStart(e) {
+    if (window.isPopupVisible) return;
     const touch = e.touches[0];
     let cell = e.target.closest('.board-cell');
     if (!cell) {
@@ -6304,6 +6461,7 @@ document.addEventListener('click', (e) => {
 // Helper to ensure UI is correctly reset for active play (escapes spectator mode)
 function resetPlayUI() {
     console.log('[play.js] resetPlayUI() called for active play session');
+    wrongGuessesOnBoardCount = 0;
     const wordInputSection = document.querySelector('.word-input-section');
     const wordInput = document.getElementById('word-input');
     const submitBtn = document.getElementById('submit-word-btn');
@@ -6471,11 +6629,13 @@ async function handleTournamentWord(word) {
 
     if (tournamentWords.find(w => w.word === word)) {
         showValidationFeedback('Already found!', false, false, path);
+        recordGuessResult(false, path && path.length > 0);
         return;
     }
 
     if (!path) {
         showValidationFeedback(`${word} is invalid.`, false);
+        recordGuessResult(false, false);
         return;
     }
 
@@ -6500,16 +6660,19 @@ async function handleTournamentWord(word) {
     const effectiveLen = word.replace(/Q(?!U)/g, 'QU').length;
     if (effectiveLen < minLen && !is_valid_dict) {
         showValidationFeedback("Sequence not a word and too small", false, false, path);
+        recordGuessResult(false, path && path.length > 0);
         return;
     }
 
     if (!is_valid_dict) {
         showValidationFeedback(`${word.toUpperCase()} INVALID`, false, false, path);
+        recordGuessResult(false, path && path.length > 0);
         return;
     }
 
     if (effectiveLen < minLen) {
         showValidationFeedback(`${word.toUpperCase()} IS TOO SHORT (MIN: ${minLen}L)`, false, false, path);
+        recordGuessResult(false, path && path.length > 0);
         return;
     }
 
@@ -6562,6 +6725,7 @@ async function handleTournamentWord(word) {
     // Show success feedback
     const showBonusMsg = isBonus && !usesEitherOrTile;
     showValidationFeedback(showBonusMsg ? 'BONUS WORD!' : `${word.toUpperCase()} VALID`, true, isBonus, path);
+    recordGuessResult(true, true);
 
     // Update Score UI
     const scoreEl = document.querySelector('.player-card .score');
@@ -6869,6 +7033,7 @@ async function handlePrivateMatchWord(word, path = null) {
         const p = is3D ? findWordPathOnCube(resolvedWord, board) : findWordPathOnBoard(resolvedWord, board);
         if (!p) {
             showValidationFeedback('Not on board!', false);
+            recordGuessResult(false, false);
             return;
         }
         resolvedPath = p;
@@ -6876,6 +7041,7 @@ async function handlePrivateMatchWord(word, path = null) {
 
     if (privateMatchWords.find(w => w.word === resolvedWord)) {
         showValidationFeedback('Already found!', false, false, resolvedPath);
+        recordGuessResult(false, resolvedPath && resolvedPath.length > 0);
         return;
     }
 
@@ -6906,6 +7072,7 @@ async function handlePrivateMatchWord(word, path = null) {
         } else {
             showValidationFeedback(`${word.toUpperCase()} IS TOO SHORT (MIN: ${minLen}L)`, false, false, resolvedPath);
         }
+        recordGuessResult(false, resolvedPath && resolvedPath.length > 0);
         return;
     }
 
@@ -6992,10 +7159,12 @@ async function handlePrivateMatchWord(word, path = null) {
                 showValidationFeedback('INVALID (PENALTY -3)', false, false, wordPath);
             } else {
                 showValidationFeedback('Not in dictionary!', false, false, resolvedPath);
+                recordGuessResult(false, resolvedPath && resolvedPath.length > 0);
                 return;
             }
         } else {
             showValidationFeedback('Not in dictionary!', false, false, resolvedPath);
+            recordGuessResult(false, resolvedPath && resolvedPath.length > 0);
             return;
         }
     }
@@ -7029,6 +7198,12 @@ async function handlePrivateMatchWord(word, path = null) {
 
     // Flash Highlight
     reapplyBoardHighlights();
+
+    if (isDictionaryValid) {
+        recordGuessResult(true, true);
+    } else {
+        recordGuessResult(false, resolvedPath && resolvedPath.length > 0);
+    }
 }
 
 async function finishPrivateMatchTurn() {
