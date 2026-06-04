@@ -4081,7 +4081,10 @@ function updateBoardCell(cell, r, c, letter, grayed, f, state = null) {
     applyDensityToCell(cell, r, c, f, state);
 }
 
-function applyDensityToCell(cell, r, c, f, state = null) {
+function applyDensityToCell(cell, r = null, c = null, f = null, state = null) {
+    if (r === null || r === undefined) r = parseInt(cell.dataset.r);
+    if (c === null || c === undefined) c = parseInt(cell.dataset.c);
+    if (f === null || f === undefined) f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : undefined;
     const densityData = (state && state.cell_density) ? state.cell_density : (window.lastGameState && window.lastGameState.cell_density);
     const hasDensityData = densityData && Array.isArray(densityData) && densityData.length > 0;
     const boardFormat = (state && state.current_board_format) ? state.current_board_format : (window.lastGameState && window.lastGameState.current_board_format) || 'Normal';
@@ -5169,7 +5172,10 @@ document.addEventListener('keydown', (e) => {
                 typingHighlightTimeout = null;
             }
             if (!window.isProgrammaticClear) {
-                document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
+                document.querySelectorAll('.board-cell.typing-highlight').forEach(c => {
+                    c.classList.remove('typing-highlight');
+                    applyDensityToCell(c);
+                });
             }
             return;
         }
@@ -5183,12 +5189,22 @@ document.addEventListener('keydown', (e) => {
             const board = window.lastGameState ? window.lastGameState.board : null;
             const isEnabled = window.userSettings && window.userSettings.highlight_typing !== false;
             if (!isEnabled) {
-                document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
+                document.querySelectorAll('.board-cell.typing-highlight').forEach(c => {
+                    c.classList.remove('typing-highlight');
+                    applyDensityToCell(c);
+                });
                 return;
             }
 
-            document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
-            if (!board || (mouseState && mouseState.isDown)) return;
+            const cellsToUpdate = new Set();
+            document.querySelectorAll('.board-cell.typing-highlight').forEach(c => {
+                c.classList.remove('typing-highlight');
+                cellsToUpdate.add(c);
+            });
+            if (!board || (mouseState && mouseState.isDown)) {
+                cellsToUpdate.forEach(c => applyDensityToCell(c));
+                return;
+            }
 
             const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
             const path = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
@@ -5197,9 +5213,13 @@ document.addEventListener('keydown', (e) => {
                     let selector = `.board-cell[data-r="${coord.r}"][data-c="${coord.c}"]`;
                     if (coord.f !== undefined) selector = `.board-cell[data-f="${coord.f}"][data-r="${coord.r}"][data-c="${coord.c}"]`;
                     const cell = document.querySelector(selector);
-                    if (cell) cell.classList.add('typing-highlight');
+                    if (cell) {
+                        cell.classList.add('typing-highlight');
+                        cellsToUpdate.add(cell);
+                    }
                 });
             }
+            cellsToUpdate.forEach(c => applyDensityToCell(c));
         }, 30);
     });
 }
@@ -5583,11 +5603,13 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
     if (!isSwipingNewWord) {
         document.querySelectorAll('.board-cell.selected, .board-cell.current').forEach(c => {
             c.classList.remove('selected', 'current');
+            applyDensityToCell(c);
         });
     }
     if (!isUserTypingNewWord) {
         document.querySelectorAll('.board-cell.typing-highlight').forEach(c => {
             c.classList.remove('typing-highlight');
+            applyDensityToCell(c);
         });
     }
 
@@ -5650,10 +5672,12 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
                     // Trigger reflow to restart animation if already playing
                     void cell.offsetWidth; 
                     cell.classList.add(tileFlashClass);
+                    applyDensityToCell(cell);
                     // True flash effect: 80ms — visible but not lingering
                     const flashMs = 80;
                     setTimeout(() => {
                         cell.classList.remove(tileFlashClass);
+                        applyDensityToCell(cell);
                     }, flashMs);
                 }
             }
@@ -5882,11 +5906,18 @@ function selectCell(row, col, letter, cellEl, face = null) {
                 oldSelector = `.board-cell[data-f="${lastCell.face}"][data-r="${lastCell.row}"][data-c="${lastCell.col}"]`;
             }
             const oldCellEl = document.querySelector(oldSelector);
-            if (oldCellEl) oldCellEl.classList.remove('selected', 'current');
+            if (oldCellEl) {
+                oldCellEl.classList.remove('selected', 'current');
+                applyDensityToCell(oldCellEl);
+            }
 
             if (cellEl) {
-                document.querySelectorAll('.board-cell.current').forEach(c => c.classList.remove('current'));
+                document.querySelectorAll('.board-cell.current').forEach(c => {
+                    c.classList.remove('current');
+                    applyDensityToCell(c);
+                });
                 cellEl.classList.add('selected', 'current');
+                applyDensityToCell(cellEl);
             }
 
             updateWordInputFromPath();
@@ -5913,8 +5944,12 @@ function selectCell(row, col, letter, cellEl, face = null) {
     mouseState.selectedPath.push({ row, col, letter, face });
 
     if (cellEl) {
-        document.querySelectorAll('.board-cell.current').forEach(c => c.classList.remove('current'));
+        document.querySelectorAll('.board-cell.current').forEach(c => {
+            c.classList.remove('current');
+            applyDensityToCell(c);
+        });
         cellEl.classList.add('selected', 'current');
+        applyDensityToCell(cellEl);
     }
 
     updateWordInputFromPath();
@@ -6042,6 +6077,7 @@ function handleCellMouseDown(e) {
     mouseState.visitedCells = new Set();
     document.querySelectorAll('.board-cell.selected, .board-cell.current').forEach(c => {
         c.classList.remove('selected', 'current');
+        applyDensityToCell(c);
     });
 
     selectCell(r, c, letter, cell, f);
@@ -6126,6 +6162,7 @@ function handleCellTouchStart(e) {
         mouseState.visitedCells = new Set();
         document.querySelectorAll('.board-cell.selected, .board-cell.current').forEach(c => {
             c.classList.remove('selected', 'current');
+            applyDensityToCell(c);
         });
 
         const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
