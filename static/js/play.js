@@ -5423,14 +5423,7 @@ async function submitWord(wordParam = null, pathParam = null) {
             optimisticColor = 'purple';
         } else if (effectiveLen < minLen) {
             // Word is too short. Flash red immediately to avoid hesitation!
-            const allWords = preState.all_words || [];
-            const isInWordList = allWords.some(w =>
-                (typeof w === 'object' ? (w.word || '') : w).toUpperCase() === word
-            );
-            const msg = isInWordList 
-                ? `${word} IS TOO SHORT (MIN: ${minLen}L)` 
-                : `${word} INVALID`;
-            showValidationFeedback(msg, false, false, finalPath);
+            showValidationFeedback(`${word} IS TOO SHORT (MIN: ${minLen}L)`, false, false, finalPath);
             optimisticColor = 'red';
         } else if (finalPath && finalPath.length > 0) {
             // Check dictionary validity locally using the authoritative all_words list from the game state
@@ -6714,8 +6707,8 @@ async function handleTournamentWord(word) {
     // Check length and dictionary validity
     const minLen = window.tournamentParams ? window.tournamentParams.min_word_length : 3;
     const effectiveLen = word.replace(/Q(?!U)/g, 'QU').length;
-    if (effectiveLen < minLen && !is_valid_dict) {
-        showValidationFeedback("Sequence not a word and too small", false, false, path);
+    if (effectiveLen < minLen) {
+        showValidationFeedback(`${word.toUpperCase()} IS TOO SHORT (MIN: ${minLen}L)`, false, false, path);
         recordGuessResult(false, path && path.length > 0, true);
         return;
     }
@@ -6723,12 +6716,6 @@ async function handleTournamentWord(word) {
     if (!is_valid_dict) {
         showValidationFeedback(`${word.toUpperCase()} INVALID`, false, false, path);
         recordGuessResult(false, path && path.length > 0);
-        return;
-    }
-
-    if (effectiveLen < minLen) {
-        showValidationFeedback(`${word.toUpperCase()} IS TOO SHORT (MIN: ${minLen}L)`, false, false, path);
-        recordGuessResult(false, path && path.length > 0, true);
         return;
     }
 
@@ -7123,11 +7110,7 @@ async function handlePrivateMatchWord(word, path = null) {
     const minLen = privateMatchParams ? privateMatchParams.min_word_length : 3;
     const effectiveLen = word.replace(/Q(?!U)/g, 'QU').length;
     if (effectiveLen < minLen) {
-        if (!isDictionaryValid) {
-            showValidationFeedback("Sequence not a word and too small", false, false, resolvedPath);
-        } else {
-            showValidationFeedback(`${word.toUpperCase()} IS TOO SHORT (MIN: ${minLen}L)`, false, false, resolvedPath);
-        }
+        showValidationFeedback(`${word.toUpperCase()} IS TOO SHORT (MIN: ${minLen}L)`, false, false, resolvedPath);
         recordGuessResult(false, resolvedPath && resolvedPath.length > 0, true);
         return;
     }
