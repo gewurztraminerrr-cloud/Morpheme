@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `471f9fff6dca12536bbde0c1e1958a9d3aeb57cc` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `471f9fff6dca12536bbde0c1e1958a9d3aeb57cc` / `snapshot-current` / `START_OVER_POINT_JUNE_4` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `471f9fff6dca12536bbde0c1e1958a9d3aeb57cc` / `snapshot-current` | ✅ Fully Deployed & PM2 Reloaded |
+| **localhost** (`/Users/jeffbabiak/`) | [LATEST_COMMIT_ID] | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | [LATEST_COMMIT_ID] / `snapshot-current` / `START_OVER_POINT_JUNE_4` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | [LATEST_COMMIT_ID] / `snapshot-current` | ✅ Fully Deployed & PM2 Reloaded |
 
-**All environments are 100% synchronized at the latest commit `471f9fff6dca12536bbde0c1e1958a9d3aeb57cc`.**
+**All environments are 100% synchronized at the latest commit [LATEST_COMMIT_ID].**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_4` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -18,9 +18,9 @@ The active recovery points `START_OVER_POINT_JUNE_4` and `snapshot-current` tags
 
 | File / Style | Version | Description |
 |--------------|---------|-------------|
-| `/js/play.js` | `v=132` | Implemented a consecutive invalid path warning popup (triggering on 4 consecutive guesses connecting on the board but dictionary-invalid) across all play modes. Do not increment the counter if a word is already found or is too short. Added instant client-side validation/flashing for too-short words to eliminate network delay. Fixed intermission finders button display/stale value bug by adding highlightedFoundWord to render keys. Prevented intermission tile press for the first 5 seconds of intermission. |
+| `/js/play.js` | `v=135` | Implemented a consecutive invalid path warning popup (triggering on 4 consecutive guesses connecting on the board but dictionary-invalid) across all play modes. Fixed client-side validation message for too-short words to immediately show `[word] IS TOO SHORT (MIN: XL)` rather than flashing `INVALID` first. Fixed intermission finders button display/stale value bug. Prevented intermission tile press for the first 5 seconds of intermission. |
 | `/js/app.js` | `v=39` | Standardized FAQ dictionary stats table styling: color cells to match headers (NWL #60a5fa, CSW #fbbf24, AW #c084fc, 16+ List #f87171). |
-| `templates/index.html` | *Dynamic* | Styled dictionary stats table headers, added missing period to Vibrant Blue FAQ text, and bumped play.js cache-buster to `v=132` and app.js cache-buster to `v=39`. |
+| `templates/index.html` | *Dynamic* | Styled dictionary stats table headers, added missing period to Vibrant Blue FAQ text, and bumped play.js cache-buster to `v=135` and app.js cache-buster to `v=39`. |
 
 ---
 
@@ -65,9 +65,19 @@ The active recovery points `START_OVER_POINT_JUNE_4` and `snapshot-current` tags
 * **Goal achieved:** Eliminate the network latency delay before showing validation feedback when a user submits a word that is too short.
 * **Implementation (`static/js/play.js`):**
   * Updated `submitWord` client-side validation logic: if the word's length is smaller than the minimum word length, it evaluates it locally immediately.
-  * If the word is in the dictionary (but too short), it displays `${word} IS TOO SHORT (MIN: ${minLen}L)` instantly and sets `optimisticColor = 'red'`.
-  * If the word is not in the dictionary, it displays `${word} INVALID` instantly and sets `optimisticColor = 'red'`.
+  * Shows `${word} IS TOO SHORT (MIN: ${minLen}L)` instantly and sets `optimisticColor = 'red'`.
   * The server confirms this status, preventing double-flashing and eliminating the validation delay completely.
+
+### 8. Board Generator Compliance & Transition Lag Fixes
+* **Goal achieved:** Eliminate visual hangs and server watchdog triggers during intermission-to-active transitions on low-target rooms.
+* **Implementation (`board_generator.py`):**
+  * Dynamically scaled the target word-embedding number based on `word_count_range` (`max_words`).
+  * Introduced consonant-biased, vowel-reduced `fill_weights` for empty cell fills to prevent massive accidental connections, guaranteeing immediate compliance without decimation loops.
+
+### 9. Dynamic Submission Word Self-Healing
+* **Goal achieved:** Prevent valid words on the board (like "TANGLER") from being rejected due to server truncation to fit targets.
+* **Implementation (`game_room.py`):**
+  * Added self-healing fallback to `submit_word`: if a valid dictionary word physically found on the board is missing from `all_words`, it is dynamically accepted, scored, and added to the round statistics.
 
 ---
 
@@ -75,10 +85,11 @@ The active recovery points `START_OVER_POINT_JUNE_4` and `snapshot-current` tags
 
 | File | Location | Purpose |
 |------|----------|---------|
-| `static/js/play.js` | Production + GitHub | Client-side consecutive invalid guess tracking, warning popup logic, finders button rendering, 5s click delay, and validation. |
-| `static/js/app.js` | Production + GitHub | Client-side FAQ dictionary stats table rendering and dynamic cell color styling. |
-| `templates/index.html` | Production + GitHub | Styled table headers and FAQ text updates; cache-buster version bumps. |
-| `test_scenarios.py` | Production + GitHub | Verification script simulating board generator compliance checks. |
+| `static/js/play.js` | Production + GitHub | Client-side guess warning popups, too-short feedback handling, finders button rendering, and delay checks. |
+| `static/js/app.js` | Production + GitHub | Client-side FAQ table styling. |
+| `templates/index.html` | Production + GitHub | Table headers, FAQ text updates, and script cache-busters. |
+| `board_generator.py` | Production + GitHub | Dynamic board generation target scaling and sparse cell filling. |
+| `game_room.py` | Production + GitHub | Dynamic word self-healing and submission acceptance logic. |
 
 ---
 
