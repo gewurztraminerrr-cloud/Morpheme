@@ -5399,7 +5399,6 @@ async function submitWord(wordParam = null, pathParam = null) {
     // for an accurate instant flash. This is populated during active play via the words panel
     // renderer, whereas preState.all_words is only sent by the server during intermission.
     let optimisticColor = null; // 'red' | 'blue' | 'green'
-    let isTooShortSubmission = false; // Tracks too-short submissions to suppress server text update
     const preState = window.lastGameState;
     if (preState) {
         const minLen = preState.current_min_length || (preState.spinner_params ? preState.spinner_params.min_word_length : 3) || 3;
@@ -5423,12 +5422,12 @@ async function submitWord(wordParam = null, pathParam = null) {
             showValidationFeedback('Already found!', false, false, finalPath);
             optimisticColor = 'purple';
         } else if (effectiveLen < minLen) {
-            // Too short — flash red instantly with a unified message so there is zero hesitation.
-            // The server may return a different variant (IS TOO SHORT vs. not a word), but tiles
-            // won't re-flash because optimisticColor matches serverColor. Text stays as-is.
+            // Too short — flash red instantly with a placeholder message so there is zero hesitation.
+            // optimisticColor='red' prevents tile re-flash when the server responds.
+            // The server's text (accurate — e.g. "BALL IS TOO SHORT" vs "SEQUENCE IS NOT A WORD")
+            // will update the status label without re-flashing the tiles.
             showValidationFeedback('SEQUENCE IS NOT A WORD AND TOO SMALL', false, false, finalPath);
             optimisticColor = 'red';
-            isTooShortSubmission = true;
         } else if (finalPath && finalPath.length > 0) {
             // Check dictionary validity locally using the authoritative all_words list from the game state
             const allWords = preState.all_words || [];
@@ -5493,13 +5492,11 @@ async function submitWord(wordParam = null, pathParam = null) {
 
         if (optimisticColor !== null && optimisticColor === serverColor) {
             // Server confirmed our local check — no second tile flash.
-            // For too-short submissions, suppress the text update entirely: the unified
-            // 'SEQUENCE IS NOT A WORD AND TOO SMALL' message already shown is correct.
-            if (!isTooShortSubmission) {
-                const statusEl = document.getElementById('word-validation-status');
-                if (statusEl) {
-                    statusEl.textContent = data.message || (data.success ? `${word} VALID` : `${word} INVALID`);
-                }
+            // Always update the status text with the real server message so the display is accurate
+            // (e.g. "BALL IS TOO SHORT (MIN: 5L)" vs "SEQUENCE IS NOT A WORD AND TOO SMALL").
+            const statusEl = document.getElementById('word-validation-status');
+            if (statusEl) {
+                statusEl.textContent = data.message || (data.success ? `${word} VALID` : `${word} INVALID`);
             }
         } else {
             // Server result differs from local check — show correction flash.
