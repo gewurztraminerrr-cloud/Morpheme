@@ -5424,13 +5424,15 @@ async function submitWord(wordParam = null, pathParam = null) {
             optimisticColor = 'purple';
             optimisticIsDefinitive = true;
         } else if (effectiveLen < minLen) {
-            // Too short — the client cannot reliably determine if the sequence is a dictionary word,
-            // because all_words only contains words formable on the current board (not the full dictionary).
-            // Show a length-based message that is always factually accurate, then suppress the server
-            // text update — single message, zero hesitation, no false "NOT A WORD" claim.
-            showValidationFeedback(`${word} IS TOO SHORT (MIN: ${minLen}L)`, false, false, finalPath);
+            // Too short — the client cannot determine dictionary validity (all_words is board-scoped only).
+            // Flash the tiles red immediately (zero hesitation) with no status text.
+            // The server will provide the single, accurate message:
+            //   "[WORD] IS TOO SHORT (MIN: XL)"  → real word, too short
+            //   "SEQUENCE IS NOT A WORD AND TOO SMALL" → not a word AND too short
+            // No text is ever replaced — it appears exactly once.
+            showValidationFeedback('', false, false, finalPath);
             optimisticColor = 'red';
-            optimisticIsDefinitive = true;
+            // optimisticIsDefinitive stays false — server will set the accurate text once.
 
         } else if (finalPath && finalPath.length > 0) {
             // Check dictionary validity locally using the authoritative all_words list from the game state
