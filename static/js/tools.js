@@ -1469,21 +1469,18 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
         round = window.lastTournamentReplay;
     }
 
-    // A) Try Profile/Recent Rounds First (Preferred source for own history)
-    if (gameId) {
+    // A) If an exact gameId is provided, use it to find the precise profile round.
+    if (!round && gameId) {
         round = rounds.find(r => r.game_id == gameId);
     }
-    if (!round) {
-        // Fallback to oldheuristic
-        round = rounds.find(r => r.room_id == roomId && r.round_number == roundNum);
-    }
 
-    // B) Fallback to Lobby History (If not found in profile)
-    // Only use if we didn't find it in detailed history
+    // B) Prefer Lobby History when no gameId — it is definitively from the CURRENT session.
+    //    Profile rounds are matched only by room_id+round_number and can span multiple sessions
+    //    of the same room, returning stale data from a previous game.
     if (!round && window.lastGameState && window.lastGameState.winners_history && window.lastGameState.room_id === roomId) {
         const foundInLobby = window.lastGameState.winners_history.find(h => h.round == roundNum);
         if (foundInLobby && foundInLobby.board) {
-            console.log(`[Review] Using Round ${roundNum} from Lobby winners_history`);
+            console.log(`[Review] Using Round ${roundNum} from Lobby winners_history (current session)`);
             round = {
                 ...foundInLobby,
                 room_id: roomId,
@@ -1493,6 +1490,13 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
             };
         }
     }
+
+    // C) Fallback to Profile/Recent Rounds (cross-session, matched by room_id+round_number).
+    //    Only used when lobby data isn't available (e.g., viewing history from profile page).
+    if (!round) {
+        round = rounds.find(r => r.room_id == roomId && r.round_number == roundNum);
+    }
+
 
 
 
