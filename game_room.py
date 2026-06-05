@@ -1454,7 +1454,9 @@ class GameRoom:
                                 'board': [list(row) for row in self.board] if self.board else [],
                                 'words': winner_words,
                                 'bonus_word': getattr(self, 'bonus_word', ''),
-                                'timestamp': int(time.time() * 1000)
+                                'timestamp': int(time.time() * 1000),
+                                'round_duration': self.time_limit,
+                                'round_start_time': self.round_start_time,
                             })
                             if len(self.winners_history) > 25: self.winners_history = self.winners_history[:25]
 

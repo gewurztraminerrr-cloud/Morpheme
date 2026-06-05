@@ -1674,7 +1674,13 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
 
     // 4. Playback Logic
     const rawWords = round.words || [];
-    const roundDuration = round.round_duration || 60;
+    // Prefer stored round_duration; fall back to the live game state's time_limit for the
+    // current room (covers older winners_history entries that predate the round_duration field);
+    // last resort is 60s.
+    const liveTimeLimitForRoom = (window.lastGameState && window.lastGameState.room_id === round.room_id)
+        ? window.lastGameState.time_limit
+        : null;
+    const roundDuration = round.round_duration || liveTimeLimitForRoom || 60;
 
     // START TIME LOGIC:
     // Preferred: round_start_time (absolute s)
