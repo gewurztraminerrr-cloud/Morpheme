@@ -5424,26 +5424,14 @@ async function submitWord(wordParam = null, pathParam = null) {
             optimisticColor = 'purple';
             optimisticIsDefinitive = true;
         } else if (effectiveLen < minLen) {
-            // Too short — check the local word list to determine the exact message immediately.
-            const allWords = preState.all_words || [];
-            if (allWords.length > 0) {
-                // Word list is available — determine the precise message right now so the server
-                // text update can be suppressed (single message, zero hesitation).
-                const isInWordList = allWords.some(w =>
-                    (typeof w === 'object' ? (w.word || '') : w).toUpperCase() === word
-                );
-                const msg = isInWordList
-                    ? `${word} IS TOO SHORT (MIN: ${minLen}L)`
-                    : 'SEQUENCE IS NOT A WORD AND TOO SMALL';
-                showValidationFeedback(msg, false, false, finalPath);
-                optimisticColor = 'red';
-                optimisticIsDefinitive = true; // message is already exact — suppress server text update
-            } else {
-                // Word list not yet loaded — show placeholder instantly and let server correct text.
-                showValidationFeedback('SEQUENCE IS NOT A WORD AND TOO SMALL', false, false, finalPath);
-                optimisticColor = 'red';
-                // optimisticIsDefinitive stays false — server update allowed to correct the label
-            }
+            // Too short — the client cannot reliably determine if the sequence is a dictionary word,
+            // because all_words only contains words formable on the current board (not the full dictionary).
+            // Show a length-based message that is always factually accurate, then suppress the server
+            // text update — single message, zero hesitation, no false "NOT A WORD" claim.
+            showValidationFeedback(`${word} IS TOO SHORT (MIN: ${minLen}L)`, false, false, finalPath);
+            optimisticColor = 'red';
+            optimisticIsDefinitive = true;
+
         } else if (finalPath && finalPath.length > 0) {
             // Check dictionary validity locally using the authoritative all_words list from the game state
             const allWords = preState.all_words || [];
