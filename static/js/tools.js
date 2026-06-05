@@ -1863,11 +1863,12 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
             window.replayInterval = setInterval(() => {
                 elapsed += tick / 1000;
 
-                // Update Progress
-                if (progressBar) progressBar.style.width = `${Math.min(100, (elapsed / roundDuration) * 100)}%`;
+                // Update Progress — cap display at roundDuration so timer never shows past end of round
+                const displayElapsed = Math.min(elapsed, roundDuration);
+                if (progressBar) progressBar.style.width = `${(displayElapsed / roundDuration) * 100}%`;
                 if (currentTimeEl) {
-                    const m = Math.floor(elapsed / 60);
-                    const s = (elapsed % 60).toFixed(1);
+                    const m = Math.floor(displayElapsed / 60);
+                    const s = (displayElapsed % 60).toFixed(1);
                     currentTimeEl.innerText = `${m}:${s.padStart(4, '0')}`;
                 }
 
@@ -1942,15 +1943,34 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
                     }
                 }
 
-                if (elapsed >= roundDuration + 2) { // Add buffer
+                if (elapsed >= roundDuration) {
+                    // Flush any remaining words before stopping (catches words near round's end)
+                    while (wordIndex < sortedWords.length) {
+                        try {
+                            const word = sortedWords[wordIndex];
+                            if (walkthroughList) {
+                                if (window.innerWidth <= 900) {
+                                    walkthroughList.insertAdjacentHTML('afterbegin', renderWord(word));
+                                } else {
+                                    walkthroughList.insertAdjacentHTML('beforeend', renderWord(word));
+                                    walkthroughList.scrollTop = walkthroughList.scrollHeight;
+                                }
+                            }
+                            currentScore += word.points;
+                            if (currentScoreEl) currentScoreEl.innerText = `${currentScore} pts`;
+                        } catch (err) {
+                            console.error('[Review] Error flushing word at round end:', err);
+                        } finally {
+                            wordIndex++;
+                        }
+                    }
                     if (window.replayInterval) clearInterval(window.replayInterval);
+                    window.replayInterval = null;
                     if (skipBtn) skipBtn.classList.add('hidden');
                     if (startBtn) {
                         startBtn.classList.remove('hidden');
                         startBtn.innerText = "↺ Replay";
                     }
-                    // Ensure everything is shown at end just in case
-                    showAllWords();
                 }
             }, tick);
         };
