@@ -1774,13 +1774,8 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     };
 
     const showAllWords = () => {
-        // Default: Show in chronological order (Order Found)
-        let displayWords = [...sortedWords];
-
-        // USER REQUEST: For "With Friends" (Private) history, sort by length (Biggest first)
-        if (roomId && String(roomId).startsWith('private_')) {
-            displayWords.sort((a, b) => b.word.length - a.word.length || a.word.localeCompare(b.word));
-        }
+        // Always show in chronological order (the order words were found)
+        const displayWords = [...sortedWords];
 
         if (walkthroughList) {
             let htmlContent = '';
