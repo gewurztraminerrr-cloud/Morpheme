@@ -771,18 +771,51 @@ class GameRoom:
         # Direct match check
         if is_in:
             matched_word = word
-        elif 'Q' in word:
-            # Fallback: check if "QU" variant exists (Handle Q -> QU mapping)
-            # Strategy: Replace 'Q' with 'QU' and check if that exists in all_words
-            # NOTE: This simple replace handles single Q. For multiple Qs, we might need permutations.
-            # Boggle logic usually treats tile 'Q' as 'QU', so direct replacement works.
-            # However, if 'U' is on the board, user might have typed Q-U-A-T-E explicitly.
-            # If Q is represented as Q, then Q-A-T-E -> QATE.
-            # If board generator found QUATE via (Q->QU)-A-T-E, then all_words has QUATE.
-            # So, check if replacing Q with QU yields a valid word.
-            variant = word.replace('Q', 'QU')
-            if variant in self.all_words:
-                matched_word = variant
+        elif 'Q' in word and word.replace('Q', 'QU') in self.all_words:
+            matched_word = word.replace('Q', 'QU')
+        else:
+            # Self-healing fallback for truncated/missing valid words on the board
+            # Test both original word and QU variant
+            candidates = [word]
+            if 'Q' in word:
+                candidates.append(word.replace('Q', 'QU'))
+                
+            for cand in candidates:
+                is_valid_dict = word_validator.word_validator.is_valid_word(cand, getattr(self, 'current_dictionary', 'NWL'))
+                if is_valid_dict:
+                    is_on_board, path = word_validator.word_validator.find_word_on_board(self.board, cand, return_path=True)
+                    if is_on_board:
+                        # Dynamically add to all_words and paths to accept it!
+                        self.all_words.add(cand)
+                        if not self.all_words_paths:
+                            self.all_words_paths = {}
+                        self.all_words_paths[cand] = path
+                        
+                        # Add to solved_words_with_scores so scoring works
+                        if not hasattr(self, 'solved_words_with_scores') or not self.solved_words_with_scores:
+                            self.solved_words_with_scores = {}
+                        
+                        from scoring import calculate_word_score
+                        pts_data = calculate_word_score(
+                            cand, 
+                            self.bonus_word, 
+                            board_format=self.current_board_format, 
+                            path=path, 
+                            bonus_cell=self.bonus_cell, 
+                            board=self.board, 
+                            return_details=True,
+                            is_private=self.is_private,
+                            strict_path=True
+                        )
+                        self.solved_words_with_scores[cand] = pts_data
+                        
+                        # Recalculate stats
+                        self.recalculate_total_points()
+                        self.total_words_count = len(self.all_words)
+                        
+                        matched_word = cand
+                        print(f"[DynamicAccept] Dynamically accepted and added truncated/missing word: {cand}")
+                        break
         
         if not matched_word:
             # PENALTY CHECK: Any sequence >= min length found on board but NOT in dictionary

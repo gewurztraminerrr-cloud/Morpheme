@@ -1071,9 +1071,9 @@ class BoardGenerator:
                 board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
             elif "either/or" in safe_format:
                 # Support Either/Or tiles (e.g. A/B) by creating a normal board first
-                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary)
+                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range)
             else:
-                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary)
+                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range)
 
             # UNIVERSAL LIMIT: Defend against "loads and loads of A's" across all board sizes (both 2D and 3D)
             flat_letters = []
@@ -1443,14 +1443,14 @@ class BoardGenerator:
             if is_checkerboard:
                 board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
             elif "either/or" in safe_format:
-                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary)
+                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range)
                 # Pick Either/Or tile coordinates
                 eo_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
                 special_cells.append(eo_cell)
                 all_excluded.add(eo_cell)
                 print(f"[BoardGen] Selected and protected Either/Or coordinate in emergency loop: {eo_cell}")
             else:
-                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary)
+                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range)
                 
             # 3. Apply Mania abundance and register cells as excluded to protect them
             if mania_letter:
@@ -1850,7 +1850,7 @@ class BoardGenerator:
         else:
             return LETTER_FREQ_USER
 
-    def _create_normal_board(self, rows, cols, weights, depth=1, difficulty="Easy", dictionary=None):
+    def _create_normal_board(self, rows, cols, weights, depth=1, difficulty="Easy", dictionary=None, word_count_range=None):
         """Create board using Overwriting Word Soup method for 2D, or random letters for 3D"""
         if depth > 1:
             return [
@@ -1888,34 +1888,57 @@ class BoardGenerator:
                         print(f"[BoardGen] Error loading full dictionary {dict_name}: {e}. Using fallback words.")
                         dictionary = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
                         
-        # Determine number of words and length range based on grid size
+        # Determine number of words and length range based on grid size & target range
         num_cells = rows * cols
+        min_words, max_words = self._parse_word_count_range(word_count_range) if word_count_range else (100, 200)
+        
+        # Determine base word lengths
         if difficulty in ["Medium", "Hard"]:
             if num_cells <= 16:  # 4x4
                 min_len, max_len = 5, 7
-                num_words_to_embed = 30
             elif num_cells <= 24:  # 4x6
                 min_len, max_len = 5, 7
-                num_words_to_embed = 45
             elif num_cells <= 35:  # 5x7
                 min_len, max_len = 6, 9
-                num_words_to_embed = 45
             else:  # 6x8 / Cube
                 min_len, max_len = 6, 10
-                num_words_to_embed = 60
         else:
             if num_cells <= 16:  # 4x4
                 min_len, max_len = 5, 7
-                num_words_to_embed = random.randint(15, 20)
             elif num_cells <= 24:  # 4x6
                 min_len, max_len = 5, 7
-                num_words_to_embed = random.randint(20, 25)
             elif num_cells <= 35:  # 5x7
                 min_len, max_len = 7, 10
-                num_words_to_embed = 30
             else:  # 6x8 / Cube
                 min_len, max_len = 7, 10
-                num_words_to_embed = 45
+
+        # Scale num_words_to_embed dynamically
+        if max_words < 100:  # e.g., 50-100
+            if num_cells <= 16: num_words_to_embed = 8
+            elif num_cells <= 24: num_words_to_embed = 12
+            elif num_cells <= 35: num_words_to_embed = 16
+            else: num_words_to_embed = 20
+        elif max_words < 200:  # e.g., 100-200
+            if num_cells <= 16: num_words_to_embed = 15
+            elif num_cells <= 24: num_words_to_embed = 22
+            elif num_cells <= 35: num_words_to_embed = 28
+            else: num_words_to_embed = 32
+        elif max_words < 300:  # e.g., 200-300
+            if num_cells <= 16: num_words_to_embed = 25
+            elif num_cells <= 24: num_words_to_embed = 32
+            elif num_cells <= 35: num_words_to_embed = 38
+            else: num_words_to_embed = 42
+        else:  # e.g., 300-400 or 500+
+            if difficulty in ["Medium", "Hard"]:
+                if num_cells <= 16: num_words_to_embed = 30
+                elif num_cells <= 24: num_words_to_embed = 45
+                elif num_cells <= 35: num_words_to_embed = 45
+                else: num_words_to_embed = 60
+            else:
+                if num_cells <= 16: num_words_to_embed = random.randint(15, 20)
+                elif num_cells <= 24: num_words_to_embed = random.randint(20, 25)
+                elif num_cells <= 35: num_words_to_embed = 30
+                else: num_words_to_embed = 45
 
         if dictionary:
             valid_words = [w for w in dictionary if min_len <= len(w) <= max_len and not w.upper().endswith("ING") and not w.upper().endswith("INGS")]
@@ -1964,10 +1987,30 @@ class BoardGenerator:
                     board[r][c] = word[i]
                     
         # Fill remaining empty cells with random letters
+        # If target word count is low, use consonant-biased sparse weights to fill empty cells
+        # to prevent generating massive accidental words.
+        fill_weights = weights
+        if max_words < 100:
+            # Reduce vowels and common letters aggressively for low targets
+            fill_weights = list(weights)
+            for idx, char in enumerate(self.letters):
+                if char in "AEIOU":
+                    fill_weights[idx] = max(1, int(fill_weights[idx] * 0.20))
+                elif char in "TRSN":
+                    fill_weights[idx] = max(1, int(fill_weights[idx] * 0.35))
+        elif max_words <= 200 and num_cells >= 24:
+            # For large boards, 100-200 is also a low target compared to connection count
+            fill_weights = list(weights)
+            for idx, char in enumerate(self.letters):
+                if char in "AEIOU":
+                    fill_weights[idx] = max(1, int(fill_weights[idx] * 0.30))
+                elif char in "TRSN":
+                    fill_weights[idx] = max(1, int(fill_weights[idx] * 0.50))
+        
         for r in range(rows):
             for c in range(cols):
                 if board[r][c] == ' ':
-                    board[r][c] = random.choices(self.letters, weights=weights, k=1)[0]
+                    board[r][c] = random.choices(self.letters, weights=fill_weights, k=1)[0]
                     
         # Check and break up any "ING" sequences (no "ING" or "INGS" paths allowed on Medium/Hard)
         if difficulty in ["Medium", "Hard"]:
@@ -2157,7 +2200,7 @@ class BoardGenerator:
             if is_checkerboard:
                 board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
             else:
-                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary)
+                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=f"{min_words}-{max_words}")
 
         # Determine number of passes
         pass_count = 1
