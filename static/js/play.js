@@ -5422,9 +5422,9 @@ async function submitWord(wordParam = null, pathParam = null) {
             showValidationFeedback('Already found!', false, false, finalPath);
             optimisticColor = 'purple';
         } else if (effectiveLen < minLen) {
-            // Word is too short. Flash red immediately to avoid hesitation!
-            showValidationFeedback(`${word} IS TOO SHORT (MIN: ${minLen}L)`, false, false, finalPath);
-            optimisticColor = 'red';
+            // Word is too short. Skip optimistic validation to let the server return the precise message
+            // (either "Sequence not a word and too small" or "IS TOO SHORT").
+            // We do NOT set optimisticColor, and we do NOT call showValidationFeedback here.
         } else if (finalPath && finalPath.length > 0) {
             // Check dictionary validity locally using the authoritative all_words list from the game state
             const allWords = preState.all_words || [];
