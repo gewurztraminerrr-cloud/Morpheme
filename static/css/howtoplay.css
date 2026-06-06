@@ -1161,3 +1161,105 @@
         max-width: 1400px;
     }
 }
+
+/* FAQ Selector List Styles */
+.faq-selector-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin: 40px auto 30px auto;
+    max-width: 1000px;
+    width: 100%;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.faq-selector-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #a5b4fc;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(165, 180, 252, 0.3);
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.faq-questions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+    width: 100%;
+}
+
+.faq-nav-link {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 14px 18px;
+    color: rgba(255, 255, 255, 0.85);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 0.95rem;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    line-height: 1.4;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.faq-nav-link::before {
+    content: '✦';
+    color: #ffd700;
+    font-size: 0.8rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+    opacity: 0.7;
+    transition: transform 0.25s ease;
+}
+
+.faq-nav-link:hover {
+    background: rgba(165, 180, 252, 0.08);
+    border-color: rgba(165, 180, 252, 0.4);
+    color: #ffffff;
+    transform: translateX(4px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+}
+
+.faq-nav-link:hover::before {
+    transform: scale(1.2) rotate(45deg);
+    opacity: 1;
+}
+
+.faq-nav-link:active {
+    transform: translateX(2px);
+}
+
+/* Pulse Highlight Animation for Targeted FAQ Item */
+@keyframes faqPulseGlow {
+    0% {
+        border-color: rgba(96, 165, 250, 0.9) !important;
+        box-shadow: 0 0 30px rgba(96, 165, 250, 0.6) !important;
+        background: rgba(96, 165, 250, 0.12) !important;
+        transform: scale(1.01) translateX(5px);
+    }
+    50% {
+        border-color: rgba(96, 165, 250, 0.9) !important;
+        box-shadow: 0 0 35px rgba(96, 165, 250, 0.7) !important;
+        background: rgba(96, 165, 250, 0.15) !important;
+        transform: scale(1.01) translateX(5px);
+    }
+    100% {
+        border-color: rgba(var(--text-primary-rgb), 0.08);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        background: rgba(var(--text-primary-rgb), 0.03);
+        transform: scale(1) translateX(0);
+    }
+}
+
+.faq-item.highlight-pulse {
+    animation: faqPulseGlow 2.5s cubic-bezier(0.25, 0.8, 0.25, 1) forwards !important;
+}

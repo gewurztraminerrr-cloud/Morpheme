@@ -30,7 +30,7 @@
     <link rel="stylesheet" href="/css/style.css?v=27">
     <link rel="stylesheet" href="/css/lobby.css?v=17">
     <link rel="stylesheet" href="/css/play.css?v=85">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=8">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=1">
     <link rel="stylesheet" href="/css/donate.css?v=1">
     <style>
@@ -2994,16 +2994,43 @@
 
             <!-- FAQ Section -->
             <div class="faq-section">
+                <!-- FAQ Quick Navigation List -->
+                <div class="faq-selector-container">
+                    <h3 class="faq-selector-title">Quick Navigate FAQ</h3>
+                    <div class="faq-questions-grid">
+                        <button class="faq-nav-link" data-target="faq-registered-online">How many players are currently registered and online?</button>
+                        <button class="faq-nav-link" data-target="faq-dictionaries">What are the different dictionaries used?</button>
+                        <button class="faq-nav-link" data-target="faq-difficulty-differences">What are the differences between Easy, Medium, and Hard, and why are they set up this way?</button>
+                        <button class="faq-nav-link" data-target="faq-year-launched">In what year was Morpheme launched?</button>
+                        <button class="faq-nav-link" data-target="faq-meaning-morpheme">What does Morpheme mean?</button>
+                        <button class="faq-nav-link" data-target="faq-all-words-highlights">What do the various highlights on the "All Words" table signify?</button>
+                        <button class="faq-nav-link" data-target="faq-bonus-words">How many points do Bonus Words give, and how does length affect the score?</button>
+                        <button class="faq-nav-link" data-target="faq-rating-system">How does the rating system evaluate my performance and skill?</button>
+                        <button class="faq-nav-link" data-target="faq-strategies">What are the distinct strategies for the different game types?</button>
+                        <button class="faq-nav-link" data-target="faq-icons-flags">What do the different icons next to the flags mean?</button>
+                        <button class="faq-nav-link" data-target="faq-game-formats">What are the different game Formats and what do they do?</button>
+                        <button class="faq-nav-link" data-target="faq-solo-friends">Can I play Solo or With Friends?</button>
+                        <button class="faq-nav-link" data-target="faq-board-difficulty">What determines the difficulty level of a board?</button>
+                        <button class="faq-nav-link" data-target="faq-user-profile">Is there a faster way to view a user’s profile?</button>
+                        <button class="faq-nav-link" data-target="faq-unique-parameters">Why does the system generate unique parameters for each round?</button>
+                        <button class="faq-nav-link" data-target="faq-mouse-hover">When I mouse over letters, other letters are being selected on the board.</button>
+                        <button class="faq-nav-link" data-target="faq-combo-checker">What is the "Combo Checker" in the Tools tab?</button>
+                        <button class="faq-nav-link" data-target="faq-board-generation">How are boards generated?</button>
+                        <button class="faq-nav-link" data-target="faq-2d-boards">Why are the 2D boards that are not 4x4 not a perfect square?</button>
+                        <button class="faq-nav-link" data-target="faq-hidden-features">Are there any additional features in game rooms that aren’t obvious?</button>
+                    </div>
+                </div>
+
                 <div class="faq-container">
                     <!-- Q_counts -->
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-registered-online">
                         <div class="faq-question">How many players are currently registered and online?</div>
                         <div class="faq-answer">
                             <p>There are <strong id="faq-reg-count">[number]</strong> registered users, and <strong id="faq-online-count">[number]</strong> online users.</p>
                         </div>
                     </div>
                     <!-- Q_dict_stats -->
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-dictionaries">
                         <div class="faq-question">What are the different dictionaries used?</div>
                         <div class="faq-answer">
                             <p>Morpheme supports four distinct word lists/dictionaries that are dynamically spun or configured for each round:</p>
@@ -3038,7 +3065,7 @@
                         </div>
                     </div>
                     <!-- Q_difficulty_differences -->
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-difficulty-differences">
                         <div class="faq-question">What are the differences between Easy, Medium, and Hard, and why are they set up this way?</div>
                         <div class="faq-answer">
                             <p>Board difficulty in Morpheme is mathematically driven by the <strong>Uniqueness Ratio</strong>—the proportion of scorable words on a board that belong to the "Unique" dictionary subsets (words found in only one major dictionary, e.g., in NWL but not CSW, or vice versa). Obscure tournament vocabulary is highly unique, whereas highly common words are shared across dictionaries.</p>
@@ -3084,21 +3111,21 @@
                         </div>
                     </div>
                     <!-- Q0 -->
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-year-launched">
                         <div class="faq-question">In what year was Morpheme launched?</div>
                         <div class="faq-answer">
                             <p>Morpheme was launched in 2026!</p>
                         </div>
                     </div>
                     <!-- Q_meaning -->
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-meaning-morpheme">
                         <div class="faq-question">What does Morpheme mean?</div>
                         <div class="faq-answer">
                             <p>In linguistics, a <strong>morpheme</strong> is the smallest grammatical and meaningful unit of a language (such as roots, prefixes, and suffixes like <em>play</em>, <em>un-</em>, or <em>-ful</em>) that cannot be divided into smaller parts. In our game, players act as lexical engineers, linking adjacent letters and using these morphological building blocks to construct high-scoring words!</p>
                         </div>
                     </div>
                     <!-- Q1 -->
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-all-words-highlights">
                         <div class="faq-question">What do the various highlights on the "All
                             Words" table signify?
                         </div>
@@ -3142,7 +3169,7 @@
                     </div>
 
                     <!-- Bonus Word Scoring FAQ -->
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-bonus-words">
                         <div class="faq-question">How many points do Bonus Words give, and how does length affect the score?</div>
                         <div class="faq-answer">
                             <p>Every board features a single hidden <strong>Bonus Word</strong>. Uncovering it grants a massive points boost! The score is calculated by taking the word's <strong>base Boggle score</strong> and adding a <strong>Bonus Word Premium equal to the exact letter length</strong> of the word.</p>
@@ -3202,7 +3229,7 @@
                     </div>
 
                     <!-- Q2 -->
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-rating-system">
                         <div class="faq-question">How does the rating system evaluate my
                             performance and skill?
                         </div>
@@ -3260,7 +3287,7 @@
                     </div>
 
                     <!-- Q3 -->
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-strategies">
                         <div class="faq-question">What are the distinct strategies for the
                             different game types?
                         </div>
@@ -3297,7 +3324,7 @@
                     </div>
 
                     <!-- Q4 -->
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-icons-flags">
                         <div class="faq-question">What do the different icons next to the flags
                             mean?</div>
                         <div class="faq-answer">
@@ -3335,7 +3362,7 @@
                         </div>
                     </div>
 
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-game-formats">
                         <div class="faq-question">What are the different game Formats and what do they do?</div>
                         <div class="faq-answer">
                             <p><strong>Normal (72%):</strong> The standard gameplay experience where everything is
@@ -3369,7 +3396,7 @@
                         </div>
                     </div>
 
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-solo-friends">
                         <div class="faq-question">Can I play Solo or With Friends?</div>
                         <div class="faq-answer">
                             <p>Yes! To get to play With Friends on mobile devices, swipe right in the lobby. On desktops and laptops, scroll down in the lobby to find the "Solo" and "With Friends" match creation tabs. You can customize your own rooms and invite others by name.</p>
@@ -3377,7 +3404,7 @@
                     </div>
 
                     <!-- Q6 -->
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-board-difficulty">
                         <div class="faq-question">What determines the difficulty level of a
                             board?</div>
                         <div class="faq-answer">
@@ -3400,7 +3427,7 @@
                     </div>
 
                     <!-- Q7 -->
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-user-profile">
                         <div class="faq-question">Is there a faster way to view a user’s
                             profile?</div>
                         <div class="faq-answer">
@@ -3416,7 +3443,7 @@
                     </div>
 
                     <!-- Q8 -->
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-unique-parameters">
                         <div class="faq-question">Why does the system generate unique parameters
                             for each round?
                         </div>
@@ -3446,7 +3473,7 @@
                     </div>
 
                     <!-- Q9 -->
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-mouse-hover">
                         <div class="faq-question">When I mouse over letters, other letters are being selected on the
                             board.</div>
                         <div class="faq-answer">
@@ -3455,7 +3482,7 @@
                     </div>
 
                     <!-- Q10 -->
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-combo-checker">
                         <div class="faq-question">What is the "Combo Checker" in the Tools tab?</div>
                         <div class="faq-answer">
                             <p><strong>ELI5 (Explain Like I'm Five):</strong> Imagine the Combo Checker is like a
@@ -3468,7 +3495,7 @@
                     </div>
 
                     <!-- Q11 -->
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-board-generation">
                         <div class="faq-question">How are boards generated?</div>
                         <div class="faq-answer">
                             <p>Boards are generated using a multi-stage background process to ensure a fair, competitive, and lag-free experience:</p>
@@ -3485,7 +3512,7 @@
                     </div>
 
                     <!-- Q12 -->
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-2d-boards">
                         <div class="faq-question">Why are the 2D boards that are not 4x4 not a perfect square?</div>
                         <div class="faq-answer">
                             <p>That is to accommodate the shape of the screen of the users who are using their mobile devices to play Morpheme!</p>
@@ -3493,7 +3520,7 @@
                     </div>
 
                     <!-- Q13 -->
-                    <div class="faq-item">
+                    <div class="faq-item" id="faq-hidden-features">
                         <div class="faq-question">Are there any additional features in game rooms that aren’t obvious?</div>
                         <div class="faq-answer">
                             <ol style="margin-top: 10px; margin-bottom: 15px; padding-left: 20px; line-height: 1.6;">
@@ -4376,7 +4403,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=15"></script>
     <script src="/js/forum.js?v=32"></script>
-    <script src="/js/app.js?v=39"></script>
+    <script src="/js/app.js?v=41"></script>
     <script src="/js/lobby.js?v=5"></script>
     <script src="/js/play.js?v=141"></script>
     <script src="/js/tournaments.js?v=2"></script>

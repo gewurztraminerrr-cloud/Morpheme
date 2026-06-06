@@ -844,6 +844,28 @@ function setupModalListeners() {
         });
     }
 
+    // FAQ Selector List Navigation
+    const faqLinks = document.querySelectorAll('.faq-nav-link');
+    faqLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            const targetId = link.getAttribute('data-target');
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                // Clear any previous highlights
+                document.querySelectorAll('.faq-item.highlight-pulse').forEach(item => {
+                    item.classList.remove('highlight-pulse');
+                });
+                
+                // Scroll the target element into view within the modal content
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Trigger reflow to restart animation, then add the pulsing glow class
+                void targetEl.offsetWidth;
+                targetEl.classList.add('highlight-pulse');
+            }
+        });
+    });
+
     const genericModal = document.getElementById('generic-info-modal');
     const closeGenericBtn = document.getElementById('close-generic-modal');
     if (genericModal && closeGenericBtn) {
