@@ -843,7 +843,10 @@ async function updateGameState(incomingState = null) {
                     const winnersList = latest.winners.map(w => w.username).join(' & ');
                     
                     if (defPanel) {
-                        defPanel.classList.add('winner-flash');
+                        const is24H = (state.time_limit >= 7200);
+                        if (!is24H) {
+                            defPanel.classList.add('winner-flash');
+                        }
                         defPanel.classList.remove('timer-flash');
                     }
                     if (defHeader) defHeader.style.display = 'none';
