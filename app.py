@@ -2419,10 +2419,21 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         word_text = w.get('word')
         points = int(w.get('points', 0))
         if word_text not in unique_words or points >= unique_words[word_text]['points']:
-             unique_words[word_text] = {'word': word_text, 'points': points, 'timestamp': w.get('timestamp'), 'game_id': w.get('game_id')}
+             unique_words[word_text] = {
+                 'word': word_text, 
+                 'points': points, 
+                 'timestamp': w.get('timestamp'), 
+                 'game_id': w.get('game_id'),
+                 'room_id': w.get('room_id'),
+                 'round_number': w.get('round_number')
+             }
     
     unique_word_list = list(unique_words.values())
     best_words = sorted(unique_word_list, key=lambda x: (x['points'], x['timestamp']), reverse=True)[:50]
+
+    # Collect round objects for best_words
+    best_word_game_ids = {w['game_id'] for w in best_words if w.get('game_id')}
+    best_words_rounds = [r for r in performance_list if r['game_id'] in best_word_game_ids]
 
     # Get config rating
     # 24-hour configurations exception: load global rating from users table
@@ -2470,7 +2481,8 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             'best_pcts': best_pcts,
             'best_obscure': best_obscure,
             'recent_rounds': recent,
-            'best_words': best_words
+            'best_words': best_words,
+            'best_words_rounds': best_words_rounds
         }
     })
 

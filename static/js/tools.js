@@ -1342,12 +1342,31 @@ function findWordPath(board, word) {
     const targetWord = word.toUpperCase();
     function dfs(r, c, index, visited) {
         if (index >= targetWord.length) return [];
-        const letter = board[r][c].toUpperCase();
+        const cellVal = board[r][c].toUpperCase();
         let matchLen = 0;
-        if (targetWord[index] === letter) {
-            matchLen = 1;
-        } else if (letter === 'Q' && targetWord.substring(index, index + 2) === 'QU') {
-            matchLen = 2;
+        if (cellVal.includes('/')) {
+            const options = cellVal.split('/');
+            for (const opt of options) {
+                if (opt === 'Q') {
+                    if (targetWord.substring(index, index + 2) === 'QU') {
+                        matchLen = 2;
+                        break;
+                    } else if (targetWord[index] === 'Q') {
+                        matchLen = 1;
+                        break;
+                    }
+                } else if (targetWord.substring(index).startsWith(opt)) {
+                    matchLen = opt.length;
+                    break;
+                }
+            }
+        } else {
+            const letter = cellVal;
+            if (targetWord[index] === letter) {
+                matchLen = 1;
+            } else if (letter === 'Q' && targetWord.substring(index, index + 2) === 'QU') {
+                matchLen = 2;
+            }
         }
         if (matchLen === 0) return null;
         if (index + matchLen === targetWord.length) {
@@ -1429,7 +1448,23 @@ function findWordPathOnCube(word, board) {
         if (visited.has(`${f},${r},${c}`)) return null;
         const cellValue = board[f][r][c].toUpperCase();
         let matchLength = 0;
-        if (cellValue === 'Q') {
+        if (cellValue.includes('/')) {
+            const options = cellValue.split('/');
+            for (const opt of options) {
+                if (opt === 'Q') {
+                    if (upperWord.substring(index, index + 2) === 'QU') {
+                        matchLength = 2;
+                        break;
+                    } else if (upperWord[index] === 'Q') {
+                        matchLength = 1;
+                        break;
+                    }
+                } else if (upperWord.substring(index).startsWith(opt)) {
+                    matchLength = opt.length;
+                    break;
+                }
+            }
+        } else if (cellValue === 'Q') {
             if (upperWord.substring(index, index + 2) === 'QU') matchLength = 2;
             else if (upperWord[index] === 'Q') matchLength = 1;
         } else if (upperWord[index] === cellValue) matchLength = 1;
@@ -1743,7 +1778,11 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     });
 
     // Sort words chronologically
-    processedWords.sort((a, b) => a.timestamp - b.timestamp);
+    processedWords.sort((a, b) => {
+        const tA = Number(a.timestamp) || 0;
+        const tB = Number(b.timestamp) || 0;
+        return tA - tB;
+    });
 
     // 3. Fallback: If all words have nearly identical timestamps, distribute them evenly
     // (e.g., if they were batch-submitted at the end of a round)
@@ -1894,12 +1933,9 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
                         try {
                             // Insert at TOP on mobile, or BOTTOM on desktop
                             if (walkthroughList) {
-                                if (window.innerWidth <= 900) {
-                                    walkthroughList.insertAdjacentHTML('afterbegin', renderWord(word));
-                                } else {
-                                    walkthroughList.insertAdjacentHTML('beforeend', renderWord(word));
-                                    walkthroughList.scrollTop = walkthroughList.scrollHeight;
-                                }
+                                // Always display the (new) word just displayed at the top of the list
+                                walkthroughList.insertAdjacentHTML('afterbegin', renderWord(word));
+                                walkthroughList.scrollTop = 0; // Keep scrolled to top so the newest is visible
                             }
 
                             currentScore += word.points;
@@ -1958,14 +1994,6 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
                     while (wordIndex < sortedWords.length) {
                         try {
                             const word = sortedWords[wordIndex];
-                            if (walkthroughList) {
-                                if (window.innerWidth <= 900) {
-                                    walkthroughList.insertAdjacentHTML('afterbegin', renderWord(word));
-                                } else {
-                                    walkthroughList.insertAdjacentHTML('beforeend', renderWord(word));
-                                    walkthroughList.scrollTop = walkthroughList.scrollHeight;
-                                }
-                            }
                             currentScore += word.points;
                             if (currentScoreEl) currentScoreEl.innerText = `${currentScore} pts`;
                         } catch (err) {
@@ -1981,6 +2009,8 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
                         startBtn.classList.remove('hidden');
                         startBtn.innerText = "↺ Replay";
                     }
+                    // Reset list to show all words in chronological order (first found at the top) when complete
+                    showAllWords();
                 }
             }, tick);
         };
@@ -2339,6 +2369,28 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         }
 
         const stats = data.stats;
+
+        // Cache all retrieved rounds in window.lastRenderedRounds by their unique game_id
+        if (!window.lastRenderedRounds) window.lastRenderedRounds = [];
+        const retrievedRounds = [
+            ...(stats.exceptional_rounds || []),
+            ...(stats.winning_rounds || []),
+            ...(stats.recent_rounds || []),
+            ...(stats.best_scores || []),
+            ...(stats.best_word_counts || []),
+            ...(stats.best_pcts || []),
+            ...(stats.best_obscure || []),
+            ...(stats.best_words_rounds || [])
+        ];
+        retrievedRounds.forEach(r => {
+            if (r && r.game_id) {
+                const exists = window.lastRenderedRounds.some(cr => cr.game_id === r.game_id);
+                if (!exists) {
+                    window.lastRenderedRounds.push(r);
+                }
+            }
+        });
+
         // Average and Period specific labels
         document.getElementById('ach-avg-perf').textContent = stats.avg_perf || '-';
         document.getElementById('ach-avg-winrate').textContent = (stats.win_rate || 0) + '%';

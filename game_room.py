@@ -1441,8 +1441,13 @@ class GameRoom:
                             winners_data = [{'username': p.username, 'rating': p.rating} for p in active_pool if p.score == max_score]
                             for p in active_pool:
                                 if p.score == max_score:
-                                    sorted_submitted = sorted(p.submitted_words, key=lambda x: x.get('points', 0), reverse=True)
-                                    winner_words = [{'word': w['word'], 'points': w.get('points', 0)} for w in sorted_submitted[:20]]
+                                    # Store all words in chronological order with timestamps so the
+                                    # replay can position them correctly in the timeline.
+                                    sorted_by_time = sorted(p.submitted_words, key=lambda x: x.get('time', 0))
+                                    winner_words = [
+                                        {'word': w['word'], 'points': w.get('points', 0), 'time': w.get('time', 0)}
+                                        for w in sorted_by_time
+                                    ]
                                     break
                         
                         if max_score > 0:
