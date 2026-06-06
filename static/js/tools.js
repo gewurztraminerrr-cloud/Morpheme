@@ -1481,12 +1481,32 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
         const foundInLobby = window.lastGameState.winners_history.find(h => h.round == roundNum);
         if (foundInLobby && foundInLobby.board) {
             console.log(`[Review] Using Round ${roundNum} from Lobby winners_history (current session)`);
+
+            // CRITICAL: winners_history only stores the WINNER's words.
+            // Use the current player's own submitted_words from the live game state instead,
+            // so the replay shows YOUR words in the order YOU found them — not the winner's words.
+            let myWords = null;
+            if (window.lastGameState.players && window.lastGameState.your_username) {
+                const myUsername = window.lastGameState.your_username;
+                const myPlayer = window.lastGameState.players.find(p => p.username === myUsername);
+                if (myPlayer && myPlayer.submitted_words && myPlayer.submitted_words.length > 0) {
+                    // Keep only words with actual text (filter obfuscated '???' words, though during intermission all should be visible)
+                    const visible = myPlayer.submitted_words.filter(w => w.word && !w.obfuscated && w.word.indexOf('?') === -1);
+                    if (visible.length > 0) {
+                        myWords = visible;
+                        console.log(`[Review] Using ${myWords.length} of YOUR own words for replay (not winner's words)`);
+                    }
+                }
+            }
+
             round = {
                 ...foundInLobby,
                 room_id: roomId,
                 round_number: foundInLobby.round,
                 total_score: foundInLobby.score,
-                game_type: foundInLobby.game_type || 'accumulative'
+                game_type: foundInLobby.game_type || 'accumulative',
+                // Override words with current player's own words if available
+                words: myWords !== null ? myWords : (foundInLobby.words || [])
             };
         }
     }
