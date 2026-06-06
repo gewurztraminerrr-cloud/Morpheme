@@ -1244,7 +1244,14 @@ class BoardGenerator:
                     candidate_cells = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in protected]
                 random.shuffle(candidate_cells)
                 
-                # Try up to 30 different cells, and up to 5 alternate letters each, to find a non-ambiguous combination
+                # Sort candidates so center cells are tried first — they have more neighbors
+                # so more words will pass through the Either/Or tile.
+                center_r, center_c = rows / 2.0 - 0.5, cols / 2.0 - 0.5
+                if depth > 1:
+                    candidate_cells.sort(key=lambda cell: abs(cell[1] - center_r) + abs(cell[2] - center_c))
+                else:
+                    candidate_cells.sort(key=lambda cell: abs(cell[0] - center_r) + abs(cell[1] - center_c))
+
                 for cell in candidate_cells[:30]:
                     if depth > 1:
                         f, r, c = cell
@@ -1256,9 +1263,20 @@ class BoardGenerator:
                         
                     if '/' in str(orig): continue
                     
-                    others = [l for l in self.letters if l != orig]
-                    other_weights = [weights[self.letters.index(l)] for l in others]
-                    sampled_others = random.choices(others, weights=other_weights, k=5)
+                    # ENFORCE: one letter must be a vowel, the other a consonant.
+                    # This ensures the tile is useful in more word contexts.
+                    orig_is_vowel = self._is_vowel(orig)
+                    if orig_is_vowel:
+                        # orig is vowel → partner must be a consonant
+                        partner_pool = [l for l in self.letters if not self._is_vowel(l)]
+                    else:
+                        # orig is consonant → partner must be a vowel
+                        partner_pool = [l for l in self.letters if self._is_vowel(l)]
+                    partner_weights = [weights[self.letters.index(l)] for l in partner_pool]
+                    # Try all valid partners (weighted shuffle) instead of just 5 random samples
+                    weighted_partners = random.choices(partner_pool, weights=partner_weights, k=len(partner_pool))
+                    # Deduplicate while preserving weighted priority order
+                    seen = set(); sampled_others = [x for x in weighted_partners if not (x in seen or seen.add(x))]
                     
                     found_valid = False
                     for other in sampled_others:
@@ -1509,7 +1527,14 @@ class BoardGenerator:
                     candidate_cells = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in protected]
                 random.shuffle(candidate_cells)
                 
-                # Try up to 30 different cells, and up to 5 alternate letters each, to find a non-ambiguous combination
+                # Sort candidates so center cells are tried first — they have more neighbors
+                # so more words will pass through the Either/Or tile.
+                center_r, center_c = rows / 2.0 - 0.5, cols / 2.0 - 0.5
+                if depth > 1:
+                    candidate_cells.sort(key=lambda cell: abs(cell[1] - center_r) + abs(cell[2] - center_c))
+                else:
+                    candidate_cells.sort(key=lambda cell: abs(cell[0] - center_r) + abs(cell[1] - center_c))
+
                 for cell in candidate_cells[:30]:
                     if depth > 1:
                         f, r, c = cell
@@ -1521,9 +1546,15 @@ class BoardGenerator:
                         
                     if '/' in str(orig): continue
                     
-                    others = [l for l in self.letters if l != orig]
-                    other_weights = [weights[self.letters.index(l)] for l in others]
-                    sampled_others = random.choices(others, weights=other_weights, k=5)
+                    # ENFORCE: one letter must be a vowel, the other a consonant.
+                    orig_is_vowel = self._is_vowel(orig)
+                    if orig_is_vowel:
+                        partner_pool = [l for l in self.letters if not self._is_vowel(l)]
+                    else:
+                        partner_pool = [l for l in self.letters if self._is_vowel(l)]
+                    partner_weights = [weights[self.letters.index(l)] for l in partner_pool]
+                    weighted_partners = random.choices(partner_pool, weights=partner_weights, k=len(partner_pool))
+                    seen = set(); sampled_others = [x for x in weighted_partners if not (x in seen or seen.add(x))]
                     
                     found_valid = False
                     for other in sampled_others:
