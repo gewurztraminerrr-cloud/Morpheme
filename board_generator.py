@@ -1252,7 +1252,13 @@ class BoardGenerator:
                 else:
                     candidate_cells.sort(key=lambda cell: abs(cell[0] - center_r) + abs(cell[1] - center_c))
 
+                import time as _time
+                _eo_deadline = _time.time() + 3.0  # Hard 3-second limit on the whole E/O search
+
                 for cell in candidate_cells[:30]:
+                    if _time.time() > _eo_deadline:
+                        print(f"[BoardGen] Either/Or deadline reached — using last valid board")
+                        break
                     if depth > 1:
                         f, r, c = cell
                         orig = board[f][r][c]
@@ -1273,13 +1279,16 @@ class BoardGenerator:
                         # orig is consonant → partner must be a vowel
                         partner_pool = [l for l in self.letters if self._is_vowel(l)]
                     partner_weights = [weights[self.letters.index(l)] for l in partner_pool]
-                    # Try all valid partners (weighted shuffle) instead of just 5 random samples
-                    weighted_partners = random.choices(partner_pool, weights=partner_weights, k=len(partner_pool))
+                    # Cap at 8 samples to avoid expensive DFS explosion
+                    k = min(8, len(partner_pool))
+                    weighted_partners = random.choices(partner_pool, weights=partner_weights, k=k)
                     # Deduplicate while preserving weighted priority order
                     seen = set(); sampled_others = [x for x in weighted_partners if not (x in seen or seen.add(x))]
                     
                     found_valid = False
                     for other in sampled_others:
+                        if _time.time() > _eo_deadline:
+                            break
                         # Prevent creating forbidden sequence on Medium/Hard
                         if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, other, r, c, f, depth=depth):
                             continue
@@ -1535,7 +1544,13 @@ class BoardGenerator:
                 else:
                     candidate_cells.sort(key=lambda cell: abs(cell[0] - center_r) + abs(cell[1] - center_c))
 
+                import time as _time
+                _eo_deadline = _time.time() + 3.0  # Hard 3-second limit
+
                 for cell in candidate_cells[:30]:
+                    if _time.time() > _eo_deadline:
+                        print(f"[BoardGen] Either/Or deadline reached — using last valid board")
+                        break
                     if depth > 1:
                         f, r, c = cell
                         orig = board[f][r][c]
@@ -1553,11 +1568,14 @@ class BoardGenerator:
                     else:
                         partner_pool = [l for l in self.letters if self._is_vowel(l)]
                     partner_weights = [weights[self.letters.index(l)] for l in partner_pool]
-                    weighted_partners = random.choices(partner_pool, weights=partner_weights, k=len(partner_pool))
+                    k = min(8, len(partner_pool))
+                    weighted_partners = random.choices(partner_pool, weights=partner_weights, k=k)
                     seen = set(); sampled_others = [x for x in weighted_partners if not (x in seen or seen.add(x))]
                     
                     found_valid = False
                     for other in sampled_others:
+                        if _time.time() > _eo_deadline:
+                            break
                         # Prevent creating forbidden sequence on Medium/Hard
                         if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, other, r, c, f, depth=depth):
                             continue
