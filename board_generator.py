@@ -3105,6 +3105,8 @@ class BoardGenerator:
 
     def _has_either_or_ambiguity(self, board, dictionary):
         """Check if any path in the board passing through the E/O tile could represent two different valid words."""
+        import time as _time
+        _ambig_deadline = _time.time() + 0.5  # Hard 500ms cap — never stall board generation
         is_3d = len(board) > 0 and isinstance(board[0], list) and isinstance(board[0][0], list)
         depth_val = len(board) if is_3d else 1
         rows, cols = (len(board[0]), len(board[0][0])) if is_3d else (len(board), len(board[0]))
@@ -3131,6 +3133,8 @@ class BoardGenerator:
             return False
 
         def dfs_check(f, r, c, visited, word_so_far):
+            if _time.time() > _ambig_deadline:
+                return False  # Timed out — treat as no ambiguity to unblock generation
             # word_so_far is a list of lists of possible letters at each step
             # e.g. [['E'], ['L', 'T'], ['U'], ['D'], ['E']]
 
@@ -3191,6 +3195,8 @@ class BoardGenerator:
             for fi in range(depth_val):
                 for ri in range(rows):
                     for ci in range(cols):
+                        if _time.time() > _ambig_deadline:
+                            return False
                         cell = board[fi][ri][ci]
                         letters = cell.split("/") if "/" in cell else [cell]
                         if dfs_check(fi, ri, ci, {(fi, ri, ci)}, [letters]):
@@ -3198,6 +3204,8 @@ class BoardGenerator:
         else:
             for ri in range(rows):
                 for ci in range(cols):
+                    if _time.time() > _ambig_deadline:
+                        return False
                     cell = board[ri][ci]
                     letters = cell.split("/") if "/" in cell else [cell]
                     if dfs_check(0, ri, ci, {(0, ri, ci)}, [letters]):
