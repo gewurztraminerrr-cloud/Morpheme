@@ -1798,13 +1798,8 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
         const displayWords = [...sortedWords];
 
         if (walkthroughList) {
-            let htmlContent = '';
-            if (window.innerWidth <= 900) {
-                // Newest at the top on mobile
-                htmlContent = displayWords.slice().reverse().map(w => renderWord(w)).join('');
-            } else {
-                htmlContent = displayWords.map(w => renderWord(w)).join('');
-            }
+            // Always first-found first (chronological) on all screen sizes
+            const htmlContent = displayWords.map(w => renderWord(w)).join('');
             walkthroughList.innerHTML = htmlContent;
             if (sortedWords.length === 0) {
                 walkthroughList.innerHTML = '<p class="placeholder" style="color:rgba(255,255,255,0.2); text-align:center; padding:40px;">No words found in this round.</p>';
