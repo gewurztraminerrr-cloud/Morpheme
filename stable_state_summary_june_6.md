@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `48cf725` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `48cf725` / `snapshot-current` / `START_OVER_POINT_JUNE_6` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `48cf725` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
+| **localhost** (`/Users/jeffbabiak/`) | `8ea9d7b` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `8ea9d7b` / `snapshot-current` / `START_OVER_POINT_JUNE_6` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `8ea9d7b` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
 
-**All environments are 100% synchronized at the latest commit 48cf725.**
+**All environments are 100% synchronized at the latest commit 8ea9d7b.**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_6` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -55,3 +55,8 @@ The active recovery points `START_OVER_POINT_JUNE_6` and `snapshot-current` tags
   * Added CSS rules to override `.board-cell.selected.bonus-highlight`, `.board-cell.current.bonus-highlight`, `.board-cell.typing-highlight.bonus-highlight`, and `.board-cell.review-highlight.bonus-highlight`.
   * Set these classes to use the standard theme accent colors (`--highlight-mouse-color` and `--highlight-typing-color`), reset text color to `#000`, and set `animation: none !important` to stop the pulsing lime green box-shadow animation when selected.
   * Injected these overrides both in the external stylesheet and the templates inline stylesheet for maximum safety and cache independence, and bumped the stylesheet version parameter in `templates/index.html` from `?v=85` to `?v=86`.
+
+### 5. FAQ Question Hidden Features Update
+* **Goal achieved:** Add information to the FAQ regarding clicking on the Spinner Set.
+* **Implementation (`templates/index.html`):**
+  * Added item 6 to the "Are there any additional features in game rooms that aren’t obvious?" FAQ answer: `<li><strong>Clicking on the Spinner Set</strong> to get more information about the likelihoods and meaning of each Spinner.</li>`.
