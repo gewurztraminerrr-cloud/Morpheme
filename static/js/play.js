@@ -39,6 +39,131 @@ document.addEventListener('click', () => {
     }
 }, { once: true });
 
+// Sound effects system using Web Audio API
+const BoardAudio = {
+    ctx: null,
+    
+    init() {
+        if (this.ctx) return;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+            this.ctx = new AudioContext();
+        }
+    },
+    
+    playTileSound(pathLen = 1) {
+        if (window.userSettings && window.userSettings.board_sounds === false) return;
+        this.init();
+        if (!this.ctx) return;
+        
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+        
+        try {
+            const osc = this.ctx.createOscillator();
+            const gainNode = this.ctx.createGain();
+            
+            osc.connect(gainNode);
+            gainNode.connect(this.ctx.destination);
+            
+            osc.type = 'sine';
+            
+            // Ascending pitch scaling based on path length (50Hz steps from 400Hz)
+            const baseFreq = 400;
+            const step = 50;
+            const freq = Math.min(1200, baseFreq + (pathLen * step));
+            
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            
+            gainNode.gain.setValueAtTime(0.08, this.ctx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.05);
+            
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.05);
+        } catch (e) {
+            console.warn('Failed to play tile sound:', e);
+        }
+    },
+    
+    playSuccessSound() {
+        if (window.userSettings && window.userSettings.board_sounds === false) return;
+        this.init();
+        if (!this.ctx) return;
+        
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+        
+        try {
+            const playBeep = (freq, startTime, duration, volume) => {
+                const osc = this.ctx.createOscillator();
+                const gainNode = this.ctx.createGain();
+                
+                osc.connect(gainNode);
+                gainNode.connect(this.ctx.destination);
+                
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, startTime);
+                
+                gainNode.gain.setValueAtTime(volume, startTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+                
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            };
+            
+            const now = this.ctx.currentTime;
+            playBeep(523.25, now, 0.08, 0.15); // C5
+            playBeep(783.99, now + 0.06, 0.15, 0.15); // G5
+        } catch (e) {
+            console.warn('Failed to play success sound:', e);
+        }
+    },
+    
+    playFailureSound() {
+        if (window.userSettings && window.userSettings.board_sounds === false) return;
+        this.init();
+        if (!this.ctx) return;
+        
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+        
+        try {
+            const osc = this.ctx.createOscillator();
+            const gainNode = this.ctx.createGain();
+            
+            osc.connect(gainNode);
+            gainNode.connect(this.ctx.destination);
+            
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+            osc.frequency.linearRampToValueAtTime(100, this.ctx.currentTime + 0.18);
+            
+            gainNode.gain.setValueAtTime(0.12, this.ctx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.18);
+            
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.18);
+        } catch (e) {
+            console.warn('Failed to play failure sound:', e);
+        }
+    }
+};
+
+// Resume AudioContext on user interaction
+document.addEventListener('click', () => {
+    if (BoardAudio.ctx && BoardAudio.ctx.state === 'suspended') {
+        BoardAudio.ctx.resume();
+    }
+});
+document.addEventListener('touchstart', () => {
+    if (BoardAudio.ctx && BoardAudio.ctx.state === 'suspended') {
+        BoardAudio.ctx.resume();
+    }
+});
+
 // Mouse selection state
 let mouseState = {
     isDown: false,
@@ -5826,6 +5951,13 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
     const isActuallyValid = isValid && !isPenalty;
     const isAlreadyFound = message && (message === 'Already found!' || message.toUpperCase().includes('ALREADY FOUND'));
 
+    // Play validation sound
+    if (isActuallyValid) {
+        BoardAudio.playSuccessSound();
+    } else {
+        BoardAudio.playFailureSound();
+    }
+
     // Set text and class
     statusEl.textContent = message;
     if (isAlreadyFound) {
@@ -6128,6 +6260,7 @@ function selectCell(row, col, letter, cellEl, face = null) {
             }
 
             updateWordInputFromPath();
+            BoardAudio.playTileSound(mouseState.selectedPath.length);
             return;
         }
     }
@@ -6160,6 +6293,7 @@ function selectCell(row, col, letter, cellEl, face = null) {
     }
 
     updateWordInputFromPath();
+    BoardAudio.playTileSound(mouseState.selectedPath.length);
 }
 
 function updateWordInputFromPath() {

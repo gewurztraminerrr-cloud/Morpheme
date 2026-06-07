@@ -26,8 +26,13 @@ function debounce(func, wait) {
         highlight_mouse: true,
         next_round_bell_enabled: true,
         letter_colors: {},
-        word_flash: true
+        word_flash: true,
+        board_sounds: true
     };
+
+    if (window.userSettings && typeof window.userSettings.board_sounds === 'undefined') {
+        window.userSettings.board_sounds = true;
+    }
 
     // DOM Elements
     const boardSizeSlider = document.getElementById('setting-board-size');
@@ -205,6 +210,19 @@ function debounce(func, wait) {
 
             if (!window.userSettings) window.userSettings = {};
             window.userSettings.word_flash = val;
+        }
+
+        // Board Sound Effects
+        if (settings.board_sounds !== undefined) {
+            let val = settings.board_sounds;
+            if (val === 'true' || val === 'True' || val === true) val = true;
+            else if (val === 'false' || val === 'False' || val === false) val = false;
+
+            const soundsToggle = document.getElementById('setting-board-sounds');
+            if (soundsToggle) soundsToggle.checked = val;
+
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.board_sounds = val;
         }
 
 
@@ -521,6 +539,15 @@ function debounce(func, wait) {
             const val = e.target.checked;
             window.userSettings.word_flash = val;
             saveSettingDebounced('word_flash', val);
+        });
+    }
+
+    const soundsToggle = document.getElementById('setting-board-sounds');
+    if (soundsToggle) {
+        soundsToggle.addEventListener('change', (e) => {
+            const val = e.target.checked;
+            window.userSettings.board_sounds = val;
+            saveSettingDebounced('board_sounds', val);
         });
     }
 
