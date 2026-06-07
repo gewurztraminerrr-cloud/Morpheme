@@ -1017,12 +1017,24 @@ body.theme-light-brown .player-score-val {
     font-weight: 900;
 }
 
-/* Darker green when selected/active in a path */
+/* Make highlighted/selected/current bonus cells look identical to standard highlights, hiding green */
 .board-cell.selected.bonus-highlight,
 .board-cell.current.bonus-highlight {
-    background: #228b22 !important;
-    /* Darker green (ForestGreen) */
-    box-shadow: 0 0 20px rgba(34, 139, 34, 0.8), inset 0 2px 0 rgba(255, 255, 255, 0.4) !important;
+    background: var(--highlight-mouse-color, rgba(64, 156, 255, 0.5)) !important;
+    box-shadow: 0 0 15px var(--highlight-mouse-color, rgba(64, 156, 255, 0.6)) !important;
+    animation: none !important;
+}
+
+.board-cell.typing-highlight.bonus-highlight {
+    background: var(--highlight-typing-color, #ffcc00) !important;
+    box-shadow: 0 0 20px var(--highlight-typing-color, #ffcc00) !important;
+    animation: none !important;
+}
+
+.board-cell.review-highlight.bonus-highlight {
+    background: #ffd700 !important;
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.8), 0 0 10px #fff !important;
+    animation: none !important;
 }
 
 /* Removed redundant dual-letter block previously at this location */

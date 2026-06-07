@@ -29,7 +29,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css?v=27">
     <link rel="stylesheet" href="/css/lobby.css?v=17">
-    <link rel="stylesheet" href="/css/play.css?v=85">
+    <link rel="stylesheet" href="/css/play.css?v=86">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=1">
     <link rel="stylesheet" href="/css/donate.css?v=1">
@@ -38,6 +38,22 @@
             background: #32cd32 !important;
             color: #fff !important;
             box-shadow: 0 0 15px rgba(50, 205, 50, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.8) !important;
+        }
+        .board-cell.selected.bonus-highlight,
+        .board-cell.current.bonus-highlight {
+            background: var(--highlight-mouse-color, rgba(64, 156, 255, 0.5)) !important;
+            box-shadow: 0 0 15px var(--highlight-mouse-color, rgba(64, 156, 255, 0.6)) !important;
+            animation: none !important;
+        }
+        .board-cell.typing-highlight.bonus-highlight {
+            background: var(--highlight-typing-color, #ffcc00) !important;
+            box-shadow: 0 0 20px var(--highlight-typing-color, #ffcc00) !important;
+            animation: none !important;
+        }
+        .board-cell.review-highlight.bonus-highlight {
+            background: #ffd700 !important;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.8), 0 0 10px #fff !important;
+            animation: none !important;
         }
         /* Alternating backgrounds for Spinner Set Odds window sections to prevent confusion */
         .odds-section {
