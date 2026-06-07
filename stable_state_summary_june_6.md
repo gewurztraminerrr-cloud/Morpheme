@@ -59,4 +59,4 @@ The active recovery points `START_OVER_POINT_JUNE_6` and `snapshot-current` tags
 ### 5. FAQ Question Hidden Features Update
 * **Goal achieved:** Add information to the FAQ regarding clicking on the Spinner Set.
 * **Implementation (`templates/index.html`):**
-  * Added item 6 to the "Are there any additional features in game rooms that aren’t obvious?" FAQ answer: `<li><strong>Clicking on the Spinner Set</strong> to get more information about the likelihoods and meaning of each Spinner.</li>`.
+  * Added item 6 to the "Are there any additional features in game rooms that aren’t obvious?" FAQ answer: `<li><strong>Clicking on the Spinner Set</strong> displays more information about the likelihoods and meaning of each Spinner.</li>`.
