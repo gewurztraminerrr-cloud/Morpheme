@@ -1255,6 +1255,9 @@ class BoardGenerator:
                 import time as _time
                 _eo_deadline = _time.time() + 3.0  # Hard 3-second limit on the whole E/O search
 
+                best_eo_candidate = None
+                best_eo_diff = 1.0
+
                 for cell in candidate_cells[:30]:
                     if _time.time() > _eo_deadline:
                         print(f"[BoardGen] Either/Or deadline reached — using last valid board")
@@ -1300,19 +1303,50 @@ class BoardGenerator:
                             board[r][c] = val
                         
                         if not self._has_either_or_ambiguity(board, dictionary):
-                            print(f"[BoardGen] * Successfully applied NON-AMBIGUOUS Either/Or dual-letters {val} to cell {cell}")
-                            found_valid = True
-                            ambiguity_resolved = True
-                            break
-                        else:
-                            if depth > 1:
-                                board[f][r][c] = orig # Revert and try another letter
+                            # Solve board to check word ratio using Either/Or tile
+                            temp_words = self._solve_board(
+                                board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=1.0
+                            )
+                            if temp_words:
+                                words_using_eo = sum(1 for w in temp_words if cell in temp_words[w])
+                                eo_ratio = words_using_eo / len(temp_words)
                             else:
-                                board[r][c] = orig
+                                eo_ratio = 0
+                            
+                            diff = abs(eo_ratio - 0.333)
+                            print(f"[BoardGen] Tried Either/Or {val} at cell {cell}: {words_using_eo}/{len(temp_words)} words ({eo_ratio:.2%}) use it. Diff from 1/3: {diff:.3f}")
+                            
+                            # Perfect candidate is within 5% of 1/3 (28.3% to 38.3%)
+                            if diff <= 0.05:
+                                print(f"[BoardGen] * Perfect Either/Or candidate found at {cell} with ratio {eo_ratio:.2%}. Accepting immediately.")
+                                best_eo_candidate = (cell, val, diff)
+                                ambiguity_resolved = True
+                                found_valid = True
+                                break
+                            
+                            if diff < best_eo_diff:
+                                best_eo_diff = diff
+                                best_eo_candidate = (cell, val, diff)
+                                
+                        # Revert if not perfect
+                        if depth > 1:
+                            board[f][r][c] = orig
+                        else:
+                            board[r][c] = orig
                             
                     if found_valid:
                         break
-                        
+                
+                if not ambiguity_resolved and best_eo_candidate:
+                    # Apply the best candidate found
+                    cell, val, diff = best_eo_candidate
+                    if depth > 1:
+                        board[cell[0]][cell[1]][cell[2]] = val
+                    else:
+                        board[cell[0]][cell[1]] = val
+                    print(f"[BoardGen] * Selected best Either/Or candidate at {cell} with dual-letters {val} (diff from 1/3: {diff:.3f})")
+                    ambiguity_resolved = True
+
                 if not ambiguity_resolved:
                     print(f"[BoardGen] ATTEMPT {attempts}: Either/Or board has ambiguity across all tested combinations. Retrying...")
                     continue
@@ -1547,6 +1581,9 @@ class BoardGenerator:
                 import time as _time
                 _eo_deadline = _time.time() + 3.0  # Hard 3-second limit
 
+                best_eo_candidate = None
+                best_eo_diff = 1.0
+
                 for cell in candidate_cells[:30]:
                     if _time.time() > _eo_deadline:
                         print(f"[BoardGen] Either/Or deadline reached — using last valid board")
@@ -1587,19 +1624,50 @@ class BoardGenerator:
                             board[r][c] = val
                         
                         if not self._has_either_or_ambiguity(board, dictionary):
-                            print(f"[BoardGen] * Successfully applied NON-AMBIGUOUS Either/Or dual-letters {val} to cell {cell}")
-                            found_valid = True
-                            ambiguity_resolved = True
-                            break
-                        else:
-                            if depth > 1:
-                                board[f][r][c] = orig # Revert and try another letter
+                            # Solve board to check word ratio using Either/Or tile
+                            temp_words = self._solve_board(
+                                board, dictionary, (0, 99999), display_min, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=1.0
+                            )
+                            if temp_words:
+                                words_using_eo = sum(1 for w in temp_words if cell in temp_words[w])
+                                eo_ratio = words_using_eo / len(temp_words)
                             else:
-                                board[r][c] = orig
+                                eo_ratio = 0
+                            
+                            diff = abs(eo_ratio - 0.333)
+                            print(f"[BoardGen] Tried Either/Or {val} at cell {cell}: {words_using_eo}/{len(temp_words)} words ({eo_ratio:.2%}) use it. Diff from 1/3: {diff:.3f}")
+                            
+                            # Perfect candidate is within 5% of 1/3 (28.3% to 38.3%)
+                            if diff <= 0.05:
+                                print(f"[BoardGen] * Perfect Either/Or candidate found at {cell} with ratio {eo_ratio:.2%}. Accepting immediately.")
+                                best_eo_candidate = (cell, val, diff)
+                                ambiguity_resolved = True
+                                found_valid = True
+                                break
+                            
+                            if diff < best_eo_diff:
+                                best_eo_diff = diff
+                                best_eo_candidate = (cell, val, diff)
+                                
+                        # Revert if not perfect
+                        if depth > 1:
+                            board[f][r][c] = orig
+                        else:
+                            board[r][c] = orig
                             
                     if found_valid:
                         break
-                        
+                
+                if not ambiguity_resolved and best_eo_candidate:
+                    # Apply the best candidate found
+                    cell, val, diff = best_eo_candidate
+                    if depth > 1:
+                        board[cell[0]][cell[1]][cell[2]] = val
+                    else:
+                        board[cell[0]][cell[1]] = val
+                    print(f"[BoardGen] * Selected best Either/Or candidate at {cell} with dual-letters {val} (diff from 1/3: {diff:.3f})")
+                    ambiguity_resolved = True
+
                 if not ambiguity_resolved:
                     print(f"[BoardGen] ATTEMPT {_attempt}: Either/Or board has ambiguity across all tested combinations. Retrying...")
                     continue
