@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `a822e67` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `a822e67` / `snapshot-current` / `START_OVER_POINT_JUNE_7` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `a822e67` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
+| **localhost** (`/Users/jeffbabiak/`) | `090c7bf` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `090c7bf` / `snapshot-current` / `START_OVER_POINT_JUNE_7` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `090c7bf` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
 
-**All environments are 100% synchronized at the latest commit a822e67.**
+**All environments are 100% synchronized at the latest commit 090c7bf.**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -56,3 +56,12 @@ The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags
   * Configured `playTileSound(pathLen)` to play sine wave blips that arpeggiate in pitch as letters are added or backtracked.
   * Configured `playSuccessSound()` and `playFailureSound()` to trigger warm chimes or thud sounds respectively inside `showValidationFeedback()` for all gameplay validation scenarios.
   * Incremented cache-buster script tags in `index.html` to `settings.js?v=16` and `play.js?v=143`.
+
+### 5. Stuck Board Transition Fallback Recovery
+* **Goal achieved:** Automatically recover stalled room transitions at 0:00 within 10 seconds by resetting state locks and applying simplified parameters.
+* **Implementation (`game_room.py`):**
+  * Configured the stuck watchdog in `get_next_round_milestone` to detect if the room has been stuck in the `intermission` state for more than 10 seconds past the 0:00 timer mark.
+  * Overrides the room's parameters with a guaranteed-fast fallback parameter set: Normal format (or Valued Letters with 50-100 count for 24h rooms), 50-100 word count range, Medium difficulty, NWL dictionary, min word length 3, and bonus word length 6.
+  * Clears the staging board fields and resets all transition locks (`starting_round = False`), triggering a clean re-attempt on the next heartbeat or client poll.
+  * Stale background generation and emergency generation tasks immediately detect the parameter change and abort, preventing resource contention.
+
