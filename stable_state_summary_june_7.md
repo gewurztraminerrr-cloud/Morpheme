@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `7721533` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `7721533` / `snapshot-current` / `START_OVER_POINT_JUNE_7` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `7721533` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
+| **localhost** (`/Users/jeffbabiak/`) | `a822e67` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `a822e67` / `snapshot-current` / `START_OVER_POINT_JUNE_7` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `a822e67` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
 
-**All environments are 100% synchronized at the latest commit 7721533.**
+**All environments are 100% synchronized at the latest commit a822e67.**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -46,3 +46,13 @@ The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags
 * **Goal achieved:** Add information to the FAQ regarding clicking on the Spinner Set to see more information.
 * **Implementation (`templates/index.html`):**
   * Added item 6 to the "Are there any additional features in game rooms that aren’t obvious?" FAQ answer: `<li><strong>Clicking on the Spinner Set</strong> displays more information about the likelihoods and meaning of each Spinner.</li>`.
+
+### 4. Board Gesture & Word Validation Sound Effects
+* **Goal achieved:** Play responsive, latency-free sound effects during swiping and word submission, with an option to toggle this in User Settings.
+* **Implementation (`templates/index.html` & `static/js/settings.js` & `static/js/play.js`):**
+  * Added a "Board Sound Effects" checkbox toggle to the Layout / App Theme settings grid inside `index.html`.
+  * Configured `settings.js` to initialize, save (via debounced API POST requests to `/api/settings/update`), and toggle the sound preference `board_sounds` (defaulting to `true`).
+  * Created a global, Web Audio API-powered `BoardAudio` class in `play.js` that synthesizes low-latency audio tones.
+  * Configured `playTileSound(pathLen)` to play sine wave blips that arpeggiate in pitch as letters are added or backtracked.
+  * Configured `playSuccessSound()` and `playFailureSound()` to trigger warm chimes or thud sounds respectively inside `showValidationFeedback()` for all gameplay validation scenarios.
+  * Incremented cache-buster script tags in `index.html` to `settings.js?v=16` and `play.js?v=143`.
