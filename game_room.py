@@ -1215,30 +1215,29 @@ class GameRoom:
         
         if getattr(self, 'intermission_stuck_start_time', 0) > 0:
             if now - self.intermission_stuck_start_time > 10.0:
-                print(f"[Watchdog] Intermission stuck for >10s on {self.room_id} loading a board. Re-spinning Spinner Set parameters and starting anew!")
+                print(f"[Watchdog] Intermission stuck for >10s on {self.room_id} loading a board. Resetting parameters to guaranteed-fast fallback and retrying immediately!")
                 
-                # 1. Re-generate spinner parameters
-                from spinner_set import SpinnerSet
-                new_params = SpinnerSet.generate_params(
-                    self.board_dimensions,
-                    is_24h=(self.time_limit >= 7200),
-                    is_split=(self.game_type == 'split'),
-                    previous_params=self.spinner_params
-                )
-                new_params['board_dimensions'] = self.board_dimensions
-                new_params['time_limit'] = self.time_limit
+                # 1. Set fallback spinner parameters
+                fallback_params = {
+                    'difficulty': 'Medium',
+                    'dictionary': getattr(self, 'current_dictionary', 'NWL') or 'NWL',
+                    'word_count_range': '50-100',
+                    'board_format': 'Valued Letters' if self.time_limit >= 7200 else 'Normal',
+                    'min_word_length': 3,
+                    'bonus_word_length': 6,
+                    'generated_at': now,
+                    'board_dimensions': self.board_dimensions,
+                    'time_limit': self.time_limit
+                }
                 
-                # If difficulty is Hard (which is most likely to stall), downgrade to Medium to ensure fast load
-                if new_params.get('difficulty') == 'Hard':
-                    new_params['difficulty'] = 'Medium'
-                
-                self.spinner_params = dict(new_params)
-                self.next_spinner_params = dict(new_params)
+                self.spinner_params = dict(fallback_params)
+                self.next_spinner_params = dict(fallback_params)
+                self.next_round_spinner_params = dict(fallback_params)
                 self.spinner_params_generated = True
                 self.spinner_params_revealed = True
                 self._reveal_sync_complete = True
                 
-                # 2. Reset staging and search flags
+                # 2. Reset staging and search flags to force re-generation
                 self.next_round_board = None
                 self.next_round_words = None
                 self.next_round_word_paths = None
@@ -1249,17 +1248,16 @@ class GameRoom:
                 self.next_round_bonus_cell = None
                 self.next_round_format = None
                 self.next_round_uniqueness = None
-                self.next_round_spinner_params = None
                 
                 self.board_search_started = False
                 self.board_search_started_actual = False
                 self.board_search_loading = False
                 self.starting_round = False
                 
-                # 3. Reset the watchdog stuck timer to give the new search thread a fresh 10s window
+                # 3. Reset the watchdog stuck timer to give the new thread a fresh window
                 self.intermission_stuck_start_time = now
                 
-                # We return None so the heartbeat will proceed to see 'search' milestone next tick
+                # We return None so the heartbeat will proceed to see 'start' milestone next tick and call start_next_round
                 return None
 
         if getattr(self, 'starting_round', False):
