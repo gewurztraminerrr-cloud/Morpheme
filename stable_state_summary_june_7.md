@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `090c7bf` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `090c7bf` / `snapshot-current` / `START_OVER_POINT_JUNE_7` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `090c7bf` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
+| **localhost** (`/Users/jeffbabiak/`) | `023c84f` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `023c84f` / `snapshot-current` / `START_OVER_POINT_JUNE_7` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `023c84f` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
 
-**All environments are 100% synchronized at the latest commit 090c7bf.**
+**All environments are 100% synchronized at the latest commit 023c84f.**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -21,8 +21,8 @@ The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags
 | `/css/play.css` | `v=86` | Added overrides for `.bonus-highlight` elements when actively selected or highlighted to hide the lime green background and glow. |
 | `/css/howtoplay.css` | `v=10` | Implemented visible list grid and button styles for FAQ quick navigation. |
 | `/js/app.js` | `v=41` | Implemented scroll navigation and pulse highlight logic for FAQ links. |
-| `/js/play.js` | `v=142` | Disabled definitions panel gold flashing animation at round complete in 24h rooms. |
-| `templates/index.html` | *Dynamic* | Replaced the quick-nav dropdown selector with the visible question link button grid, bumped howtoplay.css cache-buster to `v=10`, app.js cache-buster to `v=41`, play.js cache-buster to `v=142`, and play.css cache-buster to `v=86`. |
+| `/js/play.js` | `v=144` | Disabled definitions panel gold flashing animation at round complete in 24h rooms, and fixed transposition corruption on definition click during intermission. |
+| `templates/index.html` | *Dynamic* | Replaced the quick-nav dropdown selector with the visible question link button grid, bumped howtoplay.css cache-buster to `v=10`, app.js cache-buster to `v=41`, play.js cache-buster to `v=144`, and play.css cache-buster to `v=86`. |
 
 ---
 
@@ -64,4 +64,13 @@ The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags
   * Overrides the room's parameters with a guaranteed-fast fallback parameter set: Normal format (or Valued Letters with 50-100 count for 24h rooms), 50-100 word count range, Medium difficulty, NWL dictionary, min word length 3, and bonus word length 6.
   * Clears the staging board fields and resets all transition locks (`starting_round = False`), triggering a clean re-attempt on the next heartbeat or client poll.
   * Stale background generation and emergency generation tasks immediately detect the parameter change and abort, preventing resource contention.
+
+### 6. Intermission Definition & Board Transposition Bug Fixes
+* **Goal achieved:** Ensure that viewing a word's definition during intermission does not clear board tile highlights or corrupt the board transposition state on mobile devices.
+* **Implementation (`static/js/play.js` & `templates/index.html`):**
+  * Added a custom cached property `state._isAlreadyTransposed` and `state._isBoardTransposedValue` on the room state object.
+  * Configured `updateGameState` to check if `state._isAlreadyTransposed` is set. If true, it restores `window.isBoardTransposed` from the cached value and skips the transposition logic, completely preventing rows/columns double-swapping and transposition state corruption.
+  * Configured `reapplyBoardHighlights` to correctly restore the intermission letter filter highlight class `.intermission-highlight` to the clicked cell.
+  * Incremented cache-buster script tags in `index.html` to `play.js?v=144`.
+
 
