@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `3ea9bdf` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `3ea9bdf` / `snapshot-current` / `START_OVER_POINT_JUNE_7` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `3ea9bdf` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
+| **localhost** (`/Users/jeffbabiak/`) | `24e08e5` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `24e08e5` / `snapshot-current` / `START_OVER_POINT_JUNE_7` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `24e08e5` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
 
-**All environments are 100% synchronized at the latest commit 3ea9bdf.**
+**All environments are 100% synchronized at the latest commit 24e08e5.**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -20,7 +20,7 @@ The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags
 |--------------|---------|-------------|
 | `/css/play.css` | `v=86` | Added overrides for `.bonus-highlight` elements when actively selected or highlighted to hide the lime green background and glow. |
 | `/css/howtoplay.css` | `v=10` | Implemented visible list grid and button styles for FAQ quick navigation. |
-| `/css/lobby.css` | `v=18` | Added styling for the "My Rating" button using a premium blue-purple gradient. |
+| `/css/lobby.css` | `v=19` | Added styling for the "My Rating" button using a premium blue-purple gradient, and optimized input width/button sizes for mobile responsive layouts. |
 | `/js/app.js` | `v=41` | Implemented scroll navigation and pulse highlight logic for FAQ links. |
 | `/js/lobby.js` | `v=6` | Added click handler to populate rating-filter with current user rating and sort the active rooms list. |
 | `/js/play.js` | `v=144` | Disabled definitions panel gold flashing animation at round complete in 24h rooms, and fixed transposition corruption on definition click during intermission. |
@@ -82,8 +82,9 @@ The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags
   * Updated percentages under Easy, Medium, and Hard for 4x4, 4x6, 5x7, and 6x8/Cube according to the trial results.
 
 ### 8. Lobby sorting by user rating ("My Rating" Button)
-* **Goal achieved:** Allowed users to instantly sort active game rooms by how close the room's average rating is to their own player rating.
+* **Goal achieved:** Allowed users to instantly sort active game rooms by how close the room's average rating is to their own player rating, with mobile responsiveness layout optimizations.
 * **Implementation (`templates/index.html` & `static/css/lobby.css` & `static/js/lobby.js`):**
   * Added the `<button id="my-rating-btn">My Rating</button>` element in `templates/index.html` inside the rating filter container next to the "Find" button.
   * Styled the button in `lobby.css` with a premium blue-to-purple gradient, lift transitions, and active press scale animations.
   * Programmed a click event listener in `lobby.js` that retrieves the current user rating (defaulting to 1000 if not logged in or invalid), updates the `#rating-filter` text field, sets the search filter value `window.activeRatingFilterValue`, and triggers `fetchAndRenderRooms()` to execute the sort.
+  * Optimized mobile layouts in `lobby.css` under the `@media (max-width: 900px)` and `@media (max-width: 480px)` responsive queries by reducing button sizes and padding, which maximizes the horizontal space for the `#rating-filter` text field and prevents its placeholder text ("Filter by average rating") from being cut off on narrow screens.
