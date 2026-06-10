@@ -12,6 +12,7 @@ import threading
 import uuid
 from collections import Counter
 import datetime
+from zoneinfo import ZoneInfo
 
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'morpheme-secret-key-2024'
@@ -2053,15 +2054,23 @@ def get_public_profile(username):
     user_id = user[0]
     period = request.args.get('period', 'all').lower()
     
+    # Calculate Chicago local time boundaries
+    chicago_tz = ZoneInfo("America/Chicago")
+    chicago_now = datetime.datetime.now(chicago_tz)
+    chicago_today_str = chicago_now.strftime('%Y-%m-%d')
+    chicago_week_ago_str = (chicago_now - datetime.timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
+    chicago_month_ago_str = (chicago_now - datetime.timedelta(days=30)).strftime('%Y-%m-%d %H:%M:%S')
+    chicago_year_ago_str = (chicago_now - datetime.timedelta(days=365)).strftime('%Y-%m-%d %H:%M:%S')
+
     time_filter = ""
     if period == 'day':
-        time_filter = "AND date(timestamp, 'localtime') = date('now', 'localtime')"
+        time_filter = f"AND date(timestamp) = '{chicago_today_str}'"
     elif period == 'week':
-        time_filter = "AND date(timestamp, 'localtime') >= date('now', '-7 days', 'localtime')"
+        time_filter = f"AND timestamp >= '{chicago_week_ago_str}'"
     elif period == 'month':
-        time_filter = "AND date(timestamp, 'localtime') >= date('now', '-30 days', 'localtime')"
+        time_filter = f"AND timestamp >= '{chicago_month_ago_str}'"
     elif period == 'year':
-        time_filter = "AND date(timestamp, 'localtime') >= date('now', '-365 days', 'localtime')"
+        time_filter = f"AND timestamp >= '{chicago_year_ago_str}'"
 
     # Calculate Period Stats (If 'all', we still calculate from round_history for consistency, 
     # but could use user table for performance if data volume is high)
@@ -2277,11 +2286,22 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         except: continue
 
     # 2. Filter by Period for the lists - Enforce Calendar Day logic
+    chicago_tz = ZoneInfo("America/Chicago")
+    chicago_now = datetime.datetime.now(chicago_tz)
+    chicago_today_str = chicago_now.strftime('%Y-%m-%d')
+    chicago_week_ago_str = (chicago_now - datetime.timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
+    chicago_month_ago_str = (chicago_now - datetime.timedelta(days=30)).strftime('%Y-%m-%d %H:%M:%S')
+    chicago_year_ago_str = (chicago_now - datetime.timedelta(days=365)).strftime('%Y-%m-%d %H:%M:%S')
+
     time_filter = ""
-    if period == 'day': time_filter = "AND date(timestamp, 'localtime') = date('now', 'localtime')"
-    elif period == 'week': time_filter = "AND date(timestamp, 'localtime') >= date('now', '-7 days', 'localtime')"
-    elif period == 'month': time_filter = "AND date(timestamp, 'localtime') >= date('now', '-30 days', 'localtime')"
-    elif period == 'year': time_filter = "AND date(timestamp, 'localtime') >= date('now', '-365 days', 'localtime')"
+    if period == 'day':
+        time_filter = f"AND date(timestamp) = '{chicago_today_str}'"
+    elif period == 'week':
+        time_filter = f"AND timestamp >= '{chicago_week_ago_str}'"
+    elif period == 'month':
+        time_filter = f"AND timestamp >= '{chicago_month_ago_str}'"
+    elif period == 'year':
+        time_filter = f"AND timestamp >= '{chicago_year_ago_str}'"
         
     query = f'''
         SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions, total_words_avail
@@ -5003,17 +5023,26 @@ def get_leaderboard_data():
             if game_type == 'all' or game_type == 'accumulative':
                 where_clauses.append("(rh.game_type != 'accumulative' OR rh.round_duration != 600)")
 
+        # Calculate Chicago local time boundaries
+        chicago_tz = ZoneInfo("America/Chicago")
+        chicago_now = datetime.datetime.now(chicago_tz)
+        chicago_today_str = chicago_now.strftime('%Y-%m-%d')
+        chicago_week_ago_str = (chicago_now - datetime.timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
+        chicago_month_ago_str = (chicago_now - datetime.timedelta(days=30)).strftime('%Y-%m-%d %H:%M:%S')
+        chicago_year_ago_str = (chicago_now - datetime.timedelta(days=365)).strftime('%Y-%m-%d %H:%M:%S')
+
         period_clause = "1=1"
         if period == 'day':
-            period_clause = "date(rh.timestamp, 'localtime') = date('now', 'localtime')"
+            period_clause = f"date(timestamp) = '{chicago_today_str}'"
         elif period == 'week':
-            period_clause = "rh.timestamp >= datetime('now', '-7 days', 'localtime')"
+            period_clause = f"timestamp >= '{chicago_week_ago_str}'"
         elif period == 'month':
-            period_clause = "rh.timestamp >= datetime('now', '-30 days', 'localtime')"
+            period_clause = f"timestamp >= '{chicago_month_ago_str}'"
         elif period == 'year':
-            period_clause = "rh.timestamp >= datetime('now', '-365 days', 'localtime')"
+            period_clause = f"timestamp >= '{chicago_year_ago_str}'"
 
-        where_clauses.append(period_clause)
+        outer_period_clause = period_clause.replace("timestamp", "rh.timestamp")
+        where_clauses.append(outer_period_clause)
         base_where = " AND ".join(where_clauses)
 
         # Row cap: prevent unbounded full-table scans for Python-processed queries
