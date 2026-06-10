@@ -1117,6 +1117,7 @@ body.theme-light-brown .field-hint {
         gap: 6px;
     }
     #rating-filter {
+        flex: 0 0 100%;
         width: 100%;
         padding: 12px 8px;
         font-size: 0.85rem;
@@ -1137,6 +1138,7 @@ body.theme-light-brown .field-hint {
         gap: 4px;
     }
     #rating-filter {
+        flex: 0 0 100%;
         width: 100%;
         padding: 10px 6px;
         font-size: 0.8rem;
