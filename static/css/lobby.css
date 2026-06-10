@@ -190,12 +190,13 @@
 
 .rating-filter-container {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     width: 100%;
 }
 
 #rating-filter {
-    flex: 1;
+    width: 100%;
     padding: 12px;
     background: var(--input-bg);
     border: 2px solid var(--input-border);
@@ -217,6 +218,7 @@
 }
 
 #find-rating-btn {
+    flex: 1;
     padding: 12px 20px;
     background: linear-gradient(135deg, var(--accent-color, #ff0844) 0%, #ffb199 100%);
     border: none;
@@ -241,6 +243,7 @@
 }
 
 #my-rating-btn {
+    flex: 1;
     padding: 12px 20px;
     background: linear-gradient(135deg, #2575fc 0%, #6a11cb 100%);
     border: none;
