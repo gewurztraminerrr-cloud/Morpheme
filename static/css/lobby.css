@@ -1113,43 +1113,51 @@ body.theme-light-brown .field-hint {
 /* Rating filter mobile optimization */
 @media (max-width: 900px) {
     .rating-filter-container {
-        flex-wrap: wrap;
-        gap: 6px;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
+        width: 100% !important;
     }
     #rating-filter {
-        flex: 0 0 100%;
-        width: 100%;
-        padding: 12px 8px;
-        font-size: 0.85rem;
+        grid-column: span 2 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        padding: 12px 8px !important;
+        font-size: 0.85rem !important;
     }
     #rating-filter::placeholder {
-        font-size: 0.78rem;
+        font-size: 0.78rem !important;
     }
     #find-rating-btn, #my-rating-btn {
-        flex: 1;
-        padding: 12px 8px;
-        font-size: 0.8rem;
+        grid-column: span 1 !important;
+        width: 100% !important;
+        padding: 12px 8px !important;
+        font-size: 0.8rem !important;
     }
 }
 
 @media (max-width: 480px) {
     .rating-filter-container {
-        flex-wrap: wrap;
-        gap: 4px;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 4px !important;
+        width: 100% !important;
     }
     #rating-filter {
-        flex: 0 0 100%;
-        width: 100%;
-        padding: 10px 6px;
-        font-size: 0.8rem;
+        grid-column: span 2 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        padding: 10px 6px !important;
+        font-size: 0.8rem !important;
     }
     #rating-filter::placeholder {
-        font-size: 0.7rem;
+        font-size: 0.7rem !important;
     }
     #find-rating-btn, #my-rating-btn {
-        flex: 1;
-        padding: 10px 6px;
-        font-size: 0.72rem;
+        grid-column: span 1 !important;
+        width: 100% !important;
+        padding: 10px 6px !important;
+        font-size: 0.72rem !important;
     }
 }
 
