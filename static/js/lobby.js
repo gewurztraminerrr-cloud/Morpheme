@@ -434,6 +434,31 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const myRatingBtn = document.getElementById('my-rating-btn');
+    if (myRatingBtn) {
+        myRatingBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            let userRating = window.lastPlayerRating;
+            if (userRating === undefined || userRating === null || isNaN(userRating)) {
+                userRating = 1000;
+            }
+            const input = document.getElementById('rating-filter');
+            if (input) {
+                input.value = userRating;
+            }
+            window.activeRatingFilterValue = userRating;
+            console.log('[Lobby] My Rating clicked. Value:', userRating);
+            if (currentLobbyConfig) {
+                fetchAndRenderRooms(
+                    currentLobbyConfig.gameType,
+                    currentLobbyConfig.timeLimit,
+                    currentLobbyConfig.boardDimensions,
+                    false
+                );
+            }
+        });
+    }
+
     // Start stats polling if we land on lobby
     if (isOnLobby()) {
         startStatsPolling();

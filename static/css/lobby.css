@@ -240,6 +240,31 @@
     transform: translateY(0);
 }
 
+#my-rating-btn {
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #2575fc 0%, #6a11cb 100%);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+    white-space: nowrap;
+}
+
+#my-rating-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(37, 117, 252, 0.35);
+    filter: brightness(1.1);
+}
+
+#my-rating-btn:active {
+    transform: translateY(0);
+}
+
+
 #selected-game-info {
     background: var(--input-bg);
     border: 1px solid var(--input-border);
