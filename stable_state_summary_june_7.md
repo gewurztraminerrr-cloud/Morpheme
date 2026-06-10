@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `c2924ac` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `c2924ac` / `snapshot-current` / `START_OVER_POINT_JUNE_7` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `c2924ac` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
+| **localhost** (`/Users/jeffbabiak/`) | `fd91f4f` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `fd91f4f` / `snapshot-current` / `START_OVER_POINT_JUNE_7` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `fd91f4f` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
 
-**All environments are 100% synchronized at the latest commit c2924ac.**
+**All environments are 100% synchronized at the latest commit fd91f4f.**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -95,8 +95,10 @@ The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags
   * Replaced the SQLite `date(timestamp, 'localtime') = date('now', 'localtime')` date function calls with a timezone-aware calculation in Python using `zoneinfo.ZoneInfo("America/Chicago")` (matching the game's authoritative server clock).
   * The calculations generate exact threshold string representations (`chicago_today_str`, `chicago_week_ago_str`, etc.) which are evaluated directly against the stored datetimes in SQLite, correcting the timezone offset mismatch and restoring all records to the "Day" tabs.
 
-### 10. Intermission Leaver Stats Fix
+### 10. Intermission Leaver Stats Fix (Immediate Save Enhancement)
 * **Goal achieved:** Ensure that when a player leaves a room during intermission, the round results they just played are saved correctly to achievements, leaderboards, and stats instead of being dropped.
 * **Implementation (`game_room.py`):**
-  * Combined the active `room.players` list with `room.past_players.values()` (filtering duplicates by user ID) when capturing `ghost_player_snapshots` at the beginning of the round transition in `start_next_round()`. This captures players who left during the intermission but participated in the round.
+  * Implemented an immediate database save by calling `save_round_history` and `log_word_tally` inside the `process_results_async()` thread spawned at the start of intermission (transition ACTIVE -> INTERMISSION).
+  * Stores a reference to `RoomManager` in a global variable `_room_manager_instance` upon initialization to allow the `GameRoom` background thread to call its database methods.
+  * Captures participating players' snapshots synchronously at the exact moment the round ends, preventing players who leave or disconnect during intermission from being omitted.
   * Added a reset loop in the standard room transition path to clear the stats of players in `room.past_players` (in addition to `room.players`), preventing old scores from leaking into future rounds.
