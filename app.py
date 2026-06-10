@@ -3343,6 +3343,8 @@ def get_room_state(room_id):
                 'spinner_params': {**room.spinner_params, 'uniqueness': getattr(room, 'next_round_uniqueness', None) or 0} if (is_intermission and is_revealed) else room.spinner_params,
                 'use_added_words': word_validator.get_use_added_words(),
                 'current_min_length': getattr(room, 'current_min_length', 3),
+                'min_rating': getattr(room, 'min_rating', 0),
+                'max_rating': getattr(room, 'max_rating', 9999),
                 'current_board_format': getattr(room, 'current_board_format', 'Normal'),
                 'current_word_count_range': getattr(room, 'current_word_count_range', 'Random'),
                 'current_difficulty': getattr(room, 'current_difficulty', None) or 'Medium',

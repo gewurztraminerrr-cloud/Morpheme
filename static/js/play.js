@@ -1188,38 +1188,60 @@ async function updateGameState(incomingState = null) {
             }
 
             const defContent = document.getElementById('definition-content');
+            const defHeader = document.getElementById('definition-header');
             
-            // PRIORITY: During intermission, show the winner announcement for everyone (even spectators)
-            if (defContent) {
-                if (state.state === 'intermission') {
-                    defContent.style.display = 'block';
-                    if (spectatorPanel) spectatorPanel.style.display = 'none';
-                } else {
-                    defContent.style.display = 'none';
-                    if (spectatorPanel) spectatorPanel.style.display = 'flex';
+            // Hide the actual definitions content and definition header
+            if (defContent) defContent.style.display = 'none';
+            if (defHeader) defHeader.style.display = 'none';
+            
+            // Show spectator panel during gameplay and intermission, overriding winner/definition messages
+            if (spectatorPanel) spectatorPanel.style.display = 'flex';
+
+            // Check if there is space to join
+            const playerCount = (state.players && Array.isArray(state.players)) ? state.players.length : 0;
+            const maxPlayers = state.max_players || 8;
+            const isAccumulative = state.game_type === 'accumulative';
+            const canJoin = isAccumulative || (playerCount < maxPlayers);
+
+            // Determine spectator rating limits
+            const currentUsername = state.your_username || window.currentUser || localStorage.getItem('morpheme_username');
+            let myRating = window.lastPlayerRating;
+            if (myRating === undefined || myRating === null || isNaN(myRating)) {
+                myRating = (currentUsername && currentUsername.startsWith('Guest_')) ? 0 : 1000;
+            }
+            if (state.spectators && Array.isArray(state.spectators) && currentUsername) {
+                const meSpec = state.spectators.find(s => s.username && s.username.toLowerCase() === currentUsername.toLowerCase());
+                if (meSpec && meSpec.rating !== undefined && meSpec.rating !== null) {
+                    myRating = meSpec.rating;
                 }
             }
-            
-            // Re-render spectator content only if not in intermission (if in intermission, defContent wins)
-            if (state.state !== 'intermission' && spectatorPanel) {
-                spectatorPanel.style.display = 'flex';
 
-                // Check if there is space to join
-                const playerCount = (state.players && Array.isArray(state.players)) ? state.players.length : 0;
-                const maxPlayers = state.max_players || 8;
-                const isAccumulative = state.game_type === 'accumulative';
-                const canJoin = isAccumulative || (playerCount < maxPlayers);
+            const minRating = state.min_rating !== undefined ? state.min_rating : 0;
+            const maxRating = state.max_rating !== undefined ? state.max_rating : 9999;
+            const isWithinLimits = (myRating >= minRating && myRating <= maxRating);
 
             // Render Content
-                spectatorPanel.innerHTML = `
-                    <div class="spectator-title">SPECTATING</div>
-                    <div class="spectator-actions">
-                        ${canJoin ?
-                        `<button id="spec-join-btn" class="spectator-join-btn premium-btn">Join Game</button>` :
-                        `<div class="spectator-full-badge">Full Room</div>`
-                    }
-                    </div>
-                `;
+            if (spectatorPanel) {
+                if (isWithinLimits) {
+                    const slotOpen = playerCount < 8;
+                    spectatorPanel.innerHTML = `
+                        <div class="spectator-title">SPECTATING</div>
+                        <div class="spectator-actions" style="flex-direction: column; align-items: center; gap: 8px;">
+                            ${slotOpen ?
+                            `<button id="spec-join-btn" class="spectator-join-btn premium-btn">Join Game</button>
+                             <div class="spectator-slot-open" style="font-size: 0.8rem; color: #10b981; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 4px; animation: pulse 2s infinite;">
+                                <span style="display: inline-block; width: 6px; height: 6px; background-color: #10b981; border-radius: 50%;"></span>
+                                Slot Open - Join When Ready
+                             </div>` :
+                            `<div class="spectator-full-badge">Full Room</div>`
+                        }
+                        </div>
+                    `;
+                } else {
+                    spectatorPanel.innerHTML = `
+                        <div class="spectator-title">SPECTATING</div>
+                    `;
+                }
 
                 // Re-attach event listener
                 setTimeout(() => {
@@ -6131,6 +6153,7 @@ if (rotateBtnEl) {
 // Definition Logic
 async function fetchDefinition(word) {
     if (!word) return;
+    if (window.isSpectatorMode) return; // Block spectators from overwriting definition panel
     const defContent = document.getElementById('definition-content');
     const defWord = document.getElementById('definition-word');
     const defHeader = document.getElementById('definition-header');
