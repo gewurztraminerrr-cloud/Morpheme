@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `63b3cf3` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `63b3cf3` / `snapshot-current` / `START_OVER_POINT_JUNE_7` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `63b3cf3` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
+| **localhost** (`/Users/jeffbabiak/`) | `18e35af` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `18e35af` / `snapshot-current` / `START_OVER_POINT_JUNE_7` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `18e35af` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
 
-**All environments are 100% synchronized at the latest commit 63b3cf3.**
+**All environments are 100% synchronized at the latest commit 18e35af.**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -87,7 +87,8 @@ The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags
   * Added the `<button id="my-rating-btn">My Rating</button>` element in `templates/index.html` inside the rating filter container next to the "Find" button.
   * Styled the button in `lobby.css` with a premium blue-to-purple gradient, lift transitions, and active press scale animations.
   * Programmed a click event listener in `lobby.js` that retrieves the current user rating (defaulting to 1000 if not logged in or invalid), updates the `#rating-filter` text field, sets the search filter value `window.activeRatingFilterValue`, and triggers `fetchAndRenderRooms()` to execute the sort.
-  * Reconfigured `.rating-filter-container` layout with `flex-wrap: wrap`, setting `#rating-filter` to `width: 100%` and both buttons to `flex: 1` so they wrap to a side-by-side layout on the second row. This expands the input to 100% panel width, making the placeholder text "Filter by average rating" fully visible and readable on both desktop and mobile viewports.
+  * Widened the `.lobby-grid` desktop columns from `2fr 1fr` to `1.7fr 1.3fr` and removed the overriding `min-width: 0` on `#rating-filter` to enforce a `min-width: 185px`. This keeps the "Filter by average rating" placeholder text fully visible and readable on desktop/laptop screens with the buttons placed side-by-side on the right.
+  * Configured media queries (`max-width: 900px` and `max-width: 480px`) to wrap the layout (`flex-wrap: wrap`, `#rating-filter` at `width: 100%`, and buttons at `flex: 1`) so it neatly stacks on smaller mobile and tablet viewports.
 
 ### 9. Timezone-Aware Leaderboard & Achievements ("Day" Tab Fix)
 * **Goal achieved:** Fixed a bug where the "Day" tab under Leaderboards and User Achievements/Skill Rankings displayed no records due to a double-conversion timezone offset mismatch in SQLite.

@@ -2,7 +2,7 @@
 
 .lobby-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1.7fr 1.3fr;
     gap: 20px;
     height: calc(100vh - 100px);
     margin-top: 0;
@@ -190,20 +190,19 @@
 
 .rating-filter-container {
     display: flex;
-    flex-wrap: wrap;
     gap: 8px;
     width: 100%;
 }
 
 #rating-filter {
-    width: 100%;
+    flex: 1;
+    min-width: 185px;
     padding: 12px;
     background: var(--input-bg);
     border: 2px solid var(--input-border);
     border-radius: 8px;
     color: var(--text-primary);
     font-size: 1rem;
-    min-width: 0;
 }
 
 #rating-filter::placeholder {
@@ -218,8 +217,7 @@
 }
 
 #find-rating-btn {
-    flex: 1;
-    padding: 12px 20px;
+    padding: 12px 15px;
     background: linear-gradient(135deg, var(--accent-color, #ff0844) 0%, #ffb199 100%);
     border: none;
     border-radius: 8px;
@@ -243,8 +241,7 @@
 }
 
 #my-rating-btn {
-    flex: 1;
-    padding: 12px 20px;
+    padding: 12px 15px;
     background: linear-gradient(135deg, #2575fc 0%, #6a11cb 100%);
     border: none;
     border-radius: 8px;
@@ -1116,9 +1113,11 @@ body.theme-light-brown .field-hint {
 /* Rating filter mobile optimization */
 @media (max-width: 900px) {
     .rating-filter-container {
+        flex-wrap: wrap;
         gap: 6px;
     }
     #rating-filter {
+        width: 100%;
         padding: 12px 8px;
         font-size: 0.85rem;
     }
@@ -1126,6 +1125,7 @@ body.theme-light-brown .field-hint {
         font-size: 0.78rem;
     }
     #find-rating-btn, #my-rating-btn {
+        flex: 1;
         padding: 12px 8px;
         font-size: 0.8rem;
     }
@@ -1133,9 +1133,11 @@ body.theme-light-brown .field-hint {
 
 @media (max-width: 480px) {
     .rating-filter-container {
+        flex-wrap: wrap;
         gap: 4px;
     }
     #rating-filter {
+        width: 100%;
         padding: 10px 6px;
         font-size: 0.8rem;
     }
@@ -1143,6 +1145,7 @@ body.theme-light-brown .field-hint {
         font-size: 0.7rem;
     }
     #find-rating-btn, #my-rating-btn {
+        flex: 1;
         padding: 10px 6px;
         font-size: 0.72rem;
     }
