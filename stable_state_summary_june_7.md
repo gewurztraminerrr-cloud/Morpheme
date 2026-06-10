@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `023c84f` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `023c84f` / `snapshot-current` / `START_OVER_POINT_JUNE_7` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `023c84f` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
+| **localhost** (`/Users/jeffbabiak/`) | `9ef9066` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `9ef9066` / `snapshot-current` / `START_OVER_POINT_JUNE_7` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `9ef9066` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
 
-**All environments are 100% synchronized at the latest commit 023c84f.**
+**All environments are 100% synchronized at the latest commit 9ef9066.**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -22,7 +22,7 @@ The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags
 | `/css/howtoplay.css` | `v=10` | Implemented visible list grid and button styles for FAQ quick navigation. |
 | `/js/app.js` | `v=41` | Implemented scroll navigation and pulse highlight logic for FAQ links. |
 | `/js/play.js` | `v=144` | Disabled definitions panel gold flashing animation at round complete in 24h rooms, and fixed transposition corruption on definition click during intermission. |
-| `templates/index.html` | *Dynamic* | Replaced the quick-nav dropdown selector with the visible question link button grid, bumped howtoplay.css cache-buster to `v=10`, app.js cache-buster to `v=41`, play.js cache-buster to `v=144`, and play.css cache-buster to `v=86`. |
+| `templates/index.html` | *Dynamic* | Replaced the quick-nav dropdown selector with the visible question link button grid, bumped howtoplay.css cache-buster to `v=10`, app.js cache-buster to `v=41`, play.js cache-buster to `v=144`, play.css cache-buster to `v=86`, and updated the Spinner Set Odds description and trial percentages. |
 
 ---
 
@@ -73,4 +73,8 @@ The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags
   * Configured `reapplyBoardHighlights` to correctly restore the intermission letter filter highlight class `.intermission-highlight` to the clicked cell.
   * Incremented cache-buster script tags in `index.html` to `play.js?v=144`.
 
-
+### 7. Spinner Set Odds Modal Updates
+* **Goal achieved:** Updated the text description and difficulty percentages inside the "Diff: Difficulty & Uniqueness" section of the Spinner Set Odds modal based on 200 trials.
+* **Implementation (`templates/index.html`):**
+  * Updated description text to explain the 200 trials conducted for each 2D board size and the rationale behind the difficulty distribution.
+  * Updated percentages under Easy, Medium, and Hard for 4x4, 4x6, 5x7, and 6x8/Cube according to the trial results.
