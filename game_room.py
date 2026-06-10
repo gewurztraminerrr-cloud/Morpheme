@@ -29,6 +29,8 @@ from scoring import calculate_word_score
 from rating_logic import calculate_proportional_rating_change, is_player_guest
 import word_validator
 
+_room_manager_instance = None
+
 @dataclass
 class Player:
     user_id: int
@@ -1423,6 +1425,25 @@ class GameRoom:
                 self.previous_total_words = getattr(self, 'total_words_count', 0)
                 self.previous_total_counts_by_len = dict(getattr(self, 'total_counts_by_len', {}))
                 
+                # Capture snapshot of players who participated in the completed round
+                intermission_player_snapshots = []
+                all_candidate_players = list(self.players)
+                existing_uids = {p.user_id for p in self.players}
+                for p in self.past_players.values():
+                    if p.user_id not in existing_uids:
+                        all_candidate_players.append(p)
+                for p in all_candidate_players:
+                    if (p.is_registered or (self.time_limit >= 7200 and p.is_guest)) and (p.score > 0 or p.submitted_words or p.invalid_words):
+                        intermission_player_snapshots.append({
+                            'user_id': p.user_id,
+                            'username': p.username,
+                            'score': p.score,
+                            'submitted_words': [dict(w) for w in p.submitted_words],
+                            'invalid_words': list(p.invalid_words),
+                            'rating': getattr(p, 'rating', 1200),
+                            'performance_efficiency': getattr(p, 'performance_efficiency', 0)
+                        })
+                
                 # Asynchronous Post-Round Processing
                 def process_results_async():
                     try:
@@ -1541,6 +1562,28 @@ class GameRoom:
                             traceback.print_exc()
                             print(f"[GameRoom] Rating error: {e}")
 
+
+                        # Save history and word tally immediately at the start of intermission
+                        global _room_manager_instance
+                        if _room_manager_instance:
+                            try:
+                                _room_manager_instance.save_round_history(
+                                    self,
+                                    board=[list(row) for row in self.board] if self.board else None,
+                                    all_words=list(self.complete_words) if (getattr(self, 'complete_words', None) and len(self.complete_words) > 0) else list(self.all_words),
+                                    bonus_word=(self.bonus_word.upper() if self.bonus_word else None),
+                                    player_snapshots=intermission_player_snapshots,
+                                    round_num=self.current_round,
+                                    all_words_paths=dict(getattr(self, 'all_words_paths', {})),
+                                    round_start_time=self.round_start_time,
+                                    board_format=self.current_board_format
+                                )
+                                
+                                # Log word tally
+                                player_words = {p['username']: [w['word'] for w in p['submitted_words']] for p in intermission_player_snapshots}
+                                _room_manager_instance.log_word_tally(self, player_words)
+                            except Exception as db_save_err:
+                                print(f"[GameRoom] Error in immediate database save: {db_save_err}")
 
                         # Store data for results screen and RESET mid-round flag for NEXT round
                         for p in self.players:
@@ -1764,6 +1807,8 @@ def calculate_word_score(word, bonus_word, board_format='Normal', path=None, bon
 
 class RoomManager:
     def __init__(self):
+        global _room_manager_instance
+        _room_manager_instance = self
         self.rooms: Dict[str, GameRoom] = {}
         self.user_presence: Dict[str, float] = {} # {user_id_str: last_active_timestamp}
         self.lock = threading.RLock() # USE RLOCK: Prevents deadlocks when start_next_round calls start_round
