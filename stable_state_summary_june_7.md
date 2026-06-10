@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `e3a0028` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `e3a0028` / `snapshot-current` / `START_OVER_POINT_JUNE_7` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `e3a0028` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
+| **localhost** (`/Users/jeffbabiak/`) | `73eb3be` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `73eb3be` / `snapshot-current` / `START_OVER_POINT_JUNE_7` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `73eb3be` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
 
-**All environments are 100% synchronized at the latest commit e3a0028.**
+**All environments are 100% synchronized at the latest commit 73eb3be.**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -88,3 +88,9 @@ The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags
   * Styled the button in `lobby.css` with a premium blue-to-purple gradient, lift transitions, and active press scale animations.
   * Programmed a click event listener in `lobby.js` that retrieves the current user rating (defaulting to 1000 if not logged in or invalid), updates the `#rating-filter` text field, sets the search filter value `window.activeRatingFilterValue`, and triggers `fetchAndRenderRooms()` to execute the sort.
   * Optimized mobile layouts in `lobby.css` under the `@media (max-width: 900px)` and `@media (max-width: 480px)` responsive queries by reducing button sizes and padding, which maximizes the horizontal space for the `#rating-filter` text field and prevents its placeholder text ("Filter by average rating") from being cut off on narrow screens.
+
+### 9. Timezone-Aware Leaderboard & Achievements ("Day" Tab Fix)
+* **Goal achieved:** Fixed a bug where the "Day" tab under Leaderboards and User Achievements/Skill Rankings displayed no records due to a double-conversion timezone offset mismatch in SQLite.
+* **Implementation (`app.py`):**
+  * Replaced the SQLite `date(timestamp, 'localtime') = date('now', 'localtime')` date function calls with a timezone-aware calculation in Python using `zoneinfo.ZoneInfo("America/Chicago")` (matching the game's authoritative server clock).
+  * The calculations generate exact threshold string representations (`chicago_today_str`, `chicago_week_ago_str`, etc.) which are evaluated directly against the stored datetimes in SQLite, correcting the timezone offset mismatch and restoring all records to the "Day" tabs.
