@@ -3728,7 +3728,15 @@ class RoomManager:
             # SNAPSHOT PLAYERS: We MUST deep-copy the data because player objects are reset in the main thread
             # while the history saver runs in the background.
             ghost_player_snapshots = []
-            for p in room.players:
+            
+            # Combine current players and past players who played in the round to capture those who left during intermission
+            all_candidate_players = list(room.players)
+            existing_uids = {p.user_id for p in room.players}
+            for p in room.past_players.values():
+                if p.user_id not in existing_uids:
+                    all_candidate_players.append(p)
+                    
+            for p in all_candidate_players:
                 if (p.is_registered or (room.time_limit >= 7200 and p.is_guest)) and (p.score > 0 or p.submitted_words or p.invalid_words):
                     ghost_player_snapshots.append({
                         'user_id': p.user_id,
@@ -3794,6 +3802,11 @@ class RoomManager:
                     room.spectators = []
                 else:
                     for p in room.players:
+                        p.submitted_words, p.invalid_words, p.score = [], [], 0
+                        p.found_bonus_word, p.has_abandoned = False, False
+                        p.joined_mid_round = False
+                        p._last_round_seen = next_round_val
+                    for p in room.past_players.values():
                         p.submitted_words, p.invalid_words, p.score = [], [], 0
                         p.found_bonus_word, p.has_abandoned = False, False
                         p.joined_mid_round = False
