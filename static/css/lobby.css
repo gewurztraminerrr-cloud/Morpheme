@@ -1112,30 +1112,36 @@ body.theme-light-brown .field-hint {
 
 /* Rating filter mobile optimization */
 @media (max-width: 900px) {
-    #rating-filter {
-        padding: 12px 10px;
-        font-size: 0.88rem;
+    .rating-filter-container {
+        gap: 6px;
     }
-    #rating-filter::placeholder {
+    #rating-filter {
+        padding: 12px 8px;
         font-size: 0.85rem;
     }
+    #rating-filter::placeholder {
+        font-size: 0.78rem;
+    }
     #find-rating-btn, #my-rating-btn {
-        padding: 12px 10px;
-        font-size: 0.82rem;
+        padding: 12px 8px;
+        font-size: 0.8rem;
     }
 }
 
 @media (max-width: 480px) {
+    .rating-filter-container {
+        gap: 4px;
+    }
     #rating-filter {
-        padding: 10px 8px;
-        font-size: 0.82rem;
+        padding: 10px 6px;
+        font-size: 0.8rem;
     }
     #rating-filter::placeholder {
-        font-size: 0.8rem;
+        font-size: 0.7rem;
     }
     #find-rating-btn, #my-rating-btn {
         padding: 10px 6px;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
     }
 }
 
