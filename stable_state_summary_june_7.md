@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `24e08e5` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `24e08e5` / `snapshot-current` / `START_OVER_POINT_JUNE_7` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `24e08e5` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
+| **localhost** (`/Users/jeffbabiak/`) | `e3a0028` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `e3a0028` / `snapshot-current` / `START_OVER_POINT_JUNE_7` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `e3a0028` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
 
-**All environments are 100% synchronized at the latest commit 24e08e5.**
+**All environments are 100% synchronized at the latest commit e3a0028.**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -20,7 +20,7 @@ The active recovery points `START_OVER_POINT_JUNE_7` and `snapshot-current` tags
 |--------------|---------|-------------|
 | `/css/play.css` | `v=86` | Added overrides for `.bonus-highlight` elements when actively selected or highlighted to hide the lime green background and glow. |
 | `/css/howtoplay.css` | `v=10` | Implemented visible list grid and button styles for FAQ quick navigation. |
-| `/css/lobby.css` | `v=19` | Added styling for the "My Rating" button using a premium blue-purple gradient, and optimized input width/button sizes for mobile responsive layouts. |
+| `/css/lobby.css` | `v=20` | Added styling for the "My Rating" button using a premium blue-purple gradient, and optimized input width/button sizes for mobile responsive layouts. |
 | `/js/app.js` | `v=41` | Implemented scroll navigation and pulse highlight logic for FAQ links. |
 | `/js/lobby.js` | `v=6` | Added click handler to populate rating-filter with current user rating and sort the active rooms list. |
 | `/js/play.js` | `v=144` | Disabled definitions panel gold flashing animation at round complete in 24h rooms, and fixed transposition corruption on definition click during intermission. |
