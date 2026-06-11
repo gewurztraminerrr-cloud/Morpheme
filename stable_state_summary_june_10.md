@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `ff25e878367fc84c95eb52e0f7a8e82812df1308` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `ff25e878367fc84c95eb52e0f7a8e82812df1308` / `snapshot-current` / `START_OVER_POINT_JUNE_10` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `ff25e878367fc84c95eb52e0f7a8e82812df1308` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
+| **localhost** (`/Users/jeffbabiak/`) | `74096b026dfd150244f7724269cd2fef119be955` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `74096b026dfd150244f7724269cd2fef119be955` / `snapshot-current` / `START_OVER_POINT_JUNE_10` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `74096b026dfd150244f7724269cd2fef119be955` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
 
-**All environments are 100% synchronized at the latest commit ff25e878367fc84c95eb52e0f7a8e82812df1308.**
+**All environments are 100% synchronized at the latest commit 74096b026dfd150244f7724269cd2fef119be955.**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_10` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -20,8 +20,9 @@ The active recovery points `START_OVER_POINT_JUNE_10` and `snapshot-current` tag
 |--------------|---------|-------------|
 | `/css/style.css` | `v=28` | Confined the Tournaments Championship Bracket standings list to a compact max-height of 200px and added customized thin scrollbars. |
 | `/css/lobby.css` | `v=25` | Implemented mobile-first grid layout for the rating filter to guarantee buttons wrap below the input box, and flex side-by-side override for desktop viewports. |
+| `/css/forum.css` | `v=2` | Styled `.file-input-wrapper` and `input[type="file"]` to transparently overlay the dummy select box, resolving mobile photo chooser opening bugs. |
 | `/js/play.js` | `v=146` | Implemented lowest-RTT clock offset synchronization, local countdown timer clamping to prevent display anomalies, and rapid 300ms transition polling at 0:00 intermission to render the new board instantly. Added global touch and wheel scroll prevention when the "You're guessing!" popup is active, and bypass logic for 24h rooms. |
-| `templates/index.html` | *Dynamic* | Bumps cache-busters for style.css (v=28), lobby.css (v=25), and play.js (v=146). |
+| `templates/index.html` | *Dynamic* | Bumps cache-busters for style.css (v=28), lobby.css (v=25), play.js (v=146), and forum.css (v=2). |
 
 ---
 
@@ -87,3 +88,12 @@ The active recovery points `START_OVER_POINT_JUNE_10` and `snapshot-current` tag
 * **Implementation (`app.py` & `game_room.py`):**
   * Modified the Flask `/api/room/create` endpoint to assign a random UUID instead of a stable `pub_v2_...` ID when public rooms are created for FCFS or Split.
   * Updated `create_room()` in `RoomManager` to skip the singleton lookup logic for `fcfs` and `split` formats, ensuring they are always spawned as fresh instances.
+
+### 10. Forum File Upload Mobile Tap Fix
+* **Goal achieved:** Ensure the "Choose file" area in the forums successfully opens the photo library / file selection on all mobile devices (iOS/Android).
+* **Implementation (`static/css/forum.css` & `templates/index.html`)**:
+  * Configured `.file-input-wrapper` with `position: relative; cursor: pointer;`.
+  * Positioned the `<input type="file">` absolutely at `top: 0; left: 0; width: 100%; height: 100%;` and set `opacity: 0; z-index: 2; cursor: pointer;`.
+  * This transparently stretches the real click area to cover the entire custom `.file-dummy` upload box so that taps anywhere on the dummy elements trigger the native browser photo selector.
+  * Added hover transitions and color changes on `.file-input-wrapper:hover .file-dummy` for enhanced visual feedback.
+  * Bumped `forum.css` version to `v=2` in `templates/index.html` to force immediately refreshed mobile styles.
