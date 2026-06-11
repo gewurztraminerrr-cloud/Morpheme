@@ -29,7 +29,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css?v=28">
     <link rel="stylesheet" href="/css/lobby.css?v=25">
-    <link rel="stylesheet" href="/css/play.css?v=87">
+    <link rel="stylesheet" href="/css/play.css?v=88">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=8">
     <link rel="stylesheet" href="/css/donate.css?v=1">
@@ -1914,7 +1914,12 @@
                         <div class="lists-container" id="lists-container">
                             <div class="list-column" id="main-list-column" style="flex: 1;">
                                 <h3><span id="list-display-title">NWL</span> <span class="list-count" id="main-list-count"></span></h3>
-                                <div class="list-scroll-area" id="main-list-results">Loading...</div>
+                                <div class="list-scroll-area-wrapper">
+                                    <div class="list-scroll-area" id="main-list-results">Loading...</div>
+                                    <div class="custom-scrollbar-track" id="list-scrollbar-track">
+                                        <div class="custom-scrollbar-thumb" id="list-scrollbar-thumb"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -4440,7 +4445,7 @@
     <script src="/js/play.js?v=149"></script>
     <script src="/js/tournaments.js?v=2"></script>
     <script src="/js/leaderboard.js?v=2"></script>
-    <script src="/js/tools.js?v=37"></script>
+    <script src="/js/tools.js?v=38"></script>
     <script src="/js/mouse_selection.js?v=3"></script>
     <script src="/js/mods.js?v=2"></script>
     <script src="/js/private_matches.js?v=3"></script>

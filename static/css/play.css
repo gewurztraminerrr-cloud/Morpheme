@@ -5550,4 +5550,66 @@ body .board-cell.tile-flash-purple * {
     animation: none !important;
 }
 
+/* Custom Draggable Scrollbar Styles for lists in Tools */
+.list-scroll-area-wrapper {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* Hide native scrollbar in Webkit browsers (Chrome, Safari, etc.) on mobile specifically,
+   but keep custom scrollbar visible and functional */
+@media (max-width: 768px) {
+    .list-scroll-area::-webkit-scrollbar {
+        width: 0px;
+        background: transparent;
+        display: none;
+    }
+    .list-scroll-area {
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE/Edge */
+    }
+}
+
+.custom-scrollbar-track {
+    position: absolute;
+    top: 5px;
+    bottom: 5px;
+    right: 4px;
+    width: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    z-index: 100;
+    backdrop-filter: blur(2px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: none; /* Shown dynamically via JS when list overflows */
+    touch-action: none;
+}
+
+.custom-scrollbar-thumb {
+    position: absolute;
+    top: 0;
+    left: 2px;
+    width: 12px;
+    background: linear-gradient(180deg, rgba(0, 210, 255, 0.4), rgba(58, 123, 213, 0.4));
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid rgba(0, 210, 255, 0.3);
+    box-shadow: 0 0 8px rgba(0, 210, 255, 0.2);
+    touch-action: none;
+}
+
+.custom-scrollbar-thumb:active,
+.custom-scrollbar-thumb.dragging {
+    background: linear-gradient(180deg, rgba(0, 210, 255, 0.7), rgba(58, 123, 213, 0.7));
+    border: 1px solid rgba(0, 210, 255, 0.6);
+    box-shadow: 0 0 12px rgba(0, 210, 255, 0.5);
+    width: 14px;
+    left: 1px;
+}
+
+
 

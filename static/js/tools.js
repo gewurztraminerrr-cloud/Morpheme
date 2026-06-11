@@ -2663,7 +2663,157 @@ function setupListsTool() {
         });
     }
 
+    // Initialize custom draggable scrollbar
+    initCustomScrollbar();
 }
+
+function initCustomScrollbar() {
+    const scrollArea = document.getElementById('main-list-results');
+    const track = document.getElementById('list-scrollbar-track');
+    const thumb = document.getElementById('list-scrollbar-thumb');
+    if (!scrollArea || !track || !thumb) return;
+
+    function updateThumb() {
+        const scrollHeight = scrollArea.scrollHeight;
+        const clientHeight = scrollArea.clientHeight;
+        const scrollTop = scrollArea.scrollTop;
+
+        // Show scrollbar only if list content overflows
+        if (scrollHeight <= clientHeight + 5) {
+            track.style.display = 'none';
+            return;
+        }
+        track.style.display = 'block';
+
+        const ratio = clientHeight / scrollHeight;
+        const thumbHeight = Math.max(40, clientHeight * ratio);
+        thumb.style.height = `${thumbHeight}px`;
+
+        const maxScrollTop = scrollHeight - clientHeight;
+        const maxThumbTop = clientHeight - thumbHeight;
+        const thumbTop = (scrollTop / maxScrollTop) * maxThumbTop;
+        thumb.style.top = `${thumbTop}px`;
+    }
+
+    // Bind event listeners for scroll and resize
+    scrollArea.addEventListener('scroll', updateThumb);
+    window.addEventListener('resize', updateThumb);
+
+    // Watch for dynamic content changes inside the scroll area to auto-update
+    const observer = new MutationObserver(updateThumb);
+    observer.observe(scrollArea, { childList: true, subtree: true });
+
+    // Dragging state tracking
+    let isDragging = false;
+    let startY = 0;
+    let startThumbTop = 0;
+
+    function onDragStart(e) {
+        isDragging = true;
+        thumb.classList.add('dragging');
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        startY = clientY;
+        startThumbTop = parseFloat(thumb.style.top) || 0;
+        document.body.style.userSelect = 'none';
+        
+        if (e.cancelable !== false) {
+            e.preventDefault();
+        }
+    }
+
+    function onDragMove(e) {
+        if (!isDragging) return;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const deltaY = clientY - startY;
+
+        const clientHeight = scrollArea.clientHeight;
+        const thumbHeight = thumb.offsetHeight;
+        const maxThumbTop = clientHeight - thumbHeight;
+
+        let newThumbTop = startThumbTop + deltaY;
+        newThumbTop = Math.max(0, Math.min(maxThumbTop, newThumbTop));
+
+        thumb.style.top = `${newThumbTop}px`;
+
+        const scrollHeight = scrollArea.scrollHeight;
+        const maxScrollTop = scrollHeight - clientHeight;
+        scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
+
+        if (e.cancelable !== false) {
+            e.preventDefault();
+        }
+    }
+
+    function onDragEnd() {
+        if (isDragging) {
+            isDragging = false;
+            thumb.classList.remove('dragging');
+            document.body.style.userSelect = '';
+        }
+    }
+
+    // Mouse events for thumb
+    thumb.addEventListener('mousedown', onDragStart);
+    document.addEventListener('mousemove', onDragMove);
+    document.addEventListener('mouseup', onDragEnd);
+
+    // Touch events for thumb
+    thumb.addEventListener('touchstart', onDragStart, { passive: false });
+    document.addEventListener('touchmove', onDragMove, { passive: false });
+    document.addEventListener('touchend', onDragEnd);
+
+    // Click/tap on track to jump and drag
+    track.addEventListener('mousedown', (e) => {
+        if (e.target === thumb) return;
+        const rect = track.getBoundingClientRect();
+        const clickY = e.clientY - rect.top;
+        const clientHeight = scrollArea.clientHeight;
+        const thumbHeight = thumb.offsetHeight;
+
+        let newThumbTop = clickY - thumbHeight / 2;
+        const maxThumbTop = clientHeight - thumbHeight;
+        newThumbTop = Math.max(0, Math.min(maxThumbTop, newThumbTop));
+
+        const scrollHeight = scrollArea.scrollHeight;
+        const maxScrollTop = scrollHeight - clientHeight;
+        scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
+
+        // Directly start drag session
+        isDragging = true;
+        thumb.classList.add('dragging');
+        startY = e.clientY;
+        startThumbTop = newThumbTop;
+        e.preventDefault();
+    });
+
+    track.addEventListener('touchstart', (e) => {
+        if (e.target === thumb) return;
+        const rect = track.getBoundingClientRect();
+        const touchY = e.touches[0].clientY - rect.top;
+        const clientHeight = scrollArea.clientHeight;
+        const thumbHeight = thumb.offsetHeight;
+
+        let newThumbTop = touchY - thumbHeight / 2;
+        const maxThumbTop = clientHeight - thumbHeight;
+        newThumbTop = Math.max(0, Math.min(maxThumbTop, newThumbTop));
+
+        const scrollHeight = scrollArea.scrollHeight;
+        const maxScrollTop = scrollHeight - clientHeight;
+        scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
+
+        isDragging = true;
+        thumb.classList.add('dragging');
+        startY = e.touches[0].clientY;
+        startThumbTop = newThumbTop;
+        if (e.cancelable !== false) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // Initial position trigger
+    updateThumb();
+}
+
 
 
 window.removeAddedWordFromTools = async function(word) {
