@@ -73,11 +73,20 @@ class SpinnerSet:
                     print(f"[SpinnerSet] Wrapper adjusted 6x8 min_len for 100-200 words from 6 to {res['min_word_length']}")
             # Roll for Added Words (50% chance if enabled globally)
             if isinstance(res, dict):
-                is_added_words_enabled = word_validator.get_use_added_words()
-                if is_added_words_enabled:
-                    res['use_added_words'] = (random.random() < 0.5)
-                else:
-                    res['use_added_words'] = False
+                if 'use_added_words' not in res:
+                    is_added_words_enabled = word_validator.get_use_added_words()
+                    if is_added_words_enabled:
+                        choices = [
+                            ('NWL', False),
+                            ('CSW', False),
+                            ('NWL', True),
+                            ('CSW', True)
+                        ]
+                        dict_choice, aw_choice = random.choice(choices)
+                        res['dictionary'] = dict_choice
+                        res['use_added_words'] = aw_choice
+                    else:
+                        res['use_added_words'] = False
 
             # Apply our ironclad safety sanitizer
             res = SpinnerSet.sanitize_params(res, board_dimensions)
@@ -94,11 +103,20 @@ class SpinnerSet:
                 'generated_at': time.time()
             }
             # Roll for Added Words fallback
-            is_added_words_enabled = word_validator.get_use_added_words()
-            if is_added_words_enabled:
-                fallback['use_added_words'] = (random.random() < 0.5)
-            else:
-                fallback['use_added_words'] = False
+            if 'use_added_words' not in fallback:
+                is_added_words_enabled = word_validator.get_use_added_words()
+                if is_added_words_enabled:
+                    choices = [
+                        ('NWL', False),
+                        ('CSW', False),
+                        ('NWL', True),
+                        ('CSW', True)
+                    ]
+                    dict_choice, aw_choice = random.choice(choices)
+                    fallback['dictionary'] = dict_choice
+                    fallback['use_added_words'] = aw_choice
+                else:
+                    fallback['use_added_words'] = False
                 
             return SpinnerSet.sanitize_params(fallback, board_dimensions)
 
@@ -171,8 +189,19 @@ class SpinnerSet:
             best_res = None
             
             for _ in range(30):
-                # Randomize dictionary
-                dictionary = SpinnerSet._spin_dictionary()
+                # Randomize dictionary and added words joint configuration
+                is_added_words_enabled = word_validator.get_use_added_words()
+                if is_added_words_enabled:
+                    choices = [
+                        ('NWL', False),
+                        ('CSW', False),
+                        ('NWL', True),
+                        ('CSW', True)
+                    ]
+                    dictionary, use_added_words = random.choice(choices)
+                else:
+                    dictionary = SpinnerSet._spin_dictionary()
+                    use_added_words = False
                 
                 # Minimum word length (spin BEFORE word count to inform density)
                 min_word_length = SpinnerSet._spin_min_word_length(board_dimensions)
@@ -218,6 +247,7 @@ class SpinnerSet:
                     'difficulty': difficulty,
                     'word_count_range': wc_range or SpinnerSet._spin_word_count(dictionary, min_word_length, difficulty, board_dimensions),
                     'dictionary': dictionary,
+                    'use_added_words': use_added_words,
                     'board_format': board_format,
                     'bonus_word_length': bw_len,
                     'generated_at': time.time()
@@ -245,6 +275,7 @@ class SpinnerSet:
                         'difficulty': initial_diff,
                         'word_count_range': initial_wc,
                         'dictionary': 'NWL',
+                        'use_added_words': False,
                         'board_format': 'Normal',
                         'bonus_word_length': max(8, initial_min),
                         'generated_at': time.time()
@@ -259,7 +290,7 @@ class SpinnerSet:
                           continue
 
                 # Uniqueness Check: Ensure at least one major parameter changed
-                major_keys = ['difficulty', 'min_word_length', 'word_count_range', 'dictionary', 'board_format']
+                major_keys = ['difficulty', 'min_word_length', 'word_count_range', 'dictionary', 'use_added_words', 'board_format']
                 is_different = False
                 for k in major_keys:
                     if str(res.get(k)) != str(previous_params.get(k)):
