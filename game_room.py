@@ -2097,7 +2097,7 @@ class RoomManager:
         try:
             with self.lock:
                 # Singleton Logic for Multiplayer Hubs (Skip for Private/Solo rooms)
-                if not is_private:
+                if not is_private and game_type not in ['fcfs', 'split']:
                     for existing_room in self.rooms.values():
                         if (existing_room.game_type == game_type and 
                             existing_room.board_dimensions == board_dimensions and

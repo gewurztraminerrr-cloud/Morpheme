@@ -2724,7 +2724,7 @@ def create_room():
     is_public = (int(min_rating) == 0 and int(max_rating) == 9999)
     # is_long_running = (int(time_limit) >= 600) # User Request: even 45s rooms should be stable hubs
     
-    if is_public:
+    if is_public and game_type not in ['fcfs', 'split']:
         # Use deterministic ID: pub_v2_[game]_[dims]_[time]
         # v2: Forced reset for 6x8 compliance and rare letter lockdown.
         generated_id = f"pub_v2_{game_type}_{board_dimensions}_{time_limit}".replace(' ', '_').lower()
