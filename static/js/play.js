@@ -1461,10 +1461,12 @@ async function updateGameState(incomingState = null) {
         }
         
         // Check for state transitions (Cleanup/Misc)
-        const isNewRound = (state.state === 'active' && (lastStateStr !== 'active' || (previousState && state.current_round !== previousState.current_round)));
+        const roomChanged = previousState && state.room_id !== previousState.room_id;
+        const isNewRound = (state.state === 'active' && (lastStateStr !== 'active' || roomChanged || (previousState && state.current_round !== previousState.current_round)));
         if (lastStateStr !== state.state || isNewRound) {
             if (isNewRound) {
                 wrongGuessesOnBoardCount = 0;
+                window._localSubmittedWords = new Set();
                 // Clear word panel render cache for new round to prevent stale pre-validation
                 window.lastDisplayAllWordsArgs = null;
 
@@ -5637,7 +5639,9 @@ async function submitWord(wordParam = null, pathParam = null) {
         const effectiveLen = word.replace(/Q(?!U)/g, 'QU').length;
 
         let alreadyFound = false;
-        if (preState.game_type === 'fcfs') {
+        if (window._localSubmittedWords && window._localSubmittedWords.has(word)) {
+            alreadyFound = true;
+        } else if (preState.game_type === 'fcfs') {
             alreadyFound = preState.players && preState.players.some(p =>
                 p.submitted_words && p.submitted_words.some(w => (typeof w === 'object' ? (w.word || '') : w).toUpperCase() === word)
             );
@@ -5752,7 +5756,9 @@ async function submitWord(wordParam = null, pathParam = null) {
             const effectiveLen = word.replace(/Q(?!U)/g, 'QU').length;
             
             let alreadyFound = false;
-            if (preState.game_type === 'fcfs') {
+            if (window._localSubmittedWords && window._localSubmittedWords.has(word)) {
+                alreadyFound = true;
+            } else if (preState.game_type === 'fcfs') {
                 alreadyFound = preState.players && preState.players.some(p =>
                     p.submitted_words && p.submitted_words.some(w => (typeof w === 'object' ? (w.word || '') : w).toUpperCase() === word)
                 );
@@ -5773,6 +5779,8 @@ async function submitWord(wordParam = null, pathParam = null) {
         }
 
         if (data.success) {
+            window._localSubmittedWords = window._localSubmittedWords || new Set();
+            window._localSubmittedWords.add(word);
             recordGuessResult(true, true, isSpecialSkip);
         } else {
             recordGuessResult(false, finalPath && finalPath.length > 0, isSpecialSkip);
