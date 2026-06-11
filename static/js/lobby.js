@@ -644,8 +644,8 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                     <div class="room-header-row">
                         <div class="room-status ${room.state}">${room.state.toUpperCase()}</div>
                         <div class="room-meta">
-                            <span>Avg Rating: ${room.display_average_rating}</span> 
-                            ${hasLimits ? `<span class="rating-req-badge" style="background: rgba(231, 76, 60, 0.2); color: #e74c3c; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; border: 1px solid rgba(231, 76, 60, 0.3);">Req: ${ratingRangeText}</span>` : ''}
+                            <span class="room-avg-rating">Avg Rating: ${room.display_average_rating}</span> 
+                            ${hasLimits ? `<span class="rating-req-badge">Req: ${ratingRangeText}</span>` : ''}
                         </div>
                     </div>
                     <div class="room-players-row">
