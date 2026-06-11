@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `abe53e9` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `abe53e9` / `snapshot-current` / `START_OVER_POINT_JUNE_10` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `abe53e9` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
+| **localhost** (`/Users/jeffbabiak/`) | `5ea2383017d2a5a70aacb52cc219d5a0eb38f714` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `5ea2383017d2a5a70aacb52cc219d5a0eb38f714` / `snapshot-current` / `START_OVER_POINT_JUNE_10` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `5ea2383017d2a5a70aacb52cc219d5a0eb38f714` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
 
-**All environments are 100% synchronized at the latest commit abe53e9.**
+**All environments are 100% synchronized at the latest commit 5ea2383017d2a5a70aacb52cc219d5a0eb38f714.**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_10` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -20,12 +20,8 @@ The active recovery points `START_OVER_POINT_JUNE_10` and `snapshot-current` tag
 |--------------|---------|-------------|
 | `/css/style.css` | `v=28` | Confined the Tournaments Championship Bracket standings list to a compact max-height of 200px and added customized thin scrollbars. |
 | `/css/lobby.css` | `v=25` | Implemented mobile-first grid layout for the rating filter to guarantee buttons wrap below the input box, and flex side-by-side override for desktop viewports. |
-| `/css/play.css` | `v=86` | Overrides for selecting bonus highlight tiles to mask the green background. |
-| `/css/howtoplay.css` | `v=10` | FAQ Question link buttons and list grid. |
-| `/js/app.js` | `v=41` | Scroll navigation and highlight pulses for FAQs. |
-| `/js/lobby.js` | `v=6` | Populates and fetches rating-filter closeness sorting. |
-| `/js/play.js` | `v=144` | Definitions gold flashing control and transposition fixes. |
-| `templates/index.html` | *Dynamic* | Bumps cache-busters for style.css (v=28) and lobby.css (v=25). |
+| `/js/play.js` | `v=146` | Implemented lowest-RTT clock offset synchronization, local countdown timer clamping to prevent display anomalies (like starting at 0:47), and rapid 300ms transition polling at 0:00 intermission to render the new board instantly. |
+| `templates/index.html` | *Dynamic* | Bumps cache-busters for style.css (v=28), lobby.css (v=25), and play.js (v=146). |
 
 ---
 
@@ -46,3 +42,17 @@ The active recovery points `START_OVER_POINT_JUNE_10` and `snapshot-current` tag
   * Updated `.t-standings-list` to reduce the `max-height` parameter from `400px` to `200px`.
   * Added styling rules for thin webkit-based scrollbars using `scrollbar-width: thin` and scrollbar colors matched to the accent color (`var(--accent-color)`).
   * Bumped `style.css` cache-buster to `v=28` in `templates/index.html`.
+
+### 3. Forum Thread Bumping on Reply
+* **Goal achieved:** Automatically bump a forum thread to the top of its category whenever a new comment/reply is posted.
+* **Implementation (`app.py`):**
+  * Updated `get_forum_posts(category_id)` to select a dynamic `last_activity` timestamp using `COALESCE((SELECT MAX(timestamp) FROM forum_comments WHERE post_id = p.id), p.timestamp)`.
+  * Sorted results by `last_activity DESC` to order posts chronologically by the latest activity (either creation or reply comment).
+
+### 4. Timer Sync and Board Transition Optimization
+* **Goal achieved:** Prevent premature round starts at `0:02` intermission, ensure the active round starts precisely at `0:45` (preventing `0:47`), and display the board instantly when the timer hits `0:00`.
+* **Implementation (`static/js/play.js` & `templates/index.html`):**
+  * Implemented an SNTP-style RTT-based offset calculation: `offset = server_time - (tBefore + tAfter) / 2`, and tracked the offset associated with the lowest RTT (`bestServerTimeRTT`) to eliminate network transmission time skew.
+  * Added countdown clamping in `updateLocalTimer` to guarantee the displayed timer value never exceeds the room's limits (active limit or intermission limit).
+  * Configured rapid polling (`300`ms interval) at `0:00` intermission to query the server and detect the `active` transition immediately, reverting back to the standard `1000`ms interval on transition.
+  * Bumped `play.js` cache-buster to `v=146` in `templates/index.html`.
