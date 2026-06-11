@@ -588,7 +588,7 @@
 }
 
 @media (hover: hover) {
-    .file-input-wrapper input[type="file"]:hover + .file-dummy {
+    .file-input-wrapper:hover .file-dummy {
         border-color: var(--accent-color);
         background: rgba(var(--text-primary-rgb), 0.08);
     }
