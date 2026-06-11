@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `5ea2383017d2a5a70aacb52cc219d5a0eb38f714` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `5ea2383017d2a5a70aacb52cc219d5a0eb38f714` / `snapshot-current` / `START_OVER_POINT_JUNE_10` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `5ea2383017d2a5a70aacb52cc219d5a0eb38f714` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
+| **localhost** (`/Users/jeffbabiak/`) | `ff25e878367fc84c95eb52e0f7a8e82812df1308` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `ff25e878367fc84c95eb52e0f7a8e82812df1308` / `snapshot-current` / `START_OVER_POINT_JUNE_10` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `ff25e878367fc84c95eb52e0f7a8e82812df1308` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
 
-**All environments are 100% synchronized at the latest commit 5ea2383017d2a5a70aacb52cc219d5a0eb38f714.**
+**All environments are 100% synchronized at the latest commit ff25e878367fc84c95eb52e0f7a8e82812df1308.**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_10` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -20,7 +20,7 @@ The active recovery points `START_OVER_POINT_JUNE_10` and `snapshot-current` tag
 |--------------|---------|-------------|
 | `/css/style.css` | `v=28` | Confined the Tournaments Championship Bracket standings list to a compact max-height of 200px and added customized thin scrollbars. |
 | `/css/lobby.css` | `v=25` | Implemented mobile-first grid layout for the rating filter to guarantee buttons wrap below the input box, and flex side-by-side override for desktop viewports. |
-| `/js/play.js` | `v=146` | Implemented lowest-RTT clock offset synchronization, local countdown timer clamping to prevent display anomalies (like starting at 0:47), and rapid 300ms transition polling at 0:00 intermission to render the new board instantly. |
+| `/js/play.js` | `v=146` | Implemented lowest-RTT clock offset synchronization, local countdown timer clamping to prevent display anomalies, and rapid 300ms transition polling at 0:00 intermission to render the new board instantly. Added global touch and wheel scroll prevention when the "You're guessing!" popup is active, and bypass logic for 24h rooms. |
 | `templates/index.html` | *Dynamic* | Bumps cache-busters for style.css (v=28), lobby.css (v=25), and play.js (v=146). |
 
 ---
@@ -32,7 +32,7 @@ The active recovery points `START_OVER_POINT_JUNE_10` and `snapshot-current` tag
 * **Implementation (`static/css/lobby.css` & `templates/index.html`):**
   * Restructured styling to be mobile-first: configured `.rating-filter-container` default rules to use CSS Grid (`display: grid; grid-template-columns: 1fr 1fr; gap: 6px;`).
   * Placed `#rating-filter` input on row 1 (`grid-column: span 2; width: 100%;`) and the two buttons on row 2 (`grid-column: span 1; width: 100%;`), guaranteeing they stack vertically.
-  * Overrode the grid layout for screens above 900px (`@media (min-width: 901px)`) to use flexbox (`display: flex; flex-wrap: nowrap; gap: 8px;`) with `#rating-filter` at a min-width of 185px (removing duplicate `min-width: 0` overrides) to show the full placeholder text.
+  * Overrode the grid layout for screens above 900px (`@media (min-width: 901px)`) to use flexbox (`display: flex; flex-wrap: nowrap; gap: 8px;`) with `#rating-filter` at a min-width of 185px to show the full placeholder text.
   * Widened `.lobby-grid` desktop columns to `1.7fr 1.3fr` to accommodate the side-by-side flex layout without text truncation.
   * Bumped `lobby.css` cache-buster to `v=25` inside `templates/index.html`.
 
@@ -56,3 +56,34 @@ The active recovery points `START_OVER_POINT_JUNE_10` and `snapshot-current` tag
   * Added countdown clamping in `updateLocalTimer` to guarantee the displayed timer value never exceeds the room's limits (active limit or intermission limit).
   * Configured rapid polling (`300`ms interval) at `0:00` intermission to query the server and detect the `active` transition immediately, reverting back to the standard `1000`ms interval on transition.
   * Bumped `play.js` cache-buster to `v=146` in `templates/index.html`.
+
+### 5. 6x8 Board Rescue and Dynamic Fallback
+* **Goal achieved:** Prevent 6x8 rooms from hanging during intermission due to board generation delays, and ensure the board contains valid words matching the board coordinates.
+* **Implementation (`game_room.py` & `app.py`):**
+  * Added `check_6x8_rescue(room)` in `RoomManager` to detect when a 6x8 room has <= 10 seconds remaining in intermission without a generated board.
+  * When triggered, it overrides the room's spinner configuration with fast parameters (Normal format, Medium difficulty, NWL dictionary, min length 3, bonus length 6) and restarts the generation thread.
+  * Implemented a robust `get_emergency_fallback_board(dimensions, board_format, time_limit)` helper to construct compliant boards dynamically with correct words matching the grid coordinates (both 2D and 3D).
+
+### 6. Viewport Scroll Locking on "You're guessing!" Popup
+* **Goal achieved:** Keep the board in place and do not allow scrolling or movement of the background page while the guessing popup is shown.
+* **Implementation (`static/js/play.js`):**
+  * Configured `showGuessingPopup()` to set `document.body.style.overflow = 'hidden'` on popup show and restore it on close.
+  * Registered document-level passive-false listeners for `wheel` and `touchmove` events that intercept and invoke `e.preventDefault()`, fully freezing scroll and swipe interactions on all devices (mobile and desktop) while guessing.
+
+### 7. Guessing Popup Bypass for 24h Rooms
+* **Goal achieved:** Do not display the "You're guessing!" window if the user is in a 24-hour room.
+* **Implementation (`static/js/play.js`):**
+  * Added a check at the beginning of `showGuessingPopup()` to return early and skip showing the modal entirely if the room's `time_limit` is >= 7200 seconds.
+
+### 8. FAQ Multiplier Descriptions Update (Double/Triple)
+* **Goal achieved:** Document the precise rating change limits for Double and Triple multiplier formats in the FAQ.
+* **Implementation (`templates/index.html`):**
+  * Updated FAQ descriptions to mention:
+    * Double: "The highest and lowest rating change possible is +32 and -32."
+    * Triple: "The highest and lowest rating change possible is +48 and -48."
+
+### 9. FCFS and Split Room Creation Isolation
+* **Goal achieved:** Open a brand-new room with only the creator inside whenever a user creates an FCFS or SP room, bypassing any room-reuse (singleton) behavior.
+* **Implementation (`app.py` & `game_room.py`):**
+  * Modified the Flask `/api/room/create` endpoint to assign a random UUID instead of a stable `pub_v2_...` ID when public rooms are created for FCFS or Split.
+  * Updated `create_room()` in `RoomManager` to skip the singleton lookup logic for `fcfs` and `split` formats, ensuring they are always spawned as fresh instances.
