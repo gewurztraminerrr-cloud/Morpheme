@@ -4783,11 +4783,12 @@ def get_forum_posts(category_id):
     try:
         rows = conn.execute('''
             SELECT p.*, u.username, u.avatar_url, u.country_flag,
-            (SELECT COUNT(*) FROM forum_comments WHERE post_id = p.id) as comment_count
+            (SELECT COUNT(*) FROM forum_comments WHERE post_id = p.id) as comment_count,
+            COALESCE((SELECT MAX(timestamp) FROM forum_comments WHERE post_id = p.id), p.timestamp) as last_activity
             FROM forum_posts p
             JOIN users u ON p.user_id = u.id
             WHERE p.category_id = ?
-            ORDER BY p.timestamp DESC
+            ORDER BY last_activity DESC
         ''', (category_id,)).fetchall()
         return jsonify({'posts': [dict(row) for row in rows]})
     finally:
