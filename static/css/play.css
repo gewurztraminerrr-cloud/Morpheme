@@ -5389,7 +5389,7 @@ body.is-desktop .word-input-section {
     background: #1a5fb4;
     color: #fff;
     border: none;
-    border-radius: 50%;
+    border-radius: 6px;
     font-size: 14px;
     cursor: pointer;
     display: flex;
