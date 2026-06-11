@@ -38,6 +38,10 @@ document.addEventListener('click', () => {
         window.intermissionBellAudio.src = `/static/audio/${bellType}.wav`;
         window.intermissionBellAudio.load();
     }
+    const tripleMusic = document.getElementById('triple-music');
+    if (tripleMusic) {
+        tripleMusic.load();
+    }
 }, { once: true });
 
 // Sound effects system using Web Audio API
@@ -437,7 +441,10 @@ window.stopGamePolling = function () {
 function clearGameUIAndCache() {
     console.log('[play.js] Clearing Game UI and Caches from previous match');
     
-    // 1. Reset Global state caches
+    const tripleMusic = document.getElementById('triple-music');
+    if (tripleMusic && !tripleMusic.paused) {
+        tripleMusic.pause();
+    }
     window.lastGameState = null;
     window.lastDisplayAllWordsArgs = null;
     window.lastRenderedStateJSON = null;
@@ -3553,6 +3560,9 @@ function updateLocalTimer() {
         refreshPollInterval();
     }
 
+    // -- Update Triple Format Music State --
+    updateTripleMusicState(remaining);
+
     // -- Next Round Bell Logic --
     if (window.lastGameState && window.lastGameState.state === 'intermission') {
         const isEnabled = window.userSettings && (window.userSettings.next_round_bell_enabled === true || window.userSettings.next_round_bell_enabled === 'true');
@@ -3575,6 +3585,95 @@ function updateLocalTimer() {
     } else {
         // Reset flag when not in intermission
         hasPlayedIntermissionBell = false;
+    }
+}
+
+function updateTripleMusicState(remaining) {
+    const audio = document.getElementById('triple-music');
+    if (!audio) return;
+
+    // Respect user lobby music preferences
+    const musicEnabled = (!window.userSettings || window.userSettings.lobby_music !== false);
+    if (!musicEnabled) {
+        if (!audio.paused) {
+            audio.pause();
+        }
+        return;
+    }
+
+    const state = window.lastGameState;
+    if (!state) {
+        if (!audio.paused) {
+            audio.pause();
+        }
+        return;
+    }
+
+    const sp = state.spinner_params || {};
+    const isIntermission = state.state === 'intermission';
+    const isRevealed = state.spinner_params_revealed === true || state.spinner_params_revealed === 'true';
+    const preferSp = isIntermission && isRevealed;
+
+    const factFmt = (preferSp ? (sp.board_format || state.current_board_format) : (state.current_board_format || sp.board_format)) || 'Normal';
+    const isTriple = (factFmt === 'Triple');
+
+    if (state.state === 'active') {
+        window._lastActiveRoundFormat = state.current_board_format || 'Normal';
+    }
+    const wasTriplePrevious = (window._lastActiveRoundFormat === 'Triple');
+
+    if (state.state === 'active') {
+        if (isTriple) {
+            audio.volume = 1.0;
+            if (audio.paused) {
+                audio.currentTime = 0;
+                audio.play().catch(e => console.warn('Failed to play triple music:', e));
+            }
+        } else {
+            if (!audio.paused) {
+                audio.pause();
+            }
+        }
+    } else if (isIntermission) {
+        const intermission_duration = (state.time_limit >= 7200) ? 5 : 60;
+        const elapsed = intermission_duration - remaining;
+
+        if (wasTriplePrevious && elapsed >= 0 && elapsed <= 10.0) {
+            // Fade-out: 10s from start of intermission
+            const fadeOutVolume = Math.max(0.0, Math.min(1.0, (10.0 - elapsed) / 10.0));
+            audio.volume = fadeOutVolume;
+            if (fadeOutVolume > 0) {
+                if (audio.paused) {
+                    audio.play().catch(e => console.warn('Failed to play triple music during fade-out:', e));
+                }
+            } else {
+                if (!audio.paused) {
+                    audio.pause();
+                }
+            }
+        } else if (isTriple && remaining >= 0 && remaining <= 10.0) {
+            // Fade-in: 10s before round starts
+            const fadeInVolume = Math.max(0.0, Math.min(1.0, (10.0 - remaining) / 10.0));
+            audio.volume = fadeInVolume;
+            if (fadeInVolume > 0) {
+                if (audio.paused) {
+                    audio.currentTime = 0;
+                    audio.play().catch(e => console.warn('Failed to play triple music during fade-in:', e));
+                }
+            } else {
+                if (!audio.paused) {
+                    audio.pause();
+                }
+            }
+        } else {
+            if (!audio.paused) {
+                audio.pause();
+            }
+        }
+    } else {
+        if (!audio.paused) {
+            audio.pause();
+        }
     }
 }
 
