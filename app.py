@@ -2274,7 +2274,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     query_all = '''
         SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions, total_words_avail
         FROM round_history
-        WHERE user_id = ? AND game_type = ? AND board_dimensions = ? AND round_duration = ?
+        WHERE user_id = ? AND game_type = ? AND board_dimensions = ? AND round_duration = ? AND (board_format IS NULL OR board_format != 'Valued Letters')
         ORDER BY timestamp DESC
     '''
     cursor_all = conn.execute(query_all, (user_id, game_type, board_dimensions, time_limit))
@@ -2322,7 +2322,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     query = f'''
         SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions, total_words_avail
         FROM round_history
-        WHERE user_id = ? AND game_type = ? AND board_dimensions = ? AND round_duration = ? {time_filter}
+        WHERE user_id = ? AND game_type = ? AND board_dimensions = ? AND round_duration = ? {time_filter} AND (board_format IS NULL OR board_format != 'Valued Letters')
         ORDER BY timestamp DESC
     '''
     cursor = conn.execute(query, (user_id, game_type, board_dimensions, time_limit))
@@ -5083,7 +5083,7 @@ def get_leaderboard_data():
                        ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.total_score DESC, rh.timestamp DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
-                WHERE {base_where}
+                WHERE {base_where} AND (rh.board_format IS NULL OR rh.board_format != 'Valued Letters')
             ) sub WHERE rn = 1
             ORDER BY total_score DESC, timestamp DESC LIMIT 50
         """, params).fetchall()
@@ -5097,7 +5097,7 @@ def get_leaderboard_data():
                        ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.best_word_score DESC, rh.timestamp DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
-                WHERE {base_where} AND rh.best_word IS NOT NULL
+                WHERE {base_where} AND rh.best_word IS NOT NULL AND (rh.board_format IS NULL OR rh.board_format != 'Valued Letters')
             ) sub WHERE rn = 1
             ORDER BY best_word_score DESC, timestamp DESC LIMIT 50
         """, params).fetchall()
@@ -5111,7 +5111,7 @@ def get_leaderboard_data():
                        ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.performance_ratio DESC, rh.timestamp DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
-                WHERE {base_where} AND rh.performance_ratio > 0
+                WHERE {base_where} AND rh.performance_ratio > 0 AND (rh.board_format IS NULL OR rh.board_format != 'Valued Letters')
             ) sub WHERE rn = 1
             ORDER BY performance_ratio DESC, timestamp DESC LIMIT 50
         """, params).fetchall()
@@ -5171,7 +5171,7 @@ def get_leaderboard_data():
                    u.username, u.country_flag, u.avatar_url
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
-            WHERE {base_where}
+            WHERE {base_where} AND (rh.board_format IS NULL OR rh.board_format != 'Valued Letters')
             GROUP BY u.id
             HAVING games >= 1
             ORDER BY avg_score DESC LIMIT 50
@@ -5184,7 +5184,7 @@ def get_leaderboard_data():
                    rh.round_duration, rh.id, rh.game_type
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
-            WHERE {base_where}
+            WHERE {base_where} AND (rh.board_format IS NULL OR rh.board_format != 'Valued Letters')
             ORDER BY rh.total_score DESC
             LIMIT {_row_cap}
         """, params).fetchall()
