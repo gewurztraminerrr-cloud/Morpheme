@@ -1147,7 +1147,7 @@
                                     
                                     <div id="forum-comment-image-upload" class="forum-upload-group" style="padding: 10px; margin-bottom: 10px; border-width: 1px; border-style: solid;">
                                         <div class="file-input-wrapper" id="forum-comment-image-wrapper" style="font-size: 0.8rem; position: relative; height: 40px; overflow: hidden; display: block; cursor: pointer;">
-                                            <input type="file" id="forum-comment-image" accept="image/*" style="position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; z-index: -1;">
+                                            <input type="file" id="forum-comment-image" accept="image/*" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; pointer-events: auto;">
                                             <div class="file-dummy" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; display: flex; align-items: center; justify-content: center; margin: 0; box-sizing: border-box; padding: 10px; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text);">
                                                 <span class="file-text">📎 Attach an image (optional)</span>
                                             </div>
@@ -1187,7 +1187,7 @@
                                 <div id="forum-image-upload-section" class="forum-upload-group hidden">
                                     <label>Attach Image</label>
                                     <div class="file-input-wrapper" id="forum-post-image-wrapper" style="position: relative; height: 60px; overflow: hidden; display: block; cursor: pointer;">
-                                        <input type="file" id="forum-post-image" accept="image/*" style="position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; z-index: -1;">
+                                        <input type="file" id="forum-post-image" accept="image/*" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; pointer-events: auto;">
                                         <div class="file-dummy" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; display: flex; align-items: center; justify-content: center; margin: 0; box-sizing: border-box; padding: 20px; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text);">
                                             <span class="file-text">Click to choose a file or
                                                 drag and drop</span>
@@ -1301,11 +1301,11 @@
                                 <div class="profile-layout">
                                     <!-- Left Column: Avatar -->
                                     <div class="profile-left-column">
-                                        <div class="profile-avatar-container">
+                                        <div class="profile-avatar-container" style="position: relative;">
                                             <div class="profile-avatar large" id="profile-avatar-trigger"
                                                 title="Click to upload photo" style="cursor: pointer;">?</div>
                                             <input type="file" id="profile-avatar-input" accept="image/*"
-                                                style="position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; z-index: -1;">
+                                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; pointer-events: auto;">
                                         </div>
                                     </div>
 
