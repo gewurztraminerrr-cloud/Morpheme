@@ -27,6 +27,7 @@ let tournamentScore = 0;
 let tournamentStartTime = 0;
 let localEndTime = 0;
 let stableServerTimeOffset = null; // Persistent offset to prevent jitter
+let bestServerTimeRTT = Infinity; // Track the best RTT seen so far
 let timerFormatIs24h = false;     // Cached format to prevent flashing between HH:MM:SS and M:SS
 
 // Global audio object to bypass mobile autoplay restrictions
@@ -509,7 +510,9 @@ function refreshPollInterval() {
     // Speed up polling significantly when intermission is about to end (last 2s)
     if (window.lastGameState && window.lastGameState.state === 'intermission' && !document.hidden) {
         const tr = window.lastGameState.time_remaining;
-        if (tr < 2.5) {
+        if (window._rapidTransitionPolling) {
+             delay = 300; // High-frequency polling at 0:00 intermission transition
+        } else if (tr < 2.5) {
              delay = 500; // Poll twice as fast at the very end
         }
     }
@@ -700,6 +703,8 @@ async function updateGameState(incomingState = null) {
 
     try {
         let state;
+        let tBefore = null;
+        let tAfter = null;
         if (incomingState) {
             state = incomingState;
             window._lastGameStateFetchedTime = Date.now();
@@ -711,10 +716,12 @@ async function updateGameState(incomingState = null) {
             // abort it and retry immediately. The retry forces a fresh TCP/SSL socket and completes instantly!
             let response;
             try {
+                tBefore = Date.now() / 1000;
                 response = await fetchWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' }, 600);
             } catch (err) {
                 console.log(`[play.js] Wake-up state fetch timed out or failed, retrying immediately with fresh socket...`);
                 try {
+                    tBefore = Date.now() / 1000;
                     // Try again with a slightly longer timeout (1800ms) to ensure it doesn't block indefinitely
                     response = await fetchWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}&retry=true`, { cache: 'no-store' }, 1800);
                 } catch (retryErr) {
@@ -762,6 +769,7 @@ async function updateGameState(incomingState = null) {
                 return;
             }
             state = await response.json();
+            tAfter = Date.now() / 1000;
             window._lastGameStateFetchedTime = Date.now();
 
             // Check again after parsing the json response
@@ -846,7 +854,7 @@ async function updateGameState(incomingState = null) {
             if (document.hidden) return;
             
             // If visible, we still need to sync the timer reference, but we can skip heavy DOM re-renders
-            syncTimerWithServer(state);
+            syncTimerWithServer(state, tBefore, tAfter);
             updateLocalTimer(); // Instantly update the timer display on identical-state resume!
             return;
         }
@@ -882,6 +890,11 @@ async function updateGameState(incomingState = null) {
         // Ensure polling interval is fresh (switches to high-frequency if near intermission end)
         if (state.state === 'intermission') {
             refreshPollInterval();
+        } else if (state.state === 'active') {
+            if (window._rapidTransitionPolling) {
+                window._rapidTransitionPolling = false;
+                refreshPollInterval();
+            }
         }
 
         // Detect transition to intermission (round end)
@@ -1310,7 +1323,7 @@ async function updateGameState(incomingState = null) {
         }
 
         // Sync local timer with server
-        syncTimerWithServer(state);
+        syncTimerWithServer(state, tBefore, tAfter);
         updateLocalTimer();
 
         // Track last successful server update
@@ -3354,14 +3367,30 @@ function updateTimer(seconds) {
     // see updateLocalTimer
 }
 
-function syncTimerWithServer(state) {
+function syncTimerWithServer(state, tBefore = null, tAfter = null) {
     const clientTime = Date.now() / 1000;
     const serverTime = state.server_time;
     if (serverTime) {
-        const currentOffset = serverTime - clientTime;
-        // Establish once, then only update if drifting by > 3s
+        let currentOffset;
+        let rtt = null;
+        if (tBefore !== null && tAfter !== null) {
+            rtt = tAfter - tBefore;
+            currentOffset = serverTime - (tBefore + tAfter) / 2;
+        } else {
+            currentOffset = serverTime - clientTime;
+        }
+
+        // Reset our tracker if a large step-change (> 3 seconds) occurs, indicating a clock change
         if (stableServerTimeOffset === null || Math.abs(currentOffset - stableServerTimeOffset) > 3) {
+            bestServerTimeRTT = Infinity;
+        }
+
+        // Update offset if we have a better (lower RTT) sample, or if it is uninitialized
+        if (stableServerTimeOffset === null || (rtt !== null && rtt < bestServerTimeRTT)) {
             stableServerTimeOffset = currentOffset;
+            if (rtt !== null) {
+                bestServerTimeRTT = rtt;
+            }
         }
     }
 
@@ -3414,7 +3443,24 @@ function updateLocalTimer() {
     if (!cachedBoardPanelEl) cachedBoardPanelEl = document.querySelector('.board-panel');
 
     const now = Date.now() / 1000;
-    const remaining = Math.max(0, localEndTime - now);
+    let remaining = Math.max(0, localEndTime - now);
+
+    // Clamp remaining time to room or intermission limit to prevent values like 0:47 or 1:02
+    if (window.lastGameState) {
+        const currentState = window.lastGameState.state;
+        if (currentState === 'active') {
+            const limit = window.lastGameState.time_limit || 45;
+            if (remaining > limit) {
+                remaining = limit;
+            }
+        } else if (currentState === 'intermission') {
+            const limit = (window.lastGameState.time_limit >= 7200) ? 5 : 60;
+            if (remaining > limit) {
+                remaining = limit;
+            }
+        }
+    }
+
     const seconds = Math.ceil(remaining);
 
     // Format determination: Stick with it once detected
@@ -3469,10 +3515,17 @@ function updateLocalTimer() {
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
         console.log(`[play.js] Local timer reached 0:00 in ${currentState} state - Scheduling rapid server poll.`);
         
-        // Use a short 250ms buffer to allow the server to register the transition, then poll
-        setTimeout(() => {
+        if (currentState === 'intermission') {
+            // Rapid polling loop to check for active state immediately
             updateGameState();
-        }, 250);
+            window._rapidTransitionPolling = true;
+            refreshPollInterval();
+        } else {
+            // Use a short 250ms buffer to allow the server to register the transition, then poll
+            setTimeout(() => {
+                updateGameState();
+            }, 250);
+        }
     }
 
     // -- Next Round Bell Logic --
