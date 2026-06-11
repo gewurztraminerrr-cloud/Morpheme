@@ -43,12 +43,38 @@ document.addEventListener('click', () => {
 // Sound effects system using Web Audio API
 const BoardAudio = {
     ctx: null,
+    _keepAliveNode: null,
+    _keepAliveGain: null,
     
     init() {
         if (this.ctx) return;
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (AudioContext) {
-            this.ctx = new AudioContext();
+            this.ctx = new AudioContext({ latencyHint: 'interactive' });
+            this.keepAlive();
+        }
+    },
+    
+    keepAlive() {
+        if (!this.ctx) return;
+        if (this._keepAliveNode) return;
+        
+        try {
+            const osc = this.ctx.createOscillator();
+            const gainNode = this.ctx.createGain();
+            
+            // Set gain to extremely low to remain completely inaudible (1e-5)
+            gainNode.gain.value = 0.00001; 
+            
+            osc.connect(gainNode);
+            gainNode.connect(this.ctx.destination);
+            
+            osc.start();
+            this._keepAliveNode = osc;
+            this._keepAliveGain = gainNode;
+            console.log("[BoardAudio] Bluetooth keep-alive oscillator started");
+        } catch (e) {
+            console.warn("[BoardAudio] Failed to start keep-alive:", e);
         }
     },
     
@@ -153,17 +179,21 @@ const BoardAudio = {
     }
 };
 
-// Resume AudioContext on user interaction
-document.addEventListener('click', () => {
-    if (BoardAudio.ctx && BoardAudio.ctx.state === 'suspended') {
-        BoardAudio.ctx.resume();
+// Warm up and resume AudioContext on user interaction to prevent Bluetooth latency
+const initAudioOnUserInteraction = () => {
+    BoardAudio.init();
+    if (BoardAudio.ctx) {
+        if (BoardAudio.ctx.state === 'suspended') {
+            BoardAudio.ctx.resume().then(() => {
+                BoardAudio.keepAlive();
+            });
+        } else {
+            BoardAudio.keepAlive();
+        }
     }
-});
-document.addEventListener('touchstart', () => {
-    if (BoardAudio.ctx && BoardAudio.ctx.state === 'suspended') {
-        BoardAudio.ctx.resume();
-    }
-});
+};
+document.addEventListener('click', initAudioOnUserInteraction);
+document.addEventListener('touchstart', initAudioOnUserInteraction);
 
 // Mouse selection state
 let mouseState = {
