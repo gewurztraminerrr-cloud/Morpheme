@@ -930,3 +930,10 @@ body.theme-black .forum-action-btn {
         padding: 12px !important;
     }
 }
+
+/* Bypass touch boundaries on mobile viewports for custom file uploaders */
+@media (max-width: 1024px) {
+    .file-input-wrapper input[type="file"] {
+        pointer-events: none !important;
+    }
+}
