@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `99f76f6d068c8fcc5dd418a5be87e61756fc86dd` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `99f76f6d068c8fcc5dd418a5be87e61756fc86dd` / `snapshot-current` / `START_OVER_POINT_JUNE_11` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `99f76f6d068c8fcc5dd418a5be87e61756fc86dd` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
+| **localhost** (`/Users/jeffbabiak/`) | `fd0d5df7e7960d4b3b002722050e1367b45e1be8` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `fd0d5df7e7960d4b3b002722050e1367b45e1be8` / `snapshot-current` / `START_OVER_POINT_JUNE_11` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `fd0d5df7e7960d4b3b002722050e1367b45e1be8` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
 
-**All environments are 100% synchronized at the latest commit 99f76f6d068c8fcc5dd418a5be87e61756fc86dd.**
+**All environments are 100% synchronized at the latest commit fd0d5df7e7960d4b3b002722050e1367b45e1be8.**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_11` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -88,10 +88,11 @@ The active recovery points `START_OVER_POINT_JUNE_11` and `snapshot-current` tag
 * **Implementation:**
   * Restructured layout positions for `<input type="file">` to be layered absolutely over the styling container with `pointer-events` configured so that mobile taps register directly on the native component.
 
-### 10. Added Words 50% Probability Integration
+### 10. Added Words 50% Probability Integration & Uniqueness Parity
 * **Goal achieved:** Ensure that custom "Added Words" (AW) have a 50% chance of being used on the board per round in standard play. The UI indicates this status on the Spinner Set (e.g., displaying `NWL + AW` or `CSW + AW` if active, and simply `NWL` or `CSW` if inactive).
 * **Implementation:**
   * Updated [spinner_set.py](file:///Users/jeffbabiak/spinner_set.py) to roll a 50% chance (`random.random() < 0.5`) to set `use_added_words` to `True` or `False` if the global moderator configuration is enabled.
   * Propagated `use_added_words` thread-safely via `use_added_words_ctx` (ContextVar) and updated [game_room.py](file:///Users/jeffbabiak/game_room.py) to propagate and set `room.use_added_words` on room creation (kickstart), start of next round, solo parameter generation, 6x8 rescue fallback, and fallback board generation.
   * Updated [static/js/play.js](file:///Users/jeffbabiak/static/js/play.js) (version `v=150`) to dynamically render `+ AW` based on `sp.use_added_words` or `state.use_added_words` strictly.
   * Incremented the cache-buster version of `play.js` in [templates/index.html](file:///Users/jeffbabiak/templates/index.html) to `?v=150`.
+  * **Uniqueness Parity:** Updated [board_generator.py](file:///Users/jeffbabiak/board_generator.py) to treat Added Words as unique words inside all uniqueness ratio validation and board optimization methods when `use_added_words` is active. This ensures they correctly contribute to uniqueness thresholds required for Hard (e.g., 45%) difficulty boards.
