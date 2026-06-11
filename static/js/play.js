@@ -5884,8 +5884,20 @@ function recordGuessResult(isValid, isOnBoard, isSpecialSkip = false) {
 function showGuessingPopup() {
     if (document.getElementById('guessing-popup')) return;
 
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     const popup = document.createElement('div');
     popup.id = 'guessing-popup';
+
+    // Prevent scrolling/swiping through the popup overlay
+    popup.addEventListener('wheel', function(e) {
+        e.preventDefault();
+    }, { passive: false });
+
+    popup.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+    }, { passive: false });
     popup.innerHTML = `
         <div class="guessing-popup-card">
             <div class="guessing-popup-icon">⚠️</div>
@@ -5989,6 +6001,7 @@ function showGuessingPopup() {
         popup.querySelector('.guessing-popup-card').style.transform = 'scale(0.9)';
         setTimeout(() => {
             popup.remove();
+            document.body.style.overflow = originalOverflow;
             
             window.isPopupVisible = false;
             if (wordInput) {
