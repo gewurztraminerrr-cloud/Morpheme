@@ -244,8 +244,14 @@ class BoardGenerator:
         if not filtered_words:
             return 0.0
 
+        val_ctx = use_added_words_ctx.get()
+        if val_ctx is None:
+            from word_validator import word_validator
+            val_ctx = word_validator.use_added_words
+
+        from word_validator import word_validator
         count_relevant = len(filtered_words)
-        count_unique = sum(1 for w in filtered_words if w.upper() in unique_set)
+        count_unique = sum(1 for w in filtered_words if (w.upper() in unique_set) or (val_ctx and w.upper() in word_validator.added_words))
 
         return count_unique / count_relevant if count_relevant > 0 else 0.0
 
@@ -2456,8 +2462,14 @@ class BoardGenerator:
                     else:
                         relevant_ev = [w for w in current_words_eval if 6 <= len(w) <= 8]
 
+                    val_ctx = use_added_words_ctx.get()
+                    if val_ctx is None:
+                        from word_validator import word_validator
+                        val_ctx = word_validator.use_added_words
+
+                    from word_validator import word_validator
                     count_rel_ev = len(relevant_ev)
-                    count_u_ev = sum(1 for w in relevant_ev if w in unique_set)
+                    count_u_ev = sum(1 for w in relevant_ev if (w in unique_set) or (val_ctx and w in word_validator.added_words))
                     ratio_u_ev = count_u_ev / count_rel_ev if count_rel_ev > 0 else 0
 
                     if min_words <= count_eval <= max_words and min_r <= ratio_u_ev <= max_r:
@@ -2498,7 +2510,13 @@ class BoardGenerator:
                         # Multiplier Logic (User Request: Protect common long words)
                         # All 6L+ words are 'High Value' (15x) if we are doing Density optimization.
                         # IF we are doing Uniqueness optimization, ONLY provide the 15x multiplier if actually in unique set.
-                        is_unique = w in unique_set
+                        val_ctx = use_added_words_ctx.get()
+                        if val_ctx is None:
+                            from word_validator import word_validator
+                            val_ctx = word_validator.use_added_words
+
+                        from word_validator import word_validator
+                        is_unique = (w in unique_set) or (val_ctx and w in word_validator.added_words)
 
                         if target_type == "Uniqueness":
                             multiplier = 15 if is_unique else 1
@@ -2715,8 +2733,14 @@ class BoardGenerator:
             else:
                 relevant_final = [w for w in test_solve_all if len(w) >= min_word_length]
 
+            val_ctx = use_added_words_ctx.get()
+            if val_ctx is None:
+                from word_validator import word_validator
+                val_ctx = word_validator.use_added_words
+
+            from word_validator import word_validator
             count_rel_final = len(relevant_final)
-            count_unique = sum(1 for w in relevant_final if w.upper() in unique_set)
+            count_unique = sum(1 for w in relevant_final if (w.upper() in unique_set) or (val_ctx and w.upper() in word_validator.added_words))
             curr_r = count_unique / count_rel_final if count_rel_final > 0 else 0
             print(f"[BoardGen] Pass {p} complete. Count: {total_words}, Unique: {curr_r:.1%}")
 
@@ -2947,8 +2971,14 @@ class BoardGenerator:
                         board, dictionary, (0, 99999), min_word_length, 
                         max_depth=solve_depth, store_paths=False, timeout=timeout_cell
                     )
+                    val_ctx = use_added_words_ctx.get()
+                    if val_ctx is None:
+                        from word_validator import word_validator
+                        val_ctx = word_validator.use_added_words
+
+                    from word_validator import word_validator
                     total_w = len(all_found)
-                    unique_w = sum(1 for w in all_found if w in unique_set)
+                    unique_w = sum(1 for w in all_found if (w in unique_set) or (val_ctx and w in word_validator.added_words))
                     
                     # USER REQUEST: Total word count compliance.
                     # We prioritize density/uniqueness but STERNLY penalize overshooting max_words (ceiling).
