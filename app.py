@@ -3014,6 +3014,7 @@ def get_room_state(room_id):
     if room:
         # 1. On-demand state updates & next round transitions safeguard
         room.check_and_update_state()
+        room_manager.check_6x8_rescue(room)
         if room.state == 'intermission' and room.time_remaining <= 0:
             if not getattr(room, 'starting_round', False):
                 import threading
@@ -3141,6 +3142,7 @@ def get_room_state(room_id):
         # sends its rapid state poll at 0:00, the server instantly evaluates timer expiry
         # and transitions to intermission, bypassing any background loop polling delays!
         room.check_and_update_state()
+        room_manager.check_6x8_rescue(room)
             
         with room._state_lock:
             # LAZY LOAD YESTERDAY'S HISTORY FOR 24H ROOMS:

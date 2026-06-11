@@ -168,6 +168,7 @@ class GameRoom:
     creation_time: float = field(default_factory=time.time)
     previous_total_words: int = 0
     previous_total_counts_by_len: Dict = field(default_factory=dict)
+    _did_6x8_fallback_rescue: bool = False
     @property
     def round_end_time(self):
         """Absolute timestamp when the current round expires"""
@@ -1805,6 +1806,65 @@ def calculate_word_score(word, bonus_word, board_format='Normal', path=None, bon
     return shared_calc(word, bonus_word, board_format=board_format, path=path, bonus_cell=bonus_cell, **kwargs)
 
 
+def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=60):
+    """Dynamically generate a valid emergency fallback board that matches room dimensions and spells correct words."""
+    import random
+    parts = dimensions.split("x")
+    if len(parts) == 3:
+        # 3D Cube: 6 faces of r x c
+        depth, rows, cols = map(int, parts)
+        board = [[['A' for _ in range(cols)] for _ in range(rows)] for _ in range(6)]
+        words = []
+        paths = {}
+        # Simple short words on face 0
+        word_list = ["CAT", "DOG", "RUN", "MAP", "SUN", "TOY"]
+        for r in range(min(rows, len(word_list))):
+            w = word_list[r][:cols]
+            if not w:
+                continue
+            for c in range(len(w)):
+                board[0][r][c] = w[c]
+            words.append(w)
+            paths[w] = [(0, r, c) for c in range(len(w))]
+    else:
+        rows, cols = map(int, parts)
+        board = [['A' for _ in range(cols)] for _ in range(rows)]
+        words = []
+        paths = {}
+        # Dynamic words based on columns
+        fallback_words_by_len = {
+            3: ["CAT", "DOG", "RUN", "MAP", "SUN", "TOY", "BOX", "FLY", "GET", "HOT"],
+            4: ["SEND", "RATE", "TILE", "POEM", "GOLD", "WIND", "FIRE", "BLUE", "GAME", "PLAY"],
+            5: ["HOUSE", "PAPER", "WATER", "LIGHT", "PLANT", "TABLE", "CHAIR", "CLOCK", "SMART", "ROUND"],
+            6: ["SILENT", "PEACES", "LOVELY", "MOTHER", "FATHER", "STREAM", "FOREST", "SPRING", "SUMMER", "WINTER"],
+            7: ["PROCESS", "PROJECT", "PROMISE", "PROTECT", "PROVIDE", "PERFECT", "JOURNEY", "COUNTRY", "SCIENCE", "HISTORY"],
+            8: ["BUILDING", "CREATING", "DESIGNED", "FEEDBACK", "PLAYINGS", "STARTING", "LEARNING", "THINKING", "PRACTICE", "MOUNTAIN"]
+        }
+        w_len = min(cols, 8)
+        if w_len < 3:
+            w_len = cols
+            word_list = ["A" * w_len] * rows
+        else:
+            word_list = fallback_words_by_len.get(w_len, ["CAT"[:w_len]])
+            
+        for r in range(min(rows, len(word_list))):
+            w = word_list[r]
+            for c in range(len(w)):
+                board[r][c] = w[c]
+            words.append(w)
+            paths[w] = [(r, c) for c in range(len(w))]
+            
+    bonus_word = words[0] if words else 'CAT'
+    bonus_cell = paths[bonus_word][0] if bonus_word in paths else (0, 0)
+    if len(parts) == 3 and not isinstance(bonus_cell, tuple):
+        bonus_cell = (0, 0, 0)
+        
+    fmt = 'Valued Letters' if time_limit >= 7200 else board_format
+    ratio = 0.5
+    
+    return board, words, bonus_cell, fmt, paths, ratio, bonus_word
+
+
 class RoomManager:
     def __init__(self):
         global _room_manager_instance
@@ -1832,6 +1892,7 @@ class RoomManager:
                     try:
                         # timers/transitions
                         room.check_and_update_state()
+                        self.check_6x8_rescue(room)
                         
                         # Milestones (Spinner, Search, Reveal, Round Start)
                         milestone = room.get_next_round_milestone()
@@ -3284,6 +3345,60 @@ class RoomManager:
         finally:
             with room._state_lock:
                 room.spinner_params_loading = False
+
+    def check_6x8_rescue(self, room):
+        """Rescue 6x8 rooms that haven't generated a board 10s before intermission ends."""
+        if not room:
+            return
+        if room.state == 'intermission' and room.board_dimensions == '6x8':
+            if room.time_remaining <= 10 and room.time_remaining > 0:
+                if not room.next_round_board and not getattr(room, '_did_6x8_fallback_rescue', False):
+                    with room._state_lock:
+                        # Re-verify condition under lock
+                        if not room.next_round_board and not getattr(room, '_did_6x8_fallback_rescue', False):
+                            room._did_6x8_fallback_rescue = True
+                            print(f"[6x8-Rescue] Intermission at 0:10 remaining and no board found. Switching parameters to fast configuration for room {room.room_id}!")
+                            
+                            import time
+                            # 1. Update spinner parameters to fast config
+                            now = time.time()
+                            fast_params = {
+                                'difficulty': 'Medium',
+                                'dictionary': 'NWL',
+                                'word_count_range': '100-200',
+                                'board_format': 'Normal',
+                                'min_word_length': 3,
+                                'bonus_word_length': 6,
+                                'generated_at': now,
+                                'board_dimensions': room.board_dimensions,
+                                'time_limit': room.time_limit
+                            }
+                            room.spinner_params = dict(fast_params)
+                            room.next_spinner_params = dict(fast_params)
+                            room.next_round_spinner_params = dict(fast_params)
+                            room.spinner_params_generated = True
+                            room.spinner_params_revealed = True
+                            room._reveal_sync_complete = True
+                            
+                            # 2. Reset staging and search flags to force re-generation
+                            room.next_round_board = None
+                            room.next_round_words = None
+                            room.next_round_word_paths = None
+                            room.next_round_word_scores = None
+                            room.next_round_total_points = 0
+                            room.next_round_total_words_count = 0
+                            room.next_round_bonus = None
+                            room.next_round_bonus_cell = None
+                            room.next_round_format = None
+                            room.next_round_uniqueness = None
+                            
+                            room.board_search_started = False
+                            room.board_search_started_actual = False
+                            room.board_search_loading = False
+                            
+                            # 3. Start search process in background thread
+                            import threading
+                            threading.Thread(target=self.start_board_search, args=(room.room_id,), daemon=True).start()
     
     def start_board_search(self, room_id):
         """Start board search using Spinner Set parameters (called at 15s remaining)"""
@@ -3806,6 +3921,7 @@ class RoomManager:
             
             # 2. STATE TRANSITION LOCK: Perform the atomic board swap
             with room._state_lock:
+                room._did_6x8_fallback_rescue = False
                 # Reset players active stats and roster for the next round BEFORE database save
                 # FCFS: Clear shared found lists for the upcoming round
                 room.fcfs_found_words = []
@@ -3972,14 +4088,8 @@ class RoomManager:
                             e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio = e_results
                             e_bonus_word = getattr(room, 'next_round_bonus', '')
                     else:
-                        print(f"[RoomManager] Hardcoded board fallback in emergency promotion!")
-                        e_board = [['A','B','C','D'],['E','F','G','H'],['I','J','K','L'],['M','N','O','P']]
-                        e_words = ['ABLE', 'BAKER']
-                        e_bonus_c = (0, 0)
-                        e_fmt = 'Valued Letters' if room.time_limit >= 7200 else 'Normal'
-                        e_paths = {'ABLE': [(0,0),(0,1),(0,2),(0,3)], 'BAKER': [(1,0),(1,1),(1,2),(1,3)]}
-                        e_ratio = 0.5
-                        e_bonus_word = 'ABLE'
+                        print(f"[RoomManager] Dynamic emergency board fallback in emergency promotion!")
+                        e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio, e_bonus_word = get_emergency_fallback_board(room.board_dimensions, room.current_board_format, room.time_limit)
                     
                     room.next_round_board = e_board
                     room.next_round_words = e_words
