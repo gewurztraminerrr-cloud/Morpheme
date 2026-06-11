@@ -4132,6 +4132,13 @@ class RoomManager:
                     room.next_round_bonus = e_bonus_word
                     room.next_round_format = e_fmt
                     
+                    if hasattr(word_validator, 'word_validator'):
+                        room.next_round_csw_only_words = [w for w in e_words if word_validator.word_validator.is_csw_only(w)]
+                        room.next_round_added_words = [w for w in e_words if word_validator.word_validator.is_added_word(w)]
+                    else:
+                        room.next_round_csw_only_words = []
+                        room.next_round_added_words = []
+                    
                     # USER REQUEST: Ensure Total Points is never 0.
                     # Fast-apply length based scores for the emergency board immediately.
                     is_valued_e = ('valued' in str(room.current_board_format).lower())
