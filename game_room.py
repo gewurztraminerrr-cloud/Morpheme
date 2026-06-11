@@ -665,6 +665,9 @@ class GameRoom:
     
     def submit_word(self, user_id, word, path=None):
         """Submit word for player"""
+        if self.state != 'active':
+            return False, "Round is not active", 0, None
+            
         # Security check: Spectators cannot play
         for s in self.spectators:
             if str(s.user_id) == str(user_id):
