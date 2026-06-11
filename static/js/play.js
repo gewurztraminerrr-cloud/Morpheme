@@ -5881,23 +5881,25 @@ function recordGuessResult(isValid, isOnBoard, isSpecialSkip = false) {
     }
 }
 
+let activeGuessingScrollPrevent = null;
+
 function showGuessingPopup() {
     if (document.getElementById('guessing-popup')) return;
 
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
+    // Global scroll/swipe lock for the entire document
+    activeGuessingScrollPrevent = function(e) {
+        if (e.cancelable !== false) {
+            e.preventDefault();
+        }
+    };
+    document.addEventListener('wheel', activeGuessingScrollPrevent, { passive: false });
+    document.addEventListener('touchmove', activeGuessingScrollPrevent, { passive: false });
+
     const popup = document.createElement('div');
     popup.id = 'guessing-popup';
-
-    // Prevent scrolling/swiping through the popup overlay
-    popup.addEventListener('wheel', function(e) {
-        e.preventDefault();
-    }, { passive: false });
-
-    popup.addEventListener('touchmove', function(e) {
-        e.preventDefault();
-    }, { passive: false });
     popup.innerHTML = `
         <div class="guessing-popup-card">
             <div class="guessing-popup-icon">⚠️</div>
@@ -6002,6 +6004,13 @@ function showGuessingPopup() {
         setTimeout(() => {
             popup.remove();
             document.body.style.overflow = originalOverflow;
+            
+            // Release global scroll/swipe lock
+            if (activeGuessingScrollPrevent) {
+                document.removeEventListener('wheel', activeGuessingScrollPrevent, { passive: false });
+                document.removeEventListener('touchmove', activeGuessingScrollPrevent, { passive: false });
+                activeGuessingScrollPrevent = null;
+            }
             
             window.isPopupVisible = false;
             if (wordInput) {
