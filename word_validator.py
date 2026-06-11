@@ -6,6 +6,10 @@ always consulted in addition to whichever main dictionary is in use.
 """
 
 import os
+import contextvars
+
+# Context variable to specify if added words are enabled for the current thread/context
+use_added_words_ctx = contextvars.ContextVar('use_added_words', default=None)
 
 class TrieNode:
     def __init__(self):
@@ -289,20 +293,27 @@ class WordValidator:
             node = node.children[char]
         return True
     
-    def is_valid_word(self, word, dictionary='NWL'):
+    def is_valid_word(self, word, dictionary='NWL', use_added_words=None):
         """Check if word is valid using pre-merged sets."""
-        self.get_use_added_words()
+        if use_added_words is None:
+            self.get_use_added_words()
+            val = use_added_words_ctx.get()
+            if val is None:
+                val = self.use_added_words
+        else:
+            val = use_added_words
+            
         d_upper = str(dictionary).upper()
         if d_upper == 'UNIQUENWL':
-            return word in self.unique_nwl_words or (self.use_added_words and word in self.added_words)
+            return word in self.unique_nwl_words or (val and word in self.added_words)
         elif d_upper == 'UNIQUECSW':
             self.ensure_csw_loaded()
-            return word in self.unique_csw_words or (self.use_added_words and word in self.added_words)
+            return word in self.unique_csw_words or (val and word in self.added_words)
         elif d_upper == 'CSW':
             self.ensure_csw_loaded()
-            return word in self.csw_words or word in self.long_words or (self.use_added_words and word in self.added_words)
+            return word in self.csw_words or word in self.long_words or (val and word in self.added_words)
         else:  # NWL
-            return word in self.nwl_words or word in self.long_words or (self.use_added_words and word in self.added_words)
+            return word in self.nwl_words or word in self.long_words or (val and word in self.added_words)
     
     def is_csw_only(self, word):
         """Check if word is in CSW but not NWL"""

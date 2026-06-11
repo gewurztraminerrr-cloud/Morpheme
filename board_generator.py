@@ -6,7 +6,7 @@ Generates boards with bonus word embedding and validation
 import random
 import time
 import os
-from word_validator import word_validator
+from word_validator import word_validator, use_added_words_ctx
 
 DEBUG_FLOW_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'debug_flow.log')
 
@@ -3334,6 +3334,10 @@ class BoardGenerator:
         from word_validator import word_validator
         word_validator.get_use_added_words()
         
+        val_ctx = use_added_words_ctx.get()
+        if val_ctx is None:
+            val_ctx = word_validator.use_added_words
+        
         d_upper = str(dictionary).upper()
         if d_upper in ["UNIQUECSW", "CSW"]:
             word_validator.ensure_csw_loaded()
@@ -3368,7 +3372,9 @@ class BoardGenerator:
                     new_uses_target = uses_target or (must_include and (f, r, c) == (must_include[0] if len(must_include)==3 else 0, must_include[-2], must_include[-1]))
 
                     if len(new_word) >= min_word_length and next_node.is_word:
-                        if not must_include or new_uses_target:
+                        if not val_ctx and new_word in word_validator.added_words and not word_validator.is_valid_word_authoritative(new_word):
+                            pass
+                        elif not must_include or new_uses_target:
                             if new_word not in found_words:
                                 found_words[new_word] = True
                                 found_words_uses_bonus[new_word] = new_uses_bonus
@@ -3399,7 +3405,9 @@ class BoardGenerator:
                         if u_node:
                             q_word = current_word + "QU"
                             if len(q_word) >= min_word_length and u_node.is_word:
-                                if q_word not in found_words:
+                                if not val_ctx and q_word in word_validator.added_words and not word_validator.is_valid_word_authoritative(q_word):
+                                    pass
+                                elif q_word not in found_words:
                                     found_words[q_word] = True
                                     found_words_uses_bonus[q_word] = new_uses_bonus
                                 elif new_uses_bonus and not found_words_uses_bonus.get(q_word, False):
@@ -3444,7 +3452,9 @@ class BoardGenerator:
                     new_uses_target = uses_target or (must_include and (f, r, c) == (must_include[0] if len(must_include)==3 else 0, must_include[-2], must_include[-1]))
 
                     if len(new_word) >= min_word_length and next_node.is_word:
-                        if not must_include or new_uses_target:
+                        if not val_ctx and new_word in word_validator.added_words and not word_validator.is_valid_word_authoritative(new_word):
+                            pass
+                        elif not must_include or new_uses_target:
                             if new_word not in found_words:
                                 found_words[new_word] = new_path
                                 found_words_uses_bonus[new_word] = new_uses_bonus
@@ -3476,7 +3486,9 @@ class BoardGenerator:
                         if u_node:
                             q_word = current_word + "QU"
                             if len(q_word) >= min_word_length and u_node.is_word:
-                                if q_word not in found_words:
+                                if not val_ctx and q_word in word_validator.added_words and not word_validator.is_valid_word_authoritative(q_word):
+                                    pass
+                                elif q_word not in found_words:
                                     found_words[q_word] = new_path
                                     found_words_uses_bonus[q_word] = new_uses_bonus
                                 elif new_uses_bonus and not found_words_uses_bonus.get(q_word, False):

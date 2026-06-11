@@ -28,6 +28,7 @@ from board_generator import BoardGenerator
 from scoring import calculate_word_score
 from rating_logic import calculate_proportional_rating_change, is_player_guest
 import word_validator
+from word_validator import use_added_words_ctx
 
 _room_manager_instance = None
 
@@ -123,6 +124,7 @@ class GameRoom:
     current_difficulty: str = 'Varying...'
     current_bonus_word_length: int = 0
     current_uniqueness: float = 0.0
+    use_added_words: bool = False
     spinner_params: Dict = field(default_factory=dict)
     
     # Density Format Tracking
@@ -733,7 +735,7 @@ class GameRoom:
                 for w in possible_words:
                     if w in self.all_words:
                         valid_options.append(w)
-                    elif word_validator.word_validator.is_valid_word(w, getattr(self, 'current_dictionary', 'NWL')):
+                    elif word_validator.word_validator.is_valid_word(w, getattr(self, 'current_dictionary', 'NWL'), use_added_words=getattr(self, 'use_added_words', False)):
                         valid_options.append(w)
                 
                 if submitted_word_upper in valid_options:
@@ -758,7 +760,7 @@ class GameRoom:
         import re
         effective_len = len(re.sub(r'Q(?!U)', 'QU', word))
         if effective_len < min_len_req:
-            is_valid = word_validator.word_validator.is_valid_word(word, getattr(self, 'current_dictionary', 'NWL'))
+            is_valid = word_validator.word_validator.is_valid_word(word, getattr(self, 'current_dictionary', 'NWL'), use_added_words=getattr(self, 'use_added_words', False))
             if not is_valid:
                 return False, "Sequence not a word and too small", 0, None
             return False, f"{word.upper()} IS TOO SHORT (MIN: {min_len_req}L)", 0, None
@@ -779,7 +781,7 @@ class GameRoom:
                 candidates.append(word.replace('Q', 'QU'))
                 
             for cand in candidates:
-                is_valid_dict = word_validator.word_validator.is_valid_word(cand, getattr(self, 'current_dictionary', 'NWL'))
+                is_valid_dict = word_validator.word_validator.is_valid_word(cand, getattr(self, 'current_dictionary', 'NWL'), use_added_words=getattr(self, 'use_added_words', False))
                 if is_valid_dict:
                     is_on_board, path = word_validator.word_validator.find_word_on_board(self.board, cand, return_path=True)
                     if is_on_board:
@@ -1215,6 +1217,10 @@ class GameRoom:
             if now - self.intermission_stuck_start_time > 10.0:
                 print(f"[Watchdog] Intermission stuck for >10s on {self.room_id} loading a board. Resetting parameters to guaranteed-fast fallback and retrying immediately!")
                 
+                import random
+                is_added_words_enabled = word_validator.word_validator.get_use_added_words()
+                use_aw = (random.random() < 0.5) if is_added_words_enabled else False
+
                 # 1. Set fallback spinner parameters
                 fallback_params = {
                     'difficulty': 'Medium',
@@ -1223,6 +1229,7 @@ class GameRoom:
                     'board_format': 'Valued Letters' if self.time_limit >= 7200 else 'Normal',
                     'min_word_length': 3,
                     'bonus_word_length': 6,
+                    'use_added_words': use_aw,
                     'generated_at': now,
                     'board_dimensions': self.board_dimensions,
                     'time_limit': self.time_limit
@@ -2350,15 +2357,20 @@ class RoomManager:
                             room.spinner_params['min_word_length'] = 6
                         
                         # 3. Generate board
-                        e_results = self.board_generator.generate_board(
-                            dimensions=room.board_dimensions,
-                            bonus_word=b_word,
-                            word_count_range=room.spinner_params.get('word_count_range', '100-200'), 
-                            dictionary=room.spinner_params.get('dictionary', 'NWL'),
-                            board_format=room.spinner_params.get('board_format', 'Normal'),
-                            min_word_length=m_len,
-                            is_emergency=True
-                        )
+                        use_aw_flag = room.spinner_params.get('use_added_words', False)
+                        token = use_added_words_ctx.set(use_aw_flag)
+                        try:
+                            e_results = self.board_generator.generate_board(
+                                dimensions=room.board_dimensions,
+                                bonus_word=b_word,
+                                word_count_range=room.spinner_params.get('word_count_range', '100-200'), 
+                                dictionary=room.spinner_params.get('dictionary', 'NWL'),
+                                board_format=room.spinner_params.get('board_format', 'Normal'),
+                                min_word_length=m_len,
+                                is_emergency=True
+                            )
+                        finally:
+                            use_added_words_ctx.reset(token)
                         
                         if e_results and len(e_results) >= 7:
                             e_board, e_words, e_bonus_c, e_fmt, e_dict, e_ratio, e_bonus_word = e_results[:7]
@@ -2371,6 +2383,7 @@ class RoomManager:
                             room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
                             room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
                             room.current_uniqueness = e_ratio
+                            room.use_added_words = room.spinner_params.get('use_added_words', False)
                             
                             # Filter words for length lockdown and store paths
                             room.all_words = {w for w in (e_words or []) if len(w) >= m_len}
@@ -2960,16 +2973,21 @@ class RoomManager:
                 import random
                 random.seed()
                 
-                res = self.board_generator.generate_board(
-                    dimensions=room.board_dimensions,
-                    bonus_word=bonus_word,
-                    word_count_range=room.spinner_params['word_count_range'],
-                    dictionary=room.spinner_params['dictionary'],
-                    board_format=room.spinner_params['board_format'],
-                    min_word_length=room.spinner_params.get('min_word_length', 3),
-                    difficulty=room.spinner_params.get('difficulty', 'Medium'),
-                    is_emergency=True # SPEED: For the very first user in a room, prioritize instant start
-                )
+                use_aw_flag = room.spinner_params.get('use_added_words', False)
+                token = use_added_words_ctx.set(use_aw_flag)
+                try:
+                    res = self.board_generator.generate_board(
+                        dimensions=room.board_dimensions,
+                        bonus_word=bonus_word,
+                        word_count_range=room.spinner_params['word_count_range'],
+                        dictionary=room.spinner_params['dictionary'],
+                        board_format=room.spinner_params['board_format'],
+                        min_word_length=room.spinner_params.get('min_word_length', 3),
+                        difficulty=room.spinner_params.get('difficulty', 'Medium'),
+                        is_emergency=True # SPEED: For the very first user in a room, prioritize instant start
+                    )
+                finally:
+                    use_added_words_ctx.reset(token)
                 
                 board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio, final_bonus_word = res
                 
@@ -3039,6 +3057,7 @@ class RoomManager:
             
             room.current_min_length = room.spinner_params.get('min_word_length', 3)
             room.current_board_format = 'Valued Letters' if is_24h else updated_format
+            room.use_added_words = room.spinner_params.get('use_added_words', False)
             # room.bonus_cell already set above
             room.all_words_paths = all_words_dict # ATOMIC SAVE: Crucial for optimized scoring
             
@@ -3261,6 +3280,10 @@ class RoomManager:
                         else:
                             resolved_board_format = board_fmt
                             
+                        import random
+                        is_added_words_enabled = word_validator.word_validator.get_use_added_words()
+                        use_aw = (random.random() < 0.5) if is_added_words_enabled else False
+
                         new_params = {
                             'min_word_length': min_word_len,
                             'difficulty': difficulty,
@@ -3268,6 +3291,7 @@ class RoomManager:
                             'dictionary': dictionary,
                             'board_format': resolved_board_format,
                             'bonus_word_length': bonus_word_len,
+                            'use_added_words': use_aw,
                             'generated_at': time.time()
                         }
                     else:
@@ -3340,6 +3364,10 @@ class RoomManager:
                             print(f"[6x8-Rescue] Intermission at 0:10 remaining and no board found. Switching parameters to fast configuration for room {room.room_id}!")
                             
                             import time
+                            import random
+                            is_added_words_enabled = word_validator.word_validator.get_use_added_words()
+                            use_aw = (random.random() < 0.5) if is_added_words_enabled else False
+
                             # 1. Update spinner parameters to fast config
                             now = time.time()
                             fast_params = {
@@ -3349,6 +3377,7 @@ class RoomManager:
                                 'board_format': 'Normal',
                                 'min_word_length': 3,
                                 'bonus_word_length': 6,
+                                'use_added_words': use_aw,
                                 'generated_at': now,
                                 'board_dimensions': room.board_dimensions,
                                 'time_limit': room.time_limit
@@ -3517,17 +3546,22 @@ class RoomManager:
                         import random
                         random.seed()
                         
-                        # ROBUST CALL: Use keyword arguments to prevent positional mismatch
-                        res = self.board_generator.generate_board(
-                            dimensions=room.board_dimensions,
-                            bonus_word=bonus_word,
-                            word_count_range=search_wc,
-                            dictionary=search_dict,
-                            board_format=search_fmt,
-                            min_word_length=search_min,
-                            difficulty=search_diff,
-                            timeout=search_timeout
-                        )
+                        use_aw_flag = params.get('use_added_words', False)
+                        token = use_added_words_ctx.set(use_aw_flag)
+                        try:
+                            # ROBUST CALL: Use keyword arguments to prevent positional mismatch
+                            res = self.board_generator.generate_board(
+                                dimensions=room.board_dimensions,
+                                bonus_word=bonus_word,
+                                word_count_range=search_wc,
+                                dictionary=search_dict,
+                                board_format=search_fmt,
+                                min_word_length=search_min,
+                                difficulty=search_diff,
+                                timeout=search_timeout
+                            )
+                        finally:
+                            use_added_words_ctx.reset(token)
                         
                         # ROBUST UNPACKING: Support legacy 6-tuple or modern 7-tuple
                         if len(res) == 7:
@@ -4001,6 +4035,7 @@ class RoomManager:
                 room.current_word_count_range = '200-300' if room.time_limit >= 7200 else active_params.get('word_count_range', '100-200')
                 room.current_difficulty = active_params.get('difficulty', 'Medium')
                 room.current_dictionary = active_params.get('dictionary', 'NWL')
+                room.use_added_words = active_params.get('use_added_words', False)
                 raw_min = active_params.get('min_word_length', 3)
                 
                 # Update spinner_params to match the actual board being used
@@ -4048,6 +4083,8 @@ class RoomManager:
                         import random
                         random.seed()
                         
+                        use_aw_flag = e_params.get('use_added_words', False)
+                        token = use_added_words_ctx.set(use_aw_flag)
                         try:
                             e_results = bg.generate_board(
                                 dimensions=room.board_dimensions, 
@@ -4062,6 +4099,8 @@ class RoomManager:
                         except Exception as e:
                             print(f"[RoomManager] Emergency generate_board at promotion failed: {e}")
                             e_results = None
+                        finally:
+                            use_added_words_ctx.reset(token)
                             
                         if e_results:
                             if len(e_results) == 7:
@@ -4675,7 +4714,7 @@ class RoomManager:
                 unique_words_for_user = set()
                 for entry in words:
                     w = entry.get('word', '').upper() if isinstance(entry, dict) else str(entry).upper()
-                    if w and word_validator.is_valid_word(w, 'CSW'):
+                    if w and word_validator.is_valid_word(w, 'CSW', use_added_words=getattr(room, 'use_added_words', False)):
                         unique_words_for_user.add(w)
                 
                 for w in unique_words_for_user:

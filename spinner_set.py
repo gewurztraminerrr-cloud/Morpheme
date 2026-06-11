@@ -71,6 +71,14 @@ class SpinnerSet:
                 elif '6x8' in dims and min_word_length == 6:
                     res['min_word_length'] = random.choice([7, 8])
                     print(f"[SpinnerSet] Wrapper adjusted 6x8 min_len for 100-200 words from 6 to {res['min_word_length']}")
+            # Roll for Added Words (50% chance if enabled globally)
+            if isinstance(res, dict):
+                is_added_words_enabled = word_validator.get_use_added_words()
+                if is_added_words_enabled:
+                    res['use_added_words'] = (random.random() < 0.5)
+                else:
+                    res['use_added_words'] = False
+
             # Apply our ironclad safety sanitizer
             res = SpinnerSet.sanitize_params(res, board_dimensions)
             return res
@@ -85,6 +93,13 @@ class SpinnerSet:
                 'bonus_word_length': 8,
                 'generated_at': time.time()
             }
+            # Roll for Added Words fallback
+            is_added_words_enabled = word_validator.get_use_added_words()
+            if is_added_words_enabled:
+                fallback['use_added_words'] = (random.random() < 0.5)
+            else:
+                fallback['use_added_words'] = False
+                
             return SpinnerSet.sanitize_params(fallback, board_dimensions)
 
     @staticmethod
