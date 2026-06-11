@@ -4,11 +4,11 @@
 
 | Environment | Commit / Tag | Status |
 |-------------|--------------|--------|
-| **localhost** (`/Users/jeffbabiak/`) | `74096b026dfd150244f7724269cd2fef119be955` | ✅ Clean & Synchronized |
-| **GitHub** (`origin/main`) | `74096b026dfd150244f7724269cd2fef119be955` / `snapshot-current` / `START_OVER_POINT_JUNE_10` | ✅ Pushed & Tagged |
-| **morpheme.games** (production) | `74096b026dfd150244f7724269cd2fef119be955` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
+| **localhost** (`/Users/jeffbabiak/`) | `f45d7989938cd4cb6b5c3ee67ec50875db0505b3` | ✅ Clean & Synchronized |
+| **GitHub** (`origin/main`) | `f45d7989938cd4cb6b5c3ee67ec50875db0505b3` / `snapshot-current` / `START_OVER_POINT_JUNE_10` | ✅ Pushed & Tagged |
+| **morpheme.games** (production) | `f45d7989938cd4cb6b5c3ee67ec50875db0505b3` / `snapshot-current` | ✅ Fully Deployed & PM2 Restarted |
 
-**All environments are 100% synchronized at the latest commit 74096b026dfd150244f7724269cd2fef119be955.**
+**All environments are 100% synchronized at the latest commit f45d7989938cd4cb6b5c3ee67ec50875db0505b3.**
 The local modifications have been committed, pushed to remote, and successfully deployed to the remote production environment via `deploy.py`.
 The active recovery points `START_OVER_POINT_JUNE_10` and `snapshot-current` tags have been successfully updated and pushed to GitHub.
 
@@ -20,7 +20,7 @@ The active recovery points `START_OVER_POINT_JUNE_10` and `snapshot-current` tag
 |--------------|---------|-------------|
 | `/css/style.css` | `v=28` | Confined the Tournaments Championship Bracket standings list to a compact max-height of 200px and added customized thin scrollbars. |
 | `/css/lobby.css` | `v=25` | Implemented mobile-first grid layout for the rating filter to guarantee buttons wrap below the input box, and flex side-by-side override for desktop viewports. |
-| `/css/forum.css` | `v=2` | Styled `.file-input-wrapper` and `input[type="file"]` to transparently overlay the dummy select box, resolving mobile photo chooser opening bugs. |
+| `/css/forum.css` | `v=2` | Styled `.file-dummy` as a block label and added hover transitions/colors to the file upload zone. |
 | `/js/play.js` | `v=146` | Implemented lowest-RTT clock offset synchronization, local countdown timer clamping to prevent display anomalies, and rapid 300ms transition polling at 0:00 intermission to render the new board instantly. Added global touch and wheel scroll prevention when the "You're guessing!" popup is active, and bypass logic for 24h rooms. |
 | `templates/index.html` | *Dynamic* | Bumps cache-busters for style.css (v=28), lobby.css (v=25), play.js (v=146), and forum.css (v=2). |
 
@@ -90,10 +90,11 @@ The active recovery points `START_OVER_POINT_JUNE_10` and `snapshot-current` tag
   * Updated `create_room()` in `RoomManager` to skip the singleton lookup logic for `fcfs` and `split` formats, ensuring they are always spawned as fresh instances.
 
 ### 10. Forum File Upload Mobile Tap Fix
-* **Goal achieved:** Ensure the "Choose file" area in the forums successfully opens the photo library / file selection on all mobile devices (iOS/Android).
+* **Goal achieved:** Ensure the "Choose file" / "Attach image" area in the forums successfully opens the photo library / file selection on all mobile devices (iOS/Android).
 * **Implementation (`static/css/forum.css` & `templates/index.html`)**:
-  * Configured `.file-input-wrapper` with `position: relative; cursor: pointer;`.
-  * Positioned the `<input type="file">` absolutely at `top: 0; left: 0; width: 100%; height: 100%;` and set `opacity: 0; z-index: 2; cursor: pointer;`.
-  * This transparently stretches the real click area to cover the entire custom `.file-dummy` upload box so that taps anywhere on the dummy elements trigger the native browser photo selector.
-  * Added hover transitions and color changes on `.file-input-wrapper:hover .file-dummy` for enhanced visual feedback.
+  * Configured `<input type="file">` to be completely hidden (`display: none;`) inside the upload wrappers.
+  * Replaced the custom `.file-dummy` container `div` elements with native HTML `<label>` elements linked to the input IDs via the `for` attribute.
+  * Configured `.file-dummy` with `display: block; cursor: pointer;` and added hover transitions.
+  * By relying on the browser's native `<label>` event triggering behavior, clicks/taps anywhere on the visual upload box automatically forward the event to the hidden native file input.
+  * This completely sidesteps WebKit's click-boundary security policies on mobile Safari/Chrome, guaranteeing that tapping "Attach an image (optional)" immediately opens the photo library.
   * Bumped `forum.css` version to `v=2` in `templates/index.html` to force immediately refreshed mobile styles.

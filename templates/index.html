@@ -1147,10 +1147,10 @@
                                     
                                     <div id="forum-comment-image-upload" class="forum-upload-group" style="padding: 10px; margin-bottom: 10px; border-width: 1px; border-style: solid;">
                                         <div class="file-input-wrapper" style="font-size: 0.8rem;">
-                                            <input type="file" id="forum-comment-image" accept="image/*">
-                                            <div class="file-dummy" style="padding: 10px;">
+                                            <input type="file" id="forum-comment-image" accept="image/*" style="position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; z-index: -1;">
+                                            <label class="file-dummy" for="forum-comment-image" style="padding: 10px; cursor: pointer;">
                                                 <span class="file-text">📎 Attach an image (optional)</span>
-                                            </div>
+                                            </label>
                                         </div>
                                         <div id="forum-comment-image-preview" class="image-preview hidden" style="max-height: 150px; margin-top: 5px;"></div>
                                     </div>
@@ -1187,11 +1187,11 @@
                                 <div id="forum-image-upload-section" class="forum-upload-group hidden">
                                     <label>Attach Image</label>
                                     <div class="file-input-wrapper">
-                                        <input type="file" id="forum-post-image" accept="image/*">
-                                        <div class="file-dummy">
+                                        <input type="file" id="forum-post-image" accept="image/*" style="position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; z-index: -1;">
+                                        <label class="file-dummy" for="forum-post-image" style="cursor: pointer;">
                                             <span class="file-text">Click to choose a file or
                                                 drag and drop</span>
-                                        </div>
+                                        </label>
                                     </div>
                                     <div id="forum-image-preview" class="image-preview hidden">
                                     </div>
