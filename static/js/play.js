@@ -5884,6 +5884,7 @@ function recordGuessResult(isValid, isOnBoard, isSpecialSkip = false) {
 let activeGuessingScrollPrevent = null;
 
 function showGuessingPopup() {
+    if (window.lastGameState && window.lastGameState.time_limit >= 7200) return;
     if (document.getElementById('guessing-popup')) return;
 
     const originalOverflow = document.body.style.overflow;
