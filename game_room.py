@@ -612,7 +612,8 @@ class GameRoom:
     def intermission_end_time(self):
         """Get timestamp when intermission ends (for client sync)"""
         if self.state == 'intermission':
-            return self.intermission_start_time + 60  # 60 second intermission
+            limit = 5 if self.time_limit >= 7200 else 60
+            return self.intermission_start_time + limit
         return 0
     
     def save_active_players(self):
