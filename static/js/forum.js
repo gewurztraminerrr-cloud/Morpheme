@@ -60,27 +60,13 @@ const Forum = {
         }
 
         // Image wrappers and inputs
-        const postImageWrapper = document.getElementById('forum-post-image-wrapper');
         const postImageInput = document.getElementById('forum-post-image');
-        if (postImageWrapper && postImageInput) {
-            postImageWrapper.addEventListener('click', () => {
-                postImageInput.click();
-            });
-            postImageInput.addEventListener('click', (e) => {
-                e.stopPropagation();
-            });
+        if (postImageInput) {
             postImageInput.addEventListener('change', (e) => this.handleImagePreview(e, 'forum-image-preview'));
         }
 
-        const commentImageWrapper = document.getElementById('forum-comment-image-wrapper');
         const commentImageInput = document.getElementById('forum-comment-image');
-        if (commentImageWrapper && commentImageInput) {
-            commentImageWrapper.addEventListener('click', () => {
-                commentImageInput.click();
-            });
-            commentImageInput.addEventListener('click', (e) => {
-                e.stopPropagation();
-            });
+        if (commentImageInput) {
             commentImageInput.addEventListener('change', (e) => this.handleImagePreview(e, 'forum-comment-image-preview'));
         }
 
