@@ -2847,10 +2847,62 @@ async function fetchListsData(typeOverride) {
     }
     
     const selectedType = typeSelect ? typeSelect.value : 'nwl';
+    const selectedLength = lengthSelect ? lengthSelect.value : 'all';
+    const selectedStart = startSelect ? startSelect.value : 'all';
 
     const titleEl = document.getElementById('list-display-title');
     const countEl = document.getElementById('main-list-count');
     const scrollArea = document.getElementById('main-list-results');
+
+    // Prevent overload on Likelihood + Length: All
+    if (selectedType === 'likelihood' && selectedLength === 'all') {
+        if (titleEl) {
+            titleEl.innerText = 'Likelihood (Scrabble)';
+        }
+        if (scrollArea) {
+            scrollArea.innerHTML = `
+                <div style="padding:30px; text-align:center; color: #ffb703; font-weight: 500;">
+                    <div style="font-size: 1.5rem; margin-bottom: 10px;">⚠️ Heavy Computation Warning</div>
+                    <div>Likelihood rankings cannot be computed for "Length: All" to prevent server overload.</div>
+                    <div style="margin-top: 15px; font-size: 0.95rem; opacity: 0.9; line-height: 1.6;">
+                        Please select configurations that don't overload the server with too many computations.<br>
+                        <strong>Select a specific word length</strong> (e.g., 3 to 15 letters) under the filters to view Scrabble likelihood.
+                    </div>
+                </div>
+            `;
+        }
+        if (countEl) countEl.innerText = '';
+        return;
+    }
+
+    // Prevent overload on loading entire dictionaries (NWL, CSW, CSW Only, Uniques)
+    const massiveTypes = ['nwl', 'csw', 'csw_only', 'uniques'];
+    if (massiveTypes.includes(selectedType) && selectedLength === 'all' && selectedStart === 'all') {
+        const typeMap = {
+            'nwl': 'NWL (North American)',
+            'csw': 'CSW (International)',
+            'csw_only': 'CSW Only',
+            'uniques': 'NWL Uniques'
+        };
+        if (titleEl) {
+            titleEl.innerText = typeMap[selectedType] || 'Word List';
+        }
+        if (scrollArea) {
+            scrollArea.innerHTML = `
+                <div style="padding:30px; text-align:center; color: #00d2ff; font-weight: 500;">
+                    <div style="font-size: 1.5rem; margin-bottom: 10px;">📋 Filter Configuration Required</div>
+                    <div>Loading this entire word list without filters is disabled to prevent browser freeze and server overload.</div>
+                    <div style="margin-top: 15px; font-size: 0.95rem; opacity: 0.9; line-height: 1.6;">
+                        Please select configurations that don't overload the server with too many computations.<br>
+                        <strong>Choose a specific word length</strong> (e.g., 3 Letters) or a <strong>starting letter</strong> (e.g., Starts with: A) to browse this list.
+                    </div>
+                </div>
+            `;
+        }
+        if (countEl) countEl.innerText = '';
+        return;
+    }
+
 
     // Update UI title mapping
     const typeMap = {
