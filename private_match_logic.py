@@ -87,7 +87,13 @@ class PrivateMatchManager:
                 all_words TEXT, -- JSON
                 dictionary TEXT,
                 min_length INTEGER,
-                updated_at REAL
+                updated_at REAL,
+                bonus_word TEXT,
+                bonus_cell_json TEXT,
+                board_format TEXT,
+                uniqueness REAL,
+                word_count_range TEXT,
+                active_players_json TEXT
             );
         ''')
         conn.commit()

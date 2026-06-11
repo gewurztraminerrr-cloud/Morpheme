@@ -3506,6 +3506,8 @@ class BoardGenerator:
             for fi in range(depth_val):
                 for ri in range(rows):
                     for ci in range(cols):
+                        # Yield GIL to keep Flask responsive
+                        time.sleep(0.001)
                         if time.time() - solver_start_time > solver_timeout:
                             break
                         if not store_paths:
@@ -3562,6 +3564,8 @@ class BoardGenerator:
 
         for r in range(rows):
             for c in range(cols):
+                # Yield GIL to keep Flask responsive
+                time.sleep(0.001)
                 cell_val = str(board[r][c])
                 letters = cell_val.split("/") if "/" in cell_val else [cell_val]
                 for char in letters:

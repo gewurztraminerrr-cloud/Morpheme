@@ -651,11 +651,6 @@ class GameRoom:
             db_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
             conn = sqlite3.connect(db_file)
             try:
-                # Ensure migration column exists
-                try: conn.execute('ALTER TABLE active_boards ADD COLUMN active_players_json TEXT')
-                except sqlite3.OperationalError: pass
-                conn.commit()
-                
                 conn.execute('''
                     UPDATE active_boards SET active_players_json = ? WHERE room_id = ?
                 ''', (players_json, self.room_id))
@@ -1313,7 +1308,7 @@ class GameRoom:
                         should_end = True
                 else:
                     elapsed = now - self.round_start_time
-                    if elapsed >= self.time_limit:
+                    if elapsed >= self.time_limit - 0.2:
                         # Ensure we don't end round 0.5s after start due to uninitialized time
                         if self.round_start_time > 0:
                             should_end = True
@@ -2163,21 +2158,6 @@ class RoomManager:
                     
                     conn = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db'))
                     try:
-                        # Ensure migrations columns exist
-                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN bonus_word TEXT')
-                        except sqlite3.OperationalError: pass
-                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN bonus_cell_json TEXT')
-                        except sqlite3.OperationalError: pass
-                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN board_format TEXT')
-                        except sqlite3.OperationalError: pass
-                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN uniqueness REAL')
-                        except sqlite3.OperationalError: pass
-                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN word_count_range TEXT')
-                        except sqlite3.OperationalError: pass
-                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN active_players_json TEXT')
-                        except sqlite3.OperationalError: pass
-                        conn.commit()
-                        
                         cursor = conn.execute('''
                             SELECT board_data, all_words, dictionary, min_length, updated_at,
                                    bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range,
@@ -3818,15 +3798,30 @@ class RoomManager:
         if getattr(room, 'board_search_loading', False) or getattr(room, 'board_search_started', False):
             return
         
-        print(f"[RoomManager] PRE-GENERATING next board for room {room_id} (Lead time start)")
+        print(f"[RoomManager] PRE-GENERATING next board for room {room_id} (Scheduled after delay)")
         
         # Atomic Guard: If we are already searching or have a board ready, DO NOT RE-ROLL.
         if getattr(room, 'board_search_started', False) or getattr(room, 'next_round_board', None):
              print(f"[RoomManager] Lead-time: Search already in progress or board ready for {room_id}")
              return
              
-        self.generate_spinner_params(room_id, reveal=False)
-        self.start_board_search(room_id)
+        def delayed_pre_generate():
+            # Wait 4.0 seconds to allow the transition-phase network requests to finish first
+            time.sleep(4.0)
+            
+            # Recheck conditions in case the room state changed during the sleep
+            room_check = self.get_room(room_id)
+            if not room_check or room_check.state != 'active':
+                return
+                
+            if getattr(room_check, 'board_search_loading', False) or getattr(room_check, 'board_search_started', False) or getattr(room_check, 'next_round_board', None):
+                return
+                
+            print(f"[RoomManager] Executing delayed pre-generation for {room_id}")
+            self.generate_spinner_params(room_id, reveal=False)
+            self.start_board_search(room_id)
+
+        threading.Thread(target=delayed_pre_generate, daemon=True).start()
 
     def start_next_round(self, room_id):
         """Start next round with pre-generated board (called at 0s remaining)"""
@@ -4234,20 +4229,6 @@ class RoomManager:
                         import time
                         import os
                         conn = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db'))
-                        # Ensure migration columns exist
-                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN bonus_word TEXT')
-                        except sqlite3.OperationalError: pass
-                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN bonus_cell_json TEXT')
-                        except sqlite3.OperationalError: pass
-                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN board_format TEXT')
-                        except sqlite3.OperationalError: pass
-                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN uniqueness REAL')
-                        except sqlite3.OperationalError: pass
-                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN word_count_range TEXT')
-                        except sqlite3.OperationalError: pass
-                        try: conn.execute('ALTER TABLE active_boards ADD COLUMN active_players_json TEXT')
-                        except sqlite3.OperationalError: pass
-                        conn.commit()
                         
                         # Serialize active players
                         players_data = []

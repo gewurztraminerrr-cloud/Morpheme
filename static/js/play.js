@@ -507,13 +507,15 @@ function refreshPollInterval() {
     let delay = document.hidden ? 15000 : 1000;
     
     // User Request: Automatic/instant transition. 
-    // Speed up polling significantly when intermission is about to end (last 2s)
-    if (window.lastGameState && window.lastGameState.state === 'intermission' && !document.hidden) {
-        const tr = window.lastGameState.time_remaining;
+    // Speed up polling significantly when transitioning or when intermission is about to end
+    if (!document.hidden) {
         if (window._rapidTransitionPolling) {
-             delay = 300; // High-frequency polling at 0:00 intermission transition
-        } else if (tr < 2.5) {
-             delay = 500; // Poll twice as fast at the very end
+             delay = 300; // High-frequency polling at 0:00 transition
+        } else if (window.lastGameState && window.lastGameState.state === 'intermission') {
+             const tr = window.lastGameState.time_remaining;
+             if (tr < 2.5) {
+                  delay = 500; // Poll twice as fast at the very end
+             }
         }
     }
 
@@ -887,14 +889,12 @@ async function updateGameState(incomingState = null) {
         
         window.lastGameState = state;  // Store for optimistic updates
         
-        // Ensure polling interval is fresh (switches to high-frequency if near intermission end)
-        if (state.state === 'intermission') {
+        // Clear rapid transition polling if state changed
+        if (previousState && previousState.state !== state.state) {
+            window._rapidTransitionPolling = false;
             refreshPollInterval();
-        } else if (state.state === 'active') {
-            if (window._rapidTransitionPolling) {
-                window._rapidTransitionPolling = false;
-                refreshPollInterval();
-            }
+        } else if (state.state === 'intermission') {
+            refreshPollInterval();
         }
 
         // Detect transition to intermission (round end)
@@ -3515,17 +3515,9 @@ function updateLocalTimer() {
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
         console.log(`[play.js] Local timer reached 0:00 in ${currentState} state - Scheduling rapid server poll.`);
         
-        if (currentState === 'intermission') {
-            // Rapid polling loop to check for active state immediately
-            updateGameState();
-            window._rapidTransitionPolling = true;
-            refreshPollInterval();
-        } else {
-            // Use a short 250ms buffer to allow the server to register the transition, then poll
-            setTimeout(() => {
-                updateGameState();
-            }, 250);
-        }
+        updateGameState();
+        window._rapidTransitionPolling = true;
+        refreshPollInterval();
     }
 
     // -- Next Round Bell Logic --
@@ -3533,7 +3525,7 @@ function updateLocalTimer() {
         const isEnabled = window.userSettings && (window.userSettings.next_round_bell_enabled === true || window.userSettings.next_round_bell_enabled === 'true');
         const bellType = (window.userSettings && window.userSettings.next_round_bell_type) || 'bell1';
 
-        if (isEnabled && seconds === 10 && !hasPlayedIntermissionBell) {
+        if (isEnabled && remaining <= 10.0 && remaining > 1.0 && !hasPlayedIntermissionBell) {
             console.log(`[play.js] Playing intermission bell: ${bellType}`);
             const audio = window.intermissionBellAudio;
             if (audio) {

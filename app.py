@@ -1268,6 +1268,22 @@ def init_db():
     except Exception:
         pass
 
+    # MIGRATION: Ensure active_boards columns exist
+    for col, col_type in [
+        ('bonus_word', 'TEXT'),
+        ('bonus_cell_json', 'TEXT'),
+        ('board_format', 'TEXT'),
+        ('uniqueness', 'REAL'),
+        ('word_count_range', 'TEXT'),
+        ('active_players_json', 'TEXT')
+    ]:
+        try:
+            conn.execute(f'ALTER TABLE active_boards ADD COLUMN {col} {col_type}')
+            conn.commit()
+            print(f"Migrated DB: Added {col} column to active_boards")
+        except sqlite3.OperationalError:
+            pass
+
     conn.close()
 
 init_db()
