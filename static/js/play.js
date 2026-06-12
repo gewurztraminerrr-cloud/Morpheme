@@ -7839,7 +7839,7 @@ function runBoardProbe() {
     lastProbeTime = now;
 
     console.log('[DBG] Client Probing...');
-    const board = generateProbeBoard(s.spinner_params);
+    const board = generateProbeBoard(params);
     if (!board) return;
 
     fetch(`/api/room/${s.room_id}/propose-board`, {

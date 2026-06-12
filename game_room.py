@@ -4859,7 +4859,7 @@ class RoomManager:
                 return {"error": f"Too many total rare letters: {total_rares} (Max 3)", "success": False}
                 
             # Check standard abundance limits on non-Mania formats
-            board_format = target.get('format', 'Normal')
+            board_format = target.get('board_format', 'Normal')
             safe_format = str(board_format or "Normal").strip().upper()
             is_mania = "MANIA" in safe_format
             mania_letter = None
@@ -4936,6 +4936,12 @@ class RoomManager:
                     room.next_round_word_scores = scored_dict
                     room.next_round_uniqueness = u_ratio
                     room.next_round_difficulty = achieved_diff
+                    room.next_round_format = board_format
+                    room.next_round_spinner_params = dict(target)
+                    room.next_round_spinner_params['board_format'] = board_format
+                    room.next_round_bonus = bonus_word
+                    if bonus_word and bonus_word.upper() in all_words_dict:
+                        room.next_round_bonus_cell = all_words_dict[bonus_word.upper()][0]
                     room.solving_complete = True # STOPS SERVER SEARCH
                     
                     # Sync UI
