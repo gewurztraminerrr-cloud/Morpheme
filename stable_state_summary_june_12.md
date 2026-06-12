@@ -10,10 +10,10 @@ This summary documents the stable state of the Morpheme application as of June 1
 *   **Feature**: Integrated a new "Find Count" tool inside the Tools sidebar navigation, positioned immediately before the **Personal Timer**.
 *   **Functionality**:
     *   Allows users to search for any word to retrieve its total find count across all dictionaries since Morpheme began.
-    *   Renders a table of the 10 most recent users who found the word, showing the finder's username and the formatted local/UTC date it was found.
+    *   Renders a table of the 10 most recent users who found the word, showing the finder's country flag (rendered as an image) and username, and the formatted local/UTC date it was found.
     *   Binds click events to the finder rows to display their mini-profile overlay (`window.showMiniProfile(username)`).
     *   Fully optimized for responsive viewports on desktop, laptop, and mobile screens.
-*   **Asset Cache Busting**: Bushed static script and style caches to force instant client reloading.
+*   **Asset Cache Busting**: Bushed static script and style caches to force client reloading.
 
 ### 2. Country Flag Image Rendering (Windows/Desktop Fix)
 *   **The Issue**: Windows desktop browsers do not support flag emojis natively, falling back to rendering plain two-letter abbreviations (e.g. "CA" instead of the Canadian flag).
@@ -24,9 +24,17 @@ This summary documents the stable state of the Morpheme application as of June 1
         *   **Forum**: In post list card metadata, thread details author info, and comment header author names.
         *   **Leaderboards**: Next to usernames in the ranking rows.
         *   **Gameplay (Player List)**: Under player names in the active list.
-        *   **Tools/Profiles**: In the mini-profile popup, the main user profile view, the optimistic profile flag update UI, and the mini friend cards.
+        *   **Tools/Profiles**: In the mini-profile popup, the main user profile view, the optimistic profile flag update UI, the mini friend cards, and the Find Count search results table.
         *   **Dropdown Selector**: In the profile country selection list dropdown items.
-    *   **Cache Busting**: Incremented the script versions (`forum.js?v=38`, `play.js?v=153`, `leaderboard.js?v=3`, `tools.js?v=43`) to ensure instant loading.
+    *   **Cache Busting**: Incremented the style and script versions (`style.css?v=29`, `forum.js?v=39`, `app.js?v=42`, `tools.js?v=44`) to ensure instant loading.
+
+### 3. Registration Flag Selection Requirement
+*   **Feature**: Required flag selection during user registration to ensure every new registered user has a location representing where they live.
+*   **Implementation**:
+    *   Added a styled country flag selection select dropdown in the registration popup form (`#signup-form` in `index.html`), matched with input styling in `style.css`.
+    *   Populated the dropdown options dynamically from the globally exposed `ALL_FLAGS` country catalog.
+    *   Validated country selection in `handleSignUp()` and submitted the flag parameter in the register payload.
+    *   Updated the backend `/api/register` endpoint in `app.py` to validate flag selection and write the user flag directly to the database.
 
 ---
 
@@ -38,6 +46,6 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `f6d9bd046141dca1f076a372a543f7dedd0a66e0`  
+**Latest Stable Commit ID**: `[TO_BE_REPLACED]`  
 **Localhost & GitHub Sameness Status**: Synchronized  
 **Production Server Status**: Green / PM2 Online / Live  
