@@ -444,11 +444,25 @@ function setupProfileTool() {
 
     // Avatar Upload Logic
     const avatarInput = document.getElementById('profile-avatar-input');
+    const avatarTrigger = document.getElementById('profile-avatar-trigger');
 
     if (avatarInput) {
         avatarInput.addEventListener('change', async (e) => {
             if (e.target.files && e.target.files[0]) {
                 await uploadAvatar(e.target.files[0]);
+            }
+        });
+    }
+
+    if (avatarTrigger && avatarInput) {
+        avatarTrigger.addEventListener('click', () => {
+            const displayedName = document.getElementById('profile-username').innerText;
+            const globalUser = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
+            const currentName = (typeof globalUser === 'object') ? globalUser.username : globalUser;
+
+            const isOwner = currentName && currentName.toLowerCase() === displayedName.toLowerCase();
+            if (isOwner && !avatarInput.disabled) {
+                avatarInput.click();
             }
         });
     }
@@ -858,17 +872,15 @@ async function renderProfile(user) {
     if (avatarInput) {
         if (isOwner) {
             avatarInput.disabled = false;
-            avatarInput.style.display = 'block';
-            avatarInput.style.pointerEvents = 'auto';
             if (avatarTrigger) {
                 avatarTrigger.style.setProperty('cursor', 'pointer', 'important');
+                avatarTrigger.title = "Click to upload photo";
             }
         } else {
             avatarInput.disabled = true;
-            avatarInput.style.display = 'none';
-            avatarInput.style.pointerEvents = 'none';
             if (avatarTrigger) {
                 avatarTrigger.style.setProperty('cursor', 'default', 'important');
+                avatarTrigger.title = "";
             }
         }
     }

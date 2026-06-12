@@ -521,6 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dictTriggerBtn = document.getElementById('dict-upload-trigger-btn');
     const dictFileInput = document.getElementById('dict-upload-input');
     const dictSubmitBtn = document.getElementById('dict-submit-db-btn');
+    const dictUploadWrapper = document.getElementById('dict-upload-wrapper');
 
     if (dictTriggerBtn && dictFileInput) {
         dictFileInput.addEventListener('change', (e) => {
@@ -532,6 +533,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     statusEl.innerText = `Selected: ${name}`;
                     statusEl.style.color = "#fff";
                 }
+            }
+        });
+    }
+
+    if (dictUploadWrapper && dictFileInput) {
+        dictUploadWrapper.addEventListener('click', () => {
+            dictFileInput.click();
+        });
+        dictUploadWrapper.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (dictTriggerBtn) {
+                dictTriggerBtn.style.background = 'rgba(var(--text-primary-rgb), 0.15)';
+                dictTriggerBtn.style.borderColor = 'var(--accent-color)';
+            }
+        });
+        dictUploadWrapper.addEventListener('dragleave', () => {
+            if (dictTriggerBtn) {
+                dictTriggerBtn.style.background = 'var(--input-bg)';
+                dictTriggerBtn.style.borderColor = 'var(--input-border)';
+            }
+        });
+        dictUploadWrapper.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (dictTriggerBtn) {
+                dictTriggerBtn.style.background = 'var(--input-bg)';
+                dictTriggerBtn.style.borderColor = 'var(--input-border)';
+            }
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                dictFileInput.files = e.dataTransfer.files;
+                dictFileInput.dispatchEvent(new Event('change'));
             }
         });
     }

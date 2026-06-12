@@ -342,13 +342,61 @@ const Forum = {
 
         // Image wrappers and inputs
         const postImageInput = document.getElementById('forum-post-image');
+        const postImageWrapper = document.getElementById('forum-post-image-wrapper');
         if (postImageInput) {
             postImageInput.addEventListener('change', (e) => this.handleImagePreview(e, 'forum-image-preview'));
         }
+        if (postImageWrapper && postImageInput) {
+            postImageWrapper.addEventListener('click', () => {
+                postImageInput.click();
+            });
+            postImageWrapper.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                postImageWrapper.style.background = 'rgba(0, 0, 0, 0.4)';
+                postImageWrapper.style.borderColor = 'var(--accent-color)';
+            });
+            postImageWrapper.addEventListener('dragleave', () => {
+                postImageWrapper.style.background = 'rgba(0, 0, 0, 0.2)';
+                postImageWrapper.style.borderColor = 'var(--input-border)';
+            });
+            postImageWrapper.addEventListener('drop', (e) => {
+                e.preventDefault();
+                postImageWrapper.style.background = 'rgba(0, 0, 0, 0.2)';
+                postImageWrapper.style.borderColor = 'var(--input-border)';
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    postImageInput.files = e.dataTransfer.files;
+                    postImageInput.dispatchEvent(new Event('change'));
+                }
+            });
+        }
 
         const commentImageInput = document.getElementById('forum-comment-image');
+        const commentImageWrapper = document.getElementById('forum-comment-image-wrapper');
         if (commentImageInput) {
             commentImageInput.addEventListener('change', (e) => this.handleImagePreview(e, 'forum-comment-image-preview'));
+        }
+        if (commentImageWrapper && commentImageInput) {
+            commentImageWrapper.addEventListener('click', () => {
+                commentImageInput.click();
+            });
+            commentImageWrapper.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                commentImageWrapper.style.background = 'rgba(0, 0, 0, 0.4)';
+                commentImageWrapper.style.borderColor = 'var(--accent-color)';
+            });
+            commentImageWrapper.addEventListener('dragleave', () => {
+                commentImageWrapper.style.background = 'rgba(0, 0, 0, 0.2)';
+                commentImageWrapper.style.borderColor = 'var(--input-border)';
+            });
+            commentImageWrapper.addEventListener('drop', (e) => {
+                e.preventDefault();
+                commentImageWrapper.style.background = 'rgba(0, 0, 0, 0.2)';
+                commentImageWrapper.style.borderColor = 'var(--input-border)';
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    commentImageInput.files = e.dataTransfer.files;
+                    commentImageInput.dispatchEvent(new Event('change'));
+                }
+            });
         }
 
         // User search
