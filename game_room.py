@@ -1277,9 +1277,13 @@ class GameRoom:
             else:
                 return None
             
-        # 1. Start Milestone: Threshold is TR=0 during intermission
-        if self.state == 'intermission' and self.time_remaining <= 0:
-            return 'start'
+        # 1. Start Milestone: Trigger 0.5s early to ensure next round starts slightly early
+        # and the new board is ready when the client timer hits 0:00.
+        if self.state == 'intermission':
+            elapsed = now - self.intermission_start_time
+            intermission_limit = 5 if self.time_limit >= 7200 else 60
+            if elapsed >= intermission_limit - 0.5:
+                return 'start'
             
         # 2. Parameter Reveal (15s into intermission)
         if self.state == 'intermission':

@@ -3555,6 +3555,34 @@ function updateLocalTimer() {
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
         console.log(`[play.js] Local timer reached 0:00 in ${currentState} state - Scheduling rapid server poll.`);
         
+        // Instant client-side transition feedback!
+        setTimerWaitingState(true);
+        if (currentState === 'active') {
+            const wordInput = document.getElementById('word-input');
+            if (wordInput) {
+                wordInput.value = '';
+                wordInput.disabled = true;
+                wordInput.blur();
+            }
+            // Reset mouse selection state if it was active
+            if (typeof mouseState !== 'undefined') {
+                mouseState.isDown = false;
+                mouseState.selectedPath = [];
+                if (mouseState.visitedCells) mouseState.visitedCells.clear();
+            }
+        } else if (currentState === 'intermission') {
+            // If intermission ended, show loading inside board
+            const boardEl = document.getElementById('game-board');
+            if (boardEl) {
+                boardEl.innerHTML = `
+                    <div class="board-loader-container">
+                        <div class="board-loader-spinner"></div>
+                        <div class="board-loader-text">GENERATING NEXT BOARD...</div>
+                    </div>
+                `;
+            }
+        }
+
         updateGameState();
         window._rapidTransitionPolling = true;
         refreshPollInterval();
