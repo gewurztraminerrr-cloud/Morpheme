@@ -538,9 +538,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (dictUploadWrapper && dictFileInput) {
-        dictUploadWrapper.addEventListener('click', () => {
-            dictFileInput.click();
-        });
         dictUploadWrapper.addEventListener('dragover', (e) => {
             e.preventDefault();
             if (dictTriggerBtn) {

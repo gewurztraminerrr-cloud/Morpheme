@@ -454,18 +454,7 @@ function setupProfileTool() {
         });
     }
 
-    if (avatarTrigger && avatarInput) {
-        avatarTrigger.addEventListener('click', () => {
-            const displayedName = document.getElementById('profile-username').innerText;
-            const globalUser = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
-            const currentName = (typeof globalUser === 'object') ? globalUser.username : globalUser;
 
-            const isOwner = currentName && currentName.toLowerCase() === displayedName.toLowerCase();
-            if (isOwner && !avatarInput.disabled) {
-                avatarInput.click();
-            }
-        });
-    }
 
     // Flag Selection Logic (Dropdown)
     const flagTrigger = document.getElementById('profile-flag');
@@ -872,12 +861,16 @@ async function renderProfile(user) {
     if (avatarInput) {
         if (isOwner) {
             avatarInput.disabled = false;
+            avatarInput.style.pointerEvents = 'auto';
+            avatarInput.style.cursor = 'pointer';
             if (avatarTrigger) {
                 avatarTrigger.style.setProperty('cursor', 'pointer', 'important');
                 avatarTrigger.title = "Click to upload photo";
             }
         } else {
             avatarInput.disabled = true;
+            avatarInput.style.pointerEvents = 'none';
+            avatarInput.style.cursor = 'default';
             if (avatarTrigger) {
                 avatarTrigger.style.setProperty('cursor', 'default', 'important');
                 avatarTrigger.title = "";

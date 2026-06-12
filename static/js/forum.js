@@ -347,9 +347,6 @@ const Forum = {
             postImageInput.addEventListener('change', (e) => this.handleImagePreview(e, 'forum-image-preview'));
         }
         if (postImageWrapper && postImageInput) {
-            postImageWrapper.addEventListener('click', () => {
-                postImageInput.click();
-            });
             postImageWrapper.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 postImageWrapper.style.background = 'rgba(0, 0, 0, 0.4)';
@@ -376,9 +373,6 @@ const Forum = {
             commentImageInput.addEventListener('change', (e) => this.handleImagePreview(e, 'forum-comment-image-preview'));
         }
         if (commentImageWrapper && commentImageInput) {
-            commentImageWrapper.addEventListener('click', () => {
-                commentImageInput.click();
-            });
             commentImageWrapper.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 commentImageWrapper.style.background = 'rgba(0, 0, 0, 0.4)';
