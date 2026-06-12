@@ -1096,6 +1096,7 @@ function switchAuthTab(tab) {
     } else {
         document.querySelector('[data-tab="signup"]').classList.add('active');
         document.getElementById('signup-form').classList.add('active');
+        populateSignupFlagDropdown();
     }
 
     // Clear errors & states
@@ -1188,6 +1189,7 @@ async function handleSignUp() {
     const confirmPassword = document.getElementById('signup-password-confirm').value;
     const code = document.getElementById('signup-verification-code').value.trim();
     const captcha = document.getElementById('signup-captcha').value.trim();
+    const flag = document.getElementById('signup-flag').value;
     const errorEl = document.getElementById('signup-error');
 
     // Validation
@@ -1198,6 +1200,11 @@ async function handleSignUp() {
 
     if (password.length < 6) {
         errorEl.textContent = 'Password must be at least 6 characters';
+        return;
+    }
+
+    if (!flag) {
+        errorEl.textContent = 'Please select a flag representing where you live';
         return;
     }
 
@@ -1212,7 +1219,7 @@ async function handleSignUp() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, password, email, captcha, code })
+            body: JSON.stringify({ username, password, email, captcha, code, flag })
         });
 
         const responseText = await response.text();
@@ -1467,6 +1474,25 @@ function setupMobileLogic() {
     });
 }
 
+function populateSignupFlagDropdown() {
+    const select = document.getElementById('signup-flag');
+    if (!select) return;
+    if (select.children.length > 1) return; // already populated
+
+    const list = window.ALL_FLAGS;
+    if (!list) {
+        console.warn("ALL_FLAGS is not defined yet.");
+        return;
+    }
+
+    list.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.flag;
+        option.textContent = `${item.name} ${item.flag}`;
+        select.appendChild(option);
+    });
+}
+
 // Setup authentication
 function setupAuth() {
     // CAPTCHA helper logic
@@ -1513,6 +1539,12 @@ function setupAuth() {
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', handleLogout);
+    }
+
+    // Populate registration flag dropdown dynamically if active
+    const isSignupActive = document.getElementById('signup-form') && document.getElementById('signup-form').classList.contains('active');
+    if (isSignupActive) {
+        populateSignupFlagDropdown();
     }
 
     // Sign in form

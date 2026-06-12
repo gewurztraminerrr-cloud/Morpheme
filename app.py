@@ -1735,6 +1735,7 @@ def register():
     username = data.get('username')
     password = data.get('password')
     email = data.get('email')
+    flag = data.get('flag', '').strip()
     code = data.get('code', '').strip()
     captcha_val = data.get('captcha', '')
     
@@ -1754,6 +1755,9 @@ def register():
 
     if len(password) < 6:
         return jsonify({'error': 'Password must be 6+ characters'}), 400
+        
+    if not flag:
+        return jsonify({'error': 'Flag selection is required'}), 400
         
     # Verify the code from session
     saved_code = session.get('signup_code')
@@ -1780,8 +1784,8 @@ def register():
         password_hash = generate_password_hash(password, method='pbkdf2:sha256')
         
         # Insert user cleanly
-        conn.execute('INSERT INTO users (username, password_hash, email, is_verified) VALUES (?, ?, ?, 1)',
-                    (username, password_hash, email))
+        conn.execute('INSERT INTO users (username, password_hash, email, is_verified, country_flag) VALUES (?, ?, ?, 1, ?)',
+                    (username, password_hash, email, flag))
         conn.commit()
         
         cursor = conn.execute('SELECT id, rating FROM users WHERE username = ?', (username,))
@@ -4670,7 +4674,7 @@ def tools_find_count():
         
         # 1. Query round_history
         cursor = conn.execute("""
-            SELECT rh.timestamp, u.username, rh.words_json
+            SELECT rh.timestamp, u.username, u.country_flag, rh.words_json
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE rh.words_json LIKE ?
@@ -4690,6 +4694,7 @@ def tools_find_count():
                         
                         finds.append({
                             'username': row['username'],
+                            'country_flag': row['country_flag'],
                             'timestamp': iso_ts
                         })
             except Exception as ex:
@@ -4697,7 +4702,7 @@ def tools_find_count():
 
         # 2. Query tournament_scores
         cursor = conn.execute("""
-            SELECT ts.submitted_at, u.username, ts.submitted_words
+            SELECT ts.submitted_at, u.username, u.country_flag, ts.submitted_words
             FROM tournament_scores ts
             JOIN users u ON ts.user_id = u.id
             WHERE ts.submitted_words LIKE ?
@@ -4717,6 +4722,7 @@ def tools_find_count():
                         
                         finds.append({
                             'username': row['username'],
+                            'country_flag': row['country_flag'],
                             'timestamp': iso_ts
                         })
             except Exception as ex:
@@ -4724,7 +4730,7 @@ def tools_find_count():
 
         # 3. Query private_match_turns
         cursor = conn.execute("""
-            SELECT pmt.submitted_at, u.username, pmt.submitted_words
+            SELECT pmt.submitted_at, u.username, u.country_flag, pmt.submitted_words
             FROM private_match_turns pmt
             JOIN users u ON pmt.user_id = u.id
             WHERE pmt.submitted_words LIKE ?
@@ -4744,6 +4750,7 @@ def tools_find_count():
                         
                         finds.append({
                             'username': row['username'],
+                            'country_flag': row['country_flag'],
                             'timestamp': iso_ts
                         })
             except Exception as ex:

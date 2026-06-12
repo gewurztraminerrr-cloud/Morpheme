@@ -27,7 +27,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css?v=28">
+    <link rel="stylesheet" href="/css/style.css?v=29">
     <link rel="stylesheet" href="/css/lobby.css?v=26">
     <link rel="stylesheet" href="/css/play.css?v=89">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
@@ -349,6 +349,11 @@
                         placeholder="Username (1-16 characters, letters/numbers/underscores)" required>
                     
                     <input type="email" id="signup-email" placeholder="Email" required>
+                    
+                    <!-- Country Flag Dropdown -->
+                    <select id="signup-flag" required>
+                        <option value="" disabled selected>Select where you live...</option>
+                    </select>
                     
                     <!-- Send Email Button -->
                     <button type="button" id="signup-send-email-btn" style="background: linear-gradient(135deg, #ff007f, #b30059); border: none; font-weight: 700; cursor: pointer; border-radius: 8px; height: 42px; margin-bottom: 15px; transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem; display: block; width: 100%;">Send Email</button>
@@ -4538,13 +4543,13 @@
     </div>
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=17"></script>
-    <script src="/js/forum.js?v=38"></script>
-    <script src="/js/app.js?v=41"></script>
+    <script src="/js/forum.js?v=39"></script>
+    <script src="/js/app.js?v=42"></script>
     <script src="/js/lobby.js?v=7"></script>
     <script src="/js/play.js?v=153"></script>
     <script src="/js/tournaments.js?v=2"></script>
     <script src="/js/leaderboard.js?v=3"></script>
-    <script src="/js/tools.js?v=43"></script>
+    <script src="/js/tools.js?v=44"></script>
     <script src="/js/mouse_selection.js?v=3"></script>
     <script src="/js/mods.js?v=2"></script>
     <script src="/js/private_matches.js?v=3"></script>
