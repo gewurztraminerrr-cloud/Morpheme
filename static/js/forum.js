@@ -346,33 +346,9 @@ const Forum = {
             postImageInput.addEventListener('change', (e) => this.handleImagePreview(e, 'forum-image-preview'));
         }
 
-        const postImageWrapper = document.getElementById('forum-post-image-wrapper');
-        if (postImageWrapper && postImageInput) {
-            let isClicking = false;
-            postImageWrapper.addEventListener('click', (e) => {
-                if (isClicking) return;
-                if (e.target === postImageInput) return;
-                isClicking = true;
-                postImageInput.click();
-                isClicking = false;
-            });
-        }
-
         const commentImageInput = document.getElementById('forum-comment-image');
         if (commentImageInput) {
             commentImageInput.addEventListener('change', (e) => this.handleImagePreview(e, 'forum-comment-image-preview'));
-        }
-
-        const commentImageWrapper = document.getElementById('forum-comment-image-wrapper');
-        if (commentImageWrapper && commentImageInput) {
-            let isClicking = false;
-            commentImageWrapper.addEventListener('click', (e) => {
-                if (isClicking) return;
-                if (e.target === commentImageInput) return;
-                isClicking = true;
-                commentImageInput.click();
-                isClicking = false;
-            });
         }
 
         // User search

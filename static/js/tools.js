@@ -443,21 +443,9 @@ function setupProfileTool() {
     setTimeout(window.refreshProfileTool, 3000);
 
     // Avatar Upload Logic
-    const avatarTrigger = document.getElementById('profile-avatar-trigger');
     const avatarInput = document.getElementById('profile-avatar-input');
 
-    if (avatarTrigger && avatarInput) {
-        avatarTrigger.addEventListener('click', () => {
-            const displayedName = document.getElementById('profile-username').innerText;
-            const globalUser = window.currentUser || currentUser;
-            const currentName = (typeof globalUser === 'object') ? globalUser.username : globalUser;
-
-            // Only allow if it matches current user (case-insensitive)
-            if (currentName && currentName.toLowerCase() === displayedName.toLowerCase()) {
-                avatarInput.click();
-            }
-        });
-
+    if (avatarInput) {
         avatarInput.addEventListener('change', async (e) => {
             if (e.target.files && e.target.files[0]) {
                 await uploadAvatar(e.target.files[0]);
@@ -857,15 +845,23 @@ async function renderProfile(user) {
     const currentName = (typeof globalUser === 'object') ? globalUser.username : globalUser;
     const isOwner = currentName && currentName.toLowerCase() === user.username.toLowerCase();
 
-    // Dynamically toggle pointer-events on avatar input based on ownership
+    // Dynamically toggle pointer-events & disabled state on avatar input based on ownership
     const avatarInput = document.getElementById('profile-avatar-input');
     if (avatarInput) {
         if (isOwner) {
             avatarInput.style.pointerEvents = 'auto';
             avatarInput.style.cursor = 'pointer';
+            avatarInput.disabled = false;
+            if (avatarInput.parentElement) {
+                avatarInput.parentElement.style.cursor = 'pointer';
+            }
         } else {
             avatarInput.style.pointerEvents = 'none';
             avatarInput.style.cursor = 'default';
+            avatarInput.disabled = true;
+            if (avatarInput.parentElement) {
+                avatarInput.parentElement.style.cursor = 'default';
+            }
         }
     }
 

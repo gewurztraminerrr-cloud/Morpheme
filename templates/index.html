@@ -31,7 +31,7 @@
     <link rel="stylesheet" href="/css/lobby.css?v=26">
     <link rel="stylesheet" href="/css/play.css?v=89">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
-    <link rel="stylesheet" href="/css/forum.css?v=9">
+    <link rel="stylesheet" href="/css/forum.css?v=10">
     <link rel="stylesheet" href="/css/donate.css?v=1">
     <style>
         .board-cell.bonus-highlight {
@@ -1152,12 +1152,12 @@
                                         placeholder="Join the conversation..."></textarea>
                                     
                                     <div id="forum-comment-image-upload" class="forum-upload-group" style="padding: 10px; margin-bottom: 10px; border-width: 1px; border-style: solid;">
-                                        <div class="file-input-wrapper" id="forum-comment-image-wrapper" style="font-size: 0.8rem; position: relative; height: 40px; overflow: hidden; display: block;">
+                                        <label class="file-input-wrapper" id="forum-comment-image-wrapper" for="forum-comment-image" style="font-size: 0.8rem; position: relative; height: 40px; overflow: hidden; display: block; cursor: pointer;">
                                             <div class="file-dummy" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; display: flex; align-items: center; justify-content: center; margin: 0; box-sizing: border-box; padding: 10px; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); pointer-events: none;">
                                                 <span class="file-text">📎 Attach an image (optional)</span>
                                             </div>
                                             <input type="file" id="forum-comment-image" accept="image/*" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2;">
-                                        </div>
+                                        </label>
                                         <div id="forum-comment-image-preview" class="image-preview hidden" style="max-height: 150px; margin-top: 5px;"></div>
                                     </div>
 
@@ -1192,13 +1192,13 @@
                                 </div>
                                 <div id="forum-image-upload-section" class="forum-upload-group hidden">
                                     <label>Attach Image</label>
-                                    <div class="file-input-wrapper" id="forum-post-image-wrapper" style="position: relative; height: 60px; overflow: hidden; display: block;">
+                                    <label class="file-input-wrapper" id="forum-post-image-wrapper" for="forum-post-image" style="position: relative; height: 60px; overflow: hidden; display: block; cursor: pointer;">
                                         <div class="file-dummy" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; display: flex; align-items: center; justify-content: center; margin: 0; box-sizing: border-box; padding: 20px; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); pointer-events: none;">
                                             <span class="file-text">Click to choose a file or
                                                 drag and drop</span>
                                         </div>
                                         <input type="file" id="forum-post-image" accept="image/*" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2;">
-                                    </div>
+                                    </label>
                                     <div id="forum-image-preview" class="image-preview hidden">
                                     </div>
                                 </div>
@@ -1340,12 +1340,12 @@
                                 <div class="profile-layout">
                                     <!-- Left Column: Avatar -->
                                     <div class="profile-left-column">
-                                        <div class="profile-avatar-container" style="position: relative; width: 160px; height: 160px; overflow: hidden; border-radius: 30px;">
+                                        <label class="profile-avatar-container" id="profile-avatar-container-label" for="profile-avatar-input" style="position: relative; width: 160px; height: 160px; overflow: hidden; border-radius: 30px; display: block; cursor: pointer;">
                                             <div class="profile-avatar large" id="profile-avatar-trigger"
-                                                title="Click to upload photo" style="cursor: pointer;">?</div>
-                                            <input type="file" id="profile-avatar-input" accept="image/*"
+                                                title="Click to upload photo" style="cursor: pointer; pointer-events: none;">?</div>
+                                            <input type="file" id="profile-avatar-input" accept="image/*" disabled
                                                 style="position: absolute; top: 0; right: 0; min-width: 100%; min-height: 100%; opacity: 0; cursor: pointer; z-index: 10; pointer-events: auto; font-size: 100px;">
-                                        </div>
+                                        </label>
                                     </div>
 
                                     <!-- Right Column: Details -->
@@ -2214,11 +2214,13 @@
                             to permanently add words to the dictionary DB and tracking tables.
                         </p>
                         <div id="dict-upload-status" style="min-height: 20px; margin-bottom: 12px; font-weight: 700; font-size: 0.9rem;"></div>
-                        <div class="dict-upload-row" style="display: flex; gap: 12px; align-items: center; position: relative;">
-                            <input type="file" id="dict-upload-input" accept=".txt" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2;">
-                            <button id="dict-upload-trigger-btn" class="mod-full-btn" style="background: var(--input-bg); flex: 1; border: 1px solid var(--input-border); color: var(--text-primary); font-weight: 600;">Select .txt File</button>
-                            <button id="dict-submit-db-btn" class="mod-full-btn add" style="flex: 1; font-weight: 800;">Submit to Database</button>
-                        </div>
+                        <div class="dict-upload-row" style="display: flex; gap: 12px; align-items: center;">
+                                            <label class="file-input-wrapper" for="dict-upload-input" style="flex: 1; position: relative; display: block; margin: 0; cursor: pointer;">
+                                                <div class="mod-full-btn" id="dict-upload-trigger-btn" style="background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-primary); font-weight: 600; box-sizing: border-box; text-align: center; padding: 10px 15px;">Select .txt File</div>
+                                                <input type="file" id="dict-upload-input" accept=".txt" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2;">
+                                            </label>
+                                            <button id="dict-submit-db-btn" class="mod-full-btn add" style="flex: 1; font-weight: 800; margin: 0;">Submit to Database</button>
+                                        </div>
                 </div>
 
                 <!-- Moderator Management -->
@@ -4543,13 +4545,13 @@
     </div>
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=17"></script>
-    <script src="/js/forum.js?v=39"></script>
+    <script src="/js/forum.js?v=40"></script>
     <script src="/js/app.js?v=42"></script>
     <script src="/js/lobby.js?v=7"></script>
     <script src="/js/play.js?v=153"></script>
     <script src="/js/tournaments.js?v=2"></script>
     <script src="/js/leaderboard.js?v=3"></script>
-    <script src="/js/tools.js?v=44"></script>
+    <script src="/js/tools.js?v=45"></script>
     <script src="/js/mouse_selection.js?v=3"></script>
     <script src="/js/mods.js?v=2"></script>
     <script src="/js/private_matches.js?v=3"></script>
