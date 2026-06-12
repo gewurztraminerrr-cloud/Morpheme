@@ -701,6 +701,11 @@ async function performProfileSearch(username, activeTab = null, period = 'all') 
 window.performProfileSearch = performProfileSearch;
 
 async function renderProfile(user) {
+    // Check Ownership for Editing
+    const globalUser = window.currentUser || currentUser;
+    const currentName = (typeof globalUser === 'object') ? globalUser.username : globalUser;
+    const isOwner = currentName && currentName.toLowerCase() === user.username.toLowerCase();
+
     const usernameEl = document.getElementById('profile-username');
     if (usernameEl) usernameEl.innerText = user.username;
 
@@ -728,10 +733,15 @@ async function renderProfile(user) {
             avatar.style.backgroundRepeat = 'no-repeat';
             avatar.style.backgroundPosition = 'center';
             avatar.innerText = '';
-            avatar.style.cursor = 'pointer';
-            avatar.onclick = () => showImageLightbox(user.avatar_url, `${user.username}'s Profile Image`);
+            if (isOwner) {
+                avatar.style.cursor = 'pointer';
+                avatar.onclick = null;
+            } else {
+                avatar.style.cursor = 'pointer';
+                avatar.onclick = () => showImageLightbox(user.avatar_url, `${user.username}'s Profile Image`);
+            }
         } else {
-            avatar.style.cursor = 'default';
+            avatar.style.cursor = isOwner ? 'pointer' : 'default';
             avatar.onclick = null;
             avatar.style.backgroundImage = 'none';
             avatar.style.background = `linear-gradient(135deg, ${color}, #444)`;
@@ -840,10 +850,7 @@ async function renderProfile(user) {
     const followBtn = document.getElementById('profile-follow-btn');
     const roomInput = document.getElementById('profile-current-room');
 
-    // Check Ownership for Editing
-    const globalUser = window.currentUser || currentUser;
-    const currentName = (typeof globalUser === 'object') ? globalUser.username : globalUser;
-    const isOwner = currentName && currentName.toLowerCase() === user.username.toLowerCase();
+    // Check Ownership for Editing (already checked at the top of renderProfile)
 
     // Dynamically toggle pointer-events & disabled state on avatar input based on ownership
     const avatarInput = document.getElementById('profile-avatar-input');
