@@ -1760,8 +1760,12 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     let startTime = 0;
     if (round.round_start_time) {
         startTime = parseFloat(round.round_start_time);
+    } else if (round.timestamp) {
+        const parsedDate = window.parseUTCTimestamp ? window.parseUTCTimestamp(round.timestamp) : new Date(round.timestamp);
+        const tVal = parsedDate.getTime() / 1000.0;
+        startTime = isNaN(tVal) ? (Date.now() / 1000) : tVal;
     } else {
-        startTime = parseFloat(round.timestamp) / 1000 || (Date.now() / 1000);
+        startTime = Date.now() / 1000;
     }
 
     // Normalize and convert all timestamps to SECONDS relative to epoch
