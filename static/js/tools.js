@@ -274,7 +274,7 @@ window.showMiniProfile = async function (username) {
 
         // Flag and Meta
         const flagEl = document.getElementById('mini-profile-flag');
-        if (flagEl) flagEl.innerText = data.country_flag || '🏳️';
+        if (flagEl) flagEl.innerHTML = window.getFlagHtml ? window.getFlagHtml(data.country_flag) : (data.country_flag || '🏳️');
 
         // Country Name Lookup
         const flagEmoji = data.country_flag || '🏳️';
@@ -811,7 +811,7 @@ function renderFlagDropdown(filter = '') {
         div.className = 'dropdown-item';
 
         div.innerHTML = `
-            <span class="dropdown-item-flag">${item.flag}</span>
+            <span class="dropdown-item-flag">${window.getFlagHtml ? window.getFlagHtml(item.flag) : item.flag}</span>
             <span class="dropdown-item-text">${item.name}</span>
         `;
 
@@ -842,7 +842,7 @@ async function updateFlag(flag) {
     const dropdown = document.getElementById('flag-dropdown');
 
     // Optimistic UI
-    flagEl.innerText = flag;
+    flagEl.innerHTML = window.getFlagHtml ? window.getFlagHtml(flag) : flag;
 
     // Find country name
     const country = typeof ALL_FLAGS !== 'undefined' ? ALL_FLAGS.find(f => f.flag === flag) : null;
@@ -1006,7 +1006,7 @@ async function renderProfile(user) {
     const flagNameEl = document.getElementById('profile-flag-name');
     if (flagEl) {
         const flagEmoji = user.country_flag || '🏳️';
-        flagEl.innerText = flagEmoji;
+        flagEl.innerHTML = window.getFlagHtml ? window.getFlagHtml(flagEmoji) : flagEmoji;
 
         // Find country name
         const country = typeof ALL_FLAGS !== 'undefined' ? ALL_FLAGS.find(f => f.flag === flagEmoji) : null;
@@ -3893,7 +3893,7 @@ async function fetchAndRenderFriends() {
                         ${friend.username}
                         ${isOnline ? '<span class="status-indicator-mini online" style="display:inline-block; margin-left:5px; width:8px; height:8px;"></span>' : ''}
                     </div>
-                    <div class="friend-flag-mini">${friend.country_flag || '🏳️'}</div>
+                    <div class="friend-flag-mini">${window.getFlagHtml ? window.getFlagHtml(friend.country_flag) : (friend.country_flag || '🏳️')}</div>
                 </div>
             `;
         }).join('');

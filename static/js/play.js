@@ -2379,7 +2379,7 @@ function renderPlayers(players, currentUser = null, state = null) {
                 <span class="player-rating-val">${ratingDisplay}</span>
             </div>
             <div class="player-row-bottom">
-                <span class="player-flag">${p.country_flag || '🏳️'}</span>
+                <span class="player-flag">${window.getFlagHtml ? window.getFlagHtml(p.country_flag) : (p.country_flag || '🏳️')}</span>
                 <span class="player-input-icon">${inputIcon}</span>
                 ${trophyHtml}
                 <div style="flex:1;"></div>

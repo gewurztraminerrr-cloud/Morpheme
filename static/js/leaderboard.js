@@ -459,13 +459,13 @@ document.addEventListener('DOMContentLoaded', () => {
             else color = '#9b59b6'; // purple/basic
         }
 
-        const flag = row.country_flag ? row.country_flag : '';
+        const flagHtml = window.getFlagHtml ? window.getFlagHtml(row.country_flag) : (row.country_flag || '');
         // If avatar isn't supported yet in API response fully, fallback to flag/square
 
         return `
             <div class="lb-user-cell" onclick="window.showMiniProfile('${row.username}')">
                 <div class="rating-square" style="background-color: ${color};"></div>
-                <span class="user-flag">${flag}</span>
+                <span class="user-flag">${flagHtml}</span>
                 <span class="username">${row.username}</span>
             </div>
         `;
