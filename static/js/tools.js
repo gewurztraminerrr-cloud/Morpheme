@@ -852,17 +852,21 @@ async function renderProfile(user) {
 
     // Check Ownership for Editing (already checked at the top of renderProfile)
 
-    // Dynamically toggle disabled state & cursor on avatar trigger based on ownership
+    // Dynamically toggle disabled state, display, & cursor on avatar trigger based on ownership
     const avatarInput = document.getElementById('profile-avatar-input');
     const avatarTrigger = document.getElementById('profile-avatar-trigger');
     if (avatarInput) {
         if (isOwner) {
             avatarInput.disabled = false;
+            avatarInput.style.display = 'block';
+            avatarInput.style.pointerEvents = 'auto';
             if (avatarTrigger) {
                 avatarTrigger.style.setProperty('cursor', 'pointer', 'important');
             }
         } else {
             avatarInput.disabled = true;
+            avatarInput.style.display = 'none';
+            avatarInput.style.pointerEvents = 'none';
             if (avatarTrigger) {
                 avatarTrigger.style.setProperty('cursor', 'default', 'important');
             }

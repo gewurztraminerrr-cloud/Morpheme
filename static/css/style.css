@@ -1302,6 +1302,13 @@ body {
     width: 200px;
 }
 
+.profile-avatar-container {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    border-radius: 30px;
+}
+
 .profile-avatar.large {
     width: 160px;
     height: 160px;

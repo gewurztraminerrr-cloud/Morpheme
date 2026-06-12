@@ -4564,6 +4564,11 @@ input[type=range]::-moz-range-track {
     .profile-left-column {
         width: 100% !important;
     }
+    .profile-avatar-container {
+        width: 120px !important;
+        height: 120px !important;
+        border-radius: 20px !important;
+    }
     .profile-avatar.large {
         width: 120px !important;
         height: 120px !important;
