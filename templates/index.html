@@ -4558,6 +4558,41 @@
     <script src="/js/private_matches.js?v=3"></script>
     <script src="/js/donate.js?v=2"></script>
     
+    <!-- Hybrid App / WebView Javascript File Picker Bridge -->
+    <script>
+        window.setFileInputBlob = function(inputId, base64Data, filename, mimeType) {
+            try {
+                const binaryStr = atob(base64Data);
+                const len = binaryStr.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = binaryStr.charCodeAt(i);
+                }
+                const blob = new Blob([bytes], { type: mimeType });
+                const file = new File([blob], filename, { type: mimeType });
+                const input = document.getElementById(inputId);
+                if (input) {
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    input.files = dataTransfer.files;
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            } catch (err) {
+                console.error("Error setting file input blob:", err);
+            }
+        };
+
+        document.addEventListener('click', function(e) {
+            if (window.MorphemeFilePicker && e.target && e.target.type === 'file') {
+                const id = e.target.id;
+                if (id === 'forum-comment-image' || id === 'forum-post-image' || id === 'profile-avatar-input' || id === 'dict-upload-input') {
+                    e.preventDefault();
+                    window.MorphemeFilePicker.postMessage(id);
+                }
+            }
+        }, true);
+    </script>
+    
     <!-- Script to handle mobile-only header placement -->
     <script>
         // Detect if device is a laptop/desktop (not mobile/tablet)
