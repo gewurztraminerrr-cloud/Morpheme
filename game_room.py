@@ -4725,7 +4725,8 @@ class RoomManager:
                 unique_words_for_user = set()
                 for entry in words:
                     w = entry.get('word', '').upper() if isinstance(entry, dict) else str(entry).upper()
-                    if w and word_validator.is_valid_word(w, 'CSW', use_added_words=getattr(room, 'use_added_words', False)):
+                    active_dict = getattr(room, 'current_dictionary', 'NWL')
+                    if w and word_validator.is_valid_word(w, active_dict, use_added_words=getattr(room, 'use_added_words', False)):
                         unique_words_for_user.add(w)
                 
                 for w in unique_words_for_user:
