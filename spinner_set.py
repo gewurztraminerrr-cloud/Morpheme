@@ -382,7 +382,7 @@ class SpinnerSet:
     @staticmethod
     def _spin_board_format(is_24h=False, dimensions='4x4'):
         """
-        TEMPORARY: 50% Triple format, 23% Normal format, rest same
+        Original board format weights
         """
         if is_24h:
             return 'Valued Letters'
@@ -392,7 +392,7 @@ class SpinnerSet:
             
         result = random.choices(
             ['Normal', 'Checkerboard', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Density', 'Rotation', 'Double', 'Triple'],
-            weights=[23, 12, 2, 2, 2, 2, 2, 2, 2, 1, 50]
+            weights=[72, 12, 2, 2, 2, 2, 2, 2, 2, 1, 1]
         )[0]
         
         if result == 'Mania':
