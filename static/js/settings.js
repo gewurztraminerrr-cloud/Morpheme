@@ -181,6 +181,23 @@ function debounce(func, wait) {
             }
         }
 
+        // Triple Format Music
+        if (settings.triple_music !== undefined) {
+            let val = settings.triple_music;
+            if (val === 'true' || val === 'True' || val === true) val = true;
+            else if (val === 'false' || val === 'False' || val === false) val = false;
+
+            const tripleMusicToggle = document.getElementById('setting-triple-music');
+            if (tripleMusicToggle) tripleMusicToggle.checked = val;
+
+            if (window.userSettings) window.userSettings.triple_music = val;
+
+            if (typeof updateTripleMusicState === 'function') {
+                const remaining = (window.lastGameState && window.lastGameState.time_remaining) || 0;
+                updateTripleMusicState(remaining);
+            }
+        }
+
         // App Theme
         if (settings.app_theme) {
             applyTheme(settings.app_theme);
@@ -521,6 +538,19 @@ function debounce(func, wait) {
             window.userSettings.lobby_music = val;
             if (typeof handleLobbyMusicState === 'function') handleLobbyMusicState();
             saveSettingDebounced('lobby_music', val);
+        });
+    }
+
+    const tripleMusicToggle = document.getElementById('setting-triple-music');
+    if (tripleMusicToggle) {
+        tripleMusicToggle.addEventListener('change', (e) => {
+            const val = e.target.checked;
+            window.userSettings.triple_music = val;
+            if (typeof updateTripleMusicState === 'function') {
+                const remaining = (window.lastGameState && window.lastGameState.time_remaining) || 0;
+                updateTripleMusicState(remaining);
+            }
+            saveSettingDebounced('triple_music', val);
         });
     }
 

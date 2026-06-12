@@ -3592,8 +3592,8 @@ function updateTripleMusicState(remaining) {
     const audio = document.getElementById('triple-music');
     if (!audio) return;
 
-    // Respect user lobby music preferences
-    const musicEnabled = (!window.userSettings || window.userSettings.lobby_music !== false);
+    // Respect user triple music preferences
+    const musicEnabled = (!window.userSettings || window.userSettings.triple_music !== false);
     if (!musicEnabled) {
         if (!audio.paused) {
             audio.pause();
