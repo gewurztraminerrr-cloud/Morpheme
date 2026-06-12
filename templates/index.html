@@ -4583,11 +4583,25 @@
         };
 
         document.addEventListener('click', function(e) {
-            if (window.MorphemeFilePicker && e.target && e.target.type === 'file') {
-                const id = e.target.id;
-                if (id === 'forum-comment-image' || id === 'forum-post-image' || id === 'profile-avatar-input' || id === 'dict-upload-input') {
-                    e.preventDefault();
-                    window.MorphemeFilePicker.postMessage(id);
+            if (window.MorphemeFilePicker) {
+                const wrapper = e.target.closest('#forum-comment-image-wrapper, #forum-post-image-wrapper, #profile-avatar-trigger, #dict-upload-wrapper');
+                if (wrapper) {
+                    const inputMap = {
+                        'forum-comment-image-wrapper': 'forum-comment-image',
+                        'forum-post-image-wrapper': 'forum-post-image',
+                        'profile-avatar-trigger': 'profile-avatar-input',
+                        'dict-upload-wrapper': 'dict-upload-input'
+                    };
+                    const inputId = inputMap[wrapper.id];
+                    if (inputId) {
+                        const input = document.getElementById(inputId);
+                        if (input && input.disabled) {
+                            return;
+                        }
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.MorphemeFilePicker.postMessage(inputId);
+                    }
                 }
             }
         }, true);
