@@ -1763,9 +1763,9 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     } else if (round.timestamp) {
         const parsedDate = window.parseUTCTimestamp ? window.parseUTCTimestamp(round.timestamp) : new Date(round.timestamp);
         const tVal = parsedDate.getTime() / 1000.0;
-        startTime = isNaN(tVal) ? (Date.now() / 1000) : tVal;
+        startTime = isNaN(tVal) ? (Date.now() / 1000) - roundDuration : tVal - roundDuration;
     } else {
-        startTime = Date.now() / 1000;
+        startTime = (Date.now() / 1000) - roundDuration;
     }
 
     // Normalize and convert all timestamps to SECONDS relative to epoch

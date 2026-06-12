@@ -5093,7 +5093,7 @@ def get_leaderboard_data():
             SELECT * FROM (
                 SELECT rh.total_score, rh.user_rating, u.username, u.country_flag, u.avatar_url,
                        rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json,
-                       rh.round_duration, rh.id, rh.game_type,
+                       rh.round_duration, rh.id, rh.game_type, rh.round_start_time,
                        ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.total_score DESC, rh.timestamp DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
@@ -5107,7 +5107,7 @@ def get_leaderboard_data():
             SELECT * FROM (
                 SELECT rh.best_word, rh.best_word_score, u.username, u.country_flag, u.avatar_url,
                        rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json,
-                       rh.round_duration, rh.id, rh.game_type,
+                       rh.round_duration, rh.id, rh.game_type, rh.round_start_time,
                        ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.best_word_score DESC, rh.timestamp DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
@@ -5121,7 +5121,7 @@ def get_leaderboard_data():
             SELECT * FROM (
                 SELECT rh.performance_ratio, rh.total_score, u.username, u.country_flag, u.avatar_url,
                        rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json,
-                       rh.round_duration, rh.id, rh.game_type, rh.total_words_avail,
+                       rh.round_duration, rh.id, rh.game_type, rh.total_words_avail, rh.round_start_time,
                        ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.performance_ratio DESC, rh.timestamp DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
@@ -5134,7 +5134,7 @@ def get_leaderboard_data():
         cursor_pcts = conn.execute(f"""
             SELECT rh.total_score, u.username, u.country_flag, u.avatar_url,
                    rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json,
-                   rh.round_duration, rh.id, rh.game_type, rh.total_words_avail
+                   rh.round_duration, rh.id, rh.game_type, rh.total_words_avail, rh.round_start_time
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE {base_where} AND rh.total_words_avail > 0
@@ -5195,7 +5195,7 @@ def get_leaderboard_data():
         cursor_obscure = conn.execute(f"""
             SELECT rh.total_score, u.username, u.country_flag, u.avatar_url,
                    rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json,
-                   rh.round_duration, rh.id, rh.game_type
+                   rh.round_duration, rh.id, rh.game_type, rh.round_start_time
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE {base_where}
