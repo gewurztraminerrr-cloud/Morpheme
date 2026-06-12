@@ -1,6 +1,6 @@
 print(f"[Main] SERVER STARTING - VERSION: 2026-05-05_04:00 (Tally Hardened)")
 
-from flask import Flask, request, jsonify, session, send_from_directory, g, redirect, url_for, render_template
+from flask import Flask, request, jsonify, session, send_from_directory, g, redirect, url_for, render_template, make_response
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
@@ -1492,7 +1492,11 @@ def get_recent_donations():
 def index():
     # USER REQUEST: once the user logs in, entering "morpheme.games" (or refreshing root)
     # should automatically take them to the lobby without having to login again.
-    return render_template('index.html')
+    resp = make_response(render_template('index.html'))
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
+    return resp
 
 
 # Authentication endpoints
