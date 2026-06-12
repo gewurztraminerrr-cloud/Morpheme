@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupMiniProfileModal();
     setupImageLightbox();
     setupUnscrambleTool();
+    setupFindCountTool();
     setupPersonalTimer();
 });
 
@@ -4355,6 +4356,98 @@ function renderUnscrambleFound(revealMissed = false) {
     }
 
     list.innerHTML = html;
+}
+
+// ==========================================
+// FIND COUNT
+// ==========================================
+function setupFindCountTool() {
+    const input = document.getElementById('find-count-input');
+    const btn = document.getElementById('find-count-btn');
+    
+    if (btn) {
+        btn.addEventListener('click', runFindCountSearch);
+    }
+    if (input) {
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') runFindCountSearch();
+        });
+    }
+}
+
+async function runFindCountSearch() {
+    const input = document.getElementById('find-count-input');
+    if (!input) return;
+    
+    const word = input.value.trim().toUpperCase();
+    if (!word) return;
+    
+    const resultsContainer = document.getElementById('find-count-results-container');
+    const summaryEl = document.getElementById('find-count-summary');
+    const tableBody = document.getElementById('find-count-table-body');
+    
+    if (summaryEl) summaryEl.innerHTML = '<div class="loading-spinner">Searching...</div>';
+    if (resultsContainer) resultsContainer.classList.remove('hidden');
+    if (tableBody) tableBody.innerHTML = '';
+    
+    try {
+        const response = await fetch(`/api/tools/find-count?word=${encodeURIComponent(word)}`);
+        const data = await response.json();
+        
+        if (data.error) {
+            if (summaryEl) summaryEl.innerText = `Error: ${data.error}`;
+            return;
+        }
+        
+        if (summaryEl) {
+            summaryEl.innerText = `The word "${data.word}" has been found ${data.count} ${data.count === 1 ? 'time' : 'times'} since Morpheme began.`;
+        }
+        
+        if (data.recent && data.recent.length > 0) {
+            tableBody.innerHTML = data.recent.map(item => {
+                const date = window.parseUTCTimestamp(item.timestamp);
+                const formattedDate = date.toLocaleDateString(undefined, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                return `
+                    <tr class="finder-row" data-username="${item.username}" style="cursor: pointer; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05); transition: background 0.2s;">
+                        <td style="padding: 12px; color: var(--accent-color); font-weight: 500;">${item.username}</td>
+                        <td style="padding: 12px; color: var(--muted-text);">${formattedDate}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // Add click events to rows
+            tableBody.querySelectorAll('.finder-row').forEach(row => {
+                row.addEventListener('click', () => {
+                    const username = row.dataset.username;
+                    if (username && username !== 'System') {
+                        window.showMiniProfile(username);
+                    }
+                });
+                row.addEventListener('mouseenter', () => {
+                    row.style.background = 'rgba(var(--text-primary-rgb), 0.05)';
+                });
+                row.addEventListener('mouseleave', () => {
+                    row.style.background = 'transparent';
+                });
+            });
+        } else {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="2" style="padding: 20px; text-align: center; color: var(--muted-text);">No one has found this word yet.</td>
+                </tr>
+            `;
+        }
+    } catch (err) {
+        console.error('Find Count error:', err);
+        if (summaryEl) summaryEl.innerText = 'Search failed. Please try again.';
+    }
 }
 
 // ==========================================

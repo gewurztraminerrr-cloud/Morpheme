@@ -29,7 +29,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css?v=28">
     <link rel="stylesheet" href="/css/lobby.css?v=26">
-    <link rel="stylesheet" href="/css/play.css?v=88">
+    <link rel="stylesheet" href="/css/play.css?v=89">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=9">
     <link rel="stylesheet" href="/css/donate.css?v=1">
@@ -1236,6 +1236,7 @@
                     <button class="tool-nav-btn" data-tool="random" onclick="window.showTool('random')">Random Word</button>
                     <button class="tool-nav-btn" data-tool="wotd" onclick="window.showTool('wotd')">Word of the Day</button>
                     <button class="tool-nav-btn" data-tool="unscramble" onclick="window.showTool('unscramble')">Unscramble</button>
+                    <button class="tool-nav-btn" data-tool="find-count" onclick="window.showTool('find-count')">Find Count</button>
 
                     <button class="tool-nav-btn" data-tool="timer" onclick="window.showTool('timer')">Personal Timer</button>
                     <!-- Future tools go here -->
@@ -1243,6 +1244,38 @@
 
                 <!-- Content (2/3) -->
                 <div class="tools-content">
+                    <!-- Find Count Interface -->
+                    <div id="tool-find-count" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Find Count</h2>
+                            <p>Enter a word to see how many times it has been found since Morpheme began.</p>
+                        </div>
+                        <div class="combo-control-panel">
+                            <div class="input-row">
+                                <input type="text" id="find-count-input" placeholder="Enter word..." autocomplete="off">
+                                <button id="find-count-btn">Search</button>
+                            </div>
+                        </div>
+                        <div id="find-count-results-container" class="hidden" style="width: 100%; margin-top: 25px;">
+                            <div id="find-count-summary" style="font-size: 1.25rem; font-weight: 700; margin-bottom: 20px; color: var(--accent-color);"></div>
+                            
+                            <h3 style="margin: 20px 0 10px 0; font-size: 1.1rem; color: var(--text-primary);">10 Most Recent Finders</h3>
+                            <div class="history-table-wrapper" style="overflow-x: auto; background: rgba(0, 0, 0, 0.2); border-radius: 8px; border: 1px solid rgba(var(--text-primary-rgb), 0.1);">
+                                <table class="history-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                                    <thead>
+                                        <tr style="border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1); background: rgba(var(--text-primary-rgb), 0.05);">
+                                            <th style="padding: 12px; font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Finder</th>
+                                            <th style="padding: 12px; font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Date Found</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="find-count-table-body">
+                                        <!-- Injected by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Personal Timer Interface -->
                     <div id="tool-timer" class="tool-pane">
                         <div class="tool-header">
@@ -4511,7 +4544,7 @@
     <script src="/js/play.js?v=152"></script>
     <script src="/js/tournaments.js?v=2"></script>
     <script src="/js/leaderboard.js?v=2"></script>
-    <script src="/js/tools.js?v=41"></script>
+    <script src="/js/tools.js?v=42"></script>
     <script src="/js/mouse_selection.js?v=3"></script>
     <script src="/js/mods.js?v=2"></script>
     <script src="/js/private_matches.js?v=3"></script>
