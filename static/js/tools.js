@@ -856,18 +856,18 @@ async function renderProfile(user) {
     const avatarInput = document.getElementById('profile-avatar-input');
     if (avatarInput) {
         if (isOwner) {
-            avatarInput.style.pointerEvents = 'auto';
-            avatarInput.style.cursor = 'pointer';
+            avatarInput.style.setProperty('pointer-events', 'auto', 'important');
+            avatarInput.style.setProperty('cursor', 'pointer', 'important');
             avatarInput.disabled = false;
             if (avatarInput.parentElement) {
-                avatarInput.parentElement.style.cursor = 'pointer';
+                avatarInput.parentElement.style.setProperty('cursor', 'pointer', 'important');
             }
         } else {
-            avatarInput.style.pointerEvents = 'none';
-            avatarInput.style.cursor = 'default';
+            avatarInput.style.setProperty('pointer-events', 'none', 'important');
+            avatarInput.style.setProperty('cursor', 'default', 'important');
             avatarInput.disabled = true;
             if (avatarInput.parentElement) {
-                avatarInput.parentElement.style.cursor = 'default';
+                avatarInput.parentElement.style.setProperty('cursor', 'default', 'important');
             }
         }
     }
