@@ -27,11 +27,11 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css?v=39">
+    <link rel="stylesheet" href="/css/style.css?v=40">
     <link rel="stylesheet" href="/css/lobby.css?v=26">
     <link rel="stylesheet" href="/css/play.css?v=91">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
-    <link rel="stylesheet" href="/css/forum.css?v=12">
+    <link rel="stylesheet" href="/css/forum.css?v=13">
     <link rel="stylesheet" href="/css/donate.css?v=1">
     <style>
         .board-cell.bonus-highlight {
@@ -1152,9 +1152,11 @@
                                         placeholder="Join the conversation..."></textarea>
                                     
                                     <div id="forum-comment-image-upload" class="forum-upload-group" style="padding: 10px; margin-bottom: 10px; border-width: 1px; border-style: solid;">
-                                        <div id="forum-comment-image-wrapper" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 40px; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); cursor: pointer; font-size: 0.8rem; box-sizing: border-box; padding: 10px; transition: all 0.2s ease; position: relative; overflow: hidden; display: flex;">
-                                            <span class="file-text" style="pointer-events: none;">📎 Attach an image (optional)</span>
-                                            <input type="file" id="forum-comment-image" accept="image/*" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; pointer-events: auto;">
+                                        <div id="forum-comment-image-wrapper" style="width: 100%; height: 40px; position: relative; overflow: hidden; cursor: pointer;">
+                                            <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); font-size: 0.8rem; box-sizing: border-box; padding: 10px; transition: all 0.2s ease; pointer-events: none;">
+                                                <span class="file-text">📎 Attach an image (optional)</span>
+                                            </div>
+                                            <input type="file" id="forum-comment-image" accept="image/*" style="position: absolute; top: 0; left: 0; width: 100% !important; height: 100% !important; min-width: 100% !important; min-height: 100% !important; opacity: 0 !important; cursor: pointer !important; z-index: 10 !important; pointer-events: auto !important; font-size: 200px !important; margin: 0 !important; padding: 0 !important;">
                                         </div>
                                         <div id="forum-comment-image-preview" class="image-preview hidden" style="max-height: 150px; margin-top: 5px;"></div>
                                     </div>
@@ -1190,9 +1192,11 @@
                                 </div>
                                 <div id="forum-image-upload-section" class="forum-upload-group hidden">
                                     <label>Attach Image</label>
-                                    <div id="forum-post-image-wrapper" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 60px; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); cursor: pointer; font-size: 1rem; box-sizing: border-box; padding: 20px; transition: all 0.2s ease; position: relative; overflow: hidden; display: flex;">
-                                        <span class="file-text" style="pointer-events: none;">Click to choose a file or drag and drop</span>
-                                        <input type="file" id="forum-post-image" accept="image/*" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; pointer-events: auto;">
+                                    <div id="forum-post-image-wrapper" style="width: 100%; height: 60px; position: relative; overflow: hidden; cursor: pointer;">
+                                        <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); font-size: 1rem; box-sizing: border-box; padding: 20px; transition: all 0.2s ease; pointer-events: none;">
+                                            <span class="file-text">Click to choose a file or drag and drop</span>
+                                        </div>
+                                        <input type="file" id="forum-post-image" accept="image/*" style="position: absolute; top: 0; left: 0; width: 100% !important; height: 100% !important; min-width: 100% !important; min-height: 100% !important; opacity: 0 !important; cursor: pointer !important; z-index: 10 !important; pointer-events: auto !important; font-size: 200px !important; margin: 0 !important; padding: 0 !important;">
                                     </div>
                                     <div id="forum-image-preview" class="image-preview hidden">
                                     </div>
@@ -1336,10 +1340,12 @@
                                     <!-- Left Column: Avatar -->
                                      <div class="profile-left-column">
                                          <div class="profile-avatar-container">
-                                             <div class="profile-avatar large" id="profile-avatar-trigger" title="Click to upload photo" style="width: 100%; height: 100%; cursor: pointer; display: flex; justify-content: center; align-items: center; margin: 0; border-radius: inherit; position: relative; overflow: hidden;">
-                                                  ?
-                                                  <input type="file" id="profile-avatar-input" accept="image/*" disabled style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; pointer-events: auto;">
-                                              </div>
+                                             <div id="profile-avatar-trigger" title="Click to upload photo" style="width: 100%; height: 100%; cursor: pointer; position: relative; overflow: hidden; border-radius: inherit; margin: 0; display: block;">
+                                                 <div class="profile-avatar large" style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; border-radius: inherit; pointer-events: none;">
+                                                     ?
+                                                 </div>
+                                                 <input type="file" id="profile-avatar-input" accept="image/*" disabled style="position: absolute; top: 0; left: 0; width: 100% !important; height: 100% !important; min-width: 100% !important; min-height: 100% !important; opacity: 0 !important; cursor: pointer !important; z-index: 10 !important; pointer-events: auto !important; font-size: 200px !important; margin: 0 !important; padding: 0 !important;">
+                                             </div>
                                          </div>
                                      </div>
 
@@ -2212,7 +2218,7 @@
                         <div class="dict-upload-row" style="display: flex; gap: 12px; align-items: center;">
                                             <div id="dict-upload-wrapper" style="flex: 1; position: relative; display: block; margin: 0; cursor: pointer; overflow: hidden; border-radius: 5px;">
                                                 <div class="mod-full-btn" id="dict-upload-trigger-btn" style="background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-primary); font-weight: 600; box-sizing: border-box; text-align: center; padding: 10px 15px; pointer-events: none;">Select .txt File</div>
-                                                <input type="file" id="dict-upload-input" accept=".txt" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; pointer-events: auto;">
+                                                <input type="file" id="dict-upload-input" accept=".txt" style="position: absolute; top: 0; left: 0; width: 100% !important; height: 100% !important; min-width: 100% !important; min-height: 100% !important; opacity: 0 !important; cursor: pointer !important; z-index: 10 !important; pointer-events: auto !important; font-size: 200px !important; margin: 0 !important; padding: 0 !important;">
                                             </div>
                                             <button id="dict-submit-db-btn" class="mod-full-btn add" style="flex: 1; font-weight: 800; margin: 0;">Submit to Database</button>
                                         </div>
@@ -4540,15 +4546,15 @@
     </div>
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=17"></script>
-    <script src="/js/forum.js?v=45"></script>
+    <script src="/js/forum.js?v=46"></script>
     <script src="/js/app.js?v=42"></script>
     <script src="/js/lobby.js?v=7"></script>
     <script src="/js/play.js?v=153"></script>
     <script src="/js/tournaments.js?v=2"></script>
     <script src="/js/leaderboard.js?v=3"></script>
-    <script src="/js/tools.js?v=51"></script>
+    <script src="/js/tools.js?v=52"></script>
     <script src="/js/mouse_selection.js?v=3"></script>
-    <script src="/js/mods.js?v=6"></script>
+    <script src="/js/mods.js?v=7"></script>
     <script src="/js/private_matches.js?v=3"></script>
     <script src="/js/donate.js?v=2"></script>
     
