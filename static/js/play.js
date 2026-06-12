@@ -7858,7 +7858,7 @@ function runBoardProbe() {
 
 function generateProbeBoard(params) {
     const dims = params.dimensions || '4x4';
-    const format = params.format || 'Normal';
+    const format = params.board_format || params.format || 'Normal';
     const bonusWord = params.bonus_word || '';
     const parts = dims.split('x');
     if (parts.length !== 2) return null;

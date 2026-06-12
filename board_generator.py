@@ -172,7 +172,7 @@ class BoardGenerator:
                     print(f"[BoardGen] Warning: Unique set for {core_type} NOT FOUND at {path} or {path_alt}")
         return self.unique_sets.get(core_type, set())
 
-    def _get_uniqueness_range(self, difficulty, rows=4, cols=4, dictionary="NWL", depth=1):
+    def _get_uniqueness_range(self, difficulty, rows=4, cols=4, dictionary="NWL", depth=1, min_word_length=3):
         """Get (min, max) ratio range for specified difficulty target."""
         difficulty = str(difficulty).split()[0].strip()
         if difficulty not in ["Easy", "Medium", "Hard"]:
@@ -218,11 +218,29 @@ class BoardGenerator:
             }
         else:
             ranges = {
-                "Easy": (0.0, 0.25),
-                "Medium": (0.26, 0.39),
-                "Hard": (0.40, 1.0)
+                "Easy": (0.0, 0.19),
+                "Medium": (0.20, 0.35),
+                "Hard": (0.36, 1.0)
             }
-        return ranges.get(difficulty, (0.0, 1.0))
+            
+        base_range = ranges.get(difficulty, (0.0, 1.0))
+        
+        # Calculate natural uniqueness shift based on min_word_length
+        default_min = 3
+        if is_4x6: default_min = 4
+        elif is_5x7: default_min = 5
+        elif is_6x8: default_min = 6
+        elif is_cube: default_min = 6
+        
+        shift = 0.0
+        try:
+            min_l = int(min_word_length)
+            if min_l > default_min:
+                shift = (min_l - default_min) * 0.07
+        except Exception:
+            pass
+            
+        return (max(0.0, base_range[0] + shift), min(1.0, base_range[1] + shift))
 
     def get_uniqueness_ratio(self, board, all_words, rows=4, cols=4, dictionary="NWL", depth=1):
         """Calculate the uniqueness ratio for a given board and word list.
@@ -1369,7 +1387,7 @@ class BoardGenerator:
                 # To prevent timeouts, we only enforce this strictly for the first 8 attempts
                 # and when we have sufficient time remaining.
                 ratio = self.get_uniqueness_ratio(board, list(all_words_dict.keys()), rows, cols, dictionary, depth)
-                min_ratio, max_ratio = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth)
+                min_ratio, max_ratio = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth, min_word_length=min_word_length)
                 
                 if attempts <= 8 and (time.time() - start_time < timeout - 1.5):
                     if not (min_ratio <= ratio <= max_ratio):
@@ -1697,10 +1715,13 @@ class BoardGenerator:
                 if min_words <= count <= max_words:
                     # USER REQUEST: Enforce uniqueness ratio match for the selected difficulty inside emergency loop too.
                     ratio = self.get_uniqueness_ratio(board, list(final_solve.keys()), rows, cols, dictionary, depth)
-                    min_ratio, max_ratio = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth)
+                    min_ratio, max_ratio = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth, min_word_length=min_word_length)
                     if _attempt <= 45:
-                        if not (min_ratio <= ratio <= max_ratio):
-                            print(f"[BoardGen] [Emergency] ATTEMPT {_attempt}: Uniqueness ratio {ratio:.2f} is outside range {min_ratio}-{max_ratio} for target {difficulty}. Retrying...")
+                        relaxation = max(0, (_attempt - 5) * 0.02)
+                        adj_min = max(0.0, min_ratio - relaxation)
+                        adj_max = min(1.0, max_ratio + relaxation)
+                        if not (adj_min <= ratio <= adj_max):
+                            print(f"[BoardGen] [Emergency] ATTEMPT {_attempt}: Uniqueness ratio {ratio:.2f} is outside range {adj_min:.2f}-{adj_max:.2f} (base: {min_ratio:.2f}-{max_ratio:.2f}) for target {difficulty}. Retrying...")
                             continue
                 if _attempt >= 50:
                     print(f"[BoardGen] ⚠️ EMERGENCY LOOP TIMEOUT: Failed to hit target after 50 attempts. Returning best effort with {count} words.")
