@@ -2418,6 +2418,48 @@ async function saveProfileField(key, value) {
 // --- Lists Tool Logic ---
 
 let listsDataLoaded = false;
+let currentWordsList = [];
+let currentWordsRenderedCount = 0;
+let currentWordsType = '';
+const WORDS_PAGE_SIZE = 1000;
+
+function renderNextWordsPage() {
+    const scrollArea = document.getElementById('main-list-results');
+    if (!scrollArea || currentWordsRenderedCount >= currentWordsList.length) return;
+
+    const nextPageWords = currentWordsList.slice(
+        currentWordsRenderedCount,
+        currentWordsRenderedCount + WORDS_PAGE_SIZE
+    );
+
+    let html = '';
+    if (currentWordsType === 'likelihood') {
+        html = nextPageWords.map(item => `
+            <div class="list-item">
+                <span class="likelihood-score">${item.score}</span> ${item.word}
+            </div>
+        `).join('');
+    } else if (currentWordsType === 'added') {
+        const isMod = window.currentUserIsMod;
+        html = nextPageWords.map(w => `
+            <div class="list-item added-word" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>${w}</span>
+                ${isMod ? `<button onclick="removeAddedWordFromTools('${w}')" style="background:none; border:none; color:#f43f5e; cursor:pointer; font-weight:bold; padding:0 5px;" title="Remove">&times;</button>` : ''}
+            </div>
+        `).join('');
+    } else {
+        html = nextPageWords.map(w => `<div class="list-item">${w}</div>`).join('');
+    }
+
+    if (currentWordsRenderedCount === 0) {
+        scrollArea.innerHTML = html;
+        scrollArea.scrollTop = 0;
+    } else {
+        scrollArea.insertAdjacentHTML('beforeend', html);
+    }
+
+    currentWordsRenderedCount += nextPageWords.length;
+}
 
 function setupListsTool() {
     const updateBtn = document.getElementById('list-update-btn');
@@ -2432,6 +2474,15 @@ function setupListsTool() {
     if (typeFilter) {
         typeFilter.addEventListener('change', () => {
             fetchListsData();
+        });
+    }
+
+    const scrollArea = document.getElementById('main-list-results');
+    if (scrollArea) {
+        scrollArea.addEventListener('scroll', () => {
+            if (scrollArea.scrollTop + scrollArea.clientHeight >= scrollArea.scrollHeight - 200) {
+                renderNextWordsPage();
+            }
         });
     }
 
@@ -2693,38 +2744,16 @@ async function fetchListsData(typeOverride) {
             countEl.textContent = words && words.length ? `(${words.length.toLocaleString()})` : '(0)';
         }
 
+        currentWordsList = words;
+        currentWordsRenderedCount = 0;
+        currentWordsType = selectedType;
+
         if (!words || words.length === 0) {
             if (scrollArea) scrollArea.innerHTML = '<div style="padding:20px; opacity:0.6; text-align:center;">No words found matching these filters.</div>';
             return;
         }
 
-        // Render based on type
-        let html = '';
-        if (selectedType === 'likelihood') {
-            // Each item is { score, word }
-            html = words.map(item => `
-                <div class="list-item">
-                    <span class="likelihood-score">${item.score}</span> ${item.word}
-                </div>
-            `).join('');
-        } else if (selectedType === 'added') {
-            // Added words: show removal for mods
-            const isMod = window.currentUserIsMod;
-            html = words.map(w => `
-                <div class="list-item added-word" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>${w}</span>
-                    ${isMod ? `<button onclick="removeAddedWordFromTools('${w}')" style="background:none; border:none; color:#f43f5e; cursor:pointer; font-weight:bold; padding:0 5px;" title="Remove">&times;</button>` : ''}
-                </div>
-            `).join('');
-        } else {
-            // Each item is just a string
-            html = words.map(w => `<div class="list-item">${w}</div>`).join('');
-        }
-
-        if (scrollArea) {
-            scrollArea.innerHTML = html;
-            scrollArea.scrollTop = 0;
-        }
+        renderNextWordsPage();
 
         listsDataLoaded = true;
 

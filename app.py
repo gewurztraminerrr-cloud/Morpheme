@@ -4115,6 +4115,8 @@ def tools_combo_check():
         'lic_groups': lic_groups
     })
 
+LISTS_CACHE = {}
+
 @app.route('/api/tools/lists', methods=['GET'])
 def tools_get_lists():
     """Returns the 5 specific word lists for the Lists tool with optional filtering."""
@@ -4142,29 +4144,53 @@ def tools_get_lists():
         base_dir = os.path.dirname(__file__)
         dict_dir = os.path.join(base_dir, 'dictionaries')
         
-        # --- Logic: Unified 16+ Routing ---
-        def load_source_set(filename):
+        # Make sure CSW is loaded if we need it
+        if list_type in ['all', 'csw', 'csw_only', 'new_csw']:
+            word_validator.ensure_csw_loaded()
+        
+        # --- Logic: In-Memory Set Fetching and Filtering ---
+        def get_source_set(dict_type):
             if target_len is not None and target_len >= 16:
-                path = os.path.join(dict_dir, '16plus.txt')
+                base_set = word_validator.long_words
             else:
-                path = os.path.join(dict_dir, filename)
+                if dict_type == 'NWL':
+                    base_set = word_validator.nwl_words
+                elif dict_type == 'CSW':
+                    base_set = word_validator.csw_words
+                elif dict_type == 'uniqueNWL':
+                    base_set = word_validator.unique_nwl_words
+                elif dict_type == 'new_NWL':
+                    if 'new_NWL' not in LISTS_CACHE:
+                        path = os.path.join(dict_dir, 'new_NWL.txt')
+                        if os.path.exists(path):
+                            with open(path, 'r') as f:
+                                LISTS_CACHE['new_NWL'] = {line.strip().upper() for line in f if line.strip()}
+                        else:
+                            LISTS_CACHE['new_NWL'] = set()
+                    base_set = LISTS_CACHE['new_NWL']
+                elif dict_type == 'new_CSW':
+                    if 'new_CSW' not in LISTS_CACHE:
+                        path = os.path.join(dict_dir, 'new_CSW.txt')
+                        if os.path.exists(path):
+                            with open(path, 'r') as f:
+                                LISTS_CACHE['new_CSW'] = {line.strip().upper() for line in f if line.strip()}
+                        else:
+                            LISTS_CACHE['new_CSW'] = set()
+                    base_set = LISTS_CACHE['new_CSW']
+                else:
+                    base_set = set()
             
-            if not os.path.exists(path):
-                return set()
-                
-            words = set()
-            with open(path, 'r') as f:
-                for line in f:
-                    w = line.strip().upper()
-                    if not w: continue
-                    if (target_len is None or target_len < 16) and len(w) >= 16:
-                        continue
-                    if target_len is not None and len(w) != target_len:
-                        continue
-                    if start_char is not None and not w.startswith(start_char):
-                        continue
-                    words.add(w)
-            return words
+            # Filter the base_set in-memory
+            filtered = set()
+            for w in base_set:
+                if (target_len is None or target_len < 16) and len(w) >= 16:
+                    continue
+                if target_len is not None and len(w) != target_len:
+                    continue
+                if start_char is not None and not w.startswith(start_char):
+                    continue
+                filtered.add(w)
+            return filtered
 
         # Conditional fetching based on list_type
         response = {
@@ -4173,21 +4199,20 @@ def tools_get_lists():
         }
 
         if list_type in ['all', 'nwl', 'csw_only', 'likelihood']:
-            nwl_set = load_source_set('NWL.txt')
+            nwl_set = get_source_set('NWL')
             if list_type in ['all', 'nwl']: response['nwl'] = sorted(list(nwl_set))
 
         if list_type in ['all', 'csw', 'csw_only']:
-            csw_set = load_source_set('CSW.txt')
+            csw_set = get_source_set('CSW')
             if list_type in ['all', 'csw']: response['csw'] = sorted(list(csw_set))
 
         if list_type in ['all', 'csw_only']:
-            # We need both sets for CSW only
-            if 'nwl_set' not in locals(): nwl_set = load_source_set('NWL.txt')
-            if 'csw_set' not in locals(): csw_set = load_source_set('CSW.txt')
+            if 'nwl_set' not in locals(): nwl_set = get_source_set('NWL')
+            if 'csw_set' not in locals(): csw_set = get_source_set('CSW')
             response['csw_only'] = sorted(list(csw_set - nwl_set))
 
         if list_type in ['all', 'likelihood']:
-            if 'nwl_set' not in locals(): nwl_set = load_source_set('NWL.txt')
+            if 'nwl_set' not in locals(): nwl_set = get_source_set('NWL')
             scrabble_freq = {
                 'A': 9, 'B': 2, 'C': 2, 'D': 4, 'E': 12, 'F': 2, 'G': 3, 'H': 2, 'I': 9,
                 'J': 1, 'K': 1, 'L': 4, 'M': 2, 'N': 6, 'O': 8, 'P': 2, 'Q': 1, 'R': 6,
@@ -4211,14 +4236,14 @@ def tools_get_lists():
             response['likelihood'] = likelihood_list
 
         if list_type in ['all', 'uniques']:
-            response['uniques'] = sorted(list(load_source_set('uniqueNWL.txt')))
+            response['uniques'] = sorted(list(get_source_set('uniqueNWL')))
             
         if list_type in ['all', 'new_nwl']:
-            response['new_nwl'] = list(load_source_set('new_NWL.txt'))
+            response['new_nwl'] = list(get_source_set('new_NWL'))
             response['new_nwl'].reverse() # Show most recent first
             
         if list_type in ['all', 'new_csw']:
-            response['new_csw'] = list(load_source_set('new_CSW.txt'))
+            response['new_csw'] = list(get_source_set('new_CSW'))
             response['new_csw'].reverse() # Show most recent first
             
         if list_type in ['all', 'added']:
