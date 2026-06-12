@@ -523,7 +523,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const dictSubmitBtn = document.getElementById('dict-submit-db-btn');
 
     if (dictTriggerBtn && dictFileInput) {
-        dictTriggerBtn.addEventListener('click', () => dictFileInput.click());
         dictFileInput.addEventListener('change', (e) => {
             if (e.target.files && e.target.files[0]) {
                 const name = e.target.files[0].name;

@@ -6500,3 +6500,18 @@ html, body {
     margin: 0 !important;
     padding: 0 !important;
 }
+
+/* Accessibility-safe hidden file input class for styled native label buttons */
+.hidden-file-input {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    z-index: -1 !important;
+    pointer-events: none !important;
+}
