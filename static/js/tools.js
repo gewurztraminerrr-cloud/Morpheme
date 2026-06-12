@@ -702,7 +702,7 @@ window.performProfileSearch = performProfileSearch;
 
 async function renderProfile(user) {
     // Check Ownership for Editing
-    const globalUser = window.currentUser || currentUser;
+    const globalUser = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
     const currentName = (typeof globalUser === 'object') ? globalUser.username : globalUser;
     const isOwner = currentName && currentName.toLowerCase() === user.username.toLowerCase();
 
