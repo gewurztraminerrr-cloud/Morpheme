@@ -16,6 +16,7 @@ function debounce(func, wait) {
     const savedSettings = localStorage.getItem('morpheme_settings');
     window.userSettings = savedSettings ? JSON.parse(savedSettings) : {
         lobby_music: true,
+        triple_music: true,
         chat_font_size: 13,
         def_font_size: 15,
         board_size: 54,
@@ -30,8 +31,13 @@ function debounce(func, wait) {
         board_sounds: true
     };
 
-    if (window.userSettings && typeof window.userSettings.board_sounds === 'undefined') {
-        window.userSettings.board_sounds = true;
+    if (window.userSettings) {
+        if (typeof window.userSettings.board_sounds === 'undefined') {
+            window.userSettings.board_sounds = true;
+        }
+        if (typeof window.userSettings.triple_music === 'undefined') {
+            window.userSettings.triple_music = true;
+        }
     }
 
     // DOM Elements

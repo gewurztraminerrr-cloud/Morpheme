@@ -3593,7 +3593,7 @@ function updateTripleMusicState(remaining) {
     if (!audio) return;
 
     // Respect user triple music preferences
-    const musicEnabled = (!window.userSettings || window.userSettings.triple_music !== false);
+    const musicEnabled = (!window.userSettings || (window.userSettings.triple_music !== false && window.userSettings.triple_music !== 'false'));
     if (!musicEnabled) {
         if (!audio.paused) {
             audio.pause();
@@ -3615,12 +3615,12 @@ function updateTripleMusicState(remaining) {
     const preferSp = isIntermission && isRevealed;
 
     const factFmt = (preferSp ? (sp.board_format || state.current_board_format) : (state.current_board_format || sp.board_format)) || 'Normal';
-    const isTriple = (factFmt === 'Triple');
+    const isTriple = (factFmt && factFmt.toString().toLowerCase().trim() === 'triple');
 
     if (state.state === 'active') {
         window._lastActiveRoundFormat = state.current_board_format || 'Normal';
     }
-    const wasTriplePrevious = (window._lastActiveRoundFormat === 'Triple');
+    const wasTriplePrevious = (window._lastActiveRoundFormat && window._lastActiveRoundFormat.toString().toLowerCase().trim() === 'triple');
 
     if (state.state === 'active') {
         if (isTriple) {
@@ -3635,12 +3635,9 @@ function updateTripleMusicState(remaining) {
             }
         }
     } else if (isIntermission) {
-        const intermission_duration = (state.time_limit >= 7200) ? 5 : 60;
-        const elapsed = intermission_duration - remaining;
-
-        if (wasTriplePrevious && elapsed >= 0 && elapsed <= 10.0) {
-            // Fade-out: 10s from start of intermission
-            const fadeOutVolume = Math.max(0.0, Math.min(1.0, (10.0 - elapsed) / 10.0));
+        if (wasTriplePrevious && remaining >= 50.0) {
+            // Fade-out: 10s from start of intermission (remaining: 60.0 -> 50.0)
+            const fadeOutVolume = Math.max(0.0, Math.min(1.0, (remaining - 50.0) / 10.0));
             audio.volume = fadeOutVolume;
             if (fadeOutVolume > 0) {
                 if (audio.paused) {
@@ -3652,7 +3649,7 @@ function updateTripleMusicState(remaining) {
                 }
             }
         } else if (isTriple && remaining >= 0 && remaining <= 10.0) {
-            // Fade-in: 10s before round starts
+            // Fade-in: 10s before round starts (remaining: 10.0 -> 0.0)
             const fadeInVolume = Math.max(0.0, Math.min(1.0, (10.0 - remaining) / 10.0));
             audio.volume = fadeInVolume;
             if (fadeInVolume > 0) {
