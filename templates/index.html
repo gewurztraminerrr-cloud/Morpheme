@@ -4583,8 +4583,10 @@
         };
 
         document.addEventListener('click', function(e) {
+            console.log("[MorphemeBridge] Click detected on element:", e.target);
             if (typeof MorphemeFilePicker !== 'undefined') {
                 const wrapper = e.target.closest('#forum-comment-image-wrapper, #forum-post-image-wrapper, #profile-avatar-trigger, #dict-upload-wrapper');
+                console.log("[MorphemeBridge] Found closest upload wrapper:", wrapper);
                 if (wrapper) {
                     const inputMap = {
                         'forum-comment-image-wrapper': 'forum-comment-image',
@@ -4593,16 +4595,21 @@
                         'dict-upload-wrapper': 'dict-upload-input'
                     };
                     const inputId = inputMap[wrapper.id];
+                    console.log("[MorphemeBridge] Mapped inputId:", inputId);
                     if (inputId) {
                         const input = document.getElementById(inputId);
                         if (input && input.disabled) {
+                            console.log("[MorphemeBridge] Input is disabled, ignoring click.");
                             return;
                         }
                         e.preventDefault();
                         e.stopPropagation();
+                        console.log("[MorphemeBridge] Posting message to MorphemeFilePicker:", inputId);
                         MorphemeFilePicker.postMessage(inputId);
                     }
                 }
+            } else {
+                console.log("[MorphemeBridge] MorphemeFilePicker channel is NOT defined (standard browser environment).");
             }
         }, true);
     </script>
