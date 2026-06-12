@@ -25,6 +25,22 @@ _lb_cache_expiry = {}
 _LB_CACHE_TTL = 45  # seconds
 
 
+def format_chicago_to_utc(chicago_ts_str):
+    if not chicago_ts_str:
+        return None
+    try:
+        ts_str = str(chicago_ts_str).replace('T', ' ')
+        if '.' in ts_str:
+            dt = datetime.datetime.strptime(ts_str, '%Y-%m-%d %H:%M:%S.%f')
+        else:
+            dt = datetime.datetime.strptime(ts_str, '%Y-%m-%d %H:%M:%S')
+        dt = dt.replace(tzinfo=ZoneInfo("America/Chicago"))
+        utc_dt = dt.astimezone(datetime.timezone.utc)
+        return utc_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+    except Exception as e:
+        return chicago_ts_str
+
+
 @app.route('/api/ping')
 def ping_debug():
     return jsonify({'pong': True})
@@ -2176,7 +2192,7 @@ def get_public_profile(username):
             'board': board, 'dimensions': dims, 'words': words, 'num_words': num_words,
             'top_word': top_word, 'avg_len': avg_len, 'total_score': score,
             'performance_value': perf_val, 'room_strength': room_strength,
-            'round_start_time': rstart, 'round_duration': rdur, 'timestamp': ts,
+            'round_start_time': rstart, 'round_duration': rdur, 'timestamp': format_chicago_to_utc(ts),
             'wpm': wpm or 0, 'total_words_avail': twa or 0,
             'all_players': sorted([{'username': e[2], 'score': e[0], 'rating': e[1]} for e in r_entries], key=lambda x: x['score'], reverse=True)
         }
@@ -2274,7 +2290,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     query_all = '''
         SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions, total_words_avail
         FROM round_history
-        WHERE user_id = ? AND game_type = ? AND board_dimensions = ? AND round_duration = ? AND (board_format IS NULL OR board_format != 'Valued Letters')
+        WHERE user_id = ? AND game_type = ? AND board_dimensions = ? AND round_duration = ?
         ORDER BY timestamp DESC
     '''
     cursor_all = conn.execute(query_all, (user_id, game_type, board_dimensions, time_limit))
@@ -2322,7 +2338,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     query = f'''
         SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions, total_words_avail
         FROM round_history
-        WHERE user_id = ? AND game_type = ? AND board_dimensions = ? AND round_duration = ? {time_filter} AND (board_format IS NULL OR board_format != 'Valued Letters')
+        WHERE user_id = ? AND game_type = ? AND board_dimensions = ? AND round_duration = ? {time_filter}
         ORDER BY timestamp DESC
     '''
     cursor = conn.execute(query, (user_id, game_type, board_dimensions, time_limit))
@@ -2363,7 +2379,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         total_period_score += my_score
         total_period_words += len(words)
         for w in words:
-            w.update({'timestamp': ts, 'room_id': r_id, 'round_number': r_num, 'game_id': g_id})
+            w.update({'timestamp': format_chicago_to_utc(ts), 'room_id': r_id, 'round_number': r_num, 'game_id': g_id})
             all_period_words.append(w)
 
         # Context fetch
@@ -2420,7 +2436,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         pct_found = round(num_words / twa * 100, 1) if twa > 0 else 0
         obscure_count = sum(1 for w in words if isinstance(w, dict) and w.get('word', '').upper() in word_validator.unique_csw_words) if words else 0
         processed = {
-            'game_id': g_id, 'room_id': r_id, 'round_number': r_num, 'timestamp': ts,
+            'game_id': g_id, 'room_id': r_id, 'round_number': r_num, 'timestamp': format_chicago_to_utc(ts),
             'total_score': my_score, 'num_words': len(words), 'is_win': is_win,
             'avg_len': avg_l,
             'ratio': ratio, 'performance_value': perf_val,
@@ -5081,7 +5097,7 @@ def get_leaderboard_data():
                        ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.total_score DESC, rh.timestamp DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
-                WHERE {base_where} AND (rh.board_format IS NULL OR rh.board_format != 'Valued Letters')
+                WHERE {base_where}
             ) sub WHERE rn = 1
             ORDER BY total_score DESC, timestamp DESC LIMIT 50
         """, params).fetchall()
@@ -5095,7 +5111,7 @@ def get_leaderboard_data():
                        ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.best_word_score DESC, rh.timestamp DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
-                WHERE {base_where} AND rh.best_word IS NOT NULL AND (rh.board_format IS NULL OR rh.board_format != 'Valued Letters')
+                WHERE {base_where} AND rh.best_word IS NOT NULL
             ) sub WHERE rn = 1
             ORDER BY best_word_score DESC, timestamp DESC LIMIT 50
         """, params).fetchall()
@@ -5109,7 +5125,7 @@ def get_leaderboard_data():
                        ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.performance_ratio DESC, rh.timestamp DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
-                WHERE {base_where} AND rh.performance_ratio > 0 AND (rh.board_format IS NULL OR rh.board_format != 'Valued Letters')
+                WHERE {base_where} AND rh.performance_ratio > 0
             ) sub WHERE rn = 1
             ORDER BY performance_ratio DESC, timestamp DESC LIMIT 50
         """, params).fetchall()
@@ -5169,7 +5185,7 @@ def get_leaderboard_data():
                    u.username, u.country_flag, u.avatar_url
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
-            WHERE {base_where} AND (rh.board_format IS NULL OR rh.board_format != 'Valued Letters')
+            WHERE {base_where}
             GROUP BY u.id
             HAVING games >= 1
             ORDER BY avg_score DESC LIMIT 50
@@ -5182,7 +5198,7 @@ def get_leaderboard_data():
                    rh.round_duration, rh.id, rh.game_type
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
-            WHERE {base_where} AND (rh.board_format IS NULL OR rh.board_format != 'Valued Letters')
+            WHERE {base_where}
             ORDER BY rh.total_score DESC
             LIMIT {_row_cap}
         """, params).fetchall()
@@ -5297,8 +5313,16 @@ def get_leaderboard_data():
                 WHERE {base_where} GROUP BY u.id ORDER BY rating DESC LIMIT 1000
             """, params).fetchall()
 
-        def to_list(rows):
-            return [dict(r) for r in rows]
+        def format_result_timestamps(lst):
+            formatted = []
+            for item in lst:
+                d = dict(item)
+                if 'timestamp' in d:
+                    d['timestamp'] = format_chicago_to_utc(d['timestamp'])
+                if 'last_active' in d:
+                    d['last_active'] = format_chicago_to_utc(d['last_active'])
+                formatted.append(d)
+            return formatted
 
         pes_processed = []
         for r in pes:
@@ -5312,16 +5336,16 @@ def get_leaderboard_data():
             pes_processed.append(d)
 
         result = {
-            'best_scores':    to_list(scores),
-            'best_words':     to_list(words),
-            'best_pes':       pes_processed,
-            'best_pcts':      best_pcts,
-            'best_ratings':   to_list(ratings),
-            'avg_scores':     to_list(avgs),
-            'current_ratings': to_list(current_ratings),
-            'most_games':     to_list(most_games),
-            'best_avg_pcts':  best_avg_pcts,
-            'best_obscure':   best_obscure
+            'best_scores':    format_result_timestamps(scores),
+            'best_words':     format_result_timestamps(words),
+            'best_pes':       format_result_timestamps(pes_processed),
+            'best_pcts':      format_result_timestamps(best_pcts),
+            'best_ratings':   format_result_timestamps(ratings),
+            'avg_scores':     format_result_timestamps(avgs),
+            'current_ratings': format_result_timestamps(current_ratings),
+            'most_games':     format_result_timestamps(most_games),
+            'best_avg_pcts':  format_result_timestamps(best_avg_pcts),
+            'best_obscure':   format_result_timestamps(best_obscure)
         }
 
         # Store in TTL cache
