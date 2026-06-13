@@ -653,7 +653,7 @@ function debounce(func, wait) {
             btn.classList.add('active');
             
             if (typeof window.updateIntermissionBellSource === 'function') {
-                window.updateIntermissionBellSource();
+                window.updateIntermissionBellSource(true);
             }
             
             playPreviewBell(bell);

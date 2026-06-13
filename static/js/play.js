@@ -33,13 +33,24 @@ let timerFormatIs24h = false;     // Cached format to prevent flashing between H
 // Global audio object to bypass mobile autoplay restrictions
 window.intermissionBellAudio = new Audio();
 
-window.updateIntermissionBellSource = function() {
+window.updateIntermissionBellSource = function(isGesture = false) {
     if (window.intermissionBellAudio) {
         const bellType = (window.userSettings && window.userSettings.next_round_bell_type) || 'bell1';
-        if (!window.intermissionBellAudio.src || !window.intermissionBellAudio.src.includes(bellType)) {
-            window.intermissionBellAudio.src = `/static/audio/${bellType}.wav`;
+        const expectedSrc = `/static/audio/${bellType}.wav`;
+        const srcChanged = !window.intermissionBellAudio.src || !window.intermissionBellAudio.src.includes(bellType);
+        const needsUnlock = isGesture && !window.intermissionBellAudio._unlocked;
+
+        if (srcChanged || needsUnlock) {
+            window.intermissionBellAudio.src = expectedSrc;
             try {
                 window.intermissionBellAudio.load();
+                if (isGesture) {
+                    window.intermissionBellAudio._unlocked = true;
+                    console.log(`[play.js] Intermission bell audio unlocked with source: ${bellType}`);
+                } else {
+                    window.intermissionBellAudio._unlocked = false;
+                    console.log(`[play.js] Intermission bell audio source updated outside gesture to: ${bellType}`);
+                }
             } catch (e) {
                 console.warn('[play.js] Failed to load intermission bell audio:', e);
             }
@@ -48,12 +59,17 @@ window.updateIntermissionBellSource = function() {
 };
 
 document.addEventListener('click', () => {
-    window.updateIntermissionBellSource();
-    const tripleMusic = document.getElementById('triple-music');
-    if (tripleMusic) {
-        tripleMusic.load();
+    if (window.intermissionBellAudio && !window.intermissionBellAudio._unlocked) {
+        window.updateIntermissionBellSource(true);
     }
-}, { once: true });
+    const tripleMusic = document.getElementById('triple-music');
+    if (tripleMusic && !tripleMusic._unlocked) {
+        try {
+            tripleMusic.load();
+            tripleMusic._unlocked = true;
+        } catch (e) {}
+    }
+});
 
 // Sound effects system using Web Audio API
 const BoardAudio = {
@@ -3736,6 +3752,7 @@ function updateLocalTimer() {
                     audio.src = `/static/audio/${bellType}.wav`;
                     try {
                         audio.load();
+                        audio._unlocked = false;
                     } catch (e) {
                         console.warn('[play.js] Failed to load audio src on trigger:', e);
                     }
