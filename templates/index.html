@@ -1152,12 +1152,12 @@
                                         placeholder="Join the conversation..."></textarea>
                                     
                                     <div id="forum-comment-image-upload" class="forum-upload-group" style="padding: 10px; margin-bottom: 10px; border-width: 1px; border-style: solid;">
-                                        <label for="forum-comment-image" id="forum-comment-image-wrapper" style="width: 100%; height: 40px; display: block; position: relative; cursor: pointer; margin: 0; padding: 0;">
+                                        <div id="forum-comment-image-wrapper" style="width: 100%; height: 40px; display: block; position: relative; cursor: pointer; margin: 0; padding: 0;">
                                             <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); font-size: 0.8rem; box-sizing: border-box; padding: 10px; transition: all 0.2s ease;">
                                                 <span class="file-text">📎 Attach an image (optional)</span>
                                             </div>
-                                            <input type="file" id="forum-comment-image" accept="image/*" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; opacity: 0; pointer-events: none;">
-                                        </label>
+                                            <input type="file" id="forum-comment-image" accept="image/*" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; opacity: 0;">
+                                        </div>
                                         <div id="forum-comment-image-preview" class="image-preview hidden" style="max-height: 150px; margin-top: 5px;"></div>
                                     </div>
 
@@ -1192,12 +1192,12 @@
                                 </div>
                                 <div id="forum-image-upload-section" class="forum-upload-group hidden">
                                     <label>Attach Image</label>
-                                    <label for="forum-post-image" id="forum-post-image-wrapper" style="width: 100%; height: 60px; display: block; position: relative; cursor: pointer; margin: 0; padding: 0;">
+                                    <div id="forum-post-image-wrapper" style="width: 100%; height: 60px; display: block; position: relative; cursor: pointer; margin: 0; padding: 0;">
                                         <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); font-size: 1rem; box-sizing: border-box; padding: 20px; transition: all 0.2s ease;">
                                             <span class="file-text">Click to choose a file or drag and drop</span>
                                         </div>
-                                        <input type="file" id="forum-post-image" accept="image/*" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; opacity: 0; pointer-events: none;">
-                                    </label>
+                                        <input type="file" id="forum-post-image" accept="image/*" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; opacity: 0;">
+                                    </div>
                                     <div id="forum-image-preview" class="image-preview hidden">
                                     </div>
                                 </div>
@@ -1340,12 +1340,12 @@
                                     <!-- Left Column: Avatar -->
                                      <div class="profile-left-column">
                                          <div class="profile-avatar-container">
-                                             <label for="profile-avatar-input" id="profile-avatar-trigger" title="Click to upload photo" style="width: 100%; height: 100%; cursor: pointer; position: relative; display: block; border-radius: inherit; margin: 0; padding: 0;">
+                                             <div id="profile-avatar-trigger" title="Click to upload photo" style="width: 100%; height: 100%; cursor: pointer; position: relative; display: block; border-radius: inherit; margin: 0; padding: 0;">
                                                  <div class="profile-avatar large" style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; border-radius: inherit;">
                                                      ?
                                                  </div>
-                                                 <input type="file" id="profile-avatar-input" accept="image/*" disabled style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; opacity: 0; pointer-events: none;">
-                                             </label>
+                                                 <input type="file" id="profile-avatar-input" accept="image/*" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; opacity: 0;">
+                                             </div>
                                          </div>
                                      </div>
 
@@ -2216,10 +2216,10 @@
                         </p>
                         <div id="dict-upload-status" style="min-height: 20px; margin-bottom: 12px; font-weight: 700; font-size: 0.9rem;"></div>
                         <div class="dict-upload-row" style="display: flex; gap: 12px; align-items: center;">
-                            <label for="dict-upload-input" id="dict-upload-wrapper" style="flex: 1; display: block; position: relative; margin: 0; cursor: pointer; border-radius: 5px; padding: 0;">
+                            <div id="dict-upload-wrapper" style="flex: 1; display: block; position: relative; margin: 0; cursor: pointer; border-radius: 5px; padding: 0;">
                                 <div class="mod-full-btn" id="dict-upload-trigger-btn" style="background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-primary); font-weight: 600; box-sizing: border-box; text-align: center; padding: 10px 15px;">Select .txt File</div>
-                                <input type="file" id="dict-upload-input" accept=".txt" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; opacity: 0; pointer-events: none;">
-                            </label>
+                                <input type="file" id="dict-upload-input" accept=".txt" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; opacity: 0;">
+                            </div>
                             <button id="dict-submit-db-btn" class="mod-full-btn add" style="flex: 1; font-weight: 800; margin: 0;">Submit to Database</button>
                         </div>
                 </div>
@@ -4546,15 +4546,15 @@
     </div>
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=17"></script>
-    <script src="/js/forum.js?v=47"></script>
+    <script src="/js/forum.js?v=48"></script>
     <script src="/js/app.js?v=42"></script>
     <script src="/js/lobby.js?v=7"></script>
     <script src="/js/play.js?v=153"></script>
     <script src="/js/tournaments.js?v=2"></script>
     <script src="/js/leaderboard.js?v=3"></script>
-    <script src="/js/tools.js?v=53"></script>
+    <script src="/js/tools.js?v=54"></script>
     <script src="/js/mouse_selection.js?v=3"></script>
-    <script src="/js/mods.js?v=8"></script>
+    <script src="/js/mods.js?v=9"></script>
     <script src="/js/private_matches.js?v=3"></script>
     <script src="/js/donate.js?v=2"></script>
     
@@ -4584,32 +4584,40 @@
 
         document.addEventListener('click', function(e) {
             console.log("[MorphemeBridge] Click detected on element:", e.target);
-            if (typeof MorphemeFilePicker !== 'undefined') {
-                const wrapper = e.target.closest('#forum-comment-image-wrapper, #forum-post-image-wrapper, #profile-avatar-trigger, #dict-upload-wrapper');
+            const wrapper = e.target.closest('#forum-comment-image-wrapper, #forum-post-image-wrapper, #profile-avatar-trigger, #dict-upload-wrapper');
+            if (wrapper) {
                 console.log("[MorphemeBridge] Found closest upload wrapper:", wrapper);
-                if (wrapper) {
-                    const inputMap = {
-                        'forum-comment-image-wrapper': 'forum-comment-image',
-                        'forum-post-image-wrapper': 'forum-post-image',
-                        'profile-avatar-trigger': 'profile-avatar-input',
-                        'dict-upload-wrapper': 'dict-upload-input'
-                    };
-                    const inputId = inputMap[wrapper.id];
-                    console.log("[MorphemeBridge] Mapped inputId:", inputId);
-                    if (inputId) {
-                        const input = document.getElementById(inputId);
-                        if (input && input.disabled) {
+                const inputMap = {
+                    'forum-comment-image-wrapper': 'forum-comment-image',
+                    'forum-post-image-wrapper': 'forum-post-image',
+                    'profile-avatar-trigger': 'profile-avatar-input',
+                    'dict-upload-wrapper': 'dict-upload-input'
+                };
+                const inputId = inputMap[wrapper.id];
+                console.log("[MorphemeBridge] Mapped inputId:", inputId);
+                if (inputId) {
+                    const input = document.getElementById(inputId);
+                    if (input) {
+                        if (input.disabled) {
                             console.log("[MorphemeBridge] Input is disabled, ignoring click.");
                             return;
                         }
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log("[MorphemeBridge] Posting message to MorphemeFilePicker:", inputId);
-                        MorphemeFilePicker.postMessage(inputId);
+                        if (typeof MorphemeFilePicker !== 'undefined') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log("[MorphemeBridge] Posting message to MorphemeFilePicker:", inputId);
+                            MorphemeFilePicker.postMessage(inputId);
+                        } else {
+                            if (e.target !== input) {
+                                e.preventDefault();
+                                console.log("[MorphemeBridge] Programmatically triggering input click for standard browser:", inputId);
+                                input.click();
+                            } else {
+                                console.log("[MorphemeBridge] Click event originated from the input itself, letting it proceed.");
+                            }
+                        }
                     }
                 }
-            } else {
-                console.log("[MorphemeBridge] MorphemeFilePicker channel is NOT defined (standard browser environment).");
             }
         }, true);
     </script>
