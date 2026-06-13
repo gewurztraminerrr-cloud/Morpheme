@@ -4060,78 +4060,15 @@ class RoomManager:
                 # --- 2. BOARD & WORD PROMOTION ---
                 # EMERGENCY SAFETY: If for any reason staging is empty, force a fast fallback board NOW
                 if not room.next_round_board or not room.next_round_words:
-                    print(f"[REMAINING-STABILIZER] Staging empty for {room_id} at promotion. Forcing emergency fallbackboard.")
-                    from board_generator import BoardGenerator
-                    bg = BoardGenerator()
-                    target_range = room.spinner_params.get('word_count_range', '100-200')
+                    print(f"[REMAINING-STABILIZER] Staging empty for {room_id} at promotion. Forcing emergency fallback board instantly.")
                     if room.time_limit >= 7200:
                         room.current_board_format = 'Valued Letters'
                         room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
                         room.current_min_length = int(room.spinner_params.get('min_word_length', 3))
                     
-                    # Ensure next_round_bonus is populated for the generator
-                    e_bonus = getattr(room, 'next_round_bonus', '')
-                    if not e_bonus:
-                        bw_l = room.spinner_params.get('bonus_word_length', 8)
-                        e_bonus = self._get_bonus_word(
-                            length=bw_l,
-                            dictionary=room.current_dictionary,
-                            alternating=('checkerboard' in str(room.current_board_format).lower())
-                        )
-                        room.next_round_bonus = e_bonus
-                        
-                    e_params = dict(room.spinner_params)
-                    e_attempts = 0
-                    e_results = None
-                    while e_attempts < 4:
-                        if room.spinner_params != e_params:
-                            print(f"[RoomManager] Aborting stale emergency board generation for {room_id}: Spinner parameters have changed.")
-                            room.starting_round = False
-                            return False
-                        import random
-                        random.seed()
-                        
-                        use_aw_flag = e_params.get('use_added_words', False)
-                        token = use_added_words_ctx.set(use_aw_flag)
-                        try:
-                            e_results = bg.generate_board(
-                                dimensions=room.board_dimensions, 
-                                bonus_word=e_bonus,
-                                word_count_range=target_range,
-                                dictionary=room.current_dictionary,
-                                board_format=room.current_board_format,
-                                min_word_length=room.current_min_length,
-                                difficulty=room.current_difficulty,
-                                is_emergency=True
-                            )
-                        except Exception as e:
-                            print(f"[RoomManager] Emergency generate_board at promotion failed: {e}")
-                            e_results = None
-                        finally:
-                            use_added_words_ctx.reset(token)
-                            
-                        if e_results:
-                            if len(e_results) == 7:
-                                e_board = e_results[0]
-                            else:
-                                e_board = e_results[0]
-                                
-                            # Compare to current board and previous round board to guarantee uniqueness
-                            if getattr(room, 'board', None) != e_board and getattr(room, 'previous_board', None) != e_board:
-                                break
-                            print(f"[RoomManager] WARNING: Fallback generated board is IDENTICAL to current/previous board. Retrying...")
-                        e_attempts += 1
-                        
-                    # Robust Unpacking: Support both 6-tuple and 7-tuple returns
-                    if e_results:
-                        if len(e_results) == 7:
-                            e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio, e_bonus_word = e_results
-                        else:
-                            e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio = e_results
-                            e_bonus_word = getattr(room, 'next_round_bonus', '')
-                    else:
-                        print(f"[RoomManager] Dynamic emergency board fallback in emergency promotion!")
-                        e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio, e_bonus_word = get_emergency_fallback_board(room.board_dimensions, room.current_board_format, room.time_limit)
+                    e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio, e_bonus_word = get_emergency_fallback_board(
+                        room.board_dimensions, room.current_board_format, room.time_limit
+                    )
                     
                     room.next_round_board = e_board
                     room.next_round_words = e_words
@@ -4139,6 +4076,10 @@ class RoomManager:
                     room.next_round_total_words_count = len(e_words)
                     room.next_round_bonus = e_bonus_word
                     room.next_round_format = e_fmt
+                    room.next_round_bonus_cell = e_bonus_c
+                    room.next_round_uniqueness = e_ratio
+                    
+                    room.initialize_density(e_board, e_paths, e_fmt, is_staging=True)
                     
                     if hasattr(word_validator, 'word_validator'):
                         room.next_round_csw_only_words = [w for w in e_words if word_validator.word_validator.is_csw_only(w)]
