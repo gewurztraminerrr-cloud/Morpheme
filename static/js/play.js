@@ -49,6 +49,7 @@ const BoardAudio = {
     ctx: null,
     _keepAliveNode: null,
     _keepAliveGain: null,
+    _silentHtmlAudio: null,
     
     init() {
         if (this.ctx) return;
@@ -73,7 +74,34 @@ const BoardAudio = {
                 }
             };
             
+            // Pre-initialize silent HTML audio background keep-alive
+            this.initSilentHtmlAudio();
             this.keepAlive();
+        }
+    },
+    
+    initSilentHtmlAudio() {
+        if (this._silentHtmlAudio) return;
+        try {
+            // A 1-second 8-bit mono silent WAV file to keep iOS CoreAudio pipeline active
+            const silentWavBase64 = "data:audio/wav;base64,UklGRsQPAABXQVZFZm10IBAAAAABAAEAoA8AAKAPAAABAAgAZGF0YaAPAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgQ==";
+            const audio = new Audio(silentWavBase64);
+            audio.loop = true;
+            audio.volume = 0.001; // completely silent, but active
+            this._silentHtmlAudio = audio;
+        } catch (e) {
+            console.warn("[BoardAudio] Failed to create silent HTML audio:", e);
+        }
+    },
+    
+    playSilentHtmlAudio() {
+        if (!this._silentHtmlAudio) this.initSilentHtmlAudio();
+        if (this._silentHtmlAudio) {
+            this._silentHtmlAudio.play().then(() => {
+                console.log("[BoardAudio] Silent HTML audio loop is actively playing.");
+            }).catch(err => {
+                console.warn("[BoardAudio] Silent HTML audio failed to play:", err);
+            });
         }
     },
     
@@ -146,13 +174,16 @@ const BoardAudio = {
             const step = 50;
             const freq = Math.min(1200, baseFreq + (pathLen * step));
             
-            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            // Add a small 2ms scheduling lookahead to bypass rendering block delays
+            const startTime = this.ctx.currentTime + 0.002;
             
-            gainNode.gain.setValueAtTime(0.08, this.ctx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.05);
+            osc.frequency.setValueAtTime(freq, startTime);
             
-            osc.start();
-            osc.stop(this.ctx.currentTime + 0.05);
+            gainNode.gain.setValueAtTime(0.08, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.05);
+            
+            osc.start(startTime);
+            osc.stop(startTime + 0.05);
         } catch (e) {
             console.warn('Failed to play tile sound:', e);
         }
@@ -185,7 +216,8 @@ const BoardAudio = {
                 osc.stop(startTime + duration);
             };
             
-            const now = this.ctx.currentTime;
+            // Add a small 2ms scheduling lookahead
+            const now = this.ctx.currentTime + 0.002;
             playBeep(523.25, now, 0.08, 0.15); // C5
             playBeep(783.99, now + 0.06, 0.15, 0.15); // G5
         } catch (e) {
@@ -210,14 +242,18 @@ const BoardAudio = {
             gainNode.connect(this.ctx.destination);
             
             osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(150, this.ctx.currentTime);
-            osc.frequency.linearRampToValueAtTime(100, this.ctx.currentTime + 0.18);
             
-            gainNode.gain.setValueAtTime(0.12, this.ctx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.18);
+            // Add a small 2ms scheduling lookahead
+            const startTime = this.ctx.currentTime + 0.002;
             
-            osc.start();
-            osc.stop(this.ctx.currentTime + 0.18);
+            osc.frequency.setValueAtTime(150, startTime);
+            osc.frequency.linearRampToValueAtTime(100, startTime + 0.18);
+            
+            gainNode.gain.setValueAtTime(0.12, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.18);
+            
+            osc.start(startTime);
+            osc.stop(startTime + 0.18);
         } catch (e) {
             console.warn('Failed to play failure sound:', e);
         }
@@ -227,6 +263,7 @@ const BoardAudio = {
 // Warm up and resume AudioContext on user interaction to prevent Bluetooth latency
 const initAudioOnUserInteraction = () => {
     BoardAudio.init();
+    BoardAudio.playSilentHtmlAudio();
     if (BoardAudio.ctx) {
         if (BoardAudio.ctx.state === 'suspended') {
             BoardAudio.ctx.resume().then(() => {
