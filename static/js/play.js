@@ -153,6 +153,14 @@ const BoardAudio = {
     
     playTileSound(pathLen = 1) {
         if (window.userSettings && window.userSettings.board_sounds === false) return;
+        if (typeof MorphemeAudioBridge !== 'undefined') {
+            try {
+                MorphemeAudioBridge.postMessage(JSON.stringify({ sound: 'tile', pathLen: pathLen }));
+            } catch (e) {
+                console.error("MorphemeAudioBridge error:", e);
+            }
+            return;
+        }
         this.init();
         if (!this.ctx) return;
         
@@ -191,6 +199,14 @@ const BoardAudio = {
     
     playSuccessSound() {
         if (window.userSettings && window.userSettings.board_sounds === false) return;
+        if (typeof MorphemeAudioBridge !== 'undefined') {
+            try {
+                MorphemeAudioBridge.postMessage(JSON.stringify({ sound: 'success' }));
+            } catch (e) {
+                console.error("MorphemeAudioBridge error:", e);
+            }
+            return;
+        }
         this.init();
         if (!this.ctx) return;
         
@@ -227,6 +243,14 @@ const BoardAudio = {
     
     playFailureSound() {
         if (window.userSettings && window.userSettings.board_sounds === false) return;
+        if (typeof MorphemeAudioBridge !== 'undefined') {
+            try {
+                MorphemeAudioBridge.postMessage(JSON.stringify({ sound: 'failure' }));
+            } catch (e) {
+                console.error("MorphemeAudioBridge error:", e);
+            }
+            return;
+        }
         this.init();
         if (!this.ctx) return;
         
