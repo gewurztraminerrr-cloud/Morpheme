@@ -45,8 +45,23 @@ window.updateIntermissionBellSource = function(isGesture = false) {
             try {
                 window.intermissionBellAudio.load();
                 if (isGesture) {
-                    window.intermissionBellAudio._unlocked = true;
-                    console.log(`[play.js] Intermission bell audio unlocked with source: ${bellType}`);
+                    // Force play/pause under gesture to unlock programmatic play
+                    const playPromise = window.intermissionBellAudio.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            window.intermissionBellAudio.pause();
+                            window.intermissionBellAudio.currentTime = 0;
+                            window.intermissionBellAudio._unlocked = true;
+                            console.log(`[play.js] Intermission bell audio unlocked via play/pause with source: ${bellType}`);
+                        }).catch(e => {
+                            console.warn('[play.js] Failed gesture play/pause unlock:', e);
+                        });
+                    } else {
+                        window.intermissionBellAudio.pause();
+                        window.intermissionBellAudio.currentTime = 0;
+                        window.intermissionBellAudio._unlocked = true;
+                        console.log(`[play.js] Intermission bell audio unlocked (sync) with source: ${bellType}`);
+                    }
                 } else {
                     window.intermissionBellAudio._unlocked = false;
                     console.log(`[play.js] Intermission bell audio source updated outside gesture to: ${bellType}`);
@@ -65,8 +80,21 @@ const unlockAudio = () => {
     const tripleMusic = document.getElementById('triple-music');
     if (tripleMusic && !tripleMusic._unlocked) {
         try {
-            tripleMusic.load();
-            tripleMusic._unlocked = true;
+            const playPromise = tripleMusic.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    tripleMusic.pause();
+                    tripleMusic.currentTime = 0;
+                    tripleMusic._unlocked = true;
+                    console.log('[play.js] #triple-music successfully unlocked via gesture play/pause');
+                }).catch(e => {
+                    console.warn('[play.js] Failed to unlock #triple-music:', e);
+                });
+            } else {
+                tripleMusic.pause();
+                tripleMusic.currentTime = 0;
+                tripleMusic._unlocked = true;
+            }
         } catch (e) {}
     }
 };
