@@ -4609,7 +4609,6 @@
                             MorphemeFilePicker.postMessage(inputId);
                         } else {
                             if (e.target !== input) {
-                                e.preventDefault();
                                 console.log("[MorphemeBridge] Programmatically triggering input click for standard browser:", inputId);
                                 input.click();
                             } else {
