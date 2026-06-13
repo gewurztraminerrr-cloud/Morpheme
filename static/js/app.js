@@ -275,6 +275,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 };
 
                 gatewayBtn.onclick = handleGatewayTransition;
+
+                // Force press-down effect on mobile (iOS :active is unreliable without a touch listener)
+                gatewayBtn.addEventListener('touchstart', () => {
+                    gatewayBtn.classList.add('pressed');
+                }, { passive: true });
+                gatewayBtn.addEventListener('touchend', () => {
+                    setTimeout(() => gatewayBtn.classList.remove('pressed'), 200);
+                }, { passive: true });
+                gatewayBtn.addEventListener('touchcancel', () => {
+                    gatewayBtn.classList.remove('pressed');
+                }, { passive: true });
             } else {
                 // Fallback if elements not in DOM
                 showPage('page-lobby');

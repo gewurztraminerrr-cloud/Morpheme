@@ -6299,13 +6299,15 @@ select option,
     text-shadow: 0 0 12px rgba(255, 255, 255, 0.85);
 }
 
-.neon-gateway-btn:active {
+.neon-gateway-btn:active,
+.neon-gateway-btn.pressed {
     transform: translateY(2px) scale(0.97);
     box-shadow: 0 2px 8px rgba(255, 0, 127, 0.15), inset 0 0 24px rgba(0, 0, 0, 0.5);
     filter: brightness(0.88);
     transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
     animation: none;
 }
+
 
 @keyframes pulseGlow {
     0% {
