@@ -1320,7 +1320,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['FORUM_UPLOAD_FOLDER'] = FORUM_UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB Limit
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB Limit
 
 # Ensure upload directories exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)

@@ -615,15 +615,71 @@ async function updateFlag(flag) {
     }
 }
 
-async function uploadAvatar(file) {
-    const formData = new FormData();
-    formData.append('avatar', file);
+function compressImage(file, maxDimension, quality = 0.8) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                let width = img.width;
+                let height = img.height;
 
+                if (width > maxDimension || height > maxDimension) {
+                    if (width > height) {
+                        height = Math.round((height * maxDimension) / width);
+                        width = maxDimension;
+                    } else {
+                        width = Math.round((width * maxDimension) / height);
+                        height = maxDimension;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        const name = file.name.substring(0, file.name.lastIndexOf('.')) + '.jpg';
+                        const compressedFile = new File([blob], name, { type: 'image/jpeg', lastModified: Date.now() });
+                        resolve(compressedFile);
+                    } else {
+                        reject(new Error("Canvas to Blob failed"));
+                    }
+                }, 'image/jpeg', quality);
+            };
+            img.onerror = (err) => reject(err);
+        };
+        reader.onerror = (err) => reject(err);
+    });
+}
+
+async function uploadAvatar(file) {
     const avatarEl = document.querySelector('.profile-avatar');
     const originalContent = avatarEl.innerHTML;
 
     // Optimistic UI
     avatarEl.innerHTML = '<span style="font-size:12px">...</span>';
+
+    let processedFile = file;
+    if (file && file.type !== 'image/gif') {
+        try {
+            processedFile = await compressImage(file, 300, 0.8);
+        } catch (e) {
+            console.error("Avatar compression failed, uploading original:", e);
+        }
+    } else if (file && file.size > 2 * 1024 * 1024) {
+        alert("GIF files must be under 2MB.");
+        avatarEl.innerHTML = originalContent;
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('avatar', processedFile);
 
     try {
         const response = await fetch('/api/profile/upload_avatar', {

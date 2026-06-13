@@ -753,16 +753,43 @@ const Forum = {
         const title = document.getElementById('forum-post-title').value;
         const content = document.getElementById('forum-post-content').value;
         const catId = document.getElementById('forum-post-category-id').value;
-        const imageFile = document.getElementById('forum-post-image').files[0];
+        const imageFile = document.getElementById('forum-post-image') ? document.getElementById('forum-post-image').files[0] : null;
 
         if (!title || !content) return;
+
+        // Visual loading feedback
+        const submitPostBtn = document.querySelector('#forum-post-form button[type="submit"]');
+        const originalBtnText = submitPostBtn ? submitPostBtn.textContent : 'Create Post';
+        if (submitPostBtn) {
+            submitPostBtn.disabled = true;
+            submitPostBtn.textContent = 'Posting...';
+        }
 
         const formData = new FormData();
         formData.append('category_id', catId);
         formData.append('title', title);
         formData.append('content', content);
+
         if (imageFile) {
-            formData.append('image', imageFile);
+            if (imageFile.type === 'image/gif') {
+                if (imageFile.size > 2 * 1024 * 1024) {
+                    alert("GIF files must be under 2MB.");
+                    if (submitPostBtn) {
+                        submitPostBtn.disabled = false;
+                        submitPostBtn.textContent = originalBtnText;
+                    }
+                    return;
+                }
+                formData.append('image', imageFile);
+            } else {
+                try {
+                    const compressed = await this.compressImage(imageFile, 1200, 0.8);
+                    formData.append('image', compressed);
+                } catch (err) {
+                    console.error("[Forum] Compression failed, uploading original:", err);
+                    formData.append('image', imageFile);
+                }
+            }
         }
 
         try {
@@ -779,11 +806,16 @@ const Forum = {
                 await this.loadCategories(); // Refresh ALL side buttons first
                 await this.selectCategory(this.currentCategoryId); // Then load posts for the current one
             } else {
-                alert(data.error);
+                alert(data.error || "Failed to create post.");
             }
         } catch (err) {
             console.error("[Forum] Post submit error:", err);
             alert("Failed to create post.");
+        } finally {
+            if (submitPostBtn) {
+                submitPostBtn.disabled = false;
+                submitPostBtn.textContent = originalBtnText;
+            }
         }
     },
 
@@ -793,11 +825,38 @@ const Forum = {
 
         if (!content) return;
 
+        // Visual loading feedback
+        const submitCommentBtn = document.getElementById('forum-submit-comment');
+        const originalBtnText = submitCommentBtn ? submitCommentBtn.textContent : 'Post Comment';
+        if (submitCommentBtn) {
+            submitCommentBtn.disabled = true;
+            submitCommentBtn.textContent = 'Posting...';
+        }
+
         const formData = new FormData();
         formData.append('post_id', this.currentPostId);
         formData.append('content', content);
+
         if (imageFile) {
-            formData.append('image', imageFile);
+            if (imageFile.type === 'image/gif') {
+                if (imageFile.size > 2 * 1024 * 1024) {
+                    alert("GIF files must be under 2MB.");
+                    if (submitCommentBtn) {
+                        submitCommentBtn.disabled = false;
+                        submitCommentBtn.textContent = originalBtnText;
+                    }
+                    return;
+                }
+                formData.append('image', imageFile);
+            } else {
+                try {
+                    const compressed = await this.compressImage(imageFile, 1200, 0.8);
+                    formData.append('image', compressed);
+                } catch (err) {
+                    console.error("[Forum] Compression failed, uploading original:", err);
+                    formData.append('image', imageFile);
+                }
+            }
         }
 
         try {
@@ -815,12 +874,60 @@ const Forum = {
                 await this.loadCategories(); // Refresh side buttons (to clear/update gold)
                 await this.loadPostDetail(this.currentPostId);
             } else {
-                alert(data.error);
+                alert(data.error || "Failed to post comment.");
             }
         } catch (err) {
             console.error("[Forum] Comment submit error:", err);
             alert("Failed to post comment.");
+        } finally {
+            if (submitCommentBtn) {
+                submitCommentBtn.disabled = false;
+                submitCommentBtn.textContent = originalBtnText;
+            }
         }
+    },
+
+    compressImage: function (file, maxDimension, quality = 0.8) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > maxDimension || height > maxDimension) {
+                        if (width > height) {
+                            height = Math.round((height * maxDimension) / width);
+                            width = maxDimension;
+                        } else {
+                            width = Math.round((width * maxDimension) / height);
+                            height = maxDimension;
+                        }
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            const name = file.name.substring(0, file.name.lastIndexOf('.')) + '.jpg';
+                            const compressedFile = new File([blob], name, { type: 'image/jpeg', lastModified: Date.now() });
+                            resolve(compressedFile);
+                        } else {
+                            reject(new Error("Canvas to Blob failed"));
+                        }
+                    }, 'image/jpeg', quality);
+                };
+                img.onerror = (err) => reject(err);
+            };
+            reader.onerror = (err) => reject(err);
+        });
     },
 
     handleImagePreview: function (e, previewId) {
