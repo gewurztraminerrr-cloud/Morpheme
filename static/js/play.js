@@ -58,7 +58,7 @@ window.updateIntermissionBellSource = function(isGesture = false) {
     }
 };
 
-document.addEventListener('click', () => {
+const unlockAudio = () => {
     if (window.intermissionBellAudio && !window.intermissionBellAudio._unlocked) {
         window.updateIntermissionBellSource(true);
     }
@@ -69,7 +69,10 @@ document.addEventListener('click', () => {
             tripleMusic._unlocked = true;
         } catch (e) {}
     }
-});
+};
+
+document.addEventListener('click', unlockAudio);
+document.addEventListener('touchstart', unlockAudio);
 
 // Sound effects system using Web Audio API
 const BoardAudio = {
