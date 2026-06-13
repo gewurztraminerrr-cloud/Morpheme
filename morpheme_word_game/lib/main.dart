@@ -46,6 +46,8 @@ class _GameScreenState extends State<GameScreen> {
   final Map<String, AudioSource> _bellSources = {};
   AudioSource? _successSource;
   AudioSource? _failureSource;
+  AudioSource? _keepAliveSource;
+  SoundHandle? _keepAliveHandle;
   bool _soLoudInitialized = false;
 
   void _playSound(AudioSource? source) {
@@ -65,21 +67,6 @@ class _GameScreenState extends State<GameScreen> {
 
   Future<void> _initAudio() async {
     try {
-      // Configure audio session to use standard playback category to allow webview audio to play normally
-      final session = await AudioSession.instance;
-      await session.configure(AudioSessionConfiguration(
-        avAudioSessionCategory: AVAudioSessionCategory.playback,
-        avAudioSessionCategoryOptions: AVAudioSessionCategoryOptions.mixWithOthers,
-        avAudioSessionMode: AVAudioSessionMode.defaultMode,
-        avAudioSessionRouteSharingPolicy: AVAudioSessionRouteSharingPolicy.defaultPolicy,
-        androidAudioAttributes: const AndroidAudioAttributes(
-          contentType: AndroidAudioContentType.music,
-          usage: AndroidAudioUsage.game,
-        ),
-        androidAudioFocusGainType: AndroidAudioFocusGainType.gain,
-      ));
-      await session.setActive(true);
-
       final soloud = SoLoud.instance;
       // Set a small buffer size (512) for ultra-low latency
       await soloud.init(bufferSize: 512);
@@ -98,16 +85,99 @@ class _GameScreenState extends State<GameScreen> {
         _bellSources[type] = source;
       }
 
-      // Start the 30Hz keep-alive loop to prevent Bluetooth from sleeping
-      final keepAliveSource = await soloud.loadAsset('assets/sounds/keep_alive.wav');
-      soloud.play(keepAliveSource, looping: true, volume: 0.02);
+      // Load keep-alive source
+      _keepAliveSource = await soloud.loadAsset('assets/sounds/keep_alive.wav');
 
       setState(() {
         _soLoudInitialized = true;
       });
-      debugPrint("SoLoud audio engine initialized successfully with low latency buffer and keep-alive");
+      debugPrint("SoLoud audio engine initialized successfully with low latency buffer");
+
+      // Listen to audio session routing changes
+      final session = await AudioSession.instance;
+      session.devicesChangedEventStream.listen((event) {
+        debugPrint("[AudioSession] Audio devices changed. Reconfiguring session...");
+        _configureAudioSession();
+      });
+
+      // Initial session configuration
+      await _configureAudioSession();
     } catch (e) {
       debugPrint("Error initializing SoLoud: $e");
+    }
+  }
+
+  Future<void> _configureAudioSession() async {
+    try {
+      final session = await AudioSession.instance;
+      final devices = await session.getDevices();
+      bool hasBluetooth = false;
+      for (final device in devices) {
+        if (device.type == AudioDeviceType.bluetoothA2dp ||
+            device.type == AudioDeviceType.bluetoothSco ||
+            device.type == AudioDeviceType.bluetoothLe) {
+          hasBluetooth = true;
+          break;
+        }
+      }
+
+      if (hasBluetooth) {
+        debugPrint("[AudioSession] Bluetooth device detected. Setting category to playAndRecord and mode to voiceChat...");
+        await session.configure(AudioSessionConfiguration(
+          avAudioSessionCategory: AVAudioSessionCategory.playAndRecord,
+          avAudioSessionCategoryOptions: AVAudioSessionCategoryOptions.allowBluetooth |
+              AVAudioSessionCategoryOptions.defaultToSpeaker,
+          avAudioSessionMode: AVAudioSessionMode.voiceChat,
+          avAudioSessionRouteSharingPolicy: AVAudioSessionRouteSharingPolicy.defaultPolicy,
+          androidAudioAttributes: const AndroidAudioAttributes(
+            contentType: AndroidAudioContentType.music,
+            usage: AndroidAudioUsage.game,
+          ),
+          androidAudioFocusGainType: AndroidAudioFocusGainType.gain,
+        ));
+
+        // Start native 30Hz keep-alive to keep Bluetooth active
+        _updateKeepAlive(true);
+      } else {
+        debugPrint("[AudioSession] Standard playback detected. Setting category to playback...");
+        await session.configure(AudioSessionConfiguration(
+          avAudioSessionCategory: AVAudioSessionCategory.playback,
+          avAudioSessionCategoryOptions: AVAudioSessionCategoryOptions.mixWithOthers,
+          avAudioSessionMode: AVAudioSessionMode.defaultMode,
+          avAudioSessionRouteSharingPolicy: AVAudioSessionRouteSharingPolicy.defaultPolicy,
+          androidAudioAttributes: const AndroidAudioAttributes(
+            contentType: AndroidAudioContentType.music,
+            usage: AndroidAudioUsage.game,
+          ),
+          androidAudioFocusGainType: AndroidAudioFocusGainType.gain,
+        ));
+
+        // Stop native 30Hz keep-alive to save battery
+        _updateKeepAlive(false);
+      }
+      await session.setActive(true);
+    } catch (e) {
+      debugPrint("Error configuring AudioSession: $e");
+    }
+  }
+
+  void _updateKeepAlive(bool enable) {
+    if (!_soLoudInitialized || _keepAliveSource == null) return;
+    try {
+      if (enable) {
+        if (_keepAliveHandle == null) {
+          _keepAliveHandle = SoLoud.instance.play(_keepAliveSource!, looping: true, volume: 0.02);
+          debugPrint("[SoLoud] Native Bluetooth keep-alive loop started.");
+        }
+      } else {
+        if (_keepAliveHandle != null) {
+          SoLoud.instance.stop(_keepAliveHandle!);
+          _keepAliveHandle = null;
+          debugPrint("[SoLoud] Native Bluetooth keep-alive loop stopped.");
+        }
+      }
+    } catch (e) {
+      debugPrint("Error updating keep-alive: $e");
     }
   }
 

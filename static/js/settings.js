@@ -653,19 +653,19 @@ function debounce(func, wait) {
             btn.classList.add('active');
             
             if (typeof window.updateIntermissionBellSource === 'function') {
-                window.updateIntermissionBellSource(true);
+                window.updateIntermissionBellSource();
             }
             
             playPreviewBell(bell);
             saveSettingDebounced('next_round_bell_type', bell);
         });
     });
-
+ 
     function playPreviewBell(type) {
         if (typeof MorphemeAudioBridge !== 'undefined') {
             try {
-                // Send success chime natively for mobile app wrappers
-                MorphemeAudioBridge.postMessage(JSON.stringify({ sound: 'success' }));
+                // Send bell chime natively for mobile app wrappers
+                MorphemeAudioBridge.postMessage(JSON.stringify({ sound: 'bell', type: type }));
             } catch (e) {
                 console.error("MorphemeAudioBridge error:", e);
             }

@@ -33,179 +33,40 @@ let timerFormatIs24h = false;     // Cached format to prevent flashing between H
 // Global audio object to bypass mobile autoplay restrictions
 window.intermissionBellAudio = new Audio();
 
-window.updateIntermissionBellSource = function(isGesture = false) {
+window.updateIntermissionBellSource = function() {
     if (window.intermissionBellAudio) {
         const bellType = (window.userSettings && window.userSettings.next_round_bell_type) || 'bell1';
-        const expectedSrc = `/static/audio/${bellType}.wav`;
-        const srcChanged = !window.intermissionBellAudio.src || !window.intermissionBellAudio.src.includes(bellType);
-        const needsUnlock = isGesture && !window.intermissionBellAudio._unlocked;
-
-        if (srcChanged || needsUnlock) {
-            window.intermissionBellAudio.src = expectedSrc;
-            try {
-                window.intermissionBellAudio.load();
-                if (isGesture) {
-                    // Force play/pause under gesture to unlock programmatic play
-                    const playPromise = window.intermissionBellAudio.play();
-                    if (playPromise !== undefined) {
-                        playPromise.then(() => {
-                            window.intermissionBellAudio.pause();
-                            window.intermissionBellAudio.currentTime = 0;
-                            window.intermissionBellAudio._unlocked = true;
-                            console.log(`[play.js] Intermission bell audio unlocked via play/pause with source: ${bellType}`);
-                        }).catch(e => {
-                            console.warn('[play.js] Failed gesture play/pause unlock:', e);
-                        });
-                    } else {
-                        window.intermissionBellAudio.pause();
-                        window.intermissionBellAudio.currentTime = 0;
-                        window.intermissionBellAudio._unlocked = true;
-                        console.log(`[play.js] Intermission bell audio unlocked (sync) with source: ${bellType}`);
-                    }
-                } else {
-                    window.intermissionBellAudio._unlocked = false;
-                    console.log(`[play.js] Intermission bell audio source updated outside gesture to: ${bellType}`);
-                }
-            } catch (e) {
-                console.warn('[play.js] Failed to load intermission bell audio:', e);
-            }
+        window.intermissionBellAudio.src = `/static/audio/${bellType}.wav`;
+        try {
+            window.intermissionBellAudio.load();
+        } catch (e) {
+            console.warn('[play.js] Failed to load intermission bell audio:', e);
         }
     }
 };
 
 const unlockAudio = () => {
-    if (window.intermissionBellAudio && !window.intermissionBellAudio._unlocked) {
-        window.updateIntermissionBellSource(true);
-    }
+    window.updateIntermissionBellSource();
     const tripleMusic = document.getElementById('triple-music');
-    if (tripleMusic && !tripleMusic._unlocked) {
+    if (tripleMusic) {
         try {
-            const playPromise = tripleMusic.play();
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    tripleMusic.pause();
-                    tripleMusic.currentTime = 0;
-                    tripleMusic._unlocked = true;
-                    console.log('[play.js] #triple-music successfully unlocked via gesture play/pause');
-                }).catch(e => {
-                    console.warn('[play.js] Failed to unlock #triple-music:', e);
-                });
-            } else {
-                tripleMusic.pause();
-                tripleMusic.currentTime = 0;
-                tripleMusic._unlocked = true;
-            }
+            tripleMusic.load();
         } catch (e) {}
     }
 };
 
-document.addEventListener('click', unlockAudio);
-document.addEventListener('touchstart', unlockAudio);
+document.addEventListener('click', unlockAudio, { once: true });
+document.addEventListener('touchstart', unlockAudio, { once: true });
 
 // Sound effects system using Web Audio API
 const BoardAudio = {
     ctx: null,
-    _keepAliveNode: null,
-    _keepAliveGain: null,
-    _silentHtmlAudio: null,
     
     init() {
         if (this.ctx) return;
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (AudioContext) {
-            try {
-                this.ctx = new AudioContext({ latencyHint: 'interactive' });
-            } catch (e) {
-                this.ctx = new AudioContext();
-            }
-            
-            // Set up statechange listener to auto-resume context and recreate keep-alive node if Safari auto-suspends it
-            this.ctx.onstatechange = () => {
-                console.log(`[BoardAudio] AudioContext state changed to: ${this.ctx.state}`);
-                if (this.ctx.state === 'suspended' && !document.hidden) {
-                    console.log('[BoardAudio] Context suspended while tab is active. Auto-resuming...');
-                    this.ctx.resume().then(() => {
-                        this.keepAlive(true);
-                    }).catch(err => {
-                        console.warn("[BoardAudio] Failed to auto-resume context:", err);
-                    });
-                }
-            };
-            
-            // Pre-initialize silent HTML audio background keep-alive
-            this.initSilentHtmlAudio();
-            this.keepAlive();
-        }
-    },
-    
-    initSilentHtmlAudio() {
-        if (this._silentHtmlAudio) return;
-        try {
-            // A 1-second 8-bit mono silent WAV file to keep iOS CoreAudio pipeline active
-            const silentWavBase64 = "data:audio/wav;base64,UklGRsQPAABXQVZFZm10IBAAAAABAAEAoA8AAKAPAAABAAgAZGF0YaAPAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgQ==";
-            const audio = new Audio(silentWavBase64);
-            audio.loop = true;
-            audio.volume = 0.001; // completely silent, but active
-            this._silentHtmlAudio = audio;
-        } catch (e) {
-            console.warn("[BoardAudio] Failed to create silent HTML audio:", e);
-        }
-    },
-    
-    playSilentHtmlAudio() {
-        if (!this._silentHtmlAudio) this.initSilentHtmlAudio();
-        if (this._silentHtmlAudio) {
-            this._silentHtmlAudio.play().then(() => {
-                console.log("[BoardAudio] Silent HTML audio loop is actively playing.");
-            }).catch(err => {
-                console.warn("[BoardAudio] Silent HTML audio failed to play:", err);
-            });
-        }
-    },
-    
-    keepAlive(forceRecreate = false) {
-        if (!this.ctx) return;
-        if (this.ctx.state !== 'running') return; // Only run when AudioContext is active
-        
-        if (forceRecreate) {
-            this.stopKeepAlive();
-        }
-        
-        if (this._keepAliveNode) return;
-        
-        try {
-            const osc = this.ctx.createOscillator();
-            const gainNode = this.ctx.createGain();
-            
-            // Set frequency to 30Hz (subsonic, inaudible) and volume to 0.02 to keep Bluetooth channel active and bypass hardware noise-gates
-            osc.frequency.setValueAtTime(30, this.ctx.currentTime);
-            gainNode.gain.value = 0.02; 
-            
-            osc.connect(gainNode);
-            gainNode.connect(this.ctx.destination);
-            
-            osc.start();
-            this._keepAliveNode = osc;
-            this._keepAliveGain = gainNode;
-            console.log("[BoardAudio] Bluetooth keep-alive oscillator started (30Hz @ 0.02 gain)");
-        } catch (e) {
-            console.warn("[BoardAudio] Failed to start keep-alive:", e);
-        }
-    },
-    
-    stopKeepAlive() {
-        if (this._keepAliveNode) {
-            try {
-                this._keepAliveNode.stop();
-                this._keepAliveNode.disconnect();
-            } catch (e) {}
-            this._keepAliveNode = null;
-        }
-        if (this._keepAliveGain) {
-            try {
-                this._keepAliveGain.disconnect();
-            } catch (e) {}
-            this._keepAliveGain = null;
+            this.ctx = new AudioContext();
         }
     },
     
@@ -240,16 +101,13 @@ const BoardAudio = {
             const step = 50;
             const freq = Math.min(1200, baseFreq + (pathLen * step));
             
-            // Add a small 2ms scheduling lookahead to bypass rendering block delays
-            const startTime = this.ctx.currentTime + 0.002;
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
             
-            osc.frequency.setValueAtTime(freq, startTime);
+            gainNode.gain.setValueAtTime(0.08, this.ctx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.05);
             
-            gainNode.gain.setValueAtTime(0.08, startTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.05);
-            
-            osc.start(startTime);
-            osc.stop(startTime + 0.05);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.05);
         } catch (e) {
             console.warn('Failed to play tile sound:', e);
         }
@@ -290,8 +148,7 @@ const BoardAudio = {
                 osc.stop(startTime + duration);
             };
             
-            // Add a small 2ms scheduling lookahead
-            const now = this.ctx.currentTime + 0.002;
+            const now = this.ctx.currentTime;
             playBeep(523.25, now, 0.08, 0.15); // C5
             playBeep(783.99, now + 0.06, 0.15, 0.15); // G5
         } catch (e) {
@@ -325,35 +182,25 @@ const BoardAudio = {
             
             osc.type = 'sawtooth';
             
-            // Add a small 2ms scheduling lookahead
-            const startTime = this.ctx.currentTime + 0.002;
+            osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+            osc.frequency.linearRampToValueAtTime(100, this.ctx.currentTime + 0.18);
             
-            osc.frequency.setValueAtTime(150, startTime);
-            osc.frequency.linearRampToValueAtTime(100, startTime + 0.18);
+            gainNode.gain.setValueAtTime(0.12, this.ctx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.18);
             
-            gainNode.gain.setValueAtTime(0.12, startTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.18);
-            
-            osc.start(startTime);
-            osc.stop(startTime + 0.18);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.18);
         } catch (e) {
             console.warn('Failed to play failure sound:', e);
         }
     }
 };
 
-// Warm up and resume AudioContext on user interaction to prevent Bluetooth latency
+// Warm up and resume AudioContext on user interaction
 const initAudioOnUserInteraction = () => {
     BoardAudio.init();
-    BoardAudio.playSilentHtmlAudio();
-    if (BoardAudio.ctx) {
-        if (BoardAudio.ctx.state === 'suspended') {
-            BoardAudio.ctx.resume().then(() => {
-                BoardAudio.keepAlive(true);
-            });
-        } else {
-            BoardAudio.keepAlive();
-        }
+    if (BoardAudio.ctx && BoardAudio.ctx.state === 'suspended') {
+        BoardAudio.ctx.resume();
     }
 };
 document.addEventListener('click', initAudioOnUserInteraction);
@@ -752,13 +599,6 @@ document.addEventListener('visibilitychange', () => {
         // Tab became visible: Update immediately and restore fast polling
         console.log('[play.js] Tab visible: Restoring fast polling.');
         
-        // Resume AudioContext if suspended to warm up Bluetooth stream
-        if (BoardAudio.ctx && BoardAudio.ctx.state === 'suspended') {
-            BoardAudio.ctx.resume().then(() => {
-                BoardAudio.keepAlive(true);
-            });
-        }
-        
         // Force-abort any stale/stuck in-flight fetch and release lock to prevent queue clogging
         if (window._activeStateFetchController) {
             console.log('[play.js] Tab visible: Aborting stale in-flight state fetch.');
@@ -795,11 +635,6 @@ document.addEventListener('visibilitychange', () => {
         console.log('[play.js] Tab hidden: Entering battery-saving mode.');
         refreshPollInterval();
         
-        // Suspend AudioContext to save battery in background
-        if (BoardAudio.ctx && BoardAudio.ctx.state === 'running') {
-            BoardAudio.ctx.suspend();
-        }
-        
         // Pause the high-frequency timer interval while hidden
         if (timerInterval) {
             clearInterval(timerInterval);
@@ -812,13 +647,6 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('focus', () => {
     if (!document.hidden) {
         console.log('[play.js] Window focus gained: Checking wake-up update.');
-        
-        // Resume AudioContext if suspended to warm up Bluetooth stream
-        if (BoardAudio.ctx && BoardAudio.ctx.state === 'suspended') {
-            BoardAudio.ctx.resume().then(() => {
-                BoardAudio.keepAlive(true);
-            });
-        }
         
         // Force-abort any stale/stuck in-flight fetch and release lock to prevent queue clogging
         if (window._activeStateFetchController) {
@@ -3779,8 +3607,8 @@ function updateLocalTimer() {
             console.log(`[play.js] Playing intermission bell: ${bellType}`);
             if (typeof MorphemeAudioBridge !== 'undefined') {
                 try {
-                    // Send success chime natively for mobile app wrappers (bypasses webview audio block)
-                    MorphemeAudioBridge.postMessage(JSON.stringify({ sound: 'success' }));
+                    // Send bell chime natively for mobile app wrappers (bypasses webview audio block)
+                    MorphemeAudioBridge.postMessage(JSON.stringify({ sound: 'bell', type: bellType }));
                 } catch (e) {
                     console.error("MorphemeAudioBridge error:", e);
                 }
@@ -3793,7 +3621,6 @@ function updateLocalTimer() {
                     audio.src = `/static/audio/${bellType}.wav`;
                     try {
                         audio.load();
-                        audio._unlocked = false;
                     } catch (e) {
                         console.warn('[play.js] Failed to load audio src on trigger:', e);
                     }
