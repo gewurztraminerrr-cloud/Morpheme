@@ -56,6 +56,10 @@ This summary documents the stable state of the Morpheme application as of June 1
 *   **Invalid Word Indicators**:
     *   Correctly flags invalid dictionary words inside the Find Count query results rather than showing "0 times found" for them, improving clarity.
 
+### 6. Transition Latency & Worker Exhaustion Elimination
+*   **The Issue**: During round transition countdowns reaching 0:00 (especially after a deploy or server restart where singleton rooms are reconstructed on the fly), if the background board generation thread did not complete in time, the room would attempt to generate a board synchronously inside the HTTP/WS request thread. This blocked the Gunicorn worker thread for 5–8 seconds, freezing other network requests and showing "WAITING..." to players.
+*   **The Fix**: Modified `start_next_round` in `game_room.py` to immediately utilize the instant `get_emergency_fallback_board(...)` function (which runs in <1ms) rather than executing a synchronous CPU-bound board search. It pre-calculates, validates, and initializes the board density maps instantly.
+
 ---
 
 ## 🛠 Active Features & Configuration
@@ -66,6 +70,6 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `09ee050e04746f363074d2ee9b69992d19277d33`  
+**Latest Stable Commit ID**: `89211eecfa4eb299012b42245e903fad2e8a33b2`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `09ee050`
+**Production Server Status**: Green / PM2 Online / Live at commit `89211ee`
