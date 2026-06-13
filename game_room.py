@@ -254,19 +254,17 @@ class GameRoom:
             if rating is not None and not is_guest:
                 existing_player.rating = rating
             existing_player.is_guest = is_guest
-            # Note: manual_accessed doesn't force mid-round for persistent daily rooms usually, 
-            # but if it's the rule, we should apply it.
-            # For now, let's stick to the user's rule for ALL rooms.
-            if manual_accessed:
-                existing_player.joined_mid_round = True
-            elif not is_daily and self.state == 'active':
-                # If they rejoin mid-round after being gone, mark them late? 
-                # Ideally yes, unless was_already_in_room logic covers it. 
-                # But here we are reusing existing_player object which means they were in past_players.
-                # If they were active before, they should be fine?
-                # But if they left and came back much later in same round?
-                # User rule is usually strict. Let's stick to the consistent check.
-                existing_player.joined_mid_round = True
+            # MID-ROUND DETECTION: Use round_start_time as authoritative truth.
+            # If the player was not present at round start, they are a mid-round joiner.
+            if not is_daily and self.state == 'active':
+                round_started_at = getattr(self, 'round_start_time', 0)
+                was_present_at_start = (
+                    round_started_at > 0 and
+                    getattr(existing_player, 'last_active', 0) >= round_started_at - 30
+                )
+                if not was_present_at_start or manual_accessed:
+                    existing_player.joined_mid_round = True
+                    print(f"[GameRoom] Mid-round flag set for {username} (existing player path). round_start={round_started_at:.0f}, last_active={getattr(existing_player, 'last_active', 0):.0f}")
             # Ensure they are removed from round_quitters if they were in there (REJOIN TRANSITION)
             self.round_quitters = [q for q in self.round_quitters if str(q.user_id) != str(user_id)]
             if not getattr(existing_player, 'cell_density', None):
@@ -286,6 +284,11 @@ class GameRoom:
             quitter.last_active = time.time()
             quitter.country_flag = country_flag
             quitter.is_guest = is_guest
+            # Quitters who rejoin mid-round should NOT get rating changes for this round
+            # They already left; their re-entry counts as mid-round regardless of original status
+            if not is_daily and self.state == 'active':
+                quitter.joined_mid_round = True
+                print(f"[GameRoom] Mid-round flag set for quitter {username} rejoining mid-round.")
             if not getattr(quitter, 'cell_density', None):
                 self._initialize_player_density_grid(quitter)
             self.players.append(quitter)
@@ -305,12 +308,13 @@ class GameRoom:
                 # NEW ROUND: Clear all round-specific activity
                 existing_player.found_bonus_word = False
                 existing_player.has_abandoned = False
-                existing_player.joined_mid_round = (self.state == 'active')
                 existing_player.submitted_words = []
                 existing_player.invalid_words = []
                 existing_player.score = 0
                 existing_player.previous_round_score = 0
                 existing_player.cell_density = []
+                # MID-ROUND DETECTION for past_player on new round
+                existing_player.joined_mid_round = (self.state == 'active')
             
             existing_player._last_round_seen = self.current_round
             existing_player.last_active = time.time()
@@ -321,12 +325,18 @@ class GameRoom:
                 existing_player.rating = rating
             existing_player.is_guest = is_guest
             
-            if manual_accessed:
-                existing_player.joined_mid_round = True
-            elif not is_daily and self.state == 'active':
-                 # Check for "Refresh" grace period (15s)
-                 if (time.time() - existing_player.last_active) > 15:
-                      existing_player.joined_mid_round = True
+            # MID-ROUND DETECTION: Use round_start_time as authoritative truth.
+            # Remove the 15s grace period loophole — if they weren't present at round start, they're late.
+            if not is_daily and self.state == 'active':
+                round_started_at = getattr(self, 'round_start_time', 0)
+                prior_last_active = getattr(existing_player, 'last_active', 0)
+                was_present_at_start = (
+                    round_started_at > 0 and
+                    prior_last_active >= round_started_at - 30
+                )
+                if not was_present_at_start or manual_accessed:
+                    existing_player.joined_mid_round = True
+                    print(f"[GameRoom] Mid-round flag set for {username} (past_player path). round_start={round_started_at:.0f}, last_active={prior_last_active:.0f}")
             
             if not getattr(existing_player, 'cell_density', None):
                 self._initialize_player_density_grid(existing_player)
