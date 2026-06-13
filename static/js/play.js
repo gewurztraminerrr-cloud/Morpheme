@@ -54,7 +54,11 @@ const BoardAudio = {
         if (this.ctx) return;
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (AudioContext) {
-            this.ctx = new AudioContext({ latencyHint: 'interactive' });
+            try {
+                this.ctx = new AudioContext({ latencyHint: 0.005 });
+            } catch (e) {
+                this.ctx = new AudioContext({ latencyHint: 'interactive' });
+            }
             this.keepAlive();
         }
     },
