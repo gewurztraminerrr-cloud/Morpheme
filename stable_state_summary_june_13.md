@@ -6,7 +6,13 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ## 🚀 Key Improvements & Bug Fixes
 
-### 1. Low-Latency Audio Engine & Flutter Wrapper Upgrades
+### 1. Public Room On-Demand Reconstruction Optimizations
+*   **The Issue**: When public singleton rooms/hubs (e.g. `pub_v2_...`) were reconstructed on-demand (such as after a server restart or deployment), the intermission state was initialized with a tight 15-second timer. If the server was cold or loading dictionaries lazily (like the 2.6-second CSW trie build time on first access), the background board search would not complete before the countdown reached 0:00. This caused players to experience a delayed "GENERATING NEXT BOARD..." loading message.
+*   **The Fix**:
+    *   **Background Search Kickstart**: Modified the public singleton reconstruction logic in `app.py` to immediately launch a background thread to generate spinner parameters and kickstart the board generator search before the player's web page even completes loading.
+    *   **Extended Intermission Buffer**: Increased the initial intermission countdown buffer for reconstructed public rooms from 15 seconds to **25 seconds** (`time.time() - 35`), giving the server ample lead-time to pre-generate and score the board.
+
+### 2. Low-Latency Audio Engine & Flutter Wrapper Upgrades
 *   **Flutter `flutter_soloud` Audio Engine Migration**:
     *   Migrated the mobile hybrid app audio system from the `audioplayers` package to the lower-latency `flutter_soloud` engine.
     *   Preloads sound assets natively on application startup, allowing instantaneous playback.
@@ -20,7 +26,7 @@ This summary documents the stable state of the Morpheme application as of June 1
     *   Removed subsonic keep-alive oscillators and silent audio loops from the standard web client's `play.js`.
     *   Wired the intermission countdown warnings (the `0:10` remaining bell/beeper alert) to trigger native Flutter chimes dynamically based on the user's selected bell type.
 
-### 2. Word Lists Performance & Rendering Overhaul
+### 3. Word Lists Performance & Rendering Overhaul
 *   **Gzip Compression Middleware**:
     *   Implemented a global `@app.after_request` gzip compression middleware.
     *   Automatically compresses responses larger than 500 bytes, reducing the uncompressed NWL list payload size from **2.4MB to ~544KB (a 4.42x size reduction)** and saving significant mobile data.
@@ -36,7 +42,7 @@ This summary documents the stable state of the Morpheme application as of June 1
     *   Extended client-side timeouts in `tools.js` to 4 minutes to allow slow mobile data connections to finish downloading.
     *   Appended warnings in the Lists description: *"Some lists may take 2-4 minutes to load, especially if you are using data, and not wi-fi."*
 
-### 3. Forum, Lightbox, and Image Upload Upgrades
+### 4. Forum, Lightbox, and Image Upload Upgrades
 *   **SQLite Database Schema Migration for Comment Images**:
     *   Added an `image_url` column to the `forum_comments` table via startup schema migrations, enabling image attachments on comment replies.
 *   **Client-Side Image Compression**:
@@ -46,7 +52,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 *   **Responsive Image Lightbox**:
     *   Enabled expanding forum post and comment images into a responsive full-screen overlay lightbox on mobile and desktop devices.
 
-### 4. Find Count Tool Enhancements
+### 5. Find Count Tool Enhancements
 *   **Invalid Word Indicators**:
     *   Correctly flags invalid dictionary words inside the Find Count query results rather than showing "0 times found" for them, improving clarity.
 
@@ -60,6 +66,6 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `b3184c5a4646e34a8ad4927edf22a27b2c112059`  
+**Latest Stable Commit ID**: `09ee050e04746f363074d2ee9b69992d19277d33`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `b3184c5`
+**Production Server Status**: Green / PM2 Online / Live at commit `09ee050`
