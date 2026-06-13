@@ -4193,8 +4193,11 @@ async function runFindCountSearch() {
                 summaryEl.innerText = `The word "${data.word}" has been found ${data.count} ${data.count === 1 ? 'time' : 'times'} since Morpheme began.`;
             } else {
                 const escapedWord = (data.word || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-                summaryEl.innerHTML = `<span style="color: #ff6b6b; font-weight: 700;">⚠️ "${escapedWord}" is not a valid word in Morpheme's dictionaries.</span><br>` +
-                                      `<span style="font-size: 0.95rem; opacity: 0.95;">However, it has been found ${data.count} ${data.count === 1 ? 'time' : 'times'} in custom rounds or historical matches.</span>`;
+                let html = `<span style="color: #ff6b6b; font-weight: 700;">⚠️ "${escapedWord}" is not a valid word in Morpheme's dictionaries.</span>`;
+                if (data.count > 0) {
+                    html += `<br><span style="font-size: 0.95rem; opacity: 0.95;">However, it has been found ${data.count} ${data.count === 1 ? 'time' : 'times'} in custom rounds or historical matches.</span>`;
+                }
+                summaryEl.innerHTML = html;
             }
         }
         
