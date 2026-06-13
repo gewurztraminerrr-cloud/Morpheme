@@ -32,12 +32,23 @@ let timerFormatIs24h = false;     // Cached format to prevent flashing between H
 
 // Global audio object to bypass mobile autoplay restrictions
 window.intermissionBellAudio = new Audio();
-document.addEventListener('click', () => {
-    if (window.intermissionBellAudio && !window.intermissionBellAudio.src) {
+
+window.updateIntermissionBellSource = function() {
+    if (window.intermissionBellAudio) {
         const bellType = (window.userSettings && window.userSettings.next_round_bell_type) || 'bell1';
-        window.intermissionBellAudio.src = `/static/audio/${bellType}.wav`;
-        window.intermissionBellAudio.load();
+        if (!window.intermissionBellAudio.src || !window.intermissionBellAudio.src.includes(bellType)) {
+            window.intermissionBellAudio.src = `/static/audio/${bellType}.wav`;
+            try {
+                window.intermissionBellAudio.load();
+            } catch (e) {
+                console.warn('[play.js] Failed to load intermission bell audio:', e);
+            }
+        }
     }
+};
+
+document.addEventListener('click', () => {
+    window.updateIntermissionBellSource();
     const tripleMusic = document.getElementById('triple-music');
     if (tripleMusic) {
         tripleMusic.load();
@@ -3723,11 +3734,20 @@ function updateLocalTimer() {
             if (audio) {
                 if (!audio.src || !audio.src.includes(bellType)) {
                     audio.src = `/static/audio/${bellType}.wav`;
+                    try {
+                        audio.load();
+                    } catch (e) {
+                        console.warn('[play.js] Failed to load audio src on trigger:', e);
+                    }
                 }
-                audio.play().catch(e => console.warn('Bell audio failed:', e));
+                audio.play().catch(e => {
+                    console.warn('[play.js] Intermission audio failed, playing fallback:', e);
+                    const fallbackAudio = new Audio(`/static/audio/${bellType}.wav`);
+                    fallbackAudio.play().catch(fe => console.warn('Fallback audio failed:', fe));
+                });
             } else {
                 const fallbackAudio = new Audio(`/static/audio/${bellType}.wav`);
-                fallbackAudio.play().catch(e => console.warn('Bell audio fallback failed:', e));
+                fallbackAudio.play().catch(e => console.warn('Fallback audio failed:', e));
             }
             hasPlayedIntermissionBell = true;
         }

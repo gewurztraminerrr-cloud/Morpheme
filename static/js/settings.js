@@ -315,6 +315,10 @@ function debounce(func, wait) {
             if (!window.userSettings) window.userSettings = {};
             window.userSettings.next_round_bell_type = type;
             localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
+
+            if (typeof window.updateIntermissionBellSource === 'function') {
+                window.updateIntermissionBellSource();
+            }
         }
 
         // Synesthesia: Letter Colors
@@ -647,6 +651,11 @@ function debounce(func, wait) {
             window.userSettings.next_round_bell_type = bell;
             bellBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            
+            if (typeof window.updateIntermissionBellSource === 'function') {
+                window.updateIntermissionBellSource();
+            }
+            
             playPreviewBell(bell);
             saveSettingDebounced('next_round_bell_type', bell);
         });
