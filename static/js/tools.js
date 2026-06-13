@@ -2766,7 +2766,7 @@ async function fetchListsData(typeOverride) {
             scrollArea.innerHTML = `
                 <div style="padding:30px; text-align:center; color: #ffb703; font-weight: 500;">
                     <div style="font-size: 1.5rem; margin-bottom: 10px;">⚠️ Heavy Computation Warning</div>
-                    <div>This list is taking longer than 20 seconds to load because it is computationally heavy to load or render.</div>
+                    <div>This list is taking longer than 4 minutes to load, especially if you are using data, and not wi-fi.</div>
                     <div style="margin-top: 15px; font-size: 0.95rem; opacity: 0.9; line-height: 1.6;">
                         Loading massive list configurations without filters can overload the browser or server.<br>
                         <strong>Please select a specific word length</strong> or a <strong>starting letter</strong> to reduce the size of the request.
@@ -2774,7 +2774,7 @@ async function fetchListsData(typeOverride) {
                 </div>
             `;
         }
-    }, 20000);
+    }, 240000);
 
     try {
         // Build Query URL

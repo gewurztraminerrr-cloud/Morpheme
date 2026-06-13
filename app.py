@@ -10,6 +10,8 @@ import json
 import random
 import threading
 import uuid
+import gzip
+import io
 from collections import Counter
 import datetime
 from zoneinfo import ZoneInfo
@@ -18,6 +20,34 @@ app = Flask(__name__, static_folder='static')
 app.secret_key = 'morpheme-secret-key-2024'
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(days=30)
+
+@app.after_request
+def compress(response):
+    accept_encoding = request.headers.get('Accept-Encoding', '')
+    if (response.status_code < 200 or 
+        response.status_code >= 300 or 
+        'gzip' not in accept_encoding.lower() or 
+        'Content-Encoding' in response.headers):
+        return response
+
+    content_type = response.headers.get('Content-Type', '')
+    if 'json' not in content_type and 'text' not in content_type:
+        return response
+
+    response.direct_passthrough = False
+    data = response.get_data()
+    if len(data) < 500: # Don't compress small responses
+        return response
+
+    gzip_buffer = io.BytesIO()
+    gzip_file = gzip.GzipFile(mode='wb', fileobj=gzip_buffer)
+    gzip_file.write(data)
+    gzip_file.close()
+
+    response.set_data(gzip_buffer.getvalue())
+    response.headers['Content-Encoding'] = 'gzip'
+    response.headers['Content-Length'] = len(response.get_data())
+    return response
 
 # --- Leaderboard in-memory TTL cache ---
 _lb_cache = {}
@@ -592,6 +622,9 @@ def submit_dictionary_words():
         # 6. Reload Word Validator
         if word_validator:
             word_validator._load_dictionaries()
+            
+        global LISTS_CACHE
+        LISTS_CACHE.clear()
             
         return jsonify({
             'success': True, 
@@ -4133,6 +4166,12 @@ def tools_get_lists():
         # Get Filter Params
         length_filter = request.args.get('length')
         start_filter = request.args.get('starts_with')
+        list_type = request.args.get('list_type', 'all').lower()
+
+        # Check cache first (skip caching for 'added' list type)
+        cache_key = f"endpoint_{list_type}_{length_filter}_{start_filter}"
+        if list_type != 'added' and cache_key in LISTS_CACHE:
+            return jsonify(LISTS_CACHE[cache_key])
         
         # Convert length to int if provided and not "all"
         target_len = None
@@ -4147,8 +4186,6 @@ def tools_get_lists():
         if start_filter and start_filter.lower() != 'all':
             start_char = start_filter.upper().strip()
             if not start_char: start_char = None
-
-        list_type = request.args.get('list_type', 'all').lower()
 
         base_dir = os.path.dirname(__file__)
         dict_dir = os.path.join(base_dir, 'dictionaries')
@@ -4190,6 +4227,9 @@ def tools_get_lists():
                     base_set = set()
             
             # Filter the base_set in-memory
+            if target_len is None and start_char is None:
+                return {w for w in base_set if len(w) < 16}
+
             filtered = set()
             for w in base_set:
                 if (target_len is None or target_len < 16) and len(w) >= 16:
@@ -4275,6 +4315,10 @@ def tools_get_lists():
                         unique_added.append(w)
                         seen_added.add(w)
             response['added'] = unique_added
+
+        # Cache response (except for 'added' which is mutable)
+        if list_type != 'added':
+            LISTS_CACHE[cache_key] = response
 
         return jsonify(response)
 
