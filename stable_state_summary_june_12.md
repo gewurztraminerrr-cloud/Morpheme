@@ -6,7 +6,14 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ## 🚀 Key Improvements & Bug Fixes
 
-### 1. Mobile File Pickers & Photo Library Triggers Fix (Standard Web & Hybrid App)
+### 1. Bluetooth Audio Latency Fix (Mobile Earpieces)
+*   **The Issue**: When playing with Bluetooth earpieces (e.g. AirPods, Galaxy Buds), the sound effects of letter selection and word validation had a tremendous delay or were cut off. This occurred because Bluetooth hardware aggressive noise-gating put the earpieces' DAC/amplifiers to sleep during moments of silence. Playback of short game sounds (50ms) had to wake the hardware up, causing 200ms–500ms startup delays.
+*   **The Fix**:
+    *   Configured the Web Audio API keep-alive oscillator to output a subsonic **5Hz sine wave** (completely inaudible and below the physical reproduction range of mobile speakers) at a volume of **0.01** (sufficiently above the noise-gate threshold to keep the DAC active and awake).
+    *   Added listeners to automatically call `ctx.suspend()` when the browser tab goes to the background (saving mobile battery) and `ctx.resume()` upon tab focus/visibility change (instantly warming up the Bluetooth stream for zero-delay tap response).
+    *   **Cache Busting**: Bumped `play.js` query version string in `templates/index.html` to `v=154`.
+
+### 2. Mobile File Pickers & Photo Library Triggers Fix (Standard Web & Hybrid App)
 *   **The Issue**: WebKit/Mobile Safari and Android Chrome ignored or blocked `<label>` click forwarding to hidden file input elements when the inputs were styled with offscreen layout or zero sizing. Furthermore, calling `e.preventDefault()` on the click events canceled the user's active touch/click session, causing browsers to block programmatic `.click()` actions as "not user-initiated".
 *   **The Fix**:
     *   Converted uploader container tags (`#forum-comment-image-wrapper`, `#forum-post-image-wrapper`, `#profile-avatar-trigger`, `#dict-upload-wrapper`) from `<label>` elements to standard `<div>` elements in [templates/index.html](file:///Users/jeffbabiak/templates/index.html) to eliminate flaky native label click forwarding and prevent double-triggering on desktop.
@@ -14,7 +21,7 @@ This summary documents the stable state of the Morpheme application as of June 1
     *   Verified and successfully tested in mobile Chrome, Safari, and the hybrid mobile app on Android.
     *   **Cache Busting**: Bumped version strings for static assets (`forum.js?v=48`, `tools.js?v=54`, `mods.js?v=9`) to ensure users load the latest script implementations.
 
-### 2. Find Count Tool
+### 3. Find Count Tool
 *   **Feature**: Integrated a new "Find Count" tool inside the Tools sidebar navigation, positioned immediately before the **Personal Timer**.
 *   **Functionality**:
     *   Allows users to search for any word to retrieve its total find count across all dictionaries since Morpheme began.
@@ -22,14 +29,14 @@ This summary documents the stable state of the Morpheme application as of June 1
     *   Binds click events to the finder rows to display their mini-profile overlay (`window.showMiniProfile(username)`).
     *   Fully optimized for responsive viewports on desktop, laptop, and mobile screens.
 
-### 3. Country Flag Image Rendering (Windows/Desktop Fix)
+### 4. Country Flag Image Rendering (Windows/Desktop Fix)
 *   **The Issue**: Windows desktop browsers do not support flag emojis natively, falling back to rendering plain two-letter abbreviations (e.g. "CA" instead of the Canadian flag).
 *   **The Fix**:
     *   Defined global helpers `window.emojiToCountryCode` and `window.getFlagHtml` at the top of the frontend code.
     *   Instead of raw emoji characters, the helper dynamically renders a crisp flag image hosted on `flagcdn.com` using inline styles that align and scale perfectly with text.
     *   Integrated flag image rendering globally across all key views: Forum, Leaderboards, Gameplay Player List, Tools/Profiles, and the country selection dropdown lists.
 
-### 4. Registration Flag Selection Requirement
+### 5. Registration Flag Selection Requirement
 *   **Feature**: Required flag selection during user registration to ensure every new registered user has a location representing where they live.
 *   **Implementation**:
     *   Added a styled country flag selection select dropdown in the registration popup form (`#signup-form` in `index.html`), matched with input styling in `style.css`.
