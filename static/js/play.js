@@ -63,8 +63,14 @@ const BoardAudio = {
         }
     },
     
-    keepAlive() {
+    keepAlive(forceRecreate = false) {
         if (!this.ctx) return;
+        if (this.ctx.state !== 'running') return; // Only run when AudioContext is active
+        
+        if (forceRecreate) {
+            this.stopKeepAlive();
+        }
+        
         if (this._keepAliveNode) return;
         
         try {
@@ -84,6 +90,22 @@ const BoardAudio = {
             console.log("[BoardAudio] Bluetooth keep-alive oscillator started (28Hz @ 0.015 gain)");
         } catch (e) {
             console.warn("[BoardAudio] Failed to start keep-alive:", e);
+        }
+    },
+    
+    stopKeepAlive() {
+        if (this._keepAliveNode) {
+            try {
+                this._keepAliveNode.stop();
+                this._keepAliveNode.disconnect();
+            } catch (e) {}
+            this._keepAliveNode = null;
+        }
+        if (this._keepAliveGain) {
+            try {
+                this._keepAliveGain.disconnect();
+            } catch (e) {}
+            this._keepAliveGain = null;
         }
     },
     
@@ -194,7 +216,7 @@ const initAudioOnUserInteraction = () => {
     if (BoardAudio.ctx) {
         if (BoardAudio.ctx.state === 'suspended') {
             BoardAudio.ctx.resume().then(() => {
-                BoardAudio.keepAlive();
+                BoardAudio.keepAlive(true);
             });
         } else {
             BoardAudio.keepAlive();
@@ -600,7 +622,7 @@ document.addEventListener('visibilitychange', () => {
         // Resume AudioContext if suspended to warm up Bluetooth stream
         if (BoardAudio.ctx && BoardAudio.ctx.state === 'suspended') {
             BoardAudio.ctx.resume().then(() => {
-                BoardAudio.keepAlive();
+                BoardAudio.keepAlive(true);
             });
         }
         
@@ -661,7 +683,7 @@ window.addEventListener('focus', () => {
         // Resume AudioContext if suspended to warm up Bluetooth stream
         if (BoardAudio.ctx && BoardAudio.ctx.state === 'suspended') {
             BoardAudio.ctx.resume().then(() => {
-                BoardAudio.keepAlive();
+                BoardAudio.keepAlive(true);
             });
         }
         
