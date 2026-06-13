@@ -6,7 +6,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_soloud/flutter_soloud.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,44 +41,52 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   late final WebViewController controller;
-  final Map<int, AudioPlayer> _tilePlayers = {};
-  late final AudioPlayer _successPlayer;
-  late final AudioPlayer _failurePlayer;
+  final Map<int, AudioSource> _tileSources = {};
+  AudioSource? _successSource;
+  AudioSource? _failureSource;
+  bool _soLoudInitialized = false;
 
-  void _playSound(AudioPlayer player) {
-    player.stop().then((_) {
-      player.resume();
-    });
+  void _playSound(AudioSource? source) {
+    if (source == null || !_soLoudInitialized) return;
+    try {
+      SoLoud.instance.play(source);
+    } catch (e) {
+      debugPrint("Error playing sound: $e");
+    }
   }
 
   @override
   void dispose() {
-    for (final player in _tilePlayers.values) {
-      player.dispose();
-    }
-    _successPlayer.dispose();
-    _failurePlayer.dispose();
+    SoLoud.instance.deinit();
     super.dispose();
+  }
+
+  Future<void> _initAudio() async {
+    try {
+      final soloud = SoLoud.instance;
+      await soloud.init();
+
+      // Load all sources
+      for (int i = 1; i <= 16; i++) {
+        final source = await soloud.loadAsset('assets/sounds/tile_$i.wav');
+        _tileSources[i] = source;
+      }
+      _successSource = await soloud.loadAsset('assets/sounds/success.wav');
+      _failureSource = await soloud.loadAsset('assets/sounds/failure.wav');
+
+      setState(() {
+        _soLoudInitialized = true;
+      });
+      debugPrint("SoLoud audio engine initialized successfully");
+    } catch (e) {
+      debugPrint("Error initializing SoLoud: $e");
+    }
   }
 
   @override
   void initState() {
     super.initState();
-
-    // Preload audio players for low latency
-    for (int i = 1; i <= 16; i++) {
-      final player = AudioPlayer();
-      player.setReleaseMode(ReleaseMode.stop);
-      player.setSource(AssetSource('sounds/tile_$i.wav'));
-      _tilePlayers[i] = player;
-    }
-    _successPlayer = AudioPlayer();
-    _successPlayer.setReleaseMode(ReleaseMode.stop);
-    _successPlayer.setSource(AssetSource('sounds/success.wav'));
-
-    _failurePlayer = AudioPlayer();
-    _failurePlayer.setReleaseMode(ReleaseMode.stop);
-    _failurePlayer.setSource(AssetSource('sounds/failure.wav'));
+    _initAudio();
 
     controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -117,14 +125,14 @@ class _GameScreenState extends State<GameScreen> {
               int pathLen = data['pathLen'] ?? 1;
               if (pathLen < 1) pathLen = 1;
               if (pathLen > 16) pathLen = 16;
-              final player = _tilePlayers[pathLen];
-              if (player != null) {
-                _playSound(player);
+              final source = _tileSources[pathLen];
+              if (source != null) {
+                _playSound(source);
               }
             } else if (sound == 'success') {
-              _playSound(_successPlayer);
+              _playSound(_successSource);
             } else if (sound == 'failure') {
-              _playSound(_failurePlayer);
+              _playSound(_failureSource);
             }
           } catch (e) {
             debugPrint("Error in MorphemeAudioBridge channel: $e");
