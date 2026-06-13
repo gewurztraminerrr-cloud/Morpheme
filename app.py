@@ -3141,7 +3141,7 @@ def get_room_state(room_id):
                             # Start in intermission so the user has a graceful transition and doesn't jump midround!
                             with room._state_lock:
                                 room.state = 'intermission'
-                                room.intermission_start_time = time.time() - 45  # 15s remaining
+                                room.intermission_start_time = time.time() - 35  # 25s remaining (extended buffer)
                                 room.spinner_params_generated = False
                                 if hasattr(room, '_transition_spinner_launched'): delattr(room, '_transition_spinner_launched')
                                 if hasattr(room, 'spinner_params_revealed'): delattr(room, 'spinner_params_revealed')
@@ -3165,6 +3165,20 @@ def get_room_state(room_id):
                                 room.next_round_spinner_params = None
                                 room.next_round_difficulty = None
                                 room.next_round_uniqueness = None
+
+                            # Kickstart the spinner parameters and board search immediately in a background thread
+                            # so the server starts generating the board while the user's frontend is loading.
+                            def kickstart_first_board():
+                                try:
+                                    print(f"[app.py] Kickstarting background board pre-generation for reconstructed room {room_id}")
+                                    room_manager.generate_spinner_params(room_id, reveal=False)
+                                    room_manager.generate_spinner_params(room_id, reveal=True)
+                                    room_manager.start_board_search(room_id)
+                                except Exception as ex:
+                                    print(f"[app.py] Error kickstarting first board on reconstruction: {ex}")
+                            
+                            import threading
+                            threading.Thread(target=kickstart_first_board, daemon=True).start()
                         
                         # Re-add the active polling user as player right away
                         if 'user_id' in session:
