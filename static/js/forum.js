@@ -652,6 +652,13 @@ const Forum = {
     },
 
     renderPostDetail: function (post, comments) {
+        // Clear/reset comment inputs for the new post
+        const commentInput = document.getElementById('forum-comment-input');
+        if (commentInput) commentInput.value = '';
+        const commentImageInput = document.getElementById('forum-comment-image');
+        if (commentImageInput) commentImageInput.value = '';
+        this.handleImagePreview({ target: { files: [] } }, 'forum-comment-image-preview');
+
         const detailEl = document.getElementById('forum-post-detail');
         const date = parseUTCTimestamp(post.timestamp);
         const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });

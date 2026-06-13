@@ -1218,6 +1218,7 @@ def init_db():
                 post_id INTEGER NOT NULL,
                 user_id INTEGER NOT NULL,
                 content TEXT NOT NULL,
+                image_url TEXT,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(post_id) REFERENCES forum_posts(id),
                 FOREIGN KEY(user_id) REFERENCES users(id)
@@ -1299,6 +1300,14 @@ def init_db():
             print(f"Migrated DB: Added {col} column to active_boards")
         except sqlite3.OperationalError:
             pass
+
+    # MIGRATION: Ensure forum_comments has image_url column
+    try:
+        conn.execute('ALTER TABLE forum_comments ADD COLUMN image_url TEXT')
+        conn.commit()
+        print("Migrated DB: Added image_url column to forum_comments")
+    except sqlite3.OperationalError:
+        pass
 
     conn.close()
 
