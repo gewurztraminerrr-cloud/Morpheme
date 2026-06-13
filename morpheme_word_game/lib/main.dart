@@ -7,6 +7,7 @@ import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
+import 'package:audio_session/audio_session.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -63,8 +64,25 @@ class _GameScreenState extends State<GameScreen> {
 
   Future<void> _initAudio() async {
     try {
+      // Configure audio session for ultra-low latency, forcing Bluetooth HFP mode if connected
+      final session = await AudioSession.instance;
+      await session.configure(AudioSessionConfiguration(
+        avAudioSessionCategory: AVAudioSessionCategory.playAndRecord,
+        avAudioSessionCategoryOptions: AVAudioSessionCategoryOptions.allowBluetooth |
+            AVAudioSessionCategoryOptions.defaultToSpeaker,
+        avAudioSessionMode: AVAudioSessionMode.voiceChat,
+        avAudioSessionRouteSharingPolicy: AVAudioSessionRouteSharingPolicy.defaultPolicy,
+        androidAudioAttributes: const AndroidAudioAttributes(
+          contentType: AndroidAudioContentType.music,
+          usage: AndroidAudioUsage.game,
+        ),
+        androidAudioFocusGainType: AndroidAudioFocusGainType.gain,
+      ));
+      await session.setActive(true);
+
       final soloud = SoLoud.instance;
-      await soloud.init();
+      // Set a small buffer size (512) for ultra-low latency
+      await soloud.init(bufferSize: 512);
 
       // Load all sources
       for (int i = 1; i <= 16; i++) {
@@ -74,10 +92,14 @@ class _GameScreenState extends State<GameScreen> {
       _successSource = await soloud.loadAsset('assets/sounds/success.wav');
       _failureSource = await soloud.loadAsset('assets/sounds/failure.wav');
 
+      // Start the 30Hz keep-alive loop to prevent Bluetooth from sleeping
+      final keepAliveSource = await soloud.loadAsset('assets/sounds/keep_alive.wav');
+      soloud.play(keepAliveSource, looping: true, volume: 0.02);
+
       setState(() {
         _soLoudInitialized = true;
       });
-      debugPrint("SoLoud audio engine initialized successfully");
+      debugPrint("SoLoud audio engine initialized successfully with low latency buffer and keep-alive");
     } catch (e) {
       debugPrint("Error initializing SoLoud: $e");
     }
