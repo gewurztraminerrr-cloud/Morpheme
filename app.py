@@ -4793,10 +4793,14 @@ def tools_find_count():
         total_count = len(finds)
         recent_finds = finds[:10]
         
+        # Check if the word is valid in dictionaries (NWL, CSW, or supplementary/added lists)
+        is_valid = word_validator.is_valid_word(word, 'NWL') or word_validator.is_valid_word(word, 'CSW')
+        
         return jsonify({
             'word': word,
             'count': total_count,
-            'recent': recent_finds
+            'recent': recent_finds,
+            'is_valid': is_valid
         })
 
     except Exception as e:
