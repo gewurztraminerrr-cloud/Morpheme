@@ -662,6 +662,14 @@ function debounce(func, wait) {
     });
 
     function playPreviewBell(type) {
+        if (typeof MorphemeAudioBridge !== 'undefined') {
+            try {
+                MorphemeAudioBridge.postMessage(JSON.stringify({ sound: 'bell', type: type }));
+            } catch (e) {
+                console.error("MorphemeAudioBridge error:", e);
+            }
+            return;
+        }
         const audio = new Audio(`/static/audio/${type}.wav`);
         audio.play().catch(e => console.log('Audio play failed:', e));
     }

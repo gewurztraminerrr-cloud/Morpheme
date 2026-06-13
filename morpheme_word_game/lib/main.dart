@@ -43,6 +43,7 @@ class GameScreen extends StatefulWidget {
 class _GameScreenState extends State<GameScreen> {
   late final WebViewController controller;
   final Map<int, AudioSource> _tileSources = {};
+  final Map<String, AudioSource> _bellSources = {};
   AudioSource? _successSource;
   AudioSource? _failureSource;
   bool _soLoudInitialized = false;
@@ -91,6 +92,12 @@ class _GameScreenState extends State<GameScreen> {
       }
       _successSource = await soloud.loadAsset('assets/sounds/success.wav');
       _failureSource = await soloud.loadAsset('assets/sounds/failure.wav');
+
+      // Load bell/beep warning chimes
+      for (final type in ['bell1', 'bell2', 'bell3', 'beep1', 'beep2', 'beep3']) {
+        final source = await soloud.loadAsset('assets/sounds/$type.wav');
+        _bellSources[type] = source;
+      }
 
       // Start the 30Hz keep-alive loop to prevent Bluetooth from sleeping
       final keepAliveSource = await soloud.loadAsset('assets/sounds/keep_alive.wav');
@@ -155,6 +162,12 @@ class _GameScreenState extends State<GameScreen> {
               _playSound(_successSource);
             } else if (sound == 'failure') {
               _playSound(_failureSource);
+            } else if (sound == 'bell') {
+              final String type = data['type'] ?? 'bell1';
+              final source = _bellSources[type];
+              if (source != null) {
+                _playSound(source);
+              }
             }
           } catch (e) {
             debugPrint("Error in MorphemeAudioBridge channel: $e");
