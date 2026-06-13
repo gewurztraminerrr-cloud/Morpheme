@@ -2482,7 +2482,25 @@ let listsDataLoaded = false;
 let currentWordsList = [];
 let currentWordsRenderedCount = 0;
 let currentWordsType = '';
-const WORDS_PAGE_SIZE = 1000;
+const WORDS_PAGE_SIZE = 2000; // Render in slightly larger chunks for speed
+let currentProgressiveLoadId = 0;
+
+function startProgressiveRendering() {
+    const loadId = ++currentProgressiveLoadId;
+    
+    function renderChunk() {
+        if (loadId !== currentProgressiveLoadId) return;
+        if (currentWordsRenderedCount >= currentWordsList.length) {
+            console.log(`[Lists] Finished progressive rendering of ${currentWordsList.length} words.`);
+            return;
+        }
+        
+        renderNextWordsPage();
+        setTimeout(renderChunk, 5);
+    }
+    
+    renderChunk();
+}
 
 function renderNextWordsPage() {
     const scrollArea = document.getElementById('main-list-results');
@@ -2814,13 +2832,13 @@ async function fetchListsData(typeOverride) {
             return;
         }
 
-        renderNextWordsPage();
+        startProgressiveRendering();
 
         listsDataLoaded = true;
 
     } catch (err) {
         if (err.name === 'AbortError') {
-            console.log('[Lists] Fetch aborted due to 20-second computational timeout.');
+            console.log('[Lists] Fetch aborted due to 4-minute computational timeout.');
             return;
         }
         console.error('Failed to fetch lists:', err);
