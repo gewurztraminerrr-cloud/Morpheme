@@ -55,10 +55,24 @@ const BoardAudio = {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (AudioContext) {
             try {
-                this.ctx = new AudioContext({ latencyHint: 0.005 });
-            } catch (e) {
                 this.ctx = new AudioContext({ latencyHint: 'interactive' });
+            } catch (e) {
+                this.ctx = new AudioContext();
             }
+            
+            // Set up statechange listener to auto-resume context and recreate keep-alive node if Safari auto-suspends it
+            this.ctx.onstatechange = () => {
+                console.log(`[BoardAudio] AudioContext state changed to: ${this.ctx.state}`);
+                if (this.ctx.state === 'suspended' && !document.hidden) {
+                    console.log('[BoardAudio] Context suspended while tab is active. Auto-resuming...');
+                    this.ctx.resume().then(() => {
+                        this.keepAlive(true);
+                    }).catch(err => {
+                        console.warn("[BoardAudio] Failed to auto-resume context:", err);
+                    });
+                }
+            };
+            
             this.keepAlive();
         }
     },
@@ -77,9 +91,9 @@ const BoardAudio = {
             const osc = this.ctx.createOscillator();
             const gainNode = this.ctx.createGain();
             
-            // Set frequency to 28Hz (subsonic, inaudible) and volume to 0.015 to keep Bluetooth channel active and bypass hardware noise-gates
-            osc.frequency.setValueAtTime(28, this.ctx.currentTime);
-            gainNode.gain.value = 0.015; 
+            // Set frequency to 30Hz (subsonic, inaudible) and volume to 0.02 to keep Bluetooth channel active and bypass hardware noise-gates
+            osc.frequency.setValueAtTime(30, this.ctx.currentTime);
+            gainNode.gain.value = 0.02; 
             
             osc.connect(gainNode);
             gainNode.connect(this.ctx.destination);
@@ -87,7 +101,7 @@ const BoardAudio = {
             osc.start();
             this._keepAliveNode = osc;
             this._keepAliveGain = gainNode;
-            console.log("[BoardAudio] Bluetooth keep-alive oscillator started (28Hz @ 0.015 gain)");
+            console.log("[BoardAudio] Bluetooth keep-alive oscillator started (30Hz @ 0.02 gain)");
         } catch (e) {
             console.warn("[BoardAudio] Failed to start keep-alive:", e);
         }
