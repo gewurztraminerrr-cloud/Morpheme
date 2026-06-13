@@ -682,7 +682,7 @@ const Forum = {
             <div class="post-content">${this.escapeHtml(post.content)}</div>
             ${post.image_url ? `
                 <div class="post-image-container">
-                    <img src="${post.image_url}" class="post-image" alt="Post attachment">
+                    <img src="${post.image_url}" class="post-image forum-lightbox-trigger" data-url="${post.image_url}" data-caption="${this.escapeHtml(post.title)} by ${this.escapeHtml(post.username)}" alt="Post attachment" style="cursor: pointer;">
                 </div>
             ` : ''}
         `;
@@ -725,8 +725,8 @@ const Forum = {
                             </div>
                             <div class="comment-content">${this.escapeHtml(c.content)}</div>
                             ${c.image_url ? `
-                                <div class="comment-image-container" style="margin-top: 10px; border-radius: 8px; overflow: hidden; border: 1px solid var(--input-border);">
-                                    <img src="${c.image_url}" style="max-width: 100%; display: block;" alt="Comment attachment">
+                                <div class="comment-image-container" style="margin-top: 10px; border-radius: 8px; overflow: hidden; border: 1px solid var(--input-border); cursor: pointer;">
+                                    <img src="${c.image_url}" class="forum-lightbox-trigger" data-url="${c.image_url}" data-caption="Reply by ${this.escapeHtml(c.username)}" style="max-width: 100%; display: block;" alt="Comment attachment">
                                 </div>
                             ` : ''}
                         </div>
@@ -742,6 +742,18 @@ const Forum = {
                 });
             });
         }
+
+        // Attach lightbox listeners
+        const triggers = document.querySelectorAll('.forum-lightbox-trigger');
+        triggers.forEach(img => {
+            img.addEventListener('click', () => {
+                const url = img.getAttribute('data-url');
+                const caption = img.getAttribute('data-caption');
+                if (typeof window.showImageLightbox === 'function') {
+                    window.showImageLightbox(url, caption);
+                }
+            });
+        });
 
         // Show/hide comment form
         const isGuest = window.currentUserIsGuest || (window.currentUser === null);
