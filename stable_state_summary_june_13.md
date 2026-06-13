@@ -39,8 +39,8 @@ This summary documents the stable state of the Morpheme application as of June 1
     *   Renders the first 2,000 words instantly for immediate view, then renders the rest of the dictionary in small chunks of 2,000 words every 5ms.
     *   Adjusts the scrollbar height dynamically, enabling users to drag the custom scrollbar thumb smoothly from 'A' to 'Z' without freezing or lagging the browser layout.
 *   **Extended Timeout & Descriptions**:
-    *   Extended client-side timeouts in `tools.js` to 4 minutes to allow slow mobile data connections to finish downloading.
-    *   Appended warnings in the Lists description: *"Some lists may take 2-4 minutes to load, especially if you are using data, and not wi-fi."*
+    *   Extended client-side timeouts in `tools.js` to 3 minutes to allow slow mobile data connections to finish downloading.
+    *   Appended warnings in the Lists description: *"Some lists may take 1-3 minutes to fully load, especially if you are using data, and not wi-fi."*
 
 ### 4. Forum, Lightbox, and Image Upload Upgrades
 *   **SQLite Database Schema Migration for Comment Images**:
@@ -72,6 +72,6 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `cfc8800277bb51065ac6786e7516539c03a788be`  
+**Latest Stable Commit ID**: `06449b734ea4a8dea9b39f95f493b44690df241d`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `cfc8800`
+**Production Server Status**: Green / PM2 Online / Live at commit `06449b7`
