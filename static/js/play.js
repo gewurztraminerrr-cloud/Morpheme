@@ -67,8 +67,8 @@ const BoardAudio = {
             const osc = this.ctx.createOscillator();
             const gainNode = this.ctx.createGain();
             
-            // Set frequency to 5Hz (subsonic, inaudible) and volume to 0.01 to keep Bluetooth channel active and bypass hardware noise-gates
-            osc.frequency.setValueAtTime(5, this.ctx.currentTime);
+            // Set frequency to 18Hz (subsonic, inaudible) and volume to 0.01 to keep Bluetooth channel active and bypass hardware noise-gates
+            osc.frequency.setValueAtTime(18, this.ctx.currentTime);
             gainNode.gain.value = 0.01; 
             
             osc.connect(gainNode);
@@ -77,7 +77,7 @@ const BoardAudio = {
             osc.start();
             this._keepAliveNode = osc;
             this._keepAliveGain = gainNode;
-            console.log("[BoardAudio] Bluetooth keep-alive oscillator started (5Hz @ 0.01 gain)");
+            console.log("[BoardAudio] Bluetooth keep-alive oscillator started (18Hz @ 0.01 gain)");
         } catch (e) {
             console.warn("[BoardAudio] Failed to start keep-alive:", e);
         }

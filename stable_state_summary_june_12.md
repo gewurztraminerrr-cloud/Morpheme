@@ -9,9 +9,9 @@ This summary documents the stable state of the Morpheme application as of June 1
 ### 1. Bluetooth Audio Latency Fix (Mobile Earpieces)
 *   **The Issue**: When playing with Bluetooth earpieces (e.g. AirPods, Galaxy Buds), the sound effects of letter selection and word validation had a tremendous delay or were cut off. This occurred because Bluetooth hardware aggressive noise-gating put the earpieces' DAC/amplifiers to sleep during moments of silence. Playback of short game sounds (50ms) had to wake the hardware up, causing 200ms–500ms startup delays.
 *   **The Fix**:
-    *   Configured the Web Audio API keep-alive oscillator to output a subsonic **5Hz sine wave** (completely inaudible and below the physical reproduction range of mobile speakers) at a volume of **0.01** (sufficiently above the noise-gate threshold to keep the DAC active and awake).
+    *   Configured the Web Audio API keep-alive oscillator to output a subsonic **18Hz sine wave** (completely inaudible and below the physical reproduction range of mobile speakers) at a volume of **0.01** (sufficiently above the noise-gate threshold to keep the DAC active and awake).
     *   Added listeners to automatically call `ctx.suspend()` when the browser tab goes to the background (saving mobile battery) and `ctx.resume()` upon tab focus/visibility change (instantly warming up the Bluetooth stream for zero-delay tap response).
-    *   **Cache Busting**: Bumped `play.js` query version string in `templates/index.html` to `v=154`.
+    *   **Cache Busting**: Bumped `play.js` query version string in `templates/index.html` to `v=155`.
 
 ### 2. Mobile File Pickers & Photo Library Triggers Fix (Standard Web & Hybrid App)
 *   **The Issue**: WebKit/Mobile Safari and Android Chrome ignored or blocked `<label>` click forwarding to hidden file input elements when the inputs were styled with offscreen layout or zero sizing. Furthermore, calling `e.preventDefault()` on the click events canceled the user's active touch/click session, causing browsers to block programmatic `.click()` actions as "not user-initiated".
