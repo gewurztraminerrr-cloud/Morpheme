@@ -248,6 +248,8 @@ class GameRoom:
         existing_player = self.get_player(user_id)
         if existing_player:
             print(f"[GameRoom] Persistence: Reusing existing player {username} in room {self.room_id}")
+            # SNAPSHOT last_active BEFORE overwriting — needed for mid-round check below
+            prior_last_active = getattr(existing_player, 'last_active', 0)
             existing_player.last_active = time.time()
             existing_player.country_flag = country_flag # Update flag
             # CRITICAL: Always sync rating from DB even for persistent daily players
@@ -255,16 +257,17 @@ class GameRoom:
                 existing_player.rating = rating
             existing_player.is_guest = is_guest
             # MID-ROUND DETECTION: Use round_start_time as authoritative truth.
-            # If the player was not present at round start, they are a mid-round joiner.
-            if not is_daily and self.state == 'active':
+            # Players already in self.players are refreshing — do NOT flag them as mid-round.
+            # Only flag if they were gone before the round started.
+            if not is_daily and self.state == 'active' and not existing_player.joined_mid_round:
                 round_started_at = getattr(self, 'round_start_time', 0)
                 was_present_at_start = (
                     round_started_at > 0 and
-                    getattr(existing_player, 'last_active', 0) >= round_started_at - 30
+                    prior_last_active >= round_started_at - 30
                 )
                 if not was_present_at_start or manual_accessed:
                     existing_player.joined_mid_round = True
-                    print(f"[GameRoom] Mid-round flag set for {username} (existing player path). round_start={round_started_at:.0f}, last_active={getattr(existing_player, 'last_active', 0):.0f}")
+                    print(f"[GameRoom] Mid-round flag set for {username} (existing player path). round_start={round_started_at:.0f}, prior_last_active={prior_last_active:.0f}")
             # Ensure they are removed from round_quitters if they were in there (REJOIN TRANSITION)
             self.round_quitters = [q for q in self.round_quitters if str(q.user_id) != str(user_id)]
             if not getattr(existing_player, 'cell_density', None):
@@ -304,6 +307,8 @@ class GameRoom:
         
         if existing_player:
             last_p_round = getattr(existing_player, '_last_round_seen', -1)
+            # SNAPSHOT last_active BEFORE overwriting — needed for mid-round check below
+            prior_last_active = getattr(existing_player, 'last_active', 0)
             if last_p_round != self.current_round:
                 # NEW ROUND: Clear all round-specific activity
                 existing_player.found_bonus_word = False
@@ -313,11 +318,11 @@ class GameRoom:
                 existing_player.score = 0
                 existing_player.previous_round_score = 0
                 existing_player.cell_density = []
-                # MID-ROUND DETECTION for past_player on new round
+                # MID-ROUND DETECTION for past_player joining a new round that is already active
                 existing_player.joined_mid_round = (self.state == 'active')
             
             existing_player._last_round_seen = self.current_round
-            existing_player.last_active = time.time()
+            existing_player.last_active = time.time()  # Update AFTER snapshot above
             existing_player.country_flag = country_flag
             existing_player.games_played = games_played
             # CRITICAL: Always sync rating from DB for rejoiners/refreshers
@@ -326,17 +331,16 @@ class GameRoom:
             existing_player.is_guest = is_guest
             
             # MID-ROUND DETECTION: Use round_start_time as authoritative truth.
-            # Remove the 15s grace period loophole — if they weren't present at round start, they're late.
-            if not is_daily and self.state == 'active':
+            # Use prior_last_active (snapshotted before update) for an accurate comparison.
+            if not is_daily and self.state == 'active' and not existing_player.joined_mid_round:
                 round_started_at = getattr(self, 'round_start_time', 0)
-                prior_last_active = getattr(existing_player, 'last_active', 0)
                 was_present_at_start = (
                     round_started_at > 0 and
                     prior_last_active >= round_started_at - 30
                 )
                 if not was_present_at_start or manual_accessed:
                     existing_player.joined_mid_round = True
-                    print(f"[GameRoom] Mid-round flag set for {username} (past_player path). round_start={round_started_at:.0f}, last_active={prior_last_active:.0f}")
+                    print(f"[GameRoom] Mid-round flag set for {username} (past_player path). round_start={round_started_at:.0f}, prior_last_active={prior_last_active:.0f}")
             
             if not getattr(existing_player, 'cell_density', None):
                 self._initialize_player_density_grid(existing_player)
