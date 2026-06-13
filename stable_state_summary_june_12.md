@@ -6,29 +6,30 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ## 🚀 Key Improvements & Bug Fixes
 
-### 1. Find Count Tool
+### 1. Mobile File Pickers & Photo Library Triggers Fix (Standard Web & Hybrid App)
+*   **The Issue**: WebKit/Mobile Safari and Android Chrome ignored or blocked `<label>` click forwarding to hidden file input elements when the inputs were styled with offscreen layout or zero sizing. Furthermore, calling `e.preventDefault()` on the click events canceled the user's active touch/click session, causing browsers to block programmatic `.click()` actions as "not user-initiated".
+*   **The Fix**:
+    *   Converted uploader container tags (`#forum-comment-image-wrapper`, `#forum-post-image-wrapper`, `#profile-avatar-trigger`, `#dict-upload-wrapper`) from `<label>` elements to standard `<div>` elements in [templates/index.html](file:///Users/jeffbabiak/templates/index.html) to eliminate flaky native label click forwarding and prevent double-triggering on desktop.
+    *   Refactored the global click capturing listener on the document. For the hybrid mobile app, it blocks propagation and calls the native Flutter uploader bridge. For standard web browsers (desktop & mobile Chrome/Safari), it programmatically invokes `input.click()` synchronously without calling `e.preventDefault()`, allowing standard browsers to open the photo library/file selector dialog natively.
+    *   Verified and successfully tested in mobile Chrome, Safari, and the hybrid mobile app on Android.
+    *   **Cache Busting**: Bumped version strings for static assets (`forum.js?v=48`, `tools.js?v=54`, `mods.js?v=9`) to ensure users load the latest script implementations.
+
+### 2. Find Count Tool
 *   **Feature**: Integrated a new "Find Count" tool inside the Tools sidebar navigation, positioned immediately before the **Personal Timer**.
 *   **Functionality**:
     *   Allows users to search for any word to retrieve its total find count across all dictionaries since Morpheme began.
     *   Renders a table of the 10 most recent users who found the word, showing the finder's country flag (rendered as an image) and username, and the formatted local/UTC date it was found.
     *   Binds click events to the finder rows to display their mini-profile overlay (`window.showMiniProfile(username)`).
     *   Fully optimized for responsive viewports on desktop, laptop, and mobile screens.
-*   **Asset Cache Busting**: Bushed static script and style caches to force client reloading.
 
-### 2. Country Flag Image Rendering (Windows/Desktop Fix)
+### 3. Country Flag Image Rendering (Windows/Desktop Fix)
 *   **The Issue**: Windows desktop browsers do not support flag emojis natively, falling back to rendering plain two-letter abbreviations (e.g. "CA" instead of the Canadian flag).
 *   **The Fix**:
     *   Defined global helpers `window.emojiToCountryCode` and `window.getFlagHtml` at the top of the frontend code.
     *   Instead of raw emoji characters, the helper dynamically renders a crisp flag image hosted on `flagcdn.com` using inline styles that align and scale perfectly with text.
-    *   Integrated flag image rendering globally across all key views:
-        *   **Forum**: In post list card metadata, thread details author info, and comment header author names.
-        *   **Leaderboards**: Next to usernames in the ranking rows.
-        *   **Gameplay (Player List)**: Under player names in the active list.
-        *   **Tools/Profiles**: In the mini-profile popup, the main user profile view, the optimistic profile flag update UI, the mini friend cards, and the Find Count search results table.
-        *   **Dropdown Selector**: In the profile country selection list dropdown items.
-    *   **Cache Busting**: Incremented the style and script versions (`style.css?v=29`, `forum.js?v=39`, `app.js?v=42`, `tools.js?v=44`) to ensure instant loading.
+    *   Integrated flag image rendering globally across all key views: Forum, Leaderboards, Gameplay Player List, Tools/Profiles, and the country selection dropdown lists.
 
-### 3. Registration Flag Selection Requirement
+### 4. Registration Flag Selection Requirement
 *   **Feature**: Required flag selection during user registration to ensure every new registered user has a location representing where they live.
 *   **Implementation**:
     *   Added a styled country flag selection select dropdown in the registration popup form (`#signup-form` in `index.html`), matched with input styling in `style.css`.
@@ -46,6 +47,6 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `95d7df4257c583e6de57f825f19c926d55d708a6`  
+**Latest Stable Commit ID**: `e3806022cd27ab1032f13ac81b33b5cf7739676f`  
 **Localhost & GitHub Sameness Status**: Synchronized  
 **Production Server Status**: Green / PM2 Online / Live  
