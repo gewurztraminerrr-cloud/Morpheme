@@ -963,11 +963,27 @@ const Forum = {
     showListView: function () {
         document.querySelectorAll('.forum-view').forEach(v => v.classList.remove('active'));
         document.getElementById('forum-view-list').classList.add('active');
+
+        // On mobile devices, scroll down so they see the category title and threads
+        if (window.innerWidth <= 820) {
+            const titleEl = document.getElementById('forum-category-title');
+            if (titleEl) {
+                titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
     },
 
     showPostView: function () {
         document.querySelectorAll('.forum-view').forEach(v => v.classList.remove('active'));
         document.getElementById('forum-view-post').classList.add('active');
+
+        // On mobile devices, scroll down so they see the post details
+        if (window.innerWidth <= 820) {
+            const postViewEl = document.getElementById('forum-view-post');
+            if (postViewEl) {
+                postViewEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
     },
 
     showCreateView: function () {
@@ -979,6 +995,14 @@ const Forum = {
 
         // User Request Update: Allow all posts in every topic to attach an image
         document.getElementById('forum-image-upload-section').classList.remove('hidden');
+
+        // On mobile devices, scroll down so they see the create post form
+        if (window.innerWidth <= 820) {
+            const createEl = document.getElementById('forum-view-create');
+            if (createEl) {
+                createEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
     },
 
     showRestrictedView: function () {

@@ -51,6 +51,8 @@ This summary documents the stable state of the Morpheme application as of June 1
     *   Added visual loading states and disabled upload/submit buttons during active network requests.
 *   **Responsive Image Lightbox**:
     *   Enabled expanding forum post and comment images into a responsive full-screen overlay lightbox on mobile and desktop devices.
+*   **Mobile Auto-Scroll transitions**:
+    *   Implemented automatic viewport scrolling to active content on mobile devices (screen width <= 820px) when changing forum views. This scrolls the view smoothly to the category title/threads, post details, or create post inputs, avoiding manual scroll requirements after selection.
 
 ### 5. Find Count Tool Enhancements
 *   **Invalid Word Indicators**:
@@ -70,6 +72,6 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `89211eecfa4eb299012b42245e903fad2e8a33b2`  
+**Latest Stable Commit ID**: `37292d74596efd1a805c87d482e8cc4f4c834926`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `89211ee`
+**Production Server Status**: Green / PM2 Online / Live at commit `37292d7`
