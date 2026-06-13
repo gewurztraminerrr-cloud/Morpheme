@@ -71,9 +71,9 @@ const BoardAudio = {
             const osc = this.ctx.createOscillator();
             const gainNode = this.ctx.createGain();
             
-            // Set frequency to 18Hz (subsonic, inaudible) and volume to 0.01 to keep Bluetooth channel active and bypass hardware noise-gates
-            osc.frequency.setValueAtTime(18, this.ctx.currentTime);
-            gainNode.gain.value = 0.01; 
+            // Set frequency to 28Hz (subsonic, inaudible) and volume to 0.015 to keep Bluetooth channel active and bypass hardware noise-gates
+            osc.frequency.setValueAtTime(28, this.ctx.currentTime);
+            gainNode.gain.value = 0.015; 
             
             osc.connect(gainNode);
             gainNode.connect(this.ctx.destination);
@@ -81,7 +81,7 @@ const BoardAudio = {
             osc.start();
             this._keepAliveNode = osc;
             this._keepAliveGain = gainNode;
-            console.log("[BoardAudio] Bluetooth keep-alive oscillator started (18Hz @ 0.01 gain)");
+            console.log("[BoardAudio] Bluetooth keep-alive oscillator started (28Hz @ 0.015 gain)");
         } catch (e) {
             console.warn("[BoardAudio] Failed to start keep-alive:", e);
         }
@@ -6658,6 +6658,7 @@ function handleCellMouseDown(e) {
     if (window.isPopupVisible) return;
     if (e.button !== 0) return; // Only left click
     if (Date.now() - lastTouchTime < 1500) return; // Ignore simulated mouse events on touch devices
+    initAudioOnUserInteraction();
 
     const cell = e.target.closest('.board-cell');
     if (!cell) return;
@@ -6763,6 +6764,7 @@ let lastTouchY = -1;
 
 function handleCellTouchStart(e) {
     if (window.isPopupVisible) return;
+    initAudioOnUserInteraction();
     const touch = e.touches[0];
     let cell = e.target.closest('.board-cell');
     if (!cell) {
