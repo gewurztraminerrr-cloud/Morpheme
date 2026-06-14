@@ -219,6 +219,8 @@ let showBoardInSplitIntermission = false;
 
 // Board Rotation State
 let isBoardRotated = false;
+// Board Transposition: true = 90° portrait rotation for mobile (swaps display cols/rows + iterates [c][r])
+let isBoardTransposed = false;
 let activeWordsTab = 'found'; // 'found' or 'remaining'
 let validationTimeout = null;
 let highlightedSplitWord = null; // Track word for shared highlighting in Split Points
@@ -3906,6 +3908,13 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
 
     boardEl.className = 'game-board';
     boardEl.style.display = '';
+
+    // When transposed for mobile portrait: swap the CSS grid dimensions so the
+    // shorter raw dimension becomes the column count and the longer becomes the row count.
+    if (isBoardTransposed && !is3D && cols > 0 && rows > 0) {
+        boardEl.style.setProperty('--board-cols', rows);  // data rows → display cols
+        boardEl.style.setProperty('--board-rows', cols);  // data cols → display rows
+    }
     
     // FORTE: Enforce grid sizing BEFORE children are added to prevent "vertical column" flickering
     if (!is3D && cols > 0 && rows > 0) {
@@ -4023,11 +4032,18 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     if (currentCells.length === expectedCount && !is3D) {
         // SYNC EXISTING CELLS (Supports Dynamic Shading Transitions)
         let idx = 0;
-        if (isBoardRotated) {
+        if (isBoardTransposed) {
+            // 90° portrait rotation: iterate column-first so each display row = one data column
+            for (let c = 0; c < cols; c++) {
+                for (let r = 0; r < rows; r++) {
+                    const existing = currentCells[idx++];
+                    updateBoardCell(existing, r, c, board[r][c], grayed, undefined, state);
+                }
+            }
+        } else if (isBoardRotated) {
             for (let r = rows - 1; r >= 0; r--) {
                 for (let c = cols - 1; c >= 0; c--) {
                     const existing = currentCells[idx++];
-                    // Update only if necessary
                     updateBoardCell(existing, r, c, board[r][c], grayed, undefined, state);
                 }
             }
@@ -4042,7 +4058,15 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     } else {
         // FULL RERENDER
         boardEl.innerHTML = '';
-        if (isBoardRotated) {
+        if (isBoardTransposed) {
+            // 90° portrait rotation: iterate column-first so each display row = one data column
+            for (let c = 0; c < cols; c++) {
+                for (let r = 0; r < rows; r++) {
+                    const cell = createBoardCell(r, c, board[r][c], grayed, undefined, state);
+                    boardEl.appendChild(cell);
+                }
+            }
+        } else if (isBoardRotated) {
             for (let r = rows - 1; r >= 0; r--) {
                 for (let c = cols - 1; c >= 0; c--) {
                     const cell = createBoardCell(r, c, board[r][c], grayed, undefined, state);
@@ -4118,9 +4142,12 @@ function checkBoardOverflow() {
     if (!rows) rows = 4;
 
     const isSixByEight = (cols === 6 && rows === 8) || (cols === 8 && rows === 6);
-    console.log(`[LayoutCheck] Dimensions: ${cols}x${rows}. Is 6x8 target? ${isSixByEight}`);
-    boardEl.style.setProperty('--board-cols', cols);
-    boardEl.style.setProperty('--board-rows', rows);
+    // When transposed for mobile portrait: display cols = raw rows, display rows = raw cols
+    const displayCols = isBoardTransposed ? rows : cols;
+    const displayRows = isBoardTransposed ? cols : rows;
+    console.log(`[LayoutCheck] Raw: ${cols}x${rows}, Display: ${displayCols}x${displayRows}. Transposed: ${isBoardTransposed}`);
+    boardEl.style.setProperty('--board-cols', displayCols);
+    boardEl.style.setProperty('--board-rows', displayRows);
 
     // Get Cell Size (Always fetch to ensure sync with User Settings)
     const minDim = Math.min(cols, rows);
@@ -4179,10 +4206,14 @@ function checkBoardOverflow() {
 
     if (isMobileView) {
         if (!window.userManuallyOverrodeBoardSize) {
-            // User Request: On mobile devices, regardless of board dimensions, always ensure the board fits perfectly onto the screen from one end to the other by changing tile size. ZERO PADDING.
-            const mobileTargetSize = Math.floor((window.innerWidth - boardGap) / cols);
+            // When the board is transposed (portrait display), the display column count is `rows`
+            // (the shorter raw dimension), not `cols`. Size cells to fill screen based on display cols.
+            const displayCols = isBoardTransposed ? rows : cols;
+            const displayGap = 4 * (displayCols - 1);
+            // User Request: On mobile devices, always ensure the board fits perfectly onto the screen. ZERO PADDING.
+            const mobileTargetSize = Math.floor((window.innerWidth - displayGap) / displayCols);
             cellSize = Math.max(20, mobileTargetSize);
-            requiredBoardWidth = (cols * cellSize) + boardGap;
+            requiredBoardWidth = (displayCols * cellSize) + displayGap;
         }
     } else {
         // Constrain cell size on small desktop screens so the board ALWAYS fits snugly without horizontal overflow
@@ -7099,20 +7130,18 @@ async function initTournamentPlay() {
         window.lastGameState = tournamentGameState;
         lastRenderedBoardJSON = null; // Force re-render
 
-        // Auto-rotate board for mobile: if the board has more columns than rows
-        // (i.e. landscape data for a portrait screen), rotate it to fit naturally.
-        // This mirrors the Rotate button behaviour that public rooms apply automatically.
+        // On mobile, if the board data is wider than tall (landscape), transpose it to
+        // portrait so the long dimension runs vertically and fills the phone screen naturally.
+        // Example: a 4-row × 6-col board becomes 4 columns × 6 rows on screen.
+        isBoardTransposed = false; // reset
+        isBoardRotated = false;    // reset
         if (!is3D && isMobile && data.board && data.board.length > 0) {
             const boardRows = data.board.length;
             const boardCols = data.board[0] ? data.board[0].length : 0;
             if (boardCols > boardRows) {
-                isBoardRotated = true;
-                console.log('[Tournament] Auto-rotating board for mobile portrait fit. Raw:', boardCols, 'x', boardRows);
-            } else {
-                isBoardRotated = false;
+                isBoardTransposed = true;
+                console.log('[Tournament] Transposing board for mobile portrait fit. Raw data:', boardRows, 'rows ×', boardCols, 'cols → display:', boardRows, 'cols ×', boardCols, 'rows');
             }
-        } else if (!is3D) {
-            isBoardRotated = false;
         }
 
         // Render Board
@@ -7334,6 +7363,8 @@ function exitTournamentPlay() {
     localStorage.removeItem('tournament_play_active');
     isTournamentPlay = false;
     window.isTournamentPlay = false;
+    isBoardTransposed = false; // RESET: clear portrait transposition set for tournament mobile
+    isBoardRotated = false;    // RESET: ensure board isn't flipped from previous game
     clearGameUIAndCache();
     if (window.navigateToPage) {
         window.navigateToPage('tournaments');
