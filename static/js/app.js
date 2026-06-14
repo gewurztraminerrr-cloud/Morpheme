@@ -184,31 +184,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // NEW: Handle initial navigation based on hash OR landing page
     const hash = window.location.hash || '';
-    let tournamentActive = localStorage.getItem('tournament_play_active');
     const privateActive = localStorage.getItem('private_match_active');
 
-    // GUARD: Verify the tournament turn is still valid before bypassing ENTER LOBBY.
-    // A stale key left from a closed mid-round session must not skip the gateway.
+    // CLEAN UP any stale tournament_play_active left from a previous session.
+    // We always show ENTER LOBBY on fresh open — the user navigates to their
+    // tournament turn normally from the Tournaments page.
+    // The key is only used within the same session to resume via startGamePolling().
+    const tournamentActive = localStorage.getItem('tournament_play_active');
     if (tournamentActive) {
         try {
             const tCheck = await fetch('/api/tournament/game-state', { cache: 'no-store' });
             const tData = await tCheck.json();
             if (tData.error) {
-                console.log('[app.js] Stale tournament_play_active cleared:', tData.error);
+                // Turn already submitted or expired — clear the stale key
+                console.log('[app.js] Clearing stale tournament_play_active:', tData.error);
                 localStorage.removeItem('tournament_play_active');
-                tournamentActive = null;
             }
+            // If turn IS still valid, we leave the key so startGamePolling()
+            // can resume the turn when the user manually navigates to Play.
         } catch (e) {
-            // Network error — clear to be safe; tournament state is unknown
-            console.warn('[app.js] Could not verify tournament turn, clearing key:', e);
-            localStorage.removeItem('tournament_play_active');
-            tournamentActive = null;
+            console.warn('[app.js] Could not verify tournament turn on startup:', e);
         }
     }
 
     if (currentUser) {
-        // AUTHENTICATED: Always stay out of login page
-        if (tournamentActive || privateActive || (hash === '#page-play' && window.currentRoomId)) {
+        // AUTHENTICATED: Always show ENTER LOBBY on a fresh app open.
+        // tournament_play_active is intentionally NOT a bypass here — the user
+        // reaches their tournament turn by entering the lobby and navigating to Tournaments.
+        // private_match_active IS a bypass because both players must be present simultaneously.
+        if (privateActive || (hash === '#page-play' && window.currentRoomId)) {
             showPage('page-play');
             const playBtn = document.querySelector('.nav-btn[data-page="play"]');
             if (playBtn) updateActiveNav(playBtn);
