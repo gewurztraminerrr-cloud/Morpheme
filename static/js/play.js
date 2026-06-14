@@ -7099,6 +7099,22 @@ async function initTournamentPlay() {
         window.lastGameState = tournamentGameState;
         lastRenderedBoardJSON = null; // Force re-render
 
+        // Auto-rotate board for mobile: if the board has more columns than rows
+        // (i.e. landscape data for a portrait screen), rotate it to fit naturally.
+        // This mirrors the Rotate button behaviour that public rooms apply automatically.
+        if (!is3D && isMobile && data.board && data.board.length > 0) {
+            const boardRows = data.board.length;
+            const boardCols = data.board[0] ? data.board[0].length : 0;
+            if (boardCols > boardRows) {
+                isBoardRotated = true;
+                console.log('[Tournament] Auto-rotating board for mobile portrait fit. Raw:', boardCols, 'x', boardRows);
+            } else {
+                isBoardRotated = false;
+            }
+        } else if (!is3D) {
+            isBoardRotated = false;
+        }
+
         // Render Board
         console.log('[Tournament] Rendering tournament board. Format:', (data.params.board_format || 'Normal'));
         renderBoard(data.board, false, is3D);
