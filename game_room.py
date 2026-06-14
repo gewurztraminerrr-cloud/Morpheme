@@ -1557,32 +1557,50 @@ class GameRoom:
                                         count = len(eligible_receivers)
                                         share = self.abandonment_bounty // count
                                         remainder = self.abandonment_bounty % count
-                                        
+
+                                        # Determine the per-format rating cap so bounty never busts the ceiling
+                                        fmt = (self.current_board_format or '').lower()
+                                        if 'triple' in fmt:
+                                            rating_cap = 48
+                                        elif 'double' in fmt:
+                                            rating_cap = 32
+                                        else:
+                                            rating_cap = 16
+
                                         config_key = f"{self.game_type.replace('solo_', '')}|{self.board_dimensions}|{self.time_limit}"
-                                        
+
                                         for i, target in enumerate(eligible_receivers):
                                             bonus = share + (1 if i < remainder else 0)
                                             if bonus <= 0: continue
-                                        
-                                            # Apply to DB (using INSERT OR ON CONFLICT UPDATE upsert)
+
+                                            # Cap: only give as much bonus as keeps total_change <= rating_cap
+                                            current_change = getattr(target, 'rating_change', 0)
+                                            headroom = max(0, rating_cap - current_change)
+                                            bonus = min(bonus, headroom)
+                                            if bonus <= 0:
+                                                with open(RATING_AUDIT_PATH, 'a') as log:
+                                                    log.write(f"[{time.time()}] Round-End Bounty SKIPPED for {target.username}: already at cap ({current_change}/{rating_cap})\n")
+                                                continue
+
+                                            # Apply to DB
                                             conn_p.execute('UPDATE users SET rating = rating + ? WHERE id = ?', (bonus, target.user_id))
                                             conn_p.execute('''
                                                 INSERT INTO user_ratings (user_id, config_key, rating)
                                                 VALUES (?, ?, 1200 + ?)
                                                 ON CONFLICT(user_id, config_key) DO UPDATE SET rating = rating + ?
                                             ''', (target.user_id, config_key, bonus, bonus))
-                                        
-                                            # Apply in-memory (and ensure rating_change is updated for UI display)
+
+                                            # Apply in-memory
                                             target.rating += bonus
                                             if not hasattr(target, 'rating_change'): target.rating_change = 0
                                             target.rating_change = getattr(target, 'rating_change', 0) + bonus
-                                        
+
                                             if not hasattr(target, 'bonus_notices'): target.bonus_notices = []
                                             target.bonus_notices.append(f"Received +{bonus} from round abandonment pool")
 
                                             with open(RATING_AUDIT_PATH, 'a') as log:
-                                                log.write(f"[{time.time()}] Round-End Bounty Payout: +{bonus} to {target.username} (Room: {self.room_id}, Pool: {self.abandonment_bounty})\n")
-                                    
+                                                log.write(f"[{time.time()}] Round-End Bounty Payout: +{bonus} to {target.username} (Room: {self.room_id}, Pool: {self.abandonment_bounty}, Cap: {rating_cap})\n")
+
                                         # Reset pool AFTER successful distribution
                                         self.abandonment_bounty = 0
                                         
