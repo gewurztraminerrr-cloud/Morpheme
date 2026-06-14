@@ -2639,8 +2639,12 @@ def upload_avatar():
 # Game Room APIs
 
 def apply_leave_penalty(user_id, room):
-    """Applies a -16 point penalty if a user leaves a room after participating.
-    Exempts 24h persistent rooms and players with no score/words.
+    """Marks a leaver for score-based proportional rating change at round end.
+    The flat -16 penalty is replaced by the end-of-round proportional system,
+    which uses the quitter's score at the time they left. This is fairer —
+    a player who left with a high score gets a smaller negative change than
+    one who left with no score. A small abandonment bounty is still added to
+    the pool for remaining players as a signal that the quitter disrupted the round.
     """
     player = room.get_player(user_id)
     if not player or player.is_ai:
@@ -2649,94 +2653,60 @@ def apply_leave_penalty(user_id, room):
     # 1. Broad Exemption: 24h Rooms (>= 2h time limit)
     if room.time_limit >= 7200:
         with open(RATING_AUDIT_PATH, 'a') as log:
-            log.write(f"[{time.time()}] Penalty SKIPPED for {player.username} in {room.room_id}: 24h room\n")
+            log.write(f"[{time.time()}] Leave-rating SKIPPED for {player.username} in {room.room_id}: 24h room\n")
         return
 
-    # 2. Activity Check: Only penalize if they actually PARTICIPATED in this round
-    # If they have 0 score and 0 words, they are a passive leaver (Ghost).
-    # If the room is in INTERMISSION, the round is over, so leaving is NOT abandonment.
+    # 2. Activity Check: Only apply if they actually PARTICIPATED in this round.
+    # If the room is in INTERMISSION, the round is already over — no action needed.
     if getattr(room, 'state', '') == 'intermission':
         with open(RATING_AUDIT_PATH, 'a') as log:
-            log.write(f"[{time.time()}] Penalty SKIPPED for {player.username} in {room.room_id}: Intermission\n")
+            log.write(f"[{time.time()}] Leave-rating SKIPPED for {player.username} in {room.room_id}: Intermission\n")
         return
 
-    # 2b. Mid-Round Exemption: USER MANDATE - Do not penalize if they joined mid-round
-    # We use a very strict check here to ensure NO ONE who joins late is penalized.
+    # 2b. Mid-Round Exemption: Do not penalize if they joined mid-round.
     is_late_joiner = getattr(player, 'joined_mid_round', False)
     if is_late_joiner:
         with open(RATING_AUDIT_PATH, 'a') as log:
-            log.write(f"[{time.time()}] Penalty SKIPPED for {player.username} in {room.room_id}: Joined mid-round (Flag check: {is_late_joiner})\n")
+            log.write(f"[{time.time()}] Leave-rating SKIPPED for {player.username} in {room.room_id}: Joined mid-round\n")
         return
 
     has_score = (player.score > 0)
     has_words = (len(player.submitted_words) > 0)
-    
+
     if not (has_score or has_words):
         with open(RATING_AUDIT_PATH, 'a') as log:
-            log.write(f"[{time.time()}] Penalty SKIPPED for {player.username} in {room.room_id}: No activity (score={player.score}, words={len(player.submitted_words)})\n")
+            log.write(f"[{time.time()}] Leave-rating SKIPPED for {player.username} in {room.room_id}: No activity (score={player.score}, words={len(player.submitted_words)})\n")
         return
 
-    # 3. Check if others played with the user (Human participants only)
-    # USER MANDATE: Only penalize if we are abandoning REGISTERED STARTER players.
-    # We trigger the penalty if ANY other human starter is in the room, regardless of their score.
+    # 3. Check if others are still playing (Human starters only).
     other_participants = [
-        p for p in room.players 
-        if str(p.user_id) != str(user_id) 
-        and not p.is_ai 
+        p for p in room.players
+        if str(p.user_id) != str(user_id)
+        and not p.is_ai
         and not getattr(p, 'is_guest', False)
         and not getattr(p, 'joined_mid_round', False)
     ]
-    
+
     if not other_participants:
-        num_humans = len([p for p in room.players if not p.is_ai])
         with open(RATING_AUDIT_PATH, 'a') as log:
-            log.write(f"[{time.time()}] Penalty SKIPPED: No other registered human STARTERS in {room.room_id}.\n")
+            log.write(f"[{time.time()}] Leave-rating SKIPPED: No other registered human STARTERS in {room.room_id}.\n")
         return
 
-    # Diagnostic: Log EXACTLY who is causing the penalty to trigger
-    others_names = ", ".join([f"{p.username}(Starter={not getattr(p, 'joined_mid_round', False)})" for p in other_participants])
+    # 4. Log the leave event with the score at time of leaving.
+    # The actual rating change will be computed proportionally at round end
+    # via round_quitters (the player's score is preserved there).
     with open(RATING_AUDIT_PATH, 'a') as log:
-        log.write(f"[{time.time()}] Penalty TRIGGERED by presence of: {others_names}\n")
+        log.write(f"[{time.time()}] Leave-rating QUEUED for {player.username} in {room.room_id}: "
+                  f"score={player.score}, words={len(player.submitted_words)}. "
+                  f"Proportional change will apply at round end via round_quitters.\n")
 
-    # 4. Apply the -16 Penalty to the leaver
+    # 5. Add a small abandonment bounty to the pool for remaining players.
+    # This is a disruption signal — the main rating impact comes from the proportional system.
+    bounty = 8
+    room.abandonment_bounty += bounty
     with open(RATING_AUDIT_PATH, 'a') as log:
-        log.write(f"[{time.time()}] Penalty APPLYING to {player.username} in {room.room_id}: -16 points\n")
-    
-    # Update DB
-    display_game_type = room.game_type.replace('solo_', '')
-    config_key = f"{display_game_type}|{room.board_dimensions}|{room.time_limit}"
-    
-    conn = sqlite3.connect(DB_PATH, timeout=30)
-    try:
-        # Subtract from leaver
-        conn.execute('''
-            INSERT INTO user_ratings (user_id, config_key, rating)
-            VALUES (?, ?, MAX(400, 1200 - 16))
-            ON CONFLICT(user_id, config_key) DO UPDATE SET rating = MAX(400, rating - 16)
-        ''', (user_id, config_key))
-        
-        conn.execute('''
-            UPDATE users 
-            SET rating = MAX(400, rating - 16) 
-            WHERE id = ?
-        ''', (user_id,))
-        
-        # Update in-memory rating so subsequent round-end calcs use the penalized value
-        player.rating = max(400, player.rating - 16)
+        log.write(f"[{time.time()}] Bounty Collection: +{bounty} added to {room.room_id} pool (Total: {room.abandonment_bounty})\n")
 
-        # 5. Add to the room's abandonment_bounty pool (To be distributed at round end results)
-        # USER MANDATE: Distribute at the end when results are shown.
-        room.abandonment_bounty += 16
-        
-        with open(RATING_AUDIT_PATH, 'a') as log:
-            log.write(f"[{time.time()}] Bounty Collection: +16 added to {room.room_id} pool (Total: {room.abandonment_bounty})\n")
-        
-        conn.commit()
-    except Exception as e:
-        with open(RATING_AUDIT_PATH, 'a') as log:
-            log.write(f"[{time.time()}] Penalty ERROR for {player.username}: {e}\n")
-    finally:
-        conn.close()
 
 def cleanup_user_rooms(user_id, exclude_room_id=None):
     """Remove user from all rooms except exclude_room_id and 24h persistent rooms"""

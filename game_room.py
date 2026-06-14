@@ -283,20 +283,24 @@ class GameRoom:
         # Check if player exists in round_quitters (RESTORE mid-round state)
         quitter = next((q for q in self.round_quitters if str(q.user_id) == str(user_id)), None)
         if quitter:
-            print(f"[GameRoom] Restoring quitter {username} ({user_id}) to active players list with {len(quitter.submitted_words)} words.")
+            print(f"[GameRoom] Restoring quitter {username} ({user_id}) to active players with {len(quitter.submitted_words)} words, score={quitter.score}.")
             quitter.last_active = time.time()
             quitter.country_flag = country_flag
             quitter.is_guest = is_guest
-            # Quitters who rejoin mid-round should NOT get rating changes for this round
-            # They already left; their re-entry counts as mid-round regardless of original status
-            if not is_daily and self.state == 'active':
-                quitter.joined_mid_round = True
-                print(f"[GameRoom] Mid-round flag set for quitter {username} rejoining mid-round.")
+            # STARTER RETURN: Preserve the player's original joined_mid_round flag.
+            # If they started the round (joined_mid_round=False) and are coming back,
+            # they are still a starter — their score and words are fully restored.
+            # Do NOT mark them as mid-round; they deserve their proportional rating change at round end.
+            # (The abandonment bounty added when they left is reversed below.)
             if not getattr(quitter, 'cell_density', None):
                 self._initialize_player_density_grid(quitter)
             self.players.append(quitter)
-            # CRITICAL: Remove from round_quitters so they aren't penalized as a quitter at round end
+            # CRITICAL: Remove from round_quitters so they aren't double-counted at round end
             self.round_quitters = [q for q in self.round_quitters if str(q.user_id) != str(user_id)]
+            # Reverse the abandonment bounty that was charged when they left
+            if self.abandonment_bounty >= 8:
+                self.abandonment_bounty -= 8
+                print(f"[GameRoom] Reversed abandonment bounty for returning player {username}. Pool now: {self.abandonment_bounty}")
             if is_daily:
                 self.save_active_players()
             return True
@@ -1387,6 +1391,8 @@ class GameRoom:
                 
                 # [PROACTIVE] Do NOT clear generated/search flags here anymore.
                 # They are now reset only at start_next_round.
+                # Snapshot round_quitters BEFORE clearing so the async thread can use them
+                quitters_snapshot = list(self.round_quitters)
                 self.round_quitters = []
                 self.custom_end_time = 0 # CLEAR ALWAYS AT TRANSITION
                 
@@ -1513,14 +1519,14 @@ class GameRoom:
                         try:
                             is_24h = (self.time_limit >= 7200)
                             if is_24h:
-                                for p in self.players + self.round_quitters:
+                                for p in self.players + quitters_snapshot:
                                     p.rating_change = 0
                                 print(f"[GameRoom] 24-hour room: skipping rating updates.")
                             else:
                                 from rating_logic import calculate_proportional_rating_change
                                 # USER MANDATE: Only change ratings for players who started the round from the beginning
                                 participants = [
-                                    p for p in self.players + self.round_quitters 
+                                    p for p in self.players + quitters_snapshot 
                                     if (getattr(p, 'score', 0) > 0 or not getattr(p, 'is_ai', False)) 
                                     and not getattr(p, 'joined_mid_round', False)
                                 ]
@@ -1528,7 +1534,7 @@ class GameRoom:
                                 
                                 import sqlite3
                                 conn_p = sqlite3.connect(DB_PATH, timeout=30)
-                                for p in self.players + self.round_quitters:
+                                for p in self.players + quitters_snapshot:
                                     if p.user_id in rating_changes:
                                         p.rating_change = rating_changes[p.user_id]
                                         p.rating += p.rating_change
