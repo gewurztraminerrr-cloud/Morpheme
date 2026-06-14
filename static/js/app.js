@@ -184,8 +184,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // NEW: Handle initial navigation based on hash OR landing page
     const hash = window.location.hash || '';
-    const tournamentActive = localStorage.getItem('tournament_play_active');
+    let tournamentActive = localStorage.getItem('tournament_play_active');
     const privateActive = localStorage.getItem('private_match_active');
+
+    // GUARD: Verify the tournament turn is still valid before bypassing ENTER LOBBY.
+    // A stale key left from a closed mid-round session must not skip the gateway.
+    if (tournamentActive) {
+        try {
+            const tCheck = await fetch('/api/tournament/game-state', { cache: 'no-store' });
+            const tData = await tCheck.json();
+            if (tData.error) {
+                console.log('[app.js] Stale tournament_play_active cleared:', tData.error);
+                localStorage.removeItem('tournament_play_active');
+                tournamentActive = null;
+            }
+        } catch (e) {
+            // Network error — clear to be safe; tournament state is unknown
+            console.warn('[app.js] Could not verify tournament turn, clearing key:', e);
+            localStorage.removeItem('tournament_play_active');
+            tournamentActive = null;
+        }
+    }
 
     if (currentUser) {
         // AUTHENTICATED: Always stay out of login page

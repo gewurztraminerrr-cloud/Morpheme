@@ -598,7 +598,7 @@ document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
         // Tab became visible: Update immediately and restore fast polling
         console.log('[play.js] Tab visible: Restoring fast polling.');
-        
+
         // Force-abort any stale/stuck in-flight fetch and release lock to prevent queue clogging
         if (window._activeStateFetchController) {
             console.log('[play.js] Tab visible: Aborting stale in-flight state fetch.');
@@ -606,7 +606,34 @@ document.addEventListener('visibilitychange', () => {
             window._activeStateFetchController = null;
         }
         isFetchingState = false;
-        
+
+        // TOURNAMENT MODE: Handle resume separately — don't poll public room endpoints
+        if (isTournamentPlay) {
+            const now = Date.now() / 1000;
+            if (localEndTime && localEndTime > now) {
+                // Time remains — restart the local countdown
+                if (timerInterval) clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    const diff = Math.max(0, Math.ceil(localEndTime - (Date.now() / 1000)));
+                    updateSpecialMatchTimer(diff);
+                    if (diff <= 0) {
+                        clearInterval(timerInterval);
+                        finishTournamentTurn();
+                    }
+                }, 1000);
+                const initialDiff = Math.max(0, Math.ceil(localEndTime - now));
+                updateSpecialMatchTimer(initialDiff);
+            } else if (localEndTime) {
+                // Timer already expired while tab was hidden — finish the turn now
+                console.log('[play.js] Tournament timer expired while hidden. Finishing turn.');
+                if (timerInterval) clearInterval(timerInterval);
+                finishTournamentTurn();
+            } else {
+                setTimerWaitingState(true);
+            }
+            return; // Do NOT call updateGameState/refreshPollInterval for tournament
+        }
+
         // Instant Feedback: Show ticking countdown if active, otherwise show "WAIT..."
         if (localEndTime && localEndTime > (Date.now() / 1000)) {
             if (!timerInterval) {
@@ -624,7 +651,7 @@ document.addEventListener('visibilitychange', () => {
                 refreshPollInterval();
             }
         }, 80);
-        
+
         // Re-sync timer if needed (ONLY if lastGameState is fresh, within 5 seconds)
         if (window.lastGameState && window._lastGameStateFetchedTime && (Date.now() - window._lastGameStateFetchedTime < 5000)) {
             syncTimerWithServer(window.lastGameState);
@@ -634,7 +661,7 @@ document.addEventListener('visibilitychange', () => {
         // Tab hidden: Enter battery-saving mode
         console.log('[play.js] Tab hidden: Entering battery-saving mode.');
         refreshPollInterval();
-        
+
         // Pause the high-frequency timer interval while hidden
         if (timerInterval) {
             clearInterval(timerInterval);
@@ -647,7 +674,7 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('focus', () => {
     if (!document.hidden) {
         console.log('[play.js] Window focus gained: Checking wake-up update.');
-        
+
         // Force-abort any stale/stuck in-flight fetch and release lock to prevent queue clogging
         if (window._activeStateFetchController) {
             console.log('[play.js] Focus: Aborting stale in-flight state fetch.');
@@ -655,7 +682,32 @@ window.addEventListener('focus', () => {
             window._activeStateFetchController = null;
         }
         isFetchingState = false;
-        
+
+        // TOURNAMENT MODE: Handle resume separately — don't poll public room endpoints
+        if (isTournamentPlay) {
+            const now = Date.now() / 1000;
+            if (localEndTime && localEndTime > now) {
+                if (timerInterval) clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    const diff = Math.max(0, Math.ceil(localEndTime - (Date.now() / 1000)));
+                    updateSpecialMatchTimer(diff);
+                    if (diff <= 0) {
+                        clearInterval(timerInterval);
+                        finishTournamentTurn();
+                    }
+                }, 1000);
+                const initialDiff = Math.max(0, Math.ceil(localEndTime - now));
+                updateSpecialMatchTimer(initialDiff);
+            } else if (localEndTime) {
+                console.log('[play.js] Tournament timer expired while hidden (focus). Finishing turn.');
+                if (timerInterval) clearInterval(timerInterval);
+                finishTournamentTurn();
+            } else {
+                setTimerWaitingState(true);
+            }
+            return;
+        }
+
         // Instant Feedback: Show ticking countdown if active, otherwise show "WAIT..."
         if (localEndTime && localEndTime > (Date.now() / 1000)) {
             if (!timerInterval) {
