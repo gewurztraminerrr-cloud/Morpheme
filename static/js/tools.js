@@ -1389,6 +1389,13 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
         return;
     }
 
+    // Normalize board if it's a dictionary
+    if (round.board && typeof round.board === 'object' && !Array.isArray(round.board)) {
+        round.board = round.board.board;
+    }
+
+    window.currentActiveReplayRound = round;
+
     // Update Date Display
     const dateEl = document.getElementById('history-review-date');
     if (dateEl) {
@@ -1657,7 +1664,7 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
         if (word.is_bonus) ptsClass += ' bonus';
 
         return `
-        <div class="walkthrough-item reveal">
+        <div class="walkthrough-item reveal" style="cursor: pointer;" onclick="highlightWordPathOnReplay('${word.word.replace(/'/g, "\\'")}')">
             <span class="walkthrough-time">${timeStr}</span>
             <span class="walkthrough-word">${word.word}</span>
             <span class="${ptsClass}">${word.points} pts</span>
@@ -4427,4 +4434,55 @@ window.lookupWord = function (word) {
     // 3. Scroll to results if needed
     const container = document.getElementById('valid-results-container');
     if (container) container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+};
+
+window.findWordPath = findWordPath;
+
+window.highlightWordPathOnReplay = function(wordText) {
+    const round = window.currentActiveReplayRound;
+    if (!round || !round.board) return;
+    
+    let board = round.board;
+    if (board && typeof board === 'object' && !Array.isArray(board)) {
+        board = board.board;
+    }
+    if (!board) return;
+    
+    const rows = board.length;
+    const firstRow = board[0];
+    const is3D = rows === 6 && Array.isArray(firstRow) && Array.isArray(firstRow[0]);
+    const overlay = document.getElementById('history-review-overlay');
+    const prefix = overlay ? 'review' : 'integrated';
+    const boardContainer = document.getElementById(`${prefix}-board-container`);
+    if (!boardContainer) return;
+    
+    const cells = boardContainer.querySelectorAll('.review-cell');
+    cells.forEach(c => c.classList.remove('highlight'));
+    
+    if (is3D) {
+        if (typeof findWordPathOnCube === 'function') {
+            const path = findWordPathOnCube(wordText, board);
+            if (path) {
+                path.forEach((p, i) => {
+                    const idx = p.f * 9 + p.r * 3 + p.c;
+                    setTimeout(() => {
+                        if (cells[idx]) cells[idx].classList.add('highlight');
+                    }, i * 40);
+                });
+            }
+        }
+    } else {
+        if (typeof findWordPath === 'function') {
+            const path = findWordPath(board, wordText);
+            if (path) {
+                const gridCols = board[0].length;
+                path.forEach((p, i) => {
+                    const idx = p.row * gridCols + p.col;
+                    setTimeout(() => {
+                        if (cells[idx]) cells[idx].classList.add('highlight');
+                    }, i * 40);
+                });
+            }
+        }
+    }
 };

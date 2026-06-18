@@ -163,8 +163,7 @@ function renderTournament(data) {
                         <div class="score-group">
                             <span class="score">${s.score} <small style="font-size:0.6rem; opacity:0.6;">PTS</small></span>
                             <div style="display:flex; gap:8px;">
-                                <button class="replay-btn-small" title="Watch Walkthrough" onclick="watchTournamentReplay(${data.id}, ${data.current_round}, '${s.username}', false)">▶ Walkthrough</button>
-                                <button class="replay-btn-small" title="View Snapshot" onclick="watchTournamentReplay(${data.id}, ${data.current_round}, '${s.username}', true)">📷 Snapshot</button>
+                                <button class="replay-btn-small" title="Watch Replay" onclick="watchTournamentReplay(${data.id}, ${data.current_round}, '${s.username}', false)">▶ Replay</button>
                             </div>
                         </div>
                     </div>
@@ -511,7 +510,10 @@ window.watchTournamentReplay = function (tid, roundNum, targetUsername, isSnapsh
     const mockRound = {
         room_id: `tournament_${tid}`,
         round_number: roundNum,
-        board: JSON.parse(scoreData.board_data),
+        board: (() => {
+            const parsed = JSON.parse(scoreData.board_data);
+            return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed.board : parsed;
+        })(),
         words: scoreData.submitted_words, // Already an array of objects
         total_score: scoreData.score,
         round_duration: currentTournamentState.parameters.time_limit || 60,
@@ -548,7 +550,7 @@ window.watchTournamentWinnerReplay = async function (tid, username) {
         const mockRound = {
             room_id: `tournament_hist_${tid}`,
             round_number: data.current_round || 0,
-            board: data.board_data,
+            board: (data.board_data && typeof data.board_data === 'object' && !Array.isArray(data.board_data)) ? data.board_data.board : data.board_data,
             words: data.submitted_words,
             total_score: data.score,
             round_duration: data.parameters?.time_limit || 60,
