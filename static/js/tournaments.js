@@ -148,7 +148,8 @@ function renderTournament(data) {
     const lbCard = document.getElementById('tournament-leaderboard-card');
     const lbList = document.getElementById('tournament-leaderboard-list');
     if (lbCard && lbList) {
-        if (data.round_scores && data.round_scores.length > 0) {
+        const hasNotPlayedYet = userStatus.status === 'active' && userStatus.has_turn;
+        if (data.round_scores && data.round_scores.length > 0 && !hasNotPlayedYet) {
             lbCard.classList.remove('hidden');
             lbList.innerHTML = data.round_scores.map((s, idx) => {
                 const isMe = s.username === window.currentUser;

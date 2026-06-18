@@ -5630,8 +5630,13 @@ def get_tournament_status():
             rs_dict = dict(rs)
             is_own = ('user_id' in session and rs_dict['user_id'] == session['user_id'])
             
-            # Censor if user hasn't completed their own turn and it's not their own score
-            if not user_has_completed and not is_own:
+            # Censor if:
+            # 1. User hasn't completed their own turn (and it's not their own score)
+            # 2. Or the round is still active/ongoing (to prevent sharing/leakage to other active players)
+            is_round_active = (time.time() < round_end_time)
+            should_censor = not is_own and (not user_has_completed or is_round_active)
+            
+            if should_censor:
                 rs_dict['submitted_words'] = []
                 rs_dict['board_data'] = None
             else:

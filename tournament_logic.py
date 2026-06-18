@@ -422,8 +422,8 @@ class TournamentManager:
         conn.row_factory = sqlite3.Row
         
         # Get tournament info
-        t = conn.execute('SELECT current_round, parameters FROM tournaments WHERE id = ?', (tid,)).fetchone()
-        if not t:
+        t = conn.execute('SELECT status, current_round, parameters FROM tournaments WHERE id = ?', (tid,)).fetchone()
+        if not t or t['status'] != 'completed':
             conn.close()
             return None
         
