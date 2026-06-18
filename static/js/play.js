@@ -786,6 +786,11 @@ let isFetchingState = false;
 window._activeStateFetchController = null;
 
 async function updateGameState(incomingState = null) {
+    if (isTournamentPlay || localStorage.getItem('tournament_play_active') || isPrivateMatchPlay || localStorage.getItem('private_match_active')) {
+        console.log('[play.js] updateGameState: Discarding poll update because a match session is active');
+        return;
+    }
+
     const roomId = getCurrentRoomId();
     if (!roomId) {
         return;
@@ -7386,7 +7391,7 @@ async function handleTournamentWord(word, path = null) {
 
     // Bonus Word
     let isBonus = false;
-    if (window.lastGameState && window.lastGameState.bonus_word && word === window.lastGameState.bonus_word.toUpperCase()) {
+    if (window.lastGameState && window.lastGameState.bonus_word && typeof window.lastGameState.bonus_word === 'string' && word === window.lastGameState.bonus_word.toUpperCase()) {
         pts += word.length;
         isBonus = true;
     }
