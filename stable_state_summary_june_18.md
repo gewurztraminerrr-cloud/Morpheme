@@ -1,8 +1,8 @@
-# Stable State Summary — June 18, 2026 (Evening)
+# Stable State Summary — June 18, 2026 (EOD Update)
 
-**Commit:** `25cf175`
+**Commit:** `bb15b58`
 **Tags:** `START_OVER_POINT_JUNE_18` / `snapshot-current`
-**Date:** June 18, 2026 (17:54 CT)
+**Date:** June 18, 2026 (23:10 UTC)
 **Status:** All platforms synchronized — localhost, GitHub, morpheme.games
 
 ---
@@ -26,7 +26,12 @@
 - Implemented client-side Either/Or option expansion and dictionary checking locally in `handleTournamentWord` to align with the behaviour of public rooms.
 - Ensured local validation properly checks candidate words against `window.lastGameState.all_words` (supporting arrays or objects/keys formats).
 - Correctly forwarded paths from `submitWord` to `handleTournamentWord` instead of calling findWordPathOnBoard again.
-- Bumped play.js cache version parameter to `v=173` in `templates/index.html`.
+
+### 4. Tournament Word Submission, Path highlights, & Redirection Fixes
+- **Files:** `static/js/play.js`, `templates/index.html`
+- **TypeError Fix:** Added type checking in `handleTournamentWord` to ensure `bonus_word` is a string before evaluating `.toUpperCase()`, preventing crashes during valid word submissions.
+- **Race Condition Prevention:** Discard standard room state poll updates in `updateGameState` when a tournament or private match session is active, eliminating background redirection back to a 4x4 public room.
+- **Cache Busting:** Bumped play.js cache version parameter to `v=174` in `templates/index.html`.
 
 ---
 
@@ -37,16 +42,17 @@
 | 1 | Board transposition coordinate alignment | `static/js/play.js` |
 | 2 | Multi-touch drag selection swipe isolation | `static/js/play.js` |
 | 3 | Local Either/Or path validation for Tournaments | `static/js/play.js` |
-| 4 | play.js cache version bump to v=173 | `templates/index.html` |
+| 4 | Fix tournament validation TypeErrors & race condition redirection | `static/js/play.js` |
+| 5 | play.js cache version bump to v=174 | `templates/index.html` |
 
 ---
 
 ## Platform Sync Status
 | Platform | Commit |
 |----------|--------|
-| localhost | `25cf175` |
-| GitHub (origin/main) | `25cf175` |
-| morpheme.games (132.148.72.249) | `25cf175` |
+| localhost | `bb15b58` |
+| GitHub (origin/main) | `bb15b58` |
+| morpheme.games (132.148.72.249) | `bb15b58` |
 
 ---
 
