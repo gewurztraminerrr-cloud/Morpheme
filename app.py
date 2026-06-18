@@ -5614,11 +5614,30 @@ def get_tournament_status():
 
     round_scores = []
     if t and t['status'] == 'active':
+        # Check if requesting user has completed/submitted their turn
+        user_has_completed = False
+        if 'user_id' in session and not session.get('is_guest'):
+            user_id = session['user_id']
+            conn = sqlite3.connect(DB_PATH, timeout=30)
+            completed_row = conn.execute('SELECT 1 FROM tournament_scores WHERE tournament_id = ? AND round_number = ? AND user_id = ? AND submitted_at IS NOT NULL',
+                                         (t['id'], t['current_round'], user_id)).fetchone()
+            conn.close()
+            if completed_row:
+                user_has_completed = True
+
         raw_scores = tournament_manager.get_round_scores(t['id'], t['current_round'])
         for rs in raw_scores:
-            if rs.get('submitted_words'):
-                rs['submitted_words'] = json.loads(rs['submitted_words'])
-            round_scores.append(rs)
+            rs_dict = dict(rs)
+            is_own = ('user_id' in session and rs_dict['user_id'] == session['user_id'])
+            
+            # Censor if user hasn't completed their own turn and it's not their own score
+            if not user_has_completed and not is_own:
+                rs_dict['submitted_words'] = []
+                rs_dict['board_data'] = None
+            else:
+                if rs_dict.get('submitted_words'):
+                    rs_dict['submitted_words'] = json.loads(rs_dict['submitted_words'])
+            round_scores.append(rs_dict)
 
     conn = sqlite3.connect(DB_PATH, timeout=30)
     total_participants = conn.execute('SELECT COUNT(*) FROM tournament_participants WHERE tournament_id = ?', (t['id'],)).fetchone()[0]
@@ -5774,7 +5793,10 @@ def get_tournament_game_state():
     })
 
 @app.route('/api/tournament/winner-turn/<int:tid>/<username>', methods=['GET'])
+@login_required
 def get_tournament_winner_turn(tid, username):
+    if session.get('is_guest'):
+        return jsonify({'error': 'Guest access denied'}), 403
     data = tournament_manager.get_winner_turn_data(tid, username)
     if not data:
         return jsonify({'error': 'Winner turn data not found'}), 404

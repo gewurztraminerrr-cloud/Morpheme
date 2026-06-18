@@ -154,6 +154,12 @@ function renderTournament(data) {
                 const isMe = s.username === window.currentUser;
                 const highlight = isMe ? 'border: 1px solid rgba(46, 204, 113, 0.3); background: rgba(46, 204, 113, 0.05);' : '';
 
+                // Show replay button ONLY if board data and submitted words are returned by the backend
+                const canReplay = s.board_data && s.submitted_words && s.submitted_words.length > 0;
+                const replayBtnHtml = canReplay
+                    ? `<button class="replay-btn-small" title="Watch Replay" onclick="watchTournamentReplay(${data.id}, ${data.current_round}, '${s.username}', false)">▶ Replay</button>`
+                    : '';
+
                 return `
                     <div class="t-leaderboard-item" style="${highlight}">
                         <div class="user-info">
@@ -163,7 +169,7 @@ function renderTournament(data) {
                         <div class="score-group">
                             <span class="score">${s.score} <small style="font-size:0.6rem; opacity:0.6;">PTS</small></span>
                             <div style="display:flex; gap:8px;">
-                                <button class="replay-btn-small" title="Watch Replay" onclick="watchTournamentReplay(${data.id}, ${data.current_round}, '${s.username}', false)">▶ Replay</button>
+                                ${replayBtnHtml}
                             </div>
                         </div>
                     </div>
