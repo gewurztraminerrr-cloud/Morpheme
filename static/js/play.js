@@ -221,6 +221,11 @@ let showBoardInSplitIntermission = false;
 let isBoardRotated = false;
 // Board Transposition: true = 90° portrait rotation for mobile (swaps display cols/rows + iterates [c][r])
 let isBoardTransposed = false;
+Object.defineProperty(window, 'isBoardTransposed', {
+    get: () => isBoardTransposed,
+    set: (v) => { isBoardTransposed = v; },
+    configurable: true
+});
 let activeWordsTab = 'found'; // 'found' or 'remaining'
 let validationTimeout = null;
 let highlightedSplitWord = null; // Track word for shared highlighting in Split Points
@@ -2859,14 +2864,7 @@ function rebuildTileToWordsMap() {
                 nc = node.c !== undefined ? node.c : -1;
             }
 
-            let matchR = nr;
-            let matchC = nc;
-            if (isTransposed) {
-                matchR = nc;
-                matchC = nr;
-            }
-
-            const key = (nf !== -1) ? `${nf},${matchR},${matchC}` : `${matchR},${matchC}`;
+            const key = (nf !== -1) ? `${nf},${nr},${nc}` : `${nr},${nc}`;
             if (!window.tileToWordsMap[key]) {
                 window.tileToWordsMap[key] = new Set();
             }
@@ -4516,8 +4514,8 @@ function updateBoardCell(cell, r, c, letter, grayed, f, state = null) {
                     isMatch = true;
                 }
             } else if (activeBonusCell.length === 2) {
-                const targetR = window.isBoardTransposed ? Number(activeBonusCell[1]) : Number(activeBonusCell[0]);
-                const targetC = window.isBoardTransposed ? Number(activeBonusCell[0]) : Number(activeBonusCell[1]);
+                const targetR = Number(activeBonusCell[0]);
+                const targetC = Number(activeBonusCell[1]);
                 if (targetR === r && targetC === c) {
                     isMatch = true;
                 }
@@ -4526,8 +4524,8 @@ function updateBoardCell(cell, r, c, letter, grayed, f, state = null) {
             if (activeBonusCell.f !== undefined) {
                 if (typeof f !== 'undefined' && Number(activeBonusCell.f) === f && Number(activeBonusCell.r) === r && Number(activeBonusCell.c) === c) isMatch = true;
             } else if (activeBonusCell.r !== undefined) {
-                const targetR = window.isBoardTransposed ? Number(activeBonusCell.c) : Number(activeBonusCell.r);
-                const targetC = window.isBoardTransposed ? Number(activeBonusCell.r) : Number(activeBonusCell.c);
+                const targetR = Number(activeBonusCell.r);
+                const targetC = Number(activeBonusCell.c);
                 if (targetR === r && targetC === c) {
                     isMatch = true;
                 }
@@ -4720,14 +4718,14 @@ function findWordPathOnBoard(word, board, targetCoord = null) {
     if (bc) {
         if (Array.isArray(bc)) {
             if (bc.length === 2) {
-                const targetR = window.isBoardTransposed ? Number(bc[1]) : Number(bc[0]);
-                const targetC = window.isBoardTransposed ? Number(bc[0]) : Number(bc[1]);
+                const targetR = Number(bc[0]);
+                const targetC = Number(bc[1]);
                 specialCoords.add(`${targetR},${targetC}`);
             }
         } else if (typeof bc === 'object') {
             if (bc.r !== undefined) {
-                const targetR = window.isBoardTransposed ? Number(bc.c) : Number(bc.r);
-                const targetC = window.isBoardTransposed ? Number(bc.r) : Number(bc.c);
+                const targetR = Number(bc.r);
+                const targetC = Number(bc.c);
                 specialCoords.add(`${targetR},${targetC}`);
             }
         }
@@ -5598,6 +5596,9 @@ function addSplitViewBoardToggle() {
 // Word Submission
 // Initialize Word Submission Listeners
 function initWordSubmission() {
+    if (window.hasInitWordSubmission) return;
+    window.hasInitWordSubmission = true;
+
     const submitBtn = document.getElementById('submit-word-btn');
     const wordInputEl = document.getElementById('word-input');
     
@@ -5707,8 +5708,23 @@ document.addEventListener('keydown', (e) => {
 initWordSubmission();
 
 
+function clearSubmissionVisuals() {
+    document.querySelectorAll('.board-cell.typing-highlight').forEach(c => {
+        c.classList.remove('typing-highlight');
+        applyDensityToCell(c);
+    });
+    const isIntermission = window.lastGameState && window.lastGameState.state === 'intermission';
+    if (!isIntermission) {
+        const defHeader = document.getElementById('definition-header');
+        if (defHeader) defHeader.style.display = 'none';
+        const defContent = document.getElementById('definition-content');
+        if (defContent) defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
+    }
+}
+
 async function submitWord(wordParam = null, pathParam = null) {
-    const input = document.getElementById('word-input');
+    try {
+        const input = document.getElementById('word-input');
     let word = wordParam ? wordParam.toUpperCase() : (input ? input.value.trim().toUpperCase() : '');
     const roomId = getCurrentRoomId();
     
@@ -5745,16 +5761,6 @@ async function submitWord(wordParam = null, pathParam = null) {
         }
     }
     
-    // Proactively untranspose coordinate paths if they were generated locally from the client-transposed board
-    if (finalPath && window.isBoardTransposed && !pathParam) {
-        finalPath = finalPath.map(p => {
-            if (p.length === 3) {
-                return [p[0], p[2], p[1]]; // [face, col, row]
-            }
-            return [p[1], p[0]]; // [col, row]
-        });
-    }
-
     // --- EITHER/OR PATH RESOLUTION ---
     const boardFormat = (window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : 'Normal';
     const isEO = boardFormat.toLowerCase().includes('either');
@@ -5774,10 +5780,8 @@ async function submitWord(wordParam = null, pathParam = null) {
                 }
             } else {
                 const [r, c] = node;
-                const visualR = window.isBoardTransposed ? c : r;
-                const visualC = window.isBoardTransposed ? r : c;
-                if (visualR >= 0 && visualR < board.length && visualC >= 0 && visualC < board[0].length) {
-                    cellVal = String(board[visualR][visualC]);
+                if (r >= 0 && r < board.length && c >= 0 && c < board[0].length) {
+                    cellVal = String(board[r][c]);
                 } else {
                     validPath = false;
                     break;
@@ -5841,15 +5845,15 @@ async function submitWord(wordParam = null, pathParam = null) {
 
     console.log(`[play.js] Attempting submission: "${word}" (Path: ${finalPath ? 'Yes' : 'No'})`);
 
-    if (isTournamentPlay) {
-        handleTournamentWord(word);
-        return;
-    }
+        if (isTournamentPlay) {
+            handleTournamentWord(word, finalPath);
+            return;
+        }
 
-    if (isPrivateMatchPlay) {
-        await handlePrivateMatchWord(word, finalPath);
-        return;
-    }
+        if (isPrivateMatchPlay) {
+            await handlePrivateMatchWord(word, finalPath);
+            return;
+        }
 
     if (!word) return;
     
@@ -6118,16 +6122,8 @@ async function submitWord(wordParam = null, pathParam = null) {
         console.error('Error submitting word:', error);
         showValidationFeedback('Submission Error', false);
     }
-    // input.value = ''; // MOVED TO TOP OF FUNCTION
-    // Clear typing highlights and declaration after submission
-    document.querySelectorAll('.board-cell.typing-highlight').forEach(c => c.classList.remove('typing-highlight'));
-    // ONLY clear panel and header if we're not celebrating the winner!
-    const isIntermission = window.lastGameState && window.lastGameState.state === 'intermission';
-    if (!isIntermission) {
-        const defHeader = document.getElementById('definition-header');
-        if (defHeader) defHeader.style.display = 'none';
-        const defContent = document.getElementById('definition-content');
-        if (defContent) defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
+    } finally {
+        clearSubmissionVisuals();
     }
 }
 
@@ -6362,15 +6358,9 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
             }
             
             if (r !== undefined && c !== undefined) {
-                let visualR = r;
-                let visualC = c;
-                if (window.isBoardTransposed) {
-                    visualR = c;
-                    visualC = r;
-                }
-                let selector = `.board-cell[data-r="${visualR}"][data-c="${visualC}"]`;
+                let selector = `.board-cell[data-r="${r}"][data-c="${c}"]`;
                 if (f !== undefined) {
-                    selector = `.board-cell[data-f="${f}"][data-r="${visualR}"][data-c="${visualC}"]`;
+                    selector = `.board-cell[data-f="${f}"][data-r="${r}"][data-c="${c}"]`;
                 }
                 const cell = document.querySelector(selector);
                 if (cell) {
@@ -6850,7 +6840,7 @@ let lastTouchY = -1;
 function handleCellTouchStart(e) {
     if (window.isPopupVisible) return;
     initAudioOnUserInteraction();
-    const touch = e.touches[0];
+    const touch = e.changedTouches ? e.changedTouches[0] : e.touches[0];
     let cell = e.target.closest('.board-cell');
     if (!cell) {
         const target = touch && document.elementFromPoint(touch.clientX, touch.clientY);
@@ -6885,6 +6875,7 @@ function handleCellTouchStart(e) {
     
     if (cell && !cell.classList.contains('grayed')) {
         mouseState.isDown = true;
+        window.activeTouchIdentifier = touch ? touch.identifier : undefined;
         mouseState.selectedPath = [];
         mouseState.visitedCells = new Set();
         document.querySelectorAll('.board-cell.selected, .board-cell.current').forEach(c => {
@@ -6909,7 +6900,12 @@ function handleCellTouchMove(e) {
         e.preventDefault();
     }
 
-    const touch = e.touches[0];
+    let touch = e.touches[0];
+    if (window.activeTouchIdentifier !== undefined && e.touches) {
+        const match = Array.from(e.touches).find(t => t.identifier === window.activeTouchIdentifier);
+        if (match) touch = match;
+    }
+    if (!touch) return;
     
     // PERFORMANCE THROTTLE: Skip expensive DOM calculation if the finger hasn't moved a meaningful distance
     if (Math.abs(touch.clientX - lastTouchX) < 10 && Math.abs(touch.clientY - lastTouchY) < 10) {
@@ -6933,37 +6929,62 @@ function handleCellTouchMove(e) {
 function finishDragSelection(e) {
     if (!mouseState.isDown) return;
     
-    // If this was triggered by a touchend/touchcancel but the user is still pressing the screen with another touch point, do NOT terminate the swipe!
-    if (e && e.touches && e.touches.length > 0) {
-        return;
+    // If this was triggered by a touchend/touchcancel but the user's swiping touch has not ended yet, do NOT terminate the swipe!
+    if (e && e.changedTouches && window.activeTouchIdentifier !== undefined) {
+        // FAIL-SAFE: If no active touch points remain on the screen, always terminate the swipe!
+        if (e.touches && e.touches.length === 0) {
+            // Proceed to terminate
+        } else {
+            let hasEnded = false;
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === window.activeTouchIdentifier) {
+                    hasEnded = true;
+                    break;
+                }
+            }
+            if (!hasEnded) {
+                return;
+            }
+        }
     }
 
     mouseState.isDown = false;
 
     const path = mouseState.selectedPath;
-    if (path.length >= 1) {
-        const word = path.map(p => {
-            const L = p.letter;
-            // For Either/Or slash letters, use the first character option as a clean representation.
-            // The server's path reconstruction will auto-correct to the valid dictionary option.
-            const cleanL = (L && L.includes('/')) ? L.split('/')[0] : L;
-            return cleanL === 'Q' ? 'QU' : cleanL;
-        }).join('');
-        const serverPath = path.map(p => {
-            if (p.face !== null && p.face !== undefined) {
-                return [p.face, p.row, p.col];
-            }
-            return window.isBoardTransposed ? [p.col, p.row] : [p.row, p.col];
-        });
-
-        // Unconditionally submit word
-        submitWord(word, serverPath);
-    }
-
-    // Keep selected/current visual classes on cells for instantaneous transition to validation feedback.
-    // They will be cleared inside showValidationFeedback or when a new swipe begins.
+    
+    // Clear selection state immediately so that synchronous validation calls don't see it as active!
     mouseState.selectedPath = [];
     mouseState.visitedCells = new Set();
+    window.activeTouchIdentifier = undefined;
+
+    // Clear visual selection and typing highlights from DOM immediately
+    document.querySelectorAll('.board-cell.selected, .board-cell.current, .board-cell.typing-highlight').forEach(c => {
+        c.classList.remove('selected', 'current', 'typing-highlight');
+        applyDensityToCell(c);
+    });
+
+    if (path.length >= 1) {
+        try {
+            const word = path.map(p => {
+                const L = p.letter;
+                // For Either/Or slash letters, use the first character option as a clean representation.
+                // The server's path reconstruction will auto-correct to the valid dictionary option.
+                const cleanL = (L && L.includes('/')) ? L.split('/')[0] : L;
+                return cleanL === 'Q' ? 'QU' : cleanL;
+            }).join('');
+            const serverPath = path.map(p => {
+                if (p.face !== null && p.face !== undefined) {
+                    return [p.face, p.row, p.col];
+                }
+                return [p.row, p.col];
+            });
+
+            // Unconditionally submit word
+            submitWord(word, serverPath);
+        } catch (err) {
+            console.error('[play.js] Error in finishDragSelection submission:', err);
+        }
+    }
 
     // UX: Refocus chat if pending
     const inputEl = document.getElementById('word-input');
@@ -7125,7 +7146,8 @@ async function initTournamentPlay() {
             current_board_format: data.params.board_format || 'Normal',
             spinner_params: data.params,
             bonus_word: data.bonus_word,
-            all_words: data.all_words || []
+            all_words: data.all_words || [],
+            bonus_cell: data.bonus_cell
         };
         window.lastGameState = tournamentGameState;
         lastRenderedBoardJSON = null; // Force re-render
@@ -7198,7 +7220,7 @@ async function initTournamentPlay() {
     }
 }
 
-async function handleTournamentWord(word) {
+async function handleTournamentWord(word, path = null) {
     if (!word) return;
 
     // Check if word is on board
@@ -7209,19 +7231,121 @@ async function handleTournamentWord(word) {
     }
 
     const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
-    const path = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
+    const fmt = (window.tournamentParams && typeof window.tournamentParams.board_format === 'string') ? window.tournamentParams.board_format : 'Normal';
+    const isEO = fmt && fmt.toLowerCase().includes('either');
 
-    if (tournamentWords.find(w => w.word === word)) {
-        showValidationFeedback('Already found!', false, false, path);
-        recordGuessResult(false, path && path.length > 0, true);
+    let resolvedWord = word.toUpperCase();
+    let resolvedPath = path;
+
+    if (resolvedPath && isEO) {
+        // Reconstruct all possible words from the path
+        let possibleWords = [''];
+        let validPath = true;
+
+        for (const node of resolvedPath) {
+            let cellVal = '';
+            let f = undefined, r = undefined, c = undefined;
+            if (Array.isArray(node)) {
+                if (node.length === 3) {
+                    [f, r, c] = node;
+                } else if (node.length === 2) {
+                    [r, c] = node;
+                }
+            } else if (node && typeof node === 'object') {
+                r = node.r;
+                c = node.c;
+                f = node.f;
+            }
+
+            if (f !== undefined && f !== null) {
+                if (f >= 0 && f < board.length && r >= 0 && r < board[f].length && c >= 0 && c < board[f][r].length) {
+                    cellVal = String(board[f][r][c]);
+                } else {
+                    validPath = false;
+                    break;
+                }
+            } else if (r !== undefined && c !== undefined) {
+                if (r >= 0 && r < board.length && c >= 0 && c < board[0].length) {
+                    cellVal = String(board[r][c]);
+                } else {
+                    validPath = false;
+                    break;
+                }
+            } else {
+                validPath = false;
+                break;
+            }
+
+            if (cellVal.includes('/')) {
+                const options = cellVal.split('/');
+                let newWords = [];
+                for (const prefix of possibleWords) {
+                    for (const opt of options) {
+                        newWords.push(prefix + opt);
+                    }
+                }
+                possibleWords = newWords;
+            } else {
+                for (let i = 0; i < possibleWords.length; i++) {
+                    possibleWords[i] += cellVal;
+                }
+            }
+        }
+
+        if (validPath) {
+            let validOptions = [];
+            let wordList = [];
+            if (window.lastGameState && window.lastGameState.all_words) {
+                const allWordsState = window.lastGameState.all_words;
+                if (Array.isArray(allWordsState)) {
+                    wordList = allWordsState;
+                } else if (allWordsState && typeof allWordsState === 'object') {
+                    wordList = Object.keys(allWordsState);
+                }
+            }
+
+            // Check dictionary validity for each possible word locally
+            for (const w of possibleWords) {
+                const isVal = wordList.some(item => {
+                    const wText = (typeof item === 'string' ? item : (item.word || '')) || '';
+                    return wText.toUpperCase() === w.toUpperCase();
+                });
+                if (isVal) {
+                    validOptions.push(w);
+                }
+            }
+
+            // Find which option to select
+            let submittedClean = resolvedWord.replace(/\//g, '');
+            if (validOptions.includes(submittedClean)) {
+                resolvedWord = submittedClean;
+            } else if (validOptions.length >= 1) {
+                resolvedWord = validOptions[0];
+            } else if (possibleWords.includes(submittedClean)) {
+                resolvedWord = submittedClean;
+            } else if (possibleWords.length > 0) {
+                resolvedWord = possibleWords[0];
+            }
+        }
+    } else if (!resolvedPath) {
+        // If not Either/Or or no path, validate the path using findWordPath
+        const p = is3D ? findWordPathOnCube(resolvedWord, board) : findWordPathOnBoard(resolvedWord, board);
+        if (!p) {
+            showValidationFeedback(`${resolvedWord} is invalid.`, false);
+            recordGuessResult(false, false);
+            return;
+        }
+        resolvedPath = p;
+    }
+
+    if (tournamentWords.find(w => w.word === resolvedWord)) {
+        showValidationFeedback('Already found!', false, false, resolvedPath);
+        recordGuessResult(false, resolvedPath && resolvedPath.length > 0, true);
         return;
     }
 
-    if (!path) {
-        showValidationFeedback(`${word} is invalid.`, false);
-        recordGuessResult(false, false);
-        return;
-    }
+    word = resolvedWord;
+    path = resolvedPath;
 
     // Check dictionary locally using all_words list
     let is_valid_dict = false;
@@ -7280,19 +7404,29 @@ async function handleTournamentWord(word) {
     if (path && board) {
         for (const node of path) {
             let cellVal = '';
-            if (node.length === 3) {
-                const [f, r, c] = node;
+            let f = undefined, r = undefined, c = undefined;
+            if (Array.isArray(node)) {
+                if (node.length === 3) {
+                    [f, r, c] = node;
+                } else if (node.length === 2) {
+                    [r, c] = node;
+                }
+            } else if (node && typeof node === 'object') {
+                r = node.r;
+                c = node.c;
+                f = node.f;
+            }
+
+            if (f !== undefined && f !== null) {
                 if (f >= 0 && f < board.length && r >= 0 && r < board[f].length && c >= 0 && c < board[f][r].length) {
                     cellVal = String(board[f][r][c]);
                 }
-            } else {
-                const [r, c] = node;
-                const visualR = window.isBoardTransposed ? c : r;
-                const visualC = window.isBoardTransposed ? r : c;
-                if (visualR >= 0 && visualR < board.length && visualC >= 0 && visualC < board[0].length) {
-                    cellVal = String(board[visualR][visualC]);
+            } else if (r !== undefined && c !== undefined) {
+                if (r >= 0 && r < board.length && c >= 0 && c < board[0].length) {
+                    cellVal = String(board[r][c]);
                 }
             }
+
             if (cellVal && cellVal.includes('/')) {
                 usesEitherOrTile = true;
                 break;
@@ -7534,24 +7668,36 @@ async function handlePrivateMatchWord(word, path = null) {
 
         for (const node of resolvedPath) {
             let cellVal = '';
-            if (node.length === 3) {
-                const [f, r, c] = node;
+            let f = undefined, r = undefined, c = undefined;
+            if (Array.isArray(node)) {
+                if (node.length === 3) {
+                    [f, r, c] = node;
+                } else if (node.length === 2) {
+                    [r, c] = node;
+                }
+            } else if (node && typeof node === 'object') {
+                r = node.r;
+                c = node.c;
+                f = node.f;
+            }
+
+            if (f !== undefined && f !== null) {
                 if (f >= 0 && f < board.length && r >= 0 && r < board[f].length && c >= 0 && c < board[f][r].length) {
                     cellVal = String(board[f][r][c]);
                 } else {
                     validPath = false;
                     break;
                 }
-            } else {
-                const [r, c] = node;
-                const visualR = window.isBoardTransposed ? c : r;
-                const visualC = window.isBoardTransposed ? r : c;
-                if (visualR >= 0 && visualR < board.length && visualC >= 0 && visualC < board[0].length) {
-                    cellVal = String(board[visualR][visualC]);
+            } else if (r !== undefined && c !== undefined) {
+                if (r >= 0 && r < board.length && c >= 0 && c < board[0].length) {
+                    cellVal = String(board[r][c]);
                 } else {
                     validPath = false;
                     break;
                 }
+            } else {
+                validPath = false;
+                break;
             }
 
             if (cellVal.includes('/')) {
@@ -7608,7 +7754,7 @@ async function handlePrivateMatchWord(word, path = null) {
                 resolvedWord = possibleWords[0];
             }
         }
-    } else {
+    } else if (!resolvedPath) {
         // If not Either/Or or no path, validate the path using findWordPath
         const p = is3D ? findWordPathOnCube(resolvedWord, board) : findWordPathOnBoard(resolvedWord, board);
         if (!p) {
@@ -7710,12 +7856,12 @@ async function handlePrivateMatchWord(word, path = null) {
                     let targetR, targetC;
                     if (Array.isArray(bonusCell)) {
                         if (is3D && bonusCell.length === 3) return coord.f === bonusCell[0] && coord.r === bonusCell[1] && coord.c === bonusCell[2];
-                        targetR = window.isBoardTransposed ? bonusCell[1] : bonusCell[0];
-                        targetC = window.isBoardTransposed ? bonusCell[0] : bonusCell[1];
+                        targetR = bonusCell[0];
+                        targetC = bonusCell[1];
                     } else if (typeof bonusCell === 'object') {
                         if (is3D && bonusCell.f !== undefined) return coord.f === bonusCell.f && coord.r === bonusCell.r && coord.c === bonusCell.c;
-                        targetR = window.isBoardTransposed ? bonusCell.c : bonusCell.r;
-                        targetC = window.isBoardTransposed ? bonusCell.r : bonusCell.c;
+                        targetR = bonusCell.r;
+                        targetC = bonusCell.c;
                     }
                     return coord.r === Number(targetR) && coord.c === Number(targetC);
                 });
