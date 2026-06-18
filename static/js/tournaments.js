@@ -279,16 +279,49 @@ function renderSignupState(container, data, userStatus) {
     }
 }
 
+function renderScoresListHTML(myScore, oppScore, oppName) {
+    const myName = window.currentUser || "You";
+    const p1 = myScore >= oppScore ? { name: myName, score: myScore } : { name: oppName, score: oppScore };
+    const p2 = myScore >= oppScore ? { name: oppName, score: oppScore } : { name: myName, score: myScore };
+    
+    const color1 = myScore === oppScore ? '#ffd700' : '#2ecc71';
+    const color2 = myScore === oppScore ? '#ffd700' : '#e74c3c';
+    
+    return `
+        <div style="margin-top: 15px; font-size: 1.1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; text-align: left; display: inline-block; min-width: 220px;">
+            <div style="font-weight:700; opacity:0.9; margin-bottom: 8px; text-align: center; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Scores:</div>
+            <div style="display:flex; justify-content:space-between; margin-bottom: 6px; color: ${color1}; font-weight: 700;">
+                <span>${p1.name}</span>
+                <span>${p1.score} pts</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; color: ${color2}; opacity: ${myScore === oppScore ? '1' : '0.9'}; font-weight: ${myScore === oppScore ? '700' : 'normal'};">
+                <span>${p2.name}</span>
+                <span>${p2.score} pts</span>
+            </div>
+        </div>
+    `;
+}
+
 function renderActiveState(container, data, userStatus) {
     const matchup = userStatus.matchup;
     const total = data.total_participants || 0;
 
     if (userStatus.status === 'eliminated') {
         const rank = userStatus.final_rank || total;
+        let scoresHtml = "";
+        if (matchup) {
+            const myScore = matchup.my_score || 0;
+            const oppScore = matchup.opponent_score || 0;
+            scoresHtml = renderScoresListHTML(myScore, oppScore, matchup.opponent_name);
+        }
+        
         container.innerHTML = `
-            <div style="font-size:3rem; color:#e74c3c; font-weight:900; margin-bottom:10px; text-shadow: 0 0 20px rgba(231, 76, 60, 0.4);">YOU LOST</div>
-            <div style="font-size:1.5rem; opacity:0.8; margin-bottom:20px;">Rank: #${rank} of ${total} players</div>
-            <p style="font-size:1.1rem; opacity:0.7; line-height:1.6;">You fought well, but have been eliminated from this tournament. Keep practicing for the next one!</p>
+            <div style="background: rgba(231, 76, 60, 0.1); border: 2px solid #e74c3c; border-radius: 15px; padding: 25px; text-align: center; max-width: 500px; margin: 0 auto;">
+                <div style="font-size:3rem; color:#e74c3c; font-weight:900; margin-bottom:10px; text-shadow: 0 0 20px rgba(231, 76, 60, 0.4);">YOU LOST</div>
+                <div style="font-size:1.5rem; opacity:0.8; margin-bottom:20px;">Rank: #${rank} of ${total} players</div>
+                ${scoresHtml}
+                <p style="font-size:1.05rem; opacity:0.7; line-height:1.6; margin-top: 20px; text-align: center;">You fought well, but have been eliminated from this tournament. Keep practicing for the next one!</p>
+            </div>
         `;
         return;
     }
@@ -326,33 +359,37 @@ function renderActiveState(container, data, userStatus) {
             if (oppScore === null) {
                 // Opponent hasn't played
                 container.innerHTML += `
-                    <div style="background: rgba(243, 156, 18, 0.1); border: 1px solid #f39c12; border-radius: 12px; padding: 25px; text-align: center;">
+                    <div style="background: rgba(243, 156, 18, 0.1); border: 1px solid #f39c12; border-radius: 12px; padding: 25px; text-align: center; max-width: 500px; margin: 0 auto;">
                         <div style="font-size:1.8rem; color:#f39c12; font-weight:800; margin-bottom:10px;">WAITING FOR OPPONENT</div>
                         <p style="opacity:0.9;">You finished with <strong>${myScore} pts</strong>. We'll show the result once ${matchup.opponent_name} finishes.</p>
                     </div>
                 `;
             } else {
                 // Both played!
+                const scoresHtml = renderScoresListHTML(myScore, oppScore, matchup.opponent_name);
                 if (myScore > oppScore) {
                     container.innerHTML += `
-                        <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid #2ecc71; border-radius: 15px; padding: 25px; text-align: center; animation: pulse 2s infinite;">
+                        <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid #2ecc71; border-radius: 15px; padding: 25px; text-align: center; animation: pulse 2s infinite; max-width: 500px; margin: 0 auto;">
                             <div style="font-size:1.8rem; color:#2ecc71; font-weight:800; margin-bottom:5px;">YOU WON! ADVANCING...</div>
-                            <div style="font-size:1.1rem; opacity:0.8;">You: ${myScore} | ${matchup.opponent_name}: ${oppScore}</div>
+                            <div style="font-size:1.1rem; opacity:0.8; margin-bottom:15px;">You: ${myScore} | ${matchup.opponent_name}: ${oppScore}</div>
+                            ${scoresHtml}
                         </div>
                     `;
                 } else if (oppScore > myScore) {
                     container.innerHTML += `
-                        <div style="background: rgba(231, 76, 60, 0.1); border: 2px solid #e74c3c; border-radius: 15px; padding: 25px; text-align: center;">
+                        <div style="background: rgba(231, 76, 60, 0.1); border: 2px solid #e74c3c; border-radius: 15px; padding: 25px; text-align: center; max-width: 500px; margin: 0 auto;">
                             <div style="font-size:1.8rem; color:#e74c3c; font-weight:800; margin-bottom:5px;">YOU LOST</div>
-                            <div style="font-size:1.1rem; opacity:0.8;">You: ${myScore} | ${matchup.opponent_name}: ${oppScore}</div>
+                            <div style="font-size:1.1rem; opacity:0.8; margin-bottom:15px;">You: ${myScore} | ${matchup.opponent_name}: ${oppScore}</div>
+                            ${scoresHtml}
                         </div>
                     `;
                 } else {
                     // Tie
                     container.innerHTML += `
-                        <div style="background: rgba(243, 156, 18, 0.1); border: 2px solid #f39c12; border-radius: 15px; padding: 25px; text-align: center;">
+                        <div style="background: rgba(243, 156, 18, 0.1); border: 2px solid #f39c12; border-radius: 15px; padding: 25px; text-align: center; max-width: 500px; margin: 0 auto;">
                             <div style="font-size:1.8rem; color:#f39c12; font-weight:800; margin-bottom:5px;">IT'S A TIE!</div>
-                            <div style="font-size:1.1rem; opacity:0.8;">Both of you got ${myScore} pts. Random winner selection pending round end.</div>
+                            <div style="font-size:1.1rem; opacity:0.8; margin-bottom:15px;">Both of you got ${myScore} pts. Random winner selection pending round end.</div>
+                            ${scoresHtml}
                         </div>
                     `;
                 }
@@ -360,7 +397,7 @@ function renderActiveState(container, data, userStatus) {
         } else if (matchup && matchup.opponent_id === -1) {
             // Bye
             container.innerHTML += `
-                <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid #2ecc71; border-radius: 15px; padding: 25px; text-align: center; animation: pulse 2s infinite;">
+                <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid #2ecc71; border-radius: 15px; padding: 25px; text-align: center; animation: pulse 2s infinite; max-width: 500px; margin: 0 auto;">
                     <div style="font-size:1.8rem; color:#2ecc71; font-weight:800; margin-bottom:5px;">YOU WON! ADVANCING...</div>
                     <div style="font-size:1.1rem; opacity:0.8;">Automatic win this round.</div>
                 </div>

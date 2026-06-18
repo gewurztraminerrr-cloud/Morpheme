@@ -5577,7 +5577,13 @@ def get_tournament_status():
             user_status['status'] = p['status']
             user_status['final_rank'] = p['final_rank']
             user_status['has_turn'] = tournament_manager.has_user_turn(t['id'], user_id)
-            user_status['matchup'] = tournament_manager.get_user_matchup(t['id'], t['current_round'], user_id)
+            matchup = tournament_manager.get_user_matchup(t['id'], t['current_round'], user_id)
+            if not matchup and p['status'] == 'eliminated':
+                for prev_r in range(t['current_round'] - 1, 0, -1):
+                    matchup = tournament_manager.get_user_matchup(t['id'], prev_r, user_id)
+                    if matchup:
+                        break
+            user_status['matchup'] = matchup
         conn.close()
         
     history = tournament_manager.get_history()
