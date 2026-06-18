@@ -7466,11 +7466,35 @@ async function handleTournamentWord(word, path = null) {
 
     // Flash Highlight
     reapplyBoardHighlights();
+
+    // Save Draft to Server
+    saveTournamentDraft();
 }
 
-async function finishTournamentTurn() {
+function saveTournamentDraft() {
+    const activeData = JSON.parse(localStorage.getItem('tournament_play_active'));
+    if (!activeData) return;
+
+    fetch('/api/tournament/save-draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            tournament_id: activeData.tid,
+            round_number: activeData.round,
+            words: tournamentWords,
+            score: Math.floor(tournamentScore),
+            round_start_time: tournamentStartTime
+        })
+    }).catch(err => console.warn('[Tournament] Failed to save draft:', err));
+}
+
+async function finishTournamentTurn(targetPage = 'tournaments') {
     console.log('[Tournament] Finish Turn. Final Score:', tournamentScore);
     const activeData = JSON.parse(localStorage.getItem('tournament_play_active'));
+    if (!activeData) {
+        exitTournamentPlay(targetPage);
+        return;
+    }
 
     try {
         const response = await fetch('/api/tournament/submit', {
@@ -7495,10 +7519,10 @@ async function finishTournamentTurn() {
         console.error("Submit error:", e);
     }
 
-    exitTournamentPlay();
+    exitTournamentPlay(targetPage);
 }
 
-function exitTournamentPlay() {
+function exitTournamentPlay(targetPage = 'tournaments') {
     localStorage.removeItem('tournament_play_active');
     isTournamentPlay = false;
     window.isTournamentPlay = false;
@@ -7506,11 +7530,15 @@ function exitTournamentPlay() {
     isBoardRotated = false;    // RESET: ensure board isn't flipped from previous game
     clearGameUIAndCache();
     if (window.navigateToPage) {
-        window.navigateToPage('tournaments');
+        window.navigateToPage(targetPage);
     } else {
-        window.location.href = '#page-tournaments';
+        window.location.href = '#page-' + targetPage;
     }
 }
+
+window.saveTournamentDraft = saveTournamentDraft;
+window.finishTournamentTurn = finishTournamentTurn;
+window.exitTournamentPlay = exitTournamentPlay;
 
 // --- PRIVATE MATCH PLAY LOGIC ---
 window.initPrivateMatchPlay = function () {

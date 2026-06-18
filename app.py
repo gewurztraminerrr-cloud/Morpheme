@@ -5570,6 +5570,21 @@ def get_tournament_status():
         user_id = session['user_id']
         conn = sqlite3.connect(DB_PATH, timeout=30)
         conn.row_factory = sqlite3.Row
+        
+        # Auto-finalize expired stale turn if user left mid-round
+        if t['status'] == 'active':
+            row = conn.execute('SELECT * FROM tournament_scores WHERE tournament_id = ? AND round_number = ? AND user_id = ?',
+                               (t['id'], t['current_round'], user_id)).fetchone()
+            if row and row['submitted_at'] is None:
+                elapsed = time.time() - row['round_start_time']
+                params = json.loads(t['parameters'])
+                time_limit = int(params.get('time_limit', 60))
+                if elapsed > time_limit + 15: # 15-second grace buffer
+                    conn.execute('UPDATE tournament_scores SET submitted_at = ? WHERE tournament_id = ? AND round_number = ? AND user_id = ?',
+                                 (time.time(), t['id'], t['current_round'], user_id))
+                    conn.commit()
+                    print(f"[Tournament] Auto-finalized expired turn for user {user_id} (elapsed: {elapsed}s)")
+
         p = conn.execute('SELECT * FROM tournament_participants WHERE tournament_id = ? AND user_id = ?', 
                         (t['id'], user_id)).fetchone()
         
@@ -5692,14 +5707,42 @@ def get_tournament_game_state():
         return jsonify({'error': 'No active tournament'}), 400
         
     user_id = session['user_id']
-    if not tournament_manager.has_user_turn(t['id'], user_id):
-        return jsonify({'error': 'Not your turn or already played'}), 403
-        
+    
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
-    r = conn.execute('SELECT * FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?',
-                    (t['id'], t['current_round'])).fetchone()
-    conn.close()
+    try:
+        # Check active participant status
+        p = conn.execute('SELECT status FROM tournament_participants WHERE tournament_id = ? AND user_id = ?', 
+                         (t['id'], user_id)).fetchone()
+        if not p or p['status'] != 'active':
+            return jsonify({'error': 'Not an active participant'}), 403
+            
+        # Check if already started or finished this round
+        existing = conn.execute('SELECT * FROM tournament_scores WHERE tournament_id = ? AND round_number = ? AND user_id = ?',
+                                (t['id'], t['current_round'], user_id)).fetchone()
+                                
+        if existing:
+            if existing['submitted_at'] is not None:
+                return jsonify({'error': 'Not your turn or already played'}), 403
+            else:
+                # User started previously but left mid-round and is returning. End turn!
+                conn.execute('UPDATE tournament_scores SET submitted_at = ? WHERE tournament_id = ? AND round_number = ? AND user_id = ?',
+                             (time.time(), t['id'], t['current_round'], user_id))
+                conn.commit()
+                return jsonify({'error': 'Turn ended because you left mid-round'}), 403
+                
+        # First time starting. Initialize row.
+        now = time.time()
+        conn.execute('''
+            INSERT INTO tournament_scores (tournament_id, round_number, user_id, score, submitted_words, submitted_at, round_start_time)
+            VALUES (?, ?, ?, 0, '[]', NULL, ?)
+        ''', (t['id'], t['current_round'], user_id, now))
+        conn.commit()
+        
+        r = conn.execute('SELECT * FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?',
+                        (t['id'], t['current_round'])).fetchone()
+    finally:
+        conn.close()
     
     if not r:
         return jsonify({'error': 'Round data not found'}), 404
@@ -5751,8 +5794,22 @@ def submit_tournament_score():
     
     user_id = session['user_id']
     
-    if not tournament_manager.has_user_turn(tid, user_id):
-        return jsonify({'error': 'Invalid turn or already submitted'}), 403
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
+    p = conn.execute('SELECT status FROM tournament_participants WHERE tournament_id = ? AND user_id = ?', (tid, user_id)).fetchone()
+    if not p or p['status'] != 'active':
+        conn.close()
+        return jsonify({'error': 'Not an active participant'}), 403
+        
+    existing = conn.execute('SELECT submitted_at FROM tournament_scores WHERE tournament_id = ? AND round_number = ? AND user_id = ?',
+                            (tid, round_num, user_id)).fetchone()
+    conn.close()
+    
+    if not existing:
+        return jsonify({'error': 'Turn not started yet'}), 403
+        
+    if existing['submitted_at'] is not None:
+        return jsonify({'error': 'Turn already completed/submitted'}), 403
         
     # FETCH ROUND DATA for validation
     conn = sqlite3.connect(DB_PATH, timeout=30)
@@ -5852,9 +5909,131 @@ def submit_tournament_score():
     conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         conn.execute('''
-            INSERT INTO tournament_scores (tournament_id, round_number, user_id, score, submitted_words, submitted_at, round_start_time)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (tid, round_num, user_id, total_score, json.dumps(valid_words), time.time(), round_start_time))
+            UPDATE tournament_scores 
+            SET score = ?, submitted_words = ?, submitted_at = ?, round_start_time = ?
+            WHERE tournament_id = ? AND round_number = ? AND user_id = ?
+        ''', (total_score, json.dumps(valid_words), time.time(), round_start_time, tid, round_num, user_id))
+        conn.commit()
+        return jsonify({'success': True, 'score': total_score})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/tournament/save-draft', methods=['POST'])
+@login_required
+def save_tournament_draft():
+    if session.get('is_guest'):
+        return jsonify({'error': 'Guest access denied'}), 403
+        
+    data = request.json
+    tid = data.get('tournament_id')
+    round_num = data.get('round_number')
+    words_data = data.get('words', []) # Now objects with 'word', 'points', 'timestamp'
+    round_start_time = data.get('round_start_time', time.time())
+    
+    user_id = session['user_id']
+    
+    # FETCH ROUND DATA for validation
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
+    t = conn.execute('SELECT * FROM tournaments WHERE id = ?', (tid,)).fetchone()
+    r = conn.execute('SELECT * FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?',
+                    (tid, round_num)).fetchone()
+    if not t or not r:
+        conn.close()
+        return jsonify({'error': 'Tournament or round not found'}), 404
+        
+    # Check participant and draft validity
+    p = conn.execute('SELECT status FROM tournament_participants WHERE tournament_id = ? AND user_id = ?', (tid, user_id)).fetchone()
+    if not p or p['status'] != 'active':
+        conn.close()
+        return jsonify({'error': 'Not an active participant'}), 403
+        
+    existing = conn.execute('SELECT submitted_at FROM tournament_scores WHERE tournament_id = ? AND round_number = ? AND user_id = ?',
+                            (tid, round_num, user_id)).fetchone()
+    conn.close()
+    
+    if not existing:
+        return jsonify({'error': 'Turn not started yet'}), 403
+        
+    if existing['submitted_at'] is not None:
+        return jsonify({'error': 'Turn already completed/submitted'}), 403
+        
+    params = json.loads(t['parameters'])
+    board_raw = json.loads(r['board_data'])
+    
+    if isinstance(board_raw, dict):
+        board = board_raw.get('board')
+        target_bonus_word = board_raw.get('bonus_word', '').upper()
+        bonus_len_target = params.get('bonus_word_length', 0)
+    else:
+        board = board_raw
+        target_bonus_word = None
+        bonus_len_target = params.get('bonus_word_length', 0)
+
+    dict_name = params.get('dictionary', 'NWL')
+    min_len = params.get('min_word_length', 3)
+    
+    official_dict = word_validator.load_dictionary(dict_name)
+    
+    valid_words = []
+    total_score = 0
+    
+    for item in words_data:
+        word = item.get('word', '').strip().upper()
+        if not word: continue
+        if len(word) < min_len: continue
+        if word not in official_dict: continue
+        if not word_validator.find_word_on_board(board, word): continue
+        
+        if not any(v['word'] == word for v in valid_words):
+            pts = len(word)
+            if len(word) == 6: pts = 10
+            elif len(word) == 7: pts = 15
+            elif len(word) >= 8: pts = 25
+            
+            is_bonus = False
+            fmt_low = str(board_raw.get('board_format', 'Normal')).lower() if isinstance(board_raw, dict) else 'normal'
+            bonus_word_target = target_bonus_word.upper() if target_bonus_word else ""
+            bonus_cell = board_raw.get('bonus_cell') if isinstance(board_raw, dict) else None
+            
+            if bonus_word_target and word == bonus_word_target:
+                pts += len(word)
+                is_bonus = True
+            
+            if bonus_cell and ('bonus letter' in fmt_low or 'either' in fmt_low):
+                found, path = word_validator.find_word_on_board(board, word, return_path=True)
+                if found and path:
+                    bx = bonus_cell[0] if isinstance(bonus_cell, (list, tuple)) else bonus_cell.get('r', -1)
+                    by = bonus_cell[1] if isinstance(bonus_cell, (list, tuple)) else bonus_cell.get('c', -1)
+                    if any((p[0] == bx and p[1] == by) for p in path):
+                        pts += 3
+                    elif 'either' in fmt_low:
+                        if any('/' in str(board[p[0]][p[1]]) for p in path):
+                            pts += 3
+            elif 'either' in fmt_low:
+                found, path = word_validator.find_word_on_board(board, word, return_path=True)
+                if found and path and any('/' in str(board[p[0]][p[1]]) for p in path):
+                    pts += 3
+                
+            valid_words.append({
+                'word': word,
+                'points': pts,
+                'timestamp': item.get('timestamp', time.time()),
+                'is_bonus': is_bonus
+            })
+            total_score += pts
+            
+    total_score = max(0, total_score)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    try:
+        conn.execute('''
+            UPDATE tournament_scores 
+            SET score = ?, submitted_words = ?, round_start_time = ?
+            WHERE tournament_id = ? AND round_number = ? AND user_id = ?
+        ''', (total_score, json.dumps(valid_words), round_start_time, tid, round_num, user_id))
         conn.commit()
         return jsonify({'success': True, 'score': total_score})
     except Exception as e:

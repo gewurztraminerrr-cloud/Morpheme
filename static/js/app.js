@@ -945,6 +945,17 @@ function setupModalListeners() {
 }
 
 function showPage(pageId) {
+    // Intercept leaving tournament play mid-round
+    if (pageId !== 'page-play' && window.isTournamentPlay && localStorage.getItem('tournament_play_active')) {
+        if (typeof window.finishTournamentTurn === 'function') {
+            const targetPageName = pageId.replace('page-', '');
+            console.log('[Navigation] Finalizing tournament turn because user navigated away mid-round to:', targetPageName);
+            window.isTournamentPlay = false; // Prevent recursion
+            window.finishTournamentTurn(targetPageName);
+            return;
+        }
+    }
+
     if (window.hideLoadingOverlay) window.hideLoadingOverlay();
     // 0. Synchronize URL Hash (for Reload/Navigation consistency)
     if (window.location.hash !== "#" + pageId) {
