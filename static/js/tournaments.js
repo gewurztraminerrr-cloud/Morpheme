@@ -376,16 +376,14 @@ function renderActiveState(container, data, userStatus) {
                 if (myScore > oppScore) {
                     container.innerHTML += `
                         <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid #2ecc71; border-radius: 15px; padding: 25px; text-align: center; animation: pulse 2s infinite; max-width: 500px; margin: 0 auto;">
-                            <div style="font-size:1.8rem; color:#2ecc71; font-weight:800; margin-bottom:5px;">YOU WON! ADVANCING...</div>
-                            <div style="font-size:1.1rem; opacity:0.8; margin-bottom:15px;">You: ${myScore} | ${matchup.opponent_name}: ${oppScore}</div>
+                            <div style="font-size:1.8rem; color:#2ecc71; font-weight:800; margin-bottom:15px;">YOU WON! ADVANCING...</div>
                             ${scoresHtml}
                         </div>
                     `;
                 } else if (oppScore > myScore) {
                     container.innerHTML += `
                         <div style="background: rgba(231, 76, 60, 0.1); border: 2px solid #e74c3c; border-radius: 15px; padding: 25px; text-align: center; max-width: 500px; margin: 0 auto;">
-                            <div style="font-size:1.8rem; color:#e74c3c; font-weight:800; margin-bottom:5px;">YOU LOST</div>
-                            <div style="font-size:1.1rem; opacity:0.8; margin-bottom:15px;">You: ${myScore} | ${matchup.opponent_name}: ${oppScore}</div>
+                            <div style="font-size:1.8rem; color:#e74c3c; font-weight:800; margin-bottom:15px;">YOU LOST</div>
                             ${scoresHtml}
                         </div>
                     `;
