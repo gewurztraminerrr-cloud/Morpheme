@@ -1026,6 +1026,9 @@ function showPage(pageId) {
         if (typeof window.checkLobbyNotice === 'function' && !window._lobbyNoticeShownThisSession) {
             window.checkLobbyNotice();
         }
+        if (typeof window.loadCurrentUserConfigRatings === 'function') {
+            window.loadCurrentUserConfigRatings();
+        }
     }
 
     if (pageId === 'page-mods') {
