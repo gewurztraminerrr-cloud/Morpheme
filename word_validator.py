@@ -119,6 +119,13 @@ class WordValidator:
         nwl_path = os.path.join(base_dir, 'dictionaries', 'NWL.txt')
         with open(nwl_path, 'r') as f:
             self.nwl_words = {line.strip().upper() for line in f if line.strip()}
+            
+        # Load custom_nwl if exists
+        custom_nwl_path = os.path.join(base_dir, 'dictionaries', 'custom_nwl.txt')
+        if os.path.exists(custom_nwl_path):
+            with open(custom_nwl_path, 'r') as f:
+                custom_nwl = {line.strip().upper() for line in f if line.strip()}
+                self.nwl_words.update(custom_nwl)
         
         # Initialize empty sets for CSW
         self.csw_words = set()
@@ -200,6 +207,13 @@ class WordValidator:
         else:
             print("[WordValidator] Error: CSW.txt not found!")
             self.csw_words = set()
+            
+        # Load custom_csw if exists
+        custom_csw_path = os.path.join(base_dir, 'dictionaries', 'custom_csw.txt')
+        if os.path.exists(custom_csw_path):
+            with open(custom_csw_path, 'r') as f:
+                custom_csw = {line.strip().upper() for line in f if line.strip()}
+                self.csw_words.update(custom_csw)
             
         # Calculate CSW-only words
         self.csw_only = self.csw_words - self.nwl_words

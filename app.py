@@ -572,7 +572,7 @@ def submit_dictionary_words():
         dict_dir = os.path.join(base_dir, 'dictionaries')
         
         # Determine target dictionary
-        target_dict_name = 'NWL.txt' if filename == 'newNWL.txt' else 'CSW.txt'
+        target_dict_name = 'custom_nwl.txt' if filename == 'newNWL.txt' else 'custom_csw.txt'
         target_path = os.path.join(dict_dir, target_dict_name)
         
         # 1. Load existing words
