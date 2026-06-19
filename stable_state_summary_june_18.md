@@ -43,6 +43,12 @@ This summary documents the stable state of the Morpheme application as of June 1
 ### 7. Win/Loss UI Score Text Cleanup
 *   **Duplicate Elimination**: Removed the duplicate text line `You: X | Opponent: Y` under the "YOU WON! ADVANCING..." and "YOU LOST" panels in [tournaments.js](file:///Users/jeffbabiak/static/js/tournaments.js), keeping the layout clean as the detailed styled scores list is already rendered below it.
 
+### 8. Default Settings on Registration
+*   **DB Setting Initialization**: Populated `user_settings` table entries during registration to set default configurations:
+    *   `board_sizes`: `{"4x4": 82, "4x6": 82, "5x7": 65, "6x8": 54}`
+    *   `corner_cutoff` (Tile Selectable Space): `39`
+*   **System Fallbacks**: Configured fallback configurations in `settings.js`, `play.js`, and `play.css` to match these default settings.
+
 ---
 
 ## 🛠 Active Features & Configuration
@@ -53,7 +59,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `bb729ada0b3a1b2300e980a7d894db2f9846b331`  
+**Latest Stable Commit ID**: `a255c20bff4fdaf71c51eb9063f753239cc0a67a`  
 **GitHub Tag**: `START_OVER_POINT_JUNE_18`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `bb729ad`
+**Production Server Status**: Green / PM2 Online / Live at commit `a255c20`
