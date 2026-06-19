@@ -226,6 +226,71 @@ Object.defineProperty(window, 'isBoardTransposed', {
     set: (v) => { isBoardTransposed = v; },
     configurable: true
 });
+
+function safelyTransposeState(state) {
+    if (!state) return;
+    if (state._isAlreadyTransposed) {
+        window.isBoardTransposed = !!state._isBoardTransposedValue;
+        return;
+    }
+    
+    window.isBoardTransposed = false;
+    const isMobile = (window.innerWidth <= 992) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    try {
+        if (isMobile && state.board && state.board.length > 0 && Array.isArray(state.board[0])) {
+            const isBoard3D = state.board_dimensions === '3x3x3' || (state.board.length === 6 && Array.isArray(state.board[0]) && Array.isArray(state.board[0][0]));
+            if (!isBoard3D) {
+                const rows = state.board.length;
+                const cols = state.board[0].length;
+                if (rows < cols) {
+                    window.isBoardTransposed = true;
+                    // Transpose Board letters array safely
+                    const transposedBoard = [];
+                    for (let c = 0; c < cols; c++) {
+                        transposedBoard[c] = [];
+                        for (let r = 0; r < rows; r++) {
+                            transposedBoard[c][r] = (state.board[r] && state.board[r][c] !== undefined) ? state.board[r][c] : '';
+                        }
+                    }
+                    state.board = transposedBoard;
+
+                    // Transpose Cell Density grid array safely
+                    if (state.cell_density && state.cell_density.length > 0 && Array.isArray(state.cell_density[0])) {
+                        const transposedDensity = [];
+                        for (let c = 0; c < cols; c++) {
+                            transposedDensity[c] = [];
+                            for (let r = 0; r < rows; r++) {
+                                if (state.cell_density[r] && state.cell_density[r][c] !== undefined) {
+                                    transposedDensity[c][r] = state.cell_density[r][c];
+                                } else {
+                                    transposedDensity[c][r] = 0;
+                                }
+                            }
+                        }
+                        state.cell_density = transposedDensity;
+                    }
+
+                    // Transpose Bonus Cell coordinate safely
+                    if (state.bonus_cell) {
+                        if (Array.isArray(state.bonus_cell) && state.bonus_cell.length === 2) {
+                            state.bonus_cell = [state.bonus_cell[1], state.bonus_cell[0]];
+                        } else if (typeof state.bonus_cell === 'object') {
+                            if (state.bonus_cell.r !== undefined && state.bonus_cell.c !== undefined) {
+                                state.bonus_cell = { r: state.bonus_cell.c, c: state.bonus_cell.r };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } catch (transpositionError) {
+        console.error("[Mobile] Transposition failed safely:", transpositionError);
+    }
+    state._isAlreadyTransposed = true;
+    state._isBoardTransposedValue = window.isBoardTransposed;
+}
+
 let activeWordsTab = 'found'; // 'found' or 'remaining'
 let validationTimeout = null;
 let highlightedSplitWord = null; // Track word for shared highlighting in Split Points
@@ -892,53 +957,7 @@ async function updateGameState(incomingState = null) {
 
         if (!state) return;
 
-        if (state._isAlreadyTransposed) {
-            window.isBoardTransposed = !!state._isBoardTransposedValue;
-        } else {
-            window.isBoardTransposed = false;
-            // Mobile Board Transposition: Turn landscape flat boards (rows < cols) into portrait (longest side runs vertically)
-            try {
-                if (window.innerWidth <= 992 && state.board && state.board.length > 0 && Array.isArray(state.board[0])) {
-                    const isBoard3D = state.board_dimensions === '3x3x3' || (state.board.length === 6 && Array.isArray(state.board[0]) && Array.isArray(state.board[0][0]));
-                    if (!isBoard3D) {
-                        const rows = state.board.length;
-                        const cols = state.board[0].length;
-                        if (rows < cols) {
-                            window.isBoardTransposed = true;
-                            // Transpose Board letters array safely
-                            const transposedBoard = [];
-                            for (let c = 0; c < cols; c++) {
-                                transposedBoard[c] = [];
-                                for (let r = 0; r < rows; r++) {
-                                    transposedBoard[c][r] = (state.board[r] && state.board[r][c] !== undefined) ? state.board[r][c] : '';
-                                }
-                            }
-                            state.board = transposedBoard;
-
-                            // Transpose Cell Density grid array safely
-                            if (state.cell_density && state.cell_density.length > 0 && Array.isArray(state.cell_density[0])) {
-                                const transposedDensity = [];
-                                for (let c = 0; c < cols; c++) {
-                                    transposedDensity[c] = [];
-                                    for (let r = 0; r < rows; r++) {
-                                        if (state.cell_density[r] && state.cell_density[r][c] !== undefined) {
-                                            transposedDensity[c][r] = state.cell_density[r][c];
-                                        } else {
-                                            transposedDensity[c][r] = 0;
-                                        }
-                                    }
-                                }
-                                state.cell_density = transposedDensity;
-                            }
-                        }
-                    }
-                }
-            } catch (transpositionError) {
-                console.error("[Mobile] Transposition failed safely:", transpositionError);
-            }
-            state._isAlreadyTransposed = true;
-            state._isBoardTransposedValue = window.isBoardTransposed;
-        }
+        safelyTransposeState(state);
 
         // Mobile Device Restriction: Cube is not allowed on mobile!
         const isMobile = (window.innerWidth <= 992) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -2868,6 +2887,12 @@ function rebuildTileToWordsMap() {
                 nc = node.c !== undefined ? node.c : -1;
             }
 
+            if (isTransposed && nf === -1) {
+                const temp = nr;
+                nr = nc;
+                nc = temp;
+            }
+
             const key = (nf !== -1) ? `${nf},${nr},${nc}` : `${nr},${nc}`;
             if (!window.tileToWordsMap[key]) {
                 window.tileToWordsMap[key] = new Set();
@@ -3911,12 +3936,7 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     boardEl.className = 'game-board';
     boardEl.style.display = '';
 
-    // When transposed for mobile portrait: swap the CSS grid dimensions so the
-    // shorter raw dimension becomes the column count and the longer becomes the row count.
-    if (isBoardTransposed && !is3D && cols > 0 && rows > 0) {
-        boardEl.style.setProperty('--board-cols', rows);  // data rows → display cols
-        boardEl.style.setProperty('--board-rows', cols);  // data cols → display rows
-    }
+
     
     // FORTE: Enforce grid sizing BEFORE children are added to prevent "vertical column" flickering
     if (!is3D && cols > 0 && rows > 0) {
@@ -4034,15 +4054,7 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     if (currentCells.length === expectedCount && !is3D) {
         // SYNC EXISTING CELLS (Supports Dynamic Shading Transitions)
         let idx = 0;
-        if (isBoardTransposed) {
-            // 90° portrait rotation: iterate column-first so each display row = one data column
-            for (let c = 0; c < cols; c++) {
-                for (let r = 0; r < rows; r++) {
-                    const existing = currentCells[idx++];
-                    updateBoardCell(existing, r, c, board[r][c], grayed, undefined, state);
-                }
-            }
-        } else if (isBoardRotated) {
+        if (isBoardRotated) {
             for (let r = rows - 1; r >= 0; r--) {
                 for (let c = cols - 1; c >= 0; c--) {
                     const existing = currentCells[idx++];
@@ -4060,15 +4072,7 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     } else {
         // FULL RERENDER
         boardEl.innerHTML = '';
-        if (isBoardTransposed) {
-            // 90° portrait rotation: iterate column-first so each display row = one data column
-            for (let c = 0; c < cols; c++) {
-                for (let r = 0; r < rows; r++) {
-                    const cell = createBoardCell(r, c, board[r][c], grayed, undefined, state);
-                    boardEl.appendChild(cell);
-                }
-            }
-        } else if (isBoardRotated) {
+        if (isBoardRotated) {
             for (let r = rows - 1; r >= 0; r--) {
                 for (let c = cols - 1; c >= 0; c--) {
                     const cell = createBoardCell(r, c, board[r][c], grayed, undefined, state);
@@ -4144,10 +4148,9 @@ function checkBoardOverflow() {
     if (!rows) rows = 4;
 
     const isSixByEight = (cols === 6 && rows === 8) || (cols === 8 && rows === 6);
-    // When transposed for mobile portrait: display cols = raw rows, display rows = raw cols
-    const displayCols = isBoardTransposed ? rows : cols;
-    const displayRows = isBoardTransposed ? cols : rows;
-    console.log(`[LayoutCheck] Raw: ${cols}x${rows}, Display: ${displayCols}x${displayRows}. Transposed: ${isBoardTransposed}`);
+    const displayCols = cols;
+    const displayRows = rows;
+    console.log(`[LayoutCheck] Raw/Display: ${cols}x${rows}. Transposed: ${isBoardTransposed}`);
     boardEl.style.setProperty('--board-cols', displayCols);
     boardEl.style.setProperty('--board-rows', displayRows);
 
@@ -4208,9 +4211,8 @@ function checkBoardOverflow() {
 
     if (isMobileView) {
         if (!window.userManuallyOverrodeBoardSize) {
-            // When the board is transposed (portrait display), the display column count is `rows`
-            // (the shorter raw dimension), not `cols`. Size cells to fill screen based on display cols.
-            const displayCols = isBoardTransposed ? rows : cols;
+            // Since the board is already transposed, displayCols is cols
+            const displayCols = cols;
             const displayGap = 4 * (displayCols - 1);
             // User Request: On mobile devices, always ensure the board fits perfectly onto the screen. ZERO PADDING.
             const mobileTargetSize = Math.floor((window.innerWidth - displayGap) / displayCols);
@@ -7158,17 +7160,11 @@ async function initTournamentPlay() {
 
         // On mobile, if the board data is wider than tall (landscape), transpose it to
         // portrait so the long dimension runs vertically and fills the phone screen naturally.
-        // Example: a 4-row × 6-col board becomes 4 columns × 6 rows on screen.
         isBoardTransposed = false; // reset
         isBoardRotated = false;    // reset
-        if (!is3D && isMobile && data.board && data.board.length > 0) {
-            const boardRows = data.board.length;
-            const boardCols = data.board[0] ? data.board[0].length : 0;
-            if (boardCols > boardRows) {
-                isBoardTransposed = true;
-                console.log('[Tournament] Transposing board for mobile portrait fit. Raw data:', boardRows, 'rows ×', boardCols, 'cols → display:', boardRows, 'cols ×', boardCols, 'rows');
-            }
-        }
+        safelyTransposeState(tournamentGameState);
+        data.board = tournamentGameState.board;
+        data.bonus_cell = tournamentGameState.bonus_cell;
 
         // Render Board
         console.log('[Tournament] Rendering tournament board. Format:', (data.params.board_format || 'Normal'));
@@ -7576,8 +7572,13 @@ window.initPrivateMatchPlay = function () {
         current_board_format: activeMatch.parameters.board_format || 'Normal',
         spinner_params: activeMatch.parameters,
         bonus_word: activeMatch.bonus_word,
-        all_words: activeMatch.all_words || []
+        all_words: activeMatch.all_words || [],
+        bonus_cell: activeMatch.bonus_cell
     };
+    safelyTransposeState(mockState);
+    activeMatch.board = mockState.board;
+    activeMatch.bonus_cell = mockState.bonus_cell;
+    
     window.lastGameState = mockState;
     lastRenderedBoardJSON = null; // Force re-render
 
