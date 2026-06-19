@@ -1374,6 +1374,14 @@ class GameRoom:
                             } for p in self.players
                         }
                         
+                        # Capture intermission stats
+                        self.previous_total_words = getattr(self, 'total_words_count', 0)
+                        self.previous_total_points = getattr(self, 'total_points_count', 0)
+                        
+                        # Clear active players and spectators at midnight boundary reset
+                        self.players = []
+                        self.spectators = []
+                        
                         # Direct room resets instead of invalid method call
                         self.custom_end_time = 0
                         self.solving_complete = False
@@ -2008,7 +2016,7 @@ class RoomManager:
             
             # 2. Query all player entries for this round
             cursor.execute('''
-                SELECT rh.user_id, u.username, rh.words_json, rh.board_json, rh.bonus_word, rh.bonus_cell, rh.board_format, rh.all_solutions_json, rh.all_words_paths, rh.board_dimensions
+                SELECT rh.user_id, u.username, rh.words_json, rh.board_json, rh.bonus_word, rh.bonus_cell, rh.board_format, rh.all_solutions_json, rh.all_words_paths, rh.board_dimensions, rh.total_words_avail
                 FROM round_history rh
                 LEFT JOIN users u ON rh.user_id = u.id
                 WHERE rh.room_id = ? AND rh.round_number = ?
@@ -2021,7 +2029,7 @@ class RoomManager:
                 
             # Parse common board/round attributes from the first entry
             first_row = rows[0]
-            user_id, username, words_json, board_json, bonus_word, bonus_cell, board_format, all_solutions_json, all_words_paths, board_dimensions = first_row
+            user_id, username, words_json, board_json, bonus_word, bonus_cell, board_format, all_solutions_json, all_words_paths, board_dimensions, total_words_avail = first_row
             
             # Restore previous board
             try:
@@ -2051,6 +2059,7 @@ class RoomManager:
                     except: pass
                     
             room.previous_all_words = restored_solutions
+            room.previous_total_words = total_words_avail if total_words_avail else len(restored_solutions)
             
             # Reconstruct word scores for history
             from scoring import calculate_word_score
@@ -2069,6 +2078,15 @@ class RoomManager:
                     strict_path=True
                 )
             room.previous_all_word_scores = restored_scores
+            
+            # Restore total points count by summing restored scores
+            total_pts = 0
+            for pts in restored_scores.values():
+                if isinstance(pts, dict):
+                    total_pts += pts.get('total', 0)
+                elif isinstance(pts, int):
+                    total_pts += pts
+            room.previous_total_points = total_pts
             
             # Filter CSW / Added words for yesterday
             import word_validator

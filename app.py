@@ -3221,6 +3221,13 @@ def get_room_state(room_id):
                                             games_played=games_played, country_flag=country_flag, 
                                             manual_accessed=False, is_guest=is_guest)
                             room.update_player_activity(user_id)
+                            
+                            # Kickstart 24h room round if it has no board (e.g. first join of the day / server restart)
+                            if is_24h and not room.board:
+                                print(f"[app.py] Kickstarting first round for reconstructed 24h room {room_id}")
+                                import threading
+                                thread = threading.Thread(target=room_manager.start_round, args=(room_id,), daemon=True)
+                                thread.start()
                 except Exception as re_err:
                     print(f"[app.py] Could not reconstruct public hub {room_id}: {re_err}")
 

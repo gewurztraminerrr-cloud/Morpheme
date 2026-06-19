@@ -1235,31 +1235,11 @@ async function updateGameState(incomingState = null) {
                 (previousState.spectators || []).some(s => s.username.toLowerCase() === currentUsername.toLowerCase())
             );
 
-            // 24H RESET AUTO-REJOIN: If we are in a 24H room, the user count resets to 0 at midnight.
-            // Active users sitting in the room MUST NOT be kicked out to the lobby! They should silently auto-rejoin.
+            // 24H RESET EVICTION: If we are in a 24H room and the daily reset occurred (round changed), eject the user to lobby!
             const roundChanged = previousState && state.current_round > previousState.current_round;
-            if (is24H && (roundChanged || window._wasEverInRoster)) {
-                const roomId = window.currentRoomId || state.room_id;
-                if (roomId && !window._isRejoiningRoom) {
-                    window._isRejoiningRoom = true;
-                    console.warn(`[play.js] Daily reset detected in 24h room ${roomId}. Performing silent auto-rejoin.`);
-                    fetch(`/api/room/${roomId}/join`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ as_spectator: !!window.isSpectatorMode })
-                    })
-                    .then(resp => resp.json())
-                    .then(data => {
-                        window._isRejoiningRoom = false;
-                        if (data.success) {
-                            console.log(`[play.js] Silent auto-rejoin successful! Role: ${data.role}`);
-                            setTimeout(updateGameState, 100);
-                        }
-                    })
-                    .catch(err => {
-                        window._isRejoiningRoom = false;
-                    });
-                }
+            if (is24H && roundChanged) {
+                console.warn(`[play.js] Daily reset detected in 24h room. Ejecting to lobby.`);
+                ejectToLobby("daily_reset");
                 return;
             }
 
