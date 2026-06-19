@@ -19,6 +19,36 @@ let selectedRoom = null;
 let sessionStartTime = Date.now();
 window.sessionStartTime = sessionStartTime;
 
+window.currentUserConfigRatings = {};
+
+async function loadCurrentUserConfigRatings() {
+    if (!window.currentUser || window.currentUserIsGuest) {
+        window.currentUserConfigRatings = {};
+        return;
+    }
+    try {
+        const resp = await fetch(`/api/profile/${encodeURIComponent(window.currentUser)}?t=${Date.now()}`);
+        const data = await resp.json();
+        if (data && data.config_ratings) {
+            window.currentUserConfigRatings = data.config_ratings;
+            console.log('Loaded config ratings for current user:', window.currentUserConfigRatings);
+            if (window.updateMyRatingButton && window.currentLobbyConfig) {
+                window.updateMyRatingButton(
+                    window.currentLobbyConfig.gameType,
+                    window.currentLobbyConfig.boardDimensions,
+                    window.currentLobbyConfig.timeLimit
+                );
+            }
+        } else {
+            window.currentUserConfigRatings = {};
+        }
+    } catch (e) {
+        console.error('Failed to load user config ratings:', e);
+        window.currentUserConfigRatings = {};
+    }
+}
+window.loadCurrentUserConfigRatings = loadCurrentUserConfigRatings;
+
 // Define standardized rating ranges globaly for reuse
 const RATING_RANGES = [
     // --- THE CLIMB (1 - 1399) ---
@@ -1394,6 +1424,11 @@ function updateAuthUI(rating = null) {
             updateUserRatingHighlight(rating || window.lastPlayerRating);
         }
 
+        // Load config-specific ratings
+        if (window.loadCurrentUserConfigRatings) {
+            window.loadCurrentUserConfigRatings();
+        }
+
         // Handle Mods Button
         const modsBtn = document.getElementById('nav-mods-btn');
         if (modsBtn) {
@@ -1460,6 +1495,7 @@ async function handleLogout() {
         // Clear only session-specific or sensitive data
         localStorage.clear();
         sessionStorage.clear();
+        window.currentUserConfigRatings = {};
         
         // Set logged out flag to prevent auto-login on mobile
         localStorage.setItem('morpheme_logged_out', 'true');

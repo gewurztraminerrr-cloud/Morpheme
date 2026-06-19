@@ -172,6 +172,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Update global config
             currentLobbyConfig = { gameType, timeLimit, boardDimensions };
+            window.currentLobbyConfig = currentLobbyConfig;
+
+            // Update My Rating button and auto-populate filter if FCFS 45s
+            if (typeof updateMyRatingButton === 'function') {
+                updateMyRatingButton(gameType, boardDimensions, timeLimit);
+            }
 
             const gameNames = {
                 'fcfs': 'First Come First Serve',
@@ -424,6 +430,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 handleRatingFilterSearch();
             }
         });
+        ratingFilterInput.addEventListener('input', () => {
+            if (isOnLobby() && currentLobbyConfig) {
+                const val = ratingFilterInput.value.trim();
+                if (val === '') {
+                    window.activeRatingFilterValue = null;
+                } else {
+                    const parsed = parseInt(val);
+                    window.activeRatingFilterValue = isNaN(parsed) ? null : parsed;
+                }
+                fetchAndRenderRooms(
+                    currentLobbyConfig.gameType,
+                    currentLobbyConfig.timeLimit,
+                    currentLobbyConfig.boardDimensions,
+                    false
+                );
+            }
+        });
     }
 
     const findRatingBtn = document.getElementById('find-rating-btn');
@@ -438,9 +461,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (myRatingBtn) {
         myRatingBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            let userRating = window.lastPlayerRating;
-            if (userRating === undefined || userRating === null || isNaN(userRating)) {
-                userRating = 1000;
+            let userRating = 1200;
+            if (currentLobbyConfig) {
+                const gameType = currentLobbyConfig.gameType;
+                const board = currentLobbyConfig.boardDimensions;
+                const time = currentLobbyConfig.timeLimit;
+                if (gameType !== 'fcfs' && gameType !== 'split' && gameType !== '3d') {
+                    const configKey = `${gameType}|${board}|${time}`;
+                    const ratings = window.currentUserConfigRatings || {};
+                    const ratingObj = ratings[configKey];
+                    userRating = (ratingObj && ratingObj.rating !== undefined) ? ratingObj.rating : (window.lastPlayerRating || 1200);
+                }
+            } else {
+                userRating = window.lastPlayerRating || 1200;
             }
             const input = document.getElementById('rating-filter');
             if (input) {
@@ -834,7 +867,52 @@ function resetLobbyButtons() {
         btn.style.opacity = '1';
         btn.style.pointerEvents = 'auto';
     });
+    const myRatingBtn = document.getElementById('my-rating-btn');
+    if (myRatingBtn) {
+        myRatingBtn.style.display = 'none';
+    }
 }
 window.resetLobbyButtons = resetLobbyButtons;
+
+function updateMyRatingButton(gameType, board, time) {
+    const btn = document.getElementById('my-rating-btn');
+    if (!btn) return;
+
+    if (!window.currentUser || window.currentUserIsGuest) {
+        btn.style.display = 'none';
+        return;
+    }
+
+    let rating = 1200;
+    // For all game types that lead you to the Active Rooms panel (fcfs, split, 3d), it should read 1200.
+    if (gameType !== 'fcfs' && gameType !== 'split' && gameType !== '3d') {
+        const configKey = `${gameType}|${board}|${time}`;
+        const ratings = window.currentUserConfigRatings || {};
+        const ratingObj = ratings[configKey];
+        rating = (ratingObj && ratingObj.rating !== undefined) ? ratingObj.rating : (window.lastPlayerRating || 1200);
+    }
+
+    btn.textContent = `My Rating: ${rating}`;
+    btn.dataset.rating = rating;
+    btn.style.display = 'block';
+
+    // Auto-populate textbox if it is FCFS 45s
+    if (gameType === 'fcfs' && time === 45) {
+        const ratingFilter = document.getElementById('rating-filter');
+        if (ratingFilter) {
+            ratingFilter.value = rating;
+            // Trigger input event to filter rooms immediately
+            ratingFilter.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    } else {
+        // Clear the textbox for other configurations to avoid leftover filters
+        const ratingFilter = document.getElementById('rating-filter');
+        if (ratingFilter) {
+            ratingFilter.value = '';
+            ratingFilter.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    }
+}
+window.updateMyRatingButton = updateMyRatingButton;
 
 console.log('lobby.js fully loaded - version with polling');
