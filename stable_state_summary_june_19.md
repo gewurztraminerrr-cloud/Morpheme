@@ -1,6 +1,6 @@
 # Morpheme Stable State Summary - June 19, 2026
 
-This summary documents the stable state of the Morpheme application as of June 19, 2026. Localhost, GitHub origin, and `morpheme.games` are fully synchronized and verified under Commit ID **`a3bb9f9`** (and subsequently tagged as **`START_OVER_POINT_JUNE_19`**).
+This summary documents the stable state of the Morpheme application as of June 19, 2026. Localhost, GitHub origin, and `morpheme.games` are fully synchronized and verified under Commit ID **`d7fe75e`** (and tagged as **`START_OVER_POINT_JUNE_19`**).
 
 ---
 
@@ -32,6 +32,11 @@ This summary documents the stable state of the Morpheme application as of June 1
 ### 6. Motivating Rating brackets
 *   **Inspiring Bracket Descriptions**: Populated custom bracket descriptions for the 35 color segments in `RATING_RANGES`. Clicking any segment of the `#game-color-bar` in the header now brings up the detailed motivational modal.
 
+### 7. 24h Room Issue Fixes
+*   **Daily Reset Eviction**: Active users and spectators in 24h rooms are now immediately evicted back to the Lobby at Chicago midnight when a daily reset occurs (round changes), preventing silent auto-rejoins and stale roster counts.
+*   **Stale Board Elimination**: Reconstructed public 24h rooms with empty boards automatically trigger a background thread to generate the daily board immediately, resolving flashing or incorrect boards on first login.
+*   **Stale Stats Sync ("21/4" Fix)**: Properly capture and save `previous_total_words` and `previous_total_points` on reset. Updated database loading logic in `load_previous_day_data()` to query `total_words_avail` and reconstruct yesterday's word scores from the database rather than relying on dynamic fallbacks.
+
 ---
 
 ## 🛠 Active Features & Configuration
@@ -42,7 +47,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `a3bb9f9` (tagged as `START_OVER_POINT_JUNE_19`)  
+**Latest Stable Commit ID**: `d7fe75e` (tagged as `START_OVER_POINT_JUNE_19`)  
 **GitHub Tag**: `START_OVER_POINT_JUNE_19`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `a3bb9f9`
+**Production Server Status**: Green / Auto-Restart protection active / Live at commit `d7fe75e`
