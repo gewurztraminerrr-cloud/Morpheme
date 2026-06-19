@@ -604,10 +604,16 @@ def submit_dictionary_words():
             for w in added_to_track:
                 f.write(w + '\n')
 
-        # 4. Remove from Added Words (Staging Area) - DISABLED
-        # Per user request, words in the Added Words list are kept permanently and not removed
-        # even if they are uploaded/promoted to custom dictionaries.
-        pass
+        # 4. Remove from Added Words (Staging Area)
+        if os.path.exists(ADDED_WORDS_FILE):
+            with open(ADDED_WORDS_FILE, 'r') as f:
+                current_added = [line.strip().upper() for line in f if line.strip()]
+            
+            filtered_added = [w for w in current_added if w not in new_words]
+            
+            with open(ADDED_WORDS_FILE, 'w') as f:
+                for w in filtered_added:
+                    f.write(w + '\n')
         
         # 5. Initialize counts in word_stats.json for the new words
         for w in new_words:

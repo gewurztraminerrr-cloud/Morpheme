@@ -1,6 +1,6 @@
 # Morpheme Stable State Summary - June 18, 2026
 
-This summary documents the stable state of the Morpheme application as of June 18, 2026. Localhost, GitHub origin, and `morpheme.games` are fully synchronized and verified under Commit ID **`b200e67`**.
+This summary documents the stable state of the Morpheme application as of June 18, 2026. Localhost, GitHub origin, and `morpheme.games` are fully synchronized and verified under Commit ID **`7c9caf0`** (with subsequent reverts/updates).
 
 ---
 
@@ -11,13 +11,14 @@ This summary documents the stable state of the Morpheme application as of June 1
 *   **Persistence Fix**: Modified the `/api/mods/dictionary/submit` endpoint in [app.py](file:///Users/jeffbabiak/app.py) to write custom dictionary additions to `custom_nwl.txt` and `custom_csw.txt` instead of standard tracked dictionary files.
 *   **Git Tracking Exclusions**: Untracked `new_NWL.txt`/`new_CSW.txt` and added them alongside `custom_nwl.txt`/`custom_csw.txt` to [.gitignore](file:///Users/jeffbabiak/.gitignore), ensuring they are persistent and immune to Git resets.
 *   **WordValidator Integration**: Updated `_load_dictionaries` and `ensure_csw_loaded` in [word_validator.py](file:///Users/jeffbabiak/word_validator.py) to automatically load and merge custom dictionaries into the active word sets on startup and lazy-loading.
-*   **Added Words Restoration**: Successfully uploaded and merged **1,666 missing words** from `misplaced.txt` back into the production `added_words.txt`, bringing the total count to **9,395** words.
+*   **Added Words Restoration**: Successfully uploaded and merged **1,666 missing words** from `misplaced.txt` back into the production `added_words.txt`, bringing the total count to **9,395** words. Also synchronized this updated file back to the localhost.
+*   **Clean Staging Area**: Maintains the staging cleanup logic in [app.py](file:///Users/jeffbabiak/app.py) which removes newly uploaded dictionary words from `added_words.txt`. Since custom additions are saved in the persistent `custom_nwl.txt`/`custom_csw.txt` files, the words are safely transitioned from the staging list to the active dictionary without risk of loss.
 
 ### 2. Tournament Replay Security & Active Standings Censorship
 *   **Standings Visibility**: Modified [tournaments.js](file:///Users/jeffbabiak/static/js/tournaments.js) to hide the **Round Standings** leaderboard card entirely for active participants who have not completed their turn.
 *   **Selective Replay Censorship**: Modified [app.py](file:///Users/jeffbabiak/app.py) to censor `board_data` and `submitted_words` of other players for active rounds. 
-    *   Unplayed participants and spectators/guests see censored placeholder results (`board_data: null`, `submitted_words: []`).
-    *   Players who **have finished their turn** can view other players' replays, even while the round remains active.
+*   *   Unplayed participants and spectators/guests see censored placeholder results (`board_data: null`, `submitted_words: []`).
+*   *   Players who **have finished their turn** can view other players' replays, even while the round remains active.
 *   **Winner Route Protection**: Restricted the `/api/tournament/winner-turn/<tid>/<username>` endpoint in [tournament_logic.py](file:///Users/jeffbabiak/tournament_logic.py) to completed tournaments only (`status == 'completed'`), preventing custom queries from harvesting active round details.
 
 ### 3. Unified Replay UI & Visual Board Highlight Paths
@@ -47,7 +48,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `b200e67cd7c8fdf1287c8053a73a6a3b2b80f123`  
+**Latest Stable Commit ID**: `7c9caf0c14a8f440e1dcd23053a7f9979fc11739` (with updates)  
 **GitHub Tag**: `START_OVER_POINT_JUNE_18`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `b200e67`
+**Production Server Status**: Green / PM2 Online / Live
