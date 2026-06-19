@@ -935,21 +935,11 @@ function updateMyRatingButton(gameType, board, time) {
     btn.dataset.rating = rating;
     btn.style.display = 'block';
 
-    // Auto-populate textbox if it is FCFS 45s
-    if (gameType === 'fcfs' && time === 45) {
-        const ratingFilter = document.getElementById('rating-filter');
-        if (ratingFilter) {
-            ratingFilter.value = rating;
-            // Trigger input event to filter rooms immediately
-            ratingFilter.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-    } else {
-        // Clear the textbox for other configurations to avoid leftover filters
-        const ratingFilter = document.getElementById('rating-filter');
-        if (ratingFilter) {
-            ratingFilter.value = '';
-            ratingFilter.dispatchEvent(new Event('input', { bubbles: true }));
-        }
+    // Clear the textbox for all configurations to avoid leftover filters by default
+    const ratingFilter = document.getElementById('rating-filter');
+    if (ratingFilter) {
+        ratingFilter.value = '';
+        ratingFilter.dispatchEvent(new Event('input', { bubbles: true }));
     }
 }
 window.updateMyRatingButton = updateMyRatingButton;
