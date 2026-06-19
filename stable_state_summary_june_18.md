@@ -49,6 +49,10 @@ This summary documents the stable state of the Morpheme application as of June 1
     *   `corner_cutoff` (Tile Selectable Space): `39`
 *   **System Fallbacks**: Configured fallback configurations in `settings.js`, `play.js`, and `play.css` to match these default settings.
 
+### 9. Inspiring Rating Tier Descriptions
+*   **Encouraging Tiers**: Added custom, highly motivating descriptions to each of the 35 rating brackets in `RATING_RANGES`.
+*   **Dynamic Visual Chart Modals**: Updated the `#game-color-bar` HTML generator and `#color-tier-modal` script logic in `app.js` and `index.html` to load and display the specific motivating description when clicking any segment.
+
 ---
 
 ## 🛠 Active Features & Configuration
@@ -59,7 +63,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `a255c20bff4fdaf71c51eb9063f753239cc0a67a`  
+**Latest Stable Commit ID**: `477e001fe7947484abe9d690d6ae074c3eeaca51`  
 **GitHub Tag**: `START_OVER_POINT_JUNE_18`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `a255c20`
+**Production Server Status**: Green / PM2 Online / Live at commit `477e001`
