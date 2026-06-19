@@ -20,8 +20,8 @@ function debounce(func, wait) {
         chat_font_size: 13,
         def_font_size: 15,
         board_size: 54,
-        corner_cutoff: 30,
-        board_sizes: { '4x4': 54, '4x6': 50, '5x7': 45, '6x8': 40 },
+        corner_cutoff: 39,
+        board_sizes: { '4x4': 82, '4x6': 82, '5x7': 65, '6x8': 54 },
         cube_size: 220,
         highlight_typing: true,
         highlight_mouse: true,
@@ -89,7 +89,7 @@ function debounce(func, wait) {
         if (settings.board_sizes) {
             let sizes = settings.board_sizes;
             if (typeof sizes === 'string') {
-                try { sizes = JSON.parse(sizes); } catch (e) { sizes = { '4x4': 54, '4x6': 50, '5x7': 45, '6x8': 40 }; }
+                try { sizes = JSON.parse(sizes); } catch (e) { sizes = { '4x4': 82, '4x6': 82, '5x7': 65, '6x8': 54 }; }
             }
             if (!window.userSettings) window.userSettings = {};
             window.userSettings.board_sizes = sizes;

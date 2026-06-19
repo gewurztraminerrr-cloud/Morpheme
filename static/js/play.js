@@ -4186,7 +4186,7 @@ function checkBoardOverflow() {
     }
 
     // Default fallbacks for each dimension if not customized yet
-    const defaultForDim = currentDim === '6x8' ? 40 : (currentDim === '5x7' ? 45 : (currentDim === '4x6' ? 50 : 54));
+    const defaultForDim = currentDim === '6x8' ? 54 : (currentDim === '5x7' ? 65 : (currentDim === '4x6' ? 82 : 82));
     let baseCellSize = savedSettingSize || defaultForDim;
 
     // CRITICAL: Set userManuallyOverrodeBoardSize = true so mobile/laptop layout constraints don't override the user's explicit setting

@@ -1830,8 +1830,18 @@ def register():
         password_hash = generate_password_hash(password, method='pbkdf2:sha256')
         
         # Insert user cleanly
-        conn.execute('INSERT INTO users (username, password_hash, email, is_verified, country_flag) VALUES (?, ?, ?, 1, ?)',
+        cursor = conn.execute('INSERT INTO users (username, password_hash, email, is_verified, country_flag) VALUES (?, ?, ?, 1, ?)',
                     (username, password_hash, email, flag))
+        user_id = cursor.lastrowid
+        
+        # Insert default settings for the new user
+        default_settings = [
+            ('board_sizes', '{"4x4":82,"4x6":82,"5x7":65,"6x8":54}'),
+            ('corner_cutoff', '39')
+        ]
+        for key, val in default_settings:
+            conn.execute('INSERT INTO user_settings (user_id, setting_key, setting_value) VALUES (?, ?, ?)', (user_id, key, val))
+            
         conn.commit()
         
         cursor = conn.execute('SELECT id, rating FROM users WHERE username = ?', (username,))

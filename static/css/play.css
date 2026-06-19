@@ -952,14 +952,14 @@ body.theme-light-brown .player-score-val {
     touch-action: none !important;
     /* Only this layer talks to the JS */
     clip-path: polygon(
-        var(--corner-cutoff, 30%) 0%, 
-        calc(100% - var(--corner-cutoff, 30%)) 0%, 
-        100% var(--corner-cutoff, 30%), 
-        100% calc(100% - var(--corner-cutoff, 30%)), 
-        calc(100% - var(--corner-cutoff, 30%)) 100%, 
-        var(--corner-cutoff, 30%) 100%, 
-        0% calc(100% - var(--corner-cutoff, 30%)), 
-        0% var(--corner-cutoff, 30%)
+        var(--corner-cutoff, 39%) 0%, 
+        calc(100% - var(--corner-cutoff, 39%)) 0%, 
+        100% var(--corner-cutoff, 39%), 
+        100% calc(100% - var(--corner-cutoff, 39%)), 
+        calc(100% - var(--corner-cutoff, 39%)) 100%, 
+        var(--corner-cutoff, 39%) 100%, 
+        0% calc(100% - var(--corner-cutoff, 39%)), 
+        0% var(--corner-cutoff, 39%)
     );
     cursor: pointer;
 }
