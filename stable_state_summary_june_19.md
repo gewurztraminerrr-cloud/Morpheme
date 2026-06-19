@@ -1,6 +1,6 @@
 # Morpheme Stable State Summary - June 19, 2026
 
-This summary documents the stable state of the Morpheme application as of June 19, 2026. Localhost, GitHub origin, and `morpheme.games` are fully synchronized and verified under Commit ID **`d7fe75e`** (and tagged as **`START_OVER_POINT_JUNE_19`**).
+This summary documents the stable state of the Morpheme application as of June 19, 2026. Localhost, GitHub origin, and `morpheme.games` are fully synchronized and verified under Commit ID **`aae7bbc`** (and tagged as **`START_OVER_POINT_JUNE_19`**).
 
 ---
 
@@ -16,6 +16,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 *   **Correct Defaults**: If no rating exists in the database for the active room configuration, the button defaults to `1200` for active room game types (`fcfs`, `split`, `3d`) and the global rating (`window.lastPlayerRating || 1200`) for accumulative setups.
 *   **Mobile Visibility**: Restored visibility of the "My Rating" button on mobile layout screen widths within `resetLobbyButtons()`.
 *   **Immediate Lobby Updates**: Programmed [app.js](file:///Users/jeffbabiak/static/js/app.js)'s `showPage('page-lobby')` logic to fetch the latest configuration ratings whenever returning to the lobby page. This updates the local rating client cache immediately post-round.
+*   **Average Rating Textbox Behavior**: The average rating filter textbox is now left blank by default when users select or go to any active room configuration, allowing them to click the "My Rating" button to populate it manually.
 
 ### 3. Static Asset Caching & Instant Audio Playback
 *   **The Issue**: The global `add_cache_headers` middleware forced a `no-store, no-cache` policy on all requests, disabling caching for static assets. This required browser range requests to redownload the large 7.4 MB `lobby.mp3` on every refresh, leading to noticeable buffering delays when seeking to the 205s starting loop.
@@ -47,7 +48,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `d7fe75e` (tagged as `START_OVER_POINT_JUNE_19`)  
+**Latest Stable Commit ID**: `aae7bbc` (tagged as `START_OVER_POINT_JUNE_19`)  
 **GitHub Tag**: `START_OVER_POINT_JUNE_19`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / Auto-Restart protection active / Live at commit `d7fe75e`
+**Production Server Status**: Green / Auto-Restart protection active / Live at commit `aae7bbc`
