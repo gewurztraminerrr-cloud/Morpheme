@@ -272,6 +272,14 @@ def check_mod_status():
 
 @app.after_request
 def add_cache_headers(response):
+    # Allow caching for static files to improve performance and enable instant audio loading
+    if request.endpoint in ('static', 'static_files') or (request.path and any(request.path.endswith(ext) for ext in ('.mp3', '.wav', '.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.ico'))):
+        response.headers["Cache-Control"] = "public, max-age=604800"
+        if "Pragma" in response.headers:
+            del response.headers["Pragma"]
+        if "Expires" in response.headers:
+            del response.headers["Expires"]
+        return response
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
