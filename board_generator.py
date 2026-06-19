@@ -524,6 +524,8 @@ class BoardGenerator:
             
             def find_path(idx, r, c, f, current_path):
                 if idx == seq_len:
+                    if protected and all(p in protected for p in current_path):
+                        return None
                     return current_path
                 target = sequence[idx]
                 if is_3d:
@@ -605,7 +607,7 @@ class BoardGenerator:
 
         # If it has "ING" sequence, break it up by replacing one of the tiles (preferably unprotected, but force-replace if needed)
         for _ in range(50):
-            if not self._has_ing_sequence(board, depth):
+            if not self._has_ing_sequence(board, depth, protected_positions=protected_positions):
                 break
                 
             # Scan and find the first ING path
@@ -613,6 +615,8 @@ class BoardGenerator:
             
             def find_path(idx, r, c, f, current_path):
                 if idx == 3:
+                    if protected and all(p in protected for p in current_path):
+                        return None
                     return current_path
                 target = "ING"[idx]
                 if is_3d:
@@ -873,15 +877,25 @@ class BoardGenerator:
                             return True
         return False
 
-    def _has_ing_sequence(self, b, depth=1):
+    def _has_ing_sequence(self, b, depth=1, protected_positions=None):
         """Highly optimized board-wide scan for 'ING' sequence supporting Either/Or formats."""
         is_3d = (depth > 1) or (len(b) == 6 and isinstance(b[0], list) and isinstance(b[0][0], list))
         depth_val = 6 if (len(b) == 6 and is_3d) else depth
         R = len(b[0]) if is_3d else len(b)
         C = len(b[0][0]) if is_3d else len(b[0])
 
+        protected = set()
+        if protected_positions:
+            for cell in protected_positions:
+                if isinstance(cell, (list, tuple)):
+                    protected.add(tuple(cell))
+                else:
+                    protected.add(cell)
+
         def dfs(r, c, f, idx, visited):
             if idx == 3:
+                if protected and all(p in protected for p in visited):
+                    return False
                 return True
             if is_3d:
                 neighbors = self._get_cube_neighbors(f, r, c)
@@ -1149,6 +1163,8 @@ class BoardGenerator:
                 pass
 
             all_excluded = set()
+            if embedded_path:
+                all_excluded.update(embedded_path)
             special_cells = []
             
             if "either/or" in board_format.lower():
@@ -1180,9 +1196,15 @@ class BoardGenerator:
                     min_word_length, max_words, min_words, 0, 1, depth=depth, difficulty=difficulty, weights=weights
                 )
                 # Stage 2: IO and B Uniqueness
-                board = self._apply_io_b_uniqueness_optimization(
-                    board, rows, cols, dictionary, all_excluded, min_word_length, depth=depth, difficulty=difficulty, max_words=max_words, is_checkerboard=is_checkerboard
-                )
+                # To prevent timeouts on retries, only optimize uniqueness on the first attempt
+                # and if we have ample time remaining.
+                time_rem = timeout - (time.time() - start_time)
+                if attempts == 1 and time_rem >= 15.0:
+                    board = self._apply_io_b_uniqueness_optimization(
+                        board, rows, cols, dictionary, all_excluded, min_word_length, depth=depth, difficulty=difficulty, max_words=max_words, is_checkerboard=is_checkerboard, min_words=min_words
+                    )
+                else:
+                    print(f"[BoardGen] Skipping Stage 2 Uniqueness Optimization (attempts={attempts}, time_rem={time_rem:.1f}s)")
             elif strategy == "WordSoup":
                 # Do NOT optimize Word Soup boards with common letter Density sweeps!
                 # This preserves all embedded unique words and thematic structure intact.
@@ -1400,7 +1422,7 @@ class BoardGenerator:
                 # USER MANDATE: Ensure no "ING" or "INGS" path sequences exist in Medium or Hard boards!
                 # If they do, toss the board and generate another one (continue)!
                 if difficulty in ["Medium", "Hard"] or achieved_diff in ["Medium", "Hard"]:
-                    if self._has_ing_sequence(board, depth):
+                    if self._has_ing_sequence(board, depth, protected_positions=embedded_path):
                         print(f"[BoardGen] ❌ ATTEMPT {attempts}: Board has an 'ING'/'INGS' sequence on {achieved_diff} (target {difficulty}) board. TOSSING board and generating another one...")
                         continue
 
@@ -2915,7 +2937,7 @@ class BoardGenerator:
                 break
         return board
 
-    def _apply_io_b_uniqueness_optimization(self, board, rows, cols, dictionary, excluded_cells, min_word_length, depth=1, difficulty="Medium", max_words=200, is_checkerboard=False):
+    def _apply_io_b_uniqueness_optimization(self, board, rows, cols, dictionary, excluded_cells, min_word_length, depth=1, difficulty="Medium", max_words=200, is_checkerboard=False, min_words=0):
         """
         USER MANDATE: Stage 2 of 200+ Optimization. 
         Implements specific "IO and B" checkerboard where:
@@ -2929,6 +2951,21 @@ class BoardGenerator:
         if not unique_set:
             print("[BoardGen] !! Stage 2 Skip: Unique set empty.")
             return board
+
+        # Check if the board is already compliant before doing expensive Stage 2 optimization
+        try:
+            initial_solve = self._solve_board(
+                board, dictionary, (0, 99999), min_word_length, max_depth=12 if rows * cols >= 35 else 25, store_paths=False, timeout=2.0
+            )
+            initial_count = len(initial_solve)
+            initial_ratio = self.get_uniqueness_ratio(board, list(initial_solve.keys()), rows, cols, dictionary, depth)
+            min_ratio, max_ratio = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth, min_word_length=min_word_length)
+            
+            if min_words <= initial_count <= max_words and min_ratio <= initial_ratio <= max_ratio:
+                print(f"[BoardGen] Board is already compliant (Count={initial_count}, Ratio={initial_ratio:.2f}). Skipping Stage 2 Uniqueness Optimization.")
+                return board
+        except Exception as e:
+            print(f"[BoardGen] Warning during initial check: {e}")
             
         print(f"[BoardGen] Stage 2 starting for {rows}x{cols} ({dictionary})")
         start_time = time.time()
@@ -2951,7 +2988,8 @@ class BoardGenerator:
         random.shuffle(io_positions)
         
         # Solve depth optimization
-        solve_depth = 6 if (rows * cols >= 35) else 12
+        base_depth = 6 if (rows * cols >= 35) else 12
+        solve_depth = max(min_word_length + 1, base_depth)
         timeout_cell = 0.05 if (rows * cols >= 35) else 0.15
         
         alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

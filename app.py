@@ -2271,9 +2271,7 @@ def get_public_profile(username):
     for cfg_key, rating in config_ratings.items():
         try:
             gtype, dims, dur = cfg_key.split('|')
-            if gtype in ('fcfs', 'split', '3d'):
-                rating = 1200
-            elif int(dur) >= 7200:
+            if int(dur) >= 7200:
                 rating = user[2]
             matching = [p for p in processed_all if p['game_type'] == gtype and p['dimensions'] == dims and p['round_duration'] == int(dur)]
             matching_valid = [p for p in matching if p.get('total_words_avail', 0) > 0]
@@ -2556,12 +2554,10 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     best_words_rounds = [r for r in performance_list if r['game_id'] in best_word_game_ids]
 
     # Get config rating
+    # 24-hour configurations exception: load global rating from users table
     parts = config_key.split('|')
-    gtype = parts[0] if len(parts) >= 1 else ''
     is_24h = (len(parts) >= 3 and int(parts[2]) >= 7200)
-    if gtype in ('fcfs', 'split', '3d'):
-        rating = 1200
-    elif is_24h:
+    if is_24h:
         cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (user_id,))
         rating_row = cursor.fetchone()
         rating = rating_row[0] if rating_row else 1200
@@ -2822,9 +2818,7 @@ def create_room():
         conn = sqlite3.connect(DB_PATH, timeout=30)
         # 24-hour rooms exception: load global rating from users table
         is_24h = (int(time_limit) >= 7200)
-        if game_type in ('fcfs', 'split', '3d'):
-            rating = 1200
-        elif is_24h:
+        if is_24h:
             cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
             row = cursor.fetchone()
             if row:
@@ -2893,9 +2887,7 @@ def join_room(room_id):
         conn = sqlite3.connect(DB_PATH, timeout=30)
         # 24-hour rooms exception: load global rating from users table
         is_24h = (room.time_limit >= 7200)
-        if game_type_base in ('fcfs', 'split', '3d'):
-            rating = 1200
-        elif is_24h:
+        if is_24h:
             cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
             row = cursor.fetchone()
             if row:
@@ -3188,9 +3180,8 @@ def get_room_state(room_id):
                                     game_type_base = room.game_type.replace('solo_', '')
                                     config_key = f"{game_type_base}|{room.board_dimensions}|{room.time_limit}"
                                     # 24-hour rooms exception: load global rating from users table
-                                    if game_type_base in ('fcfs', 'split', '3d'):
-                                        rating = 1200
-                                    elif is_24h:
+                                    is_24h = (room.time_limit >= 7200)
+                                    if is_24h:
                                         cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (user_id,))
                                         row = cursor.fetchone()
                                         if row:
@@ -6177,9 +6168,7 @@ def create_solo_match():
             config_key = f"{display_game_type}|{board_dimensions}|{time_limit}"
             # 24-hour rooms exception: load global rating from users table
             is_24h = (time_limit >= 7200)
-            if display_game_type in ('fcfs', 'split', '3d'):
-                rating = 1200
-            elif is_24h:
+            if is_24h:
                 cur = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
                 row = cur.fetchone()
                 if row:

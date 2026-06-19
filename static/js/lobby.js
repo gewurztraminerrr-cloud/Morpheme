@@ -466,11 +466,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const gameType = currentLobbyConfig.gameType;
                 const board = currentLobbyConfig.boardDimensions;
                 const time = currentLobbyConfig.timeLimit;
-                if (gameType !== 'fcfs' && gameType !== 'split' && gameType !== '3d') {
-                    const configKey = `${gameType}|${board}|${time}`;
-                    const ratings = window.currentUserConfigRatings || {};
-                    const ratingObj = ratings[configKey];
-                    userRating = (ratingObj && ratingObj.rating !== undefined) ? ratingObj.rating : (window.lastPlayerRating || 1200);
+                const configKey = `${gameType}|${board}|${time}`;
+                const ratings = window.currentUserConfigRatings || {};
+                const ratingObj = ratings[configKey];
+                if (ratingObj && ratingObj.rating !== undefined) {
+                    userRating = ratingObj.rating;
+                } else {
+                    if (gameType === 'fcfs' || gameType === 'split' || gameType === '3d') {
+                        userRating = 1200;
+                    } else {
+                        userRating = window.lastPlayerRating || 1200;
+                    }
                 }
             } else {
                 userRating = window.lastPlayerRating || 1200;
@@ -880,19 +886,25 @@ function resetLobbyButtons() {
         } else {
             // Keep it visible on desktop/laptop
             myRatingBtn.style.display = 'block';
-            let rating = window.lastPlayerRating || 1200;
+            let rating = 1200;
             if (window.currentLobbyConfig) {
                 const gameType = window.currentLobbyConfig.gameType;
                 const board = window.currentLobbyConfig.boardDimensions;
                 const time = window.currentLobbyConfig.timeLimit;
-                if (gameType !== 'fcfs' && gameType !== 'split' && gameType !== '3d') {
-                    const configKey = `${gameType}|${board}|${time}`;
-                    const ratings = window.currentUserConfigRatings || {};
-                    const ratingObj = ratings[configKey];
-                    rating = (ratingObj && ratingObj.rating !== undefined) ? ratingObj.rating : rating;
+                const configKey = `${gameType}|${board}|${time}`;
+                const ratings = window.currentUserConfigRatings || {};
+                const ratingObj = ratings[configKey];
+                if (ratingObj && ratingObj.rating !== undefined) {
+                    rating = ratingObj.rating;
                 } else {
-                    rating = 1200;
+                    if (gameType === 'fcfs' || gameType === 'split' || gameType === '3d') {
+                        rating = 1200;
+                    } else {
+                        rating = window.lastPlayerRating || 1200;
+                    }
                 }
+            } else {
+                rating = window.lastPlayerRating || 1200;
             }
             myRatingBtn.textContent = `My Rating: ${rating}`;
             myRatingBtn.dataset.rating = rating;
@@ -911,12 +923,17 @@ function updateMyRatingButton(gameType, board, time) {
     }
 
     let rating = 1200;
-    // For all game types that lead you to the Active Rooms panel (fcfs, split, 3d), it should read 1200.
-    if (gameType !== 'fcfs' && gameType !== 'split' && gameType !== '3d') {
-        const configKey = `${gameType}|${board}|${time}`;
-        const ratings = window.currentUserConfigRatings || {};
-        const ratingObj = ratings[configKey];
-        rating = (ratingObj && ratingObj.rating !== undefined) ? ratingObj.rating : (window.lastPlayerRating || 1200);
+    const configKey = `${gameType}|${board}|${time}`;
+    const ratings = window.currentUserConfigRatings || {};
+    const ratingObj = ratings[configKey];
+    if (ratingObj && ratingObj.rating !== undefined) {
+        rating = ratingObj.rating;
+    } else {
+        if (gameType === 'fcfs' || gameType === 'split' || gameType === '3d') {
+            rating = 1200;
+        } else {
+            rating = window.lastPlayerRating || 1200;
+        }
     }
 
     btn.textContent = `My Rating: ${rating}`;
