@@ -23,53 +23,53 @@ window.sessionStartTime = sessionStartTime;
 const RATING_RANGES = [
     // --- THE CLIMB (1 - 1399) ---
     // Greens (1 - 699): The Foundation
-    { min: 1, max: 99, color: '#e6ffe6', label: '1 - 99', name: 'Initiate' },
-    { min: 100, max: 199, color: '#ccffcc', label: '100 - 199', name: 'Apprentice' },
-    { min: 200, max: 299, color: '#99ff99', label: '200 - 299', name: 'Practitioner' },
-    { min: 300, max: 399, color: '#66ff66', label: '300 - 399', name: 'Scholar' },
-    { min: 400, max: 499, color: '#33ff33', label: '400 - 499', name: 'Adept' },
-    { min: 500, max: 599, color: '#00ff00', label: '500 - 599', name: 'Specialist' },
-    { min: 600, max: 699, color: '#00cc00', label: '600 - 699', name: 'Expert' },
+    { min: 1, max: 99, color: '#e6ffe6', label: '1 - 99', name: 'Initiate', desc: "You've taken your first step into Morpheme! Every expert started right here. Focus on learning the grid layouts, and watch your score climb!" },
+    { min: 100, max: 199, color: '#ccffcc', label: '100 - 199', name: 'Apprentice', desc: "You're building a solid foundation. You've learned the basics and are beginning to spot longer words. Keep practicing to sharpen your vocabulary!" },
+    { min: 200, max: 299, color: '#99ff99', label: '200 - 299', name: 'Practitioner', desc: "Your skills are growing! You're consistently finding good words and adjusting to different board parameters. Keep pushing your limits!" },
+    { min: 300, max: 399, color: '#66ff66', label: '300 - 399', name: 'Scholar', desc: "A dedicated student of the game! Your knowledge of prefixes, suffixes, and word structures is starting to show. You're well on your way to mastery." },
+    { min: 400, max: 499, color: '#33ff33', label: '400 - 499', name: 'Adept', desc: "You've achieved impressive proficiency! You spot high-value words quickly and navigate complex grid patterns with ease. Excellent progress!" },
+    { min: 500, max: 599, color: '#00ff00', label: '500 - 599', name: 'Specialist', desc: "Your gameplay is highly focused and efficient. You excel under pressure and can turn any difficult board into a high-scoring round. Keep it up!" },
+    { min: 600, max: 699, color: '#00cc00', label: '600 - 699', name: 'Expert', desc: "An expert word finder! Your vocabulary is extensive, and you consistently dominate standard rooms. You have a deep understanding of board dynamics." },
 
     // Blues (700 - 1399): The Sky & Ocean
-    { min: 700, max: 799, color: '#66ccff', label: '700 - 799', name: 'Vanguard' },
-    { min: 800, max: 899, color: '#33bbff', label: '800 - 899', name: 'Sentinel' },
-    { min: 900, max: 999, color: '#00aaff', label: '900 - 999', name: 'Strategist' },
-    { min: 1000, max: 1099, color: '#0088ff', label: '1000 - 1099', name: 'Tactician' },
-    { min: 1100, max: 1199, color: '#0066ff', label: '1100 - 1199', name: 'Virtuoso' },
-    { min: 1200, max: 1299, color: '#0044ff', label: '1200 - 1299', name: 'Master' },
-    { min: 1300, max: 1399, color: '#0000ff', label: '1300 - 1399', name: 'Grandmaster' },
+    { min: 700, max: 799, color: '#66ccff', label: '700 - 799', name: 'Vanguard', desc: "You're at the forefront of the competition! You lead the pack with quick reflexes and strategic word selections. You're ready for the highest tiers." },
+    { min: 800, max: 899, color: '#33bbff', label: '800 - 899', name: 'Sentinel', desc: "A watchful guardian of the leaderboard! Your defensive and offensive strategies are perfectly balanced. You rarely miss a high-value bonus word." },
+    { min: 900, max: 999, color: '#00aaff', label: '900 - 999', name: 'Strategist', desc: "A master of tactics! You plan your moves ahead, using Either/Or and Valued Letters formats to maximize every single point. Brilliant mind!" },
+    { min: 1000, max: 1099, color: '#0088ff', label: '1000 - 1099', name: 'Tactician', desc: "Precision is your weapon! You execute perfect paths and find obscure combinations that others overlook. A truly formidable competitor." },
+    { min: 1100, max: 1199, color: '#0066ff', label: '1100 - 1199', name: 'Virtuoso', desc: "Your play style is an art form! You glide through the grid with incredible speed and fluidity, putting on a clinic in every round." },
+    { min: 1200, max: 1299, color: '#0044ff', label: '1200 - 1299', name: 'Master', desc: "You have achieved true mastery! Your name commands respect on the server. You play with absolute confidence and standard-setting execution." },
+    { min: 1300, max: 1399, color: '#0000ff', label: '1300 - 1399', name: 'Grandmaster', desc: "One of the absolute elite! Your deep understanding of the game's mechanics is matched only by your vast vocabulary. A legendary competitor." },
 
     // --- THE HEAT (1400 - 2499) ---
     // Yellows → light-to-dark progression into oranges
-    { min: 1400, max: 1499, color: '#ffff99', label: '1400 - 1499', name: 'Elite' },      // Pale lemon yellow
-    { min: 1500, max: 1599, color: '#ffff00', label: '1500 - 1599', name: 'Champion' },   // True pure yellow
-    { min: 1600, max: 1699, color: '#ffd700', label: '1600 - 1699', name: 'Titan' },      // Rich golden yellow
-    { min: 1700, max: 1799, color: '#ffaa00', label: '1700 - 1799', name: 'Paragon' },    // Deep amber
+    { min: 1400, max: 1499, color: '#ffff99', label: '1400 - 1499', name: 'Elite', desc: "A rare tier of excellence! You've broken into the highest brackets through sheer dedication and skill. You are an inspiration to other players." },      // Pale lemon yellow
+    { min: 1500, max: 1599, color: '#ffff00', label: '1500 - 1599', name: 'Champion', desc: "A true champion of Morpheme! You thrive in the most intense rooms and tournaments, consistently rising to meet every challenge." },   // True pure yellow
+    { min: 1600, max: 1699, color: '#ffd700', label: '1600 - 1699', name: 'Titan', desc: "A colossal force on the board! Your presence dominates any room you enter, and your high scores are a testament to your outstanding ability." },      // Rich golden yellow
+    { min: 1700, max: 1799, color: '#ffaa00', label: '1700 - 1799', name: 'Paragon', desc: "The model of perfect play! You demonstrate flawless word-finding ability and strategic positioning in every single round." },    // Deep amber
 
     // Oranges
-    { min: 1800, max: 1899, color: '#ff8800', label: '1800 - 1899', name: 'Sovereign' },
-    { min: 1900, max: 1999, color: '#ff6600', label: '1900 - 1999', name: 'Exalted' },
-    { min: 2000, max: 2099, color: '#ff4400', label: '2000 - 2099', name: 'Overlord' },
-    { min: 2100, max: 2199, color: '#ff2200', label: '2100 - 2199', name: 'Conqueror' },
+    { min: 1800, max: 1899, color: '#ff8800', label: '1800 - 1899', name: 'Sovereign', desc: "You rule the grids! Your deep vocabulary and tactical dominance make you almost unbeatable. You set the standard for high-level play." },
+    { min: 1900, max: 1999, color: '#ff6600', label: '1900 - 1999', name: 'Exalted', desc: "Held in the highest regard by the community! Your play is exceptionally creative, finding words in positions that seem impossible to others." },
+    { min: 2000, max: 2099, color: '#ff4400', label: '2000 - 2099', name: 'Overlord', desc: "Unrivaled control and dominance! You dictate the pace of the game, leaving opponents in awe of your rapid word discovery and execution." },
+    { min: 2100, max: 2199, color: '#ff2200', label: '2100 - 2199', name: 'Conqueror', desc: "You have conquered all standard challenges! Your strategic mastery is absolute, and you represent the pinnacle of mortal word-finding ability." },
 
     // Reds
-    { min: 2200, max: 2299, color: '#ff0000', label: '2200 - 2299', name: 'Warlord' },
-    { min: 2300, max: 2399, color: '#e60000', label: '2300 - 2399', name: 'Juggernaut' },
-    { min: 2400, max: 2499, color: '#cc0000', label: '2400 - 2499', name: 'Apex' },
+    { min: 2200, max: 2299, color: '#ff0000', label: '2200 - 2299', name: 'Warlord', desc: "A fierce and relentless competitor! You battle through the toughest boards with unmatched intensity and drive, claiming victory after victory." },
+    { min: 2300, max: 2399, color: '#e60000', label: '2300 - 2399', name: 'Juggernaut', desc: "An unstoppable force! No board layout or complex format can slow you down. You crush high-score records with ease." },
+    { min: 2400, max: 2499, color: '#cc0000', label: '2400 - 2499', name: 'Apex', desc: "At the very top of the food chain! Your play is exceptionally sharp and deadly accurate. You stand as one of the ultimate players." },
 
     // --- THE VOID (2500 - 6000+) ---
-    { min: 2500, max: 2599, color: '#b30000', label: '2500 - 2599', name: 'Harbinger' },
-    { min: 2600, max: 2699, color: '#990000', label: '2600 - 2699', name: 'Oracle' },
-    { min: 2700, max: 2799, color: '#800000', label: '2700 - 2799', name: 'Revenant' },
-    { min: 2800, max: 2899, color: '#660000', label: '2800 - 2899', name: 'Specter' },
-    { min: 2900, max: 2999, color: '#4d0000', label: '2900 - 2999', name: 'Phantom' },
+    { min: 2500, max: 2599, color: '#b30000', label: '2500 - 2599', name: 'Harbinger', desc: "A sign of what's to come! Your play style is futuristic and incredibly advanced, hinting at a level of skill that transcends normal limits." },
+    { min: 2600, max: 2699, color: '#990000', label: '2600 - 2699', name: 'Oracle', desc: "You see paths before they even register to others! Your foresight and pattern recognition are supernatural. A true visionary of the grid." },
+    { min: 2700, max: 2799, color: '#800000', label: '2700 - 2799', name: 'Revenant', desc: "A relentless spirit that never yields! You make legendary comebacks and find spectacular high-value words under absolute pressure." },
+    { min: 2800, max: 2899, color: '#660000', label: '2800 - 2899', name: 'Specter', desc: "A hauntingly fast presence! You sweep through the board invisibly and discover complex sequences before anyone else can react." },
+    { min: 2900, max: 2999, color: '#4d0000', label: '2900 - 2999', name: 'Phantom', desc: "Elusive, fast, and incredibly precise! You maneuver through the grid like a shadow, leaving opponents wondering how you found those words." },
 
-    { min: 3000, max: 3999, color: '#330000', label: '3000 - 3999', name: 'Ascendant' },
-    { min: 4000, max: 4999, color: '#220000', label: '4000 - 4999', name: 'Transcendent' },
-    { min: 5000, max: 5999, color: '#110000', label: '5000 - 5999', name: 'Ethereal' },
-    { min: 6000, max: 6999, color: '#000000', label: '6000 - 6999', name: 'ALIEN BEING' },
-    { min: 7000, max: 99999, color: '#a020f0', label: '7000+', name: 'SINGULARITY' }
+    { min: 3000, max: 3999, color: '#330000', label: '3000 - 3999', name: 'Ascendant', desc: "You have ascended past human limitations! Your play is transcendent, demonstrating a level of speed and vocabulary that is truly awe-inspiring." },
+    { min: 4000, max: 4999, color: '#220000', label: '4000 - 4999', name: 'Transcendent', desc: "You exist in a state of pure grid enlightenment! Every move is optimal, and your high scores are legendary achievements in Morpheme history." },
+    { min: 5000, max: 5999, color: '#110000', label: '5000 - 5999', name: 'Ethereal', desc: "A legend whispered in the lobby! Your skill is so rarefied and perfect that it seems almost mythical. You represent the peak of absolute dedication." },
+    { min: 6000, max: 6999, color: '#000000', label: '6000 - 6999', name: 'ALIEN BEING', desc: "An otherworldly intelligence! Your word-finding speed and pattern execution defy all logic and human capability. Absolute perfection." },
+    { min: 7000, max: 99999, color: '#a020f0', label: '7000+', name: 'SINGULARITY', desc: "You are the board, and the board is you! You have achieved infinite complexity, collapsing all word-finding possibilities into instantaneous mastery." }
 ];
 
 // Single Instance Logic (Harden to prevent self-collision)
@@ -1495,6 +1495,7 @@ function setupGlobalProfileLogic() {
             if (segment) {
                 const tierName = segment.getAttribute('data-name') || 'Rating Tier';
                 const tierLabel = segment.getAttribute('data-label') || '';
+                const tierDesc = segment.getAttribute('data-desc') || '';
                 const bgColor = segment.style.backgroundColor || '#fff';
                 
                 const modal = document.getElementById('color-tier-modal');
@@ -1503,6 +1504,7 @@ function setupGlobalProfileLogic() {
                     document.getElementById('color-tier-title').style.color = bgColor;
                     document.getElementById('color-tier-icon').style.color = bgColor;
                     document.getElementById('color-tier-range').textContent = `Rating Range: ${tierLabel}`;
+                    document.getElementById('color-tier-desc').textContent = tierDesc;
                     document.getElementById('color-tier-swatch').style.backgroundColor = bgColor;
                     modal.classList.remove('hidden');
                 }
@@ -1804,11 +1806,13 @@ function renderGameColorBar() {
     // Optimization: Build entire HTML string first to avoid DOM thrashing
     let html = '';
     RATING_RANGES.forEach(range => {
-        const rangeText = `${range.min}-${range.max === 9999 ? '∞' : range.max}`;
+        const rangeText = `${range.min}-${range.max === 99999 ? '∞' : range.max}`;
+        const escapedDesc = (range.desc || '').replace(/"/g, '&quot;');
         html += `<div class="color-bar-segment" 
                       style="background-color: ${range.color};" 
                       data-name="${range.name.toUpperCase()}" 
                       data-label="${rangeText}"
+                      data-desc="${escapedDesc}"
                       title="${range.name.toUpperCase()} (${rangeText})">
                  </div>`;
     });
