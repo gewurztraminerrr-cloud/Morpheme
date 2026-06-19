@@ -820,8 +820,13 @@ if (lobbyPage) {
             // If we navigate in app, 'isOnLobby' changes.
             if (window.resetLobbyButtons) window.resetLobbyButtons();
             
-            if (currentLobbyConfig && !lobbyPollInterval) {
-                startLobbyPolling();
+            if (currentLobbyConfig) {
+                if (typeof updateMyRatingButton === 'function') {
+                    updateMyRatingButton(currentLobbyConfig.gameType, currentLobbyConfig.boardDimensions, currentLobbyConfig.timeLimit);
+                }
+                if (!lobbyPollInterval) {
+                    startLobbyPolling();
+                }
             }
 
             // Always start stats polling when entering lobby
@@ -869,7 +874,29 @@ function resetLobbyButtons() {
     });
     const myRatingBtn = document.getElementById('my-rating-btn');
     if (myRatingBtn) {
-        myRatingBtn.style.display = 'none';
+        const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+            myRatingBtn.style.display = 'none';
+        } else {
+            // Keep it visible on desktop/laptop
+            myRatingBtn.style.display = 'block';
+            let rating = window.lastPlayerRating || 1200;
+            if (window.currentLobbyConfig) {
+                const gameType = window.currentLobbyConfig.gameType;
+                const board = window.currentLobbyConfig.boardDimensions;
+                const time = window.currentLobbyConfig.timeLimit;
+                if (gameType !== 'fcfs' && gameType !== 'split' && gameType !== '3d') {
+                    const configKey = `${gameType}|${board}|${time}`;
+                    const ratings = window.currentUserConfigRatings || {};
+                    const ratingObj = ratings[configKey];
+                    rating = (ratingObj && ratingObj.rating !== undefined) ? ratingObj.rating : rating;
+                } else {
+                    rating = 1200;
+                }
+            }
+            myRatingBtn.textContent = `My Rating: ${rating}`;
+            myRatingBtn.dataset.rating = rating;
+        }
     }
 }
 window.resetLobbyButtons = resetLobbyButtons;
