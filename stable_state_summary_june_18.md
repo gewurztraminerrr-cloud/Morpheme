@@ -1,34 +1,40 @@
 # Morpheme Stable State Summary - June 18, 2026
 
-This summary documents the stable state of the Morpheme application as of June 18, 2026. Localhost, GitHub origin, and `morpheme.games` are fully synchronized and verified under Commit ID **`3184446`**.
+This summary documents the stable state of the Morpheme application as of June 18, 2026. Localhost, GitHub origin, and `morpheme.games` are fully synchronized and verified under Commit ID **`b200e67`**.
 
 ---
 
 ## 🚀 Key Improvements & Bug Fixes
 
-### 1. Tournament Replay Security & Active Standings Censorship
-*   **The Issue**: Players who had not yet completed their turn in the active tournament round could view the Round Standings and click "Replay" to see other players' words and boards, leaking solutions before they played.
+### 1. Custom Persistent Dictionaries & Git Overwrite Prevention
+*   **The Issue**: Adding words directly to Git-tracked files (`NWL.txt`/`CSW.txt`) on the production server caused those changes to be completely wiped out by Git hard-resets during subsequent deployments.
+*   **Persistence Fix**: Modified the `/api/mods/dictionary/submit` endpoint in [app.py](file:///Users/jeffbabiak/app.py) to write custom dictionary additions to `custom_nwl.txt` and `custom_csw.txt` instead of standard tracked dictionary files.
+*   **Git Tracking Exclusions**: Untracked `new_NWL.txt`/`new_CSW.txt` and added them alongside `custom_nwl.txt`/`custom_csw.txt` to [.gitignore](file:///Users/jeffbabiak/.gitignore), ensuring they are persistent and immune to Git resets.
+*   **WordValidator Integration**: Updated `_load_dictionaries` and `ensure_csw_loaded` in [word_validator.py](file:///Users/jeffbabiak/word_validator.py) to automatically load and merge custom dictionaries into the active word sets on startup and lazy-loading.
+*   **Added Words Restoration**: Successfully uploaded and merged **1,666 missing words** from `misplaced.txt` back into the production `added_words.txt`, bringing the total count to **9,395** words.
+
+### 2. Tournament Replay Security & Active Standings Censorship
 *   **Standings Visibility**: Modified [tournaments.js](file:///Users/jeffbabiak/static/js/tournaments.js) to hide the **Round Standings** leaderboard card entirely for active participants who have not completed their turn.
 *   **Selective Replay Censorship**: Modified [app.py](file:///Users/jeffbabiak/app.py) to censor `board_data` and `submitted_words` of other players for active rounds. 
     *   Unplayed participants and spectators/guests see censored placeholder results (`board_data: null`, `submitted_words: []`).
-    *   Players who **have finished their turn** can view other players' replays, even while the round remains active, as they can no longer replay their own turn.
+    *   Players who **have finished their turn** can view other players' replays, even while the round remains active.
 *   **Winner Route Protection**: Restricted the `/api/tournament/winner-turn/<tid>/<username>` endpoint in [tournament_logic.py](file:///Users/jeffbabiak/tournament_logic.py) to completed tournaments only (`status == 'completed'`), preventing custom queries from harvesting active round details.
 
-### 2. Unified Replay UI & Visual Board Highlight Paths
+### 3. Unified Replay UI & Visual Board Highlight Paths
 *   **Consolidation**: Consolidated the redundant "Snapshot" and "Walkthrough" buttons in the tournament standings and lobby lists into a single, clean **▶ Replay** button.
 *   **Board Highlights Restored**: Fixed board rendering and path coordinate extraction inside `watchTournamentReplay` and `watchTournamentWinnerReplay` when board data is in the dictionary format.
 *   **Timeline Interactive Paths**: Added an interactive path highlight feature. Clicking any word in the "Timeline of Discovery" review list during replay playback instantly highlights its valid path coordinates on the board grid.
 
-### 3. Tournament Mid-Round Leave Protection
+### 4. Tournament Mid-Round Leave Protection
 *   **Draft Auto-Saves**: Implemented client-side auto-saves (`/api/tournament/save-draft`) on the `/api/tournament/submit` channel after each word discovery to preserve in-progress score state.
 *   **Finalization on Re-entry/Exit**: Automatically creates a score row (`submitted_at = NULL`) when starting a turn. If a user tries to re-enter, refreshes the tab, or navigates away, the server finalizes the turn immediately (`submitted_at = current_time`) and returns a 403 error, preventing timers from resetting.
 *   **Stale Turn Auto-Finalization**: Added a 15-second grace buffer to auto-finalize stale turns during tournament status updates if browser closures or disconnects left the turn unsubmitted.
 
-### 4. Touch Drag Selections & Mobile Transposed Coordinates
+### 5. Touch Drag Selections & Mobile Transposed Coordinates
 *   **Swipe Alignment**: Isolated touchscreen and mouse drag selectors using pointer identifiers to prevent touch release failures. Ensure selections submit immediately upon pointer release.
 *   **Mobile Transposed Layout Paths**: Fixed word validation highlighting on portrait mobile layout rotations (such as 4x6, 5x7, 6x8) by transposing coordinates.
 
-### 5. Win/Loss UI Score Text Cleanup
+### 6. Win/Loss UI Score Text Cleanup
 *   **Duplicate Elimination**: Removed the duplicate text line `You: X | Opponent: Y` under the "YOU WON! ADVANCING..." and "YOU LOST" panels in [tournaments.js](file:///Users/jeffbabiak/static/js/tournaments.js), keeping the layout clean as the detailed styled scores list is already rendered below it.
 
 ---
@@ -41,7 +47,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `3184446b7a9504af6a31032df4ea8b60fa22513f`  
+**Latest Stable Commit ID**: `b200e67cd7c8fdf1287c8053a73a6a3b2b80f123`  
 **GitHub Tag**: `START_OVER_POINT_JUNE_18`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `3184446`
+**Production Server Status**: Green / PM2 Online / Live at commit `b200e67`
