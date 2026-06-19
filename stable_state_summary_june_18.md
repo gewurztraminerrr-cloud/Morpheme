@@ -35,9 +35,10 @@ This summary documents the stable state of the Morpheme application as of June 1
 *   **Finalization on Re-entry/Exit**: Automatically creates a score row (`submitted_at = NULL`) when starting a turn. If a user tries to re-enter, refreshes the tab, or navigates away, the server finalizes the turn immediately (`submitted_at = current_time`) and returns a 403 error, preventing timers from resetting.
 *   **Stale Turn Auto-Finalization**: Added a 15-second grace buffer to auto-finalize stale turns during tournament status updates if browser closures or disconnects left the turn unsubmitted.
 
-### 6. Touch Drag Selections & Mobile Transposed Coordinates
+### 6. Touch Drag Selections & Mobile Vertical Board Orientation
 *   **Swipe Alignment**: Isolated touchscreen and mouse drag selectors using pointer identifiers to prevent touch release failures. Ensure selections submit immediately upon pointer release.
-*   **Mobile Transposed Layout Paths**: Fixed word validation highlighting on portrait mobile layout rotations (such as 4x6, 5x7, 6x8) by transposing coordinates.
+*   **Vertical Mobile Boards**: Solved the double-transposition layout bug. We now transpose the underlying board grid arrays directly in a unified `safelyTransposeState` helper (applied to normal rooms, tournament matches, and private matches) and render the transposed arrays row-by-row naturally without double CSS grid/loop variable transpositions.
+*   **Intermission Filter Coordination**: Swapped row and column coordinates when mapping path filters in intermission so they align perfectly with transposed grid elements.
 
 ### 7. Win/Loss UI Score Text Cleanup
 *   **Duplicate Elimination**: Removed the duplicate text line `You: X | Opponent: Y` under the "YOU WON! ADVANCING..." and "YOU LOST" panels in [tournaments.js](file:///Users/jeffbabiak/static/js/tournaments.js), keeping the layout clean as the detailed styled scores list is already rendered below it.
@@ -52,7 +53,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `c31693eee2d1a6d10e3f6716954c897607ae8736`  
+**Latest Stable Commit ID**: `bb729ada0b3a1b2300e980a7d894db2f9846b331`  
 **GitHub Tag**: `START_OVER_POINT_JUNE_18`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `c31693e`
+**Production Server Status**: Green / PM2 Online / Live at commit `bb729ad`
