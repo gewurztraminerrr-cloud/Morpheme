@@ -1244,13 +1244,14 @@ class GameRoom:
                 use_aw = (random.random() < 0.5) if is_added_words_enabled else False
 
                 # 1. Set fallback spinner parameters
+                fallback_min = SpinnerSet._spin_min_word_length(self.board_dimensions)
                 fallback_params = {
                     'difficulty': 'Medium',
                     'dictionary': getattr(self, 'current_dictionary', 'NWL') or 'NWL',
                     'word_count_range': '50-100',
                     'board_format': 'Valued Letters' if self.time_limit >= 7200 else 'Normal',
-                    'min_word_length': 3,
-                    'bonus_word_length': 6,
+                    'min_word_length': fallback_min,
+                    'bonus_word_length': max(6, fallback_min),
                     'use_added_words': use_aw,
                     'generated_at': now,
                     'board_dimensions': self.board_dimensions,
@@ -3416,13 +3417,14 @@ class RoomManager:
 
                             # 1. Update spinner parameters to fast config
                             now = time.time()
+                            fast_min = SpinnerSet._spin_min_word_length(room.board_dimensions)
                             fast_params = {
                                 'difficulty': 'Medium',
                                 'dictionary': 'NWL',
                                 'word_count_range': '100-200',
                                 'board_format': 'Normal',
-                                'min_word_length': 3,
-                                'bonus_word_length': 6,
+                                'min_word_length': fast_min,
+                                'bonus_word_length': max(6, fast_min),
                                 'use_added_words': use_aw,
                                 'generated_at': now,
                                 'board_dimensions': room.board_dimensions,
