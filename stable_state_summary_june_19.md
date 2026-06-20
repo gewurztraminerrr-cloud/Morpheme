@@ -1,6 +1,6 @@
 # Morpheme Stable State Summary - June 19, 2026
 
-This summary documents the stable state of the Morpheme application as of June 19, 2026. Localhost, GitHub origin, and `morpheme.games` are fully synchronized and verified under Commit ID **`d40cf06`** (and tagged as **`START_OVER_POINT_JUNE_19`**).
+This summary documents the stable state of the Morpheme application as of June 19, 2026. Localhost, GitHub origin, and `morpheme.games` are fully synchronized and verified under Commit ID **`3aa26c2`** (and tagged as **`START_OVER_POINT_JUNE_19`**).
 
 ---
 
@@ -42,6 +42,9 @@ This summary documents the stable state of the Morpheme application as of June 1
 *   **10 Minutes Option**: Added "10 Minutes" option (`600` seconds) to the Solo time limit configuration, allowing players to play longer practice sessions.
 *   **Board Format Random Label**: Removed the misleading `(14% special)` text from the "Random" option inside Solo's Board Format dropdown.
 
+### 9. Store Mobile View Alignment Fix
+*   **Category Tab Sizing**: Added mobile styling rules under a new `(max-width: 600px)` media query in `static/css/lobby.css`. The store tabs now flex to fill the screen evenly, with reduced gap, padding, and font size. This ensures all buttons ("Hardware", "Themes", "Avatars", "Perks") fit perfectly on any mobile device viewport without distorting the top menu header container.
+
 ---
 
 ## 🛠 Active Features & Configuration
@@ -52,7 +55,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `d40cf06` (tagged as `START_OVER_POINT_JUNE_19`)  
+**Latest Stable Commit ID**: `3aa26c2` (tagged as `START_OVER_POINT_JUNE_19`)  
 **GitHub Tag**: `START_OVER_POINT_JUNE_19`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / Auto-Restart protection active / Live at commit `d40cf06`
+**Production Server Status**: Green / Auto-Restart protection active / Live at commit `3aa26c2`
