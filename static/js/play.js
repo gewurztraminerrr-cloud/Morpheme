@@ -5708,6 +5708,129 @@ function clearSubmissionVisuals() {
     }
 }
 
+function calculateWordScoreLocally(word, path) {
+    if (!word) return 0;
+    const preState = window.lastGameState;
+    const boardFormat = (preState && preState.current_board_format) ? preState.current_board_format : 'Normal';
+    const fmtLower = boardFormat.toLowerCase();
+    const isValuedFormat = (fmtLower.includes('valued') || fmtLower.includes('value'));
+    const length = word.length;
+    let score = 0;
+
+    // 1. Base Score
+    if (isValuedFormat) {
+        const letterValues = {
+            'A': 2, 'B': 4, 'C': 4, 'D': 3, 'E': 1, 'F': 5, 'G': 3, 'H': 5, 'I': 2, 'J': 10,
+            'K': 6, 'L': 3, 'M': 4, 'N': 2, 'O': 2, 'P': 4, 'Q': 10, 'R': 2, 'S': 2, 'T': 2,
+            'U': 4, 'V': 5, 'W': 5, 'X': 8, 'Y': 5, 'Z': 8
+        };
+        const chars = word.toUpperCase().split('');
+        let i = 0;
+        while (i < chars.length) {
+            const char = chars[i];
+            if (char === 'Q' && i + 1 < chars.length && chars[i + 1] === 'U') {
+                score += letterValues['Q'] || 10;
+                i += 2;
+            } else {
+                score += letterValues[char] || 1;
+                i += 1;
+            }
+        }
+    } else {
+        if (length <= 2) score = 0;
+        else if (length <= 4) score = 1;
+        else if (length === 5) score = 2;
+        else if (length === 6) score = 3;
+        else if (length === 7) score = 5;
+        else score = 11;
+    }
+
+    // 2. Hidden Bonus Word (+Length)
+    if (preState && preState.bonus_word && word.toUpperCase() === preState.bonus_word.toUpperCase()) {
+        score += length;
+    }
+
+    // 3. Format Bonus (+3 points for Either/Or or Bonus Letter tile)
+    const isSpecBonusFmt = (fmtLower.includes('bonus letter') || fmtLower.includes('either'));
+    if (preState && preState.board && isSpecBonusFmt && !fmtLower.includes('checkerboard')) {
+        let usedBonus = false;
+        const bonusCell = preState.bonus_cell;
+        const board = preState.board;
+        const is3D = (board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]));
+
+        if (path && Array.isArray(path)) {
+            for (const node of path) {
+                let f = -1, r = -1, c = -1;
+                if (Array.isArray(node)) {
+                    if (node.length === 3) {
+                        f = Number(node[0]);
+                        r = Number(node[1]);
+                        c = Number(node[2]);
+                    } else if (node.length === 2) {
+                        r = Number(node[0]);
+                        c = Number(node[1]);
+                    }
+                } else if (node && typeof node === 'object') {
+                    f = node.f !== undefined ? Number(node.f) : -1;
+                    r = node.r !== undefined ? Number(node.r) : -1;
+                    c = node.c !== undefined ? Number(node.c) : -1;
+                }
+
+                if (fmtLower.includes('bonus letter') && bonusCell) {
+                    let targetF = -1, targetR = -1, targetC = -1;
+                    if (Array.isArray(bonusCell)) {
+                        if (bonusCell.length === 3) {
+                            targetF = Number(bonusCell[0]);
+                            targetR = Number(bonusCell[1]);
+                            targetC = Number(bonusCell[2]);
+                        } else {
+                            targetR = Number(bonusCell[0]);
+                            targetC = Number(bonusCell[1]);
+                        }
+                    } else if (typeof bonusCell === 'object') {
+                        targetF = bonusCell.f !== undefined ? Number(bonusCell.f) : -1;
+                        targetR = bonusCell.r !== undefined ? Number(bonusCell.r) : -1;
+                        targetC = bonusCell.c !== undefined ? Number(bonusCell.c) : -1;
+                    }
+
+                    if (is3D) {
+                        if (f === targetF && r === targetR && c === targetC) {
+                            usedBonus = true;
+                            break;
+                        }
+                    } else {
+                        if (r === targetR && c === targetC) {
+                            usedBonus = true;
+                            break;
+                        }
+                    }
+                }
+
+                let cellVal = '';
+                if (is3D) {
+                    if (f >= 0 && f < board.length && r >= 0 && r < board[f].length && c >= 0 && c < board[f][r].length) {
+                        cellVal = String(board[f][r][c]);
+                    }
+                } else {
+                    if (r >= 0 && r < board.length && c >= 0 && c < board[0].length) {
+                        cellVal = String(board[r][c]);
+                    }
+                }
+
+                if (fmtLower.includes('either') && cellVal && cellVal.includes('/')) {
+                    usedBonus = true;
+                    break;
+                }
+            }
+        }
+        if (usedBonus) {
+            score += 3;
+        }
+    }
+
+    return score;
+}
+
 async function submitWord(wordParam = null, pathParam = null) {
     try {
         const input = document.getElementById('word-input');
@@ -5907,7 +6030,8 @@ async function submitWord(wordParam = null, pathParam = null) {
                     // Confirmed valid — flash the correct color immediately.
                     const isBonus = preState.bonus_word && word === preState.bonus_word.toUpperCase();
                     const showBonusMsg = isBonus && !usesEitherOrTile;
-                    showValidationFeedback(showBonusMsg ? 'BONUS WORD!' : `${word} VALID`, true, isBonus, finalPath);
+                    const localPts = calculateWordScoreLocally(word, finalPath);
+                    showValidationFeedback(showBonusMsg ? `BONUS WORD! (${localPts} PTS)` : `${word.toUpperCase()} VALID (${localPts} PTS)`, true, isBonus, finalPath);
                     optimisticColor = isBonus ? 'green' : 'blue';
                     optimisticIsDefinitive = true;
                 } else {
