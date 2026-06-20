@@ -616,7 +616,7 @@ body.theme-light-brown .player-score-val {
     /* Reduced from 20px to tighten up space */
     align-items: center;
     transition: background-color 0.5s ease;
-    min-width: 0;
+    min-width: min-content; /* Ensure it doesn't shrink below content (board) width on desktop */
     min-height: 0;
     /* Allow shrinking */
     /* max-width removed to allow Board-First internal expansion */
@@ -627,6 +627,7 @@ body.theme-light-brown .player-score-val {
     /* Center in grid column */
     overflow-y: auto;
     /* Allow vertical scrolling for huge boards */
+    overflow-x: hidden; /* Disallow horizontal scrolling on desktop */
     max-height: 100%;
     /* Constrain to grid area height */
 }
@@ -4919,6 +4920,7 @@ input[type=range]::-moz-range-track {
         border-radius: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
+        min-width: 0 !important; /* Allow shrinking to screen size on mobile */
         box-sizing: border-box !important;
         overflow-x: hidden !important; /* Prevent horizontal wiggle */
 
