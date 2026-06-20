@@ -4877,6 +4877,25 @@ def tools_find_count():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/tools/random-words', methods=['GET'])
+@login_required
+def tools_random_words():
+    try:
+        if not hasattr(word_validator, '_nwl_words_list') or not word_validator._nwl_words_list:
+            word_validator._nwl_words_list = [w for w in word_validator.nwl_words if 3 <= len(w) <= 8]
+        
+        words_list = word_validator._nwl_words_list
+        if not words_list:
+            return jsonify({'words': ['EMBER', 'MOUSSES', 'ABLATE', 'PASSER', 'ROTATION']})
+            
+        sampled = random.sample(words_list, min(5, len(words_list)))
+        return jsonify({'words': sampled})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
 # --- Friends Management Routes ---
 
 @app.route('/api/friends/add', methods=['POST'])
