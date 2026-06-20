@@ -4242,9 +4242,8 @@ function checkBoardOverflow() {
             requiredBoardWidth = (displayCols * cellSize) + displayGap;
         }
     } else {
-        // Constrain cell size on desktop/laptop screen width so that side panels have comfortable minimum space
-        // minLeft comfort = 280px, minRight comfort = 350px, gaps/paddings = 60px
-        const maxAllowedWidth = window.innerWidth - 280 - 350 - 60;
+        // Board-first: only shrink cell size if panels are already at absolute minimum
+        const maxAllowedWidth = window.innerWidth - 220 - 280 - 50;
         if (requiredBoardWidth > maxAllowedWidth) {
             const targetCellSize = Math.floor((maxAllowedWidth - boardGap - boardPadding - scrollbarWidth) / cols);
             cellSize = Math.max(20, targetCellSize);
@@ -4267,74 +4266,37 @@ function checkBoardOverflow() {
 
     // 3. Calculate Available Space
     const windowWidth = window.innerWidth;
-    // Safety Margin: Reduced to 50px to prevent artificially constraining panel widths
-    const safetyMargin = 50;
+    // Account for play-page padding (10px each side) and grid gaps (12px * 2)
+    const layoutOverhead = 44;
+    const availableForPanels = windowWidth - requiredBoardWidth - layoutOverhead;
 
-    // The key difference: We start with Window and subtract Board
-    const availableForPanels = windowWidth - requiredBoardWidth - safetyMargin;
+    // 4. Distribute remaining space dynamically — board-first, panels shrink to fit
+    // Panels split available space in a 44/56 ratio (left is narrower than right)
+    const minLeft = 220;
+    const minRight = 280;
 
-    // 4. Distribute Remaining Space Dynamically to fit the board snug
-    // Fetch adaptive default limits based on screen size (matching media queries)
-    let maxLeft = 400;
-    let maxRight = 450;
+    let newLeft, newRight;
 
-    if (windowWidth >= 1920) {
-        maxLeft = 520;
-        maxRight = 560;
-    } else if (windowWidth >= 1600) {
-        maxLeft = 480;
-        maxRight = 520;
-    } else if (windowWidth >= 1400) {
-        maxLeft = 440;
-        maxRight = 480;
-    } else if (windowWidth < 1200) {
-        maxLeft = 320;
-        maxRight = 380;
-    }
-    
-    // Set a reasonable minimum boundary so sidebars remain readable/functional
-    const minLeft = 280;
-    const minRight = 350;
+    if (availableForPanels >= (minLeft + minRight)) {
+        // Distribute proportionally: left gets ~44%, right gets ~56%
+        newLeft  = Math.max(minLeft,  Math.floor(availableForPanels * 0.44));
+        newRight = Math.max(minRight, availableForPanels - newLeft);
 
-    let newLeft = maxLeft;
-    let newRight = maxRight;
-
-    // Total space requested by default maximum panels
-    const defaultTotalPanels = maxLeft + maxRight;
-
-    if (availableForPanels >= defaultTotalPanels) {
-        // Plenty of room! Keep panels at their full gorgeous sizes
-        newLeft = maxLeft;
-        newRight = maxRight;
-    } else {
-        // The board is very large! We must shrink the side panels horizontally
-        // to make sure the board fits snugly in the middle.
-        if (availableForPanels >= (minLeft + minRight)) {
-            // We can distribute the constrained space proportionally!
-            const ratio = availableForPanels / defaultTotalPanels;
-            newLeft = Math.floor(maxLeft * ratio);
-            newRight = Math.floor(maxRight * ratio);
-            
-            // Enforce minimum limits
-            newLeft = Math.max(newLeft, minLeft);
-            newRight = Math.max(newRight, minRight);
-
-            // Recalculate to ensure their sum does not exceed availableForPanels after min enforcement
-            if (newLeft + newRight > availableForPanels) {
-                const overage = (newLeft + newRight) - availableForPanels;
-                if (newLeft - overage >= minLeft) {
-                    newLeft -= overage;
-                } else {
-                    const leftOverage = newLeft - minLeft;
-                    newLeft = minLeft;
-                    newRight = Math.max(minRight, newRight - (overage - leftOverage));
-                }
-            }
-        } else {
-            // Under extreme constraints, use absolute minimal sizes
-            newLeft = minLeft;
-            newRight = minRight;
+        // If right exceeds a sensible max, give the surplus to left instead
+        const maxRight = windowWidth >= 1920 ? 500 : windowWidth >= 1600 ? 460 : windowWidth >= 1400 ? 420 : 380;
+        const maxLeft  = windowWidth >= 1920 ? 460 : windowWidth >= 1600 ? 420 : windowWidth >= 1400 ? 380 : 340;
+        if (newRight > maxRight) {
+            const surplus = newRight - maxRight;
+            newRight = maxRight;
+            newLeft  = Math.min(maxLeft, newLeft + surplus);
         }
+        if (newLeft > maxLeft) {
+            newLeft = maxLeft;
+        }
+    } else {
+        // Extreme constraint — use absolute minimums
+        newLeft  = minLeft;
+        newRight = minRight;
     }
 
     // 5. Apply
