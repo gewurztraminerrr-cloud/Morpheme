@@ -144,7 +144,7 @@
 .words-table-box {
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 12px 8px; /* Reduced left/right padding from 15px to 8px to shift content left */
+    padding: 12px 10px; /* Reduced left/right padding to shift content left */
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -1184,7 +1184,7 @@ body.theme-light-brown .player-score-val {
     border: none;
     background: transparent;
     color: var(--muted-text);
-    font-size: 0.78rem; /* Slightly smaller font size for laptop displays */
+    font-size: 0.75rem; /* Shrunk from 0.78rem to prevent cutoffs on narrow viewports */
     font-weight: 600;
     cursor: pointer;
     border-radius: 8px;
@@ -3966,14 +3966,14 @@ input[type=range]::-moz-range-track {
 .points-math {
     white-space: nowrap;
     font-family: 'Courier New', Courier, monospace;
-    font-size: 0.95rem;
+    font-size: 0.82rem; /* Shrunk from 0.95rem/1rem to fit math breakdowns horizontally */
     font-weight: 800;
     color: #fff;
     background: rgba(0, 0, 0, 0.45);
-    padding: 3px 10px;
+    padding: 3px 8px; /* Shrunk padding to fit more content */
     border-radius: 6px;
     flex-shrink: 0; /* USER REQUEST: Never squish the math breakdown */
-    margin-left: auto;
+    margin-left: auto; /* Always right-aligned, even on second row */
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -3997,27 +3997,13 @@ input[type=range]::-moz-range-track {
 }
 
 .word-text {
-    font-size: 1.15rem;
+    font-size: 0.95rem; /* Shrunk from 1.15rem to fit long words horizontally */
     font-weight: 700;
     white-space: normal; /* No more ellipsis truncation */
     overflow: visible;
     min-width: 0;
     line-height: 1.2;
     word-break: break-all; /* Break extremely long words if needed */
-}
-
-.points-math {
-    white-space: nowrap;
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 1rem;
-    font-weight: 800;
-    color: #fff;
-    background: rgba(0, 0, 0, 0.45);
-    padding: 4px 12px;
-    border-radius: 6px;
-    flex-shrink: 0;
-    margin-left: auto; /* Always right-aligned, even on second row */
-    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .found-indicator, .list-bonus-tag {

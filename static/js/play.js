@@ -4183,7 +4183,7 @@ function checkBoardOverflow() {
 
     // Define sidebar size boundaries
     let minLeft = 280;
-    let minRight = 390; // Expanded to fit history tab and total point values comfortably in all rooms
+    let minRight = 330; // Shrunk minimum sidebar width so board is larger on laptops
 
     let savedSettingSize = null;
     let storedSettingsObj = window.userSettings;
