@@ -880,30 +880,34 @@ function resetLobbyButtons() {
     });
     const myRatingBtn = document.getElementById('my-rating-btn');
     if (myRatingBtn) {
-        // Keep it visible on all devices (mobile, tablet, desktop, laptop)
-        myRatingBtn.style.display = 'block';
-        let rating = 1200;
-        if (window.currentLobbyConfig) {
-            const gameType = window.currentLobbyConfig.gameType;
-            const board = window.currentLobbyConfig.boardDimensions;
-            const time = window.currentLobbyConfig.timeLimit;
-            const configKey = `${gameType}|${board}|${time}`;
-            const ratings = window.currentUserConfigRatings || {};
-            const ratingObj = ratings[configKey];
-            if (ratingObj && ratingObj.rating !== undefined) {
-                rating = ratingObj.rating;
-            } else {
-                if (gameType === 'fcfs' || gameType === 'split' || gameType === '3d') {
-                    rating = 1200;
-                } else {
-                    rating = window.lastPlayerRating || 1200;
-                }
-            }
+        if (!window.currentUser || window.currentUserIsGuest) {
+            myRatingBtn.style.display = 'none';
         } else {
-            rating = window.lastPlayerRating || 1200;
+            myRatingBtn.style.display = 'block';
+            if (window.currentLobbyConfig) {
+                let rating = 1200;
+                const gameType = window.currentLobbyConfig.gameType;
+                const board = window.currentLobbyConfig.boardDimensions;
+                const time = window.currentLobbyConfig.timeLimit;
+                const configKey = `${gameType}|${board}|${time}`;
+                const ratings = window.currentUserConfigRatings || {};
+                const ratingObj = ratings[configKey];
+                if (ratingObj && ratingObj.rating !== undefined) {
+                    rating = ratingObj.rating;
+                } else {
+                    if (gameType === 'fcfs' || gameType === 'split' || gameType === '3d') {
+                        rating = 1200;
+                    } else {
+                        rating = window.lastPlayerRating || 1200;
+                    }
+                }
+                myRatingBtn.textContent = `My Rating: ${rating}`;
+                myRatingBtn.dataset.rating = rating;
+            } else {
+                myRatingBtn.textContent = 'My Rating';
+                myRatingBtn.removeAttribute('data-rating');
+            }
         }
-        myRatingBtn.textContent = `My Rating: ${rating}`;
-        myRatingBtn.dataset.rating = rating;
     }
 }
 window.resetLobbyButtons = resetLobbyButtons;
