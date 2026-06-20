@@ -42,6 +42,13 @@ This summary documents the stable state of the Morpheme application as of June 1
     2. Modified the mobile `.board-panel .timer-display` layout to align items with `justify-content: flex-start !important;` instead of `center`, ensuring that the timer text remains in a fixed left-aligned position and never jumps to the center during intermission or state transitions.
     3. Programmatically hid the Rotate button (`#rotate-board-btn`) during intermission in FCFS and Split rooms, ensuring it only displays during the active rounds.
 
+### 8. Word Lists Tool Async Race Condition
+*   **The Issue**: In the Lists tool inside Tools, selecting a different list (e.g. Added Words) while another list (e.g. NWL) was loading caused overlapping asynchronous fetch requests and progressive rendering chunks. This resulted in the loading text disappearing, the previous list rendering inside the new one, and lists displaying corrupted data (e.g. Added Words reading 199,429 words).
+*   **Resolution**:
+    1. Instantiated a module-level `listsFetchAbortController` inside [tools.js](file:///Users/jeffbabiak/static/js/tools.js).
+    2. At the start of `fetchListsData()`, we increment `currentProgressiveLoadId` to immediately halt any active progressive rendering loop and call `abort()` on the previous controller to cancel the running network request.
+    3. Added `AbortError` exception handling to silently catch canceled fetches.
+
 ---
 
 ## 🛠 Active Features & Configuration
@@ -51,7 +58,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `c30bc6c` (tagged as `START_OVER_POINT_JUNE_19`)  
+**Latest Stable Commit ID**: `95210f1` (tagged as `START_OVER_POINT_JUNE_19`)  
 **GitHub Tag**: `START_OVER_POINT_JUNE_19`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `c30bc6c`
+**Production Server Status**: Green / PM2 Online / Live at commit `95210f1`
