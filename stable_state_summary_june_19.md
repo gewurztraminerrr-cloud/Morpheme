@@ -49,6 +49,13 @@ This summary documents the stable state of the Morpheme application as of June 1
     2. At the start of `fetchListsData()`, we increment `currentProgressiveLoadId` to immediately halt any active progressive rendering loop and call `abort()` on the previous controller to cancel the running network request.
     3. Added `AbortError` exception handling to silently catch canceled fetches.
 
+### 9. Desktop Board Panel Layout & Scroll Lock
+*   **The Issue**: On desktops and laptops, when a large board was loaded or when the browser window was resized narrow, the `.board-panel` container shrank below the board content width and displayed horizontal scrollbars, allowing the user to scroll the board left and right.
+*   **Resolution**:
+    1. Modified base `.board-panel` styling in [play.css](file:///Users/jeffbabiak/static/css/play.css) to use `min-width: min-content;` instead of `min-width: 0;` on desktops, preventing it from ever collapsing smaller than the board's natural size.
+    2. Added `overflow-x: hidden;` to lock horizontal scrolling completely on desktops.
+    3. Overrode this on mobile with `min-width: 0 !important;` in the media query to preserve full-bleed scrolling behavior on narrow device screens.
+
 ---
 
 ## 🛠 Active Features & Configuration
@@ -58,7 +65,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `95210f1` (tagged as `START_OVER_POINT_JUNE_19`)  
+**Latest Stable Commit ID**: `2d6871a` (tagged as `START_OVER_POINT_JUNE_19`)  
 **GitHub Tag**: `START_OVER_POINT_JUNE_19`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `95210f1`
+**Production Server Status**: Green / PM2 Online / Live at commit `2d6871a`
