@@ -1,6 +1,6 @@
 # Morpheme Stable State Summary - June 19, 2026
 
-This summary documents the stable state of the Morpheme application as of June 19, 2026. Localhost, GitHub origin, and `morpheme.games` are fully synchronized and verified under Commit ID **`17f93fa`** (and subsequently tagged as **`START_OVER_POINT_JUNE_19`**).
+This summary documents the stable state of the Morpheme application as of June 19, 2026. Localhost, GitHub origin, and `morpheme.games` are fully synchronized and verified under Commit ID **`7ca8e67`** (and subsequently tagged as **`START_OVER_POINT_JUNE_19`**).
 
 ---
 
@@ -29,6 +29,10 @@ This summary documents the stable state of the Morpheme application as of June 1
 *   **Client-Side Score Calculator**: Implemented `calculateWordScoreLocally` in [play.js](file:///Users/jeffbabiak/static/js/play.js) replicating base scores, valued letter counts, hidden bonus words, and special tile modifiers.
 *   **Instant Message**: Display of validation feedback (e.g. `[word] VALID ([points] PTS)`) is now instantaneous, avoiding the previous quick flash transition from `PASSER VALID` to `PASSER VALID (3 PTS)`.
 
+### 6. Guest Round History and Tally Synchronization
+*   **The Issue**: Guest player round results and submissions in standard rooms were previously excluded from the `round_history` database and the `word_tally.log` (only 24h rooms allowed guests). This caused a discrepancy where intermission screens correctly showed all connected players (including guests) who moused a word, but the "Find Count" tool reported fewer finds because it only queried database records.
+*   **Resolution**: Updated player snapshot filters in [game_room.py](file:///Users/jeffbabiak/game_room.py) to save and log rounds for guest players (`p.is_registered or p.is_guest`) across all room types.
+
 ---
 
 ## 🛠 Active Features & Configuration
@@ -38,7 +42,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `17f93fa` (tagged as `START_OVER_POINT_JUNE_19`)  
+**Latest Stable Commit ID**: `7ca8e67` (tagged as `START_OVER_POINT_JUNE_19`)  
 **GitHub Tag**: `START_OVER_POINT_JUNE_19`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `17f93fa`
+**Production Server Status**: Green / PM2 Online / Live at commit `7ca8e67`
