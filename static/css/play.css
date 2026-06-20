@@ -144,7 +144,7 @@
 .words-table-box {
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 15px;
+    padding: 12px 8px; /* Reduced left/right padding from 15px to 8px to shift content left */
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -1180,11 +1180,11 @@ body.theme-light-brown .player-score-val {
 
 .word-tab {
     flex: 1;
-    padding: 8px 4px;
+    padding: 6px 2px; /* Reduced from 8px 4px to make tab spacing smaller */
     border: none;
     background: transparent;
     color: var(--muted-text);
-    font-size: 0.82rem;
+    font-size: 0.78rem; /* Slightly smaller font size for laptop displays */
     font-weight: 600;
     cursor: pointer;
     border-radius: 8px;
@@ -3982,9 +3982,9 @@ input[type=range]::-moz-range-track {
     flex-wrap: wrap !important; /* USER REQUEST: Allow content to occupy a second line */
     justify-content: space-between !important;
     align-items: center !important;
-    gap: 6px 14px !important;
+    gap: 6px 8px !important; /* Reduced horizontal gap from 14px to 8px */
     cursor: pointer;
-    padding: 10px 14px !important;
+    padding: 8px 8px !important; /* Reduced padding from 10px 14px to shift content to the left */
     min-width: 0;
 }
 
