@@ -192,6 +192,9 @@ class GameRoom:
         if self.min_rating is not None: self.min_rating = int(self.min_rating)
         if self.max_rating is not None: self.max_rating = int(self.max_rating)
         
+        if self.time_limit >= 7200:
+            self.current_word_count_range = '200-300'
+        
         # Configuration-specific max players
         if self.game_type in ['accumulative', 'solo_accumulative']:
             self.max_players = 9999 # Effectively unlimited
@@ -2253,7 +2256,7 @@ class RoomManager:
                                 room.bonus_cell = json.loads(bonus_cell_json) if bonus_cell_json else None
                                 room.current_board_format = 'Valued Letters' if is_24h else (board_format or 'Normal')
                                 room.current_uniqueness = uniqueness or 0.0
-                                room.current_word_count_range = word_count_range or '100-200'
+                                room.current_word_count_range = word_count_range or ('200-300' if is_24h else '100-200')
                                 
                                 # Deserialize and restore active players
                                 if active_players_json:
@@ -3439,8 +3442,8 @@ class RoomManager:
                             fast_params = {
                                 'difficulty': 'Medium',
                                 'dictionary': 'NWL',
-                                'word_count_range': '100-200',
-                                'board_format': 'Normal',
+                                'word_count_range': '200-300' if room.time_limit >= 7200 else '100-200',
+                                'board_format': 'Valued Letters' if room.time_limit >= 7200 else 'Normal',
                                 'min_word_length': fast_min,
                                 'bonus_word_length': max(6, fast_min),
                                 'use_added_words': use_aw,
@@ -4240,7 +4243,7 @@ class RoomManager:
                     if hasattr(room, 'solved_words_with_scores'):
                         room.solved_words_with_scores = {w: room.solved_words_with_scores[w] for w in room.all_words if w in room.solved_words_with_scores}
 
-                    target_range = getattr(room, 'current_word_count_range', '100-200')
+                    target_range = getattr(room, 'current_word_count_range', '200-300' if room.time_limit >= 7200 else '100-200')
                     if target_range:
                         _, max_target = self.board_generator._parse_word_count_range(target_range)
                         
@@ -4327,7 +4330,7 @@ class RoomManager:
                             json.dumps(room.bonus_cell) if room.bonus_cell else None,
                             room.current_board_format or 'Normal',
                             room.current_uniqueness or 0.0,
-                            room.current_word_count_range or '100-200',
+                            room.current_word_count_range or ('200-300' if room.time_limit >= 7200 else '100-200'),
                             players_json
                         ))
                         conn.commit()
