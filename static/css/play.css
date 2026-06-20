@@ -144,7 +144,7 @@
 .words-table-box {
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 12px 10px; /* Reduced left/right padding to shift content left */
+    padding: 10px 6px; /* Reduced left/right padding to 6px to shift content further left */
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -1180,11 +1180,11 @@ body.theme-light-brown .player-score-val {
 
 .word-tab {
     flex: 1;
-    padding: 6px 2px; /* Reduced from 8px 4px to make tab spacing smaller */
+    padding: 4px 1px; /* Reduced padding to make tab spacing ultra-compact */
     border: none;
     background: transparent;
     color: var(--muted-text);
-    font-size: 0.75rem; /* Shrunk from 0.78rem to prevent cutoffs on narrow viewports */
+    font-size: 0.72rem; /* Shrunk font size to prevent cutoffs on narrow viewports */
     font-weight: 600;
     cursor: pointer;
     border-radius: 8px;
@@ -3966,11 +3966,11 @@ input[type=range]::-moz-range-track {
 .points-math {
     white-space: nowrap;
     font-family: 'Courier New', Courier, monospace;
-    font-size: 0.82rem; /* Shrunk from 0.95rem/1rem to fit math breakdowns horizontally */
+    font-size: 0.78rem; /* Shrunk from 0.82rem to fit math breakdowns horizontally */
     font-weight: 800;
     color: #fff;
     background: rgba(0, 0, 0, 0.45);
-    padding: 3px 8px; /* Shrunk padding to fit more content */
+    padding: 2px 6px; /* Shrunk padding to fit more content */
     border-radius: 6px;
     flex-shrink: 0; /* USER REQUEST: Never squish the math breakdown */
     margin-left: auto; /* Always right-aligned, even on second row */
@@ -3982,22 +3982,22 @@ input[type=range]::-moz-range-track {
     flex-wrap: wrap !important; /* USER REQUEST: Allow content to occupy a second line */
     justify-content: space-between !important;
     align-items: center !important;
-    gap: 6px 8px !important; /* Reduced horizontal gap from 14px to 8px */
+    gap: 4px 6px !important; /* Reduced horizontal gap to fit compactly */
     cursor: pointer;
-    padding: 8px 8px !important; /* Reduced padding from 10px 14px to shift content to the left */
+    padding: 6px 6px !important; /* Reduced padding to shift content to the left */
     min-width: 0;
 }
 
 .word-left {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px; /* Tighter gap */
     min-width: auto;
     flex: 1 1 auto;
 }
 
 .word-text {
-    font-size: 0.95rem; /* Shrunk from 1.15rem to fit long words horizontally */
+    font-size: 0.88rem; /* Shrunk from 0.95rem to fit long words horizontally */
     font-weight: 700;
     white-space: normal; /* No more ellipsis truncation */
     overflow: visible;
