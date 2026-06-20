@@ -461,25 +461,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (myRatingBtn) {
         myRatingBtn.addEventListener('click', (e) => {
             e.preventDefault();
+            if (!currentLobbyConfig) {
+                console.log('[Lobby] My Rating clicked, but no active config. Doing nothing.');
+                return;
+            }
             let userRating = 1200;
-            if (currentLobbyConfig) {
-                const gameType = currentLobbyConfig.gameType;
-                const board = currentLobbyConfig.boardDimensions;
-                const time = currentLobbyConfig.timeLimit;
-                const configKey = `${gameType}|${board}|${time}`;
-                const ratings = window.currentUserConfigRatings || {};
-                const ratingObj = ratings[configKey];
-                if (ratingObj && ratingObj.rating !== undefined) {
-                    userRating = ratingObj.rating;
-                } else {
-                    if (gameType === 'fcfs' || gameType === 'split' || gameType === '3d') {
-                        userRating = 1200;
-                    } else {
-                        userRating = window.lastPlayerRating || 1200;
-                    }
-                }
+            const gameType = currentLobbyConfig.gameType;
+            const board = currentLobbyConfig.boardDimensions;
+            const time = currentLobbyConfig.timeLimit;
+            const configKey = `${gameType}|${board}|${time}`;
+            const ratings = window.currentUserConfigRatings || {};
+            const ratingObj = ratings[configKey];
+            if (ratingObj && ratingObj.rating !== undefined) {
+                userRating = ratingObj.rating;
             } else {
-                userRating = window.lastPlayerRating || 1200;
+                if (gameType === 'fcfs' || gameType === 'split' || gameType === '3d') {
+                    userRating = 1200;
+                } else {
+                    userRating = window.lastPlayerRating || 1200;
+                }
             }
             const input = document.getElementById('rating-filter');
             if (input) {
@@ -487,14 +487,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             window.activeRatingFilterValue = userRating;
             console.log('[Lobby] My Rating clicked. Value:', userRating);
-            if (currentLobbyConfig) {
-                fetchAndRenderRooms(
-                    currentLobbyConfig.gameType,
-                    currentLobbyConfig.timeLimit,
-                    currentLobbyConfig.boardDimensions,
-                    false
-                );
-            }
+            fetchAndRenderRooms(
+                currentLobbyConfig.gameType,
+                currentLobbyConfig.timeLimit,
+                currentLobbyConfig.boardDimensions,
+                false
+            );
         });
     }
 
