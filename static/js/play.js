@@ -4181,13 +4181,9 @@ function checkBoardOverflow() {
     const maxDim = Math.max(cols, rows);
     const currentDim = `${minDim}x${maxDim}`;
 
-    // Define sidebar size boundaries with special expansion for 5x7 and 6x8 rooms
+    // Define sidebar size boundaries
     let minLeft = 280;
-    let minRight = 350;
-    const isSpecialRoom = (currentDim === '5x7' || currentDim === '6x8');
-    if (isSpecialRoom) {
-        minRight = 390; // Expanded to fit history tab and total point values comfortably
-    }
+    let minRight = 390; // Expanded to fit history tab and total point values comfortably in all rooms
 
     let savedSettingSize = null;
     let storedSettingsObj = window.userSettings;
@@ -4300,9 +4296,7 @@ function checkBoardOverflow() {
         maxRight = 380;
     }
 
-    if (isSpecialRoom) {
-        maxRight = Math.max(maxRight, 480);
-    }
+    maxRight = Math.max(maxRight, 480);
 
     let newLeft = maxLeft;
     let newRight = maxRight;
