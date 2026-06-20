@@ -74,6 +74,10 @@ This summary documents the stable state of the Morpheme application as of June 1
     2. Added a suggested words table structure and a "More random words" button in [index.html](file:///Users/jeffbabiak/templates/index.html). Set `margin-bottom: 0px;` on the combo-control search panel, `margin-top: 0px;` on the suggested-words-section, and removed the "Suggested Words to Search" `h3` header, making the search box and the suggestions table virtually touch.
     3. Updated [tools.js](file:///Users/jeffbabiak/static/js/tools.js) to lazy-load suggestions when opening the tool or clicking the fetch button, allowing users to instantly click suggested words to fill the search box and run queries automatically without having to click Search.
 
+### 13. Restrict My Rating Click Event Listener
+*   **The Issue**: If the user entered the lobby and clicked the "My Rating" button before selecting a game mode (clicking "Show Rooms"), the app injected a default/random rating value (1200) into the filter textbox and triggered an empty active rooms fetch.
+*   **Resolution**: Modified the click event listener on `#my-rating-btn` in [lobby.js](file:///Users/jeffbabiak/static/js/lobby.js) to check if `currentLobbyConfig` (or `window.currentLobbyConfig`) is active. If not, the click handler returns immediately and does nothing.
+
 ---
 
 ## 🛠 Active Features & Configuration
@@ -83,7 +87,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `92d76ac` (tagged as `START_OVER_POINT_JUNE_19`)  
+**Latest Stable Commit ID**: `f455270` (tagged as `START_OVER_POINT_JUNE_19`)  
 **GitHub Tag**: `START_OVER_POINT_JUNE_19`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `92d76ac`
+**Production Server Status**: Green / PM2 Online / Live at commit `f455270`
