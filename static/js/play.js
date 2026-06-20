@@ -4180,6 +4180,15 @@ function checkBoardOverflow() {
     const minDim = Math.min(cols, rows);
     const maxDim = Math.max(cols, rows);
     const currentDim = `${minDim}x${maxDim}`;
+
+    // Define sidebar size boundaries with special expansion for 5x7 and 6x8 rooms
+    let minLeft = 280;
+    let minRight = 350;
+    const isSpecialRoom = (currentDim === '5x7' || currentDim === '6x8');
+    if (isSpecialRoom) {
+        minRight = 390; // Expanded to fit history tab and total point values comfortably
+    }
+
     let savedSettingSize = null;
     let storedSettingsObj = window.userSettings;
 
@@ -4243,8 +4252,7 @@ function checkBoardOverflow() {
         }
     } else {
         // Constrain cell size on desktop/laptop screen width so that side panels have comfortable minimum space
-        // minLeft comfort = 280px, minRight comfort = 350px, gaps/paddings = 60px
-        const maxAllowedWidth = window.innerWidth - 280 - 350 - 60;
+        const maxAllowedWidth = window.innerWidth - minLeft - minRight - 60;
         if (requiredBoardWidth > maxAllowedWidth) {
             const targetCellSize = Math.floor((maxAllowedWidth - boardGap - boardPadding - scrollbarWidth) / cols);
             cellSize = Math.max(20, targetCellSize);
@@ -4291,10 +4299,10 @@ function checkBoardOverflow() {
         maxLeft = 320;
         maxRight = 380;
     }
-    
-    // Set a reasonable minimum boundary so sidebars remain readable/functional
-    const minLeft = 280;
-    const minRight = 350;
+
+    if (isSpecialRoom) {
+        maxRight = Math.max(maxRight, 480);
+    }
 
     let newLeft = maxLeft;
     let newRight = maxRight;
