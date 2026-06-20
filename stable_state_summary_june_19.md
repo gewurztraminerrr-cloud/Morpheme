@@ -30,8 +30,10 @@ This summary documents the stable state of the Morpheme application as of June 1
 *   **Instant Message**: Display of validation feedback (e.g. `[word] VALID ([points] PTS)`) is now instantaneous, avoiding the previous quick flash transition from `PASSER VALID` to `PASSER VALID (3 PTS)`.
 
 ### 6. Guest Round History and Tally Synchronization
-*   **The Issue**: Guest player round results and submissions in standard rooms were previously excluded from the `round_history` database and the `word_tally.log` (only 24h rooms allowed guests). This caused a discrepancy where intermission screens correctly showed all connected players (including guests) who moused a word, but the "Find Count" tool reported fewer finds because it only queried database records.
-*   **Resolution**: Updated player snapshot filters in [game_room.py](file:///Users/jeffbabiak/game_room.py) to save and log rounds for guest players (`p.is_registered or p.is_guest`) across all room types.
+*   **The Issue**: Guest player round results and submissions in standard rooms were previously excluded from the `round_history` database and the `word_tally.log` (only 24h rooms allowed guests). This caused a discrepancy where intermission screens correctly showed all connected players (including guests) who moused a word, but the "Find Count" tool reported fewer finds because it only queried database records. Furthermore, clicking on "Finders" during intermission queried `word_tally.log` (excluding tournaments/private matches), whereas the Find Count tool queried the SQLite database tables.
+*   **Resolution**:
+    1. Updated player snapshot filters in [game_room.py](file:///Users/jeffbabiak/game_room.py) to save and log rounds for guest players (`p.is_registered or p.is_guest`) across all room types.
+    2. Consolidated the tally lookup logic in [app.py](file:///Users/jeffbabiak/app.py) into a shared database helper function `_get_word_finds(word)`. Both the intermission click endpoint `/api/word_tally/<word>` and the Find Count tool `/api/tools/find-count` now query the SQLite database (`round_history`, `tournament_scores`, and `private_match_turns`), guaranteeing accurate and consistent counts across both views.
 
 ---
 
@@ -42,7 +44,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `7ca8e67` (tagged as `START_OVER_POINT_JUNE_19`)  
+**Latest Stable Commit ID**: `5fd9c7b` (tagged as `START_OVER_POINT_JUNE_19`)  
 **GitHub Tag**: `START_OVER_POINT_JUNE_19`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `7ca8e67`
+**Production Server Status**: Green / PM2 Online / Live at commit `5fd9c7b`
