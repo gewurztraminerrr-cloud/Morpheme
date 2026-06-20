@@ -89,7 +89,7 @@ class SpinnerSet:
                         res['use_added_words'] = False
 
             # Apply our ironclad safety sanitizer
-            res = SpinnerSet.sanitize_params(res, board_dimensions)
+            res = SpinnerSet.sanitize_params(res, board_dimensions, is_24h)
             return res
         except Exception as e:
             print(f"[SpinnerSet] CRITICAL WRAPPER ERROR: {e}")
@@ -118,10 +118,10 @@ class SpinnerSet:
                 else:
                     fallback['use_added_words'] = False
                 
-            return SpinnerSet.sanitize_params(fallback, board_dimensions)
+            return SpinnerSet.sanitize_params(fallback, board_dimensions, is_24h)
 
     @staticmethod
-    def sanitize_params(res, board_dimensions):
+    def sanitize_params(res, board_dimensions, is_24h=False):
         """Ironclad density/min-length sanitization to prevent impossible board generator CPU hangs."""
         if not isinstance(res, dict):
             return res
@@ -131,6 +131,19 @@ class SpinnerSet:
             min_word_length = int(res.get('min_word_length', 3))
         except:
             min_word_length = 3
+
+        if is_24h:
+            res['word_count_range'] = '200-300'
+            if '4x4' in dims and min_word_length >= 5:
+                res['min_word_length'] = 4
+            elif '4x6' in dims and min_word_length >= 6:
+                res['min_word_length'] = 5
+            elif '5x7' in dims and min_word_length >= 7:
+                res['min_word_length'] = 6
+            elif ('6x8' in dims or '3x3x3' in dims) and min_word_length >= 8:
+                res['min_word_length'] = 7
+            return res
+
         wc_range = res.get('word_count_range', '100-200')
         
         # 1. 4x4 Grid Safety Caps

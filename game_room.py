@@ -1251,7 +1251,7 @@ class GameRoom:
                 fallback_params = {
                     'difficulty': 'Medium',
                     'dictionary': getattr(self, 'current_dictionary', 'NWL') or 'NWL',
-                    'word_count_range': '50-100',
+                    'word_count_range': '200-300' if self.time_limit >= 7200 else '50-100',
                     'board_format': 'Valued Letters' if self.time_limit >= 7200 else 'Normal',
                     'min_word_length': fallback_min,
                     'bonus_word_length': max(6, fallback_min),
@@ -1260,6 +1260,7 @@ class GameRoom:
                     'board_dimensions': self.board_dimensions,
                     'time_limit': self.time_limit
                 }
+                fallback_params = SpinnerSet.sanitize_params(fallback_params, self.board_dimensions, self.time_limit >= 7200)
                 
                 self.spinner_params = dict(fallback_params)
                 self.next_spinner_params = dict(fallback_params)
@@ -2998,7 +2999,7 @@ class RoomManager:
                 room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split)
                 room.spinner_params_generated = True
             from spinner_set import SpinnerSet
-            room.spinner_params = SpinnerSet.sanitize_params(room.spinner_params, room.board_dimensions)
+            room.spinner_params = SpinnerSet.sanitize_params(room.spinner_params, room.board_dimensions, is_24h)
             
             # GET BONUS WORD (Use override if available, else roll new)
             if bonus_word_override:
@@ -3451,6 +3452,7 @@ class RoomManager:
                                 'board_dimensions': room.board_dimensions,
                                 'time_limit': room.time_limit
                             }
+                            fast_params = SpinnerSet.sanitize_params(fast_params, room.board_dimensions, room.time_limit >= 7200)
                             room.spinner_params = dict(fast_params)
                             room.next_spinner_params = dict(fast_params)
                             room.next_round_spinner_params = dict(fast_params)
@@ -3515,7 +3517,7 @@ class RoomManager:
                 room.next_spinner_params = dict(getattr(room, 'spinner_params', {}))
                 params = room.next_spinner_params
             from spinner_set import SpinnerSet
-            params = SpinnerSet.sanitize_params(params, room.board_dimensions)
+            params = SpinnerSet.sanitize_params(params, room.board_dimensions, room.time_limit >= 7200)
             room.next_spinner_params = params
             launched_generated_at = params.get('generated_at') if params else None
             
