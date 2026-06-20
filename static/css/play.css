@@ -115,7 +115,7 @@
 .play-grid {
     display: grid;
     /* User Request: Make side panels larger horizontally while preserving board space */
-    grid-template-columns: var(--left-panel-w, 400px) 1fr var(--right-panel-w, 380px);
+    grid-template-columns: var(--left-panel-w, 400px) 1fr var(--right-panel-w, 420px);
     gap: 12px; /* Slightly tighter gap to gain a few pixels */
     flex: 1;
     min-height: 0;
@@ -1338,6 +1338,7 @@ body.theme-light-brown .player-score-val {
     padding: 8px 12px;
     border-radius: 6px;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .word-item.player-word {
@@ -2684,6 +2685,7 @@ body.theme-light-brown .word-item.missed {
     background: rgba(var(--text-primary-rgb), 0.08);
     color: var(--text-primary);
     margin-bottom: 2px;
+    white-space: nowrap;
 }
 
 .notepad-item:nth-child(odd) {
@@ -4026,7 +4028,7 @@ input[type=range]::-moz-range-track {
     }
     .play-grid {
         --left-panel-w: 320px;
-        --right-panel-w: 300px;
+        --right-panel-w: 350px;
     }
 }
 
@@ -4296,7 +4298,7 @@ input[type=range]::-moz-range-track {
     }
     .play-grid {
         --left-panel-w: 440px;
-        --right-panel-w: 420px;
+        --right-panel-w: 450px;
         gap: 16px !important;
     }
     .player-item {
@@ -4319,7 +4321,7 @@ input[type=range]::-moz-range-track {
     }
     .play-grid {
         --left-panel-w: 480px;
-        --right-panel-w: 460px;
+        --right-panel-w: 490px;
         gap: 20px !important;
     }
     .player-item {
@@ -4342,7 +4344,7 @@ input[type=range]::-moz-range-track {
     }
     .play-grid {
         --left-panel-w: 520px; /* Tons of space for users and scores */
-        --right-panel-w: 500px; /* Massive space for words list and tabs */
+        --right-panel-w: 530px; /* Massive space for words list and tabs */
         gap: 24px !important;
     }
     .player-item {

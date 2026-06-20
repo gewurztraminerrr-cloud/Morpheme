@@ -1865,7 +1865,35 @@ async function updateGameState(incomingState = null) {
                     listEl.innerHTML = sortedWords.map(w => {
                         const word = typeof w === 'string' ? w : w.word;
                         const wordUpper = word.toUpperCase();
-                        const points = typeof w === 'string' ? (state.all_word_scores[wordUpper] || 0) : (w.points || 0);
+                        const pointsObj = (typeof w === 'object' && w !== null && w.score_details)
+                            ? w.score_details
+                            : (state.all_word_scores && state.all_word_scores[wordUpper]);
+                        
+                        let ptsDisplay = typeof w === 'string' ? (state.all_word_scores[wordUpper] || 0) : (w.points || 0);
+                        const ptsNum = (typeof pointsObj === 'object' && pointsObj !== null && pointsObj.total !== undefined) ? pointsObj.total : ptsDisplay;
+
+                        if (typeof pointsObj === 'object' && pointsObj !== null) {
+                            const hasBonusLetter = (pointsObj.bonus_letter_points || 0) > 0;
+                            const hasBonusWord = (pointsObj.bonus_word_points || 0) > 0;
+                            const hasEO = (pointsObj.either_or_points || 0) > 0;
+                            
+                            if (hasBonusLetter || hasBonusWord || hasEO) {
+                                let parts = [];
+                                parts.push(pointsObj.base !== undefined ? pointsObj.base : ptsNum);
+                                if (hasBonusWord) parts.push(pointsObj.bonus_word_points);
+                                if (hasBonusLetter) parts.push(pointsObj.bonus_letter_points);
+                                if (hasEO) parts.push(pointsObj.either_or_points);
+                                
+                                if (parts.length > 1) {
+                                    ptsDisplay = `${parts.join(' + ')} = ${ptsNum}`;
+                                } else {
+                                    ptsDisplay = ptsNum;
+                                }
+                            } else {
+                                ptsDisplay = ptsNum;
+                            }
+                        }
+
                         const isBonus = state.bonus_word && wordUpper === state.bonus_word.toUpperCase();
                         const isCSWOnly = state.csw_only_words && state.csw_only_words.some(csw => csw.toUpperCase() === wordUpper);
 
@@ -1880,7 +1908,7 @@ async function updateGameState(incomingState = null) {
                         } else if (isCSWOnly) {
                             className += ' csw-only';
                         }
-                        if (points < 0) className += ' penalty-word';
+                        if (ptsNum < 0) className += ' penalty-word';
                         if (highlightedFoundWord === wordUpper) className += ' finder-active';
 
                         // All words in this list ARE found by user
@@ -1888,7 +1916,7 @@ async function updateGameState(incomingState = null) {
 
                         return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; cursor:pointer;">
                             <span>${indicator}${word}</span>
-                            <span style="opacity:0.8">${points}</span>
+                            <span style="opacity:0.8">${ptsDisplay}</span>
                         </div>`;
                     }).join('');
 
