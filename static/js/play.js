@@ -4242,8 +4242,9 @@ function checkBoardOverflow() {
             requiredBoardWidth = (displayCols * cellSize) + displayGap;
         }
     } else {
-        // Constrain cell size on small desktop screens so the board ALWAYS fits snugly without horizontal overflow
-        const maxAllowedWidth = window.innerWidth - 20; // 10px margin on each side
+        // Constrain cell size on desktop/laptop screen width so that side panels have comfortable minimum space
+        // minLeft comfort = 280px, minRight comfort = 350px, gaps/paddings = 60px
+        const maxAllowedWidth = window.innerWidth - 280 - 350 - 60;
         if (requiredBoardWidth > maxAllowedWidth) {
             const targetCellSize = Math.floor((maxAllowedWidth - boardGap - boardPadding - scrollbarWidth) / cols);
             cellSize = Math.max(20, targetCellSize);
@@ -4274,26 +4275,26 @@ function checkBoardOverflow() {
 
     // 4. Distribute Remaining Space Dynamically to fit the board snug
     // Fetch adaptive default limits based on screen size (matching media queries)
-    let maxLeft = isSixByEight ? 350 : 340;
-    let maxRight = isSixByEight ? 330 : 320;
+    let maxLeft = 400;
+    let maxRight = 450;
 
     if (windowWidth >= 1920) {
         maxLeft = 520;
-        maxRight = 500;
+        maxRight = 560;
     } else if (windowWidth >= 1600) {
         maxLeft = 480;
-        maxRight = 460;
+        maxRight = 520;
     } else if (windowWidth >= 1400) {
         maxLeft = 440;
-        maxRight = 420;
+        maxRight = 480;
     } else if (windowWidth < 1200) {
         maxLeft = 320;
-        maxRight = 300;
+        maxRight = 380;
     }
     
     // Set a reasonable minimum boundary so sidebars remain readable/functional
-    const minLeft = 200;
-    const minRight = 200;
+    const minLeft = 280;
+    const minRight = 350;
 
     let newLeft = maxLeft;
     let newRight = maxRight;
