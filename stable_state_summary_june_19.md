@@ -1,6 +1,6 @@
 # Morpheme Stable State Summary - June 19, 2026
 
-This summary documents the stable state of the Morpheme application as of June 19, 2026. Localhost, GitHub origin, and `morpheme.games` are fully synchronized and verified under Commit ID **`76f86c4`** (and tagged as **`START_OVER_POINT_JUNE_19`**).
+This summary documents the stable state of the Morpheme application as of June 19, 2026. Localhost, GitHub origin, and `morpheme.games` are fully synchronized and verified under Commit ID **`f1f1bfa`** (and tagged as **`START_OVER_POINT_JUNE_19`**).
 
 ---
 
@@ -43,7 +43,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 *   **Board Format Random Label**: Removed the misleading `(14% special)` text from the "Random" option inside Solo's Board Format dropdown.
 
 ### 9. Store Mobile View Alignment Fix
-*   **Category Tab Sizing**: Added mobile styling rules under a `(max-width: 900px)` media query in `static/css/lobby.css` (expanded from 600px to cover tablet and simulated mobile viewport layouts). The store tabs now flex to fill the screen evenly, with reduced gap, padding, and font size. This ensures all buttons ("Hardware", "Themes", "Avatars", "Perks") fit perfectly on any mobile device viewport without distorting the top menu header container.
+*   **Category Tab Sizing**: Added mobile styling rules under a `(max-width: 900px)` media query in `static/css/lobby.css` (expanded from 600px to cover tablet and simulated mobile layouts). The store tabs now flex to fill the screen evenly, with optimized gap (`4px`), padding (`6px 2px`), and font size (`0.72rem`) along with reduced `#page-store` padding (`10px`). This ensures all buttons ("Hardware", "Themes", "Avatars", "Perks") fit perfectly on any mobile device viewport together without distorting the top menu header container.
 
 ---
 
@@ -55,7 +55,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `76f86c4` (tagged as `START_OVER_POINT_JUNE_19`)  
+**Latest Stable Commit ID**: `f1f1bfa` (tagged as `START_OVER_POINT_JUNE_19`)  
 **GitHub Tag**: `START_OVER_POINT_JUNE_19`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / Auto-Restart protection active / Live at commit `76f86c4`
+**Production Server Status**: Green / Auto-Restart protection active / Live at commit `f1f1bfa`
