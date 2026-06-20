@@ -1183,20 +1183,22 @@ body.theme-light-brown .field-hint {
 }
 
 @media (max-width: 900px) {
+    #page-store {
+        padding: 10px !important;
+    }
     .store-tabs {
         width: 100% !important;
-        max-width: 400px !important;
-        gap: 6px !important;
-        padding: 5px !important;
+        max-width: 350px !important;
+        gap: 4px !important;
+        padding: 4px !important;
         box-sizing: border-box !important;
         border-radius: 30px !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
+        margin: 20px auto !important;
     }
     .store-tab {
         flex: 1 !important;
-        padding: 8px 4px !important;
-        font-size: 0.78rem !important;
+        padding: 6px 2px !important;
+        font-size: 0.72rem !important;
         border-radius: 20px !important;
         text-align: center !important;
         white-space: nowrap !important;
