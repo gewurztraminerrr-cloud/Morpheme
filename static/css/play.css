@@ -1173,25 +1173,25 @@ body.theme-light-brown .player-score-val {
     display: flex;
     background: var(--tab-container-bg);
     border-radius: 12px;
-    padding: 4px;
+    padding: 2px;
     margin-bottom: 15px;
     border: 1px solid var(--input-border);
 }
 
 .word-tab {
     flex: 1;
-    padding: 4px 1px; /* Reduced padding to make tab spacing ultra-compact */
+    padding: 4px 2px; /* Ultra-compact padding so all tabs fit in narrow panel */
     border: none;
     background: transparent;
     color: var(--muted-text);
-    font-size: 0.72rem; /* Shrunk font size to prevent cutoffs on narrow viewports */
+    font-size: 0.7rem; /* Compact font size to prevent cutoffs on narrow viewports */
     font-weight: 600;
     cursor: pointer;
     border-radius: 8px;
     transition: all 0.2s ease;
     white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    overflow: visible;
+    min-width: 0;
 }
 
 .word-tab.active {
