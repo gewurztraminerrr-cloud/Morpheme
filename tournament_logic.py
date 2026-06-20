@@ -130,10 +130,41 @@ class TournamentManager:
         # Use tournament parameters
         # User Request: Bonus words should appear in ALL rooms, including tournaments
         target_format = params.get('board_format', 'Normal')
-        bonus_len = params.get('bonus_word_length', 6)
         dict_name = params.get('dictionary', 'NWL')
         
-        bonus_word = "" # User Request: No manual embedding. BoardGen will pick a natural one.
+        # Get a bonus word of specified length from parameters
+        try:
+            bonus_len = int(params.get('bonus_word_length', 8))
+        except:
+            bonus_len = 8
+            
+        d_name_upper = str(dict_name).upper()
+        if d_name_upper == 'CSW':
+            word_validator.ensure_csw_loaded()
+            words_pool = word_validator.csw_by_len.get(bonus_len, [])
+            if not words_pool: words_pool = [w for w in getattr(word_validator, 'csw_words', []) if len(w) == bonus_len]
+        else:
+            words_pool = word_validator.nwl_by_len.get(bonus_len, [])
+            if not words_pool: words_pool = [w for w in getattr(word_validator, 'nwl_words', []) if len(w) == bonus_len]
+            
+        # Filter out words containing 'ING' if the difficulty is Medium/Hard
+        difficulty = params.get('difficulty', 'Medium')
+        if difficulty in ['Medium', 'Hard']:
+            valid_words = [w for w in words_pool if 'ING' not in w.upper()]
+            if not valid_words:
+                valid_words = words_pool
+        else:
+            valid_words = words_pool
+            
+        if valid_words:
+            is_checkerboard = 'checkerboard' in str(target_format).lower()
+            if is_checkerboard:
+                alt_words = [w for w in valid_words if bg._is_alternating_word(w)]
+                if alt_words:
+                    valid_words = alt_words
+            bonus_word = random.choice(valid_words).upper()
+        else:
+            bonus_word = 'A' * bonus_len
 
         # Use tournament parameters
         target_range = params.get('word_count_range')
