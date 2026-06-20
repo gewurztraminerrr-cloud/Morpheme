@@ -2957,6 +2957,8 @@ def create_room():
     # Only if this is a BRAND NEW room (no board yet)
     if not room.board:
         print(f"[app.py] Kickstarting first round for NEW room {room_id}")
+        room.starting_round = True
+        room._round_start_init_time = time.time()
         import threading
         thread = threading.Thread(target=room_manager.start_round, args=(room_id,), daemon=True)
         thread.start()
@@ -3316,6 +3318,8 @@ def get_room_state(room_id):
                             # Kickstart 24h room round if it has no board (e.g. first join of the day / server restart)
                             if is_24h and not room.board:
                                 print(f"[app.py] Kickstarting first round for reconstructed 24h room {room_id}")
+                                room.starting_round = True
+                                room._round_start_init_time = time.time()
                                 import threading
                                 thread = threading.Thread(target=room_manager.start_round, args=(room_id,), daemon=True)
                                 thread.start()

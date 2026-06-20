@@ -1234,9 +1234,12 @@ class GameRoom:
         intermission_limit = 5 if self.time_limit >= 7200 else 60
         is_at_or_past_zero = (self.state == 'intermission' and (now - self.intermission_start_time >= intermission_limit))
         
-        if is_at_or_past_zero:
+        # Do not consider stuck if currently starting a round or loading search
+        if is_at_or_past_zero and not getattr(self, 'starting_round', False) and not getattr(self, 'board_search_loading', False):
             if not getattr(self, 'intermission_stuck_start_time', 0):
                 self.intermission_stuck_start_time = now
+        else:
+            self.intermission_stuck_start_time = 0
         
         if getattr(self, 'intermission_stuck_start_time', 0) > 0:
             if now - self.intermission_stuck_start_time > 10.0:
@@ -1294,9 +1297,10 @@ class GameRoom:
 
         if getattr(self, 'starting_round', False):
             start_init = getattr(self, '_round_start_init_time', 0)
-            if start_init > 0 and (now - start_init > 12.0):
+            timeout = 180.0 if self.time_limit >= 7200 else 12.0
+            if start_init > 0 and (now - start_init > timeout):
                 self.starting_round = False
-                print(f"[RoomManager] STALE starting_round detected for {self.room_id} (>12s). Resetting.")
+                print(f"[RoomManager] STALE starting_round detected for {self.room_id} (>{timeout}s). Resetting.")
             else:
                 return None
             
@@ -2517,7 +2521,7 @@ class RoomManager:
                     else:
                         # Default behavior: Intermission
                         room.state = 'intermission'
-                        room.intermission_start_time = time.time() - 45 # 15s TR
+                        room.intermission_start_time = time.time() if is_24h else (time.time() - 45)
                         if room_id.startswith('pub_') and not is_24h:
                              threading.Thread(target=self.start_board_search, args=(room_id,), daemon=True).start()
 
@@ -3953,8 +3957,9 @@ class RoomManager:
             if getattr(room, 'starting_round', False):
                 # Watchdog reset: If stalled for > 12s (fast recovery)
                 curr_init = getattr(room, '_round_start_init_time', 0)
-                if curr_init > 0 and (time.time() - curr_init > 12.0):
-                     print(f"[RoomManager] Stale start detected (>12s) for {room_id}, resetting guard.")
+                timeout = 180.0 if room.time_limit >= 7200 else 12.0
+                if curr_init > 0 and (time.time() - curr_init > timeout):
+                     print(f"[RoomManager] Stale start detected (>{timeout}s) for {room_id}, resetting guard.")
                      room.starting_round = False
                 else:
                      print(f"[RoomManager] Already starting a round for {room_id}. Skipping duplicate start.")
