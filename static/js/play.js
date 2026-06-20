@@ -5959,16 +5959,25 @@ async function submitWord(wordParam = null, pathParam = null) {
 
         if (optimisticColor !== null && optimisticColor === serverColor) {
             // Server confirmed our local check — no second tile flash.
-            // Only update the status text if our optimistic message was a placeholder (not definitive).
-            if (!optimisticIsDefinitive) {
-                const statusEl = document.getElementById('word-validation-status');
-                if (statusEl) {
-                    statusEl.textContent = data.message || (data.success ? `${word} VALID` : `${word} INVALID`);
+            const statusEl = document.getElementById('word-validation-status');
+            if (statusEl) {
+                if (data.success) {
+                    statusEl.textContent = `${(data.word || word).toUpperCase()} VALID (${data.points} PTS)`;
+                } else {
+                    if (!optimisticIsDefinitive) {
+                        statusEl.textContent = data.message || `${word.toUpperCase()} INVALID`;
+                    }
                 }
             }
         } else {
             // Server result differs from local check — show correction flash.
-            showValidationFeedback(data.message || (data.success ? `${word} VALID` : `${word} INVALID`), data.success, isBonus, finalPath);
+            let msg;
+            if (data.success) {
+                msg = `${(data.word || word).toUpperCase()} VALID (${data.points} PTS)`;
+            } else {
+                msg = data.message || `${word.toUpperCase()} INVALID`;
+            }
+            showValidationFeedback(msg, data.success, isBonus, finalPath);
         }
 
 
@@ -7416,7 +7425,7 @@ async function handleTournamentWord(word, path = null) {
 
     // Show success feedback
     const showBonusMsg = isBonus && !usesEitherOrTile;
-    showValidationFeedback(showBonusMsg ? 'BONUS WORD!' : `${word.toUpperCase()} VALID`, true, isBonus, path);
+    showValidationFeedback(showBonusMsg ? `BONUS WORD! (${pts} PTS)` : `${word.toUpperCase()} VALID (${pts} PTS)`, true, isBonus, path);
     recordGuessResult(true, true);
 
     // Update Score UI
@@ -7842,15 +7851,10 @@ async function handlePrivateMatchWord(word, path = null) {
         }
 
         // Hidden Bonus Word (+Length)
+        let isBonus = false;
         if (activeMatch && activeMatch.bonus_word && activeMatch.bonus_word.toUpperCase() === word) {
             pts += word.length;
-            if (usesEitherOrTile) {
-                showValidationFeedback(`${word.toUpperCase()} VALID`, true, true, resolvedPath);
-            } else {
-                showValidationFeedback('BONUS WORD FOUND!', true, true, resolvedPath);
-            }
-        } else {
-            showValidationFeedback(`${word.toUpperCase()} VALID`, true, false, resolvedPath);
+            isBonus = true;
         }
 
         // Format Bonus (+3 points for Either/Or or Bonus Letter tile)
@@ -7883,6 +7887,16 @@ async function handlePrivateMatchWord(word, path = null) {
                     console.log('[Private Match] Awarded +3 Bonus for Special Tile');
                 }
             }
+        }
+
+        if (isBonus) {
+            if (usesEitherOrTile) {
+                showValidationFeedback(`${word.toUpperCase()} VALID (${pts} PTS)`, true, true, resolvedPath);
+            } else {
+                showValidationFeedback(`BONUS WORD FOUND! (${pts} PTS)`, true, true, resolvedPath);
+            }
+        } else {
+            showValidationFeedback(`${word.toUpperCase()} VALID (${pts} PTS)`, true, false, resolvedPath);
         }
     } else {
         // Invalid Word Check for Penalty
