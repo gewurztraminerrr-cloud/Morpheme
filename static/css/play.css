@@ -616,7 +616,7 @@ body.theme-light-brown .player-score-val {
     /* Reduced from 20px to tighten up space */
     align-items: center;
     transition: background-color 0.5s ease;
-    min-width: min-content; /* Ensure it doesn't shrink below content (board) width on desktop */
+    min-width: 0; /* Allow grid column to control width; checkBoardOverflow handles cell sizing */
     min-height: 0;
     /* Allow shrinking */
     /* max-width removed to allow Board-First internal expansion */
