@@ -35,6 +35,12 @@ This summary documents the stable state of the Morpheme application as of June 1
     1. Updated player snapshot filters in [game_room.py](file:///Users/jeffbabiak/game_room.py) to save and log rounds for guest players (`p.is_registered or p.is_guest`) across all room types.
     2. Consolidated the tally lookup logic in [app.py](file:///Users/jeffbabiak/app.py) into a shared database helper function `_get_word_finds(word)`. Both the intermission click endpoint `/api/word_tally/<word>` and the Find Count tool `/api/tools/find-count` now query the SQLite database (`round_history`, `tournament_scores`, and `private_match_turns`), guaranteeing accurate and consistent counts across both views.
 
+### 7. Mobile Intermission Toggle Button & Timer Alignment
+*   **The Issue**: During FCFS/split intermissions on mobile devices, the "Show Board" / "Show Notepads" toggle button sat inside the words list panel instead of the timer display header. Furthermore, the timer text jumped to the center of the panel when entering intermission because the Rotate button became hidden.
+*   **Resolution**:
+    1. Repositioned the toggle button (`#toggle-board-btn`) to the right side of the timer display panel `.timer-display` on mobile devices, matching the position of the Rotate button during the round and styling it with the `rotate-btn` appearance.
+    2. Modified the mobile `.board-panel .timer-display` layout to align items with `justify-content: flex-start !important;` instead of `center`, ensuring that the timer text remains in a fixed left-aligned position and never jumps to the center during intermission or state transitions.
+
 ---
 
 ## 🛠 Active Features & Configuration
@@ -44,7 +50,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `5fd9c7b` (tagged as `START_OVER_POINT_JUNE_19`)  
+**Latest Stable Commit ID**: `74e99da` (tagged as `START_OVER_POINT_JUNE_19`)  
 **GitHub Tag**: `START_OVER_POINT_JUNE_19`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `5fd9c7b`
+**Production Server Status**: Green / PM2 Online / Live at commit `74e99da`
