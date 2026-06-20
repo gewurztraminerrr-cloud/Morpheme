@@ -1477,22 +1477,113 @@ def get_dictionary_stats():
         'long_dist': get_dist(long_words)
     })
 
+def _get_word_finds(word):
+    word = word.strip().upper()
+    if not word:
+        return []
+        
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
+    finds = []
+    try:
+        # 1. Query round_history
+        cursor = conn.execute("""
+            SELECT rh.timestamp, u.username, u.country_flag, rh.words_json
+            FROM round_history rh
+            JOIN users u ON rh.user_id = u.id
+            WHERE rh.words_json LIKE ?
+        """, (f'%"{word}"%',))
+        
+        for row in cursor.fetchall():
+            try:
+                words = json.loads(row['words_json'])
+                for w_obj in words:
+                    if w_obj.get('word', '').upper() == word:
+                        ts_val = w_obj.get('timestamp')
+                        if ts_val and isinstance(ts_val, (int, float)):
+                            dt = datetime.datetime.fromtimestamp(ts_val, tz=datetime.timezone.utc)
+                            iso_ts = dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+                        else:
+                            iso_ts = format_chicago_to_utc(row['timestamp'])
+                        
+                        finds.append({
+                            'username': row['username'],
+                            'country_flag': row['country_flag'],
+                            'timestamp': iso_ts
+                        })
+            except Exception as ex:
+                print(f"[FindCount] Error parsing round_history row: {ex}")
+
+        # 2. Query tournament_scores
+        cursor = conn.execute("""
+            SELECT ts.submitted_at, u.username, u.country_flag, ts.submitted_words
+            FROM tournament_scores ts
+            JOIN users u ON ts.user_id = u.id
+            WHERE ts.submitted_words LIKE ?
+        """, (f'%"{word}"%',))
+        
+        for row in cursor.fetchall():
+            try:
+                words = json.loads(row['submitted_words'])
+                for w_obj in words:
+                    if w_obj.get('word', '').upper() == word:
+                        ts_val = w_obj.get('timestamp') or row['submitted_at']
+                        if ts_val and isinstance(ts_val, (int, float)):
+                            dt = datetime.datetime.fromtimestamp(ts_val, tz=datetime.timezone.utc)
+                            iso_ts = dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+                        else:
+                            iso_ts = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+                        
+                        finds.append({
+                            'username': row['username'],
+                            'country_flag': row['country_flag'],
+                            'timestamp': iso_ts
+                        })
+            except Exception as ex:
+                print(f"[FindCount] Error parsing tournament_scores row: {ex}")
+
+        # 3. Query private_match_turns
+        cursor = conn.execute("""
+            SELECT pmt.submitted_at, u.username, u.country_flag, pmt.submitted_words
+            FROM private_match_turns pmt
+            JOIN users u ON pmt.user_id = u.id
+            WHERE pmt.submitted_words LIKE ?
+        """, (f'%"{word}"%',))
+        
+        for row in cursor.fetchall():
+            try:
+                words = json.loads(row['submitted_words'])
+                for w_obj in words:
+                    if w_obj.get('word', '').upper() == word:
+                        ts_val = w_obj.get('timestamp') or row['submitted_at']
+                        if ts_val and isinstance(ts_val, (int, float)):
+                            dt = datetime.datetime.fromtimestamp(ts_val, tz=datetime.timezone.utc)
+                            iso_ts = dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+                        else:
+                            iso_ts = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+                        
+                        finds.append({
+                            'username': row['username'],
+                            'country_flag': row['country_flag'],
+                            'timestamp': iso_ts
+                        })
+            except Exception as ex:
+                print(f"[FindCount] Error parsing private_match_turns row: {ex}")
+
+    except Exception as e:
+        print(f"[get_word_finds] DB Error: {e}")
+    finally:
+        conn.close()
+
+    # Sort finds descending by timestamp string
+    finds.sort(key=lambda x: x['timestamp'], reverse=True)
+    return finds
+
 @app.route('/api/word_tally/<word>', methods=['GET'])
 def get_word_tally_api(word):
     word = word.upper()
-    total = 0
-    try:
-        with open('word_tally.log', 'r') as f:
-            for line in f:
-                try:
-                    data = json.loads(line)
-                    tally = data.get('tally', {})
-                    total += tally.get(word, 0)
-                except json.JSONDecodeError:
-                    continue
-    except FileNotFoundError:
-        pass
-    return jsonify({'word': word, 'count': total})
+    finds = _get_word_finds(word)
+    return jsonify({'word': word, 'count': len(finds)})
 
 
 @app.route('/api/donations/recent', methods=['GET'])
@@ -4765,100 +4856,8 @@ def tools_find_count():
     if not word:
         return jsonify({'error': 'Word required'}), 400
 
-    conn = sqlite3.connect(DB_PATH, timeout=30)
-    conn.row_factory = sqlite3.Row
     try:
-        finds = []
-        
-        # 1. Query round_history
-        cursor = conn.execute("""
-            SELECT rh.timestamp, u.username, u.country_flag, rh.words_json
-            FROM round_history rh
-            JOIN users u ON rh.user_id = u.id
-            WHERE rh.words_json LIKE ?
-        """, (f'%"{word}"%',))
-        
-        for row in cursor.fetchall():
-            try:
-                words = json.loads(row['words_json'])
-                for w_obj in words:
-                    if w_obj.get('word', '').upper() == word:
-                        ts_val = w_obj.get('timestamp')
-                        if ts_val and isinstance(ts_val, (int, float)):
-                            dt = datetime.datetime.fromtimestamp(ts_val, tz=datetime.timezone.utc)
-                            iso_ts = dt.strftime('%Y-%m-%dT%H:%M:%SZ')
-                        else:
-                            iso_ts = format_chicago_to_utc(row['timestamp'])
-                        
-                        finds.append({
-                            'username': row['username'],
-                            'country_flag': row['country_flag'],
-                            'timestamp': iso_ts
-                        })
-            except Exception as ex:
-                print(f"[FindCount] Error parsing round_history row: {ex}")
-
-        # 2. Query tournament_scores
-        cursor = conn.execute("""
-            SELECT ts.submitted_at, u.username, u.country_flag, ts.submitted_words
-            FROM tournament_scores ts
-            JOIN users u ON ts.user_id = u.id
-            WHERE ts.submitted_words LIKE ?
-        """, (f'%"{word}"%',))
-        
-        for row in cursor.fetchall():
-            try:
-                words = json.loads(row['submitted_words'])
-                for w_obj in words:
-                    if w_obj.get('word', '').upper() == word:
-                        ts_val = w_obj.get('timestamp') or row['submitted_at']
-                        if ts_val and isinstance(ts_val, (int, float)):
-                            dt = datetime.datetime.fromtimestamp(ts_val, tz=datetime.timezone.utc)
-                            iso_ts = dt.strftime('%Y-%m-%dT%H:%M:%SZ')
-                        else:
-                            iso_ts = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-                        
-                        finds.append({
-                            'username': row['username'],
-                            'country_flag': row['country_flag'],
-                            'timestamp': iso_ts
-                        })
-            except Exception as ex:
-                print(f"[FindCount] Error parsing tournament_scores row: {ex}")
-
-        # 3. Query private_match_turns
-        cursor = conn.execute("""
-            SELECT pmt.submitted_at, u.username, u.country_flag, pmt.submitted_words
-            FROM private_match_turns pmt
-            JOIN users u ON pmt.user_id = u.id
-            WHERE pmt.submitted_words LIKE ?
-        """, (f'%"{word}"%',))
-        
-        for row in cursor.fetchall():
-            try:
-                words = json.loads(row['submitted_words'])
-                for w_obj in words:
-                    if w_obj.get('word', '').upper() == word:
-                        ts_val = w_obj.get('timestamp') or row['submitted_at']
-                        if ts_val and isinstance(ts_val, (int, float)):
-                            dt = datetime.datetime.fromtimestamp(ts_val, tz=datetime.timezone.utc)
-                            iso_ts = dt.strftime('%Y-%m-%dT%H:%M:%SZ')
-                        else:
-                            iso_ts = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-                        
-                        finds.append({
-                            'username': row['username'],
-                            'country_flag': row['country_flag'],
-                            'timestamp': iso_ts
-                        })
-            except Exception as ex:
-                print(f"[FindCount] Error parsing private_match_turns row: {ex}")
-
-        conn.close()
-
-        # Sort finds descending by timestamp string
-        finds.sort(key=lambda x: x['timestamp'], reverse=True)
-        
+        finds = _get_word_finds(word)
         total_count = len(finds)
         recent_finds = finds[:10]
         
@@ -4873,8 +4872,6 @@ def tools_find_count():
         })
 
     except Exception as e:
-        if conn:
-            conn.close()
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
