@@ -4198,7 +4198,8 @@ input[type=range]::-moz-range-track {
         min-width: auto !important; /* Remove the large 220px min-width on mobile */
         font-size: 1.5rem !important; /* Slightly smaller but still readable */
     }
-    .timer-display .rotate-btn {
+    .timer-display .rotate-btn,
+    .timer-display #toggle-board-btn {
         justify-self: end !important;
     }
 
@@ -4263,7 +4264,8 @@ input[type=range]::-moz-range-track {
     }
 
     /* Style the rotate button when it is inside the timer on mobile */
-    .timer-display .rotate-btn {
+    .timer-display .rotate-btn,
+    .timer-display #toggle-board-btn {
         margin-left: auto !important; /* Push it to the far right of the flex container */
         padding: 2px 8px !important; /* Smaller padding to prevent spill */
         font-size: 0.75rem !important; /* Smaller text */
@@ -4964,7 +4966,7 @@ input[type=range]::-moz-range-track {
         width: auto !important; /* Force auto width */
         margin: 5px auto !important; /* Center the box */
         display: flex !important; /* Ensure flex for alignment */
-        justify-content: center !important;
+        justify-content: flex-start !important; /* Keep timer on the left, preventing jump to center */
         align-items: center !important;
     }
 

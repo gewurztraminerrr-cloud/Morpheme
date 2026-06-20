@@ -4668,6 +4668,29 @@
                     header.insertAdjacentElement('afterend', colorBar);
                 }
             }
+
+            // Move the toggle board button to the correct place on resize
+            const toggleBoardBtn = document.getElementById('toggle-board-btn');
+            if (toggleBoardBtn) {
+                if (window.innerWidth <= 992) {
+                    toggleBoardBtn.className = 'rotate-btn';
+                    toggleBoardBtn.style.fontSize = '';
+                    toggleBoardBtn.style.marginLeft = '';
+                    toggleBoardBtn.style.padding = '';
+                    if (timerDisplay && toggleBoardBtn.parentElement !== timerDisplay) {
+                        timerDisplay.appendChild(toggleBoardBtn);
+                    }
+                } else {
+                    toggleBoardBtn.className = 'active-room-btn';
+                    toggleBoardBtn.style.fontSize = '0.7rem';
+                    toggleBoardBtn.style.marginLeft = '10px';
+                    toggleBoardBtn.style.padding = '2px 8px';
+                    const wordsHeader = document.querySelector('.words-panel h3');
+                    if (wordsHeader && toggleBoardBtn.parentElement !== wordsHeader) {
+                        wordsHeader.appendChild(toggleBoardBtn);
+                    }
+                }
+            }
         }
 
 

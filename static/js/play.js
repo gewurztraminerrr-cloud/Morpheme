@@ -1441,6 +1441,14 @@ async function updateGameState(incomingState = null) {
         const isSplitIntermission = (state.game_type === 'split' && state.state === 'intermission');
         const isFCFSIntermission = (state.game_type === 'fcfs' && state.state === 'intermission');
 
+        // Cleanup split/FCFS board toggle button when not in split/FCFS intermission
+        if (!(isSplitIntermission || isFCFSIntermission)) {
+            const existingBtn = document.getElementById('toggle-board-btn');
+            if (existingBtn) {
+                existingBtn.remove();
+            }
+        }
+
         if (isSplitIntermission && !showBoardInSplitIntermission) {
             renderSplitNotepads(state.players, state);
         } else if (isFCFSIntermission && !showBoardInSplitIntermission) {
@@ -5556,26 +5564,42 @@ function renderFCFSNotepads(players, state) {
 
 
 function addSplitViewBoardToggle() {
+    const isMobile = window.innerWidth <= 992;
+    const timerDisplay = document.querySelector('.timer-display');
     const panelHeader = document.querySelector('.words-panel h3');
-    if (!panelHeader) return;
 
     // Check if button already exists
-    if (document.getElementById('toggle-board-btn')) return;
+    let btn = document.getElementById('toggle-board-btn');
+    if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'toggle-board-btn';
+        btn.onclick = () => {
+            showBoardInSplitIntermission = !showBoardInSplitIntermission;
+            updateGameState();
+        };
+    }
 
-    const btn = document.createElement('button');
-    btn.id = 'toggle-board-btn';
     btn.textContent = showBoardInSplitIntermission ? 'Show Notepads' : 'Show Board';
-    btn.className = 'active-room-btn'; // Re-use a style class
-    btn.style.fontSize = '0.7rem';
-    btn.style.marginLeft = '10px';
-    btn.style.padding = '2px 8px';
 
-    btn.onclick = () => {
-        showBoardInSplitIntermission = !showBoardInSplitIntermission;
-        updateGameState();
-    };
-
-    panelHeader.appendChild(btn);
+    if (isMobile && timerDisplay) {
+        // Mobile style and placement inside timer display (same as rotate button position)
+        btn.className = 'rotate-btn'; // Matches .timer-display .rotate-btn CSS rule
+        btn.style.fontSize = ''; // Clear desktop styling overrides
+        btn.style.marginLeft = '';
+        btn.style.padding = '';
+        if (btn.parentElement !== timerDisplay) {
+            timerDisplay.appendChild(btn);
+        }
+    } else if (panelHeader) {
+        // Desktop style and placement
+        btn.className = 'active-room-btn';
+        btn.style.fontSize = '0.7rem';
+        btn.style.marginLeft = '10px';
+        btn.style.padding = '2px 8px';
+        if (btn.parentElement !== panelHeader) {
+            panelHeader.appendChild(btn);
+        }
+    }
 }
 
 // Spinner Logic
