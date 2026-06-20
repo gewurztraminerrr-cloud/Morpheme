@@ -1473,7 +1473,7 @@ class GameRoom:
                     if p.user_id not in existing_uids:
                         all_candidate_players.append(p)
                 for p in all_candidate_players:
-                    if (p.is_registered or (self.time_limit >= 7200 and p.is_guest)) and (p.score > 0 or p.submitted_words or p.invalid_words):
+                    if (p.is_registered or p.is_guest) and (p.score > 0 or p.submitted_words or p.invalid_words):
                         intermission_player_snapshots.append({
                             'user_id': p.user_id,
                             'username': p.username,
@@ -3992,7 +3992,7 @@ class RoomManager:
                     all_candidate_players.append(p)
                     
             for p in all_candidate_players:
-                if (p.is_registered or (room.time_limit >= 7200 and p.is_guest)) and (p.score > 0 or p.submitted_words or p.invalid_words):
+                if (p.is_registered or p.is_guest) and (p.score > 0 or p.submitted_words or p.invalid_words):
                     ghost_player_snapshots.append({
                         'user_id': p.user_id,
                         'username': p.username,
@@ -4603,7 +4603,7 @@ class RoomManager:
             if player_snapshots is not None:
                 participating_registered = player_snapshots
             else:
-                participating_registered = [p for p in room.players if (p.is_registered or (room.time_limit >= 7200 and p.is_guest)) and (p.score > 0 or p.submitted_words or p.invalid_words)]
+                participating_registered = [p for p in room.players if (p.is_registered or p.is_guest) and (p.score > 0 or p.submitted_words or p.invalid_words)]
             
             if not participating_registered:
                 if room.time_limit >= 7200:
