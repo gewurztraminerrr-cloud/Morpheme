@@ -434,7 +434,7 @@ function debounce(func, wait) {
                 previewBoard.style.setProperty('--cell-size', `${val}px`);
             }
             if (boardSizeVal) boardSizeVal.textContent = `${val}px`;
-            window.dispatchEvent(new Event('resize'));
+            if (typeof window.checkBoardOverflow === 'function') window.checkBoardOverflow();
             saveSettingDebounced('board_size', val);
         });
     }
@@ -454,7 +454,7 @@ function debounce(func, wait) {
             localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
             saveSettingDebounced('board_sizes', window.userSettings.board_sizes);
 
-            // If active room matches this dimension, apply instantly
+            // If active room matches this dimension, apply instantly and recalculate panels
             if (typeof window.checkBoardOverflow === 'function') {
                 const boardEl = document.getElementById('game-board');
                 if (boardEl) {
@@ -469,7 +469,7 @@ function debounce(func, wait) {
                         const playPage = document.getElementById('page-play');
                         if (playPage) playPage.style.setProperty('--cell-size', `${val}px`);
                         boardEl.style.setProperty('--cell-size', `${val}px`);
-                        window.dispatchEvent(new Event('resize'));
+                        window.checkBoardOverflow();
                     }
                 }
             }

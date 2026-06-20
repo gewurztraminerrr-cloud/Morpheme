@@ -4200,11 +4200,9 @@ function checkBoardOverflow() {
         savedSettingSize = parseInt(storedSettingsObj.board_size);
     }
 
-    // 2. If user is actively dragging the primary slider in Settings right now, allow live preview
+    // 2. If user has manually set a board size (via Settings slider), always use it
     if (window.userManuallyOverrodeBoardSize && window.cachedCellSize) {
-        if (document.getElementById('page-settings')?.classList.contains('active')) {
-            savedSettingSize = parseInt(window.cachedCellSize);
-        }
+        savedSettingSize = parseInt(window.cachedCellSize);
     }
 
     // Default fallbacks for each dimension if not customized yet
