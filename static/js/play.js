@@ -4180,11 +4180,6 @@ function checkBoardOverflow() {
     const minDim = Math.min(cols, rows);
     const maxDim = Math.max(cols, rows);
     const currentDim = `${minDim}x${maxDim}`;
-
-    // Define sidebar size boundaries
-    let minLeft = 280;
-    let minRight = 370; // Enough width for 3 tabs + point badges without clipping
-
     let savedSettingSize = null;
     let storedSettingsObj = window.userSettings;
 
@@ -4248,7 +4243,8 @@ function checkBoardOverflow() {
         }
     } else {
         // Constrain cell size on desktop/laptop screen width so that side panels have comfortable minimum space
-        const maxAllowedWidth = window.innerWidth - minLeft - minRight - 60;
+        // minLeft comfort = 280px, minRight comfort = 350px, gaps/paddings = 60px
+        const maxAllowedWidth = window.innerWidth - 280 - 350 - 60;
         if (requiredBoardWidth > maxAllowedWidth) {
             const targetCellSize = Math.floor((maxAllowedWidth - boardGap - boardPadding - scrollbarWidth) / cols);
             cellSize = Math.max(20, targetCellSize);
@@ -4295,8 +4291,10 @@ function checkBoardOverflow() {
         maxLeft = 320;
         maxRight = 380;
     }
-
-    maxRight = Math.max(maxRight, 420);
+    
+    // Set a reasonable minimum boundary so sidebars remain readable/functional
+    const minLeft = 280;
+    const minRight = 350;
 
     let newLeft = maxLeft;
     let newRight = maxRight;

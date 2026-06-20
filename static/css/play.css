@@ -135,7 +135,7 @@
 .words-panel {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 20px;
     min-height: 0;
     height: 100%;
     box-sizing: border-box;
@@ -144,7 +144,7 @@
 .words-table-box {
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 10px 6px; /* Reduced left/right padding to 6px to shift content further left */
+    padding: 15px;
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -1173,25 +1173,25 @@ body.theme-light-brown .player-score-val {
     display: flex;
     background: var(--tab-container-bg);
     border-radius: 12px;
-    padding: 2px;
+    padding: 4px;
     margin-bottom: 15px;
     border: 1px solid var(--input-border);
 }
 
 .word-tab {
     flex: 1;
-    padding: 4px 2px; /* Ultra-compact padding so all tabs fit in narrow panel */
+    padding: 8px 4px;
     border: none;
     background: transparent;
     color: var(--muted-text);
-    font-size: 0.7rem; /* Compact font size to prevent cutoffs on narrow viewports */
+    font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
     border-radius: 8px;
     transition: all 0.2s ease;
     white-space: nowrap;
-    overflow: visible;
-    min-width: 0;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 .word-tab.active {
@@ -3966,14 +3966,14 @@ input[type=range]::-moz-range-track {
 .points-math {
     white-space: nowrap;
     font-family: 'Courier New', Courier, monospace;
-    font-size: 0.78rem; /* Shrunk from 0.82rem to fit math breakdowns horizontally */
+    font-size: 0.95rem;
     font-weight: 800;
     color: #fff;
     background: rgba(0, 0, 0, 0.45);
-    padding: 2px 6px; /* Shrunk padding to fit more content */
+    padding: 3px 10px;
     border-radius: 6px;
     flex-shrink: 0; /* USER REQUEST: Never squish the math breakdown */
-    margin-left: auto; /* Always right-aligned, even on second row */
+    margin-left: auto;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -3982,22 +3982,22 @@ input[type=range]::-moz-range-track {
     flex-wrap: wrap !important; /* USER REQUEST: Allow content to occupy a second line */
     justify-content: space-between !important;
     align-items: center !important;
-    gap: 4px 6px !important; /* Reduced horizontal gap to fit compactly */
+    gap: 6px 14px !important;
     cursor: pointer;
-    padding: 6px 6px !important; /* Reduced padding to shift content to the left */
+    padding: 10px 14px !important;
     min-width: 0;
 }
 
 .word-left {
     display: flex;
     align-items: center;
-    gap: 8px; /* Tighter gap */
+    gap: 10px;
     min-width: auto;
     flex: 1 1 auto;
 }
 
 .word-text {
-    font-size: 0.88rem; /* Shrunk from 0.95rem to fit long words horizontally */
+    font-size: 1.15rem;
     font-weight: 700;
     white-space: normal; /* No more ellipsis truncation */
     overflow: visible;
