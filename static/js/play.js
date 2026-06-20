@@ -4267,8 +4267,8 @@ function checkBoardOverflow() {
 
     // 3. Calculate Available Space
     const windowWidth = window.innerWidth;
-    // Safety Margin: Standard
-    const safetyMargin = 120;
+    // Safety Margin: Reduced to 50px to prevent artificially constraining panel widths
+    const safetyMargin = 50;
 
     // The key difference: We start with Window and subtract Board
     const availableForPanels = windowWidth - requiredBoardWidth - safetyMargin;
@@ -4318,6 +4318,18 @@ function checkBoardOverflow() {
             // Enforce minimum limits
             newLeft = Math.max(newLeft, minLeft);
             newRight = Math.max(newRight, minRight);
+
+            // Recalculate to ensure their sum does not exceed availableForPanels after min enforcement
+            if (newLeft + newRight > availableForPanels) {
+                const overage = (newLeft + newRight) - availableForPanels;
+                if (newLeft - overage >= minLeft) {
+                    newLeft -= overage;
+                } else {
+                    const leftOverage = newLeft - minLeft;
+                    newLeft = minLeft;
+                    newRight = Math.max(minRight, newRight - (overage - leftOverage));
+                }
+            }
         } else {
             // Under extreme constraints, use absolute minimal sizes
             newLeft = minLeft;
