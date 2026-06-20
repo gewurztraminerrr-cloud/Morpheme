@@ -68,11 +68,11 @@ This summary documents the stable state of the Morpheme application as of June 1
     3. Added a mobile-only media query (<= 600px) that sets the modal wrapper padding to a minimal `15px 8px` and forces the Quick Navigate FAQ question grid to a single-column stack (`grid-template-columns: 1fr;`), causing all buttons and text elements to fit fully on small mobile screen widths.
 
 ### 12. Find Count Tool Suggested Words & Interactive Search
-*   **The Issue**: Users had to type every word manually to query its find history, with no quick-select dictionary suggestions to guide them.
+*   **The Issue**: Users had to type every word manually to query its find history, with no quick-select dictionary suggestions. Additionally, the spacing between the search box and the suggestions table was too wide, and the list of words lacked a structured length policy.
 *   **Resolution**:
-    1. Implemented the backend API `/api/tools/random-words` in [app.py](file:///Users/jeffbabiak/app.py) to lazily cache the list of 3-to-8 letter NWL dictionary words and serve 5 random selections.
-    2. Added a suggested words table structure and a "More random words" button in [index.html](file:///Users/jeffbabiak/templates/index.html) inside the Find Count tool pane.
-    3. Updated [tools.js](file:///Users/jeffbabiak/static/js/tools.js) to lazy-load suggestions when opening the tool or clicking the fetch button, allowing users to instantly click suggested words to fill the search box and run queries.
+    1. Implemented the backend API `/api/tools/random-words` in [app.py](file:///Users/jeffbabiak/app.py) to return 6 random words, sequentially incrementing in length by one starting from 5 letters up to 10 letters (lengths 5, 6, 7, 8, 9, and 10).
+    2. Added a suggested words table structure and a "More random words" button in [index.html](file:///Users/jeffbabiak/templates/index.html). Set `margin-bottom: 0px;` on the combo-control search panel, `margin-top: 0px;` on the suggested-words-section, and removed the "Suggested Words to Search" `h3` header, making the search box and the suggestions table virtually touch.
+    3. Updated [tools.js](file:///Users/jeffbabiak/static/js/tools.js) to lazy-load suggestions when opening the tool or clicking the fetch button, allowing users to instantly click suggested words to fill the search box and run queries automatically without having to click Search.
 
 ---
 
@@ -83,7 +83,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `9093f97` (tagged as `START_OVER_POINT_JUNE_19`)  
+**Latest Stable Commit ID**: `92d76ac` (tagged as `START_OVER_POINT_JUNE_19`)  
 **GitHub Tag**: `START_OVER_POINT_JUNE_19`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `9093f97`
+**Production Server Status**: Green / PM2 Online / Live at commit `92d76ac`
