@@ -60,6 +60,13 @@ This summary documents the stable state of the Morpheme application as of June 1
 *   **The Issue**: The rating display was showing a random rating or the default 1200 rating number as soon as the lobby was entered, even before any rooms list config was active.
 *   **Resolution**: Modified `resetLobbyButtons()` in [lobby.js](file:///Users/jeffbabiak/static/js/lobby.js) to conditionally output the rating suffix `My Rating: ${rating}` only if `window.currentLobbyConfig` is set (i.e. a "Show Rooms" button has been clicked). On initial entry to the lobby or before a config is chosen, it displays exactly `'My Rating'` and clears the `data-rating` attribute. The button is also hidden entirely for guests/unauthenticated users.
 
+### 11. FAQ Mobile Layout and Spacing Optimization
+*   **The Issue**: On mobile devices, the How to Play & FAQ modal contents were squeezed horizontally due to excessive wrapper padding, and the Quick Navigate FAQ question buttons shifted to the right and overflowed the screen on narrow viewports.
+*   **Resolution**:
+    1. Inside [howtoplay.css](file:///Users/jeffbabiak/static/css/howtoplay.css), reduced the wrapper padding to `20px 15px` and zeroed out the FAQ container selector padding in tablets (<= 900px).
+    2. Decreased the minimum column width in `.faq-questions-grid` to `260px` to prevent layout breaks on small tablets.
+    3. Added a mobile-only media query (<= 600px) that sets the modal wrapper padding to a minimal `15px 8px` and forces the Quick Navigate FAQ question grid to a single-column stack (`grid-template-columns: 1fr;`), causing all buttons and text elements to fit fully on small mobile screen widths.
+
 ---
 
 ## 🛠 Active Features & Configuration
@@ -69,7 +76,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `1ef7210` (tagged as `START_OVER_POINT_JUNE_19`)  
+**Latest Stable Commit ID**: `4fc5261` (tagged as `START_OVER_POINT_JUNE_19`)  
 **GitHub Tag**: `START_OVER_POINT_JUNE_19`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `1ef7210`
+**Production Server Status**: Green / PM2 Online / Live at commit `4fc5261`
