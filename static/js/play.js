@@ -4183,7 +4183,7 @@ function checkBoardOverflow() {
 
     // Define sidebar size boundaries
     let minLeft = 280;
-    let minRight = 330; // Shrunk minimum sidebar width so board is larger on laptops
+    let minRight = 370; // Enough width for 3 tabs + point badges without clipping
 
     let savedSettingSize = null;
     let storedSettingsObj = window.userSettings;
@@ -4296,7 +4296,7 @@ function checkBoardOverflow() {
         maxRight = 380;
     }
 
-    maxRight = Math.max(maxRight, 480);
+    maxRight = Math.max(maxRight, 420);
 
     let newLeft = maxLeft;
     let newRight = maxRight;
