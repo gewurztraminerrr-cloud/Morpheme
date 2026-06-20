@@ -56,6 +56,10 @@ This summary documents the stable state of the Morpheme application as of June 1
     2. Added `overflow-x: hidden;` to lock horizontal scrolling completely on desktops.
     3. Overrode this on mobile with `min-width: 0 !important;` in the media query to preserve full-bleed scrolling behavior on narrow device screens.
 
+### 10. Lobby "My Rating" Button Display Restriction
+*   **The Issue**: The rating display was showing a random rating or the default 1200 rating number as soon as the lobby was entered, even before any rooms list config was active.
+*   **Resolution**: Modified `resetLobbyButtons()` in [lobby.js](file:///Users/jeffbabiak/static/js/lobby.js) to conditionally output the rating suffix `My Rating: ${rating}` only if `window.currentLobbyConfig` is set (i.e. a "Show Rooms" button has been clicked). On initial entry to the lobby or before a config is chosen, it displays exactly `'My Rating'` and clears the `data-rating` attribute. The button is also hidden entirely for guests/unauthenticated users.
+
 ---
 
 ## 🛠 Active Features & Configuration
@@ -65,7 +69,7 @@ This summary documents the stable state of the Morpheme application as of June 1
 
 ---
 
-**Latest Stable Commit ID**: `2d6871a` (tagged as `START_OVER_POINT_JUNE_19`)  
+**Latest Stable Commit ID**: `1ef7210` (tagged as `START_OVER_POINT_JUNE_19`)  
 **GitHub Tag**: `START_OVER_POINT_JUNE_19`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `2d6871a`
+**Production Server Status**: Green / PM2 Online / Live at commit `1ef7210`
