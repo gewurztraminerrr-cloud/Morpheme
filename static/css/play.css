@@ -115,7 +115,7 @@
 .play-grid {
     display: grid;
     /* User Request: Make side panels larger horizontally while preserving board space */
-    grid-template-columns: var(--left-panel-w, 400px) 1fr var(--right-panel-w, 420px);
+    grid-template-columns: var(--left-panel-w, 400px) 1fr var(--right-panel-w, 450px);
     gap: 12px; /* Slightly tighter gap to gain a few pixels */
     flex: 1;
     min-height: 0;
@@ -4031,7 +4031,7 @@ input[type=range]::-moz-range-track {
     }
     .play-grid {
         --left-panel-w: 320px;
-        --right-panel-w: 350px;
+        --right-panel-w: 380px;
     }
 }
 
@@ -4301,7 +4301,7 @@ input[type=range]::-moz-range-track {
     }
     .play-grid {
         --left-panel-w: 440px;
-        --right-panel-w: 450px;
+        --right-panel-w: 480px;
         gap: 16px !important;
     }
     .player-item {
@@ -4324,7 +4324,7 @@ input[type=range]::-moz-range-track {
     }
     .play-grid {
         --left-panel-w: 480px;
-        --right-panel-w: 490px;
+        --right-panel-w: 520px;
         gap: 20px !important;
     }
     .player-item {
@@ -4347,7 +4347,7 @@ input[type=range]::-moz-range-track {
     }
     .play-grid {
         --left-panel-w: 520px; /* Tons of space for users and scores */
-        --right-panel-w: 530px; /* Massive space for words list and tabs */
+        --right-panel-w: 560px; /* Massive space for words list and tabs */
         gap: 24px !important;
     }
     .player-item {
