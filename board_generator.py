@@ -1010,6 +1010,14 @@ class BoardGenerator:
         Generate a valid board that meets word count requirements (100-300).
         RESTARTED: Simplified logic with ironclad compliance.
         """
+        if min_word_length is None:
+            min_word_length = 3
+        else:
+            try:
+                min_word_length = int(min_word_length)
+            except:
+                min_word_length = 3
+
         # FOR UNCONDITIONAL UNIQUENESS: Re-seed random from system randomness
         # This breaks any process-level determinism from forks/seeds
         import random
@@ -1501,6 +1509,14 @@ class BoardGenerator:
         We will loop indefinitely until the target is met.
         We also strictly respect board formats (Mania, Checkerboard, Either/Or) in the emergency path.
         """
+        if min_word_length is None:
+            min_word_length = 3
+        else:
+            try:
+                min_word_length = int(min_word_length)
+            except:
+                min_word_length = 3
+
         min_words, max_words = self._parse_word_count_range(word_count_range)
         
         # Dimension Parsing
@@ -3373,6 +3389,14 @@ class BoardGenerator:
         self, board, dictionary="NWL", word_count_range=(0, 99999), min_word_length=3, max_depth=12, store_paths=True, timeout=10.0, must_include=None, bonus_cell=None
     ):
         """Find all valid words on the board using high-speed node-based DFS traversal."""
+        if min_word_length is None:
+            min_word_length = 3
+        else:
+            try:
+                min_word_length = int(min_word_length)
+            except:
+                min_word_length = 3
+
         # Support 3D detect
         is_3d = len(board) > 0 and isinstance(board[0], list) and isinstance(board[0][0], list)
         depth_val = len(board) if is_3d else 1

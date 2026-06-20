@@ -1871,62 +1871,131 @@ def calculate_word_score(word, bonus_word, board_format='Normal', path=None, bon
     return shared_calc(word, bonus_word, board_format=board_format, path=path, bonus_cell=bonus_cell, **kwargs)
 
 
-def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=60):
+def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=60, dictionary='NWL'):
     """Dynamically generate a valid emergency fallback board that matches room dimensions and spells correct words."""
+    try:
+        from board_generator import BoardGenerator
+        bg = BoardGenerator()
+        is_24h = time_limit >= 7200
+        
+        # Determine starting min length based on dimensions
+        min_l = 4 if '4x4' in dimensions else (5 if '4x6' in dimensions else (6 if '5x7' in dimensions else 7))
+        target_range = '200-300' if is_24h else '100-200'
+        fmt = 'Valued Letters' if is_24h else board_format
+        
+        # We will try 4 configurations, relaxing constraints at each step
+        configs = [
+            (min_l, target_range, fmt, 4.0),
+            (3, target_range, 'Normal', 3.0),
+            (3, '100-200', 'Normal', 3.0),
+            (3, '50-100', 'Normal', 3.0)
+        ]
+        
+        for idx, (ml, tr, f, to) in enumerate(configs):
+            try:
+                print(f"[get_emergency_fallback_board] Attempt {idx+1}: min_len={ml}, range={tr}, format={f}, timeout={to}")
+                res = bg.generate_board(
+                    dimensions=dimensions,
+                    bonus_word="",
+                    word_count_range=tr,
+                    dictionary=dictionary or 'NWL',
+                    board_format=f,
+                    min_word_length=ml,
+                    difficulty="Medium",
+                    is_emergency=True,
+                    timeout=to
+                )
+                if res and len(res) >= 7:
+                    board, words, bonus_cell, updated_format, paths, ratio, bonus_word = res
+                    # Ensure we have a healthy number of words (at least 30)
+                    if words and len(words) >= 30:
+                        print(f"[get_emergency_fallback_board] Success on attempt {idx+1} with {len(words)} words")
+                        return board, words, bonus_cell, updated_format, paths, ratio, bonus_word
+            except Exception as inner_err:
+                print(f"[get_emergency_fallback_board] Attempt {idx+1} error: {inner_err}")
+                
+    except Exception as e:
+        print(f"[get_emergency_fallback_board] Error preparing generation: {e}")
+
+    # --- HARD DETERMINISTIC FALLBACK WITH SOLVER RESOLUTION ---
+    print(f"[get_emergency_fallback_board] CRITICAL: Dynamic generation failed. Using high-density static board.")
+    from board_generator import BoardGenerator
+    bg = BoardGenerator()
     import random
+    
     parts = dimensions.split("x")
-    if len(parts) == 3:
-        # 3D Cube: 6 faces of r x c
+    is_3d = len(parts) == 3
+    
+    if is_3d:
         depth, rows, cols = map(int, parts)
-        board = [[['A' for _ in range(cols)] for _ in range(rows)] for _ in range(6)]
-        words = []
-        paths = {}
-        # Simple short words on face 0
-        word_list = ["CAT", "DOG", "RUN", "MAP", "SUN", "TOY"]
-        for r in range(min(rows, len(word_list))):
-            w = word_list[r][:cols]
-            if not w:
-                continue
-            for c in range(len(w)):
-                board[0][r][c] = w[c]
-            words.append(w)
-            paths[w] = [(0, r, c) for c in range(len(w))]
+        # Use high-density 3D face pattern
+        face_pattern = [
+            ["S", "E", "R"],
+            ["P", "A", "T"],
+            ["L", "A", "N"]
+        ]
+        # Repeat pattern across all faces
+        board = []
+        for f in range(6):
+            board.append([[face_pattern[r][c] for c in range(cols)] for r in range(rows)])
     else:
         rows, cols = map(int, parts)
-        board = [['A' for _ in range(cols)] for _ in range(rows)]
-        words = []
-        paths = {}
-        # Dynamic words based on columns
-        fallback_words_by_len = {
-            3: ["CAT", "DOG", "RUN", "MAP", "SUN", "TOY", "BOX", "FLY", "GET", "HOT"],
-            4: ["SEND", "RATE", "TILE", "POEM", "GOLD", "WIND", "FIRE", "BLUE", "GAME", "PLAY"],
-            5: ["HOUSE", "PAPER", "WATER", "LIGHT", "PLANT", "TABLE", "CHAIR", "CLOCK", "SMART", "ROUND"],
-            6: ["SILENT", "PEACES", "LOVELY", "MOTHER", "FATHER", "STREAM", "FOREST", "SPRING", "SUMMER", "WINTER"],
-            7: ["PROCESS", "PROJECT", "PROMISE", "PROTECT", "PROVIDE", "PERFECT", "JOURNEY", "COUNTRY", "SCIENCE", "HISTORY"],
-            8: ["BUILDING", "CREATING", "DESIGNED", "FEEDBACK", "PLAYINGS", "STARTING", "LEARNING", "THINKING", "PRACTICE", "MOUNTAIN"]
-        }
-        w_len = min(cols, 8)
-        if w_len < 3:
-            w_len = cols
-            word_list = ["A" * w_len] * rows
+        # Define high-density static grids for common dimensions
+        if rows == 4 and cols == 4:
+            board = [
+                ["S", "E", "R", "S"],
+                ["P", "A", "T", "I"],
+                ["L", "A", "N", "E"],
+                ["T", "E", "S", "T"]
+            ]
+        elif rows == 4 and cols == 6:
+            board = [
+                ["S", "E", "R", "S", "E", "R"],
+                ["P", "A", "T", "I", "N", "G"],
+                ["L", "A", "N", "E", "S", "T"],
+                ["T", "E", "S", "T", "A", "R"]
+            ]
+        elif rows == 5 and cols == 7:
+            board = [
+                ["S", "E", "R", "S", "E", "R", "S"],
+                ["P", "A", "T", "I", "N", "G", "S"],
+                ["L", "A", "N", "E", "S", "T", "A"],
+                ["T", "E", "S", "T", "A", "R", "E"],
+                ["S", "T", "A", "R", "E", "S", "T"]
+            ]
+        elif rows == 6 and cols == 8:
+            board = [
+                ["S", "E", "R", "S", "E", "R", "S", "E"],
+                ["P", "A", "T", "I", "N", "G", "S", "T"],
+                ["L", "A", "N", "E", "S", "T", "A", "R"],
+                ["T", "E", "S", "T", "A", "R", "E", "S"],
+                ["S", "T", "A", "R", "E", "S", "T", "A"],
+                ["E", "R", "S", "T", "A", "R", "E", "S"]
+            ]
         else:
-            word_list = fallback_words_by_len.get(w_len, ["CAT"[:w_len]])
+            # General fallback for arbitrary sizes
+            letters_pool = ["E", "A", "I", "O", "T", "R", "S", "N", "L", "C", "D", "P"]
+            board = [[random.choice(letters_pool) for _ in range(cols)] for _ in range(rows)]
             
-        for r in range(min(rows, len(word_list))):
-            w = word_list[r]
-            for c in range(len(w)):
-                board[r][c] = w[c]
-            words.append(w)
-            paths[w] = [(r, c) for c in range(len(w))]
-            
-    bonus_word = words[0] if words else 'CAT'
+    # Run solver on the static board to get ALL valid words!
+    ml_solve = 3
+    paths = bg._solve_board(board, dictionary or "NWL", min_word_length=ml_solve, store_paths=True)
+    words = sorted(list(paths.keys()))
+    
+    # Ensure there is a bonus word
+    suitable = [w for w in words if 6 <= len(w) <= 10]
+    if not suitable: suitable = [w for w in words if len(w) >= 5]
+    if not suitable: suitable = [w for w in words if len(w) >= 3]
+    bonus_word = sorted(suitable, key=len, reverse=True)[0] if suitable else "CAT"
+    
     bonus_cell = paths[bonus_word][0] if bonus_word in paths else (0, 0)
-    if len(parts) == 3 and not isinstance(bonus_cell, tuple):
+    if is_3d and not isinstance(bonus_cell, tuple):
         bonus_cell = (0, 0, 0)
         
     fmt = 'Valued Letters' if time_limit >= 7200 else board_format
-    ratio = 0.5
+    ratio = bg.get_uniqueness_ratio(board, words, rows, cols, dictionary or "NWL", depth=6 if is_3d else 1)
     
+    print(f"[get_emergency_fallback_board] Static board generated with {len(words)} words. Bonus Word: {bonus_word}")
     return board, words, bonus_cell, fmt, paths, ratio, bonus_word
 
 
@@ -2344,6 +2413,7 @@ class RoomManager:
                                         
                                 import threading
                                 threading.Thread(target=async_rebuild_active_scoring, daemon=True).start()
+                                self.pre_generate_next_round(room_id)
                                 restored_active = True
                             else:
                                 print(f"[RoomManager] Outdated 24h board found for {room_id} from {saved_dt} (Today is {now_dt}). Archiving to round_history.")
@@ -3198,6 +3268,67 @@ class RoomManager:
                     
                     # 5. Pre-generate AI turns for this first round
                     room.generate_ai_turns()
+
+                    # For 24h rooms, save the generated board to the database immediately
+                    if is_24h:
+                        try:
+                            import sqlite3
+                            import json
+                            import os
+                            conn = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db'))
+                            
+                            # Serialize active players
+                            players_data = []
+                            for p in room.players:
+                                players_data.append({
+                                    'user_id': p.user_id,
+                                    'username': p.username,
+                                    'rating': p.rating,
+                                    'submitted_words': p.submitted_words,
+                                    'invalid_words': p.invalid_words,
+                                    'score': p.score,
+                                    'previous_round_score': p.previous_round_score,
+                                    'games_played': p.games_played,
+                                    'previous_submitted_words': p.previous_submitted_words,
+                                    'found_bonus_word': p.found_bonus_word,
+                                    'last_active': p.last_active,
+                                    'input_method': p.input_method,
+                                    'country_flag': p.country_flag,
+                                    'joined_mid_round': p.joined_mid_round,
+                                    'has_exceptional_round': p.has_exceptional_round,
+                                    'is_guest': p.is_guest,
+                                    'is_ai': p.is_ai,
+                                    'ai_rating': p.ai_rating,
+                                    'has_abandoned': p.has_abandoned
+                                })
+                            players_json = json.dumps(players_data)
+                            
+                            conn.execute('''
+                                INSERT OR REPLACE INTO active_boards (
+                                    room_id, board_data, all_words, dictionary, min_length, updated_at,
+                                    bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range,
+                                    active_players_json
+                                )
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            ''', (
+                                room.room_id,
+                                json.dumps(room.board),
+                                json.dumps(list(room.all_words)),
+                                room.current_dictionary,
+                                room.current_min_length,
+                                time.time(),
+                                room.bonus_word or '',
+                                json.dumps(room.bonus_cell) if room.bonus_cell else None,
+                                room.current_board_format or 'Normal',
+                                room.current_uniqueness or 0.0,
+                                room.current_word_count_range or '200-300',
+                                players_json
+                            ))
+                            conn.commit()
+                            conn.close()
+                            print(f"[RoomManager] Reconstructed 24h room {room.room_id} board saved to active_boards DB successfully.")
+                        except Exception as db_err:
+                            print(f"[RoomManager] Error saving reconstructed 24h room board to DB: {db_err}")
                 except Exception as e:
                     print(f"[RoomManager] Background start error for {room_id}: {e}")
                 finally:
@@ -3515,11 +3646,19 @@ class RoomManager:
         
         try:
             # AUTHORITATIVE: Use the specific params intended for this background search.
-            # Fallback to spinner_params ONLY if it's the very first round (current_round == 1)
+            # Fallback to spinner_params if next_spinner_params is missing
             params = getattr(room, 'next_spinner_params', None)
-            if not params and room.current_round == 1:
-                room.next_spinner_params = dict(getattr(room, 'spinner_params', {}))
-                params = room.next_spinner_params
+            if not params:
+                current_params = getattr(room, 'spinner_params', None)
+                if current_params:
+                    room.next_spinner_params = dict(current_params)
+                    params = room.next_spinner_params
+                else:
+                    is_24h = room.time_limit >= 7200
+                    is_split = (room.game_type == 'split')
+                    from spinner_set import SpinnerSet
+                    room.next_spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split)
+                    params = room.next_spinner_params
             from spinner_set import SpinnerSet
             params = SpinnerSet.sanitize_params(params, room.board_dimensions, room.time_limit >= 7200)
             room.next_spinner_params = params
@@ -4135,7 +4274,7 @@ class RoomManager:
                         room.current_min_length = int(room.spinner_params.get('min_word_length', 3))
                     
                     e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio, e_bonus_word = get_emergency_fallback_board(
-                        room.board_dimensions, room.current_board_format, room.time_limit
+                        room.board_dimensions, room.current_board_format, room.time_limit, dictionary=room.current_dictionary
                     )
                     
                     room.next_round_board = e_board
