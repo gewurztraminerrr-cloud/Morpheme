@@ -1488,7 +1488,13 @@ async function updateGameState(incomingState = null) {
             // Show otherwise
             if (inputEl) inputEl.style.display = '';
             if (submitBtnEl) submitBtnEl.style.display = '';
-            if (rotateBtn) rotateBtn.style.display = '';
+            if (rotateBtn) {
+                if (isSplitIntermission || isFCFSIntermission) {
+                    rotateBtn.style.display = 'none';
+                } else {
+                    rotateBtn.style.display = '';
+                }
+            }
 
             if (inputEl && inputEl.disabled !== !isActive) {
                 inputEl.disabled = !isActive;
