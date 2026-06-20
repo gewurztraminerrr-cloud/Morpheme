@@ -2491,6 +2491,7 @@ let currentWordsRenderedCount = 0;
 let currentWordsType = '';
 const WORDS_PAGE_SIZE = 2000; // Render in slightly larger chunks for speed
 let currentProgressiveLoadId = 0;
+let listsFetchAbortController = null;
 
 function startProgressiveRendering() {
     const loadId = ++currentProgressiveLoadId;
@@ -2745,6 +2746,16 @@ window.removeAddedWordFromTools = async function(word) {
 
 window.loadAddedWords = fetchListsData;
 async function fetchListsData(typeOverride) {
+    // Cancel previous progressive render chunk loop
+    currentProgressiveLoadId++;
+
+    // Cancel previous fetch if it's still running
+    if (listsFetchAbortController) {
+        listsFetchAbortController.abort();
+    }
+    listsFetchAbortController = new AbortController();
+    const currentController = listsFetchAbortController;
+
     // Get Filter Values
     const lengthSelect = document.getElementById('list-length-filter');
     const startSelect = document.getElementById('list-start-filter');
@@ -2784,7 +2795,7 @@ async function fetchListsData(typeOverride) {
     }
     if (countEl) countEl.innerText = '';
 
-    const controller = new AbortController();
+    const controller = currentController;
     const timeoutId = setTimeout(() => {
         controller.abort();
         if (scrollArea) {
@@ -2816,6 +2827,11 @@ async function fetchListsData(typeOverride) {
         clearTimeout(timeoutId);
         const data = await response.json();
 
+        // Clear active fetch controller tracking if it is still this controller
+        if (listsFetchAbortController === currentController) {
+            listsFetchAbortController = null;
+        }
+
         if (data.error) {
             console.error(data.error);
             if (scrollArea) scrollArea.innerHTML = `<div style="color:red; padding:20px; text-align:center;">Error: ${data.error}</div>`;
@@ -2844,8 +2860,11 @@ async function fetchListsData(typeOverride) {
         listsDataLoaded = true;
 
     } catch (err) {
+        if (listsFetchAbortController === currentController) {
+            listsFetchAbortController = null;
+        }
         if (err.name === 'AbortError') {
-            console.log('[Lists] Fetch aborted due to 4-minute computational timeout.');
+            console.log('[Lists] Fetch aborted (newer selection or timeout).');
             return;
         }
         console.error('Failed to fetch lists:', err);
