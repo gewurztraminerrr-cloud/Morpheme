@@ -4249,8 +4249,22 @@ function checkBoardOverflow() {
         } else if (window.innerWidth >= 1400) {
             gridGap = 16;
         }
-        const overhead = 20 + (gridGap * 2); // page padding + grid gaps
-        const maxAllowedWidth = window.innerWidth - 160 - 220 - overhead;
+        
+        let gridWidth = window.innerWidth;
+        const playGrid = document.querySelector('.play-grid');
+        if (playGrid && playGrid.clientWidth > 0) {
+            gridWidth = playGrid.clientWidth;
+        } else {
+            let pagesWidth = window.innerWidth;
+            if (window.innerWidth >= 1920) {
+                pagesWidth = Math.floor(window.innerWidth * 0.92);
+            } else if (window.innerWidth >= 1440) {
+                pagesWidth = Math.floor(window.innerWidth * 0.95);
+            }
+            gridWidth = pagesWidth - 20;
+        }
+        
+        const maxAllowedWidth = gridWidth - 160 - 220 - (gridGap * 2);
         if (requiredBoardWidth > maxAllowedWidth) {
             const targetCellSize = Math.floor((maxAllowedWidth - boardGap - boardPadding - scrollbarWidth) / cols);
             cellSize = Math.max(20, targetCellSize);
@@ -4294,30 +4308,42 @@ function applyPanelLayout(cellSize, cols) {
     const boardPadding = 40; // desktop only
     const requiredBoardWidth = (cols * cellSize) + boardGap + boardPadding;
 
-    const windowWidth = window.innerWidth;
     let gridGap = 12;
-    if (windowWidth >= 1920) {
+    if (window.innerWidth >= 1920) {
         gridGap = 24;
-    } else if (windowWidth >= 1600) {
+    } else if (window.innerWidth >= 1600) {
         gridGap = 20;
-    } else if (windowWidth >= 1400) {
+    } else if (window.innerWidth >= 1400) {
         gridGap = 16;
     }
-    const layoutOverhead = 20 + (gridGap * 2); // play-page padding (20) + grid gaps
-    const availableForPanels = windowWidth - requiredBoardWidth - layoutOverhead;
+
+    let gridWidth = window.innerWidth;
+    if (playGrid && playGrid.clientWidth > 0) {
+        gridWidth = playGrid.clientWidth;
+    } else {
+        let pagesWidth = window.innerWidth;
+        if (window.innerWidth >= 1920) {
+            pagesWidth = Math.floor(window.innerWidth * 0.92);
+        } else if (window.innerWidth >= 1440) {
+            pagesWidth = Math.floor(window.innerWidth * 0.95);
+        }
+        gridWidth = pagesWidth - 20;
+    }
+
+    const availableForPanels = gridWidth - requiredBoardWidth - (gridGap * 2);
 
     const minLeft = 160;
     const minRight = 220;
     let newLeft, newRight;
 
-    console.log('[play.js] availableForPanels:', availableForPanels, 'requiredBoardWidth:', requiredBoardWidth, 'windowWidth:', windowWidth);
+    console.log('[play.js] availableForPanels:', availableForPanels, 'requiredBoardWidth:', requiredBoardWidth, 'gridWidth:', gridWidth);
 
     if (availableForPanels >= (minLeft + minRight)) {
         newLeft  = Math.max(minLeft,  Math.floor(availableForPanels * 0.44));
         newRight = Math.max(minRight, availableForPanels - newLeft);
 
-        const maxRight = windowWidth >= 1920 ? 500 : windowWidth >= 1600 ? 460 : windowWidth >= 1400 ? 420 : 380;
-        const maxLeft  = windowWidth >= 1920 ? 460 : windowWidth >= 1600 ? 420 : windowWidth >= 1400 ? 380 : 340;
+        const maxRight = window.innerWidth >= 1920 ? 500 : window.innerWidth >= 1600 ? 460 : window.innerWidth >= 1400 ? 420 : 380;
+        const maxLeft  = window.innerWidth >= 1920 ? 460 : window.innerWidth >= 1600 ? 420 : window.innerWidth >= 1400 ? 380 : 340;
         console.log('[play.js] layout targets: minLeft/minRight:', minLeft, minRight, 'maxLeft/maxRight:', maxLeft, maxRight);
         if (newRight > maxRight) {
             const surplus = newRight - maxRight;
