@@ -5927,7 +5927,7 @@ function calculateWordScoreLocally(word, path) {
     return score;
 }
 
-async function submitWord(wordParam = null, pathParam = null) {
+async function submitWord(wordParam = null, pathParam = null, _quFallback = false) {
     try {
         const input = document.getElementById('word-input');
     let word = wordParam ? wordParam.toUpperCase() : (input ? input.value.trim().toUpperCase() : '');
@@ -6131,10 +6131,17 @@ async function submitWord(wordParam = null, pathParam = null) {
                     optimisticColor = isBonus ? 'green' : 'blue';
                     optimisticIsDefinitive = true;
                 } else {
-                    // Not in the word list — flash red immediately.
-                    showValidationFeedback(`${word} INVALID`, false, false, finalPath);
-                    optimisticColor = 'red';
-                    optimisticIsDefinitive = true;
+                    // Not in the word list.
+                    // If this is a mouse/swipe submission with QU tiles and not already a fallback
+                    // attempt, skip the immediate red flash — the QU→Q retry will produce the
+                    // correct definitive flash on its own.
+                    const mightBeQUFallback = pathParam !== null && !_quFallback && /QU/.test(word);
+                    if (!mightBeQUFallback) {
+                        showValidationFeedback(`${word} INVALID`, false, false, finalPath);
+                        optimisticColor = 'red';
+                        optimisticIsDefinitive = true;
+                    }
+                    // else: hold off — QU fallback will handle feedback
                 }
             }
             // Word list not yet available — server response will fire the single definitive flash.
@@ -6163,6 +6170,18 @@ async function submitWord(wordParam = null, pathParam = null) {
             clearTimeout(fetchTimeout);
         }
         const data = await response.json();
+
+        // QU-TILE FALLBACK (mouse/swipe only): If the word failed and it contains QU
+        // from a Q tile, strip the U and resubmit. E.g. QUANAT → QANAT.
+        // Only fires once (_quFallback guard) and only for mouse/swipe (pathParam non-null).
+        if (!data.success && !_quFallback && pathParam !== null && /QU/.test(word)) {
+            const strippedWord = word.replace(/QU/g, 'Q');
+            if (strippedWord !== word) {
+                console.log(`[play.js] QU-tile fallback: retrying "${word}" as "${strippedWord}"`);
+                submitWord(strippedWord, pathParam, true);
+                return;
+            }
+        }
 
         // Determine the server's actual color result.
         const currentState = window.lastGameState;
