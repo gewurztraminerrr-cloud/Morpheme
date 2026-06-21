@@ -4241,7 +4241,16 @@ function checkBoardOverflow() {
         }
     } else {
         // Board-first: only shrink cell size if panels are already at absolute minimum
-        const maxAllowedWidth = window.innerWidth - 160 - 220 - 50;
+        let gridGap = 12;
+        if (window.innerWidth >= 1920) {
+            gridGap = 24;
+        } else if (window.innerWidth >= 1600) {
+            gridGap = 20;
+        } else if (window.innerWidth >= 1400) {
+            gridGap = 16;
+        }
+        const overhead = 20 + (gridGap * 2); // page padding + grid gaps
+        const maxAllowedWidth = window.innerWidth - 160 - 220 - overhead;
         if (requiredBoardWidth > maxAllowedWidth) {
             const targetCellSize = Math.floor((maxAllowedWidth - boardGap - boardPadding - scrollbarWidth) / cols);
             cellSize = Math.max(20, targetCellSize);
@@ -4286,7 +4295,15 @@ function applyPanelLayout(cellSize, cols) {
     const requiredBoardWidth = (cols * cellSize) + boardGap + boardPadding;
 
     const windowWidth = window.innerWidth;
-    const layoutOverhead = 44; // play-page padding (20) + grid gaps (24)
+    let gridGap = 12;
+    if (windowWidth >= 1920) {
+        gridGap = 24;
+    } else if (windowWidth >= 1600) {
+        gridGap = 20;
+    } else if (windowWidth >= 1400) {
+        gridGap = 16;
+    }
+    const layoutOverhead = 20 + (gridGap * 2); // play-page padding (20) + grid gaps
     const availableForPanels = windowWidth - requiredBoardWidth - layoutOverhead;
 
     const minLeft = 160;
