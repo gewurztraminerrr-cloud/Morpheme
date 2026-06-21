@@ -2169,6 +2169,24 @@
                     
                     <div id="def-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
                     
+                    <!-- Undefined Words Scroller Box -->
+                    <div class="undef-words-box" style="margin-bottom: 15px; border: 1px solid var(--input-border); border-radius: 8px; background: rgba(0,0,0,0.15); padding: 12px; display: none;" id="undef-words-container">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: 700; font-size: 0.85rem; opacity: 0.9;">
+                            <span style="color: var(--text-primary);">Words Without Definitions <span id="undef-words-count" style="opacity: 0.6; font-weight: 500; font-size: 0.8rem;">(Loading...)</span></span>
+                            <button id="refresh-undef-btn" class="mod-refresh-btn" style="background: none; border: none; color: #a5b4fc; cursor: pointer; font-size: 0.8rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='none'">Refresh</button>
+                        </div>
+                        <div style="margin-bottom: 8px;">
+                            <input type="text" id="undef-search-input" placeholder="Search undefined words..." style="width: 100%; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); font-size: 0.85rem;">
+                        </div>
+                        <div class="undef-words-list-scroll" style="max-height: 120px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; background: rgba(0,0,0,0.2);">
+                            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                                <tbody id="undef-words-tbody">
+                                    <!-- Rendered dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
                     <div class="mod-add-section pron-layout" style="margin-bottom: 15px;">
                         <input type="text" id="def-word-input" style="flex: 0.4;" placeholder="Words, e.g. MORPHEME, BOGGLE">
                         <textarea id="def-text-input" style="flex: 1; min-height: 48px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); padding: 8px; font-family: inherit; font-size: 0.9rem; resize: vertical;" placeholder="Enter definition..."></textarea>
@@ -4583,7 +4601,7 @@
     <script src="/js/leaderboard.js?v=3"></script>
     <script src="/js/tools.js?v=62"></script>
     <script src="/js/mouse_selection.js?v=3"></script>
-    <script src="/js/mods.js?v=9"></script>
+    <script src="/js/mods.js?v=10"></script>
     <script src="/js/private_matches.js?v=3"></script>
     <script src="/js/donate.js?v=2"></script>
     

@@ -722,6 +722,37 @@ def add_definition_api():
         print(f"Error updating definitions: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/mods/definitions/undefined', methods=['GET'])
+@login_required
+def get_undefined_words_api():
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    try:
+        global DEFINITIONS_CACHE
+        if not DEFINITIONS_CACHE:
+            load_definitions()
+            
+        word_validator.ensure_csw_loaded()
+        
+        all_words = set()
+        all_words.update(word_validator.nwl_words)
+        all_words.update(word_validator.csw_words)
+        all_words.update(word_validator.long_words)
+        all_words.update(word_validator.added_words)
+        
+        # Filter out words that have definitions in DEFINITIONS_CACHE
+        undefined_words = [w for w in all_words if w not in DEFINITIONS_CACHE]
+        undefined_words.sort()
+        
+        return jsonify({
+            'success': True,
+            'words': undefined_words
+        })
+    except Exception as e:
+        print(f"Error fetching undefined words: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/mods/definitions/remove', methods=['POST'])
 @login_required
 def remove_definition_api():

@@ -12,6 +12,9 @@ async function checkModStatus() {
         
         if (data.is_mod) {
             loadModList();
+            if (typeof loadUndefinedWords === 'function') {
+                loadUndefinedWords();
+            }
             document.querySelectorAll('.mod-only-btn').forEach(btn => btn.style.display = 'inline-block');
         }
     } catch (err) {
@@ -500,6 +503,16 @@ document.addEventListener('DOMContentLoaded', () => {
         removeDefBtn.addEventListener('click', removeDefinition);
     }
 
+    const refreshUndefBtn = document.getElementById('refresh-undef-btn');
+    if (refreshUndefBtn) {
+        refreshUndefBtn.addEventListener('click', loadUndefinedWords);
+    }
+
+    const undefSearchInput = document.getElementById('undef-search-input');
+    if (undefSearchInput) {
+        undefSearchInput.addEventListener('input', renderUndefinedWords);
+    }
+
     // Ban User
     const banUserBtn = document.getElementById('ban-user-btn');
     if (banUserBtn) {
@@ -631,6 +644,7 @@ async function addDefinition() {
             const wordsStr = data.words ? data.words.join(', ') : word;
             showModStatus(`Definition for "${wordsStr}" updated.`, false, 'def-status-area');
             alert(`Success: Definition for "${wordsStr}" has been set.`);
+            if (typeof loadUndefinedWords === 'function') loadUndefinedWords();
         } else {
             alert("Error: " + (data.error || "Failed to set definition."));
         }
@@ -661,6 +675,7 @@ async function removeDefinition() {
             const wordsStr = data.words ? data.words.join(', ') : word;
             showModStatus(`Definition for "${wordsStr}" removed.`, false, 'def-status-area');
             alert(`Success: Definition for "${wordsStr}" has been removed.`);
+            if (typeof loadUndefinedWords === 'function') loadUndefinedWords();
         } else {
             alert("Error: " + (data.error || "Failed to remove definition."));
         }
@@ -718,5 +733,82 @@ window.promptRemoveAddedWord = async function() {
         alert("Network error: Could not reach the server.");
     }
 };
+
+// Undefined Words Table Support
+let undefinedWordsList = [];
+
+async function loadUndefinedWords() {
+    const container = document.getElementById('undef-words-container');
+    if (!container) return;
+    
+    if (!window.currentUserIsMod) {
+        container.style.display = 'none';
+        return;
+    }
+    
+    container.style.display = 'block';
+    
+    const countEl = document.getElementById('undef-words-count');
+    const tbody = document.getElementById('undef-words-tbody');
+    
+    if (countEl) countEl.textContent = '(Loading...)';
+    
+    try {
+        const response = await fetch('/api/mods/definitions/undefined');
+        const data = await response.json();
+        
+        if (data.success && Array.isArray(data.words)) {
+            undefinedWordsList = data.words;
+            renderUndefinedWords();
+        } else {
+            if (tbody) tbody.innerHTML = `<tr><td style="padding: 10px; color: #f43f5e; font-size: 0.85rem;">Failed to load words.</td></tr>`;
+        }
+    } catch (err) {
+        console.error("Error loading undefined words:", err);
+        if (tbody) tbody.innerHTML = `<tr><td style="padding: 10px; color: #f43f5e; font-size: 0.85rem;">Error loading words.</td></tr>`;
+    }
+}
+
+function renderUndefinedWords() {
+    const countEl = document.getElementById('undef-words-count');
+    const tbody = document.getElementById('undef-words-tbody');
+    const searchInput = document.getElementById('undef-search-input');
+    const query = searchInput ? searchInput.value.trim().toUpperCase() : '';
+    
+    if (!tbody) return;
+    
+    const filtered = query 
+        ? undefinedWordsList.filter(w => w.includes(query))
+        : undefinedWordsList;
+        
+    if (countEl) {
+        countEl.textContent = `(${filtered.length} undefined)`;
+    }
+    
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td style="padding: 10px; color: rgba(255,255,255,0.4); font-size: 0.85rem; text-align: center;">No undefined words found.</td></tr>`;
+        return;
+    }
+    
+    tbody.innerHTML = filtered.map(word => `
+        <tr onclick="selectUndefinedWord('${word}')" style="border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+            <td style="padding: 6px 12px; font-weight: 600; font-size: 0.85rem; color: #a5b4fc;">${word}</td>
+        </tr>
+    `).join('');
+}
+
+window.selectUndefinedWord = function(word) {
+    const wordInput = document.getElementById('def-word-input');
+    const textInput = document.getElementById('def-text-input');
+    if (wordInput) {
+        wordInput.value = word;
+    }
+    if (textInput) {
+        textInput.focus();
+    }
+};
+
+window.loadUndefinedWords = loadUndefinedWords;
+window.renderUndefinedWords = renderUndefinedWords;
 
 
