@@ -6202,6 +6202,16 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
         }
     }
 
+    let serverPath = finalPath;
+    if (serverPath && window.isBoardTransposed) {
+        serverPath = serverPath.map(node => {
+            if (Array.isArray(node) && node.length === 2) {
+                return [node[1], node[0]]; // Swapping r and c back to untranspose for server
+            }
+            return node;
+        });
+    }
+
     try {
         // Use a timeout + keepalive to handle mobile network stalls gracefully.
         // keepalive ensures the request completes even if the page visibility changes mid-flight.
@@ -6217,7 +6227,7 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                 body: JSON.stringify({
                     word: word,
                     input_method: currentInputMethod,
-                    path: finalPath
+                    path: serverPath
                 })
             });
         } finally {

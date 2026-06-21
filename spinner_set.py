@@ -405,7 +405,7 @@ class SpinnerSet:
             
         result = random.choices(
             ['Normal', 'Equality Freq', 'Checkerboard', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Density', 'Rotation', 'Double', 'Triple'],
-            weights=[70, 2, 12, 2, 2, 2, 2, 2, 2, 2, 1, 1]
+            weights=[22, 2, 12, 2, 2, 50, 2, 2, 2, 2, 1, 1]
         )[0]
         
         if result == 'Mania':
