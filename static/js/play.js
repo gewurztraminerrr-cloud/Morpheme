@@ -4338,27 +4338,32 @@ function applyPanelLayout(cellSize, cols) {
 
     console.log('[play.js] availableForPanels:', availableForPanels, 'requiredBoardWidth:', requiredBoardWidth, 'gridWidth:', gridWidth);
 
-    if (availableForPanels >= (minLeft + minRight)) {
-        newLeft  = Math.max(minLeft,  Math.floor(availableForPanels * 0.44));
-        newRight = Math.max(minRight, availableForPanels - newLeft);
+    const maxRight = window.innerWidth >= 1920 ? 500 : window.innerWidth >= 1600 ? 460 : window.innerWidth >= 1400 ? 420 : 380;
+    const maxLeft  = window.innerWidth >= 1920 ? 460 : window.innerWidth >= 1600 ? 420 : window.innerWidth >= 1400 ? 380 : 340;
 
-        const maxRight = window.innerWidth >= 1920 ? 500 : window.innerWidth >= 1600 ? 460 : window.innerWidth >= 1400 ? 420 : 380;
-        const maxLeft  = window.innerWidth >= 1920 ? 460 : window.innerWidth >= 1600 ? 420 : window.innerWidth >= 1400 ? 380 : 340;
-        console.log('[play.js] layout targets: minLeft/minRight:', minLeft, minRight, 'maxLeft/maxRight:', maxLeft, maxRight);
-        if (newRight > maxRight) {
-            const surplus = newRight - maxRight;
-            newRight = maxRight;
-            newLeft  = Math.min(maxLeft, newLeft + surplus);
-        }
-        if (newLeft > maxLeft) newLeft = maxLeft;
-
-        // If right panel was capped to minRight, adjust left panel down to fit available space
-        if (newRight === minRight && (newLeft + newRight) > availableForPanels) {
-            newLeft = Math.max(minLeft, availableForPanels - minRight);
-        }
-    } else {
-        newLeft  = minLeft;
+    const totalMax = maxLeft + maxRight;
+    if (availableForPanels >= totalMax) {
+        newLeft = maxLeft;
+        newRight = maxRight;
+    } else if (availableForPanels <= (minLeft + minRight)) {
+        newLeft = minLeft;
         newRight = minRight;
+    } else {
+        // Distribute the reduction equally between both panels
+        const deficit = totalMax - availableForPanels;
+        const reduction = Math.floor(deficit / 2);
+
+        newLeft = maxLeft - reduction;
+        newRight = maxRight - reduction;
+
+        // Enforce minimum constraints and transfer excess deficit to the other panel if needed
+        if (newLeft < minLeft) {
+            newLeft = minLeft;
+            newRight = availableForPanels - minLeft;
+        } else if (newRight < minRight) {
+            newRight = minRight;
+            newLeft = availableForPanels - minRight;
+        }
     }
 
     console.log('[play.js] setting widths: newLeft:', newLeft, 'newRight:', newRight);
