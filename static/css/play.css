@@ -140,6 +140,8 @@
     height: 100%;
     box-sizing: border-box;
     min-width: 0; /* Allow the grid item to shrink below min-content width */
+    container-type: inline-size;
+    container-name: wordspanel;
 }
 
 .words-table-box {
@@ -173,6 +175,8 @@
     gap: 15px;
     height: 100%;
     min-width: 0; /* Allow the grid item to shrink below min-content width */
+    container-type: inline-size;
+    container-name: leftpanel;
 }
 
 .players-panel {
@@ -5657,6 +5661,68 @@ body .board-cell.tile-flash-purple * {
     transform: translateY(0);
 }
 
+/* Widescreen Panel Adaptations using CSS Container Queries */
 
+@container leftpanel (max-width: 280px) {
+    .players-panel {
+        padding: 10px !important;
+    }
+    .player-actions-row {
+        flex-direction: column !important;
+        gap: 6px !important;
+    }
+    .player-actions-row .find-me-btn {
+        padding: 6px 0 !important;
+        font-size: 0.72rem !important;
+        margin-bottom: 0 !important;
+    }
+    .player-item {
+        padding: 4px 10px !important;
+        height: 52px !important;
+    }
+    .player-username {
+        min-width: 50px !important;
+        font-size: 0.85rem !important;
+    }
+    .chat-input-section button {
+        padding: 8px 8px !important;
+        font-size: 0.8rem !important;
+    }
+}
 
+@container leftpanel (max-width: 200px) {
+    .player-rank,
+    .rating-square {
+        display: none !important;
+    }
+    .player-flag {
+        font-size: 0.9rem !important;
+    }
+    .player-item {
+        height: 48px !important;
+        padding: 4px 6px !important;
+    }
+    .player-rating-val {
+        font-size: 0.75rem !important;
+    }
+    .player-score-val {
+        font-size: 0.9rem !important;
+    }
+}
 
+@container wordspanel (max-width: 280px) {
+    .words-table-box {
+        padding: 10px 8px !important;
+    }
+    .word-tab {
+        font-size: 0.72rem !important;
+        padding: 6px 1px !important;
+    }
+    .words-tabs {
+        margin-bottom: 8px !important;
+        padding: 2px !important;
+    }
+    .word-item {
+        padding: 4px 4px !important;
+    }
+}

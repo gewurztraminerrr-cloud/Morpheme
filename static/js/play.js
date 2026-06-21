@@ -4315,7 +4315,16 @@ function applyPanelLayout(cellSize, cols) {
 
     console.log('[play.js] setting widths: newLeft:', newLeft, 'newRight:', newRight);
     if (playPage)  { playPage.style.setProperty('--left-panel-w',  `${newLeft}px`);  playPage.style.setProperty('--right-panel-w',  `${newRight}px`); }
-    if (playGrid)  { playGrid.style.setProperty('--left-panel-w',  `${newLeft}px`);  playGrid.style.setProperty('--right-panel-w',  `${newRight}px`); }
+    if (playGrid)  {
+        playGrid.style.setProperty('--left-panel-w',  `${newLeft}px`);
+        playGrid.style.setProperty('--right-panel-w',  `${newRight}px`);
+        const isMobileView = window.innerWidth <= 992;
+        if (isMobileView) {
+            playGrid.style.gridTemplateColumns = '';
+        } else {
+            playGrid.style.gridTemplateColumns = `${newLeft}px 1fr ${newRight}px`;
+        }
+    }
 }
 window.applyPanelLayout = applyPanelLayout;
 
