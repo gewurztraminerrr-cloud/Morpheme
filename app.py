@@ -4916,11 +4916,16 @@ def tools_find_count():
 @login_required
 def tools_random_words():
     try:
+        word_validator.ensure_csw_loaded()
         sampled = []
         for length in [5, 6, 7, 8, 9, 10]:
-            words = word_validator.nwl_by_len.get(length, [])
-            if words:
-                sampled.append(random.choice(words))
+            nwl_set = word_validator.nwl_by_len.get(length, [])
+            csw_set = word_validator.csw_by_len.get(length, [])
+            aw_set = [w for w in word_validator.added_words if len(w) == length]
+            combined = list(set(nwl_set) | set(csw_set) | set(aw_set))
+            
+            if combined:
+                sampled.append(random.choice(combined))
             else:
                 fallbacks = {5: 'KUDZU', 6: 'BURANS', 7: 'PLEROMA', 8: 'PRONOTUM', 9: 'MANGETOUT', 10: 'OVERSTATES'}
                 sampled.append(fallbacks.get(length, 'MORPHEME'))
