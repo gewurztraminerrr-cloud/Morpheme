@@ -324,6 +324,7 @@ class GameRoom:
                 existing_player.invalid_words = []
                 existing_player.score = 0
                 existing_player.previous_round_score = 0
+                existing_player.rating_change = 0
                 existing_player.cell_density = []
                 # MID-ROUND DETECTION for past_player joining a new round that is already active
                 existing_player.joined_mid_round = (self.state == 'active')
@@ -1553,19 +1554,21 @@ class GameRoom:
                                 conn_p = sqlite3.connect(DB_PATH, timeout=30)
                                 for p in self.players + quitters_snapshot:
                                     if p.user_id in rating_changes:
-                                        p.rating_change = rating_changes[p.user_id]
-                                        p.rating += p.rating_change
-                                        # Update Global Rating
-                                        conn_p.execute('UPDATE users SET rating = MAX(400, rating + ?) WHERE id = ?', (p.rating_change, p.user_id))
-                                        
-                                        # Update Config-Specific Rating (using INSERT OR ON CONFLICT UPDATE upsert)
-                                        display_game_type = self.game_type.replace('solo_', '')
-                                        config_key = f"{display_game_type}|{self.board_dimensions}|{self.time_limit}"
-                                        conn_p.execute('''
-                                            INSERT INTO user_ratings (user_id, config_key, rating)
-                                            VALUES (?, ?, MAX(400, 1200 + ?))
-                                            ON CONFLICT(user_id, config_key) DO UPDATE SET rating = MAX(400, rating + ?)
-                                        ''', (p.user_id, config_key, p.rating_change, p.rating_change))
+                                         p.rating_change = rating_changes[p.user_id]
+                                         p.rating += p.rating_change
+                                         # Update Global Rating
+                                         conn_p.execute('UPDATE users SET rating = MAX(400, rating + ?) WHERE id = ?', (p.rating_change, p.user_id))
+                                         
+                                         # Update Config-Specific Rating (using INSERT OR ON CONFLICT UPDATE upsert)
+                                         display_game_type = self.game_type.replace('solo_', '')
+                                         config_key = f"{display_game_type}|{self.board_dimensions}|{self.time_limit}"
+                                         conn_p.execute('''
+                                             INSERT INTO user_ratings (user_id, config_key, rating)
+                                             VALUES (?, ?, MAX(400, 1200 + ?))
+                                             ON CONFLICT(user_id, config_key) DO UPDATE SET rating = MAX(400, rating + ?)
+                                         ''', (p.user_id, config_key, p.rating_change, p.rating_change))
+                                    else:
+                                         p.rating_change = 0
 
                                 # 5. Distribute Abandonment Bounty (User Request: At the end when results are shown)
                                 if self.abandonment_bounty > 0:
@@ -4187,6 +4190,7 @@ class RoomManager:
                         p.performance_efficiency = 0.0
                         p.has_abandoned = False
                         p._last_round_seen = next_round_val
+                        p.rating_change = 0
                     
                     # Clear active stats and snapshot for all archive players in past_players
                     for p in room.past_players.values():
@@ -4202,6 +4206,7 @@ class RoomManager:
                         p.performance_efficiency = 0.0
                         p.has_abandoned = False
                         p._last_round_seen = next_round_val
+                        p.rating_change = 0
                     
                     room.players = []
                     room.spectators = []
@@ -4211,11 +4216,13 @@ class RoomManager:
                         p.found_bonus_word, p.has_abandoned = False, False
                         p.joined_mid_round = False
                         p._last_round_seen = next_round_val
+                        p.rating_change = 0
                     for p in room.past_players.values():
                         p.submitted_words, p.invalid_words, p.score = [], [], 0
                         p.found_bonus_word, p.has_abandoned = False, False
                         p.joined_mid_round = False
                         p._last_round_seen = next_round_val
+                        p.rating_change = 0
 
                 # CLEAR BOARD & WORDS IMMEDIATELY if we are about to generate a new one
                 # This handles the fallback Case or any state where we want to avoid stale data
