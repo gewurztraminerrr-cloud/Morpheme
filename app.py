@@ -839,7 +839,7 @@ def ban_user_api():
     conn.row_factory = sqlite3.Row
     try:
         # Get user ID
-        cursor = conn.execute("SELECT id FROM users WHERE username = ?", (username,))
+        cursor = conn.execute("SELECT id FROM users WHERE username = ? COLLATE NOCASE", (username,))
         row = cursor.fetchone()
         if not row:
             return jsonify({'error': 'User not found'}), 404
@@ -867,9 +867,9 @@ def ban_user_api():
         conn.execute("DELETE FROM user_settings WHERE user_id = ?", (user_id,))
         
         # Name-based string deletions
-        conn.execute("DELETE FROM match_invites WHERE recipient_username = ?", (username,))
-        conn.execute("DELETE FROM private_match_players WHERE username = ?", (username,))
-        conn.execute("DELETE FROM private_messages WHERE sender_username = ?", (username,))
+        conn.execute("DELETE FROM match_invites WHERE recipient_username = ? COLLATE NOCASE", (username,))
+        conn.execute("DELETE FROM private_match_players WHERE username = ? COLLATE NOCASE", (username,))
+        conn.execute("DELETE FROM private_messages WHERE sender_username = ? COLLATE NOCASE", (username,))
 
         # Finally, delete the user record
         conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
@@ -1883,7 +1883,7 @@ def send_signup_verification():
         
     try:
         conn = sqlite3.connect(DB_PATH, timeout=30)
-        cursor = conn.execute('SELECT id FROM users WHERE username = ?', (username,))
+        cursor = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (username,))
         if cursor.fetchone():
             return jsonify({'error': 'Username already exists'}), 400
             
@@ -1959,6 +1959,11 @@ def register():
     try:
         conn = sqlite3.connect(DB_PATH, timeout=30)
         
+        # Check if username already exists case-insensitively
+        cursor = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (username,))
+        if cursor.fetchone():
+            return jsonify({'error': 'Username already exists'}), 400
+            
         # Check if email already exists
         cursor = conn.execute('SELECT id FROM users WHERE email = ?', (email,))
         if cursor.fetchone():
@@ -1981,7 +1986,7 @@ def register():
             
         conn.commit()
         
-        cursor = conn.execute('SELECT id, rating FROM users WHERE username = ?', (username,))
+        cursor = conn.execute('SELECT id, rating FROM users WHERE username = ? COLLATE NOCASE', (username,))
         user = cursor.fetchone()
         
         # Clear the verification session data
@@ -2089,15 +2094,16 @@ def login():
             return jsonify({'success': False, 'error': 'Incorrect or expired CAPTCHA. Please click on the CAPTCHA image to refresh and try again.'}), 200
             
         conn = sqlite3.connect(DB_PATH, timeout=30)
-        cursor = conn.execute('SELECT id, password_hash, email FROM users WHERE username = ?', (username,))
+        cursor = conn.execute('SELECT id, password_hash, email, username FROM users WHERE username = ? COLLATE NOCASE', (username,))
         user = cursor.fetchone()
         conn.close()
         
         if not user or not check_password_hash(user[1], password):
             return jsonify({'success': False, 'error': 'Invalid username or password'}), 200
         
+        canonical_username = user[3]
         session['user_id'] = user[0]
-        session['username'] = username
+        session['username'] = canonical_username
         session['email'] = user[2]
         session.pop('is_guest', None) # Clear guest flag if present
         session['_morpheme_login_time'] = time.time()
@@ -2105,9 +2111,9 @@ def login():
         
         return jsonify({
             'success': True, 
-            'username': username, 
+            'username': canonical_username, 
             'email': user[2],
-            'is_mod': is_mod(username)
+            'is_mod': is_mod(canonical_username)
         })
     except Exception as e:
         print(f"[LoginError] {e}")
