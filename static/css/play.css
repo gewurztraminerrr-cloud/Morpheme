@@ -139,6 +139,7 @@
     min-height: 0;
     height: 100%;
     box-sizing: border-box;
+    min-width: 0; /* Allow the grid item to shrink below min-content width */
 }
 
 .words-table-box {
@@ -171,6 +172,7 @@
     flex-direction: column;
     gap: 15px;
     height: 100%;
+    min-width: 0; /* Allow the grid item to shrink below min-content width */
 }
 
 .players-panel {
