@@ -4325,6 +4325,11 @@ function applyPanelLayout(cellSize, cols) {
             newLeft  = Math.min(maxLeft, newLeft + surplus);
         }
         if (newLeft > maxLeft) newLeft = maxLeft;
+
+        // If right panel was capped to minRight, adjust left panel down to fit available space
+        if (newRight === minRight && (newLeft + newRight) > availableForPanels) {
+            newLeft = Math.max(minLeft, availableForPanels - minRight);
+        }
     } else {
         newLeft  = minLeft;
         newRight = minRight;
