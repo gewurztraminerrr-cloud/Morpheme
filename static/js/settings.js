@@ -425,16 +425,22 @@ function debounce(func, wait) {
     // 4. Existing Listeners (boardSize, chatSize, defSize, music, highlight typing/mouse, theme, bell)
     if (boardSizeSlider) {
         boardSizeSlider.addEventListener('input', (e) => {
-            const val = e.target.value;
+            const val = parseInt(e.target.value);
+            console.log('[settings.js] boardSizeSlider input:', val);
             window.userManuallyOverrodeBoardSize = true;
             window.cachedCellSize = val;
             document.documentElement.style.setProperty('--cell-size', `${val}px`);
             const previewBoard = document.getElementById('preview-board');
-            if (previewBoard) {
-                previewBoard.style.setProperty('--cell-size', `${val}px`);
-            }
+            if (previewBoard) previewBoard.style.setProperty('--cell-size', `${val}px`);
             if (boardSizeVal) boardSizeVal.textContent = `${val}px`;
-            if (typeof window.checkBoardOverflow === 'function') window.checkBoardOverflow();
+            // Recalculate panels immediately using known board size
+            if (typeof window.applyPanelLayout === 'function') {
+                const cols = window.lastGameState?.board?.[0]?.length || 8;
+                console.log('[settings.js] calling applyPanelLayout with cols:', cols);
+                window.applyPanelLayout(val, cols);
+            } else {
+                console.log('[settings.js] window.applyPanelLayout is not defined yet');
+            }
             saveSettingDebounced('board_size', val);
         });
     }
@@ -443,33 +449,40 @@ function debounce(func, wait) {
     dimSliders.forEach(slider => {
         slider.addEventListener('input', (e) => {
             const dim = e.target.getAttribute('data-dim');
-            const val = e.target.value;
+            const val = parseInt(e.target.value);
+            console.log('[settings.js] dimSlider input:', dim, val);
             const valEl = document.getElementById(`val-dim-${dim}`);
             if (valEl) valEl.textContent = `${val}px`;
 
             if (!window.userSettings) window.userSettings = {};
-            if (!window.userSettings.board_sizes) window.userSettings.board_sizes = { '4x4': 54, '4x6': 50, '5x7': 45, '6x8': 40 };
-            window.userSettings.board_sizes[dim] = parseInt(val);
-
+            if (!window.userSettings.board_sizes) window.userSettings.board_sizes = {};
+            window.userSettings.board_sizes[dim] = val;
             localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
             saveSettingDebounced('board_sizes', window.userSettings.board_sizes);
 
-            // If active room matches this dimension, apply instantly and recalculate panels
-            if (typeof window.checkBoardOverflow === 'function') {
-                const boardEl = document.getElementById('game-board');
-                if (boardEl) {
-                    const cols = parseInt(boardEl.getAttribute('data-cols') || boardEl.style.getPropertyValue('--board-cols').trim() || '4');
-                    const rows = parseInt(boardEl.getAttribute('data-rows') || boardEl.style.getPropertyValue('--board-rows').trim() || '4');
-                    const minDim = Math.min(cols, rows);
-                    const maxDim = Math.max(cols, rows);
-                    if (`${minDim}x${maxDim}` === dim) {
-                        window.userManuallyOverrodeBoardSize = true;
-                        window.cachedCellSize = val;
-                        document.documentElement.style.setProperty('--cell-size', `${val}px`);
-                        const playPage = document.getElementById('page-play');
-                        if (playPage) playPage.style.setProperty('--cell-size', `${val}px`);
-                        boardEl.style.setProperty('--cell-size', `${val}px`);
-                        window.checkBoardOverflow();
+            // Check if the active room matches this dimension; if so apply immediately
+            const gs = window.lastGameState;
+            console.log('[settings.js] gs state:', gs ? 'defined' : 'undefined');
+            if (gs && gs.board && gs.board[0]) {
+                const activeCols = gs.board[0].length;
+                const activeRows = gs.board.length;
+                const minD = Math.min(activeCols, activeRows);
+                const maxD = Math.max(activeCols, activeRows);
+                console.log('[settings.js] active room dims:', activeCols, 'x', activeRows, 'minD:', minD, 'maxD:', maxD, 'target dim:', dim);
+                if (`${minD}x${maxD}` === dim) {
+                    window.userManuallyOverrodeBoardSize = true;
+                    window.cachedCellSize = val;
+                    document.documentElement.style.setProperty('--cell-size', `${val}px`);
+                    const playPage = document.getElementById('page-play');
+                    if (playPage) playPage.style.setProperty('--cell-size', `${val}px`);
+                    const boardEl = document.getElementById('game-board');
+                    if (boardEl) boardEl.style.setProperty('--cell-size', `${val}px`);
+                    // Recalculate panel widths directly
+                    if (typeof window.applyPanelLayout === 'function') {
+                        console.log('[settings.js] calling applyPanelLayout with activeCols:', activeCols);
+                        window.applyPanelLayout(val, activeCols);
+                    } else {
+                        console.log('[settings.js] window.applyPanelLayout is not defined yet (dim)');
                     }
                 }
             }

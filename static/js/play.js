@@ -4262,51 +4262,7 @@ function checkBoardOverflow() {
     const previewBoard = document.getElementById('preview-board');
     if (previewBoard) previewBoard.style.setProperty('--cell-size', `${cellSize}px`);
 
-    // 3. Calculate Available Space
-    const windowWidth = window.innerWidth;
-    // Account for play-page padding (10px each side) and grid gaps (12px * 2)
-    const layoutOverhead = 44;
-    const availableForPanels = windowWidth - requiredBoardWidth - layoutOverhead;
-
-    // 4. Distribute remaining space dynamically — board-first, panels shrink to fit
-    // Panels split available space in a 44/56 ratio (left is narrower than right)
-    const minLeft = 220;
-    const minRight = 280;
-
-    let newLeft, newRight;
-
-    if (availableForPanels >= (minLeft + minRight)) {
-        // Distribute proportionally: left gets ~44%, right gets ~56%
-        newLeft  = Math.max(minLeft,  Math.floor(availableForPanels * 0.44));
-        newRight = Math.max(minRight, availableForPanels - newLeft);
-
-        // If right exceeds a sensible max, give the surplus to left instead
-        const maxRight = windowWidth >= 1920 ? 500 : windowWidth >= 1600 ? 460 : windowWidth >= 1400 ? 420 : 380;
-        const maxLeft  = windowWidth >= 1920 ? 460 : windowWidth >= 1600 ? 420 : windowWidth >= 1400 ? 380 : 340;
-        if (newRight > maxRight) {
-            const surplus = newRight - maxRight;
-            newRight = maxRight;
-            newLeft  = Math.min(maxLeft, newLeft + surplus);
-        }
-        if (newLeft > maxLeft) {
-            newLeft = maxLeft;
-        }
-    } else {
-        // Extreme constraint — use absolute minimums
-        newLeft  = minLeft;
-        newRight = minRight;
-    }
-
-    // 5. Apply
-    playPage.style.setProperty('--left-panel-w', `${newLeft}px`);
-    playPage.style.setProperty('--right-panel-w', `${newRight}px`);
-
-    // CRITICAL: Apply directly to .play-grid to override CSS media queries specifying these vars on .play-grid
-    const playGrid = document.querySelector('.play-grid');
-    if (playGrid) {
-        playGrid.style.setProperty('--left-panel-w', `${newLeft}px`);
-        playGrid.style.setProperty('--right-panel-w', `${newRight}px`);
-    }
+    applyPanelLayout(cellSize, cols);
 
     // Maintain vertical scroll class
     if (boardPanel.scrollHeight > boardPanel.clientHeight) {
@@ -4315,6 +4271,53 @@ function checkBoardOverflow() {
         playPage.classList.remove('has-vertical-scroll');
     }
 }
+
+// Standalone panel layout calculator — can be called directly from Settings sliders
+// cellSize: current tile px size, cols: number of board columns
+function applyPanelLayout(cellSize, cols) {
+    console.log('[play.js] applyPanelLayout called with cellSize:', cellSize, 'cols:', cols);
+    const playPage = document.getElementById('page-play');
+    const playGrid = document.querySelector('.play-grid');
+    console.log('[play.js] playPage:', !!playPage, 'playGrid:', !!playGrid);
+    if (!playPage && !playGrid) return;
+
+    const boardGap = 4 * (cols - 1);
+    const boardPadding = 40; // desktop only
+    const requiredBoardWidth = (cols * cellSize) + boardGap + boardPadding;
+
+    const windowWidth = window.innerWidth;
+    const layoutOverhead = 44; // play-page padding (20) + grid gaps (24)
+    const availableForPanels = windowWidth - requiredBoardWidth - layoutOverhead;
+
+    const minLeft = 220;
+    const minRight = 280;
+    let newLeft, newRight;
+
+    console.log('[play.js] availableForPanels:', availableForPanels, 'requiredBoardWidth:', requiredBoardWidth, 'windowWidth:', windowWidth);
+
+    if (availableForPanels >= (minLeft + minRight)) {
+        newLeft  = Math.max(minLeft,  Math.floor(availableForPanels * 0.44));
+        newRight = Math.max(minRight, availableForPanels - newLeft);
+
+        const maxRight = windowWidth >= 1920 ? 500 : windowWidth >= 1600 ? 460 : windowWidth >= 1400 ? 420 : 380;
+        const maxLeft  = windowWidth >= 1920 ? 460 : windowWidth >= 1600 ? 420 : windowWidth >= 1400 ? 380 : 340;
+        console.log('[play.js] layout targets: minLeft/minRight:', minLeft, minRight, 'maxLeft/maxRight:', maxLeft, maxRight);
+        if (newRight > maxRight) {
+            const surplus = newRight - maxRight;
+            newRight = maxRight;
+            newLeft  = Math.min(maxLeft, newLeft + surplus);
+        }
+        if (newLeft > maxLeft) newLeft = maxLeft;
+    } else {
+        newLeft  = minLeft;
+        newRight = minRight;
+    }
+
+    console.log('[play.js] setting widths: newLeft:', newLeft, 'newRight:', newRight);
+    if (playPage)  { playPage.style.setProperty('--left-panel-w',  `${newLeft}px`);  playPage.style.setProperty('--right-panel-w',  `${newRight}px`); }
+    if (playGrid)  { playGrid.style.setProperty('--left-panel-w',  `${newLeft}px`);  playGrid.style.setProperty('--right-panel-w',  `${newRight}px`); }
+}
+window.applyPanelLayout = applyPanelLayout;
 
 // Deprecated old function (renamed to avoid conflict)
 function checkBoardOverflow_OLD() {
