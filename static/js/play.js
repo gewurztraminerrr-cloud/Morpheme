@@ -4241,7 +4241,7 @@ function checkBoardOverflow() {
         }
     } else {
         // Board-first: only shrink cell size if panels are already at absolute minimum
-        const maxAllowedWidth = window.innerWidth - 220 - 280 - 50;
+        const maxAllowedWidth = window.innerWidth - 160 - 220 - 50;
         if (requiredBoardWidth > maxAllowedWidth) {
             const targetCellSize = Math.floor((maxAllowedWidth - boardGap - boardPadding - scrollbarWidth) / cols);
             cellSize = Math.max(20, targetCellSize);
@@ -4289,8 +4289,8 @@ function applyPanelLayout(cellSize, cols) {
     const layoutOverhead = 44; // play-page padding (20) + grid gaps (24)
     const availableForPanels = windowWidth - requiredBoardWidth - layoutOverhead;
 
-    const minLeft = 220;
-    const minRight = 280;
+    const minLeft = 160;
+    const minRight = 220;
     let newLeft, newRight;
 
     console.log('[play.js] availableForPanels:', availableForPanels, 'requiredBoardWidth:', requiredBoardWidth, 'windowWidth:', windowWidth);
