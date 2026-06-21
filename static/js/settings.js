@@ -434,7 +434,10 @@ function debounce(func, wait) {
             if (previewBoard) previewBoard.style.setProperty('--cell-size', `${val}px`);
             if (boardSizeVal) boardSizeVal.textContent = `${val}px`;
             // Recalculate panels immediately using known board size
-            if (typeof window.applyPanelLayout === 'function') {
+            if (typeof window.checkBoardOverflow === 'function') {
+                console.log('[settings.js] calling checkBoardOverflow');
+                window.checkBoardOverflow();
+            } else if (typeof window.applyPanelLayout === 'function') {
                 const cols = window.lastGameState?.board?.[0]?.length || 8;
                 console.log('[settings.js] calling applyPanelLayout with cols:', cols);
                 window.applyPanelLayout(val, cols);
@@ -478,7 +481,10 @@ function debounce(func, wait) {
                     const boardEl = document.getElementById('game-board');
                     if (boardEl) boardEl.style.setProperty('--cell-size', `${val}px`);
                     // Recalculate panel widths directly
-                    if (typeof window.applyPanelLayout === 'function') {
+                    if (typeof window.checkBoardOverflow === 'function') {
+                        console.log('[settings.js] calling checkBoardOverflow (dim)');
+                        window.checkBoardOverflow();
+                    } else if (typeof window.applyPanelLayout === 'function') {
                         console.log('[settings.js] calling applyPanelLayout with activeCols:', activeCols);
                         window.applyPanelLayout(val, activeCols);
                     } else {
