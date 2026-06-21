@@ -68,31 +68,14 @@ function setupToolsNavigation() {
         const btn = e.target.closest('.tool-nav-btn');
         if (!btn) return;
 
-        const navBtns = sidebar.querySelectorAll('.tool-nav-btn');
-        const panes = document.querySelectorAll('.tool-pane');
-
-        // Update buttons
-        navBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        // Show pane
-        const toolId = btn.dataset.tool; // e.g. "combo"
-        panes.forEach(p => p.classList.remove('active'));
-        const targetPane = document.getElementById(`tool-${toolId}`);
-        if (targetPane) targetPane.classList.add('active');
-
-        // Trigger fetch for Lists if selected (lazy load)
-        if (toolId === 'profile') {
-            refreshProfileTool();
-        }
-        if (toolId === 'lists') {
-            fetchListsData();
-        }
-        if (toolId === 'manual') {
-            fetch('/api/tools/flag_manual', { method: 'POST' });
-        }
-        if (toolId === 'wotd') {
-            updateWotd();
+        const toolId = btn.dataset.tool;
+        if (toolId) {
+            // Check if this tool is already active to prevent double-firing with inline onclick
+            const currentActive = sidebar.querySelector('.tool-nav-btn.active');
+            if (currentActive && currentActive.dataset.tool === toolId) {
+                return;
+            }
+            window.showTool(toolId);
         }
     });
 }
@@ -2495,6 +2478,7 @@ let currentWordsType = '';
 const WORDS_PAGE_SIZE = 2000; // Render in slightly larger chunks for speed
 let currentProgressiveLoadId = 0;
 let listsFetchAbortController = null;
+let listsFetchTimeoutId = null; // Module-level so it can be cancelled on re-fetch
 
 function startProgressiveRendering() {
     const loadId = ++currentProgressiveLoadId;
@@ -2756,6 +2740,11 @@ async function fetchListsData(typeOverride) {
     if (listsFetchAbortController) {
         listsFetchAbortController.abort();
     }
+    // Cancel previous warning timer (prevents ghost warnings after fast loads)
+    if (listsFetchTimeoutId) {
+        clearTimeout(listsFetchTimeoutId);
+        listsFetchTimeoutId = null;
+    }
     listsFetchAbortController = new AbortController();
     const currentController = listsFetchAbortController;
 
@@ -2800,6 +2789,9 @@ async function fetchListsData(typeOverride) {
 
     const controller = currentController;
     const timeoutId = setTimeout(() => {
+        if (listsFetchTimeoutId === timeoutId) {
+            listsFetchTimeoutId = null;
+        }
         controller.abort();
         if (scrollArea) {
             scrollArea.innerHTML = `
@@ -2814,6 +2806,7 @@ async function fetchListsData(typeOverride) {
             `;
         }
     }, 180000);
+    listsFetchTimeoutId = timeoutId;
 
     try {
         // Build Query URL
@@ -2827,7 +2820,11 @@ async function fetchListsData(typeOverride) {
         }
 
         const response = await fetch(url + `&t=${Date.now()}`, { signal: controller.signal });
-        clearTimeout(timeoutId);
+        // Clear the warning timer — fetch completed in time
+        if (listsFetchTimeoutId === timeoutId) {
+            clearTimeout(timeoutId);
+            listsFetchTimeoutId = null;
+        }
         const data = await response.json();
 
         // Clear active fetch controller tracking if it is still this controller
@@ -2863,6 +2860,10 @@ async function fetchListsData(typeOverride) {
         listsDataLoaded = true;
 
     } catch (err) {
+        if (listsFetchTimeoutId === timeoutId) {
+            clearTimeout(timeoutId);
+            listsFetchTimeoutId = null;
+        }
         if (listsFetchAbortController === currentController) {
             listsFetchAbortController = null;
         }
