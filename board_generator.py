@@ -72,6 +72,10 @@ LETTER_FREQ_EASY = [
     1,    # Z (Hardened)
 ]
 
+LETTER_FREQ_EQUALITY = [
+    700, 413, 413, 413, 700, 413, 413, 413, 700, 25, 413, 413, 413, 413, 700, 413, 25, 413, 413, 413, 700, 413, 413, 25, 413, 25
+]
+
 LETTER_FREQ_SUPER_DENSITY = [
     250, # A
     150,  # B
@@ -1069,6 +1073,12 @@ class BoardGenerator:
             timeout = 120.0 if (not is_emergency and rows*cols <= 16 and min_words >= 100) else (60.0 if not is_emergency else 8.0)
         attempts = 0
         
+        # For Equality Freq format, track the best board found in case of fallback
+        best_equality_board = None
+        best_equality_distance = float('inf')
+        best_equality_words_dict = None
+        best_equality_embedded_path = None
+        
         while time.time() - start_time < timeout:
             attempts += 1
             print(f"[BoardGen] COMPLIANCE ATTEMPT {attempts} (Target: {min_words}-{max_words}, MinLen: {min_word_length})")
@@ -1092,14 +1102,18 @@ class BoardGenerator:
             is_checkerboard = "checkerboard" in safe_format
 
             # Standard Strategies
-            if num_tiles >= 24 and depth == 1 and not is_checkerboard and "either/or" not in safe_format:
+            if "equality freq" in safe_format:
+                strategy = "None"
+            elif num_tiles >= 24 and depth == 1 and not is_checkerboard and "either/or" not in safe_format:
                 strategy = "WordSoup"
             else:
                 strategy = "StepwiseOptimization" if (num_tiles >= 24 or difficulty in ["Medium", "Hard"]) else "HighDensity"
             
             # Weighted frequencies for density
             # If target difficulty is Easy, we want natural/friendly frequencies, NOT super dense or rare letters!
-            if difficulty == "Easy":
+            if "equality freq" in safe_format:
+                weights = LETTER_FREQ_EQUALITY
+            elif difficulty == "Easy":
                 # For Easy boards, always prioritize standard user frequencies unless repeatedly failing
                 weights = LETTER_FREQ_EASY if (min_words >= 300 or attempts > 3) else LETTER_FREQ_USER
             else:
@@ -1113,7 +1127,18 @@ class BoardGenerator:
                     weights = LETTER_FREQ_SUPER_DENSITY
                 else:
                     weights = LETTER_FREQ_EASY if (min_words >= 200 or attempts > 3) else LETTER_FREQ_USER
-            if is_checkerboard:
+            if "equality freq" in safe_format:
+                if depth > 1:
+                    board = [
+                        [[random.choices(self.letters, weights=weights, k=1)[0] for _ in range(cols)] for _ in range(rows)]
+                        for _ in range(depth)
+                    ]
+                else:
+                    board = [
+                        [random.choices(self.letters, weights=weights, k=1)[0] for _ in range(cols)]
+                        for _ in range(rows)
+                    ]
+            elif is_checkerboard:
                 board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
             elif "either/or" in safe_format:
                 # Support Either/Or tiles (e.g. A/B) by creating a normal board first
@@ -1195,7 +1220,9 @@ class BoardGenerator:
                             if cell == mania_letter: all_excluded.add((f, r, c) if depth > 1 else (r, c))
 
             # --- OPTIMIZATION ---
-            if strategy == "StepwiseOptimization":
+            if "equality freq" in safe_format:
+                pass
+            elif strategy == "StepwiseOptimization":
                 # Stage 1: Base Board (Targeting 150 for safety margin)
                 # USER REQUEST: Even if we use "Easy" weights for speed, we MUST respect forbidden sequences 
                 # if the target difficulty is Medium or Hard.
@@ -1236,7 +1263,9 @@ class BoardGenerator:
             print(f"[BoardGen] ATTEMPT {attempts} PRE-SWEEP: Count={count} Target={min_words}-{max_words}")
 
             # --- DYNAMIC CORRECTION (Push-Pull) ---
-            if count < min_words:
+            if "equality freq" in safe_format:
+                pass
+            elif count < min_words:
                 # SPARSE: Add letters to increase count
                 board = self._perform_rescue_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, rescue_depth=final_depth, protected_path=embedded_path, is_checkerboard=is_checkerboard, board_format=board_format)
             elif count > max_words:
@@ -1245,10 +1274,11 @@ class BoardGenerator:
 
             # --- FINAL RARE LETTER SANITIZATION (User Request: Max 1 Q, Z, J, X, K) ---
             # We do this AFTER all optimizations and sweeps to ensure compliance and clean board.
-            self._sanitize_rare_letters(board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
-            self._sanitize_letter_abundances(board, depth, board_format=board_format, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
-            if difficulty in ["Medium", "Hard"]:
-                self._sanitize_forbidden_sequences(board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
+            if "equality freq" not in safe_format:
+                self._sanitize_rare_letters(board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
+                self._sanitize_letter_abundances(board, depth, board_format=board_format, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
+                if difficulty in ["Medium", "Hard"]:
+                    self._sanitize_forbidden_sequences(board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
 
             # Final check to ensure the board strictly alternates C/V in checkerboard mode
             if is_checkerboard:
@@ -1412,6 +1442,73 @@ class BoardGenerator:
             count = len(all_words_dict)
             print(f"[BoardGen] ATTEMPT {attempts} POST-SWEEP VERIFICATION: Count={count} Target={min_words}-{max_words} MinLen={min_word_length}L")
             
+            if "equality freq" in safe_format:
+                dist = 0
+                if count < min_words:
+                    dist = min_words - count
+                elif count > max_words:
+                    dist = count - max_words
+                
+                if dist < best_equality_distance:
+                    best_equality_distance = dist
+                    best_equality_board = board
+                    best_equality_words_dict = all_words_dict
+                    best_equality_embedded_path = embedded_path
+                
+                time_elapsed = time.time() - start_time
+                should_exit = (dist == 0) or (attempts >= 250) or (time_elapsed >= 5.0)
+                
+                if should_exit:
+                    if dist > 0:
+                        print(f"[BoardGen] Equality Freq fallback: returning best board with count {len(best_equality_words_dict)} (distance {best_equality_distance}) after {attempts} attempts / {time_elapsed:.2f}s")
+                        board = best_equality_board
+                        embedded_path = best_equality_embedded_path
+                    
+                    # Re-solve the chosen board with paths stored so that the metadata/bonus word works!
+                    all_words_dict = self._solve_board(
+                        board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=30.0
+                    )
+                    
+                    ratio = self.get_uniqueness_ratio(board, list(all_words_dict.keys()), rows, cols, dictionary, depth)
+                    actual_bonus = None
+                    bonus_cell = None
+                    
+                    if bonus_word and embedded_path and bonus_word.upper() in [w.upper() for w in all_words_dict]:
+                        actual_bonus = bonus_word
+                        bonus_cell = all_words_dict[actual_bonus.upper() if actual_bonus.upper() in all_words_dict else actual_bonus][0]
+                    else:
+                        suitable = [w for w in all_words_dict if 6 <= len(w) <= 10]
+                        if not suitable: suitable = [w for w in all_words_dict if len(w) >= 6]
+                        if not suitable: suitable = [w for w in all_words_dict if len(w) >= 3]
+                        requested_length = len(bonus_word) if bonus_word else 8
+                        suitable_exact = [w for w in suitable if len(w) == requested_length]
+                        if suitable_exact:
+                            actual_bonus = random.choice(suitable_exact)
+                        else:
+                            actual_bonus = sorted(suitable, key=len, reverse=True)[0] if suitable else None
+                        if actual_bonus:
+                            bonus_cell = all_words_dict[actual_bonus][0]
+                            
+                    if difficulty in ["Medium", "Hard"]:
+                        self._guarantee_no_ing(board, depth, protected_positions=embedded_path)
+                        
+                    if bonus_cell:
+                        all_words_dict = self._solve_board(
+                            board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=10.0, bonus_cell=bonus_cell
+                        )
+                        
+                    return (
+                        board,
+                        sorted(list(all_words_dict.keys())),
+                        bonus_cell,
+                        board_format,
+                        all_words_dict,
+                        ratio,
+                        actual_bonus.upper() if actual_bonus else None
+                    )
+                else:
+                    continue
+            
             if min_words <= count <= max_words:
                 # USER REQUEST: Enforce uniqueness ratio match for the selected difficulty.
                 # To prevent timeouts, we only enforce this strictly for the first 8 attempts
@@ -1524,6 +1621,59 @@ class BoardGenerator:
         else:
             parts = dimensions.split("x")
             depth, rows, cols = (map(int, parts) if len(parts) == 3 else (1, int(parts[0]), int(parts[1])))
+            
+        safe_format = str(board_format or "").lower()
+        if "equality freq" in safe_format:
+            weights = LETTER_FREQ_EQUALITY
+            best_board = None
+            best_dist = float('inf')
+            best_solve = None
+            
+            for _attempt in range(1, 51):
+                if depth > 1:
+                    board = [
+                        [[random.choices(self.letters, weights=weights, k=1)[0] for _ in range(cols)] for _ in range(rows)]
+                        for _ in range(depth)
+                    ]
+                else:
+                    board = [
+                        [random.choices(self.letters, weights=weights, k=1)[0] for _ in range(cols)]
+                        for _ in range(rows)
+                    ]
+                final_solve = self._solve_board(
+                    board, dictionary, (0, 99999), min_word_length, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=10.0
+                )
+                count = len(final_solve)
+                if count < min_words:
+                    dist = min_words - count
+                elif count > max_words:
+                    dist = count - max_words
+                else:
+                    dist = 0
+                if dist < best_dist:
+                    best_dist = dist
+                    best_board = board
+                    best_solve = final_solve
+                if dist == 0:
+                    break
+            
+            board = best_board
+            final_solve = best_solve
+            ratio = self.get_uniqueness_ratio(board, list(final_solve.keys()), rows, cols, dictionary, depth)
+            
+            suitable = [w for w in final_solve if 6 <= len(w) <= 10]
+            if not suitable: suitable = [w for w in final_solve if len(w) >= 6]
+            if not suitable: suitable = [w for w in final_solve if len(w) >= 3]
+            
+            final_bonus = sorted(suitable, key=len, reverse=True)[0] if suitable else None
+            bonus_cell = None
+            if final_bonus:
+                bonus_cell = final_solve[final_bonus][0]
+            if bonus_cell:
+                final_solve = self._solve_board(
+                    board, dictionary, (0, 99999), min_word_length, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=10.0, bonus_cell=bonus_cell
+                )
+            return (board, sorted(list(final_solve.keys())), bonus_cell, board_format, final_solve, ratio, final_bonus)
         
         _attempt = 0
         import random

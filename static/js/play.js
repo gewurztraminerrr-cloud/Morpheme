@@ -8487,7 +8487,20 @@ function generateProbeBoard(params) {
     const cols = parseInt(parts[1]);
 
     let letters = [];
-    if (rows === 4 && cols === 4 && format !== 'Checkerboard') {
+    if (format === 'Equality Freq') {
+         const freq = {
+             'A': 700, 'B': 413, 'C': 413, 'D': 413, 'E': 700, 'F': 413, 'G': 413, 'H': 413, 'I': 700, 'J': 25,
+             'K': 413, 'L': 413, 'M': 413, 'N': 413, 'O': 700, 'P': 413, 'Q': 25, 'R': 413, 'S': 413, 'T': 413,
+             'U': 700, 'V': 413, 'W': 413, 'X': 25, 'Y': 413, 'Z': 25
+         };
+         let pool = [];
+         for (let char in freq) {
+             for (let i = 0; i < freq[char]; i++) pool.push(char);
+         }
+         for (let i = 0; i < rows * cols; i++) {
+             letters.push(pool[Math.floor(Math.random() * pool.length)]);
+         }
+    } else if (rows === 4 && cols === 4 && format !== 'Checkerboard') {
          const dice = [...DICE_CONFIG_4x4];
          for (let i = dice.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
