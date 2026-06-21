@@ -3529,6 +3529,7 @@ def get_room_state(room_id):
                 'room_id': room.room_id,
                 'game_type': room.game_type,
                 'state': room.state,
+                'midnight_reset_occurred': getattr(room, 'midnight_reset_occurred', False),
                 'current_round': room.current_round,
                 'time_limit': room.time_limit,
                 'time_remaining': room.time_remaining,

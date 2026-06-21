@@ -1235,10 +1235,11 @@ async function updateGameState(incomingState = null) {
                 (previousState.spectators || []).some(s => s.username.toLowerCase() === currentUsername.toLowerCase())
             );
 
-            // 24H RESET EVICTION: If we are in a 24H room and the daily reset occurred (round changed), eject the user to lobby!
+            // 24H RESET EVICTION: If we are in a 24H room and the daily reset occurred (round changed or midnight reset occurred), eject the user to lobby!
             const roundChanged = previousState && state.current_round > previousState.current_round;
-            if (is24H && roundChanged) {
-                console.warn(`[play.js] Daily reset detected in 24h room. Ejecting to lobby.`);
+            const midnightReset = state.midnight_reset_occurred;
+            if (is24H && (roundChanged || midnightReset)) {
+                console.warn(`[play.js] Daily reset detected in 24h room (roundChanged: ${roundChanged}, midnightReset: ${midnightReset}). Ejecting to lobby.`);
                 ejectToLobby("daily_reset");
                 return;
             }
