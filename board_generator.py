@@ -345,6 +345,7 @@ class BoardGenerator:
         1. Max 1 of each super-rare (Q, Z, J, X, K).
         2. Max 3 TOTAL super-rare letters per board (New Hardening).
         """
+        active_mania = getattr(self, 'active_mania_letter', None)
         rare_letters = {'Q', 'Z', 'J', 'X', 'K'}
         found_counts = {rl: 0 for rl in rare_letters}
         total_rares_found = 0
@@ -365,6 +366,8 @@ class BoardGenerator:
                     replaced_in_this_cell = False
                     for rl in rare_letters:
                         if rl in cell:
+                            if active_mania and rl == active_mania:
+                                continue
                             # Is this letter redundant or exceeding total cap?
                             is_redundant = (found_counts[rl] >= 1)
                             is_over_total_cap = (total_rares_found >= 3)
@@ -1083,6 +1086,13 @@ class BoardGenerator:
             attempts += 1
             print(f"[BoardGen] COMPLIANCE ATTEMPT {attempts} (Target: {min_words}-{max_words}, MinLen: {min_word_length})")
 
+            # Resolve current active mania letter
+            self.active_mania_letter = None
+            if "mania" in str(board_format).lower():
+                parts = str(board_format).strip().split()
+                if len(parts) >= 2 and len(parts[0]) == 1 and parts[0].isalpha():
+                    self.active_mania_letter = parts[0].upper()
+
             # If we are in Mania format and failing to find a compliant board,
             # dynamically rotate the mania letter to a different one to aid compliance!
             if "mania" in str(board_format).lower() and attempts > 3:
@@ -1091,6 +1101,7 @@ class BoardGenerator:
                 else:
                     mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')
                 board_format = f"{mania_letter} Mania"
+                self.active_mania_letter = mania_letter.upper()
                 print(f"[BoardGen] Rotated Mania letter to '{mania_letter}' on attempt {attempts} to find compliant board.")
             
             # --- STRATEGY SELECTION ---
@@ -1740,8 +1751,10 @@ class BoardGenerator:
                     print(f"[BoardGen] [Emergency] Chosen/Rotated Mania letter to '{mania_letter}' on attempt {_attempt}")
                 else:
                     mania_letter = parts[0].upper()
+                self.active_mania_letter = mania_letter
             else:
                 mania_letter = None
+                self.active_mania_letter = None
 
             # 2. Setup Board based on format
             safe_format = str(board_format or "").lower()
@@ -3365,7 +3378,11 @@ class BoardGenerator:
         return board
 
     def _apply_mania_to_board(self, board, mania_letter, exclude_cells, is_checkerboard=False):
-        """Fill approx 31% of cells with the mania letter (5/16 ratio)."""
+        """
+        Fill board with the mania letter.
+        For rare letters (Q, Z, J, X, K), let a minimum of 1/5 (20%) of all letters on the board be the abundant letter.
+        For more common letters, let 1/3 (33.3%) of all letters on the board be the abundant letter.
+        """
         if not mania_letter or len(mania_letter) != 1:
             print(f"[BoardGen] Mania: INVALID letter '{mania_letter}', skipping abundance")
             return
@@ -3378,9 +3395,15 @@ class BoardGenerator:
         # Determine mania type
         is_mania_vowel = self._is_vowel(mania_letter)
 
-        # Target ratio: 5/16 (31.25%)
-        target_ratio = 5.0 / 16.0
-        target_count = max(3, round(total_cells * target_ratio))
+        # Determine target ratio based on letter rarity
+        rare_letters = {'Q', 'Z', 'J', 'X', 'K'}
+        import math
+        if mania_letter.upper() in rare_letters:
+            target_ratio = 1.0 / 5.0
+        else:
+            target_ratio = 1.0 / 3.0
+            
+        target_count = max(3, math.ceil(total_cells * target_ratio))
 
         if is_3d:
             current_count = sum(1 for f in range(depth_val) for r in range(rows) for c in range(cols) if board[f][r][c] == mania_letter)
@@ -4371,6 +4394,10 @@ class BoardGenerator:
 
     def _is_rare_limited(self, board, char, depth=1):
         """Helper for optimization loops to respect global rare limits (Max 1 per, Max 3 total)."""
+        active_mania = getattr(self, 'active_mania_letter', None)
+        if active_mania and char == active_mania:
+            return False
+
         rare_letters = {"Q", "Z", "J", "X", "K"}
         if char not in rare_letters:
             return False
@@ -4382,6 +4409,8 @@ class BoardGenerator:
         # 2. Total Cap limit (Max 3 TOTAL across all rares)
         total_rares = 0
         for rl in rare_letters:
+            if active_mania and rl == active_mania:
+                continue
             total_rares += self._count_char_on_board(board, rl, depth)
         if total_rares >= 3:
             return True
