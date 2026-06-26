@@ -1025,6 +1025,15 @@ class BoardGenerator:
             except:
                 min_word_length = 3
 
+        # Extract + AW if present in the dictionary name
+        use_aw_flag = False
+        if dictionary and ('+ AW' in str(dictionary) or '+AW' in str(dictionary)):
+            use_aw_flag = True
+            dictionary = str(dictionary).replace('+ AW', '').replace('+AW', '').strip()
+            
+        # Set context var for added words
+        use_added_words_ctx.set(use_aw_flag)
+
         # FOR UNCONDITIONAL UNIQUENESS: Re-seed random from system randomness
         # This breaks any process-level determinism from forks/seeds
         import random

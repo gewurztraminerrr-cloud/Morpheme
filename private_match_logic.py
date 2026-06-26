@@ -169,6 +169,21 @@ class PrivateMatchManager:
         """
         participants: list of {'user_id': id, 'username': name, 'is_ai': bool, 'ai_rating': optional}
         """
+        # Parse dictionary name and extract use_added_words if needed
+        dict_name = parameters.get('dictionary', 'NWL')
+        use_aw_flag = False
+        if dict_name == 'random':
+            # Spin will happen per round
+            pass
+        elif dict_name:
+            if '+ AW' in str(dict_name) or '+AW' in str(dict_name):
+                use_aw_flag = True
+                dict_name = str(dict_name).replace('+ AW', '').replace('+AW', '').strip()
+                parameters['dictionary'] = dict_name
+                parameters['use_added_words'] = True
+            else:
+                parameters['use_added_words'] = False
+
         conn = self.get_db()
         now = time.time()
         
@@ -254,10 +269,16 @@ class PrivateMatchManager:
         min_len = parameters.get('min_word_length', 3)
 
         # Bonus word selection BEFORE board generation to allow embedding
-        bonus_len = parameters.get('bonus_word_length', 0)
-        if bonus_len == 0:
-             # Force a bonus word for private rooms if none was specified (standard UI behavior)
-             bonus_len = random.randint(6, 10)
+        bonus_len_choice = parameters.get('bonus_word_length', 'random')
+        if bonus_len_choice == 'random' or not bonus_len_choice or str(bonus_len_choice) == '0':
+             import random
+             bonus_len = random.choices([6, 7, 8, 9, 10], weights=[20, 20, 20, 20, 20])[0]
+        else:
+             try:
+                 bonus_len = int(bonus_len_choice)
+             except:
+                 import random
+                 bonus_len = random.randint(6, 10)
         bonus_word = ""
         # Check if the format allows a bonus word
         target_format = parameters.get('board_format', 'Normal')
@@ -283,6 +304,15 @@ class PrivateMatchManager:
         # Randomize dictionary for each round if it's not fixed
         if dict_name == 'random':
             dict_name = SpinnerSet._spin_dictionary()
+
+        # Extract + AW from dictionary name
+        use_aw_flag = False
+        if dict_name and ('+ AW' in str(dict_name) or '+AW' in str(dict_name)):
+            use_aw_flag = True
+            dict_name = str(dict_name).replace('+ AW', '').replace('+AW', '').strip()
+            
+        parameters['dictionary'] = dict_name
+        parameters['use_added_words'] = use_aw_flag
 
         target_range = parameters.get('word_count_range', 'random')
         if target_range == 'random':

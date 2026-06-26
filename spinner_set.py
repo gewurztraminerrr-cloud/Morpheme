@@ -360,37 +360,17 @@ class SpinnerSet:
     
     @staticmethod
     def _spin_word_count(dictionary, min_word_length, difficulty, board_dimensions):
-        # Greatest minimum word length options for each board size:
-        # 4x4 -> 5L, 4x6 -> 6L, 5x7 -> 7L, 6x8 -> 8L, 3x3x3 -> 8L
-        dims = str(board_dimensions).lower().replace(" ", "")
-        is_greatest_length = False
-        
-        if '4x4' in dims and min_word_length >= 5:
-            is_greatest_length = True
-        elif '4x6' in dims and min_word_length >= 6:
-            is_greatest_length = True
-        elif '5x7' in dims and min_word_length >= 7:
-            is_greatest_length = True
-        elif '6x8' in dims and min_word_length >= 8:
-            is_greatest_length = True
-        elif '3x3x3' in dims and min_word_length >= 8:
-            is_greatest_length = True
-
-        if is_greatest_length:
-            # USER REQUEST: 50-100 words (Greatest Min-Length Only) 9%
-            choices = ['50-100', '100-200', '200-300', '300-400', '500+']
-            weights = [9, 30, 30, 30, 1]
-        else:
-            # Standard rebalanced odds: 30% 100-200, 30% 200-300, 30% 300-400, 1% 500+
-            choices = ['100-200', '200-300', '300-400', '500+']
-            weights = [30, 30, 30, 1]
-            
+        # USER REQUEST: 50-100 words (9%), 100-200 (30%), 200-300 (30%), 300-400 (30%), 500+ (1%)
+        choices = ['50-100', '100-200', '200-300', '300-400', '500+']
+        weights = [9, 30, 30, 30, 1]
         return random.choices(choices, weights=weights)[0]
     
     @staticmethod
     def _spin_dictionary():
-        """50% NWL, 50% CSW"""
-        return random.choices(['NWL', 'CSW'], weights=[50, 50])[0]
+        """Equal probability: 25% NWL, 25% CSW, 25% NWL + AW, 25% CSW + AW"""
+        choices = ['NWL', 'CSW', 'NWL + AW', 'CSW + AW']
+        weights = [25, 25, 25, 25]
+        return random.choices(choices, weights=weights)[0]
     
     @staticmethod
     def _spin_board_format(is_24h=False, dimensions='4x4'):

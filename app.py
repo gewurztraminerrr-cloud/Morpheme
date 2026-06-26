@@ -6313,6 +6313,12 @@ def create_solo_match():
     if not dict_name or dict_name == 'random':
         from spinner_set import SpinnerSet
         dict_name = SpinnerSet._spin_dictionary()
+        
+    # Extract + AW from dictionary name
+    use_aw_flag = False
+    if dict_name and ('+ AW' in str(dict_name) or '+AW' in str(dict_name)):
+        use_aw_flag = True
+        dict_name = str(dict_name).replace('+ AW', '').replace('+AW', '').strip()
     
     board_format = parameters.get('board_format', 'Normal')
     from spinner_set import SpinnerSet
@@ -6335,22 +6341,36 @@ def create_solo_match():
         # Use custom range provided by user
         wc_range = custom_word_count_range
 
+    # Bonus word length: spin if random (equal weights for 6-10)
+    bonus_len_choice = parameters.get('bonus_word_length', 'random')
+    if bonus_len_choice == 'random' or not bonus_len_choice or str(bonus_len_choice) == '0':
+        import random
+        bonus_word_len = random.choices([6, 7, 8, 9, 10], weights=[20, 20, 20, 20, 20])[0]
+    else:
+        try:
+            bonus_word_len = int(bonus_len_choice)
+        except:
+            bonus_word_len = 8
+
     # Check if the user wants randomization per round
     room.randomize_spinner = (
         parameters.get('dictionary') == 'random' or
         parameters.get('difficulty', 'random') == 'random' or
         parameters.get('word_count_range', 'random') == 'random' or
-        parameters.get('board_format', 'random') == 'random'
+        parameters.get('board_format', 'random') == 'random' or
+        parameters.get('bonus_word_length', 'random') == 'random'
     )
 
     room.spinner_params = {
         'dictionary': dict_name,
         'min_word_length': int(parameters.get('min_word_length', 3)),
-        'bonus_word_length': int(parameters.get('bonus_word_length', 8)),
+        'bonus_word_length': bonus_word_len,
         'board_format': board_format,
         'difficulty': target_difficulty,
-        'word_count_range': wc_range
+        'word_count_range': wc_range,
+        'use_added_words': use_aw_flag
     }
+    room.use_added_words = use_aw_flag
     
     # Cleanup only if NOT in this room
     cleanup_user_rooms(session['user_id'], exclude_room_id=room_id)

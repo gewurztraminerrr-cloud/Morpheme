@@ -3458,7 +3458,18 @@ class RoomManager:
                         initial_solo_params = room.initial_solo_params
                         dict_choice = initial_solo_params.get('dictionary', 'random')
                         min_word_len = int(initial_solo_params.get('min_word_length', 3))
-                        bonus_word_len = int(initial_solo_params.get('bonus_word_length', 8))
+                        
+                        # Safe-parse bonus word length: spin if random (equal weights for 6-10)
+                        bonus_len_choice = initial_solo_params.get('bonus_word_length', 'random')
+                        if bonus_len_choice == 'random' or not bonus_len_choice or str(bonus_len_choice) == '0':
+                            import random
+                            bonus_word_len = random.choices([6, 7, 8, 9, 10], weights=[20, 20, 20, 20, 20])[0]
+                        else:
+                            try:
+                                bonus_word_len = int(bonus_len_choice)
+                            except:
+                                bonus_word_len = 8
+
                         board_fmt = initial_solo_params.get('board_format', 'Normal')
                         difficulty_choice = initial_solo_params.get('difficulty', 'random')
                         wc_choice = initial_solo_params.get('word_count_range', 'random')
@@ -3468,6 +3479,12 @@ class RoomManager:
                             dictionary = SpinnerSet._spin_dictionary()
                         else:
                             dictionary = dict_choice
+                            
+                        # Extract + AW from dictionary name
+                        use_aw = False
+                        if dictionary and ('+ AW' in str(dictionary) or '+AW' in str(dictionary)):
+                            use_aw = True
+                            dictionary = str(dictionary).replace('+ AW', '').replace('+AW', '').strip()
                             
                         # 2. Resolve Difficulty
                         if difficulty_choice == 'random':
@@ -3486,10 +3503,6 @@ class RoomManager:
                             resolved_board_format = SpinnerSet._spin_board_format(is_24h=False, dimensions=room.board_dimensions)
                         else:
                             resolved_board_format = board_fmt
-                            
-                        import random
-                        is_added_words_enabled = word_validator.word_validator.get_use_added_words()
-                        use_aw = (random.random() < 0.5) if is_added_words_enabled else False
 
                         new_params = {
                             'min_word_length': min_word_len,
