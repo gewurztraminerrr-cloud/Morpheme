@@ -5979,46 +5979,19 @@ def submit_tournament_score():
         
         # Check uniqueness in valid_words to avoid double scoring
         if not any(v['word'] == word for v in valid_words):
-            # Scoring (Base)
-            pts = len(word)
-            if len(word) == 6: pts = 10
-            elif len(word) == 7: pts = 15
-            elif len(word) >= 8: pts = 25
-            
-            # --- Bonus Point Logic for Tournaments ---
-            is_bonus = False
-            fmt_low = str(board_raw.get('board_format', 'Normal')).lower() if isinstance(board_raw, dict) else 'normal'
-            bonus_word_target = target_bonus_word.upper() if target_bonus_word else ""
+            is_bonus = (target_bonus_word and word == target_bonus_word.upper())
+            fmt = params.get('board_format', 'Normal')
             bonus_cell = board_raw.get('bonus_cell') if isinstance(board_raw, dict) else None
             
-            # 1. Hidden Bonus Word (+Length)
-            if bonus_word_target and word == bonus_word_target:
-                pts += len(word)
-                is_bonus = True
+            # Authoritative scoring calculation from scoring.py
+            pts = calculate_word_score(
+                word=word,
+                bonus_word=target_bonus_word,
+                board_format=fmt,
+                bonus_cell=bonus_cell,
+                board=board
+            )
             
-            # 2. Special Format Tiles (+3)
-            # Find path and hit bonus cell if format uses them
-            if bonus_cell and ('bonus letter' in fmt_low or 'either' in fmt_low):
-                # We reuse word_validator.find_word_on_board which now returns (found, path)
-                found, path = word_validator.find_word_on_board(board, word, return_path=True)
-                if found and path:
-                    # bx, by = bonus_cell['r'], bonus_cell['c'] ? or list [r, c]?
-                    # Standardizing coordinate access
-                    bx = bonus_cell[0] if isinstance(bonus_cell, (list, tuple)) else bonus_cell.get('r', -1)
-                    by = bonus_cell[1] if isinstance(bonus_cell, (list, tuple)) else bonus_cell.get('c', -1)
-                    
-                    if any((p[0] == bx and p[1] == by) for p in path):
-                        pts += 3
-                    elif 'either' in fmt_low:
-                        # On either/or, hit ANY either/or cell
-                        if any('/' in str(board[p[0]][p[1]]) for p in path):
-                            pts += 3
-            elif 'either' in fmt_low:
-                # Fallback if no specific bonus_cell but is Either/Or format
-                found, path = word_validator.find_word_on_board(board, word, return_path=True)
-                if found and path and any('/' in str(board[p[0]][p[1]]) for p in path):
-                    pts += 3
-                
             valid_words.append({
                 'word': word,
                 'points': pts,
@@ -6112,35 +6085,19 @@ def save_tournament_draft():
         if not word_validator.find_word_on_board(board, word): continue
         
         if not any(v['word'] == word for v in valid_words):
-            pts = len(word)
-            if len(word) == 6: pts = 10
-            elif len(word) == 7: pts = 15
-            elif len(word) >= 8: pts = 25
-            
-            is_bonus = False
-            fmt_low = str(board_raw.get('board_format', 'Normal')).lower() if isinstance(board_raw, dict) else 'normal'
-            bonus_word_target = target_bonus_word.upper() if target_bonus_word else ""
+            is_bonus = (target_bonus_word and word == target_bonus_word.upper())
+            fmt = params.get('board_format', 'Normal')
             bonus_cell = board_raw.get('bonus_cell') if isinstance(board_raw, dict) else None
             
-            if bonus_word_target and word == bonus_word_target:
-                pts += len(word)
-                is_bonus = True
+            # Authoritative scoring calculation from scoring.py
+            pts = calculate_word_score(
+                word=word,
+                bonus_word=target_bonus_word,
+                board_format=fmt,
+                bonus_cell=bonus_cell,
+                board=board
+            )
             
-            if bonus_cell and ('bonus letter' in fmt_low or 'either' in fmt_low):
-                found, path = word_validator.find_word_on_board(board, word, return_path=True)
-                if found and path:
-                    bx = bonus_cell[0] if isinstance(bonus_cell, (list, tuple)) else bonus_cell.get('r', -1)
-                    by = bonus_cell[1] if isinstance(bonus_cell, (list, tuple)) else bonus_cell.get('c', -1)
-                    if any((p[0] == bx and p[1] == by) for p in path):
-                        pts += 3
-                    elif 'either' in fmt_low:
-                        if any('/' in str(board[p[0]][p[1]]) for p in path):
-                            pts += 3
-            elif 'either' in fmt_low:
-                found, path = word_validator.find_word_on_board(board, word, return_path=True)
-                if found and path and any('/' in str(board[p[0]][p[1]]) for p in path):
-                    pts += 3
-                
             valid_words.append({
                 'word': word,
                 'points': pts,
