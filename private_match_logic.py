@@ -181,7 +181,7 @@ class PrivateMatchManager:
                         conn.close()
                         raise ValueError(f"User '{p['username']}' does not exist.")
                     # Use canonical username to ensure correct casing in invites/player records
-                    p['username'] = user['username']
+                    p['username'] = user[1]
         
         # 2. Create Match Entry (Start at round 0 so it's not active until board is ready)
         cur = conn.execute('''
