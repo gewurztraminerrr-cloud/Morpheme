@@ -1340,7 +1340,7 @@ class BoardGenerator:
                 _eo_deadline = _time.time() + 3.0  # Hard 3-second limit on the whole E/O search
 
                 best_eo_candidate = None
-                best_eo_diff = 1.0
+                best_eo_balance = -1.0
 
                 for cell in candidate_cells[:30]:
                     if _time.time() > _eo_deadline:
@@ -1392,25 +1392,72 @@ class BoardGenerator:
                                 board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=1.0
                             )
                             if temp_words:
-                                words_using_eo = sum(1 for w in temp_words if cell in temp_words[w])
-                                eo_ratio = words_using_eo / len(temp_words)
+                                l1, l2 = val.split('/')
+                                l1, l2 = l1.upper(), l2.upper()
+                                words_using_l1 = 0
+                                words_using_l2 = 0
+                                is_3d = len(board) == 6 and isinstance(board[0], list) and isinstance(board[0][0], list)
+                                for w, path in temp_words.items():
+                                    if cell in path:
+                                        used_letter = None
+                                        char_idx = 0
+                                        for node in path:
+                                            if is_3d:
+                                                nf_n, nr_n, nc_n = node
+                                                cell_val = str(board[nf_n][nr_n][nc_n]).upper()
+                                            else:
+                                                nr_n, nc_n = node
+                                                cell_val = str(board[nr_n][nc_n]).upper()
+                                            
+                                            letters = cell_val.split('/') if '/' in cell_val else [cell_val]
+                                            consumed = 0
+                                            matched = None
+                                            for letter in letters:
+                                                expanded = 'QU' if letter == 'Q' else letter
+                                                if w.upper().startswith(expanded, char_idx):
+                                                    consumed = len(expanded)
+                                                    matched = letter
+                                                    break
+                                            
+                                            if node == cell:
+                                                used_letter = matched
+                                                break
+                                            
+                                            if consumed > 0:
+                                                char_idx += consumed
+                                            else:
+                                                char_idx += 1
+                                        
+                                        if used_letter == l1:
+                                            words_using_l1 += 1
+                                        elif used_letter == l2:
+                                            words_using_l2 += 1
+                                
+                                total_words_count = len(temp_words)
+                                ratio_l1 = words_using_l1 / total_words_count if total_words_count > 0 else 0
+                                ratio_l2 = words_using_l2 / total_words_count if total_words_count > 0 else 0
+                                eo_ratio = (words_using_l1 + words_using_l2) / total_words_count if total_words_count > 0 else 0
                             else:
+                                ratio_l1 = 0
+                                ratio_l2 = 0
                                 eo_ratio = 0
+                                words_using_l1 = 0
+                                words_using_l2 = 0
                             
-                            diff = abs(eo_ratio - 0.333)
-                            print(f"[BoardGen] Tried Either/Or {val} at cell {cell}: {words_using_eo}/{len(temp_words)} words ({eo_ratio:.2%}) use it. Diff from 1/3: {diff:.3f}")
+                            balance_score = min(ratio_l1, ratio_l2)
+                            print(f"[BoardGen] Tried Either/Or {val} at cell {cell}: {words_using_l1} words ({ratio_l1:.2%}) use {l1}, {words_using_l2} words ({ratio_l2:.2%}) use {l2}. Total: {eo_ratio:.2%}. Balance score: {balance_score:.2%}")
                             
-                            # Perfect candidate is within 5% of 1/3 (28.3% to 38.3%)
-                            if diff <= 0.05:
-                                print(f"[BoardGen] * Perfect Either/Or candidate found at {cell} with ratio {eo_ratio:.2%}. Accepting immediately.")
-                                best_eo_candidate = (cell, val, diff)
+                            # A perfect candidate has at least 10% of all words using L1 and 10% using L2
+                            if balance_score >= 0.10:
+                                print(f"[BoardGen] * Perfect Either/Or candidate found at {cell} with balance score {balance_score:.2%}. Accepting immediately.")
+                                best_eo_candidate = (cell, val, balance_score)
                                 ambiguity_resolved = True
                                 found_valid = True
                                 break
                             
-                            if diff < best_eo_diff:
-                                best_eo_diff = diff
-                                best_eo_candidate = (cell, val, diff)
+                            if balance_score > best_eo_balance:
+                                best_eo_balance = balance_score
+                                best_eo_candidate = (cell, val, balance_score)
                                 
                         # Revert if not perfect
                         if depth > 1:
@@ -1423,12 +1470,12 @@ class BoardGenerator:
                 
                 if not ambiguity_resolved and best_eo_candidate:
                     # Apply the best candidate found
-                    cell, val, diff = best_eo_candidate
+                    cell, val, balance_score = best_eo_candidate
                     if depth > 1:
                         board[cell[0]][cell[1]][cell[2]] = val
                     else:
                         board[cell[0]][cell[1]] = val
-                    print(f"[BoardGen] * Selected best Either/Or candidate at {cell} with dual-letters {val} (diff from 1/3: {diff:.3f})")
+                    print(f"[BoardGen] * Selected best Either/Or candidate at {cell} with dual-letters {val} (balance score: {balance_score:.2%})")
                     ambiguity_resolved = True
 
                 if not ambiguity_resolved:
@@ -1794,7 +1841,7 @@ class BoardGenerator:
                 _eo_deadline = _time.time() + 3.0  # Hard 3-second limit
 
                 best_eo_candidate = None
-                best_eo_diff = 1.0
+                best_eo_balance = -1.0
 
                 for cell in candidate_cells[:30]:
                     if _time.time() > _eo_deadline:
@@ -1813,12 +1860,16 @@ class BoardGenerator:
                     # ENFORCE: one letter must be a vowel, the other a consonant.
                     orig_is_vowel = self._is_vowel(orig)
                     if orig_is_vowel:
+                        # orig is vowel → partner must be a consonant
                         partner_pool = [l for l in self.letters if not self._is_vowel(l)]
                     else:
+                        # orig is consonant → partner must be a vowel
                         partner_pool = [l for l in self.letters if self._is_vowel(l)]
                     partner_weights = [weights[self.letters.index(l)] for l in partner_pool]
+                    # Cap at 8 samples to avoid expensive DFS explosion
                     k = min(8, len(partner_pool))
                     weighted_partners = random.choices(partner_pool, weights=partner_weights, k=k)
+                    # Deduplicate while preserving weighted priority order
                     seen = set(); sampled_others = [x for x in weighted_partners if not (x in seen or seen.add(x))]
                     
                     found_valid = False
@@ -1841,25 +1892,72 @@ class BoardGenerator:
                                 board, dictionary, (0, 99999), display_min, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=1.0
                             )
                             if temp_words:
-                                words_using_eo = sum(1 for w in temp_words if cell in temp_words[w])
-                                eo_ratio = words_using_eo / len(temp_words)
+                                l1, l2 = val.split('/')
+                                l1, l2 = l1.upper(), l2.upper()
+                                words_using_l1 = 0
+                                words_using_l2 = 0
+                                is_3d = len(board) == 6 and isinstance(board[0], list) and isinstance(board[0][0], list)
+                                for w, path in temp_words.items():
+                                    if cell in path:
+                                        used_letter = None
+                                        char_idx = 0
+                                        for node in path:
+                                            if is_3d:
+                                                nf_n, nr_n, nc_n = node
+                                                cell_val = str(board[nf_n][nr_n][nc_n]).upper()
+                                            else:
+                                                nr_n, nc_n = node
+                                                cell_val = str(board[nr_n][nc_n]).upper()
+                                            
+                                            letters = cell_val.split('/') if '/' in cell_val else [cell_val]
+                                            consumed = 0
+                                            matched = None
+                                            for letter in letters:
+                                                expanded = 'QU' if letter == 'Q' else letter
+                                                if w.upper().startswith(expanded, char_idx):
+                                                    consumed = len(expanded)
+                                                    matched = letter
+                                                    break
+                                            
+                                            if node == cell:
+                                                used_letter = matched
+                                                break
+                                            
+                                            if consumed > 0:
+                                                char_idx += consumed
+                                            else:
+                                                char_idx += 1
+                                        
+                                        if used_letter == l1:
+                                            words_using_l1 += 1
+                                        elif used_letter == l2:
+                                            words_using_l2 += 1
+                                
+                                total_words_count = len(temp_words)
+                                ratio_l1 = words_using_l1 / total_words_count if total_words_count > 0 else 0
+                                ratio_l2 = words_using_l2 / total_words_count if total_words_count > 0 else 0
+                                eo_ratio = (words_using_l1 + words_using_l2) / total_words_count if total_words_count > 0 else 0
                             else:
+                                ratio_l1 = 0
+                                ratio_l2 = 0
                                 eo_ratio = 0
+                                words_using_l1 = 0
+                                words_using_l2 = 0
                             
-                            diff = abs(eo_ratio - 0.333)
-                            print(f"[BoardGen] Tried Either/Or {val} at cell {cell}: {words_using_eo}/{len(temp_words)} words ({eo_ratio:.2%}) use it. Diff from 1/3: {diff:.3f}")
+                            balance_score = min(ratio_l1, ratio_l2)
+                            print(f"[BoardGen] Tried Either/Or {val} at cell {cell}: {words_using_l1} words ({ratio_l1:.2%}) use {l1}, {words_using_l2} words ({ratio_l2:.2%}) use {l2}. Total: {eo_ratio:.2%}. Balance score: {balance_score:.2%}")
                             
-                            # Perfect candidate is within 5% of 1/3 (28.3% to 38.3%)
-                            if diff <= 0.05:
-                                print(f"[BoardGen] * Perfect Either/Or candidate found at {cell} with ratio {eo_ratio:.2%}. Accepting immediately.")
-                                best_eo_candidate = (cell, val, diff)
+                            # A perfect candidate has at least 10% of all words using L1 and 10% using L2
+                            if balance_score >= 0.10:
+                                print(f"[BoardGen] * Perfect Either/Or candidate found at {cell} with balance score {balance_score:.2%}. Accepting immediately.")
+                                best_eo_candidate = (cell, val, balance_score)
                                 ambiguity_resolved = True
                                 found_valid = True
                                 break
                             
-                            if diff < best_eo_diff:
-                                best_eo_diff = diff
-                                best_eo_candidate = (cell, val, diff)
+                            if balance_score > best_eo_balance:
+                                best_eo_balance = balance_score
+                                best_eo_candidate = (cell, val, balance_score)
                                 
                         # Revert if not perfect
                         if depth > 1:
@@ -1872,12 +1970,12 @@ class BoardGenerator:
                 
                 if not ambiguity_resolved and best_eo_candidate:
                     # Apply the best candidate found
-                    cell, val, diff = best_eo_candidate
+                    cell, val, balance_score = best_eo_candidate
                     if depth > 1:
                         board[cell[0]][cell[1]][cell[2]] = val
                     else:
                         board[cell[0]][cell[1]] = val
-                    print(f"[BoardGen] * Selected best Either/Or candidate at {cell} with dual-letters {val} (diff from 1/3: {diff:.3f})")
+                    print(f"[BoardGen] * Selected best Either/Or candidate at {cell} with dual-letters {val} (balance score: {balance_score:.2%})")
                     ambiguity_resolved = True
 
                 if not ambiguity_resolved:

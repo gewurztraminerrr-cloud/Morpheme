@@ -113,8 +113,8 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
         
         # B. Fallback: If no path provided OR provided path missed the bonus, 
         # do a full search to see if ANY path hits the bonus.
-        # If strict_path is True and a path was provided, we skip this fallback!
-        if not used_bonus and is_spec_bonus_fmt and not (strict_path and path):
+        # We always check for a bonus-hitting path to default to the greatest point value.
+        if not used_bonus and is_spec_bonus_fmt:
             word_target = word.upper()
             if not (is_3d and len(word_target) > 12):
                 bx, by, bf = -1, -1, -1

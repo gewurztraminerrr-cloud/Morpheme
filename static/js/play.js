@@ -2906,16 +2906,15 @@ function rebuildTileToWordsMap() {
         return { nf, nr, nc };
     }
 
-    // Helper: get the board letter at a tile position
+    // Helper: get the board letters at a tile position
     const is3D = board && board.length > 0 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
-    function getBoardLetter(nf, nr, nc) {
-        if (!board) return null;
+    function getBoardLetters(nf, nr, nc) {
+        if (!board) return [];
         try {
             const cell = is3D ? board[nf][nr][nc] : board[nr][nc];
-            if (cell == null) return null;
-            // Either/Or: return the first option for comparison purposes
-            return String(cell).split('/')[0].toUpperCase();
-        } catch { return null; }
+            if (cell == null) return [];
+            return String(cell).split('/').map(s => s.trim().toUpperCase());
+        } catch { return []; }
     }
 
     // ── Pass 1: Primary map — word → tiles in its canonical path ──
@@ -2932,8 +2931,10 @@ function rebuildTileToWordsMap() {
             window.tileToWordsMap[key].add(wordUpper);
 
             // Track which letters this word's path uses
-            const letter = getBoardLetter(nf, nr, nc);
-            if (letter) lettersUsed.add(letter);
+            const letters = getBoardLetters(nf, nr, nc);
+            for (const letter of letters) {
+                if (letter) lettersUsed.add(letter);
+            }
         }
         wordLettersUsed[wordUpper] = lettersUsed;
     }
@@ -2948,16 +2949,18 @@ function rebuildTileToWordsMap() {
         for (let fi = 0; fi < faces; fi++) {
             for (let ri = 0; ri < rows; ri++) {
                 for (let ci = 0; ci < cols; ci++) {
-                    let letter = getBoardLetter(fi, ri, ci);
-                    if (!letter) continue;
-                    let tileKey;
-                    if (isTransposed && !is3D) {
-                        tileKey = `${ci},${ri}`; // transposed: swap r/c
-                    } else {
-                        tileKey = is3D ? `${fi},${ri},${ci}` : `${ri},${ci}`;
+                    const letters = getBoardLetters(fi, ri, ci);
+                    for (const letter of letters) {
+                        if (!letter) continue;
+                        let tileKey;
+                        if (isTransposed && !is3D) {
+                            tileKey = `${ci},${ri}`; // transposed: swap r/c
+                        } else {
+                            tileKey = is3D ? `${fi},${ri},${ci}` : `${ri},${ci}`;
+                        }
+                        if (!letterToTileKeys[letter]) letterToTileKeys[letter] = [];
+                        letterToTileKeys[letter].push(tileKey);
                     }
-                    if (!letterToTileKeys[letter]) letterToTileKeys[letter] = [];
-                    letterToTileKeys[letter].push(tileKey);
                 }
             }
         }
@@ -5967,6 +5970,77 @@ function calculateWordScoreLocally(word, path) {
                 if (fmtLower.includes('either') && cellVal && cellVal.includes('/')) {
                     usedBonus = true;
                     break;
+                }
+            }
+        }
+        if (!usedBonus) {
+            const fallbackPath = is3D 
+                ? (typeof findWordPathOnCube === 'function' ? findWordPathOnCube(word, board) : null)
+                : (typeof findWordPathOnBoard === 'function' ? findWordPathOnBoard(word, board) : null);
+            
+            if (fallbackPath) {
+                let fallbackHitsBonus = false;
+                const specialCoords = new Set();
+                
+                if (fmtLower.includes('either')) {
+                    const rows = board.length;
+                    const cols = is3D ? 0 : board[0].length;
+                    if (is3D) {
+                        for (let f = 0; f < 6; f++) {
+                            for (let r = 0; r < board[f].length; r++) {
+                                for (let c = 0; c < board[f][r].length; c++) {
+                                    if (board[f][r][c] && String(board[f][r][c]).includes('/')) {
+                                        specialCoords.add(`${f},${r},${c}`);
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        for (let r = 0; r < rows; r++) {
+                            for (let c = 0; c < cols; c++) {
+                                if (board[r][c] && String(board[r][c]).includes('/')) {
+                                    specialCoords.add(`${r},${c}`);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if (fmtLower.includes('bonus letter') && bonusCell) {
+                    let targetF = -1, targetR = -1, targetC = -1;
+                    if (Array.isArray(bonusCell)) {
+                        if (bonusCell.length === 3) {
+                            targetF = Number(bonusCell[0]); targetR = Number(bonusCell[1]); targetC = Number(bonusCell[2]);
+                            specialCoords.add(`${targetF},${targetR},${targetC}`);
+                        } else {
+                            targetR = Number(bonusCell[0]); targetC = Number(bonusCell[1]);
+                            specialCoords.add(`${targetR},${targetC}`);
+                        }
+                    } else if (typeof bonusCell === 'object') {
+                        targetF = bonusCell.f !== undefined ? Number(bonusCell.f) : -1;
+                        targetR = bonusCell.r !== undefined ? Number(bonusCell.r) : -1;
+                        targetC = bonusCell.c !== undefined ? Number(bonusCell.c) : -1;
+                        if (is3D) specialCoords.add(`${targetF},${targetR},${targetC}`);
+                        else specialCoords.add(`${targetR},${targetC}`);
+                    }
+                }
+                
+                for (const node of fallbackPath) {
+                    let key = '';
+                    if (Array.isArray(node)) {
+                        if (node.length === 3) key = `${node[0]},${node[1]},${node[2]}`;
+                        else key = `${node[0]},${node[1]}`;
+                    } else if (node && typeof node === 'object') {
+                        if (node.f !== undefined) key = `${node.f},${node.r},${node.c}`;
+                        else key = `${node.r},${node.c}`;
+                    }
+                    if (specialCoords.has(key)) {
+                        fallbackHitsBonus = true;
+                        break;
+                    }
+                }
+                if (fallbackHitsBonus) {
+                    usedBonus = true;
                 }
             }
         }
