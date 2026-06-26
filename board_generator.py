@@ -1115,7 +1115,7 @@ class BoardGenerator:
             # Standard Strategies
             if "equality freq" in safe_format:
                 strategy = "None"
-            elif num_tiles >= 24 and depth == 1 and not is_checkerboard and "either/or" not in safe_format:
+            elif num_tiles >= 24 and depth == 1 and "either/or" not in safe_format:
                 strategy = "WordSoup"
             else:
                 strategy = "StepwiseOptimization" if (num_tiles >= 24 or difficulty in ["Medium", "Hard"]) else "HighDensity"
@@ -1150,7 +1150,10 @@ class BoardGenerator:
                         for _ in range(rows)
                     ]
             elif is_checkerboard:
-                board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
+                if strategy == "WordSoup":
+                    board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range, is_checkerboard=True)
+                else:
+                    board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
             elif "either/or" in safe_format:
                 # Support Either/Or tiles (e.g. A/B) by creating a normal board first
                 board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range)
@@ -1774,7 +1777,10 @@ class BoardGenerator:
             all_excluded = set()
             special_cells = []
             if is_checkerboard:
-                board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
+                if depth == 1:
+                    board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range, is_checkerboard=True)
+                else:
+                    board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
             elif "either/or" in safe_format:
                 board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range)
                 # Pick Either/Or tile coordinates
@@ -2293,7 +2299,7 @@ class BoardGenerator:
         else:
             return LETTER_FREQ_USER
 
-    def _create_normal_board(self, rows, cols, weights, depth=1, difficulty="Easy", dictionary=None, word_count_range=None):
+    def _create_normal_board(self, rows, cols, weights, depth=1, difficulty="Easy", dictionary=None, word_count_range=None, is_checkerboard=False):
         """Create board using Overwriting Word Soup method for 2D, or random letters for 3D"""
         if depth > 1:
             return [
@@ -2419,10 +2425,46 @@ class BoardGenerator:
             return path
 
         print(f"[BoardGen] Word Soup: Embedding {len(selected_words)} words on {rows}x{cols} grid...")
+        # Define checkerboard path finder if needed
+        def find_checkerboard_path(word):
+            # Try a few random starting cells that match the first letter's type
+            for _ in range(40):
+                start_r = random.randint(0, rows - 1)
+                start_c = random.randint(0, cols - 1)
+                first_is_vowel = (start_r + start_c) % 2 != 0
+                if self._is_vowel(word[0]) != first_is_vowel:
+                    continue
+                    
+                path = [(start_r, start_c)]
+                possible = True
+                for i in range(1, len(word)):
+                    curr_r, curr_c = path[-1]
+                    neighbors = get_neighbors(curr_r, curr_c)
+                    valid_neighbors = []
+                    for nr, nc in neighbors:
+                        if (nr, nc) in path:
+                            continue
+                        neighbor_is_vowel = (nr + nc) % 2 != 0
+                        if self._is_vowel(word[i]) == neighbor_is_vowel:
+                            valid_neighbors.append((nr, nc))
+                            
+                    if not valid_neighbors:
+                        possible = False
+                        break
+                    path.append(random.choice(valid_neighbors))
+                    
+                if possible:
+                    return path
+            return None
+
+        print(f"[BoardGen] Word Soup: Embedding {len(selected_words)} words on {rows}x{cols} grid (Checkerboard={is_checkerboard})...")
         for word in selected_words:
             path = None
             for _ in range(10): # Try 10 times to find a path
-                path = find_random_path(len(word))
+                if is_checkerboard:
+                    path = find_checkerboard_path(word)
+                else:
+                    path = find_random_path(len(word))
                 if path:
                     break
             if path:
@@ -2450,10 +2492,24 @@ class BoardGenerator:
                 elif char in "TRSN":
                     fill_weights[idx] = max(1, int(fill_weights[idx] * 0.50))
         
-        for r in range(rows):
-            for c in range(cols):
-                if board[r][c] == ' ':
-                    board[r][c] = random.choices(self.letters, weights=fill_weights, k=1)[0]
+        if is_checkerboard:
+            vowel_indices = [self.letters.index(char) for char in VOWELS]
+            consonant_indices = [self.letters.index(char) for char in CONSONANTS]
+            vowel_weights = [fill_weights[i] for i in vowel_indices]
+            consonant_weights = [fill_weights[i] for i in consonant_indices]
+
+            for r in range(rows):
+                for c in range(cols):
+                    if board[r][c] == ' ':
+                        if (r + c) % 2 == 0:
+                            board[r][c] = random.choices(CONSONANTS, weights=consonant_weights, k=1)[0]
+                        else:
+                            board[r][c] = random.choices(VOWELS, weights=vowel_weights, k=1)[0]
+        else:
+            for r in range(rows):
+                for c in range(cols):
+                    if board[r][c] == ' ':
+                        board[r][c] = random.choices(self.letters, weights=fill_weights, k=1)[0]
                     
         # Check and break up any "ING" sequences (no "ING" or "INGS" paths allowed on Medium/Hard)
         if difficulty in ["Medium", "Hard"]:
