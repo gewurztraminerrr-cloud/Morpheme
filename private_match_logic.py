@@ -214,16 +214,30 @@ class PrivateMatchManager:
                     ''', (match_id, creator_id, p['username'], now))
 
         conn.commit()
-        
-        # 4. Generate first round board (Pass existing conn to avoid locks)
-        self.generate_round(match_id, 1, parameters, conn=conn)
-
-        # 5. NOW set current_round to 1 (making it active)
-        conn.execute('UPDATE private_matches SET current_round = 1 WHERE id = ?', (match_id,))
-        conn.commit()
-        
         conn.close()
+        
+        # 4. Spawn background thread to generate board and activate match
+        import threading
+        thread = threading.Thread(
+            target=self._async_generate_round,
+            args=(match_id, parameters),
+            daemon=True
+        )
+        thread.start()
+        
         return match_id
+
+    def _async_generate_round(self, match_id, parameters):
+        try:
+            print(f"[AsyncBoardGen] Starting background board generation for match {match_id}...")
+            conn = self.get_db()
+            self.generate_round(match_id, 1, parameters, conn=conn)
+            conn.execute('UPDATE private_matches SET current_round = 1 WHERE id = ?', (match_id,))
+            conn.commit()
+            conn.close()
+            print(f"[AsyncBoardGen] Successfully activated match {match_id} with round 1.")
+        except Exception as e:
+            print(f"[AsyncBoardGen] ERROR generating board for match {match_id}: {e}")
 
     def generate_round(self, match_id, round_number, parameters, conn=None):
         from board_generator import BoardGenerator
