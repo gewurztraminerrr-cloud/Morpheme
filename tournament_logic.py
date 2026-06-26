@@ -189,8 +189,9 @@ class TournamentManager:
             
         bonus_word = final_bonus_word
         
-        now = time.time()
-        end_time = now + self.turn_duration
+        # Allow turn duration override from parameters
+        turn_dur = params.get('turn_duration', self.turn_duration)
+        end_time = now + turn_dur
         
         # Tournament rounds table needs to store the bonus word
         # (Assuming the schema supports it or we use board_data JSON)
