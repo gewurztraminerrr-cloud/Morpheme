@@ -360,13 +360,20 @@ class WordValidator:
             self.full_nwl_set = self.nwl_words | self.long_words
             self.full_csw_set = self.csw_words | self.long_words
 
-    def load_dictionary(self, dict_name):
+    def load_dictionary(self, dict_name, use_added_words=None):
         """Return the pre-calculated full set for the given dictionary."""
+        if use_added_words is None:
+            use_added_words = self.use_added_words
+            
         if dict_name == 'CSW':
             self.ensure_csw_loaded()
-            return self.full_csw_set
+            if use_added_words == self.use_added_words:
+                return self.full_csw_set
+            return self.csw_words | self.long_words | (self.added_words if use_added_words else set())
         else:  # NWL (default)
-            return self.full_nwl_set
+            if use_added_words == self.use_added_words:
+                return self.full_nwl_set
+            return self.nwl_words | self.long_words | (self.added_words if use_added_words else set())
 
     def find_word_on_board(self, board, word, return_path=False):
         """Standard DFS search for a word on a Boggle board.

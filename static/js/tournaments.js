@@ -114,7 +114,7 @@ function renderTournament(data) {
                 </div>
                 <div class="param-item">
                     <span class="param-label">Dictionary</span>
-                    <span class="param-value">${params.dictionary}</span>
+                    <span class="param-value">${params.dictionary}${params.use_added_words ? ' + AW' : ''}</span>
                 </div>
                 <div class="param-item">
                     <span class="param-label">Bonus Word</span>

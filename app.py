@@ -5959,9 +5959,10 @@ def submit_tournament_score():
 
     dict_name = params.get('dictionary', 'NWL')
     min_len = params.get('min_word_length', 3)
+    use_aw = params.get('use_added_words', False)
     
     # LOAD DICTIONARY
-    official_dict = word_validator.load_dictionary(dict_name)
+    official_dict = word_validator.load_dictionary(dict_name, use_added_words=use_aw)
     
     # VALIDATE WORDS & CALCULATE SCORE
     valid_words = []
@@ -6096,8 +6097,9 @@ def save_tournament_draft():
 
     dict_name = params.get('dictionary', 'NWL')
     min_len = params.get('min_word_length', 3)
+    use_aw = params.get('use_added_words', False)
     
-    official_dict = word_validator.load_dictionary(dict_name)
+    official_dict = word_validator.load_dictionary(dict_name, use_added_words=use_aw)
     
     valid_words = []
     total_score = 0
@@ -6440,7 +6442,8 @@ def submit_private_match_turn():
                 dict_name = r['dictionary']
         except:
             pass
-        official_dict = word_validator.load_dictionary(dict_name)
+        use_aw = params.get('use_added_words', True)
+        official_dict = word_validator.load_dictionary(dict_name, use_added_words=use_aw)
         
         for item in words_data:
             word = item.get('word', '').strip().upper()
