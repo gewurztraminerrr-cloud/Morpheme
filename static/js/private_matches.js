@@ -50,7 +50,7 @@
 
         // Initial Load
         loadPrivateMatches();
-        setInterval(loadPrivateMatches, 30000); // Polling for invites/turns
+        setInterval(loadPrivateMatches, 5000); // Poll every 5 seconds for fast processing of invitations and turns
 
         // Dynamic Min Word Len options
         const soloDims = document.getElementById('sf-config-dims');
@@ -224,14 +224,14 @@
     async function loadPrivateMatches() {
         if (!window.currentUser || window.currentUserIsGuest) return;
         try {
-            const res = await fetch('/api/private-match/list');
+            const res = await fetch('/api/private-match/list', { cache: 'no-store' });
             const data = await res.json();
             renderMatchList('your-turn', data.your_turn);
             renderMatchList('their-turn', data.their_turn);
             renderMatchList('history', data.history, true);
 
             // Fetch invites too, to combine badges
-            const invRes = await fetch('/api/private-match/invites');
+            const invRes = await fetch('/api/private-match/invites', { cache: 'no-store' });
             const invData = await invRes.json();
             renderInvites(invData);
 
@@ -431,7 +431,7 @@
                     `).join('')}</p>
                 </div>
                 <div class="match-actions">
-                    ${!isHistory ? `<button class="sf-action-btn" onclick="window.launchPrivateMatch(${m.id})">Play Turn</button>` : ''}
+                    ${!isHistory ? (type === 'their-turn' ? `<span class="waiting-label" style="opacity: 0.7; font-size: 0.9em; font-weight: 500;">Waiting for Friend</span>` : `<button class="sf-action-btn" onclick="window.launchPrivateMatch(${m.id})">Play Turn</button>`) : ''}
                     ${isHistory ? `<button class="rematch-btn" onclick="window.rematchPrivate(${m.id})">Rematch</button>` : ''}
                     ${isHistory ? `<button class="replay-btn-friends" onclick="window.showPrivateHistory(${m.id})">View History</button>` : ''}
                 </div>
@@ -503,7 +503,7 @@
 
     window.launchPrivateMatch = async (matchId) => {
         try {
-            const res = await fetch('/api/private-match/status/' + matchId);
+            const res = await fetch('/api/private-match/status/' + matchId, { cache: 'no-store' });
             const data = await res.json();
             if (data.error) {
                 alert(data.error);

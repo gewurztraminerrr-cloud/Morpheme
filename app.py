@@ -6318,6 +6318,13 @@ def get_private_match_status(match_id):
         conn.close()
         return jsonify({'error': 'Not a participant'}), 403
         
+    # Check if user has already played their turn for this round
+    turn = conn.execute('SELECT 1 FROM private_match_turns WHERE match_id = ? AND round_number = ? AND user_id = ?',
+                        (match_id, round_num, session['user_id'])).fetchone()
+    if turn:
+        conn.close()
+        return jsonify({'error': 'You have already played your turn for this round.'}), 400
+        
     if not r:
         conn.close()
         return jsonify({'error': f'Round {round_num} board data not found. It may still be generating.'}), 202

@@ -172,14 +172,16 @@ class PrivateMatchManager:
         conn = self.get_db()
         now = time.time()
         
-        # 1. Verify all non-AI participants exist
+        # 1. Verify all non-AI participants exist (case-insensitively)
         if participants:
             for p in participants:
                 if not p.get('is_ai'):
-                    user = conn.execute('SELECT id FROM users WHERE username = ?', (p['username'],)).fetchone()
+                    user = conn.execute('SELECT id, username FROM users WHERE username = ? COLLATE NOCASE', (p['username'],)).fetchone()
                     if not user:
                         conn.close()
                         raise ValueError(f"User '{p['username']}' does not exist.")
+                    # Use canonical username to ensure correct casing in invites/player records
+                    p['username'] = user['username']
         
         # 2. Create Match Entry (Start at round 0 so it's not active until board is ready)
         cur = conn.execute('''
