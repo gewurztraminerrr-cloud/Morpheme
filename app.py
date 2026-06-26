@@ -15,6 +15,114 @@ import io
 from collections import Counter
 import datetime
 from zoneinfo import ZoneInfo
+from dotenv import load_dotenv
+import base64
+import requests
+
+# Load environment variables from .env file
+load_dotenv()
+
+def parse_data_url(data_url):
+    """
+    Parses a data URL (e.g. "data:image/png;base64,...") and returns (raw_bytes, mime_type).
+    """
+    if not data_url or not data_url.startswith("data:"):
+        return None, None
+    try:
+        header, encoded = data_url.split(",", 1)
+        mime_type = header.split(";")[0].split(":")[1]
+        raw_bytes = base64.b64decode(encoded)
+        return raw_bytes, mime_type
+    except Exception as e:
+        print(f"[Moderation] Failed to parse data URL: {e}")
+        return None, None
+
+def moderate_content(text=None, image_bytes=None, mime_type=None):
+    """
+    Moderates content using Google Gemini 1.5 Flash API.
+    Supports text and/or image bytes.
+    Returns: {"inappropriate": True/False, "reason": "..."}
+    """
+    api_key = os.environ.get('GEMINI_API_KEY')
+    if not api_key:
+        # Fail-open if no key is configured (ideal for local/default setup)
+        print("[Moderation] WARNING: GEMINI_API_KEY not set. Moderation bypassed (Fail-Open).")
+        return {"inappropriate": False, "reason": "Service unconfigured"}
+
+    # Determine url
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    
+    parts = []
+    
+    # Base64-encode image if provided
+    if image_bytes:
+        # Ensure correct mime-type format
+        if not mime_type:
+            mime_type = "image/jpeg"
+        elif not mime_type.startswith("image/"):
+            mime_type = f"image/{mime_type}"
+            
+        b64_data = base64.b64encode(image_bytes).decode('utf-8')
+        parts.append({
+            "inlineData": {
+                "mimeType": mime_type,
+                "data": b64_data
+            }
+        })
+        
+    # Append prompt
+    prompt = (
+        "You are a content moderation system. Analyze if the provided content (text and/or image) "
+        "is inappropriate, X-rated, sexually explicit, highly offensive, or harmful.\n"
+    )
+    if text:
+        prompt += f"Text to analyze: {text}\n"
+        
+    prompt += (
+        "Respond with a JSON object containing exactly two fields: "
+        "'inappropriate' (boolean) and 'reason' (string explaining why it was flagged, or empty if safe). "
+        "Do not include any markdown formatting or extra text in your response, just the raw JSON."
+    )
+    
+    parts.append({"text": prompt})
+    
+    payload = {
+        "contents": [{
+            "parts": parts
+        }],
+        "generationConfig": {
+            "responseMimeType": "application/json"
+        }
+    }
+    
+    try:
+        response = requests.post(url, json=payload, timeout=10)
+        if response.status_code != 200:
+            print(f"[Moderation] API Error: {response.status_code} - {response.text}")
+            # Fail-open on API failure to prevent app disruption
+            return {"inappropriate": False, "reason": f"API error: {response.status_code}"}
+            
+        res_data = response.json()
+        
+        # Parse output from candidate content
+        candidates = res_data.get('candidates', [])
+        if not candidates:
+            return {"inappropriate": False, "reason": "No candidates returned"}
+            
+        text_content = candidates[0].get('content', {}).get('parts', [{}])[0].get('text', '').strip()
+        parsed_res = json.loads(text_content)
+        
+        # Normalize keys/values
+        is_inappropriate = bool(parsed_res.get('inappropriate', False))
+        reason = str(parsed_res.get('reason', ''))
+        
+        print(f"[Moderation] Check complete. Inappropriate: {is_inappropriate} | Reason: {reason}")
+        return {"inappropriate": is_inappropriate, "reason": reason}
+        
+    except Exception as e:
+        print(f"[Moderation] Error during API call: {e}")
+        # Fail-open
+        return {"inappropriate": False, "reason": f"Error: {e}"}
 
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'morpheme-secret-key-2024'
@@ -2762,8 +2870,17 @@ def upload_avatar():
             from werkzeug.utils import secure_filename
             import time
             
-            # Generate safe filename: user_id_timestamp.ext
+            # Read bytes for AI content moderation
+            file_bytes = file.read()
+            file.seek(0)
             ext = file.filename.rsplit('.', 1)[1].lower()
+            
+            # Run AI moderation check
+            moderation_res = moderate_content(image_bytes=file_bytes, mime_type=ext)
+            if moderation_res.get("inappropriate"):
+                return jsonify({'error': f"Inappropriate content detected: {moderation_res.get('reason')}"}), 400
+                
+            # Generate safe filename: user_id_timestamp.ext
             new_filename = f"user_{session['user_id']}_{int(time.time())}.{ext}"
             
             # Save file
@@ -3682,6 +3799,16 @@ def submit_chat_message(room_id):
     # base64 factor is ~1.33. 1MB image is ~1.33MB string. Limit to ~2MB string.
     if image and len(image) > 2 * 1024 * 1024:
         return jsonify({'error': 'Image too large (max 1.5MB)'}), 400
+        
+    # Run AI Content Moderation on text and image combined
+    image_bytes = None
+    mime_type = None
+    if image:
+        image_bytes, mime_type = parse_data_url(image)
+
+    moderation_res = moderate_content(text=message, image_bytes=image_bytes, mime_type=mime_type)
+    if moderation_res.get("inappropriate"):
+        return jsonify({'error': f"Inappropriate content detected: {moderation_res.get('reason')}"}), 400
         
     user_id = session.get('user_id')
     rating = None
@@ -5247,14 +5374,27 @@ def create_forum_post():
         return jsonify({'error': 'Missing fields'}), 400
         
     image_url = None
+    image_bytes = None
+    ext = None
     if 'image' in request.files:
         file = request.files['image']
         if file and file.filename != '' and allowed_file(file.filename):
-            import uuid
+            image_bytes = file.read()
+            file.seek(0)
             ext = file.filename.rsplit('.', 1)[1].lower()
-            filename = f"{uuid.uuid4()}.{ext}"
-            file.save(os.path.join(app.config['FORUM_UPLOAD_FOLDER'], filename))
-            image_url = f"/static/uploads/forum/{filename}"
+
+    # Moderate text and image combined
+    text_to_moderate = f"Title: {title}\nContent: {content}"
+    moderation_res = moderate_content(text=text_to_moderate, image_bytes=image_bytes, mime_type=ext)
+    if moderation_res.get("inappropriate"):
+        return jsonify({'error': f"Inappropriate content detected: {moderation_res.get('reason')}"}), 400
+
+    # If safe, save the image if present
+    if image_bytes:
+        import uuid
+        filename = f"{uuid.uuid4()}.{ext}"
+        file.save(os.path.join(app.config['FORUM_UPLOAD_FOLDER'], filename))
+        image_url = f"/static/uploads/forum/{filename}"
             
     conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
@@ -5289,14 +5429,25 @@ def create_forum_comment():
         return jsonify({'error': 'Missing fields'}), 400
         
     image_url = None
+    image_bytes = None
+    ext = None
     if 'image' in request.files:
         file = request.files['image']
         if file and file.filename != '' and allowed_file(file.filename):
-            import uuid
+            image_bytes = file.read()
+            file.seek(0)
             ext = file.filename.rsplit('.', 1)[1].lower()
-            filename = f"reply_{uuid.uuid4()}.{ext}"
-            file.save(os.path.join(app.config['FORUM_UPLOAD_FOLDER'], filename))
-            image_url = f"/static/uploads/forum/{filename}"
+
+    # Moderate comment text and image combined
+    moderation_res = moderate_content(text=content, image_bytes=image_bytes, mime_type=ext)
+    if moderation_res.get("inappropriate"):
+        return jsonify({'error': f"Inappropriate content detected: {moderation_res.get('reason')}"}), 400
+
+    if image_bytes:
+        import uuid
+        filename = f"reply_{uuid.uuid4()}.{ext}"
+        file.save(os.path.join(app.config['FORUM_UPLOAD_FOLDER'], filename))
+        image_url = f"/static/uploads/forum/{filename}"
 
     conn = sqlite3.connect(DB_PATH, timeout=30)
     try:

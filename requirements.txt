@@ -30,3 +30,5 @@ MarkupSafe==3.0.3
 Jinja2==3.1.6
 click==8.1.8
 blinker==1.9.0
+requests==2.32.3
+python-dotenv==1.0.1
