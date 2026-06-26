@@ -343,6 +343,11 @@ function debounce(func, wait) {
             // Update UI if grid is built
             updateSynesthesiaUI();
         }
+
+        // Cache the fully merged settings locally so the warm cache matches server configurations immediately
+        if (window.userSettings) {
+            localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
+        }
     }
 
     // 3. Update Helpers
@@ -428,7 +433,8 @@ function debounce(func, wait) {
             const val = parseInt(e.target.value);
             console.log('[settings.js] boardSizeSlider input:', val);
             window.userManuallyOverrodeBoardSize = true;
-            window.cachedCellSize = val;
+            if (!window.cachedCellSizes) window.cachedCellSizes = {};
+            window.cachedCellSizes['global'] = val;
             document.documentElement.style.setProperty('--cell-size', `${val}px`);
             const previewBoard = document.getElementById('preview-board');
             if (previewBoard) previewBoard.style.setProperty('--cell-size', `${val}px`);
@@ -474,7 +480,8 @@ function debounce(func, wait) {
                 console.log('[settings.js] active room dims:', activeCols, 'x', activeRows, 'minD:', minD, 'maxD:', maxD, 'target dim:', dim);
                 if (`${minD}x${maxD}` === dim) {
                     window.userManuallyOverrodeBoardSize = true;
-                    window.cachedCellSize = val;
+                    if (!window.cachedCellSizes) window.cachedCellSizes = {};
+                    window.cachedCellSizes[dim] = val;
                     document.documentElement.style.setProperty('--cell-size', `${val}px`);
                     const playPage = document.getElementById('page-play');
                     if (playPage) playPage.style.setProperty('--cell-size', `${val}px`);

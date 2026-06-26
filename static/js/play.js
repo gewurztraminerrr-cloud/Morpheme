@@ -4235,39 +4235,33 @@ function checkBoardOverflow() {
     const maxDim = Math.max(cols, rows);
     const currentDim = `${minDim}x${maxDim}`;
     let savedSettingSize = null;
-    let storedSettingsObj = window.userSettings;
+    const storedSettingsObj = window.userSettings || {};
 
-    try {
-        const storedStr = localStorage.getItem('morpheme_settings') || localStorage.getItem('user_settings');
-        if (storedStr) {
-            storedSettingsObj = JSON.parse(storedStr);
-            if (window.userSettings && storedSettingsObj.board_sizes) {
-                window.userSettings.board_sizes = storedSettingsObj.board_sizes;
-            }
-        }
-    } catch (e) {}
+    // Determine the base cell size using a strict precedence:
+    // 1. Session override for this specific dimension (dim slider adjusted in this session)
+    // 2. Session override for global board size (main slider adjusted in this session)
+    // 3. Saved setting for this specific dimension (from user profile / database)
+    // 4. Hardcoded default for this specific dimension (dimension-specific defaults take precedence over main slider)
+    // 5. Saved setting for global board size (from user profile / database)
+    if (!window.cachedCellSizes) window.cachedCellSizes = {};
 
-    // 1. First, consult dimension-specific configurations
-    if (storedSettingsObj && storedSettingsObj.board_sizes && storedSettingsObj.board_sizes[currentDim]) {
-        savedSettingSize = parseInt(storedSettingsObj.board_sizes[currentDim]);
-    } else if (storedSettingsObj && storedSettingsObj.board_size) {
-        savedSettingSize = parseInt(storedSettingsObj.board_size);
-    }
-
-    // 2. If user has manually set a board size (via Settings slider), always use it
-    if (window.userManuallyOverrodeBoardSize && window.cachedCellSize) {
-        savedSettingSize = parseInt(window.cachedCellSize);
-    }
-
-    // Default fallbacks for each dimension if not customized yet
     const defaultForDim = currentDim === '6x8' ? 54 : (currentDim === '5x7' ? 65 : (currentDim === '4x6' ? 82 : 82));
-    let baseCellSize = savedSettingSize || defaultForDim;
 
-    // CRITICAL: Set userManuallyOverrodeBoardSize = true so mobile/laptop layout constraints don't override the user's explicit setting
-    if (savedSettingSize) {
-        window.userManuallyOverrodeBoardSize = true;
-        window.cachedCellSize = baseCellSize;
+    if (window.cachedCellSizes[currentDim]) {
+        savedSettingSize = parseInt(window.cachedCellSizes[currentDim]);
+    } else if (window.cachedCellSizes['global']) {
+        savedSettingSize = parseInt(window.cachedCellSizes['global']);
+    } else if (storedSettingsObj.board_sizes && storedSettingsObj.board_sizes[currentDim]) {
+        savedSettingSize = parseInt(storedSettingsObj.board_sizes[currentDim]);
+    } else if (currentDim === '4x4' || currentDim === '4x6' || currentDim === '5x7' || currentDim === '6x8') {
+        savedSettingSize = defaultForDim;
+    } else if (storedSettingsObj.board_size) {
+        savedSettingSize = parseInt(storedSettingsObj.board_size);
+    } else {
+        savedSettingSize = defaultForDim;
     }
+
+    let baseCellSize = savedSettingSize;
 
     // User Request: Settings-true board size
     let cellSize = baseCellSize;
@@ -4329,13 +4323,16 @@ function checkBoardOverflow() {
     document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
     playPage.style.setProperty('--cell-size', `${cellSize}px`);
     boardEl.style.setProperty('--cell-size', `${cellSize}px`);
-    window.cachedCellSize = cellSize; // Store for other listeners if needed
+    // Do NOT store cellSize into cachedCellSizes here — that would overwrite the user's explicit
+    // per-dim setting with the layout-constrained final value (which may have been shrunk to fit).
 
-    // Synchronize UI Settings Slider so Settings perfectly reflects the size of tiles in the room
-    const boardSizeSlider = document.getElementById('setting-board-size');
-    const boardSizeVal = document.getElementById('setting-board-size-val');
-    if (boardSizeSlider) boardSizeSlider.value = cellSize;
-    if (boardSizeVal) boardSizeVal.textContent = `${cellSize}px`;
+    // Synchronize the dimension-specific slider (if open) to reflect the active room's size.
+    // Do NOT update the main board-size slider — it is dimension-agnostic and should not be
+    // clobbered with whatever dim happens to be active.
+    const activeDimSlider = document.querySelector(`.dim-size-slider[data-dim="${currentDim}"]`);
+    const activeDimVal = document.getElementById(`val-dim-${currentDim}`);
+    if (activeDimSlider) activeDimSlider.value = cellSize;
+    if (activeDimVal) activeDimVal.textContent = `${cellSize}px`;
     const previewBoard = document.getElementById('preview-board');
     if (previewBoard) previewBoard.style.setProperty('--cell-size', `${cellSize}px`);
 
