@@ -1765,9 +1765,19 @@ def get_recent_donations():
                 'timestamp': r['timestamp']
             })
 
+        # 3. Monthly Total (sum of confirmed donations in the current calendar month, UTC)
+        cursor_month = conn.execute("""
+            SELECT SUM(amount) as total 
+            FROM donations 
+            WHERE status = 'confirmed' 
+              AND strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now')
+        """)
+        monthly_total = cursor_month.fetchone()['total'] or 0.0
+
         return jsonify({
             'top': top_list,
-            'recent': recent_list
+            'recent': recent_list,
+            'monthly_total': monthly_total
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500

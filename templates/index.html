@@ -2957,75 +2957,33 @@
                 <div class="funding-card glass-panel animate-fade-in delay-1">
                     <div class="funding-header">
                         <h3>Monthly Hosting & AI Solver Costs</h3>
-                        <span class="funding-status">$312 / $400 USD</span>
+                        <span class="funding-status" id="funding-status-text">$0 / $400 USD</span>
                     </div>
                     <div class="progress-bar-container">
-                        <div class="progress-bar-fill" style="width: 78%;">
+                        <div class="progress-bar-fill" style="width: 0%;">
                             <span class="progress-glow"></span>
                         </div>
                     </div>
                     <div class="funding-footer">
-                        <span>78% Funded this month</span>
-                        <span class="funding-days">5 days remaining</span>
+                        <span id="funding-percentage-text">0% Funded this month</span>
+                        <span class="funding-days" id="funding-days-text">-- days remaining</span>
                     </div>
                 </div>
 
-                <!-- Support Grid Options -->
-                <div class="donate-grid">
-                    <!-- Bronze Card -->
-                    <div class="donate-card glass-panel animate-fade-in delay-2">
-                        <div class="card-tier bronze">Bronze Supporter</div>
-                        <div class="card-price">$5 <span class="frequency">once</span></div>
-                        <p style="font-size: 0.95rem; color: var(--text-secondary, #94a3b8); line-height: 1.5; margin-bottom: 25px; min-height: 60px;">Support the game with a $5 donation and unlock Bronze Supporter status on the Hall of Fame.</p>
-                        <button class="donate-tier-btn bronze-btn" data-amount="5">Support $5</button>
+                <!-- Custom Support Amount Panel (Centered, Premium Glass Panel) -->
+                <div class="custom-donate-panel glass-panel animate-fade-in delay-2" style="margin: 0 auto; max-width: 550px; display: flex; flex-direction: column; gap: 20px; box-sizing: border-box; width: 100%;">
+                    <div style="text-align: center;">
+                        <h3 style="font-size: 1.4rem; font-weight: 800; color: #fff; margin: 0 0 10px 0;">Custom Support Amount</h3>
+                        <p style="font-size: 0.95rem; color: var(--text-secondary, #94a3b8); margin: 0;">Enter the amount you would like to contribute to support the project:</p>
                     </div>
-
-                    <!-- Silver Card (Most Popular) -->
-                    <div class="donate-card glass-panel premium animate-fade-in delay-3">
-                        <div class="popular-tag">Most Popular</div>
-                        <div class="card-tier silver">Silver Supporter</div>
-                        <div class="card-price">$15 <span class="frequency">once</span></div>
-                        <p style="font-size: 0.95rem; color: var(--text-secondary, #94a3b8); line-height: 1.5; margin-bottom: 25px; min-height: 60px;">Support the game with a $15 donation and unlock Silver Supporter status on the Hall of Fame.</p>
-                        <button class="donate-tier-btn silver-btn" data-amount="15">Support $15</button>
-                    </div>
-
-                    <!-- Gold Card -->
-                    <div class="donate-card glass-panel animate-fade-in delay-4">
-                        <div class="card-tier gold">Gold Supporter</div>
-                        <div class="card-price">$30 <span class="frequency">once</span></div>
-                        <p style="font-size: 0.95rem; color: var(--text-secondary, #94a3b8); line-height: 1.5; margin-bottom: 25px; min-height: 60px;">Support the game with a $30 donation and unlock Gold Supporter status on the Hall of Fame.</p>
-                        <button class="donate-tier-btn gold-btn" data-amount="30">Support $30</button>
-                    </div>
-                </div>
-
-                <!-- Actions Row: Custom Amount & Payment Channel -->
-                <div class="donate-actions-row">
-                    <!-- Custom Amount Panel -->
-                    <div class="custom-donate-panel glass-panel animate-fade-in delay-5" style="margin: 0; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
-                        <div>
-                            <h3>Custom Support Amount</h3>
-                            <p style="margin-bottom: 20px;">Enter any custom amount you'd like to support the project with:</p>
+                    <div class="custom-amount-input-group" style="display: flex; flex-direction: column; gap: 20px; width: 100%; box-sizing: border-box;">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.25); border: 1.5px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 10px 20px;">
+                            <span class="currency-prefix" style="font-size: 1.8rem; font-weight: 800; color: var(--accent-color, #f43f5e);">$</span>
+                            <input type="number" id="custom-donate-amount" min="1" placeholder="Enter amount" value="10" style="width: 100%; flex: 1; background: transparent; border: none; color: #fff; font-size: 1.6rem; font-weight: 800; outline: none; text-align: left; padding: 0;">
                         </div>
-                        <div class="custom-amount-input-group" style="display: flex; flex-direction: column; gap: 15px; width: 100%; box-sizing: border-box;">
-                            <div style="display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box;">
-                                <span class="currency-prefix">$</span>
-                                <input type="number" id="custom-donate-amount" min="1" placeholder="Enter amount" value="10" style="width: 100%; flex: 1;">
-                            </div>
-                            <button id="custom-donate-submit" class="custom-submit-btn" style="display: block; width: 100% !important; box-sizing: border-box; text-align: center;">Support</button>
-                        </div>
-                    </div>
-
-                    <!-- Payment Methods Overlay Selector -->
-                    <div class="payment-methods-card glass-panel animate-fade-in delay-6" style="margin: 0; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
-                        <div>
-                            <h3>Select Support Channel</h3>
-                            <p style="margin-bottom: 20px;">All contributions are securely processed exclusively through PayPal:</p>
-                        </div>
-                        <div class="payment-grid" style="grid-template-columns: 1fr; margin-top: 15px;">
-                            <a href="https://paypal.me/jeffbabiak" target="_blank" class="payment-btn paypal" style="width: 100%; box-sizing: border-box; display: flex; justify-content: center; align-items: center; gap: 10px;">
-                                <span class="payment-icon">💙</span> PayPal Checkout
-                            </a>
-                        </div>
+                        <a href="https://paypal.me/jeffbabiak/10" target="_blank" class="payment-btn paypal">
+                            <span class="payment-icon">💙</span> PayPal Checkout
+                        </a>
                     </div>
                 </div>
 

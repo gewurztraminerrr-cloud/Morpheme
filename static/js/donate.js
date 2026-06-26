@@ -6,16 +6,7 @@
     window.initDonatePage = function() {
         console.log('[donate.js] initDonatePage invoked.');
         
-        // 1. Reset progress bar fill and animate it beautifully on entry
-        const progressFill = document.querySelector('.progress-bar-fill');
-        if (progressFill) {
-            progressFill.style.width = '0%';
-            setTimeout(() => {
-                progressFill.style.width = '78%'; // Target funding percentage
-            }, 150);
-        }
-
-        // 2. Setup PayPal URL mapping
+        // 1. Setup PayPal URL mapping
         const basePayPalUrl = 'https://paypal.me/jeffbabiak';
         const paypalBtn = document.querySelector('.payment-btn.paypal');
         
@@ -46,67 +37,7 @@
             });
         }
 
-        // 3. Setup tier support buttons
-        const tierButtons = document.querySelectorAll('.donate-tier-btn');
-        
-        tierButtons.forEach(btn => {
-            // Remove previous listeners
-            const newBtn = btn.cloneNode(true);
-            btn.parentNode.replaceChild(newBtn, btn);
-
-            newBtn.addEventListener('click', () => {
-                const amount = newBtn.getAttribute('data-amount');
-                if (customAmountInput) {
-                    customAmountInput.value = amount;
-                    // Trigger flash effect on the input
-                    customAmountInput.style.borderColor = 'var(--accent-color, #f43f5e)';
-                    customAmountInput.style.boxShadow = '0 0 20px rgba(244, 63, 94, 0.4)';
-                    setTimeout(() => {
-                        customAmountInput.style.borderColor = '';
-                        customAmountInput.style.boxShadow = '';
-                    }, 500);
-                }
-                
-                // Update the PayPal link dynamically to matching tier amount!
-                updatePayPalLink(amount);
-                
-                showToast(`Support tier $${amount} selected! PayPal button updated to $${amount}.`, "💖");
-                
-                // Smooth scroll down to payment methods card
-                const paymentCard = document.querySelector('.payment-methods-card');
-                if (paymentCard) {
-                    paymentCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
-            });
-        });
-
-        // 4. Setup custom amount submission
-        const customSubmit = document.getElementById('custom-donate-submit');
-        if (customSubmit) {
-            const newSubmit = customSubmit.cloneNode(true);
-            customSubmit.parentNode.replaceChild(newSubmit, customSubmit);
-
-            newSubmit.addEventListener('click', () => {
-                if (customAmountInput) {
-                    const amount = parseFloat(customAmountInput.value);
-                    if (isNaN(amount) || amount <= 0) {
-                        showToast("Please enter a valid support amount.", "⚠️");
-                        return;
-                    }
-                    
-                    updatePayPalLink(amount);
-                    showToast(`Custom amount $${amount} chosen! PayPal button updated to $${amount}.`, "💖");
-                    
-                    // Smooth scroll down to payment methods card
-                    const paymentCard = document.querySelector('.payment-methods-card');
-                    if (paymentCard) {
-                        paymentCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }
-                }
-            });
-        }
-
-        // 5. Fetch and Render Real Recent Donators from SQLite DB
+        // 2. Fetch and Render Real Recent Donators and Monthly Progress
         loadRecentDonations();
     };
 
@@ -118,7 +49,48 @@
         fetch('/api/donations/recent')
             .then(res => res.json())
             .then(data => {
-                // 1. Render Top Lifetime Supporters
+                // Update Cost Progress Meter
+                const monthlyTotal = data.monthly_total || 0;
+                const target = 400;
+                const percentage = Math.round((monthlyTotal / target) * 100);
+
+                // 1. Update status text
+                const statusText = document.getElementById('funding-status-text');
+                if (statusText) {
+                    statusText.textContent = `$${Math.round(monthlyTotal)} / $${target} USD`;
+                }
+
+                // 2. Update progress bar fill
+                const progressFill = document.querySelector('.progress-bar-fill');
+                if (progressFill) {
+                    progressFill.style.width = '0%';
+                    setTimeout(() => {
+                        progressFill.style.width = `${Math.min(100, percentage)}%`;
+                    }, 150);
+                }
+
+                // 3. Update percentage footer
+                const percentageText = document.getElementById('funding-percentage-text');
+                if (percentageText) {
+                    percentageText.textContent = `${percentage}% Funded this month`;
+                }
+
+                // 4. Update days remaining
+                const daysText = document.getElementById('funding-days-text');
+                if (daysText) {
+                    const now = new Date();
+                    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+                    const daysRemaining = lastDay - now.getDate();
+                    if (daysRemaining === 0) {
+                        daysText.textContent = 'Ends today';
+                    } else if (daysRemaining === 1) {
+                        daysText.textContent = '1 day remaining';
+                    } else {
+                        daysText.textContent = `${daysRemaining} days remaining`;
+                    }
+                }
+
+                // Render Top Lifetime Supporters
                 if (data.top && data.top.length > 0) {
                     topList.innerHTML = data.top.map(donation => {
                         const amount = parseFloat(donation.amount);
@@ -150,7 +122,7 @@
                     topList.innerHTML = getEmptyPlaceholderHTML("Become a Top Supporter!");
                 }
 
-                // 2. Render Recent Support Activity
+                // Render Recent Support Activity
                 if (data.recent && data.recent.length > 0) {
                     recentList.innerHTML = data.recent.map(donation => {
                         const amount = parseFloat(donation.amount);
@@ -168,7 +140,6 @@
                             avatar = '✨';
                         }
 
-                        // Format timestamp nicely
                         let dateStr = '';
                         try {
                             const date = (typeof window.parseUTCTimestamp === 'function') ? window.parseUTCTimestamp(donation.timestamp) : new Date(donation.timestamp);
@@ -209,7 +180,6 @@
         `;
     }
 
-    // Helper to escape HTML to prevent XSS
     function escapeHTML(str) {
         if (!str) return '';
         return str.replace(/[&<>'"]/g, 
@@ -221,30 +191,5 @@
                 '"': '&quot;'
             }[tag] || tag)
         );
-    }
-
-    // Helper to trigger standard toasts
-    function showToast(message, icon = "🔔") {
-        if (typeof window.showToastNotification === 'function') {
-            window.showToastNotification(message, icon);
-            return;
-        }
-
-        // Fallback simple toast
-        const toast = document.createElement('div');
-        toast.className = 'm-toast';
-        toast.innerHTML = `
-            <div class="toast-content">
-                <span class="toast-icon">${icon}</span>
-                <div class="toast-body">
-                    <p>${message}</p>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(toast);
-        setTimeout(() => {
-            toast.classList.add('hiding');
-            setTimeout(() => toast.remove(), 400);
-        }, 4000);
     }
 })();
