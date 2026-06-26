@@ -392,6 +392,13 @@ function setupProfileTool() {
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') performProfileSearch(input.value);
         });
+        input.addEventListener('input', () => {
+            const errorEl = document.getElementById('profile-search-error');
+            if (errorEl) {
+                errorEl.style.display = 'none';
+                errorEl.innerText = '';
+            }
+        });
     }
 
     // Expose refresh function globally so app.js can trigger it
@@ -700,6 +707,12 @@ async function uploadAvatar(file) {
 }
 
 async function performProfileSearch(username, activeTab = null, period = 'all') {
+    const errorEl = document.getElementById('profile-search-error');
+    if (errorEl) {
+        errorEl.style.display = 'none';
+        errorEl.innerText = '';
+    }
+
     if (!username || !username.trim()) return;
 
     username = username.trim();
@@ -710,6 +723,10 @@ async function performProfileSearch(username, activeTab = null, period = 'all') 
     // Guests do not have profiles
     if (username.startsWith('Guest_')) {
         if (container) container.classList.add('hidden');
+        if (errorEl) {
+            errorEl.innerText = "The username you entered does not exist.";
+            errorEl.style.display = 'block';
+        }
         return;
     }
 
@@ -727,6 +744,11 @@ async function performProfileSearch(username, activeTab = null, period = 'all') 
 
         if (data.error) {
             // User not found, just don't show the profile
+            if (container) container.classList.add('hidden');
+            if (errorEl) {
+                errorEl.innerText = "The username you entered does not exist.";
+                errorEl.style.display = 'block';
+            }
             return;
         }
 
