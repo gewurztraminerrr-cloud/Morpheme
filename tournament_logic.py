@@ -189,6 +189,7 @@ class TournamentManager:
             
         bonus_word = final_bonus_word
         
+        now = time.time()
         # Allow turn duration override from parameters
         turn_dur = params.get('turn_duration', self.turn_duration)
         end_time = now + turn_dur
