@@ -3260,15 +3260,17 @@ def join_room(room_id):
     if success:
         p = room.players[-1] # Valid since we just added or updated
         p.has_exceptional_round = has_exceptional 
-    if not success:
-        # Room full
-        msg = f"Room is full (Max {room.max_players} players). You can watch instead."
+        room.update_player_activity(user_id)
+        return jsonify({'success': True, 'role': 'player', 'max_players': room.max_players, 'joined_mid_round': False})
+    else:
+        # If room is full, automatically join as spectator instead of failing (except Accumulative)
         if room.game_type in ['accumulative', 'solo_accumulative']:
-             msg = "Could not join Accumulative room. Please try again."
-        return jsonify({'error': msg}), 409
-    
-    room.update_player_activity(user_id)
-    return jsonify({'success': True, 'role': 'player', 'max_players': room.max_players, 'joined_mid_round': False})
+             return jsonify({'error': "Could not join Accumulative room. Please try again."}), 409
+        
+        print(f"[app.py] Room {room_id} is full. Automatically joining {session['username']} as spectator.")
+        room.add_spectator(user_id, session['username'], rating)
+        room.update_player_activity(user_id)
+        return jsonify({'success': True, 'role': 'spectator', 'auto_spectator': True})
 
 @app.route('/api/room/<room_id>/leave', methods=['POST'])
 def leave_room(room_id):
