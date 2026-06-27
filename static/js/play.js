@@ -1609,7 +1609,7 @@ async function updateGameState(incomingState = null) {
                 // Handle Bounce format
                 const is3D = state.board_dimensions && state.board_dimensions.includes('3x3x3');
                 if (bFormat.toLowerCase().includes('bounce') && !is3D) {
-                    setTimeout(startBounceFormat, 100);
+                    setTimeout(startBounceFormat, 300);
                 } else {
                     stopBounceFormat();
                 }
@@ -4158,7 +4158,7 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     // Handle format specific animations (Rotation and Bounce)
     const bFormat = (state && state.current_board_format) ? state.current_board_format : ((window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : 'Normal');
     if (bFormat.toLowerCase().includes('bounce') && !is3D) {
-        setTimeout(startBounceFormat, 100);
+        setTimeout(startBounceFormat, 300);
     } else {
         stopBounceFormat();
     }
@@ -4826,9 +4826,12 @@ function startBounceFormat() {
         boardEl.appendChild(ball);
         
         // Random initial position inside board
-        const rect = boardEl.getBoundingClientRect();
-        const maxX = Math.max(20, rect.width - size);
-        const maxY = Math.max(20, rect.height - size);
+        // Use offsetWidth/offsetHeight (intrinsic size) not getBoundingClientRect
+        // because getBoundingClientRect returns viewport-relative coords which change with scroll
+        const boardW = boardEl.offsetWidth;
+        const boardH = boardEl.offsetHeight;
+        const maxX = Math.max(20, boardW - size);
+        const maxY = Math.max(20, boardH - size);
         const x = Math.random() * maxX;
         const y = Math.random() * maxY;
         
@@ -4846,8 +4849,11 @@ function startBounceFormat() {
         const boardEl = document.getElementById('game-board');
         if (!boardEl) return;
         
-        const rect = boardEl.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) {
+        // Use offsetWidth/offsetHeight — these reflect the element's intrinsic layout size
+        // and are unaffected by scroll position, unlike getBoundingClientRect()
+        const boardW = boardEl.offsetWidth;
+        const boardH = boardEl.offsetHeight;
+        if (boardW === 0 || boardH === 0) {
             bounceAnimationId = requestAnimationFrame(updatePhysics);
             return;
         }
@@ -4856,8 +4862,8 @@ function startBounceFormat() {
             b.x += b.vx;
             b.y += b.vy;
             
-            const maxX = rect.width - b.size;
-            const maxY = rect.height - b.size;
+            const maxX = boardW - b.size;
+            const maxY = boardH - b.size;
             
             // Bounce off left/right
             if (b.x <= 0) {
