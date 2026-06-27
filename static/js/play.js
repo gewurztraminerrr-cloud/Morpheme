@@ -2920,7 +2920,6 @@ function rebuildTileToWordsMap() {
     if (!window.lastGameState || !window.lastGameState.all_words_paths) return;
 
     const paths = window.lastGameState.all_words_paths;
-    const board = window.lastGameState.board;
     const isTransposed = !!window.isBoardTransposed;
     const roundId = `${window.lastGameState.room_id}_${window.lastGameState.current_round}`;
     const cacheKey = `${roundId}_${isTransposed}`;
@@ -2940,80 +2939,18 @@ function rebuildTileToWordsMap() {
         return { nf, nr, nc };
     }
 
-    // Helper: get the board letters at a tile position
-    const is3D = board && board.length > 0 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
-    function getBoardLetters(nf, nr, nc) {
-        if (!board) return [];
-        try {
-            const cell = is3D ? board[nf][nr][nc] : board[nr][nc];
-            if (cell == null) return [];
-            return String(cell).split('/').map(s => s.trim().toUpperCase());
-        } catch { return []; }
-    }
-
-    // ── Pass 1: Primary map — word → tiles in its canonical path ──
-    // Also collect the set of letters used per word (for pass 2).
-    const wordLettersUsed = {}; // wordUpper → Set of letters in canonical path
-
     for (const [wordUpper, path] of Object.entries(paths)) {
         if (!path) continue;
-        const lettersUsed = new Set();
         for (let i = 0; i < path.length; i++) {
             const { nf, nr, nc } = parseNode(path[i]);
             const key = (nf !== -1) ? `${nf},${nr},${nc}` : `${nr},${nc}`;
             if (!window.tileToWordsMap[key]) window.tileToWordsMap[key] = new Set();
             window.tileToWordsMap[key].add(wordUpper);
-
-            // Track which letters this word's path uses
-            const letters = getBoardLetters(nf, nr, nc);
-            for (const letter of letters) {
-                if (letter) lettersUsed.add(letter);
-            }
-        }
-        wordLettersUsed[wordUpper] = lettersUsed;
-    }
-
-    // ── Pass 2: Duplicate-letter cross-population ──
-    // Build a map: normalised letter → all tile keys that hold that letter.
-    const letterToTileKeys = {}; // letter → [key, ...]
-    if (board) {
-        const rows = is3D ? board[0].length : board.length;
-        const cols = is3D ? board[0][0].length : board[0].length;
-        const faces = is3D ? board.length : 1;
-        for (let fi = 0; fi < faces; fi++) {
-            for (let ri = 0; ri < rows; ri++) {
-                for (let ci = 0; ci < cols; ci++) {
-                    const letters = getBoardLetters(fi, ri, ci);
-                    for (const letter of letters) {
-                        if (!letter) continue;
-                        let tileKey;
-                        if (isTransposed && !is3D) {
-                            tileKey = `${ci},${ri}`; // transposed: swap r/c
-                        } else {
-                            tileKey = is3D ? `${fi},${ri},${ci}` : `${ri},${ci}`;
-                        }
-                        if (!letterToTileKeys[letter]) letterToTileKeys[letter] = [];
-                        letterToTileKeys[letter].push(tileKey);
-                    }
-                }
-            }
-        }
-    }
-
-    // For each word, find all tiles whose letter appears in the word's canonical path letters.
-    // Map the word to ALL such tiles (not just the ones in its path).
-    for (const [wordUpper, lettersUsed] of Object.entries(wordLettersUsed)) {
-        for (const letter of lettersUsed) {
-            const siblingKeys = letterToTileKeys[letter] || [];
-            for (const key of siblingKeys) {
-                if (!window.tileToWordsMap[key]) window.tileToWordsMap[key] = new Set();
-                window.tileToWordsMap[key].add(wordUpper);
-            }
         }
     }
 
     window.tileToWordsMapCacheKey = cacheKey;
-    console.log(`[rebuildTileToWordsMap] Pre-mapped ${Object.keys(window.tileToWordsMap).length} tiles for round ${roundId} (with duplicate-letter cross-population)`);
+    console.log(`[rebuildTileToWordsMap] Pre-mapped ${Object.keys(window.tileToWordsMap).length} tiles for round ${roundId} (position-specific)`);
 }
 
 
