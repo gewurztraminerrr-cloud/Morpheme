@@ -4784,13 +4784,17 @@ function startBounceFormat() {
     // Number of balls based on board parameters
     const rows = window.lastGameState && window.lastGameState.board ? window.lastGameState.board.length : 4;
     const cols = window.lastGameState && window.lastGameState.board && window.lastGameState.board[0] ? window.lastGameState.board[0].length : 4;
-    const count = Math.min(6, Math.max(3, Math.round((rows * cols) / 5)));
+    let count = Math.min(12, Math.max(5, Math.round((rows * cols) / 3)));
+    if (rows === 4 && cols === 4) {
+        count = 5;
+    }
     
     const colors = [
-        'radial-gradient(circle, rgba(147, 51, 234, 0.45) 10%, rgba(147, 51, 234, 0.2) 50%, rgba(147, 51, 234, 0) 80%)', // Purple glow
-        'radial-gradient(circle, rgba(6, 182, 212, 0.45) 10%, rgba(6, 182, 212, 0.2) 50%, rgba(6, 182, 212, 0) 80%)', // Cyan glow
-        'radial-gradient(circle, rgba(236, 72, 153, 0.45) 10%, rgba(236, 72, 153, 0.2) 50%, rgba(236, 72, 153, 0) 80%)', // Pink glow
-        'radial-gradient(circle, rgba(234, 179, 8, 0.4) 10%, rgba(234, 179, 8, 0.2) 50%, rgba(234, 179, 8, 0) 80%)', // Yellow glow
+        'radial-gradient(circle at 30% 30%, #a855f7 0%, #7e22ce 60%, #581c87 100%)', // Glossy Purple
+        'radial-gradient(circle at 30% 30%, #22d3ee 0%, #0891b2 60%, #155e75 100%)', // Glossy Cyan
+        'radial-gradient(circle at 30% 30%, #f472b6 0%, #db2777 60%, #9d174d 100%)', // Glossy Pink
+        'radial-gradient(circle at 30% 30%, #fde047 0%, #ca8a04 60%, #854d0e 100%)', // Glossy Yellow
+        'radial-gradient(circle at 30% 30%, #34d399 0%, #059669 60%, #064e3b 100%)', // Glossy Emerald
     ];
     
     // Create balls
@@ -4812,7 +4816,7 @@ function startBounceFormat() {
             pointer-events: none;
             z-index: 10;
             will-change: transform;
-            filter: drop-shadow(0 0 15px rgba(255,255,255,0.05));
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.45));
         `;
         
         boardEl.appendChild(ball);
