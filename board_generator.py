@@ -1127,7 +1127,7 @@ class BoardGenerator:
             elif num_tiles >= 24 and depth == 1 and "either/or" not in safe_format:
                 strategy = "WordSoup"
             else:
-                strategy = "StepwiseOptimization" if (num_tiles >= 24 or difficulty in ["Medium", "Hard"]) else "HighDensity"
+                strategy = "StepwiseOptimization" if (num_tiles >= 24 or difficulty in ["Easy", "Medium", "Hard"]) else "HighDensity"
             
             # Weighted frequencies for density
             # If target difficulty is Easy, we want natural/friendly frequencies, NOT super dense or rare letters!
@@ -1257,7 +1257,8 @@ class BoardGenerator:
                 # To prevent timeouts on retries, only optimize uniqueness on the first attempt
                 # and if we have ample time remaining.
                 time_rem = timeout - (time.time() - start_time)
-                if attempts == 1 and time_rem >= 15.0:
+                min_time_needed = 4.5 if is_emergency else 15.0
+                if time_rem >= min_time_needed:
                     board = self._apply_io_b_uniqueness_optimization(
                         board, rows, cols, dictionary, all_excluded, min_word_length, depth=depth, difficulty=difficulty, max_words=max_words, is_checkerboard=is_checkerboard, min_words=min_words
                     )
@@ -3384,7 +3385,8 @@ class BoardGenerator:
                     # USER REQUEST: Total word count compliance.
                     # We prioritize density/uniqueness but STERNLY penalize overshooting max_words (ceiling).
                     if is_easy:
-                        score = total_w
+                        # Maximize common words (total words minus unique words) to lower the uniqueness ratio
+                        score = total_w - unique_w
                     else:
                         score = unique_w
                     

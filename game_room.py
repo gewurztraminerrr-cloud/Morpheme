@@ -3130,7 +3130,7 @@ class RoomManager:
                         board_format=room.spinner_params['board_format'],
                         min_word_length=room.spinner_params.get('min_word_length', 3),
                         difficulty=room.spinner_params.get('difficulty', 'Medium'),
-                        is_emergency=True # SPEED: For the very first user in a room, prioritize instant start
+                        is_emergency=not getattr(room, 'is_solo', False)
                     )
                 finally:
                     use_added_words_ctx.reset(token)
