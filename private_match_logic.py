@@ -395,9 +395,8 @@ class PrivateMatchManager:
             match_id = m['id']
             curr_round = m['current_round']
             
-            # Skip matches that are still initializing (round 0)
-            if curr_round == 0:
-                continue
+            # Allow matches that are still initializing (round 0) to show up in lists
+            pass
             
             # Check if user has submitted for this round
             turn = conn.execute('''

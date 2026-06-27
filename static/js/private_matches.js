@@ -431,7 +431,7 @@
                     `).join('')}</p>
                 </div>
                 <div class="match-actions">
-                    ${!isHistory ? (type === 'their-turn' ? `<span class="waiting-label" style="opacity: 0.7; font-size: 0.9em; font-weight: 500;">Waiting for Friend</span>` : `<button class="sf-action-btn" onclick="window.launchPrivateMatch(${m.id})">Play Turn</button>`) : ''}
+                    ${!isHistory ? (m.current_round === 0 ? `<span class="waiting-label" style="opacity: 0.7; font-size: 0.9em; font-weight: 500;">Initializing...</span>` : (type === 'their-turn' ? `<span class="waiting-label" style="opacity: 0.7; font-size: 0.9em; font-weight: 500;">Waiting for Friend</span>` : `<button class="sf-action-btn" onclick="window.launchPrivateMatch(${m.id})">Play Turn</button>`)) : ''}
                     ${isHistory ? `<button class="rematch-btn" onclick="window.rematchPrivate(${m.id})">Rematch</button>` : ''}
                     ${isHistory ? `<button class="replay-btn-friends" onclick="window.showPrivateHistory(${m.id})">View History</button>` : ''}
                 </div>
