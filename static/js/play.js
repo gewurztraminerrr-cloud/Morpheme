@@ -2927,40 +2927,182 @@ function rebuildTileToWordsMap() {
     window.tileToWordsMap = {};
     window.tileToWordsMapCacheKey = null;
 
-    if (!window.lastGameState || !window.lastGameState.all_words_paths) return;
+    if (!window.lastGameState || !window.lastGameState.board) return;
 
-    const paths = window.lastGameState.all_words_paths;
+    const board = window.lastGameState.board;
     const isTransposed = !!window.isBoardTransposed;
+    const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
     const roundId = `${window.lastGameState.room_id}_${window.lastGameState.current_round}`;
     const cacheKey = `${roundId}_${isTransposed}`;
 
-    // Helper: parse a path node into {nf, nr, nc}
-    function parseNode(node) {
-        let nf = -1, nr = -1, nc = -1;
-        if (Array.isArray(node)) {
-            if (node.length === 3) { nf = node[0]; nr = node[1]; nc = node[2]; }
-            else { nr = node[0]; nc = node[1]; }
-        } else if (node && typeof node === 'object') {
-            nf = node.f !== undefined ? node.f : -1;
-            nr = node.r !== undefined ? node.r : -1;
-            nc = node.c !== undefined ? node.c : -1;
+    const paths = window.lastGameState.all_words_paths || {};
+
+    // 3D Neighbors Helper matching board_generator.py logic
+    function getCubeNeighbors(f, r, c) {
+        const res = [];
+        for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+                if (dr === 0 && dc === 0) continue;
+                const nr = r + dr, nc = c + dc;
+                if (nr >= 0 && nr < 3 && nc >= 0 && nc < 3) res.push({ f, r: nr, c: nc });
+            }
         }
-        if (isTransposed && nf === -1) { const tmp = nr; nr = nc; nc = tmp; }
-        return { nf, nr, nc };
+        if (f === 0) {
+            res.push({ f: 4, r: 2, c }, { f: 4, r: 2, c: c - 1 }, { f: 4, r: 2, c: c + 1 });
+            res.push({ f: 5, r: 0, c }, { f: 5, r: 0, c: c - 1 }, { f: 5, r: 0, c: c + 1 });
+            res.push({ f: 2, r, c: 2 }, { f: 2, r: r - 1, c: 2 }, { f: 2, r: r + 1, c: 2 });
+            res.push({ f: 3, r, c: 0 }, { f: 3, r: r - 1, c: 0 }, { f: 3, r: r + 1, c: 0 });
+        } else if (f === 1) {
+            res.push({ f: 4, r: 0, c: 2 - c }, { f: 4, r: 0, c: 2 - (c - 1) }, { f: 4, r: 0, c: 2 - (c + 1) });
+            res.push({ f: 5, r: 2, c: 2 - c }, { f: 5, r: 2, c: 2 - (c - 1) }, { f: 5, r: 2, c: 2 - (c + 1) });
+            res.push({ f: 3, r, c: 2 }, { f: 3, r: r - 1, c: 2 }, { f: 3, r: r + 1, c: 2 });
+            res.push({ f: 2, r, c: 0 }, { f: 2, r: r - 1, c: 0 }, { f: 2, r: r + 1, c: 0 });
+        } else if (f === 2) {
+            res.push({ f: 4, r: c, c: 0 }, { f: 4, r: c - 1, c: 0 }, { f: 4, r: c + 1, c: 0 });
+            res.push({ f: 5, r: 2 - c, c: 0 }, { f: 5, r: 2 - (c - 1), c: 0 }, { f: 5, r: 2 - (c + 1), c: 0 });
+            res.push({ f: 0, r, c: 0 }, { f: 0, r: r - 1, c: 0 }, { f: 0, r: r + 1, c: 0 });
+            res.push({ f: 1, r, c: 2 }, { f: 1, r: r - 1, c: 2 }, { f: 1, r: r + 1, c: 2 });
+        } else if (f === 3) {
+            res.push({ f: 4, r: 2 - c, c: 2 }, { f: 4, r: 2 - (c - 1), c: 2 }, { f: 4, r: 2 - (c + 1), c: 2 });
+            res.push({ f: 5, r: c, c: 2 }, { f: 5, r: c - 1, c: 2 }, { f: 5, r: c + 1, c: 2 });
+            res.push({ f: 1, r, c: 0 }, { f: 1, r: r - 1, c: 0 }, { f: 1, r: r + 1, c: 0 });
+            res.push({ f: 0, r, c: 2 }, { f: 0, r: r - 1, c: 2 }, { f: 0, r: r + 1, c: 2 });
+        } else if (f === 4) {
+            res.push({ f: 1, r: 0, c: 2 - r }, { f: 1, r: 0, c: 2 - (r - 1) }, { f: 1, r: 0, c: 2 - (r + 1) });
+            res.push({ f: 0, r: 0, c }, { f: 0, r: 0, c: c - 1 }, { f: 0, r: 0, c: c + 1 });
+            res.push({ f: 2, r: 0, c: r }, { f: 2, r: 0, c: r - 1 }, { f: 2, r: 0, c: r + 1 });
+            res.push({ f: 3, r: 0, c: 2 - r }, { f: 3, r: 0, c: 2 - (r - 1) }, { f: 3, r: 0, c: 2 - (r + 1) });
+        } else if (f === 5) {
+            res.push({ f: 0, r: 2, c }, { f: 0, r: 2, c: c - 1 }, { f: 0, r: 2, c: c + 1 });
+            res.push({ f: 1, r: 2, c: 2 - r }, { f: 1, r: 2, c: 2 - (r - 1) }, { f: 1, r: 2, c: 2 - (r + 1) });
+            res.push({ f: 2, r: 2, c: 2 - r }, { f: 2, r: 2, c: 2 - (r - 1) }, { f: 2, r: 2, c: 2 - (r + 1) });
+            res.push({ f: 3, r: 2, c: r }, { f: 3, r: 2, c: r - 1 }, { f: 3, r: 2, c: r + 1 });
+        }
+        return res.filter(n => n.f >= 0 && n.f < 6 && n.r >= 0 && n.r < 3 && n.c >= 0 && n.c < 3);
     }
 
-    for (const [wordUpper, path] of Object.entries(paths)) {
-        if (!path) continue;
-        for (let i = 0; i < path.length; i++) {
-            const { nf, nr, nc } = parseNode(path[i]);
-            const key = (nf !== -1) ? `${nf},${nr},${nc}` : `${nr},${nc}`;
-            if (!window.tileToWordsMap[key]) window.tileToWordsMap[key] = new Set();
+    // High-performance DFS pathfinder to find ALL cells that can form a word
+    function getWordCells(word) {
+        const upperWord = word.toUpperCase();
+        const wordLen = upperWord.length;
+        const matchingKeys = new Set(); // Stores "f,r,c" or "r,c" keys
+
+        if (is3D) {
+            function dfs3D(f, r, c, index, visited) {
+                const cellValue = board[f][r][c].toUpperCase();
+                const letters = cellValue.includes('/') ? cellValue.split('/') : [cellValue];
+                let foundMatch = false;
+                let matchLength = 0;
+                for (const char of letters) {
+                    if (char === 'Q') {
+                        if (upperWord.substring(index, index + 2) === 'QU') { matchLength = 2; foundMatch = true; break; }
+                        else if (upperWord[index] === 'Q') { matchLength = 1; foundMatch = true; break; }
+                    } else if (upperWord[index] === char) { matchLength = 1; foundMatch = true; break; }
+                }
+                if (!foundMatch) return;
+
+                const nextIndex = index + matchLength;
+                const visitedKey = `${f},${r},${c}`;
+                visited.add(visitedKey);
+
+                if (nextIndex >= wordLen) {
+                    for (const k of visited) matchingKeys.add(k);
+                    visited.delete(visitedKey);
+                    return;
+                }
+
+                const neighbors = getCubeNeighbors(f, r, c);
+                for (const n of neighbors) {
+                    const nKey = `${n.f},${n.r},${n.c}`;
+                    if (!visited.has(nKey)) {
+                        dfs3D(n.f, n.r, n.c, nextIndex, visited);
+                    }
+                }
+                visited.delete(visitedKey);
+            }
+
+            for (let f = 0; f < 6; f++) {
+                for (let r = 0; r < 3; r++) {
+                    for (let c = 0; c < 3; c++) {
+                        dfs3D(f, r, c, 0, new Set());
+                    }
+                }
+            }
+        } else {
+            const rows = board.length;
+            const cols = board[0].length;
+
+            function dfs2D(r, c, index, visited) {
+                const cellValue = board[r][c].toUpperCase();
+                const letters = cellValue.includes('/') ? cellValue.split('/') : [cellValue];
+                let foundMatch = false;
+                let matchLength = 0;
+                for (const char of letters) {
+                    if (char === 'Q') {
+                        if (upperWord.substring(index, index + 2) === 'QU') { matchLength = 2; foundMatch = true; break; }
+                        else if (upperWord[index] === 'Q') { matchLength = 1; foundMatch = true; break; }
+                    } else if (upperWord[index] === char) { matchLength = 1; foundMatch = true; break; }
+                }
+                if (!foundMatch) return;
+
+                const nextIndex = index + matchLength;
+                const visitedKey = `${r},${c}`;
+                visited.add(visitedKey);
+
+                if (nextIndex >= wordLen) {
+                    for (const k of visited) {
+                        const parts = k.split(',');
+                        const itemR = parseInt(parts[0]);
+                        const itemC = parseInt(parts[1]);
+                        if (isTransposed) {
+                            matchingKeys.add(`${itemC},${itemR}`);
+                        } else {
+                            matchingKeys.add(`${itemR},${itemC}`);
+                        }
+                    }
+                    visited.delete(visitedKey);
+                    return;
+                }
+
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        if (dr === 0 && dc === 0) continue;
+                        const nr = r + dr;
+                        const nc = c + dc;
+                        if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+                            const nKey = `${nr},${nc}`;
+                            if (!visited.has(nKey)) {
+                                dfs2D(nr, nc, nextIndex, visited);
+                            }
+                        }
+                    }
+                }
+                visited.delete(visitedKey);
+            }
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    dfs2D(r, c, 0, new Set());
+                }
+            }
+        }
+
+        return matchingKeys;
+    }
+
+    // Populate tileToWordsMap by finding ALL cells for every word
+    for (const wordUpper of Object.keys(paths)) {
+        const matchingKeys = getWordCells(wordUpper);
+        for (const key of matchingKeys) {
+            if (!window.tileToWordsMap[key]) {
+                window.tileToWordsMap[key] = new Set();
+            }
             window.tileToWordsMap[key].add(wordUpper);
         }
     }
 
     window.tileToWordsMapCacheKey = cacheKey;
-    console.log(`[rebuildTileToWordsMap] Pre-mapped ${Object.keys(window.tileToWordsMap).length} tiles for round ${roundId} (position-specific)`);
+    console.log(`[rebuildTileToWordsMap] Pre-mapped ${Object.keys(window.tileToWordsMap).length} tiles for round ${roundId} (exhaustive paths)`);
 }
 
 
