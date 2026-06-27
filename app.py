@@ -2534,15 +2534,28 @@ def get_public_profile(username):
             avg_pct_found = round(sum(p['num_words'] / p['total_words_avail'] * 100 for p in matching_valid) / len(matching_valid), 1) if matching_valid else 0
             max_pct_found = round(max([p['num_words'] / p['total_words_avail'] * 100 for p in matching_valid]) if matching_valid else 0, 1)
 
+             config_stats[cfg_key] = {
+                'rating': rating,
+                'games_played': len(matching),
+                'wins': sum(1 for p in matching if p['all_players'] and p['total_score'] > 0 and p['total_score'] >= p['all_players'][0]['score']),
+                'point_sum': sum(p['total_score'] for p in matching),
+                'avg_pct_found': avg_pct_found,
+                'max_pct_found': max_pct_found,
+                'avg_score': round(sum(p['total_score'] for p in matching) / len(matching), 1) if matching else 0,
+                'avg_perf': round(sum(p['performance_value'] for p in matching) / len(matching), 1) if matching else 0
+            }
+        except Exception as e:
+            print(f"[Profile] Error calculating config stats for {cfg_key}: {e}")
             config_stats[cfg_key] = {
                 'rating': rating,
-                'avg_score': round(sum(p['total_score'] for p in matching) / len(matching), 1) if matching else 0,
-                'avg_perf': round(sum(p['performance_value'] for p in matching) / len(matching), 1) if matching else 0,
-                'avg_pct_found': avg_pct_found,
-                'max_pct_found': max_pct_found
+                'games_played': 0,
+                'wins': 0,
+                'point_sum': 0,
+                'avg_pct_found': 0,
+                'max_pct_found': 0,
+                'avg_score': 0,
+                'avg_perf': 0
             }
-        except:
-            config_stats[cfg_key] = {'rating': rating, 'avg_score': 0, 'avg_perf': 0}
 
     # Period-specific AVG WPM
     wpm_games = [p['wpm'] for p in processed_all if p['total_words_avail'] >= 50 and p['wpm'] > 0]
