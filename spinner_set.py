@@ -12,9 +12,9 @@ class SpinnerSet:
     @staticmethod
     def generate_tournament_params():
         """Generate ALL tournament parameters using lobby-standard dimensions and times"""
-        # 1. Broad Parameters (matching lobby options for mobile compatibility)
-        board_dims = random.choice(['4x4', '4x6']) # Sticking to rectangular mobile-friendly dims
-        time_limit = 180 # 3 minutes in seconds
+        # 1. Broad Parameters
+        board_dims = random.choice(['4x4', '4x6', '5x7', '6x8'])
+        time_limit = random.choice([60, 90, 120, 180, 240, 300])
         
         # 2. Granular Parameters
         params = SpinnerSet.generate_params(board_dims, is_24h=False)
