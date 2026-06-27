@@ -933,6 +933,14 @@ body.theme-black .forum-action-btn {
     #forum-category-desc {
         font-size: 0.85rem !important;
     }
+    #forum-user-search-input {
+        max-width: none !important;
+        width: 100% !important;
+        font-size: 0.75rem !important;
+    }
+    #forum-user-search-input::placeholder {
+        font-size: 0.72rem !important;
+    }
 }
 
 /* Mobile Readability Improvements */
