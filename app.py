@@ -2534,7 +2534,7 @@ def get_public_profile(username):
             avg_pct_found = round(sum(p['num_words'] / p['total_words_avail'] * 100 for p in matching_valid) / len(matching_valid), 1) if matching_valid else 0
             max_pct_found = round(max([p['num_words'] / p['total_words_avail'] * 100 for p in matching_valid]) if matching_valid else 0, 1)
 
-             config_stats[cfg_key] = {
+            config_stats[cfg_key] = {
                 'rating': rating,
                 'games_played': len(matching),
                 'wins': sum(1 for p in matching if p['all_players'] and p['total_score'] > 0 and p['total_score'] >= p['all_players'][0]['score']),
