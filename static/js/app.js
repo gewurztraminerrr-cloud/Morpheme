@@ -1020,6 +1020,8 @@ function showPage(pageId) {
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
         if (page.id === pageId) {
+            // Temporarily clear ID to prevent browser's native hash auto-scroll
+            page.id = '';
             page.classList.add('active');
             page.style.opacity = '1'; // Explicitly force visibility
             
@@ -1029,6 +1031,11 @@ function showPage(pageId) {
             if (layout) {
                 layout.scrollLeft = 0;
             }
+
+            // Restore ID in the next tick
+            setTimeout(() => {
+                page.id = pageId;
+            }, 0);
         }
     });
     window.scrollTo(0, 0);
