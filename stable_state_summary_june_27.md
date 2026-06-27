@@ -52,6 +52,12 @@ This summary documents the stable state of the Morpheme application as of June 2
 *   **Stage 2 Optimization Objective**: Modified `_apply_io_b_uniqueness_optimization` in [board_generator.py](file:///Users/jeffbabiak/board_generator.py) to heavily penalize unique words (specifically 5L+ words on 4x4 and 4x6 boards) when generating under the "Easy" setting. This directly aligns the optimizer's objective function with the uniqueness ratio metric.
 *   **Strict Attempt Limits**: Increased the maximum strict compliance attempts from `8` to `40` for smaller 2D boards (4x4 and 4x6) in `generate_board` to guarantee a perfect match to the selected difficulty.
 
+### 12. Added Words (+ AW) Board Generation Support
+*   **Dictionary Appending**: Modified `_create_normal_board` in [board_generator.py](file:///Users/jeffbabiak/board_generator.py) to append moderator-added custom words (`word_validator.added_words`) to the dictionary pool when the "+ AW" option is active.
+*   **Forced Embedding**: Refined `_create_normal_board` to select and force-embed up to 3 suitable custom Added Words at the very beginning of the Word Soup phase when the grid is empty, ensuring they always find a valid path.
+*   **Path Protection**: Updated the path-finding algorithms (`find_random_path` and `find_checkerboard_path`) to prevent regular words from overwriting the cells of the custom Added Words.
+*   **Optimization/Sweep Safeguards**: Updated `generate_board` to dynamically solve the board right after the Word Soup phase, identify the exact coordinates of any custom Added Words, and add them to the `all_excluded` set to protect them from being overwritten during Stage 2 Optimization, decimation sweeps, or rescue sweeps.
+
 ---
 
 ## 🛠 Active Features & Configuration
@@ -61,7 +67,7 @@ This summary documents the stable state of the Morpheme application as of June 2
 
 ---
 
-**Latest Stable Commit ID**: `9c1b34a`  
+**Latest Stable Commit ID**: `a87434b`  
 **GitHub Tags**: `START_OVER_POINT_JUNE_27`, `snapshot-current`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `9c1b34a`
+**Production Server Status**: Green / PM2 Online / Live at commit `a87434b`

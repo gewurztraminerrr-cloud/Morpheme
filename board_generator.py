@@ -1218,9 +1218,28 @@ class BoardGenerator:
             else:
                 pass
 
+            # --- FIND AND PROTECT CUSTOM ADDED WORDS ---
+            aw_cells = set()
+            val_ctx = use_added_words_ctx.get()
+            if val_ctx is None:
+                from word_validator import word_validator
+                val_ctx = word_validator.use_added_words
+            if val_ctx:
+                from word_validator import word_validator
+                if word_validator.added_words:
+                    solve_depth = 12 if (rows * cols >= 35) else 25
+                    temp_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=solve_depth, store_paths=True)
+                    for w, path in temp_solve.items():
+                        if w in word_validator.added_words:
+                            for cell in path:
+                                if isinstance(cell, (list, tuple)):
+                                    aw_cells.add(tuple(cell))
+
             all_excluded = set()
             if embedded_path:
                 all_excluded.update(embedded_path)
+            if aw_cells:
+                all_excluded.update(aw_cells)
             special_cells = []
             
             if "either/or" in board_format.lower():
@@ -2331,7 +2350,7 @@ class BoardGenerator:
                     # Load unique set for Medium/Hard (e.g. uniqueNWL.txt)
                     loaded_dict = self._get_difficulty_set(dict_name)
                     if loaded_dict:
-                        dictionary = loaded_dict
+                        dictionary = list(loaded_dict)
                         print(f"[BoardGen] Using UNIQUE dictionary (unique{dict_name}.txt) for {difficulty} Word Soup.")
                     else:
                         print(f"[BoardGen] ⚠️ Failed to load unique set for {dict_name}. Using fallback words.")
@@ -2347,6 +2366,17 @@ class BoardGenerator:
                     except Exception as e:
                         print(f"[BoardGen] Error loading full dictionary {dict_name}: {e}. Using fallback words.")
                         dictionary = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
+                
+                # Append custom added words if enabled
+                val_ctx = use_added_words_ctx.get()
+                if val_ctx is None:
+                    from word_validator import word_validator
+                    val_ctx = word_validator.use_added_words
+                if val_ctx:
+                    from word_validator import word_validator
+                    if word_validator.added_words:
+                        dictionary = list(dictionary) + list(word_validator.added_words)
+                        print(f"[BoardGen] Appended {len(word_validator.added_words)} custom added words to the Word Soup pool.")
                         
         # Determine number of words and length range based on grid size & target range
         num_cells = rows * cols
@@ -2402,7 +2432,7 @@ class BoardGenerator:
 
         if dictionary:
             valid_words = [w for w in dictionary if min_len <= len(w) <= max_len and not w.upper().endswith("ING") and not w.upper().endswith("INGS")]
-            if num_cells <= 24 and difficulty == "Easy":
+            if difficulty == "Easy":
                 uniques_nwl = self._get_difficulty_set("NWL")
                 uniques_csw = self._get_difficulty_set("CSW")
                 valid_words = [w for w in valid_words if w not in uniques_nwl and w not in uniques_csw]
@@ -2411,7 +2441,29 @@ class BoardGenerator:
             # Fallback if no dictionary passed or no words of that length
             valid_words = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
             
-        selected_words = random.sample(valid_words, min(num_words_to_embed, len(valid_words)))
+        # Force-embed some custom added words if "+ AW" is enabled
+        forced_aw = []
+        val_ctx = use_added_words_ctx.get()
+        if val_ctx is None:
+            from word_validator import word_validator
+            val_ctx = word_validator.use_added_words
+        if val_ctx:
+            from word_validator import word_validator
+            if word_validator.added_words:
+                suitable_aw = [w.upper() for w in word_validator.added_words if min_len <= len(w) <= max_len and not w.upper().endswith("ING") and not w.upper().endswith("INGS")]
+                if suitable_aw:
+                    num_to_force = min(3, len(suitable_aw))
+                    forced_aw = random.sample(suitable_aw, num_to_force)
+                    print(f"[BoardGen] Force-embedding custom added words: {forced_aw}")
+        
+        # Remove forced words from the pool to avoid duplicates, then sample the rest
+        remaining_pool = [w for w in valid_words if w not in forced_aw]
+        num_remaining = max(0, num_words_to_embed - len(forced_aw))
+        sampled_others = random.sample(remaining_pool, min(num_remaining, len(remaining_pool))) if remaining_pool else []
+        random.shuffle(sampled_others)
+        
+        # Prepend forced_aw so they are embedded first on the empty board
+        selected_words = forced_aw + sampled_others
         
         def get_neighbors(r, c):
             neighbors = []
@@ -2423,25 +2475,44 @@ class BoardGenerator:
                         neighbors.append((nr, nc))
             return neighbors
 
-        def find_random_path(length):
-            start_r = random.randint(0, rows - 1)
-            start_c = random.randint(0, cols - 1)
-            path = [(start_r, start_c)]
-            for _ in range(length - 1):
-                curr_r, curr_c = path[-1]
-                neighbors = get_neighbors(curr_r, curr_c)
-                valid_neighbors = [n for n in neighbors if n not in path]
-                if not valid_neighbors: return None
-                path.append(random.choice(valid_neighbors))
-            return path
+        # Keep track of cells occupied by forced words to protect them from being overwritten
+        protected_cells = set()
 
-        print(f"[BoardGen] Word Soup: Embedding {len(selected_words)} words on {rows}x{cols} grid...")
+        def find_random_path(length, protect=True, allow_fallback=True):
+            # Try 50 times to find a path that doesn't overwrite protected cells
+            for _ in range(50):
+                start_r = random.randint(0, rows - 1)
+                start_c = random.randint(0, cols - 1)
+                if protect and (start_r, start_c) in protected_cells:
+                    continue
+                path = [(start_r, start_c)]
+                possible = True
+                for _ in range(length - 1):
+                    curr_r, curr_c = path[-1]
+                    neighbors = get_neighbors(curr_r, curr_c)
+                    valid_neighbors = [n for n in neighbors if n not in path]
+                    if protect:
+                        valid_neighbors = [n for n in valid_neighbors if n not in protected_cells]
+                    if not valid_neighbors:
+                        possible = False
+                        break
+                    path.append(random.choice(valid_neighbors))
+                if possible:
+                    return path
+            
+            # Fallback: only allowed for forced words
+            if protect and allow_fallback:
+                return find_random_path(length, protect=False, allow_fallback=False)
+            return None
+
         # Define checkerboard path finder if needed
-        def find_checkerboard_path(word):
-            # Try a few random starting cells that match the first letter's type
+        def find_checkerboard_path(word, protect=True, allow_fallback=True):
+            # Try 40 times to find a path
             for _ in range(40):
                 start_r = random.randint(0, rows - 1)
                 start_c = random.randint(0, cols - 1)
+                if protect and (start_r, start_c) in protected_cells:
+                    continue
                 first_is_vowel = (start_r + start_c) % 2 != 0
                 if self._is_vowel(word[0]) != first_is_vowel:
                     continue
@@ -2455,6 +2526,8 @@ class BoardGenerator:
                     for nr, nc in neighbors:
                         if (nr, nc) in path:
                             continue
+                        if protect and (nr, nc) in protected_cells:
+                            continue
                         neighbor_is_vowel = (nr + nc) % 2 != 0
                         if self._is_vowel(word[i]) == neighbor_is_vowel:
                             valid_neighbors.append((nr, nc))
@@ -2466,21 +2539,27 @@ class BoardGenerator:
                     
                 if possible:
                     return path
+            
+            if protect and allow_fallback:
+                return find_checkerboard_path(word, protect=False, allow_fallback=False)
             return None
 
         print(f"[BoardGen] Word Soup: Embedding {len(selected_words)} words on {rows}x{cols} grid (Checkerboard={is_checkerboard})...")
         for word in selected_words:
             path = None
+            is_forced = (word in forced_aw)
             for _ in range(10): # Try 10 times to find a path
                 if is_checkerboard:
-                    path = find_checkerboard_path(word)
+                    path = find_checkerboard_path(word, protect=True, allow_fallback=is_forced)
                 else:
-                    path = find_random_path(len(word))
+                    path = find_random_path(len(word), protect=True, allow_fallback=is_forced)
                 if path:
                     break
             if path:
                 for i, (r, c) in enumerate(path):
                     board[r][c] = word[i]
+                if is_forced:
+                    protected_cells.update(path)
                     
         # Fill remaining empty cells with random letters
         # If target word count is low, use consonant-biased sparse weights to fill empty cells
@@ -3171,6 +3250,12 @@ class BoardGenerator:
         current_count = len(current_solve)
         if current_count <= max_words: return board
         
+        unique_set = self._get_difficulty_set(dictionary)
+        from word_validator import word_validator
+        val_ctx = use_added_words_ctx.get()
+        if val_ctx is None:
+            val_ctx = word_validator.use_added_words
+
         print(f"[BoardGen] 🔨 DECIMATION SWEEP START (Current: {current_count}, Max: {max_words})")
         dead_chars = ["Z", "X", "Q", "J", "K", "V"]
         
@@ -3184,7 +3269,15 @@ class BoardGenerator:
                     continue # Skip vowel cells since we don't have dead vowels!
             
             old_char = board[f_p][r_p][c_p] if depth > 1 else board[r_p][c_p]
-            best_char, best_score = old_char, current_count
+            
+            if difficulty == "Easy":
+                use_5plus_only = depth == 1 and ((rows == 4 and cols == 4) or (rows == 4 and cols == 6) or (rows == 6 and cols == 4))
+                initial_unique = sum(1 for w in current_solve if len(w) >= 5 and ((w in unique_set) or (val_ctx and w in word_validator.added_words))) if use_5plus_only else sum(1 for w in current_solve if (w in unique_set) or (val_ctx and w in word_validator.added_words))
+                best_score = -current_count - (initial_unique * 100)
+            else:
+                best_score = -current_count
+            
+            best_char = old_char
             
             # Try dead letters to see which breaks the most words
             for char in ["Z", "X", "Q", "J", "K", "V", "W", "G", "F", "B", "P", "M", "H"]:
@@ -3204,15 +3297,24 @@ class BoardGenerator:
                 res = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=False)
                 new_count = len(res)
                 
-                # DRACONIAN: Always favor lower counts if we are over max_words
-                if new_count < best_score:
-                    best_score, best_char = new_count, char
+                if difficulty == "Easy":
+                    unique_to_penalize = sum(1 for w in res if len(w) >= 5 and ((w in unique_set) or (val_ctx and w in word_validator.added_words))) if use_5plus_only else sum(1 for w in res if (w in unique_set) or (val_ctx and w in word_validator.added_words))
+                    score = -new_count - (unique_to_penalize * 100)
+                else:
+                    score = -new_count
+
+                if score > best_score:
+                    best_score, best_char = score, char
                 
-                if best_score <= max_words: break
+                if difficulty != "Easy" and new_count <= max_words: break
             
             if depth > 1: board[f_p][r_p][c_p] = best_char
             else: board[r_p][c_p] = best_char
-            current_count = best_score
+            
+            if best_char != old_char:
+                current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=False)
+                current_count = len(current_solve)
+                
             if current_count <= max_words:
                 print(f"[BoardGen] ✅ DECIMATION SUCCESSFUL: Hit {current_count} words.")
                 break
