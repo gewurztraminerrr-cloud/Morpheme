@@ -2976,6 +2976,8 @@ function updateIntermissionRenderKey() {
 function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWords = [], allWordScores = {}, cswOnlyWords = [], addedWords = []) {
     console.log(`[displayAllWords] RENDERING. BonusWord: "${bonusWord}" | Words count: ${allWords ? allWords.length : 0}`);
     const listEl = document.getElementById('submitted-words-list');
+    const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const prevScrollTop = (listEl && !isMobile) ? listEl.scrollTop : 0;
     const titleEl = document.getElementById('words-panel-title');
     if (titleEl && activeWordsTab === 'found') {
         titleEl.textContent = 'All Words';
@@ -3297,6 +3299,10 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             <span class="points-math">${pointsText}</span>
         </div>`;
     }).join('');
+
+    if (listEl && !isMobile) {
+        listEl.scrollTop = prevScrollTop;
+    }
 
     // Synchronize render cache key to prevent redundant heartbeat re-renders
     updateIntermissionRenderKey();
