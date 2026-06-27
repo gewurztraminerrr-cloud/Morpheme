@@ -1587,7 +1587,8 @@ class BoardGenerator:
                 ratio = self.get_uniqueness_ratio(board, list(all_words_dict.keys()), rows, cols, dictionary, depth)
                 min_ratio, max_ratio = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth, min_word_length=min_word_length)
                 
-                if attempts <= 8 and (time.time() - start_time < timeout - 1.5):
+                max_strict_attempts = 40 if (rows * cols <= 24 and depth == 1) else 8
+                if attempts <= max_strict_attempts and (time.time() - start_time < timeout - 1.5):
                     if not (min_ratio <= ratio <= max_ratio):
                         print(f"[BoardGen] ATTEMPT {attempts}: Board uniqueness ratio {ratio:.2f} is outside range {min_ratio}-{max_ratio} for target {difficulty}. Retrying...")
                         continue
@@ -3385,8 +3386,10 @@ class BoardGenerator:
                     # USER REQUEST: Total word count compliance.
                     # We prioritize density/uniqueness but STERNLY penalize overshooting max_words (ceiling).
                     if is_easy:
-                        # Maximize common words (total words minus unique words) to lower the uniqueness ratio
-                        score = total_w - unique_w
+                        # Maximize common words and heavily penalize unique words that affect the ratio
+                        use_5plus_only = depth == 1 and ((rows == 4 and cols == 4) or (rows == 4 and cols == 6) or (rows == 6 and cols == 4))
+                        unique_to_penalize = sum(1 for w in all_found if len(w) >= 5 and ((w in unique_set) or (val_ctx and w in word_validator.added_words))) if use_5plus_only else unique_w
+                        score = total_w - unique_w - (unique_to_penalize * 50)
                     else:
                         score = unique_w
                     

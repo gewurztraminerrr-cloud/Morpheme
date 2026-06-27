@@ -48,6 +48,10 @@ This summary documents the stable state of the Morpheme application as of June 2
 *   **Solo / Friends Custom Rooms**: Added the `Bounce` option to the Board Format dropdown in [templates/index.html](file:///Users/jeffbabiak/templates/index.html) under the Solo/Friends setup.
 *   **FAQ & Odds Display**: Added the `Bounce` format explanation and updated the odds displays under the FAQ section in [templates/index.html](file:///Users/jeffbabiak/templates/index.html).
 
+### 11. Easy Difficulty Board Generation Tuning
+*   **Stage 2 Optimization Objective**: Modified `_apply_io_b_uniqueness_optimization` in [board_generator.py](file:///Users/jeffbabiak/board_generator.py) to heavily penalize unique words (specifically 5L+ words on 4x4 and 4x6 boards) when generating under the "Easy" setting. This directly aligns the optimizer's objective function with the uniqueness ratio metric.
+*   **Strict Attempt Limits**: Increased the maximum strict compliance attempts from `8` to `40` for smaller 2D boards (4x4 and 4x6) in `generate_board` to guarantee a perfect match to the selected difficulty.
+
 ---
 
 ## 🛠 Active Features & Configuration
@@ -57,7 +61,7 @@ This summary documents the stable state of the Morpheme application as of June 2
 
 ---
 
-**Latest Stable Commit ID**: `19d014c`  
+**Latest Stable Commit ID**: `9c1b34a`  
 **GitHub Tags**: `START_OVER_POINT_JUNE_27`, `snapshot-current`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `19d014c`
+**Production Server Status**: Green / PM2 Online / Live at commit `9c1b34a`
