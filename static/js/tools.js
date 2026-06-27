@@ -58,6 +58,15 @@ window.showTool = function(toolId) {
     if (toolId === 'find-count') {
         if (typeof loadRandomSuggestedWords === 'function') loadRandomSuggestedWords();
     }
+
+    // Scroll tools content into view on mobile
+    const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) {
+        const toolsContent = document.querySelector('.tools-content');
+        if (toolsContent) {
+            toolsContent.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+        }
+    }
 };
 
 function setupToolsNavigation() {
@@ -78,6 +87,59 @@ function setupToolsNavigation() {
             window.showTool(toolId);
         }
     });
+
+    // Mobile Layout snapping on navigation
+    const toolsPage = document.getElementById('page-tools');
+    if (toolsPage) {
+        const observer = new MutationObserver(() => {
+            if (toolsPage.classList.contains('active')) {
+                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (isMobile) {
+                    setTimeout(() => {
+                        const sidebarEl = document.querySelector('.tools-sidebar');
+                        if (sidebarEl) sidebarEl.scrollIntoView({ behavior: 'auto', inline: 'start' });
+                    }, 100);
+                }
+            }
+        });
+        observer.observe(toolsPage, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
+    }
+
+    // Mobile touch swipe handling for sliding back to tools list
+    const toolsContent = document.querySelector('.tools-content');
+    const toolsSidebar = document.querySelector('.tools-sidebar');
+    if (toolsContent && toolsSidebar) {
+        let touchStartX = 0;
+        let touchStartY = 0;
+        toolsContent.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+        
+        toolsContent.addEventListener('touchend', (e) => {
+            const touchEndX = e.changedTouches[0].screenX;
+            const touchEndY = e.changedTouches[0].screenY;
+            const diffX = touchEndX - touchStartX;
+            const diffY = touchEndY - touchStartY;
+            
+            // If swiped right (diffX > 80) and horizontal movement was dominant
+            if (diffX > 80 && Math.abs(diffX) > Math.abs(diffY)) {
+                toolsSidebar.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+            }
+        }, { passive: true });
+    }
+
+    // Mobile back button inside tools content
+    const mobileBackBtn = document.getElementById('tools-mobile-back-btn');
+    if (mobileBackBtn) {
+        mobileBackBtn.addEventListener('click', () => {
+            const toolsSidebarEl = document.querySelector('.tools-sidebar');
+            if (toolsSidebarEl) toolsSidebarEl.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+        });
+    }
 }
 
 function setupComboChecker() {

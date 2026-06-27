@@ -4393,50 +4393,57 @@ input[type=range]::-moz-range-track {
 
 
     .tools-split-layout {
-
-        flex-direction: column !important; /* Stack vertically instead of a side-by-side split layout! */
-        height: auto !important;
-        min-height: auto !important;
-        border: none !important;
+        display: flex !important;
+        flex-direction: row !important;
+        overflow-x: auto !important;
+        scroll-snap-type: x mandatory !important;
+        -webkit-overflow-scrolling: touch !important;
+        scroll-behavior: smooth !important;
+        gap: 0 !important;
+        width: 100% !important;
+        height: calc(100vh - 120px) !important;
+        box-sizing: border-box !important;
+        border-radius: 0 !important;
+        border-left: none !important;
+        border-right: none !important;
         background: transparent !important;
+        border: none !important;
+    }
+
+    .tools-sidebar,
+    .tools-content {
+        flex: 0 0 100% !important;
+        width: 100% !important;
+        scroll-snap-align: center !important;
+        scroll-snap-stop: always !important;
+        height: 100% !important;
+        box-sizing: border-box !important;
+        overflow-y: auto !important;
     }
 
     .tools-sidebar {
-        flex: 0 0 auto !important;
-        width: 100% !important;
-        flex-direction: row !important; /* Row orientation instead of vertical column! */
-        flex-wrap: nowrap !important; /* Prevent wrapping so scrolling works! */
-        overflow-x: auto !important; /* Smooth horizontal scroll to browse tools! */
-        -webkit-overflow-scrolling: touch !important;
-        scrollbar-width: thin !important; /* Show scrollbars so user knows they can scroll! */
+        flex-direction: column !important;
         border-right: none !important;
-        border-bottom: 1px solid var(--input-border) !important; /* Divider below the tools sub-nav */
-        padding: 8px 10px !important;
-        padding-right: 50px !important; /* Safety buffer at the end of horizontal scroll */
-        gap: 6px !important;
+        border-bottom: none !important;
+        padding: 15px !important;
+        gap: 10px !important;
         background: var(--bg-panel) !important;
-        box-sizing: border-box !important;
-    }
-    .tools-sidebar::-webkit-scrollbar {
-        display: block !important;
-        height: 4px !important;
-    }
-    .tools-sidebar::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.3) !important;
-        border-radius: 2px !important;
     }
 
     .tool-nav-btn {
-        flex-shrink: 0 !important; /* Never let the tool buttons squish! */
-        padding: 6px 12px !important; /* Compact premium size */
-        font-size: 0.85rem !important;
-        white-space: nowrap !important;
+        width: 100% !important;
+        text-align: left !important;
+        padding: 12px 16px !important;
+        font-size: 1rem !important;
+        box-sizing: border-box !important;
     }
 
     .tools-content {
-        width: 100% !important;
-        padding: 15px 0 !important; /* Give content full horizontal expansion! */
-        box-sizing: border-box !important;
+        padding: 15px !important;
+    }
+
+    #tools-mobile-back-btn {
+        display: inline-block !important;
     }
 
     /* Responsive input rows for all tools */
