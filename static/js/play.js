@@ -4781,13 +4781,10 @@ function startBounceFormat() {
     const cell = boardEl.querySelector('.board-cell');
     const cellSize = cell ? cell.offsetWidth : 60;
     
-    // Number of balls based on board parameters
+    // Number of balls based on board parameters: exactly 11 balls per 16 tiles
     const rows = window.lastGameState && window.lastGameState.board ? window.lastGameState.board.length : 4;
     const cols = window.lastGameState && window.lastGameState.board && window.lastGameState.board[0] ? window.lastGameState.board[0].length : 4;
-    let count = Math.min(20, Math.max(11, Math.round((rows * cols) / 1.45)));
-    if (rows === 4 && cols === 4) {
-        count = 11;
-    }
+    const count = Math.round((rows * cols * 11) / 16);
     
     const colors = [
         'radial-gradient(circle at 30% 30%, #a855f7 0%, #7e22ce 60%, #581c87 100%)', // Glossy Purple
