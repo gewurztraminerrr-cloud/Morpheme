@@ -172,6 +172,14 @@ def format_chicago_to_utc(chicago_ts_str):
             dt = datetime.datetime.strptime(ts_str, '%Y-%m-%d %H:%M:%S.%f')
         else:
             dt = datetime.datetime.strptime(ts_str, '%Y-%m-%d %H:%M:%S')
+        
+        # Historical Fix: Prior to May 29, 2026, the database timestamps were stored
+        # in UTC (server system clock local time was UTC, before the Chicago transition on May 28).
+        # We treat those as UTC directly to prevent double-conversion timezone offsets.
+        if dt < datetime.datetime(2026, 5, 29):
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
+            return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+            
         dt = dt.replace(tzinfo=ZoneInfo("America/Chicago"))
         utc_dt = dt.astimezone(datetime.timezone.utc)
         return utc_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
