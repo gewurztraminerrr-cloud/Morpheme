@@ -307,9 +307,62 @@ const Forum = {
                 this.loadCategories();
             }
         }, 30000);
+
+        // Mobile Layout snapping on navigation
+        const forumPage = document.getElementById('page-forums');
+        if (forumPage) {
+            const observer = new MutationObserver(() => {
+                if (forumPage.classList.contains('active')) {
+                    const isMobile = (window.innerWidth <= 820) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                    if (isMobile) {
+                        setTimeout(() => {
+                            const sidebar = document.querySelector('.forum-sidebar');
+                            if (sidebar) sidebar.scrollIntoView({ behavior: 'auto', inline: 'start' });
+                        }, 100);
+                    }
+                }
+            });
+            observer.observe(forumPage, {
+                attributes: true,
+                attributeFilter: ['class']
+            });
+        }
+
+        // Mobile touch swipe handling for sliding back to categories
+        const forumMain = document.querySelector('.forum-main');
+        const forumSidebar = document.querySelector('.forum-sidebar');
+        if (forumMain && forumSidebar) {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            forumMain.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
+            
+            forumMain.addEventListener('touchend', (e) => {
+                const touchEndX = e.changedTouches[0].screenX;
+                const touchEndY = e.changedTouches[0].screenY;
+                const diffX = touchEndX - touchStartX;
+                const diffY = touchEndY - touchStartY;
+                
+                // If swiped right (diffX > 80) and horizontal movement was dominant
+                if (diffX > 80 && Math.abs(diffX) > Math.abs(diffY)) {
+                    forumSidebar.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+                }
+            }, { passive: true });
+        }
     },
 
     setupEventListeners: function () {
+        // Mobile Categories back button
+        const mobileBackBtn = document.getElementById('forum-mobile-back-btn');
+        if (mobileBackBtn) {
+            mobileBackBtn.addEventListener('click', () => {
+                const sidebar = document.querySelector('.forum-sidebar');
+                if (sidebar) sidebar.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+            });
+        }
+
         // New post button
         const newPostBtn = document.getElementById('forum-new-post-btn');
         if (newPostBtn) {
@@ -490,6 +543,14 @@ const Forum = {
 
         await this.loadPosts(catId);
         this.showListView();
+
+        const isMobile = (window.innerWidth <= 820) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+            const forumMain = document.querySelector('.forum-main');
+            if (forumMain) {
+                forumMain.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+            }
+        }
     },
 
     loadPosts: async function (catId) {
@@ -540,6 +601,14 @@ const Forum = {
                 `;
             }
             this.showListView();
+
+            const isMobile = (window.innerWidth <= 820) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile) {
+                const forumMain = document.querySelector('.forum-main');
+                if (forumMain) {
+                    forumMain.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+                }
+            }
         } catch (err) {
             console.error("[Forum] User search error:", err);
             postsList.innerHTML = '<div class="forum-placeholder"><h3>Error performing search.</h3></div>';
