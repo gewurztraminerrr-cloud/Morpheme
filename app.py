@@ -6556,21 +6556,20 @@ def get_private_match_status(match_id):
     if r['board_format']:
         params['board_format'] = r['board_format']
     try:
-        if 'dictionary' in r.keys() and r['dictionary']:
+        if r['dictionary']:
             params['dictionary'] = r['dictionary']
     except:
         pass
     try:
-        if 'difficulty' in r.keys() and r['difficulty']:
+        if r['difficulty']:
             params['difficulty'] = r['difficulty']
     except:
         pass
     try:
-        if 'bonus_word' in r.keys():
-            if r['bonus_word']:
-                params['bonus_word_length'] = len(r['bonus_word'])
-            else:
-                params['bonus_word_length'] = 'None'
+        if r['bonus_word']:
+            params['bonus_word_length'] = len(r['bonus_word'])
+        else:
+            params['bonus_word_length'] = 'None'
     except:
         pass
 

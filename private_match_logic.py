@@ -453,18 +453,17 @@ class PrivateMatchManager:
                     pass
             if round_info:
                 try:
-                    if 'dictionary' in round_info.keys() and round_info['dictionary']:
+                    if round_info['dictionary']:
                         match_data['parameters']['dictionary'] = round_info['dictionary']
-                    if 'difficulty' in round_info.keys() and round_info['difficulty']:
+                    if round_info['difficulty']:
                         match_data['parameters']['difficulty'] = round_info['difficulty']
-                    if 'board_format' in round_info.keys() and round_info['board_format']:
+                    if round_info['board_format']:
                         match_data['parameters']['board_format'] = round_info['board_format']
-                    if 'bonus_word' in round_info.keys():
-                        b_word = round_info['bonus_word']
-                        if b_word:
-                            match_data['parameters']['bonus_word_length'] = len(b_word)
-                        else:
-                            match_data['parameters']['bonus_word_length'] = 'None'
+                    b_word = round_info['bonus_word']
+                    if b_word:
+                        match_data['parameters']['bonus_word_length'] = len(b_word)
+                    else:
+                        match_data['parameters']['bonus_word_length'] = 'None'
                 except:
                     pass
                     
