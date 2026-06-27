@@ -2373,8 +2373,8 @@ class RoomManager:
                                         print(f"[RoomManager] Error restoring active players for {room_id}: {p_err}")
                                 
                                 # Set state to active
-                                room.state = 'active'
                                 room.round_start_time = updated_at # Preserve round start time!
+                                room.state = 'active'
                                 room.current_round = max_round + 1
                                 
                                 room.spinner_params = {
@@ -2558,8 +2558,8 @@ class RoomManager:
                                     kick_scores[w] = {'total': s, 'base': s}
                             room.solved_words_with_scores = kick_scores
                             
-                            room.state = 'active'
                             room.round_start_time = time.time()
+                            room.state = 'active'
                             room.current_round = 1
                             room.last_saved_round = -1 # Reset save counter for fresh session
                             
@@ -3373,8 +3373,14 @@ class RoomManager:
             # User Request: Do NOT wipe spinner_params here. 
             # They should hold the intent labels revealed during intermission.
             room.spinner_params_generated = False
-            room.state = 'active'
+            # CRITICAL: Set round_start_time BEFORE state='active'.
+            # If state is set first, check_and_update_state() (called from the tick worker or
+            # any state poll) may see state='active' with round_start_time=0, compute
+            # elapsed = now - 0 = huge number, and immediately transition to 'intermission',
+            # causing start_next_round to fire and replace room.board mid-round.
+            room.custom_end_time = 0
             room.round_start_time = time.time()
+            room.state = 'active'
             
             # TRIGGER PRE-GENERATION: Start searching for the NEXT round immediately 
             # to hide generation latency behind the active gameplay.
@@ -4573,9 +4579,12 @@ class RoomManager:
                 room.next_round_cell_density = None
                 room.next_round_initial_cell_density = None
                 
-                # ATOMIC PROMOTION: Set state to active
-                room.state = 'active'
+                # ATOMIC PROMOTION: Set round_start_time BEFORE state='active' to prevent
+                # check_and_update_state from seeing active+round_start_time=0 and immediately
+                # ending the round prematurely.
+                room.custom_end_time = 0
                 room.round_start_time = time.time()
+                room.state = 'active'
                 room.midnight_reset_occurred = False # Reset midnight reset flag for 24h rooms
                 if hasattr(room, 'intermission_stuck_start_time'):
                     delattr(room, 'intermission_stuck_start_time')
