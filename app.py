@@ -615,6 +615,7 @@ def add_added_word_api():
                 f.write(f"{l}\n")
                 
         word_validator.reload_added_words()
+        TOOLS_DICT_CACHE.clear()
         print(f"[Mods] Successfully added NEW word '{word}' to top of list.")
 
         return jsonify({
@@ -653,6 +654,7 @@ def remove_added_word():
             
             if word_validator:
                 word_validator.reload_added_words()
+                TOOLS_DICT_CACHE.clear()
 
             # Sync with Global Tally
             _update_word_stats(word, "remove")
@@ -4129,11 +4131,30 @@ def submit_contact():
 
 # --- TOOLS ENDPOINTS ---
 TOOLS_DICT_CACHE = {}
+LAST_ADDED_WORDS_MTIME = None
 
 def load_tools_dictionary(dict_name):
     """Load dictionary for tools into memory cache.
     Always merges the 16+ supplementary word list (16plus.txt) into the result
     so every tool/API route automatically includes long words."""
+    global LAST_ADDED_WORDS_MTIME
+
+    # Force word validator to reload if added_words.txt changed on disk
+    if word_validator:
+        word_validator.get_use_added_words(force=True)
+
+    # Check for cache invalidation based on added_words.txt modification time
+    added_path = os.path.join(os.path.dirname(__file__), 'dictionaries', 'added_words.txt')
+    curr_mtime = 0
+    if os.path.exists(added_path):
+        curr_mtime = os.path.getmtime(added_path)
+
+    if LAST_ADDED_WORDS_MTIME is not None and curr_mtime != LAST_ADDED_WORDS_MTIME:
+        print("[Tools] added_words.txt changed. Clearing tools dictionary cache.")
+        TOOLS_DICT_CACHE.clear()
+
+    LAST_ADDED_WORDS_MTIME = curr_mtime
+
     cache_key = dict_name
     if dict_name != 'added_words' and cache_key in TOOLS_DICT_CACHE:
         return TOOLS_DICT_CACHE[cache_key]
