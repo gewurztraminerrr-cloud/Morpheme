@@ -3056,6 +3056,7 @@ body.theme-light-brown .word-item.missed {
     text-align: left;
 }
 
+#page-tools,
 #page-settings {
     display: none;
     flex-direction: column;
@@ -3068,6 +3069,7 @@ body.theme-light-brown .word-item.missed {
     box-sizing: border-box;
 }
 
+#page-tools.active,
 #page-settings.active {
     display: flex !important;
     opacity: 1 !important;
@@ -4807,6 +4809,7 @@ input[type=range]::-moz-range-track {
         overflow-x: visible !important;
     }
 
+    #page-tools,
     #page-settings {
         padding-left: 0 !important;
         padding-right: 0 !important;
