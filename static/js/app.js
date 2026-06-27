@@ -1022,8 +1022,16 @@ function showPage(pageId) {
         if (page.id === pageId) {
             page.classList.add('active');
             page.style.opacity = '1'; // Explicitly force visibility
+            
+            // Reset scroll positions to the top
+            page.scrollTop = 0;
+            const layout = page.querySelector('.tools-split-layout');
+            if (layout) {
+                layout.scrollLeft = 0;
+            }
         }
     });
+    window.scrollTo(0, 0);
 
     // Standardize: Rating color bar ONLY appears on the Play page
     const colorBar = document.getElementById('game-color-bar');
