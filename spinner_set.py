@@ -234,7 +234,7 @@ class SpinnerSet:
                 if wc_range == '500+' or wc_range == '200+':
                     if min_word_length >= 5:
                         # Keep Either/Or, Checkerboard, and Density as they are highly requested/stable
-                        if board_format not in ['Either/Or', 'Checkerboard', 'Density', 'Valued Letters']:
+                        if board_format not in ['Either/Or', 'Checkerboard', 'Density', 'Valued Letters', 'Bounce']:
                             board_format = 'Normal'
                 if board_format == 'Checkerboard':
                     wc_range = random.choice(['100-200', '200-300'])
@@ -384,8 +384,8 @@ class SpinnerSet:
             return 'Normal'
             
         result = random.choices(
-            ['Normal', 'Equality Freq', 'Checkerboard', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Density', 'Rotation', 'Double', 'Triple'],
-            weights=[22, 2, 12, 2, 2, 50, 2, 2, 2, 2, 1, 1]
+            ['Normal', 'Bounce', 'Checkerboard', 'Equality Freq', 'Density', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Rotation', 'Double', 'Triple'],
+            weights=[20, 50, 12, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1]
         )[0]
         
         if result == 'Mania':

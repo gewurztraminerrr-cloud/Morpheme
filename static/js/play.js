@@ -530,6 +530,8 @@ function clearGameUIAndCache() {
     window.lastRenderedBoardJSON = null;
     window.lastPlayersHtml = null;
     window._wasEverInRoster = false;
+    stopBounceFormat();
+    stopRotatingLetters();
     
     // Reset local module render caches to force re-render on next entry
     lastRenderedBoardJSON = null;
@@ -1602,6 +1604,13 @@ async function updateGameState(incomingState = null) {
                     startRotatingLetters();
                 } else {
                     stopRotatingLetters();
+                }
+                
+                // Handle Bounce format
+                if (bFormat.toLowerCase().includes('bounce')) {
+                    setTimeout(startBounceFormat, 100);
+                } else {
+                    stopBounceFormat();
                 }
 
                 // Clear any winner announcement from Definitions Panel
@@ -4139,6 +4148,19 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         }
     }
 
+    // Handle format specific animations (Rotation and Bounce)
+    const bFormat = (state && state.current_board_format) ? state.current_board_format : ((window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : 'Normal');
+    if (bFormat.toLowerCase().includes('bounce')) {
+        setTimeout(startBounceFormat, 100);
+    } else {
+        stopBounceFormat();
+    }
+    if (bFormat.toLowerCase().includes('rotat')) {
+        startRotatingLetters();
+    } else {
+        stopRotatingLetters();
+    }
+
     // Trigger overflow check but don't clear grid styles anymore (to prevent flickering)
     setTimeout(checkBoardOverflow, 50);
     reapplyBoardHighlights();
@@ -4741,6 +4763,131 @@ function createBoardCell(r, c, letter, grayed, f, state = null) {
     cell.dataset.letter = letter;
     updateBoardCell(cell, r, c, letter, grayed, f, state);
     return cell;
+}
+
+let bounceBalls = [];
+let bounceAnimationId = null;
+
+function startBounceFormat() {
+    stopBounceFormat();
+    
+    const boardEl = document.getElementById('game-board');
+    if (!boardEl) return;
+    
+    // Ensure boardEl has position: relative
+    boardEl.style.position = 'relative';
+    
+    // Determine cell size
+    const cell = boardEl.querySelector('.board-cell');
+    const cellSize = cell ? cell.offsetWidth : 60;
+    
+    // Number of balls based on board parameters
+    const rows = window.lastGameState && window.lastGameState.board ? window.lastGameState.board.length : 4;
+    const cols = window.lastGameState && window.lastGameState.board && window.lastGameState.board[0] ? window.lastGameState.board[0].length : 4;
+    const count = Math.min(6, Math.max(3, Math.round((rows * cols) / 5)));
+    
+    const colors = [
+        'radial-gradient(circle, rgba(147, 51, 234, 0.45) 10%, rgba(147, 51, 234, 0.2) 50%, rgba(147, 51, 234, 0) 80%)', // Purple glow
+        'radial-gradient(circle, rgba(6, 182, 212, 0.45) 10%, rgba(6, 182, 212, 0.2) 50%, rgba(6, 182, 212, 0) 80%)', // Cyan glow
+        'radial-gradient(circle, rgba(236, 72, 153, 0.45) 10%, rgba(236, 72, 153, 0.2) 50%, rgba(236, 72, 153, 0) 80%)', // Pink glow
+        'radial-gradient(circle, rgba(234, 179, 8, 0.4) 10%, rgba(234, 179, 8, 0.2) 50%, rgba(234, 179, 8, 0) 80%)', // Yellow glow
+    ];
+    
+    // Create balls
+    for (let i = 0; i < count; i++) {
+        const ball = document.createElement('div');
+        ball.className = 'bounce-ball';
+        
+        // Size with respect to board parameters (cell size)
+        // Let's make size random between 1.0x and 1.4x the cell size!
+        const sizeMultiplier = 1.0 + Math.random() * 0.4;
+        const size = cellSize * sizeMultiplier;
+        
+        ball.style.cssText = `
+            position: absolute;
+            width: ${size}px;
+            height: ${size}px;
+            border-radius: 50%;
+            background: ${colors[i % colors.length]};
+            pointer-events: none;
+            z-index: 10;
+            will-change: transform;
+            filter: drop-shadow(0 0 15px rgba(255,255,255,0.05));
+        `;
+        
+        boardEl.appendChild(ball);
+        
+        // Random initial position inside board
+        const rect = boardEl.getBoundingClientRect();
+        const maxX = Math.max(20, rect.width - size);
+        const maxY = Math.max(20, rect.height - size);
+        const x = Math.random() * maxX;
+        const y = Math.random() * maxY;
+        
+        // Fast moving speeds: 4 to 8 pixels per frame
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 4 + Math.random() * 4;
+        const vx = Math.cos(angle) * speed;
+        const vy = Math.sin(angle) * speed;
+        
+        bounceBalls.push({ el: ball, x, y, vx, vy, size });
+    }
+    
+    // Animation loop
+    function updatePhysics() {
+        const boardEl = document.getElementById('game-board');
+        if (!boardEl) return;
+        
+        const rect = boardEl.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) {
+            bounceAnimationId = requestAnimationFrame(updatePhysics);
+            return;
+        }
+        
+        bounceBalls.forEach(b => {
+            b.x += b.vx;
+            b.y += b.vy;
+            
+            const maxX = rect.width - b.size;
+            const maxY = rect.height - b.size;
+            
+            // Bounce off left/right
+            if (b.x <= 0) {
+                b.x = 0;
+                b.vx = Math.abs(b.vx);
+            } else if (b.x >= maxX) {
+                b.x = maxX;
+                b.vx = -Math.abs(b.vx);
+            }
+            
+            // Bounce off top/bottom
+            if (b.y <= 0) {
+                b.y = 0;
+                b.vy = Math.abs(b.vy);
+            } else if (b.y >= maxY) {
+                b.y = maxY;
+                b.vy = -Math.abs(b.vy);
+            }
+            
+            // Apply transform for performance
+            b.el.style.transform = `translate3d(${b.x}px, ${b.y}px, 0)`;
+        });
+        
+        bounceAnimationId = requestAnimationFrame(updatePhysics);
+    }
+    
+    bounceAnimationId = requestAnimationFrame(updatePhysics);
+}
+
+function stopBounceFormat() {
+    if (bounceAnimationId) {
+        cancelAnimationFrame(bounceAnimationId);
+        bounceAnimationId = null;
+    }
+    
+    const existingBalls = document.querySelectorAll('.bounce-ball');
+    existingBalls.forEach(el => el.remove());
+    bounceBalls = [];
 }
 
 function startRotatingLetters() {
