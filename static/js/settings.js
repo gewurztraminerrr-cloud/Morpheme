@@ -807,7 +807,10 @@ function debounce(func, wait) {
         // Trigger scroll to content area on mobile
         const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         if (isMobile) {
-            content.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+            const layout = document.querySelector('#page-settings .tools-split-layout');
+            if (layout) {
+                layout.scrollTo({ left: layout.clientWidth, behavior: 'smooth' });
+            }
         }
     };
 
@@ -833,8 +836,8 @@ function debounce(func, wait) {
                     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
                     if (isMobile) {
                         setTimeout(() => {
-                            const sidebarEl = document.querySelector('#page-settings .tools-sidebar');
-                            if (sidebarEl) sidebarEl.scrollIntoView({ behavior: 'auto', inline: 'start' });
+                            const layoutEl = document.querySelector('#page-settings .tools-split-layout');
+                            if (layoutEl) layoutEl.scrollLeft = 0;
                         }, 100);
                     }
                 }
@@ -864,7 +867,8 @@ function debounce(func, wait) {
                 
                 // If swiped right (diffX > 80) and horizontal movement was dominant
                 if (diffX > 80 && Math.abs(diffX) > Math.abs(diffY)) {
-                    settingsSidebar.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+                    const layoutEl = document.querySelector('#page-settings .tools-split-layout');
+                    if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
                 }
             }, { passive: true });
         }
@@ -873,8 +877,8 @@ function debounce(func, wait) {
         const mobileBackBtn = document.getElementById('settings-mobile-back-btn');
         if (mobileBackBtn) {
             mobileBackBtn.addEventListener('click', () => {
-                const settingsSidebarEl = document.querySelector('#page-settings .tools-sidebar');
-                if (settingsSidebarEl) settingsSidebarEl.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+            const layoutEl = document.querySelector('#page-settings .tools-split-layout');
+            if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
             });
         }
     }

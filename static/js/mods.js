@@ -867,7 +867,10 @@ window.showModTab = function(tabId) {
     // Trigger scroll to content area on mobile
     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isMobile) {
-        content.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+        const layout = document.querySelector('#page-mods .tools-split-layout');
+        if (layout) {
+            layout.scrollTo({ left: layout.clientWidth, behavior: 'smooth' });
+        }
     }
 };
 
@@ -893,8 +896,8 @@ function setupModsNavigation() {
                 const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
                 if (isMobile) {
                     setTimeout(() => {
-                        const sidebarEl = document.querySelector('#page-mods .tools-sidebar');
-                        if (sidebarEl) sidebarEl.scrollIntoView({ behavior: 'auto', inline: 'start' });
+                        const layoutEl = document.querySelector('#page-mods .tools-split-layout');
+                        if (layoutEl) layoutEl.scrollLeft = 0;
                     }, 100);
                 }
             }
@@ -924,7 +927,8 @@ function setupModsNavigation() {
             
             // If swiped right (diffX > 80) and horizontal movement was dominant
             if (diffX > 80 && Math.abs(diffX) > Math.abs(diffY)) {
-                modsSidebar.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+                const layoutEl = document.querySelector('#page-mods .tools-split-layout');
+                if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
             }
         }, { passive: true });
     }
@@ -933,8 +937,8 @@ function setupModsNavigation() {
     const mobileBackBtn = document.getElementById('mods-mobile-back-btn');
     if (mobileBackBtn) {
         mobileBackBtn.addEventListener('click', () => {
-            const modsSidebarEl = document.querySelector('#page-mods .tools-sidebar');
-            if (modsSidebarEl) modsSidebarEl.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+            const layoutEl = document.querySelector('#page-mods .tools-split-layout');
+            if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
         });
     }
 }
