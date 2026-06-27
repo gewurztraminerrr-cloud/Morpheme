@@ -3054,11 +3054,7 @@ function rebuildTileToWordsMap() {
                         const parts = k.split(',');
                         const itemR = parseInt(parts[0]);
                         const itemC = parseInt(parts[1]);
-                        if (isTransposed) {
-                            matchingKeys.add(`${itemC},${itemR}`);
-                        } else {
-                            matchingKeys.add(`${itemR},${itemC}`);
-                        }
+                        matchingKeys.add(`${itemR},${itemC}`);
                     }
                     visited.delete(visitedKey);
                     return;
