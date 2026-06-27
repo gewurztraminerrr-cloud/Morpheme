@@ -5268,6 +5268,7 @@ def get_forum_posts(category_id):
             JOIN users u ON p.user_id = u.id
             WHERE p.category_id = ?
             ORDER BY last_activity DESC
+            LIMIT 200
         ''', (category_id,)).fetchall()
         return jsonify({'posts': [dict(row) for row in rows]})
     finally:
@@ -5307,6 +5308,7 @@ def get_forum_user_posts(username):
         # Combine and sort by timestamp DESC
         all_items = posts + comments
         all_items.sort(key=lambda x: x['timestamp'] or '', reverse=True)
+        all_items = all_items[:100]
         
         res = jsonify({'posts': all_items})
         res.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
