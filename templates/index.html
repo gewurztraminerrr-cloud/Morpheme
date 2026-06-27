@@ -1234,19 +1234,50 @@
             <div class="tools-split-layout">
                 <!-- Sidebar (1/3) -->
                 <div class="tools-sidebar">
-                    <button class="tool-nav-btn active" data-tool="profile" onclick="window.showTool('profile')">Profile</button>
-                    <button class="tool-nav-btn" data-tool="combo" onclick="window.showTool('combo')">Combo Checker</button>
-                    <button class="tool-nav-btn" data-tool="is-valid" onclick="window.showTool('is-valid')">Is Valid</button>
-                    <button class="tool-nav-btn" data-tool="lists" onclick="window.showTool('lists')">Lists</button>
-                    <button class="tool-nav-btn" data-tool="sequence" onclick="window.showTool('sequence')">Sequence</button>
-                    <button class="tool-nav-btn" data-tool="subanagrams" onclick="window.showTool('subanagrams')">Subanagrams</button>
-                    <button class="tool-nav-btn" data-tool="random" onclick="window.showTool('random')">Random Word</button>
-                    <button class="tool-nav-btn" data-tool="wotd" onclick="window.showTool('wotd')">Word of the Day</button>
-                    <button class="tool-nav-btn" data-tool="unscramble" onclick="window.showTool('unscramble')">Unscramble</button>
-                    <button class="tool-nav-btn" data-tool="find-count" onclick="window.showTool('find-count')">Find Count</button>
-
-                    <button class="tool-nav-btn" data-tool="timer" onclick="window.showTool('timer')">Personal Timer</button>
-                    <!-- Future tools go here -->
+                    <button class="tool-nav-btn active" data-tool="profile" onclick="window.showTool('profile')">
+                        <span class="tool-btn-title">Profile</span>
+                        <span class="tool-btn-desc">View player stats and rankings</span>
+                    </button>
+                    <button class="tool-nav-btn" data-tool="combo" onclick="window.showTool('combo')">
+                        <span class="tool-btn-title">Combo Checker</span>
+                        <span class="tool-btn-desc">Find connected words via MP & LIC</span>
+                    </button>
+                    <button class="tool-nav-btn" data-tool="is-valid" onclick="window.showTool('is-valid')">
+                        <span class="tool-btn-title">Is Valid</span>
+                        <span class="tool-btn-desc">Check if a word exists in dictionaries</span>
+                    </button>
+                    <button class="tool-nav-btn" data-tool="lists" onclick="window.showTool('lists')">
+                        <span class="tool-btn-title">Lists</span>
+                        <span class="tool-btn-desc">Browse official word lists</span>
+                    </button>
+                    <button class="tool-nav-btn" data-tool="sequence" onclick="window.showTool('sequence')">
+                        <span class="tool-btn-title">Sequence</span>
+                        <span class="tool-btn-desc">Search words containing a sequence</span>
+                    </button>
+                    <button class="tool-nav-btn" data-tool="subanagrams" onclick="window.showTool('subanagrams')">
+                        <span class="tool-btn-title">Subanagrams</span>
+                        <span class="tool-btn-desc">Find words formed from letters</span>
+                    </button>
+                    <button class="tool-nav-btn" data-tool="random" onclick="window.showTool('random')">
+                        <span class="tool-btn-title">Random Word</span>
+                        <span class="tool-btn-desc">Generate random words</span>
+                    </button>
+                    <button class="tool-nav-btn" data-tool="wotd" onclick="window.showTool('wotd')">
+                        <span class="tool-btn-title">Word of the Day</span>
+                        <span class="tool-btn-desc">Learn a new word daily</span>
+                    </button>
+                    <button class="tool-nav-btn" data-tool="unscramble" onclick="window.showTool('unscramble')">
+                        <span class="tool-btn-title">Unscramble</span>
+                        <span class="tool-btn-desc">Solve word jumbles</span>
+                    </button>
+                    <button class="tool-nav-btn" data-tool="find-count" onclick="window.showTool('find-count')">
+                        <span class="tool-btn-title">Find Count</span>
+                        <span class="tool-btn-desc">See word find history</span>
+                    </button>
+                    <button class="tool-nav-btn" data-tool="timer" onclick="window.showTool('timer')">
+                        <span class="tool-btn-title">Personal Timer</span>
+                        <span class="tool-btn-desc">Set a session alert timer</span>
+                    </button>
                 </div>
 
                 <!-- Content (2/3) -->
@@ -2144,13 +2175,34 @@
             <div class="tools-split-layout">
                 <!-- Sidebar (1/3) -->
                 <div class="tools-sidebar">
-                    <button class="tool-nav-btn active" data-mod-tab="ban" onclick="window.showModTab('ban')">Ban User</button>
-                    <button class="tool-nav-btn" data-mod-tab="notice" onclick="window.showModTab('notice')">Lobby Notice</button>
-                    <button class="tool-nav-btn" data-mod-tab="def" onclick="window.showModTab('def')">Definition Management</button>
-                    <button class="tool-nav-btn" data-mod-tab="pron" onclick="window.showModTab('pron')">Pronunciation Management</button>
-                    <button class="tool-nav-btn" data-mod-tab="added" onclick="window.showModTab('added')">Added Words</button>
-                    <button class="tool-nav-btn" data-mod-tab="db" onclick="window.showModTab('db')">Database Submission</button>
-                    <button class="tool-nav-btn" data-mod-tab="access" onclick="window.showModTab('access')">Moderator Access</button>
+                    <button class="tool-nav-btn active" data-mod-tab="ban" onclick="window.showModTab('ban')">
+                        <span class="tool-btn-title">Ban User</span>
+                        <span class="tool-btn-desc">Permanently delete a user account</span>
+                    </button>
+                    <button class="tool-nav-btn" data-mod-tab="notice" onclick="window.showModTab('notice')">
+                        <span class="tool-btn-title">Lobby Notice</span>
+                        <span class="tool-btn-desc">Post global lobby announcement</span>
+                    </button>
+                    <button class="tool-nav-btn" data-mod-tab="def" onclick="window.showModTab('def')">
+                        <span class="tool-btn-title">Definition Management</span>
+                        <span class="tool-btn-desc">Add or edit word definitions</span>
+                    </button>
+                    <button class="tool-nav-btn" data-mod-tab="pron" onclick="window.showModTab('pron')">
+                        <span class="tool-btn-title">Pronunciation Management</span>
+                        <span class="tool-btn-desc">Add phonetic pronunciations</span>
+                    </button>
+                    <button class="tool-nav-btn" data-mod-tab="added" onclick="window.showModTab('added')">
+                        <span class="tool-btn-title">Added Words</span>
+                        <span class="tool-btn-desc">Manage custom words list</span>
+                    </button>
+                    <button class="tool-nav-btn" data-mod-tab="db" onclick="window.showModTab('db')">
+                        <span class="tool-btn-title">Database Submission</span>
+                        <span class="tool-btn-desc">Upload word dictionary file</span>
+                    </button>
+                    <button class="tool-nav-btn" data-mod-tab="access" onclick="window.showModTab('access')">
+                        <span class="tool-btn-title">Moderator Access</span>
+                        <span class="tool-btn-desc">Manage moderator permissions</span>
+                    </button>
                 </div>
 
                 <!-- Content (2/3) -->
@@ -2320,9 +2372,18 @@
             <div class="tools-split-layout">
                 <!-- Sidebar (1/3) -->
                 <div class="tools-sidebar">
-                    <button class="tool-nav-btn active" data-setting-tab="appearance" onclick="window.showSettingTab('appearance')">Appearance</button>
-                    <button class="tool-nav-btn" data-setting-tab="audio" onclick="window.showSettingTab('audio')">Audio & Sounds</button>
-                    <button class="tool-nav-btn" data-setting-tab="gameplay" onclick="window.showSettingTab('gameplay')">Gameplay & Highlights</button>
+                    <button class="tool-nav-btn active" data-setting-tab="appearance" onclick="window.showSettingTab('appearance')">
+                        <span class="tool-btn-title">Appearance</span>
+                        <span class="tool-btn-desc">Customize theme, layout, and colors</span>
+                    </button>
+                    <button class="tool-nav-btn" data-setting-tab="audio" onclick="window.showSettingTab('audio')">
+                        <span class="tool-btn-title">Audio & Sounds</span>
+                        <span class="tool-btn-desc">Manage sound effects and volume</span>
+                    </button>
+                    <button class="tool-nav-btn" data-setting-tab="gameplay" onclick="window.showSettingTab('gameplay')">
+                        <span class="tool-btn-title">Gameplay & Highlights</span>
+                        <span class="tool-btn-desc">Configure game options and overlays</span>
+                    </button>
                 </div>
 
                 <!-- Content (2/3) -->
