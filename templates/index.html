@@ -2473,19 +2473,7 @@
                                 <div class="setting-header">
                                     <div>
                                         <div class="setting-title">Board Size</div>
-                                        <div class="setting-desc">Adjust the visual scale of the game board.</div>
-                                    </div>
-                                    <div id="setting-board-size-val" class="preview-value">54px</div>
-                                </div>
-
-                                <div class="setting-slider-container">
-                                    <div class="slider-label-row">
-                                        <span>Compact (40px)</span>
-                                        <span>Massive (110px)</span>
-                                    </div>
-                                    <input type="range" id="setting-board-size" min="40" max="110" value="54">
-                                    <div class="slider-instruction" style="font-size: 0.85rem; color: var(--text-secondary, #94a3b8); margin-top: 12px; line-height: 1.4; font-style: italic;">
-                                        💡 <b>Pro Tip:</b> Adjust this primary slider while in a game room to find your perfect tile scale. Once satisfied, match that pixel value to the corresponding dimension slider below. Morpheme will automatically consult those configurations whenever you enter a room!
+                                        <div class="setting-desc">Configure the precise tile size for each board dimension. Morpheme will automatically apply these values when you enter a room of the corresponding size.</div>
                                     </div>
                                 </div>
 
@@ -2512,35 +2500,35 @@
 
                                 <div class="dimension-sizes-section" style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
                                     <div class="setting-title" style="font-size: 1.1rem; margin-bottom: 5px;">Dimension-Specific Sizes</div>
-                                    <div class="setting-desc" style="margin-bottom: 15px;">Set distinct tile scales so you don't have to adjust the slider each time you change rooms.</div>
+                                    <div class="setting-desc" style="margin-bottom: 15px;">Set distinct tile scales so you don't have to adjust the slider each time you change rooms. The 2D example board above will demonstrate the selected size.</div>
                                     <div class="dimension-sliders-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
                                         <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
                                             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                                                 <span style="font-weight: 600;">4x4 Grid</span>
-                                                <span id="val-dim-4x4" style="color: var(--primary); font-weight: bold;">54px</span>
+                                                <span id="val-dim-4x4" style="color: var(--primary); font-weight: bold;">82px</span>
                                             </div>
-                                            <input type="range" class="dim-size-slider" data-dim="4x4" min="30" max="110" value="54" style="width: 100%;">
+                                            <input type="range" class="dim-size-slider" data-dim="4x4" min="30" max="110" value="82" style="width: 100%;">
                                         </div>
                                         <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
                                             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                                                 <span style="font-weight: 600;">4x6 Grid</span>
-                                                <span id="val-dim-4x6" style="color: var(--primary); font-weight: bold;">55px</span>
+                                                <span id="val-dim-4x6" style="color: var(--primary); font-weight: bold;">82px</span>
                                             </div>
-                                            <input type="range" class="dim-size-slider" data-dim="4x6" min="30" max="110" value="55" style="width: 100%;">
+                                            <input type="range" class="dim-size-slider" data-dim="4x6" min="30" max="110" value="82" style="width: 100%;">
                                         </div>
                                         <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
                                             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                                                 <span style="font-weight: 600;">5x7 Grid</span>
-                                                <span id="val-dim-5x7" style="color: var(--primary); font-weight: bold;">45px</span>
+                                                <span id="val-dim-5x7" style="color: var(--primary); font-weight: bold;">65px</span>
                                             </div>
-                                            <input type="range" class="dim-size-slider" data-dim="5x7" min="30" max="110" value="45" style="width: 100%;">
+                                            <input type="range" class="dim-size-slider" data-dim="5x7" min="30" max="110" value="65" style="width: 100%;">
                                         </div>
                                         <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
                                             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                                                 <span style="font-weight: 600;">6x8 Grid</span>
-                                                <span id="val-dim-6x8" style="color: var(--primary); font-weight: bold;">40px</span>
+                                                <span id="val-dim-6x8" style="color: var(--primary); font-weight: bold;">54px</span>
                                             </div>
-                                            <input type="range" class="dim-size-slider" data-dim="6x8" min="30" max="110" value="40" style="width: 100%;">
+                                            <input type="range" class="dim-size-slider" data-dim="6x8" min="30" max="110" value="54" style="width: 100%;">
                                         </div>
                                     </div>
                                 </div>

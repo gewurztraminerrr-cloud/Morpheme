@@ -1508,6 +1508,30 @@ def init_db():
     except sqlite3.OperationalError:
         pass
 
+    # MIGRATION: Force all existing accounts to have the new default board sizes once
+    try:
+        cursor = conn.execute("SELECT config_value FROM site_config WHERE config_key = 'migration_forced_board_sizes_june_27'")
+        row = cursor.fetchone()
+        if not row:
+            print("[Migration] Forcing new default board sizes for all existing accounts...")
+            # Get all user IDs
+            users_cursor = conn.execute("SELECT id FROM users")
+            user_ids = [r[0] for r in users_cursor.fetchall()]
+            
+            # Insert or replace the board_sizes setting for every user
+            for uid in user_ids:
+                conn.execute(
+                    "INSERT OR REPLACE INTO user_settings (user_id, setting_key, setting_value) VALUES (?, 'board_sizes', ?)",
+                    (uid, '{"4x4":82,"4x6":82,"5x7":65,"6x8":54}')
+                )
+            
+            # Record that this migration has run
+            conn.execute("INSERT OR REPLACE INTO site_config (config_key, config_value) VALUES ('migration_forced_board_sizes_june_27', 'done')")
+            conn.commit()
+            print(f"[Migration] Successfully updated board sizes for {len(user_ids)} users.")
+    except Exception as e:
+        print(f"[Migration] Error forcing default board sizes: {e}")
+
     conn.close()
 
 init_db()

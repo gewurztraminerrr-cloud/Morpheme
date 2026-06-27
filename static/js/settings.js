@@ -41,8 +41,7 @@ function debounce(func, wait) {
     }
 
     // DOM Elements
-    const boardSizeSlider = document.getElementById('setting-board-size');
-    const boardSizeVal = document.getElementById('setting-board-size-val');
+    // (Global boardSizeSlider removed as per user request)
 
     // 1. Load Settings on Startup
     async function loadSettings() {
@@ -64,27 +63,6 @@ function debounce(func, wait) {
 
     // 2. Apply Settings to UI and State
     function applySettings(settings) {
-        // ... (existing code for board size, chat size, def size, music, theme, highlight typing/mouse, etc.)
-        // Board Size
-        if (settings.board_size) {
-            const size = parseInt(settings.board_size);
-            if (!isNaN(size) && boardSizeSlider) {
-                document.documentElement.style.setProperty('--cell-size', `${size}px`);
-                const previewBoard = document.getElementById('preview-board');
-                if (previewBoard) {
-                    previewBoard.style.setProperty('--cell-size', `${size}px`);
-                }
-                boardSizeSlider.value = size;
-                if (boardSizeVal) boardSizeVal.textContent = `${size}px`;
-
-                const playPage = document.getElementById('page-play');
-                if (playPage) {
-                    if (size > 65) playPage.classList.add('layout-huge-board');
-                    else playPage.classList.remove('layout-huge-board');
-                }
-            }
-        }
-
         // Dimension Specific Board Sizes
         if (settings.board_sizes) {
             let sizes = settings.board_sizes;
@@ -100,6 +78,12 @@ function debounce(func, wait) {
                 if (slider) slider.value = sizes[dim];
                 if (valEl) valEl.textContent = `${sizes[dim]}px`;
             });
+
+            // Initial preview board size set to the 4x4 grid size
+            const previewBoard = document.getElementById('preview-board');
+            if (previewBoard) {
+                previewBoard.style.setProperty('--cell-size', `${sizes['4x4'] || 82}px`);
+            }
         }
 
         // Cube Size (3D)
@@ -401,7 +385,6 @@ function debounce(func, wait) {
                 saveSettingDebounced('letter_colors', window.userSettings.letter_colors);
             });
         });
-
         const resetBtn = document.getElementById('setting-synesthesia-reset');
         if (resetBtn) {
             resetBtn.addEventListener('click', () => {
@@ -427,33 +410,6 @@ function debounce(func, wait) {
         });
     }
 
-    // 4. Existing Listeners (boardSize, chatSize, defSize, music, highlight typing/mouse, theme, bell)
-    if (boardSizeSlider) {
-        boardSizeSlider.addEventListener('input', (e) => {
-            const val = parseInt(e.target.value);
-            console.log('[settings.js] boardSizeSlider input:', val);
-            window.userManuallyOverrodeBoardSize = true;
-            if (!window.cachedCellSizes) window.cachedCellSizes = {};
-            window.cachedCellSizes['global'] = val;
-            document.documentElement.style.setProperty('--cell-size', `${val}px`);
-            const previewBoard = document.getElementById('preview-board');
-            if (previewBoard) previewBoard.style.setProperty('--cell-size', `${val}px`);
-            if (boardSizeVal) boardSizeVal.textContent = `${val}px`;
-            // Recalculate panels immediately using known board size
-            if (typeof window.checkBoardOverflow === 'function') {
-                console.log('[settings.js] calling checkBoardOverflow');
-                window.checkBoardOverflow();
-            } else if (typeof window.applyPanelLayout === 'function') {
-                const cols = window.lastGameState?.board?.[0]?.length || 8;
-                console.log('[settings.js] calling applyPanelLayout with cols:', cols);
-                window.applyPanelLayout(val, cols);
-            } else {
-                console.log('[settings.js] window.applyPanelLayout is not defined yet');
-            }
-            saveSettingDebounced('board_size', val);
-        });
-    }
-
     const dimSliders = document.querySelectorAll('.dim-size-slider');
     dimSliders.forEach(slider => {
         slider.addEventListener('input', (e) => {
@@ -463,6 +419,11 @@ function debounce(func, wait) {
             const valEl = document.getElementById(`val-dim-${dim}`);
             if (valEl) valEl.textContent = `${val}px`;
 
+            const previewBoard = document.getElementById('preview-board');
+            if (previewBoard) {
+                previewBoard.style.setProperty('--cell-size', `${val}px`);
+            }
+
             if (!window.userSettings) window.userSettings = {};
             if (!window.userSettings.board_sizes) window.userSettings.board_sizes = {};
             window.userSettings.board_sizes[dim] = val;
@@ -471,13 +432,11 @@ function debounce(func, wait) {
 
             // Check if the active room matches this dimension; if so apply immediately
             const gs = window.lastGameState;
-            console.log('[settings.js] gs state:', gs ? 'defined' : 'undefined');
             if (gs && gs.board && gs.board[0]) {
                 const activeCols = gs.board[0].length;
                 const activeRows = gs.board.length;
                 const minD = Math.min(activeCols, activeRows);
                 const maxD = Math.max(activeCols, activeRows);
-                console.log('[settings.js] active room dims:', activeCols, 'x', activeRows, 'minD:', minD, 'maxD:', maxD, 'target dim:', dim);
                 if (`${minD}x${maxD}` === dim) {
                     window.userManuallyOverrodeBoardSize = true;
                     if (!window.cachedCellSizes) window.cachedCellSizes = {};
@@ -489,19 +448,14 @@ function debounce(func, wait) {
                     if (boardEl) boardEl.style.setProperty('--cell-size', `${val}px`);
                     // Recalculate panel widths directly
                     if (typeof window.checkBoardOverflow === 'function') {
-                        console.log('[settings.js] calling checkBoardOverflow (dim)');
                         window.checkBoardOverflow();
                     } else if (typeof window.applyPanelLayout === 'function') {
-                        console.log('[settings.js] calling applyPanelLayout with activeCols:', activeCols);
                         window.applyPanelLayout(val, activeCols);
-                    } else {
-                        console.log('[settings.js] window.applyPanelLayout is not defined yet (dim)');
                     }
                 }
             }
         });
     });
-
     const chatSizeSlider = document.getElementById('setting-chat-size');
     if (chatSizeSlider) {
         chatSizeSlider.addEventListener('input', (e) => {

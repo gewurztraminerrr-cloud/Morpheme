@@ -4394,90 +4394,17 @@ function checkBoardOverflow() {
 
     if (window.cachedCellSizes[currentDim]) {
         savedSettingSize = parseInt(window.cachedCellSizes[currentDim]);
-    } else if (window.cachedCellSizes['global']) {
-        savedSettingSize = parseInt(window.cachedCellSizes['global']);
     } else if (storedSettingsObj.board_sizes && storedSettingsObj.board_sizes[currentDim]) {
         savedSettingSize = parseInt(storedSettingsObj.board_sizes[currentDim]);
-    } else if (currentDim === '4x4' || currentDim === '4x6' || currentDim === '5x7' || currentDim === '6x8') {
-        savedSettingSize = defaultForDim;
-    } else if (storedSettingsObj.board_size) {
-        savedSettingSize = parseInt(storedSettingsObj.board_size);
     } else {
         savedSettingSize = defaultForDim;
     }
 
-    let baseCellSize = savedSettingSize;
-
-    // User Request: Settings-true board size
-    let cellSize = baseCellSize;
-
-    // 2. Calculate Required Width for Board
-    // Width = (Cols * Size) + Gap + Padding + Scrollbar
-    const boardGap = 4 * (cols - 1);
-    const isMobileView = window.innerWidth <= 992;
-    const boardPadding = isMobileView ? 0 : 40; // ZERO padding on mobile
-    let requiredBoardWidth = (cols * cellSize) + boardGap + boardPadding;
-
-    // Add Scrollbar Width if present
-    const scrollbarWidth = boardPanel.offsetWidth - boardPanel.clientWidth;
-    requiredBoardWidth += scrollbarWidth;
-
-    if (isMobileView) {
-        if (!window.userManuallyOverrodeBoardSize) {
-            // Since the board is already transposed, displayCols is cols
-            const displayCols = cols;
-            const displayGap = 4 * (displayCols - 1);
-            // User Request: On mobile devices, always ensure the board fits perfectly onto the screen. ZERO PADDING.
-            const mobileTargetSize = Math.floor((window.innerWidth - displayGap) / displayCols);
-            cellSize = Math.max(20, mobileTargetSize);
-            requiredBoardWidth = (displayCols * cellSize) + displayGap;
-        }
-    } else {
-        // Board-first: only shrink cell size if panels are already at absolute minimum
-        let gridGap = 12;
-        if (window.innerWidth >= 1920) {
-            gridGap = 24;
-        } else if (window.innerWidth >= 1600) {
-            gridGap = 20;
-        } else if (window.innerWidth >= 1400) {
-            gridGap = 16;
-        }
-        
-        let gridWidth = window.innerWidth;
-        const playGrid = document.querySelector('.play-grid');
-        if (playGrid && playGrid.clientWidth > 0) {
-            gridWidth = playGrid.clientWidth;
-        } else {
-            let pagesWidth = window.innerWidth;
-            if (window.innerWidth >= 1920) {
-                pagesWidth = Math.floor(window.innerWidth * 0.92);
-            } else if (window.innerWidth >= 1440) {
-                pagesWidth = Math.floor(window.innerWidth * 0.95);
-            }
-            gridWidth = pagesWidth - 20;
-        }
-        
-        const maxAllowedWidth = gridWidth - 160 - 220 - (gridGap * 2);
-        if (requiredBoardWidth > maxAllowedWidth) {
-            const targetCellSize = Math.floor((maxAllowedWidth - boardGap - boardPadding - scrollbarWidth) / cols);
-            cellSize = Math.max(20, targetCellSize);
-            requiredBoardWidth = (cols * cellSize) + boardGap + boardPadding + scrollbarWidth;
-        }
-    }
+    let cellSize = savedSettingSize;
 
     document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
     playPage.style.setProperty('--cell-size', `${cellSize}px`);
     boardEl.style.setProperty('--cell-size', `${cellSize}px`);
-    // Do NOT store cellSize into cachedCellSizes here — that would overwrite the user's explicit
-    // per-dim setting with the layout-constrained final value (which may have been shrunk to fit).
-
-    // Synchronize the dimension-specific slider (if open) to reflect the active room's size.
-    // Do NOT update the main board-size slider — it is dimension-agnostic and should not be
-    // clobbered with whatever dim happens to be active.
-    const activeDimSlider = document.querySelector(`.dim-size-slider[data-dim="${currentDim}"]`);
-    const activeDimVal = document.getElementById(`val-dim-${currentDim}`);
-    if (activeDimSlider) activeDimSlider.value = cellSize;
-    if (activeDimVal) activeDimVal.textContent = `${cellSize}px`;
     const previewBoard = document.getElementById('preview-board');
     if (previewBoard) previewBoard.style.setProperty('--cell-size', `${cellSize}px`);
 
