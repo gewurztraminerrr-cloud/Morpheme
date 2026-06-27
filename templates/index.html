@@ -31,7 +31,7 @@
     <link rel="stylesheet" href="/css/lobby.css?v=29">
     <link rel="stylesheet" href="/css/play.css?v=103">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
-    <link rel="stylesheet" href="/css/forum.css?v=16">
+    <link rel="stylesheet" href="/css/forum.css?v=17">
     <link rel="stylesheet" href="/css/donate.css?v=1">
     <style>
         .board-cell.bonus-highlight {
@@ -1110,13 +1110,15 @@
                     <!-- List View -->
                     <div id="forum-view-list" class="forum-view active">
                         <div class="forum-header">
-                            <button id="forum-mobile-back-btn" class="forum-back-btn mobile-back-btn" style="display: none; margin-bottom: 15px;">← Categories</button>
                             <div class="header-titles">
                                 <h2 id="forum-category-title">Community Board</h2>
                                 <p id="forum-category-desc">Connect with other players.</p>
                             </div>
-                            <button id="forum-new-post-btn" class="forum-action-btn hidden">+
-                                New Thread</button>
+                            <div class="forum-header-actions">
+                                <button id="forum-mobile-back-btn" class="forum-back-btn mobile-back-btn" style="display: none; margin-bottom: 0;">← Categories</button>
+                                <button id="forum-new-post-btn" class="forum-action-btn hidden">+
+                                    New Thread</button>
+                            </div>
                         </div>
                         <div id="forum-posts-list" class="forum-posts-list">
                             <div class="forum-placeholder">
