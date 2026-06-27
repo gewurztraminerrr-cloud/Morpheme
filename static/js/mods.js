@@ -790,11 +790,41 @@ function renderUndefinedWords() {
         return;
     }
     
-    tbody.innerHTML = filtered.map(word => `
-        <tr onclick="selectUndefinedWord('${word}')" style="border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
-            <td style="padding: 6px 12px; font-weight: 600; font-size: 0.85rem; color: #a5b4fc;">${word}</td>
-        </tr>
-    `).join('');
+    // Group words by length
+    const groups = {};
+    filtered.forEach(word => {
+        const len = word.length;
+        if (!groups[len]) groups[len] = [];
+        groups[len].push(word);
+    });
+    
+    // Sort lengths ascending (fewest letters first)
+    const lengths = Object.keys(groups).map(Number).sort((a, b) => a - b);
+    
+    // Build HTML rows with category headers
+    const rowsHTML = [];
+    lengths.forEach(len => {
+        // Sort words within this length group alphabetically
+        groups[len].sort((a, b) => a.localeCompare(b));
+        
+        // Category Header Row
+        rowsHTML.push(`
+            <tr style="background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.08); pointer-events: none;">
+                <td style="padding: 6px 12px; font-weight: 800; font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px;">${len} Letters</td>
+            </tr>
+        `);
+        
+        // Word Rows
+        groups[len].forEach(word => {
+            rowsHTML.push(`
+                <tr onclick="selectUndefinedWord('${word}')" style="border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+                    <td style="padding: 6px 12px; padding-left: 24px; font-weight: 600; font-size: 0.85rem; color: #a5b4fc;">${word}</td>
+                </tr>
+            `);
+        });
+    });
+    
+    tbody.innerHTML = rowsHTML.join('');
 }
 
 window.selectUndefinedWord = function(word) {
