@@ -413,7 +413,7 @@
                     if (wr[1] > 900) return wr[0] + '+';
                     return wr[0] + '-' + wr[1];
                 }
-                return wr === 'random' ? '100-200/200-300/300-400/500+' : (wr || '100-200');
+                return wr === 'random' ? '200-300' : (wr || '100-200');
             })();
             const bonusText = (() => {
                 const b = m.parameters.bonus_word_length;
@@ -460,7 +460,7 @@
                     if (wr[1] > 900) return wr[0] + '+';
                     return wr[0] + '-' + wr[1];
                 }
-                return wr === 'random' ? '100-200/200-300/300-400/500+' : (wr || '100-200');
+                return wr === 'random' ? '200-300' : (wr || '100-200');
             })();
             const bonusText = (() => {
                 const b = inv.parameters.bonus_word_length;

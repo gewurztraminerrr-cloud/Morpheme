@@ -6565,6 +6565,14 @@ def get_private_match_status(match_id):
             params['difficulty'] = r['difficulty']
     except:
         pass
+    try:
+        if 'bonus_word' in r.keys():
+            if r['bonus_word']:
+                params['bonus_word_length'] = len(r['bonus_word'])
+            else:
+                params['bonus_word_length'] = 'None'
+    except:
+        pass
 
     # NEW: Record/Retrieve the persistent turn start time for this user
     # This prevents them from resetting the timer by leaving and re-entering the match.

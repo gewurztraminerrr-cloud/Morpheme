@@ -406,7 +406,7 @@ class PrivateMatchManager:
             
             # Check round timing and get round-specific parameters
             round_info = conn.execute('''
-                SELECT end_time, word_count_range, dictionary, difficulty FROM private_match_rounds 
+                SELECT end_time, word_count_range, dictionary, difficulty, board_format, bonus_word FROM private_match_rounds 
                 WHERE match_id = ? AND round_number = ?
             ''', (match_id, curr_round)).fetchone()
             
@@ -457,6 +457,14 @@ class PrivateMatchManager:
                         match_data['parameters']['dictionary'] = round_info['dictionary']
                     if 'difficulty' in round_info.keys() and round_info['difficulty']:
                         match_data['parameters']['difficulty'] = round_info['difficulty']
+                    if 'board_format' in round_info.keys() and round_info['board_format']:
+                        match_data['parameters']['board_format'] = round_info['board_format']
+                    if 'bonus_word' in round_info.keys():
+                        b_word = round_info['bonus_word']
+                        if b_word:
+                            match_data['parameters']['bonus_word_length'] = len(b_word)
+                        else:
+                            match_data['parameters']['bonus_word_length'] = 'None'
                 except:
                     pass
                     
