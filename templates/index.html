@@ -2315,653 +2315,669 @@
 
         <!-- Settings Page -->
         <div id="page-settings" class="page">
-            <h2 style="font-size: 2.5rem; color: var(--text-primary); margin-bottom: 30px; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">
-                User
-                Settings</h2>
-            <div class="settings-grid">
-                <!-- App Theme -->
-                <div class="setting-panel" style="grid-column: 1 / -1;">
-                    <div class="setting-header">
-                        <div>
-                            <div class="setting-title">Layout / App Theme</div>
-                            <div class="setting-desc">Choose your preferred color scheme.</div>
-                        </div>
-                    </div>
-                    <!-- Expanded Theme Selector Grid -->
-                    <div class="theme-selector-grid"
-                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 15px; margin-top: 15px; max-width: 900px;">
-                        <button class="theme-btn" data-theme="default"
-                            style="background: #1a1a2e; border: 2px solid #fff;" title="Default"></button>
-                        <button class="theme-btn" data-theme="black" style="background: #000000;"
-                            title="Black"></button>
-                        <button class="theme-btn" data-theme="white"
-                            style="background: #ffffff; border: 1px solid #ccc;" title="White"></button>
-                        <button class="theme-btn" data-theme="light-gray"
-                            style="background: #d8d8d8; border: 1px solid #ccc;" title="Light Gray"></button>
-                        <button class="theme-btn" data-theme="gray" style="background: #808080;" title="Gray"></button>
-                        <button class="theme-btn" data-theme="dark-gray" style="background: #333333;"
-                            title="Dark Gray"></button>
-                        <button class="theme-btn" data-theme="light-red" style="background: #ffcccc;"
-                            title="Light Red"></button>
-                        <button class="theme-btn" data-theme="red" style="background: #cc0000;" title="Red"></button>
-                        <button class="theme-btn" data-theme="dark-red" style="background: #660000;"
-                            title="Dark Red"></button>
-                        <button class="theme-btn" data-theme="light-orange" style="background: #ffe0b3;"
-                            title="Light Orange"></button>
-                        <button class="theme-btn" data-theme="orange" style="background: #ff8c00;"
-                            title="Orange"></button>
-                        <button class="theme-btn" data-theme="dark-orange" style="background: #804000;"
-                            title="Dark Orange"></button>
-                        <button class="theme-btn" data-theme="light-yellow" style="background: #ffffcc;"
-                            title="Light Yellow"></button>
-                        <button class="theme-btn" data-theme="yellow" style="background: #ffff00;"
-                            title="Yellow"></button>
-                        <button class="theme-btn" data-theme="dark-yellow" style="background: #808000;"
-                            title="Dark Yellow"></button>
-                        <button class="theme-btn" data-theme="light-green" style="background: #ccffcc;"
-                            title="Light Green"></button>
-                        <button class="theme-btn" data-theme="green" style="background: #008000;"
-                            title="Green"></button>
-                        <button class="theme-btn" data-theme="dark-green" style="background: #003300;"
-                            title="Dark Green"></button>
-                        <button class="theme-btn" data-theme="light-blue" style="background: #cceeff;"
-                            title="Light Blue"></button>
-                        <button class="theme-btn" data-theme="blue" style="background: #0000ff;" title="Blue"></button>
-                        <button class="theme-btn" data-theme="dark-blue" style="background: #000066;"
-                            title="Dark Blue"></button>
-                        <button class="theme-btn" data-theme="light-purple" style="background: #f3e5f5;"
-                            title="Light Purple"></button>
-                        <button class="theme-btn" data-theme="purple" style="background: #800080;"
-                            title="Purple"></button>
-                        <button class="theme-btn" data-theme="dark-purple" style="background: #330066;"
-                            title="Dark Purple"></button>
-                        <button class="theme-btn" data-theme="light-pink" style="background: #fce4ec;"
-                            title="Light Pink"></button>
-                        <button class="theme-btn" data-theme="pink" style="background: #ffc0cb;" title="Pink"></button>
-                        <button class="theme-btn" data-theme="dark-pink" style="background: #c2185b;"
-                            title="Dark Pink"></button>
-                        <button class="theme-btn" data-theme="light-brown" style="background: #efe0cc;"
-                            title="Light Brown"></button>
-                        <button class="theme-btn" data-theme="brown" style="background: #795548;"
-                            title="Brown"></button>
-                        <button class="theme-btn" data-theme="dark-brown" style="background: #3e2723;"
-                            title="Dark Brown"></button>
-                    </div>
+            <div class="tools-split-layout">
+                <!-- Sidebar (1/3) -->
+                <div class="tools-sidebar">
+                    <button class="tool-nav-btn active" data-setting-tab="appearance" onclick="window.showSettingTab('appearance')">Appearance</button>
+                    <button class="tool-nav-btn" data-setting-tab="audio" onclick="window.showSettingTab('audio')">Audio & Sounds</button>
+                    <button class="tool-nav-btn" data-setting-tab="gameplay" onclick="window.showSettingTab('gameplay')">Gameplay & Highlights</button>
                 </div>
-                <div class="setting-panel">
-                    <div class="setting-header">
-                        <div>
-                            <div class="setting-title">Board Size</div>
-                            <div class="setting-desc">Adjust the visual scale of the game board.
-                            </div>
-                        </div>
-                        <div id="setting-board-size-val" class="preview-value">54px</div>
-                    </div>
 
-                    <div class="setting-slider-container">
-                        <div class="slider-label-row">
-                            <span>Compact (40px)</span>
-                            <span>Massive (110px)</span>
-                        </div>
-                        <!-- Range: 40px to 110px -->
-                        <input type="range" id="setting-board-size" min="40" max="110" value="54">
-                        <div class="slider-instruction" style="font-size: 0.85rem; color: var(--text-secondary, #94a3b8); margin-top: 12px; line-height: 1.4; font-style: italic;">
-                            💡 <b>Pro Tip:</b> Adjust this primary slider while in a game room to find your perfect tile scale. Once satisfied, match that pixel value to the corresponding dimension slider below. Morpheme will automatically consult those configurations whenever you enter a room!
-                        </div>
-                    </div>
+                <!-- Content (2/3) -->
+                <div class="tools-content">
+                    <button id="settings-mobile-back-btn" class="forum-back-btn mobile-back-btn" style="display: none; margin-bottom: 15px; margin-left: 15px; margin-top: 5px;">← Settings Categories</button>
 
-                    <div class="preview-board-container" style="margin-top: 15px;">
-                        <div class="preview-board" id="preview-board">
-                            <!-- 4x4 grid of cells -->
-                            <div class="board-cell">A</div>
-                            <div class="board-cell">B</div>
-                            <div class="board-cell">C</div>
-                            <div class="board-cell">D</div>
-                            <div class="board-cell">E</div>
-                            <div class="board-cell">F</div>
-                            <div class="board-cell">G</div>
-                            <div class="board-cell">H</div>
-                            <div class="board-cell">I</div>
-                            <div class="board-cell">J</div>
-                            <div class="board-cell">K</div>
-                            <div class="board-cell">L</div>
-                            <div class="board-cell">M</div>
-                            <div class="board-cell">N</div>
-                            <div class="board-cell">O</div>
-                            <div class="board-cell">P</div>
+                    <!-- Appearance Tab -->
+                    <div id="setting-tab-appearance" class="tool-pane active">
+                        <div class="tool-header">
+                            <h2>Appearance</h2>
+                            <p>Customize the visual layout, themes, sizes, and styling of the game.</p>
                         </div>
-                    </div>
-
-                    <!-- Dimension-Specific Board Size Configurations -->
-                    <div class="dimension-sizes-section" style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-                        <div class="setting-title" style="font-size: 1.1rem; margin-bottom: 5px;">Dimension-Specific Sizes</div>
-                        <div class="setting-desc" style="margin-bottom: 15px;">Set distinct tile scales so you don't have to adjust the slider each time you change rooms.</div>
-                        <div class="dimension-sliders-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
-                            <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                    <span style="font-weight: 600;">4x4 Grid</span>
-                                    <span id="val-dim-4x4" style="color: var(--primary); font-weight: bold;">54px</span>
+                        <div class="settings-tab-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px; width: 100%; box-sizing: border-box;">
+                            <!-- App Theme -->
+                            <div class="setting-panel">
+                                <div class="setting-header">
+                                    <div>
+                                        <div class="setting-title">Layout / App Theme</div>
+                                        <div class="setting-desc">Choose your preferred color scheme.</div>
+                                    </div>
                                 </div>
-                                <input type="range" class="dim-size-slider" data-dim="4x4" min="30" max="110" value="54" style="width: 100%;">
-                            </div>
-                            <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                    <span style="font-weight: 600;">4x6 Grid</span>
-                                    <span id="val-dim-4x6" style="color: var(--primary); font-weight: bold;">55px</span>
+                                <!-- Expanded Theme Selector Grid -->
+                                <div class="theme-selector-grid"
+                                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 15px; margin-top: 15px; max-width: 900px;">
+                                    <button class="theme-btn" data-theme="default"
+                                        style="background: #1a1a2e; border: 2px solid #fff;" title="Default"></button>
+                                    <button class="theme-btn" data-theme="black" style="background: #000000;"
+                                        title="Black"></button>
+                                    <button class="theme-btn" data-theme="white"
+                                        style="background: #ffffff; border: 1px solid #ccc;" title="White"></button>
+                                    <button class="theme-btn" data-theme="light-gray"
+                                        style="background: #d8d8d8; border: 1px solid #ccc;" title="Light Gray"></button>
+                                    <button class="theme-btn" data-theme="gray" style="background: #808080;" title="Gray"></button>
+                                    <button class="theme-btn" data-theme="dark-gray" style="background: #333333;"
+                                        title="Dark Gray"></button>
+                                    <button class="theme-btn" data-theme="light-red" style="background: #ffcccc;"
+                                        title="Light Red"></button>
+                                    <button class="theme-btn" data-theme="red" style="background: #cc0000;" title="Red"></button>
+                                    <button class="theme-btn" data-theme="dark-red" style="background: #660000;"
+                                        title="Dark Red"></button>
+                                    <button class="theme-btn" data-theme="light-orange" style="background: #ffe0b3;"
+                                        title="Light Orange"></button>
+                                    <button class="theme-btn" data-theme="orange" style="background: #ff8c00;"
+                                        title="Orange"></button>
+                                    <button class="theme-btn" data-theme="dark-orange" style="background: #804000;"
+                                        title="Dark Orange"></button>
+                                    <button class="theme-btn" data-theme="light-yellow" style="background: #ffffcc;"
+                                        title="Light Yellow"></button>
+                                    <button class="theme-btn" data-theme="yellow" style="background: #ffff00;"
+                                        title="Yellow"></button>
+                                    <button class="theme-btn" data-theme="dark-yellow" style="background: #808000;"
+                                        title="Dark Yellow"></button>
+                                    <button class="theme-btn" data-theme="light-green" style="background: #ccffcc;"
+                                        title="Light Green"></button>
+                                    <button class="theme-btn" data-theme="green" style="background: #008000;"
+                                        title="Green"></button>
+                                    <button class="theme-btn" data-theme="dark-green" style="background: #003300;"
+                                        title="Dark Green"></button>
+                                    <button class="theme-btn" data-theme="light-blue" style="background: #cceeff;"
+                                        title="Light Blue"></button>
+                                    <button class="theme-btn" data-theme="blue" style="background: #0000ff;" title="Blue"></button>
+                                    <button class="theme-btn" data-theme="dark-blue" style="background: #000066;"
+                                        title="Dark Blue"></button>
+                                    <button class="theme-btn" data-theme="light-purple" style="background: #f3e5f5;"
+                                        title="Light Purple"></button>
+                                    <button class="theme-btn" data-theme="purple" style="background: #800080;"
+                                        title="Purple"></button>
+                                    <button class="theme-btn" data-theme="dark-purple" style="background: #330066;"
+                                        title="Dark Purple"></button>
+                                    <button class="theme-btn" data-theme="light-pink" style="background: #fce4ec;"
+                                        title="Light Pink"></button>
+                                    <button class="theme-btn" data-theme="pink" style="background: #ffc0cb;" title="Pink"></button>
+                                    <button class="theme-btn" data-theme="dark-pink" style="background: #c2185b;"
+                                        title="Dark Pink"></button>
+                                    <button class="theme-btn" data-theme="light-brown" style="background: #efe0cc;"
+                                        title="Light Brown"></button>
+                                    <button class="theme-btn" data-theme="brown" style="background: #795548;"
+                                        title="Brown"></button>
+                                    <button class="theme-btn" data-theme="dark-brown" style="background: #3e2723;"
+                                        title="Dark Brown"></button>
                                 </div>
-                                <input type="range" class="dim-size-slider" data-dim="4x6" min="30" max="110" value="55" style="width: 100%;">
                             </div>
-                            <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                    <span style="font-weight: 600;">5x7 Grid</span>
-                                    <span id="val-dim-5x7" style="color: var(--primary); font-weight: bold;">45px</span>
+
+                            <!-- Board Size -->
+                            <div class="setting-panel">
+                                <div class="setting-header">
+                                    <div>
+                                        <div class="setting-title">Board Size</div>
+                                        <div class="setting-desc">Adjust the visual scale of the game board.</div>
+                                    </div>
+                                    <div id="setting-board-size-val" class="preview-value">54px</div>
                                 </div>
-                                <input type="range" class="dim-size-slider" data-dim="5x7" min="30" max="110" value="45" style="width: 100%;">
-                            </div>
-                            <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                    <span style="font-weight: 600;">6x8 Grid</span>
-                                    <span id="val-dim-6x8" style="color: var(--primary); font-weight: bold;">40px</span>
+
+                                <div class="setting-slider-container">
+                                    <div class="slider-label-row">
+                                        <span>Compact (40px)</span>
+                                        <span>Massive (110px)</span>
+                                    </div>
+                                    <input type="range" id="setting-board-size" min="40" max="110" value="54">
+                                    <div class="slider-instruction" style="font-size: 0.85rem; color: var(--text-secondary, #94a3b8); margin-top: 12px; line-height: 1.4; font-style: italic;">
+                                        💡 <b>Pro Tip:</b> Adjust this primary slider while in a game room to find your perfect tile scale. Once satisfied, match that pixel value to the corresponding dimension slider below. Morpheme will automatically consult those configurations whenever you enter a room!
+                                    </div>
                                 </div>
-                                <input type="range" class="dim-size-slider" data-dim="6x8" min="30" max="110" value="40" style="width: 100%;">
+
+                                <div class="preview-board-container" style="margin-top: 15px;">
+                                    <div class="preview-board" id="preview-board">
+                                        <div class="board-cell">A</div>
+                                        <div class="board-cell">B</div>
+                                        <div class="board-cell">C</div>
+                                        <div class="board-cell">D</div>
+                                        <div class="board-cell">E</div>
+                                        <div class="board-cell">F</div>
+                                        <div class="board-cell">G</div>
+                                        <div class="board-cell">H</div>
+                                        <div class="board-cell">I</div>
+                                        <div class="board-cell">J</div>
+                                        <div class="board-cell">K</div>
+                                        <div class="board-cell">L</div>
+                                        <div class="board-cell">M</div>
+                                        <div class="board-cell">N</div>
+                                        <div class="board-cell">O</div>
+                                        <div class="board-cell">P</div>
+                                    </div>
+                                </div>
+
+                                <div class="dimension-sizes-section" style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                                    <div class="setting-title" style="font-size: 1.1rem; margin-bottom: 5px;">Dimension-Specific Sizes</div>
+                                    <div class="setting-desc" style="margin-bottom: 15px;">Set distinct tile scales so you don't have to adjust the slider each time you change rooms.</div>
+                                    <div class="dimension-sliders-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
+                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                                <span style="font-weight: 600;">4x4 Grid</span>
+                                                <span id="val-dim-4x4" style="color: var(--primary); font-weight: bold;">54px</span>
+                                            </div>
+                                            <input type="range" class="dim-size-slider" data-dim="4x4" min="30" max="110" value="54" style="width: 100%;">
+                                        </div>
+                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                                <span style="font-weight: 600;">4x6 Grid</span>
+                                                <span id="val-dim-4x6" style="color: var(--primary); font-weight: bold;">55px</span>
+                                            </div>
+                                            <input type="range" class="dim-size-slider" data-dim="4x6" min="30" max="110" value="55" style="width: 100%;">
+                                        </div>
+                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                                <span style="font-weight: 600;">5x7 Grid</span>
+                                                <span id="val-dim-5x7" style="color: var(--primary); font-weight: bold;">45px</span>
+                                            </div>
+                                            <input type="range" class="dim-size-slider" data-dim="5x7" min="30" max="110" value="45" style="width: 100%;">
+                                        </div>
+                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                                <span style="font-weight: 600;">6x8 Grid</span>
+                                                <span id="val-dim-6x8" style="color: var(--primary); font-weight: bold;">40px</span>
+                                            </div>
+                                            <input type="range" class="dim-size-slider" data-dim="6x8" min="30" max="110" value="40" style="width: 100%;">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Selectable Tile Space Configuration -->
-                <div class="setting-panel">
-                    <div class="setting-header">
-                        <div>
-                            <div class="setting-title">Tile Selectable Space (Octagon vs Diamond)</div>
-                            <div class="setting-desc">Adjust the diagonal selectable space of a tile for easier mousing and swiping.</div>
-                        </div>
-                        <div id="setting-corner-cutoff-val" class="preview-value">30%</div>
-                    </div>
+                            <!-- Selectable Tile Space Configuration -->
+                            <div class="setting-panel">
+                                <div class="setting-header">
+                                    <div>
+                                        <div class="setting-title">Tile Selectable Space (Octagon vs Diamond)</div>
+                                        <div class="setting-desc">Adjust the diagonal selectable space of a tile for easier mousing and swiping.</div>
+                                    </div>
+                                    <div id="setting-corner-cutoff-val" class="preview-value">30%</div>
+                                </div>
 
-                    <div class="setting-slider-container">
-                        <div class="slider-label-row">
-                            <span>Square (0%)</span>
-                            <span>Octagon (30%)</span>
-                            <span>Diamond (50%)</span>
-                        </div>
-                        <input type="range" id="setting-corner-cutoff" min="0" max="50" value="30">
-                        <div class="slider-instruction" style="font-size: 0.85rem; color: var(--text-secondary, #94a3b8); margin-top: 12px; line-height: 1.4; font-style: italic;">
-                            💡 <b>Selectable Hitbox Adjuster:</b> This alters the diagonal space of the tile that responds to mousing and swiping. Adjusting from 30% towards 50% morphs the interactive space closer to a diamond shape to accommodate easier selection!
-                        </div>
-                    </div>
+                                <div class="setting-slider-container">
+                                    <div class="slider-label-row">
+                                        <span>Square (0%)</span>
+                                        <span>Octagon (30%)</span>
+                                        <span>Diamond (50%)</span>
+                                    </div>
+                                    <input type="range" id="setting-corner-cutoff" min="0" max="50" value="30">
+                                    <div class="slider-instruction" style="font-size: 0.85rem; color: var(--text-secondary, #94a3b8); margin-top: 12px; line-height: 1.4; font-style: italic;">
+                                        💡 <b>Selectable Hitbox Adjuster:</b> This alters the diagonal space of the tile that responds to mousing and swiping. Adjusting from 30% towards 50% morphs the interactive space closer to a diamond shape to accommodate easier selection!
+                                    </div>
+                                </div>
 
-                    <div class="preview-hitbox-container" style="margin-top: 20px; display: flex; justify-content: center;">
-                        <div class="preview-hitbox-tile" style="position: relative; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border: 2px dashed rgba(255,255,255,0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 900;">
-                            <span style="z-index: 10; pointer-events: none; opacity: 0.4;">M</span>
-                            <div id="preview-hitbox-shape" style="position: absolute; inset: 0; background: rgba(64, 156, 255, 0.4); border: 3px solid #409cff; z-index: 5; transition: clip-path 0.1s ease; clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Lobby Music Setting -->
-                <div class="setting-panel">
-                    <label for="setting-lobby-music" class="setting-header" style="cursor: pointer;">
-                        <div>
-                            <div class="setting-title">Lobby Music</div>
-                            <div class="setting-desc">Play background music when in the lobby.
+                                <div class="preview-hitbox-container" style="margin-top: 20px; display: flex; justify-content: center;">
+                                    <div class="preview-hitbox-tile" style="position: relative; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border: 2px dashed rgba(255,255,255,0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 900;">
+                                        <span style="z-index: 10; pointer-events: none; opacity: 0.4;">M</span>
+                                        <div id="preview-hitbox-shape" style="position: absolute; inset: 0; background: rgba(64, 156, 255, 0.4); border: 3px solid #409cff; z-index: 5; transition: clip-path 0.1s ease; clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);"></div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <span class="toggle-switch">
-                            <input type="checkbox" id="setting-lobby-music" checked>
-                            <span class="slider round"></span>
-                        </span>
-                    </label>
-                </div>
 
-                <!-- Triple Format Music Setting -->
-                <div class="setting-panel">
-                    <label for="setting-triple-music" class="setting-header" style="cursor: pointer;">
-                        <div>
-                            <div class="setting-title">Triple Format Music</div>
-                            <div class="setting-desc">Play background music when the format is Triple.</div>
-                        </div>
-                        <span class="toggle-switch">
-                            <input type="checkbox" id="setting-triple-music" checked>
-                            <span class="slider round"></span>
-                        </span>
-                    </label>
-                </div>
-
-                <!-- Toggle: Word Flash Effect -->
-                <div class="setting-panel">
-                    <label for="setting-word-flash" class="setting-header" style="cursor: pointer;">
-                        <div>
-                            <div class="setting-title">Word Flash Effect</div>
-                            <div class="setting-desc">Flash word trace tiles on the board (blue: valid, green: bonus, red: invalid/penalty) on submission.</div>
-                        </div>
-                        <span class="toggle-switch">
-                            <input type="checkbox" id="setting-word-flash" checked>
-                            <span class="slider round"></span>
-                        </span>
-                    </label>
-                </div>
-
-                <!-- Toggle: Board Sound Effects -->
-                <div class="setting-panel">
-                    <label for="setting-board-sounds" class="setting-header" style="cursor: pointer;">
-                        <div>
-                            <div class="setting-title">Board Sound Effects</div>
-                            <div class="setting-desc">Play sound effects when pressing, swiping, and validating words during play.</div>
-                        </div>
-                        <span class="toggle-switch">
-                            <input type="checkbox" id="setting-board-sounds" checked>
-                            <span class="slider round"></span>
-                        </span>
-                    </label>
-                </div>
-
-                <!-- Toggle: Highlight While Typing -->
-                <div class="setting-panel">
-                    <label for="setting-highlight-typing" class="setting-header" style="cursor: pointer;">
-                        <div>
-                            <div class="setting-title">Highlight as you type</div>
-                            <div class="setting-desc">Highlight letters on the board as you type
-                                in the input box.</div>
-                        </div>
-                        <span class="toggle-switch">
-                            <input type="checkbox" id="setting-highlight-typing" checked>
-                            <span class="slider round"></span>
-                        </span>
-                    </label>
-                    <!-- Color Picker: Typing -->
-                    <div id="highlight-color-picker"
-                        style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%;">
-                        <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Typing
-                            Color
-                        </div>
-                        <div class="color-dot-grid"
-                            style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
-                            <button class="color-dot active" data-color="#ffcc00" style="background: #ffcc00;"
-                                title="Yellow"></button>
-                            <button class="color-dot" data-color="#00ffff" style="background: #00ffff;"
-                                title="Cyan"></button>
-                            <button class="color-dot" data-color="#00ff00" style="background: #00ff00;"
-                                title="Lime"></button>
-                            <button class="color-dot" data-color="#ff66cc" style="background: #ff66cc;"
-                                title="Pink"></button>
-                            <button class="color-dot" data-color="#ff9900" style="background: #ff9900;"
-                                title="Orange"></button>
-                            <button class="color-dot" data-color="#ff4d4d" style="background: #ff4d4d;"
-                                title="Red"></button>
-                            <button class="color-dot" data-color="#b366ff" style="background: #b366ff;"
-                                title="Purple"></button>
-                            <button class="color-dot" data-color="#3399ff" style="background: #3399ff;"
-                                title="Blue"></button>
-                            <button class="color-dot" data-color="#00ff99" style="background: #00ff99;"
-                                title="Mint"></button>
-                            <button class="color-dot" data-color="#ffd700" style="background: #ffd700;"
-                                title="Gold"></button>
-                            <button class="color-dot" data-color="#ffffff" style="background: #ffffff;"
-                                title="White"></button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Toggle: Highlight While Mousing -->
-                <div class="setting-panel">
-                    <label for="setting-highlight-mouse" class="setting-header" style="cursor: pointer;">
-                        <div>
-                            <div class="setting-title">Highlight while mousing</div>
-                            <div class="setting-desc">Highlight letters on the board as you drag
-                                or swipe over them.
+                            <!-- Chat Text Size -->
+                            <div class="setting-panel">
+                                <div class="setting-header">
+                                    <div>
+                                        <div class="setting-title">Chat Text Size</div>
+                                        <div class="setting-desc">Adjust the font size of chat messages.</div>
+                                    </div>
+                                    <div id="setting-chat-size-val" class="preview-value">13px</div>
+                                </div>
+                                <div class="setting-slider-container">
+                                    <div class="slider-label-row">
+                                        <span>Small (10px)</span>
+                                        <span>Large (24px)</span>
+                                    </div>
+                                    <input type="range" id="setting-chat-size" min="10" max="24" value="13">
+                                </div>
+                                <!-- Chat Preview -->
+                                <div class="settings-preview-box">
+                                    <div id="preview-chat-text" class="settings-preview-text" style="line-height: 1.5;">
+                                        <span style="font-weight: 700; color: #ffd700;">Player:</span> This is a sample chat message.
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <span class="toggle-switch">
-                            <input type="checkbox" id="setting-highlight-mouse" checked>
-                            <span class="slider round"></span>
-                        </span>
-                    </label>
-                    <!-- Color Picker: Mousing -->
-                    <div id="highlight-mouse-color-picker"
-                        style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%;">
-                        <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Mousing
-                            Color
-                        </div>
-                        <div class="color-dot-grid"
-                            style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
-                            <button class="color-dot active" data-color="#409cff" style="background: #409cff;"
-                                title="Blue"></button>
-                            <button class="color-dot" data-color="#ffcc00" style="background: #ffcc00;"
-                                title="Yellow"></button>
-                            <button class="color-dot" data-color="#00ffff" style="background: #00ffff;"
-                                title="Cyan"></button>
-                            <button class="color-dot" data-color="#00ff00" style="background: #00ff00;"
-                                title="Lime"></button>
-                            <button class="color-dot" data-color="#ff66cc" style="background: #ff66cc;"
-                                title="Pink"></button>
-                            <button class="color-dot" data-color="#ff9900" style="background: #ff9900;"
-                                title="Orange"></button>
-                            <button class="color-dot" data-color="#ff4d4d" style="background: #ff4d4d;"
-                                title="Red"></button>
-                            <button class="color-dot" data-color="#b366ff" style="background: #b366ff;"
-                                title="Purple"></button>
-                            <button class="color-dot" data-color="#00ff99" style="background: #00ff99;"
-                                title="Mint"></button>
-                            <button class="color-dot" data-color="#ffd700" style="background: #ffd700;"
-                                title="Gold"></button>
-                            <button class="color-dot" data-color="#ffffff" style="background: #ffffff;"
-                                title="White"></button>
-                        </div>
-                    </div>
-                </div>
 
-                <style>
-                    .color-dot {
-                        width: 24px;
-                        height: 24px;
-                        border-radius: 50%;
-                        cursor: pointer;
-                        border: 2px solid rgba(0, 0, 0, 0.3);
-                        transition: transform 0.2s, box-shadow 0.2s;
-                    }
-
-                    .color-dot:hover {
-                        transform: scale(1.2);
-                    }
-
-                    .color-dot.active {
-                        transform: scale(1.3);
-                        border-color: #fff;
-                        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-                    }
-                </style>
-
-                <!-- Chat Text Size -->
-                <div class="setting-panel">
-                    <div class="setting-header">
-                        <div>
-                            <div class="setting-title">Chat Text Size</div>
-                            <div class="setting-desc">Adjust the font size of chat messages.
+                            <!-- Definition Text Size -->
+                            <div class="setting-panel">
+                                <div class="setting-header">
+                                    <div>
+                                        <div class="setting-title">Definition Text Size</div>
+                                        <div class="setting-desc">Adjust the font size of word definitions.</div>
+                                    </div>
+                                    <div id="setting-def-size-val" class="preview-value">15px</div>
+                                </div>
+                                <div class="setting-slider-container">
+                                    <div class="slider-label-row">
+                                        <span>Small (11px)</span>
+                                        <span>Large (26px)</span>
+                                    </div>
+                                    <input type="range" id="setting-def-size" min="11" max="26" value="15">
+                                </div>
+                                <!-- Definition Preview -->
+                                <div class="settings-preview-box">
+                                    <div style="color: var(--accent-color); font-weight: 700; font-size: 1.2em; margin-bottom: 4px;">Example</div>
+                                    <div id="preview-def-text" class="settings-preview-text" style="line-height: 1.5;">
+                                        (n.) A representative form or pattern.
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div id="setting-chat-size-val" class="preview-value">13px</div>
-                    </div>
-                    <div class="setting-slider-container">
-                        <div class="slider-label-row">
-                            <span>Small (10px)</span>
-                            <span>Large (24px)</span>
-                        </div>
-                        <input type="range" id="setting-chat-size" min="10" max="24" value="13">
-                    </div>
-                    <!-- Chat Preview -->
-                    <div class="settings-preview-box">
-                        <div id="preview-chat-text" class="settings-preview-text" style="line-height: 1.5;">
-                            <span style="font-weight: 700; color: #ffd700;">Player:</span> This
-                            is a sample chat
-                            message.
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Definition Text Size -->
-                <div class="setting-panel">
-                    <div class="setting-header">
-                        <div>
-                            <div class="setting-title">Definition Text Size</div>
-                            <div class="setting-desc">Adjust the font size of word definitions.
+                            <!-- 3D Cube Scale -->
+                            <div class="setting-panel">
+                                <div class="setting-header">
+                                    <div>
+                                        <div class="setting-title">Cube Scale (3D)</div>
+                                        <div class="setting-desc">Adjust the size of the 3D game board.</div>
+                                    </div>
+                                    <div id="setting-cube-size-val" class="preview-value">220px</div>
+                                </div>
+                                <div class="setting-slider-container">
+                                    <div class="slider-label-row">
+                                        <span>Small (150px)</span>
+                                        <span>Large (300px)</span>
+                                    </div>
+                                    <input type="range" id="setting-cube-size" min="150" max="300" value="220">
+                                </div>
+                                <!-- Cube Preview -->
+                                <div class="settings-preview-box" style="min-height: calc(var(--cube-container-size) + 40px); overflow: visible; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border-radius: 12px; margin-top: 20px;">
+                                     <div class="cube-container" style="margin: 0; transform: none;">
+                                        <div class="cube" style="animation: cube-preview-spin 10s linear infinite;">
+                                            <div class="cube-face face-front"><div class="cube-cell">A</div><div class="cube-cell">B</div><div class="cube-cell">C</div><div class="cube-cell">D</div><div class="cube-cell">E</div><div class="cube-cell">F</div><div class="cube-cell">G</div><div class="cube-cell">H</div><div class="cube-cell">I</div></div>
+                                            <div class="cube-face face-back"><div class="cube-cell">J</div><div class="cube-cell">K</div><div class="cube-cell">L</div><div class="cube-cell">M</div><div class="cube-cell">N</div><div class="cube-cell">O</div><div class="cube-cell">P</div><div class="cube-cell">Q</div><div class="cube-cell">R</div></div>
+                                            <div class="cube-face face-right"><div class="cube-cell">S</div><div class="cube-cell">T</div><div class="cube-cell">U</div><div class="cube-cell">V</div><div class="cube-cell">W</div><div class="cube-cell">X</div><div class="cube-cell">Y</div><div class="cube-cell">Z</div><div class="cube-cell">A</div></div>
+                                            <div class="cube-face face-left"><div class="cube-cell">B</div><div class="cube-cell">C</div><div class="cube-cell">D</div><div class="cube-cell">E</div><div class="cube-cell">F</div><div class="cube-cell">G</div><div class="cube-cell">H</div><div class="cube-cell">I</div><div class="cube-cell">J</div></div>
+                                            <div class="cube-face face-top"><div class="cube-cell">K</div><div class="cube-cell">L</div><div class="cube-cell">M</div><div class="cube-cell">N</div><div class="cube-cell">O</div><div class="cube-cell">P</div><div class="cube-cell">Q</div><div class="cube-cell">R</div><div class="cube-cell">S</div></div>
+                                            <div class="cube-face face-bottom"><div class="cube-cell">T</div><div class="cube-cell">U</div><div class="cube-cell">V</div><div class="cube-cell">W</div><div class="cube-cell">X</div><div class="cube-cell">Y</div><div class="cube-cell">Z</div><div class="cube-cell">A</div><div class="cube-cell">B</div></div>
+                                        </div>
+                                     </div>
+                                     <style>
+                                        @keyframes cube-preview-spin {
+                                            from { transform: rotateX(-20deg) rotateY(0deg); }
+                                            to { transform: rotateX(-20deg) rotateY(360deg); }
+                                        }
+                                     </style>
+                                </div>
                             </div>
-                        </div>
-                        <div id="setting-def-size-val" class="preview-value">15px</div>
-                    </div>
-                    <div class="setting-slider-container">
-                        <div class="slider-label-row">
-                            <span>Small (11px)</span>
-                            <span>Large (26px)</span>
-                        </div>
-                        <input type="range" id="setting-def-size" min="11" max="26" value="15">
-                    </div>
-                    <!-- Definition Preview -->
-                    <div class="settings-preview-box">
-                        <div
-                            style="color: var(--accent-color); font-weight: 700; font-size: 1.2em; margin-bottom: 4px;">
-                            Example</div>
-                        <div id="preview-def-text" class="settings-preview-text"
-                            style="line-height: 1.5;">
-                            (n.) A representative form or pattern.
-                        </div>
-                    </div>
-                </div>
 
-                <!-- 3D Cube Scale -->
-                <div class="setting-panel">
-                    <div class="setting-header">
-                        <div>
-                            <div class="setting-title">Cube Scale (3D)</div>
-                            <div class="setting-desc">Adjust the size of the 3D game board.
-                            </div>
-                        </div>
-                        <div id="setting-cube-size-val" class="preview-value">220px</div>
-                    </div>
-                    <div class="setting-slider-container">
-                        <div class="slider-label-row">
-                            <span>Small (150px)</span>
-                            <span>Large (300px)</span>
-                        </div>
-                        <input type="range" id="setting-cube-size" min="150" max="300" value="220">
-                    </div>
-                    <!-- Cube Preview -->
-                    <div class="settings-preview-box" style="min-height: calc(var(--cube-container-size) + 40px); overflow: visible; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border-radius: 12px; margin-top: 20px;">
-                         <div class="cube-container" style="margin: 0; transform: none;">
-                            <div class="cube" style="animation: cube-preview-spin 10s linear infinite;">
-                                <div class="cube-face face-front"><div class="cube-cell">A</div><div class="cube-cell">B</div><div class="cube-cell">C</div><div class="cube-cell">D</div><div class="cube-cell">E</div><div class="cube-cell">F</div><div class="cube-cell">G</div><div class="cube-cell">H</div><div class="cube-cell">I</div></div>
-                                <div class="cube-face face-back"><div class="cube-cell">J</div><div class="cube-cell">K</div><div class="cube-cell">L</div><div class="cube-cell">M</div><div class="cube-cell">N</div><div class="cube-cell">O</div><div class="cube-cell">P</div><div class="cube-cell">Q</div><div class="cube-cell">R</div></div>
-                                <div class="cube-face face-right"><div class="cube-cell">S</div><div class="cube-cell">T</div><div class="cube-cell">U</div><div class="cube-cell">V</div><div class="cube-cell">W</div><div class="cube-cell">X</div><div class="cube-cell">Y</div><div class="cube-cell">Z</div><div class="cube-cell">A</div></div>
-                                <div class="cube-face face-left"><div class="cube-cell">B</div><div class="cube-cell">C</div><div class="cube-cell">D</div><div class="cube-cell">E</div><div class="cube-cell">F</div><div class="cube-cell">G</div><div class="cube-cell">H</div><div class="cube-cell">I</div><div class="cube-cell">J</div></div>
-                                <div class="cube-face face-top"><div class="cube-cell">K</div><div class="cube-cell">L</div><div class="cube-cell">M</div><div class="cube-cell">N</div><div class="cube-cell">O</div><div class="cube-cell">P</div><div class="cube-cell">Q</div><div class="cube-cell">R</div><div class="cube-cell">S</div></div>
-                                <div class="cube-face face-bottom"><div class="cube-cell">T</div><div class="cube-cell">U</div><div class="cube-cell">V</div><div class="cube-cell">W</div><div class="cube-cell">X</div><div class="cube-cell">Y</div><div class="cube-cell">Z</div><div class="cube-cell">A</div><div class="cube-cell">B</div></div>
-                            </div>
-                         </div>
-                         <style>
-                            @keyframes cube-preview-spin {
-                                from { transform: rotateX(-20deg) rotateY(0deg); }
-                                to { transform: rotateX(-20deg) rotateY(360deg); }
-                            }
-                         </style>
-                    </div>
-                </div>
-                <!-- Next Round Notification -->
-                <div class="setting-panel">
-                    <label for="setting-next-round-bell" class="setting-header" style="cursor: pointer;">
-                        <div>
-                            <div class="setting-title">Next Round Notification</div>
-                            <div class="setting-desc">Play a bell or a set of beeps 10 seconds before a new round
-                                starts.</div>
-                        </div>
-                        <span class="toggle-switch">
-                            <input type="checkbox" id="setting-next-round-bell">
-                            <span class="slider round"></span>
-                        </span>
-                    </label>
+                            <!-- Synesthesia Panel -->
+                            <div class="setting-panel">
+                                <div class="setting-header">
+                                    <div>
+                                        <div class="setting-title">Synesthesia</div>
+                                        <div class="setting-desc">Tailor the color of each individual letter on the game board.</div>
+                                    </div>
+                                    <button id="setting-synesthesia-reset" class="mini-action-btn secondary"
+                                        style="padding: 6px 12px; font-size: 0.75rem;">Reset All to Black</button>
+                                </div>
+                                <div id="synesthesia-letters-grid"
+                                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 12px; margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                                    <!-- Letters A-Z injected by settings.js -->
+                                </div>
 
-                    <div id="bell-selection-container"
-                        style="display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%;">
-                        <!-- Row 1: Bells -->
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
-                            <div class="meta-label"
-                                style="font-size: 0.85rem; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-                                Select Bell Sound</div>
-                            <div
-                                style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
-                                <button class="bell-btn" data-bell="bell1">Bell 1 <span
-                                        class="play-icon">▶</span></button>
-                                <button class="bell-btn" data-bell="bell2">Bell 2 <span
-                                        class="play-icon">▶</span></button>
-                                <button class="bell-btn" data-bell="bell3">Bell 3 <span
-                                        class="play-icon">▶</span></button>
-                            </div>
-                        </div>
+                                <style>
+                                    .synesthesia-unit {
+                                        display: flex;
+                                        flex-direction: column;
+                                        align-items: center;
+                                        gap: 6px;
+                                        background: rgba(255, 255, 255, 0.03);
+                                        padding: 10px 4px;
+                                        border-radius: 8px;
+                                        border: 1px solid rgba(255, 255, 255, 0.08);
+                                        transition: all 0.2s;
+                                    }
 
-                        <!-- Row 2: Beeps -->
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
-                            <div class="meta-label"
-                                style="font-size: 0.85rem; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-                                Select Beep Sound</div>
-                            <div
-                                style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
-                                <button class="bell-btn" data-bell="beep1">Beep 1 <span
-                                        class="play-icon">▶</span></button>
-                                <button class="bell-btn" data-bell="beep2">Beep 2 <span
-                                        class="play-icon">▶</span></button>
-                                <button class="bell-btn" data-bell="beep3">Beep 3 <span
-                                        class="play-icon">▶</span></button>
+                                    .synesthesia-unit:hover {
+                                        background: rgba(255, 255, 255, 0.08);
+                                        border-color: rgba(255, 255, 255, 0.2);
+                                        transform: translateY(-2px);
+                                    }
+
+                                    .synesthesia-unit label {
+                                        font-size: 0.95rem;
+                                        font-weight: 800;
+                                        color: #fff;
+                                    }
+
+                                    .synesthesia-unit input[type="color"] {
+                                        width: 32px;
+                                        height: 32px;
+                                        border: 2px solid rgba(255, 255, 255, 0.2);
+                                        background: none;
+                                        cursor: pointer;
+                                        border-radius: 6px;
+                                        padding: 0;
+                                        overflow: hidden;
+                                    }
+
+                                    .synesthesia-unit input[type="color"]::-webkit-color-swatch-wrapper {
+                                        padding: 0;
+                                    }
+
+                                    .synesthesia-unit input[type="color"]::-webkit-color-swatch {
+                                        border: none;
+                                        border-radius: 4px;
+                                    }
+
+                                    body.theme-white .synesthesia-unit {
+                                        background: rgba(0, 0, 0, 0.03);
+                                        border-color: rgba(0, 0, 0, 0.1);
+                                    }
+
+                                    body.theme-white .synesthesia-unit label {
+                                        color: #333;
+                                    }
+
+                                    body.theme-white .synesthesia-unit input[type="color"] {
+                                        border-color: rgba(0, 0, 0, 0.1);
+                                    }
+                                </style>
                             </div>
                         </div>
                     </div>
 
-                    <style>
-                        .bell-btn {
-                            background: rgba(255, 255, 255, 0.05);
-                            border: 1px solid rgba(255, 255, 255, 0.15);
-                            color: #fff;
-                            padding: 8px 16px;
-                            border-radius: 8px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            gap: 8px;
-                            font-size: 0.9rem;
-                            font-weight: 500;
-                        }
+                    <!-- Audio & Sounds Tab -->
+                    <div id="setting-tab-audio" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Audio & Sounds</h2>
+                            <p>Manage background music, sound effects, and next round alerts.</p>
+                        </div>
+                        <div class="settings-tab-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px; width: 100%; box-sizing: border-box;">
+                            <!-- Lobby Music Setting -->
+                            <div class="setting-panel">
+                                <label for="setting-lobby-music" class="setting-header" style="cursor: pointer;">
+                                    <div>
+                                        <div class="setting-title">Lobby Music</div>
+                                        <div class="setting-desc">Play background music when in the lobby.</div>
+                                    </div>
+                                    <span class="toggle-switch">
+                                        <input type="checkbox" id="setting-lobby-music" checked>
+                                        <span class="slider round"></span>
+                                    </span>
+                                </label>
+                            </div>
 
-                        .bell-btn:hover {
-                            background: rgba(255, 255, 255, 0.15);
-                            transform: translateY(-1px);
-                        }
+                            <!-- Triple Format Music Setting -->
+                            <div class="setting-panel">
+                                <label for="setting-triple-music" class="setting-header" style="cursor: pointer;">
+                                    <div>
+                                        <div class="setting-title">Triple Format Music</div>
+                                        <div class="setting-desc">Play background music when the format is Triple.</div>
+                                    </div>
+                                    <span class="toggle-switch">
+                                        <input type="checkbox" id="setting-triple-music" checked>
+                                        <span class="slider round"></span>
+                                    </span>
+                                </label>
+                            </div>
 
-                        .bell-btn.active {
-                            background: #409cff;
-                            border-color: #fff;
-                            box-shadow: 0 0 15px rgba(64, 156, 255, 0.4);
-                        }
+                            <!-- Toggle: Board Sound Effects -->
+                            <div class="setting-panel">
+                                <label for="setting-board-sounds" class="setting-header" style="cursor: pointer;">
+                                    <div>
+                                        <div class="setting-title">Board Sound Effects</div>
+                                        <div class="setting-desc">Play sound effects when pressing, swiping, and validating words during play.</div>
+                                    </div>
+                                    <span class="toggle-switch">
+                                        <input type="checkbox" id="setting-board-sounds" checked>
+                                        <span class="slider round"></span>
+                                    </span>
+                                </label>
+                            </div>
 
-                        .play-icon {
-                            font-size: 0.7rem;
-                            background: rgba(255, 255, 255, 0.2);
-                            width: 18px;
-                            height: 18px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            border-radius: 50%;
-                        }
+                            <!-- Next Round Notification -->
+                            <div class="setting-panel">
+                                <label for="setting-next-round-bell" class="setting-header" style="cursor: pointer;">
+                                    <div>
+                                        <div class="setting-title">Next Round Notification</div>
+                                        <div class="setting-desc">Play a bell or a set of beeps 10 seconds before a new round starts.</div>
+                                    </div>
+                                    <span class="toggle-switch">
+                                        <input type="checkbox" id="setting-next-round-bell">
+                                        <span class="slider round"></span>
+                                    </span>
+                                </label>
 
-                        body.theme-white .bell-btn {
-                            background: rgba(0, 0, 0, 0.05);
-                            border-color: rgba(0, 0, 0, 0.1);
-                            color: #333;
-                        }
+                                <div id="bell-selection-container"
+                                    style="display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%;">
+                                    <!-- Row 1: Bells -->
+                                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
+                                        <div class="meta-label"
+                                            style="font-size: 0.85rem; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            Select Bell Sound</div>
+                                        <div
+                                            style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
+                                            <button class="bell-btn" data-bell="bell1">Bell 1 <span
+                                                    class="play-icon">▶</span></button>
+                                            <button class="bell-btn" data-bell="bell2">Bell 2 <span
+                                                    class="play-icon">▶</span></button>
+                                            <button class="bell-btn" data-bell="bell3">Bell 3 <span
+                                                    class="play-icon">▶</span></button>
+                                        </div>
+                                    </div>
 
-                        body.theme-white .bell-btn:hover {
-                            background: rgba(0, 0, 0, 0.1);
-                        }
+                                    <!-- Row 2: Beeps -->
+                                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
+                                        <div class="meta-label"
+                                            style="font-size: 0.85rem; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            Select Beep Sound</div>
+                                        <div
+                                            style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
+                                            <button class="bell-btn" data-bell="beep1">Beep 1 <span
+                                                    class="play-icon">▶</span></button>
+                                            <button class="bell-btn" data-bell="beep2">Beep 2 <span
+                                                    class="play-icon">▶</span></button>
+                                            <button class="bell-btn" data-bell="beep3">Beep 3 <span
+                                                    class="play-icon">▶</span></button>
+                                        </div>
+                                    </div>
+                                </div>
 
-                        body.theme-white .bell-btn.active {
-                            background: #409cff;
-                            color: #fff;
-                            border-color: #2a7fd1;
-                        }
+                                <style>
+                                    .bell-btn {
+                                        background: rgba(255, 255, 255, 0.05);
+                                        border: 1px solid rgba(255, 255, 255, 0.15);
+                                        color: #fff;
+                                        padding: 8px 16px;
+                                        border-radius: 8px;
+                                        cursor: pointer;
+                                        transition: all 0.2s;
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 8px;
+                                        font-size: 0.9rem;
+                                        font-weight: 500;
+                                    }
 
-                        body.theme-white .play-icon {
-                            background: rgba(0, 0, 0, 0.1);
-                            color: #333;
-                        }
+                                    .bell-btn:hover {
+                                        background: rgba(255, 255, 255, 0.15);
+                                        transform: translateY(-1px);
+                                    }
 
-                        body.theme-white .bell-btn.active .play-icon {
-                            background: rgba(255, 255, 255, 0.3);
-                            color: #fff;
-                        }
+                                    .bell-btn.active {
+                                        background: #409cff;
+                                        border-color: #fff;
+                                        box-shadow: 0 0 15px rgba(64, 156, 255, 0.4);
+                                    }
 
-                        body.theme-white .meta-label {
-                            color: #555 !important;
-                        }
+                                    .play-icon {
+                                        font-size: 0.7rem;
+                                        background: rgba(255, 255, 255, 0.2);
+                                        width: 18px;
+                                        height: 18px;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        border-radius: 50%;
+                                    }
 
-                        body.theme-white #bell-selection-container {
-                            border-top-color: rgba(0, 0, 0, 0.1) !important;
-                        }
-                    </style>
-                </div>
+                                    body.theme-white .bell-btn {
+                                        background: rgba(0, 0, 0, 0.05);
+                                        border-color: rgba(0, 0, 0, 0.1);
+                                        color: #333;
+                                    }
 
-                <!-- Synesthesia Panel -->
-                <div class="setting-panel" style="grid-column: 1 / -1;">
-                    <div class="setting-header">
-                        <div>
-                            <div class="setting-title">Synesthesia</div>
-                            <div class="setting-desc">Tailor the color of each individual letter on the game board.
+                                    body.theme-white .bell-btn:hover {
+                                        background: rgba(0, 0, 0, 0.1);
+                                    }
+
+                                    body.theme-white .bell-btn.active {
+                                        background: #409cff;
+                                        color: #fff;
+                                        border-color: #2a7fd1;
+                                    }
+
+                                    body.theme-white .play-icon {
+                                        background: rgba(0, 0, 0, 0.1);
+                                        color: #333;
+                                    }
+
+                                    body.theme-white .bell-btn.active .play-icon {
+                                        background: rgba(255, 255, 255, 0.3);
+                                        color: #fff;
+                                    }
+
+                                    body.theme-white .meta-label {
+                                        color: #555 !important;
+                                    }
+
+                                    body.theme-white #bell-selection-container {
+                                        border-top-color: rgba(0, 0, 0, 0.1) !important;
+                                    }
+                                </style>
                             </div>
                         </div>
-                        <button id="setting-synesthesia-reset" class="mini-action-btn secondary"
-                            style="padding: 6px 12px; font-size: 0.75rem;">Reset All to Black</button>
-                    </div>
-                    <div id="synesthesia-letters-grid"
-                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 12px; margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 12px;">
-                        <!-- Letters A-Z injected by settings.js -->
                     </div>
 
-                    <style>
-                        .synesthesia-unit {
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            gap: 6px;
-                            background: rgba(255, 255, 255, 0.03);
-                            padding: 10px 4px;
-                            border-radius: 8px;
-                            border: 1px solid rgba(255, 255, 255, 0.08);
-                            transition: all 0.2s;
-                        }
+                    <!-- Gameplay & Highlights Tab -->
+                    <div id="setting-tab-gameplay" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Gameplay & Highlights</h2>
+                            <p>Configure board animations and typing/drag highlights.</p>
+                        </div>
+                        <div class="settings-tab-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px; width: 100%; box-sizing: border-box;">
+                            <!-- Toggle: Word Flash Effect -->
+                            <div class="setting-panel">
+                                <label for="setting-word-flash" class="setting-header" style="cursor: pointer;">
+                                    <div>
+                                        <div class="setting-title">Word Flash Effect</div>
+                                        <div class="setting-desc">Flash word trace tiles on the board (blue: valid, green: bonus, red: invalid/penalty) on submission.</div>
+                                    </div>
+                                    <span class="toggle-switch">
+                                        <input type="checkbox" id="setting-word-flash" checked>
+                                        <span class="slider round"></span>
+                                    </span>
+                                </label>
+                            </div>
 
-                        .synesthesia-unit:hover {
-                            background: rgba(255, 255, 255, 0.08);
-                            border-color: rgba(255, 255, 255, 0.2);
-                            transform: translateY(-2px);
-                        }
+                            <!-- Toggle: Highlight While Typing -->
+                            <div class="setting-panel">
+                                <label for="setting-highlight-typing" class="setting-header" style="cursor: pointer;">
+                                    <div>
+                                        <div class="setting-title">Highlight as you type</div>
+                                        <div class="setting-desc">Highlight letters on the board as you type in the input box.</div>
+                                    </div>
+                                    <span class="toggle-switch">
+                                        <input type="checkbox" id="setting-highlight-typing" checked>
+                                        <span class="slider round"></span>
+                                    </span>
+                                </label>
+                                <!-- Color Picker: Typing -->
+                                <div id="highlight-color-picker"
+                                    style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%;">
+                                    <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Typing Color</div>
+                                    <div class="color-dot-grid"
+                                        style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
+                                        <button class="color-dot active" data-color="#ffcc00" style="background: #ffcc00;"
+                                            title="Yellow"></button>
+                                        <button class="color-dot" data-color="#00ffff" style="background: #00ffff;"
+                                            title="Cyan"></button>
+                                        <button class="color-dot" data-color="#00ff00" style="background: #00ff00;"
+                                            title="Lime"></button>
+                                        <button class="color-dot" data-color="#ff66cc" style="background: #ff66cc;"
+                                            title="Pink"></button>
+                                        <button class="color-dot" data-color="#ff9900" style="background: #ff9900;"
+                                            title="Orange"></button>
+                                        <button class="color-dot" data-color="#ff4d4d" style="background: #ff4d4d;"
+                                            title="Red"></button>
+                                        <button class="color-dot" data-color="#b366ff" style="background: #b366ff;"
+                                            title="Purple"></button>
+                                        <button class="color-dot" data-color="#3399ff" style="background: #3399ff;"
+                                            title="Blue"></button>
+                                        <button class="color-dot" data-color="#00ff99" style="background: #00ff99;"
+                                            title="Mint"></button>
+                                        <button class="color-dot" data-color="#ffd700" style="background: #ffd700;"
+                                            title="Gold"></button>
+                                        <button class="color-dot" data-color="#ffffff" style="background: #ffffff;"
+                                            title="White"></button>
+                                    </div>
+                                </div>
+                            </div>
 
-                        .synesthesia-unit label {
-                            font-size: 0.95rem;
-                            font-weight: 800;
-                            color: #fff;
-                        }
+                            <!-- Toggle: Highlight While Mousing -->
+                            <div class="setting-panel">
+                                <label for="setting-highlight-mouse" class="setting-header" style="cursor: pointer;">
+                                    <div>
+                                        <div class="setting-title">Highlight while mousing</div>
+                                        <div class="setting-desc">Highlight letters on the board as you drag or swipe over them.</div>
+                                    </div>
+                                    <span class="toggle-switch">
+                                        <input type="checkbox" id="setting-highlight-mouse" checked>
+                                        <span class="slider round"></span>
+                                    </span>
+                                </label>
+                                <!-- Color Picker: Mousing -->
+                                <div id="highlight-mouse-color-picker"
+                                    style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%;">
+                                    <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Mousing Color</div>
+                                    <div class="color-dot-grid"
+                                        style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
+                                        <button class="color-dot active" data-color="#409cff" style="background: #409cff;"
+                                            title="Blue"></button>
+                                        <button class="color-dot" data-color="#ffcc00" style="background: #ffcc00;"
+                                            title="Yellow"></button>
+                                        <button class="color-dot" data-color="#00ffff" style="background: #00ffff;"
+                                            title="Cyan"></button>
+                                        <button class="color-dot" data-color="#00ff00" style="background: #00ff00;"
+                                            title="Lime"></button>
+                                        <button class="color-dot" data-color="#ff66cc" style="background: #ff66cc;"
+                                            title="Pink"></button>
+                                        <button class="color-dot" data-color="#ff9900" style="background: #ff9900;"
+                                            title="Orange"></button>
+                                        <button class="color-dot" data-color="#ff4d4d" style="background: #ff4d4d;"
+                                            title="Red"></button>
+                                        <button class="color-dot" data-color="#b366ff" style="background: #b366ff;"
+                                            title="Purple"></button>
+                                        <button class="color-dot" data-color="#00ff99" style="background: #00ff99;"
+                                            title="Mint"></button>
+                                        <button class="color-dot" data-color="#ffd700" style="background: #ffd700;"
+                                            title="Gold"></button>
+                                        <button class="color-dot" data-color="#ffffff" style="background: #ffffff;"
+                                            title="White"></button>
+                                    </div>
+                                </div>
+                                <style>
+                                    .color-dot {
+                                        width: 24px;
+                                        height: 24px;
+                                        border-radius: 50%;
+                                        cursor: pointer;
+                                        border: 2px solid rgba(0, 0, 0, 0.3);
+                                        transition: transform 0.2s, box-shadow 0.2s;
+                                    }
 
-                        .synesthesia-unit input[type="color"] {
-                            width: 32px;
-                            height: 32px;
-                            border: 2px solid rgba(255, 255, 255, 0.2);
-                            background: none;
-                            cursor: pointer;
-                            border-radius: 6px;
-                            padding: 0;
-                            overflow: hidden;
-                        }
+                                    .color-dot:hover {
+                                        transform: scale(1.2);
+                                    }
 
-                        .synesthesia-unit input[type="color"]::-webkit-color-swatch-wrapper {
-                            padding: 0;
-                        }
-
-                        .synesthesia-unit input[type="color"]::-webkit-color-swatch {
-                            border: none;
-                            border-radius: 4px;
-                        }
-
-                        body.theme-white .synesthesia-unit {
-                            background: rgba(0, 0, 0, 0.03);
-                            border-color: rgba(0, 0, 0, 0.1);
-                        }
-
-                        body.theme-white .synesthesia-unit label {
-                            color: #333;
-                        }
-
-                        body.theme-white .synesthesia-unit input[type="color"] {
-                            border-color: rgba(0, 0, 0, 0.1);
-                        }
-                    </style>
+                                    .color-dot.active {
+                                        transform: scale(1.3);
+                                        border-color: #fff;
+                                        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+                                    }
+                                </style>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

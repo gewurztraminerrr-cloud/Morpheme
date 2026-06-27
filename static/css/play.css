@@ -4801,7 +4801,7 @@ input[type=range]::-moz-range-track {
         max-width: 100% !important;
         box-sizing: border-box !important;
         overflow-x: hidden !important;
-        padding: 15px !important;
+        padding: 0 !important;
     }
 
     .settings-grid {

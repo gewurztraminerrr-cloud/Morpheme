@@ -780,6 +780,108 @@ function debounce(func, wait) {
         return maxDist + 0.414 * minDist <= r;
     }
 
+    // --- Settings Tab Navigation ---
+    window.showSettingTab = function(tabId) {
+        const sidebar = document.querySelector('#page-settings .tools-sidebar');
+        const content = document.querySelector('#page-settings .tools-content');
+        if (!sidebar || !content) return;
+
+        // Update active class on buttons
+        sidebar.querySelectorAll('.tool-nav-btn').forEach(btn => {
+            if (btn.dataset.settingTab === tabId) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // Update active class on panes
+        content.querySelectorAll('.tool-pane').forEach(pane => {
+            if (pane.id === `setting-tab-${tabId}`) {
+                pane.classList.add('active');
+            } else {
+                pane.classList.remove('active');
+            }
+        });
+
+        // Trigger scroll to content area on mobile
+        const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+            content.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+        }
+    };
+
+    function setupSettingsNavigation() {
+        const sidebar = document.querySelector('#page-settings .tools-sidebar');
+        if (!sidebar) return;
+
+        sidebar.addEventListener('click', (e) => {
+            const btn = e.target.closest('.tool-nav-btn');
+            if (!btn) return;
+
+            const tabId = btn.dataset.settingTab;
+            if (tabId) {
+                window.showSettingTab(tabId);
+            }
+        });
+
+        // Mobile Layout snapping on navigation
+        const settingsPage = document.getElementById('page-settings');
+        if (settingsPage) {
+            const observer = new MutationObserver(() => {
+                if (settingsPage.classList.contains('active')) {
+                    const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                    if (isMobile) {
+                        setTimeout(() => {
+                            const sidebarEl = document.querySelector('#page-settings .tools-sidebar');
+                            if (sidebarEl) sidebarEl.scrollIntoView({ behavior: 'auto', inline: 'start' });
+                        }, 100);
+                    }
+                }
+            });
+            observer.observe(settingsPage, {
+                attributes: true,
+                attributeFilter: ['class']
+            });
+        }
+
+        // Mobile touch swipe handling for sliding back to settings list
+        const settingsContent = document.querySelector('#page-settings .tools-content');
+        const settingsSidebar = document.querySelector('#page-settings .tools-sidebar');
+        if (settingsContent && settingsSidebar) {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            settingsContent.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
+            
+            settingsContent.addEventListener('touchend', (e) => {
+                const touchEndX = e.changedTouches[0].screenX;
+                const touchEndY = e.changedTouches[0].screenY;
+                const diffX = touchEndX - touchStartX;
+                const diffY = touchEndY - touchStartY;
+                
+                // If swiped right (diffX > 80) and horizontal movement was dominant
+                if (diffX > 80 && Math.abs(diffX) > Math.abs(diffY)) {
+                    settingsSidebar.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+                }
+            }, { passive: true });
+        }
+
+        // Mobile back button inside settings content
+        const mobileBackBtn = document.getElementById('settings-mobile-back-btn');
+        if (mobileBackBtn) {
+            mobileBackBtn.addEventListener('click', () => {
+                const settingsSidebarEl = document.querySelector('#page-settings .tools-sidebar');
+                if (settingsSidebarEl) settingsSidebarEl.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+            });
+        }
+    }
+
+    // Initialize navigation
+    setupSettingsNavigation();
+
     window.loadSettings = loadSettings;
     window.applySettings = applySettings;
 })();
