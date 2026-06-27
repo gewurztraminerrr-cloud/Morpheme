@@ -385,7 +385,7 @@ async function ejectToLobby(reason = "inactivity") {
         message = `
             The 24-hour Daily Room has reset for the new day!
             <br><br>
-            A fresh daily board has been generated. Head back in to start finding words and climb the leaderboard!
+            A fresh daily board has been generated. Head back in to start finding words!
         `;
     }
 
