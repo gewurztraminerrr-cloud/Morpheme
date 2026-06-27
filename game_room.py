@@ -4795,11 +4795,19 @@ class RoomManager:
 
             print(f"[RoomManager] Saving history for room {room.room_id} Round {target_round} ({len(participating_registered)} players)")
 
+            solutions_saved = False
             for p in participating_registered:
                 # p is either a Player object or a dictionary snapshot
                 u_id = p.user_id if hasattr(p, 'user_id') else p['user_id']
                 u_name = p.username if hasattr(p, 'username') else p['username']
                 u_score = p.score if hasattr(p, 'score') else p['score']
+
+                # If a user gets a score of 0, do not save their round results in round_history
+                # (Unless it is the System placeholder for 24-hour rooms)
+                if u_score <= 0 and u_id != -1 and u_name != 'System':
+                    print(f"[RoomManager] Skipping saving round history for {u_name} because score is {u_score}")
+                    continue
+
                 u_submitted = p.submitted_words if hasattr(p, 'submitted_words') else p['submitted_words']
                 u_rating = getattr(p, 'rating', 1200) if hasattr(p, 'rating') else p.get('rating', 1200)
                 u_perf = getattr(p, 'performance_efficiency', 0) if hasattr(p, 'performance_efficiency') else p.get('performance_efficiency', 0)
@@ -4845,10 +4853,12 @@ class RoomManager:
                         if dt > 0.001:
                             final_wpm = (len(sorted_entries) * 60.0) / dt
                 
-                # 2. SAVE: Optimization - Only store full solutions/paths for the FIRST player in the batch
-                is_first_player = (p == participating_registered[0])
-                solutions_payload = json.dumps(list(actual_all_words)) if is_first_player else None
-                paths_payload = json.dumps(actual_all_words_paths) if is_first_player else None 
+                # 2. SAVE: Optimization - Only store full solutions/paths for the FIRST player saved in the batch
+                is_first_saved = not solutions_saved
+                solutions_payload = json.dumps(list(actual_all_words)) if is_first_saved else None
+                paths_payload = json.dumps(actual_all_words_paths) if is_first_saved else None 
+                if is_first_saved:
+                    solutions_saved = True
 
                 conn.execute('''
                     INSERT INTO round_history (user_id, room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, timestamp, user_rating, performance_ratio, best_word, best_word_score, board_dimensions, wpm, total_words_avail, bonus_word, bonus_cell, board_format, all_solutions_json, all_words_paths)
