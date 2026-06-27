@@ -1,6 +1,6 @@
 # Morpheme Stable State Summary - June 26, 2026
 
-This summary documents the stable state of the Morpheme application as of June 26, 2026. Localhost, GitHub origin, and `morpheme.games` are fully synchronized and verified under Commit ID **`6d269c360106016000bef11198aa8f57c177847e`** (and subsequently tagged as **`START_OVER_POINT_JUNE_26`**).
+This summary documents the stable state of the Morpheme application as of June 26, 2026. Localhost, GitHub origin, and `morpheme.games` are fully synchronized and verified under Commit ID **`8795a06df2e7a21874451e91c3069ab7c81828e8`** (and subsequently tagged as **`START_OVER_POINT_JUNE_26`**).
 
 ---
 
@@ -79,6 +79,21 @@ This summary documents the stable state of the Morpheme application as of June 2
 ### 21. Mania Mode Letter Abundance Calibration
 *   **Resolution**: Calibrated Mania mode to require a minimum of 1/5 (20%) of all letters on the board to be the abundant letter for rare letters (Q, Z, J, X, K) and 1/3 (33.3%) for common letters. Exempted the active Mania letter from the individual and total rare-letter sanitizer caps and optimization limits, ensuring abundant letters remain protected.
 
+### 22. Randomized Tournament Parameters Restoration
+*   **Resolution**: Restored `SpinnerSet.generate_tournament_params()` to randomize board size and time limit parameters for new tournaments instead of using fixed testing settings.
+
+### 23. Profile Rating Desktop Grid Wrapping Fix
+*   **Resolution**: Corrected the rating boxes layout on desktop under Tools > Profile by removing the fixed 100px width limit on `.rating-box-config`, ensuring dimension and time limit stay on the same row (e.g. `4x4 | 45s`).
+
+### 24. Round Replay 3D Sizing & Overlap Fix
+*   **Resolution**: Implemented dynamic cell size scaling for 3D Cube rounds in Round Replay. Utilized `repeat(3, max-content)` and overflow-auto to prevent faces from overlapping and ensure all 6 sides are clearly visible.
+
+### 25. Word Validator Cache Invalidation
+*   **Resolution**: Added file modification check and automatic cache invalidation for `TOOLS_DICT_CACHE` in `app.py` when custom mod words are added or removed, ensuring the "ALL (Full)" validator option remains in sync.
+
+### 26. Static Asset Cache Busting
+*   **Resolution**: Appended incremented version tags to CSS and JS imports in `index.html` to force client browsers to download layout and functional updates.
+
 ---
 
 ## 🛠 Active Features & Configuration
@@ -88,7 +103,7 @@ This summary documents the stable state of the Morpheme application as of June 2
 
 ---
 
-**Latest Stable Commit ID**: `6d269c360106016000bef11198aa8f57c177847e` (tagged as `START_OVER_POINT_JUNE_26`)  
+**Latest Stable Commit ID**: `8795a06df2e7a21874451e91c3069ab7c81828e8` (tagged as `START_OVER_POINT_JUNE_26`)  
 **GitHub Tag**: `START_OVER_POINT_JUNE_26`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `6d269c360106016000bef11198aa8f57c177847e` (PM2 restarted successfully)
+**Production Server Status**: Green / PM2 Online / Live at commit `8795a06df2e7a21874451e91c3069ab7c81828e8` (PM2 restarted successfully)
