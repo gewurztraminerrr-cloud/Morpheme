@@ -142,10 +142,8 @@ def profile_combo(search_term):
     
     shared_counts = np.minimum(dict_matrix, s_vec).sum(axis=1)
     
-    min_shared = 1
-    if source_len == 5: min_shared = 3
-    if source_len == 6: min_shared = 4
-    if source_len >= 7: min_shared = 5
+    # Mathematical lower bound: insertions + deletions <= 6 => (S-M)+(L-M) <= 6 => M >= (S+L-5)//2
+    min_shared = np.maximum(1, (source_len + dict_lens.astype(np.int16) - 5) // 2)
     
     len_diffs = np.abs(dict_lens.astype(np.int16) - source_len)
     candidates = np.where(

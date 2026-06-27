@@ -4405,11 +4405,8 @@ def tools_combo_check():
     # 2. VECTORIZED PRUNING
     shared_counts = np.minimum(dict_matrix, s_vec).sum(axis=1)
     
-    # HEURISTIC TIGHTENING: For 7+ letter words, we need a high shared count
-    min_shared = 1
-    if source_len == 5: min_shared = 3
-    if source_len == 6: min_shared = 4 # TIGHTENED to 4
-    if source_len >= 7: min_shared = 5 # TIGHTENED to 5 for speed
+    # Mathematical lower bound: insertions + deletions <= 6 => (S-M)+(L-M) <= 6 => M >= (S+L-5)//2
+    min_shared = np.maximum(1, (source_len + dict_lens.astype(np.int16) - 5) // 2)
     
     len_diffs = np.abs(dict_lens.astype(np.int16) - source_len)
     candidates = np.where(
