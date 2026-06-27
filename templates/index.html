@@ -2482,36 +2482,6 @@
                                 </div>
                             </div>
 
-                            <!-- Selectable Tile Space Configuration -->
-                            <div class="setting-panel">
-                                <div class="setting-header">
-                                    <div>
-                                        <div class="setting-title">Tile Selectable Space (Octagon vs Diamond)</div>
-                                        <div class="setting-desc">Adjust the diagonal selectable space of a tile for easier mousing and swiping.</div>
-                                    </div>
-                                    <div id="setting-corner-cutoff-val" class="preview-value">30%</div>
-                                </div>
-
-                                <div class="setting-slider-container">
-                                    <div class="slider-label-row">
-                                        <span>Square (0%)</span>
-                                        <span>Octagon (30%)</span>
-                                        <span>Diamond (50%)</span>
-                                    </div>
-                                    <input type="range" id="setting-corner-cutoff" min="0" max="50" value="30">
-                                    <div class="slider-instruction" style="font-size: 0.85rem; color: var(--text-secondary, #94a3b8); margin-top: 12px; line-height: 1.4; font-style: italic;">
-                                        💡 <b>Selectable Hitbox Adjuster:</b> This alters the diagonal space of the tile that responds to mousing and swiping. Adjusting from 30% towards 50% morphs the interactive space closer to a diamond shape to accommodate easier selection!
-                                    </div>
-                                </div>
-
-                                <div class="preview-hitbox-container" style="margin-top: 20px; display: flex; justify-content: center;">
-                                    <div class="preview-hitbox-tile" style="position: relative; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border: 2px dashed rgba(255,255,255,0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 900;">
-                                        <span style="z-index: 10; pointer-events: none; opacity: 0.4;">M</span>
-                                        <div id="preview-hitbox-shape" style="position: absolute; inset: 0; background: rgba(64, 156, 255, 0.4); border: 3px solid #409cff; z-index: 5; transition: clip-path 0.1s ease; clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);"></div>
-                                    </div>
-                                </div>
-                            </div>
-
                             <!-- Chat Text Size -->
                             <div class="setting-panel">
                                 <div class="setting-header">
@@ -2855,6 +2825,36 @@
                             <p>Configure board animations and typing/drag highlights.</p>
                         </div>
                         <div class="settings-tab-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px; width: 100%; box-sizing: border-box;">
+                            <!-- Selectable Tile Space Configuration -->
+                            <div class="setting-panel">
+                                <div class="setting-header">
+                                    <div>
+                                        <div class="setting-title">Tile Selectable Space (Octagon vs Diamond)</div>
+                                        <div class="setting-desc">Adjust the diagonal selectable space of a tile for easier mousing and swiping.</div>
+                                    </div>
+                                    <div id="setting-corner-cutoff-val" class="preview-value">30%</div>
+                                </div>
+
+                                <div class="setting-slider-container">
+                                    <div class="slider-label-row">
+                                        <span>Square (0%)</span>
+                                        <span>Octagon (30%)</span>
+                                        <span>Diamond (50%)</span>
+                                    </div>
+                                    <input type="range" id="setting-corner-cutoff" min="0" max="50" value="30">
+                                    <div class="slider-instruction" style="font-size: 0.85rem; color: var(--text-secondary, #94a3b8); margin-top: 12px; line-height: 1.4; font-style: italic;">
+                                        💡 <b>Selectable Hitbox Adjuster:</b> This alters the diagonal space of the tile that responds to mousing and swiping. Adjusting from 30% towards 50% morphs the interactive space closer to a diamond shape to accommodate easier selection!
+                                    </div>
+                                </div>
+
+                                <div class="preview-hitbox-container" style="margin-top: 20px; display: flex; justify-content: center;">
+                                    <div class="preview-hitbox-tile" style="position: relative; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border: 2px dashed rgba(255,255,255,0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 900;">
+                                        <span style="z-index: 10; pointer-events: none; opacity: 0.4;">M</span>
+                                        <div id="preview-hitbox-shape" style="position: absolute; inset: 0; background: rgba(64, 156, 255, 0.4); border: 3px solid #409cff; z-index: 5; transition: clip-path 0.1s ease; clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);"></div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Toggle: Word Flash Effect -->
                             <div class="setting-panel">
                                 <label for="setting-word-flash" class="setting-header" style="cursor: pointer;">
