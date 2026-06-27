@@ -37,16 +37,27 @@ This summary documents the stable state of the Morpheme application as of June 2
 *   **Visual Alignment**: Added `<h2>` headers with the class `.page-title-header` to both the Tools and Settings pages in [templates/index.html](file:///Users/jeffbabiak/templates/index.html).
 *   **CSS Layout**: Created the `.page-title-header` class in [play.css](file:///Users/jeffbabiak/static/css/play.css) to ensure perfect alignment on desktop and automatic side padding (`15px`) on mobile.
 
+### 8. Intermission Word List Desktop Scroll Preservation
+*   **Scroll Locking**: Modified `displayAllWords` in [play.js](file:///Users/jeffbabiak/static/js/play.js) to cache the scroll position of `#submitted-words-list` before re-rendering and restore it immediately after rendering on desktops/laptops (`!isMobile`), keeping the user's scroll position anchored when clicking a word to view its definition or board path.
+
+### 9. Automatic Spectator Assignment on Full Rooms
+*   **Graceful Spectate Fallback**: Modified `join_room` in [app.py](file:///Users/jeffbabiak/app.py) to automatically add the user as a spectator and return `role: 'spectator'` if the room is already full (has 8 active players), preventing "Room is full" errors. Both the Profile **Follow** button and the backend API are now fully aligned.
+
+### 10. Bounce Format Updates & Custom Setup Integration
+*   **Format Weight Distribution**: Updated `_spin_board_format` in [spinner_set.py](file:///Users/jeffbabiak/spinner_set.py) to restore the normal format weights: `68%` Normal, `12%` Checkerboard, `2%` Bounce, and `2%` for other modifiers.
+*   **Solo / Friends Custom Rooms**: Added the `Bounce` option to the Board Format dropdown in [templates/index.html](file:///Users/jeffbabiak/templates/index.html) under the Solo/Friends setup.
+*   **FAQ & Odds Display**: Added the `Bounce` format explanation and updated the odds displays under the FAQ section in [templates/index.html](file:///Users/jeffbabiak/templates/index.html).
+
 ---
 
 ## 🛠 Active Features & Configuration
-*   **Board Formats**: Normal, Checkerboard, Double, Triple, Valued Letters, Rotation, Penalty, Mania, Either/Or, Bonus Word, and Density.
+*   **Board Formats**: Normal, Checkerboard, Bounce, Double, Triple, Valued Letters, Rotation, Penalty, Mania, Either/Or, Bonus Word, and Density.
 *   **Grid Dimensions**: 4x4, 4x6, 5x7, 6x8, and 3x3x3 Cube.
 *   **Dictionaries**: NWL (American) and CSW (International) Tries.
 
 ---
 
-**Latest Stable Commit ID**: `5007457`  
+**Latest Stable Commit ID**: `19d014c`  
 **GitHub Tags**: `START_OVER_POINT_JUNE_27`, `snapshot-current`  
 **Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `5007457`
+**Production Server Status**: Green / PM2 Online / Live at commit `19d014c`

@@ -62,9 +62,9 @@ window.showTool = function(toolId) {
     // Scroll tools content into view on mobile
     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isMobile) {
-        const toolsContent = document.querySelector('.tools-content');
-        if (toolsContent) {
-            toolsContent.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+        const layout = document.querySelector('#page-tools .tools-split-layout');
+        if (layout) {
+            layout.scrollTo({ left: layout.clientWidth, behavior: 'smooth' });
         }
     }
 };
@@ -96,8 +96,8 @@ function setupToolsNavigation() {
                 const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
                 if (isMobile) {
                     setTimeout(() => {
-                        const sidebarEl = document.querySelector('.tools-sidebar');
-                        if (sidebarEl) sidebarEl.scrollIntoView({ behavior: 'auto', inline: 'start' });
+                        const layoutEl = document.querySelector('#page-tools .tools-split-layout');
+                        if (layoutEl) layoutEl.scrollLeft = 0;
                     }, 100);
                 }
             }
@@ -127,7 +127,8 @@ function setupToolsNavigation() {
             
             // If swiped right (diffX > 80) and horizontal movement was dominant
             if (diffX > 80 && Math.abs(diffX) > Math.abs(diffY)) {
-                toolsSidebar.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+                const layoutEl = document.querySelector('#page-tools .tools-split-layout');
+                if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
             }
         }, { passive: true });
     }
@@ -136,8 +137,8 @@ function setupToolsNavigation() {
     const mobileBackBtn = document.getElementById('tools-mobile-back-btn');
     if (mobileBackBtn) {
         mobileBackBtn.addEventListener('click', () => {
-            const toolsSidebarEl = document.querySelector('.tools-sidebar');
-            if (toolsSidebarEl) toolsSidebarEl.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+            const layoutEl = document.querySelector('#page-tools .tools-split-layout');
+            if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
         });
     }
 }
