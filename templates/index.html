@@ -2140,146 +2140,173 @@
         </div>
 
         <div id="page-mods" class="page">
-            <div class="mods-container">
-                <div class="mods-header">
-                    <h2>Moderator Management</h2>
+            <div class="tools-split-layout">
+                <!-- Sidebar (1/3) -->
+                <div class="tools-sidebar">
+                    <button class="tool-nav-btn active" data-mod-tab="ban" onclick="window.showModTab('ban')">Ban User</button>
+                    <button class="tool-nav-btn" data-mod-tab="notice" onclick="window.showModTab('notice')">Lobby Notice</button>
+                    <button class="tool-nav-btn" data-mod-tab="def" onclick="window.showModTab('def')">Definition Management</button>
+                    <button class="tool-nav-btn" data-mod-tab="pron" onclick="window.showModTab('pron')">Pronunciation Management</button>
+                    <button class="tool-nav-btn" data-mod-tab="added" onclick="window.showModTab('added')">Added Words</button>
+                    <button class="tool-nav-btn" data-mod-tab="db" onclick="window.showModTab('db')">Database Submission</button>
+                    <button class="tool-nav-btn" data-mod-tab="access" onclick="window.showModTab('access')">Moderator Access</button>
                 </div>
 
+                <!-- Content (2/3) -->
+                <div class="tools-content">
+                    <button id="mods-mobile-back-btn" class="forum-back-btn mobile-back-btn" style="display: none; margin-bottom: 15px; margin-left: 15px; margin-top: 5px;">← Mods List</button>
 
-                <!-- Moderator Control: Ban User -->
-                <div class="mod-section">
-                    <div class="mod-list-title">Moderator Control: Ban User</div>
-                    <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 5px; color: #f43f5e;"><strong>WARNING:</strong> This will permanently delete the user and erase all their stats, posts, and history.</p>
-                    <div id="ban-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
-                    <div class="mod-add-section">
-                        <input type="text" id="ban-username-input" placeholder="Enter username to ban...">
-                        <button id="ban-user-btn" class="mod-full-btn remove">Ban and Erase User</button>
-                    </div>
-                </div>
-
-                <!-- Lobby Notice Management -->
-                <div class="mod-section">
-                    <div class="mod-list-title">Global Lobby Notice</div>
-                    <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 10px;">This message will be shown as a popup to all users <strong>ONLY</strong> when they enter the Lobby. (NOT during gameplay).</p>
-                    <div id="notice-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
-                    <div class="mod-add-section" style="flex-direction: column; align-items: stretch; gap: 10px;">
-                        <textarea id="lobby-notice-input" placeholder="Enter notice message... (Supports multi-line)" style="width: 100%; min-height: 100px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); padding: 12px; font-family: inherit; font-size: 0.95rem; resize: vertical;"></textarea>
-                        <div class="mod-action-buttons" style="display: flex; gap: 10px;">
-                            <button id="set-notice-btn" class="mod-full-btn add" style="flex: 1;">Update Lobby Notice</button>
-                            <button id="clear-notice-btn" class="mod-full-btn remove" style="flex: 0.3;">Clear</button>
+                    <!-- Moderator Control: Ban User -->
+                    <div id="mod-tab-ban" class="tool-pane active">
+                        <div class="tool-header">
+                            <h2>Ban User</h2>
+                            <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 5px; color: #f43f5e;"><strong>WARNING:</strong> This will permanently delete the user and erase all their stats, posts, and history.</p>
+                        </div>
+                        <div id="ban-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
+                        <div class="mod-add-section" style="width: 100%; box-sizing: border-box;">
+                            <input type="text" id="ban-username-input" placeholder="Enter username to ban...">
+                            <button id="ban-user-btn" class="mod-full-btn remove">Ban and Erase User</button>
                         </div>
                     </div>
-                </div>
 
-                <!-- Definition Management -->
-                <div class="mod-section">
-                    <div class="mod-list-title">Definition Management</div>
-                    <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 5px;">Add, update, or remove definitions for any word. You can separate multiple words with commas to apply the definition to all of them at once (e.g. <strong>arity,arities</strong>).</p>
-                    
-                    <div id="def-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
-                    
-                    <!-- Undefined Words Scroller Box -->
-                    <div class="undef-words-box" style="margin-bottom: 15px; border: 1px solid var(--input-border); border-radius: 8px; background: rgba(0,0,0,0.15); padding: 12px; display: none;" id="undef-words-container">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: 700; font-size: 0.85rem; opacity: 0.9;">
-                            <span style="color: var(--text-primary);">Words Without Definitions <span id="undef-words-count" style="opacity: 0.6; font-weight: 500; font-size: 0.8rem;">(Loading...)</span></span>
-                            <button id="refresh-undef-btn" class="mod-refresh-btn" style="background: none; border: none; color: #a5b4fc; cursor: pointer; font-size: 0.8rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='none'">Refresh</button>
+                    <!-- Lobby Notice Management -->
+                    <div id="mod-tab-notice" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Global Lobby Notice</h2>
+                            <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 10px;">This message will be shown as a popup to all users <strong>ONLY</strong> when they enter the Lobby. (NOT during gameplay).</p>
                         </div>
-                        <div style="margin-bottom: 8px;">
-                            <input type="text" id="undef-search-input" placeholder="Search undefined words..." style="width: 100%; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); font-size: 0.85rem;">
-                        </div>
-                        <div class="undef-words-list-scroll" style="max-height: 120px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; background: rgba(0,0,0,0.2);">
-                            <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                                <tbody id="undef-words-tbody">
-                                    <!-- Rendered dynamically -->
-                                </tbody>
-                            </table>
+                        <div id="notice-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
+                        <div class="mod-add-section" style="flex-direction: column; align-items: stretch; gap: 10px; width: 100%; box-sizing: border-box;">
+                            <textarea id="lobby-notice-input" placeholder="Enter notice message... (Supports multi-line)" style="width: 100%; min-height: 100px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); padding: 12px; font-family: inherit; font-size: 0.95rem; resize: vertical; box-sizing: border-box;"></textarea>
+                            <div class="mod-action-buttons" style="display: flex; gap: 10px; width: 100%;">
+                                <button id="set-notice-btn" class="mod-full-btn add" style="flex: 1;">Update Lobby Notice</button>
+                                <button id="clear-notice-btn" class="mod-full-btn remove" style="flex: 0.3;">Clear</button>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="mod-add-section pron-layout" style="margin-bottom: 15px;">
-                        <input type="text" id="def-word-input" style="flex: 0.4;" placeholder="Words, e.g. MORPHEME, BOGGLE">
-                        <textarea id="def-text-input" style="flex: 1; min-height: 48px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); padding: 8px; font-family: inherit; font-size: 0.9rem; resize: vertical;" placeholder="Enter definition..."></textarea>
-                    </div>
-                    <div class="mod-action-buttons">
-                        <button id="add-def-btn" class="mod-full-btn add">Set Definition</button>
-                        <button id="remove-def-btn" class="mod-full-btn remove">Remove Definition</button>
-                    </div>
-                </div>
 
-                <!-- Pronunciation Management -->
-                <div class="mod-section">
-                    <div class="mod-list-title">Pronunciation Management</div>
-                    <div id="pron-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
-                    <div class="mod-add-section pron-layout">
-                        <div class="input-row">
-                            <input type="text" id="pron-word-input" placeholder="Word (e.g. MORPHEME)">
-                            <input type="text" id="pron-value-input" placeholder="Pronunciation (e.g. MORE-FEEM)">
+                    <!-- Definition Management -->
+                    <div id="mod-tab-def" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Definition Management</h2>
+                            <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 5px;">Add, update, or remove definitions for any word. You can separate multiple words with commas to apply the definition to all of them at once (e.g. <strong>arity,arities</strong>).</p>
                         </div>
-                        <div class="mod-action-buttons">
-                            <button id="add-pron-btn" class="mod-full-btn add">Add Pronunciation</button>
-                            <button id="remove-pron-btn" class="mod-full-btn remove">Remove Pronunciation</button>
+                        
+                        <div id="def-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
+                        
+                        <!-- Undefined Words Scroller Box -->
+                        <div class="undef-words-box" style="margin-bottom: 15px; border: 1px solid var(--input-border); border-radius: 8px; background: rgba(0,0,0,0.15); padding: 12px; display: none; width: 100%; box-sizing: border-box;" id="undef-words-container">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: 700; font-size: 0.85rem; opacity: 0.9;">
+                                <span style="color: var(--text-primary);">Words Without Definitions <span id="undef-words-count" style="opacity: 0.6; font-weight: 500; font-size: 0.8rem;">(Loading...)</span></span>
+                                <button id="refresh-undef-btn" class="mod-refresh-btn" style="background: none; border: none; color: #a5b4fc; cursor: pointer; font-size: 0.8rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='none'">Refresh</button>
+                            </div>
+                            <div style="margin-bottom: 8px;">
+                                <input type="text" id="undef-search-input" placeholder="Search undefined words..." style="width: 100%; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); font-size: 0.85rem; box-sizing: border-box;">
+                            </div>
+                            <div class="undef-words-list-scroll" style="max-height: 120px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; background: rgba(0,0,0,0.2);">
+                                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                                    <tbody id="undef-words-tbody">
+                                        <!-- Rendered dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Added Words Management -->
-                <div class="mod-section">
-                    <div class="mod-list-title">Added Words Management</div>
-                    <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 10px;">Words in this list are always included in board solving and are highlighted <strong>purple</strong> when found on the board.</p>
-                    <p style="font-size: 0.9rem; color: #ffdd57; font-weight: bold; margin-bottom: 12px; background: rgba(255, 221, 87, 0.08); border-left: 3px solid #ffdd57; padding: 8px 12px; border-radius: 4px;">
-                        To anyone adding a word: PLEASE define it and add a pronunciation!
-                    </p>
-                    
-                    <label for="toggle-use-added-words" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255, 255, 255, 0.05); padding: 12px 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;">
-                        <div>
-                            <div style="font-weight: 700; font-size: 0.95rem;">Include Added Words in Game</div>
-                            <div style="font-size: 0.8rem; opacity: 0.6;">If OFF, these words will not count and won't be on boards.</div>
+                        
+                        <div class="mod-add-section pron-layout" style="margin-bottom: 15px; width: 100%; box-sizing: border-box;">
+                            <input type="text" id="def-word-input" style="flex: 0.4;" placeholder="Words, e.g. MORPHEME, BOGGLE">
+                            <textarea id="def-text-input" style="flex: 1; min-height: 48px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); padding: 8px; font-family: inherit; font-size: 0.9rem; resize: vertical; box-sizing: border-box;" placeholder="Enter definition..."></textarea>
                         </div>
-                        <span class="toggle-switch">
-                            <input type="checkbox" id="toggle-use-added-words" checked>
-                            <span class="slider round"></span>
-                        </span>
-                    </label>
-
-                    <div id="added-word-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
-
-                    <div class="mod-add-section pron-layout" style="margin-bottom: 20px;">
-                        <input type="text" id="added-word-input" style="flex: 1;" placeholder="Enter word (e.g. MORPHEME)">
-                        <div class="mod-action-buttons">
-                            <button id="add-added-word-btn" class="mod-full-btn add">Add Word</button>
-                            <button id="remove-added-word-btn" class="mod-full-btn remove">Remove Word</button>
+                        <div class="mod-action-buttons" style="width: 100%;">
+                            <button id="add-def-btn" class="mod-full-btn add">Set Definition</button>
+                            <button id="remove-def-btn" class="mod-full-btn remove">Remove Definition</button>
                         </div>
                     </div>
-                </div>
 
-                <!-- Dictionary Submission Section -->
-                <div class="mod-section">
-                    <div class="mod-list-title">Database Submission</div>
-                        <p style="font-size: 0.85rem; line-height: 1.4; margin-bottom: 15px; color: var(--text-primary); opacity: 0.9;">
-                            Upload a text file (e.g., <code style="color: var(--accent-color); font-weight: 800; background: rgba(var(--text-primary-rgb), 0.1); padding: 2px 4px; border-radius: 4px;">newNWL.txt</code> or <code style="color: var(--accent-color); font-weight: 800; background: rgba(var(--text-primary-rgb), 0.1); padding: 2px 4px; border-radius: 4px;">newCSW.txt</code>) 
-                            to permanently add words to the dictionary DB and tracking tables.
-                        </p>
+                    <!-- Pronunciation Management -->
+                    <div id="mod-tab-pron" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Pronunciation Management</h2>
+                            <p style="font-size: 0.85rem; opacity: 0.7;">Add, update, or remove phonetic pronunciations for spelling play.</p>
+                        </div>
+                        <div id="pron-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
+                        <div class="mod-add-section pron-layout" style="width: 100%; box-sizing: border-box;">
+                            <div class="input-row" style="width: 100%; box-sizing: border-box;">
+                                <input type="text" id="pron-word-input" placeholder="Word (e.g. MORPHEME)">
+                                <input type="text" id="pron-value-input" placeholder="Pronunciation (e.g. MORE-FEEM)">
+                            </div>
+                            <div class="mod-action-buttons" style="width: 100%;">
+                                <button id="add-pron-btn" class="mod-full-btn add">Add Pronunciation</button>
+                                <button id="remove-pron-btn" class="mod-full-btn remove">Remove Pronunciation</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Added Words Management -->
+                    <div id="mod-tab-added" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Added Words Management</h2>
+                            <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 10px;">Words in this list are always included in board solving and are highlighted <strong>purple</strong> when found on the board.</p>
+                            <p style="font-size: 0.9rem; color: #ffdd57; font-weight: bold; margin-bottom: 12px; background: rgba(255, 221, 87, 0.08); border-left: 3px solid #ffdd57; padding: 8px 12px; border-radius: 4px;">
+                                To anyone adding a word: PLEASE define it and add a pronunciation!
+                            </p>
+                        </div>
+                        
+                        <label for="toggle-use-added-words" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255, 255, 255, 0.05); padding: 12px 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; width: 100%; box-sizing: border-box;">
+                            <div>
+                                <div style="font-weight: 700; font-size: 0.95rem;">Include Added Words in Game</div>
+                                <div style="font-size: 0.8rem; opacity: 0.6;">If OFF, these words will not count and won't be on boards.</div>
+                            </div>
+                            <span class="toggle-switch">
+                                <input type="checkbox" id="toggle-use-added-words" checked>
+                                <span class="slider round"></span>
+                            </span>
+                        </label>
+
+                        <div id="added-word-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
+
+                        <div class="mod-add-section pron-layout" style="margin-bottom: 20px; width: 100%; box-sizing: border-box;">
+                            <input type="text" id="added-word-input" style="flex: 1;" placeholder="Enter word (e.g. MORPHEME)">
+                            <div class="mod-action-buttons" style="width: 100%;">
+                                <button id="add-added-word-btn" class="mod-full-btn add">Add Word</button>
+                                <button id="remove-added-word-btn" class="mod-full-btn remove">Remove Word</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Database Submission Section -->
+                    <div id="mod-tab-db" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Database Submission</h2>
+                            <p style="font-size: 0.85rem; line-height: 1.4; margin-bottom: 15px; color: var(--text-primary); opacity: 0.9;">
+                                Upload a text file (e.g., <code style="color: var(--accent-color); font-weight: 800; background: rgba(var(--text-primary-rgb), 0.1); padding: 2px 4px; border-radius: 4px;">newNWL.txt</code> or <code style="color: var(--accent-color); font-weight: 800; background: rgba(var(--text-primary-rgb), 0.1); padding: 2px 4px; border-radius: 4px;">newCSW.txt</code>) 
+                                to permanently add words to the dictionary DB and tracking tables.
+                            </p>
+                        </div>
                         <div id="dict-upload-status" style="min-height: 20px; margin-bottom: 12px; font-weight: 700; font-size: 0.9rem;"></div>
-                        <div class="dict-upload-row" style="display: flex; gap: 12px; align-items: center;">
+                        <div class="dict-upload-row" style="display: flex; gap: 12px; align-items: center; width: 100%; box-sizing: border-box;">
                             <div id="dict-upload-wrapper" style="flex: 1; display: block; position: relative; margin: 0; cursor: pointer; border-radius: 5px; padding: 0;">
                                 <div class="mod-full-btn" id="dict-upload-trigger-btn" style="background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-primary); font-weight: 600; box-sizing: border-box; text-align: center; padding: 10px 15px;">Select .txt File</div>
                                 <input type="file" id="dict-upload-input" accept=".txt" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; opacity: 0;">
                             </div>
                             <button id="dict-submit-db-btn" class="mod-full-btn add" style="flex: 1; font-weight: 800; margin: 0;">Submit to Database</button>
                         </div>
-                </div>
-
-                <!-- Moderator Management -->
-                <div class="mod-section">
-                    <div class="mod-list-title">Moderator Access</div>
-                    <div id="mod-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
-                    <div class="mod-add-section">
-                        <input type="text" id="new-mod-username" placeholder="Enter username to add...">
-                        <button id="add-mod-btn" class="add-mod-btn">Add Moderator</button>
                     </div>
-                    <div class="mod-list-title">Current Moderators</div>
-                    <div id="mod-list-container" class="mod-list">
-                        <!-- Loaded by JS -->
+
+                    <!-- Moderator Access -->
+                    <div id="mod-tab-access" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Moderator Access</h2>
+                            <p style="font-size: 0.85rem; opacity: 0.7;">Manage user permissions and moderator access.</p>
+                        </div>
+                        <div id="mod-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
+                        <div class="mod-add-section" style="width: 100%; box-sizing: border-box;">
+                            <input type="text" id="new-mod-username" placeholder="Enter username to add...">
+                            <button id="add-mod-btn" class="add-mod-btn">Add Moderator</button>
+                        </div>
+                        <div class="mod-list-title" style="margin-top: 15px; margin-bottom: 10px;">Current Moderators</div>
+                        <div id="mod-list-container" class="mod-list" style="width: 100%;">
+                            <!-- Loaded by JS -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4572,7 +4599,7 @@
     <script src="/js/leaderboard.js?v=3"></script>
     <script src="/js/tools.js?v=70"></script>
     <script src="/js/mouse_selection.js?v=3"></script>
-    <script src="/js/mods.js?v=11"></script>
+    <script src="/js/mods.js?v=12"></script>
     <script src="/js/private_matches.js?v=4"></script>
     <script src="/js/donate.js?v=2"></script>
     

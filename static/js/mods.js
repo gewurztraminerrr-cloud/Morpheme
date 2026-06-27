@@ -841,4 +841,107 @@ window.selectUndefinedWord = function(word) {
 window.loadUndefinedWords = loadUndefinedWords;
 window.renderUndefinedWords = renderUndefinedWords;
 
+window.showModTab = function(tabId) {
+    const sidebar = document.querySelector('#page-mods .tools-sidebar');
+    const content = document.querySelector('#page-mods .tools-content');
+    if (!sidebar || !content) return;
+
+    // Update active class on buttons
+    sidebar.querySelectorAll('.tool-nav-btn').forEach(btn => {
+        if (btn.dataset.modTab === tabId) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // Update active class on panes
+    content.querySelectorAll('.tool-pane').forEach(pane => {
+        if (pane.id === `mod-tab-${tabId}`) {
+            pane.classList.add('active');
+        } else {
+            pane.classList.remove('active');
+        }
+    });
+
+    // Trigger scroll to content area on mobile
+    const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) {
+        content.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+    }
+};
+
+function setupModsNavigation() {
+    const sidebar = document.querySelector('#page-mods .tools-sidebar');
+    if (!sidebar) return;
+
+    sidebar.addEventListener('click', (e) => {
+        const btn = e.target.closest('.tool-nav-btn');
+        if (!btn) return;
+
+        const tabId = btn.dataset.modTab;
+        if (tabId) {
+            window.showModTab(tabId);
+        }
+    });
+
+    // Mobile Layout snapping on navigation
+    const modsPage = document.getElementById('page-mods');
+    if (modsPage) {
+        const observer = new MutationObserver(() => {
+            if (modsPage.classList.contains('active')) {
+                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (isMobile) {
+                    setTimeout(() => {
+                        const sidebarEl = document.querySelector('#page-mods .tools-sidebar');
+                        if (sidebarEl) sidebarEl.scrollIntoView({ behavior: 'auto', inline: 'start' });
+                    }, 100);
+                }
+            }
+        });
+        observer.observe(modsPage, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
+    }
+
+    // Mobile touch swipe handling for sliding back to mods list
+    const modsContent = document.querySelector('#page-mods .tools-content');
+    const modsSidebar = document.querySelector('#page-mods .tools-sidebar');
+    if (modsContent && modsSidebar) {
+        let touchStartX = 0;
+        let touchStartY = 0;
+        modsContent.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+        
+        modsContent.addEventListener('touchend', (e) => {
+            const touchEndX = e.changedTouches[0].screenX;
+            const touchEndY = e.changedTouches[0].screenY;
+            const diffX = touchEndX - touchStartX;
+            const diffY = touchEndY - touchStartY;
+            
+            // If swiped right (diffX > 80) and horizontal movement was dominant
+            if (diffX > 80 && Math.abs(diffX) > Math.abs(diffY)) {
+                modsSidebar.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+            }
+        }, { passive: true });
+    }
+
+    // Mobile back button inside mods content
+    const mobileBackBtn = document.getElementById('mods-mobile-back-btn');
+    if (mobileBackBtn) {
+        mobileBackBtn.addEventListener('click', () => {
+            const modsSidebarEl = document.querySelector('#page-mods .tools-sidebar');
+            if (modsSidebarEl) modsSidebarEl.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+        });
+    }
+}
+
+// Add event listener to initialize setupModsNavigation when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    setupModsNavigation();
+});
+
 
