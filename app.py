@@ -4274,15 +4274,16 @@ def calculate_morpheme_metric(source, target):
             current_relocations = 0
             current_paid_deletions = 0
             
-        current_insertions = t_len - m_len
-        min_possible_cost = current_relocations + current_paid_deletions + current_insertions
+        # Lower bound on insertions is insertions made so far (t_idx - m_len)
+        min_possible_cost = current_relocations + current_paid_deletions + (t_idx - m_len)
         
         if min_possible_cost >= best_mp:
             return
             
         if t_idx == t_len:
-            if min_possible_cost < best_mp:
-                best_mp = min_possible_cost
+            actual_cost = current_relocations + current_paid_deletions + (t_len - m_len)
+            if actual_cost < best_mp:
+                best_mp = actual_cost
             return
             
         char = target[t_idx]
