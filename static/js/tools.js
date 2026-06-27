@@ -4378,12 +4378,12 @@ async function loadRandomSuggestedWords() {
         } else {
             tableBody.innerHTML = `
                 <tr>
-                    <td style="padding: 15px; opacity: 0.6;">No suggested words available.</td>
+                    <td style="padding: 15px; opacity: 0.6;">No random words available.</td>
                 </tr>
             `;
         }
     } catch (err) {
-        console.error('Failed to load random suggested words:', err);
+        console.error('Failed to load random words:', err);
         tableBody.innerHTML = `
             <tr>
                 <td style="padding: 15px; color: #ff6b6b;">Failed to load words.</td>
