@@ -1214,7 +1214,14 @@ async function renderProfile(user) {
         } else {
             // Limits to 50 rows as requested
             const displayRounds = user.exceptional_rounds.slice(0, 50);
-            exceptionalList.innerHTML = window.roundGridHeader + displayRounds.map(r => window.renderRoundGridItem(r)).join('');
+            const greatestPE = user.max_pe || 0;
+            const peHeader = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 12px 20px; border-radius: 8px;">
+                    <span style="font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.5px;">Exceptional Performances</span>
+                    <span style="font-size: 0.9rem; font-weight: 800; color: #60a5fa;">Greatest PE: <span style="color: #fff;">${greatestPE}%</span></span>
+                </div>
+            `;
+            exceptionalList.innerHTML = peHeader + window.roundGridHeader + displayRounds.map(r => window.renderRoundGridItem(r)).join('');
         }
     }
 
@@ -2323,6 +2330,10 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
 
         // Average and Period specific labels
         document.getElementById('ach-avg-perf').textContent = stats.avg_perf || '-';
+        const achGreatestPeEl = document.getElementById('ach-greatest-pe');
+        if (achGreatestPeEl) {
+            achGreatestPeEl.textContent = stats.max_pe || '0';
+        }
         document.getElementById('ach-avg-winrate').textContent = (stats.win_rate || 0) + '%';
         document.getElementById('ach-total-games').textContent = stats.games_played || '0';
         document.getElementById('ach-avg-score').textContent = (stats.avg_score || 0).toLocaleString();

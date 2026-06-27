@@ -369,6 +369,36 @@ const Forum = {
             newPostBtn.addEventListener('click', () => this.showCreateView());
         }
 
+        // Refresh posts button
+        const refreshBtn = document.getElementById('forum-refresh-posts-btn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', async () => {
+                const icon = refreshBtn.querySelector('.refresh-icon');
+                if (icon) {
+                    icon.style.transition = 'transform 0.5s ease-in-out';
+                    icon.style.transform = 'rotate(360deg)';
+                }
+                refreshBtn.style.opacity = '0.7';
+                
+                if (this.currentCategoryId) {
+                    await this.loadPosts(this.currentCategoryId);
+                } else {
+                    const username = document.getElementById('forum-user-search-input').value.trim();
+                    if (username) {
+                        await this.handleUserSearch();
+                    }
+                }
+                
+                setTimeout(() => {
+                    if (icon) {
+                        icon.style.transition = 'none';
+                        icon.style.transform = '';
+                    }
+                    refreshBtn.style.opacity = '1';
+                }, 500);
+            });
+        }
+
         // Back to list button
         const backToListBtn = document.getElementById('forum-back-to-list');
         if (backToListBtn) {

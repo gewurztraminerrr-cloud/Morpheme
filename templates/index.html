@@ -31,7 +31,7 @@
     <link rel="stylesheet" href="/css/lobby.css?v=29">
     <link rel="stylesheet" href="/css/play.css?v=104">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
-    <link rel="stylesheet" href="/css/forum.css?v=18">
+    <link rel="stylesheet" href="/css/forum.css?v=19">
     <link rel="stylesheet" href="/css/donate.css?v=1">
     <style>
         .board-cell.bonus-highlight {
@@ -1114,10 +1114,10 @@
                                 <h2 id="forum-category-title">Community Board</h2>
                                 <p id="forum-category-desc">Connect with other players.</p>
                             </div>
-                            <div class="forum-header-actions">
+                            <div class="forum-header-actions" style="display: flex; align-items: center; gap: 8px;">
                                 <button id="forum-mobile-back-btn" class="forum-back-btn mobile-back-btn" style="display: none; margin-bottom: 0;">← Categories</button>
-                                <button id="forum-new-post-btn" class="forum-action-btn hidden">+
-                                    New Thread</button>
+                                <button id="forum-refresh-posts-btn" class="forum-action-btn secondary" style="padding: 10px 15px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;"><span class="refresh-icon" style="display: inline-block; transition: transform 0.5s ease;">🔄</span> Refresh</button>
+                                <button id="forum-new-post-btn" class="forum-action-btn hidden">+ New Thread</button>
                             </div>
                         </div>
                         <div id="forum-posts-list" class="forum-posts-list">
@@ -4243,7 +4243,7 @@
                                 Performances</h3>
                             <span
                                 style="font-size: 0.7rem; font-weight: 800; color: #60a5fa; text-transform: uppercase;">Average
-                                Perf: <span id="ach-avg-perf">-</span> | Avg Words Found: <span id="ach-avg-pct">-</span></span>
+                                Perf: <span id="ach-avg-perf">-</span> | Greatest PE: <span id="ach-greatest-pe">-</span>% | Avg Words Found: <span id="ach-avg-pct">-</span></span>
                         </div>
                         <div class="ach-table-container"
                             style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
@@ -4591,13 +4591,13 @@
     </div>
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=27"></script>
-    <script src="/js/forum.js?v=53"></script>
+    <script src="/js/forum.js?v=54"></script>
     <script src="/js/app.js?v=47"></script>
     <script src="/js/lobby.js?v=10"></script>
     <script src="/js/play.js?v=211"></script>
     <script src="/js/tournaments.js?v=7"></script>
     <script src="/js/leaderboard.js?v=3"></script>
-    <script src="/js/tools.js?v=70"></script>
+    <script src="/js/tools.js?v=71"></script>
     <script src="/js/mouse_selection.js?v=3"></script>
     <script src="/js/mods.js?v=12"></script>
     <script src="/js/private_matches.js?v=6"></script>

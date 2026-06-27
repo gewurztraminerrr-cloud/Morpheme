@@ -1421,6 +1421,8 @@ def init_db():
                 FOREIGN KEY(user_id) REFERENCES users(id)
             )
         ''')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_forum_posts_category ON forum_posts(category_id)')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_forum_comments_post ON forum_comments(post_id)')
         
         # Initialize categories if they don't exist
         categories = [
@@ -2578,6 +2580,7 @@ def get_public_profile(username):
                                (p['performance_value'] > config_stats.get(f"{p['game_type']}|{p['dimensions']}|{p['round_duration']}", {}).get('avg_perf', 0))
                                or (p['total_score'] >= 100)], 
                                key=lambda x: x['timestamp'], reverse=True)[:50]
+    dynamic_max_pe = max([p['performance_value'] for p in processed_all]) if processed_all else 0
 
     conn.close()
     session_info = room_manager.find_user_session(user[0])
@@ -2599,7 +2602,7 @@ def get_public_profile(username):
         'quote': user[10] or 'Enter a personal quote',
         'description': user[11] or 'Add a detailed description about yourself...',
         'proof_url': user[12],
-        'max_pe': round(user[14], 2) if user[14] else 0.0,
+        'max_pe': dynamic_max_pe,
         'avg_pe': round(user[15], 2) if user[15] else 0.0,
         'created_at': user[17],
         'recent_rounds': recent_rounds,
@@ -2868,6 +2871,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             'avg_words': round(total_period_words / len(period_matching), 1) if period_matching else 0,
             'avg_perf': round(sum(r['ratio'] for r in performance_list)/len(performance_list), 2) if performance_list else 1.0,
             'avg_word_pts': round(total_period_score / total_period_words, 1) if total_period_words > 0 else 0,
+            'max_pe': max([r['performance_value'] for r in performance_list]) if performance_list else 0,
             
             'exceptional_rounds': exceptional,
             'winning_rounds': winning,
