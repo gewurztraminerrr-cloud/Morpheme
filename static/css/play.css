@@ -1849,6 +1849,13 @@ body.theme-light-brown .word-item.missed {
     box-sizing: border-box;
 }
 
+@media (min-width: 993px) {
+    .tool-nav-btn {
+        height: 76px;
+        justify-content: center;
+    }
+}
+
 .tool-btn-title {
     font-weight: 600;
     font-size: 0.95rem;
@@ -3083,7 +3090,7 @@ body.theme-light-brown .word-item.missed {
     display: none;
     flex-direction: column;
     align-items: center;
-    padding: 40px;
+    padding: 15px 40px 40px 40px;
     color: var(--text-primary);
     overflow-y: auto;
     width: 100%;
