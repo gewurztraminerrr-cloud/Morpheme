@@ -4818,6 +4818,17 @@ input[type=range]::-moz-range-track {
         box-sizing: border-box !important;
         overflow-x: hidden !important;
         padding: 0 !important;
+        height: calc(100vh - 120px) !important;
+        overflow-y: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    #page-tools .tools-split-layout,
+    #page-settings .tools-split-layout {
+        flex: 1 !important;
+        min-height: 0 !important;
+        height: auto !important;
     }
 
     .page-title-header {
