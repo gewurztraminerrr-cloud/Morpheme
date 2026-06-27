@@ -4784,9 +4784,9 @@ function startBounceFormat() {
     // Number of balls based on board parameters
     const rows = window.lastGameState && window.lastGameState.board ? window.lastGameState.board.length : 4;
     const cols = window.lastGameState && window.lastGameState.board && window.lastGameState.board[0] ? window.lastGameState.board[0].length : 4;
-    let count = Math.min(15, Math.max(7, Math.round((rows * cols) / 2.2)));
+    let count = Math.min(20, Math.max(11, Math.round((rows * cols) / 1.45)));
     if (rows === 4 && cols === 4) {
-        count = 7;
+        count = 11;
     }
     
     const colors = [
