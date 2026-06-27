@@ -3043,6 +3043,19 @@ body.theme-light-brown .word-item.missed {
 }
 
 /* --- SETTINGS PAGE --- */
+.page-title-header {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0 0 20px 0;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 1000px;
+    box-sizing: border-box;
+    padding: 0;
+    text-align: left;
+}
+
 #page-settings {
     display: none;
     flex-direction: column;
@@ -4802,6 +4815,12 @@ input[type=range]::-moz-range-track {
         box-sizing: border-box !important;
         overflow-x: hidden !important;
         padding: 0 !important;
+    }
+
+    .page-title-header {
+        padding: 0 15px !important;
+        margin: 15px 0 !important;
+        font-size: 1.8rem !important;
     }
 
     .settings-grid {
