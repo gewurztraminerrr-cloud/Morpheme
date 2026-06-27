@@ -1,3 +1,8 @@
+// Disable browser's automatic scroll restoration on navigation/reload
+if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+}
+
 // Navigation system
 const pages = {
     'nav-login-btn': 'page-login',
@@ -1032,10 +1037,12 @@ function showPage(pageId) {
                 layout.scrollLeft = 0;
             }
 
-            // Restore ID in the next tick
+            // Restore ID and force scroll reset to top in subsequent ticks
             setTimeout(() => {
                 page.id = pageId;
-            }, 0);
+                window.scrollTo(0, 0);
+                page.scrollTop = 0;
+            }, 20);
         }
     });
     window.scrollTo(0, 0);
