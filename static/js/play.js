@@ -4813,6 +4813,8 @@ function startBounceFormat() {
         
         ball.style.cssText = `
             position: absolute;
+            top: 0;
+            left: 0;
             width: ${size}px;
             height: ${size}px;
             border-radius: 50%;
