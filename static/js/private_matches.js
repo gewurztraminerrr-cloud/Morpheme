@@ -407,21 +407,26 @@
 
         container.innerHTML = matches.map(m => {
             const formattedDate = m.last_activity ? new Date(m.last_activity * 1000).toLocaleDateString() : '';
+            const wordsRange = (() => {
+                let wr = m.parameters.word_count_range;
+                if (Array.isArray(wr)) {
+                    if (wr[1] > 900) return wr[0] + '+';
+                    return wr[0] + '-' + wr[1];
+                }
+                return wr === 'random' ? '100-200/200-300/300-400/500+' : (wr || '100-200');
+            })();
+            const bonusText = (() => {
+                const b = m.parameters.bonus_word_length;
+                return (b && b !== 'None') ? b + 'L' : 'None';
+            })();
+            const diffText = m.parameters.difficulty === 'Normal' ? 'Medium' : (m.parameters.difficulty || 'Medium');
+
             return `
-            <div class="friends-match-panel">
+            <div class="friends-match-panel ${isHistory ? 'history-panel' : ''}">
                 <div class="match-info">
                     <h4>With Friends ${m.current_round > 1 ? `(Round ${m.current_round})` : ''}</h4>
                     <p style="font-size:0.85em; opacity:0.85; line-height:1.4;">
-                        <strong>Board:</strong> ${m.parameters.board_dimensions || '4x4'} | <strong>Time:</strong> ${m.parameters.time_limit || 60}s | <strong>Dict:</strong> ${m.parameters.dictionary || 'NWL'}<br>
-                        <strong>Rules:</strong> Min ${m.parameters.min_word_length || 3}L | Bonus ${m.parameters.bonus_word_length || 'None'}<br>
-                        <strong>Style:</strong> ${m.parameters.difficulty === 'Normal' ? 'Medium' : (m.parameters.difficulty || 'Medium')} | ${m.parameters.board_format || 'Normal'} | Range: ${(() => {
-                    let wr = m.parameters.word_count_range;
-                    if (Array.isArray(wr)) {
-                        if (wr[1] > 900) return wr[0] + '+';
-                        return wr[0] + '-' + wr[1];
-                    }
-                    return wr === 'random' ? '100-200/200-300/300-400/500+' : (wr || '100-200');
-                })()}
+                        Board: ${m.parameters.board_dimensions || '4x4'} | Time: ${m.parameters.time_limit || 60}s | Diff: ${diffText} | Min: ${m.parameters.min_word_length || 3}L | Dict: ${m.parameters.dictionary || 'NWL'} | Words: ${wordsRange} | Format: ${m.parameters.board_format || 'Normal'} | Bonus: ${bonusText}
                         ${isHistory && formattedDate ? `<br><strong>Completed:</strong> ${formattedDate}` : ''}
                     </p>
                     <p style="margin-top:5px;">Players: ${m.players.map(p => `
@@ -448,21 +453,27 @@
             return;
         }
 
-        container.innerHTML = invites.map(inv => `
-            <div class="friends-match-panel invite-panel">
-                <div class="match-info">
-                    <h4>Invite from ${inv.sender_name}</h4>
-                    <p style="font-size:0.85em; opacity:0.85; line-height:1.4;">
-                        <strong>Board:</strong> ${inv.parameters.board_dimensions || '4x4'} | <strong>Time:</strong> ${inv.parameters.time_limit || 60}s | <strong>Dict:</strong> ${inv.parameters.dictionary || 'NWL'}<br>
-                        <strong>Rules:</strong> Min ${inv.parameters.min_word_length || 3}L | Bonus ${inv.parameters.bonus_word_length || 'None'}<br>
-                        <strong>Style:</strong> ${inv.parameters.difficulty === 'Normal' ? 'Medium' : (inv.parameters.difficulty || 'Medium')} | ${inv.parameters.board_format || 'Normal'} | Range: ${(() => {
+        container.innerHTML = invites.map(inv => {
+            const wordsRange = (() => {
                 let wr = inv.parameters.word_count_range;
                 if (Array.isArray(wr)) {
                     if (wr[1] > 900) return wr[0] + '+';
                     return wr[0] + '-' + wr[1];
                 }
                 return wr === 'random' ? '100-200/200-300/300-400/500+' : (wr || '100-200');
-            })()}
+            })();
+            const bonusText = (() => {
+                const b = inv.parameters.bonus_word_length;
+                return (b && b !== 'None') ? b + 'L' : 'None';
+            })();
+            const diffText = inv.parameters.difficulty === 'Normal' ? 'Medium' : (inv.parameters.difficulty || 'Medium');
+
+            return `
+            <div class="friends-match-panel invite-panel">
+                <div class="match-info">
+                    <h4>Invite from ${inv.sender_name}</h4>
+                    <p style="font-size:0.85em; opacity:0.85; line-height:1.4;">
+                        Board: ${inv.parameters.board_dimensions || '4x4'} | Time: ${inv.parameters.time_limit || 60}s | Diff: ${diffText} | Min: ${inv.parameters.min_word_length || 3}L | Dict: ${inv.parameters.dictionary || 'NWL'} | Words: ${wordsRange} | Format: ${inv.parameters.board_format || 'Normal'} | Bonus: ${bonusText}
                     </p>
                 </div>
                 <div class="match-actions">
@@ -470,7 +481,8 @@
                     <button class="sf-action-btn" style="background:#444;" onclick="window.declineInvite(${inv.id})">Decline</button>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
     }
 
     window.acceptInvite = async (inviteId) => {
