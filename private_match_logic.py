@@ -285,6 +285,9 @@ class PrivateMatchManager:
         from spinner_set import SpinnerSet
         if target_format == 'random':
             target_format = SpinnerSet._spin_board_format(is_24h=False, dimensions=dims)
+            
+        if '3x3x3' in str(dims) and 'bounce' in target_format.lower():
+            target_format = 'Normal'
         
         # 0. Handle "Mania" without a prefix (ensure 33% vowels, 67% consonants)
         if target_format.strip() == 'Mania':

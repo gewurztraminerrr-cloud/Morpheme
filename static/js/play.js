@@ -1607,7 +1607,8 @@ async function updateGameState(incomingState = null) {
                 }
                 
                 // Handle Bounce format
-                if (bFormat.toLowerCase().includes('bounce')) {
+                const is3D = state.board_dimensions && state.board_dimensions.includes('3x3x3');
+                if (bFormat.toLowerCase().includes('bounce') && !is3D) {
                     setTimeout(startBounceFormat, 100);
                 } else {
                     stopBounceFormat();
@@ -4150,7 +4151,7 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
 
     // Handle format specific animations (Rotation and Bounce)
     const bFormat = (state && state.current_board_format) ? state.current_board_format : ((window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : 'Normal');
-    if (bFormat.toLowerCase().includes('bounce')) {
+    if (bFormat.toLowerCase().includes('bounce') && !is3D) {
         setTimeout(startBounceFormat, 100);
     } else {
         stopBounceFormat();
