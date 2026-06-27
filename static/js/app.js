@@ -823,6 +823,23 @@ function setupNavigation() {
                 return;
             }
 
+            // NAVIGATION GUARD FOR ACTIVE MATCHES
+            if (window.isTournamentPlay) {
+                const confirmLeave = confirm("Leaving mid-round will end your tournament turn and record a score of 0. Are you sure?");
+                if (!confirmLeave) return;
+                try { await fetch('/api/tournament/forfeit', { method: 'POST' }); } catch (e) { }
+                if (window.exitTournamentPlay) window.exitTournamentPlay(pageTarget);
+                return;
+            }
+            if (window.isPrivateMatchPlay) {
+                const confirmLeave = confirm("Leaving mid-round will end your turn and submit your current words. Are you sure?");
+                if (!confirmLeave) return;
+                if (window.finishPrivateMatchTurn) {
+                    await window.finishPrivateMatchTurn(pageTarget);
+                }
+                return;
+            }
+
             // USER NAVIGATION LEAVE HARNESS: If navigating to lobby from another page, leave the current room
             if (pageTarget === 'lobby') {
                 if (window.leaveCurrentRoom && (window.currentRoomId || localStorage.getItem('last_joined_room'))) {

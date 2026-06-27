@@ -706,6 +706,23 @@ document.addEventListener('visibilitychange', () => {
             return; // Do NOT call updateGameState/refreshPollInterval for tournament
         }
 
+        // PRIVATE MATCH MODE: Handle resume separately — don't poll public room endpoints
+        if (isPrivateMatchPlay) {
+            const activeMatch = JSON.parse(localStorage.getItem('private_match_active'));
+            const endTime = activeMatch ? activeMatch.end_time : null;
+            const now = Date.now() / 1000;
+            if (endTime && endTime > now) {
+                startPrivateMatchTimer(endTime);
+            } else if (endTime) {
+                console.log('[play.js] Private match timer expired while hidden. Finishing turn.');
+                if (timerInterval) clearInterval(timerInterval);
+                finishPrivateMatchTurn();
+            } else {
+                setTimerWaitingState(true);
+            }
+            return; // Do NOT call updateGameState/refreshPollInterval for private match
+        }
+
         // Instant Feedback: Show ticking countdown if active, otherwise show "WAIT..."
         if (localEndTime && localEndTime > (Date.now() / 1000)) {
             if (!timerInterval) {
@@ -774,6 +791,23 @@ window.addEventListener('focus', () => {
                 console.log('[play.js] Tournament timer expired while hidden (focus). Finishing turn.');
                 if (timerInterval) clearInterval(timerInterval);
                 finishTournamentTurn();
+            } else {
+                setTimerWaitingState(true);
+            }
+            return;
+        }
+
+        // PRIVATE MATCH MODE: Handle resume separately — don't poll public room endpoints
+        if (isPrivateMatchPlay) {
+            const activeMatch = JSON.parse(localStorage.getItem('private_match_active'));
+            const endTime = activeMatch ? activeMatch.end_time : null;
+            const now = Date.now() / 1000;
+            if (endTime && endTime > now) {
+                startPrivateMatchTimer(endTime);
+            } else if (endTime) {
+                console.log('[play.js] Private match timer expired while hidden (focus). Finishing turn.');
+                if (timerInterval) clearInterval(timerInterval);
+                finishPrivateMatchTurn();
             } else {
                 setTimerWaitingState(true);
             }
@@ -6825,6 +6859,12 @@ if (returnBtnEl) {
             exitTournamentPlay();
             return;
         }
+        if (isPrivateMatchPlay) {
+            const confirmLeave = confirm("Leaving mid-round will end your turn and submit your current words. Are you sure?");
+            if (!confirmLeave) return;
+            await finishPrivateMatchTurn();
+            return;
+        }
         await leaveCurrentRoom();
         showPage('page-lobby');
     });
@@ -7897,11 +7937,14 @@ function exitTournamentPlay(targetPage = 'tournaments') {
 window.saveTournamentDraft = saveTournamentDraft;
 window.finishTournamentTurn = finishTournamentTurn;
 window.exitTournamentPlay = exitTournamentPlay;
+window.finishPrivateMatchTurn = finishPrivateMatchTurn;
+window.exitPrivateMatchPlay = exitPrivateMatchPlay;
 
 // --- PRIVATE MATCH PLAY LOGIC ---
 window.initPrivateMatchPlay = function () {
     console.log('[play.js] initPrivateMatchPlay() START');
     isPrivateMatchPlay = true;
+    window.isPrivateMatchPlay = true;
     isBoardRotated = false; // RESET: Ensure board isn't flipped 180 from a previous public game
     isTournamentPlay = false;
     privateMatchWords = [];
@@ -8329,12 +8372,12 @@ async function handlePrivateMatchWord(word, path = null) {
     }
 }
 
-async function finishPrivateMatchTurn() {
+async function finishPrivateMatchTurn(targetPage = 'lobby') {
     console.log('[play.js] finishPrivateMatchTurn() called');
     const activeMatch = JSON.parse(localStorage.getItem('private_match_active'));
     if (!activeMatch) {
         console.warn('[play.js] finishPrivateMatchTurn: No activeMatch found');
-        exitPrivateMatchPlay();
+        exitPrivateMatchPlay(targetPage);
         return;
     }
 
@@ -8369,11 +8412,12 @@ async function finishPrivateMatchTurn() {
         // But the user requested "Instant Lobby Loading", so let's retry navigating.
     }
 
-    exitPrivateMatchPlay();
+    exitPrivateMatchPlay(targetPage);
 }
 
-function exitPrivateMatchPlay() {
+function exitPrivateMatchPlay(targetPage = 'lobby') {
     isPrivateMatchPlay = false;
+    window.isPrivateMatchPlay = false;
     localStorage.removeItem('private_match_active');
     clearGameUIAndCache();
 
@@ -8381,7 +8425,7 @@ function exitPrivateMatchPlay() {
     if (window.privateMatchInterval) clearInterval(window.privateMatchInterval);
 
     if (window.navigateToPage) {
-        window.navigateToPage('lobby');
+        window.navigateToPage(targetPage);
         // Force refresh of match lists immediately
         if (window.loadPrivateMatches) setTimeout(window.loadPrivateMatches, 100);
     }
