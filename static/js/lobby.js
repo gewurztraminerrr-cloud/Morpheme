@@ -860,8 +860,8 @@ if (lobbyPage) {
 }
 
 function isOnLobby() {
-    const lobbyPage = document.getElementById('page-lobby');
-    return lobbyPage && lobbyPage.classList.contains('active');
+    const el = lobbyPage || document.getElementById('page-lobby');
+    return el && el.classList.contains('active');
 }
 
 function resetLobbyButtons() {
