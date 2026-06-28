@@ -4446,16 +4446,7 @@ def check_and_add_mp(mp_groups, source_len, target_len, mp, word):
 
 def check_and_add_lic(lic_groups, count, target_len, word):
     if count not in lic_groups: lic_groups[count] = set()
-    valid = False
-    if count == 1: valid = (target_len < 3)
-    elif count == 2: valid = (target_len < 4)
-    elif count == 3: valid = (target_len < 5)
-    elif count == 4: valid = (target_len < 6)
-    elif count == 5: valid = (target_len < 7)
-    elif count == 6: valid = (target_len < 8)
-    elif count == 7: valid = (target_len < 10)
-    elif count >= 8: valid = (target_len < 11)
-    if valid:
+    if target_len <= count + 4:
         lic_groups[count].add(word)
 
 @app.route('/api/tools/combo', methods=['POST'])
@@ -4506,13 +4497,22 @@ def tools_combo_check():
     
     # 2. VECTORIZED PRUNING
     shared_counts = np.minimum(dict_matrix, s_vec).sum(axis=1)
-    
     dict_lens_int = dict_lens.astype(np.int16)
-    candidates = np.where(
+    
+    # MP Candidates: absolute length diff <= 3, and shared >= T - 6, and unique shared >= 3
+    candidates_mp = np.where(
         passed_mask & 
         (np.abs(dict_lens_int - source_len) <= 3) & 
         (shared_counts >= dict_lens_int - 6)
     )[0]
+    
+    # LIC Candidates: target_len <= source_len + 4, and shared >= T - 4
+    candidates_lic = np.where(
+        (dict_lens_int <= source_len + 4) & 
+        (shared_counts >= dict_lens_int - 4)
+    )[0]
+    
+    candidates = np.union1d(candidates_mp, candidates_lic)
     
     # Initialize Groups (Using sets to prevent O(N^2) search bottleneck)
     mp_groups = {i: set() for i in range(7)} # 0MP to 6MP
@@ -4524,34 +4524,33 @@ def tools_combo_check():
         target_len = int(dict_lens[idx])
         shared_count = int(shared_counts[idx])
         
-        # Calculate forward MP (search_term -> candidate)
-        m1_f, linearity = calculate_morpheme_metric(search_term, word)
-        m2_f, _ = calculate_morpheme_metric(search_term, word[::-1])
-        m3_f, _ = calculate_morpheme_metric(search_term_rev, word)
-        forward_mp = min(m1_f, m2_f, m3_f)
-        
-        # Calculate backward MP (candidate -> search_term)
-        m1_b, _ = calculate_morpheme_metric(word, search_term)
-        m2_b, _ = calculate_morpheme_metric(word[::-1], search_term)
-        m3_b, _ = calculate_morpheme_metric(word, search_term_rev)
-        backward_mp = min(m1_b, m2_b, m3_b)
-        
-        # Apply asymmetric combination logic:
-        # If backward is 0 (free reduction), we show the non-trivial forward cost.
-        # If forward is 0, we show 0.
-        # Otherwise, we show the minimum connection cost between them.
-        if backward_mp == 0:
-            best_mp = forward_mp
-        elif forward_mp == 0:
-            best_mp = 0
-        else:
-            best_mp = min(forward_mp, backward_mp)
-        
-        if best_mp <= 6:
-            check_and_add_mp(mp_groups, source_len, target_len, best_mp, word)
+        # 1. MP Logic
+        if np.abs(target_len - source_len) <= 3 and shared_count >= target_len - 6:
+            # Calculate forward MP (search_term -> candidate)
+            m1_f, linearity = calculate_morpheme_metric(search_term, word)
+            m2_f, _ = calculate_morpheme_metric(search_term, word[::-1])
+            m3_f, _ = calculate_morpheme_metric(search_term_rev, word)
+            forward_mp = min(m1_f, m2_f, m3_f)
             
-        # LIC logic: uses the pre-calculated shared_count (Vectorized)
-        if shared_count >= 1:
+            # Calculate backward MP (candidate -> search_term)
+            m1_b, _ = calculate_morpheme_metric(word, search_term)
+            m2_b, _ = calculate_morpheme_metric(word[::-1], search_term)
+            m3_b, _ = calculate_morpheme_metric(word, search_term_rev)
+            backward_mp = min(m1_b, m2_b, m3_b)
+            
+            # Apply asymmetric combination logic:
+            if backward_mp == 0:
+                best_mp = forward_mp
+            elif forward_mp == 0:
+                best_mp = 0
+            else:
+                best_mp = min(forward_mp, backward_mp)
+            
+            if best_mp <= 6:
+                check_and_add_mp(mp_groups, source_len, target_len, best_mp, word)
+            
+        # 2. LIC Logic
+        if target_len <= source_len + 4 and shared_count >= target_len - 4:
             check_and_add_lic(lic_groups, shared_count, target_len, word)
 
     # Sort Groups
