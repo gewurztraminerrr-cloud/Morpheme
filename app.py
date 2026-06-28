@@ -4539,30 +4539,13 @@ def tools_combo_check():
         # 1. MP Logic
         if np.abs(target_len - source_len) <= 3 and shared_count >= target_len - max_mp:
             # Calculate forward MP (search_term -> candidate) with lazy evaluation
-            best_f, linearity = calculate_morpheme_metric(search_term, word, limit=max_mp)
-            if best_f > 1:
-                m2_f, _ = calculate_morpheme_metric(search_term, word[::-1], limit=best_f - 1)
-                best_f = min(best_f, m2_f)
-            if best_f > 1:
-                m3_f, _ = calculate_morpheme_metric(search_term_rev, word, limit=best_f - 1)
-                best_f = min(best_f, m3_f)
-            
-            # Calculate backward MP (candidate -> search_term) with lazy evaluation
-            best_b, _ = calculate_morpheme_metric(word, search_term, limit=max_mp)
-            if best_b > 1:
-                m2_b, _ = calculate_morpheme_metric(word[::-1], search_term, limit=best_b - 1)
-                best_b = min(best_b, m2_b)
-            if best_b > 1:
-                m3_b, _ = calculate_morpheme_metric(word, search_term_rev, limit=best_b - 1)
-                best_b = min(best_b, m3_b)
-            
-            # Apply asymmetric combination logic:
-            if best_b == 0:
-                best_mp = best_f
-            elif best_f == 0:
-                best_mp = 0
-            else:
-                best_mp = min(best_f, best_b)
+            best_mp, linearity = calculate_morpheme_metric(search_term, word, limit=max_mp)
+            if best_mp > 1:
+                m2_f, _ = calculate_morpheme_metric(search_term, word[::-1], limit=best_mp - 1)
+                best_mp = min(best_mp, m2_f)
+            if best_mp > 1:
+                m3_f, _ = calculate_morpheme_metric(search_term_rev, word, limit=best_mp - 1)
+                best_mp = min(best_mp, m3_f)
             
             if best_mp <= max_mp:
                 check_and_add_mp(mp_groups, source_len, target_len, best_mp, word)
