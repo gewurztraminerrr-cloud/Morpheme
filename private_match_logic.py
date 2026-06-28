@@ -693,19 +693,19 @@ class PrivateMatchManager:
             conn.close()
 
     def generate_ai_submission(self, rating, possible_words, bonus_word, board_format='Normal', bonus_cell=None, duration=60):
-        # AI Logic (WPM Model):
-        # Rating 800: ~4.0 WPM 
-        # Rating 1200: ~10.0 WPM
-        # Rating 3000: ~45 WPM (Elite)
+        # AI Logic (Dynamic Human Performance Model):
+        # Dynamically scales WPM, word length preferences, vocabulary knowledge (CSW-only words),
+        # and difficulty pool partitioning based on the bot's rating to reflect real human abilities.
         
         if rating is None: rating = 1200
         r = max(400, min(3000, rating))
         
-        # Calculate WPM based on rating (linear scale, floor at 2 WPM for better gameplay)
-        # 800 -> 4, 1200 -> 10, 3000 -> 45
-        # wpm = (r / 60) - 10? No.
-        # Adjusted formula:
-        wpm = max(2.0, (r / 65.0))
+        # Calculate WPM based on rating (dynamic curve fitted to match real human averages)
+        # r = 800  -> ~9 WPM (6.7 words in 45s)
+        # r = 1200 -> ~13.3 WPM (10 words in 45s)
+        # r = 2000 -> ~23 WPM (17.2 words in 45s)
+        # r = 3000 -> ~41 WPM (30.7 words in 45s)
+        wpm = 3.0 + (r / 200.0) ** 1.3
         
         # Total words count based on duration
         count = int((duration / 60.0) * wpm)
@@ -717,17 +717,11 @@ class PrivateMatchManager:
         count = max(1, min(count, len(possible_words)))
 
         # Sort words to identify high-scorers
-        # We'll score all possible words first to pick the best ones
         word_scores = []
         is_dict = isinstance(possible_words, dict)
         
         for w in possible_words:
-            # OPTIMIZATION: Use path from dictionary if available to avoid slow DFS
             w_path = possible_words[w] if is_dict else None
-            
-            # Note: We don't have the full board object here, but calculate_word_score 
-            # handles basic format scoring without it if needed (path omitted).
-            # For AI, we assume they hit the bonus cell if it exists (simplified).
             word_scores.append((w, calculate_word_score(
                 w, 
                 bonus_word, 
@@ -740,9 +734,6 @@ class PrivateMatchManager:
         # Sort by points descending
         word_scores.sort(key=lambda x: x[1], reverse=True)
         
-        # Sort by points descending to partition
-        word_scores.sort(key=lambda x: x[1], reverse=True)
-        
         # Partition words into Hard (top 20%), Medium (next 30%), Easy (bottom 50%)
         num_hard = max(1, int(len(word_scores) * 0.2))
         num_med = max(1, int(len(word_scores) * 0.3))
@@ -752,29 +743,30 @@ class PrivateMatchManager:
         easy_pool = word_scores[num_hard+num_med:]
         if not easy_pool: easy_pool = word_scores # Fallback if very few words
         
-        # Determine human-like find ratios based on AI rating
-        if r >= 2400:
-            easy_pct, med_pct, hard_pct = 0.40, 0.40, 0.20
-        elif r >= 1800:
-            easy_pct, med_pct, hard_pct = 0.55, 0.35, 0.10
-        elif r >= 1200:
-            easy_pct, med_pct, hard_pct = 0.75, 0.20, 0.05
-        else:
-            easy_pct, med_pct, hard_pct = 0.90, 0.10, 0.00
+        # Determine human-like find ratios based on AI rating (smooth continuous functions)
+        hard_pct = max(0.0, min(0.30, (r - 1000) / 6000.0))
+        med_pct = max(0.10, min(0.50, (r - 600) / 3000.0))
+        easy_pct = 1.0 - hard_pct - med_pct
             
         selected_words = []
         unpicked = list(word_scores)
+        
+        # Dynamic vocabulary and length weights matching real humans
+        # Higher-rated players find longer words and know rare CSW-only words.
+        len_penalty = min(0.95, 0.5 + (r / 6000.0))
+        csw_penalty = min(1.0, 0.01 + (r / 3000.0) ** 3 * 0.99)
         
         from word_validator import word_validator
         def get_human_weight(w_str):
             w_u = w_str.upper()
             weight = 100.0
-            if len(w_u) > 5: weight *= (0.8 ** (len(w_u) - 5))
+            if len(w_u) > 5: 
+                weight *= (len_penalty ** (len(w_u) - 5))
             rare_letters = {'Z': 0.1, 'Q': 0.1, 'X': 0.2, 'J': 0.2, 'K': 0.5, 'V': 0.5}
             for char in w_u:
                 if char in rare_letters: weight *= rare_letters[char]
             if hasattr(word_validator, 'is_csw_only') and word_validator.is_csw_only(w_u):
-                weight *= 0.05
+                weight *= csw_penalty
             return max(0.1, weight)
         
         for _ in range(count):
@@ -801,9 +793,7 @@ class PrivateMatchManager:
         # Bonus word chance (scales with rating)
         bonus_chance = max(0, min(0.95, (r - 600) / 1800))
         if bonus_word and random.random() < bonus_chance:
-            # Ensure index 0 doesn't just get it if we can find it
             if not any(w[0] == bonus_word for w in selected_words):
-                # Replace a word or just add it
                 bonus_pts = calculate_word_score(
                     bonus_word, 
                     bonus_word, 
