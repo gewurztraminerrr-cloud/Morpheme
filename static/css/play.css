@@ -1854,8 +1854,7 @@ body.theme-light-brown .word-item.missed {
 
 @media (min-width: 901px) {
     #page-tools,
-    #page-settings,
-    #page-mods {
+    #page-settings {
         overflow: hidden !important;
         padding-top: 20px !important;
         padding-bottom: 20px !important;
@@ -3109,8 +3108,7 @@ body.theme-light-brown .word-item.missed {
 }
 
 #page-tools,
-#page-settings,
-#page-mods {
+#page-settings {
     display: none;
     flex-direction: column;
     align-items: center;
