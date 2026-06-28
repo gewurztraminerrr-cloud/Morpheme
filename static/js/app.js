@@ -372,44 +372,28 @@ async function fetchUserCount() {
 // - Mobile: Plays natively from 0s (no seeks) to prevent browser/OS seek stalling.
 // - Desktop/Laptop: Exact June 27 stable logic (seek to 205s and loop between 205s and 295s).
 function playLobbyMusicHelper(lobbyMusic, onSuccess) {
-    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || /iPad|iPhone|iPod|Android/i.test(navigator.userAgent);
+    // Loop between 205s and 295s
+    lobbyMusic.ontimeupdate = function () {
+        if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
+            try { 
+                lobbyMusic.currentTime = 205; 
+            } catch(err) {}
+        }
+    };
 
-    if (isTouchDevice) {
-        lobbyMusic.ontimeupdate = null; // Native looping only
-        console.log('[LobbyMusic] Playing natively on touch device.');
-        lobbyMusic.play()
-            .then(() => {
-                console.log('[LobbyMusic] Touch device play succeeded.');
-                if (onSuccess) onSuccess();
-            })
-            .catch(err => {
-                console.warn('[LobbyMusic] Touch device play failed:', err);
-                setupFirstInteractionMusic();
-            });
-    } else {
-        // Desktop: loop between 205s and 295s
-        lobbyMusic.ontimeupdate = function () {
-            if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
-                try { 
-                    lobbyMusic.currentTime = 205; 
-                } catch(err) {}
-            }
-        };
-
-        console.log('[LobbyMusic] Playing on desktop.');
-        lobbyMusic.play()
-            .then(() => {
-                console.log('[LobbyMusic] Desktop play succeeded. Seeking to 205...');
-                try {
-                    lobbyMusic.currentTime = 205;
-                } catch(err) {}
-                if (onSuccess) onSuccess();
-            })
-            .catch(err => {
-                console.warn('[LobbyMusic] Desktop play failed:', err);
-                setupFirstInteractionMusic();
-            });
-    }
+    console.log('[LobbyMusic] Playing lobby music.');
+    lobbyMusic.play()
+        .then(() => {
+            console.log('[LobbyMusic] Play succeeded. Seeking to 205...');
+            try {
+                lobbyMusic.currentTime = 205;
+            } catch(err) {}
+            if (onSuccess) onSuccess();
+        })
+        .catch(err => {
+            console.warn('[LobbyMusic] Play failed:', err);
+            setupFirstInteractionMusic();
+        });
 }
 
 // Helper to start/stop music based on Page AND Setting
