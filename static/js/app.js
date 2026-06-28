@@ -347,6 +347,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     fetchUserCount(); // Fetch user count for login page
+    setupFirstInteractionMusic(); // Set up gesture listeners immediately on page load!
 });
 
 async function fetchUserCount() {
