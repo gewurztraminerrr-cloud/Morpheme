@@ -2463,8 +2463,9 @@ def get_public_profile(username):
 
     # Calculate Period Stats (If 'all', we still calculate from round_history for consistency, 
     # but could use user table for performance if data volume is high)
+    # Only count rounds with a score > 0 as a played game
     cursor_stats = conn.execute(f'''
-        SELECT COUNT(*), SUM(total_score)
+        SELECT COUNT(CASE WHEN total_score > 0 THEN 1 END), SUM(total_score)
         FROM round_history
         WHERE user_id = ? {time_filter}
     ''', (user_id,))
@@ -2714,7 +2715,8 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     cursor = conn.execute(query, (user_id, game_type, board_dimensions, time_limit))
     period_rows = cursor.fetchall()
     
-    period_matching = period_rows
+    # Only count rounds where the player actually scored points (> 0)
+    period_matching = [r for r in period_rows if r[1] > 0]
 
     if not period_matching and period != 'all':
         conn.close()
