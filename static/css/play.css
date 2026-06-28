@@ -1867,6 +1867,14 @@ body.theme-light-brown .word-item.missed {
         min-height: 620px !important;
         max-height: 620px !important;
     }
+    .tool-pane.active {
+        overflow-y: auto !important;
+        height: 100% !important;
+    }
+    .combo-results-container {
+        overflow-y: visible !important;
+        flex: unset !important;
+    }
     .tool-nav-btn {
         height: 76px;
         justify-content: center;
@@ -1942,14 +1950,15 @@ body.theme-light-brown .word-item.missed {
 
 .tool-pane {
     display: none;
-    min-height: 100%;
-    height: auto;
+    height: 100%;
     flex-direction: column;
 }
 
 .tool-pane.active {
     display: flex;
     align-items: flex-start;
+    overflow-y: auto;
+    width: 100%;
 }
 
 .tool-header,
@@ -2078,8 +2087,8 @@ body.theme-light-brown .word-item.missed {
     gap: 25px;
     flex: 1;
     min-height: 0;
-    overflow-y: visible;
-    /* Main vertical scroll handled by container, but charts need room */
+    overflow-y: hidden;
+    /* Main vertical scroll handled by .tool-pane on desktop */
 }
 
 .result-section {
