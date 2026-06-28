@@ -371,18 +371,18 @@ async function fetchUserCount() {
 // - Mobile: Plays natively from 0s (no seeks) to prevent browser/OS seek stalling.
 // - Desktop/Laptop: Exact June 27 stable logic (seek to 205s and loop between 205s and 295s).
 function playLobbyMusicHelper(lobbyMusic, onSuccess) {
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0);
+    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || /iPad|iPhone|iPod|Android/i.test(navigator.userAgent);
 
-    if (isMobile) {
+    if (isTouchDevice) {
         lobbyMusic.ontimeupdate = null; // Native looping only
-        console.log('[LobbyMusic] Playing natively on mobile.');
+        console.log('[LobbyMusic] Playing natively on touch device.');
         lobbyMusic.play()
             .then(() => {
-                console.log('[LobbyMusic] Mobile play succeeded.');
+                console.log('[LobbyMusic] Touch device play succeeded.');
                 if (onSuccess) onSuccess();
             })
             .catch(err => {
-                console.warn('[LobbyMusic] Mobile play failed:', err);
+                console.warn('[LobbyMusic] Touch device play failed:', err);
                 setupFirstInteractionMusic();
             });
     } else {
