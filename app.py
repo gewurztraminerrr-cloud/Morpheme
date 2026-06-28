@@ -4551,10 +4551,17 @@ def tools_combo_check():
             best_b, _ = calculate_morpheme_metric(word, search_term, limit=max_mp)
             if best_b > 1:
                 m2_b, _ = calculate_morpheme_metric(word[::-1], search_term, limit=best_b - 1)
-                best_b = min(best_b, m2_b)
+                # Only accept 0MP from reversed-word check if lengths match.
+                # When word reversed happens to start with search_term (e.g. ANORETIC reversed =
+                # CITERONA starts with CITER), this gives a false 0MP via free exterior deletions.
+                if not (m2_b == 0 and target_len != source_len):
+                    best_b = min(best_b, m2_b)
             if best_b > 1:
                 m3_b, _ = calculate_morpheme_metric(word, search_term_rev, limit=best_b - 1)
-                best_b = min(best_b, m3_b)
+                # Same guard: reject false 0MP when word contains search_term reversed as a
+                # consecutive suffix (e.g. ANORETIC ends with RETIC = CITER reversed).
+                if not (m3_b == 0 and target_len != source_len):
+                    best_b = min(best_b, m3_b)
 
             best_mp = min(best_f, best_b)
 
