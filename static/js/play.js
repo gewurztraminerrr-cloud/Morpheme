@@ -4147,58 +4147,58 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
                     align-items: center;
                     justify-content: center;
                     width: 100%;
-                    height: 420px;
-                    min-height: 420px;
+                    height: 100%;
+                    min-height: 100%;
                     color: var(--text-primary);
                     background: rgba(10, 15, 30, 0.85);
                     border: 2px solid rgba(var(--accent-color-rgb, 0, 230, 118), 0.2);
                     border-radius: 16px;
                     backdrop-filter: blur(10px);
-                    padding: 30px;
+                    padding: 20px;
                     box-sizing: border-box;
                     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
                 }
                 .glow-spinner {
-                    width: 70px;
-                    height: 70px;
-                    border: 4px solid rgba(255, 255, 255, 0.05);
-                    border-top: 4px solid var(--accent-color);
-                    border-right: 4px solid var(--accent-color);
+                    width: 45px;
+                    height: 45px;
+                    border: 3px solid rgba(255, 255, 255, 0.05);
+                    border-top: 3px solid var(--accent-color);
+                    border-right: 3px solid var(--accent-color);
                     border-radius: 50%;
                     animation: spin-glow 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-                    margin-bottom: 25px;
+                    margin-bottom: 15px;
                 }
                 .glow-title {
-                    font-weight: 900;
-                    font-size: 1.3rem;
+                    font-weight: 800;
+                    font-size: 1.1rem;
                     text-transform: uppercase;
-                    letter-spacing: 3px;
+                    letter-spacing: 2px;
                     color: var(--text-primary);
                     animation: pulse-glow 2s ease-in-out infinite;
                     text-align: center;
                 }
                 .why-text {
-                    font-size: 0.85rem;
+                    font-size: 0.75rem;
                     color: var(--text-secondary);
                     text-align: center;
-                    max-width: 90%;
-                    margin-top: 15px;
-                    line-height: 1.5;
+                    max-width: 95%;
+                    margin-top: 12px;
+                    line-height: 1.4;
                     font-weight: 400;
-                    border-top: 1px solid rgba(255, 255, 255, 0.1);
-                    padding-top: 15px;
+                    border-top: 1px solid rgba(255, 255, 255, 0.08);
+                    padding-top: 12px;
                 }
                 .status-ticker {
                     font-family: monospace;
-                    font-size: 0.85rem;
+                    font-size: 0.75rem;
                     color: var(--accent-color);
-                    margin-top: 15px;
+                    margin-top: 10px;
                     background: rgba(0, 0, 0, 0.4);
-                    padding: 6px 16px;
-                    border-radius: 20px;
+                    padding: 4px 12px;
+                    border-radius: 15px;
                     border: 1px solid rgba(var(--accent-color-rgb, 0, 230, 118), 0.15);
                     font-weight: 600;
-                    letter-spacing: 1px;
+                    letter-spacing: 0.5px;
                 }
             </style>
             <div class="loading-container">
