@@ -3181,7 +3181,7 @@ class RoomManager:
             d_num = int(dims[0]) if len(dims) == 3 else 1
             r_num = int(dims[1] if len(dims) == 3 else dims[0])
             c_num = int(dims[2] if len(dims) == 3 else dims[1])
-            achieved_diff = self.board_generator.get_difficulty_label(u_ratio, r_num, c_num, room.spinner_params.get('dictionary', 'NWL'), depth=d_num, board=room.board, target_difficulty=room.spinner_params.get('difficulty'))
+            achieved_diff = self.board_generator.get_difficulty_label(u_ratio, r_num, c_num, room.spinner_params.get('dictionary', 'NWL'), depth=d_num, board=room.board, target_difficulty=room.spinner_params.get('difficulty'), min_word_length=room.spinner_params.get('min_word_length', 3))
             room.current_difficulty = f"{achieved_diff} ({int(u_ratio * 100)}%)"
             room.spinner_params['difficulty'] = room.current_difficulty
             room.current_uniqueness = u_ratio
@@ -3952,7 +3952,7 @@ class RoomManager:
                         d_val = int(b_dims[0]) if len(b_dims) == 3 else 1
                         rows = int(b_dims[1] if len(b_dims) == 3 else b_dims[0])
                         cols = int(b_dims[2] if len(b_dims) == 3 else b_dims[1])
-                        achieved_diff = self.board_generator.get_difficulty_label(u_ratio, rows, cols, search_dict, depth=d_val, board=board, target_difficulty=room.next_spinner_params.get('difficulty'))
+                        achieved_diff = self.board_generator.get_difficulty_label(u_ratio, rows, cols, search_dict, depth=d_val, board=board, target_difficulty=room.next_spinner_params.get('difficulty'), min_word_length=room.next_spinner_params.get('min_word_length', 3))
                         # Wait to calculate achieved_wc until AFTER authoritative truncation
                         
                         # Frontend handles appending uniqueness percentage to difficulty label
@@ -5117,8 +5117,8 @@ class RoomManager:
                     
                     # Score and Uniqueness
                     scored_dict = self.board_generator.scoring.score_words(all_words, dict_name)
-                    target_diff = room.next_spinner_params.get('difficulty') if getattr(room, 'next_spinner_params', None) else room.spinner_params.get('difficulty')
-                    achieved_diff = self.board_generator.get_difficulty_label(u_ratio, r_num, c_num, dict_name, depth=d_num, board=proposed_board, target_difficulty=target_diff)
+                    target_min_len = target.get('min_word_length', 3)
+                    achieved_diff = self.board_generator.get_difficulty_label(u_ratio, r_num, c_num, dict_name, depth=d_num, board=proposed_board, target_difficulty=target_diff, min_word_length=target_min_len)
                     
                     # PROMOTE DATA
                     room.next_round_board = proposed_board

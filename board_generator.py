@@ -230,11 +230,8 @@ class BoardGenerator:
         base_range = ranges.get(difficulty, (0.0, 1.0))
         
         # Calculate natural uniqueness shift based on min_word_length
+        # We use a base of 3 for all board sizes to correctly scale with evaluation length
         default_min = 3
-        if is_4x6: default_min = 4
-        elif is_5x7: default_min = 5
-        elif is_6x8: default_min = 6
-        elif is_cube: default_min = 6
         
         shift = 0.0
         try:
@@ -277,11 +274,8 @@ class BoardGenerator:
 
         return count_unique / count_relevant if count_relevant > 0 else 0.0
 
-    def get_difficulty_label(self, ratio, rows=4, cols=4, dictionary="NWL", depth=1, board=None, target_difficulty=None):
+    def get_difficulty_label(self, ratio, rows=4, cols=4, dictionary="NWL", depth=1, board=None, target_difficulty=None, min_word_length=3):
         """Derive difficulty label strictly from the uniqueness ratio achieved to ensure absolute parity."""
-        # Derive difficulty label strictly from the uniqueness ratio achieved to ensure absolute parity.
-
-        # Defensive casting to ensure math logic works
         try:
             rat_str = str(ratio).replace('%', '').strip()
             rat = float(rat_str) if rat_str else 0.0
@@ -291,53 +285,18 @@ class BoardGenerator:
         except Exception as e:
             print(f"[BoardGen-Diff] ERROR parsing ratio '{ratio}': {e}")
             return "Easy" # Safe fallback
-
-        is_5x7 = (rows == 5 and cols == 7) or (rows == 7 and cols == 5)
-        is_6x8 = (rows == 6 and cols == 8) or (rows == 8 and cols == 6)
-        is_4x6 = (rows == 4 and cols == 6) or (rows == 6 and cols == 4)
-        is_cube = depth > 1
-        if rows == 4 and cols == 4 and depth == 1:
-            if rat >= 0.40:
-                return "Hard"
-            elif rat >= 0.25:
-                return "Medium"
-            else:
-                return "Easy"
-        elif is_4x6:
-            if rat >= 0.40:
-                return "Hard"
-            elif rat >= 0.26:
-                return "Medium"
-            else:
-                return "Easy"
-        elif is_5x7:
-            if rat >= 0.45:
-                return "Hard"
-            elif rat >= 0.30:
-                return "Medium"
-            else:
-                return "Easy"
-        elif is_6x8:
-            if rat >= 0.50:
-                return "Hard"
-            elif rat >= 0.35:
-                return "Medium"
-            else:
-                return "Easy"
-        elif is_cube:
-            if rat >= 0.50:
-                return "Hard"
-            elif rat >= 0.35:
-                return "Medium"
-            else:
-                return "Easy"
+            
+        # Dynamically fetch the shifted ranges from _get_uniqueness_range
+        easy_min, easy_max = self._get_uniqueness_range("Easy", rows, cols, dictionary, depth, min_word_length)
+        med_min, med_max = self._get_uniqueness_range("Medium", rows, cols, dictionary, depth, min_word_length)
+        
+        # Classify based on these exact shifted thresholds
+        if rat <= easy_max:
+            return "Easy"
+        elif rat <= med_max:
+            return "Medium"
         else:
-            if rat >= 0.40:
-                return "Hard"
-            elif rat >= 0.26:
-                return "Medium"
-            else:
-                return "Easy"
+            return "Hard"
 
     def _sanitize_rare_letters(self, board, depth=1, protected_positions=None, is_checkerboard=False, difficulty="Medium"):
         """
@@ -1609,11 +1568,14 @@ class BoardGenerator:
             
             if min_words <= count <= max_words:
                 # USER REQUEST: Enforce uniqueness ratio match for the selected difficulty.
-                # To prevent timeouts, we only enforce this strictly for the first 8 attempts
-                # and when we have sufficient time remaining.
                 ratio = self.get_uniqueness_ratio(board, list(all_words_dict.keys()), rows, cols, dictionary, depth)
                 min_ratio, max_ratio = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth, min_word_length=min_word_length)
                 
+                if ratio > max_ratio and difficulty == "Easy":
+                    print(f"[BoardGen] ATTEMPT {attempts}: Easy board ratio {ratio:.2f} exceeds max {max_ratio:.2f}. Running targeted uniqueness sanitizer...")
+                    board, all_words_dict, ratio = self._sanitize_uniqueness(board, depth, dictionary, min_word_length, max_ratio, rows, cols)
+                    count = len(all_words_dict)
+                    
                 max_strict_attempts = 80
                 if attempts <= max_strict_attempts and (time.time() - start_time < timeout - 1.5):
                     if not (min_ratio <= ratio <= max_ratio):
@@ -1621,7 +1583,7 @@ class BoardGenerator:
                         continue
                 
                 # Derive achieved difficulty label
-                achieved_diff = self.get_difficulty_label(ratio, rows, cols, dictionary, depth)
+                achieved_diff = self.get_difficulty_label(ratio, rows, cols, dictionary, depth, min_word_length=min_word_length)
                 
                 # USER MANDATE: Ensure no "ING" or "INGS" path sequences exist in Medium or Hard boards!
                 # If they do, toss the board and generate another one (continue)!
@@ -1866,7 +1828,7 @@ class BoardGenerator:
             # Solve to get intermediate ratio for sanitization decision
             inter_solve = self._solve_board(board, dictionary, (0, 99999), display_min, max_depth=12 if rows * cols >= 35 else 25, store_paths=False, timeout=10.0)
             inter_ratio = self.get_uniqueness_ratio(board, list(inter_solve.keys()), rows, cols, dictionary, depth)
-            inter_diff = self.get_difficulty_label(inter_ratio, rows, cols, dictionary, depth)
+            inter_diff = self.get_difficulty_label(inter_ratio, rows, cols, dictionary, depth, min_word_length=display_min)
             if difficulty in ["Medium", "Hard"] or inter_diff in ["Medium", "Hard"]:
                 self._sanitize_forbidden_sequences(board, depth, protected_positions=all_excluded, is_checkerboard=is_checkerboard)
             
@@ -2048,7 +2010,7 @@ class BoardGenerator:
 
             # USER MANDATE: Ensure no "ING" or "INGS" path sequences exist in Medium or Hard boards inside emergency path too!
             ratio = self.get_uniqueness_ratio(board, list(final_solve.keys()), rows, cols, dictionary, depth)
-            achieved_diff = self.get_difficulty_label(ratio, rows, cols, dictionary, depth)
+            achieved_diff = self.get_difficulty_label(ratio, rows, cols, dictionary, depth, min_word_length=display_min)
             if difficulty in ["Medium", "Hard"] or achieved_diff in ["Medium", "Hard"]:
                 if self._has_ing_sequence(board, depth):
                     print(f"[BoardGen] ❌ [Emergency] ATTEMPT {_attempt}: Board has forbidden 'ING' sequence on {achieved_diff} (target {difficulty}) board. Retrying...")
@@ -2337,6 +2299,139 @@ class BoardGenerator:
         else:
             return LETTER_FREQ_USER
 
+    def _sanitize_uniqueness(self, board, depth, dictionary, min_word_length, max_ratio, rows, cols):
+        """Actively sanitize the board to lower its uniqueness ratio below max_ratio by replacing letters that form unique words."""
+        all_words_dict = self._solve_board(
+            board, dictionary, (0, 99999), min_word_length, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=5.0
+        )
+        ratio = self.get_uniqueness_ratio(board, list(all_words_dict.keys()), rows, cols, dictionary, depth)
+        if ratio <= max_ratio:
+            return board, all_words_dict, ratio
+            
+        unique_set = self._get_difficulty_set(dictionary)
+        if not unique_set:
+            return board, all_words_dict, ratio
+            
+        val_ctx = use_added_words_ctx.get()
+        if val_ctx is None:
+            from word_validator import word_validator
+            val_ctx = word_validator.use_added_words
+        from word_validator import word_validator
+
+        # We will do up to 4 iterations of cell replacement
+        for iteration in range(4):
+            # 1. Identify which words are unique
+            unique_words = [w for w in all_words_dict if (w in unique_set) or (val_ctx and w in word_validator.added_words)]
+            if not unique_words:
+                break
+                
+            # 2. Count how many unique words pass through each cell
+            cell_counts = {}
+            for w in unique_words:
+                paths = all_words_dict[w]
+                # Support both a single path (legacy) or a list of paths
+                if paths and isinstance(paths[0], (list, tuple)) and isinstance(paths[0][0], (int, float)):
+                    # It's a single path
+                    paths = [paths]
+                for path in paths:
+                    for cell in path:
+                        # Ensure cell is a tuple
+                        cell_counts[cell] = cell_counts.get(cell, 0) + 1
+                    
+            if not cell_counts:
+                break
+                
+            # Sort cells by unique word count descending
+            sorted_cells = sorted(cell_counts.items(), key=lambda x: x[1], reverse=True)
+            
+            # Try to optimize the top cell
+            target_cell = sorted_cells[0][0]
+            
+            # Try replacing the letter in target_cell with a few common consonants that are unlikely to form unique words
+            test_letters = ['B', 'F', 'V', 'W', 'Y', 'M', 'P', 'D', 'G']
+            best_char = None
+            best_ratio = ratio
+            best_words_dict = all_words_dict
+            
+            orig_char = board[target_cell[0]][target_cell[1]][target_cell[2]] if depth > 1 else board[target_cell[0]][target_cell[1]]
+            
+            for char in test_letters:
+                if char == orig_char:
+                    continue
+                # Apply change
+                if depth > 1:
+                    board[target_cell[0]][target_cell[1]][target_cell[2]] = char
+                else:
+                    board[target_cell[0]][target_cell[1]] = char
+                    
+                # Solve and check
+                temp_dict = self._solve_board(
+                    board, dictionary, (0, 99999), min_word_length, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=2.0
+                )
+                temp_ratio = self.get_uniqueness_ratio(board, list(temp_dict.keys()), rows, cols, dictionary, depth)
+                
+                if temp_ratio < best_ratio:
+                    best_ratio = temp_ratio
+                    best_char = char
+                    best_words_dict = temp_dict
+                    
+            # Revert or keep best
+            if best_char:
+                if depth > 1:
+                    board[target_cell[0]][target_cell[1]][target_cell[2]] = best_char
+                else:
+                    board[target_cell[0]][target_cell[1]] = best_char
+                ratio = best_ratio
+                all_words_dict = best_words_dict
+                print(f"[BoardGen] Sanitized uniqueness at cell {target_cell}: replaced {orig_char} with {best_char}. New ratio: {ratio:.2%}")
+                if ratio <= max_ratio:
+                    break
+            else:
+                # Revert
+                if depth > 1:
+                    board[target_cell[0]][target_cell[1]][target_cell[2]] = orig_char
+                else:
+                    board[target_cell[0]][target_cell[1]] = orig_char
+                # If we couldn't improve the top cell, try the second one
+                if len(sorted_cells) > 1:
+                    target_cell = sorted_cells[1][0]
+                    orig_char = board[target_cell[0]][target_cell[1]][target_cell[2]] if depth > 1 else board[target_cell[0]][target_cell[1]]
+                    for char in test_letters:
+                        if char == orig_char:
+                            continue
+                        if depth > 1:
+                            board[target_cell[0]][target_cell[1]][target_cell[2]] = char
+                        else:
+                            board[target_cell[0]][target_cell[1]] = char
+                        temp_dict = self._solve_board(
+                            board, dictionary, (0, 99999), min_word_length, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=2.0
+                        )
+                        temp_ratio = self.get_uniqueness_ratio(board, list(temp_dict.keys()), rows, cols, dictionary, depth)
+                        if temp_ratio < best_ratio:
+                            best_ratio = temp_ratio
+                            best_char = char
+                            best_words_dict = temp_dict
+                    if best_char:
+                        if depth > 1:
+                            board[target_cell[0]][target_cell[1]][target_cell[2]] = best_char
+                        else:
+                            board[target_cell[0]][target_cell[1]] = best_char
+                        ratio = best_ratio
+                        all_words_dict = best_words_dict
+                        print(f"[BoardGen] Sanitized uniqueness (fallback) at cell {target_cell}: replaced {orig_char} with {best_char}. New ratio: {ratio:.2%}")
+                        if ratio <= max_ratio:
+                            break
+                    else:
+                        if depth > 1:
+                            board[target_cell[0]][target_cell[1]][target_cell[2]] = orig_char
+                        else:
+                            board[target_cell[0]][target_cell[1]] = orig_char
+                        break
+                else:
+                    break
+                    
+        return board, all_words_dict, ratio
+
     def _create_normal_board(self, rows, cols, weights, depth=1, difficulty="Easy", dictionary=None, word_count_range=None, is_checkerboard=False):
         """Create board using Overwriting Word Soup method for 2D, or random letters for 3D"""
         if depth > 1:
@@ -2411,17 +2506,17 @@ class BoardGenerator:
                 min_len, max_len = 7, 10
 
         # Scale num_words_to_embed dynamically
-        if max_words < 100:  # e.g., 50-100
+        if max_words <= 100:  # e.g., 50-100
             if num_cells <= 16: num_words_to_embed = 8
             elif num_cells <= 24: num_words_to_embed = 12
             elif num_cells <= 35: num_words_to_embed = 16
             else: num_words_to_embed = 20
-        elif max_words < 200:  # e.g., 100-200
+        elif max_words <= 200:  # e.g., 100-200
             if num_cells <= 16: num_words_to_embed = 15
             elif num_cells <= 24: num_words_to_embed = 22
             elif num_cells <= 35: num_words_to_embed = 28
             else: num_words_to_embed = 32
-        elif max_words < 300:  # e.g., 200-300
+        elif max_words <= 300:  # e.g., 200-300
             if num_cells <= 16: num_words_to_embed = 25
             elif num_cells <= 24: num_words_to_embed = 32
             elif num_cells <= 35: num_words_to_embed = 38
@@ -2573,7 +2668,7 @@ class BoardGenerator:
         # If target word count is low, use consonant-biased sparse weights to fill empty cells
         # to prevent generating massive accidental words.
         fill_weights = weights
-        if max_words < 100:
+        if max_words <= 100:
             # Reduce vowels and common letters aggressively for low targets
             fill_weights = list(weights)
             for idx, char in enumerate(self.letters):
