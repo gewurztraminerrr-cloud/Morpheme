@@ -4200,6 +4200,32 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
                     font-weight: 600;
                     letter-spacing: 0.5px;
                 }
+                @media (max-width: 768px) {
+                    .loading-container {
+                        padding: 12px;
+                    }
+                    .glow-spinner {
+                        width: 30px;
+                        height: 30px;
+                        border-width: 2px;
+                        margin-bottom: 10px;
+                    }
+                    .glow-title {
+                        font-size: 0.9rem;
+                        letter-spacing: 1px;
+                    }
+                    .status-ticker {
+                        font-size: 0.65rem;
+                        margin-top: 8px;
+                        padding: 2px 8px;
+                    }
+                    .why-text {
+                        font-size: 0.65rem;
+                        margin-top: 8px;
+                        padding-top: 8px;
+                        line-height: 1.3;
+                    }
+                }
             </style>
             <div class="loading-container">
                 <div class="glow-spinner"></div>
