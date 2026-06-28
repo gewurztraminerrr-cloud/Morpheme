@@ -6,6 +6,13 @@ from typing import List, Dict
 from scoring import calculate_word_score
 from rating_logic import calculate_proportional_rating_change
 
+# Module-level cache for human stats by rating bracket
+# Refreshed dynamically to reflect real human player abilities over time.
+_human_stats_cache = {
+    'timestamp': 0.0,
+    'stats': {}
+}
+
 class PrivateMatchManager:
     def __init__(self, db_path=None):
         if db_path is None:
@@ -700,12 +707,110 @@ class PrivateMatchManager:
         if rating is None: rating = 1200
         r = max(400, min(3000, rating))
         
-        # Calculate WPM based on rating (dynamic curve fitted to match real human averages)
-        # r = 800  -> ~9 WPM (6.7 words in 45s)
-        # r = 1200 -> ~13.3 WPM (10 words in 45s)
-        # r = 2000 -> ~23 WPM (17.2 words in 45s)
-        # r = 3000 -> ~41 WPM (30.7 words in 45s)
-        wpm = 3.0 + (r / 200.0) ** 1.3
+        # Update/load the human stats cache to adjust for rating inflation/deflation
+        global _human_stats_cache
+        now = time.time()
+        # Refresh cache every hour (3600 seconds)
+        if now - _human_stats_cache.get('timestamp', 0.0) >= 3600:
+            try:
+                # Try to import DB_PATH from app, fallback to default
+                try:
+                    from app import DB_PATH
+                except ImportError:
+                    DB_PATH = "morpheme.db"
+                
+                conn = sqlite3.connect(DB_PATH, timeout=10)
+                # Fetch last 1000 rounds of active registered human players
+                cur = conn.execute('''
+                    SELECT user_rating, wpm, words_json
+                    FROM round_history
+                    WHERE user_id > 0 AND round_duration < 7200 AND total_score > 0
+                    ORDER BY timestamp DESC
+                    LIMIT 1000
+                ''')
+                rows = cur.fetchall()
+                conn.close()
+                
+                brackets = {
+                    'easy': [],   # < 1000
+                    'medium': [], # 1000 - 1399
+                    'hard': [],   # 1400 - 1799
+                    'elite': []   # >= 1800
+                }
+                
+                for r_rating, r_wpm, r_wjson in rows:
+                    if r_rating < 1000: b = 'easy'
+                    elif r_rating < 1400: b = 'medium'
+                    elif r_rating < 1800: b = 'hard'
+                    else: b = 'elite'
+                    
+                    try:
+                        words = json.loads(r_wjson)
+                        num_words = len(words)
+                        if num_words > 0:
+                            avg_len = sum(len(w['word']) for w in words) / num_words
+                            csw_words = sum(1 for w in words if word_validator.is_csw_only(w['word']))
+                            csw_ratio = csw_words / num_words
+                        else:
+                            avg_len = 0
+                            csw_ratio = 0
+                    except:
+                        continue
+                        
+                    brackets[b].append({
+                        'wpm': r_wpm or (num_words * 60.0 / 45.0),
+                        'avg_len': avg_len,
+                        'csw_ratio': csw_ratio,
+                        'num_words': num_words
+                    })
+                    
+                new_stats = {}
+                for b, data in brackets.items():
+                    if len(data) >= 5:
+                        avg_wpm = sum(d['wpm'] for d in data) / len(data)
+                        avg_len = sum(d['avg_len'] for d in data) / len(data)
+                        avg_csw = sum(d['csw_ratio'] for d in data) / len(data)
+                        avg_num_words = sum(d['num_words'] for d in data) / len(data)
+                        new_stats[b] = {
+                            'wpm': avg_wpm,
+                            'avg_len': avg_len,
+                            'csw_ratio': avg_csw,
+                            'num_words': avg_num_words
+                        }
+                        
+                _human_stats_cache['stats'] = new_stats
+                _human_stats_cache['timestamp'] = now
+                print(f"[AI-Dynamic] Updated human stats cache from {len(rows)} rounds. Brackets: {list(new_stats.keys())}")
+            except Exception as e:
+                print(f"[AI-Dynamic] Error updating human stats cache: {e}")
+        
+        # Determine bot bracket
+        if r < 1000: b = 'easy'
+        elif r < 1400: b = 'medium'
+        elif r < 1800: b = 'hard'
+        else: b = 'elite'
+        
+        stats = _human_stats_cache.get('stats', {}).get(b)
+        
+        if stats:
+            # 1. WPM / Word Count
+            wpm = max(4.0, min(45.0, stats['wpm']))
+            
+            # 2. Word Length Penalty
+            # Map human average length (usually 5.2 - 6.5) to len_penalty (0.6 - 0.9)
+            target_len = stats['avg_len']
+            len_penalty = 0.6 + (max(5.2, min(6.5, target_len)) - 5.2) * 0.23
+            
+            # 3. CSW-only Word Penalty
+            csw_penalty = max(0.01, min(1.0, stats['csw_ratio']))
+            
+            # Print stats details for debugging / parity checks
+            print(f"[AI-Dynamic] Bot rating {r} ({b}) using human stats: WPM={wpm:.2f}, LenPen={len_penalty:.2f}, CSWPen={csw_penalty:.2f}")
+        else:
+            # Fallback to mathematical curves if the database has insufficient data
+            wpm = 3.0 + (r / 200.0) ** 1.3
+            len_penalty = min(0.95, 0.5 + (r / 6000.0))
+            csw_penalty = min(1.0, 0.01 + (r / 3000.0) ** 3 * 0.99)
         
         # Total words count based on duration
         count = int((duration / 60.0) * wpm)
@@ -750,11 +855,6 @@ class PrivateMatchManager:
             
         selected_words = []
         unpicked = list(word_scores)
-        
-        # Dynamic vocabulary and length weights matching real humans
-        # Higher-rated players find longer words and know rare CSW-only words.
-        len_penalty = min(0.95, 0.5 + (r / 6000.0))
-        csw_penalty = min(1.0, 0.01 + (r / 3000.0) ** 3 * 0.99)
         
         from word_validator import word_validator
         def get_human_weight(w_str):
