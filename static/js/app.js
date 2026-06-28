@@ -280,31 +280,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     console.log(`[Gateway] Transitioning via event: ${e ? e.type : 'manual'}`);
 
-                    // 1. Leave the room if we are not going to the play page
-                    if (targetNavName !== 'play') {
-                        if (window.leaveCurrentRoom && (window.currentRoomId || localStorage.getItem('last_joined_room'))) {
-                            console.log('[Gateway] Leaving current room on gateway transition.');
-                            try {
-                                await window.leaveCurrentRoom();
-                            } catch (err) {
-                                console.error('[Gateway] Failed to leave room during gateway transition:', err);
-                            }
-                        }
-                    }
-
-                    // 2. Play the music inside a completely isolated, non-blocking try-catch block
+                    // 1. Start music FIRST — must happen synchronously before any await
+                    //    so we are still inside the user-gesture call stack.
                     try {
                         const lobbyMusic = document.getElementById('lobby-music');
                         if (lobbyMusic) {
-                            // Enforce the loop upper boundary on timeupdate
                             lobbyMusic.ontimeupdate = function () {
                                 if (lobbyMusic.currentTime >= 295) {
                                     try { lobbyMusic.currentTime = 205; } catch(err) {}
                                 }
                             };
-                            // Seek to loop start — may silently fail on mobile if not buffered yet
                             try { lobbyMusic.currentTime = 205; } catch(err) {}
-                            // If not buffered enough, retry seek once ready (mobile safety net)
+                            // Mobile safety net: retry seek once buffered
                             if (lobbyMusic.readyState < 3) {
                                 const seekOnReady = () => {
                                     if (lobbyMusic.currentTime < 205) {
@@ -323,6 +310,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     } catch (audioErr) {
                         console.error('[LobbyMusic] Exception during gateway play initialization:', audioErr);
+                    }
+
+                    // 2. Leave the room (async — after music is already started)
+                    if (targetNavName !== 'play') {
+                        if (window.leaveCurrentRoom && (window.currentRoomId || localStorage.getItem('last_joined_room'))) {
+                            console.log('[Gateway] Leaving current room on gateway transition.');
+                            try {
+                                await window.leaveCurrentRoom();
+                            } catch (err) {
+                                console.error('[Gateway] Failed to leave room during gateway transition:', err);
+                            }
+                        }
                     }
 
                     // 3. Perform the page transition (ALWAYS runs independently of audio success)
