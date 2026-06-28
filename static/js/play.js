@@ -4085,29 +4085,129 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         }
     }
     
+    // Clear loading interval if board has content
+    if (hasLetters && window.boardLoadingInterval) {
+        clearInterval(window.boardLoadingInterval);
+        window.boardLoadingInterval = null;
+    }
+    
     // IF board is empty OR has no letters, show loading spinner
     if (!hasLetters) {
-        let loadingMsg = "CONNECTING TO MATRIX...";
-        let subMsg = "Constructing the temporal vortex...";
+        let loadingMsg = "GENERATING COMPLIANT BOARD...";
         if (state && state.current_board_format) {
-            loadingMsg = `CALIBRATING ${state.current_board_format.toUpperCase()}...`;
-            subMsg = "Aligning format parameters and rules...";
+            loadingMsg = `GENERATING ${state.current_board_format.toUpperCase()}...`;
         } else if (window.lastGameState && window.lastGameState.current_board_format) {
-            loadingMsg = `CALIBRATING ${window.lastGameState.current_board_format.toUpperCase()}...`;
-            subMsg = "Aligning format parameters and rules...";
+            loadingMsg = `GENERATING ${window.lastGameState.current_board_format.toUpperCase()}...`;
         }
+        
+        // Clear any existing interval to prevent leaks
+        if (window.boardLoadingInterval) {
+            clearInterval(window.boardLoadingInterval);
+        }
+        
+        const statuses = [
+            "Rolling letter frequencies...",
+            "Attempting to embed bonus word...",
+            "Running DFS solver to find all possible words...",
+            "Checking word count against target range...",
+            "Validating uniqueness ratio for difficulty...",
+            "Enforcing rare letter caps (Max 1 of Q, Z, J, X, K)...",
+            "Verifying checkerboard alternation...",
+            "Sanitizing layout for playability...",
+            "Calibrating board density...",
+            "Finalizing ironclad compliance check..."
+        ];
+        let statusIdx = 0;
+        
+        // Start the interval to rotate status messages
+        window.boardLoadingInterval = setInterval(() => {
+            const el = document.getElementById('board-loading-status');
+            if (el) {
+                statusIdx = (statusIdx + 1) % statuses.length;
+                el.innerText = `[PROCESSING] ${statuses[statusIdx]}`;
+            } else {
+                clearInterval(window.boardLoadingInterval);
+            }
+        }, 1200);
         
         boardEl.innerHTML = `
             <style>
-                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                @keyframes pulse { 0%, 100% { opacity: 0.6; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
-                .loading-spinner { animation: spin 0.8s linear infinite !important; }
-                .optimizing-text { animation: pulse 2s ease-in-out infinite; }
+                @keyframes spin-glow {
+                    0% { transform: rotate(0deg); box-shadow: 0 0 15px var(--accent-color); }
+                    50% { box-shadow: 0 0 30px var(--accent-color), inset 0 0 15px var(--accent-color); }
+                    100% { transform: rotate(360deg); box-shadow: 0 0 15px var(--accent-color); }
+                }
+                @keyframes pulse-glow {
+                    0%, 100% { opacity: 0.8; text-shadow: 0 0 8px var(--accent-color); }
+                    50% { opacity: 1; text-shadow: 0 0 20px var(--accent-color), 0 0 30px var(--accent-color); }
+                }
+                .loading-container {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    width: 100%;
+                    height: 420px;
+                    min-height: 420px;
+                    color: var(--text-primary);
+                    background: rgba(10, 15, 30, 0.85);
+                    border: 2px solid rgba(var(--accent-color-rgb, 0, 230, 118), 0.2);
+                    border-radius: 16px;
+                    backdrop-filter: blur(10px);
+                    padding: 30px;
+                    box-sizing: border-box;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+                }
+                .glow-spinner {
+                    width: 70px;
+                    height: 70px;
+                    border: 4px solid rgba(255, 255, 255, 0.05);
+                    border-top: 4px solid var(--accent-color);
+                    border-right: 4px solid var(--accent-color);
+                    border-radius: 50%;
+                    animation: spin-glow 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+                    margin-bottom: 25px;
+                }
+                .glow-title {
+                    font-weight: 900;
+                    font-size: 1.3rem;
+                    text-transform: uppercase;
+                    letter-spacing: 3px;
+                    color: var(--text-primary);
+                    animation: pulse-glow 2s ease-in-out infinite;
+                    text-align: center;
+                }
+                .why-text {
+                    font-size: 0.85rem;
+                    color: var(--text-secondary);
+                    text-align: center;
+                    max-width: 90%;
+                    margin-top: 15px;
+                    line-height: 1.5;
+                    font-weight: 400;
+                    border-top: 1px solid rgba(255, 255, 255, 0.1);
+                    padding-top: 15px;
+                }
+                .status-ticker {
+                    font-family: monospace;
+                    font-size: 0.85rem;
+                    color: var(--accent-color);
+                    margin-top: 15px;
+                    background: rgba(0, 0, 0, 0.4);
+                    padding: 6px 16px;
+                    border-radius: 20px;
+                    border: 1px solid rgba(var(--accent-color-rgb, 0, 230, 118), 0.15);
+                    font-weight: 600;
+                    letter-spacing: 1px;
+                }
             </style>
-            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:350px; color:var(--text-primary); background: rgba(0,0,0,0.3); border-radius: 12px; backdrop-filter: blur(5px); padding: 20px; box-sizing: border-box;">
-                <div class="loading-spinner" style="margin-bottom:20px; width:60px; height:60px; border:5px solid rgba(var(--text-primary-rgb),0.1); border-top:5px solid var(--accent-color); border-radius:50%;"></div>
-                <div class="optimizing-text" style="font-weight:800; font-size:1.1rem; text-transform:uppercase; letter-spacing:2px; color:var(--text-primary); text-shadow: 0 0 10px var(--accent-color); text-align:center; padding:0 15px; box-sizing:border-box;">${loadingMsg}</div>
-                <div style="font-size:0.9rem; opacity:0.8; margin-top:12px; text-align:center; max-width:85%; font-weight: 500; color:var(--text-secondary);">${subMsg}</div>
+            <div class="loading-container">
+                <div class="glow-spinner"></div>
+                <div class="glow-title">${loadingMsg}</div>
+                <div id="board-loading-status" class="status-ticker">[PROCESSING] ${statuses[0]}</div>
+                <div class="why-text">
+                    Morpheme solves and calibrates every board in real-time. We run hundreds of simulations in the background to guarantee your target word count, board difficulty, and letter distribution.
+                </div>
             </div>
         `;
         boardEl.className = 'game-board';
