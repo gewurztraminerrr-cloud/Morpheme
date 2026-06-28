@@ -397,10 +397,7 @@ function playLobbyMusicHelper(lobbyMusic, onSuccess) {
                 setupFirstInteractionMusic();
             });
     } else {
-        try {
-            lobbyMusic.currentTime = 205;
-        } catch(err) {}
-        
+        // Desktop: loop between 205s and 295s
         lobbyMusic.ontimeupdate = function () {
             if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
                 try { 
@@ -409,10 +406,13 @@ function playLobbyMusicHelper(lobbyMusic, onSuccess) {
             }
         };
 
-        console.log('[LobbyMusic] Playing with desktop loop logic.');
+        console.log('[LobbyMusic] Playing on desktop.');
         lobbyMusic.play()
             .then(() => {
-                console.log('[LobbyMusic] Desktop play succeeded.');
+                console.log('[LobbyMusic] Desktop play succeeded. Seeking to 205...');
+                try {
+                    lobbyMusic.currentTime = 205;
+                } catch(err) {}
                 if (onSuccess) onSuccess();
             })
             .catch(err => {
