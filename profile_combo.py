@@ -142,15 +142,11 @@ def profile_combo(search_term):
     
     shared_counts = np.minimum(dict_matrix, s_vec).sum(axis=1)
     
-    # Mathematical lower bound: insertions + deletions <= 6 => (S-M)+(L-M) <= 6 => M >= (S+L-5)//2
-    min_shared = np.maximum(1, (source_len + dict_lens.astype(np.int16) - 5) // 2)
-    
-    len_diffs = np.abs(dict_lens.astype(np.int16) - source_len)
+    dict_lens_int = dict_lens.astype(np.int16)
     candidates = np.where(
         passed_mask & 
-        (len_diffs <= 6) & 
-        (shared_counts >= min_shared) &
-        (dict_lens.astype(np.int16) - shared_counts <= 6)
+        (dict_lens_int - source_len <= 6) & 
+        (shared_counts >= dict_lens_int - 6)
     )[0]
     pruning_time = time.time() - start_pruning
     print(f"Pruning time: {pruning_time:.4f}s, Candidates: {len(candidates)}")

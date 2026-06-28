@@ -4507,15 +4507,11 @@ def tools_combo_check():
     # 2. VECTORIZED PRUNING
     shared_counts = np.minimum(dict_matrix, s_vec).sum(axis=1)
     
-    # Mathematical lower bound: insertions + deletions <= 6 => (S-M)+(L-M) <= 6 => M >= (S+L-5)//2
-    min_shared = np.maximum(1, (source_len + dict_lens.astype(np.int16) - 5) // 2)
-    
-    len_diffs = np.abs(dict_lens.astype(np.int16) - source_len)
+    dict_lens_int = dict_lens.astype(np.int16)
     candidates = np.where(
         passed_mask & 
-        (len_diffs <= 6) & 
-        (shared_counts >= min_shared) &
-        (dict_lens.astype(np.int16) - shared_counts <= 6)
+        (dict_lens_int - source_len <= 6) & 
+        (shared_counts >= dict_lens_int - 6)
     )[0]
     
     # Initialize Groups (Using sets to prevent O(N^2) search bottleneck)
