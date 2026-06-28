@@ -118,12 +118,21 @@ function setupToolsNavigation() {
     if (toolsContent && toolsSidebar) {
         let touchStartX = 0;
         let touchStartY = 0;
+        let startedInTable = false;
+        
         toolsContent.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-            touchStartY = e.changedTouches[0].screenY;
+            if (e.changedTouches.length > 0) {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+                startedInTable = !!e.target.closest('.horizontal-scroll-container');
+            }
         }, { passive: true });
         
         toolsContent.addEventListener('touchend', (e) => {
+            if (startedInTable || e.target.closest('.horizontal-scroll-container')) {
+                return; // Ignore swipes that start or end inside the scrollable tables
+            }
+            
             const touchEndX = e.changedTouches[0].screenX;
             const touchEndY = e.changedTouches[0].screenY;
             const diffX = touchEndX - touchStartX;
