@@ -156,6 +156,52 @@ function setupComboChecker() {
             if (e.key === 'Enter') runComboSearch();
         });
     }
+
+    // Prevent horizontal scroll/swipe chaining to the parent .tools-split-layout on mobile and desktop
+    const containers = [document.getElementById('mp-container'), document.getElementById('lic-container')];
+    containers.forEach(container => {
+        if (!container) return;
+
+        let startX = 0;
+        let startY = 0;
+        let isHorizontalSwipe = false;
+        let touchIdentified = false;
+
+        container.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 0) {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                isHorizontalSwipe = false;
+                touchIdentified = false;
+            }
+        }, { passive: true });
+
+        container.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                if (!touchIdentified) {
+                    const diffX = Math.abs(e.touches[0].clientX - startX);
+                    const diffY = Math.abs(e.touches[0].clientY - startY);
+                    // Determine if horizontal or vertical swipe once at the start of movement
+                    if (diffX > 5 || diffY > 5) {
+                        isHorizontalSwipe = diffX > diffY;
+                        touchIdentified = true;
+                    }
+                }
+
+                if (isHorizontalSwipe) {
+                    // Stop propagation to prevent the parent .tools-split-layout from swiping back to categories
+                    e.stopPropagation();
+                }
+            }
+        }, { passive: false });
+
+        container.addEventListener('wheel', (e) => {
+            if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+                // Stop propagation to prevent horizontal trackpad scroll from shifting the split-layout
+                e.stopPropagation();
+            }
+        }, { passive: true });
+    });
 }
 
 async function runComboSearch() {

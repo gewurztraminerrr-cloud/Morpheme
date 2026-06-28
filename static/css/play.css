@@ -2116,6 +2116,7 @@ body.theme-light-brown .word-item.missed {
     flex: 1;
     padding: 10px;
     gap: 10px;
+    overscroll-behavior-x: contain;
 }
 
 /* Individual Group Column (e.g. "0MP", "1MP") */
