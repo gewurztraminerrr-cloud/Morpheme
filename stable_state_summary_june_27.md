@@ -1,73 +1,28 @@
-# Morpheme Stable State Summary - June 27, 2026
+# Stable State Summary - June 27, 2026
 
-This summary documents the stable state of the Morpheme application as of June 27, 2026. Localhost, GitHub origin, and `morpheme.games` are fully synchronized and verified under Commit ID **`5007457`** (and subsequently tagged as **`START_OVER_POINT_JUNE_27`** and **`snapshot-current`**).
+This document summarizes the stable state of **Morpheme** as of June 27, 2026. All local changes, remote code on GitHub, and the live application running on morpheme.games are fully synchronized.
 
----
+## Latest Commit Information
+* **Commit ID**: `6beb512`
+* **Branch**: `main`
+* **Commit Message**: "Deploy updates"
+* **Date**: June 27, 2026
 
-## 🚀 Key Improvements & Bug Fixes
+## Changes Included in this Stable State
+1. **Tools, Settings, and Mods Layout Fixes (Desktop/Laptop)**:
+   * **Constant Panel Height**: Locked the height of the `.tools-split-layout` container to exactly `620px` and the width to `1400px` on all screens `901px` and wider.
+   * **Constant Category Button Size**: Locked the sidebar category buttons to a height of `76px` and a width of `220px` to prevent any button shifting or layout jumping when switching tabs.
+   * **Empty Content Area**: Configured a constant dark background (`rgba(0, 0, 0, 0.25)`) and borders for the content area on the right, providing a large, stable empty space when no category is selected.
+   * **Aligned Page Titles**: Added a centered "Mods" title to the Mods tab and aligned all page title headers ("Tools", "Settings", "Mods") to match the `1400px` layout grid.
+2. **Mobile Layout Constraints**:
+   * Removed desktop width constraints on mobile screens (widths `900px` and below) to ensure the category button sidebar spans exactly `100%` of the screen width and the content area remains completely hidden off-screen to the right until selected.
+3. **Board Sizing Settings Refactor**:
+   * Removed the main board size slider and updated settings descriptions.
+   * Configured default sizes: 4x4: `82px`, 4x6: `82px`, 5x7: `65px`, 6x8: `54px`.
+   * Linked the dimension-specific sliders to dynamically resize the 2D example board (`#preview-board`) on slider input.
+4. **Intermission Tile Filtering Fix**:
+   * Clicking any letter tile (including duplicate letter tiles like multiple "C"s) now correctly filters the "All Words" list on mobile and desktop.
 
-### 1. Settings Page Redesign (Split-Layout)
-*   **Desktop & Laptop Layout**: Refactored the Settings container in [templates/index.html](file:///Users/jeffbabiak/templates/index.html) to use `.tools-split-layout`. It now features a sidebar on the left with three category tabs (**Appearance**, **Audio & Sounds**, and **Gameplay & Highlights**) and the corresponding configuration panels on the right.
-*   **Mobile Sliding Navigation**: Implemented sliding transitions, swipe gestures (swipe-to-back), and category navigation in [settings.js](file:///Users/jeffbabiak/static/js/settings.js) for mobile devices, aligning the Settings UX with the Tools UX.
-*   **Tile Selectable Space Relocation**: Moved the "Tile Selectable Space (Octagon vs Diamond)" panel from the *Appearance* category to the *Gameplay & Highlights* category per user feedback.
-
-### 2. Vertical Page Scroll Containment & Hash Reset
-*   **Disable Hash Auto-Scroll**: Modified [app.js](file:///Users/jeffbabiak/static/js/app.js) to temporarily clear the page container's `id` during transition. This prevents the browser's native layout engine from auto-scrolling the viewport down to the page container when the URL hash (e.g. `#page-settings` or `#page-tools`) becomes visible.
-*   **Manual Scroll Restoration**: Set `history.scrollRestoration = 'manual'` at the beginning of [app.js](file:///Users/jeffbabiak/static/js/app.js) to block the browser from forcing history-based scroll offsets on page navigation or reload.
-*   **Forced Scroll Reset**: Added a delayed scroll reset to `(0, 0)` in `showPage` to ensure that both the window and the page container are anchored at the very top, keeping the **"MORPHEME MORE-FEEM"** header fully visible.
-
-### 3. Mobile Scroll Containment
-*   **Viewport Lock**: Configured `#page-tools` and `#page-settings` on mobile in [play.css](file:///Users/jeffbabiak/static/css/play.css) to have a fixed height (`calc(100vh - 120px)`) and hidden vertical overflow (`overflow-y: hidden`).
-*   **Independent Scrollbars**: Forced the `.tools-split-layout` to fill the remaining viewport height, confining all scrolling to the sidebar list and the active tool content pane.
-*   **Active State Visibility**: Fixed a bug where inactive pages were shown on mobile by ensuring `#page-tools` and `#page-settings` default to `display: none` and only receive `display: flex !important` when active.
-
-### 4. Lobby "Start" Button State Reset
-*   **Lobby Observer Fix**: Modified `isOnLobby()` in [lobby.js](file:///Users/jeffbabiak/static/js/lobby.js) to use the cached `lobbyPage` closure reference. This ensures that even when the page container's ID is temporarily cleared during transition, the Lobby correctly registers that it is active and runs `resetLobbyButtons()`, restoring the "Start" buttons to their clickable, active states.
-
-### 5. Category Descriptions in Tools, Mods, and Settings
-*   **Structured Content**: Added nested `.tool-btn-title` and `.tool-btn-desc` `div` tags to all sidebar buttons in [templates/index.html](file:///Users/jeffbabiak/templates/index.html).
-*   **Theme-Adaptive Styling**: Styled descriptions in [play.css](file:///Users/jeffbabiak/static/css/play.css) to be smaller (`0.72rem`) and use a theme-adaptive muted color (`rgba(var(--text-primary-rgb), 0.45)`) that adapts to light and dark themes.
-*   **Caching Workaround**: Used `div` elements instead of inline `span` elements in the HTML to guarantee that the title and description stack vertically even if the user's browser has cached the older stylesheet.
-
-### 6. Bounce Format Ball Count Ratio
-*   **10:16 Ratio**: Changed the ball count formula in [play.js](file:///Users/jeffbabiak/static/js/play.js) to a ratio of 10 balls for every 16 letters (tiles): `const count = Math.round((rows * cols * 10) / 16);`.
-*   **4x4 Board Optimization**: For a 4x4 board (16 letters), this automatically reduces the ball count from 11 to 10, removing exactly 1 ball as requested.
-
-### 7. Page Title Headers
-*   **Visual Alignment**: Added `<h2>` headers with the class `.page-title-header` to both the Tools and Settings pages in [templates/index.html](file:///Users/jeffbabiak/templates/index.html).
-*   **CSS Layout**: Created the `.page-title-header` class in [play.css](file:///Users/jeffbabiak/static/css/play.css) to ensure perfect alignment on desktop and automatic side padding (`15px`) on mobile.
-
-### 8. Intermission Word List Desktop Scroll Preservation
-*   **Scroll Locking**: Modified `displayAllWords` in [play.js](file:///Users/jeffbabiak/static/js/play.js) to cache the scroll position of `#submitted-words-list` before re-rendering and restore it immediately after rendering on desktops/laptops (`!isMobile`), keeping the user's scroll position anchored when clicking a word to view its definition or board path.
-
-### 9. Automatic Spectator Assignment on Full Rooms
-*   **Graceful Spectate Fallback**: Modified `join_room` in [app.py](file:///Users/jeffbabiak/app.py) to automatically add the user as a spectator and return `role: 'spectator'` if the room is already full (has 8 active players), preventing "Room is full" errors. Both the Profile **Follow** button and the backend API are now fully aligned.
-
-### 10. Bounce Format Updates & Custom Setup Integration
-*   **Format Weight Distribution**: Updated `_spin_board_format` in [spinner_set.py](file:///Users/jeffbabiak/spinner_set.py) to restore the normal format weights: `68%` Normal, `12%` Checkerboard, `2%` Bounce, and `2%` for other modifiers.
-*   **Solo / Friends Custom Rooms**: Added the `Bounce` option to the Board Format dropdown in [templates/index.html](file:///Users/jeffbabiak/templates/index.html) under the Solo/Friends setup.
-*   **FAQ & Odds Display**: Added the `Bounce` format explanation and updated the odds displays under the FAQ section in [templates/index.html](file:///Users/jeffbabiak/templates/index.html).
-
-### 11. Easy Difficulty Board Generation Tuning
-*   **Stage 2 Optimization Objective**: Modified `_apply_io_b_uniqueness_optimization` in [board_generator.py](file:///Users/jeffbabiak/board_generator.py) to heavily penalize unique words (specifically 5L+ words on 4x4 and 4x6 boards) when generating under the "Easy" setting. This directly aligns the optimizer's objective function with the uniqueness ratio metric.
-*   **Strict Attempt Limits**: Increased the maximum strict compliance attempts from `8` to `40` for smaller 2D boards (4x4 and 4x6) in `generate_board` to guarantee a perfect match to the selected difficulty.
-
-### 12. Added Words (+ AW) Board Generation Support
-*   **Dictionary Appending**: Modified `_create_normal_board` in [board_generator.py](file:///Users/jeffbabiak/board_generator.py) to append moderator-added custom words (`word_validator.added_words`) to the dictionary pool when the "+ AW" option is active.
-*   **Forced Embedding**: Refined `_create_normal_board` to select and force-embed up to 3 suitable custom Added Words at the very beginning of the Word Soup phase when the grid is empty, ensuring they always find a valid path.
-*   **Path Protection**: Updated the path-finding algorithms (`find_random_path` and `find_checkerboard_path`) to prevent regular words from overwriting the cells of the custom Added Words.
-*   **Optimization/Sweep Safeguards**: Updated `generate_board` to dynamically solve the board right after the Word Soup phase, identify the exact coordinates of any custom Added Words, and add them to the `all_excluded` set to protect them from being overwritten during Stage 2 Optimization, decimation sweeps, or rescue sweeps.
-
----
-
-## 🛠 Active Features & Configuration
-*   **Board Formats**: Normal, Checkerboard, Bounce, Double, Triple, Valued Letters, Rotation, Penalty, Mania, Either/Or, Bonus Word, and Density.
-*   **Grid Dimensions**: 4x4, 4x6, 5x7, 6x8, and 3x3x3 Cube.
-*   **Dictionaries**: NWL (American) and CSW (International) Tries.
-
----
-
-**Latest Stable Commit ID**: `a87434b`  
-**GitHub Tags**: `START_OVER_POINT_JUNE_27`, `snapshot-current`  
-**Localhost & GitHub Sameness Status**: Synchronized  
-**Production Server Status**: Green / PM2 Online / Live at commit `a87434b`
+## Verification
+* **Local**: Verified on Safari and Chrome.
+* **Production**: Deployed via SSH/PM2 and verified live on **morpheme.games**.
