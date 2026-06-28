@@ -1942,7 +1942,8 @@ body.theme-light-brown .word-item.missed {
 
 .tool-pane {
     display: none;
-    height: 100%;
+    min-height: 100%;
+    height: auto;
     flex-direction: column;
 }
 
@@ -2077,7 +2078,7 @@ body.theme-light-brown .word-item.missed {
     gap: 25px;
     flex: 1;
     min-height: 0;
-    overflow-y: hidden;
+    overflow-y: visible;
     /* Main vertical scroll handled by container, but charts need room */
 }
 
