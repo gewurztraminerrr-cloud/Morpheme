@@ -4383,7 +4383,7 @@ def calculate_morpheme_metric(source, target):
             return
             
         if t_idx == t_len:
-            actual_cost = current_relocations + (s_len - m_len) + (t_len - m_len)
+            actual_cost = current_relocations + current_paid_deletions + (t_len - m_len)
             if actual_cost < best_mp:
                 best_mp = actual_cost
             return
