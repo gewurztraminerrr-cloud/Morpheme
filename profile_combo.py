@@ -145,7 +145,7 @@ def profile_combo(search_term):
     dict_lens_int = dict_lens.astype(np.int16)
     candidates = np.where(
         passed_mask & 
-        (dict_lens_int - source_len <= 6) & 
+        (np.abs(dict_lens_int - source_len) <= 3) & 
         (shared_counts >= dict_lens_int - 6)
     )[0]
     pruning_time = time.time() - start_pruning

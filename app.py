@@ -4510,7 +4510,7 @@ def tools_combo_check():
     dict_lens_int = dict_lens.astype(np.int16)
     candidates = np.where(
         passed_mask & 
-        (dict_lens_int - source_len <= 6) & 
+        (np.abs(dict_lens_int - source_len) <= 3) & 
         (shared_counts >= dict_lens_int - 6)
     )[0]
     
