@@ -64,7 +64,6 @@ window.showTool = function(toolId) {
     if (isMobile) {
         const layout = document.querySelector('#page-tools .tools-split-layout');
         if (layout) {
-            layout.classList.add('pane-active');
             layout.scrollTo({ left: layout.clientWidth, behavior: 'smooth' });
         }
     }
@@ -99,7 +98,6 @@ function setupToolsNavigation() {
                     setTimeout(() => {
                         const layoutEl = document.querySelector('#page-tools .tools-split-layout');
                         if (layoutEl) {
-                            layoutEl.classList.remove('pane-active');
                             layoutEl.scrollLeft = 0;
                         }
                     }, 50);
@@ -142,7 +140,6 @@ function setupToolsNavigation() {
             if (diffX > 80 && Math.abs(diffX) > Math.abs(diffY)) {
                 const layoutEl = document.querySelector('#page-tools .tools-split-layout');
                 if (layoutEl) {
-                    layoutEl.classList.remove('pane-active');
                     layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
                 }
             }
@@ -155,7 +152,6 @@ function setupToolsNavigation() {
         mobileBackBtn.addEventListener('click', () => {
             const layoutEl = document.querySelector('#page-tools .tools-split-layout');
             if (layoutEl) {
-                layoutEl.classList.remove('pane-active');
                 layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
             }
         });
