@@ -4524,21 +4524,28 @@ def tools_combo_check():
         target_len = int(dict_lens[idx])
         shared_count = int(shared_counts[idx])
         
-        # 1-pass primary check
-        best_mp, linearity = calculate_morpheme_metric(search_term, word)
+        # Calculate forward MP (search_term -> candidate)
+        m1_f, linearity = calculate_morpheme_metric(search_term, word)
+        m2_f, _ = calculate_morpheme_metric(search_term, word[::-1])
+        m3_f, _ = calculate_morpheme_metric(search_term_rev, word)
+        forward_mp = min(m1_f, m2_f, m3_f)
         
-        # Subsequent passes only if promising
-        # Early Exit: If linearity is already very low, m2/m3 might not help much
-        # But we must be careful. For now, just optimize the calls.
-        if best_mp > 1:
-            # Mirror check (source vs target[::-1])
-            m2, _ = calculate_morpheme_metric(search_term, word[::-1])
-            best_mp = min(best_mp, m2)
-        if best_mp > 1:
-            # Reverse-Source check (source[::-1] vs target)
-            # Note: These are NOT identical due to how paid_deletions/span are calculated.
-            m3, _ = calculate_morpheme_metric(search_term[::-1], word)
-            best_mp = min(best_mp, m3)
+        # Calculate backward MP (candidate -> search_term)
+        m1_b, _ = calculate_morpheme_metric(word, search_term)
+        m2_b, _ = calculate_morpheme_metric(word[::-1], search_term)
+        m3_b, _ = calculate_morpheme_metric(word, search_term_rev)
+        backward_mp = min(m1_b, m2_b, m3_b)
+        
+        # Apply asymmetric combination logic:
+        # If backward is 0 (free reduction), we show the non-trivial forward cost.
+        # If forward is 0, we show 0.
+        # Otherwise, we show the minimum connection cost between them.
+        if backward_mp == 0:
+            best_mp = forward_mp
+        elif forward_mp == 0:
+            best_mp = 0
+        else:
+            best_mp = min(forward_mp, backward_mp)
         
         if best_mp <= 6:
             check_and_add_mp(mp_groups, source_len, target_len, best_mp, word)
