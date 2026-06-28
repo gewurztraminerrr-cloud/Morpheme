@@ -285,9 +285,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     try {
                         const lobbyMusic = document.getElementById('lobby-music');
                         if (lobbyMusic) {
-                            try {
-                                lobbyMusic.currentTime = 205;
-                            } catch(err) {}
+                            if (lobbyMusic.readyState >= 1) {
+                                try {
+                                    lobbyMusic.currentTime = 205;
+                                } catch(err) {}
+                            }
                             setupLobbyMusicLoop(lobbyMusic);
                             console.log('[LobbyMusic] Playing lobby music via gateway button click.');
                             lobbyMusic.play()
@@ -435,9 +437,11 @@ function handleLobbyMusicState() {
 
         if (lobbyMusic.paused) {
             console.log('[LobbyMusic] Attempting programmatic .play()...');
-            try {
-                lobbyMusic.currentTime = 205;
-            } catch(err) {}
+            if (lobbyMusic.readyState >= 1) {
+                try {
+                    lobbyMusic.currentTime = 205;
+                } catch(err) {}
+            }
             lobbyMusic.play()
                 .then(() => {
                     console.log('[LobbyMusic] Programatic play() resolved successfully!');
@@ -480,9 +484,11 @@ function playMusicOnFirstInteraction() {
             setupLobbyMusicLoop(lobbyMusic);
 
             console.log('[LobbyMusic] Attempting play() on gesture to unlock/unmute stream...');
-            try {
-                lobbyMusic.currentTime = 205;
-            } catch(err) {}
+            if (lobbyMusic.readyState >= 1) {
+                try {
+                    lobbyMusic.currentTime = 205;
+                } catch(err) {}
+            }
             lobbyMusic.play()
                 .then(() => {
                     console.log('[LobbyMusic] Lobby music playback started/unlocked successfully on user gesture!');
