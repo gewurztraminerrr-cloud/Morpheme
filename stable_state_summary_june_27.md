@@ -3,9 +3,9 @@
 This document summarizes the stable state of **Morpheme** as of June 27, 2026. All local changes, remote code on GitHub, and the live application running on morpheme.games are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `4f260e5`
+* **Commit ID**: `0cdbef4`
 * **Branch**: `main`
-* **Commit Message**: "Deploy updates"
+* **Commit Message**: "Create June 27 Stable Point"
 * **Date**: June 27, 2026
 
 ## Changes Included in this Stable State
@@ -22,7 +22,20 @@ This document summarizes the stable state of **Morpheme** as of June 27, 2026. A
    * Linked the dimension-specific sliders to dynamically resize the 2D example board (`#preview-board`) on slider input.
 4. **Intermission Tile Filtering Fix**:
    * Clicking any letter tile (including duplicate letter tiles like multiple "C"s) now correctly filters the "All Words" list on mobile and desktop.
+5. **CSW + AW Dictionary in Solo Mode**:
+   * Modified `board_generator.py` to preserve the `use_added_words` context variable if already set to `True` by the game room, ensuring Added Words (AW) are correctly generated on Solo boards.
+6. **Easy Difficulty Board Generation**:
+   * Adjusted uniqueness ratio ranges for 4x4 and 4x6 boards to prevent generator timeouts.
+   * Purged all super-rare letters (`Q`, `Z`, `J`, `X`, `K`) on Easy difficulty (unless they are part of the protected bonus word) to guarantee a lower uniqueness ratio.
+7. **Profile Stats Exclude 24h Rooms**:
+   * Excluded 24-hour rooms (duration `>= 7200` seconds) from the main profile statistics (**GAMES**, **WIN RATE**, **AVG WPM**, **BEST**, and **PT SUM**) so that they only reflect active play sessions.
+   * Filtered out rounds with a score of `0` from these statistics and config-specific averages.
+8. **Dynamic human-like Solo Bots**:
+   * Implemented a database-driven dynamic AI model where bots query the recent round history of real human players on the server, calculate their WPM, word length, and CSW-only knowledge by rating bracket, and dynamically configure their parameters to match.
+9. **Premium Board Loader with Typewriter Status Ticker**:
+   * Redesigned the board loading state to feature a premium glowing spinner, a clear explanation card of the real-time board generation process, and a live status ticker that rotates through the actual steps of the generation (DFS solving, uniqueness checks, etc.).
+   * Made the loading state mobile-responsive and fixed a layout collapse issue where the container was squeezed into a single 50px cell on mobile viewports.
 
 ## Verification
-* **Local**: Verified on Safari and Chrome.
+* **Local**: Verified on Safari and Chrome (Desktop and Mobile).
 * **Production**: Deployed via SSH/PM2 and verified live on **morpheme.games**.
