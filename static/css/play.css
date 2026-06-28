@@ -1833,6 +1833,7 @@ body.theme-light-brown .word-item.missed {
     flex-direction: column;
     gap: 10px;
     box-sizing: border-box;
+    overflow-y: auto;
 }
 
 .tool-nav-btn {
@@ -1855,7 +1856,7 @@ body.theme-light-brown .word-item.missed {
 @media (min-width: 901px) {
     #page-tools,
     #page-settings {
-        overflow: hidden !important;
+        overflow-y: auto !important;
         padding-top: 20px !important;
         padding-bottom: 20px !important;
     }
