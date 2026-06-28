@@ -1853,10 +1853,16 @@ body.theme-light-brown .word-item.missed {
 }
 
 @media (min-width: 901px) {
+    #page-tools,
+    #page-settings {
+        overflow: hidden !important;
+        padding-top: 20px !important;
+        padding-bottom: 20px !important;
+    }
     .tools-split-layout {
-        height: calc(100vh - 200px) !important;
-        min-height: 550px !important;
-        max-height: 750px !important;
+        height: 620px !important;
+        min-height: 620px !important;
+        max-height: 620px !important;
     }
     .tool-nav-btn {
         height: 76px;
