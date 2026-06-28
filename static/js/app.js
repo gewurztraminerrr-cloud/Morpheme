@@ -280,22 +280,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     console.log(`[Gateway] Transitioning via event: ${e ? e.type : 'manual'}`);
 
-                    // 1. Start music FIRST — must happen synchronously before any await
-                    //    so we are still inside the user-gesture call stack.
-                    //    Do NOT seek before play() — seeking to 205 before the audio is
-                    //    buffered there can block play() on iOS. ontimeupdate will jump
-                    //    to 205 once the position is actually buffered.
+                    // 1. Play the music inside a completely isolated, non-blocking try-catch block
+                    // Play it synchronously first, before any await, to preserve the user gesture context!
                     try {
                         const lobbyMusic = document.getElementById('lobby-music');
                         if (lobbyMusic) {
-                            console.log('[LobbyMusic] Playing via gateway click.');
-                            _playLobbyMusic(lobbyMusic, removeInteractionListeners);
+                            try {
+                                lobbyMusic.currentTime = 205;
+                            } catch(err) {}
+                            setupLobbyMusicLoop(lobbyMusic);
+                            console.log('[LobbyMusic] Playing lobby music via gateway button click.');
+                            lobbyMusic.play()
+                                .then(() => {
+                                    console.log('[LobbyMusic] Gateway playback succeeded.');
+                                    removeInteractionListeners();
+                                })
+                                .catch(err => console.warn('[LobbyMusic] Gateway play rejected:', err));
                         }
                     } catch (audioErr) {
-                        console.error('[LobbyMusic] Exception during gateway play:', audioErr);
+                        console.error('[LobbyMusic] Exception during gateway play initialization:', audioErr);
                     }
 
-                    // 2. Leave the room (async — after music is already started)
+                    // 2. Leave the room if we are not going to the play page
                     if (targetNavName !== 'play') {
                         if (window.leaveCurrentRoom && (window.currentRoomId || localStorage.getItem('last_joined_room'))) {
                             console.log('[Gateway] Leaving current room on gateway transition.');
@@ -324,17 +330,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 gatewayBtn.onclick = handleGatewayTransition;
 
                 // Force press-down effect on mobile (iOS :active is unreliable without a touch listener)
-                // Also immediately play music on touchstart — this guarantees we're in the gesture
-                // context before any async/await or page-state race conditions can interfere.
                 gatewayBtn.addEventListener('touchstart', () => {
                     gatewayBtn.classList.add('pressed');
-                    // Play music immediately on touch — synchronous, within gesture context
-                    try {
-                        const lobbyMusic = document.getElementById('lobby-music');
-                        if (lobbyMusic && lobbyMusic.paused) {
-                            _playLobbyMusic(lobbyMusic, removeInteractionListeners);
-                        }
-                    } catch(e) {}
                 }, { passive: true });
                 gatewayBtn.addEventListener('touchend', () => {
                     setTimeout(() => gatewayBtn.classList.remove('pressed'), 200);
@@ -388,31 +385,27 @@ async function fetchUserCount() {
 }
 
 
-// Sets the ontimeupdate loop handler (upper bound only — loops back to 205 at 295s)
-function _setupLobbyMusicLoop(lobbyMusic) {
+// Safe helper to set up the lobby music loop.
+// It loops back to 205 if it exceeds 295.
+// If it is below 205 (e.g. at start), it attempts to seek to 205 once when metadata is ready,
+// but does not loop infinitely if the seek fails.
+function setupLobbyMusicLoop(lobbyMusic) {
+    let initialSeekAttempted = false;
     lobbyMusic.ontimeupdate = function () {
-        if (lobbyMusic.currentTime >= 295) {
-            try { lobbyMusic.currentTime = 205; } catch(e) {}
+        const curTime = lobbyMusic.currentTime;
+        if (curTime >= 295) {
+            try {
+                lobbyMusic.currentTime = 205;
+            } catch(err) {}
+        } else if (curTime < 205) {
+            if (!initialSeekAttempted && lobbyMusic.readyState >= 1) {
+                initialSeekAttempted = true;
+                try {
+                    lobbyMusic.currentTime = 205;
+                } catch(err) {}
+            }
         }
     };
-}
-
-// Plays lobby music: calls play() with no upfront seek, then seeks to 205
-// inside .then() once the browser has confirmed playback is active.
-// This avoids blocking play() with a seek on iOS (where audio may not be
-// buffered at 205s yet), while still landing at the right loop position.
-function _playLobbyMusic(lobbyMusic, onSuccess) {
-    _setupLobbyMusicLoop(lobbyMusic);
-    lobbyMusic.play()
-        .then(() => {
-            // Now playing — safe to seek on all devices
-            try { lobbyMusic.currentTime = 205; } catch(e) {}
-            if (onSuccess) onSuccess();
-        })
-        .catch(e => {
-            console.log('[LobbyMusic] play() blocked:', e.message);
-            setupFirstInteractionMusic();
-        });
 }
 
 // Helper to start/stop music based on Page AND Setting
@@ -430,16 +423,29 @@ function handleLobbyMusicState() {
     const shouldPlay = (onLobby || onLoading) && lobbyMusicSetting;
 
     console.log('[LobbyMusic] State assessment:', {
-        onLobby, lobbyMusicSetting, shouldPlay,
-        readyState: lobbyMusic.readyState,
+        onLobby,
+        lobbyMusicSetting,
+        shouldPlay,
         paused: lobbyMusic.paused,
         currentTime: lobbyMusic.currentTime
     });
 
     if (shouldPlay) {
+        setupLobbyMusicLoop(lobbyMusic);
+
         if (lobbyMusic.paused) {
             console.log('[LobbyMusic] Attempting programmatic .play()...');
-            _playLobbyMusic(lobbyMusic, null);
+            try {
+                lobbyMusic.currentTime = 205;
+            } catch(err) {}
+            lobbyMusic.play()
+                .then(() => {
+                    console.log('[LobbyMusic] Programatic play() resolved successfully!');
+                })
+                .catch(e => {
+                    console.log('[LobbyMusic] Programatic play() blocked by browser:', e.message);
+                    setupFirstInteractionMusic();
+                });
         }
     } else {
         console.log('[LobbyMusic] shouldPlay is false, ensuring audio is paused.');
@@ -459,16 +465,32 @@ function playMusicOnFirstInteraction() {
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
     const shouldPlay = (onLobby || onLoading) && !onLogin && lobbyMusicSetting;
 
-    console.log('[LobbyMusic] Gesture state evaluation:', { onLobby, onLoading, onLogin, lobbyMusicSetting, shouldPlay });
+    console.log('[LobbyMusic] Gesture state evaluation:', {
+        onLobby,
+        onLoading,
+        onLogin,
+        lobbyMusicSetting,
+        shouldPlay
+    });
 
     // Only attempt to play if we are in the lobby or loading, but NOT on the login page!
     if (shouldPlay) {
         const lobbyMusic = document.getElementById('lobby-music');
         if (lobbyMusic) {
-            console.log('[LobbyMusic] Attempting play() on gesture...');
-            _playLobbyMusic(lobbyMusic, removeInteractionListeners);
+            setupLobbyMusicLoop(lobbyMusic);
+
+            console.log('[LobbyMusic] Attempting play() on gesture to unlock/unmute stream...');
+            try {
+                lobbyMusic.currentTime = 205;
+            } catch(err) {}
+            lobbyMusic.play()
+                .then(() => {
+                    console.log('[LobbyMusic] Lobby music playback started/unlocked successfully on user gesture!');
+                    removeInteractionListeners();
+                })
+                .catch(e => console.log('[LobbyMusic] Gesture play() still blocked:', e.message));
         } else {
-            console.warn('[LobbyMusic] #lobby-music not found on gesture.');
+            console.warn('[LobbyMusic] #lobby-music element not found on gesture.');
         }
     }
 }
@@ -487,8 +509,6 @@ function setupFirstInteractionMusic() {
         document.addEventListener(evt, playMusicOnFirstInteraction, { capture: true });
     });
 }
-
-
 
 // Setup contact form submission
 function setupContactForm() {
