@@ -4472,6 +4472,8 @@ input[type=range]::-moz-range-track {
     .tools-content {
         flex: 0 0 100% !important;
         width: 100% !important;
+        min-width: none !important;
+        max-width: none !important;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important;
         height: 100% !important;
