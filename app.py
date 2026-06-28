@@ -2463,28 +2463,28 @@ def get_public_profile(username):
 
     # Calculate Period Stats (If 'all', we still calculate from round_history for consistency, 
     # but could use user table for performance if data volume is high)
-    # Only count rounds with a score > 0 as a played game
+    # Only count rounds with a score > 0 as a played game, and exclude 24h rooms (duration >= 7200)
     cursor_stats = conn.execute(f'''
         SELECT COUNT(CASE WHEN total_score > 0 THEN 1 END), SUM(total_score)
         FROM round_history
-        WHERE user_id = ? {time_filter}
+        WHERE user_id = ? AND round_duration < 7200 {time_filter}
     ''', (user_id,))
     games_played_period, pt_sum_period = cursor_stats.fetchone()
     games_played_period = games_played_period or 0
     pt_sum_period = pt_sum_period or 0
 
-    # Calculate Wins in Period (Optimized single query)
+    # Calculate Wins in Period (Optimized single query, excluding 24h rooms)
     cursor_wins = conn.execute(f'''
         SELECT COUNT(*) FROM (
             SELECT rh.room_id, rh.round_number, rh.timestamp, MAX(rh.total_score) as max_s
             FROM round_history rh
-            WHERE rh.room_id IN (SELECT room_id FROM round_history WHERE user_id = ? {time_filter})
+            WHERE rh.room_id IN (SELECT room_id FROM round_history WHERE user_id = ? AND round_duration < 7200 {time_filter})
             GROUP BY rh.room_id, rh.round_number, rh.timestamp
         ) as room_winners
         JOIN round_history rh2 ON rh2.room_id = room_winners.room_id 
             AND rh2.round_number = room_winners.round_number 
             AND rh2.timestamp = room_winners.timestamp
-        WHERE rh2.user_id = ? AND rh2.total_score >= room_winners.max_s AND room_winners.max_s > 0
+        WHERE rh2.user_id = ? AND rh2.total_score >= room_winners.max_s AND room_winners.max_s > 0 AND rh2.round_duration < 7200
     ''', (user_id, user_id))
     wins_period = cursor_wins.fetchone()[0] or 0
 
