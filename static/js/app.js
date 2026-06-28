@@ -546,8 +546,39 @@ async function checkSession() {
         return;
     }
     try {
-        const response = await fetch('/api/session');
-        const data = await response.json();
+        let response = await fetch('/api/session');
+        let data = await response.json();
+
+        if (!data.authenticated) {
+            const token = localStorage.getItem('morpheme_auth_token');
+            if (token) {
+                console.info('[Auth] Session empty. Attempting auto-login via stored token...');
+                try {
+                    const autoLoginRes = await fetch('/api/auth/auto-login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ auth_token: token })
+                    });
+                    const autoLoginData = await autoLoginRes.json();
+                    if (autoLoginData.success) {
+                        console.info('[Auth] Auto-login succeeded.');
+                        data = {
+                            authenticated: true,
+                            username: autoLoginData.username,
+                            email: autoLoginData.email,
+                            rating: autoLoginData.rating,
+                            is_guest: false,
+                            is_mod: autoLoginData.is_mod
+                        };
+                    } else {
+                        console.warn('[Auth] Auto-login failed:', autoLoginData.error);
+                        localStorage.removeItem('morpheme_auth_token');
+                    }
+                } catch (e) {
+                    console.error('[Auth] Auto-login error:', e);
+                }
+            }
+        }
 
         if (data.authenticated) {
             localStorage.setItem('morpheme_logged_in', 'true');
@@ -1250,6 +1281,9 @@ async function handleSignIn() {
         if (data.success) {
             localStorage.removeItem('morpheme_logged_out');
             localStorage.setItem('morpheme_logged_in', 'true');
+            if (data.auth_token) {
+                localStorage.setItem('morpheme_auth_token', data.auth_token);
+            }
             currentUser = data.username;
             window.currentUser = currentUser;
             currentUserEmail = data.email;
@@ -1334,6 +1368,9 @@ async function handleSignUp() {
 
         if (data.success) {
             localStorage.setItem('morpheme_logged_in', 'true');
+            if (data.auth_token) {
+                localStorage.setItem('morpheme_auth_token', data.auth_token);
+            }
             currentUser = data.username;
             window.currentUser = currentUser;
             currentUserEmail = email; // From the signup form

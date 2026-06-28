@@ -1147,6 +1147,14 @@ def init_db():
         except sqlite3.OperationalError:
             pass
 
+    # MIGRATION: Add auth_token column for persistent PWA logins
+    try:
+        conn.execute('ALTER TABLE users ADD COLUMN auth_token TEXT')
+        conn.commit()
+        print("Migrated DB: Added auth_token column to users")
+    except sqlite3.OperationalError:
+        pass
+
     # MIGRATION: Add email verification columns
     try:
         conn.execute('ALTER TABLE users ADD COLUMN is_verified INTEGER DEFAULT 1')
@@ -2150,6 +2158,10 @@ def register():
         session.pop('signup_code_expires', None)
         
         # Automatically log the user in!
+        auth_token = uuid.uuid4().hex
+        conn.execute('UPDATE users SET auth_token = ? WHERE id = ?', (auth_token, user[0]))
+        conn.commit()
+
         session['user_id'] = user[0]
         session['username'] = username
         session['email'] = email
@@ -2157,7 +2169,7 @@ def register():
         session['_morpheme_login_time'] = time.time()
         session.permanent = True
         
-        return jsonify({'success': True, 'username': username, 'email': email, 'rating': user[1]})
+        return jsonify({'success': True, 'username': username, 'email': email, 'rating': user[1], 'auth_token': auth_token})
     except sqlite3.IntegrityError:
         return jsonify({'error': 'Username already exists'}), 400
     except Exception as e:
@@ -2250,12 +2262,17 @@ def login():
         conn = sqlite3.connect(DB_PATH, timeout=30)
         cursor = conn.execute('SELECT id, password_hash, email, username FROM users WHERE username = ? COLLATE NOCASE', (username,))
         user = cursor.fetchone()
-        conn.close()
         
         if not user or not check_password_hash(user[1], password):
+            conn.close()
             return jsonify({'success': False, 'error': 'Invalid username or password'}), 200
         
         canonical_username = user[3]
+        auth_token = uuid.uuid4().hex
+        conn.execute('UPDATE users SET auth_token = ? WHERE id = ?', (auth_token, user[0]))
+        conn.commit()
+        conn.close()
+
         session['user_id'] = user[0]
         session['username'] = canonical_username
         session['email'] = user[2]
@@ -2267,30 +2284,62 @@ def login():
             'success': True, 
             'username': canonical_username, 
             'email': user[2],
-            'is_mod': is_mod(canonical_username)
+            'is_mod': is_mod(canonical_username),
+            'auth_token': auth_token
         })
     except Exception as e:
         print(f"[LoginError] {e}")
         return jsonify({'success': False, 'error': f'Server error: {e}'}), 200
 
 
+@app.route('/api/auth/auto-login', methods=['POST'])
+def auto_login():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'Invalid request'}), 200
+        token = data.get('auth_token')
+        if not token:
+            return jsonify({'success': False, 'error': 'Token missing'}), 200
+            
+        conn = sqlite3.connect(DB_PATH, timeout=30)
+        cursor = conn.execute('SELECT id, username, email, rating FROM users WHERE auth_token = ?', (token,))
+        user = cursor.fetchone()
+        conn.close()
+        
+        if not user:
+            return jsonify({'success': False, 'error': 'Invalid or expired token'}), 200
+            
+        session['user_id'] = user[0]
+        session['username'] = user[1]
+        session['email'] = user[2]
+        session.pop('is_guest', None)
+        session['_morpheme_login_time'] = time.time()
+        session.permanent = True
+        
+        return jsonify({
+            'success': True,
+            'username': user[1],
+            'email': user[2],
+            'rating': user[3],
+            'is_mod': is_mod(user[1])
+        })
+    except Exception as e:
+        print(f"[AutoLoginError] {e}")
+        return jsonify({'success': False, 'error': str(e)}), 200
+
+
 @app.route('/api/logout', methods=['POST'])
 def logout():
     try:
         user_id = session.get('user_id')
-        # Temporarily disable cleanup to debug logout crash
-        # if user_id:
-        #     try:
-        #         cleanup_user_rooms_entirely(user_id)
-        #     except Exception as e_rooms:
-        #         print(f"[LogoutError] Error cleaning up rooms for user {user_id}: {e_rooms}")
-        #         
-        #     try:
-        #         room_manager.remove_presence(user_id)
-        #     except Exception as e_pres:
-        #         print(f"[LogoutError] Error removing presence for user {user_id}: {e_pres}")
+        if user_id:
+            conn = sqlite3.connect(DB_PATH, timeout=30)
+            conn.execute('UPDATE users SET auth_token = NULL WHERE id = ?', (user_id,))
+            conn.commit()
+            conn.close()
     except Exception as e:
-        print(f"[LogoutError] Error during logout session retrieval: {e}")
+        print(f"[LogoutError] Error during logout: {e}")
     finally:
         session.clear()
         
