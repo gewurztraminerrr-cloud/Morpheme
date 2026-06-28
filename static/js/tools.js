@@ -64,6 +64,7 @@ window.showTool = function(toolId) {
     if (isMobile) {
         const layout = document.querySelector('#page-tools .tools-split-layout');
         if (layout) {
+            layout.classList.add('pane-active');
             layout.scrollTo({ left: layout.clientWidth, behavior: 'smooth' });
         }
     }
@@ -97,8 +98,11 @@ function setupToolsNavigation() {
                 if (isMobile) {
                     setTimeout(() => {
                         const layoutEl = document.querySelector('#page-tools .tools-split-layout');
-                        if (layoutEl) layoutEl.scrollLeft = 0;
-                    }, 100);
+                        if (layoutEl) {
+                            layoutEl.classList.remove('pane-active');
+                            layoutEl.scrollLeft = 0;
+                        }
+                    }, 50);
                 }
             }
         });
@@ -128,7 +132,10 @@ function setupToolsNavigation() {
             // If swiped right (diffX > 80) and horizontal movement was dominant
             if (diffX > 80 && Math.abs(diffX) > Math.abs(diffY)) {
                 const layoutEl = document.querySelector('#page-tools .tools-split-layout');
-                if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+                if (layoutEl) {
+                    layoutEl.classList.remove('pane-active');
+                    layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+                }
             }
         }, { passive: true });
     }
@@ -138,7 +145,10 @@ function setupToolsNavigation() {
     if (mobileBackBtn) {
         mobileBackBtn.addEventListener('click', () => {
             const layoutEl = document.querySelector('#page-tools .tools-split-layout');
-            if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+            if (layoutEl) {
+                layoutEl.classList.remove('pane-active');
+                layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+            }
         });
     }
 }
