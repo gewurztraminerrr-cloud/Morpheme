@@ -421,8 +421,10 @@ function handleLobbyMusicState() {
         return;
     }
 
-    const onLobby = document.getElementById('page-lobby')?.classList.contains('active');
-    const onLoading = document.getElementById('page-loading')?.classList.contains('active');
+    // Use window.currentPageId if available to avoid DOM ID race conditions during transition
+    const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
+    const onLobby = (activePage === 'page-lobby');
+    const onLoading = (activePage === 'page-loading');
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
     const shouldPlay = (onLobby || onLoading) && lobbyMusicSetting;
 
@@ -451,9 +453,10 @@ function handleLobbyMusicState() {
 // Modern Browser Autoplay bypass helpers
 function playMusicOnFirstInteraction() {
     console.log('[LobbyMusic] playMusicOnFirstInteraction() triggered by gesture.');
-    const onLobby = document.getElementById('page-lobby')?.classList.contains('active');
-    const onLoading = document.getElementById('page-loading')?.classList.contains('active');
-    const onLogin = document.getElementById('page-login')?.classList.contains('active');
+    const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
+    const onLobby = (activePage === 'page-lobby');
+    const onLoading = (activePage === 'page-loading');
+    const onLogin = (activePage === 'page-login');
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
     const shouldPlay = (onLobby || onLoading) && !onLogin && lobbyMusicSetting;
 
@@ -1012,6 +1015,7 @@ function setupModalListeners() {
 }
 
 function showPage(pageId) {
+    window.currentPageId = pageId;
     // Intercept leaving tournament play mid-round
     if (pageId !== 'page-play' && window.isTournamentPlay && localStorage.getItem('tournament_play_active')) {
         if (typeof window.finishTournamentTurn === 'function') {
