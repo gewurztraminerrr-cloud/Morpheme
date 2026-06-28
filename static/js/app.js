@@ -411,17 +411,29 @@ function logLobbyMusic(msg) {
 }
 
 // Helper to play lobby music safely on both mobile and desktop.
-// - Mobile: Plays natively from 0s (no seeks) to prevent browser/OS seek stalling.
-// - Desktop/Laptop: Exact June 27 stable logic (seek to 205s and loop between 205s and 295s).
+// - Mobile: Plays and then seeks to 205s inside the resolved play() promise (safe, no upfront seek-stalling).
+// - Desktop/Laptop: Seeks immediately if ready, otherwise seeks inside the resolved play() promise.
+// Both loop between 205s and 295s via ontimeupdate.
 function playLobbyMusicHelper(lobbyMusic, onSuccess) {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0);
 
+    // Common loop logic: loop back to 205 if we exceed 295
+    lobbyMusic.ontimeupdate = function () {
+        if (lobbyMusic.currentTime >= 295) {
+            try { 
+                lobbyMusic.currentTime = 205; 
+            } catch(err) {}
+        }
+    };
+
     if (isMobile) {
-        lobbyMusic.ontimeupdate = null; // Native looping only
-        logLobbyMusic('Playing natively on mobile.');
+        logLobbyMusic('Playing on mobile.');
         lobbyMusic.play()
             .then(() => {
-                logLobbyMusic('Mobile play succeeded.');
+                logLobbyMusic('Mobile play succeeded. Seeking to 205...');
+                try {
+                    lobbyMusic.currentTime = 205;
+                } catch(err) {}
                 if (onSuccess) onSuccess();
             })
             .catch(err => {
@@ -429,22 +441,21 @@ function playLobbyMusicHelper(lobbyMusic, onSuccess) {
                 setupFirstInteractionMusic();
             });
     } else {
-        try {
-            lobbyMusic.currentTime = 205;
-        } catch(err) {}
-        
-        lobbyMusic.ontimeupdate = function () {
-            if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
-                try { 
-                    lobbyMusic.currentTime = 205; 
-                } catch(err) {}
-            }
-        };
+        if (lobbyMusic.readyState >= 1) {
+            try {
+                lobbyMusic.currentTime = 205;
+            } catch(err) {}
+        }
 
-        logLobbyMusic('Playing with desktop loop logic.');
+        logLobbyMusic('Playing on desktop.');
         lobbyMusic.play()
             .then(() => {
                 logLobbyMusic('Desktop play succeeded.');
+                if (lobbyMusic.currentTime < 205) {
+                    try {
+                        lobbyMusic.currentTime = 205;
+                    } catch(err) {}
+                }
                 if (onSuccess) onSuccess();
             })
             .catch(err => {
