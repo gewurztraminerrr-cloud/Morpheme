@@ -40,10 +40,14 @@ def get_lis(nums):
                 dp[i] = max(dp[i], dp[j] + 1)
     return max(dp) if dp else 0
 
-def calculate_morpheme_metric(source, target):
+def calculate_morpheme_metric(source, target, limit=6):
     s_len, t_len = len(source), len(target)
     if s_len == 0 or t_len == 0: return 99, 0
     
+    # 0. Quick substring check
+    if target in source:
+        return 0, t_len
+        
     prev = [0] * (t_len + 1)
     curr = [0] * (t_len + 1)
     for char_s in source:
@@ -57,9 +61,10 @@ def calculate_morpheme_metric(source, target):
         prev[:] = curr
     
     linearity = prev[t_len]
-    if linearity == 0: return 99, 0
+    if linearity < t_len - limit:
+        return 99, linearity
     
-    best_mp = t_len + s_len
+    best_mp = min(limit + 1, t_len + s_len)
     
     char_to_s_indices = {}
     for idx, char in enumerate(source):
@@ -141,58 +146,84 @@ def profile_combo(search_term):
     passed_mask = (m >= 3)
     
     shared_counts = np.minimum(dict_matrix, s_vec).sum(axis=1)
-    
     dict_lens_int = dict_lens.astype(np.int16)
-    candidates = np.where(
+    
+    # Dynamic MP limit based on word length to prevent combinatorial explosion on long words
+    if source_len <= 5:
+        max_mp = 6
+    elif source_len == 6:
+        max_mp = 4
+    else:
+        max_mp = 3
+        
+    # MP Candidates: absolute length diff <= 3, and shared >= T - max_mp, and unique shared >= 3
+    candidates_mp = np.where(
         passed_mask & 
         (np.abs(dict_lens_int - source_len) <= 3) & 
-        (shared_counts >= dict_lens_int - 6)
+        (shared_counts >= dict_lens_int - max_mp)
     )[0]
+    
+    # LIC Candidates: target_len <= source_len + 4, and shared >= T - 4
+    candidates_lic = np.where(
+        (dict_lens_int <= source_len + 4) & 
+        (shared_counts >= dict_lens_int - 4)
+    )[0]
+    
+    candidates = np.union1d(candidates_mp, candidates_lic)
     pruning_time = time.time() - start_pruning
     print(f"Pruning time: {pruning_time:.4f}s, Candidates: {len(candidates)}")
+    print(f"  candidates_mp: {len(candidates_mp)}")
+    print(f"  candidates_lic: {len(candidates_lic)}")
     
     # Initialize Groups (Using sets)
-    mp_groups = {i: set() for i in range(7)} # 0MP to 6MP
+    mp_groups = {i: set() for i in range(max_mp + 1)} # 0MP to max_mp
     lic_groups = {}
     
+    def check_and_add_lic(lic_groups, count, target_len, word):
+        if count not in lic_groups: lic_groups[count] = set()
+        if target_len <= count + 4:
+            lic_groups[count].add(word)
+            
     start_loop = time.time()
     for idx in candidates:
         word = word_list[idx]
         target_len = int(dict_lens[idx])
         shared_count = int(shared_counts[idx])
         
-        # Calculate forward MP (search_term -> candidate)
-        m1_f, linearity = calculate_morpheme_metric(search_term, word)
-        m2_f, _ = calculate_morpheme_metric(search_term, word[::-1])
-        m3_f, _ = calculate_morpheme_metric(search_term_rev, word)
-        forward_mp = min(m1_f, m2_f, m3_f)
-        
-        # Calculate backward MP (candidate -> search_term)
-        m1_b, _ = calculate_morpheme_metric(word, search_term)
-        m2_b, _ = calculate_morpheme_metric(word[::-1], search_term)
-        m3_b, _ = calculate_morpheme_metric(word, search_term_rev)
-        backward_mp = min(m1_b, m2_b, m3_b)
-        
-        # Apply asymmetric combination logic:
-        if backward_mp == 0:
-            best_mp = forward_mp
-        elif forward_mp == 0:
-            best_mp = 0
-        else:
-            best_mp = min(forward_mp, backward_mp)
+        # 1. MP Logic
+        if np.abs(target_len - source_len) <= 3 and shared_count >= target_len - max_mp:
+            # Calculate forward MP (search_term -> candidate) with lazy evaluation
+            best_f, linearity = calculate_morpheme_metric(search_term, word, limit=max_mp)
+            if best_f > 1:
+                m2_f, _ = calculate_morpheme_metric(search_term, word[::-1], limit=best_f - 1)
+                best_f = min(best_f, m2_f)
+            if best_f > 1:
+                m3_f, _ = calculate_morpheme_metric(search_term_rev, word, limit=best_f - 1)
+                best_f = min(best_f, m3_f)
             
-        if best_mp <= 6:
-            mp_groups[best_mp].add(word)
+            # Calculate backward MP (candidate -> search_term) with lazy evaluation
+            best_b, _ = calculate_morpheme_metric(word, search_term, limit=max_mp)
+            if best_b > 1:
+                m2_b, _ = calculate_morpheme_metric(word[::-1], search_term, limit=best_b - 1)
+                best_b = min(best_b, m2_b)
+            if best_b > 1:
+                m3_b, _ = calculate_morpheme_metric(word, search_term_rev, limit=best_b - 1)
+                best_b = min(best_b, m3_b)
+            
+            # Apply asymmetric combination logic:
+            if best_b == 0:
+                best_mp = best_f
+            elif best_f == 0:
+                best_mp = 0
+            else:
+                best_mp = min(best_f, best_b)
                 
-        if shared_count >= 1:
-            if shared_count not in lic_groups: lic_groups[shared_count] = set()
-            # LIC logic check (simplified for profile)
-            valid = False
-            if shared_count == 5: valid = (target_len < 7)
-            elif shared_count == 6: valid = (target_len < 8)
-            elif shared_count >= 7: valid = (target_len < 10)
-            if valid:
-                lic_groups[shared_count].add(word)
+            if best_mp <= max_mp:
+                mp_groups[best_mp].add(word)
+                
+        # 2. LIC Logic
+        if target_len <= source_len + 4 and shared_count >= target_len - 4:
+            check_and_add_lic(lic_groups, shared_count, target_len, word)
             
     loop_time = time.time() - start_loop
     print(f"Loop time: {loop_time:.4f}s")
