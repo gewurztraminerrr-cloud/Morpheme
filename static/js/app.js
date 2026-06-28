@@ -341,8 +341,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 gatewayBtn.onclick = handleGatewayTransition;
 
                 // Force press-down effect on mobile (iOS :active is unreliable without a touch listener)
+                // Also immediately play music on touchstart — this guarantees we're in the gesture
+                // context before any async/await or page-state race conditions can interfere.
                 gatewayBtn.addEventListener('touchstart', () => {
                     gatewayBtn.classList.add('pressed');
+                    // Play music immediately on touch — synchronous, within gesture context
+                    try {
+                        const lobbyMusic = document.getElementById('lobby-music');
+                        if (lobbyMusic && lobbyMusic.paused) {
+                            lobbyMusic.ontimeupdate = function () {
+                                if (lobbyMusic.currentTime >= 295) {
+                                    try { lobbyMusic.currentTime = 205; } catch(e) {}
+                                }
+                            };
+                            try { lobbyMusic.currentTime = 205; } catch(e) {}
+                            lobbyMusic.play()
+                                .then(() => removeInteractionListeners())
+                                .catch(() => {});
+                        }
+                    } catch(e) {}
                 }, { passive: true });
                 gatewayBtn.addEventListener('touchend', () => {
                     setTimeout(() => gatewayBtn.classList.remove('pressed'), 200);
