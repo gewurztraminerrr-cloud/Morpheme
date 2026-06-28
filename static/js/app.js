@@ -296,15 +296,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                     try {
                         const lobbyMusic = document.getElementById('lobby-music');
                         if (lobbyMusic) {
+                            // Enforce the loop upper boundary on timeupdate
                             lobbyMusic.ontimeupdate = function () {
-                                if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
-                                    try { 
-                                        lobbyMusic.currentTime = 205; 
-                                    } catch(err) {}
+                                if (lobbyMusic.currentTime >= 295) {
+                                    try { lobbyMusic.currentTime = 205; } catch(err) {}
                                 }
                             };
+                            // Seek to loop start — may silently fail on mobile if not buffered yet
+                            try { lobbyMusic.currentTime = 205; } catch(err) {}
+                            // If not buffered enough, retry seek once ready (mobile safety net)
+                            if (lobbyMusic.readyState < 3) {
+                                const seekOnReady = () => {
+                                    if (lobbyMusic.currentTime < 205) {
+                                        try { lobbyMusic.currentTime = 205; } catch(err) {}
+                                    }
+                                };
+                                lobbyMusic.addEventListener('canplay', seekOnReady, { once: true });
+                            }
                             console.log('[LobbyMusic] Playing lobby music via gateway button click.');
-                            _seekAndPlayLobbyMusic(lobbyMusic, removeInteractionListeners);
+                            lobbyMusic.play()
+                                .then(() => {
+                                    console.log('[LobbyMusic] Gateway playback succeeded.');
+                                    removeInteractionListeners();
+                                })
+                                .catch(err => console.warn('[LobbyMusic] Gateway play rejected:', err));
                         }
                     } catch (audioErr) {
                         console.error('[LobbyMusic] Exception during gateway play initialization:', audioErr);
@@ -382,47 +397,6 @@ async function fetchUserCount() {
 }
 
 
-// Helper: safely seek to 205s and play, waiting for metadata if needed (mobile fix)
-function _seekAndPlayLobbyMusic(lobbyMusic, onSuccess) {
-    const TARGET_TIME = 205;
-
-    function doSeekAndPlay() {
-        // Only seek if we're not already in the lobby loop window
-        if (lobbyMusic.currentTime < TARGET_TIME || lobbyMusic.currentTime >= 295) {
-            try { lobbyMusic.currentTime = TARGET_TIME; } catch(err) {
-                console.warn('[LobbyMusic] Seek to 205 failed:', err);
-            }
-        }
-        lobbyMusic.play()
-            .then(() => {
-                console.log('[LobbyMusic] play() resolved successfully.');
-                if (onSuccess) onSuccess();
-            })
-            .catch(e => {
-                console.log('[LobbyMusic] play() blocked by browser:', e.message);
-                setupFirstInteractionMusic();
-            });
-    }
-
-    // If metadata is already loaded, seek immediately
-    // HAVE_METADATA = readyState >= 1, HAVE_FUTURE_DATA = readyState >= 3 (need 3+ to seek reliably)
-    if (lobbyMusic.readyState >= 1) {
-        doSeekAndPlay();
-    } else {
-        // Wait for metadata to load before seeking — critical on mobile
-        console.log('[LobbyMusic] Waiting for loadedmetadata before seeking...');
-        const onReady = () => {
-            lobbyMusic.removeEventListener('loadedmetadata', onReady);
-            lobbyMusic.removeEventListener('canplay', onReady);
-            doSeekAndPlay();
-        };
-        lobbyMusic.addEventListener('loadedmetadata', onReady, { once: true });
-        lobbyMusic.addEventListener('canplay', onReady, { once: true });
-        // Trigger a load attempt in case the browser hasn't started yet
-        try { lobbyMusic.load(); } catch(err) {}
-    }
-}
-
 // Helper to start/stop music based on Page AND Setting
 function handleLobbyMusicState() {
     console.log('[LobbyMusic] handleLobbyMusicState() triggered.');
@@ -447,18 +421,42 @@ function handleLobbyMusicState() {
     });
 
     if (shouldPlay) {
-        // Enforce loop boundaries on timeupdate
+        // Enforce the loop upper boundary on timeupdate.
+        // We do NOT enforce the lower bound (< 205) here because on mobile the
+        // audio might not be buffered at 205 yet, causing an infinite seek loop.
         lobbyMusic.ontimeupdate = function () {
-            if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
-                try { 
-                    lobbyMusic.currentTime = 205; 
-                } catch(err) {}
+            if (lobbyMusic.currentTime >= 295) {
+                try { lobbyMusic.currentTime = 205; } catch(err) {}
             }
         };
 
         if (lobbyMusic.paused) {
-            console.log('[LobbyMusic] Attempting play()...');
-            _seekAndPlayLobbyMusic(lobbyMusic, null);
+            console.log('[LobbyMusic] Attempting programmatic .play()...');
+
+            // Attempt the seek now — succeeds on desktop, may silently fail on mobile
+            // if the audio data at 205s isn't buffered yet.
+            try { lobbyMusic.currentTime = 205; } catch(err) {}
+
+            // If audio isn't buffered enough to seek yet (mobile), retry the seek
+            // once 'canplay' fires (i.e. once enough data is available).
+            // This listener self-removes and never calls play() — play is called below.
+            if (lobbyMusic.readyState < 3) {
+                const seekOnReady = () => {
+                    if (lobbyMusic.currentTime < 205) {
+                        try { lobbyMusic.currentTime = 205; } catch(err) {}
+                    }
+                };
+                lobbyMusic.addEventListener('canplay', seekOnReady, { once: true });
+            }
+
+            lobbyMusic.play()
+                .then(() => {
+                    console.log('[LobbyMusic] Programmatic play() resolved successfully!');
+                })
+                .catch(e => {
+                    console.log('[LobbyMusic] Programmatic play() blocked by browser:', e.message);
+                    setupFirstInteractionMusic();
+                });
         }
     } else {
         console.log('[LobbyMusic] shouldPlay is false, ensuring audio is paused.');
@@ -490,17 +488,35 @@ function playMusicOnFirstInteraction() {
     if (shouldPlay) {
         const lobbyMusic = document.getElementById('lobby-music');
         if (lobbyMusic) {
-            // Enforce loop boundaries on timeupdate
+            // Enforce the loop upper boundary on timeupdate.
             lobbyMusic.ontimeupdate = function () {
-                if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
-                    try { 
-                        lobbyMusic.currentTime = 205;
-                    } catch(err) {}
+                if (lobbyMusic.currentTime >= 295) {
+                    try { lobbyMusic.currentTime = 205; } catch(err) {}
                 }
             };
 
-            console.log('[LobbyMusic] Attempting play() on gesture...');
-            _seekAndPlayLobbyMusic(lobbyMusic, removeInteractionListeners);
+            // Attempt seek now. On mobile, may silently fail if data isn't buffered —
+            // the canplay retry below handles that case.
+            try { lobbyMusic.currentTime = 205; } catch(err) {}
+
+            // Retry seek once buffered (mobile safety net — we're still within the
+            // gesture call stack so play() below will be allowed regardless).
+            if (lobbyMusic.readyState < 3) {
+                const seekOnReady = () => {
+                    if (lobbyMusic.currentTime < 205) {
+                        try { lobbyMusic.currentTime = 205; } catch(err) {}
+                    }
+                };
+                lobbyMusic.addEventListener('canplay', seekOnReady, { once: true });
+            }
+
+            console.log('[LobbyMusic] Attempting play() on gesture to unlock/unmute stream...');
+            lobbyMusic.play()
+                .then(() => {
+                    console.log('[LobbyMusic] Lobby music playback started/unlocked successfully on user gesture!');
+                    removeInteractionListeners();
+                })
+                .catch(e => console.log('[LobbyMusic] Gesture play() still blocked:', e.message));
         } else {
             console.warn('[LobbyMusic] #lobby-music element not found on gesture.');
         }
@@ -521,6 +537,7 @@ function setupFirstInteractionMusic() {
         document.addEventListener(evt, playMusicOnFirstInteraction, { capture: true });
     });
 }
+
 
 
 // Setup contact form submission
