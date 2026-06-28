@@ -378,88 +378,45 @@ async function fetchUserCount() {
 // Helper to play lobby music safely on both mobile and desktop.
 // - Mobile: Plays natively from 0s (no seeks) to prevent browser/OS seek stalling.
 // - Desktop/Laptop: Exact June 27 stable logic (seek to 205s and loop between 205s and 295s).
-function logLobbyMusic(msg) {
-    console.log(msg);
-    // Only show on-screen log overlay on mobile devices
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0);
-    if (!isMobile) return;
-
-    let logDiv = document.getElementById('mobile-debug-log');
-    if (!logDiv) {
-        logDiv = document.createElement('div');
-        logDiv.id = 'mobile-debug-log';
-        logDiv.style.position = 'fixed';
-        logDiv.style.bottom = '10px';
-        logDiv.style.left = '10px';
-        logDiv.style.right = '10px';
-        logDiv.style.maxHeight = '120px';
-        logDiv.style.overflowY = 'auto';
-        logDiv.style.background = 'rgba(0,0,0,0.85)';
-        logDiv.style.color = '#00ff00';
-        logDiv.style.fontFamily = 'monospace';
-        logDiv.style.fontSize = '9px';
-        logDiv.style.padding = '6px';
-        logDiv.style.borderRadius = '5px';
-        logDiv.style.zIndex = '999999';
-        logDiv.style.pointerEvents = 'none';
-        document.body.appendChild(logDiv);
-    }
-    const line = document.createElement('div');
-    line.textContent = `[LobbyMusic] ${msg}`;
-    logDiv.appendChild(line);
-    logDiv.scrollTop = logDiv.scrollHeight;
-}
-
 // Helper to play lobby music safely on both mobile and desktop.
-// - Mobile: Plays and then seeks to 205s inside the resolved play() promise (safe, no upfront seek-stalling).
-// - Desktop/Laptop: Seeks immediately if ready, otherwise seeks inside the resolved play() promise.
-// Both loop between 205s and 295s via ontimeupdate.
+// - Mobile: Plays natively from 0s (no seeks) to prevent browser/OS seek stalling.
+// - Desktop/Laptop: Exact June 27 stable logic (seek to 205s and loop between 205s and 295s).
 function playLobbyMusicHelper(lobbyMusic, onSuccess) {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0);
 
-    // Common loop logic: loop back to 205 if we exceed 295
-    lobbyMusic.ontimeupdate = function () {
-        if (lobbyMusic.currentTime >= 295) {
-            try { 
-                lobbyMusic.currentTime = 205; 
-            } catch(err) {}
-        }
-    };
-
     if (isMobile) {
-        logLobbyMusic('Playing on mobile.');
+        lobbyMusic.ontimeupdate = null; // Native looping only
+        console.log('[LobbyMusic] Playing natively on mobile.');
         lobbyMusic.play()
             .then(() => {
-                logLobbyMusic('Mobile play succeeded. Seeking to 205...');
-                try {
-                    lobbyMusic.currentTime = 205;
-                } catch(err) {}
+                console.log('[LobbyMusic] Mobile play succeeded.');
                 if (onSuccess) onSuccess();
             })
             .catch(err => {
-                logLobbyMusic(`Mobile play failed: ${err.message}`);
+                console.warn('[LobbyMusic] Mobile play failed:', err);
                 setupFirstInteractionMusic();
             });
     } else {
-        if (lobbyMusic.readyState >= 1) {
-            try {
-                lobbyMusic.currentTime = 205;
-            } catch(err) {}
-        }
+        try {
+            lobbyMusic.currentTime = 205;
+        } catch(err) {}
+        
+        lobbyMusic.ontimeupdate = function () {
+            if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
+                try { 
+                    lobbyMusic.currentTime = 205; 
+                } catch(err) {}
+            }
+        };
 
-        logLobbyMusic('Playing on desktop.');
+        console.log('[LobbyMusic] Playing with desktop loop logic.');
         lobbyMusic.play()
             .then(() => {
-                logLobbyMusic('Desktop play succeeded.');
-                if (lobbyMusic.currentTime < 205) {
-                    try {
-                        lobbyMusic.currentTime = 205;
-                    } catch(err) {}
-                }
+                console.log('[LobbyMusic] Desktop play succeeded.');
                 if (onSuccess) onSuccess();
             })
             .catch(err => {
-                logLobbyMusic(`Desktop play failed: ${err.message}`);
+                console.warn('[LobbyMusic] Desktop play failed:', err);
                 setupFirstInteractionMusic();
             });
     }
@@ -467,10 +424,10 @@ function playLobbyMusicHelper(lobbyMusic, onSuccess) {
 
 // Helper to start/stop music based on Page AND Setting
 function handleLobbyMusicState() {
-    logLobbyMusic('handleLobbyMusicState() triggered.');
+    console.log('[LobbyMusic] handleLobbyMusicState() triggered.');
     const lobbyMusic = document.getElementById('lobby-music');
     if (!lobbyMusic) {
-        logLobbyMusic('#lobby-music element not found in DOM.');
+        console.warn('[LobbyMusic] #lobby-music element not found in DOM.');
         return;
     }
 
@@ -479,41 +436,53 @@ function handleLobbyMusicState() {
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
     const shouldPlay = (onLobby || onLoading) && lobbyMusicSetting;
 
-    logLobbyMusic(`State assessment: onLobby=${onLobby}, loading=${onLoading}, setting=${lobbyMusicSetting}, paused=${lobbyMusic.paused}, currentTime=${lobbyMusic.currentTime}`);
+    console.log('[LobbyMusic] State assessment:', {
+        onLobby,
+        lobbyMusicSetting,
+        shouldPlay,
+        paused: lobbyMusic.paused,
+        currentTime: lobbyMusic.currentTime
+    });
 
     if (shouldPlay) {
         if (lobbyMusic.paused) {
-            logLobbyMusic('Attempting programmatic .play()...');
+            console.log('[LobbyMusic] Attempting programmatic .play()...');
             playLobbyMusicHelper(lobbyMusic, null);
         }
     } else {
-        logLobbyMusic('shouldPlay is false, ensuring audio is paused.');
+        console.log('[LobbyMusic] shouldPlay is false, ensuring audio is paused.');
         if (!lobbyMusic.paused) {
             lobbyMusic.pause();
-            logLobbyMusic('Paused active playback.');
+            console.log('[LobbyMusic] Paused active playback.');
         }
     }
 }
 
 // Modern Browser Autoplay bypass helpers
 function playMusicOnFirstInteraction() {
-    logLobbyMusic('playMusicOnFirstInteraction() triggered by gesture.');
+    console.log('[LobbyMusic] playMusicOnFirstInteraction() triggered by gesture.');
     const onLobby = document.getElementById('page-lobby')?.classList.contains('active');
     const onLoading = document.getElementById('page-loading')?.classList.contains('active');
     const onLogin = document.getElementById('page-login')?.classList.contains('active');
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
     const shouldPlay = (onLobby || onLoading) && !onLogin && lobbyMusicSetting;
 
-    logLobbyMusic(`Gesture state evaluation: onLobby=${onLobby}, loading=${onLoading}, login=${onLogin}, setting=${lobbyMusicSetting}, shouldPlay=${shouldPlay}`);
+    console.log('[LobbyMusic] Gesture state evaluation:', {
+        onLobby,
+        onLoading,
+        onLogin,
+        lobbyMusicSetting,
+        shouldPlay
+    });
 
     // Only attempt to play if we are in the lobby or loading, but NOT on the login page!
     if (shouldPlay) {
         const lobbyMusic = document.getElementById('lobby-music');
         if (lobbyMusic) {
-            logLobbyMusic('Attempting play() on gesture...');
+            console.log('[LobbyMusic] Attempting play() on gesture to unlock/unmute stream...');
             playLobbyMusicHelper(lobbyMusic, removeInteractionListeners);
         } else {
-            logLobbyMusic('#lobby-music element not found on gesture.');
+            console.warn('[LobbyMusic] #lobby-music element not found on gesture.');
         }
     }
 }
