@@ -288,17 +288,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     try {
                         const lobbyMusic = document.getElementById('lobby-music');
                         if (lobbyMusic) {
-                            _setupLobbyMusicLoop(lobbyMusic);
-                            console.log('[LobbyMusic] Playing lobby music via gateway button click.');
-                            lobbyMusic.play()
-                                .then(() => {
-                                    console.log('[LobbyMusic] Gateway playback succeeded.');
-                                    removeInteractionListeners();
-                                })
-                                .catch(err => console.warn('[LobbyMusic] Gateway play rejected:', err));
+                            console.log('[LobbyMusic] Playing via gateway click.');
+                            _playLobbyMusic(lobbyMusic, removeInteractionListeners);
                         }
                     } catch (audioErr) {
-                        console.error('[LobbyMusic] Exception during gateway play initialization:', audioErr);
+                        console.error('[LobbyMusic] Exception during gateway play:', audioErr);
                     }
 
                     // 2. Leave the room (async — after music is already started)
@@ -338,10 +332,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     try {
                         const lobbyMusic = document.getElementById('lobby-music');
                         if (lobbyMusic && lobbyMusic.paused) {
-                            _setupLobbyMusicLoop(lobbyMusic);
-                            lobbyMusic.play()
-                                .then(() => removeInteractionListeners())
-                                .catch(() => {});
+                            _playLobbyMusic(lobbyMusic, removeInteractionListeners);
                         }
                     } catch(e) {}
                 }, { passive: true });
@@ -397,22 +388,31 @@ async function fetchUserCount() {
 }
 
 
-// Set up the lobby music loop boundary via ontimeupdate.
-// Seeks to 205 only once that position is actually buffered (safe on mobile).
+// Sets the ontimeupdate loop handler (upper bound only — loops back to 205 at 295s)
 function _setupLobbyMusicLoop(lobbyMusic) {
     lobbyMusic.ontimeupdate = function () {
         if (lobbyMusic.currentTime >= 295) {
             try { lobbyMusic.currentTime = 205; } catch(e) {}
-        } else if (lobbyMusic.currentTime < 205) {
-            // Jump to loop start only when position 205 is actually buffered
-            for (let i = 0; i < lobbyMusic.buffered.length; i++) {
-                if (lobbyMusic.buffered.end(i) >= 205) {
-                    try { lobbyMusic.currentTime = 205; } catch(e) {}
-                    break;
-                }
-            }
         }
     };
+}
+
+// Plays lobby music: calls play() with no upfront seek, then seeks to 205
+// inside .then() once the browser has confirmed playback is active.
+// This avoids blocking play() with a seek on iOS (where audio may not be
+// buffered at 205s yet), while still landing at the right loop position.
+function _playLobbyMusic(lobbyMusic, onSuccess) {
+    _setupLobbyMusicLoop(lobbyMusic);
+    lobbyMusic.play()
+        .then(() => {
+            // Now playing — safe to seek on all devices
+            try { lobbyMusic.currentTime = 205; } catch(e) {}
+            if (onSuccess) onSuccess();
+        })
+        .catch(e => {
+            console.log('[LobbyMusic] play() blocked:', e.message);
+            setupFirstInteractionMusic();
+        });
 }
 
 // Helper to start/stop music based on Page AND Setting
@@ -437,18 +437,9 @@ function handleLobbyMusicState() {
     });
 
     if (shouldPlay) {
-        _setupLobbyMusicLoop(lobbyMusic);
         if (lobbyMusic.paused) {
             console.log('[LobbyMusic] Attempting programmatic .play()...');
-            // No seek before play() — seeking to 205 before it is buffered can
-            // block play() on iOS. The ontimeupdate handler above will jump to
-            // 205 once the position is actually available in the buffer.
-            lobbyMusic.play()
-                .then(() => console.log('[LobbyMusic] Programmatic play() resolved successfully!'))
-                .catch(e => {
-                    console.log('[LobbyMusic] Programmatic play() blocked by browser:', e.message);
-                    setupFirstInteractionMusic();
-                });
+            _playLobbyMusic(lobbyMusic, null);
         }
     } else {
         console.log('[LobbyMusic] shouldPlay is false, ensuring audio is paused.');
@@ -474,18 +465,10 @@ function playMusicOnFirstInteraction() {
     if (shouldPlay) {
         const lobbyMusic = document.getElementById('lobby-music');
         if (lobbyMusic) {
-            _setupLobbyMusicLoop(lobbyMusic);
-            // No seek before play() — avoids blocking play() on iOS when 205s
-            // isn't buffered yet. ontimeupdate jumps to 205 once data is ready.
             console.log('[LobbyMusic] Attempting play() on gesture...');
-            lobbyMusic.play()
-                .then(() => {
-                    console.log('[LobbyMusic] Lobby music playback started on user gesture!');
-                    removeInteractionListeners();
-                })
-                .catch(e => console.log('[LobbyMusic] Gesture play() still blocked:', e.message));
+            _playLobbyMusic(lobbyMusic, removeInteractionListeners);
         } else {
-            console.warn('[LobbyMusic] #lobby-music element not found on gesture.');
+            console.warn('[LobbyMusic] #lobby-music not found on gesture.');
         }
     }
 }
