@@ -4236,13 +4236,17 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
                 </div>
             </div>
         `;
-        boardEl.className = 'game-board';
+        boardEl.className = 'game-board-loading';
         boardEl.style.display = 'flex';
+        boardEl.style.flexDirection = 'column';
         boardEl.style.justifyContent = 'center';
         boardEl.style.alignItems = 'center';
-        // CRITICAL: Clear grid styles so the spinner isn't constrained
-        boardEl.style.gridTemplateColumns = '';
-        boardEl.style.gridTemplateRows = '';
+        boardEl.style.width = '100%';
+        boardEl.style.maxWidth = '100%';
+        boardEl.style.margin = '0 auto';
+        boardEl.style.padding = '0';
+        boardEl.style.gridTemplateColumns = 'none';
+        boardEl.style.gridTemplateRows = 'none';
         return;
     }
 
