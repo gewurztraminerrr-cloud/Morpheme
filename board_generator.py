@@ -192,15 +192,15 @@ class BoardGenerator:
         is_cube = depth > 1
         if rows == 4 and cols == 4 and depth == 1:
             ranges = {
-                "Easy": (0.0, 0.15),
-                "Medium": (0.16, 0.29),
-                "Hard": (0.30, 1.0)
+                "Easy": (0.0, 0.24),
+                "Medium": (0.25, 0.39),
+                "Hard": (0.40, 1.0)
             }
         elif is_4x6:
             ranges = {
-                "Easy": (0.0, 0.19),
-                "Medium": (0.20, 0.35),
-                "Hard": (0.36, 1.0)
+                "Easy": (0.0, 0.25),
+                "Medium": (0.26, 0.39),
+                "Hard": (0.40, 1.0)
             }
         elif is_5x7:
             ranges = {
@@ -297,16 +297,16 @@ class BoardGenerator:
         is_4x6 = (rows == 4 and cols == 6) or (rows == 6 and cols == 4)
         is_cube = depth > 1
         if rows == 4 and cols == 4 and depth == 1:
-            if rat >= 0.30:
+            if rat >= 0.40:
                 return "Hard"
-            elif rat >= 0.16:
+            elif rat >= 0.25:
                 return "Medium"
             else:
                 return "Easy"
         elif is_4x6:
-            if rat >= 0.36:
+            if rat >= 0.40:
                 return "Hard"
-            elif rat >= 0.20:
+            elif rat >= 0.26:
                 return "Medium"
             else:
                 return "Easy"
@@ -339,16 +339,20 @@ class BoardGenerator:
             else:
                 return "Easy"
 
-    def _sanitize_rare_letters(self, board, depth=1, protected_positions=None, is_checkerboard=False):
+    def _sanitize_rare_letters(self, board, depth=1, protected_positions=None, is_checkerboard=False, difficulty="Medium"):
         """
         USER MANDATE: Ironclad enforcement of rare letter distribution.
-        1. Max 1 of each super-rare (Q, Z, J, X, K).
-        2. Max 3 TOTAL super-rare letters per board (New Hardening).
+        1. Max 1 of each super-rare (Q, Z, J, X, K) (0 if Easy difficulty).
+        2. Max 3 TOTAL super-rare letters per board (0 if Easy difficulty) (New Hardening).
         """
         active_mania = getattr(self, 'active_mania_letter', None)
         rare_letters = {'Q', 'Z', 'J', 'X', 'K'}
         found_counts = {rl: 0 for rl in rare_letters}
         total_rares_found = 0
+        
+        # If Easy difficulty, forbid any rare letters unless they are part of the protected bonus word
+        max_per_rare = 0 if difficulty == "Easy" else 1
+        max_total_rares = 0 if difficulty == "Easy" else 3
         
         rows = len(board) if depth == 1 else len(board[0])
         cols = len(board[0]) if depth == 1 else len(board[0][0])
@@ -369,8 +373,8 @@ class BoardGenerator:
                             if active_mania and rl == active_mania:
                                 continue
                             # Is this letter redundant or exceeding total cap?
-                            is_redundant = (found_counts[rl] >= 1)
-                            is_over_total_cap = (total_rares_found >= 3)
+                            is_redundant = (found_counts[rl] >= max_per_rare)
+                            is_over_total_cap = (total_rares_found >= max_total_rares)
                             
                             if is_redundant or is_over_total_cap:
                                 if (f, r, c) in protected or (r, c) in protected:
@@ -1031,6 +1035,10 @@ class BoardGenerator:
             use_aw_flag = True
             dictionary = str(dictionary).replace('+ AW', '').replace('+AW', '').strip()
             
+        # If the context variable is already set to True by the caller, preserve it!
+        if use_added_words_ctx.get() is True:
+            use_aw_flag = True
+            
         # Set context var for added words
         use_added_words_ctx.set(use_aw_flag)
 
@@ -1318,7 +1326,7 @@ class BoardGenerator:
             # --- FINAL RARE LETTER SANITIZATION (User Request: Max 1 Q, Z, J, X, K) ---
             # We do this AFTER all optimizations and sweeps to ensure compliance and clean board.
             if "equality freq" not in safe_format:
-                self._sanitize_rare_letters(board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
+                self._sanitize_rare_letters(board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard, difficulty=difficulty)
                 self._sanitize_letter_abundances(board, depth, board_format=board_format, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
                 if difficulty in ["Medium", "Hard"]:
                     self._sanitize_forbidden_sequences(board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
