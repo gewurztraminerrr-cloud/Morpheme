@@ -388,7 +388,10 @@ function playLobbyMusicHelper(lobbyMusic, onSuccess) {
             .then(() => {
                 if (onSuccess) onSuccess();
             })
-            .catch(err => console.warn('[LobbyMusic] Mobile play failed:', err));
+            .catch(err => {
+                console.warn('[LobbyMusic] Mobile play failed:', err);
+                setupFirstInteractionMusic();
+            });
     } else {
         try {
             lobbyMusic.currentTime = 205;
@@ -407,7 +410,10 @@ function playLobbyMusicHelper(lobbyMusic, onSuccess) {
             .then(() => {
                 if (onSuccess) onSuccess();
             })
-            .catch(err => console.warn('[LobbyMusic] Desktop play failed:', err));
+            .catch(err => {
+                console.warn('[LobbyMusic] Desktop play failed:', err);
+                setupFirstInteractionMusic();
+            });
     }
 }
 
