@@ -1860,6 +1860,8 @@ body.theme-light-brown .word-item.missed {
         padding-bottom: 20px !important;
     }
     .tools-split-layout {
+        width: 100% !important;
+        max-width: 1000px !important;
         height: 620px !important;
         min-height: 620px !important;
         max-height: 620px !important;
