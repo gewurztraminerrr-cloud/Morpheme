@@ -4666,6 +4666,16 @@ input[type=range]::-moz-range-track {
         overflow-y: visible !important;
         height: auto !important;
     }
+
+    /* Sequence and Subanagrams Tool Results Vertical Height Fix for Mobile */
+    .seq-results-container {
+        height: 380px !important;
+        max-height: 380px !important;
+        flex: 0 0 auto !important;
+        margin-top: 15px !important;
+        margin-bottom: 15px !important;
+        overflow-y: hidden !important;
+    }
     .result-section,
     .result-section:first-child,
     .result-section:nth-child(1),
