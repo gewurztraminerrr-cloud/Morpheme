@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 1, 2026. All local changes, remote code on GitHub, and the live application running on morpheme.games are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `be6dc7c` (and subsequent documentation commits)
+* **Commit ID**: `717090f` (and subsequent documentation commits)
 * **Branch**: `main`
 * **Date**: July 1, 2026
 
@@ -24,6 +24,10 @@ This document summarizes the stable state of **Morpheme** as of July 1, 2026. Al
 3. **PM2 Server Daemon and Process Recovery**:
    * **Process/Thread Leak Cleanup**: Diagnosed and resolved a PM2 crash-restart loop on `morpheme.games` (which had accumulated 5,261 restarts and hit the OS user processes limit `ulimit -u` of 7718, triggering `RuntimeError: can't start new thread`).
    * **Correct Interpreter Settings**: Terminated all defunct processes (`pm2 kill`) and restarted the server with the correct virtual environment path: `pm2 start app.py --name morpheme --interpreter venv/bin/python3` followed by `pm2 save` to ensure stability across server reboots.
+
+4. **Mobile Navigation Back Buttons Removal**:
+   * **Button Removal**: Removed the mobile back buttons (`forum-mobile-back-btn` for categories list, `tools-mobile-back-btn` for tools list, `mods-mobile-back-btn` for mods list, and `settings-mobile-back-btn` for settings categories) from `templates/index.html` completely.
+   * **Swipe Navigation**: Declutters the mobile UI, allowing users to return to category list menus seamlessly using standard swipe gestures.
 
 ## Verification
 * **Local**: Verified on Safari and Chrome.
