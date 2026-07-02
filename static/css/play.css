@@ -1869,10 +1869,10 @@ body.theme-light-brown .word-item.missed {
         max-height: none !important;
     }
     .tools-sidebar {
-        flex: 0 0 380px !important;
-        width: 380px !important;
-        min-width: 380px !important;
-        max-width: 380px !important;
+        flex: 0 0 400px !important;
+        width: 400px !important;
+        min-width: 400px !important;
+        max-width: 400px !important;
         padding: 10px 0 !important;
         gap: 0 !important;
     }
