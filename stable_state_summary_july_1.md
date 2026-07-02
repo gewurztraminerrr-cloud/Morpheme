@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 1, 2026. All local changes, remote code on GitHub, and the live application running on morpheme.games are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `50835eb` (and subsequent documentation commits)
+* **Commit ID**: `4e19a11` (and subsequent documentation commits)
 * **Branch**: `main`
 * **Date**: July 1, 2026
 
@@ -42,6 +42,13 @@ This document summarizes the stable state of **Morpheme** as of July 1, 2026. Al
 7. **FAQ Format Description Updates**:
    * **Checkerboard**: Reworded the Checkerboard format explanation in `templates/index.html` to clearly detail its alternating row/column structure and consonant-vowel rhythmic patterning.
    * **[Letter] Mania**: Reworded the [Letter] Mania description to detail the specific board-wide occurrences threshold rules (33% or more for common letters, 20% or more for rare consonants).
+
+8. **Desktop Layout Spacing and Ratio Alignment**:
+   * **Proportions Synchronization**: Aligned the layout spacing, proportions, and heights of the Tools, Settings, and Mods tab pages with the Forums tab container on desktops.
+   * **Fluid Heights**: Changed the panel layout container from a fixed `620px` height to a fluid `height: calc(100vh - 230px) !important; min-height: 620px !important;` to fill the vertical space cleanly on large monitors while retaining the original laptop dimensions as a baseline minimum.
+   * **Sidebar Width Expansion**: Expanded the navigation sidebar width from `220px` to `380px` to match the Forum sidebar's width.
+   * **Text-Wrap and Spacing Correction**: Removed the rigid `76px` button height limit in favor of `height: auto` and a stacked `gap: 0` layout, allowing description text to wrap cleanly without overlapping adjacent items. Added a left border indicator (`border-left: 3px solid transparent`) to match the Forum category style.
+   * **Cache Busting**: Incremented the stylesheet import parameter for `play.css` to `v=107` in `templates/index.html` to force desktop browsers to fetch updates immediately.
 
 ## Verification
 * **Local**: Verified on Safari and Chrome.
