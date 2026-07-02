@@ -3665,7 +3665,12 @@ async function runValidationCheck() {
         // Clear input box after submission
         if (inputEl) {
             inputEl.value = '';
-            inputEl.focus(); // Keep focus for next check
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                inputEl.blur(); // Remove focus to hide mobile keyboard
+            } else {
+                inputEl.focus(); // Keep focus for next check
+            }
         }
     }
 }
