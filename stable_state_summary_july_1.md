@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 1, 2026. All local changes, remote code on GitHub, and the live application running on morpheme.games are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `a79d9d2` (and subsequent documentation commits)
+* **Commit ID**: `f56ebb3` (and subsequent documentation commits)
 * **Branch**: `main`
 * **Date**: July 1, 2026
 
@@ -34,10 +34,10 @@ This document summarizes the stable state of **Morpheme** as of July 1, 2026. Al
    * **Sidebar Width Constraint**: Ensures that the Mods sidebar list spans exactly 100% of the screen width on mobile, and the moderation panels remain hidden off-screen to the right until selected, maintaining consistency across all dashboards.
    * **Cache Busting**: Incremented the import link of `play.css` to `v=105` in `templates/index.html` to force mobile devices to fetch the updated styles immediately.
 
-6. **Mobile Touch-Dragging Navigation Lock**:
-   * **Touch Action Prevention**: Added `touch-action: none;` to the `.header` (logo and top navigation menu tabs container) and `.separator` elements in `static/css/style.css`.
-   * **No Viewport Bouncing**: Prevents touch-dragging gestures on the logo and top menu tabs from moving or bouncing the entire lobby screen, locking the header area in place while keeping the tabs fully responsive and clickable.
-   * **Cache Busting**: Incremented the style import link of `style.css` to `v=49` in `templates/index.html` to force mobile clients to fetch the updated styles immediately.
+6. **Mobile Touch-Dragging Navigation Lock & Lobby Height Lock**:
+   * **Touch Action Prevention**: Added `touch-action: none;` to the `.header` (logo, "MORPHEME MORE-FEEM", and top navigation tabs container) and `.separator` elements in `static/css/style.css` (cache-busted to `v=49` in `templates/index.html`).
+   * **Lobby Page Viewport Lock**: Added `#page-lobby` and `.lobby-grid` to the mobile media queries in `static/css/play.css`, setting a fixed height of `calc(100vh - 120px)` and `overflow-y: hidden` (cache-busted to `v=106` in `templates/index.html`).
+   * **No Viewport Bouncing**: Prevents touch-dragging gestures on the logo, tabs, and page background from causing the whole lobby screen to bounce or move slightly. It locks the header and outer page layout in place on mobile, leaving only the inner panels scrollable vertically.
 
 ## Verification
 * **Local**: Verified on Safari and Chrome.
