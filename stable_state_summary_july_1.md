@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 1, 2026. All local changes, remote code on GitHub, and the live application running on morpheme.games are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `717090f` (and subsequent documentation commits)
+* **Commit ID**: `57b761b` (and subsequent documentation commits)
 * **Branch**: `main`
 * **Date**: July 1, 2026
 
@@ -28,6 +28,11 @@ This document summarizes the stable state of **Morpheme** as of July 1, 2026. Al
 4. **Mobile Navigation Back Buttons Removal**:
    * **Button Removal**: Removed the mobile back buttons (`forum-mobile-back-btn` for categories list, `tools-mobile-back-btn` for tools list, `mods-mobile-back-btn` for mods list, and `settings-mobile-back-btn` for settings categories) from `templates/index.html` completely.
    * **Swipe Navigation**: Declutters the mobile UI, allowing users to return to category list menus seamlessly using standard swipe gestures.
+
+5. **Mods Tab Mobile Layout Alignment**:
+   * **Layout Synchronization**: Added `#page-mods` to the mobile media queries in `static/css/play.css`, aligning the split-layout rules of the Mods tab layout exactly with the Tools and Settings pages on mobile viewports.
+   * **Sidebar Width Constraint**: Ensures that the Mods sidebar list spans exactly 100% of the screen width on mobile, and the moderation panels remain hidden off-screen to the right until selected, maintaining consistency across all dashboards.
+   * **Cache Busting**: Incremented the import link of `play.css` to `v=105` in `templates/index.html` to force mobile devices to fetch the updated styles immediately.
 
 ## Verification
 * **Local**: Verified on Safari and Chrome.
