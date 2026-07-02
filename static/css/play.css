@@ -1864,9 +1864,57 @@ body.theme-light-brown .word-item.missed {
     .tools-split-layout {
         width: 100% !important;
         max-width: 1400px !important;
-        height: 620px !important;
+        height: calc(100vh - 230px) !important;
         min-height: 620px !important;
-        max-height: 620px !important;
+        max-height: none !important;
+    }
+    .tools-sidebar {
+        flex: 0 0 380px !important;
+        width: 380px !important;
+        min-width: 380px !important;
+        max-width: 380px !important;
+        padding: 10px 0 !important;
+        gap: 0 !important;
+    }
+    .tool-nav-btn {
+        height: auto !important;
+        padding: 15px 20px !important;
+        border-radius: 0 !important;
+        border: none !important;
+        border-left: 3px solid transparent !important;
+        background: transparent !important;
+        justify-content: flex-start !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 4px !important;
+    }
+    .tool-nav-btn:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+    }
+    .tool-nav-btn.active {
+        background: rgba(79, 172, 254, 0.1) !important;
+        border-left-color: #4facfe !important;
+        color: #4facfe !important;
+    }
+    .tool-btn-title {
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 0 !important;
+    }
+    .tool-btn-desc {
+        font-size: 0.8rem !important;
+        line-height: 1.4 !important;
+        margin-top: 0 !important;
+    }
+    .tool-nav-btn:not(.active) .tool-btn-title {
+        color: var(--text-60, rgba(255, 255, 255, 0.6)) !important;
+    }
+    .tool-nav-btn:not(.active) .tool-btn-desc {
+        color: var(--text-40, rgba(255, 255, 255, 0.4)) !important;
+    }
+    .tool-nav-btn:not(.active):hover .tool-btn-title {
+        color: var(--text-primary) !important;
     }
     .tool-pane.active {
         overflow-y: auto !important;
@@ -1875,10 +1923,6 @@ body.theme-light-brown .word-item.missed {
     .combo-results-container {
         overflow-y: visible !important;
         flex: unset !important;
-    }
-    .tool-nav-btn {
-        height: 76px;
-        justify-content: center;
     }
     .tools-content {
         background: rgba(0, 0, 0, 0.25) !important;
