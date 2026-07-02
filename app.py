@@ -191,6 +191,17 @@ def format_chicago_to_utc(chicago_ts_str):
 def ping_debug():
     return jsonify({'pong': True})
 
+@app.route('/api/debug-pwa', methods=['POST'])
+def debug_pwa():
+    import json
+    try:
+        data = request.json
+        print(f"[PWA-Debug] {json.dumps(data)}")
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"[PWA-Debug] Error logging PWA debug: {e}")
+        return jsonify({'error': str(e)}), 500
+
 from tournament_logic import tournament_manager
 from private_match_logic import private_match_manager
 from word_validator import word_validator
@@ -4547,20 +4558,27 @@ def tools_combo_check():
                 m3_f, _ = calculate_morpheme_metric(search_term_rev, word, limit=best_f - 1)
                 best_f = min(best_f, m3_f)
 
-            # Calculate backward MP (candidate -> search_term) with lazy evaluation
-            best_b, _ = calculate_morpheme_metric(word, search_term, limit=max_mp)
+            # Calculate backward MP (candidate -> search_term) with lazy evaluation.
+            # Only use the direct backward check when the word is shorter/equal to the
+            # search term. When the word is longer, the forward direction already captures
+            # the correct insertion cost (e.g. CITHERS->CITER gives 1MP by dropping S
+            # exterior, but the correct answer when searching CITER is 2MP forward).
+            if target_len <= source_len:
+                best_b, _ = calculate_morpheme_metric(word, search_term, limit=max_mp)
+            else:
+                best_b = max_mp + 1
             if best_b > 1:
                 m2_b, _ = calculate_morpheme_metric(word[::-1], search_term, limit=best_b - 1)
-                # Only accept 0MP from reversed-word check if lengths match.
-                # When word reversed happens to start with search_term (e.g. ANORETIC reversed =
-                # CITERONA starts with CITER), this gives a false 0MP via free exterior deletions.
-                if not (m2_b == 0 and target_len != source_len):
+                # Reject 0MP when reversed word starts with search_term. This means the
+                # word ends with reversed search_term (e.g. ANORETIC ends with RETIC =
+                # CITER reversed), causing a false 0MP. CRETICS reversed = SCITERC does
+                # NOT start with CITER, so CRETICS correctly stays at 0MP.
+                if not (m2_b == 0 and word[::-1].startswith(search_term)):
                     best_b = min(best_b, m2_b)
             if best_b > 1:
                 m3_b, _ = calculate_morpheme_metric(word, search_term_rev, limit=best_b - 1)
-                # Same guard: reject false 0MP when word contains search_term reversed as a
-                # consecutive suffix (e.g. ANORETIC ends with RETIC = CITER reversed).
-                if not (m3_b == 0 and target_len != source_len):
+                # Reject 0MP when word ends with reversed search term (same reasoning).
+                if not (m3_b == 0 and word.endswith(search_term_rev)):
                     best_b = min(best_b, m3_b)
 
             best_mp = min(best_f, best_b)

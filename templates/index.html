@@ -4749,18 +4749,51 @@
 
         // Immersive PWA Fullscreen Mode for Mobile Devices (Android Navigation Bar hide)
         (function() {
+            const sendDebug = (step, info) => {
+                fetch('/api/debug-pwa', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        step: step,
+                        userAgent: navigator.userAgent,
+                        isStandalone: window.matchMedia('(display-mode: standalone)').matches,
+                        isFullscreenMode: window.matchMedia('(display-mode: fullscreen)').matches,
+                        navigatorStandalone: !!window.navigator.standalone,
+                        fullscreenEnabled: !!document.fullscreenEnabled,
+                        fullscreenElement: !!document.fullscreenElement,
+                        info: info || {}
+                    })
+                }).catch(() => {});
+            };
+
+            // Log initialization status
+            sendDebug("initialized");
+
             const triggerFullscreen = () => {
                 const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
                               window.matchMedia('(display-mode: fullscreen)').matches ||
                               window.navigator.standalone === true;
                 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
                 
+                // Log touch/click interaction
+                sendDebug("interaction_detected", { isPWA: isPWA, isMobile: isMobile });
+                
                 if (isPWA && isMobile) {
                     const docEl = document.documentElement;
                     if (!document.fullscreenElement && docEl.requestFullscreen) {
+                        sendDebug("requesting_fullscreen");
                         docEl.requestFullscreen({ navigationUI: 'hide' })
-                            .then(() => console.log("[MorphemePWA] Fullscreen mode activated successfully"))
-                            .catch((err) => console.log("[MorphemePWA] Fullscreen request failed: ", err));
+                            .then(() => {
+                                sendDebug("fullscreen_success");
+                            })
+                            .catch((err) => {
+                                sendDebug("fullscreen_failed", { error: err ? err.message : 'Unknown' });
+                            });
+                    } else {
+                        sendDebug("cannot_request_fullscreen", { 
+                            hasDocElRequest: !!(docEl && docEl.requestFullscreen),
+                            hasFullscreenElement: !!document.fullscreenElement
+                        });
                     }
                 }
             };
