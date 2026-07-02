@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 1, 2026. All local changes, remote code on GitHub, and the live application running on morpheme.games are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `4e19a11` (and subsequent documentation commits)
+* **Commit ID**: `b3eda79` (and subsequent documentation commits)
 * **Branch**: `main`
 * **Date**: July 1, 2026
 
@@ -47,8 +47,9 @@ This document summarizes the stable state of **Morpheme** as of July 1, 2026. Al
    * **Proportions Synchronization**: Aligned the layout spacing, proportions, and heights of the Tools, Settings, and Mods tab pages with the Forums tab container on desktops.
    * **Fluid Heights**: Changed the panel layout container from a fixed `620px` height to a fluid `height: calc(100vh - 230px) !important; min-height: 620px !important;` to fill the vertical space cleanly on large monitors while retaining the original laptop dimensions as a baseline minimum.
    * **Sidebar Width Expansion**: Expanded the navigation sidebar width from `220px` to `380px` to match the Forum sidebar's width.
+   * **Horizontal Width Expansion**: Expanded the container max-width from `1400px` to `98%` on desktop viewports, allowing the content pane to stretch horizontally and maximize screen usage on wide desktop monitors while keeping the sidebar width fixed.
    * **Text-Wrap and Spacing Correction**: Removed the rigid `76px` button height limit in favor of `height: auto` and a stacked `gap: 0` layout, allowing description text to wrap cleanly without overlapping adjacent items. Added a left border indicator (`border-left: 3px solid transparent`) to match the Forum category style.
-   * **Cache Busting**: Incremented the stylesheet import parameter for `play.css` to `v=107` in `templates/index.html` to force desktop browsers to fetch updates immediately.
+   * **Cache Busting**: Incremented the stylesheet import parameter for `play.css` to `v=108` in `templates/index.html` to force desktop browsers to fetch updates immediately.
 
 ## Verification
 * **Local**: Verified on Safari and Chrome.
