@@ -785,6 +785,7 @@ body {
     /* Reduced padding */
     background: rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
+    touch-action: none;
 }
 
 .logo {
@@ -915,6 +916,7 @@ body {
     height: 2px;
     background: linear-gradient(90deg, transparent, rgba(var(--text-primary-rgb), 0.5), transparent);
     margin: 0 40px;
+    touch-action: none;
 }
 
 /* Pages */
