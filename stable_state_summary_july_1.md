@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 1, 2026. All local changes, remote code on GitHub, and the live application running on morpheme.games are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `f56ebb3` (and subsequent documentation commits)
+* **Commit ID**: `50835eb` (and subsequent documentation commits)
 * **Branch**: `main`
 * **Date**: July 1, 2026
 
@@ -38,6 +38,10 @@ This document summarizes the stable state of **Morpheme** as of July 1, 2026. Al
    * **Touch Action Prevention**: Added `touch-action: none;` to the `.header` (logo, "MORPHEME MORE-FEEM", and top navigation tabs container) and `.separator` elements in `static/css/style.css` (cache-busted to `v=49` in `templates/index.html`).
    * **Lobby Page Viewport Lock**: Added `#page-lobby` and `.lobby-grid` to the mobile media queries in `static/css/play.css`, setting a fixed height of `calc(100vh - 120px)` and `overflow-y: hidden` (cache-busted to `v=106` in `templates/index.html`).
    * **No Viewport Bouncing**: Prevents touch-dragging gestures on the logo, tabs, and page background from causing the whole lobby screen to bounce or move slightly. It locks the header and outer page layout in place on mobile, leaving only the inner panels scrollable vertically.
+
+7. **FAQ Format Description Updates**:
+   * **Checkerboard**: Reworded the Checkerboard format explanation in `templates/index.html` to clearly detail its alternating row/column structure and consonant-vowel rhythmic patterning.
+   * **[Letter] Mania**: Reworded the [Letter] Mania description to detail the specific board-wide occurrences threshold rules (33% or more for common letters, 20% or more for rare consonants).
 
 ## Verification
 * **Local**: Verified on Safari and Chrome.
