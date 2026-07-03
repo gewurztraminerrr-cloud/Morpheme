@@ -4450,9 +4450,10 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
 // Emergency Shim: Replaced older logic with confirmed strict capped logic
 function checkBoardOverflow() {
     const playPage = document.getElementById('page-play');
+    if (!playPage || !playPage.classList.contains('active')) return;
     const boardPanel = document.querySelector('.board-panel');
     const boardEl = document.getElementById('game-board');
-    if (!playPage || !boardPanel || !boardEl) return;
+    if (!boardPanel || !boardEl) return;
 
     // 1. Get Board Dimensions (Rows & Cols)
     let cols = 0;
@@ -4719,17 +4720,8 @@ window.addEventListener('resize', () => {
     if (window.checkBoardOverflow) checkBoardOverflow();
 });
 
-// Also observe panel resize
-if (window.ResizeObserver) {
-    const resizeObserver = new ResizeObserver(entries => {
-        if (window.checkBoardOverflow) checkBoardOverflow();
-    });
-    // Wait for DOM
-    setTimeout(() => {
-        const bp = document.querySelector('.board-panel');
-        if (bp) resizeObserver.observe(bp);
-    }, 1000);
-}
+// Removed ResizeObserver to prevent infinite rendering loops and layout thrashing.
+// Window resize listener is sufficient for board overflow checks.
 
 // Letter values for "Valued Letters" format
 const LETTER_VALUES = {

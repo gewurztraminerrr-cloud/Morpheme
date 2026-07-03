@@ -4716,7 +4716,7 @@
     <script src="/js/forum.js?v=54"></script>
     <script src="/js/app.js?v=65"></script>
     <script src="/js/lobby.js?v=10"></script>
-    <script src="/js/play.js?v=211"></script>
+    <script src="/js/play.js?v=212"></script>
     <script src="/js/tournaments.js?v=7"></script>
     <script src="/js/leaderboard.js?v=3"></script>
     <script src="/js/tools.js?v=72"></script>
@@ -4851,14 +4851,15 @@
         }
 
         function adjustPlayHeaderForDevice() {
+            const pagePlay = document.getElementById('page-play');
+            if (!pagePlay || !pagePlay.classList.contains('active')) return;
             const header = document.querySelector('.play-header');
             const boardPanel = document.querySelector('.board-panel');
-            const pagePlay = document.getElementById('page-play');
             const timerDisplay = document.querySelector('.timer-display');
             const rotateBtn = document.getElementById('rotate-board-btn');
             const wordInputSection = document.querySelector('.word-input-section');
             
-            if (!header || !boardPanel || !pagePlay) return;
+            if (!header || !boardPanel) return;
             
             if (window.innerWidth <= 992) {
                 // Mobile: Move inside board panel so it swipes with it
