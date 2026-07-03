@@ -4342,11 +4342,14 @@ def get_lis(nums):
     # Using DP (O(n^2)) for simplicity and correctness with small N.
     dp = [1] * len(nums)
     for i in range(len(nums)):
-        for j in range(len(nums[:i])):
+        for j in range(i):
             if nums[i] > nums[j]:
-                dp[i] = max(dp[i], dp[j] + 1)
+                dp[i] = dp[j] + 1 if dp[j] + 1 > dp[i] else dp[i]
     return max(dp) if dp else 0
 
+from functools import lru_cache
+
+@lru_cache(maxsize=16384)
 def calculate_morpheme_metric(source, target, limit=6):
     s_len, t_len = len(source), len(target)
     if s_len == 0 or t_len == 0: return 99, 0
@@ -4371,6 +4374,10 @@ def calculate_morpheme_metric(source, target, limit=6):
     linearity = prev[t_len]
     if linearity == 0: return 99, 0
     
+    # Mathematical lower bound prune: cost >= t_len - linearity
+    if t_len - linearity > limit:
+        return 99, linearity
+        
     best_mp = min(limit + 1, t_len + s_len)
     
     char_to_s_indices = {}
@@ -4383,6 +4390,11 @@ def calculate_morpheme_metric(source, target, limit=6):
         nonlocal best_mp
         
         m_len = len(matched)
+        
+        # Extremely cheap insertion-bound check first to avoid lists allocations
+        if t_idx - m_len >= best_mp:
+            return
+            
         if m_len > 0:
             sub_lis = get_lis(matched)
             current_relocations = m_len - sub_lis
@@ -4514,39 +4526,56 @@ def tools_combo_check():
     shared_counts = np.minimum(dict_matrix, s_vec).sum(axis=1)
     dict_lens_int = dict_lens.astype(np.int16)
     
-    # Dynamic MP limit based on word length to prevent combinatorial explosion on long words
-    if source_len <= 5:
-        max_mp = 6
-    elif source_len == 6:
-        max_mp = 4
-    else:
-        max_mp = 3
+    # Capping max_mp at 3 globally to prevent large-MP candidate explosions and focus search on relevant game combinations.
+    max_mp = 3
     
     # MP Candidates: absolute length diff <= 3, and shared >= T - max_mp, and unique shared >= 3
+    # If search term is 8+, candidate must also be 8+
+    if source_len >= 8:
+        mp_len_mask = (dict_lens_int >= 8)
+    else:
+        mp_len_mask = True
+
     candidates_mp = np.where(
         passed_mask & 
         (np.abs(dict_lens_int - source_len) <= 3) & 
-        (shared_counts >= dict_lens_int - max_mp)
+        (shared_counts >= dict_lens_int - max_mp) &
+        mp_len_mask
     )[0]
     
-    # LIC Candidates: target_len <= source_len + 4, and shared >= T - 4
+    # LIC Candidates: target_len <= source_len + 4, and shared >= T - 4, and shared_counts >= 5
     candidates_lic = np.where(
         (dict_lens_int <= source_len + 4) & 
-        (shared_counts >= dict_lens_int - 4)
+        (shared_counts >= dict_lens_int - 4) &
+        (shared_counts >= 5)
     )[0]
     
     candidates = np.union1d(candidates_mp, candidates_lic)
+    
+    # Sort candidates by shared count (descending) and length difference (ascending) to check best matches first
+    candidate_shared = shared_counts[candidates]
+    candidate_lens = dict_lens_int[candidates]
+    candidate_len_diff = np.abs(candidate_lens - source_len)
+    sort_order = np.lexsort((candidate_len_diff, -candidate_shared))
+    sorted_candidates = candidates[sort_order]
     
     # Initialize Groups (Using sets to prevent O(N^2) search bottleneck)
     mp_groups = {i: set() for i in range(max_mp + 1)} # 0MP to max_mp
     lic_groups = {}
     
     # --- OPTIMIZED SINGLE-THREADED LOOP ---
-    for idx in candidates:
+    for idx in sorted_candidates:
         word = word_list[idx]
         target_len = int(dict_lens[idx])
         shared_count = int(shared_counts[idx])
         
+        # Early exit: Stop once all display columns that can still grow are fully saturated (150 items each)
+        active_mp_keys = [i for i in range(max_mp + 1) if i >= source_len - shared_count]
+        active_lic_keys = range(5, min(10, shared_count + 1))
+        if (all(len(mp_groups[i]) >= 150 for i in active_mp_keys) and
+            all(len(lic_groups.get(k, [])) >= 150 for k in active_lic_keys)):
+            break
+            
         # 1. MP Logic
         if np.abs(target_len - source_len) <= 3 and shared_count >= target_len - max_mp:
             # Calculate pure directional MP (search_term -> candidate) with lazy evaluation
@@ -4566,7 +4595,7 @@ def tools_combo_check():
                 check_and_add_mp(mp_groups, source_len, target_len, best_mp, word)
             
         # 2. LIC Logic
-        if target_len <= source_len + 4 and shared_count >= target_len - 4:
+        if target_len <= source_len + 4 and shared_count >= target_len - 4 and shared_count >= 5:
             check_and_add_lic(lic_groups, shared_count, target_len, word)
 
     # Sort and limit groups to 150 words to prevent DOM bloat and layout recalc lag on mobile resizes
