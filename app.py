@@ -4549,39 +4549,18 @@ def tools_combo_check():
         
         # 1. MP Logic
         if np.abs(target_len - source_len) <= 3 and shared_count >= target_len - max_mp:
-            # Calculate forward MP (search_term -> candidate) with lazy evaluation
-            best_f, linearity = calculate_morpheme_metric(search_term, word, limit=max_mp)
-            if best_f > 1:
-                m2_f, _ = calculate_morpheme_metric(search_term, word[::-1], limit=best_f - 1)
-                best_f = min(best_f, m2_f)
-            if best_f > 1:
-                m3_f, _ = calculate_morpheme_metric(search_term_rev, word, limit=best_f - 1)
-                best_f = min(best_f, m3_f)
-
-            # Calculate backward MP (candidate -> search_term) with lazy evaluation.
-            # Only use the direct backward check when the word is shorter/equal to the
-            # search term. When the word is longer, the forward direction already captures
-            # the correct insertion cost (e.g. CITHERS->CITER gives 1MP by dropping S
-            # exterior, but the correct answer when searching CITER is 2MP forward).
-            if target_len <= source_len:
-                best_b, _ = calculate_morpheme_metric(word, search_term, limit=max_mp)
-            else:
-                best_b = max_mp + 1
-            if best_b > 1:
-                m2_b, _ = calculate_morpheme_metric(word[::-1], search_term, limit=best_b - 1)
-                # Reject 0MP when reversed word starts with search_term. This means the
-                # word ends with reversed search_term (e.g. ANORETIC ends with RETIC =
-                # CITER reversed), causing a false 0MP. CRETICS reversed = SCITERC does
-                # NOT start with CITER, so CRETICS correctly stays at 0MP.
-                if not (m2_b == 0 and word[::-1].startswith(search_term)):
-                    best_b = min(best_b, m2_b)
-            if best_b > 1:
-                m3_b, _ = calculate_morpheme_metric(word, search_term_rev, limit=best_b - 1)
-                # Reject 0MP when word ends with reversed search term (same reasoning).
-                if not (m3_b == 0 and word.endswith(search_term_rev)):
-                    best_b = min(best_b, m3_b)
-
-            best_mp = min(best_f, best_b)
+            # Calculate pure directional MP (search_term -> candidate) with lazy evaluation
+            # 4 combinations of forward and reversed search term / candidate:
+            best_mp, linearity = calculate_morpheme_metric(search_term, word, limit=max_mp)
+            if best_mp > 1:
+                m2_f, _ = calculate_morpheme_metric(search_term, word[::-1], limit=best_mp - 1)
+                best_mp = min(best_mp, m2_f)
+            if best_mp > 1:
+                m3_f, _ = calculate_morpheme_metric(search_term_rev, word, limit=best_mp - 1)
+                best_mp = min(best_mp, m3_f)
+            if best_mp > 1:
+                m4_f, _ = calculate_morpheme_metric(search_term_rev, word[::-1], limit=best_mp - 1)
+                best_mp = min(best_mp, m4_f)
 
             if best_mp <= max_mp:
                 check_and_add_mp(mp_groups, source_len, target_len, best_mp, word)
