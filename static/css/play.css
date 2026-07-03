@@ -2224,6 +2224,19 @@ body.theme-light-brown .word-item.missed {
     color: var(--text-primary);
 }
 
+.group-row {
+    padding: 4px 10px;
+    font-size: 0.9rem;
+    border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.03);
+    color: rgba(var(--text-primary-rgb), 0.7);
+    box-sizing: border-box;
+}
+
+.group-row:hover {
+    background: rgba(var(--text-primary-rgb), 0.05);
+    color: var(--text-primary);
+}
+
 /* Specific Colors for MP/LIC Headers */
 .result-section:nth-child(1) h3 {
     color: #facc15;

@@ -276,11 +276,9 @@ function renderGroups(groupsData, containerId, type) {
         colDiv.innerHTML = `
             <div class="group-header">${label}</div>
             <div class="group-table-container">
-                <table class="group-table">
-                    <tbody>
-                        ${words.map(w => `<tr><td>${w}</td></tr>`).join('')}
-                    </tbody>
-                </table>
+                <div class="group-word-list">
+                    ${words.map(w => `<div class="group-row">${w}</div>`).join('')}
+                </div>
             </div>
         `;
         container.appendChild(colDiv);

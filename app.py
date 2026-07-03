@@ -4569,12 +4569,12 @@ def tools_combo_check():
         if target_len <= source_len + 4 and shared_count >= target_len - 4:
             check_and_add_lic(lic_groups, shared_count, target_len, word)
 
-    # Sort Groups
+    # Sort and limit groups to 150 words to prevent DOM bloat and layout recalc lag on mobile resizes
     for k in mp_groups:
-        mp_groups[k] = sorted(list(mp_groups[k]), key=lambda x: (-len(x), x))
+        mp_groups[k] = sorted(list(mp_groups[k]), key=lambda x: (-len(x), x))[:150]
         
     for k in lic_groups:
-        lic_groups[k] = sorted(list(lic_groups[k]), key=lambda x: (len(x), x))
+        lic_groups[k] = sorted(list(lic_groups[k]), key=lambda x: (len(x), x))[:150]
     
     return jsonify({
         'mp_groups': mp_groups, 
