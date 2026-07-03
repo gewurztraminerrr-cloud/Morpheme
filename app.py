@@ -4530,9 +4530,11 @@ def tools_combo_check():
     max_mp = 3
     
     # MP Candidates: absolute length diff <= 3, and shared >= T - max_mp, and unique shared >= 3
-    # If search term is 8+, candidate must also be 8+
-    if source_len >= 8:
-        mp_len_mask = (dict_lens_int >= 8)
+    # Check minimum candidate length rules based on Java specifications
+    if source_len == 8:
+        mp_len_mask = (dict_lens_int >= 5)
+    elif source_len >= 9:
+        mp_len_mask = (dict_lens_int >= 6)
     else:
         mp_len_mask = True
 
@@ -4570,7 +4572,8 @@ def tools_combo_check():
         shared_count = int(shared_counts[idx])
         
         # Early exit: Stop once all display columns that can still grow are fully saturated (150 items each)
-        active_mp_keys = [i for i in range(max_mp + 1) if i >= source_len - shared_count]
+        min_target_len = 6 if source_len >= 9 else 5
+        active_mp_keys = [i for i in range(max_mp + 1) if shared_count >= min_target_len - i]
         active_lic_keys = range(5, min(10, shared_count + 1))
         if (all(len(mp_groups[i]) >= 150 for i in active_mp_keys) and
             all(len(lic_groups.get(k, [])) >= 150 for k in active_lic_keys)):
