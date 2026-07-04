@@ -86,11 +86,29 @@ class TournamentManager:
         try:
             # 1. Filter participants
             participants = conn.execute('SELECT user_id FROM tournament_participants WHERE tournament_id = ?', (tid,)).fetchall()
-            if not participants:
+            participant_ids = [p['user_id'] for p in participants]
+            
+            if not participant_ids:
                 # Handle empty tournament? Just complete it.
                 conn.execute("UPDATE tournaments SET status = 'completed', completed_at = ? WHERE id = ?", (time.time(), tid))
                 conn.commit()
                 return
+
+            # If there are participants, but less than 8, fill with AI bots to ensure a full bracket
+            if len(participant_ids) < 8:
+                ai_users = conn.execute("SELECT id FROM users WHERE username LIKE 'AI_%'").fetchall()
+                ai_ids = [row['id'] for row in ai_users]
+                
+                # Register AI bots until we have 8 participants
+                for ai_id in ai_ids:
+                    if len(participant_ids) >= 8:
+                        break
+                    if ai_id not in participant_ids:
+                        conn.execute('''
+                            INSERT OR IGNORE INTO tournament_participants (tournament_id, user_id, joined_at)
+                            VALUES (?, ?, ?)
+                        ''', (tid, ai_id, time.time()))
+                        participant_ids.append(ai_id)
 
             # 2. Generate Round 1 Board FIRST
             # This ensures when we set current_round=1, the data exists
