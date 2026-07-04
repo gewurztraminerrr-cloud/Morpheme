@@ -4113,6 +4113,203 @@ def load_pronunciations():
         print(f"Error loading pronunciations: {e}")
         PRONUNCIATIONS_CACHE = {}
 
+import re
+
+def extract_target_word(definition_text):
+    if not definition_text:
+        return None
+    text = definition_text.strip()
+    
+    # 1. plural of
+    m = re.search(r'(?i)\bplural of\s+([a-zA-Z\-]+)', text)
+    if m:
+        return m.group(1).upper()
+        
+    # 2. verb conjugation of (past, participle, third person)
+    m = re.search(r'(?i)\b(?:present participle|past participle|past tense|past|third-person singular present|third-person singular|conjugation)\s+of\s+([a-zA-Z\-]+)', text)
+    if m:
+        return m.group(1).upper()
+        
+    # 3. alternative form of
+    m = re.search(r'(?i)\balternative\s+(?:form|spelling)\s+of\s+([a-zA-Z\-]+)', text)
+    if m:
+        return m.group(1).upper()
+        
+    return None
+
+def clean_def_text(def_text):
+    pos = 'n'
+    # Default POS detection based on leading tag
+    m = re.match(r'^\s*\((noun|verb|adjective|adverb|pronoun|preposition|conjunction|interjection)\)\s*(.*)', def_text, re.IGNORECASE)
+    if m:
+        pos_str = m.group(1).lower()
+        if pos_str == 'noun': pos = 'n'
+        elif pos_str == 'verb': pos = 'v'
+        elif pos_str == 'adjective': pos = 'adj'
+        elif pos_str == 'adverb': pos = 'adv'
+        else: pos = pos_str[:3]
+        def_text = m.group(2)
+    
+    # Clean up trailing tags like [n], [v], [adj]
+    def_text = re.sub(r'\s*\[[a-z]+\]\s*$', '', def_text.strip())
+    # Clean up trailing periods
+    def_text = def_text.rstrip('.')
+    return def_text.strip(), pos
+
+def lookup_raw_definition_online(word_upper):
+    # Free Dictionary API Fallback
+    try:
+        import urllib.request
+        import json
+        url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word_upper.lower()}"
+        req = urllib.request.Request(
+            url, 
+            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+        )
+        with urllib.request.urlopen(req, timeout=3.0) as response:
+            api_data = json.loads(response.read().decode('utf-8'))
+            if isinstance(api_data, list) and len(api_data) > 0:
+                meanings = api_data[0].get('meanings', [])
+                def_parts = []
+                for m in meanings:
+                    part_of_speech = m.get('partOfSpeech', '')
+                    defs = m.get('definitions', [])
+                    if defs:
+                        first_def = defs[0].get('definition', '')
+                        if first_def:
+                            def_parts.append(f"({part_of_speech}) {first_def}")
+                if def_parts:
+                    return "; ".join(def_parts)
+    except Exception as e:
+        pass
+
+    # Wiktionary API Fallback
+    try:
+        import urllib.request
+        import json
+        import re
+        import html
+        url = f"https://en.wiktionary.org/api/rest_v1/page/definition/{word_upper.lower()}"
+        req = urllib.request.Request(
+            url, 
+            headers={'User-Agent': 'MorphemeApp/1.0 (jeff@morpheme.games) Python-urllib'}
+        )
+        with urllib.request.urlopen(req, timeout=3.0) as response:
+            api_data = json.loads(response.read().decode('utf-8'))
+            if isinstance(api_data, dict) and "en" in api_data:
+                def_parts = []
+                for item in api_data["en"]:
+                    part_of_speech = item.get("partOfSpeech", "")
+                    for d in item.get("definitions", []):
+                        text = d.get("definition", "")
+                        text = re.sub(r"<[^>]+>", "", text)
+                        text = re.sub(r"\s+", " ", text).strip()
+                        text = html.unescape(text)
+                        if text:
+                            def_parts.append(f"({part_of_speech}) {text}")
+                if def_parts:
+                    return "; ".join(def_parts)
+    except Exception as e:
+        pass
+
+    return None
+
+def get_definition_cached_or_online(w):
+    d = DEFINITIONS_CACHE.get(w)
+    if not d:
+        d = lookup_raw_definition_online(w)
+        if d:
+            DEFINITIONS_CACHE[w] = d
+    return d
+
+def get_definition_cached_or_online_with_guess(w):
+    d = get_definition_cached_or_online(w)
+    if d:
+        return d
+        
+    # Guess root words (strip suffixes)
+    if w.endswith('S') and not w.endswith('SS') and not w.endswith('US') and not w.endswith('IS') and not w.endswith('AS'):
+        # Try stripping 'S'
+        r = w[:-1]
+        if get_definition_cached_or_online(r):
+            DEFINITIONS_CACHE[w] = f"(noun) plural of {r}"
+            return DEFINITIONS_CACHE[w]
+            
+        # Try stripping 'ES'
+        if w.endswith('ES'):
+            r2 = w[:-2]
+            if get_definition_cached_or_online(r2):
+                DEFINITIONS_CACHE[w] = f"(noun) plural of {r2}"
+                return DEFINITIONS_CACHE[w]
+                
+    if w.endswith('ED'):
+        # Try stripping 'ED'
+        r = w[:-2]
+        if get_definition_cached_or_online(r):
+            DEFINITIONS_CACHE[w] = f"(verb) conjugation of {r}"
+            return DEFINITIONS_CACHE[w]
+            
+        # Try stripping 'D' (e.g. baked -> bake)
+        r2 = w[:-1]
+        if get_definition_cached_or_online(r2):
+            DEFINITIONS_CACHE[w] = f"(verb) conjugation of {r2}"
+            return DEFINITIONS_CACHE[w]
+            
+    if w.endswith('ING'):
+        # Try stripping 'ING'
+        r = w[:-3]
+        if get_definition_cached_or_online(r):
+            DEFINITIONS_CACHE[w] = f"(verb) conjugation of {r}"
+            return DEFINITIONS_CACHE[w]
+            
+        # Try stripping 'ING' and adding 'E' (e.g. baking -> bake)
+        r2 = w[:-3] + 'E'
+        if get_definition_cached_or_online(r2):
+            DEFINITIONS_CACHE[w] = f"(verb) conjugation of {r2}"
+            return DEFINITIONS_CACHE[w]
+            
+    return None
+
+def format_resolved_definition(word_upper, visited=None):
+    if visited is None:
+        visited = set()
+    if word_upper in visited:
+        return None
+    visited.add(word_upper)
+
+    raw = get_definition_cached_or_online_with_guess(word_upper)
+    if not raw:
+        return None
+
+    target = extract_target_word(raw)
+    is_plural_or_verb = False
+    if target:
+        if re.search(r'(?i)\b(?:plural|participle|past|tense|third-person|conjugation)\s+of', raw):
+            is_plural_or_verb = True
+
+    if is_plural_or_verb:
+        return format_resolved_definition(target, visited)
+
+    meaning, pos = clean_def_text(raw)
+
+    if target and re.search(r'(?i)\balternative\s+(?:form|spelling)\s+of', raw):
+        root_raw = get_definition_cached_or_online_with_guess(target)
+        if root_raw:
+            root_meaning, root_pos = clean_def_text(root_raw)
+            return f"{word_upper}, {root_meaning}. Also {target} [{root_pos}]"
+        else:
+            return f"{word_upper}, {meaning}. [{pos}]"
+
+    alt_spellings = []
+    for k, v in DEFINITIONS_CACHE.items():
+        if k != word_upper and 'alternative' in v.lower() and extract_target_word(v) == word_upper:
+            alt_spellings.append(k)
+
+    if alt_spellings:
+        return f"{word_upper}, {meaning}. Also {', '.join(sorted(alt_spellings))} [{pos}]"
+    else:
+        return f"{word_upper}, {meaning}. [{pos}]"
+
 def lookup_word_definition_and_pronunciation(word):
     global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
     if not DEFINITIONS_CACHE:
@@ -4121,68 +4318,10 @@ def lookup_word_definition_and_pronunciation(word):
         load_pronunciations()
 
     word_upper = word.upper().strip()
-    definition = DEFINITIONS_CACHE.get(word_upper)
     pronunciation = PRONUNCIATIONS_CACHE.get(word_upper)
     
-    # ONLINE FALLBACK: If definition is not found locally, try Free Dictionary API
-    if not definition:
-        try:
-            import urllib.request
-            import json
-            url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word_upper.lower()}"
-            req = urllib.request.Request(
-                url, 
-                headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-            )
-            with urllib.request.urlopen(req, timeout=3.0) as response:
-                api_data = json.loads(response.read().decode('utf-8'))
-                if isinstance(api_data, list) and len(api_data) > 0:
-                    meanings = api_data[0].get('meanings', [])
-                    def_parts = []
-                    for m in meanings:
-                        part_of_speech = m.get('partOfSpeech', '')
-                        defs = m.get('definitions', [])
-                        if defs:
-                            first_def = defs[0].get('definition', '')
-                            if first_def:
-                                def_parts.append(f"({part_of_speech}) {first_def}")
-                    if def_parts:
-                        definition = "; ".join(def_parts)
-                        DEFINITIONS_CACHE[word_upper] = definition
-        except Exception as e:
-            print(f"Online dictionary API fallback failed for '{word_upper}': {e}")
-
-    # SECONDARY ONLINE FALLBACK: If still not found, try English Wiktionary REST API
-    if not definition:
-        try:
-            import urllib.request
-            import json
-            import re
-            import html
-            url = f"https://en.wiktionary.org/api/rest_v1/page/definition/{word_upper.lower()}"
-            req = urllib.request.Request(
-                url, 
-                headers={'User-Agent': 'MorphemeApp/1.0 (jeff@morpheme.games) Python-urllib'}
-            )
-            with urllib.request.urlopen(req, timeout=3.0) as response:
-                api_data = json.loads(response.read().decode('utf-8'))
-                if isinstance(api_data, dict) and "en" in api_data:
-                    def_parts = []
-                    for item in api_data["en"]:
-                        part_of_speech = item.get("partOfSpeech", "")
-                        for d in item.get("definitions", []):
-                            text = d.get("definition", "")
-                            text = re.sub(r"<[^>]+>", "", text)
-                            text = re.sub(r"\s+", " ", text).strip()
-                            text = html.unescape(text)
-                            if text:
-                                def_parts.append(f"({part_of_speech}) {text}")
-                    if def_parts:
-                        definition = "; ".join(def_parts)
-                        DEFINITIONS_CACHE[word_upper] = definition
-        except Exception as e:
-            print(f"Wiktionary API fallback failed for '{word_upper}': {e}")
-
+    definition = format_resolved_definition(word_upper)
+    
     return definition, pronunciation
 
 @app.route('/api/definition', methods=['GET'])
