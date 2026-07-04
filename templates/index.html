@@ -3849,6 +3849,55 @@
                             </ol>
                         </div>
                     </div>
+
+                    <div class="faq-item" id="faq-cube-mobile">
+                        <div class="faq-question">Why is the cube size adjustable when there are no playable cubes?</div>
+                        <div class="faq-answer">
+                            That would be because you are playing on your mobile device! Mobile devices are not capable of
+                            rendering the 3D cube board — but desktops and laptops can. The cube size setting is still shown
+                            in your preferences so that it is ready and waiting the moment you switch to a larger device.
+                        </div>
+                    </div>
+
+                    <div class="faq-item" id="faq-spinner-mismatch">
+                        <div class="faq-question">The parameters shown on the Spinner Set did not match the parameters of the actual round. Why?</div>
+                        <div class="faq-answer">
+                            <p>This is a known and intentional safety mechanism. Here is exactly what happens behind the scenes:</p>
+                            <ol style="margin-top: 10px; margin-bottom: 15px; padding-left: 20px; line-height: 1.8;">
+                                <li>
+                                    <strong>Pre-generation sanitization.</strong> Before the board generator even begins,
+                                    the server inspects the spun parameters and checks whether they are mathematically
+                                    compatible with each other. For example, a very high <em>Minimum Word Length</em>
+                                    combined with a very small board dimension may make it geometrically impossible to
+                                    place enough qualifying words. In these cases, one or more parameters are quietly
+                                    adjusted to a safer value before generation starts.
+                                </li>
+                                <li>
+                                    <strong>Search timeout and retries.</strong> The board generator attempts to find a
+                                    valid board that satisfies <em>all</em> of the spun constraints simultaneously — density,
+                                    word count, word length range, format rules, and more. It is given a strict time budget
+                                    to do this. If it cannot find a qualifying board within that window after multiple
+                                    retries, it does not stall the game; instead, it progressively relaxes the hardest
+                                    constraints (such as minimum word count or minimum word length) until a valid board
+                                    is found.
+                                </li>
+                                <li>
+                                    <strong>Emergency clean-slate fallback.</strong> If relaxation still fails, the generator
+                                    falls back to a clean-slate set of parameters — for instance, forcing the
+                                    <em>Density</em> format on grids that require very long minimum-length words, because
+                                    Density is the format most likely to produce a fully satisfying board under tight
+                                    constraints. The round proceeds normally; only the displayed parameters change to
+                                    reflect what was actually used.
+                                </li>
+                            </ol>
+                            <p>
+                                In short: the Spinner Set shows what was <em>spun</em>, but the round reflects what was
+                                <em>achievable</em>. The system always prioritizes getting a high-quality, playable board
+                                into your hands over rigidly honoring every spun value when doing so would be impossible
+                                or take too long.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
