@@ -3799,7 +3799,7 @@ def get_room_state(room_id):
                 'total_words_count': (room.previous_total_words if is_intermission else actual_total),
                 'next_round_total_words_count': getattr(room, 'next_round_total_words_count', 0),
                 'initial_total_words': getattr(room, 'initial_total_words', actual_total),
-                'total_points_count': (getattr(room, 'next_round_total_points', 0) if (is_intermission and is_revealed and getattr(room, 'next_round_total_points', 0) > 0) else (room.previous_total_points if is_intermission else room.total_points_count)),
+                'total_points_count': (room.previous_total_points if is_intermission else room.total_points_count),
                 'total_counts_by_len': (room.previous_total_counts_by_len if is_intermission else getattr(room, 'total_counts_by_len', {})),
                 'cell_density': (
                     getattr(requesting_player, 'cell_density', []) if (requesting_player and getattr(requesting_player, 'cell_density', None)) else getattr(room, 'cell_density', [])
