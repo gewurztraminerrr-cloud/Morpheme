@@ -317,7 +317,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 };
 
-                gatewayBtn.onclick = handleGatewayTransition;
+                // Flatten immediately on click-down (mousedown / touchstart)
+                gatewayBtn.addEventListener('mousedown', () => {
+                    gatewayBtn.classList.add('pressed');
+                });
+                gatewayBtn.addEventListener('touchstart', () => {
+                    gatewayBtn.classList.add('pressed');
+                });
+
+                // On click release, button remains flat, and transitions to lobby after a brief 200ms delay
+                gatewayBtn.onclick = (e) => {
+                    gatewayBtn.classList.add('pressed');
+                    setTimeout(() => {
+                        handleGatewayTransition(e);
+                    }, 200);
+                };
             } else {
                 // Fallback if elements not in DOM
                 showPage('page-lobby');
