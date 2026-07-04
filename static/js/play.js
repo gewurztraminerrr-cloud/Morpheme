@@ -2073,6 +2073,7 @@ async function updateGameState(incomingState = null) {
         }
 
         // --- REMAINING TAB ---
+        const cluesListEl = document.getElementById('clues-list');
         const remainingListEl = document.getElementById('remaining-words-list');
         const showRemainingInClues = is24H && activeWordsTab === 'clues' && window._cluesShowRemaining;
         if ((remainingListEl && activeWordsTab === 'remaining') || showRemainingInClues) {
@@ -2156,7 +2157,6 @@ async function updateGameState(incomingState = null) {
         }
 
         // --- CLUES TAB (24H Only) ---
-        const cluesListEl = document.getElementById('clues-list');
         const cluesToggleBtn = document.getElementById('clues-toggle-remaining-btn');
         if (cluesToggleBtn) {
             cluesToggleBtn.style.display = is24H ? 'block' : 'none';
