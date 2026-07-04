@@ -1084,6 +1084,11 @@ def init_db():
             PRIMARY KEY (user_id, setting_key),
             FOREIGN KEY(user_id) REFERENCES users(id)
         );
+        CREATE TABLE IF NOT EXISTS daily_score_sums (
+            user_id INTEGER PRIMARY KEY,
+            score_sum INTEGER NOT NULL,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        );
     ''')
     conn.commit()
     conn.commit()
@@ -5640,6 +5645,25 @@ def create_forum_comment():
         ''', (post_id, session['user_id'], content, image_url))
         conn.commit()
         return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/daily-score-sums', methods=['GET'])
+def get_daily_score_sums():
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
+    try:
+        cursor = conn.execute('''
+            SELECT u.username, d.score_sum
+            FROM daily_score_sums d
+            JOIN users u ON d.user_id = u.id
+            ORDER BY d.score_sum DESC
+        ''')
+        rows = cursor.fetchall()
+        players = [{'username': row['username'], 'score_sum': row['score_sum']} for row in rows]
+        return jsonify({'players': players})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:

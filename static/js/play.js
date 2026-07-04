@@ -292,6 +292,7 @@ function safelyTransposeState(state) {
 }
 
 let activeWordsTab = 'found'; // 'found' or 'remaining'
+window._cluesShowRemaining = false;
 let validationTimeout = null;
 let highlightedSplitWord = null; // Track word for shared highlighting in Split Points
 let highlightedFoundWord = null; // Track word from All Words list to highlight finders
@@ -1743,11 +1744,11 @@ async function updateGameState(incomingState = null) {
         tabBtns.forEach(btn => {
             const tab = btn.dataset.tab;
             if (is24H) {
-                // 24H: Found, Clues, Previous
+                // 24H: Found, Clues, Previous, Score Sum
                 if (tab === 'found') {
                     btn.textContent = 'Found';
                     btn.style.display = 'block';
-                } else if (tab === 'clues' || tab === 'previous') {
+                } else if (tab === 'clues' || tab === 'previous' || tab === 'score-sum') {
                     btn.style.display = 'block';
                 } else {
                     btn.style.display = 'none'; // Hide Remaining, History
@@ -1769,7 +1770,7 @@ async function updateGameState(incomingState = null) {
         if (is24H && (activeWordsTab === 'remaining' || activeWordsTab === 'history')) {
             activeWordsTab = 'found';
         }
-        if (!is24H && (activeWordsTab === 'clues' || activeWordsTab === 'previous')) {
+        if (!is24H && (activeWordsTab === 'clues' || activeWordsTab === 'previous' || activeWordsTab === 'score-sum')) {
             activeWordsTab = 'found';
         }
 
@@ -2073,7 +2074,8 @@ async function updateGameState(incomingState = null) {
 
         // --- REMAINING TAB ---
         const remainingListEl = document.getElementById('remaining-words-list');
-        if (remainingListEl && activeWordsTab === 'remaining') {
+        const showRemainingInClues = is24H && activeWordsTab === 'clues' && window._cluesShowRemaining;
+        if ((remainingListEl && activeWordsTab === 'remaining') || showRemainingInClues) {
             let myFoundStrs = [];
             if (state.game_type === 'fcfs') {
                 myFoundStrs = allPlayerFoundStrs;
@@ -2099,7 +2101,10 @@ async function updateGameState(incomingState = null) {
                 
                 if (totalByLen._round !== undefined && totalByLen._round !== expectedRound) {
                     console.warn(`[Remaining-Sync] Mismatch (Counts Round: ${totalByLen._round}, Expected: ${expectedRound}).`);
-                    remainingListEl.innerHTML = '<p class="placeholder" style="opacity: 0.6; font-style: italic;">Syncing word counts...</p>';
+                    const targetEl = showRemainingInClues ? cluesListEl : remainingListEl;
+                    if (targetEl) {
+                        targetEl.innerHTML = '<p class="placeholder" style="opacity: 0.6; font-style: italic;">Syncing word counts...</p>';
+                    }
                     return; 
                 }
                 
@@ -2143,44 +2148,56 @@ async function updateGameState(incomingState = null) {
                 html += `<tr><td class="len-cell">${i}LW</td><td class="count-cell">${countsByLen[i] || 0}</td></tr>`;
             }
             html += '</table>';
-            remainingListEl.innerHTML = html;
+            
+            const targetEl = showRemainingInClues ? cluesListEl : remainingListEl;
+            if (targetEl) {
+                targetEl.innerHTML = html;
+            }
         }
 
         // --- CLUES TAB (24H Only) ---
         const cluesListEl = document.getElementById('clues-list');
-        if (cluesListEl && activeWordsTab === 'clues') {
-            const oldScrollTop = cluesListEl.scrollTop;
-            
-            const myPlayer = state.players.find(p => p.username.toLowerCase() === (currentUser || "").toLowerCase());
-            const myWords = myPlayer ? myPlayer.submitted_words : [];
-            const foundSet = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase()));
-            const unfoundWords = allWords.filter(w => !foundSet.has(w.toUpperCase()));
-            console.log('[CluesDebug] allWords:', allWords.length, 'foundSet:', foundSet.size, 'unfound:', unfoundWords.length);
+        const cluesToggleBtn = document.getElementById('clues-toggle-remaining-btn');
+        if (cluesToggleBtn) {
+            cluesToggleBtn.style.display = is24H ? 'block' : 'none';
+            cluesToggleBtn.textContent = window._cluesShowRemaining ? 'Return to Clues' : 'Remaining';
+        }
 
-            if (unfoundWords.length === 0) {
-                cluesListEl.innerHTML = '<p class="placeholder">All words found!</p>';
-            } else {
-                // Sort Clues Alpha for better searching
-                unfoundWords.sort((a, b) => a.length - b.length || a.localeCompare(b));
-                const clueListHtml = unfoundWords.map(w => {
-                    const prefix = w.substring(0, 2);
-                    let sum = 0;
-                    for (let char of w.toUpperCase()) {
-                        sum += (window.LETTER_VALUES || LETTER_VALUES)[char] || 1;
-                    }
-                    return `
-                        <div class="clue-item">
-                            <span class="clue-prefix">${prefix}..</span>
-                            <div class="clue-divider"></div>
-                            <span class="clue-stats">${w.length} Letters &bull; ${sum} pts</span>
-                        </div>
-                    `;
-                }).join('');
+        if (cluesListEl && activeWordsTab === 'clues') {
+            if (!window._cluesShowRemaining) {
+                const oldScrollTop = cluesListEl.scrollTop;
                 
-                cluesListEl.innerHTML = clueListHtml;
+                const myPlayer = state.players.find(p => p.username.toLowerCase() === (currentUser || "").toLowerCase());
+                const myWords = myPlayer ? myPlayer.submitted_words : [];
+                const foundSet = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase()));
+                const unfoundWords = allWords.filter(w => !foundSet.has(w.toUpperCase()));
+                console.log('[CluesDebug] allWords:', allWords.length, 'foundSet:', foundSet.size, 'unfound:', unfoundWords.length);
+
+                if (unfoundWords.length === 0) {
+                    cluesListEl.innerHTML = '<p class="placeholder">All words found!</p>';
+                } else {
+                    // Sort Clues Alpha for better searching
+                    unfoundWords.sort((a, b) => a.length - b.length || a.localeCompare(b));
+                    const clueListHtml = unfoundWords.map(w => {
+                        const prefix = w.substring(0, 2);
+                        let sum = 0;
+                        for (let char of w.toUpperCase()) {
+                            sum += (window.LETTER_VALUES || LETTER_VALUES)[char] || 1;
+                        }
+                        return `
+                            <div class="clue-item">
+                                <span class="clue-prefix">${prefix}..</span>
+                                <div class="clue-divider"></div>
+                                <span class="clue-stats">${w.length} Letters &bull; ${sum} pts</span>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    cluesListEl.innerHTML = clueListHtml;
+                }
+                
+                cluesListEl.scrollTop = oldScrollTop;
             }
-            
-            cluesListEl.scrollTop = oldScrollTop;
         }
 
         // --- PREVIOUS DAY TAB (24H Only) ---
@@ -2375,6 +2392,16 @@ async function updateGameState(incomingState = null) {
             }
         }
 
+        // --- SCORE SUM TAB (24H Only) ---
+        const scoreSumListEl = document.getElementById('score-sum-list');
+        if (scoreSumListEl && activeWordsTab === 'score-sum') {
+            if (!window._dailyScoreSumsData) {
+                fetchDailyScoreSums();
+            } else {
+                renderDailyScoreSums();
+            }
+        }
+
 
         // Auto-focus check
         if (isActive && !previousState) {
@@ -2403,6 +2430,68 @@ async function updateGameState(incomingState = null) {
             isFetchingState = false;
         }
     }
+}
+
+function fetchDailyScoreSums() {
+    const listEl = document.getElementById('score-sum-list');
+    if (listEl) {
+        listEl.innerHTML = '<p class="placeholder">Loading rankings...</p>';
+    }
+    
+    fetch('/api/daily-score-sums')
+        .then(res => res.json())
+        .then(data => {
+            window._dailyScoreSumsData = data.players || [];
+            renderDailyScoreSums();
+        })
+        .catch(err => {
+            console.error('Error fetching score sums:', err);
+            if (listEl) {
+                listEl.innerHTML = '<p class="placeholder" style="color: var(--theme-danger);">Failed to load rankings</p>';
+            }
+        });
+}
+
+function renderDailyScoreSums() {
+    const listEl = document.getElementById('score-sum-list');
+    if (!listEl) return;
+    
+    const players = window._dailyScoreSumsData || [];
+    const searchInput = document.getElementById('score-sum-search');
+    const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    
+    const filteredPlayers = players.filter(p => p.username.toLowerCase().includes(query));
+    
+    // Update player count at the top next to "Find Me"
+    const countEl = document.getElementById('score-sum-player-count');
+    if (countEl) {
+        countEl.textContent = `Players: ${players.length}`;
+    }
+    
+    if (filteredPlayers.length === 0) {
+        listEl.innerHTML = '<p class="placeholder">No players found</p>';
+        return;
+    }
+    
+    const currentUserNameNormalized = window.currentUser ? window.currentUser.toLowerCase().trim() : '';
+    
+    let html = '<div class="score-sum-table">';
+    filteredPlayers.forEach(p => {
+        // Find the absolute rank of this player in the main unfiltered list
+        const absRank = players.findIndex(orig => orig.username === p.username) + 1;
+        const isMe = p.username.toLowerCase().trim() === currentUserNameNormalized;
+        
+        html += `
+            <div class="score-sum-row ${isMe ? 'is-me-row' : ''}" data-username="${p.username.toLowerCase().trim()}" style="display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; border-radius: 6px; margin-bottom: 4px; background: ${isMe ? 'rgba(var(--text-primary-rgb), 0.15)' : 'var(--input-bg)'}; border: 1px solid ${isMe ? 'var(--text-primary)' : 'var(--input-border)'};">
+                <span class="player-rank" style="font-weight: bold; width: 45px; opacity: 0.8;">#${absRank}</span>
+                <span class="player-name" style="flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; ${isMe ? 'font-weight: bold;' : ''}">${p.username}</span>
+                <span class="player-score" style="font-weight: bold;">${p.score_sum} pts</span>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    listEl.innerHTML = html;
 }
 
 function renderPlayers(players, currentUser = null, state = null) {
@@ -7720,6 +7809,10 @@ document.addEventListener('click', (e) => {
     if (e.target.classList.contains('word-tab')) {
         activeWordsTab = e.target.dataset.tab;
 
+        if (activeWordsTab === 'score-sum') {
+            fetchDailyScoreSums();
+        }
+
         // Update UI immediately for responsiveness
         document.querySelectorAll('.word-tab').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tab === activeWordsTab);
@@ -7739,6 +7832,51 @@ document.addEventListener('click', (e) => {
         // Refresh state visualization
         if (window.lastGameState) {
             updateGameState(window.lastGameState);
+        }
+    }
+});
+
+// Clues toggle button click listener
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'clues-toggle-remaining-btn') {
+        window._cluesShowRemaining = !window._cluesShowRemaining;
+        if (window.lastGameState) {
+            updateGameState(window.lastGameState);
+        }
+    }
+});
+
+// Score sum search and find-me input listeners
+document.addEventListener('input', (e) => {
+    if (e.target.id === 'score-sum-search') {
+        renderDailyScoreSums();
+    }
+});
+
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'score-sum-find-me-btn') {
+        const currentUserNameNormalized = window.currentUser ? window.currentUser.toLowerCase().trim() : '';
+        if (!currentUserNameNormalized) return;
+        
+        // Find if user exists in the list
+        const searchInput = document.getElementById('score-sum-search');
+        if (searchInput && searchInput.value !== '') {
+            searchInput.value = '';
+            renderDailyScoreSums();
+        }
+        
+        const row = document.querySelector(`.score-sum-row[data-username="${currentUserNameNormalized}"]`);
+        if (row) {
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Flash effect for visibility
+            row.style.transition = 'background-color 0.3s ease';
+            const originalBg = row.style.background;
+            row.style.background = 'rgba(var(--text-primary-rgb), 0.35)';
+            setTimeout(() => {
+                row.style.background = originalBg;
+            }, 1000);
+        } else {
+            alert("You are not on the Score Sum list yet! Play in the daily 24h room to get ranked.");
         }
     }
 });

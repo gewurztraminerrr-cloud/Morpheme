@@ -4880,6 +4880,13 @@ class RoomManager:
                     actual_bonus_word, json.dumps(room.bonus_cell), board_format,
                     solutions_payload, paths_payload
                 ))
+
+                if room.time_limit >= 7200 and u_id != -1 and u_name != 'System':
+                    conn.execute('''
+                        INSERT INTO daily_score_sums (user_id, score_sum)
+                        VALUES (?, ?)
+                        ON CONFLICT(user_id) DO UPDATE SET score_sum = score_sum + excluded.score_sum
+                    ''', (u_id, u_score))
                 
             conn.commit()
             conn.close()

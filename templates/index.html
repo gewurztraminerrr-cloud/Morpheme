@@ -36,7 +36,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css?v=49">
     <link rel="stylesheet" href="/css/lobby.css?v=29">
-    <link rel="stylesheet" href="/css/play.css?v=117">
+    <link rel="stylesheet" href="/css/play.css?v=118">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=22">
     <link rel="stylesheet" href="/css/donate.css?v=1">
@@ -904,6 +904,7 @@
                             <button class="word-tab" data-tab="remaining" style="display: none;">Remaining</button>
                             <button class="word-tab" data-tab="clues" style="display: none;">Clues</button>
                             <button class="word-tab" data-tab="previous" style="display: none;" title="Previous Day">Previous</button>
+                            <button class="word-tab" data-tab="score-sum" style="display: none;">Score Sum</button>
                             <button class="word-tab" data-tab="history">History</button>
                         </div>
 
@@ -938,8 +939,9 @@
 
 
                         <div id="tab-content-clues" class="tab-content">
-                            <div class="words-header-group">
+                            <div class="words-header-group" style="display: flex; justify-content: space-between; align-items: center;">
                                 <h3>Clues</h3>
+                                <button id="clues-toggle-remaining-btn" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border); cursor: pointer; display: none;">Remaining</button>
                             </div>
                             <div id="clues-list" class="clues-grid">
                                 <p class="placeholder">Loading clues...</p>
@@ -953,6 +955,20 @@
                             </div>
                             <div id="previous-words-list">
                                 <p class="placeholder">No previous data</p>
+                            </div>
+                        </div>
+
+                        <div id="tab-content-score-sum" class="tab-content">
+                            <div class="words-header-group">
+                                <h3>Score Sum</h3>
+                            </div>
+                            <div class="score-sum-controls" style="display: flex; gap: 8px; margin-bottom: 10px; padding: 0 5px; align-items: center;">
+                                <input type="text" id="score-sum-search" placeholder="Search username..." style="flex: 1; min-width: 100px; padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border); outline: none;">
+                                <button id="score-sum-find-me-btn" style="padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border); cursor: pointer; font-weight: 500; transition: all 0.2s;">Find Me</button>
+                                <span id="score-sum-player-count" style="font-size: 0.75rem; opacity: 0.7; white-space: nowrap;">Players: 0</span>
+                            </div>
+                            <div id="score-sum-list">
+                                <p class="placeholder">Loading rankings...</p>
                             </div>
                         </div>
 
@@ -4716,7 +4732,7 @@
     <script src="/js/forum.js?v=54"></script>
     <script src="/js/app.js?v=67"></script>
     <script src="/js/lobby.js?v=10"></script>
-    <script src="/js/play.js?v=215"></script>
+    <script src="/js/play.js?v=216"></script>
     <script src="/js/tournaments.js?v=7"></script>
     <script src="/js/leaderboard.js?v=3"></script>
     <script src="/js/tools.js?v=73"></script>

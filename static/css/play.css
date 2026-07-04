@@ -5985,3 +5985,22 @@ body .board-cell.tile-flash-purple * {
         display: block !important;
     }
 }
+
+/* Score Sum Leaderboard Styles */
+#score-sum-list {
+    max-height: 72vh;
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--text-primary-rgb), 0.3) transparent;
+}
+#score-sum-list::-webkit-scrollbar {
+    width: 6px;
+}
+#score-sum-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+#score-sum-list::-webkit-scrollbar-thumb {
+    background-color: rgba(var(--text-primary-rgb), 0.3);
+    border-radius: 3px;
+}
