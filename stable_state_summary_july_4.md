@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `f8851c6bf19f2c4b36d542f014afe975269290cf`
+* **Commit ID**: `5fb591fc388951bc0dc34ea658e58c7e395061f9`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -91,6 +91,12 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
     - Capped the number of rendered items in the **Words Without Definitions** list to the first 100 entries inside `static/js/mods.js`.
     - Appended an inline info alert at the bottom of the table instructing moderators to type in the search box to filter results when the list exceeds 100 matching items.
     - This drastically reduces DOM complexity (avoiding rendering 200,000+ elements simultaneously), eliminating virtual keyboard resize delays, thread-locking, and 2-3 second black screen freezes on mobile.
+
+16. **Unscramble Tool Snug Stacked Layout (Laptops/Desktops)**:
+    - Redesigned the **Unscramble** tool pane layout in `templates/index.html` to be vertically stacked (`flex-direction: column`) rather than horizontal.
+    - Placed the game dashboard (jumbled word, word counts, input, buttons) at the top, and stacked the **Status & Results** panel underneath it.
+    - Reduced the large jumbled word size from `5rem` to `3.2rem`, optimized button heights to `45px`, and tightened container paddings/margins.
+    - Configured the results list container to dynamically scale (`flex: 1; min-height: 120px; overflow: hidden;`) and scroll internally, ensuring all controls fit snugly in the viewport without creating outer browser scrollbars.
 
 ## Verification
 * **Local**: Verified dictionary test cases (all passed).
