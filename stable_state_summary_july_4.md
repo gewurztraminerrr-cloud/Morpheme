@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `61137030a6e3ca68824aa0e390b30046103af21f`
+* **Commit ID**: `e1312f56d37357d9a5c973f5695691139ffe007a`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -77,6 +77,11 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
     - Constrained the outer `#page-forums` element to `height: calc(100vh - 120px) !important; overflow-y: hidden !important;` on mobile device screens (`max-width: 900px`).
     - Unified the responsive mobile grid transition breakpoint in `static/css/forum.css` from `820px` to `900px`.
     - This locks the outer page structure exactly in place, preventing whole-screen vertical browser scroll/bouncing while allowing the internal list panels (.forum-sidebar, .forum-main) to scroll their contents independently.
+
+13. **Mobile Layout locked header for Store, Donate, Leaderboards, and Tournaments**:
+    - Constrained the heights of `#page-store`, `#page-donate`, `#page-leaderboards`, and `#page-tournaments` to `height: calc(100vh - 120px) !important;` on mobile devices (`max-width: 900px`).
+    - Enabled vertical scrolling inside the page containers themselves (`overflow-y: auto !important; -webkit-overflow-scrolling: touch !important;`).
+    - This locks the body container viewport exactly in place on mobile, keeping the top branding bar (logo and navigation menu) fixed and visible at all times as players scroll the content.
 
 ## Verification
 * **Local**: Verified dictionary test cases (all passed).
