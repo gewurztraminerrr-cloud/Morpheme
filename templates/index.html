@@ -36,7 +36,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css?v=49">
     <link rel="stylesheet" href="/css/lobby.css?v=29">
-    <link rel="stylesheet" href="/css/play.css?v=112">
+    <link rel="stylesheet" href="/css/play.css?v=113">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=22">
     <link rel="stylesheet" href="/css/donate.css?v=1">
@@ -4716,7 +4716,7 @@
     <script src="/js/forum.js?v=54"></script>
     <script src="/js/app.js?v=65"></script>
     <script src="/js/lobby.js?v=10"></script>
-    <script src="/js/play.js?v=212"></script>
+    <script src="/js/play.js?v=213"></script>
     <script src="/js/tournaments.js?v=7"></script>
     <script src="/js/leaderboard.js?v=3"></script>
     <script src="/js/tools.js?v=73"></script>
@@ -4866,33 +4866,27 @@
                 if (header.parentElement !== boardPanel) {
                     boardPanel.prepend(header);
                 }
+                // Move Timer inside play-header (appended to end)
+                if (timerDisplay && timerDisplay.parentElement !== header) {
+                    header.appendChild(timerDisplay);
+                }
                 // Move Rotate button to the right of the timer
                 if (timerDisplay && rotateBtn && rotateBtn.parentElement !== timerDisplay) {
                     timerDisplay.appendChild(rotateBtn);
-                }
-                // Move Color Chart (Color Bar) back inside the left panel (Players/Chat) so it displays when swiping right
-                const colorBar = document.getElementById('game-color-bar');
-                const playersPanel = document.getElementById('play-panel-players');
-                if (colorBar && playersPanel && colorBar.parentElement !== playersPanel) {
-                    playersPanel.prepend(colorBar);
                 }
             } else {
                 // Desktop: Move back to the top of the page
                 if (header.parentElement !== pagePlay) {
                     pagePlay.prepend(header);
                 }
+                // Move Timer back to its original position in header (before spinner-set-label)
+                const spinnerLabel = document.querySelector('.spinner-set-label');
+                if (timerDisplay && spinnerLabel && timerDisplay.nextElementSibling !== spinnerLabel) {
+                    header.insertBefore(timerDisplay, spinnerLabel);
+                }
                 // Move Rotate button back to input section
                 if (wordInputSection && rotateBtn && rotateBtn.parentElement !== wordInputSection) {
                     wordInputSection.appendChild(rotateBtn);
-                }
-                // Move Timer above the board (prepend to boardPanel)
-                if (timerDisplay && boardPanel && timerDisplay.parentElement !== boardPanel) {
-                    boardPanel.prepend(timerDisplay);
-                }
-                // Move Color Chart (Color Bar) below the header
-                const colorBar = document.getElementById('game-color-bar');
-                if (colorBar && header && colorBar.parentElement !== pagePlay) {
-                    header.insertAdjacentElement('afterend', colorBar);
                 }
             }
 
