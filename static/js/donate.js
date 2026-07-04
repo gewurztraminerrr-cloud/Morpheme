@@ -35,6 +35,18 @@
                     updatePayPalLink(null);
                 }
             });
+
+            // Bulletproof backup: Update link on actual click to capture latest input value
+            if (paypalBtn) {
+                paypalBtn.addEventListener('click', () => {
+                    const amount = parseFloat(customAmountInput.value);
+                    if (!isNaN(amount) && amount > 0) {
+                        paypalBtn.href = `${basePayPalUrl}/${amount}`;
+                    } else {
+                        paypalBtn.href = basePayPalUrl;
+                    }
+                });
+            }
         }
 
         // 2. Fetch and Render Real Recent Donators and Monthly Progress
