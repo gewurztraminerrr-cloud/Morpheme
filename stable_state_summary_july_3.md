@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 3, 2026. All local changes, remote code on GitHub, and the live application running on morpheme.games are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `4b4442e`
+* **Commit ID**: `62b11f5`
 * **Branch**: `main`
 * **Date**: July 3, 2026
 * **Git Tag**: `snapshot-current` (updated July 3, 2026)
@@ -39,6 +39,10 @@ This document summarizes the stable state of **Morpheme** as of July 3, 2026. Al
    - **LCS Linearity Lower Bound Pruning**: Added a `t_len - linearity > limit` check directly after calculating LCS length. If the edit difference bound mathematically exceeds the maximum limit, we skip the recursion entirely, pruning over 90% of backtrack calls.
    - **Removed Heavy Array Allocations in LIS**: Optimized `get_lis()` to iterate `range(i)` instead of slicing `nums[:i]`. This avoids creating millions of temporary list allocations during recursive iterations.
    - **Relevance candidate sorting & early loop exit**: Sorted evaluated candidates by descending shared counts and ascending length differences first, then implemented an early break once all active/non-final columns are fully saturated to 150 items.
+
+6. **Candidate Length and Early-Break Correction for 8+ Length Searches**:
+   - **Length Constraint Adjustment**: Relaxed candidate checks in `app.py` for search terms of length 8 to allow candidate words down to length 5 (and length 6 for search terms of length 9 and 10). This aligns the candidate selection criteria with Java Swing specifications and ensures shorter matching words like `UNITE` (length 5) are included.
+   - **Dynamic Early-Break Adjustment**: Updated `active_mp_keys` checking to calculate bounds using the minimum candidate length (`min_target_len = 6 if source_len >= 9 else 5`) instead of the source length. This prevents the early-exit condition from triggering before low-MP words with lower shared counts are processed.
 
 ## Verification
 * **Local**: Verified correct metric computations and scroll locks on localhost.
