@@ -317,6 +317,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 };
 
+                // Robust interaction handlers
+                let transitionTimeout = null;
+                const triggerTransition = (e) => {
+                    gatewayBtn.classList.add('pressed');
+                    if (transitionTimeout) return;
+                    transitionTimeout = setTimeout(() => {
+                        handleGatewayTransition(e);
+                    }, 200);
+                };
+
                 // Flatten immediately on click-down (mousedown / touchstart)
                 gatewayBtn.addEventListener('mousedown', () => {
                     gatewayBtn.classList.add('pressed');
@@ -325,13 +335,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                     gatewayBtn.classList.add('pressed');
                 });
 
-                // On click release, button remains flat, and transitions to lobby after a brief 200ms delay
+                // Trigger transition on release (mouseup / touchend / click)
+                gatewayBtn.addEventListener('mouseup', (e) => {
+                    triggerTransition(e);
+                });
+                gatewayBtn.addEventListener('touchend', (e) => {
+                    triggerTransition(e);
+                });
                 gatewayBtn.onclick = (e) => {
-                    gatewayBtn.classList.add('pressed');
-                    setTimeout(() => {
-                        handleGatewayTransition(e);
-                    }, 200);
+                    triggerTransition(e);
                 };
+
+                // Pop back up if mouse/touch moves outside the boundary without releasing
+                gatewayBtn.addEventListener('mouseleave', () => {
+                    if (!transitionTimeout) {
+                        gatewayBtn.classList.remove('pressed');
+                    }
+                });
+                gatewayBtn.addEventListener('touchcancel', () => {
+                    if (!transitionTimeout) {
+                        gatewayBtn.classList.remove('pressed');
+                    }
+                });
             } else {
                 // Fallback if elements not in DOM
                 showPage('page-lobby');
