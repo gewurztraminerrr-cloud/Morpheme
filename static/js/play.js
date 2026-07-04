@@ -2153,6 +2153,10 @@ async function updateGameState(incomingState = null) {
             const targetEl = showRemainingInClues ? cluesListEl : remainingListEl;
             if (targetEl) {
                 targetEl.innerHTML = html;
+                if (showRemainingInClues) {
+                    targetEl.style.display = 'block';
+                    targetEl.style.width = '100%';
+                }
             }
         }
 
@@ -2165,6 +2169,8 @@ async function updateGameState(incomingState = null) {
 
         if (cluesListEl && activeWordsTab === 'clues') {
             if (!window._cluesShowRemaining) {
+                cluesListEl.style.display = '';
+                cluesListEl.style.width = '';
                 const oldScrollTop = cluesListEl.scrollTop;
                 
                 const myPlayer = state.players.find(p => p.username.toLowerCase() === (currentUser || "").toLowerCase());
