@@ -1055,9 +1055,11 @@ function showPage(pageId) {
     if (colorBar) {
         if (pageId === 'page-play') {
             colorBar.style.display = 'flex';
-            if (typeof adjustPlayHeaderForDevice === 'function') {
-                adjustPlayHeaderForDevice();
-            }
+            setTimeout(() => {
+                if (typeof adjustPlayHeaderForDevice === 'function') {
+                    adjustPlayHeaderForDevice();
+                }
+            }, 50);
         } else {
             colorBar.style.display = 'none';
         }
