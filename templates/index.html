@@ -2273,19 +2273,24 @@
                                 📖 Dictionary Syntax & Formatting Guidelines
                             </div>
                             <p style="margin: 0 0 10px 0; opacity: 0.95;">To maintain consistency with traditional lexicons, please format definitions based on the part of speech:</p>
+
+                            <!-- Trailing Period Warning -->
+                            <div style="background: rgba(239, 68, 68, 0.12); border-left: 3px solid #ef4444; padding: 8px 12px; border-radius: 4px; margin-bottom: 12px; font-size: 0.8rem; color: #fca5a5; line-height: 1.3;">
+                                ⚠️ <strong>Formatting Rule:</strong> <strong>DO NOT</strong> place a period at the end of definitions (immediately before the square bracket tags). Keep definitions clean and end them immediately before the tag.
+                            </div>
                             
                             <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
                                 <!-- Nouns -->
-                                <div style="border-left: 3px solid #6366f1; padding-left: 8px; background: rgba(0,0,0,0.15); padding: 6px 10px; border-radius: 4px;">
-                                    <strong style="color: var(--text-primary);">Nouns <span style="color: #6366f1; font-weight: 500;">[n]</span>:</strong> Include the singular form in <strong>ALL CAPS</strong>, followed by a comma, the definition, and the suffix tag.
+                                <div style="border-left: 3px solid #6366f1; padding: 6px 10px; background: rgba(0,0,0,0.15); border-radius: 4px;">
+                                    <strong style="color: var(--text-primary);">Nouns <span style="color: #6366f1; font-weight: 500;">[n]</span>:</strong> Include the singular form in <strong>ALL CAPS</strong>, followed by a comma, the definition, and the suffix tag (no trailing period).
                                     <div style="font-family: monospace; font-size: 0.8rem; margin-top: 4px; color: #a5b4fc;">
                                         Word Entry: <span style="color: #fff;">arity,arities</span><br>
-                                        Definition: <span style="color: #fff;">"ARITY, the number of arguments or operands taken by a function, operation, or relation. [n]"</span>
+                                        Definition: <span style="color: #fff;">"ARITY, the number of arguments or operands taken by a function, operation, or relation [n]"</span>
                                     </div>
                                 </div>
 
                                 <!-- Verbs -->
-                                <div style="border-left: 3px solid #10b981; padding-left: 8px; background: rgba(0,0,0,0.15); padding: 6px 10px; border-radius: 4px;">
+                                <div style="border-left: 3px solid #10b981; padding: 6px 10px; background: rgba(0,0,0,0.15); border-radius: 4px;">
                                     <strong style="color: var(--text-primary);">Verbs <span style="color: #10b981; font-weight: 500;">[v]</span>:</strong> Include the infinitive/root form in <strong>ALL CAPS</strong>, followed by a comma, the definition, and the suffix tag.
                                     <div style="font-family: monospace; font-size: 0.8rem; margin-top: 4px; color: #a5b4fc;">
                                         Word Entry: <span style="color: #fff;">concile,conciles,conciled,conciling</span><br>
@@ -2294,20 +2299,41 @@
                                 </div>
 
                                 <!-- Adjectives -->
-                                <div style="border-left: 3px solid #f59e0b; padding-left: 8px; background: rgba(0,0,0,0.15); padding: 6px 10px; border-radius: 4px;">
-                                    <strong style="color: var(--text-primary);">Adjectives <span style="color: #f59e0b; font-weight: 500;">[adj]</span>:</strong> Enter the definition directly, ending with the suffix tag. <em>Do not repeat the headword or include a leading comma.</em>
-                                    <div style="font-family: monospace; font-size: 0.8rem; margin-top: 4px; color: #a5b4fc;">
+                                <div style="border-left: 3px solid #f59e0b; padding: 6px 10px; background: rgba(0,0,0,0.15); border-radius: 4px;">
+                                    <strong style="color: var(--text-primary);">Adjectives <span style="color: #f59e0b; font-weight: 500;">[adj]</span>:</strong> Enter the definition directly, ending with the suffix tag. Do not repeat the headword or include a leading comma unless inflections are grouped.
+                                    <div style="font-family: monospace; font-size: 0.8rem; margin-top: 6px; color: #a5b4fc; border-bottom: 1px dashed rgba(245, 158, 11, 0.2); padding-bottom: 6px;">
+                                        <span style="color: #fcd34d; font-weight: 600;">Standard Adjective:</span><br>
                                         Word Entry: <span style="color: #fff;">cordy</span><br>
                                         Definition: <span style="color: #fff;">"of or like a cord [adj]"</span>
+                                    </div>
+                                    <div style="font-family: monospace; font-size: 0.8rem; margin-top: 6px; border-bottom: 1px dashed rgba(245, 158, 11, 0.2); padding-bottom: 6px; color: #a5b4fc;">
+                                        <span style="color: #fcd34d; font-weight: 600;">Adjectives with comparative, superlative, and adverbial inflections (-ER, -EST, -LY):</span><br>
+                                        <span style="font-style: italic; font-size: 0.75rem; color: #cbd5e1;">Rule: Group the root, -ER, -EST, and -LY forms in the entry. Format the definition by starting with the root headword in ALL CAPS, a comma, the core meaning, and the [adj] tag.</span><br>
+                                        Word Entry: <span style="color: #fff;">FAT,FATTER,FATTEST,FATLY</span><br>
+                                        Definition: <span style="color: #fff;">"FAT, having an abundance of flesh [adj]"</span>
+                                    </div>
+                                    <div style="font-family: monospace; font-size: 0.8rem; margin-top: 6px; color: #a5b4fc;">
+                                        <span style="color: #fcd34d; font-weight: 600;">Adjectives with implicit adverb sub-tags (-LY):</span><br>
+                                        Word Entry: <span style="color: #fff;">reflective</span><br>
+                                        Definition: <span style="color: #fff;">"capable of reflecting light, images, or sound waves [adj REFLECTIVELY]"</span>
                                     </div>
                                 </div>
 
                                 <!-- Adverbs -->
-                                <div style="border-left: 3px solid #ec4899; padding-left: 8px; background: rgba(0,0,0,0.15); padding: 6px 10px; border-radius: 4px;">
-                                    <strong style="color: var(--text-primary);">Adverbs <span style="color: #ec4899; font-weight: 500;">[adv]</span>:</strong> Enter the definition directly, ending with the suffix tag. <em>Do not repeat the headword or include a leading comma.</em>
+                                <div style="border-left: 3px solid #ec4899; padding: 6px 10px; background: rgba(0,0,0,0.15); border-radius: 4px;">
+                                    <strong style="color: var(--text-primary);">Adverbs <span style="color: #ec4899; font-weight: 500;">[adv]</span>:</strong> Enter the definition directly, ending with the suffix tag.
                                     <div style="font-family: monospace; font-size: 0.8rem; margin-top: 4px; color: #a5b4fc;">
                                         Word Entry: <span style="color: #fff;">abeat</span><br>
                                         Definition: <span style="color: #fff;">"beating [adv]"</span>
+                                    </div>
+                                </div>
+
+                                <!-- Interjections -->
+                                <div style="border-left: 3px solid #a855f7; padding: 6px 10px; background: rgba(0,0,0,0.15); border-radius: 4px;">
+                                    <strong style="color: var(--text-primary);">Interjections <span style="color: #a855f7; font-weight: 500;">[interj]</span>:</strong> Denotes emotional outbursts or attention-getting sounds. Begin descriptions with "Expr." (Expressing) where relevant.
+                                    <div style="font-family: monospace; font-size: 0.8rem; margin-top: 4px; color: #a5b4fc;">
+                                        Word Entry: <span style="color: #fff;">ahem</span><br>
+                                        Definition: <span style="color: #fff;">"Expr. desire to attract attention, gain time, or show disapproval [interj]"</span>
                                     </div>
                                 </div>
                             </div>
