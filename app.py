@@ -636,6 +636,9 @@ def add_added_word_api():
         word_validator.reload_added_words()
         TOOLS_DICT_CACHE.clear()
         print(f"[Mods] Successfully added NEW word '{word}' to top of list.")
+        
+        # Trigger dynamic definition mapping and auto-saving rules
+        ensure_definitions_background([word])
 
         return jsonify({
             'success': True, 
@@ -769,6 +772,9 @@ def submit_dictionary_words():
             
         global LISTS_CACHE
         LISTS_CACHE.clear()
+        
+        # Trigger dynamic definitions processing and auto-saving rules in background
+        ensure_definitions_background(list(new_words))
             
         return jsonify({
             'success': True, 
@@ -800,7 +806,7 @@ def add_definition_api():
     if not words:
         return jsonify({'error': 'Word and definition required'}), 400
         
-    global DEFINITIONS_PATH
+    global DEFINITIONS_PATH, DEFINITIONS_CACHE
     if not DEFINITIONS_PATH:
         DEFINITIONS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'Definitions.txt')
         
@@ -820,9 +826,14 @@ def add_definition_api():
                     if len(parts) == 2:
                         defs[parts[0].strip().upper()] = parts[1].strip()
         
-        # Add or Replace for each word
+        # Add or Replace for each word (with dynamic resolution support)
+        # Store in cache temporarily so format_resolved_definition can look up references
         for word in words:
-            defs[word] = definition
+            DEFINITIONS_CACHE[word] = definition
+            
+        for word in words:
+            formatted_def = format_resolved_definition(word)
+            defs[word] = formatted_def or definition
         
         # Sort by key before writing (best practice for dictionaries)
         sorted_keys = sorted(defs.keys())
@@ -837,7 +848,6 @@ def add_definition_api():
         os.replace(temp_path, DEFINITIONS_PATH)
         
         # Flush and Reload
-        global DEFINITIONS_CACHE
         DEFINITIONS_CACHE = {} # Force reload
         load_definitions()
         
@@ -4323,6 +4333,61 @@ def lookup_word_definition_and_pronunciation(word):
     definition = format_resolved_definition(word_upper)
     
     return definition, pronunciation
+
+def ensure_definitions_for_words(words_list):
+    global DEFINITIONS_PATH, DEFINITIONS_CACHE
+    if not DEFINITIONS_PATH:
+        DEFINITIONS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'Definitions.txt')
+    
+    if not DEFINITIONS_CACHE:
+        load_definitions()
+        
+    # 1. Fetch raw definitions for any word in words_list not in cache
+    needed_fetch = [w.upper().strip() for w in words_list if w.upper().strip() not in DEFINITIONS_CACHE]
+    
+    for w_upper in needed_fetch:
+        get_definition_cached_or_online_with_guess(w_upper)
+        
+    # 2. Write resolved definitions to Definitions.txt
+    try:
+        defs = {}
+        if os.path.exists(DEFINITIONS_PATH):
+            with open(DEFINITIONS_PATH, 'r', encoding='utf-8', errors='ignore') as f:
+                for line in f:
+                    parts = line.split(' - ', 1)
+                    if len(parts) == 2:
+                        defs[parts[0].strip().upper()] = parts[1].strip()
+                        
+        written = False
+        for w in words_list:
+            w_upper = w.upper().strip()
+            if w_upper not in defs:
+                formatted_def = format_resolved_definition(w_upper)
+                if formatted_def:
+                    defs[w_upper] = formatted_def
+                    DEFINITIONS_CACHE[w_upper] = formatted_def
+                    written = True
+                    
+        if written:
+            sorted_keys = sorted(defs.keys())
+            temp_path = DEFINITIONS_PATH + '.tmp'
+            with open(temp_path, 'w', encoding='utf-8') as f:
+                for k in sorted_keys:
+                    f.write(f"{k} - {defs[k]}\n")
+            os.replace(temp_path, DEFINITIONS_PATH)
+            
+            # Reload to sync memory
+            DEFINITIONS_CACHE = {}
+            load_definitions()
+            print(f"[DefinitionsManager] Successfully auto-saved definitions for {len(words_list)} words.")
+    except Exception as e:
+        print(f"[DefinitionsManager] Error auto-saving definitions: {e}")
+
+def ensure_definitions_background(words_list):
+    import threading
+    t = threading.Thread(target=ensure_definitions_for_words, args=(words_list,))
+    t.daemon = True
+    t.start()
 
 @app.route('/api/definition', methods=['GET'])
 def get_definition():
