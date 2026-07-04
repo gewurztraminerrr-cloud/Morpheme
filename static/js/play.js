@@ -5119,9 +5119,21 @@ function startBounceFormat() {
         const x = Math.random() * maxX;
         const y = Math.random() * maxY;
         
-        // Fast moving speeds: 4 to 8 pixels per frame
+        // Progressive speeds based on Bounce multiplier:
+        // 1x: low (1.5 to 3.5), 2x: medium (4.5 to 7.5), 3x: high (8.5 to 13.5)
+        const bFormat = (window.lastGameState && window.lastGameState.current_board_format) || 'Bounce 1x';
+        let speedMin = 1.5;
+        let speedRange = 2.0;
+        if (bFormat.toLowerCase().includes('3x')) {
+            speedMin = 8.5;
+            speedRange = 5.0;
+        } else if (bFormat.toLowerCase().includes('2x')) {
+            speedMin = 4.5;
+            speedRange = 3.0;
+        }
+
         const angle = Math.random() * Math.PI * 2;
-        const speed = 4 + Math.random() * 4;
+        const speed = speedMin + Math.random() * speedRange;
         const vx = Math.cos(angle) * speed;
         const vy = Math.sin(angle) * speed;
         

@@ -234,7 +234,7 @@ class SpinnerSet:
                 if wc_range == '500+' or wc_range == '200+':
                     if min_word_length >= 5:
                         # Keep Either/Or, Checkerboard, and Density as they are highly requested/stable
-                        if board_format not in ['Either/Or', 'Checkerboard', 'Density', 'Valued Letters', 'Bounce']:
+                        if board_format not in ['Either/Or', 'Checkerboard', 'Density', 'Valued Letters'] and 'Bounce' not in board_format:
                             board_format = 'Normal'
                 if board_format == 'Checkerboard':
                     wc_range = random.choice(['100-200', '200-300'])
@@ -387,6 +387,9 @@ class SpinnerSet:
             ['Normal', 'Bounce', 'Checkerboard', 'Equality Freq', 'Density', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Rotation', 'Double', 'Triple'],
             weights=[68, 2, 12, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1]
         )[0]
+        
+        if result == 'Bounce':
+            result = random.choices(['Bounce 1x', 'Bounce 2x', 'Bounce 3x'], weights=[33, 33, 34])[0]
         
         if result == 'Mania':
             # User Request: 33% vowels, 67% consonants for Mania formats
