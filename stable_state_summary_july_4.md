@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `b921d71f28aa436568fd4e2817201fa7fdc9cecd`
+* **Commit ID**: `3792f5b92f35d218985cb15f276d18db4c991f08`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -68,6 +68,10 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
     - Added synchronization between the 10-second warning countdown beep/bell and device hardware vibration during intermission.
     - Triggers a 500ms vibration pulse via standard `navigator.vibrate` for mobile web browsers, alongside native vibration messages sent to the hybrid app bridge (`MorphemeAudioBridge`).
     - **User Configuration Toggle**: Included an "Intermission Vibration Alert" toggle switch in the "Audio & Sounds" section under settings, allowing users to enable or disable the vibration feature (persisted via DB and localStorage).
+
+11. **PayPal Support Custom Amount Retention**:
+    - Added an interactive click listener on the PayPal Checkout link inside the Donate tab.
+    - Intercepts clicks to dynamically recalculate the URL with the custom amount inputted by the user (`https://paypal.me/jeffbabiak/{amount}`) right before redirecting, guaranteeing the amount is retained without re-typing.
 
 ## Verification
 * **Local**: Verified dictionary test cases (all passed).
