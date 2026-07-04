@@ -4963,6 +4963,31 @@ input[type=range]::-moz-range-track {
         min-height: 0 !important;
         height: auto !important;
     }
+
+    /* Keep header locked on mobile for Store, Donate, Leaderboards, and Tournaments */
+    #page-store,
+    #page-donate,
+    #page-leaderboards,
+    #page-tournaments {
+        display: none;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+        padding: 10px 15px !important;
+        height: calc(100vh - 120px) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    #page-store.active,
+    #page-donate.active,
+    #page-leaderboards.active,
+    #page-tournaments.active {
+        display: block !important;
+    }
 }
 
 /* Mobile full-bleed board styling */
