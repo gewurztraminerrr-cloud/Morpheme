@@ -1,0 +1,2121 @@
+Compiled from "comboorganizer.java"
+public class combos.comboorganizer {
+  public java.lang.String[] dictionaryFileNames;
+
+  public java.util.ArrayList<java.util.ArrayList<java.lang.String>> dictionaryArrayLists;
+
+  public java.util.ArrayList<java.util.Hashtable<java.lang.String, java.lang.Integer>> dictWordHashTables;
+
+  public java.util.ArrayList<java.util.ArrayList<java.util.ArrayList<java.lang.String>>> letterLengthGrouping;
+
+  public combos.DictionaryInit di;
+
+  public javax.swing.JFrame jf;
+
+  public javax.swing.JComboBox wordsJCOMBOBOX;
+
+  public javax.swing.JComboBox wordLengthJCOMBOBOX;
+
+  public javax.swing.JTextField wordEntry;
+
+  public javax.swing.JButton randomizeJBUTTON;
+
+  public javax.swing.JButton submitJBUTTON;
+
+  public javax.swing.JLabel wordJLABEL;
+
+  public java.util.ArrayList<java.lang.String> comboString;
+
+  public int letterFormat;
+
+  public javax.swing.JTable wordMenu;
+
+  public javax.swing.JTable listMP0;
+
+  public javax.swing.JTable listMP1;
+
+  public javax.swing.JTable listMP2;
+
+  public javax.swing.JTable listMP3;
+
+  public javax.swing.JTable listMP4;
+
+  public javax.swing.JTable listMP5;
+
+  public javax.swing.JTable lettersInCommon5;
+
+  public javax.swing.JTable lettersInCommon6;
+
+  public javax.swing.JTable lettersInCommon7;
+
+  public javax.swing.JTable lettersInCommon8;
+
+  public javax.swing.JTable lettersInCommon9;
+
+  public javax.swing.table.DefaultTableModel dtm;
+
+  public javax.swing.table.DefaultTableModel dtm1;
+
+  public javax.swing.table.DefaultTableModel dtm2;
+
+  public javax.swing.table.DefaultTableModel dtm3;
+
+  public javax.swing.table.DefaultTableModel dtm4;
+
+  public javax.swing.table.DefaultTableModel dtm5;
+
+  public javax.swing.table.DefaultTableModel dtm6;
+
+  public javax.swing.table.DefaultTableModel dtm7;
+
+  public javax.swing.table.DefaultTableModel dtm8;
+
+  public javax.swing.table.DefaultTableModel dtm9;
+
+  public javax.swing.table.DefaultTableModel dtm10;
+
+  public javax.swing.table.DefaultTableModel dtm11;
+
+  public static void main(java.lang.String[]);
+    Code:
+       0: new           #1                  // class combos/comboorganizer
+       3: invokespecial #62                 // Method "<init>":()V
+       6: return
+
+  public combos.comboorganizer();
+    Code:
+       0: aload_0
+       1: invokespecial #69                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: iconst_4
+       6: anewarray     #70                 // class java/lang/String
+       9: dup
+      10: iconst_0
+      11: ldc           #72                 // String TWL
+      13: aastore
+      14: dup
+      15: iconst_1
+      16: ldc           #74                 // String CSW
+      18: aastore
+      19: dup
+      20: iconst_2
+      21: ldc           #76                 // String randomTWLunique
+      23: aastore
+      24: dup
+      25: iconst_3
+      26: ldc           #78                 // String randomCSWunique
+      28: aastore
+      29: putfield      #80                 // Field dictionaryFileNames:[Ljava/lang/String;
+      32: aload_0
+      33: new           #82                 // class java/util/ArrayList
+      36: dup
+      37: invokespecial #84                 // Method java/util/ArrayList."<init>":()V
+      40: putfield      #85                 // Field dictionaryArrayLists:Ljava/util/ArrayList;
+      43: aload_0
+      44: new           #82                 // class java/util/ArrayList
+      47: dup
+      48: invokespecial #84                 // Method java/util/ArrayList."<init>":()V
+      51: putfield      #87                 // Field dictWordHashTables:Ljava/util/ArrayList;
+      54: aload_0
+      55: new           #82                 // class java/util/ArrayList
+      58: dup
+      59: invokespecial #84                 // Method java/util/ArrayList."<init>":()V
+      62: putfield      #89                 // Field letterLengthGrouping:Ljava/util/ArrayList;
+      65: aload_0
+      66: new           #91                 // class javax/swing/JComboBox
+      69: dup
+      70: invokespecial #93                 // Method javax/swing/JComboBox."<init>":()V
+      73: putfield      #94                 // Field wordsJCOMBOBOX:Ljavax/swing/JComboBox;
+      76: aload_0
+      77: new           #91                 // class javax/swing/JComboBox
+      80: dup
+      81: invokespecial #93                 // Method javax/swing/JComboBox."<init>":()V
+      84: putfield      #96                 // Field wordLengthJCOMBOBOX:Ljavax/swing/JComboBox;
+      87: aload_0
+      88: new           #98                 // class javax/swing/JTextField
+      91: dup
+      92: invokespecial #100                // Method javax/swing/JTextField."<init>":()V
+      95: putfield      #101                // Field wordEntry:Ljavax/swing/JTextField;
+      98: aload_0
+      99: new           #82                 // class java/util/ArrayList
+     102: dup
+     103: invokespecial #84                 // Method java/util/ArrayList."<init>":()V
+     106: putfield      #103                // Field comboString:Ljava/util/ArrayList;
+     109: aload_0
+     110: iconst_0
+     111: putfield      #105                // Field letterFormat:I
+     114: aload_0
+     115: invokevirtual #107                // Method initArraysAndHashes:()V
+     118: aload_0
+     119: new           #110                // class javax/swing/JFrame
+     122: dup
+     123: invokespecial #112                // Method javax/swing/JFrame."<init>":()V
+     126: putfield      #113                // Field jf:Ljavax/swing/JFrame;
+     129: aload_0
+     130: getfield      #113                // Field jf:Ljavax/swing/JFrame;
+     133: iconst_0
+     134: iconst_0
+     135: sipush        3600
+     138: sipush        2000
+     141: invokevirtual #115                // Method javax/swing/JFrame.setBounds:(IIII)V
+     144: aload_0
+     145: getfield      #113                // Field jf:Ljavax/swing/JFrame;
+     148: invokevirtual #119                // Method javax/swing/JFrame.getContentPane:()Ljava/awt/Container;
+     151: aload_0
+     152: invokevirtual #123                // Method deleteAfter:()Ljavax/swing/JPanel;
+     155: invokevirtual #127                // Method java/awt/Container.add:(Ljava/awt/Component;)Ljava/awt/Component;
+     158: pop
+     159: aload_0
+     160: getfield      #113                // Field jf:Ljavax/swing/JFrame;
+     163: iconst_1
+     164: invokevirtual #133                // Method javax/swing/JFrame.setVisible:(Z)V
+     167: aload_0
+     168: getfield      #113                // Field jf:Ljavax/swing/JFrame;
+     171: iconst_3
+     172: invokevirtual #137                // Method javax/swing/JFrame.setDefaultCloseOperation:(I)V
+     175: return
+
+  public javax.swing.JPanel deleteAfter();
+    Code:
+       0: new           #143                // class javax/swing/JPanel
+       3: dup
+       4: new           #145                // class java/awt/BorderLayout
+       7: dup
+       8: invokespecial #147                // Method java/awt/BorderLayout."<init>":()V
+      11: invokespecial #148                // Method javax/swing/JPanel."<init>":(Ljava/awt/LayoutManager;)V
+      14: astore_1
+      15: new           #143                // class javax/swing/JPanel
+      18: dup
+      19: new           #145                // class java/awt/BorderLayout
+      22: dup
+      23: invokespecial #147                // Method java/awt/BorderLayout."<init>":()V
+      26: invokespecial #148                // Method javax/swing/JPanel."<init>":(Ljava/awt/LayoutManager;)V
+      29: astore_2
+      30: new           #143                // class javax/swing/JPanel
+      33: dup
+      34: new           #145                // class java/awt/BorderLayout
+      37: dup
+      38: invokespecial #147                // Method java/awt/BorderLayout."<init>":()V
+      41: invokespecial #148                // Method javax/swing/JPanel."<init>":(Ljava/awt/LayoutManager;)V
+      44: astore_3
+      45: new           #143                // class javax/swing/JPanel
+      48: dup
+      49: invokespecial #151                // Method javax/swing/JPanel."<init>":()V
+      52: astore        4
+      54: aload_0
+      55: new           #91                 // class javax/swing/JComboBox
+      58: dup
+      59: invokespecial #93                 // Method javax/swing/JComboBox."<init>":()V
+      62: putfield      #94                 // Field wordsJCOMBOBOX:Ljavax/swing/JComboBox;
+      65: iconst_0
+      66: istore        5
+      68: goto          88
+      71: aload_0
+      72: getfield      #94                 // Field wordsJCOMBOBOX:Ljavax/swing/JComboBox;
+      75: aload_0
+      76: getfield      #80                 // Field dictionaryFileNames:[Ljava/lang/String;
+      79: iload         5
+      81: aaload
+      82: invokevirtual #152                // Method javax/swing/JComboBox.addItem:(Ljava/lang/Object;)V
+      85: iinc          5, 1
+      88: iload         5
+      90: aload_0
+      91: getfield      #80                 // Field dictionaryFileNames:[Ljava/lang/String;
+      94: arraylength
+      95: if_icmplt     71
+      98: aload_0
+      99: getfield      #94                 // Field wordsJCOMBOBOX:Ljavax/swing/JComboBox;
+     102: new           #156                // class java/awt/Font
+     105: dup
+     106: ldc           #158                // String Serif
+     108: iconst_1
+     109: bipush        50
+     111: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+     114: invokevirtual #163                // Method javax/swing/JComboBox.setFont:(Ljava/awt/Font;)V
+     117: aload_0
+     118: getfield      #94                 // Field wordsJCOMBOBOX:Ljavax/swing/JComboBox;
+     121: aload_0
+     122: getfield      #105                // Field letterFormat:I
+     125: invokevirtual #167                // Method javax/swing/JComboBox.setSelectedIndex:(I)V
+     128: aload_2
+     129: aload_0
+     130: getfield      #94                 // Field wordsJCOMBOBOX:Ljavax/swing/JComboBox;
+     133: ldc           #170                // String West
+     135: invokevirtual #172                // Method javax/swing/JPanel.add:(Ljava/awt/Component;Ljava/lang/Object;)V
+     138: aload_0
+     139: new           #91                 // class javax/swing/JComboBox
+     142: dup
+     143: invokespecial #93                 // Method javax/swing/JComboBox."<init>":()V
+     146: putfield      #96                 // Field wordLengthJCOMBOBOX:Ljavax/swing/JComboBox;
+     149: iconst_5
+     150: istore        5
+     152: goto          170
+     155: aload_0
+     156: getfield      #96                 // Field wordLengthJCOMBOBOX:Ljavax/swing/JComboBox;
+     159: iload         5
+     161: invokestatic  #175                // Method java/lang/Integer.toString:(I)Ljava/lang/String;
+     164: invokevirtual #152                // Method javax/swing/JComboBox.addItem:(Ljava/lang/Object;)V
+     167: iinc          5, 1
+     170: iload         5
+     172: bipush        11
+     174: if_icmplt     155
+     177: aload_0
+     178: getfield      #96                 // Field wordLengthJCOMBOBOX:Ljavax/swing/JComboBox;
+     181: new           #156                // class java/awt/Font
+     184: dup
+     185: ldc           #158                // String Serif
+     187: iconst_1
+     188: bipush        50
+     190: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+     193: invokevirtual #163                // Method javax/swing/JComboBox.setFont:(Ljava/awt/Font;)V
+     196: aload_0
+     197: getfield      #96                 // Field wordLengthJCOMBOBOX:Ljavax/swing/JComboBox;
+     200: aload_0
+     201: getfield      #105                // Field letterFormat:I
+     204: invokevirtual #167                // Method javax/swing/JComboBox.setSelectedIndex:(I)V
+     207: aload_2
+     208: aload_0
+     209: getfield      #96                 // Field wordLengthJCOMBOBOX:Ljavax/swing/JComboBox;
+     212: ldc           #181                // String Center
+     214: invokevirtual #172                // Method javax/swing/JPanel.add:(Ljava/awt/Component;Ljava/lang/Object;)V
+     217: new           #143                // class javax/swing/JPanel
+     220: dup
+     221: new           #145                // class java/awt/BorderLayout
+     224: dup
+     225: invokespecial #147                // Method java/awt/BorderLayout."<init>":()V
+     228: invokespecial #148                // Method javax/swing/JPanel."<init>":(Ljava/awt/LayoutManager;)V
+     231: astore        5
+     233: aload         5
+     235: aload_0
+     236: getfield      #101                // Field wordEntry:Ljavax/swing/JTextField;
+     239: ldc           #170                // String West
+     241: invokevirtual #172                // Method javax/swing/JPanel.add:(Ljava/awt/Component;Ljava/lang/Object;)V
+     244: aload_0
+     245: getfield      #101                // Field wordEntry:Ljavax/swing/JTextField;
+     248: new           #156                // class java/awt/Font
+     251: dup
+     252: ldc           #158                // String Serif
+     254: iconst_1
+     255: bipush        50
+     257: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+     260: invokevirtual #183                // Method javax/swing/JTextField.setFont:(Ljava/awt/Font;)V
+     263: aload_0
+     264: getfield      #101                // Field wordEntry:Ljavax/swing/JTextField;
+     267: new           #184                // class java/awt/Dimension
+     270: dup
+     271: sipush        1000
+     274: bipush        100
+     276: invokespecial #186                // Method java/awt/Dimension."<init>":(II)V
+     279: invokevirtual #189                // Method javax/swing/JTextField.setPreferredSize:(Ljava/awt/Dimension;)V
+     282: aload_0
+     283: getfield      #101                // Field wordEntry:Ljavax/swing/JTextField;
+     286: new           #193                // class combos/comboorganizer$1
+     289: dup
+     290: aload_0
+     291: invokespecial #195                // Method combos/comboorganizer$1."<init>":(Lcombos/comboorganizer;)V
+     294: invokevirtual #198                // Method javax/swing/JTextField.addMouseListener:(Ljava/awt/event/MouseListener;)V
+     297: aload_0
+     298: new           #202                // class javax/swing/JButton
+     301: dup
+     302: ldc           #204                // String Randomize
+     304: invokespecial #206                // Method javax/swing/JButton."<init>":(Ljava/lang/String;)V
+     307: putfield      #209                // Field randomizeJBUTTON:Ljavax/swing/JButton;
+     310: aload_0
+     311: getfield      #209                // Field randomizeJBUTTON:Ljavax/swing/JButton;
+     314: new           #156                // class java/awt/Font
+     317: dup
+     318: ldc           #158                // String Serif
+     320: iconst_1
+     321: bipush        50
+     323: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+     326: invokevirtual #211                // Method javax/swing/JButton.setFont:(Ljava/awt/Font;)V
+     329: aload         5
+     331: aload_0
+     332: getfield      #209                // Field randomizeJBUTTON:Ljavax/swing/JButton;
+     335: ldc           #181                // String Center
+     337: invokevirtual #172                // Method javax/swing/JPanel.add:(Ljava/awt/Component;Ljava/lang/Object;)V
+     340: aload_0
+     341: new           #202                // class javax/swing/JButton
+     344: dup
+     345: ldc           #212                // String Submit
+     347: invokespecial #206                // Method javax/swing/JButton."<init>":(Ljava/lang/String;)V
+     350: putfield      #214                // Field submitJBUTTON:Ljavax/swing/JButton;
+     353: aload_0
+     354: getfield      #214                // Field submitJBUTTON:Ljavax/swing/JButton;
+     357: new           #156                // class java/awt/Font
+     360: dup
+     361: ldc           #158                // String Serif
+     363: iconst_1
+     364: bipush        50
+     366: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+     369: invokevirtual #211                // Method javax/swing/JButton.setFont:(Ljava/awt/Font;)V
+     372: aload         5
+     374: aload_0
+     375: getfield      #214                // Field submitJBUTTON:Ljavax/swing/JButton;
+     378: ldc           #216                // String East
+     380: invokevirtual #172                // Method javax/swing/JPanel.add:(Ljava/awt/Component;Ljava/lang/Object;)V
+     383: aload_2
+     384: aload         5
+     386: ldc           #216                // String East
+     388: invokevirtual #172                // Method javax/swing/JPanel.add:(Ljava/awt/Component;Ljava/lang/Object;)V
+     391: aload_0
+     392: getfield      #214                // Field submitJBUTTON:Ljavax/swing/JButton;
+     395: new           #218                // class combos/comboorganizer$2
+     398: dup
+     399: aload_0
+     400: invokespecial #220                // Method combos/comboorganizer$2."<init>":(Lcombos/comboorganizer;)V
+     403: invokevirtual #221                // Method javax/swing/JButton.addMouseListener:(Ljava/awt/event/MouseListener;)V
+     406: aload_0
+     407: getfield      #209                // Field randomizeJBUTTON:Ljavax/swing/JButton;
+     410: new           #222                // class combos/comboorganizer$3
+     413: dup
+     414: aload_0
+     415: invokespecial #224                // Method combos/comboorganizer$3."<init>":(Lcombos/comboorganizer;)V
+     418: invokevirtual #221                // Method javax/swing/JButton.addMouseListener:(Ljava/awt/event/MouseListener;)V
+     421: iconst_1
+     422: anewarray     #70                 // class java/lang/String
+     425: dup
+     426: iconst_0
+     427: ldc           #225                // String Words
+     429: aastore
+     430: astore        6
+     432: new           #227                // class java/util/Vector
+     435: dup
+     436: invokespecial #229                // Method java/util/Vector."<init>":()V
+     439: astore        7
+     441: iconst_0
+     442: istore        8
+     444: goto          460
+     447: aload         7
+     449: aload         6
+     451: iload         8
+     453: aaload
+     454: invokevirtual #230                // Method java/util/Vector.addElement:(Ljava/lang/Object;)V
+     457: iinc          8, 1
+     460: iload         8
+     462: aload         6
+     464: arraylength
+     465: if_icmplt     447
+     468: aload_0
+     469: new           #233                // class javax/swing/table/DefaultTableModel
+     472: dup
+     473: aload         7
+     475: iconst_0
+     476: invokespecial #235                // Method javax/swing/table/DefaultTableModel."<init>":(Ljava/util/Vector;I)V
+     479: putfield      #238                // Field dtm:Ljavax/swing/table/DefaultTableModel;
+     482: aload_0
+     483: new           #240                // class combos/comboorganizer$4
+     486: dup
+     487: aload_0
+     488: aload_0
+     489: getfield      #238                // Field dtm:Ljavax/swing/table/DefaultTableModel;
+     492: invokespecial #242                // Method combos/comboorganizer$4."<init>":(Lcombos/comboorganizer;Ljavax/swing/table/TableModel;)V
+     495: putfield      #245                // Field wordMenu:Ljavax/swing/JTable;
+     498: new           #247                // class javax/swing/JScrollPane
+     501: dup
+     502: aload_0
+     503: getfield      #245                // Field wordMenu:Ljavax/swing/JTable;
+     506: invokespecial #249                // Method javax/swing/JScrollPane."<init>":(Ljava/awt/Component;)V
+     509: astore        8
+     511: aload_0
+     512: getfield      #245                // Field wordMenu:Ljavax/swing/JTable;
+     515: bipush        50
+     517: invokevirtual #252                // Method javax/swing/JTable.setRowHeight:(I)V
+     520: aload         8
+     522: new           #184                // class java/awt/Dimension
+     525: dup
+     526: sipush        400
+     529: sipush        1800
+     532: invokespecial #186                // Method java/awt/Dimension."<init>":(II)V
+     535: invokevirtual #257                // Method javax/swing/JScrollPane.setPreferredSize:(Ljava/awt/Dimension;)V
+     538: aload_0
+     539: getfield      #245                // Field wordMenu:Ljavax/swing/JTable;
+     542: new           #156                // class java/awt/Font
+     545: dup
+     546: ldc_w         #258                // String Arial
+     549: iconst_1
+     550: bipush        45
+     552: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+     555: invokevirtual #260                // Method javax/swing/JTable.setFont:(Ljava/awt/Font;)V
+     558: aload         4
+     560: aload         8
+     562: invokevirtual #261                // Method javax/swing/JPanel.add:(Ljava/awt/Component;)Ljava/awt/Component;
+     565: pop
+     566: aload_0
+     567: getfield      #245                // Field wordMenu:Ljavax/swing/JTable;
+     570: new           #262                // class combos/comboorganizer$5
+     573: dup
+     574: aload_0
+     575: invokespecial #264                // Method combos/comboorganizer$5."<init>":(Lcombos/comboorganizer;)V
+     578: invokevirtual #265                // Method javax/swing/JTable.addMouseListener:(Ljava/awt/event/MouseListener;)V
+     581: aload_0
+     582: new           #266                // class javax/swing/JLabel
+     585: dup
+     586: invokespecial #268                // Method javax/swing/JLabel."<init>":()V
+     589: putfield      #269                // Field wordJLABEL:Ljavax/swing/JLabel;
+     592: new           #156                // class java/awt/Font
+     595: dup
+     596: ldc_w         #271                // String SansSerif
+     599: iconst_1
+     600: sipush        200
+     603: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+     606: astore        9
+     608: aload_0
+     609: getfield      #269                // Field wordJLABEL:Ljavax/swing/JLabel;
+     612: iconst_0
+     613: invokevirtual #273                // Method javax/swing/JLabel.setHorizontalAlignment:(I)V
+     616: aload_0
+     617: getfield      #269                // Field wordJLABEL:Ljavax/swing/JLabel;
+     620: aload         9
+     622: invokevirtual #276                // Method javax/swing/JLabel.setFont:(Ljava/awt/Font;)V
+     625: aload_3
+     626: aload_0
+     627: getfield      #269                // Field wordJLABEL:Ljavax/swing/JLabel;
+     630: ldc_w         #277                // String North
+     633: invokevirtual #172                // Method javax/swing/JPanel.add:(Ljava/awt/Component;Ljava/lang/Object;)V
+     636: new           #143                // class javax/swing/JPanel
+     639: dup
+     640: invokespecial #151                // Method javax/swing/JPanel."<init>":()V
+     643: astore        10
+     645: aload         10
+     647: new           #279                // class javax/swing/BoxLayout
+     650: dup
+     651: aload         10
+     653: iconst_0
+     654: invokespecial #281                // Method javax/swing/BoxLayout."<init>":(Ljava/awt/Container;I)V
+     657: invokevirtual #284                // Method javax/swing/JPanel.setLayout:(Ljava/awt/LayoutManager;)V
+     660: iconst_1
+     661: anewarray     #70                 // class java/lang/String
+     664: dup
+     665: iconst_0
+     666: ldc_w         #287                // String 0MP
+     669: aastore
+     670: astore        11
+     672: new           #227                // class java/util/Vector
+     675: dup
+     676: invokespecial #229                // Method java/util/Vector."<init>":()V
+     679: astore        12
+     681: iconst_0
+     682: istore        13
+     684: goto          700
+     687: aload         12
+     689: aload         11
+     691: iload         13
+     693: aaload
+     694: invokevirtual #230                // Method java/util/Vector.addElement:(Ljava/lang/Object;)V
+     697: iinc          13, 1
+     700: iload         13
+     702: aload         11
+     704: arraylength
+     705: if_icmplt     687
+     708: aload_0
+     709: new           #233                // class javax/swing/table/DefaultTableModel
+     712: dup
+     713: aload         12
+     715: iconst_0
+     716: invokespecial #235                // Method javax/swing/table/DefaultTableModel."<init>":(Ljava/util/Vector;I)V
+     719: putfield      #289                // Field dtm1:Ljavax/swing/table/DefaultTableModel;
+     722: aload_0
+     723: new           #291                // class combos/comboorganizer$6
+     726: dup
+     727: aload_0
+     728: aload_0
+     729: getfield      #289                // Field dtm1:Ljavax/swing/table/DefaultTableModel;
+     732: invokespecial #293                // Method combos/comboorganizer$6."<init>":(Lcombos/comboorganizer;Ljavax/swing/table/TableModel;)V
+     735: putfield      #294                // Field listMP0:Ljavax/swing/JTable;
+     738: new           #247                // class javax/swing/JScrollPane
+     741: dup
+     742: aload_0
+     743: getfield      #294                // Field listMP0:Ljavax/swing/JTable;
+     746: invokespecial #249                // Method javax/swing/JScrollPane."<init>":(Ljava/awt/Component;)V
+     749: astore        13
+     751: aload_0
+     752: getfield      #294                // Field listMP0:Ljavax/swing/JTable;
+     755: bipush        50
+     757: invokevirtual #252                // Method javax/swing/JTable.setRowHeight:(I)V
+     760: aload         13
+     762: new           #184                // class java/awt/Dimension
+     765: dup
+     766: sipush        400
+     769: sipush        2000
+     772: invokespecial #186                // Method java/awt/Dimension."<init>":(II)V
+     775: invokevirtual #257                // Method javax/swing/JScrollPane.setPreferredSize:(Ljava/awt/Dimension;)V
+     778: aload_0
+     779: getfield      #294                // Field listMP0:Ljavax/swing/JTable;
+     782: new           #156                // class java/awt/Font
+     785: dup
+     786: ldc_w         #258                // String Arial
+     789: iconst_1
+     790: bipush        45
+     792: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+     795: invokevirtual #260                // Method javax/swing/JTable.setFont:(Ljava/awt/Font;)V
+     798: aload_0
+     799: getfield      #294                // Field listMP0:Ljavax/swing/JTable;
+     802: invokevirtual #296                // Method javax/swing/JTable.getTableHeader:()Ljavax/swing/table/JTableHeader;
+     805: new           #156                // class java/awt/Font
+     808: dup
+     809: ldc_w         #271                // String SansSerif
+     812: iconst_2
+     813: bipush        60
+     815: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+     818: invokevirtual #300                // Method javax/swing/table/JTableHeader.setFont:(Ljava/awt/Font;)V
+     821: aload         10
+     823: aload         13
+     825: invokevirtual #261                // Method javax/swing/JPanel.add:(Ljava/awt/Component;)Ljava/awt/Component;
+     828: pop
+     829: iconst_1
+     830: anewarray     #70                 // class java/lang/String
+     833: dup
+     834: iconst_0
+     835: ldc_w         #303                // String 1MP
+     838: aastore
+     839: astore        14
+     841: new           #227                // class java/util/Vector
+     844: dup
+     845: invokespecial #229                // Method java/util/Vector."<init>":()V
+     848: astore        15
+     850: iconst_0
+     851: istore        16
+     853: goto          869
+     856: aload         15
+     858: aload         14
+     860: iload         16
+     862: aaload
+     863: invokevirtual #230                // Method java/util/Vector.addElement:(Ljava/lang/Object;)V
+     866: iinc          16, 1
+     869: iload         16
+     871: aload         14
+     873: arraylength
+     874: if_icmplt     856
+     877: aload_0
+     878: new           #233                // class javax/swing/table/DefaultTableModel
+     881: dup
+     882: aload         15
+     884: iconst_0
+     885: invokespecial #235                // Method javax/swing/table/DefaultTableModel."<init>":(Ljava/util/Vector;I)V
+     888: putfield      #305                // Field dtm2:Ljavax/swing/table/DefaultTableModel;
+     891: aload_0
+     892: new           #307                // class combos/comboorganizer$7
+     895: dup
+     896: aload_0
+     897: aload_0
+     898: getfield      #305                // Field dtm2:Ljavax/swing/table/DefaultTableModel;
+     901: invokespecial #309                // Method combos/comboorganizer$7."<init>":(Lcombos/comboorganizer;Ljavax/swing/table/TableModel;)V
+     904: putfield      #310                // Field listMP1:Ljavax/swing/JTable;
+     907: new           #247                // class javax/swing/JScrollPane
+     910: dup
+     911: aload_0
+     912: getfield      #310                // Field listMP1:Ljavax/swing/JTable;
+     915: invokespecial #249                // Method javax/swing/JScrollPane."<init>":(Ljava/awt/Component;)V
+     918: astore        16
+     920: aload_0
+     921: getfield      #310                // Field listMP1:Ljavax/swing/JTable;
+     924: bipush        50
+     926: invokevirtual #252                // Method javax/swing/JTable.setRowHeight:(I)V
+     929: aload         16
+     931: new           #184                // class java/awt/Dimension
+     934: dup
+     935: sipush        400
+     938: sipush        2000
+     941: invokespecial #186                // Method java/awt/Dimension."<init>":(II)V
+     944: invokevirtual #257                // Method javax/swing/JScrollPane.setPreferredSize:(Ljava/awt/Dimension;)V
+     947: aload_0
+     948: getfield      #310                // Field listMP1:Ljavax/swing/JTable;
+     951: new           #156                // class java/awt/Font
+     954: dup
+     955: ldc_w         #258                // String Arial
+     958: iconst_1
+     959: bipush        45
+     961: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+     964: invokevirtual #260                // Method javax/swing/JTable.setFont:(Ljava/awt/Font;)V
+     967: aload_0
+     968: getfield      #310                // Field listMP1:Ljavax/swing/JTable;
+     971: invokevirtual #296                // Method javax/swing/JTable.getTableHeader:()Ljavax/swing/table/JTableHeader;
+     974: new           #156                // class java/awt/Font
+     977: dup
+     978: ldc_w         #271                // String SansSerif
+     981: iconst_2
+     982: bipush        60
+     984: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+     987: invokevirtual #300                // Method javax/swing/table/JTableHeader.setFont:(Ljava/awt/Font;)V
+     990: aload         10
+     992: aload         16
+     994: invokevirtual #261                // Method javax/swing/JPanel.add:(Ljava/awt/Component;)Ljava/awt/Component;
+     997: pop
+     998: iconst_1
+     999: anewarray     #70                 // class java/lang/String
+    1002: dup
+    1003: iconst_0
+    1004: ldc_w         #312                // String 2MP
+    1007: aastore
+    1008: astore        17
+    1010: new           #227                // class java/util/Vector
+    1013: dup
+    1014: invokespecial #229                // Method java/util/Vector."<init>":()V
+    1017: astore        18
+    1019: iconst_0
+    1020: istore        19
+    1022: goto          1038
+    1025: aload         18
+    1027: aload         17
+    1029: iload         19
+    1031: aaload
+    1032: invokevirtual #230                // Method java/util/Vector.addElement:(Ljava/lang/Object;)V
+    1035: iinc          19, 1
+    1038: iload         19
+    1040: aload         17
+    1042: arraylength
+    1043: if_icmplt     1025
+    1046: aload_0
+    1047: new           #233                // class javax/swing/table/DefaultTableModel
+    1050: dup
+    1051: aload         18
+    1053: iconst_0
+    1054: invokespecial #235                // Method javax/swing/table/DefaultTableModel."<init>":(Ljava/util/Vector;I)V
+    1057: putfield      #314                // Field dtm3:Ljavax/swing/table/DefaultTableModel;
+    1060: aload_0
+    1061: new           #316                // class combos/comboorganizer$8
+    1064: dup
+    1065: aload_0
+    1066: aload_0
+    1067: getfield      #314                // Field dtm3:Ljavax/swing/table/DefaultTableModel;
+    1070: invokespecial #318                // Method combos/comboorganizer$8."<init>":(Lcombos/comboorganizer;Ljavax/swing/table/TableModel;)V
+    1073: putfield      #319                // Field listMP2:Ljavax/swing/JTable;
+    1076: new           #247                // class javax/swing/JScrollPane
+    1079: dup
+    1080: aload_0
+    1081: getfield      #319                // Field listMP2:Ljavax/swing/JTable;
+    1084: invokespecial #249                // Method javax/swing/JScrollPane."<init>":(Ljava/awt/Component;)V
+    1087: astore        19
+    1089: aload_0
+    1090: getfield      #319                // Field listMP2:Ljavax/swing/JTable;
+    1093: bipush        50
+    1095: invokevirtual #252                // Method javax/swing/JTable.setRowHeight:(I)V
+    1098: aload         19
+    1100: new           #184                // class java/awt/Dimension
+    1103: dup
+    1104: sipush        400
+    1107: sipush        2000
+    1110: invokespecial #186                // Method java/awt/Dimension."<init>":(II)V
+    1113: invokevirtual #257                // Method javax/swing/JScrollPane.setPreferredSize:(Ljava/awt/Dimension;)V
+    1116: aload_0
+    1117: getfield      #319                // Field listMP2:Ljavax/swing/JTable;
+    1120: new           #156                // class java/awt/Font
+    1123: dup
+    1124: ldc_w         #258                // String Arial
+    1127: iconst_1
+    1128: bipush        45
+    1130: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+    1133: invokevirtual #260                // Method javax/swing/JTable.setFont:(Ljava/awt/Font;)V
+    1136: aload_0
+    1137: getfield      #319                // Field listMP2:Ljavax/swing/JTable;
+    1140: invokevirtual #296                // Method javax/swing/JTable.getTableHeader:()Ljavax/swing/table/JTableHeader;
+    1143: new           #156                // class java/awt/Font
+    1146: dup
+    1147: ldc_w         #271                // String SansSerif
+    1150: iconst_2
+    1151: bipush        60
+    1153: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+    1156: invokevirtual #300                // Method javax/swing/table/JTableHeader.setFont:(Ljava/awt/Font;)V
+    1159: aload         10
+    1161: aload         19
+    1163: invokevirtual #261                // Method javax/swing/JPanel.add:(Ljava/awt/Component;)Ljava/awt/Component;
+    1166: pop
+    1167: iconst_1
+    1168: anewarray     #70                 // class java/lang/String
+    1171: dup
+    1172: iconst_0
+    1173: ldc_w         #321                // String 3MP
+    1176: aastore
+    1177: astore        20
+    1179: new           #227                // class java/util/Vector
+    1182: dup
+    1183: invokespecial #229                // Method java/util/Vector."<init>":()V
+    1186: astore        21
+    1188: iconst_0
+    1189: istore        22
+    1191: goto          1207
+    1194: aload         21
+    1196: aload         20
+    1198: iload         22
+    1200: aaload
+    1201: invokevirtual #230                // Method java/util/Vector.addElement:(Ljava/lang/Object;)V
+    1204: iinc          22, 1
+    1207: iload         22
+    1209: aload         20
+    1211: arraylength
+    1212: if_icmplt     1194
+    1215: aload_0
+    1216: new           #233                // class javax/swing/table/DefaultTableModel
+    1219: dup
+    1220: aload         21
+    1222: iconst_0
+    1223: invokespecial #235                // Method javax/swing/table/DefaultTableModel."<init>":(Ljava/util/Vector;I)V
+    1226: putfield      #323                // Field dtm4:Ljavax/swing/table/DefaultTableModel;
+    1229: aload_0
+    1230: new           #325                // class combos/comboorganizer$9
+    1233: dup
+    1234: aload_0
+    1235: aload_0
+    1236: getfield      #323                // Field dtm4:Ljavax/swing/table/DefaultTableModel;
+    1239: invokespecial #327                // Method combos/comboorganizer$9."<init>":(Lcombos/comboorganizer;Ljavax/swing/table/TableModel;)V
+    1242: putfield      #328                // Field listMP3:Ljavax/swing/JTable;
+    1245: new           #247                // class javax/swing/JScrollPane
+    1248: dup
+    1249: aload_0
+    1250: getfield      #328                // Field listMP3:Ljavax/swing/JTable;
+    1253: invokespecial #249                // Method javax/swing/JScrollPane."<init>":(Ljava/awt/Component;)V
+    1256: astore        22
+    1258: aload_0
+    1259: getfield      #328                // Field listMP3:Ljavax/swing/JTable;
+    1262: bipush        50
+    1264: invokevirtual #252                // Method javax/swing/JTable.setRowHeight:(I)V
+    1267: aload         22
+    1269: new           #184                // class java/awt/Dimension
+    1272: dup
+    1273: sipush        400
+    1276: sipush        2000
+    1279: invokespecial #186                // Method java/awt/Dimension."<init>":(II)V
+    1282: invokevirtual #257                // Method javax/swing/JScrollPane.setPreferredSize:(Ljava/awt/Dimension;)V
+    1285: aload_0
+    1286: getfield      #328                // Field listMP3:Ljavax/swing/JTable;
+    1289: new           #156                // class java/awt/Font
+    1292: dup
+    1293: ldc_w         #258                // String Arial
+    1296: iconst_1
+    1297: bipush        45
+    1299: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+    1302: invokevirtual #260                // Method javax/swing/JTable.setFont:(Ljava/awt/Font;)V
+    1305: aload_0
+    1306: getfield      #328                // Field listMP3:Ljavax/swing/JTable;
+    1309: invokevirtual #296                // Method javax/swing/JTable.getTableHeader:()Ljavax/swing/table/JTableHeader;
+    1312: new           #156                // class java/awt/Font
+    1315: dup
+    1316: ldc_w         #271                // String SansSerif
+    1319: iconst_2
+    1320: bipush        60
+    1322: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+    1325: invokevirtual #300                // Method javax/swing/table/JTableHeader.setFont:(Ljava/awt/Font;)V
+    1328: aload         10
+    1330: aload         22
+    1332: invokevirtual #261                // Method javax/swing/JPanel.add:(Ljava/awt/Component;)Ljava/awt/Component;
+    1335: pop
+    1336: iconst_1
+    1337: anewarray     #70                 // class java/lang/String
+    1340: dup
+    1341: iconst_0
+    1342: ldc_w         #330                // String 4MP
+    1345: aastore
+    1346: astore        23
+    1348: new           #227                // class java/util/Vector
+    1351: dup
+    1352: invokespecial #229                // Method java/util/Vector."<init>":()V
+    1355: astore        24
+    1357: iconst_0
+    1358: istore        25
+    1360: goto          1376
+    1363: aload         24
+    1365: aload         23
+    1367: iload         25
+    1369: aaload
+    1370: invokevirtual #230                // Method java/util/Vector.addElement:(Ljava/lang/Object;)V
+    1373: iinc          25, 1
+    1376: iload         25
+    1378: aload         23
+    1380: arraylength
+    1381: if_icmplt     1363
+    1384: aload_0
+    1385: new           #233                // class javax/swing/table/DefaultTableModel
+    1388: dup
+    1389: aload         24
+    1391: iconst_0
+    1392: invokespecial #235                // Method javax/swing/table/DefaultTableModel."<init>":(Ljava/util/Vector;I)V
+    1395: putfield      #332                // Field dtm5:Ljavax/swing/table/DefaultTableModel;
+    1398: aload_0
+    1399: new           #334                // class combos/comboorganizer$10
+    1402: dup
+    1403: aload_0
+    1404: aload_0
+    1405: getfield      #332                // Field dtm5:Ljavax/swing/table/DefaultTableModel;
+    1408: invokespecial #336                // Method combos/comboorganizer$10."<init>":(Lcombos/comboorganizer;Ljavax/swing/table/TableModel;)V
+    1411: putfield      #337                // Field listMP4:Ljavax/swing/JTable;
+    1414: new           #247                // class javax/swing/JScrollPane
+    1417: dup
+    1418: aload_0
+    1419: getfield      #337                // Field listMP4:Ljavax/swing/JTable;
+    1422: invokespecial #249                // Method javax/swing/JScrollPane."<init>":(Ljava/awt/Component;)V
+    1425: astore        25
+    1427: aload_0
+    1428: getfield      #337                // Field listMP4:Ljavax/swing/JTable;
+    1431: bipush        50
+    1433: invokevirtual #252                // Method javax/swing/JTable.setRowHeight:(I)V
+    1436: aload         25
+    1438: new           #184                // class java/awt/Dimension
+    1441: dup
+    1442: sipush        400
+    1445: sipush        2000
+    1448: invokespecial #186                // Method java/awt/Dimension."<init>":(II)V
+    1451: invokevirtual #257                // Method javax/swing/JScrollPane.setPreferredSize:(Ljava/awt/Dimension;)V
+    1454: aload_0
+    1455: getfield      #337                // Field listMP4:Ljavax/swing/JTable;
+    1458: new           #156                // class java/awt/Font
+    1461: dup
+    1462: ldc_w         #258                // String Arial
+    1465: iconst_1
+    1466: bipush        45
+    1468: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+    1471: invokevirtual #260                // Method javax/swing/JTable.setFont:(Ljava/awt/Font;)V
+    1474: aload_0
+    1475: getfield      #337                // Field listMP4:Ljavax/swing/JTable;
+    1478: invokevirtual #296                // Method javax/swing/JTable.getTableHeader:()Ljavax/swing/table/JTableHeader;
+    1481: new           #156                // class java/awt/Font
+    1484: dup
+    1485: ldc_w         #271                // String SansSerif
+    1488: iconst_2
+    1489: bipush        60
+    1491: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+    1494: invokevirtual #300                // Method javax/swing/table/JTableHeader.setFont:(Ljava/awt/Font;)V
+    1497: aload         10
+    1499: aload         25
+    1501: invokevirtual #261                // Method javax/swing/JPanel.add:(Ljava/awt/Component;)Ljava/awt/Component;
+    1504: pop
+    1505: iconst_1
+    1506: anewarray     #70                 // class java/lang/String
+    1509: dup
+    1510: iconst_0
+    1511: ldc_w         #339                // String 5MP
+    1514: aastore
+    1515: astore        26
+    1517: new           #227                // class java/util/Vector
+    1520: dup
+    1521: invokespecial #229                // Method java/util/Vector."<init>":()V
+    1524: astore        27
+    1526: iconst_0
+    1527: istore        28
+    1529: goto          1545
+    1532: aload         27
+    1534: aload         26
+    1536: iload         28
+    1538: aaload
+    1539: invokevirtual #230                // Method java/util/Vector.addElement:(Ljava/lang/Object;)V
+    1542: iinc          28, 1
+    1545: iload         28
+    1547: aload         26
+    1549: arraylength
+    1550: if_icmplt     1532
+    1553: aload_0
+    1554: new           #233                // class javax/swing/table/DefaultTableModel
+    1557: dup
+    1558: aload         27
+    1560: iconst_0
+    1561: invokespecial #235                // Method javax/swing/table/DefaultTableModel."<init>":(Ljava/util/Vector;I)V
+    1564: putfield      #341                // Field dtm6:Ljavax/swing/table/DefaultTableModel;
+    1567: aload_0
+    1568: new           #343                // class combos/comboorganizer$11
+    1571: dup
+    1572: aload_0
+    1573: aload_0
+    1574: getfield      #341                // Field dtm6:Ljavax/swing/table/DefaultTableModel;
+    1577: invokespecial #345                // Method combos/comboorganizer$11."<init>":(Lcombos/comboorganizer;Ljavax/swing/table/TableModel;)V
+    1580: putfield      #346                // Field listMP5:Ljavax/swing/JTable;
+    1583: new           #247                // class javax/swing/JScrollPane
+    1586: dup
+    1587: aload_0
+    1588: getfield      #346                // Field listMP5:Ljavax/swing/JTable;
+    1591: invokespecial #249                // Method javax/swing/JScrollPane."<init>":(Ljava/awt/Component;)V
+    1594: astore        28
+    1596: aload_0
+    1597: getfield      #346                // Field listMP5:Ljavax/swing/JTable;
+    1600: bipush        50
+    1602: invokevirtual #252                // Method javax/swing/JTable.setRowHeight:(I)V
+    1605: aload         28
+    1607: new           #184                // class java/awt/Dimension
+    1610: dup
+    1611: sipush        400
+    1614: sipush        2000
+    1617: invokespecial #186                // Method java/awt/Dimension."<init>":(II)V
+    1620: invokevirtual #257                // Method javax/swing/JScrollPane.setPreferredSize:(Ljava/awt/Dimension;)V
+    1623: aload_0
+    1624: getfield      #346                // Field listMP5:Ljavax/swing/JTable;
+    1627: new           #156                // class java/awt/Font
+    1630: dup
+    1631: ldc_w         #258                // String Arial
+    1634: iconst_1
+    1635: bipush        45
+    1637: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+    1640: invokevirtual #260                // Method javax/swing/JTable.setFont:(Ljava/awt/Font;)V
+    1643: aload_0
+    1644: getfield      #346                // Field listMP5:Ljavax/swing/JTable;
+    1647: invokevirtual #296                // Method javax/swing/JTable.getTableHeader:()Ljavax/swing/table/JTableHeader;
+    1650: new           #156                // class java/awt/Font
+    1653: dup
+    1654: ldc_w         #271                // String SansSerif
+    1657: iconst_2
+    1658: bipush        60
+    1660: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+    1663: invokevirtual #300                // Method javax/swing/table/JTableHeader.setFont:(Ljava/awt/Font;)V
+    1666: aload         10
+    1668: aload         28
+    1670: invokevirtual #261                // Method javax/swing/JPanel.add:(Ljava/awt/Component;)Ljava/awt/Component;
+    1673: pop
+    1674: aload_3
+    1675: aload         10
+    1677: ldc           #181                // String Center
+    1679: invokevirtual #172                // Method javax/swing/JPanel.add:(Ljava/awt/Component;Ljava/lang/Object;)V
+    1682: new           #143                // class javax/swing/JPanel
+    1685: dup
+    1686: invokespecial #151                // Method javax/swing/JPanel."<init>":()V
+    1689: astore        29
+    1691: aload         29
+    1693: new           #279                // class javax/swing/BoxLayout
+    1696: dup
+    1697: aload         29
+    1699: iconst_0
+    1700: invokespecial #281                // Method javax/swing/BoxLayout."<init>":(Ljava/awt/Container;I)V
+    1703: invokevirtual #284                // Method javax/swing/JPanel.setLayout:(Ljava/awt/LayoutManager;)V
+    1706: iconst_1
+    1707: anewarray     #70                 // class java/lang/String
+    1710: dup
+    1711: iconst_0
+    1712: ldc_w         #348                // String 5LIC
+    1715: aastore
+    1716: astore        30
+    1718: new           #227                // class java/util/Vector
+    1721: dup
+    1722: invokespecial #229                // Method java/util/Vector."<init>":()V
+    1725: astore        31
+    1727: iconst_0
+    1728: istore        32
+    1730: goto          1746
+    1733: aload         31
+    1735: aload         30
+    1737: iload         32
+    1739: aaload
+    1740: invokevirtual #230                // Method java/util/Vector.addElement:(Ljava/lang/Object;)V
+    1743: iinc          32, 1
+    1746: iload         32
+    1748: aload         30
+    1750: arraylength
+    1751: if_icmplt     1733
+    1754: aload_0
+    1755: new           #233                // class javax/swing/table/DefaultTableModel
+    1758: dup
+    1759: aload         31
+    1761: iconst_0
+    1762: invokespecial #235                // Method javax/swing/table/DefaultTableModel."<init>":(Ljava/util/Vector;I)V
+    1765: putfield      #350                // Field dtm7:Ljavax/swing/table/DefaultTableModel;
+    1768: aload_0
+    1769: new           #352                // class combos/comboorganizer$12
+    1772: dup
+    1773: aload_0
+    1774: aload_0
+    1775: getfield      #350                // Field dtm7:Ljavax/swing/table/DefaultTableModel;
+    1778: invokespecial #354                // Method combos/comboorganizer$12."<init>":(Lcombos/comboorganizer;Ljavax/swing/table/TableModel;)V
+    1781: putfield      #355                // Field lettersInCommon5:Ljavax/swing/JTable;
+    1784: aload_0
+    1785: getfield      #355                // Field lettersInCommon5:Ljavax/swing/JTable;
+    1788: bipush        50
+    1790: invokevirtual #252                // Method javax/swing/JTable.setRowHeight:(I)V
+    1793: new           #247                // class javax/swing/JScrollPane
+    1796: dup
+    1797: aload_0
+    1798: getfield      #355                // Field lettersInCommon5:Ljavax/swing/JTable;
+    1801: invokespecial #249                // Method javax/swing/JScrollPane."<init>":(Ljava/awt/Component;)V
+    1804: astore        32
+    1806: aload_0
+    1807: getfield      #355                // Field lettersInCommon5:Ljavax/swing/JTable;
+    1810: new           #156                // class java/awt/Font
+    1813: dup
+    1814: ldc_w         #258                // String Arial
+    1817: iconst_1
+    1818: bipush        45
+    1820: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+    1823: invokevirtual #260                // Method javax/swing/JTable.setFont:(Ljava/awt/Font;)V
+    1826: aload_0
+    1827: getfield      #355                // Field lettersInCommon5:Ljavax/swing/JTable;
+    1830: invokevirtual #296                // Method javax/swing/JTable.getTableHeader:()Ljavax/swing/table/JTableHeader;
+    1833: new           #156                // class java/awt/Font
+    1836: dup
+    1837: ldc_w         #271                // String SansSerif
+    1840: iconst_2
+    1841: bipush        60
+    1843: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+    1846: invokevirtual #300                // Method javax/swing/table/JTableHeader.setFont:(Ljava/awt/Font;)V
+    1849: aload         32
+    1851: new           #184                // class java/awt/Dimension
+    1854: dup
+    1855: sipush        400
+    1858: sipush        500
+    1861: invokespecial #186                // Method java/awt/Dimension."<init>":(II)V
+    1864: invokevirtual #257                // Method javax/swing/JScrollPane.setPreferredSize:(Ljava/awt/Dimension;)V
+    1867: aload         29
+    1869: aload         32
+    1871: invokevirtual #261                // Method javax/swing/JPanel.add:(Ljava/awt/Component;)Ljava/awt/Component;
+    1874: pop
+    1875: iconst_1
+    1876: anewarray     #70                 // class java/lang/String
+    1879: dup
+    1880: iconst_0
+    1881: ldc_w         #357                // String 6LIC
+    1884: aastore
+    1885: astore        33
+    1887: new           #227                // class java/util/Vector
+    1890: dup
+    1891: invokespecial #229                // Method java/util/Vector."<init>":()V
+    1894: astore        34
+    1896: iconst_0
+    1897: istore        35
+    1899: goto          1915
+    1902: aload         34
+    1904: aload         33
+    1906: iload         35
+    1908: aaload
+    1909: invokevirtual #230                // Method java/util/Vector.addElement:(Ljava/lang/Object;)V
+    1912: iinc          35, 1
+    1915: iload         35
+    1917: aload         33
+    1919: arraylength
+    1920: if_icmplt     1902
+    1923: aload_0
+    1924: new           #233                // class javax/swing/table/DefaultTableModel
+    1927: dup
+    1928: aload         34
+    1930: iconst_0
+    1931: invokespecial #235                // Method javax/swing/table/DefaultTableModel."<init>":(Ljava/util/Vector;I)V
+    1934: putfield      #359                // Field dtm8:Ljavax/swing/table/DefaultTableModel;
+    1937: aload_0
+    1938: new           #361                // class combos/comboorganizer$13
+    1941: dup
+    1942: aload_0
+    1943: aload_0
+    1944: getfield      #359                // Field dtm8:Ljavax/swing/table/DefaultTableModel;
+    1947: invokespecial #363                // Method combos/comboorganizer$13."<init>":(Lcombos/comboorganizer;Ljavax/swing/table/TableModel;)V
+    1950: putfield      #364                // Field lettersInCommon6:Ljavax/swing/JTable;
+    1953: aload_0
+    1954: getfield      #364                // Field lettersInCommon6:Ljavax/swing/JTable;
+    1957: bipush        50
+    1959: invokevirtual #252                // Method javax/swing/JTable.setRowHeight:(I)V
+    1962: new           #247                // class javax/swing/JScrollPane
+    1965: dup
+    1966: aload_0
+    1967: getfield      #364                // Field lettersInCommon6:Ljavax/swing/JTable;
+    1970: invokespecial #249                // Method javax/swing/JScrollPane."<init>":(Ljava/awt/Component;)V
+    1973: astore        35
+    1975: aload_0
+    1976: getfield      #364                // Field lettersInCommon6:Ljavax/swing/JTable;
+    1979: new           #156                // class java/awt/Font
+    1982: dup
+    1983: ldc_w         #258                // String Arial
+    1986: iconst_1
+    1987: bipush        45
+    1989: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+    1992: invokevirtual #260                // Method javax/swing/JTable.setFont:(Ljava/awt/Font;)V
+    1995: aload_0
+    1996: getfield      #364                // Field lettersInCommon6:Ljavax/swing/JTable;
+    1999: invokevirtual #296                // Method javax/swing/JTable.getTableHeader:()Ljavax/swing/table/JTableHeader;
+    2002: new           #156                // class java/awt/Font
+    2005: dup
+    2006: ldc_w         #271                // String SansSerif
+    2009: iconst_2
+    2010: bipush        60
+    2012: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+    2015: invokevirtual #300                // Method javax/swing/table/JTableHeader.setFont:(Ljava/awt/Font;)V
+    2018: aload         29
+    2020: aload         35
+    2022: invokevirtual #261                // Method javax/swing/JPanel.add:(Ljava/awt/Component;)Ljava/awt/Component;
+    2025: pop
+    2026: iconst_1
+    2027: anewarray     #70                 // class java/lang/String
+    2030: dup
+    2031: iconst_0
+    2032: ldc_w         #366                // String 7LIC
+    2035: aastore
+    2036: astore        36
+    2038: new           #227                // class java/util/Vector
+    2041: dup
+    2042: invokespecial #229                // Method java/util/Vector."<init>":()V
+    2045: astore        37
+    2047: iconst_0
+    2048: istore        38
+    2050: goto          2066
+    2053: aload         37
+    2055: aload         36
+    2057: iload         38
+    2059: aaload
+    2060: invokevirtual #230                // Method java/util/Vector.addElement:(Ljava/lang/Object;)V
+    2063: iinc          38, 1
+    2066: iload         38
+    2068: aload         36
+    2070: arraylength
+    2071: if_icmplt     2053
+    2074: aload_0
+    2075: new           #233                // class javax/swing/table/DefaultTableModel
+    2078: dup
+    2079: aload         37
+    2081: iconst_0
+    2082: invokespecial #235                // Method javax/swing/table/DefaultTableModel."<init>":(Ljava/util/Vector;I)V
+    2085: putfield      #368                // Field dtm9:Ljavax/swing/table/DefaultTableModel;
+    2088: aload_0
+    2089: new           #370                // class combos/comboorganizer$14
+    2092: dup
+    2093: aload_0
+    2094: aload_0
+    2095: getfield      #368                // Field dtm9:Ljavax/swing/table/DefaultTableModel;
+    2098: invokespecial #372                // Method combos/comboorganizer$14."<init>":(Lcombos/comboorganizer;Ljavax/swing/table/TableModel;)V
+    2101: putfield      #373                // Field lettersInCommon7:Ljavax/swing/JTable;
+    2104: aload_0
+    2105: getfield      #373                // Field lettersInCommon7:Ljavax/swing/JTable;
+    2108: bipush        50
+    2110: invokevirtual #252                // Method javax/swing/JTable.setRowHeight:(I)V
+    2113: new           #247                // class javax/swing/JScrollPane
+    2116: dup
+    2117: aload_0
+    2118: getfield      #373                // Field lettersInCommon7:Ljavax/swing/JTable;
+    2121: invokespecial #249                // Method javax/swing/JScrollPane."<init>":(Ljava/awt/Component;)V
+    2124: astore        38
+    2126: aload_0
+    2127: getfield      #373                // Field lettersInCommon7:Ljavax/swing/JTable;
+    2130: new           #156                // class java/awt/Font
+    2133: dup
+    2134: ldc_w         #258                // String Arial
+    2137: iconst_1
+    2138: bipush        45
+    2140: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+    2143: invokevirtual #260                // Method javax/swing/JTable.setFont:(Ljava/awt/Font;)V
+    2146: aload_0
+    2147: getfield      #373                // Field lettersInCommon7:Ljavax/swing/JTable;
+    2150: invokevirtual #296                // Method javax/swing/JTable.getTableHeader:()Ljavax/swing/table/JTableHeader;
+    2153: new           #156                // class java/awt/Font
+    2156: dup
+    2157: ldc_w         #271                // String SansSerif
+    2160: iconst_2
+    2161: bipush        60
+    2163: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+    2166: invokevirtual #300                // Method javax/swing/table/JTableHeader.setFont:(Ljava/awt/Font;)V
+    2169: aload         29
+    2171: aload         38
+    2173: invokevirtual #261                // Method javax/swing/JPanel.add:(Ljava/awt/Component;)Ljava/awt/Component;
+    2176: pop
+    2177: iconst_1
+    2178: anewarray     #70                 // class java/lang/String
+    2181: dup
+    2182: iconst_0
+    2183: ldc_w         #375                // String 8LIC
+    2186: aastore
+    2187: astore        39
+    2189: new           #227                // class java/util/Vector
+    2192: dup
+    2193: invokespecial #229                // Method java/util/Vector."<init>":()V
+    2196: astore        40
+    2198: iconst_0
+    2199: istore        41
+    2201: goto          2217
+    2204: aload         40
+    2206: aload         39
+    2208: iload         41
+    2210: aaload
+    2211: invokevirtual #230                // Method java/util/Vector.addElement:(Ljava/lang/Object;)V
+    2214: iinc          41, 1
+    2217: iload         41
+    2219: aload         39
+    2221: arraylength
+    2222: if_icmplt     2204
+    2225: aload_0
+    2226: new           #233                // class javax/swing/table/DefaultTableModel
+    2229: dup
+    2230: aload         40
+    2232: iconst_0
+    2233: invokespecial #235                // Method javax/swing/table/DefaultTableModel."<init>":(Ljava/util/Vector;I)V
+    2236: putfield      #377                // Field dtm10:Ljavax/swing/table/DefaultTableModel;
+    2239: aload_0
+    2240: new           #379                // class combos/comboorganizer$15
+    2243: dup
+    2244: aload_0
+    2245: aload_0
+    2246: getfield      #377                // Field dtm10:Ljavax/swing/table/DefaultTableModel;
+    2249: invokespecial #381                // Method combos/comboorganizer$15."<init>":(Lcombos/comboorganizer;Ljavax/swing/table/TableModel;)V
+    2252: putfield      #382                // Field lettersInCommon8:Ljavax/swing/JTable;
+    2255: aload_0
+    2256: getfield      #382                // Field lettersInCommon8:Ljavax/swing/JTable;
+    2259: bipush        50
+    2261: invokevirtual #252                // Method javax/swing/JTable.setRowHeight:(I)V
+    2264: new           #247                // class javax/swing/JScrollPane
+    2267: dup
+    2268: aload_0
+    2269: getfield      #382                // Field lettersInCommon8:Ljavax/swing/JTable;
+    2272: invokespecial #249                // Method javax/swing/JScrollPane."<init>":(Ljava/awt/Component;)V
+    2275: astore        41
+    2277: aload_0
+    2278: getfield      #382                // Field lettersInCommon8:Ljavax/swing/JTable;
+    2281: new           #156                // class java/awt/Font
+    2284: dup
+    2285: ldc_w         #258                // String Arial
+    2288: iconst_1
+    2289: bipush        45
+    2291: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+    2294: invokevirtual #260                // Method javax/swing/JTable.setFont:(Ljava/awt/Font;)V
+    2297: aload_0
+    2298: getfield      #382                // Field lettersInCommon8:Ljavax/swing/JTable;
+    2301: invokevirtual #296                // Method javax/swing/JTable.getTableHeader:()Ljavax/swing/table/JTableHeader;
+    2304: new           #156                // class java/awt/Font
+    2307: dup
+    2308: ldc_w         #271                // String SansSerif
+    2311: iconst_2
+    2312: bipush        60
+    2314: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+    2317: invokevirtual #300                // Method javax/swing/table/JTableHeader.setFont:(Ljava/awt/Font;)V
+    2320: aload         29
+    2322: aload         41
+    2324: invokevirtual #261                // Method javax/swing/JPanel.add:(Ljava/awt/Component;)Ljava/awt/Component;
+    2327: pop
+    2328: iconst_1
+    2329: anewarray     #70                 // class java/lang/String
+    2332: dup
+    2333: iconst_0
+    2334: ldc_w         #384                // String 9LIC
+    2337: aastore
+    2338: astore        42
+    2340: new           #227                // class java/util/Vector
+    2343: dup
+    2344: invokespecial #229                // Method java/util/Vector."<init>":()V
+    2347: astore        43
+    2349: iconst_0
+    2350: istore        44
+    2352: goto          2368
+    2355: aload         43
+    2357: aload         42
+    2359: iload         44
+    2361: aaload
+    2362: invokevirtual #230                // Method java/util/Vector.addElement:(Ljava/lang/Object;)V
+    2365: iinc          44, 1
+    2368: iload         44
+    2370: aload         42
+    2372: arraylength
+    2373: if_icmplt     2355
+    2376: aload_0
+    2377: new           #233                // class javax/swing/table/DefaultTableModel
+    2380: dup
+    2381: aload         43
+    2383: iconst_0
+    2384: invokespecial #235                // Method javax/swing/table/DefaultTableModel."<init>":(Ljava/util/Vector;I)V
+    2387: putfield      #386                // Field dtm11:Ljavax/swing/table/DefaultTableModel;
+    2390: aload_0
+    2391: new           #388                // class combos/comboorganizer$16
+    2394: dup
+    2395: aload_0
+    2396: aload_0
+    2397: getfield      #386                // Field dtm11:Ljavax/swing/table/DefaultTableModel;
+    2400: invokespecial #390                // Method combos/comboorganizer$16."<init>":(Lcombos/comboorganizer;Ljavax/swing/table/TableModel;)V
+    2403: putfield      #391                // Field lettersInCommon9:Ljavax/swing/JTable;
+    2406: aload_0
+    2407: getfield      #391                // Field lettersInCommon9:Ljavax/swing/JTable;
+    2410: bipush        50
+    2412: invokevirtual #252                // Method javax/swing/JTable.setRowHeight:(I)V
+    2415: new           #247                // class javax/swing/JScrollPane
+    2418: dup
+    2419: aload_0
+    2420: getfield      #391                // Field lettersInCommon9:Ljavax/swing/JTable;
+    2423: invokespecial #249                // Method javax/swing/JScrollPane."<init>":(Ljava/awt/Component;)V
+    2426: astore        44
+    2428: aload_0
+    2429: getfield      #391                // Field lettersInCommon9:Ljavax/swing/JTable;
+    2432: new           #156                // class java/awt/Font
+    2435: dup
+    2436: ldc_w         #258                // String Arial
+    2439: iconst_1
+    2440: bipush        45
+    2442: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+    2445: invokevirtual #260                // Method javax/swing/JTable.setFont:(Ljava/awt/Font;)V
+    2448: aload_0
+    2449: getfield      #391                // Field lettersInCommon9:Ljavax/swing/JTable;
+    2452: invokevirtual #296                // Method javax/swing/JTable.getTableHeader:()Ljavax/swing/table/JTableHeader;
+    2455: new           #156                // class java/awt/Font
+    2458: dup
+    2459: ldc_w         #271                // String SansSerif
+    2462: iconst_2
+    2463: bipush        60
+    2465: invokespecial #160                // Method java/awt/Font."<init>":(Ljava/lang/String;II)V
+    2468: invokevirtual #300                // Method javax/swing/table/JTableHeader.setFont:(Ljava/awt/Font;)V
+    2471: aload         29
+    2473: aload         44
+    2475: invokevirtual #261                // Method javax/swing/JPanel.add:(Ljava/awt/Component;)Ljava/awt/Component;
+    2478: pop
+    2479: aload_3
+    2480: aload         29
+    2482: ldc_w         #393                // String South
+    2485: invokevirtual #172                // Method javax/swing/JPanel.add:(Ljava/awt/Component;Ljava/lang/Object;)V
+    2488: aload_1
+    2489: aload_2
+    2490: ldc_w         #277                // String North
+    2493: invokevirtual #172                // Method javax/swing/JPanel.add:(Ljava/awt/Component;Ljava/lang/Object;)V
+    2496: aload_1
+    2497: aload_3
+    2498: ldc           #181                // String Center
+    2500: invokevirtual #172                // Method javax/swing/JPanel.add:(Ljava/awt/Component;Ljava/lang/Object;)V
+    2503: aload_1
+    2504: aload         4
+    2506: ldc           #170                // String West
+    2508: invokevirtual #172                // Method javax/swing/JPanel.add:(Ljava/awt/Component;Ljava/lang/Object;)V
+    2511: aload_1
+    2512: iconst_1
+    2513: invokevirtual #395                // Method javax/swing/JPanel.setVisible:(Z)V
+    2516: aload_1
+    2517: iconst_1
+    2518: invokevirtual #396                // Method javax/swing/JPanel.setOpaque:(Z)V
+    2521: aload_1
+    2522: areturn
+
+  public void fillInTables(java.util.ArrayList<java.lang.String>);
+    Code:
+       0: aload_0
+       1: getfield      #289                // Field dtm1:Ljavax/swing/table/DefaultTableModel;
+       4: iconst_0
+       5: invokevirtual #455                // Method javax/swing/table/DefaultTableModel.setRowCount:(I)V
+       8: aload_0
+       9: getfield      #305                // Field dtm2:Ljavax/swing/table/DefaultTableModel;
+      12: iconst_0
+      13: invokevirtual #455                // Method javax/swing/table/DefaultTableModel.setRowCount:(I)V
+      16: aload_0
+      17: getfield      #314                // Field dtm3:Ljavax/swing/table/DefaultTableModel;
+      20: iconst_0
+      21: invokevirtual #455                // Method javax/swing/table/DefaultTableModel.setRowCount:(I)V
+      24: aload_0
+      25: getfield      #323                // Field dtm4:Ljavax/swing/table/DefaultTableModel;
+      28: iconst_0
+      29: invokevirtual #455                // Method javax/swing/table/DefaultTableModel.setRowCount:(I)V
+      32: aload_0
+      33: getfield      #332                // Field dtm5:Ljavax/swing/table/DefaultTableModel;
+      36: iconst_0
+      37: invokevirtual #455                // Method javax/swing/table/DefaultTableModel.setRowCount:(I)V
+      40: aload_0
+      41: getfield      #341                // Field dtm6:Ljavax/swing/table/DefaultTableModel;
+      44: iconst_0
+      45: invokevirtual #455                // Method javax/swing/table/DefaultTableModel.setRowCount:(I)V
+      48: aload_0
+      49: getfield      #350                // Field dtm7:Ljavax/swing/table/DefaultTableModel;
+      52: iconst_0
+      53: invokevirtual #455                // Method javax/swing/table/DefaultTableModel.setRowCount:(I)V
+      56: aload_0
+      57: getfield      #359                // Field dtm8:Ljavax/swing/table/DefaultTableModel;
+      60: iconst_0
+      61: invokevirtual #455                // Method javax/swing/table/DefaultTableModel.setRowCount:(I)V
+      64: aload_0
+      65: getfield      #368                // Field dtm9:Ljavax/swing/table/DefaultTableModel;
+      68: iconst_0
+      69: invokevirtual #455                // Method javax/swing/table/DefaultTableModel.setRowCount:(I)V
+      72: aload_0
+      73: getfield      #377                // Field dtm10:Ljavax/swing/table/DefaultTableModel;
+      76: iconst_0
+      77: invokevirtual #455                // Method javax/swing/table/DefaultTableModel.setRowCount:(I)V
+      80: aload_0
+      81: getfield      #386                // Field dtm11:Ljavax/swing/table/DefaultTableModel;
+      84: iconst_0
+      85: invokevirtual #455                // Method javax/swing/table/DefaultTableModel.setRowCount:(I)V
+      88: ldc_w         #458                // String
+      91: astore_2
+      92: iconst_0
+      93: istore_3
+      94: goto          1452
+      97: aload_1
+      98: iload_3
+      99: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     102: checkcast     #70                 // class java/lang/String
+     105: ldc_w         #464                // String >
+     108: invokevirtual #466                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+     111: ifeq          138
+     114: aload_1
+     115: iconst_0
+     116: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     119: checkcast     #70                 // class java/lang/String
+     122: ldc_w         #464                // String >
+     125: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+     128: astore        4
+     130: aload         4
+     132: iconst_1
+     133: aaload
+     134: astore_2
+     135: goto          1449
+     138: aload_1
+     139: iload_3
+     140: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     143: checkcast     #70                 // class java/lang/String
+     146: new           #474                // class java/lang/StringBuilder
+     149: dup
+     150: aload_2
+     151: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     154: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+     157: ldc_w         #481                // String  MP0
+     160: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     163: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     166: invokevirtual #466                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+     169: ifeq          253
+     172: aload_1
+     173: iload_3
+     174: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     177: checkcast     #70                 // class java/lang/String
+     180: new           #474                // class java/lang/StringBuilder
+     183: dup
+     184: aload_2
+     185: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     188: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+     191: ldc_w         #490                // String  MP0:
+     194: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     197: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     200: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+     203: astore        4
+     205: aload         4
+     207: iconst_1
+     208: aaload
+     209: ldc_w         #492                // String ~
+     212: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+     215: astore        5
+     217: iconst_0
+     218: istore        6
+     220: goto          245
+     223: aload_0
+     224: getfield      #289                // Field dtm1:Ljavax/swing/table/DefaultTableModel;
+     227: iconst_1
+     228: anewarray     #70                 // class java/lang/String
+     231: dup
+     232: iconst_0
+     233: aload         5
+     235: iload         6
+     237: aaload
+     238: aastore
+     239: invokevirtual #494                // Method javax/swing/table/DefaultTableModel.addRow:([Ljava/lang/Object;)V
+     242: iinc          6, 1
+     245: iload         6
+     247: aload         5
+     249: arraylength
+     250: if_icmplt     223
+     253: new           #474                // class java/lang/StringBuilder
+     256: dup
+     257: aload_2
+     258: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     261: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+     264: ldc_w         #498                // String  MP1:
+     267: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     270: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     273: astore        4
+     275: aload_1
+     276: iload_3
+     277: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     280: checkcast     #70                 // class java/lang/String
+     283: aload         4
+     285: invokevirtual #466                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+     288: ifeq          360
+     291: aload_1
+     292: iload_3
+     293: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     296: checkcast     #70                 // class java/lang/String
+     299: aload         4
+     301: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+     304: astore        5
+     306: aload         5
+     308: arraylength
+     309: ifle          360
+     312: aload         5
+     314: iconst_1
+     315: aaload
+     316: ldc_w         #492                // String ~
+     319: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+     322: astore        6
+     324: iconst_0
+     325: istore        7
+     327: goto          352
+     330: aload_0
+     331: getfield      #305                // Field dtm2:Ljavax/swing/table/DefaultTableModel;
+     334: iconst_1
+     335: anewarray     #70                 // class java/lang/String
+     338: dup
+     339: iconst_0
+     340: aload         6
+     342: iload         7
+     344: aaload
+     345: aastore
+     346: invokevirtual #494                // Method javax/swing/table/DefaultTableModel.addRow:([Ljava/lang/Object;)V
+     349: iinc          7, 1
+     352: iload         7
+     354: aload         6
+     356: arraylength
+     357: if_icmplt     330
+     360: aload_1
+     361: iload_3
+     362: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     365: checkcast     #70                 // class java/lang/String
+     368: new           #474                // class java/lang/StringBuilder
+     371: dup
+     372: aload_2
+     373: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     376: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+     379: ldc_w         #500                // String  MP2
+     382: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     385: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     388: invokevirtual #466                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+     391: ifeq          481
+     394: aload_1
+     395: iload_3
+     396: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     399: checkcast     #70                 // class java/lang/String
+     402: new           #474                // class java/lang/StringBuilder
+     405: dup
+     406: aload_2
+     407: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     410: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+     413: ldc_w         #502                // String  MP2:
+     416: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     419: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     422: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+     425: astore        5
+     427: aload         5
+     429: arraylength
+     430: ifle          481
+     433: aload         5
+     435: iconst_1
+     436: aaload
+     437: ldc_w         #492                // String ~
+     440: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+     443: astore        6
+     445: iconst_0
+     446: istore        7
+     448: goto          473
+     451: aload_0
+     452: getfield      #314                // Field dtm3:Ljavax/swing/table/DefaultTableModel;
+     455: iconst_1
+     456: anewarray     #70                 // class java/lang/String
+     459: dup
+     460: iconst_0
+     461: aload         6
+     463: iload         7
+     465: aaload
+     466: aastore
+     467: invokevirtual #494                // Method javax/swing/table/DefaultTableModel.addRow:([Ljava/lang/Object;)V
+     470: iinc          7, 1
+     473: iload         7
+     475: aload         6
+     477: arraylength
+     478: if_icmplt     451
+     481: aload_1
+     482: iload_3
+     483: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     486: checkcast     #70                 // class java/lang/String
+     489: new           #474                // class java/lang/StringBuilder
+     492: dup
+     493: aload_2
+     494: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     497: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+     500: ldc_w         #504                // String  MP3
+     503: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     506: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     509: invokevirtual #466                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+     512: ifeq          602
+     515: aload_1
+     516: iload_3
+     517: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     520: checkcast     #70                 // class java/lang/String
+     523: new           #474                // class java/lang/StringBuilder
+     526: dup
+     527: aload_2
+     528: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     531: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+     534: ldc_w         #506                // String  MP3:
+     537: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     540: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     543: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+     546: astore        5
+     548: aload         5
+     550: arraylength
+     551: ifle          602
+     554: aload         5
+     556: iconst_1
+     557: aaload
+     558: ldc_w         #492                // String ~
+     561: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+     564: astore        6
+     566: iconst_0
+     567: istore        7
+     569: goto          594
+     572: aload_0
+     573: getfield      #323                // Field dtm4:Ljavax/swing/table/DefaultTableModel;
+     576: iconst_1
+     577: anewarray     #70                 // class java/lang/String
+     580: dup
+     581: iconst_0
+     582: aload         6
+     584: iload         7
+     586: aaload
+     587: aastore
+     588: invokevirtual #494                // Method javax/swing/table/DefaultTableModel.addRow:([Ljava/lang/Object;)V
+     591: iinc          7, 1
+     594: iload         7
+     596: aload         6
+     598: arraylength
+     599: if_icmplt     572
+     602: aload_1
+     603: iload_3
+     604: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     607: checkcast     #70                 // class java/lang/String
+     610: new           #474                // class java/lang/StringBuilder
+     613: dup
+     614: aload_2
+     615: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     618: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+     621: ldc_w         #508                // String  MP4
+     624: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     627: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     630: invokevirtual #466                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+     633: ifeq          723
+     636: aload_1
+     637: iload_3
+     638: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     641: checkcast     #70                 // class java/lang/String
+     644: new           #474                // class java/lang/StringBuilder
+     647: dup
+     648: aload_2
+     649: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     652: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+     655: ldc_w         #510                // String  MP4:
+     658: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     661: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     664: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+     667: astore        5
+     669: aload         5
+     671: arraylength
+     672: ifle          723
+     675: aload         5
+     677: iconst_1
+     678: aaload
+     679: ldc_w         #492                // String ~
+     682: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+     685: astore        6
+     687: iconst_0
+     688: istore        7
+     690: goto          715
+     693: aload_0
+     694: getfield      #332                // Field dtm5:Ljavax/swing/table/DefaultTableModel;
+     697: iconst_1
+     698: anewarray     #70                 // class java/lang/String
+     701: dup
+     702: iconst_0
+     703: aload         6
+     705: iload         7
+     707: aaload
+     708: aastore
+     709: invokevirtual #494                // Method javax/swing/table/DefaultTableModel.addRow:([Ljava/lang/Object;)V
+     712: iinc          7, 1
+     715: iload         7
+     717: aload         6
+     719: arraylength
+     720: if_icmplt     693
+     723: aload_1
+     724: iload_3
+     725: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     728: checkcast     #70                 // class java/lang/String
+     731: new           #474                // class java/lang/StringBuilder
+     734: dup
+     735: aload_2
+     736: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     739: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+     742: ldc_w         #512                // String  MP5
+     745: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     748: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     751: invokevirtual #466                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+     754: ifeq          844
+     757: aload_1
+     758: iload_3
+     759: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     762: checkcast     #70                 // class java/lang/String
+     765: new           #474                // class java/lang/StringBuilder
+     768: dup
+     769: aload_2
+     770: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     773: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+     776: ldc_w         #514                // String  MP5:
+     779: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     782: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     785: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+     788: astore        5
+     790: aload         5
+     792: arraylength
+     793: ifle          844
+     796: aload         5
+     798: iconst_1
+     799: aaload
+     800: ldc_w         #492                // String ~
+     803: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+     806: astore        6
+     808: iconst_0
+     809: istore        7
+     811: goto          836
+     814: aload_0
+     815: getfield      #341                // Field dtm6:Ljavax/swing/table/DefaultTableModel;
+     818: iconst_1
+     819: anewarray     #70                 // class java/lang/String
+     822: dup
+     823: iconst_0
+     824: aload         6
+     826: iload         7
+     828: aaload
+     829: aastore
+     830: invokevirtual #494                // Method javax/swing/table/DefaultTableModel.addRow:([Ljava/lang/Object;)V
+     833: iinc          7, 1
+     836: iload         7
+     838: aload         6
+     840: arraylength
+     841: if_icmplt     814
+     844: aload_1
+     845: iload_3
+     846: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     849: checkcast     #70                 // class java/lang/String
+     852: new           #474                // class java/lang/StringBuilder
+     855: dup
+     856: aload_2
+     857: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     860: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+     863: ldc_w         #516                // String  LIC5
+     866: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     869: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     872: invokevirtual #466                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+     875: ifeq          965
+     878: aload_1
+     879: iload_3
+     880: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     883: checkcast     #70                 // class java/lang/String
+     886: new           #474                // class java/lang/StringBuilder
+     889: dup
+     890: aload_2
+     891: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     894: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+     897: ldc_w         #518                // String  LIC5:
+     900: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     903: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     906: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+     909: astore        5
+     911: aload         5
+     913: arraylength
+     914: ifle          965
+     917: aload         5
+     919: iconst_1
+     920: aaload
+     921: ldc_w         #492                // String ~
+     924: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+     927: astore        6
+     929: iconst_0
+     930: istore        7
+     932: goto          957
+     935: aload_0
+     936: getfield      #350                // Field dtm7:Ljavax/swing/table/DefaultTableModel;
+     939: iconst_1
+     940: anewarray     #70                 // class java/lang/String
+     943: dup
+     944: iconst_0
+     945: aload         6
+     947: iload         7
+     949: aaload
+     950: aastore
+     951: invokevirtual #494                // Method javax/swing/table/DefaultTableModel.addRow:([Ljava/lang/Object;)V
+     954: iinc          7, 1
+     957: iload         7
+     959: aload         6
+     961: arraylength
+     962: if_icmplt     935
+     965: aload_1
+     966: iload_3
+     967: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     970: checkcast     #70                 // class java/lang/String
+     973: new           #474                // class java/lang/StringBuilder
+     976: dup
+     977: aload_2
+     978: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     981: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+     984: ldc_w         #520                // String  LIC6
+     987: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     990: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     993: invokevirtual #466                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+     996: ifeq          1086
+     999: aload_1
+    1000: iload_3
+    1001: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1004: checkcast     #70                 // class java/lang/String
+    1007: new           #474                // class java/lang/StringBuilder
+    1010: dup
+    1011: aload_2
+    1012: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+    1015: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+    1018: ldc_w         #522                // String  LIC6:
+    1021: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    1024: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+    1027: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+    1030: astore        5
+    1032: aload         5
+    1034: arraylength
+    1035: ifle          1086
+    1038: aload         5
+    1040: iconst_1
+    1041: aaload
+    1042: ldc_w         #492                // String ~
+    1045: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+    1048: astore        6
+    1050: iconst_0
+    1051: istore        7
+    1053: goto          1078
+    1056: aload_0
+    1057: getfield      #359                // Field dtm8:Ljavax/swing/table/DefaultTableModel;
+    1060: iconst_1
+    1061: anewarray     #70                 // class java/lang/String
+    1064: dup
+    1065: iconst_0
+    1066: aload         6
+    1068: iload         7
+    1070: aaload
+    1071: aastore
+    1072: invokevirtual #494                // Method javax/swing/table/DefaultTableModel.addRow:([Ljava/lang/Object;)V
+    1075: iinc          7, 1
+    1078: iload         7
+    1080: aload         6
+    1082: arraylength
+    1083: if_icmplt     1056
+    1086: aload_1
+    1087: iload_3
+    1088: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1091: checkcast     #70                 // class java/lang/String
+    1094: new           #474                // class java/lang/StringBuilder
+    1097: dup
+    1098: aload_2
+    1099: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+    1102: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+    1105: ldc_w         #524                // String  LIC7
+    1108: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    1111: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+    1114: invokevirtual #466                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+    1117: ifeq          1207
+    1120: aload_1
+    1121: iload_3
+    1122: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1125: checkcast     #70                 // class java/lang/String
+    1128: new           #474                // class java/lang/StringBuilder
+    1131: dup
+    1132: aload_2
+    1133: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+    1136: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+    1139: ldc_w         #526                // String  LIC7:
+    1142: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    1145: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+    1148: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+    1151: astore        5
+    1153: aload         5
+    1155: arraylength
+    1156: ifle          1207
+    1159: aload         5
+    1161: iconst_1
+    1162: aaload
+    1163: ldc_w         #492                // String ~
+    1166: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+    1169: astore        6
+    1171: iconst_0
+    1172: istore        7
+    1174: goto          1199
+    1177: aload_0
+    1178: getfield      #368                // Field dtm9:Ljavax/swing/table/DefaultTableModel;
+    1181: iconst_1
+    1182: anewarray     #70                 // class java/lang/String
+    1185: dup
+    1186: iconst_0
+    1187: aload         6
+    1189: iload         7
+    1191: aaload
+    1192: aastore
+    1193: invokevirtual #494                // Method javax/swing/table/DefaultTableModel.addRow:([Ljava/lang/Object;)V
+    1196: iinc          7, 1
+    1199: iload         7
+    1201: aload         6
+    1203: arraylength
+    1204: if_icmplt     1177
+    1207: aload_1
+    1208: iload_3
+    1209: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1212: checkcast     #70                 // class java/lang/String
+    1215: new           #474                // class java/lang/StringBuilder
+    1218: dup
+    1219: aload_2
+    1220: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+    1223: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+    1226: ldc_w         #528                // String  LIC8
+    1229: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    1232: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+    1235: invokevirtual #466                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+    1238: ifeq          1328
+    1241: aload_1
+    1242: iload_3
+    1243: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1246: checkcast     #70                 // class java/lang/String
+    1249: new           #474                // class java/lang/StringBuilder
+    1252: dup
+    1253: aload_2
+    1254: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+    1257: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+    1260: ldc_w         #530                // String  LIC8:
+    1263: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    1266: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+    1269: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+    1272: astore        5
+    1274: aload         5
+    1276: arraylength
+    1277: ifle          1328
+    1280: aload         5
+    1282: iconst_1
+    1283: aaload
+    1284: ldc_w         #492                // String ~
+    1287: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+    1290: astore        6
+    1292: iconst_0
+    1293: istore        7
+    1295: goto          1320
+    1298: aload_0
+    1299: getfield      #377                // Field dtm10:Ljavax/swing/table/DefaultTableModel;
+    1302: iconst_1
+    1303: anewarray     #70                 // class java/lang/String
+    1306: dup
+    1307: iconst_0
+    1308: aload         6
+    1310: iload         7
+    1312: aaload
+    1313: aastore
+    1314: invokevirtual #494                // Method javax/swing/table/DefaultTableModel.addRow:([Ljava/lang/Object;)V
+    1317: iinc          7, 1
+    1320: iload         7
+    1322: aload         6
+    1324: arraylength
+    1325: if_icmplt     1298
+    1328: aload_1
+    1329: iload_3
+    1330: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1333: checkcast     #70                 // class java/lang/String
+    1336: new           #474                // class java/lang/StringBuilder
+    1339: dup
+    1340: aload_2
+    1341: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+    1344: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+    1347: ldc_w         #532                // String  LIC9
+    1350: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    1353: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+    1356: invokevirtual #466                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+    1359: ifeq          1449
+    1362: aload_1
+    1363: iload_3
+    1364: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+    1367: checkcast     #70                 // class java/lang/String
+    1370: new           #474                // class java/lang/StringBuilder
+    1373: dup
+    1374: aload_2
+    1375: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+    1378: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+    1381: ldc_w         #534                // String  LIC9:
+    1384: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    1387: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+    1390: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+    1393: astore        5
+    1395: aload         5
+    1397: arraylength
+    1398: ifle          1449
+    1401: aload         5
+    1403: iconst_1
+    1404: aaload
+    1405: ldc_w         #492                // String ~
+    1408: invokevirtual #470                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+    1411: astore        6
+    1413: iconst_0
+    1414: istore        7
+    1416: goto          1441
+    1419: aload_0
+    1420: getfield      #386                // Field dtm11:Ljavax/swing/table/DefaultTableModel;
+    1423: iconst_1
+    1424: anewarray     #70                 // class java/lang/String
+    1427: dup
+    1428: iconst_0
+    1429: aload         6
+    1431: iload         7
+    1433: aaload
+    1434: aastore
+    1435: invokevirtual #494                // Method javax/swing/table/DefaultTableModel.addRow:([Ljava/lang/Object;)V
+    1438: iinc          7, 1
+    1441: iload         7
+    1443: aload         6
+    1445: arraylength
+    1446: if_icmplt     1419
+    1449: iinc          3, 1
+    1452: iload_3
+    1453: aload_1
+    1454: invokevirtual #536                // Method java/util/ArrayList.size:()I
+    1457: if_icmplt     97
+    1460: return
+
+  public void initArraysAndHashes();
+    Code:
+       0: aload_0
+       1: new           #548                // class combos/DictionaryInit
+       4: dup
+       5: invokespecial #550                // Method combos/DictionaryInit."<init>":()V
+       8: putfield      #551                // Field di:Lcombos/DictionaryInit;
+      11: iconst_0
+      12: istore_1
+      13: goto          132
+      16: aload_0
+      17: getfield      #85                 // Field dictionaryArrayLists:Ljava/util/ArrayList;
+      20: new           #82                 // class java/util/ArrayList
+      23: dup
+      24: aload_0
+      25: getfield      #551                // Field di:Lcombos/DictionaryInit;
+      28: new           #474                // class java/lang/StringBuilder
+      31: dup
+      32: aload_0
+      33: getfield      #80                 // Field dictionaryFileNames:[Ljava/lang/String;
+      36: iload_1
+      37: aaload
+      38: invokestatic  #476                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+      41: invokespecial #480                // Method java/lang/StringBuilder."<init>":(Ljava/lang/String;)V
+      44: ldc_w         #553                // String .txt
+      47: invokevirtual #483                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      50: invokevirtual #487                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      53: invokevirtual #555                // Method combos/DictionaryInit.addDictionary:(Ljava/lang/String;)Ljava/util/ArrayList;
+      56: invokespecial #559                // Method java/util/ArrayList."<init>":(Ljava/util/Collection;)V
+      59: invokevirtual #562                // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+      62: pop
+      63: aload_0
+      64: getfield      #87                 // Field dictWordHashTables:Ljava/util/ArrayList;
+      67: new           #565                // class java/util/Hashtable
+      70: dup
+      71: aload_0
+      72: getfield      #551                // Field di:Lcombos/DictionaryInit;
+      75: aload_0
+      76: getfield      #85                 // Field dictionaryArrayLists:Ljava/util/ArrayList;
+      79: iload_1
+      80: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+      83: checkcast     #82                 // class java/util/ArrayList
+      86: invokevirtual #567                // Method combos/DictionaryInit.dictArrayListToHashTable:(Ljava/util/ArrayList;)Ljava/util/Hashtable;
+      89: invokespecial #571                // Method java/util/Hashtable."<init>":(Ljava/util/Map;)V
+      92: invokevirtual #562                // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+      95: pop
+      96: aload_0
+      97: getfield      #89                 // Field letterLengthGrouping:Ljava/util/ArrayList;
+     100: new           #82                 // class java/util/ArrayList
+     103: dup
+     104: aload_0
+     105: getfield      #551                // Field di:Lcombos/DictionaryInit;
+     108: aload_0
+     109: getfield      #85                 // Field dictionaryArrayLists:Ljava/util/ArrayList;
+     112: iload_1
+     113: invokevirtual #460                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+     116: checkcast     #82                 // class java/util/ArrayList
+     119: invokevirtual #574                // Method combos/DictionaryInit.letterLengthGrouping:(Ljava/util/ArrayList;)Ljava/util/ArrayList;
+     122: invokespecial #559                // Method java/util/ArrayList."<init>":(Ljava/util/Collection;)V
+     125: invokevirtual #562                // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     128: pop
+     129: iinc          1, 1
+     132: iload_1
+     133: aload_0
+     134: getfield      #80                 // Field dictionaryFileNames:[Ljava/lang/String;
+     137: arraylength
+     138: if_icmplt     16
+     141: return
+}

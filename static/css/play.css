@@ -4927,7 +4927,8 @@ input[type=range]::-moz-range-track {
         font-size: 1.5rem !important;
     }
 
-    /* Mobile overrides for page-tools, page-settings, page-mods, page-lobby, and page-forums moved to max-width: 900px */
+
+    /* Mobile overrides for page-tools, page-settings, page-mods, page-lobby, and page-forums */
     #page-tools,
     #page-settings,
     #page-mods,
