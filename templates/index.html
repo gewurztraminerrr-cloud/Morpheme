@@ -2047,16 +2047,14 @@
 
                     <!-- Unscramble Tool Interface -->
                     <div id="tool-unscramble" class="tool-pane"
-                        style="flex-direction: column; align-items: center; text-align: center; width: 100%;">
+                        style="flex-direction: column; align-items: center; text-align: center; width: 100%; height: 100%; box-sizing: border-box; overflow: hidden !important;">
                         <div class="tool-header" style="text-align: center; padding: 0; width: 100%;">
                             <h2>Unscramble</h2>
-                            <p style="margin-bottom: 25px;">Test your skills: Guess the word
-                                from jumbled letters.
-                            </p>
+                            <p style="margin-bottom: 10px;">Test your skills: Guess the word from jumbled letters.</p>
                         </div>
 
                         <div class="combo-control-panel"
-                            style="padding: 20px; justify-content: center; display: flex; width: 100%; margin: 0 0 25px 0; background: rgba(255, 255, 255, 0.05);">
+                            style="padding: 10px 15px; justify-content: center; display: flex; width: 100%; margin: 0 0 12px 0; background: rgba(255, 255, 255, 0.05); box-sizing: border-box;">
                             <div class="input-row"
                                 style="justify-content: center !important; display: flex !important; gap: 12px;">
                                 <select id="unscramble-length" style="width: 120px;">
@@ -2087,7 +2085,7 @@
                                     <option value="uniqueNWL">Uniques</option>
                                     <option value="added_words">Added Words</option>
                                 </select>
-                                <span style="font-size: 0.8rem; color: rgba(255,255,255,0.4); font-weight: 700; text-transform: uppercase; margin-left: 10px;">Must Have:</span>
+                                <span style="font-size: 0.8rem; color: rgba(255,255,255,0.4); font-weight: 700; text-transform: uppercase; margin-left: 10px; align-self: center;">Must Have:</span>
                                 <select id="unscramble-must-have" style="width: 100px;">
                                     <option value="">Any</option>
                                     <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option><option value="J">J</option><option value="K">K</option><option value="L">L</option><option value="M">M</option><option value="N">N</option><option value="O">O</option><option value="P">P</option><option value="Q">Q</option><option value="R">R</option><option value="S">S</option><option value="T">T</option><option value="U">U</option><option value="V">V</option><option value="W">W</option><option value="X">X</option><option value="Y">Y</option><option value="Z">Z</option>
@@ -2097,52 +2095,52 @@
                         </div>
 
                         <div class="unscramble-container"
-                            style="display: flex; flex-direction: row; align-items: stretch; justify-content: flex-start; gap: 30px; margin-top: 40px; width: 100%; height: 600px;">
+                            style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 15px; margin-top: 10px; width: 100%; flex: 1; min-height: 0; box-sizing: border-box; overflow: hidden;">
 
-                            <!-- Left Area: Results (Now with premium styling) -->
-                            <div id="unscramble-found-container" class="hidden"
-                                style="width: 380px; background: rgba(30,30,50,0.6); backdrop-filter: blur(15px); border-radius: 20px; padding: 25px; border: 1px solid rgba(255,255,255,0.1); text-align: left; flex-direction: column; flex-shrink: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.3); height: 100%;">
-                                <h3
-                                    style="font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; text-align: center; font-weight: 800; letter-spacing: 2px;">
-                                    Status & Results</h3>
-                                <div id="unscramble-found-list"
-                                    style="display: flex; flex-direction: column; gap: 15px; overflow-y: auto; flex: 1; padding: 5px 15px 5px 5px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent;">
-                                    <!-- List of found words -->
-                                </div>
-                            </div>
-
-                            <!-- Right Area: Game Dashboard (Moved inside container) -->
+                            <!-- Top Area: Game Dashboard -->
                             <div class="unscramble-game-area"
-                                style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 25px; flex: 1; background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); padding: 40px; height: 100%;">
+                                style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; width: 100%; max-width: 600px; background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); padding: 15px 25px; box-sizing: border-box; flex-shrink: 0;">
 
                                 <div style="display: flex; flex-direction: column; align-items: center;">
                                     <div id="unscramble-jumbled" class="random-word-large"
-                                        style="letter-spacing: 15px; font-weight: 900; color: #ffd700; text-shadow: 0 0 30px rgba(255,215,0,0.4); font-size: 5rem; margin-bottom: 5px; font-family: 'Outfit', sans-serif;">
+                                        style="letter-spacing: 15px; font-weight: 900; color: #ffd700; text-shadow: 0 0 30px rgba(255,215,0,0.4); font-size: 3.2rem; margin-bottom: 5px; font-family: 'Outfit', sans-serif;">
                                         <!-- Jumbled word -->
                                     </div>
                                     <div id="unscramble-count-info"
-                                        style="font-size: 1rem; color: rgba(255,255,255,0.4); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                                        style="font-size: 0.95rem; color: rgba(255,255,255,0.4); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
                                         <!-- "X words possible" -->
                                     </div>
                                 </div>
 
                                 <div class="input-dashboard"
-                                    style="display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; max-width: 450px; margin-top: 20px;">
+                                    style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 450px; margin-top: 10px;">
 
                                     <input type="text" id="unscramble-input" placeholder="Enter word..."
                                         autocomplete="off"
-                                        style="width: 100%; text-transform: uppercase; text-align: center; font-size: 1.5rem; padding: 15px; letter-spacing: 2px; border: 2px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: #fff; border-radius: 12px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); outline: none;">
+                                        style="width: 100%; text-transform: uppercase; text-align: center; font-size: 1.25rem; padding: 10px; letter-spacing: 2px; border: 2px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: #fff; border-radius: 12px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); outline: none;">
 
                                     <div style="display: flex; gap: 15px; width: 100%;">
                                         <button id="unscramble-check-btn" class="primary-action"
-                                            style="flex: 2; height: 55px; font-size: 1rem; font-weight: 700; border-radius: 12px; background: linear-gradient(135deg, #2ecc71, #27ae60); border: none; color: #fff; cursor: pointer; transition: all 0.3s ease;">
+                                            style="flex: 2; height: 45px; font-size: 0.95rem; font-weight: 700; border-radius: 12px; background: linear-gradient(135deg, #2ecc71, #27ae60); border: none; color: #fff; cursor: pointer; transition: all 0.3s ease;">
                                             Check Word
                                         </button>
                                         <button id="unscramble-reveal-btn" class="secondary-action"
-                                            style="flex: 1; height: 55px; font-size: 1rem; font-weight: 700; border-radius: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer; transition: all 0.3s ease;">
+                                            style="flex: 1; height: 45px; font-size: 0.95rem; font-weight: 700; border-radius: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer; transition: all 0.3s ease;">
                                             Reveal
                                         </button>
                                     </div>
+                                </div>
+                            </div>
+
+                            <!-- Bottom Area: Results (Now stacked underneath the game area) -->
+                            <div id="unscramble-found-container" class="hidden"
+                                style="width: 100%; max-width: 600px; background: rgba(30,30,50,0.6); backdrop-filter: blur(15px); border-radius: 20px; padding: 15px 20px; border: 1px solid rgba(255,255,255,0.1); text-align: left; display: flex; flex-direction: column; flex: 1; min-height: 120px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); box-sizing: border-box; overflow: hidden;">
+                                <h3
+                                    style="font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; text-align: center; font-weight: 800; letter-spacing: 2px;">
+                                    Status & Results</h3>
+                                <div id="unscramble-found-list"
+                                    style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1; padding: 5px 10px 5px 5px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent;">
+                                    <!-- List of found words -->
                                 </div>
                             </div>
                         </div>
