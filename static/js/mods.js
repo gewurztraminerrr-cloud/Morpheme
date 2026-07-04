@@ -790,9 +790,13 @@ function renderUndefinedWords() {
         return;
     }
     
+    // Slice to first 100 items to keep DOM weight lightweight and prevent layout lag/freezes on mobile resize
+    const displayLimit = 100;
+    const displayWords = filtered.slice(0, displayLimit);
+    
     // Group words by length
     const groups = {};
-    filtered.forEach(word => {
+    displayWords.forEach(word => {
         const len = word.length;
         if (!groups[len]) groups[len] = [];
         groups[len].push(word);
@@ -823,6 +827,17 @@ function renderUndefinedWords() {
             `);
         });
     });
+
+    // Add footer warning if total filtered exceeds limit
+    if (filtered.length > displayLimit) {
+        rowsHTML.push(`
+            <tr style="pointer-events: none;">
+                <td style="padding: 10px; color: rgba(255,255,255,0.4); font-size: 0.8rem; text-align: center; font-style: italic; background: rgba(0,0,0,0.1);">
+                    Showing first ${displayLimit} of ${filtered.length} words. Use search to filter.
+                </td>
+            </tr>
+        `);
+    }
     
     tbody.innerHTML = rowsHTML.join('');
 }
