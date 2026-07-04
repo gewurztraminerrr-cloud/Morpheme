@@ -1873,10 +1873,10 @@ body.theme-light-brown .word-item.missed {
         max-height: none !important;
     }
     .tools-sidebar {
-        flex: 0 0 400px !important;
-        width: 400px !important;
-        min-width: 400px !important;
-        max-width: 400px !important;
+        flex: 0 0 250px !important;
+        width: 250px !important;
+        min-width: 250px !important;
+        max-width: 250px !important;
         padding: 10px 0 !important;
         gap: 0 !important;
     }
