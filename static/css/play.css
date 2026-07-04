@@ -5917,3 +5917,71 @@ body .board-cell.tile-flash-purple * {
         padding: 4px 4px !important;
     }
 }
+
+/* Desktop Timer Panel (min-width: 993px) */
+@media (min-width: 993px) {
+    .timer-display {
+        background: rgba(var(--text-primary-rgb), 0.1) !important;
+        padding: 6px 15px !important;
+        border-radius: 8px !important;
+        font-size: 1.1rem !important;
+        font-weight: 700 !important;
+        color: var(--text-primary) !important;
+        display: flex !important;
+        gap: 8px !important;
+        border: none !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 5px auto 15px auto !important;
+        width: fit-content !important;
+        max-width: none !important;
+    }
+    .timer-display .timer-label {
+        font-size: 1.1rem !important;
+        font-weight: 700 !important;
+        display: inline !important;
+    }
+    .timer-display .timer-value {
+        font-size: 1.3rem !important;
+        font-weight: 800 !important;
+        min-width: auto !important;
+        text-align: center !important;
+        display: inline-block !important;
+        font-family: 'Courier New', Courier, monospace !important;
+    }
+    .timer-display .rotate-btn {
+        display: none !important;
+    }
+}
+
+/* Mobile Timer Panel (max-width: 992px) */
+@media (max-width: 992px) {
+    .timer-display {
+        background: rgba(var(--text-primary-rgb), 0.1) !important;
+        padding: 6px 12px !important;
+        border-radius: 8px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: calc(100% - 20px) !important;
+        max-width: 280px !important;
+        box-sizing: border-box !important;
+        margin: 5px auto !important;
+        flex-shrink: 0 !important;
+    }
+    .timer-display .timer-label {
+        font-size: 0.95rem !important;
+        font-weight: 700 !important;
+        display: inline !important;
+    }
+    .timer-display .timer-value {
+        font-size: 1.2rem !important;
+        font-weight: 800 !important;
+        min-width: auto !important;
+        width: auto !important;
+        display: inline-block !important;
+    }
+    .timer-display .rotate-btn {
+        display: block !important;
+    }
+}
