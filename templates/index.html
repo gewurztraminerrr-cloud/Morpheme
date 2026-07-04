@@ -2047,7 +2047,7 @@
 
                     <!-- Unscramble Tool Interface -->
                     <div id="tool-unscramble" class="tool-pane"
-                        style="flex-direction: column; align-items: center; text-align: center; width: 100%; height: 100%; box-sizing: border-box; overflow: hidden !important;">
+                        style="flex-direction: column; align-items: center; text-align: center; width: 100%; box-sizing: border-box; overflow-y: auto !important; padding-bottom: 30px;">
                         <div class="tool-header" style="text-align: center; padding: 0; width: 100%;">
                             <h2>Unscramble</h2>
                             <p style="margin-bottom: 10px;">Test your skills: Guess the word from jumbled letters.</p>
@@ -2095,7 +2095,7 @@
                         </div>
 
                         <div class="unscramble-container"
-                            style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 15px; margin-top: 10px; width: 100%; flex: 1; min-height: 0; box-sizing: border-box; overflow: hidden;">
+                            style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 15px; margin-top: 10px; width: 100%; box-sizing: border-box;">
 
                             <!-- Top Area: Game Dashboard -->
                             <div class="unscramble-game-area"
@@ -2134,12 +2134,12 @@
 
                             <!-- Bottom Area: Results (Now stacked underneath the game area) -->
                             <div id="unscramble-found-container" class="hidden"
-                                style="width: 100%; max-width: 600px; background: rgba(30,30,50,0.6); backdrop-filter: blur(15px); border-radius: 20px; padding: 15px 20px; border: 1px solid rgba(255,255,255,0.1); text-align: left; display: flex; flex-direction: column; flex: 1; min-height: 120px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); box-sizing: border-box; overflow: hidden;">
+                                style="width: 100%; max-width: 600px; background: rgba(30,30,50,0.6); backdrop-filter: blur(15px); border-radius: 20px; padding: 15px 20px; border: 1px solid rgba(255,255,255,0.1); text-align: left; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.3); box-sizing: border-box; margin-bottom: 20px;">
                                 <h3
                                     style="font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; text-align: center; font-weight: 800; letter-spacing: 2px;">
                                     Status & Results</h3>
                                 <div id="unscramble-found-list"
-                                    style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1; padding: 5px 10px 5px 5px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent;">
+                                    style="display: flex; flex-direction: column; gap: 8px; padding: 5px 10px 5px 5px;">
                                     <!-- List of found words -->
                                 </div>
                             </div>
