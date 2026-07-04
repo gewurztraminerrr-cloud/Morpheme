@@ -1055,6 +1055,9 @@ function showPage(pageId) {
     if (colorBar) {
         if (pageId === 'page-play') {
             colorBar.style.display = 'flex';
+            if (typeof adjustPlayHeaderForDevice === 'function') {
+                adjustPlayHeaderForDevice();
+            }
         } else {
             colorBar.style.display = 'none';
         }

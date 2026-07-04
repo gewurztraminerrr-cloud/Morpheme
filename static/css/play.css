@@ -5922,29 +5922,29 @@ body .board-cell.tile-flash-purple * {
 @media (min-width: 993px) {
     .timer-display {
         background: rgba(var(--text-primary-rgb), 0.1) !important;
-        padding: 6px 15px !important;
-        border-radius: 8px !important;
-        font-size: 1.1rem !important;
+        padding: 10px 20px !important;
+        border-radius: 10px !important;
+        font-size: 1.5rem !important;
         font-weight: 700 !important;
         color: var(--text-primary) !important;
         display: flex !important;
-        gap: 8px !important;
+        gap: 10px !important;
         border: none !important;
         align-items: center !important;
         justify-content: center !important;
-        margin: 5px auto 15px auto !important;
+        margin: 0 auto 15px auto !important;
         width: fit-content !important;
         max-width: none !important;
     }
     .timer-display .timer-label {
-        font-size: 1.1rem !important;
+        font-size: 1.5rem !important;
         font-weight: 700 !important;
         display: inline !important;
     }
     .timer-display .timer-value {
-        font-size: 1.3rem !important;
+        font-size: 2.2rem !important;
         font-weight: 800 !important;
-        min-width: auto !important;
+        min-width: 220px !important;
         text-align: center !important;
         display: inline-block !important;
         font-family: 'Courier New', Courier, monospace !important;
