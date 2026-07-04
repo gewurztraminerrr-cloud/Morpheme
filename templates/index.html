@@ -36,7 +36,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css?v=49">
     <link rel="stylesheet" href="/css/lobby.css?v=29">
-    <link rel="stylesheet" href="/css/play.css?v=113">
+    <link rel="stylesheet" href="/css/play.css?v=114">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=22">
     <link rel="stylesheet" href="/css/donate.css?v=1">
@@ -4716,7 +4716,7 @@
     <script src="/js/forum.js?v=54"></script>
     <script src="/js/app.js?v=65"></script>
     <script src="/js/lobby.js?v=10"></script>
-    <script src="/js/play.js?v=213"></script>
+    <script src="/js/play.js?v=214"></script>
     <script src="/js/tournaments.js?v=7"></script>
     <script src="/js/leaderboard.js?v=3"></script>
     <script src="/js/tools.js?v=73"></script>
@@ -4858,6 +4858,8 @@
             const timerDisplay = document.querySelector('.timer-display');
             const rotateBtn = document.getElementById('rotate-board-btn');
             const wordInputSection = document.querySelector('.word-input-section');
+            const colorBar = document.getElementById('game-color-bar');
+            const playersPanel = document.getElementById('play-panel-players');
             
             if (!header || !boardPanel) return;
             
@@ -4874,19 +4876,26 @@
                 if (timerDisplay && rotateBtn && rotateBtn.parentElement !== timerDisplay) {
                     timerDisplay.appendChild(rotateBtn);
                 }
+                // Move Color Chart (Color Bar) back inside the left panel (Players/Chat) so it displays when swiping right
+                if (colorBar && playersPanel && colorBar.parentElement !== playersPanel) {
+                    playersPanel.prepend(colorBar);
+                }
             } else {
                 // Desktop: Move back to the top of the page
                 if (header.parentElement !== pagePlay) {
                     pagePlay.prepend(header);
                 }
-                // Move Timer back to its original position in header (before spinner-set-label)
-                const spinnerLabel = document.querySelector('.spinner-set-label');
-                if (timerDisplay && spinnerLabel && timerDisplay.nextElementSibling !== spinnerLabel) {
-                    header.insertBefore(timerDisplay, spinnerLabel);
+                // Move Timer above the board (prepend to boardPanel)
+                if (timerDisplay && boardPanel && timerDisplay.parentElement !== boardPanel) {
+                    boardPanel.prepend(timerDisplay);
                 }
                 // Move Rotate button back to input section
                 if (wordInputSection && rotateBtn && rotateBtn.parentElement !== wordInputSection) {
                     wordInputSection.appendChild(rotateBtn);
+                }
+                // Move Color Chart (Color Bar) below the header (above the 3 columns)
+                if (colorBar && header && colorBar.parentElement !== pagePlay) {
+                    header.insertAdjacentElement('afterend', colorBar);
                 }
             }
 
