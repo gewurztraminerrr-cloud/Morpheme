@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `69b0befb4f58c9bd19316549e9164c2c10f1fa0a`
+* **Commit ID**: `b7e65dbbf0e8544cce5ffdaec130f40ce7ef96a0`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -34,8 +34,8 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
    - Updated `spinner_set.py` to randomly sub-select a progressive speed format when a `Bounce` format is spun: **Bounce 1x** (33% weight), **Bounce 2x** (33% weight), and **Bounce 3x** (34% weight).
    - Configured `play.js` to parse the Bounce multiplier format name from the room state and adjust the physics ball velocity:
      - **Bounce 1x**: Low speed range (1.5 to 3.5 px/frame).
-     - **Bounce 2x**: Medium speed range (4.5 to 7.5 px/frame).
-     - **Bounce 3x**: High speed range (8.5 to 13.5 px/frame).
+     - **Big Bounce / Medium**: Medium speed range (4.5 to 7.5 px/frame).
+     - **Mega Bounce / High**: High speed range (8.5 to 13.5 px/frame).
    - Allowed Bounce multiplier formats to persist under high-density requirements in the backend.
 
 5. **Split Layout Sidebar Width & Spacing Adjustments**:
@@ -54,6 +54,14 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
    - If a word's definition reads `"(Noun) plural of [singular]"` or is a verb conjugation (`-S`, `-ED`, `-ING`), the resolver recursively fetches the root word definition and repeats it.
    - Handles alternative spelling forms (like `DIOCK` pointing to alternative form of `DIOCH`) by presenting alternative spelling tags: `{root}, {meaning}. Also {alternative} [{pos}]`.
    - Guessing/healing logic: If a plural or conjugated word is not in the dictionary, it strips standard suffixes (`-S`, `-ES`, `-ED`, `-ING`), looks up the root form online, and dynamically constructs and caches the redirect definition to heal the missing entry.
+
+9. **Moderation Definition Guidelines Card Updates**:
+   - Reworded guidelines layout inside the Mods Definition Management pane.
+   - Added a clear alert bar instructing moderators **NEVER** to use a trailing period at the end of definitions (immediately before square bracket tags). Removed the trailing period from the example noun definition of `arity`.
+   - Included rules and demonstrations for:
+     - **Adjectives with inflections (-ER, -EST, -LY)**: e.g., `FAT,FATTER,FATTEST,FATLY` -> `FAT, having an abundance of flesh [adj]`.
+     - **Adjectives with implicit adverb sub-tags (-LY)**: e.g., `reflective` -> `capable of reflecting light, images, or sound waves [adj REFLECTIVELY]`.
+     - **Interjections ([interj])**: e.g., `ahem` -> `Expr. desire to attract attention, gain time, or show disapproval [interj]`.
 
 ## Verification
 * **Local**: Verified dictionary test cases (all passed).
