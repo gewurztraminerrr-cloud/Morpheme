@@ -3985,10 +3985,22 @@ function updateLocalTimer() {
 
         if (isEnabled && remaining <= 10.0 && remaining > 1.0 && !hasPlayedIntermissionBell) {
             console.log(`[play.js] Playing intermission bell: ${bellType}`);
+            
+            // Trigger vibration on devices supporting it (mobile web browsers)
+            if (navigator.vibrate) {
+                try {
+                    navigator.vibrate(500); // Vibrate for 500ms
+                } catch (err) {
+                    console.warn('[play.js] navigator.vibrate failed:', err);
+                }
+            }
+
             if (typeof MorphemeAudioBridge !== 'undefined') {
                 try {
                     // Send bell chime natively for mobile app wrappers (bypasses webview audio block)
                     MorphemeAudioBridge.postMessage(JSON.stringify({ sound: 'bell', type: bellType }));
+                    // Trigger native app wrapper vibration
+                    MorphemeAudioBridge.postMessage(JSON.stringify({ action: 'vibrate', duration: 500 }));
                 } catch (e) {
                     console.error("MorphemeAudioBridge error:", e);
                 }
