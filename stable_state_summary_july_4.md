@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `adad16fef6cba8d17b4d199d5bdbedce918e2fde`
+* **Commit ID**: `f8851c6bf19f2c4b36d542f014afe975269290cf`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -86,6 +86,11 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
 14. **Bounce Format Speed Explanations in FAQ**:
     - Expanded the description of the **Bounce** format in the FAQ section of `templates/index.html`.
     - Added clear explanations for the **1x** (slow/gentle), **2x** (moderate), and **3x** (extremely fast) progressive speed multipliers to clarify how speed impacts gameplay.
+
+15. **Mods Definition Management Rendering Optimization**:
+    - Capped the number of rendered items in the **Words Without Definitions** list to the first 100 entries inside `static/js/mods.js`.
+    - Appended an inline info alert at the bottom of the table instructing moderators to type in the search box to filter results when the list exceeds 100 matching items.
+    - This drastically reduces DOM complexity (avoiding rendering 200,000+ elements simultaneously), eliminating virtual keyboard resize delays, thread-locking, and 2-3 second black screen freezes on mobile.
 
 ## Verification
 * **Local**: Verified dictionary test cases (all passed).
