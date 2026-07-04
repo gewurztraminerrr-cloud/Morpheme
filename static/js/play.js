@@ -3986,8 +3986,10 @@ function updateLocalTimer() {
         if (isEnabled && remaining <= 10.0 && remaining > 1.0 && !hasPlayedIntermissionBell) {
             console.log(`[play.js] Playing intermission bell: ${bellType}`);
             
+            const vibrationEnabled = !window.userSettings || window.userSettings.vibration_alert === true || window.userSettings.vibration_alert === 'true';
+            
             // Trigger vibration on devices supporting it (mobile web browsers)
-            if (navigator.vibrate) {
+            if (vibrationEnabled && navigator.vibrate) {
                 try {
                     navigator.vibrate(500); // Vibrate for 500ms
                 } catch (err) {
@@ -3999,8 +4001,10 @@ function updateLocalTimer() {
                 try {
                     // Send bell chime natively for mobile app wrappers (bypasses webview audio block)
                     MorphemeAudioBridge.postMessage(JSON.stringify({ sound: 'bell', type: bellType }));
-                    // Trigger native app wrapper vibration
-                    MorphemeAudioBridge.postMessage(JSON.stringify({ action: 'vibrate', duration: 500 }));
+                    // Trigger native app wrapper vibration if enabled
+                    if (vibrationEnabled) {
+                        MorphemeAudioBridge.postMessage(JSON.stringify({ action: 'vibrate', duration: 500 }));
+                    }
                 } catch (e) {
                     console.error("MorphemeAudioBridge error:", e);
                 }

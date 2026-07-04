@@ -26,6 +26,7 @@ function debounce(func, wait) {
         highlight_typing: true,
         highlight_mouse: true,
         next_round_bell_enabled: true,
+        vibration_alert: true,
         letter_colors: {},
         word_flash: true,
         board_sounds: true
@@ -37,6 +38,9 @@ function debounce(func, wait) {
         }
         if (typeof window.userSettings.triple_music === 'undefined') {
             window.userSettings.triple_music = true;
+        }
+        if (typeof window.userSettings.vibration_alert === 'undefined') {
+            window.userSettings.vibration_alert = true;
         }
     }
 
@@ -284,6 +288,20 @@ function debounce(func, wait) {
 
             if (!window.userSettings) window.userSettings = {};
             window.userSettings.next_round_bell_enabled = val;
+            localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
+        }
+
+        // Intermission Vibration Alert
+        if (settings.vibration_alert !== undefined) {
+            let val = settings.vibration_alert;
+            if (val === 'true' || val === 'True' || val === true) val = true;
+            else if (val === 'false' || val === 'False' || val === false) val = false;
+
+            const vibrationToggle = document.getElementById('setting-vibration-alert');
+            if (vibrationToggle) vibrationToggle.checked = val;
+
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.vibration_alert = val;
             localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
         }
 
@@ -621,6 +639,15 @@ function debounce(func, wait) {
             if (container) container.style.display = val ? 'flex' : 'none';
             window.userSettings.next_round_bell_enabled = val;
             saveSettingDebounced('next_round_bell_enabled', val);
+        });
+    }
+
+    const vibrationToggle = document.getElementById('setting-vibration-alert');
+    if (vibrationToggle) {
+        vibrationToggle.addEventListener('change', (e) => {
+            const val = e.target.checked;
+            window.userSettings.vibration_alert = val;
+            saveSettingDebounced('vibration_alert', val);
         });
     }
 
