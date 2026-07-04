@@ -4642,14 +4642,14 @@ input[type=range]::-moz-range-track {
         box-sizing: border-box !important;
     }
     .unscramble-container {
-        flex-direction: column-reverse !important;
+        flex-direction: column !important;
         height: auto !important;
         gap: 20px !important;
     }
     #unscramble-found-container {
         width: 100% !important;
         height: auto !important;
-        max-height: 300px !important;
+        max-height: none !important;
     }
     .unscramble-game-area {
         width: 100% !important;
