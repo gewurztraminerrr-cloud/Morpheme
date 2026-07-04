@@ -4394,7 +4394,7 @@ function renderUnscrambleFound(revealMissed = false) {
     if (unscrambleState.history.length > 0) {
         html += `<div style="width: 100%; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
                     <div style="font-size: 0.7rem; text-transform: uppercase; color: rgba(255,255,255,0.3); letter-spacing: 2px; font-weight: 800; text-align: center; margin-bottom: 15px;">Session History</div>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">`;
+                    <div style="display: flex; flex-direction: column; gap: 12px; max-height: 260px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.2) transparent; padding-right: 4px;">`;
 
         unscrambleState.history.forEach((h, idx) => {
             const foundCount = h.found.length;
