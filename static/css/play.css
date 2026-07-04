@@ -4927,11 +4927,12 @@ input[type=range]::-moz-range-track {
         font-size: 1.5rem !important;
     }
 
-    /* Mobile overrides for page-tools, page-settings, page-mods and page-lobby moved to max-width: 900px */
+    /* Mobile overrides for page-tools, page-settings, page-mods, page-lobby, and page-forums moved to max-width: 900px */
     #page-tools,
     #page-settings,
     #page-mods,
-    #page-lobby {
+    #page-lobby,
+    #page-forums {
         display: none;
         padding-left: 0 !important;
         padding-right: 0 !important;
@@ -4948,14 +4949,16 @@ input[type=range]::-moz-range-track {
     #page-tools.active,
     #page-settings.active,
     #page-mods.active,
-    #page-lobby.active {
+    #page-lobby.active,
+    #page-forums.active {
         display: flex !important;
     }
 
     #page-tools .tools-split-layout,
     #page-settings .tools-split-layout,
     #page-mods .tools-split-layout,
-    #page-lobby .lobby-grid {
+    #page-lobby .lobby-grid,
+    #page-forums .forum-container {
         flex: 1 !important;
         min-height: 0 !important;
         height: auto !important;
