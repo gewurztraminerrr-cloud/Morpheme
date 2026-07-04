@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `3e30add75f1b9329ec3621574b871ecb0ae73029`
+* **Commit ID**: `61137030a6e3ca68824aa0e390b30046103af21f`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -72,6 +72,11 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
 11. **PayPal Support Custom Amount Retention**:
     - Added an interactive click listener on the PayPal Checkout link inside the Donate tab.
     - Intercepts clicks to dynamically recalculate the URL with the custom amount inputted by the user (`https://paypal.me/jeffbabiak/{amount}`) right before redirecting, guaranteeing the amount is retained without re-typing.
+
+12. **Mobile Forum Height Constraints & Viewport Lock**:
+    - Constrained the outer `#page-forums` element to `height: calc(100vh - 120px) !important; overflow-y: hidden !important;` on mobile device screens (`max-width: 900px`).
+    - Unified the responsive mobile grid transition breakpoint in `static/css/forum.css` from `820px` to `900px`.
+    - This locks the outer page structure exactly in place, preventing whole-screen vertical browser scroll/bouncing while allowing the internal list panels (.forum-sidebar, .forum-main) to scroll their contents independently.
 
 ## Verification
 * **Local**: Verified dictionary test cases (all passed).
