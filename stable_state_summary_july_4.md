@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `e1312f56d37357d9a5c973f5695691139ffe007a`
+* **Commit ID**: `adad16fef6cba8d17b4d199d5bdbedce918e2fde`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -82,6 +82,10 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
     - Constrained the heights of `#page-store`, `#page-donate`, `#page-leaderboards`, and `#page-tournaments` to `height: calc(100vh - 120px) !important;` on mobile devices (`max-width: 900px`).
     - Enabled vertical scrolling inside the page containers themselves (`overflow-y: auto !important; -webkit-overflow-scrolling: touch !important;`).
     - This locks the body container viewport exactly in place on mobile, keeping the top branding bar (logo and navigation menu) fixed and visible at all times as players scroll the content.
+
+14. **Bounce Format Speed Explanations in FAQ**:
+    - Expanded the description of the **Bounce** format in the FAQ section of `templates/index.html`.
+    - Added clear explanations for the **1x** (slow/gentle), **2x** (moderate), and **3x** (extremely fast) progressive speed multipliers to clarify how speed impacts gameplay.
 
 ## Verification
 * **Local**: Verified dictionary test cases (all passed).
