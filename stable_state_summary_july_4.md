@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `173724e2cf6ec660909d96bc988c140db86569e5`
+* **Commit ID**: `94feaf6f524ee6dc20c7afb4825b56d6c39927a2`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -63,6 +63,10 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
      - **Adjectives with inflections (-ER, -EST, -LY)**: e.g., `FAT,FATTER,FATTEST,FATLY` -> `FAT, having an abundance of flesh [adj]`.
      - **Adjectives with implicit adverb sub-tags (-LY)**: e.g., `reflective` -> `capable of reflecting light, images, or sound waves [adj REFLECTIVELY]`.
      - **Interjections ([interj])**: e.g., `ahem` -> `Expr. desire to attract attention, gain time, or show disapproval [interj]`.
+
+10. **Intermission 10-Second Warning Vibration (Mobile)**:
+    - Added synchronization between the 10-second warning countdown beep/bell and device hardware vibration during intermission.
+    - Triggers a 500ms vibration pulse via standard `navigator.vibrate` for mobile web browsers, alongside native vibration messages sent to the hybrid app bridge (`MorphemeAudioBridge`).
 
 ## Verification
 * **Local**: Verified dictionary test cases (all passed).
