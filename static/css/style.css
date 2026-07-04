@@ -6294,7 +6294,8 @@ select option,
 
 /* Neon Gateway Button styles */
 .neon-gateway-btn {
-    background: linear-gradient(135deg, rgba(255, 0, 127, 0.2) 0%, rgba(255, 0, 127, 0.4) 100%);
+    position: relative;
+    background: linear-gradient(135deg, rgba(255, 0, 127, 0.4) 0%, rgba(255, 0, 127, 0.6) 100%);
     border: 2.5px solid var(--accent-color, #ff007f);
     color: #fff;
     padding: 18px 50px;
@@ -6303,42 +6304,42 @@ select option,
     letter-spacing: 3px;
     border-radius: 50px;
     cursor: pointer;
-    box-shadow: 0 0 25px rgba(255, 0, 127, 0.4), inset 0 0 12px rgba(255, 0, 127, 0.2);
     text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: pulseGlow 2s infinite alternate;
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     -webkit-tap-highlight-color: transparent;
     outline: none;
+    
+    /* 3D button styling */
+    transform: translateY(-8px);
+    box-shadow: 
+        0 8px 0 #b30059, 
+        0 15px 25px rgba(255, 0, 127, 0.4),
+        inset 0 0 12px rgba(255, 0, 127, 0.2);
+    transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.3s ease;
 }
 
 .neon-gateway-btn:hover {
-    background: linear-gradient(135deg, rgba(255, 0, 127, 0.4) 0%, rgba(255, 0, 127, 0.7) 100%);
-    box-shadow: 0 0 40px rgba(255, 0, 127, 0.9), inset 0 0 20px rgba(255, 255, 255, 0.4);
-    transform: translateY(-3px) scale(1.04);
+    background: linear-gradient(135deg, rgba(255, 0, 127, 0.5) 0%, rgba(255, 0, 127, 0.8) 100%);
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 
+        0 10px 0 #b30059, 
+        0 20px 35px rgba(255, 0, 127, 0.6),
+        inset 0 0 16px rgba(255, 255, 255, 0.3);
     text-shadow: 0 0 12px rgba(255, 255, 255, 0.85);
 }
 
 .neon-gateway-btn:active,
 .neon-gateway-btn.pressed {
-    transform: translateY(2px) scale(0.97);
-    box-shadow: 0 2px 8px rgba(255, 0, 127, 0.15), inset 0 0 24px rgba(0, 0, 0, 0.5);
+    transform: translateY(0px) scale(1.0) !important;
+    box-shadow: 
+        0 0px 0 #b30059, 
+        0 2px 10px rgba(255, 0, 127, 0.3),
+        inset 0 0 24px rgba(0, 0, 0, 0.5) !important;
     filter: brightness(0.88);
     transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
-    animation: none;
-}
-
-
-@keyframes pulseGlow {
-    0% {
-        box-shadow: 0 0 15px rgba(255, 0, 127, 0.3), inset 0 0 5px rgba(255, 0, 127, 0.1);
-    }
-    100% {
-        box-shadow: 0 0 35px rgba(255, 0, 127, 0.8), inset 0 0 18px rgba(255, 0, 127, 0.3);
-    }
 }
 
 /* PC/Desktop Widescreen Login Layout Overrides */
