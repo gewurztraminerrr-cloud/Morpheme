@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `ec04693ef8d2bf02345ceb79f10b944a16bd2c8e`
+* **Commit ID**: `173724e2cf6ec660909d96bc988c140db86569e5`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -39,7 +39,7 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
    - Allowed Bounce multiplier formats to persist under high-density requirements in the backend.
 
 5. **Split Layout Sidebar Width & Spacing Adjustments**:
-   - Reduced the desktop/laptop sidebar width (`.tools-sidebar`) from `400px` to `250px`, recovering 150px of horizontal space.
+   - Reduced the desktop/laptop sidebar width (`.tools-sidebar`) from `400px` to `300px`, recovering 100px of horizontal space.
    - The adjacent content panels (`.tools-content`) automatically expand horizontally to consume the recovered space.
 
 6. **Unified Navigation Button Highlights**:
