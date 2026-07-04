@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `94feaf6f524ee6dc20c7afb4825b56d6c39927a2`
+* **Commit ID**: `b921d71f28aa436568fd4e2817201fa7fdc9cecd`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -67,6 +67,7 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
 10. **Intermission 10-Second Warning Vibration (Mobile)**:
     - Added synchronization between the 10-second warning countdown beep/bell and device hardware vibration during intermission.
     - Triggers a 500ms vibration pulse via standard `navigator.vibrate` for mobile web browsers, alongside native vibration messages sent to the hybrid app bridge (`MorphemeAudioBridge`).
+    - **User Configuration Toggle**: Included an "Intermission Vibration Alert" toggle switch in the "Audio & Sounds" section under settings, allowing users to enable or disable the vibration feature (persisted via DB and localStorage).
 
 ## Verification
 * **Local**: Verified dictionary test cases (all passed).
