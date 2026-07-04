@@ -6312,21 +6312,21 @@ select option,
     -webkit-tap-highlight-color: transparent;
     outline: none;
     
-    /* 3D button styling */
-    transform: translateY(-8px);
+    /* 3D button styling - Taller */
+    transform: translateY(-16px);
     box-shadow: 
-        0 8px 0 #b30059, 
-        0 15px 25px rgba(255, 0, 127, 0.4),
+        0 16px 0 #b30059, 
+        0 25px 35px rgba(255, 0, 127, 0.45),
         inset 0 0 12px rgba(255, 0, 127, 0.2);
     transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.3s ease;
 }
 
 .neon-gateway-btn:hover {
     background: linear-gradient(135deg, rgba(255, 0, 127, 0.5) 0%, rgba(255, 0, 127, 0.8) 100%);
-    transform: translateY(-10px) scale(1.02);
+    transform: translateY(-20px) scale(1.02);
     box-shadow: 
-        0 10px 0 #b30059, 
-        0 20px 35px rgba(255, 0, 127, 0.6),
+        0 20px 0 #b30059, 
+        0 30px 45px rgba(255, 0, 127, 0.65),
         inset 0 0 16px rgba(255, 255, 255, 0.3);
     text-shadow: 0 0 12px rgba(255, 255, 255, 0.85);
 }
