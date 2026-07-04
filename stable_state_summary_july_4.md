@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `b7e65dbbf0e8544cce5ffdaec130f40ce7ef96a0`
+* **Commit ID**: `ec04693ef8d2bf02345ceb79f10b944a16bd2c8e`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -54,6 +54,7 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
    - If a word's definition reads `"(Noun) plural of [singular]"` or is a verb conjugation (`-S`, `-ED`, `-ING`), the resolver recursively fetches the root word definition and repeats it.
    - Handles alternative spelling forms (like `DIOCK` pointing to alternative form of `DIOCH`) by presenting alternative spelling tags: `{root}, {meaning}. Also {alternative} [{pos}]`.
    - Guessing/healing logic: If a plural or conjugated word is not in the dictionary, it strips standard suffixes (`-S`, `-ES`, `-ED`, `-ING`), looks up the root form online, and dynamically constructs and caches the redirect definition to heal the missing entry.
+   - **Auto-Saving to Disk**: Hooked the resolver into Added Words additions, manual definition updates, and `newNWL`/`newCSW` dictionary uploads. Definitions for these new entries are automatically resolved, formatted according to the rules, and saved alphabetically to `dictionaries/Definitions.txt` on disk.
 
 9. **Moderation Definition Guidelines Card Updates**:
    - Reworded guidelines layout inside the Mods Definition Management pane.
