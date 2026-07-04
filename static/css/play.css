@@ -1877,15 +1877,14 @@ body.theme-light-brown .word-item.missed {
         width: 250px !important;
         min-width: 250px !important;
         max-width: 250px !important;
-        padding: 10px 0 !important;
-        gap: 0 !important;
+        padding: 20px 8px !important;
+        gap: 10px !important;
     }
     .tool-nav-btn {
         height: auto !important;
         padding: 15px 20px !important;
-        border-radius: 0 !important;
-        border: none !important;
-        border-left: 3px solid transparent !important;
+        border-radius: 8px !important;
+        border: 1px solid transparent !important;
         background: transparent !important;
         justify-content: flex-start !important;
         display: flex !important;
@@ -1894,11 +1893,12 @@ body.theme-light-brown .word-item.missed {
         gap: 4px !important;
     }
     .tool-nav-btn:hover {
-        background: rgba(255, 255, 255, 0.05) !important;
+        background: var(--input-bg) !important;
+        color: var(--text-primary) !important;
     }
     .tool-nav-btn.active {
-        background: rgba(79, 172, 254, 0.1) !important;
-        border-left-color: #4facfe !important;
+        background: rgba(79, 172, 254, 0.15) !important;
+        border: 1px solid rgba(79, 172, 254, 0.3) !important;
         color: #4facfe !important;
     }
     .tool-btn-title {
