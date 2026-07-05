@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `3ecd2384a2ca4cf31818274cb3be5be083fcc407`
+* **Commit ID**: `ff8e83891461ff461cb28203f56b5f4be8cde4ab`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -135,6 +135,10 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
     - Added a new entry to the Quick Navigate FAQ page clarifying how to exit fullscreen mode when playing in PWA/standalone mode on mobile.
     - Noted that native Android overlay prompts (like "drag from the top and touch the back button") do not exit the game's fullscreen state.
     - Instructed players on proper mobile platform techniques: swiping up from the bottom edge to display the device navigation/home bar and swiping up again to minimize or switch the app.
+
+26. **Tools Auto-Scroll on Mobile**:
+    - Implemented a smooth auto-scroll to the bottom of the `.tools-content` pane after a word is generated (in the Random Word Generator) or checked (in the Word Validator).
+    - Ensures that the complete definition and pronunciation of the word is automatically scrolled into view on smaller mobile screens, removing the need for manual scrolling.
 
 ## Verification
 * **Local**: Verified dictionary test cases (all passed).
