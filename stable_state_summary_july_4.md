@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `0c45a8f6a917208cd4a1236816cf61e1a8bfe7df`
+* **Commit ID**: `9a958bfb6cb41cfb5fa2f01f8f9eb952932f91df`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -115,6 +115,10 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
 21. **Added Words List Copy Prevention**:
     - Implemented a robust multi-layered security layer blocking copying or selecting words from the "Added Words" list under Tools -> Lists.
     - Utilizes CSS `user-select: none !important;` to block text highlighting, inline event attributes (`oncopy`, `oncut`, `oncontextmenu`, `ondragstart` returned as `false`) on dynamically rendered items, and event listener overrides in the parent scroll container (`main-list-results`) to block `copy`, `cut`, `contextmenu`, and `selectstart` events whenever the custom Added Words list is loaded.
+
+22. **Store Item Update (Official Scrabble Players Dictionary Seventh Edition)**:
+    - Replaced the "Sixth Edition" of the Official Scrabble Player’s Dictionary with the newly released "Seventh Edition" (OSPD7) in the Store page.
+    - Updated description, alt tags, and bullet items, and configured the direct external purchase link to point to the Seventh Edition product page on Amazon.
 
 ## Verification
 * **Local**: Verified dictionary test cases (all passed).
