@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `ff8e83891461ff461cb28203f56b5f4be8cde4ab`
+* **Commit ID**: `242eca0a876189196b014cece6d22fc0e6f33221`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -139,6 +139,10 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
 26. **Tools Auto-Scroll on Mobile**:
     - Implemented a smooth auto-scroll to the bottom of the `.tools-content` pane after a word is generated (in the Random Word Generator) or checked (in the Word Validator).
     - Ensures that the complete definition and pronunciation of the word is automatically scrolled into view on smaller mobile screens, removing the need for manual scrolling.
+
+27. **Unscramble Keyboard Visibility Overrides on Mobile**:
+    - Added responsive CSS `:focus-within` styles to `.unscramble-game-area` in `play.css`. When the text input is focused (keyboard active) on mobile screens, the header elements (jumbled text) shrink and sub-info is hidden to minimize height.
+    - Added a focus event listener in `tools.js` to automatically scroll the active Unscramble container to the top of the viewport when focused, guaranteeing the text field and the primary action buttons ("Check Word" and "Reveal") remain fully visible and above the virtual keyboard.
 
 ## Verification
 * **Local**: Verified dictionary test cases (all passed).
