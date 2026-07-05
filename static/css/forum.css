@@ -304,8 +304,7 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    background: var(--bg-primary, #0d1117);
-    border-bottom: 1px solid var(--input-border);
+    background: transparent;
     padding: 10px 0 10px 0;
     margin: -30px -30px 20px -30px;
     padding-left: 30px;
@@ -313,7 +312,7 @@
 }
 
 .forum-back-btn {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--bg-primary, #0d1117);
     border: 1px solid var(--input-border);
     color: var(--text-primary);
     padding: 10px 15px;
