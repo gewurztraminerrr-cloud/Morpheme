@@ -1709,6 +1709,32 @@ body.theme-light-brown .word-item.missed {
     padding: 20px;
 }
 
+.validation-scroll-container {
+    max-height: 280px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    justify-content: flex-start !important;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.validation-scroll-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.validation-scroll-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.validation-scroll-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+
+.validation-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
 .random-word-large {
     font-size: 5.5rem;
     font-weight: 900;
