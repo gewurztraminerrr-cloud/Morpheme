@@ -1133,6 +1133,8 @@ async function updateGameState(incomingState = null) {
         const defPanel = document.querySelector('.definitions-panel');
         const defHeader = document.getElementById('definition-header');
         const isViewingDefinition = window.userViewingDefinitionIntermission === true;
+        // Personal Timer expiry takes priority — do not overwrite "Time is up!" notice
+        const isTimerExpired = defPanel ? defPanel.classList.contains('timer-flash') : false;
         let hasActualWinner = false;
 
         if (state.state === 'intermission' && state.winners_history) {
@@ -1144,7 +1146,7 @@ async function updateGameState(incomingState = null) {
             const bonusText = state.previous_bonus_word || state.bonus_word;
             const bonusHtml = bonusText ? `<div style="font-size: 0.85rem; color: #fff; opacity: 0.8; margin: 4px 0;">Bonus Word: <span style="color: #ffd700; font-weight: 800; letter-spacing: 1px;">${bonusText.toUpperCase()}</span></div>` : '';
 
-            if (hasActualWinner && defContent && !isViewingDefinition) {
+            if (hasActualWinner && defContent && !isViewingDefinition && !isTimerExpired) {
                 // If not already showing this round's winner
                 const winnerTextIdentifier = `WINNER_R${latest.round}`;
                 if (!defContent.innerHTML.includes(winnerTextIdentifier) || defContent.innerHTML.includes('placeholder')) {
@@ -1155,7 +1157,7 @@ async function updateGameState(incomingState = null) {
                         if (!is24H) {
                             defPanel.classList.add('winner-flash');
                         }
-                        defPanel.classList.remove('timer-flash');
+                        // NOTE: do NOT remove timer-flash here — Personal Timer expiry takes priority
                     }
                     if (defHeader) defHeader.style.display = 'none';
                     
@@ -1214,7 +1216,7 @@ async function updateGameState(incomingState = null) {
                         }, 50);
                     }
                 }
-            } else if (!hasActualWinner && defContent && !isViewingDefinition && (defContent.innerHTML.includes('CONGRATULATIONS') || defContent.innerHTML.includes('placeholder'))) {
+            } else if (!hasActualWinner && defContent && !isViewingDefinition && !isTimerExpired && (defContent.innerHTML.includes('CONGRATULATIONS') || defContent.innerHTML.includes('placeholder'))) {
                 // CLEAR the previous winner announcement if current round had no winner
                 defContent.innerHTML = `
                     <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100%; text-align: center; opacity: 0.9;">
