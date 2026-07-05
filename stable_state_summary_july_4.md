@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `4720f4a13bf7bf0e768e1b6f0e4b8a24db3d4d42`
+* **Commit ID**: `651a1768478440026e6ef1a3556ddcf6177a6a43`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -145,7 +145,7 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
     - Added a focus event listener in `tools.js` to automatically scroll the active Unscramble container to the top of the viewport when focused, guaranteeing the text field and the primary action buttons ("Check Word" and "Reveal") remain fully visible and above the virtual keyboard.
 
 28. **Desktop Mini-Profile Width Increase**:
-    - Increased the width of the `.mini-profile-card` overlay container to `480px` (from `360px`) for desktop environments.
+    - Increased the width of the `.mini-profile-card` overlay container to `560px` (from `360px`) for desktop environments.
     - Added `max-width: 90%` to ensure the card scales down fluidly and remains responsive on mobile screens.
     - Leveraged the fluid layout configurations of internal components (such as flexbox stats alignments) to stretch details evenly.
 
