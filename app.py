@@ -4389,15 +4389,7 @@ def ensure_definitions_background(words_list):
     t.daemon = True
     t.start()
 
-@app.route('/api/definition', methods=['GET'])
-def get_definition():
-    word = request.args.get('word', '').upper()
-    if not word:
-        return jsonify({'error': 'Word parameter required'}), 400
-
-    definition, pronunciation = lookup_word_definition_and_pronunciation(word)
-
-    # Look for definition image
+def lookup_definition_image(word):
     image_url = None
     word_lower = word.lower()
     for ext in ['png', 'jpg', 'jpeg', 'webp']:
@@ -4405,6 +4397,16 @@ def get_definition():
         if os.path.exists(img_path):
             image_url = f"/static/images/definitions/{word_lower}.{ext}"
             break
+    return image_url
+
+@app.route('/api/definition', methods=['GET'])
+def get_definition():
+    word = request.args.get('word', '').upper()
+    if not word:
+        return jsonify({'error': 'Word parameter required'}), 400
+
+    definition, pronunciation = lookup_word_definition_and_pronunciation(word)
+    image_url = lookup_definition_image(word)
 
     if definition or pronunciation or image_url:
         return jsonify({
@@ -5111,16 +5113,19 @@ def tools_validate_word():
     # Try to get definition and pronunciation if valid
     definition = None
     pronunciation = None
+    image_url = None
     if is_valid:
         definition, pronunciation = lookup_word_definition_and_pronunciation(word)
         if not definition:
             definition = "No definition available for this word."
+        image_url = lookup_definition_image(word)
         
     return jsonify({
         'word': word,
         'is_valid': is_valid,
         'definition': definition,
-        'pronunciation': pronunciation
+        'pronunciation': pronunciation,
+        'image_url': image_url
     })
 
 @app.route('/api/tools/unscramble/random', methods=['GET'])
@@ -5373,11 +5378,13 @@ def tools_random_word():
     definition, pronunciation = lookup_word_definition_and_pronunciation(random_word)
     if not definition:
         definition = "No definition available for this word."
+    image_url = lookup_definition_image(random_word)
     
     return jsonify({
         'word': random_word,
         'definition': definition,
-        'pronunciation': pronunciation
+        'pronunciation': pronunciation,
+        'image_url': image_url
     })
 
 @app.route('/api/tools/wotd', methods=['GET'])
@@ -5409,12 +5416,14 @@ def tools_wotd():
     definition, pronunciation = lookup_word_definition_and_pronunciation(wotd)
     if not definition:
         definition = "No definition available for this word."
+    image_url = lookup_definition_image(wotd)
     
     return jsonify({
         'word': wotd,
         'date': today_str,
         'definition': definition,
-        'pronunciation': pronunciation
+        'pronunciation': pronunciation,
+        'image_url': image_url
     })
 
 @app.route('/api/tools/find-count', methods=['GET'])
