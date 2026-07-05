@@ -152,7 +152,7 @@ ACTIVE_REFILLS_LOCK = threading.Lock()
 def serialize_param_key(dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty):
     return json.dumps({
         "dimensions": dimensions,
-        "bonus_word": bonus_word,
+        "bonus_word_len": len(bonus_word) if isinstance(bonus_word, str) else (bonus_word if isinstance(bonus_word, int) else 0),
         "word_count_range": list(word_count_range) if isinstance(word_count_range, (list, tuple)) else word_count_range,
         "dictionary": dictionary,
         "board_format": board_format,
@@ -211,9 +211,24 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=50):
         try:
             params = json.loads(param_key_str)
             dimensions = params["dimensions"]
-            bonus_word = params["bonus_word"]
-            word_count_range = tuple(params["word_count_range"]) if isinstance(params["word_count_range"], list) else params["word_count_range"]
+            
+            # Resolve dictionary and select a random bonus word based on length
             dictionary = params["dictionary"]
+            bonus_word_len = params.get("bonus_word_len", 0)
+            bonus_word = None
+            if bonus_word_len > 0:
+                import random
+                from word_validator import word_validator
+                if str(dictionary).upper() == "CSW":
+                    word_validator.ensure_csw_loaded()
+                    dictionary_set = word_validator.csw_words
+                else:
+                    dictionary_set = word_validator.nwl_words
+                potential_dict_words = [w for w in dictionary_set if len(w) == bonus_word_len]
+                if potential_dict_words:
+                    bonus_word = random.choice(potential_dict_words)
+                    
+            word_count_range = tuple(params["word_count_range"]) if isinstance(params["word_count_range"], list) else params["word_count_range"]
             board_format = params["board_format"]
             min_word_length = params["min_word_length"]
             difficulty = params["difficulty"]

@@ -347,6 +347,8 @@ class PrivateMatchManager:
             difficulty=target_difficulty
         )
         board, all_words_on_board, bonus_cell, updated_format, all_words_dict = res[0], res[1], res[2], res[3], res[4]
+        if len(res) >= 7 and res[6]:
+            bonus_word = res[6]
         # Use the updated format (e.g. "X Mania" instead of just "Mania")
         target_format = updated_format
         
