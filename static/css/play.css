@@ -5086,7 +5086,7 @@ input[type=range]::-moz-range-track {
     }
 
     #page-tournaments {
-        padding: 10px 3px !important;
+        padding: 10px 0px !important;
     }
 }
 

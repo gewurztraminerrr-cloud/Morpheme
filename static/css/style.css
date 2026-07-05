@@ -5697,8 +5697,8 @@ body .tab-btn.active {
 @media (max-width: 899px) {
     /* Tournament mobile overrides — keep panels in document flow, no overlaps */
     #page-tournaments {
-        padding-left: 3px !important;
-        padding-right: 3px !important;
+        padding-left: 0px !important;
+        padding-right: 0px !important;
         margin-left: -10px !important;
         margin-right: -10px !important;
     }
