@@ -2336,7 +2336,7 @@ body {
     border-radius: 12px;
     padding: 12px;
     margin-bottom: 24px;
-    max-height: 80px;
+    max-height: 180px;
     overflow-y: auto;
     border: 1px solid rgba(var(--text-primary-rgb), 0.05);
 }
@@ -2355,6 +2355,27 @@ body {
     cursor: pointer;
     transition: all 0.2s;
     border: 1px solid transparent;
+}
+
+/* Responsive overrides for mini-profile card on mobile devices */
+@media (max-width: 600px) {
+    .mini-profile-description {
+        max-height: 100px !important;
+    }
+    .mini-profile-actions {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .mini-action-btn {
+        flex: 1 1 calc(50% - 4px) !important;
+        min-width: 110px !important;
+        font-size: 0.8rem !important;
+        padding: 8px 6px !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
 }
 
 .mini-action-btn.primary {
