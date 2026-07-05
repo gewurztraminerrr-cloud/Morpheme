@@ -7912,7 +7912,19 @@ document.addEventListener('click', (e) => {
         
         const row = document.querySelector(`.score-sum-row[data-username="${currentUserNameNormalized}"]`);
         if (row) {
-            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const listEl = document.getElementById('score-sum-list');
+            if (listEl) {
+                const containerRect = listEl.getBoundingClientRect();
+                const rowRect = row.getBoundingClientRect();
+                const relativeTop = rowRect.top - containerRect.top;
+                const scrollTarget = listEl.scrollTop + relativeTop - (containerRect.height / 2) + (rowRect.height / 2);
+                listEl.scrollTo({
+                    top: scrollTarget,
+                    behavior: 'smooth'
+                });
+            } else {
+                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
             // Flash effect for visibility
             row.style.transition = 'background-color 0.3s ease';
             const originalBg = row.style.background;
