@@ -5699,11 +5699,17 @@ body .tab-btn.active {
     #page-tournaments {
         padding-left: 0 !important;
         padding-right: 0 !important;
+        margin-left: -10px !important;
+        margin-right: -10px !important;
     }
 
     .tournament-layout {
-        padding: 8px 4px !important;
+        padding: 8px 2px !important;
         gap: 12px !important;
+    }
+
+    .tournament-header {
+        padding: 0 4px !important;
     }
 
     .tournament-header h2 {
@@ -5711,7 +5717,7 @@ body .tab-btn.active {
     }
 
     .tournament-card {
-        padding: 16px 10px !important;
+        padding: 16px 8px !important;
         border-radius: 12px !important;
     }
 
