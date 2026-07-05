@@ -4955,11 +4955,15 @@ input[type=range]::-moz-range-track {
     .history-walkthrough-section .section-header {
         gap: 8px !important;
         margin-bottom: 16px !important;
+        padding: 12px 14px !important;
+        background: rgba(255,255,255,0.03) !important;
+        border-radius: 12px !important;
     }
 
     .history-walkthrough-section .section-header h3 {
         font-size: 1.1rem !important;
         margin: 0 !important;
+        padding: 0 0 4px 0 !important;
     }
 
     .history-walkthrough-section .replay-subheader {
@@ -4969,8 +4973,8 @@ input[type=range]::-moz-range-track {
         justify-content: space-between !important;
         gap: 10px !important;
         flex-wrap: nowrap !important;
-        padding: 8px 10px !important;
-        background: rgba(255,255,255,0.04) !important;
+        padding: 10px 12px !important;
+        background: rgba(255,255,255,0.05) !important;
         border-radius: 10px !important;
     }
 
