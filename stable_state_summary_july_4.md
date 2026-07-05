@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `ba3e5fac6d3cd62512a20b72f4ee8618e7e191b7`
+* **Commit ID**: `9e51c696e1ec821422ab2fdf752a792e3ea86676`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -124,6 +124,11 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
     - Relocated the **User Profile** interface from a sub-tab of the Tools page to a dedicated top-level page (`#page-profile`) accessed directly from the header navigation menu.
     - Repositioned the **Morpheme Store** from a top-level header navigation page to a sub-tab tool (`#tool-store`) inside the Tools sidebar, placed at the very bottom of the tools options.
     - Updated CSS selectors for layout, sizing, and mobile locks to align with the new structural placement, and updated JS routing paths and username click events in `app.js` to target `#page-profile` directly.
+
+24. **Solid-Background App Icon for PWAs (Mobile)**:
+    - Generated a solid-background square version of the PWA app icon (`morpheme.png`) on a background matching the app's dark theme color (`#0d1117`). This completely prevents mobile platforms (like iOS and Android) from adding ugly white border letterboxing to transparent home screen shortcuts.
+    - Exported the original transparent logo version to `morpheme_transparent.png` and updated header icons and lobby placeholder image tags in `index.html` to point to it, preserving transparent rendering where it belongs.
+    - Updated `manifest.json` with high-resolution sizes (`192x192`, `512x512`, `1024x1024`) and bumped client cache-buster versions in `index.html` for immediate application updates.
 
 ## Verification
 * **Local**: Verified dictionary test cases (all passed).
