@@ -6043,3 +6043,11 @@ body .board-cell.tile-flash-purple * {
     background-color: rgba(var(--text-primary-rgb), 0.3);
     border-radius: 3px;
 }
+
+/* Prevent copying / selection of Added Words list items */
+.list-item.added-word {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+}

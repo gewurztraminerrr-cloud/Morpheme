@@ -2691,8 +2691,8 @@ function renderNextWordsPage() {
     } else if (currentWordsType === 'added') {
         const isMod = window.currentUserIsMod;
         html = nextPageWords.map(w => `
-            <div class="list-item added-word" style="display: flex; justify-content: space-between; align-items: center;">
-                <span>${w}</span>
+            <div class="list-item added-word" oncopy="return false;" oncut="return false;" oncontextmenu="return false;" ondragstart="return false;" style="display: flex; justify-content: space-between; align-items: center; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;">
+                <span style="-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;">${w}</span>
                 ${isMod ? `<button onclick="removeAddedWordFromTools('${w}')" style="background:none; border:none; color:#f43f5e; cursor:pointer; font-weight:bold; padding:0 5px;" title="Remove">&times;</button>` : ''}
             </div>
         `).join('');
@@ -2731,6 +2731,28 @@ function setupListsTool() {
         scrollArea.addEventListener('scroll', () => {
             if (scrollArea.scrollTop + scrollArea.clientHeight >= scrollArea.scrollHeight - 200) {
                 renderNextWordsPage();
+            }
+        });
+
+        // Prevent copying and context menu actions on the Added Words list
+        scrollArea.addEventListener('copy', (e) => {
+            if (currentWordsType === 'added') {
+                e.preventDefault();
+            }
+        });
+        scrollArea.addEventListener('cut', (e) => {
+            if (currentWordsType === 'added') {
+                e.preventDefault();
+            }
+        });
+        scrollArea.addEventListener('contextmenu', (e) => {
+            if (currentWordsType === 'added') {
+                e.preventDefault();
+            }
+        });
+        scrollArea.addEventListener('selectstart', (e) => {
+            if (currentWordsType === 'added') {
+                e.preventDefault();
             }
         });
     }
