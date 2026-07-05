@@ -375,9 +375,9 @@ window.showMiniProfile = async function (username) {
                 durationStr = months > 0 ? `${months}m` : '< 1m';
             }
 
-            joinedEl.innerText = `${joinedDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} (${durationStr})`;
+            joinedEl.innerText = `Registered: ${joinedDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} (${durationStr})`;
         } else if (joinedEl) {
-            joinedEl.innerText = "Joined: -";
+            joinedEl.innerText = "Registered: -";
         }
 
         // Flag and Meta
@@ -1008,14 +1008,14 @@ async function renderProfile(user) {
         if (months >= 12) {
             const y = Math.floor(months / 12);
             const m = months % 12;
-            durationStr = `${y} year${y > 1 ? 's' : ''}${m > 0 ? ` ${m} month${m > 1 ? 's' : ''}` : ''}`;
+            durationStr = `${y}y${m > 0 ? ` ${m}m` : ''}`;
         } else {
-            durationStr = months > 0 ? `${months} month${months > 1 ? 's' : ''}` : 'Less than 1 month';
+            durationStr = months > 0 ? `${months}m` : '< 1m';
         }
 
-        joinedValEl.innerText = `${joinedDate.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })} (${durationStr})`;
+        joinedValEl.innerText = `Registered: ${joinedDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} (${durationStr})`;
     } else if (joinedValEl) {
-        joinedValEl.innerText = '-';
+        joinedValEl.innerText = 'Registered: -';
     }
 
     // Proof of Legitimacy Rendering
