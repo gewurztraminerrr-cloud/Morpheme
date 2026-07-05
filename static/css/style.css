@@ -2146,7 +2146,8 @@ body {
     border: 1px solid rgba(var(--text-primary-rgb), 0.1);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(var(--text-primary-rgb), 0.05);
     border-radius: 24px;
-    width: 360px;
+    width: 480px;
+    max-width: 90%;
     padding: 24px;
     position: relative;
     animation: miniReveal 0.4s cubic-bezier(0.2, 1, 0.3, 1);
