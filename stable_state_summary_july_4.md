@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `ab2fbaf40bde486c8d76dbcb110ef925c4fbccab`
+* **Commit ID**: `76dd86fd236d8fbf8e42f9a35e8020ff65b6ebcf`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -58,7 +58,6 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
 
 9. **Moderation Definition Guidelines Card Updates**:
    - Reworded guidelines layout inside the Mods Definition Management pane.
-   - Added a clear alert bar instructing moderators **NEVER** to use a trailing period at the end of definitions (immediately before square bracket tags). Removed the trailing period from the example noun definition of `arity`.
    - Included rules and demonstrations for:
      - **Adjectives with inflections (-ER, -EST, -LY)**: e.g., `FAT,FATTER,FATTEST,FATLY` -> `FAT, having an abundance of flesh [adj]`.
      - **Adjectives with implicit adverb sub-tags (-LY)**: e.g., `reflective` -> `capable of reflecting light, images, or sound waves [adj REFLECTIVELY]`.
