@@ -980,6 +980,77 @@ class BoardGenerator:
         Generate a valid board that meets word count requirements (100-300).
         RESTARTED: Simplified logic with ironclad compliance.
         """
+        res = self._generate_board_internal(
+            dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, is_emergency, timeout
+        )
+        
+        board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word = res
+        
+        # Determine 3D vs 2D board
+        is_3d = isinstance(board, list) and len(board) > 0 and isinstance(board[0], list) and len(board[0]) > 0 and isinstance(board[0][0], list)
+        depth = 6 if is_3d else 1
+        
+        achieved_diff = self.get_difficulty_label(
+            ratio, 
+            len(board[0]) if is_3d else len(board), 
+            len(board[0][0]) if is_3d else len(board[0]), 
+            dictionary, 
+            depth, 
+            min_word_length=min_word_length
+        )
+        
+        normalized_diff = str(difficulty).split()[0].strip()
+        if normalized_diff not in ["Easy", "Medium", "Hard"]:
+            if "easy" in normalized_diff.lower() or "beginner" in normalized_diff.lower():
+                normalized_diff = "Easy"
+            elif "hard" in normalized_diff.lower() or "expert" in normalized_diff.lower() or "difficult" in normalized_diff.lower():
+                normalized_diff = "Hard"
+            else:
+                normalized_diff = "Medium"
+                
+        if normalized_diff in ["Medium", "Hard"] or achieved_diff in ["Medium", "Hard"]:
+            protected_positions = None
+            if final_bonus_word:
+                fb_upper = final_bonus_word.upper()
+                if fb_upper in all_words_dict:
+                    protected_positions = all_words_dict[fb_upper]
+            
+            if self._has_ing_sequence(board, depth, protected_positions=protected_positions):
+                print(f"[BoardGen] 🛡️ FINAL AUDIT: Found 'ING' sequence on {achieved_diff} (target {difficulty}) board. Force breaking...")
+                self._guarantee_no_ing(board, depth, protected_positions=protected_positions)
+                
+                # Re-solve the board to ensure words list, bonus cell, and ratio are perfectly accurate
+                display_min = min_word_length
+                final_depth = 25 if (not is_3d and len(board)*len(board[0]) <= 16) else 14
+                
+                if bonus_cell:
+                    all_words_dict = self._solve_board(
+                        board, dictionary, (0, 99999), display_min, max_depth=final_depth, store_paths=True, timeout=15.0, bonus_cell=bonus_cell
+                    )
+                else:
+                    all_words_dict = self._solve_board(
+                        board, dictionary, (0, 99999), display_min, max_depth=final_depth, store_paths=True, timeout=15.0
+                    )
+                
+                all_words = sorted(list(all_words_dict.keys()))
+                ratio = self.get_uniqueness_ratio(
+                    board, 
+                    all_words, 
+                    len(board[0]) if is_3d else len(board), 
+                    len(board[0][0]) if is_3d else len(board[0]), 
+                    dictionary, 
+                    depth
+                )
+                
+        return (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word)
+
+    def _generate_board_internal(
+        self, dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length=3, difficulty="Medium", is_emergency=False, timeout=None
+    ):
+        """
+        Generate a valid board that meets word count requirements (100-300).
+        RESTARTED: Simplified logic with ironclad compliance.
+        """
         if min_word_length is None:
             min_word_length = 3
         else:
