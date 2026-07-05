@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `74b0b9f939e8ea6f8cdbf2616f73117462cc8d80`
+* **Commit ID**: `b1bf8bdba11802996d92631252119934ff24cc54`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -128,6 +128,7 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
 24. **Solid-Background App Icon for PWAs (Mobile)**:
     - Generated a solid-background square version of the PWA app icon (`morpheme.png`) on a background matching the app's dark theme color (`#0d1117`). This completely prevents mobile platforms (like iOS and Android) from adding ugly white border letterboxing to transparent home screen shortcuts.
     - Exported the original transparent logo version to `morpheme_transparent.png` and updated header icons and lobby placeholder image tags in `index.html` to point to it, preserving transparent rendering where it belongs.
+    - Configured manifest icons in `manifest.json` with `"purpose": "any maskable"` to enable full-bleed adaptive icon rendering on Android devices, stopping the OS from placing the shortcut in a white badge circle.
     - Updated `manifest.json` with high-resolution sizes (`192x192`, `512x512`, `1024x1024`) and bumped client cache-buster versions in `index.html` for immediate application updates.
 
 ## Verification
