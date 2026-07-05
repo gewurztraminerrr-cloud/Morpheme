@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `c47499cc8f2a17056be6fa0633b8ebcf55ec34b6`
+* **Commit ID**: `ab2fbaf40bde486c8d76dbcb110ef925c4fbccab`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -112,6 +112,10 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
 
 20. **Mobile Leaderboards Table Width Improvements**:
     - Reduced padding on `.leaderboard-container` (to 0px) and `#page-leaderboards` (to 6px) on mobile screens. This spreads out the width of the tables to sit much closer to the vertical screen edges, maximizing horizontal screen space for ranking details.
+
+21. **Added Words List Copy Prevention**:
+    - Implemented a robust multi-layered security layer blocking copying or selecting words from the "Added Words" list under Tools -> Lists.
+    - Utilizes CSS `user-select: none !important;` to block text highlighting, inline event attributes (`oncopy`, `oncut`, `oncontextmenu`, `ondragstart` returned as `false`) on dynamically rendered items, and event listener overrides in the parent scroll container (`main-list-results`) to block `copy`, `cut`, `contextmenu`, and `selectstart` events whenever the custom Added Words list is loaded.
 
 ## Verification
 * **Local**: Verified dictionary test cases (all passed).
