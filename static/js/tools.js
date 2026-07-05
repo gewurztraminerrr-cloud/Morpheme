@@ -4227,7 +4227,7 @@ async function startNewUnscramble(keepFound = false) {
     }
 
     if (revealBtn) {
-        revealBtn.innerText = "Unscramble";
+        revealBtn.innerText = "Reveal";
         revealBtn.disabled = false;
         revealBtn.style.background = 'linear-gradient(135deg, #4facfe, #2980b9)';
     }
