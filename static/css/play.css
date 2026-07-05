@@ -4953,17 +4953,19 @@ input[type=range]::-moz-range-track {
 
     /* Mobile: Timeline heading on its own row, Watch Replay + hint side-by-side below */
     .history-walkthrough-section .section-header {
-        gap: 8px !important;
-        margin-bottom: 16px !important;
-        padding: 12px 14px !important;
-        background: rgba(255,255,255,0.03) !important;
-        border-radius: 12px !important;
+        gap: 14px !important;
+        margin-bottom: 20px !important;
+        padding: 16px !important;
+        background: rgba(255,255,255,0.04) !important;
+        border-radius: 14px !important;
+        border: 1px solid rgba(255,255,255,0.08) !important;
     }
 
     .history-walkthrough-section .section-header h3 {
         font-size: 1.1rem !important;
         margin: 0 !important;
-        padding: 0 0 4px 0 !important;
+        padding-bottom: 12px !important;
+        border-bottom: 1px solid rgba(255,255,255,0.1) !important;
     }
 
     .history-walkthrough-section .replay-subheader {
@@ -4971,10 +4973,10 @@ input[type=range]::-moz-range-track {
         flex-direction: row !important;
         align-items: center !important;
         justify-content: space-between !important;
-        gap: 10px !important;
+        gap: 12px !important;
         flex-wrap: nowrap !important;
-        padding: 10px 12px !important;
-        background: rgba(255,255,255,0.05) !important;
+        padding: 10px 14px !important;
+        background: rgba(255,255,255,0.06) !important;
         border-radius: 10px !important;
     }
 
@@ -4982,7 +4984,8 @@ input[type=range]::-moz-range-track {
         font-size: 0.75rem !important;
         text-align: right !important;
         max-width: 45% !important;
-        line-height: 1.3 !important;
+        line-height: 1.4 !important;
+        padding-left: 8px !important;
     }
 
     .history-walkthrough-section .replay-controls {
