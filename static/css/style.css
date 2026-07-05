@@ -6328,94 +6328,113 @@ select option,
     }
 }
 
-/* Neon Gateway Button styles — Realistic 3D Physical Button */
+/* Neon Gateway Button — Realistic 3D Physical Button */
+/* Technique: ::after pseudo-element IS the visible side face.
+   The button face lifts up with translateY, revealing the side wall beneath it.
+   On press, the face drops down and the side wall collapses to zero. */
+
 .neon-gateway-btn {
     position: relative;
     display: inline-block;
-
-    /* Top face appearance */
-    background: linear-gradient(160deg,
-        #ff3d9a 0%,
-        #e8005c 40%,
-        #c0004d 100%);
-
     border: none;
     outline: none;
-    color: #fff;
-    padding: 22px 60px;
-    font-size: 1.45rem;
-    font-weight: 900;
-    letter-spacing: 4px;
-    border-radius: 14px;
     cursor: pointer;
+
+    /* Top face */
+    background: linear-gradient(to bottom,
+        #ff60b0 0%,
+        #f0005f 45%,
+        #cc004e 100%);
+    color: #fff;
+    padding: 24px 68px;
+    font-size: 1.5rem;
+    font-weight: 900;
+    letter-spacing: 5px;
+    border-radius: 12px;
+
+    /* Lighting on the top face */
+    box-shadow:
+        inset 0 3px 6px rgba(255, 255, 255, 0.4),
+        inset 0 -3px 6px rgba(0, 0, 0, 0.2),
+        0 20px 50px rgba(180, 0, 80, 0.5),
+        0 8px 20px rgba(0, 0, 0, 0.35);
+
     text-shadow:
-        0 1px 2px rgba(0,0,0,0.6),
-        0 0 12px rgba(255,120,180,0.7);
+        0 1px 3px rgba(0, 0, 0, 0.7),
+        0 0 14px rgba(255, 140, 190, 0.7);
+
     user-select: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
 
-    /* 3D lift: translateY pulls it up, box-shadow stack builds the thick side face */
-    transform: translateY(-22px) perspective(600px) rotateX(4deg);
+    /* Lift the face up off the surface */
+    transform: translateY(-12px);
     transform-origin: center bottom;
-
-    box-shadow:
-        /* Side face layers — stacked to create thick realistic depth */
-        0 4px 0 #a8004a,
-        0 8px 0 #950042,
-        0 12px 0 #82003a,
-        0 16px 0 #6e0031,
-        0 20px 0 #5b0029,
-        0 22px 0 #480021,
-        /* Ground shadow for float feel */
-        0 28px 40px rgba(180, 0, 80, 0.55),
-        0 38px 60px rgba(0, 0, 0, 0.4),
-        /* Top-face inner highlight */
-        inset 0 2px 4px rgba(255, 255, 255, 0.25),
-        inset 0 -2px 4px rgba(0, 0, 0, 0.2);
-
-    transition: transform 0.12s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-                box-shadow 0.12s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-                filter 0.12s ease;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
 }
 
+/* THE SIDE FACE — this is what makes it look like a real button */
+.neon-gateway-btn::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -12px;       /* sit exactly below the lifted face */
+    height: 12px;        /* matches the translateY lift amount */
+    background: linear-gradient(to bottom,
+        #8a0038 0%,
+        #5e0026 60%,
+        #3e0018 100%);
+    border-radius: 0 0 12px 12px;
+    /* Inner highlight at top of side face — where the top face meets the side */
+    box-shadow: inset 0 1px 0 rgba(255, 100, 150, 0.15);
+    transition: height 0.1s ease, bottom 0.1s ease;
+}
+
+/* Hover — lifts slightly higher, side grows taller */
 .neon-gateway-btn:hover:not(.pressed) {
-    background: linear-gradient(160deg,
-        #ff5aab 0%,
-        #ff1a72 40%,
-        #d4005d 100%);
-    transform: translateY(-26px) perspective(600px) rotateX(4deg);
+    transform: translateY(-16px);
+    background: linear-gradient(to bottom,
+        #ff78be 0%,
+        #ff1a72 45%,
+        #d90058 100%);
     box-shadow:
-        0 4px 0 #b8005a,
-        0 8px 0 #a50050,
-        0 12px 0 #920046,
-        0 16px 0 #7e003c,
-        0 20px 0 #6b0032,
-        0 24px 0 #570028,
-        0 26px 0 #44001e,
-        0 34px 50px rgba(200, 0, 100, 0.65),
-        0 44px 70px rgba(0, 0, 0, 0.45),
-        inset 0 2px 6px rgba(255, 255, 255, 0.35),
-        inset 0 -2px 4px rgba(0, 0, 0, 0.2);
-    text-shadow:
-        0 1px 2px rgba(0,0,0,0.5),
-        0 0 20px rgba(255,180,210,0.9);
-    filter: brightness(1.08);
+        inset 0 3px 7px rgba(255, 255, 255, 0.5),
+        inset 0 -3px 7px rgba(0, 0, 0, 0.2),
+        0 26px 60px rgba(210, 0, 90, 0.65),
+        0 10px 25px rgba(0, 0, 0, 0.4);
+    filter: brightness(1.06);
 }
 
-/* Pressed & stays flattened — .pressed class is added by JS on mousedown/touchstart and never removed */
+.neon-gateway-btn:hover:not(.pressed)::after {
+    height: 16px;
+    bottom: -16px;
+    background: linear-gradient(to bottom,
+        #9e0040 0%,
+        #6a002c 60%,
+        #45001c 100%);
+}
+
+/* PRESSED — face drops to surface, side face collapses to nothing.
+   .pressed class is added by JS on mousedown/touchstart and NEVER removed. */
 .neon-gateway-btn:active,
 .neon-gateway-btn.pressed {
-    transform: translateY(0px) perspective(600px) rotateX(0deg) !important;
+    transform: translateY(0px) !important;
     box-shadow:
-        0 1px 0 #6e0031,
-        0 3px 12px rgba(180, 0, 80, 0.3),
-        inset 0 3px 8px rgba(0, 0, 0, 0.55),
-        inset 0 0 20px rgba(0, 0, 0, 0.3) !important;
-    filter: brightness(0.82) !important;
+        inset 0 4px 10px rgba(0, 0, 0, 0.5),
+        inset 0 0 20px rgba(0, 0, 0, 0.25),
+        0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    filter: brightness(0.78) !important;
     transition: transform 0.07s ease,
                 box-shadow 0.07s ease,
                 filter 0.07s ease !important;
+}
+
+.neon-gateway-btn:active::after,
+.neon-gateway-btn.pressed::after {
+    height: 0 !important;
+    bottom: 0 !important;
+    transition: height 0.07s ease, bottom 0.07s ease !important;
 }
 
 
