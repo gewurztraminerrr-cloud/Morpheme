@@ -2336,7 +2336,7 @@ body {
     border-radius: 12px;
     padding: 12px;
     margin-bottom: 24px;
-    max-height: 180px;
+    height: 140px;
     overflow-y: auto;
     border: 1px solid rgba(var(--text-primary-rgb), 0.05);
 }
@@ -2360,7 +2360,7 @@ body {
 /* Responsive overrides for mini-profile card on mobile devices */
 @media (max-width: 600px) {
     .mini-profile-description {
-        max-height: 100px !important;
+        height: 90px !important;
     }
     .mini-profile-actions {
         flex-wrap: wrap !important;
@@ -2907,9 +2907,23 @@ body {
 /* Replay Controls & Animation Styles */
 .section-header {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
     margin-bottom: 25px;
+}
+
+.replay-subheader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.section-hint {
+    font-size: 0.8rem;
+    color: rgba(var(--text-primary-rgb), 0.5);
+    font-style: italic;
 }
 
 .replay-controls {

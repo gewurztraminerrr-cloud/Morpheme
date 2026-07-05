@@ -4951,6 +4951,40 @@ input[type=range]::-moz-range-track {
         font-size: 1.5rem !important;
     }
 
+    /* Mobile: Timeline heading on its own row, Watch Replay + hint side-by-side below */
+    .history-walkthrough-section .section-header {
+        gap: 8px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .history-walkthrough-section .section-header h3 {
+        font-size: 1.1rem !important;
+        margin: 0 !important;
+    }
+
+    .history-walkthrough-section .replay-subheader {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 10px !important;
+        flex-wrap: nowrap !important;
+        padding: 8px 10px !important;
+        background: rgba(255,255,255,0.04) !important;
+        border-radius: 10px !important;
+    }
+
+    .history-walkthrough-section .section-hint {
+        font-size: 0.75rem !important;
+        text-align: right !important;
+        max-width: 45% !important;
+        line-height: 1.3 !important;
+    }
+
+    .history-walkthrough-section .replay-controls {
+        flex-shrink: 0 !important;
+    }
+
 
     /* Mobile overrides for page-tools, page-settings, page-mods, page-lobby, and page-forums */
     #page-tools,
