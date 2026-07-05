@@ -3676,11 +3676,11 @@
                     <div class="faq-item" id="faq-game-formats">
                         <div class="faq-question">What are the different game Formats and what do they do?</div>
                         <div class="faq-answer">
-                            <p><strong>Normal (68%):</strong> The standard gameplay experience where everything is
+                            <p><strong>Normal (66%):</strong> The standard gameplay experience where everything is
                                 balanced for classic play.</p>
                             <p><strong>Checkerboard (12%):</strong> Alternates vowels and consonants along rows or columns. This rhythmic layout mirrors the common phonetic construction of words (consonant-vowel-consonant-vowel), occasionally interspersed with adjacent consonants or vowels to mimic natural orthographic patterns.</p>
                             <p><strong>Bounce (2%):</strong> Colorful glossy balls bounce around the board, partially obscuring letters temporarily to test your memory and speed as you spot words. This format features three distinct speed levels: <strong>1x</strong> (slow, gentle bouncing), <strong>2x</strong> (moderate speed), and <strong>3x</strong> (extremely fast motion, requiring split-second recognition and recall).</p>
-                            <p><strong>Equality Freq (2%):</strong> Generates balanced, high-word-count boards (200+) using an equalized letter frequency where vowels have a weight of 700, rare consonants (J, Q, X, Z) have a weight of 25, and all other letters have a weight of 413, without using the Word Soup embedding method. By flattening the frequency weights, less-likely letters have a more equal chance of appearing, making word discovery more difficult.</p>
+                            <p><strong>Equality Freq (4%):</strong> Generates balanced, high-word-count boards (200+) using an equalized letter frequency where vowels have a weight of 700, rare consonants (J, Q, X, Z) have a weight of 25, and all other letters have a weight of 413, without using the Word Soup embedding method. By flattening the frequency weights, less-likely letters have a more equal chance of appearing, making word discovery more difficult.</p>
                             <p><strong>Density (2%):</strong> A high-contrast visual format where tiles reflect their
                                 "lexical weight." Tiles are shaded in grayscale based on how many words pass through
                                 them. <strong>Darker tiles</strong> indicate high-density letters that are part of many
@@ -4257,10 +4257,10 @@
                         <div style="display: flex; flex-direction: column; gap: 6px;">
                             <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
                                 <span>⚪ Normal (No special mechanics)</span>
-                                <span style="font-weight: 700;">68%</span>
+                                <span style="font-weight: 700;">66%</span>
                             </div>
                             <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
-                                <div style="width: 68%; height: 100%; background: #3583e4; border-radius: 3px;"></div>
+                                <div style="width: 66%; height: 100%; background: #3583e4; border-radius: 3px;"></div>
                             </div>
 
                             <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
@@ -4270,9 +4270,17 @@
                             <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
                                 <div style="width: 12%; height: 100%; background: #f5c211; border-radius: 3px;"></div>
                             </div>
+
+                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                                <span>🟰 Equality Freq (Equalized letter frequency)</span>
+                                <span style="font-weight: 700;">4%</span>
+                            </div>
+                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
+                                <div style="width: 4%; height: 100%; background: #06b6d4; border-radius: 3px;"></div>
+                            </div>
                             
                             <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--muted-text);">
-                                <span>🟣 Bounce | 🟨 Penalty | 🔥 Mania | ⚖️ Either/Or | 🟢 Bonus | 💎 Valued | ⬛ Density | 🔄 Rotation | 🟰 Equality Freq</span>
+                                <span>🟣 Bounce | 🟨 Penalty | 🔥 Mania | ⚖️ Either/Or | 🟢 Bonus | 💎 Valued | ⬛ Density | 🔄 Rotation</span>
                                 <span style="font-weight: 700; color: var(--text-primary);">2% each</span>
                             </div>
 
