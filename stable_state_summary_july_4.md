@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `a5888f760e408ec202ce9a7cd675e386bb0eb59a`
+* **Commit ID**: `64caa976ccb63ee2585f67be6858276fcc8c2b74`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -130,6 +130,11 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
     - Exported the original transparent logo version to `morpheme_transparent.png` and updated header icons and lobby placeholder image tags in `index.html` to point to it, preserving transparent rendering where it belongs.
     - Configured manifest icons in `manifest.json` with `"purpose": "any maskable"` to enable full-bleed adaptive icon rendering on Android devices, stopping the OS from placing the shortcut in a white badge circle.
     - Updated `manifest.json` with high-resolution sizes (`192x192`, `512x512`, `1024x1024`) and bumped client cache-buster versions in `index.html` for immediate application updates.
+
+25. **FAQ Fullscreen Exit Guidance**:
+    - Added a new entry to the Quick Navigate FAQ page clarifying how to exit fullscreen mode when playing in PWA/standalone mode on mobile.
+    - Noted that native Android overlay prompts (like "drag from the top and touch the back button") do not exit the game's fullscreen state.
+    - Instructed players on proper mobile platform techniques: swiping up from the bottom edge to display the device navigation/home bar and swiping up again to minimize or switch the app.
 
 ## Verification
 * **Local**: Verified dictionary test cases (all passed).
