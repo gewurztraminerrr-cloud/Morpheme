@@ -5084,6 +5084,10 @@ input[type=range]::-moz-range-track {
     #page-leaderboards {
         padding: 10px 6px !important;
     }
+
+    #page-tournaments {
+        padding: 10px 3px !important;
+    }
 }
 
 /* Mobile full-bleed board styling */
