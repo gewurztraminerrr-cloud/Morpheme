@@ -6,6 +6,9 @@ Generates boards with bonus word embedding and validation
 import random
 import time
 import os
+import sqlite3
+import json
+import threading
 from word_validator import word_validator, use_added_words_ctx
 
 DEBUG_FLOW_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'debug_flow.log')
@@ -142,6 +145,181 @@ LETTER_FREQ_SPARSE = [
     1,    # Z (Hardened)
 ]
 
+# Pre-generated board cache state
+ACTIVE_REFILLS = set()
+ACTIVE_REFILLS_LOCK = threading.Lock()
+
+def serialize_param_key(dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty):
+    return json.dumps({
+        "dimensions": dimensions,
+        "bonus_word": bonus_word,
+        "word_count_range": list(word_count_range) if isinstance(word_count_range, (list, tuple)) else word_count_range,
+        "dictionary": dictionary,
+        "board_format": board_format,
+        "min_word_length": min_word_length,
+        "difficulty": difficulty
+    }, sort_keys=True)
+
+def pop_cached_board(param_key_str):
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
+    try:
+        conn = sqlite3.connect(db_path, timeout=30)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("BEGIN IMMEDIATE TRANSACTION;")
+        cursor.execute("SELECT id, board_json FROM pregenerated_boards WHERE param_key = ? ORDER BY id ASC LIMIT 1;", (param_key_str,))
+        row = cursor.fetchone()
+        if row:
+            cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (row['id'],))
+            conn.commit()
+            board_json = row['board_json']
+            conn.close()
+            
+            # Deserialize
+            data = json.loads(board_json)
+            board = data["board"]
+            all_words = data["all_words"]
+            bonus_cell = tuple(data["bonus_cell"]) if data["bonus_cell"] else None
+            board_format_ret = data["board_format_ret"]
+            
+            # Convert paths list to tuples for coordinates
+            all_words_dict = {}
+            for w, path in data["all_words_dict"].items():
+                all_words_dict[w] = [tuple(coord) for coord in path]
+                
+            ratio = data["ratio"]
+            final_bonus_word = data["final_bonus_word"]
+            
+            print(f"[BoardGen] Serving CACHED board for param_key: {param_key_str[:120]}...")
+            return (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word)
+        else:
+            conn.commit()
+            conn.close()
+    except Exception as e:
+        print(f"[BoardGen] Error checking/popping cached board: {e}")
+    return None
+
+def refill_board_cache_bg(generator_instance, param_key_str, target_count=50):
+    global ACTIVE_REFILLS, ACTIVE_REFILLS_LOCK
+    
+    with ACTIVE_REFILLS_LOCK:
+        if param_key_str in ACTIVE_REFILLS:
+            return
+        ACTIVE_REFILLS.add(param_key_str)
+        
+    def _worker():
+        try:
+            params = json.loads(param_key_str)
+            dimensions = params["dimensions"]
+            bonus_word = params["bonus_word"]
+            word_count_range = tuple(params["word_count_range"]) if isinstance(params["word_count_range"], list) else params["word_count_range"]
+            dictionary = params["dictionary"]
+            board_format = params["board_format"]
+            min_word_length = params["min_word_length"]
+            difficulty = params["difficulty"]
+            
+            db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
+            
+            while True:
+                # Check current count
+                conn = sqlite3.connect(db_path, timeout=30)
+                cursor = conn.cursor()
+                cursor.execute("SELECT COUNT(*) FROM pregenerated_boards WHERE param_key = ?;", (param_key_str,))
+                current_count = cursor.fetchone()[0]
+                conn.close()
+                
+                if current_count >= target_count:
+                    break
+                    
+                # Generate a single board using backend logic
+                res = generator_instance._generate_board_internal(
+                    dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, is_emergency=False, timeout=60
+                )
+                
+                board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word = res
+                
+                is_3d = isinstance(board, list) and len(board) > 0 and isinstance(board[0], list) and len(board[0]) > 0 and isinstance(board[0][0], list)
+                depth = 6 if is_3d else 1
+                
+                achieved_diff = generator_instance.get_difficulty_label(
+                    ratio, 
+                    len(board[0]) if is_3d else len(board), 
+                    len(board[0][0]) if is_3d else len(board[0]), 
+                    dictionary, 
+                    depth, 
+                    min_word_length=min_word_length
+                )
+                
+                normalized_diff = str(difficulty).split()[0].strip()
+                if normalized_diff not in ["Easy", "Medium", "Hard"]:
+                    if "easy" in normalized_diff.lower() or "beginner" in normalized_diff.lower():
+                        normalized_diff = "Easy"
+                    elif "hard" in normalized_diff.lower() or "expert" in normalized_diff.lower() or "difficult" in normalized_diff.lower():
+                        normalized_diff = "Hard"
+                    else:
+                        normalized_diff = "Medium"
+                        
+                if normalized_diff in ["Medium", "Hard"] or achieved_diff in ["Medium", "Hard"]:
+                    protected_positions = None
+                    if final_bonus_word:
+                        fb_upper = final_bonus_word.upper()
+                        if fb_upper in all_words_dict:
+                            protected_positions = all_words_dict[fb_upper]
+                    
+                    if generator_instance._has_ing_sequence(board, depth, protected_positions=protected_positions):
+                        generator_instance._guarantee_no_ing(board, depth, protected_positions=protected_positions)
+                        display_min = min_word_length
+                        final_depth = 25 if (not is_3d and len(board)*len(board[0]) <= 16) else 14
+                        if bonus_cell:
+                            all_words_dict = generator_instance._solve_board(
+                                board, dictionary, (0, 99999), display_min, max_depth=final_depth, store_paths=True, timeout=15.0, bonus_cell=bonus_cell
+                            )
+                        else:
+                            all_words_dict = generator_instance._solve_board(
+                                board, dictionary, (0, 99999), display_min, max_depth=final_depth, store_paths=True, timeout=15.0
+                            )
+                        all_words = sorted(list(all_words_dict.keys()))
+                        ratio = generator_instance.get_uniqueness_ratio(
+                            board, 
+                            all_words, 
+                            len(board[0]) if is_3d else len(board), 
+                            len(board[0][0]) if is_3d else len(board[0]), 
+                            dictionary, 
+                            depth
+                        )
+                
+                board_data = {
+                    "board": board,
+                    "all_words": all_words,
+                    "bonus_cell": list(bonus_cell) if bonus_cell else None,
+                    "board_format_ret": board_format_ret,
+                    "all_words_dict": all_words_dict,
+                    "ratio": ratio,
+                    "final_bonus_word": final_bonus_word
+                }
+                
+                try:
+                    conn = sqlite3.connect(db_path, timeout=30)
+                    conn.execute(
+                        "INSERT INTO pregenerated_boards (param_key, board_json, created_at) VALUES (?, ?, ?);",
+                        (param_key_str, json.dumps(board_data), time.time())
+                    )
+                    conn.commit()
+                    conn.close()
+                except Exception as e:
+                    print(f"[BoardGen] [Refill] Error inserting to DB: {e}")
+                    time.sleep(1.0)
+                    
+                time.sleep(0.05)
+        except Exception as e:
+            print(f"[BoardGen] [Refill] Background worker error: {e}")
+        finally:
+            with ACTIVE_REFILLS_LOCK:
+                ACTIVE_REFILLS.remove(param_key_str)
+                
+    t = threading.Thread(target=_worker, daemon=True)
+    t.start()
+
 class BoardGenerator:
     # Class-level cache for optimal board generation method per parameter set
     method_cache = {}
@@ -150,6 +328,24 @@ class BoardGenerator:
         self.letters = [chr(65 + i) for i in range(26)]  # A-Z
         self.unique_sets = {}
         self.cube_neighbor_cache = None
+        
+        # Initialize the SQLite table for pre-generated boards
+        try:
+            db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
+            conn = sqlite3.connect(db_path, timeout=30)
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS pregenerated_boards (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    param_key TEXT NOT NULL,
+                    board_json TEXT NOT NULL,
+                    created_at REAL NOT NULL
+                );
+            ''')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_param_key ON pregenerated_boards(param_key);')
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"[BoardGen] Error initializing pre-generated boards table: {e}")
 
     def _get_difficulty_set(self, dictionary_type):
         """Lazy-load and cache unique word sets for diff validation"""
@@ -978,8 +1174,21 @@ class BoardGenerator:
     ):
         """
         Generate a valid board that meets word count requirements (100-300).
-        RESTARTED: Simplified logic with ironclad compliance.
+        RESTARTED: Serves cached boards with pre-calculated metadata if available,
+        otherwise generates synchronously and refills cache in background.
         """
+        param_key_str = serialize_param_key(
+            dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty
+        )
+        
+        # Try to pop a pre-generated board from the cache
+        cached_res = pop_cached_board(param_key_str)
+        if cached_res:
+            # Trigger background refill to replace the popped board
+            refill_board_cache_bg(self, param_key_str, target_count=50)
+            return cached_res
+            
+        # Fallback to synchronous generation
         res = self._generate_board_internal(
             dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, is_emergency, timeout
         )
@@ -1042,7 +1251,11 @@ class BoardGenerator:
                     depth
                 )
                 
+        # Trigger background refill to populate the cache up to 50
+        refill_board_cache_bg(self, param_key_str, target_count=50)
+        
         return (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word)
+
 
     def _generate_board_internal(
         self, dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length=3, difficulty="Medium", is_emergency=False, timeout=None
