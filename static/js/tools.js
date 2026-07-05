@@ -3448,6 +3448,19 @@ async function generateRandomWord() {
             setTimeout(() => {
                 defEl.style.transition = 'opacity 0.5s ease';
                 defEl.style.opacity = '1';
+                // Scroll to the bottom on mobile viewports so all info is visible
+                const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (isMobile) {
+                    const contentEl = document.querySelector('#page-tools .tools-content');
+                    if (contentEl) {
+                        setTimeout(() => {
+                            contentEl.scrollTo({
+                                top: contentEl.scrollHeight,
+                                behavior: 'smooth'
+                            });
+                        }, 100);
+                    }
+                }
             }, 100);
         }
 
@@ -3666,9 +3679,22 @@ async function runValidationCheck() {
                 }
                 defEl.innerHTML = html;
                 setTimeout(() => {
-                    defEl.style.transition = 'opacity 0.5s ease';
-                    defEl.style.opacity = '1';
-                }, 100);
+                     defEl.style.transition = 'opacity 0.5s ease';
+                     defEl.style.opacity = '1';
+                     // Scroll to the bottom on mobile viewports so all info is visible
+                     const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                     if (isMobile) {
+                         const contentEl = document.querySelector('#page-tools .tools-content');
+                         if (contentEl) {
+                             setTimeout(() => {
+                                 contentEl.scrollTo({
+                                     top: contentEl.scrollHeight,
+                                     behavior: 'smooth'
+                                 });
+                             }, 100);
+                         }
+                     }
+                 }, 100);
             } else {
                 defEl.style.opacity = '0';
                 setTimeout(() => defEl.innerHTML = '', 500);
