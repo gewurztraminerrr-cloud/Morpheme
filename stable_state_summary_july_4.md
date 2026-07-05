@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `b3ffbb7e52c8e778918e695e7cc0f26e5c932457`
+* **Commit ID**: `66032b736f15b1498543ebc076bdd00e7b20b4d2`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -36,7 +36,7 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
      - **Bounce 1x**: Low speed range (1.5 to 3.5 px/frame).
      - **Big Bounce / Medium**: Medium speed range (4.5 to 7.5 px/frame).
      - **Mega Bounce / High**: High speed range (8.5 to 13.5 px/frame).
-   - Allowed Bounce multiplier formats to persist under high-density requirements in the backend.
+     - Allowed Bounce multiplier formats to persist under high-density requirements in the backend.
 
 5. **Split Layout Sidebar Width & Spacing Adjustments**:
    - Reduced the desktop/laptop sidebar width (`.tools-sidebar`) from `400px` to `300px`, recovering 100px of horizontal space.
@@ -97,6 +97,18 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
     - Placed the game dashboard (jumbled word, word counts, input, buttons) at the top, and stacked the **Status & Results** panel underneath it.
     - Reduced the large jumbled word size from `5rem` to `3.2rem`, optimized button heights to `45px`, and tightened container paddings/margins.
     - Added vertical scrolling (`overflow-y: auto !important;`) to the main content panel of `#tool-unscramble`, letting containers expand naturally so that players can scroll down the page to view the full Status & Results content.
+
+17. **Mobile Carousel Restorations for Settings, Tools, and Mods**:
+    - Restored the working horizontal swipe/scroll snap carousel for Settings, Tools, and Mods on mobile devices.
+    - Reverted layout issues where sidebar and content panes overlapped, and established correct scrolling behavior and 100% viewport container heights.
+
+18. **Unscramble Tool Mobile Layout and Scrolling Enhancements**:
+    - Restructured the Unscramble tool on mobile to place the "Status & Results" panel directly below the scrambled word game area.
+    - Scoped vertical scrolling (`max-height: 260px` with custom thin scrollbar) specifically to the "Session History" list within Status & Results, keeping the "Active" section pinned at the top.
+    - Styled the "Reveal" button with a highly readable blue gradient background to align with modern design standards.
+
+19. **New FAQ Entries**:
+    - Added entries to the game FAQ explaining why the 3D cube sizes are adjustable on mobile even though mobile displays are limited to 2D boards, and detailed explanations of why Spinner Set parameters might diverge from generated board parameters due to sanitization and timeout fallbacks.
 
 ## Verification
 * **Local**: Verified dictionary test cases (all passed).
