@@ -11,7 +11,7 @@ const pages = {
     'btn-play': 'page-play',
     'btn-leaderboards': 'page-leaderboards',
     'nav-tournaments-btn': 'page-tournaments',
-    'btn-store': 'page-store',
+    'nav-profile-btn': 'page-profile',
     'btn-forums': 'page-forums',
     'btn-tools': 'page-tools',
     'btn-settings': 'page-settings',
@@ -898,6 +898,12 @@ function setupNavigation() {
             const pageId = 'page-' + pageTarget;
             showPage(pageId);
             updateActiveNav(btn);
+
+            if (pageTarget === 'profile' && window.currentUser) {
+                if (typeof window.performProfileSearch === 'function') {
+                    window.performProfileSearch(window.currentUser);
+                }
+            }
         });
     });
 }
@@ -1506,8 +1512,7 @@ function updateAuthUI(rating = null) {
             // RESTORED: Profile navigation on click
             usernameEl.onclick = () => {
                 if (typeof window.performProfileSearch === 'function') {
-                    showPage('page-tools');
-                    window.showTool('profile'); // Uses the new window.showTool helper
+                    showPage('page-profile');
                     window.performProfileSearch(currentUser);
                 }
             };

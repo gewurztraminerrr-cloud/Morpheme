@@ -777,7 +777,7 @@ body.theme-light-brown .field-hint {
     background: rgba(var(--accent-rgb), 0.05);
 }
 /* Store Page Styling */
-#page-store {
+#tool-store {
     max-width: 1000px;
     margin: 0 auto;
     padding: 20px;
@@ -1183,7 +1183,7 @@ body.theme-light-brown .field-hint {
 }
 
 @media (max-width: 900px) {
-    #page-store {
+    #tool-store {
         padding: 10px !important;
     }
     .store-tabs {

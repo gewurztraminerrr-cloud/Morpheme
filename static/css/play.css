@@ -4971,8 +4971,8 @@ input[type=range]::-moz-range-track {
         height: auto !important;
     }
 
-    /* Keep header locked on mobile for Store, Donate, Leaderboards, and Tournaments */
-    #page-store,
+    /* Keep header locked on mobile for Profile, Donate, Leaderboards, and Tournaments */
+    #page-profile,
     #page-donate,
     #page-leaderboards,
     #page-tournaments {
@@ -4989,7 +4989,7 @@ input[type=range]::-moz-range-track {
         -webkit-overflow-scrolling: touch !important;
     }
 
-    #page-store.active,
+    #page-profile.active,
     #page-donate.active,
     #page-leaderboards.active,
     #page-tournaments.active {

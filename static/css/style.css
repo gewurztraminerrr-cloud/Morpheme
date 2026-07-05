@@ -4958,7 +4958,7 @@ body .tab-btn.active {
    STORE PAGE STYLES
    ========================================= */
 
-#page-store {
+#tool-store {
     padding: 2rem;
 }
 
@@ -6396,7 +6396,7 @@ select option,
 
 /* Mobile Responsive Profile Overrides */
 @media (max-width: 600px) {
-    #tool-profile {
+    #page-profile {
         padding: 10px !important;
     }
     .profile-card {

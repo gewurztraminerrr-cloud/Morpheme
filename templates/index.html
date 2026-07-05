@@ -34,9 +34,9 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css?v=51">
-    <link rel="stylesheet" href="/css/lobby.css?v=29">
-    <link rel="stylesheet" href="/css/play.css?v=131">
+    <link rel="stylesheet" href="/css/style.css?v=52">
+    <link rel="stylesheet" href="/css/lobby.css?v=30">
+    <link rel="stylesheet" href="/css/play.css?v=132">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=23">
     <link rel="stylesheet" href="/css/donate.css?v=1">
@@ -108,7 +108,7 @@
             <button class="nav-btn" data-page="forums" id="btn-forums">Forum</button>
             <button class="nav-btn" data-page="tools" id="nav-tools-btn">Tools</button>
             <button class="nav-btn" data-page="settings" id="nav-settings-btn">Settings</button>
-            <button class="nav-btn" data-page="store" id="nav-store-btn">Store</button>
+            <button class="nav-btn" data-page="profile" id="nav-profile-btn">Profile</button>
             <button class="nav-btn" data-page="donate" id="nav-donate-btn">Donate</button>
 
 
@@ -125,163 +125,315 @@
     <!-- Pages Container -->
     <main class="pages">
         <!-- Store Page -->
-        <div id="page-store" class="page">
-            <h2>Morpheme Store</h2>
-            <p>Customize your experience.</p>
-            <div class="store-grid" id="store-items-grid">
-                <!-- Hardware category initially visible -->
-                <div class="store-item" data-category="hardware">
-                    <div class="store-item-image">
-                        <img src="/static/images/stylus.png" alt="Yacig 4-in-1 Stylus">
-                    </div>
-                    <div class="store-item-info">
-                        <div class="store-item-header">
-                            <h3>Yacig 4-in-1 Capacitive Stylus</h3>
-                            <span class="store-item-price">$17.98 CAD</span>
+        <!-- Profile Page -->
+        <div id="page-profile" class="page">
+                        <div class="tool-header">
+                            <h2>User Profile</h2>
+                            <p>View player stats and rankings.</p>
                         </div>
-                        <p class="store-item-desc">High-precision 4-in-1 stylus with clear disc tip, mesh fiber, and black rubber tips. Perfect for Morpheme mobile and tablet play!</p>
-                        <ul class="store-item-features">
-                            <li>4-in-1 Tip Design</li>
-                            <li>Universal Compatibility</li>
-                            <li>No Batteries Required</li>
-                            <li>Free Replacement Tips</li>
-                        </ul>
-                        <a href="https://www.amazon.ca/Yacig-Capacitive-Sensitivity-Precision-Compatible/dp/B07GKY9FJZ?th=1" target="_blank" class="buy-now-btn">View on Amazon</a>
-                    </div>
-                </div>
 
-                <!-- New Product: Ergonomic Mousepad -->
-                <div class="store-item" data-category="hardware">
-                    <div class="store-item-image">
-                        <img src="/static/images/mousepad.png" alt="Non-Slip Rubber Mousepad">
-                    </div>
-                    <div class="store-item-info">
-                        <div class="store-item-header">
-                            <h3>Ergonomic Mousepad with Wrist Support</h3>
-                            <span class="store-item-price">$12.99 CAD</span>
+                        <div class="combo-control-panel">
+                            <div class="input-row">
+                                <input type="text" id="profile-search-input" placeholder="Enter username..."
+                                    autocomplete="off">
+                                <button id="profile-search-btn">Search</button>
+                            </div>
+                            <div id="profile-search-error" style="color: #ff4d4d; font-size: 0.9rem; margin-top: 8px; display: none;"></div>
                         </div>
-                        <p class="store-item-desc">High-quality non-slip rubber surface with an integrated, raised wrist rest. This is perfect for repurposing as an ergonomic support while playing Morpheme with a stylus, reducing strain during high-speed word searching.</p>
-                        <ul class="store-item-features">
-                            <li>Built-in Ergonomic Wrist Support</li>
-                            <li>Non-Slip Rubber Base</li>
-                            <li>Smooth Microfiber Surface</li>
-                            <li>Portable & Lightweight</li>
-                        </ul>
-                        <a href="https://www.amazon.ca/Non-Slip-Rubber-Computer-Laptop-Office/dp/B006ZAUD10" target="_blank" class="buy-now-btn">View on Amazon</a>
-                    </div>
-                </div>
 
-                <!-- New Product: Official Scrabble Dictionary (Collins) -->
-                <div class="store-item" data-category="hardware">
-                    <div class="store-item-image">
-                        <img src="/static/images/scrabble_dict_1.png" alt="Official Scrabble Dictionary">
-                    </div>
-                    <div class="store-item-info">
-                        <div class="store-item-header">
-                            <h3>Official Scrabble™ Dictionary (Collins)</h3>
-                            <span class="store-item-price">$16.78 CAD</span>
+                        <div id="profile-display-container" class="profile-container hidden">
+                            <div class="profile-card premium">
+                                <div class="profile-layout">
+                                    <!-- Left Column: Avatar -->
+                                     <div class="profile-left-column">
+                                         <div class="profile-avatar-container">
+                                             <div id="profile-avatar-trigger" title="Click to upload photo" style="width: 100%; height: 100%; cursor: pointer; position: relative; display: block; border-radius: inherit; margin: 0; padding: 0;">
+                                                 <div class="profile-avatar large" style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; border-radius: inherit;">
+                                                     ?
+                                                 </div>
+                                                 <input type="file" id="profile-avatar-input" accept="image/*" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; opacity: 0;">
+                                             </div>
+                                         </div>
+                                     </div>
+
+                                    <!-- Right Column: Details -->
+                                    <div class="profile-right-column">
+                                        <div class="profile-identity">
+                                            <div class="profile-title-row">
+                                                <h1 id="profile-username" class="profile-username-large">Player</h1>
+                                                <div id="profile-status-indicator" class="status-indicator offline"
+                                                    title="Offline"></div>
+                                                <button id="profile-message-btn"
+                                                    class="message-btn hidden">Message</button>
+                                                <button id="profile-friend-btn" class="friend-action-btn hidden">Add
+                                                    Friend</button>
+                                                <button id="profile-follow-btn"
+                                                    class="follow-btn hidden">Follow</button>
+                                                <button id="profile-refresh-btn" class="profile-refresh-btn" title="Refresh Profile and Round Reviews">🔄</button>
+                                                <input type="hidden" id="profile-current-room" value="">
+                                            </div>
+
+                                            <div class="profile-quote-minimal">
+                                                <p id="profile-quote-val">Enter a personal quote
+                                                </p>
+                                            </div>
+
+                                            <div class="profile-metadata-row">
+                                                <div class="meta-item" title="Real Name">
+                                                    <span class="meta-icon">🆔</span>
+                                                    <span class="meta-label">Name</span>
+                                                    <span id="profile-full-name" class="meta-text">-</span>
+                                                </div>
+                                                <div class="meta-item" title="Age">
+                                                    <span class="meta-icon">🎂</span>
+                                                    <span class="meta-label">Age</span>
+                                                    <span id="profile-age-val" class="meta-text">-</span>
+                                                </div>
+                                                <div class="meta-item" title="Gender">
+                                                    <span class="meta-icon">👤</span>
+                                                    <span class="meta-label">Gender</span>
+                                                    <span id="profile-gender-val" class="meta-text">-</span>
+                                                </div>
+                                                <div class="meta-item" title="Location">
+                                                    <div class="custom-dropdown-container">
+                                                        <span class="profile-flag" id="profile-flag"
+                                                            style="cursor: pointer;">🏳️</span>
+                                                        <div id="flag-dropdown" class="dropdown-menu">
+                                                            <div class="dropdown-header">
+                                                                <input type="text" id="flag-dropdown-search"
+                                                                    class="dropdown-search"
+                                                                    placeholder="Search countries...">
+                                                            </div>
+                                                            <div id="flag-dropdown-list" class="dropdown-list">
+                                                                <!-- Flags injected here -->
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <span id="profile-flag-name" class="flag-name-label"></span>
+                                                    <span class="meta-label">Location</span>
+                                                    <span id="profile-location-val" class="meta-text">-</span>
+                                                </div>
+                                                <div class="meta-item" id="profile-joined-container"
+                                                    title="Joined Morpheme">
+                                                    <span class="meta-icon">🗓️</span>
+                                                    <span class="meta-label">Joined</span>
+                                                    <span id="profile-joined-val" class="meta-text">-</span>
+                                                </div>
+                                                <div class="meta-item" id="profile-proof-container"
+                                                    title="Proof of Legitimacy">
+                                                    <span class="meta-icon">🎥</span>
+                                                    <span class="meta-label">Proof</span>
+                                                    <a id="profile-proof-link" href="#" target="_blank"
+                                                        class="proof-link hidden">View
+                                                        Legitimacy Video</a>
+                                                    <span id="profile-proof-placeholder" class="meta-text">No proof
+                                                        provided</span>
+                                                    <input type="text" id="profile-proof-input"
+                                                        class="proof-edit-input hidden"
+                                                        placeholder="Enter YouTube URL...">
+                                                </div>
+                                            </div>
+                                        </div> <!-- End profile-identity -->
+                                    </div> <!-- End Right Column -->
+                                </div> <!-- End Layout Row -->
+
+                                <div class="profile-description-minimal">
+                                    <span class="meta-label">About Me</span>
+                                    <div id="profile-description-val" class="description-text">
+                                        Add a
+                                        detailed description about yourself...</div>
+                                </div>
+
+                                <div class="profile-stats-grid">
+                                    <div class="stat-box">
+                                        <span class="stat-num" id="profile-games">0</span>
+                                        <span class="stat-desc">GAMES</span>
+                                    </div>
+                                    <div class="stat-box">
+                                        <span class="stat-num" id="profile-win-rate">0%</span>
+                                        <span class="stat-desc">WIN RATE</span>
+                                    </div>
+                                    <div class="stat-box">
+                                        <span class="stat-num" id="profile-avg-wpm"
+                                            title="Fastest sequence of words (min 5 words found)">0</span>
+                                        <span class="stat-desc">AVG WPM</span>
+                                    </div>
+                                    <div class="stat-box">
+                                        <span class="stat-num" id="profile-best-score">-</span>
+                                        <span class="stat-desc">BEST</span>
+                                    </div>
+                                    <div class="stat-box">
+                                        <span class="stat-num" id="profile-pt-sum">0</span>
+                                        <span class="stat-desc">PT SUM</span>
+                                    </div>
+                                </div>
+
+                                <div class="profile-content-tabs">
+                                    <div class="profile-tabs-header">
+                                        <button class="profile-tab-toggle active" data-tab="rankings">Skill
+                                            Rankings</button>
+                                        <button class="profile-tab-toggle" data-tab="exceptional">Exceptional
+                                            Rounds</button>
+                                        <button class="profile-tab-toggle" data-tab="history">Round Reviews</button>
+                                        <button id="profile-tab-toggle-friends" class="profile-tab-toggle hidden"
+                                            data-tab="friends">Friends</button>
+                                    </div>
+
+                                    <div id="profile-tab-rankings" class="profile-tab-pane active">
+                                        <div class="profile-ratings-section">
+                                            <!-- Global Profile Period Filter (for Skill Rankings) -->
+                                            <div class="ratings-filters">
+                                                <div class="filter-group">
+                                                    <label
+                                                        style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Game
+                                                        Mode</label>
+                                                    <select id="rankings-filter-mode"
+                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
+                                                        <option value="all">All Modes</option>
+                                                        <option value="accumulative">
+                                                            Accumulative</option>
+                                                        <option value="3d">Cube</option>
+                                                        <option value="fcfs">First Come First
+                                                            Serve</option>
+                                                        <option value="split">Split Points
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                                <div class="filter-group">
+                                                    <label
+                                                        style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Dimensions</label>
+                                                    <select id="rankings-filter-dims"
+                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
+                                                        <option value="all">All Sizes</option>
+                                                        <option value="4x4">4x4</option>
+                                                        <option value="4x6">4x6</option>
+                                                        <option value="5x7">5x7</option>
+                                                        <option value="6x8">6x8</option>
+                                                        <option value="3x3x3">3x3x3 Cube</option>
+                                                    </select>
+                                                </div>
+                                                <div class="filter-group">
+                                                    <label
+                                                        style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Time
+                                                        Limit</label>
+                                                    <select id="rankings-filter-time"
+                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
+                                                        <option value="all">All Times</option>
+                                                        <option value="45">45 Seconds</option>
+                                                        <option value="180">3 Minutes</option>
+                                                        <option value="300">5 Minutes</option>
+                                                        <option value="600">10 Minutes</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div id="profile-ratings-grid" class="ratings-grid">
+                                                <!-- Populated by JS -->
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="profile-tab-exceptional" class="profile-tab-pane">
+
+                                        <div class="profile-history-section">
+                                            <div id="profile-exceptional-list" class="history-list">
+                                                <!-- Populated by JS -->
+                                                <p class="placeholder">Analyzing your most
+                                                    outstanding
+                                                    achievements...
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="profile-tab-history" class="profile-tab-pane">
+
+                                        <div class="profile-history-section">
+                                            <div id="profile-history-list" class="history-list">
+                                                <!-- Populated by JS -->
+                                                <p class="placeholder">No recently tracked
+                                                    rounds.</p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Integrated Replay Panel -->
+                                        <div id="integrated-replay-panel" class="integrated-replay-container hidden">
+                                            <div class="integrated-replay-header">
+                                                <div class="header-main">
+                                                    <h3
+                                                        style="font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: 1px;">
+                                                        ROUND REPLAY</h3>
+                                                </div>
+                                            </div>
+                                            <div class="integrated-replay-layout">
+                                                <div class="replay-main">
+                                                    <!-- Board placed at the top as requested -->
+                                                    <div id="integrated-board-container"
+                                                        class="integrated-review-board">
+                                                        <!-- Populated by JS -->
+                                                    </div>
+
+
+                                                    <div class="replay-controls-row">
+                                                        <button id="integrated-start-btn"
+                                                            class="replay-action-btn primary">▶
+                                                            Watch</button>
+                                                        <button id="integrated-skip-btn"
+                                                            class="replay-action-btn secondary hidden">Show
+                                                            All</button>
+
+                                                        <div id="integrated-progress-ui"
+                                                            class="integrated-progress-ui hidden">
+                                                            <div
+                                                                style="display: flex; flex-direction: column; gap: 2px;">
+                                                                <span id="integrated-current-time"
+                                                                    style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #409cff;">0:00.0</span>
+                                                                <span id="integrated-current-score"
+                                                                    style="font-size: 0.7rem; font-weight: 800; color: #ffd700; text-transform: uppercase;">0
+                                                                    pts</span>
+                                                            </div>
+
+                                                            <div class="mini-progress-bg">
+                                                                <div id="integrated-progress-bar"
+                                                                    class="mini-progress-fill">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div id="integrated-walkthrough-list"
+                                                        class="integrated-walkthrough-list">
+                                                        <!-- Populated by JS -->
+                                                    </div>
+                                                </div>
+
+                                                <div class="replay-sidebar">
+                                                    <div id="integrated-players-list" class="replay-players-list hidden"
+                                                        style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; border: 1px solid rgba(255,255,255,0.05);">
+                                                        <h4
+                                                            style="font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 12px; letter-spacing: 1.5px; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                                                            Round Participants</h4>
+                                                        <div id="integrated-players-body"
+                                                            style="display: flex; flex-direction: column; gap: 10px;">
+                                                            <!-- Populated by JS -->
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="profile-tab-friends" class="profile-tab-pane">
+                                        <div class="profile-friends-section">
+                                            <div id="profile-friends-list" class="friends-grid">
+                                                <!-- Populated by JS -->
+                                                <p class="placeholder">You haven't added any
+                                                    friends yet.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <p class="store-item-desc"><strong>Comprehensive Word List:</strong> This official Collins Scrabble dictionary is essential for Morpheme because it shows you 2-9 letter words. It covers the vast majority of playable words you'll encounter on standard and extended boards, letting you settle word-validity debates and expand your morpheme knowledge for high-speed tournament play.</p>
-                        <ul class="store-item-features">
-                            <li>Shows 2-9 Letter Words</li>
-                            <li>Official Scrabble Authority</li>
-                            <li>Bestselling Reference Guide</li>
-                            <li>Perfect for Extended Play</li>
-                        </ul>
-                        <a href="https://www.amazon.ca/SCRABBLETM-Dictionary-official-bestselling-playable/dp/0008660735" target="_blank" class="buy-now-btn">View on Amazon</a>
-                    </div>
-                </div>
-
-                <!-- New Product: Official Scrabble Players Dictionary Seventh Edition (MW) -->
-                <div class="store-item" data-category="hardware">
-                    <div class="store-item-image">
-                        <img src="/static/images/scrabble_players_dict_6.png" alt="Official Scrabble Players Dictionary Seventh Edition">
-                    </div>
-                    <div class="store-item-info">
-                        <div class="store-item-header">
-                            <h3>Official Scrabble Players Dictionary (Seventh Edition)</h3>
-                            <span class="store-item-price">$13.50 CAD</span>
-                        </div>
-                        <p class="store-item-desc"><strong>The Pro Lexicon:</strong> For serious Morpheme competitors, the Seventh Edition Players Dictionary is an essential tool. It's perfect for Morpheme because it shows you 2-8 letter words, focusing on the core lexicon of professional play. Mastering this dictionary ensures your word-finding skills are sharp and aligned with international standards.</p>
-                        <ul class="store-item-features">
-                            <li>Shows 2-8 Letter Words</li>
-                            <li>Primary Tournament Authority</li>
-                            <li>Seventh Edition (Latest Standard)</li>
-                            <li>Crucial for Competitive Play</li>
-                        </ul>
-                        <a href="https://www.amazon.ca/Official-Scrabble-Players-Dictionary-Seventh/dp/0877795959" target="_blank" class="buy-now-btn">View on Amazon</a>
-                    </div>
-                </div>
-
-
-                <!-- New Product: Samsung Galaxy S25 Ultra -->
-                <div class="store-item" data-category="hardware">
-                    <div class="store-item-image">
-                        <img src="/static/images/phones25_final.png" alt="Samsung Galaxy S25 Ultra">
-                    </div>
-                    <div class="store-item-info">
-                        <div class="store-item-header">
-                            <h3>Samsung Galaxy S25 Ultra (The Ultimate Mobile Platform)</h3>
-                            <span class="store-item-price">$1,798.99 CAD</span>
-                        </div>
-                        <p class="store-item-desc"><strong>The Perfect Choice:</strong> With a 6.9" Dynamic AMOLED 2X display and an integrated S-Pen, this is the ultimate way to play Morpheme. The colors are incredibly vibrant, and the S-Pen offers surgical precision for complex word paths.</p>
-                        <p class="store-item-desc"><strong>Motion Sensitivity:</strong> Features a high-fidelity 120Hz refresh rate, ensuring that your swipes are tracked with zero perceptible latency, critical for tournament-level speed.</p>
-                        <p class="store-item-desc"><strong>Performance:</strong> Powered by the Snapdragon 8 Elite and 12GB of RAM, this device handles even the most complex 6x8 boards and real-time animations with total fluid stability.</p>
-                        <a href="https://www.amazon.ca/Samsung-Galaxy-AMOLED-Display-AI-Enhanced/dp/B0F2ZS5VC4" target="_blank" class="buy-now-btn">View on Amazon</a>
-                    </div>
-                </div>
-
-                <!-- New Product: OnePlus 15 -->
-                <div class="store-item" data-category="hardware">
-                    <div class="store-item-image">
-                        <img src="/static/images/oneplus15_final.png" alt="OnePlus 15">
-                    </div>
-                    <div class="store-item-info">
-                        <div class="store-item-header">
-                            <h3>OnePlus 15 (Extreme Speed Platform)</h3>
-                            <span class="store-item-price">$1,399.99 CAD</span>
-                        </div>
-                        <p class="store-item-desc"><strong>The Record Breaker:</strong> If you value pure speed, the OnePlus 15 is your choice. Its 6.78" AMOLED screen is the only flagship currently supporting a <strong>165Hz Refresh Rate</strong>, offering the smoothest Morpheme experience possible.</p>
-                        <p class="store-item-desc"><strong>Motion Sensitivity:</strong> With its class-leading 165Hz panel, the latency between your finger and the word-pathing engine is decimated, allowing for insane word-per-minute (WPM) rates.</p>
-                        <p class="store-item-desc"><strong>Performance:</strong> Packed with the massive powerhouse of the <strong>Snapdragon 8 Elite Gen 5</strong> and <strong>16GB RAM</strong>, it provides uncompromising power that never throttles during intense tournament sessions.</p>
-                        <a href="https://www.bestbuy.ca/en-ca/product/oneplus-15-512gb-infinite-black-unlocked/19634597" target="_blank" class="buy-now-btn">View on Best Buy</a>
-                    </div>
-                </div>
-
-                <!-- New Product: iPhone 17 Pro -->
-                <div class="store-item" data-category="hardware">
-                    <div class="store-item-image">
-                        <img src="/static/images/iphone17_final.png" alt="iPhone 17 Pro">
-                    </div>
-                    <div class="store-item-info">
-                        <div class="store-item-header">
-                            <h3>Apple iPhone 17 Pro (Elite Gaming Platform)</h3>
-                            <span class="store-item-price">$1,599.00 CAD</span>
-                        </div>
-                        <p class="store-item-desc"><strong>Why it's Perfect:</strong> The iPhone 17 Pro features the new <strong>A19 Pro chip</strong> with laser-welded vapour chamber cooling, ensuring that your Morpheme sessions stay at a locked 120FPS even during the most complex 6x8 grid animations.</p>
-                        <p class="store-item-desc"><strong>Touch & Motion Sensitivity:</strong> The 120Hz ProMotion display offers the lowest touch latency in its class, perfectly syncing each swipe with the game's pathing engine. Improved motion sensors and <strong>Center Stage</strong> motion detection keep your focus sharp.</p>
-                        <p class="store-item-desc"><strong>Tactile Feedback:</strong> Advanced <strong>Haptics</strong> through the Taptic Engine provide crisp, tactile confirmation for every letter you select, significantly reducing errors during high-speed play.</p>
-                        <a href="https://www.bestbuy.ca/en-ca/product/open-box-apple-iphone-17-pro-512gb-deep-blue-unlocked/19483947" target="_blank" class="buy-now-btn">View on Best Buy</a>
-                    </div>
-                </div>
-
-                <!-- New Product: iPad Pro 11-inch (M5) -->
-                <div class="store-item" data-category="hardware">
-                    <div class="store-item-image">
-                        <img src="/static/images/ipadpro11m5_final.png" alt="iPad Pro 11-inch M5">
-                    </div>
-                    <div class="store-item-info">
-                        <div class="store-item-header">
-                            <h3>Apple iPad Pro 11-inch (M5 Pro Platform)</h3>
-                            <span class="store-item-price">$1,398.99 CAD</span>
-                        </div>
-                        <p class="store-item-desc"><strong>The Ultimate Canvas:</strong> Featuring the brand new <strong>M5 chip</strong>, this is the most powerful Morpheme device ever made. Its <strong>Ultra Retina XDR (Tandem OLED)</strong> display provides extreme contrast and vibrancy for the game's color themes.</p>
-                        <p class="store-item-desc"><strong>High Precision:</strong> Optimized for high-sensitivity <strong>Apple Pencil Pro</strong> use, including hover detection that allows you to see your word path before you even touch the screen. The 120Hz ProMotion ensures instant response.</p>
-                        <p class="store-item-desc"><strong>Form Factor:</strong> The ultra-thin 11-inch design is the Morpheme community's favorite—offering a massive, clear view of the board while remaining light enough for comfortable hand-held tournament use.</p>
-                        <a href="https://www.amazon.ca/Apple-iPad-Pro-11-inch-M5/dp/B0FWDD257H?th=1" target="_blank" class="buy-now-btn">View on Amazon</a>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Global Audio Elements (Outside of SPA hidden containers) -->
@@ -1257,10 +1409,6 @@
             <div class="tools-split-layout">
                 <!-- Sidebar (1/3) -->
                 <div class="tools-sidebar">
-                    <button class="tool-nav-btn" data-tool="profile" onclick="window.showTool('profile')">
-                        <div class="tool-btn-title">Profile</div>
-                        <div class="tool-btn-desc">View player stats and rankings</div>
-                    </button>
                     <button class="tool-nav-btn" data-tool="combo" onclick="window.showTool('combo')">
                         <div class="tool-btn-title">Combo Checker</div>
                         <div class="tool-btn-desc">Find connected words via MP & LIC</div>
@@ -1300,6 +1448,10 @@
                     <button class="tool-nav-btn" data-tool="timer" onclick="window.showTool('timer')">
                         <div class="tool-btn-title">Personal Timer</div>
                         <div class="tool-btn-desc">Set a session alert timer</div>
+                    </button>
+                    <button class="tool-nav-btn" data-tool="store" onclick="window.showTool('store')">
+                        <div class="tool-btn-title">Store</div>
+                        <div class="tool-btn-desc">Customize your experience</div>
                     </button>
                 </div>
 
@@ -1397,314 +1549,166 @@
                         </div>
                     </div>
                     <!-- Profile Interface -->
-                    <div id="tool-profile" class="tool-pane">
+                    <!-- Store Interface -->
+                    <div id="tool-store" class="tool-pane">
                         <div class="tool-header">
-                            <h2>User Profile</h2>
-                            <p>View player stats and rankings.</p>
+                            <h2>Morpheme Store</h2>
+                            <p>Customize your experience.</p>
                         </div>
-
-                        <div class="combo-control-panel">
-                            <div class="input-row">
-                                <input type="text" id="profile-search-input" placeholder="Enter username..."
-                                    autocomplete="off">
-                                <button id="profile-search-btn">Search</button>
-                            </div>
-                            <div id="profile-search-error" style="color: #ff4d4d; font-size: 0.9rem; margin-top: 8px; display: none;"></div>
+                        <div class="store-grid" id="store-items-grid" style="margin-top: 15px;">
+                <!-- Hardware category initially visible -->
+                <div class="store-item" data-category="hardware">
+                    <div class="store-item-image">
+                        <img src="/static/images/stylus.png" alt="Yacig 4-in-1 Stylus">
+                    </div>
+                    <div class="store-item-info">
+                        <div class="store-item-header">
+                            <h3>Yacig 4-in-1 Capacitive Stylus</h3>
+                            <span class="store-item-price">$17.98 CAD</span>
                         </div>
+                        <p class="store-item-desc">High-precision 4-in-1 stylus with clear disc tip, mesh fiber, and black rubber tips. Perfect for Morpheme mobile and tablet play!</p>
+                        <ul class="store-item-features">
+                            <li>4-in-1 Tip Design</li>
+                            <li>Universal Compatibility</li>
+                            <li>No Batteries Required</li>
+                            <li>Free Replacement Tips</li>
+                        </ul>
+                        <a href="https://www.amazon.ca/Yacig-Capacitive-Sensitivity-Precision-Compatible/dp/B07GKY9FJZ?th=1" target="_blank" class="buy-now-btn">View on Amazon</a>
+                    </div>
+                </div>
 
-                        <div id="profile-display-container" class="profile-container hidden">
-                            <div class="profile-card premium">
-                                <div class="profile-layout">
-                                    <!-- Left Column: Avatar -->
-                                     <div class="profile-left-column">
-                                         <div class="profile-avatar-container">
-                                             <div id="profile-avatar-trigger" title="Click to upload photo" style="width: 100%; height: 100%; cursor: pointer; position: relative; display: block; border-radius: inherit; margin: 0; padding: 0;">
-                                                 <div class="profile-avatar large" style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; border-radius: inherit;">
-                                                     ?
-                                                 </div>
-                                                 <input type="file" id="profile-avatar-input" accept="image/*" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; opacity: 0;">
-                                             </div>
-                                         </div>
-                                     </div>
-
-                                    <!-- Right Column: Details -->
-                                    <div class="profile-right-column">
-                                        <div class="profile-identity">
-                                            <div class="profile-title-row">
-                                                <h1 id="profile-username" class="profile-username-large">Player</h1>
-                                                <div id="profile-status-indicator" class="status-indicator offline"
-                                                    title="Offline"></div>
-                                                <button id="profile-message-btn"
-                                                    class="message-btn hidden">Message</button>
-                                                <button id="profile-friend-btn" class="friend-action-btn hidden">Add
-                                                    Friend</button>
-                                                <button id="profile-follow-btn"
-                                                    class="follow-btn hidden">Follow</button>
-                                                <button id="profile-refresh-btn" class="profile-refresh-btn" title="Refresh Profile and Round Reviews">🔄</button>
-                                                <input type="hidden" id="profile-current-room" value="">
-                                            </div>
-
-                                            <div class="profile-quote-minimal">
-                                                <p id="profile-quote-val">Enter a personal quote
-                                                </p>
-                                            </div>
-
-                                            <div class="profile-metadata-row">
-                                                <div class="meta-item" title="Real Name">
-                                                    <span class="meta-icon">🆔</span>
-                                                    <span class="meta-label">Name</span>
-                                                    <span id="profile-full-name" class="meta-text">-</span>
-                                                </div>
-                                                <div class="meta-item" title="Age">
-                                                    <span class="meta-icon">🎂</span>
-                                                    <span class="meta-label">Age</span>
-                                                    <span id="profile-age-val" class="meta-text">-</span>
-                                                </div>
-                                                <div class="meta-item" title="Gender">
-                                                    <span class="meta-icon">👤</span>
-                                                    <span class="meta-label">Gender</span>
-                                                    <span id="profile-gender-val" class="meta-text">-</span>
-                                                </div>
-                                                <div class="meta-item" title="Location">
-                                                    <div class="custom-dropdown-container">
-                                                        <span class="profile-flag" id="profile-flag"
-                                                            style="cursor: pointer;">🏳️</span>
-                                                        <div id="flag-dropdown" class="dropdown-menu">
-                                                            <div class="dropdown-header">
-                                                                <input type="text" id="flag-dropdown-search"
-                                                                    class="dropdown-search"
-                                                                    placeholder="Search countries...">
-                                                            </div>
-                                                            <div id="flag-dropdown-list" class="dropdown-list">
-                                                                <!-- Flags injected here -->
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <span id="profile-flag-name" class="flag-name-label"></span>
-                                                    <span class="meta-label">Location</span>
-                                                    <span id="profile-location-val" class="meta-text">-</span>
-                                                </div>
-                                                <div class="meta-item" id="profile-joined-container"
-                                                    title="Joined Morpheme">
-                                                    <span class="meta-icon">🗓️</span>
-                                                    <span class="meta-label">Joined</span>
-                                                    <span id="profile-joined-val" class="meta-text">-</span>
-                                                </div>
-                                                <div class="meta-item" id="profile-proof-container"
-                                                    title="Proof of Legitimacy">
-                                                    <span class="meta-icon">🎥</span>
-                                                    <span class="meta-label">Proof</span>
-                                                    <a id="profile-proof-link" href="#" target="_blank"
-                                                        class="proof-link hidden">View
-                                                        Legitimacy Video</a>
-                                                    <span id="profile-proof-placeholder" class="meta-text">No proof
-                                                        provided</span>
-                                                    <input type="text" id="profile-proof-input"
-                                                        class="proof-edit-input hidden"
-                                                        placeholder="Enter YouTube URL...">
-                                                </div>
-                                            </div>
-                                        </div> <!-- End profile-identity -->
-                                    </div> <!-- End Right Column -->
-                                </div> <!-- End Layout Row -->
-
-                                <div class="profile-description-minimal">
-                                    <span class="meta-label">About Me</span>
-                                    <div id="profile-description-val" class="description-text">
-                                        Add a
-                                        detailed description about yourself...</div>
-                                </div>
-
-                                <div class="profile-stats-grid">
-                                    <div class="stat-box">
-                                        <span class="stat-num" id="profile-games">0</span>
-                                        <span class="stat-desc">GAMES</span>
-                                    </div>
-                                    <div class="stat-box">
-                                        <span class="stat-num" id="profile-win-rate">0%</span>
-                                        <span class="stat-desc">WIN RATE</span>
-                                    </div>
-                                    <div class="stat-box">
-                                        <span class="stat-num" id="profile-avg-wpm"
-                                            title="Fastest sequence of words (min 5 words found)">0</span>
-                                        <span class="stat-desc">AVG WPM</span>
-                                    </div>
-                                    <div class="stat-box">
-                                        <span class="stat-num" id="profile-best-score">-</span>
-                                        <span class="stat-desc">BEST</span>
-                                    </div>
-                                    <div class="stat-box">
-                                        <span class="stat-num" id="profile-pt-sum">0</span>
-                                        <span class="stat-desc">PT SUM</span>
-                                    </div>
-                                </div>
-
-                                <div class="profile-content-tabs">
-                                    <div class="profile-tabs-header">
-                                        <button class="profile-tab-toggle active" data-tab="rankings">Skill
-                                            Rankings</button>
-                                        <button class="profile-tab-toggle" data-tab="exceptional">Exceptional
-                                            Rounds</button>
-                                        <button class="profile-tab-toggle" data-tab="history">Round Reviews</button>
-                                        <button id="profile-tab-toggle-friends" class="profile-tab-toggle hidden"
-                                            data-tab="friends">Friends</button>
-                                    </div>
-
-                                    <div id="profile-tab-rankings" class="profile-tab-pane active">
-                                        <div class="profile-ratings-section">
-                                            <!-- Global Profile Period Filter (for Skill Rankings) -->
-                                            <div class="ratings-filters">
-                                                <div class="filter-group">
-                                                    <label
-                                                        style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Game
-                                                        Mode</label>
-                                                    <select id="rankings-filter-mode"
-                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
-                                                        <option value="all">All Modes</option>
-                                                        <option value="accumulative">
-                                                            Accumulative</option>
-                                                        <option value="3d">Cube</option>
-                                                        <option value="fcfs">First Come First
-                                                            Serve</option>
-                                                        <option value="split">Split Points
-                                                        </option>
-                                                    </select>
-                                                </div>
-                                                <div class="filter-group">
-                                                    <label
-                                                        style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Dimensions</label>
-                                                    <select id="rankings-filter-dims"
-                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
-                                                        <option value="all">All Sizes</option>
-                                                        <option value="4x4">4x4</option>
-                                                        <option value="4x6">4x6</option>
-                                                        <option value="5x7">5x7</option>
-                                                        <option value="6x8">6x8</option>
-                                                        <option value="3x3x3">3x3x3 Cube</option>
-                                                    </select>
-                                                </div>
-                                                <div class="filter-group">
-                                                    <label
-                                                        style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 6px;">Time
-                                                        Limit</label>
-                                                    <select id="rankings-filter-time"
-                                                        style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none; transition: border-color 0.2s;">
-                                                        <option value="all">All Times</option>
-                                                        <option value="45">45 Seconds</option>
-                                                        <option value="180">3 Minutes</option>
-                                                        <option value="300">5 Minutes</option>
-                                                        <option value="600">10 Minutes</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div id="profile-ratings-grid" class="ratings-grid">
-                                                <!-- Populated by JS -->
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div id="profile-tab-exceptional" class="profile-tab-pane">
-
-                                        <div class="profile-history-section">
-                                            <div id="profile-exceptional-list" class="history-list">
-                                                <!-- Populated by JS -->
-                                                <p class="placeholder">Analyzing your most
-                                                    outstanding
-                                                    achievements...
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div id="profile-tab-history" class="profile-tab-pane">
-
-                                        <div class="profile-history-section">
-                                            <div id="profile-history-list" class="history-list">
-                                                <!-- Populated by JS -->
-                                                <p class="placeholder">No recently tracked
-                                                    rounds.</p>
-                                            </div>
-                                        </div>
-
-                                        <!-- Integrated Replay Panel -->
-                                        <div id="integrated-replay-panel" class="integrated-replay-container hidden">
-                                            <div class="integrated-replay-header">
-                                                <div class="header-main">
-                                                    <h3
-                                                        style="font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: 1px;">
-                                                        ROUND REPLAY</h3>
-                                                </div>
-                                            </div>
-                                            <div class="integrated-replay-layout">
-                                                <div class="replay-main">
-                                                    <!-- Board placed at the top as requested -->
-                                                    <div id="integrated-board-container"
-                                                        class="integrated-review-board">
-                                                        <!-- Populated by JS -->
-                                                    </div>
-
-
-                                                    <div class="replay-controls-row">
-                                                        <button id="integrated-start-btn"
-                                                            class="replay-action-btn primary">▶
-                                                            Watch</button>
-                                                        <button id="integrated-skip-btn"
-                                                            class="replay-action-btn secondary hidden">Show
-                                                            All</button>
-
-                                                        <div id="integrated-progress-ui"
-                                                            class="integrated-progress-ui hidden">
-                                                            <div
-                                                                style="display: flex; flex-direction: column; gap: 2px;">
-                                                                <span id="integrated-current-time"
-                                                                    style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #409cff;">0:00.0</span>
-                                                                <span id="integrated-current-score"
-                                                                    style="font-size: 0.7rem; font-weight: 800; color: #ffd700; text-transform: uppercase;">0
-                                                                    pts</span>
-                                                            </div>
-
-                                                            <div class="mini-progress-bg">
-                                                                <div id="integrated-progress-bar"
-                                                                    class="mini-progress-fill">
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div id="integrated-walkthrough-list"
-                                                        class="integrated-walkthrough-list">
-                                                        <!-- Populated by JS -->
-                                                    </div>
-                                                </div>
-
-                                                <div class="replay-sidebar">
-                                                    <div id="integrated-players-list" class="replay-players-list hidden"
-                                                        style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; border: 1px solid rgba(255,255,255,0.05);">
-                                                        <h4
-                                                            style="font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 12px; letter-spacing: 1.5px; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
-                                                            Round Participants</h4>
-                                                        <div id="integrated-players-body"
-                                                            style="display: flex; flex-direction: column; gap: 10px;">
-                                                            <!-- Populated by JS -->
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div id="profile-tab-friends" class="profile-tab-pane">
-                                        <div class="profile-friends-section">
-                                            <div id="profile-friends-list" class="friends-grid">
-                                                <!-- Populated by JS -->
-                                                <p class="placeholder">You haven't added any
-                                                    friends yet.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                <!-- New Product: Ergonomic Mousepad -->
+                <div class="store-item" data-category="hardware">
+                    <div class="store-item-image">
+                        <img src="/static/images/mousepad.png" alt="Non-Slip Rubber Mousepad">
+                    </div>
+                    <div class="store-item-info">
+                        <div class="store-item-header">
+                            <h3>Ergonomic Mousepad with Wrist Support</h3>
+                            <span class="store-item-price">$12.99 CAD</span>
                         </div>
+                        <p class="store-item-desc">High-quality non-slip rubber surface with an integrated, raised wrist rest. This is perfect for repurposing as an ergonomic support while playing Morpheme with a stylus, reducing strain during high-speed word searching.</p>
+                        <ul class="store-item-features">
+                            <li>Built-in Ergonomic Wrist Support</li>
+                            <li>Non-Slip Rubber Base</li>
+                            <li>Smooth Microfiber Surface</li>
+                            <li>Portable & Lightweight</li>
+                        </ul>
+                        <a href="https://www.amazon.ca/Non-Slip-Rubber-Computer-Laptop-Office/dp/B006ZAUD10" target="_blank" class="buy-now-btn">View on Amazon</a>
+                    </div>
+                </div>
+
+                <!-- New Product: Official Scrabble Dictionary (Collins) -->
+                <div class="store-item" data-category="hardware">
+                    <div class="store-item-image">
+                        <img src="/static/images/scrabble_dict_1.png" alt="Official Scrabble Dictionary">
+                    </div>
+                    <div class="store-item-info">
+                        <div class="store-item-header">
+                            <h3>Official Scrabble™ Dictionary (Collins)</h3>
+                            <span class="store-item-price">$16.78 CAD</span>
+                        </div>
+                        <p class="store-item-desc"><strong>Comprehensive Word List:</strong> This official Collins Scrabble dictionary is essential for Morpheme because it shows you 2-9 letter words. It covers the vast majority of playable words you'll encounter on standard and extended boards, letting you settle word-validity debates and expand your morpheme knowledge for high-speed tournament play.</p>
+                        <ul class="store-item-features">
+                            <li>Shows 2-9 Letter Words</li>
+                            <li>Official Scrabble Authority</li>
+                            <li>Bestselling Reference Guide</li>
+                            <li>Perfect for Extended Play</li>
+                        </ul>
+                        <a href="https://www.amazon.ca/SCRABBLETM-Dictionary-official-bestselling-playable/dp/0008660735" target="_blank" class="buy-now-btn">View on Amazon</a>
+                    </div>
+                </div>
+
+                <!-- New Product: Official Scrabble Players Dictionary Seventh Edition (MW) -->
+                <div class="store-item" data-category="hardware">
+                    <div class="store-item-image">
+                        <img src="/static/images/scrabble_players_dict_6.png" alt="Official Scrabble Players Dictionary Seventh Edition">
+                    </div>
+                    <div class="store-item-info">
+                        <div class="store-item-header">
+                            <h3>Official Scrabble Players Dictionary (Seventh Edition)</h3>
+                            <span class="store-item-price">$13.50 CAD</span>
+                        </div>
+                        <p class="store-item-desc"><strong>The Pro Lexicon:</strong> For serious Morpheme competitors, the Seventh Edition Players Dictionary is an essential tool. It's perfect for Morpheme because it shows you 2-8 letter words, focusing on the core lexicon of professional play. Mastering this dictionary ensures your word-finding skills are sharp and aligned with international standards.</p>
+                        <ul class="store-item-features">
+                            <li>Shows 2-8 Letter Words</li>
+                            <li>Primary Tournament Authority</li>
+                            <li>Seventh Edition (Latest Standard)</li>
+                            <li>Crucial for Competitive Play</li>
+                        </ul>
+                        <a href="https://www.amazon.ca/Official-Scrabble-Players-Dictionary-Seventh/dp/0877795959" target="_blank" class="buy-now-btn">View on Amazon</a>
+                    </div>
+                </div>
+
+
+                <!-- New Product: Samsung Galaxy S25 Ultra -->
+                <div class="store-item" data-category="hardware">
+                    <div class="store-item-image">
+                        <img src="/static/images/phones25_final.png" alt="Samsung Galaxy S25 Ultra">
+                    </div>
+                    <div class="store-item-info">
+                        <div class="store-item-header">
+                            <h3>Samsung Galaxy S25 Ultra (The Ultimate Mobile Platform)</h3>
+                            <span class="store-item-price">$1,798.99 CAD</span>
+                        </div>
+                        <p class="store-item-desc"><strong>The Perfect Choice:</strong> With a 6.9" Dynamic AMOLED 2X display and an integrated S-Pen, this is the ultimate way to play Morpheme. The colors are incredibly vibrant, and the S-Pen offers surgical precision for complex word paths.</p>
+                        <p class="store-item-desc"><strong>Motion Sensitivity:</strong> Features a high-fidelity 120Hz refresh rate, ensuring that your swipes are tracked with zero perceptible latency, critical for tournament-level speed.</p>
+                        <p class="store-item-desc"><strong>Performance:</strong> Powered by the Snapdragon 8 Elite and 12GB of RAM, this device handles even the most complex 6x8 boards and real-time animations with total fluid stability.</p>
+                        <a href="https://www.amazon.ca/Samsung-Galaxy-AMOLED-Display-AI-Enhanced/dp/B0F2ZS5VC4" target="_blank" class="buy-now-btn">View on Amazon</a>
+                    </div>
+                </div>
+
+                <!-- New Product: OnePlus 15 -->
+                <div class="store-item" data-category="hardware">
+                    <div class="store-item-image">
+                        <img src="/static/images/oneplus15_final.png" alt="OnePlus 15">
+                    </div>
+                    <div class="store-item-info">
+                        <div class="store-item-header">
+                            <h3>OnePlus 15 (Extreme Speed Platform)</h3>
+                            <span class="store-item-price">$1,399.99 CAD</span>
+                        </div>
+                        <p class="store-item-desc"><strong>The Record Breaker:</strong> If you value pure speed, the OnePlus 15 is your choice. Its 6.78" AMOLED screen is the only flagship currently supporting a <strong>165Hz Refresh Rate</strong>, offering the smoothest Morpheme experience possible.</p>
+                        <p class="store-item-desc"><strong>Motion Sensitivity:</strong> With its class-leading 165Hz panel, the latency between your finger and the word-pathing engine is decimated, allowing for insane word-per-minute (WPM) rates.</p>
+                        <p class="store-item-desc"><strong>Performance:</strong> Packed with the massive powerhouse of the <strong>Snapdragon 8 Elite Gen 5</strong> and <strong>16GB RAM</strong>, it provides uncompromising power that never throttles during intense tournament sessions.</p>
+                        <a href="https://www.bestbuy.ca/en-ca/product/oneplus-15-512gb-infinite-black-unlocked/19634597" target="_blank" class="buy-now-btn">View on Best Buy</a>
+                    </div>
+                </div>
+
+                <!-- New Product: iPhone 17 Pro -->
+                <div class="store-item" data-category="hardware">
+                    <div class="store-item-image">
+                        <img src="/static/images/iphone17_final.png" alt="iPhone 17 Pro">
+                    </div>
+                    <div class="store-item-info">
+                        <div class="store-item-header">
+                            <h3>Apple iPhone 17 Pro (Elite Gaming Platform)</h3>
+                            <span class="store-item-price">$1,599.00 CAD</span>
+                        </div>
+                        <p class="store-item-desc"><strong>Why it's Perfect:</strong> The iPhone 17 Pro features the new <strong>A19 Pro chip</strong> with laser-welded vapour chamber cooling, ensuring that your Morpheme sessions stay at a locked 120FPS even during the most complex 6x8 grid animations.</p>
+                        <p class="store-item-desc"><strong>Touch & Motion Sensitivity:</strong> The 120Hz ProMotion display offers the lowest touch latency in its class, perfectly syncing each swipe with the game's pathing engine. Improved motion sensors and <strong>Center Stage</strong> motion detection keep your focus sharp.</p>
+                        <p class="store-item-desc"><strong>Tactile Feedback:</strong> Advanced <strong>Haptics</strong> through the Taptic Engine provide crisp, tactile confirmation for every letter you select, significantly reducing errors during high-speed play.</p>
+                        <a href="https://www.bestbuy.ca/en-ca/product/open-box-apple-iphone-17-pro-512gb-deep-blue-unlocked/19483947" target="_blank" class="buy-now-btn">View on Best Buy</a>
+                    </div>
+                </div>
+
+                <!-- New Product: iPad Pro 11-inch (M5) -->
+                <div class="store-item" data-category="hardware">
+                    <div class="store-item-image">
+                        <img src="/static/images/ipadpro11m5_final.png" alt="iPad Pro 11-inch M5">
+                    </div>
+                    <div class="store-item-info">
+                        <div class="store-item-header">
+                            <h3>Apple iPad Pro 11-inch (M5 Pro Platform)</h3>
+                            <span class="store-item-price">$1,398.99 CAD</span>
+                        </div>
+                        <p class="store-item-desc"><strong>The Ultimate Canvas:</strong> Featuring the brand new <strong>M5 chip</strong>, this is the most powerful Morpheme device ever made. Its <strong>Ultra Retina XDR (Tandem OLED)</strong> display provides extreme contrast and vibrancy for the game's color themes.</p>
+                        <p class="store-item-desc"><strong>High Precision:</strong> Optimized for high-sensitivity <strong>Apple Pencil Pro</strong> use, including hover detection that allows you to see your word path before you even touch the screen. The 120Hz ProMotion ensures instant response.</p>
+                        <p class="store-item-desc"><strong>Form Factor:</strong> The ultra-thin 11-inch design is the Morpheme community's favorite—offering a massive, clear view of the board while remaining light enough for comfortable hand-held tournament use.</p>
+                        <a href="https://www.amazon.ca/Apple-iPad-Pro-11-inch-M5/dp/B0FWDD257H?th=1" target="_blank" class="buy-now-btn">View on Amazon</a>
+                    </div>
+                </div>
+            </div>
                     </div>
 
 
@@ -3134,15 +3138,7 @@
         </div>
 
 
-        <!-- Store Page -->
-        <div id="page-store" class="page">
-            <div class="donate-container">
-                <div class="donate-hero animate-fade-in">
-                    <div class="donate-icon-badge">🛒</div>
-                    <h1>Morpheme Store</h1>
-                </div>
-            </div>
-        </div>
+
 
         <!-- Donate Page -->
         <div id="page-donate" class="page">
@@ -4814,12 +4810,12 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=28"></script>
     <script src="/js/forum.js?v=54"></script>
-    <script src="/js/app.js?v=69"></script>
+    <script src="/js/app.js?v=70"></script>
     <script src="/js/lobby.js?v=10"></script>
     <script src="/js/play.js?v=221"></script>
     <script src="/js/tournaments.js?v=7"></script>
     <script src="/js/leaderboard.js?v=3"></script>
-    <script src="/js/tools.js?v=75"></script>
+    <script src="/js/tools.js?v=76"></script>
     <script src="/js/mouse_selection.js?v=3"></script>
     <script src="/js/mods.js?v=13"></script>
     <script src="/js/private_matches.js?v=6"></script>
