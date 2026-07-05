@@ -4142,9 +4142,22 @@ function setupUnscrambleTool() {
                 checkUnscrambleGuess();
             }
         });
-        // Auto-focus the input when the pane might be clicked
         input.addEventListener('focus', () => {
             if (!unscrambleState.jumbled) startNewUnscramble();
+            
+            const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile) {
+                const contentEl = document.querySelector('#page-tools .tools-content');
+                const gameAreaEl = document.querySelector('.unscramble-game-area');
+                if (contentEl && gameAreaEl) {
+                    setTimeout(() => {
+                        contentEl.scrollTo({
+                            top: gameAreaEl.offsetTop - 15,
+                            behavior: 'smooth'
+                        });
+                    }, 200);
+                }
+            }
         });
     }
 

@@ -4661,10 +4661,28 @@ input[type=range]::-moz-range-track {
         width: 100% !important;
         height: auto !important;
         padding: 20px !important;
+        transition: padding 0.3s ease, gap 0.3s ease;
     }
     #unscramble-jumbled {
         font-size: 2.5rem !important;
         letter-spacing: 5px !important;
+        transition: font-size 0.3s ease, margin-bottom 0.3s ease;
+    }
+    .unscramble-game-area:focus-within {
+        padding: 10px 15px !important;
+        gap: 8px !important;
+    }
+    .unscramble-game-area:focus-within #unscramble-jumbled {
+        font-size: 1.8rem !important;
+        margin-bottom: 0 !important;
+        letter-spacing: 3px !important;
+    }
+    .unscramble-game-area:focus-within #unscramble-count-info {
+        display: none !important;
+    }
+    .unscramble-game-area:focus-within .input-dashboard {
+        margin-top: 5px !important;
+        gap: 8px !important;
     }
 
     /* Word of the Day Mobile Fixes */
