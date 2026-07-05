@@ -304,12 +304,10 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    background: rgba(13, 17, 23, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: transparent;
     border-bottom: 1px solid var(--input-border);
     padding: 10px 0 10px 0;
-    margin: -30px -30px 20px -30px;  /* bleed to edges of the padded .forum-view */
+    margin: -30px -30px 20px -30px;
     padding-left: 30px;
     padding-right: 30px;
 }
@@ -318,10 +316,14 @@
     background: none;
     border: 1px solid var(--input-border);
     color: var(--text-primary);
-    padding: 8px 15px;
+    padding: 10px 15px;
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.9rem;
+    width: 100%;
+    text-align: left;
+    display: block;
+    box-sizing: border-box;
     transition: background 0.2s ease, border-color 0.2s ease;
 }
 
