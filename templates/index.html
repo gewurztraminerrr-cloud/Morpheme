@@ -3314,6 +3314,7 @@
                         <button class="faq-nav-link" data-target="faq-hidden-features">Are there any additional features in game rooms that aren’t obvious?</button>
                         <button class="faq-nav-link" data-target="faq-cube-mobile">Why is a cube size adjustable when there are no playable cubes?</button>
                         <button class="faq-nav-link" data-target="faq-spinner-mismatch">The parameters indicated on the Spinner Set did not align with the parameters shown on the next round.</button>
+                        <button class="faq-nav-link" data-target="faq-exit-fullscreen">Why does dragging from the top and pressing the back arrow at the bottom not exit full screen on mobile?</button>
                     </div>
                 </div>
 
@@ -3889,6 +3890,17 @@
                                 into your hands over rigidly honoring every spun value when doing so would be impossible
                                 or take too long.
                             </p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item" id="faq-exit-fullscreen">
+                        <div class="faq-question">Why does dragging from the top and pressing the back arrow at the bottom not exit full screen on mobile?</div>
+                        <div class="faq-answer">
+                            <p>When playing Morpheme in PWA/standalone mode, the app uses immersive full screen to maximize space for the game board. 
+                            Note that the Android system prompt to "drag from the top and touch the back button" (or pressing the back arrow at the bottom) 
+                            will not exit full screen because the app is configured to remain immersive during play. 
+                            To minimize or close the app, swipe up from the bottom edge of your screen to reveal your device's home indicator/bar, 
+                            then swipe up again to return to your home screen or view the app switcher.</p>
                         </div>
                     </div>
                 </div>
