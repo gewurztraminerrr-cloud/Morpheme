@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `651a1768478440026e6ef1a3556ddcf6177a6a43`
+* **Commit ID**: `82136f1947a5b3a32f91dfc69f20e4dbdfb003ee`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -144,10 +144,12 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
     - Added responsive CSS `:focus-within` styles to `.unscramble-game-area` in `play.css`. When the text input is focused (keyboard active) on mobile screens, the header elements (jumbled text) shrink and sub-info is hidden to minimize height.
     - Added a focus event listener in `tools.js` to automatically scroll the active Unscramble container to the top of the viewport when focused, guaranteeing the text field and the primary action buttons ("Check Word" and "Reveal") remain fully visible and above the virtual keyboard.
 
-28. **Desktop Mini-Profile Width Increase**:
+28. **Desktop Mini-Profile Enhancements & Mobile Fixes**:
     - Increased the width of the `.mini-profile-card` overlay container to `560px` (from `360px`) for desktop environments.
-    - Added `max-width: 90%` to ensure the card scales down fluidly and remains responsive on mobile screens.
-    - Leveraged the fluid layout configurations of internal components (such as flexbox stats alignments) to stretch details evenly.
+    - Increased the description container `max-height` from `80px` to `180px` on desktop and laptop screens to give more vertical space for player bios.
+    - Added responsive media query overrides for mobile viewports (max-width `600px`):
+      - Capped the description box `max-height` to `100px` to conserve vertical space.
+      - Enabled `flex-wrap: wrap` and set a 2-column layout (`flex: 1 1 calc(50% - 4px)`) with ellipsis truncations on action buttons. This prevents the "Friends" or other action buttons from spilling outside the boundaries of the mini-profile.
 
 ## Verification
 * **Local**: Verified dictionary test cases (all passed).
