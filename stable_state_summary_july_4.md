@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `34276fe30363675094cd83b96131fd46386c280d`
+* **Commit ID**: `c47499cc8f2a17056be6fa0633b8ebcf55ec34b6`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -109,6 +109,9 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
 
 19. **New FAQ Entries**:
     - Added entries to the game FAQ explaining why the 3D cube sizes are adjustable on mobile even though mobile displays are limited to 2D boards, and detailed explanations of why Spinner Set parameters might diverge from generated board parameters due to sanitization and timeout fallbacks.
+
+20. **Mobile Leaderboards Table Width Improvements**:
+    - Reduced padding on `.leaderboard-container` (to 0px) and `#page-leaderboards` (to 6px) on mobile screens. This spreads out the width of the tables to sit much closer to the vertical screen edges, maximizing horizontal screen space for ranking details.
 
 ## Verification
 * **Local**: Verified dictionary test cases (all passed).
