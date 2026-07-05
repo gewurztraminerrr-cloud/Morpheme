@@ -3714,6 +3714,12 @@ input[type=range]::-moz-range-track {
 }
 
 @media (max-width: 992px) {
+    .leaderboard-container {
+        padding: 10px 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
     .lb-grid {
         grid-template-columns: 1fr !important;
         gap: 15px !important;
@@ -4988,6 +4994,10 @@ input[type=range]::-moz-range-track {
     #page-leaderboards.active,
     #page-tournaments.active {
         display: block !important;
+    }
+
+    #page-leaderboards {
+        padding: 10px 6px !important;
     }
 }
 
