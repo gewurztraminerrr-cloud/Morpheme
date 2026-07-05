@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 4, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `9a958bfb6cb41cfb5fa2f01f8f9eb952932f91df`
+* **Commit ID**: `ba3e5fac6d3cd62512a20b72f4ee8618e7e191b7`
 * **Branch**: `main`
 * **Date**: July 4, 2026
 
@@ -119,6 +119,11 @@ This document summarizes the stable state of **Morpheme** as of July 4, 2026. Al
 22. **Store Item Update (Official Scrabble Players Dictionary Seventh Edition)**:
     - Replaced the "Sixth Edition" of the Official Scrabble Player’s Dictionary with the newly released "Seventh Edition" (OSPD7) in the Store page.
     - Updated description, alt tags, and bullet items, and configured the direct external purchase link to point to the Seventh Edition product page on Amazon.
+
+23. **Store & Profile Navigation Restructuring**:
+    - Relocated the **User Profile** interface from a sub-tab of the Tools page to a dedicated top-level page (`#page-profile`) accessed directly from the header navigation menu.
+    - Repositioned the **Morpheme Store** from a top-level header navigation page to a sub-tab tool (`#tool-store`) inside the Tools sidebar, placed at the very bottom of the tools options.
+    - Updated CSS selectors for layout, sizing, and mobile locks to align with the new structural placement, and updated JS routing paths and username click events in `app.js` to target `#page-profile` directly.
 
 ## Verification
 * **Local**: Verified dictionary test cases (all passed).
