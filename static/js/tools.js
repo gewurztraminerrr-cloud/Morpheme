@@ -3444,6 +3444,9 @@ async function generateRandomWord() {
                 html += `<div class="pronunciation" style="margin-bottom: 8px; font-size: 1.5rem; letter-spacing: 2px;">${data.pronunciation}</div>`;
             }
             html += `<div class="definition-text" style="font-size: 1.2rem; line-height: 1.5;">${definition}</div>`;
+            if (data.image_url) {
+                html += `<div class="definition-image-container" style="margin-top: 15px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;
+            }
             defEl.innerHTML = html;
             setTimeout(() => {
                 defEl.style.transition = 'opacity 0.5s ease';
@@ -3509,6 +3512,9 @@ async function updateWotd() {
                 html += `<div class="pronunciation" style="margin-bottom: 5px;">${data.pronunciation}</div>`;
             }
             html += `<div class="definition-text">${data.definition || "No definition available."}</div>`;
+            if (data.image_url) {
+                html += `<div class="definition-image-container" style="margin-top: 15px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;
+            }
             defEl.innerHTML = html;
         }
     } catch (err) {
@@ -3669,13 +3675,16 @@ async function runValidationCheck() {
 
         // Handle definition and pronunciation
         if (defEl) {
-            if (data.is_valid && (data.definition || data.pronunciation)) {
+            if (data.is_valid && (data.definition || data.pronunciation || data.image_url)) {
                 let html = '';
                 if (data.pronunciation) {
                     html += `<div class="pronunciation" style="margin-bottom: 10px; font-size: 1.8rem; letter-spacing: 2px;">${data.pronunciation}</div>`;
                 }
                 if (data.definition) {
                     html += `<div class="definition-text" style="font-size: 1.3rem; line-height: 1.6; color: #fff; font-style: normal;">${data.definition}</div>`;
+                }
+                if (data.image_url) {
+                    html += `<div class="definition-image-container" style="margin-top: 15px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;
                 }
                 defEl.innerHTML = html;
                 setTimeout(() => {

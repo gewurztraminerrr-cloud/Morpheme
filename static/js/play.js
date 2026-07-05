@@ -7331,13 +7331,16 @@ async function fetchDefinition(word) {
         const resp = await fetch(`/api/definition?word=${encodeURIComponent(word)}`);
         const data = await resp.json();
 
-        if (data.definition || data.pronunciation) {
+        if (data.definition || data.pronunciation || data.image_url) {
             let html = '';
             if (data.pronunciation) {
                 html += `<div class="pronunciation">${data.pronunciation}</div>`;
             }
             if (data.definition) {
                 html += `<span class="definition-text">${data.definition}</span>`;
+            }
+            if (data.image_url) {
+                html += `<div class="definition-image-container" style="margin-top: 15px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;
             }
             defContent.innerHTML = html;
         } else {

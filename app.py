@@ -4397,11 +4397,21 @@ def get_definition():
 
     definition, pronunciation = lookup_word_definition_and_pronunciation(word)
 
-    if definition or pronunciation:
+    # Look for definition image
+    image_url = None
+    word_lower = word.lower()
+    for ext in ['png', 'jpg', 'jpeg', 'webp']:
+        img_path = os.path.join(os.path.dirname(__file__), 'static', 'images', 'definitions', f"{word_lower}.{ext}")
+        if os.path.exists(img_path):
+            image_url = f"/static/images/definitions/{word_lower}.{ext}"
+            break
+
+    if definition or pronunciation or image_url:
         return jsonify({
             'word': word, 
             'definition': definition or "No definition available for this word.",
-            'pronunciation': pronunciation
+            'pronunciation': pronunciation,
+            'image_url': image_url
         })
     else:
         return jsonify({'error': 'Word not found'}), 404
