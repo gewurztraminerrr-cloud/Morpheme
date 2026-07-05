@@ -1118,12 +1118,17 @@ async function updateGameState(incomingState = null) {
             window.userViewingDefinitionIntermission = false;
             
             // CLEAR STALE DEFINITIONS (Ensure winner announcement triggers)
-            const defContent = document.getElementById('definition-content');
-            if (defContent) {
-                defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
+            // But don't overwrite if Personal Timer has expired — timer-flash takes priority
+            const defPanelCheck = document.querySelector('.definitions-panel');
+            const timerExpiredAtTransition = defPanelCheck && defPanelCheck.classList.contains('timer-flash');
+            if (!timerExpiredAtTransition) {
+                const defContent = document.getElementById('definition-content');
+                if (defContent) {
+                    defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
+                }
+                const defHeader = document.getElementById('definition-header');
+                if (defHeader) defHeader.style.display = 'none';
             }
-            const defHeader = document.getElementById('definition-header');
-            if (defHeader) defHeader.style.display = 'none';
 
             console.log('[play.js] Transition to Intermission: Forcing Words tab and resetting view state.');
         }
@@ -1621,10 +1626,14 @@ async function updateGameState(incomingState = null) {
                 const defContent = document.getElementById('definition-content');
                 const defHeader = document.getElementById('definition-header');
                 const defPanel = document.querySelector('.definitions-panel');
-                if (defContent) defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
-                if (defHeader) defHeader.style.display = 'none';
+                const timerStillExpired = defPanel && defPanel.classList.contains('timer-flash');
+                // Only reset definition content if Personal Timer is NOT in expired state
+                if (!timerStillExpired) {
+                    if (defContent) defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
+                    if (defHeader) defHeader.style.display = 'none';
+                }
                 if (defPanel) {
-                    defPanel.classList.remove('timer-flash');
+                    // Keep timer-flash alive across rounds — Personal Timer expiry persists until user stops it
                     defPanel.classList.remove('winner-flash');
                 }
                 window.userViewingDefinitionIntermission = false;
