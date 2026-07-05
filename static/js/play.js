@@ -8266,16 +8266,12 @@ async function handleTournamentWord(word, path = null) {
         return;
     }
 
-    // Use tournament-specific scoring (1=1, 2=2, 3=3, 4=4, 5=5, 6=10, 7=15, 8=25)
-    let pts = word.length;
-    if (word.length === 6) pts = 10;
-    else if (word.length === 7) pts = 15;
-    else if (word.length >= 8) pts = 25;
+    // Use the same scoring rules as public rooms (3 and 4 letter words = 1pt, 5L = 2pts, 6L = 3pts, 7L = 5pts, and 8L+ = 11pts)
+    let pts = calculateWordScoreLocally(word, path);
 
     // Bonus Word
     let isBonus = false;
     if (window.lastGameState && window.lastGameState.bonus_word && typeof window.lastGameState.bonus_word === 'string' && word === window.lastGameState.bonus_word.toUpperCase()) {
-        pts += word.length;
         isBonus = true;
     }
 
