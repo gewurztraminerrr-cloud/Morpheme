@@ -5696,9 +5696,14 @@ body .tab-btn.active {
 
 @media (max-width: 899px) {
     /* Tournament mobile overrides — keep panels in document flow, no overlaps */
+    #page-tournaments {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
     .tournament-layout {
-        padding: 12px !important;
-        gap: 14px !important;
+        padding: 8px 4px !important;
+        gap: 12px !important;
     }
 
     .tournament-header h2 {
@@ -5706,8 +5711,8 @@ body .tab-btn.active {
     }
 
     .tournament-card {
-        padding: 16px 14px !important;
-        border-radius: 14px !important;
+        padding: 16px 10px !important;
+        border-radius: 12px !important;
     }
 
     .tournament-params-grid {
