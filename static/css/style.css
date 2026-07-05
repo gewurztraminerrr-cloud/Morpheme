@@ -5344,24 +5344,30 @@ body .tab-btn.active {
 
 .tournament-params-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 12px;
 }
 
 .param-item {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
+    background: rgba(var(--text-primary-rgb), 0.03);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.08);
+    border-radius: 10px;
+    padding: 10px 12px;
+    box-sizing: border-box;
 }
 
 .param-label {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     color: var(--muted-text);
     text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .param-value {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 700;
     color: var(--text-primary);
 }
@@ -5705,17 +5711,19 @@ body .tab-btn.active {
     }
 
     .tournament-params-grid {
-        grid-template-columns: 1fr 1fr !important;
-        gap: 10px !important;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
+        gap: 8px !important;
     }
 
     .param-item {
         flex-direction: column !important;
         gap: 3px !important;
+        padding: 8px 10px !important;
+        border-radius: 8px !important;
     }
 
     .param-value {
-        font-size: 1rem !important;
+        font-size: 0.95rem !important;
     }
 
     .panel-header {
