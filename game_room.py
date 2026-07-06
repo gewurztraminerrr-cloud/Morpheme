@@ -3820,6 +3820,26 @@ class RoomManager:
                     if room.time_limit >= 7200: search_timeout = 180.0 # 24h rooms get 3 mins
                     else: search_timeout = min(search_timeout, 120.0) # Cap at 2 mins for standard rooms
                     
+                    # Database board check to prevent duplicate boards across restarts
+                    recent_boards = []
+                    try:
+                        import sqlite3
+                        import json
+                        import os
+                        conn_b = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db'))
+                        cursor_b = conn_b.cursor()
+                        cursor_b.execute("SELECT board_json FROM round_history WHERE room_id = ? ORDER BY id DESC LIMIT 5", (room_id,))
+                        rows_b = cursor_b.fetchall()
+                        for row_b in rows_b:
+                            if row_b[0]:
+                                try:
+                                    recent_boards.append(json.loads(row_b[0]))
+                                except:
+                                    pass
+                        conn_b.close()
+                    except Exception as db_err:
+                        print(f"[RoomManager] Error querying recent boards: {db_err}")
+
                     # Anti-duplicate board protection loop
                     board_attempts = 0
                     while board_attempts < 4:
@@ -3851,7 +3871,15 @@ class RoomManager:
                             final_bonus_word = bonus_word
                         
                         # Compare to current board and previous round board to guarantee uniqueness
-                        if getattr(room, 'board', None) != board and getattr(room, 'previous_board', None) != board:
+                        is_duplicate = False
+                        if getattr(room, 'board', None) == board or getattr(room, 'previous_board', None) == board:
+                            is_duplicate = True
+                        else:
+                            for rb in recent_boards:
+                                if rb == board:
+                                    is_duplicate = True
+                                    break
+                        if not is_duplicate:
                             break
                         
                         print(f"[RoomManager] WARNING: Generated board for room {room_id} is IDENTICAL to current/previous round board. Retrying...")
