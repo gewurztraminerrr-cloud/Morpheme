@@ -118,7 +118,8 @@ class SpinnerSet:
         
         # AW Dictionary Target word count overrides (100-200 words is impossible/too dense for AW)
         dict_name = str(res.get('dictionary', 'NWL')).upper()
-        if dict_name in ['AW', 'ADDED_WORDS', 'ALL']:
+        is_aw_effective = (dict_name in ['AW', 'ADDED_WORDS', 'ALL'] or res.get('use_added_words') is True)
+        if is_aw_effective:
             if '3x3x3' in dims:
                 res['word_count_range'] = '300-400'
             else:
@@ -134,7 +135,7 @@ class SpinnerSet:
             min_word_length = 3
 
         if is_24h:
-            if dict_name not in ['AW', 'ADDED_WORDS', 'ALL']:
+            if not is_aw_effective:
                 res['word_count_range'] = '200-300'
             if '4x4' in dims and min_word_length >= 5:
                 res['min_word_length'] = 4
