@@ -1464,6 +1464,8 @@ class GameRoom:
                 
                 # USER REQUEST: Ensure 'All Words' list has full math breakdown in history
                 self.previous_all_words = getattr(self, 'solved_words_with_scores', {})
+                if str(getattr(self, 'current_dictionary', 'NWL')).upper() in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
+                    word_validator.word_validator.ensure_csw_loaded()
                 self.previous_csw_only_words = [w for w in (self.all_words or []) if word_validator.word_validator.is_csw_only(w)]
                 self.previous_added_words = [w for w in (self.all_words or []) if word_validator.word_validator.is_added_word(w)]
                 self.previous_bonus_word = self.bonus_word
@@ -2187,6 +2189,8 @@ class RoomManager:
             
             # Filter CSW / Added words for yesterday
             import word_validator
+            if str(getattr(room, 'current_dictionary', 'NWL')).upper() in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
+                word_validator.word_validator.ensure_csw_loaded()
             room.previous_csw_only_words = [w for w in restored_solutions if word_validator.word_validator.is_csw_only(w)]
             room.previous_added_words = [w for w in restored_solutions if word_validator.word_validator.is_added_word(w)]
             
@@ -2553,6 +2557,8 @@ class RoomManager:
                             room.all_words_paths = {w: p for w, p in (e_dict or {}).items() if len(w) >= m_len}
                             
                             if hasattr(word_validator, 'word_validator'):
+                                if str(getattr(room, 'current_dictionary', 'NWL')).upper() in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
+                                    word_validator.word_validator.ensure_csw_loaded()
                                 room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
                                 room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
                             else:
@@ -3188,6 +3194,8 @@ class RoomManager:
             
             # CATEGORIZATION (Synchronous): Ensure these are available immediately for UI sync
             if hasattr(word_validator, 'word_validator'):
+                if str(getattr(room, 'current_dictionary', 'NWL')).upper() in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
+                    word_validator.word_validator.ensure_csw_loaded()
                 room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
                 room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
                 if room.added_words:
@@ -4067,6 +4075,8 @@ class RoomManager:
                     display_min = min_l
                     filtered_all = [w for w in (all_words or []) if len(w) >= display_min]
                     
+                    if str(dict_name).upper() in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
+                        word_validator.word_validator.ensure_csw_loaded()
                     room.next_round_csw_only_words = [w for w in filtered_all if word_validator.word_validator.is_csw_only(w)]
                     room.next_round_added_words = [w for w in filtered_all if word_validator.word_validator.is_added_word(w)]
                     if room.next_round_added_words:
@@ -4351,6 +4361,8 @@ class RoomManager:
                     room.initialize_density(e_board, e_paths, e_fmt, is_staging=True)
                     
                     if hasattr(word_validator, 'word_validator'):
+                        if str(getattr(room, 'current_dictionary', 'NWL')).upper() in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
+                            word_validator.word_validator.ensure_csw_loaded()
                         room.next_round_csw_only_words = [w for w in e_words if word_validator.word_validator.is_csw_only(w)]
                         room.next_round_added_words = [w for w in e_words if word_validator.word_validator.is_added_word(w)]
                     else:

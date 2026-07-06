@@ -3724,6 +3724,7 @@ def get_room_state(room_id):
                 if hasattr(word_validator, 'word_validator'):
                     dict_name = str(getattr(room, 'current_dictionary', 'NWL')).upper()
                     if dict_name in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
+                        word_validator.word_validator.ensure_csw_loaded()
                         if not getattr(room, 'csw_only_words', None) and room.all_words:
                             room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
                     else:
