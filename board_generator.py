@@ -1387,7 +1387,7 @@ class BoardGenerator:
         # IO Optimization timeout: 4x4 boards need more time for high-density targets (100+)
         # USER MANDATE: Do not distribute until criteria is met. We increase timeout and attempts.
         if timeout is None:
-            timeout = 120.0 if (not is_emergency and rows*cols <= 16 and min_words >= 100) else (60.0 if not is_emergency else 8.0)
+            timeout = 8.0 if is_emergency else 15.0
         attempts = 0
         
         # For Equality Freq format, track the best board found in case of fallback
@@ -1401,7 +1401,7 @@ class BoardGenerator:
             
             # If AW/CSW dictionary is used and we are struggling to meet target range,
             # dynamically bump the target range up to allow for high-density words.
-            if is_emergency and attempts > 1:
+            if (is_emergency and attempts > 1) or (attempts > 8):
                 min_words, max_words = 0, 99999
             elif original_dict_name in ["AW", "ADDED_WORDS", "ALL", "CSW"]:
                 if attempts > 6:
