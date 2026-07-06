@@ -2027,6 +2027,23 @@ class RoomManager:
                 rooms_to_process = list(self.rooms.items())
                 for room_id, room in rooms_to_process:
                     try:
+                        # Inactivity pause: if room is empty of human players and not a 24h daily room,
+                        # pause it by setting state to 'waiting' and skipping milestone transition ticks.
+                        # This prevents empty public rooms from looping rounds and pegging CPU in background.
+                        is_daily = (room.time_limit >= 7200)
+                        humans = [p for p in room.players if not p.is_ai]
+                        if len(humans) == 0 and not is_daily:
+                            if room.state != 'waiting':
+                                print(f"[Heartbeat] Pausing empty room {room_id}. Setting state to 'waiting'.")
+                                with room._state_lock:
+                                    room.state = 'waiting'
+                                    room.starting_round = False
+                                    room.board_search_started = False
+                                    room.board_search_loading = False
+                                    room.spinner_params_generated = False
+                                    room.next_round_board = None
+                            continue
+
                         # timers/transitions
                         room.check_and_update_state()
                         self.check_6x8_rescue(room)
@@ -2960,6 +2977,23 @@ class RoomManager:
         # Iterate over a copy of keys to avoid modification issues
         for room_id, room in list(self.rooms.items()):
             try:
+                # Inactivity pause: if room is empty of human players and not a 24h daily room,
+                # pause it by setting state to 'waiting' and skipping transition/milestone processing.
+                # This prevents empty public rooms from looping rounds and pegging CPU in background.
+                is_daily = (room.time_limit >= 7200)
+                humans = [p for p in room.players if not p.is_ai]
+                if len(humans) == 0 and not is_daily:
+                    if room.state != 'waiting':
+                        print(f"[BG-Cleanup] Pausing empty room {room_id}. Setting state to 'waiting'.")
+                        with room._state_lock:
+                            room.state = 'waiting'
+                            room.starting_round = False
+                            room.board_search_started = False
+                            room.board_search_loading = False
+                            room.spinner_params_generated = False
+                            room.next_round_board = None
+                    continue
+
                 # 1. Update Game State (Transitions)
                 # Ensure the transition itself works (logs errors specifically for the room)
                 try:
