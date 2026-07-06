@@ -4825,14 +4825,7 @@ def tools_combo_check():
         word = word_list[idx]
         target_len = int(dict_lens[idx])
         shared_count = int(shared_counts[idx])
-        
-        # Early exit: Stop once all display columns that can still grow are fully saturated (150 items each)
-        min_target_len = 6 if source_len >= 9 else 5
-        active_mp_keys = [i for i in range(max_mp + 1) if shared_count >= min_target_len - i]
-        active_lic_keys = range(5, min(10, shared_count + 1))
-        if (all(len(mp_groups[i]) >= 150 for i in active_mp_keys) and
-            all(len(lic_groups.get(k, [])) >= 150 for k in active_lic_keys)):
-            break
+
             
         # 1. MP Logic
         if np.abs(target_len - source_len) <= 3 and shared_count >= target_len - max_mp:
