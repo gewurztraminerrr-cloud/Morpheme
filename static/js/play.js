@@ -3505,19 +3505,23 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             className += ' bonus-word';
         } else {
             const activeDict = String((window.lastGameState && window.lastGameState.current_dictionary) || 'NWL').toUpperCase();
-            const isAW = (activeDict === 'AW' || activeDict === 'ALL' || activeDict === 'ADDED_WORDS');
-            const isCSW = (activeDict === 'CSW' || isAW);
-            
-            if (isAW && isAddedWord) {
-                className += ' added-word';
-            } else if (isCSW && isCSWOnly) {
-                className += ' csw-only';
-            } else if (isTargetFound) {
-                className += ' player-word';
-            } else if (isFoundByAny) {
-                className += ' found-by-other missed';
+            if (activeDict === 'AW' || activeDict === 'ALL' || activeDict === 'ADDED_WORDS') {
+                if (isAddedWord) {
+                    className += ' added-word'; // Purple for AW-only
+                } else if (isCSWOnly) {
+                    className += ' csw-only'; // Gold for CSW-only
+                } else {
+                    className += ' nwl-word'; // Red for NWL words
+                }
+            } else if (activeDict === 'CSW') {
+                if (isCSWOnly) {
+                    className += ' csw-only'; // Gold for CSW-only
+                } else {
+                    className += ' nwl-word'; // Red for NWL words
+                }
             } else {
-                className += ' unfound missed';
+                // NWL or other fallback
+                className += ' nwl-word'; // Red for all NWL words
             }
         }
 

@@ -1422,6 +1422,15 @@ body.theme-light-brown .notepad-item.bonus-word {
     font-weight: 700;
 }
 
+/* NWL Word (Vibrant Red) */
+.nwl-word {
+    background: rgba(244, 63, 94, 0.4) !important;
+    border: 2px solid #f43f5e !important;
+    box-shadow: 0 0 10px rgba(244, 63, 94, 0.5) !important;
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
 /* CSW-Only Word (Third Priority: Solid Gold) */
 .word-item.csw-only {
     background: rgba(255, 215, 0, 0.7) !important;
