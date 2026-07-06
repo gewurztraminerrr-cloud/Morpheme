@@ -1340,6 +1340,16 @@ class GameRoom:
         """Authoritative state machine for game rooms.
         Handles transitions and timing for all game modes."""
         now = time.time()
+        
+        # 0. WAKE UP PAUSED ROOMS
+        if self.state == 'waiting':
+            humans = [p for p in self.players if not p.is_ai]
+            if len(humans) > 0:
+                print(f"[GameRoom] Waking up paused room {self.room_id} because human player joined.")
+                self.state = 'intermission'
+                self.intermission_start_time = now - 65.0  # Force expiration
+                return True
+
         should_end = False
         
         # 1. Round Timer Expiry Check
