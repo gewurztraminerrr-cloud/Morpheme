@@ -3853,6 +3853,8 @@ def get_room_state(room_id):
                 'previous_csw_only_words': getattr(room, 'previous_csw_only_words', []),
                 'previous_added_words': getattr(room, 'previous_added_words', []),
                 'previous_bonus_word': getattr(room, 'previous_bonus_word', ''),
+                'previous_dictionary': getattr(room, 'previous_dictionary', 'NWL'),
+                'previous_use_added_words': getattr(room, 'previous_use_added_words', False),
                 'spinner_params': {**room.spinner_params, 'uniqueness': getattr(room, 'next_round_uniqueness', None) or 0} if (is_intermission and is_revealed) else room.spinner_params,
                 'use_added_words': getattr(room, 'use_added_words', False),
                 'current_min_length': getattr(room, 'current_min_length', 3),

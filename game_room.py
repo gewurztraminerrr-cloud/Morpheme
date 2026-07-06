@@ -153,6 +153,8 @@ class GameRoom:
     previous_csw_only_words: List[str] = field(default_factory=list) # History
     previous_added_words: List[str] = field(default_factory=list) # History
     previous_bonus_word: str = '' # History
+    previous_dictionary: str = 'NWL' # History
+    previous_use_added_words: bool = False # History
     evicted_users: Dict = field(default_factory=dict) # user_id -> reason
     
     # Players
@@ -1479,6 +1481,8 @@ class GameRoom:
                 self.previous_csw_only_words = [w for w in (self.all_words or []) if word_validator.word_validator.is_csw_only(w)]
                 self.previous_added_words = [w for w in (self.all_words or []) if word_validator.word_validator.is_added_word(w)]
                 self.previous_bonus_word = self.bonus_word
+                self.previous_dictionary = getattr(self, 'current_dictionary', 'NWL')
+                self.previous_use_added_words = getattr(self, 'use_added_words', False)
                 
                 # Snapshot for persistence
                 self.recalculate_total_points() # Authoritative sync before snapshot

@@ -3504,7 +3504,22 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         if (isBonus) {
             className += ' bonus-word';
         } else {
-            const activeDict = String((window.lastGameState && window.lastGameState.current_dictionary) || 'NWL').toUpperCase();
+            let activeDict = 'NWL';
+            let useAW = false;
+            const s = window.lastGameState;
+            if (s) {
+                if (s.state === 'intermission') {
+                    activeDict = String(s.previous_dictionary || s.current_dictionary || 'NWL').toUpperCase();
+                    useAW = (s.previous_use_added_words === true || s.use_added_words === true);
+                } else {
+                    activeDict = String(s.current_dictionary || 'NWL').toUpperCase();
+                    useAW = (s.use_added_words === true);
+                }
+            }
+            if (useAW) {
+                activeDict = 'AW';
+            }
+
             if (activeDict === 'AW' || activeDict === 'ALL' || activeDict === 'ADDED_WORDS') {
                 if (isAddedWord) {
                     className += ' added-word'; // Purple for AW-only
