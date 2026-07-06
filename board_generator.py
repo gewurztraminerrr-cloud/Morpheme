@@ -1307,6 +1307,8 @@ class BoardGenerator:
         Generate a valid board that meets word count requirements (100-300).
         RESTARTED: Simplified logic with ironclad compliance.
         """
+        original_dict_name = str(dictionary).upper() if isinstance(dictionary, str) else ""
+        
         if min_word_length is None:
             min_word_length = 3
         else:
@@ -1317,7 +1319,7 @@ class BoardGenerator:
 
         # Set use_aw_flag if dictionary is AW or ADDED_WORDS
         use_aw_flag = False
-        if dictionary == 'AW' or dictionary == 'ADDED_WORDS':
+        if original_dict_name in ['AW', 'ADDED_WORDS', 'ALL']:
             use_aw_flag = True
             
         # If the context variable is already set to True by the caller, preserve it!
@@ -1389,11 +1391,16 @@ class BoardGenerator:
             
             # If AW dictionary is used and we are struggling to meet target range,
             # dynamically bump the target range up to allow for high-density words.
-            if str(dictionary).upper() in ["AW", "ADDED_WORDS", "ALL"]:
+            if original_dict_name in ["AW", "ADDED_WORDS", "ALL"]:
                 if attempts > 6:
-                    if min_words < 500:
-                        print(f"[BoardGen] AW Dictionary density high. Bumping target range to 500+ words.")
-                        min_words, max_words = 500, 99999
+                    if rows * cols <= 24:
+                        if min_words < 300:
+                            print(f"[BoardGen] AW Dictionary density high on small grid. Bumping target range to 300-400 words.")
+                            min_words, max_words = 300, 400
+                    else:
+                        if min_words < 500:
+                            print(f"[BoardGen] AW Dictionary density high. Bumping target range to 500+ words.")
+                            min_words, max_words = 500, 99999
                 elif attempts > 3:
                     if min_words < 300:
                         print(f"[BoardGen] AW Dictionary density high. Bumping target range to 300-400 words.")
