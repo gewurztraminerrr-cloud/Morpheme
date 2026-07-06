@@ -3506,7 +3506,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         if (isBonus) {
             className += ' bonus-word';
         } else {
-            const activeDict = String(state.current_dictionary || (window.lastGameState && window.lastGameState.current_dictionary) || 'NWL').toUpperCase();
+            const activeDict = String((window.lastGameState && window.lastGameState.current_dictionary) || 'NWL').toUpperCase();
             const isAW = (activeDict === 'AW' || activeDict === 'ALL' || activeDict === 'ADDED_WORDS');
             const isCSW = (activeDict === 'CSW' || isAW);
             
