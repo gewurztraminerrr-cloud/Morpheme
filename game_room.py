@@ -1901,12 +1901,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         min_l = 4 if '4x4' in dimensions else (5 if '4x6' in dimensions else (6 if '5x7' in dimensions else 7))
         dict_upper = str(dictionary or 'NWL').upper()
         if dict_upper in ['AW', 'ADDED_WORDS', 'ALL']:
-            if '3x3x3' in dimensions:
-                target_range = '300-400'
-            else:
-                parts = [p for p in dimensions.lower().replace(" ", "").split("x") if p.isdigit()]
-                rows_cols = (int(parts[0]) * int(parts[1])) if len(parts) >= 2 else 16
-                target_range = '300-400' if rows_cols <= 24 else '500+'
+            target_range = '500+'
         else:
             target_range = '200-300' if is_24h else '100-200'
         fmt = 'Valued Letters' if is_24h else board_format
