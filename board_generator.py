@@ -1358,6 +1358,15 @@ class BoardGenerator:
 
         # USER REQUEST: Parse word count range from spinner instead of hardcoding
         min_words, max_words = self._parse_word_count_range(word_count_range)
+        if original_dict_name in ["AW", "ADDED_WORDS", "ALL"]:
+            parts = dimensions.split("x")
+            rows_cols = (int(parts[1]) * int(parts[2])) if len(parts) == 3 else (int(parts[0]) * int(parts[1]))
+            if rows_cols <= 24:
+                min_words, max_words = 300, 400
+                print(f"[BoardGen] AW Dictionary: Force defaulted target range to 300-400 words (grid size <= 24).")
+            else:
+                min_words, max_words = 500, 99999
+                print(f"[BoardGen] AW Dictionary: Force defaulted target range to 500+ words (grid size > 24).")
         print(f"[BoardGen] generate_board called for {dimensions} | Range: {word_count_range} ({min_words}-{max_words}) | MinLen: {min_word_length}L")
         
         # 1. Dimension Parsing
