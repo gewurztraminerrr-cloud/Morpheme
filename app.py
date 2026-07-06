@@ -608,7 +608,7 @@ def add_added_word_api():
         
         # Reject if already present in Added Words list (User Request)
         # Use the authoritative WordValidator set to avoid file-system latency issues
-        if word_validator.is_added_word(word):
+        if word.upper() in word_validator.added_words:
             print(f"[Mods] REJECTED Duplicate: '{word}' is already in the Added Words set.")
             return jsonify({
                 'error': f"'{word}' is already present on Added Words list.",
@@ -1662,10 +1662,26 @@ def get_dictionary_stats():
     
     # Return pure counts for standard Scrabble lexicons (NWL/CSW)
     # without unioning the supplementary 16+ list, keeping them strictly separated.
-    nwl_words = word_validator.nwl_words
-    csw_words = word_validator.csw_words
-    aw_words = word_validator.added_words
-    long_words = word_validator.long_words
+    # Take a safe local list copy of sets to prevent RuntimeError due to multi-threaded modification
+    try:
+        nwl_words = list(word_validator.nwl_words)
+    except RuntimeError:
+        nwl_words = list(word_validator.nwl_words)
+        
+    try:
+        csw_words = list(word_validator.csw_words)
+    except RuntimeError:
+        csw_words = list(word_validator.csw_words)
+        
+    try:
+        aw_words = list(word_validator.added_words)
+    except RuntimeError:
+        aw_words = list(word_validator.added_words)
+        
+    try:
+        long_words = list(word_validator.long_words)
+    except RuntimeError:
+        long_words = list(word_validator.long_words)
     
     def get_dist(w_set):
         dist = {str(i): 0 for i in range(2, 16)}
@@ -3706,12 +3722,19 @@ def get_room_state(room_id):
                 
                 # RE-SYNC: Ensure re-categorized lists also respect this floor using pre-cached, self-healing lists
                 if hasattr(word_validator, 'word_validator'):
-                    if not getattr(room, 'csw_only_words', None) and room.all_words:
-                        room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
+                    dict_name = str(getattr(room, 'current_dictionary', 'NWL')).upper()
+                    if dict_name in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
+                        if not getattr(room, 'csw_only_words', None) and room.all_words:
+                            room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
+                    else:
+                        room.csw_only_words = []
                     room.csw_only_words = [w for w in (room.csw_only_words or []) if len(w) >= display_floor]
 
-                    if not getattr(room, 'added_words', None) and room.all_words:
-                        room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
+                    if getattr(room, 'use_added_words', False) or dict_name in ['AW', 'ALL', 'ADDED_WORDS']:
+                        if not getattr(room, 'added_words', None) and room.all_words:
+                            room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
+                    else:
+                        room.added_words = []
                     room.added_words = [w for w in (room.added_words or []) if len(w) >= display_floor]
                 
                 word_scores_to_return = getattr(room, 'solved_words_with_scores', {})

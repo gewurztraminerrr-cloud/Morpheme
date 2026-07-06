@@ -3503,12 +3503,25 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         }
 
         // Priority classes
-        if (isBonus) className += ' bonus-word';
-        else if (isAddedWord) className += ' added-word';
-        else if (isTargetFound) className += ' player-word';
-        else if (isCSWOnly) className += ' csw-only';
-        else if (isFoundByAny) className += ' found-by-other missed';
-        else className += ' unfound missed';
+        if (isBonus) {
+            className += ' bonus-word';
+        } else {
+            const activeDict = String(state.current_dictionary || (window.lastGameState && window.lastGameState.current_dictionary) || 'NWL').toUpperCase();
+            const isAW = (activeDict === 'AW' || activeDict === 'ALL' || activeDict === 'ADDED_WORDS');
+            const isCSW = (activeDict === 'CSW' || isAW);
+            
+            if (isAW && isAddedWord) {
+                className += ' added-word';
+            } else if (isCSW && isCSWOnly) {
+                className += ' csw-only';
+            } else if (isTargetFound) {
+                className += ' player-word';
+            } else if (isFoundByAny) {
+                className += ' found-by-other missed';
+            } else {
+                className += ' unfound missed';
+            }
+        }
 
         const indicatorClass = isFoundByAny ? 'found-indicator present' : 'found-indicator empty';
         const indicatorIcon = isFoundByAny ? '✓' : '';

@@ -335,8 +335,9 @@ class WordValidator:
         return word.upper() in self.csw_only
         
     def is_added_word(self, word):
-        """Check if word is in the custom moderator-added list"""
-        return word.upper() in self.added_words
+        """Check if word is in the custom moderator-added list and NOT in standard NWL or CSW"""
+        w = word.upper()
+        return w in self.added_words and not self.is_valid_word_authoritative(w)
 
     def is_valid_word_authoritative(self, word):
         """Check if word is in ANY official dictionary (excluding Added Words)"""
