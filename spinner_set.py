@@ -115,6 +115,19 @@ class SpinnerSet:
             return res
             
         dims = str(board_dimensions).lower().replace(" ", "")
+        
+        # AW Dictionary Target word count overrides (100-200 words is impossible/too dense for AW)
+        dict_name = str(res.get('dictionary', 'NWL')).upper()
+        if dict_name in ['AW', 'ADDED_WORDS', 'ALL']:
+            if '3x3x3' in dims:
+                res['word_count_range'] = '300-400'
+            else:
+                parts = [p for p in dims.split("x") if p.isdigit()]
+                rows_cols = (int(parts[0]) * int(parts[1])) if len(parts) >= 2 else 16
+                if rows_cols <= 24:
+                    res['word_count_range'] = '300-400'
+                else:
+                    res['word_count_range'] = '500+'
         try:
             min_word_length = int(res.get('min_word_length', 3))
         except:
