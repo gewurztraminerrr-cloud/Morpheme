@@ -181,10 +181,6 @@ class WordValidator:
             # Merge supplementary lists into main tries
             for word in self.long_words:
                 self._add_to_trie(trie, word)
-            
-            if self.use_added_words:
-                for word in self.added_words:
-                    self._add_to_trie(trie, word)
                 
         print("NWL Tries built and merged successfully!")
         
@@ -244,9 +240,6 @@ class WordValidator:
                 self._add_to_trie(trie, word)
             for word in self.long_words:
                 self._add_to_trie(trie, word)
-            if self.use_added_words:
-                for word in self.added_words:
-                    self._add_to_trie(trie, word)
                     
         self.csw_loaded = True
         # Recalculate full sets to include CSW
