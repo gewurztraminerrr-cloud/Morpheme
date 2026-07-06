@@ -420,7 +420,7 @@ class BoardGenerator:
         is_6x8 = (rows == 6 and cols == 8) or (rows == 8 and cols == 6)
         is_4x6 = (rows == 4 and cols == 6) or (rows == 6 and cols == 4)
         is_cube = depth > 1
-        if rows * cols <= 24 and int(min_word_length) >= 5:
+        if rows * cols <= 24 and int(min_word_length) >= 4:
             ranges = {
                 "Easy": (0.0, 0.15),
                 "Medium": (0.16, 0.29),
@@ -473,7 +473,7 @@ class BoardGenerator:
         try:
             min_l = int(min_word_length)
             if min_l > default_min:
-                if rows * cols <= 24 and min_l >= 5:
+                if rows * cols <= 24 and min_l >= 4:
                     shift = 0.0
                 else:
                     shift = (min_l - default_min) * 0.07
