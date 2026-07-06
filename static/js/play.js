@@ -1820,6 +1820,8 @@ async function updateGameState(incomingState = null) {
         });
 
         const allWords = state.all_words || [];
+        const cswForList = state.state === 'intermission' ? ((state.previous_csw_only_words && state.previous_csw_only_words.length > 0) ? state.previous_csw_only_words : state.csw_only_words) : state.csw_only_words;
+        const addedForList = state.state === 'intermission' ? ((state.previous_added_words && state.previous_added_words.length > 0) ? state.previous_added_words : state.added_words) : state.added_words;
 
         // --- SUBMITTED WORDS LIST (Standard/Found tab) ---
         const listEl = document.getElementById('submitted-words-list');
@@ -1874,8 +1876,7 @@ async function updateGameState(incomingState = null) {
 
                 const uniqueGlobalFound = [...new Set(allPlayerFoundStrs)];
                 const bonusForList = state.state === 'intermission' ? (state.previous_bonus_word || state.bonus_word) : state.bonus_word;
-                const cswForList = state.state === 'intermission' ? ((state.previous_csw_only_words && state.previous_csw_only_words.length > 0) ? state.previous_csw_only_words : state.csw_only_words) : state.csw_only_words;
-                const addedForList = state.state === 'intermission' ? ((state.previous_added_words && state.previous_added_words.length > 0) ? state.previous_added_words : state.added_words) : state.added_words;
+
 
                 const roundId = `${state.room_id}_${state.current_round}`;
                 const filterJSON = JSON.stringify(window.intermissionTileFilter || null);
