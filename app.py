@@ -4814,8 +4814,13 @@ def tools_combo_check():
     mp_groups = {i: set() for i in range(max_mp + 1)} # 0MP to max_mp
     lic_groups = {}
     
-    # --- OPTIMIZED SINGLE-THREADED LOOP ---
+    # --- OPTIMIZED SINGLE-THREADED LOOP WITH SAFETY CAP ---
+    eval_count = 0
     for idx in sorted_candidates:
+        eval_count += 1
+        if eval_count > 1500:
+            break
+            
         word = word_list[idx]
         target_len = int(dict_lens[idx])
         shared_count = int(shared_counts[idx])
