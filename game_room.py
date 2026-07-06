@@ -4075,7 +4075,7 @@ class RoomManager:
                     display_min = min_l
                     filtered_all = [w for w in (all_words or []) if len(w) >= display_min]
                     
-                    if str(dict_name).upper() in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
+                    if str(search_dict).upper() in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
                         word_validator.word_validator.ensure_csw_loaded()
                     room.next_round_csw_only_words = [w for w in filtered_all if word_validator.word_validator.is_csw_only(w)]
                     room.next_round_added_words = [w for w in filtered_all if word_validator.word_validator.is_added_word(w)]
