@@ -1952,10 +1952,8 @@ async function updateGameState(incomingState = null) {
                         }
 
                         const isBonus = state.bonus_word && wordUpper === state.bonus_word.toUpperCase();
-                        const isCSWOnly = state.csw_only_words && state.csw_only_words.some(csw => csw.toUpperCase() === wordUpper);
-
-                        const activeAdded = state.state === 'intermission' ? (state.previous_added_words || state.added_words) : state.added_words;
-                        const isAddedWord = activeAdded && activeAdded.some(aw => aw.toUpperCase() === wordUpper);
+                        const isCSWOnly = cswForList && cswForList.some(csw => csw.toUpperCase() === wordUpper);
+                        const isAddedWord = addedForList && addedForList.some(aw => aw.toUpperCase() === wordUpper);
 
                         let className = 'word-item player-word';
                         if (isBonus) {
@@ -2041,9 +2039,8 @@ async function updateGameState(incomingState = null) {
                         const indicator = isMe ? '<span class="found-indicator present">✓</span>' : (wObj.is_ai ? '<span>🤖</span>' : '<span>🔸</span>');
 
                         const isBonus = state.bonus_word && wordUpper === state.bonus_word.toUpperCase();
-                        const activeAdded = state.state === 'intermission' ? (state.previous_added_words || state.added_words) : state.added_words;
-                        const isAddedWord = activeAdded && activeAdded.some(aw => aw.toUpperCase() === wordUpper);
-                        const isCSWOnly = state.csw_only_words && state.csw_only_words.some(csw => csw.toUpperCase() === wordUpper);
+                        const isAddedWord = addedForList && addedForList.some(aw => aw.toUpperCase() === wordUpper);
+                        const isCSWOnly = cswForList && cswForList.some(csw => csw.toUpperCase() === wordUpper);
 
                         let className = 'word-item';
                         if (isMe) className += ' player-word';
