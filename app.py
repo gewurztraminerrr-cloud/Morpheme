@@ -4519,7 +4519,7 @@ def load_tools_dictionary(dict_name):
     LAST_ADDED_WORDS_MTIME = curr_mtime
 
     cache_key = dict_name
-    if dict_name != 'added_words' and cache_key in TOOLS_DICT_CACHE:
+    if cache_key in TOOLS_DICT_CACHE:
         return TOOLS_DICT_CACHE[cache_key]
 
     if dict_name == 'ALL':
@@ -4580,8 +4580,7 @@ def load_tools_dictionary(dict_name):
         'lens': lens,
         'masks': masks
     }
-    if dict_name != 'added_words':
-        TOOLS_DICT_CACHE[cache_key] = result
+    TOOLS_DICT_CACHE[cache_key] = result
     return result
 
 def get_lis(nums):
