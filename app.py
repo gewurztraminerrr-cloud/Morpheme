@@ -5011,8 +5011,7 @@ def tools_get_lists():
                 if start_char is not None and not w.startswith(start_char): continue
                 
                 unique_added.append(w)
-            # Reverse to show newest-first (if sorted, it's alphabetically reversed which is fine)
-            unique_added.reverse()
+            # Sorted alphabetically (A-to-Z)
             response['added'] = unique_added
 
         # Cache response
