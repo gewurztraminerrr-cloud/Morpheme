@@ -467,7 +467,10 @@ class BoardGenerator:
         try:
             min_l = int(min_word_length)
             if min_l > default_min:
-                shift = (min_l - default_min) * 0.07
+                if rows * cols <= 24 and min_l >= 5:
+                    shift = 0.0
+                else:
+                    shift = (min_l - default_min) * 0.07
         except Exception:
             pass
             
