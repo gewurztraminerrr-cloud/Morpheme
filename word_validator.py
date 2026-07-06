@@ -12,6 +12,7 @@ import contextvars
 use_added_words_ctx = contextvars.ContextVar('use_added_words', default=None)
 
 class TrieNode:
+    __slots__ = ('children', 'is_word')
     def __init__(self):
         self.children = {}
         self.is_word = False
@@ -265,11 +266,14 @@ class WordValidator:
                         seen.add(w)
                         self.added_words_list.append(w)
                         self.added_words.add(w)
-                        self._add_to_trie(self.added_trie, w)
 
             print(f"Loaded {len(self.added_words)} custom added words as standalone trie")
             self._filter_added_words()
             self._recalculate_full_sets()
+            
+            # Now build added_trie strictly using the filtered self.added_words!
+            for w in self.added_words:
+                self._add_to_trie(self.added_trie, w)
 
 
     def _add_to_trie(self, root, word):
@@ -293,6 +297,9 @@ class WordValidator:
             self.ensure_csw_loaded()
             trie = self.csw_trie
         elif d_upper == 'AW' or d_upper == 'ADDED_WORDS':
+            self.ensure_csw_loaded()
+            return self.has_valid_prefix(prefix, 'CSW') or self.has_valid_prefix(prefix, '_ONLY_ADDED_')
+        elif d_upper == '_ONLY_ADDED_':
             trie = self.added_trie
         else:
             trie = self.nwl_trie

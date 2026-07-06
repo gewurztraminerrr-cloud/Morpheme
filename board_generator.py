@@ -4267,6 +4267,17 @@ class BoardGenerator:
         self, board, dictionary="NWL", word_count_range=(0, 99999), min_word_length=3, max_depth=12, store_paths=True, timeout=10.0, must_include=None, bonus_cell=None
     ):
         """Find all valid words on the board using high-speed node-based DFS traversal."""
+        d_upper = str(dictionary).upper()
+        if d_upper in ["AW", "ADDED_WORDS"]:
+            from word_validator import word_validator
+            word_validator.ensure_csw_loaded()
+            csw_words = self._solve_board(board, "CSW", word_count_range, min_word_length, max_depth, store_paths, timeout, must_include, bonus_cell)
+            added_words = self._solve_board(board, "_ONLY_ADDED_", word_count_range, min_word_length, max_depth, store_paths, timeout, must_include, bonus_cell)
+            for w, p in added_words.items():
+                if w not in csw_words:
+                    csw_words[w] = p
+            return csw_words
+
         if min_word_length is None:
             min_word_length = 3
         else:
@@ -4339,7 +4350,7 @@ class BoardGenerator:
             trie_root = word_validator.unique_csw_trie
         elif d_upper == "CSW":
             trie_root = word_validator.csw_trie
-        elif d_upper == "AW" or d_upper == "ADDED_WORDS":
+        elif d_upper == "AW" or d_upper == "ADDED_WORDS" or d_upper == "_ONLY_ADDED_":
             trie_root = word_validator.added_trie
         else:
             trie_root = word_validator.nwl_trie
