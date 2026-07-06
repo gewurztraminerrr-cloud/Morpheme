@@ -4803,12 +4803,12 @@ def tools_combo_check():
     
     candidates = np.union1d(candidates_mp, candidates_lic)
     
-    # Sort candidates by lower bound MP cost (ascending), then length difference (ascending), then shared count (descending)
+    # Sort candidates by lower bound MP cost (ascending), then shared count (descending), then length difference (ascending)
     candidate_shared = shared_counts[candidates]
     candidate_lens = dict_lens_int[candidates]
     candidate_len_diff = np.abs(candidate_lens - source_len)
     lower_bound = candidate_lens - candidate_shared
-    sort_order = np.lexsort((-candidate_shared, candidate_len_diff, lower_bound))
+    sort_order = np.lexsort((candidate_len_diff, -candidate_shared, lower_bound))
     sorted_candidates = candidates[sort_order]
     
     # Initialize Groups (Using sets to prevent O(N^2) search bottleneck)
