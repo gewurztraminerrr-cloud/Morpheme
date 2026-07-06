@@ -134,7 +134,8 @@ class SpinnerSet:
             min_word_length = 3
 
         if is_24h:
-            res['word_count_range'] = '200-300'
+            if dict_name not in ['AW', 'ADDED_WORDS', 'ALL']:
+                res['word_count_range'] = '200-300'
             if '4x4' in dims and min_word_length >= 5:
                 res['min_word_length'] = 4
             elif '4x6' in dims and min_word_length >= 6:
