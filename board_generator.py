@@ -420,7 +420,13 @@ class BoardGenerator:
         is_6x8 = (rows == 6 and cols == 8) or (rows == 8 and cols == 6)
         is_4x6 = (rows == 4 and cols == 6) or (rows == 6 and cols == 4)
         is_cube = depth > 1
-        if rows == 4 and cols == 4 and depth == 1:
+        if rows * cols <= 24 and int(min_word_length) >= 5:
+            ranges = {
+                "Easy": (0.0, 0.15),
+                "Medium": (0.16, 0.29),
+                "Hard": (0.30, 1.0)
+            }
+        elif rows == 4 and cols == 4 and depth == 1:
             ranges = {
                 "Easy": (0.0, 0.24),
                 "Medium": (0.25, 0.39),
