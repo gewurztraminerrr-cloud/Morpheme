@@ -6756,7 +6756,9 @@ def create_solo_match():
     use_aw_flag = False
     if dict_name and ('+ AW' in str(dict_name) or '+AW' in str(dict_name)):
         use_aw_flag = True
-        dict_name = str(dict_name).replace('+ AW', '').replace('+AW', '').strip()
+        dict_name = 'AW'
+    elif dict_name == 'AW':
+        use_aw_flag = True
     
     board_format = parameters.get('board_format', 'Normal')
     from spinner_set import SpinnerSet

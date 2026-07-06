@@ -222,6 +222,8 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=50):
                 if str(dictionary).upper() == "CSW":
                     word_validator.ensure_csw_loaded()
                     dictionary_set = word_validator.csw_words
+                elif str(dictionary).upper() == "AW":
+                    dictionary_set = word_validator.added_words
                 else:
                     dictionary_set = word_validator.nwl_words
                 potential_dict_words = [w for w in dictionary_set if len(w) == bonus_word_len]
@@ -2747,7 +2749,8 @@ class BoardGenerator:
                 else:
                     # Load full dictionary for Easy (e.g. NWL.txt)
                     base_dir = os.path.dirname(os.path.abspath(__file__))
-                    path = os.path.join(base_dir, 'dictionaries', f"{dict_name}.txt")
+                    dict_file = 'added_words' if dict_name == 'AW' else dict_name
+                    path = os.path.join(base_dir, 'dictionaries', f"{dict_file}.txt")
                     try:
                         with open(path, "r") as f:
                             dictionary = [line.strip().upper() for line in f if line.strip()]

@@ -3524,7 +3524,9 @@ class RoomManager:
                         use_aw = False
                         if dictionary and ('+ AW' in str(dictionary) or '+AW' in str(dictionary)):
                             use_aw = True
-                            dictionary = str(dictionary).replace('+ AW', '').replace('+AW', '').strip()
+                            dictionary = 'AW'
+                        elif dictionary == 'AW':
+                            use_aw = True
                             
                         # 2. Resolve Difficulty
                         if difficulty_choice == 'random':
