@@ -242,6 +242,7 @@ class WordValidator:
                 self._add_to_trie(trie, word)
                     
         self.csw_loaded = True
+        self._filter_added_words()
         # Recalculate full sets to include CSW
         self._recalculate_full_sets()
         print(f"[WordValidator] CSW loaded successfully! ({len(self.csw_words)} words)")
@@ -267,6 +268,7 @@ class WordValidator:
                         self._add_to_trie(self.added_trie, w)
 
             print(f"Loaded {len(self.added_words)} custom added words as standalone trie")
+            self._filter_added_words()
             self._recalculate_full_sets()
 
 
@@ -314,7 +316,8 @@ class WordValidator:
             
         d_upper = str(dictionary).upper()
         if d_upper == 'AW' or d_upper == 'ADDED_WORDS':
-            return word in self.added_words
+            self.ensure_csw_loaded()
+            return word in self.nwl_words or word in self.csw_words or word in self.long_words or word in self.added_words
         elif d_upper == 'UNIQUENWL':
             return word in self.unique_nwl_words or (val and word in self.added_words)
         elif d_upper == 'UNIQUECSW':
@@ -336,8 +339,7 @@ class WordValidator:
         
     def is_added_word(self, word):
         """Check if word is in the custom moderator-added list and NOT in standard NWL or CSW"""
-        w = word.upper()
-        return w in self.added_words and not self.is_valid_word_authoritative(w)
+        return word.upper() in self.added_words
 
     def is_valid_word_authoritative(self, word):
         """Check if word is in ANY official dictionary (excluding Added Words)"""
@@ -357,6 +359,15 @@ class WordValidator:
         else:
             self.full_nwl_set = self.nwl_words | self.long_words
             self.full_csw_set = self.csw_words | self.long_words
+
+    def _filter_added_words(self):
+        """Filter out standard words from added_words set to keep it clean and fast"""
+        if self.nwl_words:
+            self.added_words = self.added_words - self.nwl_words
+        if self.long_words:
+            self.added_words = self.added_words - self.long_words
+        if getattr(self, 'csw_loaded', False) and self.csw_words:
+            self.added_words = self.added_words - self.csw_words
 
     def load_dictionary(self, dict_name, use_added_words=None):
         """Return the pre-calculated full set for the given dictionary."""

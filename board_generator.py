@@ -223,7 +223,8 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=50):
                     word_validator.ensure_csw_loaded()
                     dictionary_set = word_validator.csw_words
                 elif str(dictionary).upper() == "AW":
-                    dictionary_set = word_validator.added_words
+                    word_validator.ensure_csw_loaded()
+                    dictionary_set = word_validator.nwl_words | word_validator.csw_words | word_validator.long_words | word_validator.added_words
                 else:
                     dictionary_set = word_validator.nwl_words
                 potential_dict_words = [w for w in dictionary_set if len(w) == bonus_word_len]
