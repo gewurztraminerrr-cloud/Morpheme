@@ -134,6 +134,9 @@ class SpinnerSet:
         except:
             min_word_length = 3
 
+        if is_aw_effective:
+            return res
+
         if is_24h:
             if not is_aw_effective:
                 res['word_count_range'] = '200-300'
