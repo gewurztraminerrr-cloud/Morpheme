@@ -3119,7 +3119,7 @@ class RoomManager:
                 import random
                 random.seed()
                 
-                use_aw_flag = room.spinner_params.get('use_added_words', False)
+                use_aw_flag = room.spinner_params.get('use_added_words', False) or (str(room.spinner_params.get('dictionary')).upper() in ['AW', 'ADDED_WORDS'])
                 token = use_added_words_ctx.set(use_aw_flag)
                 try:
                     res = self.board_generator.generate_board(
@@ -4670,7 +4670,13 @@ class RoomManager:
         exclude_ing = (diff_upper in ['MEDIUM', 'HARD', 'EXPERT', 'DIFFICULT', 'MASTERS', 'NORMAL'])
         
         # Get all words of the specified length (using cache if available)
-        if dictionary == 'CSW':
+        d_upper = str(dictionary).upper()
+        if d_upper == 'AW' or d_upper == 'ADDED_WORDS':
+            words = [w for w in word_validator.added_words if len(w) == length]
+            if not words:
+                words = word_validator.nwl_by_len.get(length, [])
+                if not words: words = [w for w in word_validator.nwl_words if len(w) == length]
+        elif d_upper == 'CSW':
             words = word_validator.csw_by_len.get(length, [])
             if not words: words = [w for w in word_validator.csw_words if len(w) == length]
         else:

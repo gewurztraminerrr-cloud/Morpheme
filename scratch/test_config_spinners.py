@@ -11,7 +11,7 @@ from word_validator import use_added_words_ctx
 
 def test_dictionary_spinner():
     print("=== Testing Dictionary Spinner ===")
-    counts = {"NWL": 0, "CSW": 0, "NWL + AW": 0, "CSW + AW": 0}
+    counts = {"NWL": 0, "CSW": 0, "AW": 0}
     iterations = 10000
     for _ in range(iterations):
         res = SpinnerSet._spin_dictionary()
@@ -21,8 +21,8 @@ def test_dictionary_spinner():
     for key, val in counts.items():
         pct = (val / iterations) * 100
         print(f"  {key}: {val} ({pct:.2f}%)")
-        # Assert each is roughly 25% (allow 20-30% margin of error)
-        assert 20.0 <= pct <= 30.0, f"Dictionary {key} spin frequency {pct:.2f}% out of bounds (expected ~25%)"
+        # Assert each is roughly 33% / 34% (allow 28-38% margin of error)
+        assert 28.0 <= pct <= 38.0, f"Dictionary {key} spin frequency {pct:.2f}% out of bounds"
     print("Dictionary Spinner stats look correct!\n")
 
 def test_word_count_spinner():
@@ -75,13 +75,13 @@ def test_board_generation_normalization():
     print("=== Testing Board Generation Normalization ===")
     bg = BoardGenerator()
     
-    # Test case 1: NWL + AW dictionary, 50-100 word count
-    print("Generating board with dict='NWL + AW' and word_count_range='50-100'...")
+    # Test case 1: NWL dictionary, 50-100 word count
+    print("Generating board with dict='NWL' and word_count_range='50-100'...")
     res = bg.generate_board(
         dimensions="4x4",
         bonus_word="HELLO",
         word_count_range="50-100",
-        dictionary="NWL + AW",
+        dictionary="NWL",
         board_format="Normal",
         min_word_length=3,
         difficulty="Medium"
@@ -93,21 +93,21 @@ def test_board_generation_normalization():
     
     # Verify that the board is generated correctly and word count is within bounds or reasonable range
     assert board is not None, "Failed: Board is None!"
-    assert len(board) == 4 and len(board[0]) == 4, f"Failed: Board dimensions are not 4x4, got {len(board)}x{len(board[0])}"
+    assert len(board) == 4 and len(board[0]) == 4, f"Failed: Board dimensions are not 4x4"
     assert len(all_words) > 0, "Failed: No words generated on the board!"
     
-    # Test case 2: CSW + AW dictionary, 50-100 word count
-    print("Generating board with dict='CSW + AW' and word_count_range='50-100'...")
+    # Test case 2: AW dictionary, 50-100 word count
+    print("Generating board with dict='AW' and word_count_range='50-100'...")
     res = bg.generate_board(
         dimensions="4x4",
         bonus_word="WORLD",
         word_count_range="50-100",
-        dictionary="CSW + AW",
+        dictionary="AW",
         board_format="Normal",
         min_word_length=3,
         difficulty="Medium"
     )
-    assert res[0] is not None, "Failed: Board is None for CSW + AW!"
+    assert res[0] is not None, "Failed: Board is None for AW!"
     
     print("Board Generation and dictionary normalization verified successfully!\n")
 

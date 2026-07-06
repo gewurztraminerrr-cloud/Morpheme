@@ -259,24 +259,23 @@ class WordValidator:
         added_path = os.path.join(base_dir, 'dictionaries', 'added_words.txt')
         
         self.added_words = set()
+        self.added_words_list = []
         self.added_trie = TrieNode()
         
         if os.path.exists(added_path):
             with open(added_path, 'r') as f:
-                for line in f:
-                    word = line.strip().upper()
-                    if word:
-                        self.added_words.add(word)
-                        self._add_to_trie(self.added_trie, word)
-                        # CRITICAL: If enabled, inject these into the high-speed main tries so they appear on boards
-                        if getattr(self, 'use_added_words', True):
-                            self._add_to_trie(self.nwl_trie, word)
-                            self._add_to_trie(self.csw_trie, word)
-                            self._add_to_trie(self.unique_nwl_trie, word)
-                            self._add_to_trie(self.unique_csw_trie, word)
+                raw_lines = [line.strip().upper() for line in f if line.strip()]
+                seen = set()
+                for w in raw_lines:
+                    if w not in seen:
+                        seen.add(w)
+                        self.added_words_list.append(w)
+                        self.added_words.add(w)
+                        self._add_to_trie(self.added_trie, w)
 
-            print(f"Loaded {len(self.added_words)} custom added words (Re-injected into main tries)")
+            print(f"Loaded {len(self.added_words)} custom added words as standalone trie")
             self._recalculate_full_sets()
+
 
     def _add_to_trie(self, root, word):
         """Add a word to the trie"""
@@ -289,14 +288,17 @@ class WordValidator:
     
     def has_valid_prefix(self, prefix, dictionary='NWL'):
         """Check if prefix could lead to a valid word using pre-merged tries."""
-        if dictionary == 'UniqueNWL':
+        d_upper = str(dictionary).upper()
+        if d_upper == 'UNIQUENWL':
             trie = self.unique_nwl_trie
-        elif dictionary == 'UniqueCSW':
+        elif d_upper == 'UNIQUECSW':
             self.ensure_csw_loaded()
             trie = self.unique_csw_trie
-        elif dictionary == 'CSW':
+        elif d_upper == 'CSW':
             self.ensure_csw_loaded()
             trie = self.csw_trie
+        elif d_upper == 'AW' or d_upper == 'ADDED_WORDS':
+            trie = self.added_trie
         else:
             trie = self.nwl_trie
         
@@ -318,7 +320,9 @@ class WordValidator:
             val = use_added_words
             
         d_upper = str(dictionary).upper()
-        if d_upper == 'UNIQUENWL':
+        if d_upper == 'AW' or d_upper == 'ADDED_WORDS':
+            return word in self.added_words
+        elif d_upper == 'UNIQUENWL':
             return word in self.unique_nwl_words or (val and word in self.added_words)
         elif d_upper == 'UNIQUECSW':
             self.ensure_csw_loaded()
@@ -365,7 +369,10 @@ class WordValidator:
         if use_added_words is None:
             use_added_words = self.use_added_words
             
-        if dict_name == 'CSW':
+        d_upper = str(dict_name).upper()
+        if d_upper == 'AW' or d_upper == 'ADDED_WORDS':
+            return self.added_words
+        elif d_upper == 'CSW':
             self.ensure_csw_loaded()
             if use_added_words == self.use_added_words:
                 return self.full_csw_set

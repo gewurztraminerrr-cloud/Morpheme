@@ -635,6 +635,7 @@ def add_added_word_api():
                 
         word_validator.reload_added_words()
         TOOLS_DICT_CACHE.clear()
+        LISTS_CACHE.clear()
         print(f"[Mods] Successfully added NEW word '{word}' to top of list.")
         
         # Trigger dynamic definition mapping and auto-saving rules
@@ -677,6 +678,7 @@ def remove_added_word():
             if word_validator:
                 word_validator.reload_added_words()
                 TOOLS_DICT_CACHE.clear()
+                LISTS_CACHE.clear()
 
             # Sync with Global Tally
             _update_word_stats(word, "remove")
@@ -4224,10 +4226,25 @@ def lookup_raw_definition_online(word_upper):
 
     return None
 
+def lookup_wiki_definition_from_db(word):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=10)
+        cursor = conn.cursor()
+        cursor.execute("SELECT definition FROM wiktionary_definitions WHERE word = ?;", (word.upper(),))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return row[0]
+    except Exception as e:
+        print(f"[Definitions] Error querying local wiki definition: {e}")
+    return None
+
 def get_definition_cached_or_online(w):
     d = DEFINITIONS_CACHE.get(w)
     if not d:
-        d = lookup_raw_definition_online(w)
+        d = lookup_wiki_definition_from_db(w)
+        if not d:
+            d = lookup_raw_definition_online(w)
         if d:
             DEFINITIONS_CACHE[w] = d
     return d
@@ -4298,27 +4315,39 @@ def format_resolved_definition(word_upper, visited=None):
             is_plural_or_verb = True
 
     if is_plural_or_verb:
-        return format_resolved_definition(target, visited)
+        resolved = format_resolved_definition(target, visited)
+        if resolved:
+            m = re.match(r'^\s*\(([^)]+)\)\s*(.*)', resolved, re.IGNORECASE)
+            if m:
+                pos = m.group(1).lower()
+                meaning = m.group(2)
+                if 'plural' in raw.lower():
+                    return f"({pos}) plural of {target.upper()} ({meaning})"
+                else:
+                    return f"({pos}) conjugation of {target.upper()} ({meaning})"
+            return resolved
 
+    # Check if raw starts with leading parenthesis (e.g. (noun) meaning)
+    m = re.match(r'^\s*\(([^)]+)\)\s*(.*)', raw, re.IGNORECASE)
+    if m:
+        pos = m.group(1).lower()
+        meaning = m.group(2).strip()
+        return f"({pos}) {meaning}"
+
+    # Convert legacy format to new format
     meaning, pos = clean_def_text(raw)
-
-    if target and re.search(r'(?i)\balternative\s+(?:form|spelling)\s+of', raw):
-        root_raw = get_definition_cached_or_online_with_guess(target)
-        if root_raw:
-            root_meaning, root_pos = clean_def_text(root_raw)
-            return f"{word_upper}, {root_meaning}. Also {target} [{root_pos}]"
-        else:
-            return f"{word_upper}, {meaning}. [{pos}]"
-
-    alt_spellings = []
-    for k, v in DEFINITIONS_CACHE.items():
-        if k != word_upper and 'alternative' in v.lower() and extract_target_word(v) == word_upper:
-            alt_spellings.append(k)
-
-    if alt_spellings:
-        return f"{word_upper}, {meaning}. Also {', '.join(sorted(alt_spellings))} [{pos}]"
-    else:
-        return f"{word_upper}, {meaning}. [{pos}]"
+    pos_map = {
+        'n': 'noun',
+        'v': 'verb',
+        'adj': 'adjective',
+        'adv': 'adverb',
+        'interj': 'interjection',
+        'pron': 'pronoun',
+        'prep': 'preposition',
+        'conj': 'conjunction'
+    }
+    pos_full = pos_map.get(pos, pos)
+    return f"({pos_full}) {meaning}"
 
 def lookup_word_definition_and_pronunciation(word):
     global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
@@ -4845,9 +4874,9 @@ def tools_get_lists():
         start_filter = request.args.get('starts_with')
         list_type = request.args.get('list_type', 'all').lower()
 
-        # Check cache first (skip caching for 'added' list type)
+        # Check cache first
         cache_key = f"endpoint_{list_type}_{length_filter}_{start_filter}"
-        if list_type != 'added' and cache_key in LISTS_CACHE:
+        if cache_key in LISTS_CACHE:
             return jsonify(LISTS_CACHE[cache_key])
         
         # Convert length to int if provided and not "all"
@@ -4973,29 +5002,21 @@ def tools_get_lists():
             response['new_csw'].reverse() # Show most recent first
             
         if list_type in ['all', 'added']:
-            # Added Words: Preserve file order (which is chronological as they are appended)
-            # and reverse to show most recent first per USER REQUEST.
-            path = os.path.join(dict_dir, 'added_words.txt')
+            # Added Words: Use preloaded in-memory list to prevent lag
+            raw_lines = getattr(word_validator, 'added_words_list', [])
             unique_added = []
-            seen_added = set()
-            if os.path.exists(path):
-                with open(path, 'r') as f:
-                    # File is now newest-first, so we read directly
-                    raw_lines = [line.strip().upper() for line in f if line.strip()]
-                    for w in raw_lines:
-                        if w in seen_added: continue
-                        
-                        # Filter by length and start char if provided
-                        if target_len is not None and len(w) != target_len: continue
-                        if start_char is not None and not w.startswith(start_char): continue
-                        
-                        unique_added.append(w)
-                        seen_added.add(w)
+            for w in raw_lines:
+                # Filter by length and start char if provided
+                if target_len is not None and len(w) != target_len: continue
+                if start_char is not None and not w.startswith(start_char): continue
+                
+                unique_added.append(w)
+            # Reverse to show newest-first (if sorted, it's alphabetically reversed which is fine)
+            unique_added.reverse()
             response['added'] = unique_added
 
-        # Cache response (except for 'added' which is mutable)
-        if list_type != 'added':
-            LISTS_CACHE[cache_key] = response
+        # Cache response
+        LISTS_CACHE[cache_key] = response
 
         return jsonify(response)
 

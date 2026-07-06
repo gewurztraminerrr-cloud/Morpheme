@@ -71,20 +71,14 @@ class SpinnerSet:
                 elif '6x8' in dims and min_word_length == 6:
                     res['min_word_length'] = random.choice([7, 8])
                     print(f"[SpinnerSet] Wrapper adjusted 6x8 min_len for 100-200 words from 6 to {res['min_word_length']}")
-            # Roll for Added Words (50% chance if enabled globally)
+            # Roll for Added Words configuration
             if isinstance(res, dict):
                 if 'use_added_words' not in res:
-                    is_added_words_enabled = word_validator.get_use_added_words()
-                    if is_added_words_enabled:
-                        choices = [
-                            ('NWL', False),
-                            ('CSW', False),
-                            ('NWL', True),
-                            ('CSW', True)
-                        ]
-                        dict_choice, aw_choice = random.choice(choices)
-                        res['dictionary'] = dict_choice
-                        res['use_added_words'] = aw_choice
+                    if res.get('dictionary') == 'AW':
+                        res['use_added_words'] = True
+                    elif not res.get('dictionary'):
+                        res['dictionary'] = SpinnerSet._spin_dictionary()
+                        res['use_added_words'] = (res['dictionary'] == 'AW')
                     else:
                         res['use_added_words'] = False
 
@@ -104,17 +98,11 @@ class SpinnerSet:
             }
             # Roll for Added Words fallback
             if 'use_added_words' not in fallback:
-                is_added_words_enabled = word_validator.get_use_added_words()
-                if is_added_words_enabled:
-                    choices = [
-                        ('NWL', False),
-                        ('CSW', False),
-                        ('NWL', True),
-                        ('CSW', True)
-                    ]
-                    dict_choice, aw_choice = random.choice(choices)
-                    fallback['dictionary'] = dict_choice
-                    fallback['use_added_words'] = aw_choice
+                if fallback.get('dictionary') == 'AW':
+                    fallback['use_added_words'] = True
+                elif not fallback.get('dictionary'):
+                    fallback['dictionary'] = SpinnerSet._spin_dictionary()
+                    fallback['use_added_words'] = (fallback['dictionary'] == 'AW')
                 else:
                     fallback['use_added_words'] = False
                 
@@ -202,19 +190,9 @@ class SpinnerSet:
             best_res = None
             
             for _ in range(30):
-                # Randomize dictionary and added words joint configuration
-                is_added_words_enabled = word_validator.get_use_added_words()
-                if is_added_words_enabled:
-                    choices = [
-                        ('NWL', False),
-                        ('CSW', False),
-                        ('NWL', True),
-                        ('CSW', True)
-                    ]
-                    dictionary, use_added_words = random.choice(choices)
-                else:
-                    dictionary = SpinnerSet._spin_dictionary()
-                    use_added_words = False
+                # Randomize dictionary and added words configuration
+                dictionary = SpinnerSet._spin_dictionary()
+                use_added_words = (dictionary == 'AW')
                 
                 # Minimum word length (spin BEFORE word count to inform density)
                 min_word_length = SpinnerSet._spin_min_word_length(board_dimensions)
@@ -367,9 +345,9 @@ class SpinnerSet:
     
     @staticmethod
     def _spin_dictionary():
-        """Equal probability: 25% NWL, 25% CSW, 25% NWL + AW, 25% CSW + AW"""
-        choices = ['NWL', 'CSW', 'NWL + AW', 'CSW + AW']
-        weights = [25, 25, 25, 25]
+        """Balanced probability: 33% NWL, 33% CSW, 34% AW"""
+        choices = ['NWL', 'CSW', 'AW']
+        weights = [33, 33, 34]
         return random.choices(choices, weights=weights)[0]
     
     @staticmethod
