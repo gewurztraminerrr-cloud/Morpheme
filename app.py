@@ -4803,11 +4803,12 @@ def tools_combo_check():
     
     candidates = np.union1d(candidates_mp, candidates_lic)
     
-    # Sort candidates by shared count (descending) and length difference (ascending) to check best matches first
+    # Sort candidates by lower bound MP cost (ascending), then length difference (ascending), then shared count (descending)
     candidate_shared = shared_counts[candidates]
     candidate_lens = dict_lens_int[candidates]
     candidate_len_diff = np.abs(candidate_lens - source_len)
-    sort_order = np.lexsort((candidate_len_diff, -candidate_shared))
+    lower_bound = candidate_lens - candidate_shared
+    sort_order = np.lexsort((-candidate_shared, candidate_len_diff, lower_bound))
     sorted_candidates = candidates[sort_order]
     
     # Initialize Groups (Using sets to prevent O(N^2) search bottleneck)
@@ -4818,7 +4819,7 @@ def tools_combo_check():
     eval_count = 0
     for idx in sorted_candidates:
         eval_count += 1
-        if eval_count > 1500:
+        if eval_count > 2000:
             break
             
         word = word_list[idx]
