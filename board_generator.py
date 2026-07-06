@@ -1389,21 +1389,23 @@ class BoardGenerator:
         while time.time() - start_time < timeout:
             attempts += 1
             
-            # If AW dictionary is used and we are struggling to meet target range,
+            # If AW/CSW dictionary is used and we are struggling to meet target range,
             # dynamically bump the target range up to allow for high-density words.
-            if original_dict_name in ["AW", "ADDED_WORDS", "ALL"]:
+            if is_emergency and attempts > 1:
+                min_words, max_words = 0, 99999
+            elif original_dict_name in ["AW", "ADDED_WORDS", "ALL", "CSW"]:
                 if attempts > 6:
                     if rows * cols <= 24:
                         if min_words < 300:
-                            print(f"[BoardGen] AW Dictionary density high on small grid. Bumping target range to 300-400 words.")
+                            print(f"[BoardGen] AW/CSW Dictionary density high on small grid. Bumping target range to 300-400 words.")
                             min_words, max_words = 300, 400
                     else:
                         if min_words < 500:
-                            print(f"[BoardGen] AW Dictionary density high. Bumping target range to 500+ words.")
+                            print(f"[BoardGen] AW/CSW Dictionary density high. Bumping target range to 500+ words.")
                             min_words, max_words = 500, 99999
                 elif attempts > 3:
                     if min_words < 300:
-                        print(f"[BoardGen] AW Dictionary density high. Bumping target range to 300-400 words.")
+                        print(f"[BoardGen] AW/CSW Dictionary density high. Bumping target range to 300-400 words.")
                         min_words, max_words = 300, 400
             
             print(f"[BoardGen] COMPLIANCE ATTEMPT {attempts} (Target: {min_words}-{max_words}, MinLen: {min_word_length})")
