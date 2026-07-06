@@ -2656,7 +2656,34 @@ let listsFetchAbortController = null;
 let listsFetchTimeoutId = null; // Module-level so it can be cancelled on re-fetch
 
 function startProgressiveRendering() {
-    renderNextWordsPage();
+    const loadId = ++currentProgressiveLoadId;
+    
+    function renderChunk() {
+        if (loadId !== currentProgressiveLoadId) return;
+        const maxAllowed = 5000;
+        if (currentWordsRenderedCount >= Math.min(currentWordsList.length, maxAllowed)) {
+            if (currentWordsList.length > maxAllowed && !document.getElementById('list-truncation-notice')) {
+                const scrollArea = document.getElementById('main-list-results');
+                if (scrollArea) {
+                    const noticeHtml = `
+                        <div id="list-truncation-notice" style="padding: 15px; text-align: center; color: #ffb703; font-weight: 500; border-top: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 10px;">
+                            ⚠️ Showing first ${maxAllowed.toLocaleString()} words.<br>
+                            <span style="font-size: 0.82rem; opacity: 0.8; font-weight: normal;">
+                                Please select a specific <strong>word length</strong> or <strong>starting letter</strong> to narrow down the list.
+                            </span>
+                        </div>
+                    `;
+                    scrollArea.insertAdjacentHTML('beforeend', noticeHtml);
+                }
+            }
+            return;
+        }
+        
+        renderNextWordsPage();
+        setTimeout(renderChunk, 100);
+    }
+    
+    renderChunk();
 }
 
 function renderNextWordsPage() {
