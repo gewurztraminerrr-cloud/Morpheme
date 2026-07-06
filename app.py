@@ -4819,7 +4819,7 @@ def tools_combo_check():
     eval_count = 0
     for idx in sorted_candidates:
         eval_count += 1
-        if eval_count > 2000:
+        if eval_count > 5000:
             break
             
         word = word_list[idx]
@@ -4836,21 +4836,24 @@ def tools_combo_check():
             
         # 1. MP Logic
         if np.abs(target_len - source_len) <= 3 and shared_count >= target_len - max_mp:
-            # Calculate pure directional MP (search_term -> candidate) with lazy evaluation
-            # 4 combinations of forward and reversed search term / candidate:
-            best_mp, linearity = calculate_morpheme_metric(search_term, word, limit=max_mp)
-            if best_mp > 1:
-                m2_f, _ = calculate_morpheme_metric(search_term, word[::-1], limit=best_mp - 1)
-                best_mp = min(best_mp, m2_f)
-            if best_mp > 1:
-                m3_f, _ = calculate_morpheme_metric(search_term_rev, word, limit=best_mp - 1)
-                best_mp = min(best_mp, m3_f)
-            if best_mp > 1:
-                m4_f, _ = calculate_morpheme_metric(search_term_rev, word[::-1], limit=best_mp - 1)
-                best_mp = min(best_mp, m4_f)
+            lower_bound_val = target_len - shared_count
+            # Skip if all possible target MP groups it could fit into are already saturated to 150 words
+            if not all(len(mp_groups[k]) >= 150 for k in range(lower_bound_val, max_mp + 1)):
+                # Calculate pure directional MP (search_term -> candidate) with lazy evaluation
+                # 4 combinations of forward and reversed search term / candidate:
+                best_mp, linearity = calculate_morpheme_metric(search_term, word, limit=max_mp)
+                if best_mp > 1:
+                    m2_f, _ = calculate_morpheme_metric(search_term, word[::-1], limit=best_mp - 1)
+                    best_mp = min(best_mp, m2_f)
+                if best_mp > 1:
+                    m3_f, _ = calculate_morpheme_metric(search_term_rev, word, limit=best_mp - 1)
+                    best_mp = min(best_mp, m3_f)
+                if best_mp > 1:
+                    m4_f, _ = calculate_morpheme_metric(search_term_rev, word[::-1], limit=best_mp - 1)
+                    best_mp = min(best_mp, m4_f)
 
-            if best_mp <= max_mp:
-                check_and_add_mp(mp_groups, source_len, target_len, best_mp, word)
+                if best_mp <= max_mp:
+                    check_and_add_mp(mp_groups, source_len, target_len, best_mp, word)
             
         # 2. LIC Logic
         if target_len <= source_len + 4 and shared_count >= target_len - 4 and shared_count >= 5:
