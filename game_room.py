@@ -1895,15 +1895,24 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         
         # Determine starting min length based on dimensions
         min_l = 4 if '4x4' in dimensions else (5 if '4x6' in dimensions else (6 if '5x7' in dimensions else 7))
-        target_range = '200-300' if is_24h else '100-200'
+        dict_upper = str(dictionary or 'NWL').upper()
+        if dict_upper in ['AW', 'ADDED_WORDS', 'ALL']:
+            if '3x3x3' in dimensions:
+                target_range = '300-400'
+            else:
+                parts = [p for p in dimensions.lower().replace(" ", "").split("x") if p.isdigit()]
+                rows_cols = (int(parts[0]) * int(parts[1])) if len(parts) >= 2 else 16
+                target_range = '300-400' if rows_cols <= 24 else '500+'
+        else:
+            target_range = '200-300' if is_24h else '100-200'
         fmt = 'Valued Letters' if is_24h else board_format
         
         # We will try 4 configurations, relaxing constraints at each step
         configs = [
             (min_l, target_range, fmt, 4.0),
             (3, target_range, 'Normal', 3.0),
-            (3, '100-200', 'Normal', 3.0),
-            (3, '50-100', 'Normal', 3.0)
+            (3, target_range, 'Normal', 3.0),
+            (3, target_range, 'Normal', 3.0)
         ]
         
         for idx, (ml, tr, f, to) in enumerate(configs):
