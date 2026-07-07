@@ -32,6 +32,11 @@
     display: none;
 }
 
+/* Mobile back button — hidden on desktop, shown only on mobile */
+.mobile-back-btn {
+    display: none;
+}
+
 /* Widescreen balanced columns and expanded Active Rooms panel */
 @media (min-width: 1440px) {
     .lobby-grid {
@@ -962,6 +967,37 @@ body.theme-light-brown .field-hint {
         border-radius: 12px;
         text-transform: uppercase;
         cursor: pointer;
+    }
+
+    /* Back button inside the Rooms panel on mobile */
+    .mobile-back-btn {
+        display: flex !important;
+        align-items: center;
+        gap: 6px;
+        width: 100%;
+        padding: 12px 16px;
+        margin-bottom: 12px;
+        background: rgba(var(--text-primary-rgb), 0.06);
+        border: 1px solid var(--input-border);
+        border-radius: 10px;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-align: left;
+        cursor: pointer;
+        letter-spacing: 0.5px;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .mobile-back-btn:active {
+        background: rgba(var(--text-primary-rgb), 0.15);
+    }
+
+    /* Shrink the placeholder icon on mobile so it doesn't block the view */
+    #rooms-list .placeholder-icon {
+        width: 120px !important;
+        max-width: 50% !important;
+        margin: 15px auto !important;
+        opacity: 0.6;
     }
 
     /* Snug styling for game config matrices on mobile screen */
