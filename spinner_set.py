@@ -119,7 +119,13 @@ class SpinnerSet:
         
         # AW Dictionary Target word count overrides (CSW+AW / NWL+AW target 300-400 (33%), 400-500 (33%), or 500+ (34%) words)
         dict_name = str(res.get('dictionary', 'NWL')).upper()
-        is_aw_effective = (dict_name in ['AW', 'ADDED_WORDS', 'ALL'] or res.get('use_added_words') is True)
+        # Detect compound AW dict names like 'NWL + AW' and 'CSW + AW'
+        is_aw_effective = (
+            dict_name in ['AW', 'ADDED_WORDS', 'ALL']
+            or res.get('use_added_words') is True
+            or '+ AW' in dict_name
+            or '+AW' in dict_name
+        )
         if is_aw_effective:
             wc_range = res.get('word_count_range')
             if wc_range not in ['300-400', '400-500', '500+']:
@@ -148,50 +154,46 @@ class SpinnerSet:
 
         wc_range = res.get('word_count_range', '100-200')
         
+        # Safety caps: only enforce the truly impossible combinations.
+        # Medium min-lengths (the most common) must be allowed to reach 200-300 and 300-400.
+
         # 1. 4x4 Grid Safety Caps
         if '4x4' in dims:
             if min_word_length >= 5:
-                # Max words for 5L+ on 4x4 is extremely small, cap at 100-200
-                if wc_range in ['200-300', '300-400', '500+']:
-                    res['word_count_range'] = '100-200'
-            elif min_word_length >= 4:
-                # Max words for 4L+ on 4x4 cannot comfortably hit 300-400 or 500+
+                # 5L+ on 4x4: hard to hit 200-300+, cap there
                 if wc_range in ['300-400', '500+']:
                     res['word_count_range'] = '200-300'
-            else: # min_word_length == 3
-                # Even 3L+ on 4x4 with high difficulty/rare letters cannot comfortably hit 500+
-                if wc_range == '500+':
-                    res['word_count_range'] = '300-400'
+            # 3L and 4L on 4x4 can hit 200-300 and 300-400 fine — no cap needed
+            if wc_range == '500+':
+                res['word_count_range'] = '300-400'
                     
         # 2. 4x6 Grid Safety Caps
         elif '4x6' in dims:
             if min_word_length >= 6:
-                if wc_range in ['200-300', '300-400', '500+']:
-                    res['word_count_range'] = '100-200'
-            elif min_word_length >= 5:
+                # 6L+ on 4x6: cap at 200-300
                 if wc_range in ['300-400', '500+']:
                     res['word_count_range'] = '200-300'
-            elif min_word_length >= 4:
-                if wc_range == '500+':
-                    res['word_count_range'] = '300-400'
+            # 4L and 5L on 4x6 can reach 300-400 fine
+            if wc_range == '500+':
+                res['word_count_range'] = '300-400'
                     
         # 3. 5x7 Grid Safety Caps
         elif '5x7' in dims:
             if min_word_length >= 7:
-                if wc_range in ['200-300', '300-400', '500+']:
-                    res['word_count_range'] = '100-200'
-            elif min_word_length >= 6:
+                # 7L+ on 5x7: cap at 200-300
                 if wc_range in ['300-400', '500+']:
                     res['word_count_range'] = '200-300'
+            # 5L and 6L on 5x7 can reach 300-400 fine
+            if wc_range == '500+':
+                res['word_count_range'] = '300-400'
                     
         # 4. 6x8 or 3x3x3 Grid Safety Caps
         elif '6x8' in dims or '3x3x3' in dims:
             if min_word_length >= 8:
-                if wc_range in ['200-300', '300-400', '500+']:
-                    res['word_count_range'] = '100-200'
-            elif min_word_length >= 7:
+                # 8L+ on 6x8: cap at 200-300
                 if wc_range in ['300-400', '500+']:
                     res['word_count_range'] = '200-300'
+            # 6L and 7L on 6x8 can comfortably reach 300-400
                     
         return res
 
@@ -275,12 +277,14 @@ class SpinnerSet:
                         elif '6x8' in dims and initial_min == 6:
                             initial_min = random.choice([7, 8])
                             
+                    initial_dict = SpinnerSet._spin_dictionary()
+                    initial_use_aw = ('+ AW' in initial_dict or '+AW' in initial_dict)
                     return {
                         'min_word_length': initial_min,
                         'difficulty': initial_diff,
                         'word_count_range': initial_wc,
-                        'dictionary': 'NWL',
-                        'use_added_words': False,
+                        'dictionary': initial_dict,
+                        'use_added_words': initial_use_aw,
                         'board_format': 'Normal',
                         'bonus_word_length': max(8, initial_min),
                         'generated_at': time.time()
