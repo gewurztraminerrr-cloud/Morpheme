@@ -1227,24 +1227,41 @@ class BoardGenerator:
         RESTARTED: Serves cached boards with pre-calculated metadata if available,
         otherwise generates synchronously and refills cache in background.
         """
+        # Normalize compound dict names ('NWL + AW', 'CSW + AW') before cache key and generation
+        _norm_dict = str(dictionary).upper() if isinstance(dictionary, str) else 'NWL'
+        _has_aw = False
+        for _sfx in ['+ AW', '+AW', '+ ADDED_WORDS', '+ADDED_WORDS']:
+            if _sfx in _norm_dict:
+                _norm_dict = _norm_dict.replace(_sfx, '').strip().strip('+').strip()
+                _has_aw = True
+                break
+        if not _norm_dict or _norm_dict in ['AW', 'ADDED_WORDS', 'ALL']:
+            _norm_dict = 'NWL'
+            _has_aw = True
+        # Only keep recognized base dicts; default to NWL for unknown names
+        if _norm_dict not in ['NWL', 'CSW', 'UNIQUENWL', 'UNIQUECSW']:
+            _norm_dict = 'NWL'
+        dictionary = _norm_dict  # Use normalized name throughout
+
         if use_added_words is None:
             val_ctx = use_added_words_ctx.get()
             if val_ctx is None:
                 val_ctx = False
+            val_ctx = val_ctx or _has_aw
         else:
-            val_ctx = use_added_words
+            val_ctx = use_added_words or _has_aw
 
         param_key_str = serialize_param_key(
             dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, use_added_words=val_ctx
         )
-        
+
         # Try to pop a pre-generated board from the cache
         cached_res = pop_cached_board(param_key_str)
         if cached_res:
             # Trigger background refill to replace the popped board
             refill_board_cache_bg(self, param_key_str, target_count=50)
             return cached_res
-            
+
         # Fallback to synchronous generation
         res = self._generate_board_internal(
             dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, is_emergency, timeout, use_added_words=val_ctx
@@ -1322,7 +1339,22 @@ class BoardGenerator:
         RESTARTED: Simplified logic with ironclad compliance.
         """
         original_dict_name = str(dictionary).upper() if isinstance(dictionary, str) else ""
-        
+
+        # --- NORMALIZE compound dictionary names ('NWL + AW', 'CSW + AW') ---
+        # The spinner produces display strings like 'NWL + AW' or 'CSW + AW'.
+        # Internally we must strip the ' + AW' suffix and set use_aw_flag=True.
+        base_dict_name = original_dict_name
+        has_aw_suffix = False
+        for _aw_suffix in ['+ AW', '+AW', '+ ADDED_WORDS', '+ADDED_WORDS']:
+            if _aw_suffix in original_dict_name:
+                base_dict_name = original_dict_name.replace(_aw_suffix, '').strip().strip('+').strip()
+                has_aw_suffix = True
+                break
+        if not base_dict_name or base_dict_name in ['AW', 'ADDED_WORDS', 'ALL']:
+            base_dict_name = 'NWL' if not has_aw_suffix else 'NWL'
+        # Use base_dict_name for all internal calls (NWL or CSW)
+        dictionary = base_dict_name if base_dict_name in ['NWL', 'CSW', 'UNIQUENWL', 'UNIQUECSW'] else base_dict_name
+
         if min_word_length is None:
             min_word_length = 3
         else:
@@ -1333,14 +1365,14 @@ class BoardGenerator:
 
         # Set use_aw_flag
         if use_added_words is None:
-            use_aw_flag = False
+            use_aw_flag = has_aw_suffix  # Start from compound-name detection
             if original_dict_name in ['AW', 'ADDED_WORDS', 'ALL']:
                 use_aw_flag = True
             if use_added_words_ctx.get() is True:
                 use_aw_flag = True
         else:
-            use_aw_flag = use_added_words
-            
+            use_aw_flag = use_added_words or has_aw_suffix
+
         # Set context var for added words
         use_added_words_ctx.set(use_aw_flag)
 

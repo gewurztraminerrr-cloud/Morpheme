@@ -1927,7 +1927,8 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                     min_word_length=ml,
                     difficulty="Medium",
                     is_emergency=True,
-                    timeout=to
+                    timeout=to,
+                    use_added_words=use_added_words
                 )
                 if res and len(res) >= 7:
                     board, words, bonus_cell, updated_format, paths, ratio, bonus_word = res
@@ -2543,7 +2544,8 @@ class RoomManager:
                             room.spinner_params['min_word_length'] = 6
                         
                         # 3. Generate board
-                        use_aw_flag = room.spinner_params.get('use_added_words', False)
+                        _kick_dict = str(room.spinner_params.get('dictionary', 'NWL')).upper()
+                        use_aw_flag = room.spinner_params.get('use_added_words', False) or ('+ AW' in _kick_dict) or ('+AW' in _kick_dict)
                         token = use_added_words_ctx.set(use_aw_flag)
                         try:
                             e_results = self.board_generator.generate_board(
@@ -3179,7 +3181,8 @@ class RoomManager:
                 import random
                 random.seed()
                 
-                use_aw_flag = room.spinner_params.get('use_added_words', False) or (str(room.spinner_params.get('dictionary')).upper() in ['AW', 'ADDED_WORDS'])
+                _sp_dict = str(room.spinner_params.get('dictionary', 'NWL')).upper()
+                use_aw_flag = room.spinner_params.get('use_added_words', False) or ('+ AW' in _sp_dict) or ('+AW' in _sp_dict) or (_sp_dict in ['AW', 'ADDED_WORDS'])
                 token = use_added_words_ctx.set(use_aw_flag)
                 try:
                     res = self.board_generator.generate_board(
@@ -3868,7 +3871,8 @@ class RoomManager:
                         import random
                         random.seed()
                         
-                        use_aw_flag = params.get('use_added_words', False)
+                        _dict_str = str(params.get('dictionary', 'NWL')).upper()
+                        use_aw_flag = params.get('use_added_words', False) or ('+ AW' in _dict_str) or ('+AW' in _dict_str)
                         token = use_added_words_ctx.set(use_aw_flag)
                         try:
                             # ROBUST CALL: Use keyword arguments to prevent positional mismatch
