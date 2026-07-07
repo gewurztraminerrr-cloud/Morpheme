@@ -149,8 +149,14 @@ LETTER_FREQ_SPARSE = [
 ACTIVE_REFILLS = set()
 ACTIVE_REFILLS_LOCK = threading.Lock()
 
+# Bump this version whenever the solver logic changes in a way that affects
+# board word lists (e.g. AW inclusion, trie changes). This automatically
+# invalidates all pre-generated cached boards so stale ones are never served.
+BOARD_CACHE_VERSION = 2
+
 def serialize_param_key(dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, use_added_words=False):
     return json.dumps({
+        "v": BOARD_CACHE_VERSION,
         "dimensions": dimensions,
         "bonus_word_len": len(bonus_word) if isinstance(bonus_word, str) else (bonus_word if isinstance(bonus_word, int) else 0),
         "word_count_range": list(word_count_range) if isinstance(word_count_range, (list, tuple)) else word_count_range,
