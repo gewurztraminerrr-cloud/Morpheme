@@ -4365,7 +4365,7 @@ class RoomManager:
                 
                 # USER REQUEST: Ensure UI range matches board EXACTLY by using the params used for generation
                 # CRITICAL: Use 'or' to handle cases where next_round_spinner_params is explicitly None
-                active_params = getattr(room, 'next_round_spinner_params', None) or room.spinner_params or {}
+                active_params = getattr(room, 'next_round_spinner_params', None) or getattr(room, 'next_spinner_params', None) or room.spinner_params or {}
                 room.current_board_format = 'Valued Letters' if room.time_limit >= 7200 else (getattr(room, 'next_round_format', None) or active_params.get('board_format', 'Normal'))
                 room.current_word_count_range = '200-300' if room.time_limit >= 7200 else active_params.get('word_count_range', '100-200')
                 room.current_difficulty = active_params.get('difficulty', 'Medium')
