@@ -269,6 +269,7 @@ class WordValidator:
 
             print(f"Loaded {len(self.added_words)} custom added words as standalone trie")
             self._filter_added_words()
+            self.added_words_list = [w for w in self.added_words_list if w in self.added_words]
             self._recalculate_full_sets()
             
             # Now build added_trie strictly using the filtered self.added_words!
