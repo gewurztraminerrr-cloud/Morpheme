@@ -2553,7 +2553,8 @@ class RoomManager:
                                 dictionary=room.spinner_params.get('dictionary', 'NWL'),
                                 board_format=room.spinner_params.get('board_format', 'Normal'),
                                 min_word_length=m_len,
-                                is_emergency=True
+                                is_emergency=True,
+                                use_added_words=use_aw_flag
                             )
                         finally:
                             use_added_words_ctx.reset(token)
@@ -3189,7 +3190,8 @@ class RoomManager:
                         board_format=room.spinner_params['board_format'],
                         min_word_length=room.spinner_params.get('min_word_length', 3),
                         difficulty=room.spinner_params.get('difficulty', 'Medium'),
-                        is_emergency=not getattr(room, 'is_solo', False)
+                        is_emergency=not getattr(room, 'is_solo', False),
+                        use_added_words=use_aw_flag
                     )
                 finally:
                     use_added_words_ctx.reset(token)
@@ -3878,7 +3880,8 @@ class RoomManager:
                                 board_format=search_fmt,
                                 min_word_length=search_min,
                                 difficulty=search_diff,
-                                timeout=search_timeout
+                                timeout=search_timeout,
+                                use_added_words=use_aw_flag
                             )
                         finally:
                             use_added_words_ctx.reset(token)

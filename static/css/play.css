@@ -1422,12 +1422,12 @@ body.theme-light-brown .notepad-item.bonus-word {
     font-weight: 700;
 }
 
-/* NWL Word (Vibrant Red) */
+/* NWL Word (Dark Crimson Red) */
 .nwl-word {
-    background: rgba(244, 63, 94, 0.4) !important;
-    border: 2px solid #f43f5e !important;
-    box-shadow: 0 0 10px rgba(244, 63, 94, 0.5) !important;
-    color: var(--text-primary);
+    background: rgba(176, 30, 46, 0.45) !important;
+    border: 2px solid #b01e2e !important;
+    box-shadow: 0 0 10px rgba(176, 30, 46, 0.5) !important;
+    color: #f8c8cc;
     font-weight: 700;
 }
 

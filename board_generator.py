@@ -149,7 +149,7 @@ LETTER_FREQ_SPARSE = [
 ACTIVE_REFILLS = set()
 ACTIVE_REFILLS_LOCK = threading.Lock()
 
-def serialize_param_key(dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty):
+def serialize_param_key(dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, use_added_words=False):
     return json.dumps({
         "dimensions": dimensions,
         "bonus_word_len": len(bonus_word) if isinstance(bonus_word, str) else (bonus_word if isinstance(bonus_word, int) else 0),
@@ -157,7 +157,8 @@ def serialize_param_key(dimensions, bonus_word, word_count_range, dictionary, bo
         "dictionary": dictionary,
         "board_format": board_format,
         "min_word_length": min_word_length,
-        "difficulty": difficulty
+        "difficulty": difficulty,
+        "use_added_words": use_added_words
     }, sort_keys=True)
 
 def pop_cached_board(param_key_str):
@@ -256,8 +257,9 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=50):
                     
                 attempts += 1
                 # Generate a single board using backend logic
+                use_aw_val = params.get('use_added_words', False)
                 res = generator_instance._generate_board_internal(
-                    dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, is_emergency=False, timeout=60
+                    dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, is_emergency=False, timeout=60, use_added_words=use_aw_val
                 )
                 
                 board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word = res
@@ -1218,15 +1220,22 @@ class BoardGenerator:
         return "FastReRoll"
 
     def generate_board(
-        self, dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length=3, difficulty="Medium", is_emergency=False, timeout=None
+        self, dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length=3, difficulty="Medium", is_emergency=False, timeout=None, use_added_words=None
     ):
         """
         Generate a valid board that meets word count requirements (100-300).
         RESTARTED: Serves cached boards with pre-calculated metadata if available,
         otherwise generates synchronously and refills cache in background.
         """
+        if use_added_words is None:
+            val_ctx = use_added_words_ctx.get()
+            if val_ctx is None:
+                val_ctx = False
+        else:
+            val_ctx = use_added_words
+
         param_key_str = serialize_param_key(
-            dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty
+            dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, use_added_words=val_ctx
         )
         
         # Try to pop a pre-generated board from the cache
@@ -1238,7 +1247,7 @@ class BoardGenerator:
             
         # Fallback to synchronous generation
         res = self._generate_board_internal(
-            dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, is_emergency, timeout
+            dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, is_emergency, timeout, use_added_words=val_ctx
         )
         
         board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word = res
@@ -1306,7 +1315,7 @@ class BoardGenerator:
 
 
     def _generate_board_internal(
-        self, dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length=3, difficulty="Medium", is_emergency=False, timeout=None
+        self, dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length=3, difficulty="Medium", is_emergency=False, timeout=None, use_added_words=None
     ):
         """
         Generate a valid board that meets word count requirements (100-300).
@@ -1322,14 +1331,15 @@ class BoardGenerator:
             except:
                 min_word_length = 3
 
-        # Set use_aw_flag if dictionary is AW or ADDED_WORDS
-        use_aw_flag = False
-        if original_dict_name in ['AW', 'ADDED_WORDS', 'ALL']:
-            use_aw_flag = True
-            
-        # If the context variable is already set to True by the caller, preserve it!
-        if use_added_words_ctx.get() is True:
-            use_aw_flag = True
+        # Set use_aw_flag
+        if use_added_words is None:
+            use_aw_flag = False
+            if original_dict_name in ['AW', 'ADDED_WORDS', 'ALL']:
+                use_aw_flag = True
+            if use_added_words_ctx.get() is True:
+                use_aw_flag = True
+        else:
+            use_aw_flag = use_added_words
             
         # Set context var for added words
         use_added_words_ctx.set(use_aw_flag)
@@ -1764,10 +1774,10 @@ class BoardGenerator:
                         else:
                             board[r][c] = val
                         
-                        if not self._has_either_or_ambiguity(board, dictionary):
+                        if not self._has_either_or_ambiguity(board, dictionary, use_added_words=use_aw_flag):
                             # Solve board to check word ratio using Either/Or tile
                             temp_words = self._solve_board(
-                                board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=1.0
+                                board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=1.0, use_added_words=use_aw_flag
                             )
                             if temp_words:
                                 l1, l2 = val.split('/')
@@ -2279,10 +2289,10 @@ class BoardGenerator:
                         else:
                             board[r][c] = val
                         
-                        if not self._has_either_or_ambiguity(board, dictionary):
+                        if not self._has_either_or_ambiguity(board, dictionary, use_added_words=use_aw_flag):
                             # Solve board to check word ratio using Either/Or tile
                             temp_words = self._solve_board(
-                                board, dictionary, (0, 99999), display_min, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=1.0
+                                board, dictionary, (0, 99999), display_min, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=1.0, use_added_words=use_aw_flag
                             )
                             if temp_words:
                                 l1, l2 = val.split('/')
@@ -4167,7 +4177,7 @@ class BoardGenerator:
             f.write(f"[board_generator.py] _embed_bonus_word: FAILED at {time.time()}\n")
         return None
 
-    def _has_either_or_ambiguity(self, board, dictionary):
+    def _has_either_or_ambiguity(self, board, dictionary, use_added_words=False):
         """Check if any path in the board passing through the E/O tile could represent two different valid words."""
         import time as _time
         _ambig_deadline = _time.time() + 0.5  # Hard 500ms cap — never stall board generation
@@ -4211,13 +4221,13 @@ class BoardGenerator:
             has_multi = any(len(l) > 1 for l in word_so_far)
 
             if has_multi:
-                valid_words = [w for w in possible_words if word_validator.is_valid_word(w, dictionary)]
+                valid_words = [w for w in possible_words if word_validator.is_valid_word(w, dictionary, use_added_words=use_added_words)]
                 if len(valid_words) > 1:
                     # Ambiguity detected!
                     return True
 
             # Pruning: if NO possible word is a valid prefix, stop
-            if not any(word_validator.has_valid_prefix(w, dictionary) for w in possible_words):
+            if not any(word_validator.has_valid_prefix(w, dictionary, use_added_words=use_added_words) for w in possible_words):
                 return False
 
             # Geographic Pruning: If we can't reach eo_pos within the remaining steps, stop.
@@ -4277,15 +4287,32 @@ class BoardGenerator:
         return False
 
     def _solve_board(
-        self, board, dictionary="NWL", word_count_range=(0, 99999), min_word_length=3, max_depth=12, store_paths=True, timeout=10.0, must_include=None, bonus_cell=None
+        self, board, dictionary="NWL", word_count_range=(0, 99999), min_word_length=3, max_depth=12, store_paths=True, timeout=10.0, must_include=None, bonus_cell=None, use_added_words=None
     ):
         """Find all valid words on the board using high-speed node-based DFS traversal."""
         d_upper = str(dictionary).upper()
+        from word_validator import word_validator
+        
+        if use_added_words is None:
+            val_ctx = use_added_words_ctx.get()
+            if val_ctx is None:
+                val_ctx = word_validator.use_added_words
+        else:
+            val_ctx = use_added_words
+
+        if val_ctx and d_upper in ["NWL", "CSW"]:
+            # Recurse and combine
+            base_words = self._solve_board(board, d_upper, word_count_range, min_word_length, max_depth, store_paths, timeout, must_include, bonus_cell, use_added_words=False)
+            added_words = self._solve_board(board, "_ONLY_ADDED_", word_count_range, min_word_length, max_depth, store_paths, timeout, must_include, bonus_cell, use_added_words=False)
+            for w, p in added_words.items():
+                if w not in base_words:
+                    base_words[w] = p
+            return base_words
+
         if d_upper in ["AW", "ADDED_WORDS"]:
-            from word_validator import word_validator
             word_validator.ensure_csw_loaded()
-            csw_words = self._solve_board(board, "CSW", word_count_range, min_word_length, max_depth, store_paths, timeout, must_include, bonus_cell)
-            added_words = self._solve_board(board, "_ONLY_ADDED_", word_count_range, min_word_length, max_depth, store_paths, timeout, must_include, bonus_cell)
+            csw_words = self._solve_board(board, "CSW", word_count_range, min_word_length, max_depth, store_paths, timeout, must_include, bonus_cell, use_added_words=False)
+            added_words = self._solve_board(board, "_ONLY_ADDED_", word_count_range, min_word_length, max_depth, store_paths, timeout, must_include, bonus_cell, use_added_words=False)
             for w, p in added_words.items():
                 if w not in csw_words:
                     csw_words[w] = p
@@ -4348,10 +4375,7 @@ class BoardGenerator:
         # SYNC: Ensure tries are current with 'Added Words' toggle and file state
         from word_validator import word_validator
         word_validator.get_use_added_words()
-        
-        val_ctx = use_added_words_ctx.get()
-        if val_ctx is None:
-            val_ctx = word_validator.use_added_words
+
         
         d_upper = str(dictionary).upper()
         if d_upper in ["UNIQUECSW", "CSW"]:
@@ -4548,11 +4572,26 @@ class BoardGenerator:
             
         return found_words
 
-    def complete_solve_board(self, board, dictionary, min_word_length=3):
+    def complete_solve_board(self, board, dictionary, min_word_length=3, use_added_words=None):
         """
         Exhaustively find ALL valid words on the board without limits.
         Used for background solving during intermission.
         """
+        d_upper = str(dictionary).upper()
+        from word_validator import word_validator
+        
+        if use_added_words is None:
+            val_ctx = use_added_words_ctx.get()
+            if val_ctx is None:
+                val_ctx = word_validator.use_added_words
+        else:
+            val_ctx = use_added_words
+
+        if val_ctx and d_upper in ["NWL", "CSW"]:
+            base_words = self.complete_solve_board(board, d_upper, min_word_length, use_added_words=False)
+            added_words = self.complete_solve_board(board, "_ONLY_ADDED_", min_word_length, use_added_words=False)
+            return sorted(list(set(base_words) | set(added_words)))
+
         import time
 
         start_t = time.time()
@@ -4570,11 +4609,11 @@ class BoardGenerator:
 
             # Add word if it's valid and long enough
             # Use cached validator results if possible
-            if len(word) >= min_word_length and word_validator.is_valid_word(word, dictionary):
+            if len(word) >= min_word_length and word_validator.is_valid_word(word, d_upper, use_added_words=val_ctx):
                 found_words.add(word)
 
             # Prune search using Trie/Prefix checking
-            if word_validator.has_valid_prefix(word, dictionary):
+            if word_validator.has_valid_prefix(word, d_upper, use_added_words=val_ctx):
                 for dr in [-1, 0, 1]:
                     for dc in [-1, 0, 1]:
                         if dr == 0 and dc == 0:

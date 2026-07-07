@@ -286,8 +286,16 @@ class WordValidator:
             node = node.children[char]
         node.is_word = True
     
-    def has_valid_prefix(self, prefix, dictionary='NWL'):
+    def has_valid_prefix(self, prefix, dictionary='NWL', use_added_words=None):
         """Check if prefix could lead to a valid word using pre-merged tries."""
+        if use_added_words is None:
+            self.get_use_added_words()
+            val = use_added_words_ctx.get()
+            if val is None:
+                val = self.use_added_words
+        else:
+            val = use_added_words
+
         d_upper = str(dictionary).upper()
         if d_upper == 'UNIQUENWL':
             trie = self.unique_nwl_trie
@@ -299,7 +307,7 @@ class WordValidator:
             trie = self.csw_trie
         elif d_upper == 'AW' or d_upper == 'ADDED_WORDS':
             self.ensure_csw_loaded()
-            return self.has_valid_prefix(prefix, 'CSW') or self.has_valid_prefix(prefix, '_ONLY_ADDED_')
+            return self.has_valid_prefix(prefix, 'CSW', use_added_words=val) or self.has_valid_prefix(prefix, '_ONLY_ADDED_', use_added_words=val)
         elif d_upper == '_ONLY_ADDED_':
             trie = self.added_trie
         else:
@@ -308,6 +316,8 @@ class WordValidator:
         node = trie
         for char in prefix:
             if char not in node.children:
+                if val and d_upper in ['NWL', 'CSW']:
+                    return self.has_valid_prefix(prefix, '_ONLY_ADDED_', use_added_words=False)
                 return False
             node = node.children[char]
         return True

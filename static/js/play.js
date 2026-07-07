@@ -3501,42 +3501,45 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         }
 
         // Priority classes
+        // Color priority:
+        //   1. NWL words → dark red (nwl-word)
+        //   2. CSW-only words (in CSW, not in NWL) → gold (csw-only)
+        //   3. AW-only words (not in NWL or CSW) → purple (added-word)
         if (isBonus) {
             className += ' bonus-word';
         } else {
-            let activeDict = 'NWL';
+            let baseDict = 'NWL'; // The base standard dictionary for this round
             let useAW = false;
             const s = window.lastGameState;
             if (s) {
                 if (s.state === 'intermission') {
-                    activeDict = String(s.previous_dictionary || s.current_dictionary || 'NWL').toUpperCase();
-                    useAW = (s.previous_use_added_words === true || s.use_added_words === true);
+                    baseDict = String(s.previous_dictionary || s.current_dictionary || 'NWL').toUpperCase();
+                    useAW = (s.previous_use_added_words === true);
                 } else {
-                    activeDict = String(s.current_dictionary || 'NWL').toUpperCase();
+                    baseDict = String(s.current_dictionary || 'NWL').toUpperCase();
                     useAW = (s.use_added_words === true);
                 }
             }
-            if (useAW) {
-                activeDict = 'AW';
-            }
 
-            if (activeDict === 'AW' || activeDict === 'ALL' || activeDict === 'ADDED_WORDS') {
+            if (useAW) {
+                // NWL+AW or CSW+AW — three tiers
                 if (isAddedWord) {
-                    className += ' added-word'; // Purple for AW-only
+                    className += ' added-word'; // Purple: AW-only (not in NWL or CSW)
                 } else if (isCSWOnly) {
-                    className += ' csw-only'; // Gold for CSW-only
+                    className += ' csw-only';   // Gold: in CSW but not NWL
                 } else {
-                    className += ' nwl-word'; // Red for NWL words
+                    className += ' nwl-word';   // Dark red: in NWL (includes all NWL words)
                 }
-            } else if (activeDict === 'CSW') {
+            } else if (baseDict === 'CSW') {
+                // Pure CSW round — two tiers
                 if (isCSWOnly) {
-                    className += ' csw-only'; // Gold for CSW-only
+                    className += ' csw-only';   // Gold: in CSW but not NWL
                 } else {
-                    className += ' nwl-word'; // Red for NWL words
+                    className += ' nwl-word';   // Dark red: in NWL (also in CSW)
                 }
             } else {
-                // NWL or other fallback
-                className += ' nwl-word'; // Red for all NWL words
+                // Pure NWL or other fallback — single tier
+                className += ' nwl-word';       // Dark red for all NWL words
             }
         }
 
