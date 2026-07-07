@@ -73,14 +73,15 @@ class SpinnerSet:
                     print(f"[SpinnerSet] Wrapper adjusted 6x8 min_len for 100-200 words from 6 to {res['min_word_length']}")
             # Roll for Added Words configuration
             if isinstance(res, dict):
-                if 'use_added_words' not in res:
-                    if res.get('dictionary') == 'AW':
+                dict_val = res.get('dictionary')
+                if dict_val:
+                    if '+ AW' in str(dict_val) or '+AW' in str(dict_val):
                         res['use_added_words'] = True
-                    elif not res.get('dictionary'):
-                        res['dictionary'] = SpinnerSet._spin_dictionary()
-                        res['use_added_words'] = (res['dictionary'] == 'AW')
                     else:
-                        res['use_added_words'] = False
+                        res['use_added_words'] = (str(dict_val).upper() == 'AW')
+                else:
+                    res['dictionary'] = SpinnerSet._spin_dictionary()
+                    res['use_added_words'] = ('+ AW' in str(res['dictionary']) or '+AW' in str(res['dictionary']))
 
             # Apply our ironclad safety sanitizer
             res = SpinnerSet.sanitize_params(res, board_dimensions, is_24h)
@@ -89,7 +90,7 @@ class SpinnerSet:
             print(f"[SpinnerSet] CRITICAL WRAPPER ERROR: {e}")
             fallback = {
                 'difficulty': random.choices(['Easy', 'Medium', 'Hard'], weights=[25, 50, 25])[0],
-                'dictionary': random.choice(['NWL', 'CSW']),
+                'dictionary': random.choice(['NWL', 'CSW', 'NWL + AW', 'CSW + AW']),
                 'word_count_range': '200-300' if is_24h else random.choices(['100-200', '200-300', '300-400', '500+'], weights=[30, 30, 30, 1])[0],
                 'board_format': 'Valued Letters' if is_24h else 'Normal',
                 'min_word_length': 3,
@@ -97,14 +98,14 @@ class SpinnerSet:
                 'generated_at': time.time()
             }
             # Roll for Added Words fallback
-            if 'use_added_words' not in fallback:
-                if fallback.get('dictionary') == 'AW':
+            fallback_dict = fallback.get('dictionary')
+            if fallback_dict:
+                if '+ AW' in str(fallback_dict) or '+AW' in str(fallback_dict):
                     fallback['use_added_words'] = True
-                elif not fallback.get('dictionary'):
-                    fallback['dictionary'] = SpinnerSet._spin_dictionary()
-                    fallback['use_added_words'] = (fallback['dictionary'] == 'AW')
                 else:
-                    fallback['use_added_words'] = False
+                    fallback['use_added_words'] = (str(fallback_dict).upper() == 'AW')
+            else:
+                fallback['use_added_words'] = False
                 
             return SpinnerSet.sanitize_params(fallback, board_dimensions, is_24h)
 
@@ -202,7 +203,7 @@ class SpinnerSet:
             for _ in range(30):
                 # Randomize dictionary and added words configuration
                 dictionary = SpinnerSet._spin_dictionary()
-                use_added_words = (dictionary == 'AW')
+                use_added_words = ('+ AW' in str(dictionary) or '+AW' in str(dictionary) or str(dictionary).upper() == 'AW')
                 
                 # Minimum word length (spin BEFORE word count to inform density)
                 min_word_length = SpinnerSet._spin_min_word_length(board_dimensions)
@@ -355,9 +356,9 @@ class SpinnerSet:
     
     @staticmethod
     def _spin_dictionary():
-        """Balanced probability: 33% NWL, 33% CSW, 34% AW"""
-        choices = ['NWL', 'CSW', 'AW']
-        weights = [33, 33, 34]
+        """Equal probability: 25% NWL, 25% CSW, 25% NWL + AW, 25% CSW + AW"""
+        choices = ['NWL', 'CSW', 'NWL + AW', 'CSW + AW']
+        weights = [25, 25, 25, 25]
         return random.choices(choices, weights=weights)[0]
     
     @staticmethod

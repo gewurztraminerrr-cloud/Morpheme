@@ -3320,10 +3320,9 @@
                             <ul style="margin-top: 10px; margin-bottom: 15px; padding-left: 20px; line-height: 1.5;">
                                 <li><strong>NWL (North American Word List):</strong> The primary dictionary used for standard tournaments and North American wordplay. It currently contains <strong id="faq-nwl-total" style="color: #60a5fa;">-</strong> words.</li>
                                 <li><strong>CSW (Collins Scrabble Words):</strong> The authoritative international Scrabble dictionary, containing <strong id="faq-csw-total" style="color: #fbbf24;">-</strong> words.</li>
-                                <li><strong>AW (Added Words):</strong> A custom moderator-curated dictionary allowing live, customized word additions for dynamic community-driven solving. It currently has <strong id="faq-aw-total" style="color: #c084fc;">-</strong> words. AW uses Wiktionary’s open-source word list as its foundation, modified by removing certain words and adding others that should be in Wiktionary’s list but aren’t (for example: <em>OPALITE</em>). To make CSW a total subset of AW, words from CSW were also added to AW. This list alone contains around 520,000 unique words not present in CSW, and 600,000 words not present in NWL.</li>
+                                <li><strong>AW (Added Words):</strong> A custom moderator-curated dictionary allowing live, customized word additions for dynamic community-driven solving. It currently has <strong id="faq-aw-total" style="color: #c084fc;">-</strong> words. AW strictly only includes custom words that are neither found in NWL nor CSW. If a future update of NWL or CSW incorporates any word currently in the AW list, those words are automatically removed from AW.</li>
                                 <li><strong>16+ List (Supplementary):</strong> A specialized collection of words containing 16 or more letters to support solving on larger grids (5x7, 6x8, and Cubes). It currently has <strong id="faq-long-total" style="color: #f87171;">-</strong> words.</li>
                             </ul>
-                            <p style="margin-top: 15px; margin-bottom: 10px;"><strong>Dictionary Relationships:</strong> NWL is a subset of CSW, and CSW is a subset of AW. If a future update of NWL or CSW incorporates any word currently in the AW list, those words are automatically removed from AW to avoid duplication.</p>
                             <p style="margin-top: 15px; margin-bottom: 10px;">Below is the live distribution of word lengths (2 to 16+ letters) currently loaded in each dictionary:</p>
                             <div class="faq-table-container" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.1); margin-top: 10px; margin-bottom: 10px; overflow-x: auto;">
                                 <table class="faq-scoring-table" id="faq-dict-stats-table" style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center;">
@@ -4124,27 +4123,35 @@
                                 </div>
                                 <div style="display: flex; flex-direction: column; gap: 4px; padding-left: 8px; border-left: 2px solid #2ec27e;">
                                     <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem;">
-                                        <span>📘 NWL (North American)</span>
-                                        <span style="font-weight: 700;">33%</span>
+                                        <span>📘 NWL</span>
+                                        <span style="font-weight: 700;">25%</span>
                                     </div>
                                     <div style="height: 5px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 2.5px; overflow: hidden; margin-bottom: 4px;">
-                                        <div style="width: 33%; height: 100%; background: #3583e4; border-radius: 2.5px;"></div>
+                                        <div style="width: 25%; height: 100%; background: #3583e4; border-radius: 2.5px;"></div>
                                     </div>
                                     
                                     <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem;">
-                                        <span>📕 CSW (Collins International)</span>
-                                        <span style="font-weight: 700;">33%</span>
+                                        <span>📕 CSW</span>
+                                        <span style="font-weight: 700;">25%</span>
                                     </div>
                                     <div style="height: 5px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 2.5px; overflow: hidden; margin-bottom: 4px;">
-                                        <div style="width: 33%; height: 100%; background: #e01b24; border-radius: 2.5px;"></div>
+                                        <div style="width: 25%; height: 100%; background: #e01b24; border-radius: 2.5px;"></div>
                                     </div>
                                     
                                     <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem;">
-                                        <span>📝 AW (Added Words)</span>
-                                        <span style="font-weight: 700;">34%</span>
+                                        <span>📘 NWL + AW</span>
+                                        <span style="font-weight: 700;">25%</span>
                                     </div>
                                     <div style="height: 5px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 2.5px; overflow: hidden; margin-bottom: 4px;">
-                                        <div style="width: 34%; height: 100%; background: #c084fc; border-radius: 2.5px;"></div>
+                                        <div style="width: 25%; height: 100%; background: #1a5fb4; border-radius: 2.5px;"></div>
+                                    </div>
+
+                                    <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem;">
+                                        <span>📕 CSW + AW</span>
+                                        <span style="font-weight: 700;">25%</span>
+                                    </div>
+                                    <div style="height: 5px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 2.5px; overflow: hidden; margin-bottom: 4px;">
+                                        <div style="width: 25%; height: 100%; background: #a51d2d; border-radius: 2.5px;"></div>
                                     </div>
                                 </div>
                             </div>
@@ -4785,8 +4792,8 @@
     <script src="/js/forum.js?v=54"></script>
     <script src="/js/app.js?v=70"></script>
     <script src="/js/lobby.js?v=10"></script>
-    <script src="/js/play.js?v=234"></script>
-    <script src="/js/tournaments.js?v=8"></script>
+    <script src="/js/play.js?v=235"></script>
+    <script src="/js/tournaments.js?v=9"></script>
     <script src="/js/leaderboard.js?v=3"></script>
     <script src="/js/tools.js?v=82"></script>
     <script src="/js/mouse_selection.js?v=3"></script>

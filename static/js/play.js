@@ -3649,7 +3649,7 @@ function updateParameters(state) {
     const factMinLen = (preferSp ? (sp.min_word_length || state.current_min_length) : (state.current_min_length || sp.min_word_length)) || 3;
     const baseDict = (preferSp ? (sp.dictionary || state.current_dictionary) : (state.current_dictionary || sp.dictionary)) || 'NWL';
     const useAW = preferSp ? (sp.use_added_words === true) : (state.use_added_words === true);
-    const factDict = useAW ? 'AW' : baseDict;
+    const factDict = useAW ? `${baseDict} + AW` : baseDict;
     const factWordRange = (preferSp ? (sp.word_count_range || state.current_word_count_range) : (state.current_word_count_range || sp.word_count_range)) || 'Random';
     
     let factUniq = 0; 

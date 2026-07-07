@@ -185,11 +185,13 @@ class PrivateMatchManager:
         elif dict_name:
             if '+ AW' in str(dict_name) or '+AW' in str(dict_name):
                 use_aw_flag = True
-                dict_name = 'AW'
+                dict_name = str(dict_name).replace('+ AW', '').replace('+AW', '').strip()
                 parameters['dictionary'] = dict_name
                 parameters['use_added_words'] = True
             elif dict_name == 'AW':
                 use_aw_flag = True
+                dict_name = 'NWL'
+                parameters['dictionary'] = dict_name
                 parameters['use_added_words'] = True
             else:
                 parameters['use_added_words'] = False
@@ -322,9 +324,10 @@ class PrivateMatchManager:
         use_aw_flag = False
         if dict_name and ('+ AW' in str(dict_name) or '+AW' in str(dict_name)):
             use_aw_flag = True
-            dict_name = 'AW'
+            dict_name = str(dict_name).replace('+ AW', '').replace('+AW', '').strip()
         elif dict_name == 'AW':
             use_aw_flag = True
+            dict_name = 'NWL'
             
         parameters['dictionary'] = dict_name
         parameters['use_added_words'] = use_aw_flag
