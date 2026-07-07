@@ -117,11 +117,14 @@ class SpinnerSet:
             
         dims = str(board_dimensions).lower().replace(" ", "")
         
-        # AW Dictionary Target word count overrides (AW rounds must strictly target 500+ words to prevent generator pruning timeouts)
+        # AW Dictionary Target word count overrides (CSW+AW / NWL+AW target 300-400 (33%), 400-500 (33%), or 500+ (34%) words)
         dict_name = str(res.get('dictionary', 'NWL')).upper()
         is_aw_effective = (dict_name in ['AW', 'ADDED_WORDS', 'ALL'] or res.get('use_added_words') is True)
         if is_aw_effective:
-            res['word_count_range'] = '500+'
+            wc_range = res.get('word_count_range')
+            if wc_range not in ['300-400', '400-500', '500+']:
+                import random
+                res['word_count_range'] = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
         try:
             min_word_length = int(res.get('min_word_length', 3))
         except:

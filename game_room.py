@@ -1890,7 +1890,7 @@ def calculate_word_score(word, bonus_word, board_format='Normal', path=None, bon
     return shared_calc(word, bonus_word, board_format=board_format, path=path, bonus_cell=bonus_cell, **kwargs)
 
 
-def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=60, dictionary='NWL'):
+def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=60, dictionary='NWL', use_added_words=False):
     """Dynamically generate a valid emergency fallback board that matches room dimensions and spells correct words."""
     try:
         from board_generator import BoardGenerator
@@ -1900,8 +1900,9 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         # Determine starting min length based on dimensions
         min_l = 4 if '4x4' in dimensions else (5 if '4x6' in dimensions else (6 if '5x7' in dimensions else 7))
         dict_upper = str(dictionary or 'NWL').upper()
-        if dict_upper in ['AW', 'ADDED_WORDS', 'ALL']:
-            target_range = '500+'
+        if dict_upper in ['AW', 'ADDED_WORDS', 'ALL'] or use_added_words:
+            import random
+            target_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
         else:
             target_range = '200-300' if is_24h else '100-200'
         fmt = 'Valued Letters' if is_24h else board_format
@@ -4393,7 +4394,8 @@ class RoomManager:
                         room.current_min_length = int(room.spinner_params.get('min_word_length', 3))
                     
                     e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio, e_bonus_word = get_emergency_fallback_board(
-                        room.board_dimensions, room.current_board_format, room.time_limit, dictionary=room.current_dictionary
+                        room.board_dimensions, room.current_board_format, room.time_limit,
+                        dictionary=room.current_dictionary, use_added_words=getattr(room, 'use_added_words', False)
                     )
                     
                     room.next_round_board = e_board
