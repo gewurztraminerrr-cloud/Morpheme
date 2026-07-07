@@ -4445,7 +4445,7 @@ class BoardGenerator:
                     new_uses_target = uses_target or (must_include and (f, r, c) == (must_include[0] if len(must_include)==3 else 0, must_include[-2], must_include[-1]))
 
                     if len(new_word) >= min_word_length and next_node.is_word:
-                        if not val_ctx and new_word in word_validator.added_words and not word_validator.is_valid_word_authoritative(new_word):
+                        if not val_ctx and d_upper != "_ONLY_ADDED_" and new_word in word_validator.added_words and not word_validator.is_valid_word_authoritative(new_word):
                             pass
                         elif not must_include or new_uses_target:
                             if new_word not in found_words:
@@ -4525,7 +4525,7 @@ class BoardGenerator:
                     new_uses_target = uses_target or (must_include and (f, r, c) == (must_include[0] if len(must_include)==3 else 0, must_include[-2], must_include[-1]))
 
                     if len(new_word) >= min_word_length and next_node.is_word:
-                        if not val_ctx and new_word in word_validator.added_words and not word_validator.is_valid_word_authoritative(new_word):
+                        if not val_ctx and d_upper != "_ONLY_ADDED_" and new_word in word_validator.added_words and not word_validator.is_valid_word_authoritative(new_word):
                             pass
                         elif not must_include or new_uses_target:
                             if new_word not in found_words:
