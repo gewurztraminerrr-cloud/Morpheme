@@ -152,7 +152,7 @@ ACTIVE_REFILLS_LOCK = threading.Lock()
 # Bump this version whenever the solver logic changes in a way that affects
 # board word lists (e.g. AW inclusion, trie changes). This automatically
 # invalidates all pre-generated cached boards so stale ones are never served.
-BOARD_CACHE_VERSION = 2
+BOARD_CACHE_VERSION = 3
 
 def serialize_param_key(dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, use_added_words=False):
     return json.dumps({
@@ -1683,21 +1683,43 @@ class BoardGenerator:
                 final_depth = 12
             else:
                 final_depth = 25 if rows * cols <= 16 else 14
-            all_words_dict = self._solve_board(
-                board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=False, timeout=30.0
-            )
-            count = len(all_words_dict)
-            print(f"[BoardGen] ATTEMPT {attempts} PRE-SWEEP: Count={count} Target={min_words}-{max_words}")
 
-            # --- DYNAMIC CORRECTION (Push-Pull) ---
+            # When AW is active, solve the base dict only for push-pull compliance.
+            # AW words are additive on top and should not inflate the count used to
+            # judge whether the board is over/under the spinner-specified range.
+            if use_aw_flag:
+                base_words_dict = self._solve_board(
+                    board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=False, timeout=30.0, use_added_words=False
+                )
+                count = len(base_words_dict)
+                print(f"[BoardGen] ATTEMPT {attempts} PRE-SWEEP (base-only for AW round): Count={count} Target={min_words}-{max_words}")
+            else:
+                base_words_dict = self._solve_board(
+                    board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=False, timeout=30.0
+                )
+                count = len(base_words_dict)
+                print(f"[BoardGen] ATTEMPT {attempts} PRE-SWEEP: Count={count} Target={min_words}-{max_words}")
+
+            # --- DYNAMIC CORRECTION (Push-Pull) uses base-dict count for AW rounds ---
+            # Pass use_added_words=False to sweeps so they target the base dict range only.
             if "equality freq" in safe_format:
                 pass
             elif count < min_words:
                 # SPARSE: Add letters to increase count
+                if use_aw_flag:
+                    old_ctx = use_added_words_ctx.get()
+                    use_added_words_ctx.set(False)
                 board = self._perform_rescue_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, rescue_depth=final_depth, protected_path=embedded_path, is_checkerboard=is_checkerboard, board_format=board_format)
+                if use_aw_flag:
+                    use_added_words_ctx.set(old_ctx)
             elif count > max_words:
                 # OVER-DENSE: Remove letters to decrease count
+                if use_aw_flag:
+                    old_ctx = use_added_words_ctx.get()
+                    use_added_words_ctx.set(False)
                 board = self._perform_decimation_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, rescue_depth=final_depth, protected_path=embedded_path, is_checkerboard=is_checkerboard, board_format=board_format)
+                if use_aw_flag:
+                    use_added_words_ctx.set(old_ctx)
 
             # --- FINAL CONFORMANCE DOUBLE-CHECK ---
             if "equality freq" not in safe_format:
@@ -1909,11 +1931,14 @@ class BoardGenerator:
                     continue
 
             # Re-solve after sweeps and sanitization for final confirmation
+            # For AW rounds, check compliance against base-dict only so the
+            # spinner-specified range refers to the base dictionary word count.
             all_words_dict = self._solve_board(
-                board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=False, timeout=30.0
+                board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=False, timeout=30.0,
+                use_added_words=False if use_aw_flag else None
             )
             count = len(all_words_dict)
-            print(f"[BoardGen] ATTEMPT {attempts} POST-SWEEP VERIFICATION: Count={count} Target={min_words}-{max_words} MinLen={min_word_length}L")
+            print(f"[BoardGen] ATTEMPT {attempts} POST-SWEEP VERIFICATION ({'base-only' if use_aw_flag else 'full'}): Count={count} Target={min_words}-{max_words} MinLen={min_word_length}L")
             
             if "equality freq" in safe_format:
                 dist = 0
@@ -2015,8 +2040,10 @@ class BoardGenerator:
                         continue
 
                 # --- OFFICIAL ACCEPTANCE: RESOLVE PATHS NOW ---
+                # Always use the full merged solve (base + AW) for the final word list
                 all_words_dict = self._solve_board(
-                    board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=30.0
+                    board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=30.0,
+                    use_added_words=use_aw_flag if use_aw_flag else None
                 )
 
                 print(f"[BoardGen] ✓ IRONCLAD COMPLIANT BOARD FOUND ({count} words @ {min_word_length}L+) on attempt {attempts}")
@@ -3756,7 +3783,9 @@ class BoardGenerator:
         dead_chars = ["Z", "X", "Q", "J", "K", "V"]
         
         for pos in positions:
-            if time.time() - start_time > 20.0: break # Hard time limit
+            # AW rounds require 2x solve work per iteration; give them more time
+            sweep_timeout = 45.0 if val_ctx else 20.0
+            if time.time() - start_time > sweep_timeout: break # Hard time limit
             f_p, r_p, c_p = (pos[0], pos[1], pos[2]) if depth > 1 else (0, pos[0], pos[1])
             
             if is_checkerboard:
