@@ -3872,7 +3872,7 @@ class RoomManager:
                         random.seed()
                         
                         _dict_str = str(params.get('dictionary', 'NWL')).upper()
-                        use_aw_flag = params.get('use_added_words', False) or ('+ AW' in _dict_str) or ('+AW' in _dict_str)
+                        use_aw_flag = params.get('use_added_words', False) or ('+ AW' in _dict_str) or ('+AW' in _dict_str) or (_dict_str in ['AW', 'ADDED_WORDS'])
                         token = use_added_words_ctx.set(use_aw_flag)
                         try:
                             # ROBUST CALL: Use keyword arguments to prevent positional mismatch

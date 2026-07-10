@@ -519,10 +519,12 @@ class BoardGenerator:
         if val_ctx is None:
             from word_validator import word_validator
             val_ctx = word_validator.use_added_words
-
         from word_validator import word_validator
-        count_relevant = len(filtered_words)
-        count_unique = sum(1 for w in filtered_words if (w.upper() in unique_set) or (val_ctx and w.upper() in word_validator.added_words))
+        
+        # Calculate ratio based on base dictionary words to prevent 500k AW skew
+        base_words = [w for w in filtered_words if w.upper() not in word_validator.added_words]
+        count_relevant = len(base_words)
+        count_unique = sum(1 for w in base_words if w.upper() in unique_set)
 
         return count_unique / count_relevant if count_relevant > 0 else 0.0
 
@@ -1815,10 +1817,10 @@ class BoardGenerator:
                         else:
                             board[r][c] = val
                         
-                        if not self._has_either_or_ambiguity(board, dictionary, use_added_words=use_aw_flag):
+                        if not self._has_either_or_ambiguity(board, dictionary, use_added_words=False):
                             # Solve board to check word ratio using Either/Or tile
                             temp_words = self._solve_board(
-                                board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=1.0, use_added_words=use_aw_flag
+                                board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=1.0, use_added_words=False
                             )
                             if temp_words:
                                 l1, l2 = val.split('/')
@@ -1995,8 +1997,16 @@ class BoardGenerator:
                     board, all_words_dict, ratio = self._sanitize_uniqueness(board, depth, dictionary, min_word_length, max_ratio, rows, cols)
                     count = len(all_words_dict)
                     
-                if str(dictionary).upper() in ["AW", "ADDED_WORDS"]:
-                    # AW dictionary has no standard uniqueness subsets, bypass range check
+                # Detect compound AW dict names like 'NWL + AW' and 'CSW + AW'
+                dict_name_upper = str(dictionary).upper()
+                is_aw_effective = (
+                    dict_name_upper in ['AW', 'ADDED_WORDS', 'ALL']
+                    or use_aw_flag
+                    or '+ AW' in dict_name_upper
+                    or '+AW' in dict_name_upper
+                )
+                if is_aw_effective:
+                    # AW rounds prioritize high word counts (300-400+) and density; bypass uniqueness checks
                     is_compliant = (min_words <= count <= max_words)
                 else:
                     is_compliant = (min_ratio <= ratio <= max_ratio) and (min_words <= count <= max_words)
@@ -2746,7 +2756,7 @@ class BoardGenerator:
         # We will do up to 4 iterations of cell replacement
         for iteration in range(4):
             # 1. Identify which words are unique
-            unique_words = [w for w in all_words_dict if (w in unique_set) or (val_ctx and w in word_validator.added_words)]
+            unique_words = [w for w in all_words_dict if w in unique_set]
             if not unique_words:
                 break
                 
@@ -3415,7 +3425,8 @@ class BoardGenerator:
                             min_word_length,
                             max_depth=current_solve_depth,
                             store_paths=False,
-                            timeout=1.5
+                            timeout=1.5,
+                            use_added_words=False
                         )
                     except TimeoutError:
                         current_words_eval = {}
@@ -3451,7 +3462,7 @@ class BoardGenerator:
                 inner_timeout = 0.05 if is_4x4 else 0.12 if num_cells < 35 else 0.15
                 try:
                     initial_results = self._solve_board(
-                        board, dictionary, (0, 99999), min_word_length, max_depth=current_solve_depth, store_paths=False, timeout=inner_timeout
+                        board, dictionary, (0, 99999), min_word_length, max_depth=current_solve_depth, store_paths=False, timeout=inner_timeout, use_added_words=False
                     )
                 except TimeoutError:
                     # If it somehow still raises (though it shouldn't after my next change), return empty
@@ -3616,7 +3627,7 @@ class BoardGenerator:
 
                     # Test results against Authority dictionary
                     results = self._solve_board(
-                        board, dictionary, (0, 99999), min_word_length, max_depth=current_solve_depth, store_paths=False, timeout=inner_timeout
+                        board, dictionary, (0, 99999), min_word_length, max_depth=current_solve_depth, store_paths=False, timeout=inner_timeout, use_added_words=False
                     )
                     val = calculate_composite_value(results.keys())
                     count_w = len(results)
@@ -3745,7 +3756,7 @@ class BoardGenerator:
                         positions.append(pos)
         random.shuffle(positions)
         
-        current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=False)
+        current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=False, use_added_words=False)
         current_count = len(current_solve)
         if current_count <= max_words: return board
         
@@ -3773,7 +3784,7 @@ class BoardGenerator:
             
             if difficulty == "Easy":
                 use_5plus_only = depth == 1 and ((rows == 4 and cols == 4) or (rows == 4 and cols == 6) or (rows == 6 and cols == 4))
-                initial_unique = sum(1 for w in current_solve if len(w) >= 5 and ((w in unique_set) or (val_ctx and w in word_validator.added_words))) if use_5plus_only else sum(1 for w in current_solve if (w in unique_set) or (val_ctx and w in word_validator.added_words))
+                initial_unique = sum(1 for w in current_solve if len(w) >= 5 and w in unique_set) if use_5plus_only else sum(1 for w in current_solve if w in unique_set)
                 best_score = -current_count - (initial_unique * 100)
             else:
                 best_score = -current_count
@@ -3795,11 +3806,11 @@ class BoardGenerator:
                 if depth > 1: board[f_p][r_p][c_p] = char
                 else: board[r_p][c_p] = char
                 
-                res = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=False)
+                res = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=False, use_added_words=False)
                 new_count = len(res)
                 
                 if difficulty == "Easy":
-                    unique_to_penalize = sum(1 for w in res if len(w) >= 5 and ((w in unique_set) or (val_ctx and w in word_validator.added_words))) if use_5plus_only else sum(1 for w in res if (w in unique_set) or (val_ctx and w in word_validator.added_words))
+                    unique_to_penalize = sum(1 for w in res if len(w) >= 5 and w in unique_set) if use_5plus_only else sum(1 for w in res if w in unique_set)
                     score = -new_count - (unique_to_penalize * 100)
                 else:
                     score = -new_count
@@ -3813,7 +3824,7 @@ class BoardGenerator:
             else: board[r_p][c_p] = best_char
             
             if best_char != old_char:
-                current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=False)
+                current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=False, use_added_words=False)
                 current_count = len(current_solve)
                 
             if current_count <= max_words:
@@ -3843,7 +3854,7 @@ class BoardGenerator:
                     if pos not in excluded and pos not in protected_cells:
                         positions.append(pos)
         random.shuffle(positions)
-        current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=False)
+        current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=False, use_added_words=False)
         current_count = len(current_solve)
         if current_count >= min_words: return board
         print(f"[BoardGen] 🆘 RESCUE SWEEP START (Current: {current_count}, Target: {min_words})")
@@ -3871,7 +3882,7 @@ class BoardGenerator:
                 else: board[r_p][c_p] = char
                 
                 # Solve (Deeper depth for accuracy in rescue)
-                res = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=False)
+                res = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=False, use_added_words=False)
                 new_count = len(res)
                 if new_count > max_score and new_count <= max_words:
                     max_score, best_char = new_count, char
@@ -3902,7 +3913,7 @@ class BoardGenerator:
         # Check if the board is already compliant before doing expensive Stage 2 optimization
         try:
             initial_solve = self._solve_board(
-                board, dictionary, (0, 99999), min_word_length, max_depth=12 if rows * cols >= 35 else 25, store_paths=False, timeout=2.0
+                board, dictionary, (0, 99999), min_word_length, max_depth=12 if rows * cols >= 35 else 25, store_paths=False, timeout=2.0, use_added_words=False
             )
             initial_count = len(initial_solve)
             initial_ratio = self.get_uniqueness_ratio(board, list(initial_solve.keys()), rows, cols, dictionary, depth)
@@ -3975,7 +3986,7 @@ class BoardGenerator:
                 try:
                     all_found = self._solve_board(
                         board, dictionary, (0, 99999), min_word_length, 
-                        max_depth=solve_depth, store_paths=False, timeout=timeout_cell
+                        max_depth=solve_depth, store_paths=False, timeout=timeout_cell, use_added_words=False
                     )
                     val_ctx = use_added_words_ctx.get()
                     if val_ctx is None:
@@ -3984,7 +3995,7 @@ class BoardGenerator:
 
                     from word_validator import word_validator
                     total_w = len(all_found)
-                    unique_w = sum(1 for w in all_found if (w in unique_set) or (val_ctx and w in word_validator.added_words))
+                    unique_w = sum(1 for w in all_found if w in unique_set)
                     
                     # USER REQUEST: Total word count compliance.
                     # We prioritize density/uniqueness but STERNLY penalize overshooting max_words (ceiling).

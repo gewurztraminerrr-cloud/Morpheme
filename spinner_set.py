@@ -136,9 +136,67 @@ class SpinnerSet:
         except:
             min_word_length = 3
 
-        # NOTE: Do NOT early-return for AW rounds — grid+length caps must still apply
-        # after the AW word count override, to prevent impossible targets on small grids
-        # with high min-lengths (e.g. 300-400 6L+ words on 4x4 is unachievable even with AW).
+        wc_range = res.get('word_count_range', '100-200')
+
+        # Safety caps: prevent impossible combinations by capping min_word_length for AW/high density.
+        if is_aw_effective:
+            if '4x4' in dims:
+                # 4x4 AW target is >= 300 words. Length >= 4 is impossible to hit 300 words. Cap length to 3.
+                if min_word_length >= 4:
+                    min_word_length = 3
+            elif '4x6' in dims:
+                # 4x6 AW target is >= 300 words. Length >= 5 is impossible to hit 300 words. Cap length to 4.
+                if min_word_length >= 5:
+                    min_word_length = 4
+            elif '5x7' in dims:
+                # 5x7 AW target is >= 300. Length >= 6 is impossible. Cap length to 5.
+                if min_word_length >= 6:
+                    min_word_length = 5
+            elif '6x8' in dims or '3x3x3' in dims:
+                # 6x8/3x3x3 AW target is >= 300. Length >= 7 is impossible. Cap length to 6.
+                if min_word_length >= 7:
+                    min_word_length = 6
+        else:
+            # 1. 4x4 Grid Safety Caps for Non-AW
+            if '4x4' in dims:
+                if min_word_length >= 5:
+                    min_word_length = 4
+                if min_word_length >= 4:
+                    if wc_range in ['300-400', '400-500', '500+']:
+                        wc_range = '200-300'
+                if wc_range == '500+':
+                    wc_range = '300-400'
+
+            # 2. 4x6 Grid Safety Caps for Non-AW
+            elif '4x6' in dims:
+                if min_word_length >= 6:
+                    min_word_length = 5
+                if min_word_length >= 5:
+                    if wc_range in ['300-400', '400-500', '500+']:
+                        wc_range = '200-300'
+                if wc_range == '500+':
+                    wc_range = '300-400'
+
+            # 3. 5x7 Grid Safety Caps for Non-AW
+            elif '5x7' in dims:
+                if min_word_length >= 7:
+                    min_word_length = 6
+                if min_word_length >= 6:
+                    if wc_range in ['300-400', '400-500', '500+']:
+                        wc_range = '200-300'
+                if wc_range == '500+':
+                    wc_range = '300-400'
+
+            # 4. 6x8 or 3x3x3 Grid Safety Caps for Non-AW
+            elif '6x8' in dims or '3x3x3' in dims:
+                if min_word_length >= 8:
+                    min_word_length = 7
+                if min_word_length >= 7:
+                    if wc_range in ['300-400', '400-500', '500+']:
+                        wc_range = '200-300'
+
+        res['min_word_length'] = min_word_length
+        res['word_count_range'] = wc_range
 
         if is_24h:
             if not is_aw_effective:
@@ -151,55 +209,6 @@ class SpinnerSet:
                 res['min_word_length'] = 6
             elif ('6x8' in dims or '3x3x3' in dims) and min_word_length >= 8:
                 res['min_word_length'] = 7
-            return res
-
-        wc_range = res.get('word_count_range', '100-200')
-
-        # Safety caps: only enforce the truly impossible combinations.
-        # AW rounds can be somewhat more flexible (AW adds words on top) but still
-        # need caps at extreme min-lengths where even AW can't bridge the gap.
-
-        # 1. 4x4 Grid Safety Caps
-        if '4x4' in dims:
-            if min_word_length >= 5:
-                # 5L+ on 4x4: hard to reach even 200-300 total (base+AW), cap there
-                if wc_range in ['300-400', '400-500', '500+']:
-                    res['word_count_range'] = '200-300'
-            elif min_word_length >= 4 and not is_aw_effective:
-                # 4L on 4x4 without AW: cap at 200-300
-                if wc_range in ['300-400', '400-500', '500+']:
-                    res['word_count_range'] = '200-300'
-            if wc_range == '500+' and not is_aw_effective:
-                res['word_count_range'] = '300-400'
-
-        # 2. 4x6 Grid Safety Caps
-        elif '4x6' in dims:
-            if min_word_length >= 6:
-                # 6L+ on 4x6: cap at 200-300 even with AW
-                if wc_range in ['300-400', '400-500', '500+']:
-                    res['word_count_range'] = '200-300'
-            elif min_word_length >= 5 and not is_aw_effective:
-                if wc_range in ['300-400', '400-500', '500+']:
-                    res['word_count_range'] = '200-300'
-            if wc_range == '500+' and not is_aw_effective:
-                res['word_count_range'] = '300-400'
-
-        # 3. 5x7 Grid Safety Caps
-        elif '5x7' in dims:
-            if min_word_length >= 7:
-                # 7L+ on 5x7: cap at 200-300 even with AW
-                if wc_range in ['300-400', '400-500', '500+']:
-                    res['word_count_range'] = '200-300'
-            if wc_range == '500+' and not is_aw_effective:
-                res['word_count_range'] = '300-400'
-
-        # 4. 6x8 or 3x3x3 Grid Safety Caps
-        elif '6x8' in dims or '3x3x3' in dims:
-            if min_word_length >= 8:
-                # 8L+ on 6x8: cap at 200-300 even with AW
-                if wc_range in ['300-400', '400-500', '500+']:
-                    res['word_count_range'] = '200-300'
-            # 6L and 7L on 6x8 can comfortably reach 300-400
 
         return res
 

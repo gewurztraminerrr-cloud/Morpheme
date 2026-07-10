@@ -4974,21 +4974,27 @@ def tools_get_lists():
         # Conditional fetching based on list_type
         response = {
             'nwl': [], 'csw': [], 'csw_only': [], 'likelihood': [], 'uniques': [], 'added': [],
-            'new_nwl': [], 'new_csw': []
+            'new_nwl': [], 'new_csw': [], 'is_truncated': False
         }
+
+        def cap_list(lst):
+            if len(lst) > 1000:
+                response['is_truncated'] = True
+                return lst[:1000]
+            return lst
 
         if list_type in ['all', 'nwl', 'csw_only', 'likelihood']:
             nwl_set = get_source_set('NWL')
-            if list_type in ['all', 'nwl']: response['nwl'] = sorted(list(nwl_set))
+            if list_type in ['all', 'nwl']: response['nwl'] = cap_list(sorted(list(nwl_set)))
 
         if list_type in ['all', 'csw', 'csw_only']:
             csw_set = get_source_set('CSW')
-            if list_type in ['all', 'csw']: response['csw'] = sorted(list(csw_set))
+            if list_type in ['all', 'csw']: response['csw'] = cap_list(sorted(list(csw_set)))
 
         if list_type in ['all', 'csw_only']:
             if 'nwl_set' not in locals(): nwl_set = get_source_set('NWL')
             if 'csw_set' not in locals(): csw_set = get_source_set('CSW')
-            response['csw_only'] = sorted(list(csw_set - nwl_set))
+            response['csw_only'] = cap_list(sorted(list(csw_set - nwl_set)))
 
         if list_type in ['all', 'likelihood']:
             if 'nwl_set' not in locals(): nwl_set = get_source_set('NWL')
@@ -5012,18 +5018,20 @@ def tools_get_lists():
                 score = calculate_scrabble_likelihood(w)
                 likelihood_list.append({'score': score, 'word': w})
             likelihood_list.sort(key=lambda x: (-x['score'], x['word']))
-            response['likelihood'] = likelihood_list
+            response['likelihood'] = cap_list(likelihood_list)
 
         if list_type in ['all', 'uniques']:
-            response['uniques'] = sorted(list(get_source_set('uniqueNWL')))
+            response['uniques'] = cap_list(sorted(list(get_source_set('uniqueNWL'))))
             
         if list_type in ['all', 'new_nwl']:
             response['new_nwl'] = list(get_source_set('new_NWL'))
             response['new_nwl'].reverse() # Show most recent first
+            response['new_nwl'] = cap_list(response['new_nwl'])
             
         if list_type in ['all', 'new_csw']:
             response['new_csw'] = list(get_source_set('new_CSW'))
             response['new_csw'].reverse() # Show most recent first
+            response['new_csw'] = cap_list(response['new_csw'])
             
         if list_type in ['all', 'added']:
             # Added Words: Use preloaded in-memory list to prevent lag
@@ -5036,7 +5044,7 @@ def tools_get_lists():
                 
                 unique_added.append(w)
             # Sorted alphabetically (A-to-Z)
-            response['added'] = unique_added
+            response['added'] = cap_list(unique_added)
 
         # Cache response
         LISTS_CACHE[cache_key] = response

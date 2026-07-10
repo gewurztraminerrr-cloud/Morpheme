@@ -2663,18 +2663,30 @@ function startProgressiveRendering() {
         if (loadId !== currentProgressiveLoadId) return;
         const maxAllowed = listsShowAll ? Infinity : 5000;
         if (currentWordsRenderedCount >= Math.min(currentWordsList.length, maxAllowed)) {
-            if (currentWordsList.length > maxAllowed && !document.getElementById('list-truncation-notice')) {
+            if ((currentWordsList.length > maxAllowed || window.listsServerTruncated) && !document.getElementById('list-truncation-notice')) {
                 const scrollArea = document.getElementById('main-list-results');
                 if (scrollArea) {
-                    const noticeHtml = `
-                        <div id="list-truncation-notice" style="padding: 15px; text-align: center; color: #ffb703; font-weight: 500; border-top: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 10px;">
-                            ⚠️ Showing first 5,000 words.<br>
-                            <span style="font-size: 0.82rem; opacity: 0.8; font-weight: normal;">
-                                Please select a specific <strong>word length</strong> or <strong>starting letter</strong> to narrow down the list, or 
-                                <button id="show-all-words-btn" style="background: rgba(255, 183, 3, 0.15); border: 1px solid #ffb703; color: #ffb703; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-left: 5px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255, 183, 3, 0.3)'" onmouseout="this.style.background='rgba(255, 183, 3, 0.15)'">Load All ${currentWordsList.length.toLocaleString()} Words</button>
-                            </span>
-                        </div>
-                    `;
+                    let noticeHtml = '';
+                    if (window.listsServerTruncated) {
+                        noticeHtml = `
+                            <div id="list-truncation-notice" style="padding: 15px; text-align: center; color: #ffb703; font-weight: 500; border-top: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 10px;">
+                                ⚠️ Showing first ${currentWordsList.length.toLocaleString()} words.<br>
+                                <span style="font-size: 0.82rem; opacity: 0.8; font-weight: normal;">
+                                    Please select a specific <strong>word length</strong> or <strong>starting letter</strong> to filter and see more.
+                                </span>
+                            </div>
+                        `;
+                    } else {
+                        noticeHtml = `
+                            <div id="list-truncation-notice" style="padding: 15px; text-align: center; color: #ffb703; font-weight: 500; border-top: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 10px;">
+                                ⚠️ Showing first 5,000 words.<br>
+                                <span style="font-size: 0.82rem; opacity: 0.8; font-weight: normal;">
+                                    Please select a specific <strong>word length</strong> or <strong>starting letter</strong> to narrow down the list, or 
+                                    <button id="show-all-words-btn" style="background: rgba(255, 183, 3, 0.15); border: 1px solid #ffb703; color: #ffb703; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-left: 5px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255, 183, 3, 0.3)'" onmouseout="this.style.background='rgba(255, 183, 3, 0.15)'">Load All ${currentWordsList.length.toLocaleString()} Words</button>
+                                </span>
+                            </div>
+                        `;
+                    }
                     scrollArea.insertAdjacentHTML('beforeend', noticeHtml);
                     const btn = document.getElementById('show-all-words-btn');
                     if (btn) {
@@ -2704,15 +2716,27 @@ function renderNextWordsPage() {
     const maxAllowed = listsShowAll ? Infinity : 5000;
     if (currentWordsRenderedCount >= maxAllowed) {
         if (!document.getElementById('list-truncation-notice')) {
-            const noticeHtml = `
-                <div id="list-truncation-notice" style="padding: 15px; text-align: center; color: #ffb703; font-weight: 500; border-top: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 10px;">
-                    ⚠️ Showing first 5,000 words.<br>
-                    <span style="font-size: 0.82rem; opacity: 0.8; font-weight: normal;">
-                        Please select a specific <strong>word length</strong> or <strong>starting letter</strong> to narrow down the list, or 
-                        <button id="show-all-words-btn" style="background: rgba(255, 183, 3, 0.15); border: 1px solid #ffb703; color: #ffb703; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-left: 5px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255, 183, 3, 0.3)'" onmouseout="this.style.background='rgba(255, 183, 3, 0.15)'">Load All ${currentWordsList.length.toLocaleString()} Words</button>
-                    </span>
-                </div>
-            `;
+            let noticeHtml = '';
+            if (window.listsServerTruncated) {
+                noticeHtml = `
+                    <div id="list-truncation-notice" style="padding: 15px; text-align: center; color: #ffb703; font-weight: 500; border-top: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 10px;">
+                        ⚠️ Showing first ${currentWordsList.length.toLocaleString()} words.<br>
+                        <span style="font-size: 0.82rem; opacity: 0.8; font-weight: normal;">
+                            Please select a specific <strong>word length</strong> or <strong>starting letter</strong> to filter and see more.
+                        </span>
+                    </div>
+                `;
+            } else {
+                noticeHtml = `
+                    <div id="list-truncation-notice" style="padding: 15px; text-align: center; color: #ffb703; font-weight: 500; border-top: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 10px;">
+                        ⚠️ Showing first 5,000 words.<br>
+                        <span style="font-size: 0.82rem; opacity: 0.8; font-weight: normal;">
+                            Please select a specific <strong>word length</strong> or <strong>starting letter</strong> to narrow down the list, or 
+                            <button id="show-all-words-btn" style="background: rgba(255, 183, 3, 0.15); border: 1px solid #ffb703; color: #ffb703; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-left: 5px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255, 183, 3, 0.3)'" onmouseout="this.style.background='rgba(255, 183, 3, 0.15)'">Load All ${currentWordsList.length.toLocaleString()} Words</button>
+                        </span>
+                    </div>
+                `;
+            }
             scrollArea.insertAdjacentHTML('beforeend', noticeHtml);
             const btn = document.getElementById('show-all-words-btn');
             if (btn) {
@@ -3098,6 +3122,7 @@ async function fetchListsData(typeOverride) {
         currentWordsList = words;
         currentWordsRenderedCount = 0;
         currentWordsType = selectedType;
+        window.listsServerTruncated = data.is_truncated || false;
 
         if (!words || words.length === 0) {
             if (scrollArea) scrollArea.innerHTML = '<div style="padding:20px; opacity:0.6; text-align:center;">No words found matching these filters.</div>';
