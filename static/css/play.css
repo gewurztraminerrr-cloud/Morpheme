@@ -4240,6 +4240,11 @@ input[type=range]::-moz-range-track {
         scrollbar-width: none !important;
         -ms-overflow-style: none !important;
     }
+    .play-grid.dragging-lock {
+        overflow-x: hidden !important;
+        scroll-snap-type: none !important;
+        -webkit-overflow-scrolling: auto !important;
+    }
     .play-grid::-webkit-scrollbar {
         display: none !important;
     }

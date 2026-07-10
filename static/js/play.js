@@ -7623,6 +7623,9 @@ function handleCellMouseDown(e) {
     // Prevent native browser drag/selection behavior from interrupting our swipe
     e.preventDefault();
 
+    const playGrid = document.querySelector('.play-grid');
+    if (playGrid) playGrid.classList.add('dragging-lock');
+
     const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
     const r = parseInt(cell.dataset.r || cell.dataset.row);
     const c = parseInt(cell.dataset.c || cell.dataset.col);
@@ -7743,6 +7746,8 @@ function handleCellTouchStart(e) {
     if (cell && !cell.classList.contains('grayed')) {
         mouseState.isDown = true;
         window.activeTouchIdentifier = touch ? touch.identifier : undefined;
+        const playGrid = document.querySelector('.play-grid');
+        if (playGrid) playGrid.classList.add('dragging-lock');
         mouseState.selectedPath = [];
         mouseState.visitedCells = new Set();
         document.querySelectorAll('.board-cell.selected, .board-cell.current').forEach(c => {
@@ -7795,6 +7800,9 @@ function handleCellTouchMove(e) {
 
 function finishDragSelection(e) {
     if (!mouseState.isDown) return;
+    
+    const playGrid = document.querySelector('.play-grid');
+    if (playGrid) playGrid.classList.remove('dragging-lock');
     
     // If this was triggered by a touchend/touchcancel but the user's swiping touch has not ended yet, do NOT terminate the swipe!
     if (e && e.changedTouches && window.activeTouchIdentifier !== undefined) {
