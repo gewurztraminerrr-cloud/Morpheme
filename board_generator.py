@@ -394,6 +394,8 @@ class BoardGenerator:
     def _get_difficulty_set(self, dictionary_type):
         """Lazy-load and cache unique word sets for diff validation"""
         core_type = dictionary_type.upper()
+        if "+ AW" in core_type or "+AW" in core_type:
+            core_type = core_type.split("+")[0].strip()
         if core_type in ["AW", "ADDED_WORDS"]:
             from word_validator import word_validator
             return word_validator.added_words
@@ -4345,6 +4347,10 @@ class BoardGenerator:
     ):
         """Find all valid words on the board using high-speed node-based DFS traversal."""
         d_upper = str(dictionary).upper()
+        if "+ AW" in d_upper or "+AW" in d_upper:
+            d_upper = d_upper.split("+")[0].strip()
+            if use_added_words is None:
+                use_added_words = True
         from word_validator import word_validator
         
         if use_added_words is None:
