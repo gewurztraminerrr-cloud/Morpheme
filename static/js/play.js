@@ -7623,9 +7623,6 @@ function handleCellMouseDown(e) {
     // Prevent native browser drag/selection behavior from interrupting our swipe
     e.preventDefault();
 
-    const playGrid = document.querySelector('.play-grid');
-    if (playGrid) playGrid.classList.add('dragging-lock');
-
     const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
     const r = parseInt(cell.dataset.r || cell.dataset.row);
     const c = parseInt(cell.dataset.c || cell.dataset.col);
@@ -7710,6 +7707,12 @@ let lastTouchY = -1;
 function handleCellTouchStart(e) {
     if (window.isPopupVisible) return;
     initAudioOnUserInteraction();
+    
+    // Unconditionally prevent default scroll/gestures immediately on any board touch start
+    if (e.cancelable !== false) {
+        e.preventDefault();
+    }
+
     const touch = e.changedTouches ? e.changedTouches[0] : e.touches[0];
     let cell = e.target.closest('.board-cell');
     if (!cell) {
@@ -7720,9 +7723,6 @@ function handleCellTouchStart(e) {
 
     // INTERMISSION TILE PRESS FILTERS
     if (window.lastGameState && window.lastGameState.state === 'intermission') {
-        if (e.cancelable !== false) {
-            e.preventDefault();
-        }
         const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
         const r = parseInt(cell.dataset.r || cell.dataset.row);
         const c = parseInt(cell.dataset.c || cell.dataset.col);
@@ -7733,11 +7733,6 @@ function handleCellTouchStart(e) {
 
     if (window.isSpectatorMode) return;
 
-    // Unconditionally prevent browser default gestures/scrolling when touching anywhere on the board container
-    if (e.cancelable !== false) {
-        e.preventDefault();
-    }
-
     if (mouseState.isDown) return; // Prevent double touch/accidental brushes from erasing path
 
     lastTouchX = touch.clientX;
@@ -7746,8 +7741,6 @@ function handleCellTouchStart(e) {
     if (cell && !cell.classList.contains('grayed')) {
         mouseState.isDown = true;
         window.activeTouchIdentifier = touch ? touch.identifier : undefined;
-        const playGrid = document.querySelector('.play-grid');
-        if (playGrid) playGrid.classList.add('dragging-lock');
         mouseState.selectedPath = [];
         mouseState.visitedCells = new Set();
         document.querySelectorAll('.board-cell.selected, .board-cell.current').forEach(c => {
@@ -7764,13 +7757,13 @@ function handleCellTouchStart(e) {
 }
 
 function handleCellTouchMove(e) {
-    if (!mouseState.isDown) return;
-    if (window.isSpectatorMode) return;
-
-    // Prevent mobile scrolling/gestures unconditionally during an active board swipe
+    // Prevent mobile scrolling/gestures unconditionally during any board swipe interaction
     if (e.cancelable !== false) {
         e.preventDefault();
     }
+
+    if (!mouseState.isDown) return;
+    if (window.isSpectatorMode) return;
 
     let touch = e.touches[0];
     if (window.activeTouchIdentifier !== undefined && e.touches) {
@@ -7800,9 +7793,6 @@ function handleCellTouchMove(e) {
 
 function finishDragSelection(e) {
     if (!mouseState.isDown) return;
-    
-    const playGrid = document.querySelector('.play-grid');
-    if (playGrid) playGrid.classList.remove('dragging-lock');
     
     // If this was triggered by a touchend/touchcancel but the user's swiping touch has not ended yet, do NOT terminate the swipe!
     if (e && e.changedTouches && window.activeTouchIdentifier !== undefined) {
