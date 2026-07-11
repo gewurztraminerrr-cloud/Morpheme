@@ -270,7 +270,7 @@ def pop_cached_board(param_key_str):
         print(f"[BoardGen] Error checking/popping cached board: {e}")
     return None
 
-def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
+def refill_board_cache_bg(generator_instance, param_key_str, target_count=10):
     global ACTIVE_REFILLS, ACTIVE_REFILLS_LOCK
     
     with ACTIVE_REFILLS_LOCK:
@@ -418,7 +418,7 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
                     print(f"[BoardGen] [Refill] Error inserting to DB: {e}")
                     time.sleep(1.0)
                     
-                time.sleep(0.05)
+                time.sleep(0.1)
         except Exception as e:
             print(f"[BoardGen] [Refill] Background worker error: {e}")
         finally:
@@ -1344,7 +1344,7 @@ class BoardGenerator:
         cached_res = pop_cached_board(param_key_str)
         if cached_res:
             # Trigger background refill to replace the popped board
-            refill_board_cache_bg(self, param_key_str, target_count=3)
+            refill_board_cache_bg(self, param_key_str, target_count=10)
             return cached_res
 
         # Fallback to synchronous generation
@@ -1411,7 +1411,7 @@ class BoardGenerator:
                 )
                 
         # Trigger background refill to populate the cache up to 3
-        refill_board_cache_bg(self, param_key_str, target_count=3)
+        refill_board_cache_bg(self, param_key_str, target_count=10)
         
         return (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word)
 
