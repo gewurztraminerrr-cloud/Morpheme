@@ -152,7 +152,7 @@ ACTIVE_REFILLS_LOCK = threading.Lock()
 # Bump this version whenever the solver logic changes in a way that affects
 # board word lists (e.g. AW inclusion, trie changes). This automatically
 # invalidates all pre-generated cached boards so stale ones are never served.
-BOARD_CACHE_VERSION = 9
+BOARD_CACHE_VERSION = 10
 
 def serialize_param_key(dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, use_added_words=False):
     return json.dumps({
@@ -167,29 +167,87 @@ def serialize_param_key(dimensions, bonus_word, word_count_range, dictionary, bo
         "use_added_words": use_added_words
     }, sort_keys=True)
 
+def get_board_hash(board):
+    if not board:
+        return ""
+    # Detect if 3D
+    is_3d = isinstance(board, list) and len(board) > 0 and isinstance(board[0], list) and len(board[0]) > 0 and isinstance(board[0][0], list)
+    if is_3d:
+        chars = []
+        for plane in board:
+            for row in plane:
+                for cell in row:
+                    chars.append(str(cell))
+        return "".join(chars).upper()
+    else:
+        chars = []
+        for row in board:
+            for cell in row:
+                chars.append(str(cell))
+        return "".join(chars).upper()
+
+def is_board_hash_used(board_hash):
+    if not board_hash:
+        return False
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
+    try:
+        conn = sqlite3.connect(db_path, timeout=30)
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1 FROM used_boards WHERE board_hash = ? LIMIT 1;", (board_hash,))
+        row = cursor.fetchone()
+        conn.close()
+        return row is not None
+    except Exception as e:
+        print(f"[BoardGen] Error checking used board hash: {e}")
+        return False
+
+def mark_board_hash_used(board_hash):
+    if not board_hash:
+        return
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
+    try:
+        conn = sqlite3.connect(db_path, timeout=30)
+        cursor = conn.cursor()
+        cursor.execute("INSERT OR REPLACE INTO used_boards (board_hash, used_at) VALUES (?, ?);", (board_hash, time.time()))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[BoardGen] Error marking board hash as used: {e}")
+
 def pop_cached_board(param_key_str):
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
     try:
         conn = sqlite3.connect(db_path, timeout=30)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("BEGIN IMMEDIATE TRANSACTION;")
-        cursor.execute("SELECT id, board_json FROM pregenerated_boards WHERE param_key = ? ORDER BY id ASC LIMIT 1;", (param_key_str,))
-        row = cursor.fetchone()
-        if row:
+        
+        while True:
+            cursor.execute("BEGIN IMMEDIATE TRANSACTION;")
+            cursor.execute("SELECT id, board_json FROM pregenerated_boards WHERE param_key = ? ORDER BY id ASC LIMIT 1;", (param_key_str,))
+            row = cursor.fetchone()
+            if not row:
+                cursor.execute("COMMIT;")
+                break
+                
             cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (row['id'],))
             conn.commit()
-            board_json = row['board_json']
-            conn.close()
             
-            # Deserialize
+            board_json = row['board_json']
             data = json.loads(board_json)
             board = data["board"]
+            
+            board_hash = get_board_hash(board)
+            if is_board_hash_used(board_hash):
+                print(f"[BoardGen] Discarding cached board (layout already used globally: {board_hash})")
+                continue
+                
+            mark_board_hash_used(board_hash)
+            conn.close()
+            
             all_words = data["all_words"]
             bonus_cell = tuple(data["bonus_cell"]) if data["bonus_cell"] else None
             board_format_ret = data["board_format_ret"]
             
-            # Convert paths list to tuples for coordinates
             all_words_dict = {}
             for w, path in data["all_words_dict"].items():
                 all_words_dict[w] = [tuple(coord) for coord in path]
@@ -199,9 +257,8 @@ def pop_cached_board(param_key_str):
             
             print(f"[BoardGen] Serving CACHED board for param_key: {param_key_str[:120]}...")
             return (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word)
-        else:
-            conn.commit()
-            conn.close()
+            
+        conn.close()
     except Exception as e:
         print(f"[BoardGen] Error checking/popping cached board: {e}")
     return None
@@ -383,6 +440,12 @@ class BoardGenerator:
                     param_key TEXT NOT NULL,
                     board_json TEXT NOT NULL,
                     created_at REAL NOT NULL
+                );
+            ''')
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS used_boards (
+                    board_hash TEXT PRIMARY KEY,
+                    used_at REAL NOT NULL
                 );
             ''')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_param_key ON pregenerated_boards(param_key);')
@@ -1992,6 +2055,8 @@ class BoardGenerator:
                             board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=10.0, bonus_cell=bonus_cell
                         )
                         
+                    board_hash = get_board_hash(board)
+                    mark_board_hash_used(board_hash)
                     return (
                         board,
                         sorted(list(all_words_dict.keys())),
@@ -2048,6 +2113,12 @@ class BoardGenerator:
                         print(f"[BoardGen] ❌ ATTEMPT {attempts}: Board has an 'ING'/'INGS' sequence on {achieved_diff} (target {difficulty}) board. TOSSING board and generating another one...")
                         continue
 
+                # Enforce global uniqueness: discard if board layout is already used
+                board_hash = get_board_hash(board)
+                if is_board_hash_used(board_hash):
+                    print(f"[BoardGen] ATTEMPT {attempts}: Board layout already used globally ({board_hash}). TOSSING board and retrying...")
+                    continue
+
                 # --- OFFICIAL ACCEPTANCE: RESOLVE PATHS NOW ---
                 all_words_dict = self._solve_board(
                     board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=30.0
@@ -2100,6 +2171,7 @@ class BoardGenerator:
                         board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=10.0, bonus_cell=bonus_cell
                     )
 
+                mark_board_hash_used(board_hash)
                 return (
                     board,
                     sorted(list(all_words_dict.keys())),
@@ -2534,6 +2606,8 @@ class BoardGenerator:
                         board, dictionary, (0, 99999), display_min, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=10.0, bonus_cell=bonus_cell
                     )
  
+                board_hash = get_board_hash(board)
+                mark_board_hash_used(board_hash)
                 return (board, sorted(list(final_solve.keys())), bonus_cell, board_format, final_solve, ratio, final_bonus)
             else:
                 print(f"[BoardGen] ✗ EMERGENCY ATTEMPT {_attempt} FAILED: {count} words is not in {min_words}-{max_words}")
@@ -2677,6 +2751,11 @@ class BoardGenerator:
             print(f"[BoardGen] Procedure IO-Base attempt {attempt} finished with count {final_count} (Target: {min_words}-{max_words})")
             
             if min_words <= final_count <= max_words:
+                board_hash = get_board_hash(final_board)
+                if is_board_hash_used(board_hash):
+                    print(f"[BoardGen] Procedure IO-Base: Board layout already used globally ({board_hash}). TOSSING board and retrying...")
+                    continue
+
                 ratio = self.get_uniqueness_ratio(final_board, list(final_solve.keys()), rows, cols, dictionary, depth)
                 actual_bonus = None
                 bonus_cell = None
@@ -2691,6 +2770,7 @@ class BoardGenerator:
                         actual_bonus = random.choice(suitable)
                         bonus_cell = final_solve[actual_bonus][0]
                 
+                mark_board_hash_used(board_hash)
                 return (
                     final_board,
                     sorted(list(final_solve.keys())),
