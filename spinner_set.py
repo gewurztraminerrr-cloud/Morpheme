@@ -88,12 +88,16 @@ class SpinnerSet:
             return res
         except Exception as e:
             print(f"[SpinnerSet] CRITICAL WRAPPER ERROR: {e}")
+            # Derive fallback min length dynamically based on dimensions
+            dims_lower = str(board_dimensions).lower()
+            fallback_min = 4 if '4x6' in dims_lower else (5 if '5x7' in dims_lower else (6 if '6x8' in dims_lower or '3x3x3' in dims_lower else 3))
+            
             fallback = {
                 'difficulty': random.choices(['Easy', 'Medium', 'Hard'], weights=[25, 50, 25])[0],
                 'dictionary': random.choice(['NWL', 'CSW', 'NWL + AW', 'CSW + AW']),
                 'word_count_range': '200-300' if is_24h else random.choices(['100-200', '200-300', '300-400', '500+'], weights=[30, 30, 30, 1])[0],
                 'board_format': 'Valued Letters' if is_24h else 'Normal',
-                'min_word_length': 3,
+                'min_word_length': fallback_min,
                 'bonus_word_length': 8,
                 'generated_at': time.time()
             }
@@ -127,9 +131,18 @@ class SpinnerSet:
         )
         
         try:
-            min_word_length = int(res.get('min_word_length', 3))
+            min_word_length = int(res.get('min_word_length'))
         except:
-            min_word_length = 3
+            min_word_length = 4 if '4x6' in dims else (5 if '5x7' in dims else (6 if '6x8' in dims or '3x3x3' in dims else 3))
+
+        # Enforce grid floor limits for min_word_length
+        floor_len = 3
+        if '4x6' in dims: floor_len = 4
+        elif '5x7' in dims: floor_len = 5
+        elif '6x8' in dims or '3x3x3' in dims: floor_len = 6
+        
+        if min_word_length < floor_len:
+            min_word_length = floor_len
 
         # Hard limits on max min_word_length per grid size to prevent overflows
         if '4x4' in dims:

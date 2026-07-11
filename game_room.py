@@ -1914,12 +1914,13 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             target_range = '200-300' if is_24h else '100-200'
         fmt = 'Valued Letters' if is_24h else board_format
         
-        # We will try 4 configurations, relaxing constraints at each step
+        # We will try 4 configurations, relaxing constraints at each step (but never below the grid's floor length!)
+        floor_l = 3 if '4x4' in dimensions else (4 if '4x6' in dimensions else (5 if '5x7' in dimensions else 6))
         configs = [
             (min_l, target_range, fmt, 4.0),
-            (3, target_range, 'Normal', 3.0),
-            (3, target_range, 'Normal', 3.0),
-            (3, target_range, 'Normal', 3.0)
+            (floor_l, target_range, 'Normal', 3.0),
+            (floor_l, target_range, 'Normal', 3.0),
+            (floor_l, target_range, 'Normal', 3.0)
         ]
         
         for idx, (ml, tr, f, to) in enumerate(configs):
