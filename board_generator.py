@@ -1458,9 +1458,7 @@ class BoardGenerator:
         while time.time() - start_time < timeout:
             attempts += 1
             
-            # If AW/CSW dictionary is used and we are struggling to meet target range,
-            # dynamically bump the target range up to allow for high-density words.
-            if (is_emergency and attempts > 1) or (attempts > 8):
+            if (is_emergency and attempts > 15) or (attempts > 35):
                 min_words, max_words = 0, 99999
             elif original_dict_name in ["AW", "ADDED_WORDS", "ALL"] or use_added_words_ctx.get() is True:
                 if attempts > 6:

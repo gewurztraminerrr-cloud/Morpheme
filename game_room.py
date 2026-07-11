@@ -1890,37 +1890,37 @@ def calculate_word_score(word, bonus_word, board_format='Normal', path=None, bon
     return shared_calc(word, bonus_word, board_format=board_format, path=path, bonus_cell=bonus_cell, **kwargs)
 
 
-def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=60, dictionary='NWL', use_added_words=False):
+def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=60, dictionary='NWL', use_added_words=False, target_range=None):
     """Dynamically generate a valid emergency fallback board that matches room dimensions and spells correct words."""
+    from board_generator import BoardGenerator
+    bg = BoardGenerator()
+    
+    parts = dimensions.split("x")
+    is_24h = time_limit >= 7200
+    
     try:
-        from board_generator import BoardGenerator
-        bg = BoardGenerator()
-        is_24h = time_limit >= 7200
-        
         # Determine starting min length based on dimensions
         min_l = 4 if '4x4' in dimensions else (5 if '4x6' in dimensions else (6 if '5x7' in dimensions else 7))
-        dict_upper = str(dictionary or 'NWL').upper()
-        is_aw_effective = (
-            dict_upper in ['AW', 'ADDED_WORDS', 'ALL']
-            or use_added_words is True
-            or '+ AW' in dict_upper
-            or '+AW' in dict_upper
-        )
-        if is_aw_effective:
+        
+        # Determine target range
+        if use_added_words:
             use_added_words = True
             import random
-            target_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
+            target_range_resolved = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
         else:
-            target_range = '200-300' if is_24h else '100-200'
+            if target_range:
+                target_range_resolved = target_range
+            else:
+                target_range_resolved = '200-300' if is_24h else '100-200'
         fmt = 'Valued Letters' if is_24h else board_format
         
         # We will try 4 configurations, relaxing constraints at each step (but never below the grid's floor length!)
         floor_l = 3 if '4x4' in dimensions else (4 if '4x6' in dimensions else (5 if '5x7' in dimensions else 6))
         configs = [
-            (min_l, target_range, fmt, 4.0),
-            (floor_l, target_range, 'Normal', 3.0),
-            (floor_l, target_range, 'Normal', 3.0),
-            (floor_l, target_range, 'Normal', 3.0)
+            (min_l, target_range_resolved, fmt, 4.0),
+            (floor_l, target_range_resolved, 'Normal', 3.0),
+            (floor_l, '100-200', 'Normal', 3.0),
+            (floor_l, '50-100', 'Normal', 3.0)
         ]
         
         for idx, (ml, tr, f, to) in enumerate(configs):
@@ -1939,11 +1939,11 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                     use_added_words=use_added_words
                 )
                 if res and len(res) >= 7:
-                    board, words, bonus_cell, updated_format, paths, ratio, bonus_word = res
+                    board, words, bonus_cell, updated_format, paths, ratio, bonus_word = res[:7]
                     # Ensure we have a healthy number of words (at least 30)
                     if words and len(words) >= 30:
                         print(f"[get_emergency_fallback_board] Success on attempt {idx+1} with {len(words)} words")
-                        return board, words, bonus_cell, updated_format, paths, ratio, bonus_word
+                        return board, words, bonus_cell, updated_format, paths, ratio, bonus_word, tr
             except Exception as inner_err:
                 print(f"[get_emergency_fallback_board] Attempt {idx+1} error: {inner_err}")
                 
@@ -2029,7 +2029,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
     ratio = bg.get_uniqueness_ratio(board, words, rows, cols, dictionary or "NWL", depth=6 if is_3d else 1)
     
     print(f"[get_emergency_fallback_board] Static board generated with {len(words)} words. Bonus Word: {bonus_word}")
-    return board, words, bonus_cell, fmt, paths, ratio, bonus_word
+    return board, words, bonus_cell, fmt, paths, ratio, bonus_word, '100-200'
 
 
 class RoomManager:
@@ -4429,10 +4429,16 @@ class RoomManager:
                         room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
                         room.current_min_length = int(room.spinner_params.get('min_word_length', 3))
                     
-                    e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio, e_bonus_word = get_emergency_fallback_board(
+                    e_results = get_emergency_fallback_board(
                         room.board_dimensions, room.current_board_format, room.time_limit,
-                        dictionary=room.current_dictionary, use_added_words=getattr(room, 'use_added_words', False)
+                        dictionary=room.current_dictionary, use_added_words=getattr(room, 'use_added_words', False),
+                        target_range=room.spinner_params.get('word_count_range')
                     )
+                    e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio, e_bonus_word, e_tr = e_results
+                    
+                    if e_tr:
+                        room.spinner_params['word_count_range'] = e_tr
+                        room.current_word_count_range = e_tr
                     
                     room.next_round_board = e_board
                     room.next_round_words = e_words
