@@ -152,7 +152,7 @@ ACTIVE_REFILLS_LOCK = threading.Lock()
 # Bump this version whenever the solver logic changes in a way that affects
 # board word lists (e.g. AW inclusion, trie changes). This automatically
 # invalidates all pre-generated cached boards so stale ones are never served.
-BOARD_CACHE_VERSION = 10
+BOARD_CACHE_VERSION = 11
 
 def serialize_param_key(dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, use_added_words=False):
     return json.dumps({
@@ -2047,7 +2047,8 @@ class BoardGenerator:
                         if actual_bonus:
                             bonus_cell = all_words_dict[actual_bonus][0]
                             
-                    if difficulty in ["Medium", "Hard"]:
+                    achieved_diff = self.get_difficulty_label(ratio, rows, cols, dictionary, depth, min_word_length=min_word_length)
+                    if difficulty in ["Medium", "Hard"] or achieved_diff in ["Medium", "Hard"]:
                         self._guarantee_no_ing(board, depth, protected_positions=embedded_path)
                         
                     if bonus_cell:
@@ -2757,6 +2758,25 @@ class BoardGenerator:
                     continue
 
                 ratio = self.get_uniqueness_ratio(final_board, list(final_solve.keys()), rows, cols, dictionary, depth)
+                achieved_diff = self.get_difficulty_label(ratio, rows, cols, dictionary, depth, min_word_length=min_word_length)
+                
+                # Check target OR achieved difficulty to ensure ING is never present on Medium/Hard
+                if difficulty in ["Medium", "Hard"] or achieved_diff in ["Medium", "Hard"]:
+                    self._guarantee_no_ing(final_board, depth, protected_positions=embedded_path)
+                    
+                    # Re-solve the board to verify that the word count is still compliant after breaking up any ING sequence
+                    final_solve = self._solve_board(
+                        final_board, dictionary, (0, 99999), min_word_length, 
+                        max_depth=final_depth, store_paths=True, timeout=10.0, use_added_words=use_added_words
+                    )
+                    final_count = len(final_solve)
+                    if not (min_words <= final_count <= max_words):
+                        print(f"[BoardGen] Procedure IO-Base: Force broke 'ING' but final count {final_count} fell outside range. Retrying...")
+                        continue
+                    
+                    # Recalculate ratio after re-solving
+                    ratio = self.get_uniqueness_ratio(final_board, list(final_solve.keys()), rows, cols, dictionary, depth)
+
                 actual_bonus = None
                 bonus_cell = None
                 if bonus_word and bonus_word.upper() in final_solve:
