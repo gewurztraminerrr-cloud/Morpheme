@@ -203,16 +203,25 @@ def is_board_hash_used(board_hash):
 
 def mark_board_hash_used(board_hash):
     if not board_hash:
-        return
+        return False
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
     try:
         conn = sqlite3.connect(db_path, timeout=30)
         cursor = conn.cursor()
-        cursor.execute("INSERT OR REPLACE INTO used_boards (board_hash, used_at) VALUES (?, ?);", (board_hash, time.time()))
+        cursor.execute("INSERT INTO used_boards (board_hash, used_at) VALUES (?, ?);", (board_hash, time.time()))
         conn.commit()
         conn.close()
+        return True
+    except sqlite3.IntegrityError:
+        # Already inserted by another thread/process
+        try: conn.close()
+        except: pass
+        return False
     except Exception as e:
         print(f"[BoardGen] Error marking board hash as used: {e}")
+        try: conn.close()
+        except: pass
+        return False
 
 def pop_cached_board(param_key_str):
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
@@ -237,11 +246,9 @@ def pop_cached_board(param_key_str):
             board = data["board"]
             
             board_hash = get_board_hash(board)
-            if is_board_hash_used(board_hash):
+            if not mark_board_hash_used(board_hash):
                 print(f"[BoardGen] Discarding cached board (layout already used globally: {board_hash})")
                 continue
-                
-            mark_board_hash_used(board_hash)
             conn.close()
             
             all_words = data["all_words"]
@@ -2057,7 +2064,9 @@ class BoardGenerator:
                         )
                         
                     board_hash = get_board_hash(board)
-                    mark_board_hash_used(board_hash)
+                    if not mark_board_hash_used(board_hash):
+                        print(f"[BoardGen] Race condition: Equality Freq fallback board hash {board_hash} was already used. Retrying...")
+                        continue
                     return (
                         board,
                         sorted(list(all_words_dict.keys())),
@@ -2172,7 +2181,9 @@ class BoardGenerator:
                         board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=10.0, bonus_cell=bonus_cell
                     )
 
-                mark_board_hash_used(board_hash)
+                if not mark_board_hash_used(board_hash):
+                    print(f"[BoardGen] Race condition: board hash {board_hash} was already used. Retrying...")
+                    continue
                 return (
                     board,
                     sorted(list(all_words_dict.keys())),
@@ -2608,7 +2619,9 @@ class BoardGenerator:
                     )
  
                 board_hash = get_board_hash(board)
-                mark_board_hash_used(board_hash)
+                if not mark_board_hash_used(board_hash):
+                    print(f"[BoardGen] Race condition: emergency board hash {board_hash} was already used. Retrying...")
+                    continue
                 return (board, sorted(list(final_solve.keys())), bonus_cell, board_format, final_solve, ratio, final_bonus)
             else:
                 print(f"[BoardGen] ✗ EMERGENCY ATTEMPT {_attempt} FAILED: {count} words is not in {min_words}-{max_words}")
@@ -2790,7 +2803,9 @@ class BoardGenerator:
                         actual_bonus = random.choice(suitable)
                         bonus_cell = final_solve[actual_bonus][0]
                 
-                mark_board_hash_used(board_hash)
+                if not mark_board_hash_used(board_hash):
+                    print(f"[BoardGen] Race condition: Procedure IO-Base board hash {board_hash} was already used. Retrying...")
+                    continue
                 return (
                     final_board,
                     sorted(list(final_solve.keys())),
