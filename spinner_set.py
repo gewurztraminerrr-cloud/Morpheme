@@ -141,51 +141,25 @@ class SpinnerSet:
         elif '6x8' in dims or '3x3x3' in dims:
             if min_word_length > 8: min_word_length = 8
 
-        wc_range = res.get('word_count_range', '100-200')
-
         if is_aw_effective:
             # Scale target range according to min_word_length to keep rounds mathematically possible and prevent hangs
+            # BUT: NEVER allow word counts lower than 300-400 for AW rounds (strictly enforce 300-400, 400-500, or 500+).
+            if wc_range not in ['300-400', '400-500', '500+']:
+                import random
+                wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
+            # Safety caps for AW: Cap length to maximum possible that can hit 300+ words
             if '4x4' in dims:
-                if min_word_length == 4:
-                    if wc_range not in ['100-200', '200-300']:
-                        wc_range = '100-200'
-                else: # min_word_length <= 3
-                    if wc_range not in ['300-400', '400-500', '500+']:
-                        import random
-                        wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
+                if min_word_length >= 4:
+                    min_word_length = 3
             elif '4x6' in dims:
-                if min_word_length == 6:
-                    if wc_range not in ['100-200', '200-300']:
-                        wc_range = '100-200'
-                elif min_word_length == 5:
-                    if wc_range not in ['200-300', '300-400']:
-                        wc_range = '200-300'
-                else: # min_word_length <= 4
-                    if wc_range not in ['300-400', '400-500', '500+']:
-                        import random
-                        wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
+                if min_word_length >= 6:
+                    min_word_length = 5
             elif '5x7' in dims:
-                if min_word_length == 7:
-                    if wc_range not in ['100-200', '200-300']:
-                        wc_range = '100-200'
-                elif min_word_length == 6:
-                    if wc_range not in ['200-300', '300-400']:
-                        wc_range = '200-300'
-                else: # min_word_length <= 5
-                    if wc_range not in ['300-400', '400-500', '500+']:
-                        import random
-                        wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
+                if min_word_length >= 7:
+                    min_word_length = 6
             elif '6x8' in dims or '3x3x3' in dims:
-                if min_word_length == 8:
-                    if wc_range not in ['100-200', '200-300']:
-                        wc_range = '100-200'
-                elif min_word_length == 7:
-                    if wc_range not in ['200-300', '300-400']:
-                        wc_range = '200-300'
-                else: # min_word_length <= 6
-                    if wc_range not in ['300-400', '400-500', '500+']:
-                        import random
-                        wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
+                if min_word_length >= 8:
+                    min_word_length = 7
         else:
             if wc_range not in ['50-100', '100-200', '200-300', '300-400']:
                 import random

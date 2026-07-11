@@ -1900,7 +1900,14 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         # Determine starting min length based on dimensions
         min_l = 4 if '4x4' in dimensions else (5 if '4x6' in dimensions else (6 if '5x7' in dimensions else 7))
         dict_upper = str(dictionary or 'NWL').upper()
-        if dict_upper in ['AW', 'ADDED_WORDS', 'ALL'] or use_added_words:
+        is_aw_effective = (
+            dict_upper in ['AW', 'ADDED_WORDS', 'ALL']
+            or use_added_words is True
+            or '+ AW' in dict_upper
+            or '+AW' in dict_upper
+        )
+        if is_aw_effective:
+            use_added_words = True
             import random
             target_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
         else:
@@ -2567,6 +2574,14 @@ class RoomManager:
                             room.board = e_board
                             room.bonus_cell = e_bonus_c
                             room.bonus_word = e_bonus_word or b_word
+                            # Check if generator relaxed min_word_length
+                            if e_words:
+                                actual_shortest = min(len(w) for w in e_words)
+                                if actual_shortest < m_len:
+                                    print(f"[RoomManager] Word generator relaxed min_word_length from {m_len} to {actual_shortest} during kickstart. Updating room param.")
+                                    room.spinner_params['min_word_length'] = actual_shortest
+                                    m_len = actual_shortest
+
                             room.current_min_length = m_len
                             room.current_board_format = 'Valued Letters' if is_24h else e_fmt
                             room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
@@ -3214,6 +3229,12 @@ class RoomManager:
                 
             # ATOMICITY: Apply new round data with strict display filtering
             display_min_start = room.spinner_params.get('min_word_length', 3)
+            if all_words:
+                actual_shortest = min(len(w) for w in all_words)
+                if actual_shortest < display_min_start:
+                    print(f"[RoomManager] Word generator relaxed min_word_length from {display_min_start} to {actual_shortest}. Updating room param.")
+                    room.spinner_params['min_word_length'] = actual_shortest
+                    display_min_start = actual_shortest
             room.all_words = {w for w in (all_words or []) if len(w) >= display_min_start}
             
             # CATEGORIZATION (Synchronous): Ensure these are available immediately for UI sync
@@ -3929,6 +3950,13 @@ class RoomManager:
                     room.next_round_bonus = bonus_word
                     room.next_round_format = updated_format
                     room.next_round_uniqueness = u_ratio
+                    # Check if generator relaxed min_word_length
+                    if all_words:
+                        actual_shortest = min(len(w) for w in all_words)
+                        if actual_shortest < search_min:
+                            print(f"[RoomManager] Word generator relaxed min_word_length from {search_min} to {actual_shortest} in background. Updating room param.")
+                            params['min_word_length'] = actual_shortest
+
                     # USER REQUEST: Absolute consistency. Bundle the EXACT params used for this board.
                     room.next_round_spinner_params = dict(params)
                     room.next_round_spinner_params['board_format'] = updated_format # In case generator changed it
@@ -4476,6 +4504,14 @@ class RoomManager:
                 # HARD FLOOR: Always exclude 3-letter words from the 'All Words' list (User Request: "NOT 3 letter wrods")
                 min_l = room.current_min_length if hasattr(room, 'current_min_length') else 3
                 display_min = min_l
+                if room.next_round_words:
+                    actual_shortest = min(len(w) for w in room.next_round_words)
+                    if actual_shortest < display_min:
+                        print(f"[REMAINING-STABILIZER] Staging words are shorter than display_min ({display_min}). Updating display_min and current_min_length to {actual_shortest}")
+                        room.current_min_length = actual_shortest
+                        display_min = actual_shortest
+                        if room.spinner_params:
+                            room.spinner_params['min_word_length'] = actual_shortest
                 room.all_words = {w for w in (room.next_round_words or []) if len(w) >= display_min}
                 room.all_words_paths = {w: p for w, p in (room.next_round_word_paths or {}).items() if len(w) >= display_min}
                 room.solved_words_with_scores = getattr(room, 'next_round_word_scores', {})
