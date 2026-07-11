@@ -152,7 +152,7 @@ ACTIVE_REFILLS_LOCK = threading.Lock()
 # Bump this version whenever the solver logic changes in a way that affects
 # board word lists (e.g. AW inclusion, trie changes). This automatically
 # invalidates all pre-generated cached boards so stale ones are never served.
-BOARD_CACHE_VERSION = 8
+BOARD_CACHE_VERSION = 9
 
 def serialize_param_key(dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, use_added_words=False):
     return json.dumps({
@@ -504,27 +504,32 @@ class BoardGenerator:
         if not all_words:
             return 0.0
 
-        unique_set = self._get_difficulty_set(dictionary)
+        d_upper = str(dictionary).upper()
+        core_type = d_upper
+        if "+ AW" in core_type or "+AW" in core_type:
+            core_type = core_type.split("+")[0].strip()
+        if core_type in ["AW", "ADDED_WORDS", "ALL"]:
+            core_type = "NWL"
+
+        unique_set = self._get_difficulty_set(core_type)
         if not unique_set:
             return 0.0
 
         # USER REQUEST: For 4x4 and 4x6 boards, only pay attention to words 5 letters or longer
         if depth == 1 and ((rows == 4 and cols == 4) or (rows == 4 and cols == 6) or (rows == 6 and cols == 4)):
-            filtered_words = [w for w in all_words if len(w) >= 5]
+            filter_len = 5
         else:
-            filtered_words = all_words
+            filter_len = 3
 
-        if not filtered_words:
-            return 0.0
-
-        val_ctx = use_added_words_ctx.get()
-        if val_ctx is None:
-            from word_validator import word_validator
-            val_ctx = word_validator.use_added_words
-        from word_validator import word_validator
+        # Resolve board using ONLY the base dictionary (ignoring custom added words entirely)
+        min_len_val = min((len(w) for w in all_words), default=3)
+        solve_depth = 25 if rows * cols <= 16 else 14
         
-        # Calculate ratio based on base dictionary words to prevent 500k AW skew
-        base_words = [w for w in filtered_words if w.upper() not in word_validator.added_words]
+        base_solve = self._solve_board(
+            board, core_type, (0, 99999), min_word_length=min_len_val, max_depth=solve_depth, store_paths=False, use_added_words=False
+        )
+        base_words = [w for w in base_solve.keys() if len(w) >= filter_len]
+        
         count_relevant = len(base_words)
         count_unique = sum(1 for w in base_words if w.upper() in unique_set)
 
