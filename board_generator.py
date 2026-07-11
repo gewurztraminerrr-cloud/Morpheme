@@ -1601,17 +1601,9 @@ class BoardGenerator:
                 pass
 
             # --- FIND AND PROTECT CUSTOM ADDED WORDS ---
+            # NOTE: We no longer protect accidental custom added words, as the massive 500k AW dictionary
+            # would cause almost every cell to be locked, preventing sweeps/Mania/EitherOr from modifying letters.
             aw_cells = set()
-            if use_aw_flag:
-                from word_validator import word_validator
-                if word_validator.added_words:
-                    solve_depth = 12 if (rows * cols >= 35) else 25
-                    temp_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=solve_depth, store_paths=True, use_added_words=use_aw_flag)
-                    for w, path in temp_solve.items():
-                        if w in word_validator.added_words:
-                            for cell in path:
-                                if isinstance(cell, (list, tuple)):
-                                    aw_cells.add(tuple(cell))
 
             all_excluded = set()
             if embedded_path:
