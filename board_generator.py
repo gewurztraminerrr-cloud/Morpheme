@@ -152,7 +152,7 @@ ACTIVE_REFILLS_LOCK = threading.Lock()
 # Bump this version whenever the solver logic changes in a way that affects
 # board word lists (e.g. AW inclusion, trie changes). This automatically
 # invalidates all pre-generated cached boards so stale ones are never served.
-BOARD_CACHE_VERSION = 11
+BOARD_CACHE_VERSION = 12
 
 def serialize_param_key(dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, use_added_words=False):
     return json.dumps({
@@ -1631,14 +1631,14 @@ class BoardGenerator:
                     ]
             elif is_checkerboard:
                 if strategy == "WordSoup":
-                    board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range, is_checkerboard=True)
+                    board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range, is_checkerboard=True, use_added_words=use_aw_flag)
                 else:
                     board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
             elif "either/or" in safe_format:
                 # Support Either/Or tiles (e.g. A/B) by creating a normal board first
-                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range)
+                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range, use_added_words=use_aw_flag)
             else:
-                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range)
+                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range, use_added_words=use_aw_flag)
 
             # UNIVERSAL LIMIT: Defend against "loads and loads of A's" across all board sizes (both 2D and 3D)
             flat_letters = []
@@ -2333,18 +2333,18 @@ class BoardGenerator:
             special_cells = []
             if is_checkerboard:
                 if depth == 1:
-                    board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range, is_checkerboard=True)
+                    board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range, is_checkerboard=True, use_added_words=use_aw_flag)
                 else:
                     board = self._create_checkerboard(rows, cols, weights, depth=depth, difficulty=difficulty)
             elif "either/or" in safe_format:
-                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range)
+                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range, use_added_words=use_aw_flag)
                 # Pick Either/Or tile coordinates
                 eo_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
                 special_cells.append(eo_cell)
                 all_excluded.add(eo_cell)
                 print(f"[BoardGen] Selected and protected Either/Or coordinate in emergency loop: {eo_cell}")
             else:
-                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range)
+                board = self._create_normal_board(rows, cols, weights, depth=depth, difficulty=difficulty, dictionary=dictionary, word_count_range=word_count_range, use_added_words=use_aw_flag)
                 
             # 3. Apply Mania abundance and register cells as excluded to protect them
             if mania_letter:
