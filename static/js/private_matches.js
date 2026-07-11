@@ -62,6 +62,12 @@
             updateMinWordLenOptions();
             updateFormatOptions();
         }
+
+        const soloDict = document.getElementById('sf-config-dict');
+        if (soloDict) {
+            soloDict.addEventListener('change', updateWordCountRangeOptions);
+            updateWordCountRangeOptions();
+        }
     }
 
     function updateMinWordLenOptions() {
@@ -112,6 +118,43 @@
             Array.from(soloFormat.options).forEach(opt => {
                 opt.disabled = false;
             });
+        }
+    }
+
+    function updateWordCountRangeOptions() {
+        const soloDict = document.getElementById('sf-config-dict');
+        const soloRange = document.getElementById('sf-config-range');
+        if (!soloDict || !soloRange) return;
+
+        const val = soloDict.value;
+        const currentVal = soloRange.value;
+
+        let options = [];
+        if (val === 'NWL + AW' || val === 'CSW + AW') {
+            options = [
+                { value: 'random', text: 'Random (40/40/20)' },
+                { value: '300-400', text: '300-400 (40%)' },
+                { value: '400-500', text: '400-500 (40%)' },
+                { value: '500+', text: '500+ (20%)' }
+            ];
+        } else {
+            options = [
+                { value: 'random', text: 'Random (10/30/30/30)' },
+                { value: '50-100', text: '50-100 (10%)' },
+                { value: '100-200', text: '100-200 (30%)' },
+                { value: '200-300', text: '200-300 (30%)' },
+                { value: '300-400', text: '300-400 (30%)' }
+            ];
+        }
+
+        soloRange.innerHTML = options.map(opt =>
+            `<option value="${opt.value}" ${opt.value === currentVal ? 'selected' : ''}>${opt.text}</option>`
+        ).join('');
+
+        // Ensure the selected value is valid for the new options
+        const validValues = options.map(opt => opt.value);
+        if (!validValues.includes(soloRange.value)) {
+            soloRange.value = options[0].value;
         }
     }
 

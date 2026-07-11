@@ -127,10 +127,15 @@ class SpinnerSet:
             or '+AW' in dict_name
         )
         if is_aw_effective:
-            wc_range = res.get('word_count_range')
-            if wc_range not in ['300-400', '400-500', '500+']:
+            wc_range_check = res.get('word_count_range')
+            if wc_range_check not in ['300-400', '400-500', '500+']:
                 import random
                 res['word_count_range'] = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
+        else:
+            wc_range_check = res.get('word_count_range')
+            if wc_range_check not in ['50-100', '100-200', '200-300', '300-400']:
+                import random
+                res['word_count_range'] = random.choices(['50-100', '100-200', '200-300', '300-400'], weights=[10, 30, 30, 30])[0]
         try:
             min_word_length = int(res.get('min_word_length', 3))
         except:
@@ -371,9 +376,13 @@ class SpinnerSet:
     
     @staticmethod
     def _spin_word_count(dictionary, min_word_length, difficulty, board_dimensions):
-        # USER REQUEST: 50-100 words (9%), 100-200 (30%), 200-300 (30%), 300-400 (30%), 500+ (1%)
-        choices = ['50-100', '100-200', '200-300', '300-400', '500+']
-        weights = [9, 30, 30, 30, 1]
+        d_upper = str(dictionary).upper()
+        if "+ AW" in d_upper or "+AW" in d_upper or "ADDED" in d_upper:
+            choices = ['300-400', '400-500', '500+']
+            weights = [40, 40, 20]
+        else:
+            choices = ['50-100', '100-200', '200-300', '300-400']
+            weights = [10, 30, 30, 30]
         return random.choices(choices, weights=weights)[0]
     
     @staticmethod
