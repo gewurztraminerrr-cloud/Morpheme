@@ -1401,10 +1401,13 @@ class BoardGenerator:
             else:
                 difficulty = "Medium"
         # Ensure Mania has a valid single-letter prefix
+        original_has_specific_mania = False
         if "mania" in str(board_format).lower():
             parts = str(board_format).strip().split()
+            if len(parts) >= 2 and len(parts[0]) == 1 and parts[0].isalpha():
+                original_has_specific_mania = True
             # If it doesn't have a single-letter prefix
-            if len(parts) < 2 or len(parts[0]) != 1 or not parts[0].isalpha():
+            else:
                 if random.random() < 0.33:
                     mania_letter = random.choice('AEIOU')
                 else:
@@ -1484,8 +1487,8 @@ class BoardGenerator:
                     self.active_mania_letter = parts[0].upper()
 
             # If we are in Mania format and failing to find a compliant board,
-            # dynamically rotate the mania letter to a different one to aid compliance!
-            if "mania" in str(board_format).lower() and attempts > 3:
+            # dynamically rotate the mania letter to a different one to aid compliance (unless it is a specific letter mania!)
+            if "mania" in str(board_format).lower() and attempts > 3 and not original_has_specific_mania:
                 if random.random() < 0.33:
                     mania_letter = random.choice('AEIOU')
                 else:
@@ -2092,14 +2095,40 @@ class BoardGenerator:
         # FINAL FALLBACK (If timeout reached)
         # In a complete restart, even fallback MUST be compliant. 
         print("[BoardGen] !! TIMEOUT REACHED. FORCING EMERGENCY CLEAN SLATE.")
-        return self._generate_emergency_compliant_board(dimensions, min_word_length, dictionary, board_format, word_count_range, difficulty)
+        return self._generate_emergency_compliant_board(dimensions, min_word_length, dictionary, board_format, word_count_range, difficulty, use_added_words=use_aw_flag)
 
-    def _generate_emergency_compliant_board(self, dimensions, min_word_length, dictionary, board_format, word_count_range, difficulty):
+    def _generate_emergency_compliant_board(self, dimensions, min_word_length, dictionary, board_format, word_count_range, difficulty, use_added_words=None):
         """
         USER MANDATE: NEVER return a non-compliant board. 
         We will loop indefinitely until the target is met.
         We also strictly respect board formats (Mania, Checkerboard, Either/Or) in the emergency path.
         """
+        original_has_specific_mania = False
+        if "mania" in str(board_format).lower():
+            parts = str(board_format).strip().split()
+            if len(parts) >= 2 and len(parts[0]) == 1 and parts[0].isalpha():
+                original_has_specific_mania = True
+
+        original_dict_name = str(dictionary).upper() if isinstance(dictionary, str) else ""
+        base_dict_name = original_dict_name
+        has_aw_suffix = False
+        for _aw_suffix in ['+ AW', '+AW', '+ ADDED_WORDS', '+ADDED_WORDS']:
+            if _aw_suffix in original_dict_name:
+                base_dict_name = original_dict_name.replace(_aw_suffix, '').strip().strip('+').strip()
+                has_aw_suffix = True
+                break
+        if not base_dict_name or base_dict_name in ['AW', 'ADDED_WORDS', 'ALL']:
+            base_dict_name = 'NWL'
+        dictionary = base_dict_name
+
+        if use_added_words is None:
+            use_aw_flag = has_aw_suffix
+            if original_dict_name in ['AW', 'ADDED_WORDS', 'ALL']:
+                use_aw_flag = True
+            if use_added_words_ctx.get() is True:
+                use_aw_flag = True
+        else:
+            use_aw_flag = use_added_words or has_aw_suffix
         if min_word_length is None:
             min_word_length = 3
         else:
@@ -2178,7 +2207,7 @@ class BoardGenerator:
             # 1. Handle Mania letter selection and dynamic letter rotation if attempts are failing
             if "mania" in str(board_format).lower():
                 parts = str(board_format).strip().split()
-                if len(parts) < 2 or len(parts[0]) != 1 or not parts[0].isalpha() or (_attempt > 2 and _attempt % 2 == 0):
+                if len(parts) < 2 or len(parts[0]) != 1 or not parts[0].isalpha() or (_attempt > 2 and _attempt % 2 == 0 and not original_has_specific_mania):
                     if random.random() < 0.33:
                         mania_letter = random.choice('AEIOU')
                     else:

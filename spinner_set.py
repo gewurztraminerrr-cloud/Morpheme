@@ -117,7 +117,6 @@ class SpinnerSet:
             
         dims = str(board_dimensions).lower().replace(" ", "")
         
-        # AW Dictionary Target word count overrides (CSW+AW / NWL+AW target 300-400 (33%), 400-500 (33%), or 500+ (34%) words)
         dict_name = str(res.get('dictionary', 'NWL')).upper()
         # Detect compound AW dict names like 'NWL + AW' and 'CSW + AW'
         is_aw_effective = (
@@ -126,77 +125,98 @@ class SpinnerSet:
             or '+ AW' in dict_name
             or '+AW' in dict_name
         )
-        if is_aw_effective:
-            wc_range_check = res.get('word_count_range')
-            if wc_range_check not in ['300-400', '400-500', '500+']:
-                import random
-                res['word_count_range'] = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
-        else:
-            wc_range_check = res.get('word_count_range')
-            if wc_range_check not in ['50-100', '100-200', '200-300', '300-400']:
-                import random
-                res['word_count_range'] = random.choices(['50-100', '100-200', '200-300', '300-400'], weights=[10, 30, 30, 30])[0]
+        
         try:
             min_word_length = int(res.get('min_word_length', 3))
         except:
             min_word_length = 3
 
+        # Hard limits on max min_word_length per grid size to prevent overflows
+        if '4x4' in dims:
+            if min_word_length > 4: min_word_length = 4
+        elif '4x6' in dims:
+            if min_word_length > 6: min_word_length = 6
+        elif '5x7' in dims:
+            if min_word_length > 7: min_word_length = 7
+        elif '6x8' in dims or '3x3x3' in dims:
+            if min_word_length > 8: min_word_length = 8
+
         wc_range = res.get('word_count_range', '100-200')
 
-        # Safety caps: prevent impossible combinations by capping min_word_length for AW/high density.
         if is_aw_effective:
+            # Scale target range according to min_word_length to keep rounds mathematically possible and prevent hangs
             if '4x4' in dims:
-                # 4x4 AW target is >= 300 words. Length >= 4 is impossible to hit 300 words. Cap length to 3.
-                if min_word_length >= 4:
-                    min_word_length = 3
+                if min_word_length == 4:
+                    if wc_range not in ['100-200', '200-300']:
+                        wc_range = '100-200'
+                else: # min_word_length <= 3
+                    if wc_range not in ['300-400', '400-500', '500+']:
+                        import random
+                        wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
             elif '4x6' in dims:
-                # 4x6 AW target is >= 300 words. Length >= 5 is impossible to hit 300 words. Cap length to 4.
-                if min_word_length >= 5:
-                    min_word_length = 4
+                if min_word_length == 6:
+                    if wc_range not in ['100-200', '200-300']:
+                        wc_range = '100-200'
+                elif min_word_length == 5:
+                    if wc_range not in ['200-300', '300-400']:
+                        wc_range = '200-300'
+                else: # min_word_length <= 4
+                    if wc_range not in ['300-400', '400-500', '500+']:
+                        import random
+                        wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
             elif '5x7' in dims:
-                # 5x7 AW target is >= 300. Length >= 6 is impossible. Cap length to 5.
-                if min_word_length >= 6:
-                    min_word_length = 5
+                if min_word_length == 7:
+                    if wc_range not in ['100-200', '200-300']:
+                        wc_range = '100-200'
+                elif min_word_length == 6:
+                    if wc_range not in ['200-300', '300-400']:
+                        wc_range = '200-300'
+                else: # min_word_length <= 5
+                    if wc_range not in ['300-400', '400-500', '500+']:
+                        import random
+                        wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
             elif '6x8' in dims or '3x3x3' in dims:
-                # 6x8/3x3x3 AW target is >= 300. Length >= 7 is impossible. Cap length to 6.
-                if min_word_length >= 7:
-                    min_word_length = 6
+                if min_word_length == 8:
+                    if wc_range not in ['100-200', '200-300']:
+                        wc_range = '100-200'
+                elif min_word_length == 7:
+                    if wc_range not in ['200-300', '300-400']:
+                        wc_range = '200-300'
+                else: # min_word_length <= 6
+                    if wc_range not in ['300-400', '400-500', '500+']:
+                        import random
+                        wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
         else:
-            # 1. 4x4 Grid Safety Caps for Non-AW
+            if wc_range not in ['50-100', '100-200', '200-300', '300-400']:
+                import random
+                wc_range = random.choices(['50-100', '100-200', '200-300', '300-400'], weights=[10, 30, 30, 30])[0]
+
             if '4x4' in dims:
-                if min_word_length >= 5:
-                    min_word_length = 4
-                if min_word_length >= 4:
+                if min_word_length == 4:
+                    if wc_range not in ['50-100', '100-200']:
+                        wc_range = '50-100'
+                else: # min_word_length <= 3
                     if wc_range in ['300-400', '400-500', '500+']:
                         wc_range = '200-300'
-                if wc_range == '500+':
-                    wc_range = '300-400'
-
-            # 2. 4x6 Grid Safety Caps for Non-AW
             elif '4x6' in dims:
-                if min_word_length >= 6:
-                    min_word_length = 5
-                if min_word_length >= 5:
+                if min_word_length == 5:
+                    if wc_range not in ['50-100', '100-200']:
+                        wc_range = '50-100'
+                elif min_word_length == 4:
                     if wc_range in ['300-400', '400-500', '500+']:
                         wc_range = '200-300'
-                if wc_range == '500+':
-                    wc_range = '300-400'
-
-            # 3. 5x7 Grid Safety Caps for Non-AW
             elif '5x7' in dims:
-                if min_word_length >= 7:
-                    min_word_length = 6
-                if min_word_length >= 6:
+                if min_word_length == 6:
+                    if wc_range not in ['50-100', '100-200']:
+                        wc_range = '100-200'
+                elif min_word_length == 5:
                     if wc_range in ['300-400', '400-500', '500+']:
                         wc_range = '200-300'
-                if wc_range == '500+':
-                    wc_range = '300-400'
-
-            # 4. 6x8 or 3x3x3 Grid Safety Caps for Non-AW
             elif '6x8' in dims or '3x3x3' in dims:
-                if min_word_length >= 8:
-                    min_word_length = 7
-                if min_word_length >= 7:
+                if min_word_length == 7:
+                    if wc_range not in ['50-100', '100-200']:
+                        wc_range = '100-200'
+                elif min_word_length == 6:
                     if wc_range in ['300-400', '400-500', '500+']:
                         wc_range = '200-300'
 
