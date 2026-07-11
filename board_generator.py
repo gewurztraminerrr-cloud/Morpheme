@@ -152,7 +152,7 @@ ACTIVE_REFILLS_LOCK = threading.Lock()
 # Bump this version whenever the solver logic changes in a way that affects
 # board word lists (e.g. AW inclusion, trie changes). This automatically
 # invalidates all pre-generated cached boards so stale ones are never served.
-BOARD_CACHE_VERSION = 6
+BOARD_CACHE_VERSION = 7
 
 def serialize_param_key(dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, use_added_words=False):
     return json.dumps({
@@ -1455,8 +1455,29 @@ class BoardGenerator:
         best_equality_words_dict = None
         best_equality_embedded_path = None
         
+        # Determine if we should use the new IO and Base procedure
+        # Specifically for NWL and CSW dictionaries (no +AW)
+        is_nwl_or_csw_pure = not use_aw_flag
+        
+        # 100% of the time, 300-400 and 500+ targets use IO-Base for pure dicts
+        if is_nwl_or_csw_pure and max_words >= 300:
+            res = self._generate_io_base_board_procedure(
+                dimensions, bonus_word, word_count_range, dictionary, min_word_length, difficulty, board_format, use_aw_flag
+            )
+            if res:
+                return res
+
         while time.time() - start_time < timeout:
             attempts += 1
+            
+            # When necessary, use IO and Base on 200-300 word count for pure dicts
+            if is_nwl_or_csw_pure and max_words <= 300 and min_words >= 200 and attempts >= 6:
+                print(f"[BoardGen] Pure dict struggling for 200-300. Falling back to IO-Base procedure...")
+                res = self._generate_io_base_board_procedure(
+                    dimensions, bonus_word, word_count_range, dictionary, min_word_length, difficulty, board_format, use_aw_flag
+                )
+                if res:
+                    return res
             
             if (is_emergency and attempts > 15) or (attempts > 35):
                 min_words, max_words = 0, 99999
@@ -2511,7 +2532,6 @@ class BoardGenerator:
                 return (board, sorted(list(final_solve.keys())), bonus_cell, board_format, final_solve, ratio, final_bonus)
             else:
                 print(f"[BoardGen] ✗ EMERGENCY ATTEMPT {_attempt} FAILED: {count} words is not in {min_words}-{max_words}")
-
     def _final_rare_letter_polish(self, board, depth, protected_positions=None, difficulty=None):
         """Final audit to clean rare letters and forbidden sequences."""
         self._sanitize_rare_letters(board, depth, protected_positions=protected_positions)
@@ -2519,144 +2539,163 @@ class BoardGenerator:
             self._sanitize_forbidden_sequences(board, depth, protected_positions=protected_positions)
 
     def _generate_io_base_board_procedure(
-        self, dimensions, bonus_word, word_count_range, dictionary, min_word_length, difficulty, board_format="Normal"
+        self, dimensions, bonus_word, word_count_range, dictionary, min_word_length, difficulty, board_format="Normal", use_added_words=False
     ):
         """
-        Special Procedure: Checkerboard IO and Base
-        1. Generate Base board with ~100 words.
-        2. Iteratively optimize IO tiles (alternating) to maximize Unique Words.
+        Special Procedure: IO and Base method of generating boards for high word counts.
         """
-        rows, cols = map(int, dimensions.split("x"))
+        import time
+        import random
         
-        # We use a retry loop to guarantee this range.
-        for attempt in range(3):
-            # Determine Unique dictionary to use for optimization
-            d_upper = str(dictionary).upper()
-            unique_dict_name = "UniqueNWL" if d_upper == "NWL" else "UniqueCSW"
-
-            # 1. Generate Base Board - NO EMBEDDING
-            # USER REQUEST: Scale base board words based on Spinner Set target
-            min_w, max_w = self._parse_word_count_range(word_count_range)
-            if max_w <= 200:
-                base_val = 50
-            elif max_w <= 300:
-                base_val = 100
-            else:
-                base_val = 200
+        # 1. Parse dimensions and target counts
+        if dimensions == "3x3x3":
+            depth, rows, cols = 6, 3, 3
+        else:
+            parts = dimensions.split("x")
+            depth, rows, cols = (map(int, parts) if len(parts) == 3 else (1, int(parts[0]), int(parts[1])))
+        
+        num_tiles = rows * cols * depth
+        min_words, max_words = self._parse_word_count_range(word_count_range)
+        
+        # Determine dictionary set to use for location-based word count checks
+        from word_validator import word_validator
+        dict_name = str(dictionary).upper()
+        if difficulty == "Easy":
+            opt_dict = dict_name
+        else:
+            opt_dict = "UniqueCSW" if dict_name == "CSW" else "UniqueNWL"
+            
+        print(f"[BoardGen] Running IO-Base Procedure for target {min_words}-{max_words} (Dict: {opt_dict}, Format: {board_format})")
+        
+        # Try up to 10 times to find a compliant board
+        for attempt in range(10):
+            # A. Generate Base Board composed entirely of Word Soup board generation
+            # If checkerboard format is active, create checkerboard base
+            is_checkerboard = "checkerboard" in str(board_format).lower()
+            weights = LETTER_FREQ_SUPER_DENSITY if min_words >= 200 else LETTER_FREQ_EASY
+            base_board = self._create_normal_board(
+                rows, cols, weights, depth=depth, difficulty=difficulty, 
+                dictionary=dictionary, word_count_range=word_count_range, 
+                is_checkerboard=is_checkerboard, use_added_words=use_added_words
+            )
+            
+            # Embed bonus word if requested
+            embedded_path = None
+            if bonus_word:
+                if depth > 1:
+                    embedded_path = self._embed_bonus_word_cube(base_board, bonus_word, is_checkerboard=is_checkerboard)
+                else:
+                    embedded_path = self._embed_bonus_word(base_board, bonus_word, is_checkerboard=is_checkerboard)
+                if not embedded_path:
+                    continue # Retry if embedding fails
+            
+            # B. Collect all positions to optimize
+            # If target is 500+, perform IO on all positions
+            # If target is 300-400 or 200-300, perform IO on checkerboard positions (e.g. (r+c)%2 == 0)
+            all_positions = []
+            for f in range(depth):
+                for r in range(rows):
+                    for c in range(cols):
+                        # Skip bonus word cells to protect the bonus word
+                        pos = (f, r, c) if depth > 1 else (r, c)
+                        if embedded_path and pos in embedded_path:
+                            continue
+                        if max_words >= 500:
+                            # 100% of the positions for 500+
+                            all_positions.append(pos)
+                        else:
+                            # Checkerboard positions for 300-400 and 200-300
+                            val = (f + r + c) if depth > 1 else (r + c)
+                            if val % 2 == 0:
+                                all_positions.append(pos)
+            
+            # Shuffle positions to optimize in random order
+            random.shuffle(all_positions)
+            
+            # C. Optimize each position
+            final_board = [row[:] for row in base_board] if depth == 1 else [[[cell for cell in row] for row in plane] for plane in base_board]
+            
+            for pos in all_positions:
+                # Retrieve current letter
+                if depth > 1:
+                    best_letter = final_board[pos[0]][pos[1]][pos[2]]
+                else:
+                    best_letter = final_board[pos[0]][pos[1]]
+                max_loc_words = -1
                 
-            base_target = (base_val - 10, base_val + 10) if attempt == 0 else (base_val - 20, base_val + 5)
-            
-            print(f"[BoardGen] Procedure: IO-Base Checkerboard (Attempt {attempt}). Base target: {base_target}")
-            weights = LETTER_FREQ_SUPER_DENSITY if min_word_length >= 4 else LETTER_FREQ_EASY
-            base_board = self._create_normal_board(rows, cols, weights, depth=1, difficulty=difficulty, dictionary=dictionary)
-            print(f"[BoardGen] Normal base generated directly for special procedure.")
-            
-            final_solve = self._solve_board(base_board, dictionary, (0, 99999), min_word_length, max_depth=12, store_paths=True, timeout=30.0)
-            base_words = list(final_solve.keys())
-
-            # 2. IO Optimization
-            print(f"[BoardGen] Optimizing IO tiles (Random Walk)...")
-            final_board = [row[:] for row in base_board]
-            
-            # Checkerboard pattern: (r + c) % 2 == 1 (odd tiles) are IO
-            io_positions = [(r, c) for r in range(rows) for c in range(cols) if (r + c) % 2 == 1]
-            import random
-            random.shuffle(io_positions)
-            
-            optimized_count = 0
-            final_words_dict = {}
-            final_count = 0
-            
-            for r, c in io_positions:
-                best_letter = final_board[r][c]
-                max_unique_at_loc = 0
-                
-                # Test pool of letters (Respect Checkerboard if needed)
+                # Test letters A to Z (respecting Checkerboard alternating constraints if active)
                 test_pool = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-                if "checkerboard" in str(board_format).lower():
-                    target_is_vowel = (r + c) % 2 != 0
-                    test_pool = list(VOWELS) if target_is_vowel else list(CONSONANTS)
+                if is_checkerboard:
+                    f_val, r_val, c_val = (pos[0], pos[1], pos[2]) if depth > 1 else (0, pos[0], pos[1])
+                    target_is_vowel = (f_val + r_val + c_val) % 2 != 0
+                    test_pool = list("AEIOU") if target_is_vowel else list("BCDFGHJKLMNPQRSTVWXYZ")
                 
                 for char in test_pool:
-                    if self._is_rare_limited(final_board, char):
-                        if char != final_board[r][c]:
-                            continue
-                    
-                    final_board[r][c] = char
-                    # Solve using the surgical must_include solver
-                    words_dict = self._solve_board(
-                        final_board, unique_dict_name, (0, 99999), min_word_length, max_depth=10, store_paths=False, must_include=(r, c)
+                    # Modify character at position
+                    if depth > 1:
+                        final_board[pos[0]][pos[1]][pos[2]] = char
+                    else:
+                        final_board[pos[0]][pos[1]] = char
+                        
+                    # Calculate how many words pass through this position
+                    words_at_loc = self._solve_board(
+                        final_board, opt_dict, (0, 99999), min_word_length, 
+                        max_depth=7, store_paths=False, timeout=1.0, must_include=pos, use_added_words=False
                     )
-                    unique_count_at_loc = len(words_dict)
-
-                    if unique_count_at_loc > max_unique_at_loc:
-                        max_unique_at_loc = unique_count_at_loc
+                    
+                    count_at_loc = len(words_at_loc)
+                    if count_at_loc > max_loc_words:
+                        max_loc_words = count_at_loc
                         best_letter = char
                 
-                final_board[r][c] = best_letter
-                optimized_count += 1
-                
-                # Check if board meets criteria
-                final_words_dict = self._solve_board(
-                    final_board, dictionary, (0, 99999), min_word_length, max_depth=12, store_paths=True
-                )
-                final_count = len(final_words_dict)
-                
-                print(f"[BoardGen] Optimized {optimized_count} spots. Current count: {final_count}")
-                if min_w <= final_count <= max_w:
-                    print(f"[BoardGen] Found compliant board after optimizing {optimized_count} spots!")
-                    break
-                
-                # Safety break if taking too long (max 3 spots!)
-                if optimized_count >= 3:
-                    print(f"[BoardGen] Hit max spot limit (3). Proceeding with current board.")
-                    break
+                # Set the best letter at position
+                if depth > 1:
+                    final_board[pos[0]][pos[1]][pos[2]] = best_letter
+                else:
+                    final_board[pos[0]][pos[1]] = best_letter
             
-            if min_w <= final_count <= max_w:
-                print(f"[BoardGen] ✓ IO-Base Compliance: {final_count} words (Range: {min_w}-{max_w})")
-                break
-            else:
-                print(f"[BoardGen] ✗ IO-Base Non-Compliance: {final_count} words. Retrying...")
-        
-        # 4. USER REQUEST: Pick a Bonus Word (6-10 letters long) from the final board
-        found_list = list(final_words_dict.keys())
-        # Filter for 6-10 length
-        suitable_bonus = [w for w in found_list if 6 <= len(w) <= 10]
-        
-        # Fallback if no 6-10L words found (unlikely in high density, but for safety)
-        if not suitable_bonus:
-            suitable_bonus = [w for w in found_list if len(w) >= 6]
-        if not suitable_bonus:
-            suitable_bonus = [w for w in found_list if len(w) >= 3] # Absolute fallback
-        
-        final_bonus_word = None
-        bonus_cell = None
-        if suitable_bonus:
-            # Sort by length descending to pick a challenging/impressive one
-            suitable_bonus.sort(key=len, reverse=True)
-            final_bonus_word = suitable_bonus[0]
-            # Get path for the anchor cell
-            bonus_path = final_words_dict[final_bonus_word]
-            if bonus_path:
-                bonus_cell = bonus_path[0] # Use start of word as anchor
-        
-        print(f"[BoardGen] Selected Natural Bonus Word: {final_bonus_word} (Anchor: {bonus_cell})")
-        # FINAL AUDIT (User Request: Max 1 Rare Letter)
-        self._sanitize_rare_letters(final_board, depth=1)
-        if difficulty in ["Medium", "Hard"]:
-            self._sanitize_forbidden_sequences(final_board, depth=1, protected_positions=[bonus_cell] if bonus_cell else None)
-
-        ratio = self.get_uniqueness_ratio(final_board, found_list, rows, cols, dictionary, depth=1)
-
-        return (
-            final_board,
-            sorted(found_list),
-            bonus_cell,
-            board_format,
-            final_words_dict,
-            ratio,
-            final_bonus_word.upper() if final_bonus_word else None,
-        )
+            # D. Sanitize rare letters and forbidden sequences
+            if "equality freq" not in str(board_format).lower():
+                self._sanitize_rare_letters(final_board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard, difficulty=difficulty)
+                self._sanitize_letter_abundances(final_board, depth, board_format=board_format, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
+                if difficulty in ["Medium", "Hard"]:
+                    self._sanitize_forbidden_sequences(final_board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
+            
+            # E. Solve final board to verify compliance
+            final_depth = 25 if rows * cols <= 16 else 14
+            final_solve = self._solve_board(
+                final_board, dictionary, (0, 99999), min_word_length, 
+                max_depth=final_depth, store_paths=True, timeout=10.0, use_added_words=use_added_words
+            )
+            final_count = len(final_solve)
+            print(f"[BoardGen] Procedure IO-Base attempt {attempt} finished with count {final_count} (Target: {min_words}-{max_words})")
+            
+            if min_words <= final_count <= max_words:
+                ratio = self.get_uniqueness_ratio(final_board, list(final_solve.keys()), rows, cols, dictionary, depth)
+                actual_bonus = None
+                bonus_cell = None
+                if bonus_word and bonus_word.upper() in final_solve:
+                    actual_bonus = bonus_word.upper()
+                    bonus_cell = final_solve[actual_bonus][0]
+                else:
+                    suitable = [w for w in final_solve if 6 <= len(w) <= 10]
+                    if not suitable: suitable = [w for w in final_solve if len(w) >= 6]
+                    if not suitable: suitable = [w for w in final_solve if len(w) >= 3]
+                    if suitable:
+                        actual_bonus = random.choice(suitable)
+                        bonus_cell = final_solve[actual_bonus][0]
+                
+                return (
+                    final_board,
+                    sorted(list(final_solve.keys())),
+                    bonus_cell,
+                    board_format,
+                    final_solve,
+                    ratio,
+                    actual_bonus,
+                )
+                
+        return None
 
     def _parse_word_count_range(self, word_count_range):
         """Parse word count range using Pattern-Aware Regex"""
