@@ -154,6 +154,8 @@ class SpinnerSet:
         elif '6x8' in dims or '3x3x3' in dims:
             if min_word_length > 8: min_word_length = 8
 
+        wc_range = res.get('word_count_range', '100-200')
+
         if is_aw_effective:
             # Scale target range according to min_word_length to keep rounds mathematically possible and prevent hangs
             # BUT: NEVER allow word counts lower than 300-400 for AW rounds (strictly enforce 300-400, 400-500, or 500+).
