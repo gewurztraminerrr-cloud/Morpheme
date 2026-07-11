@@ -248,42 +248,86 @@ class SpinnerSet:
             for _ in range(30):
                 # Randomize dictionary and added words configuration
                 dictionary = SpinnerSet._spin_dictionary()
-                use_added_words = ('+ AW' in str(dictionary) or '+AW' in str(dictionary) or str(dictionary).upper() == 'AW')
-                
-                # Minimum word length (spin BEFORE word count to inform density)
-                min_word_length = SpinnerSet._spin_min_word_length(board_dimensions)
+                is_aw_effective = (
+                    '+ AW' in str(dictionary).upper()
+                    or '+AW' in str(dictionary).upper()
+                    or str(dictionary).upper() in ['AW', 'ADDED_WORDS', 'ALL']
+                )
+                use_added_words = is_aw_effective
 
-                # Difficulty (spin first to inform density)
-                difficulty = SpinnerSet._spin_difficulty(board_dimensions, min_word_length)
-                
-                # Weighted word count (density cap for Hard/Expert and long-word rounds)
-                wc_range = SpinnerSet._spin_word_count(dictionary, min_word_length, difficulty, board_dimensions)
-                
-                # RE-SYNC: High density on 4x4 ALWAYS results in high uniqueness (Hard).
-                # (We allow the spinner's selection to persist to preserve the 25%/50%/25% distribution)
-                pass
-                
-                # Determine format (Allow Either/Or to persist at high density)
-                board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions)
-                if wc_range == '500+' or wc_range == '200+':
-                    if min_word_length >= 5:
-                        # Keep Either/Or, Checkerboard, and Density as they are highly requested/stable
-                        if board_format not in ['Either/Or', 'Checkerboard', 'Density', 'Valued Letters'] and 'Bounce' not in board_format:
-                            board_format = 'Normal'
-                if board_format == 'Checkerboard':
-                    wc_range = random.choice(['100-200', '200-300'])
-                
-                # Adjust min_word_length for 100-200 word count range to exclude forbidden lengths
+                # Difficulty (spin independently)
+                difficulty = SpinnerSet._spin_difficulty(board_dimensions, 3)
+
+                # Word count range based on dictionary (forces exactly 9% weight for 50-100!)
+                if is_aw_effective:
+                    wc_range = random.choices(['300-400', '400-500', '500+'], weights=[40, 40, 20])[0]
+                else:
+                    wc_range = random.choices(['50-100', '100-200', '200-300', '300-400'], weights=[9, 31, 30, 30])[0]
+
+                # Determine minimum word length based on wc_range and dimensions
                 dims = str(board_dimensions).lower().replace(" ", "")
-                if wc_range == '100-200':
-                    if '4x4' in dims and min_word_length == 3:
-                        min_word_length = random.choices([4, 5], weights=[67, 33])[0]
-                    elif '4x6' in dims and min_word_length == 4:
-                        min_word_length = random.choices([5, 6], weights=[67, 33])[0]
-                    elif '5x7' in dims and min_word_length == 5:
-                        min_word_length = random.choices([6, 7], weights=[67, 33])[0]
-                    elif '6x8' in dims and min_word_length == 6:
-                        min_word_length = random.choices([7, 8], weights=[67, 33])[0]
+                if is_aw_effective:
+                    if '4x4' in dims:
+                        min_word_length = 3
+                    elif '4x6' in dims:
+                        min_word_length = random.choices([4, 5], weights=[50, 50])[0]
+                    elif '5x7' in dims:
+                        min_word_length = random.choices([5, 6], weights=[50, 50])[0]
+                    else: # 6x8 / 3x3x3
+                        min_word_length = random.choices([6, 7], weights=[50, 50])[0]
+                else:
+                    if wc_range == '50-100':
+                        # Must be the greatest length
+                        if '4x4' in dims: min_word_length = 4
+                        elif '4x6' in dims: min_word_length = 6
+                        elif '5x7' in dims: min_word_length = 7
+                        else: min_word_length = 8
+                    elif wc_range == '100-200':
+                        # Must be second greatest length (or below if rolled)
+                        if '4x4' in dims:
+                            min_word_length = random.choices([3, 4], weights=[75, 25])[0]
+                        elif '4x6' in dims:
+                            min_word_length = random.choices([4, 5], weights=[25, 75])[0]
+                        elif '5x7' in dims:
+                            min_word_length = random.choices([5, 6], weights=[25, 75])[0]
+                        else:
+                            min_word_length = random.choices([6, 7], weights=[25, 75])[0]
+                    elif wc_range == '200-300':
+                        # Must be lower length
+                        if '4x4' in dims:
+                            min_word_length = 3
+                        elif '4x6' in dims:
+                            min_word_length = 4
+                        elif '5x7' in dims:
+                            min_word_length = random.choices([5, 6], weights=[75, 25])[0]
+                        else:
+                            min_word_length = random.choices([6, 7], weights=[75, 25])[0]
+                    else: # 300-400
+                        # Must be lowest length
+                        if '4x4' in dims: min_word_length = 3
+                        elif '4x6' in dims: min_word_length = 4
+                        elif '5x7' in dims: min_word_length = 5
+                        else: min_word_length = 6
+
+                # Determine board format
+                board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions)
+                if board_format == 'Checkerboard':
+                    if is_aw_effective:
+                        # AW dict cannot have 100-300 word counts; force normal format
+                        board_format = 'Normal'
+                    else:
+                        wc_range = random.choice(['100-200', '200-300'])
+                        # Re-sync min_word_length for the new wc_range
+                        if wc_range == '100-200':
+                            if '4x4' in dims: min_word_length = random.choices([3, 4], weights=[75, 25])[0]
+                            elif '4x6' in dims: min_word_length = random.choices([4, 5], weights=[25, 75])[0]
+                            elif '5x7' in dims: min_word_length = random.choices([5, 6], weights=[25, 75])[0]
+                            else: min_word_length = random.choices([6, 7], weights=[25, 75])[0]
+                        else: # 200-300
+                            if '4x4' in dims: min_word_length = 3
+                            elif '4x6' in dims: min_word_length = 4
+                            elif '5x7' in dims: min_word_length = random.choices([5, 6], weights=[75, 25])[0]
+                            else: min_word_length = random.choices([6, 7], weights=[75, 25])[0]
 
                 bw_len = random.choice([6, 7, 8, 9, 10])
                 if bw_len < min_word_length:

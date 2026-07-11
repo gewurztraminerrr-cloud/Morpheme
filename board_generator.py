@@ -152,7 +152,7 @@ ACTIVE_REFILLS_LOCK = threading.Lock()
 # Bump this version whenever the solver logic changes in a way that affects
 # board word lists (e.g. AW inclusion, trie changes). This automatically
 # invalidates all pre-generated cached boards so stale ones are never served.
-BOARD_CACHE_VERSION = 4
+BOARD_CACHE_VERSION = 5
 
 def serialize_param_key(dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, use_added_words=False):
     return json.dumps({
@@ -2010,9 +2010,13 @@ class BoardGenerator:
                     # AW rounds prioritize high word counts (300-400+) and density; bypass uniqueness checks
                     is_compliant = (min_words <= count <= max_words)
                 else:
-                    is_compliant = (min_ratio <= ratio <= max_ratio) and (min_words <= count <= max_words)
+                    if attempts > 15:
+                        # Prioritize word count range compliance over exact uniqueness range targets if we are struggling
+                        is_compliant = (min_words <= count <= max_words)
+                    else:
+                        is_compliant = (min_ratio <= ratio <= max_ratio) and (min_words <= count <= max_words)
 
-                max_strict_attempts = 80
+                max_strict_attempts = 1000
                 if attempts <= max_strict_attempts and (time.time() - start_time < timeout - 1.5):
                     if not is_compliant:
                         print(f"[BoardGen] ATTEMPT {attempts}: Board uniqueness ratio {ratio:.2f} or count {count} is outside range (ratio: {min_ratio}-{max_ratio}, count: {min_words}-{max_words}) for target {difficulty}. Retrying...")
@@ -2483,7 +2487,7 @@ class BoardGenerator:
                     # USER REQUEST: Enforce uniqueness ratio match for the selected difficulty inside emergency loop too.
                     ratio = self.get_uniqueness_ratio(board, list(final_solve.keys()), rows, cols, dictionary, depth)
                     min_ratio, max_ratio = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth, min_word_length=min_word_length)
-                    if _attempt <= 45:
+                    if _attempt <= 15:
                         relaxation = max(0, (_attempt - 5) * 0.02)
                         adj_min = max(0.0, min_ratio - relaxation)
                         adj_max = min(1.0, max_ratio + relaxation)
