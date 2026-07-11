@@ -167,14 +167,14 @@ class SpinnerSet:
                 if min_word_length >= 4:
                     min_word_length = 3
             elif '4x6' in dims:
-                if min_word_length >= 6:
-                    min_word_length = 5
-            elif '5x7' in dims:
                 if min_word_length >= 7:
                     min_word_length = 6
-            elif '6x8' in dims or '3x3x3' in dims:
+            elif '5x7' in dims:
                 if min_word_length >= 8:
                     min_word_length = 7
+            elif '6x8' in dims or '3x3x3' in dims:
+                if min_word_length >= 9:
+                    min_word_length = 8
         else:
             if wc_range not in ['50-100', '100-200', '200-300', '300-400']:
                 import random
@@ -184,37 +184,43 @@ class SpinnerSet:
                 if min_word_length == 4:
                     wc_range = '50-100'
                 else: # min_word_length <= 3
-                    if wc_range not in ['100-200', '200-300']:
+                    if wc_range not in ['100-200', '200-300', '300-400']:
                         wc_range = '100-200'
             elif '4x6' in dims:
                 if min_word_length == 6:
-                    wc_range = '50-100'
+                    if wc_range not in ['50-100', '100-200']:
+                        wc_range = '50-100'
                 elif min_word_length == 5:
-                    wc_range = '100-200'
-                elif min_word_length == 4:
                     if wc_range not in ['100-200', '200-300']:
+                        wc_range = '100-200'
+                elif min_word_length == 4:
+                    if wc_range not in ['100-200', '200-300', '300-400']:
                         wc_range = '100-200'
                 else: # min_word_length <= 3
                     if wc_range not in ['100-200', '200-300', '300-400']:
                         wc_range = '200-300'
             elif '5x7' in dims:
                 if min_word_length == 7:
-                    wc_range = '50-100'
+                    if wc_range not in ['50-100', '100-200']:
+                        wc_range = '50-100'
                 elif min_word_length == 6:
-                    wc_range = '100-200'
-                elif min_word_length == 5:
                     if wc_range not in ['100-200', '200-300']:
+                        wc_range = '100-200'
+                elif min_word_length == 5:
+                    if wc_range not in ['100-200', '200-300', '300-400']:
                         wc_range = '200-300'
                 else: # min_word_length <= 4
                     if wc_range not in ['200-300', '300-400']:
                         wc_range = '200-300'
             elif '6x8' in dims or '3x3x3' in dims:
                 if min_word_length == 8:
-                    wc_range = '50-100'
+                    if wc_range not in ['50-100', '100-200']:
+                        wc_range = '50-100'
                 elif min_word_length == 7:
-                    wc_range = '100-200'
-                elif min_word_length == 6:
                     if wc_range not in ['100-200', '200-300']:
+                        wc_range = '100-200'
+                elif min_word_length == 6:
+                    if wc_range not in ['100-200', '200-300', '300-400']:
                         wc_range = '200-300'
                 else: # min_word_length <= 5
                     if wc_range not in ['200-300', '300-400']:
@@ -270,11 +276,11 @@ class SpinnerSet:
                     if '4x4' in dims:
                         min_word_length = 3
                     elif '4x6' in dims:
-                        min_word_length = random.choices([4, 5], weights=[50, 50])[0]
+                        min_word_length = random.choices([4, 5, 6], weights=[35, 45, 20])[0]
                     elif '5x7' in dims:
-                        min_word_length = random.choices([5, 6], weights=[50, 50])[0]
+                        min_word_length = random.choices([5, 6, 7], weights=[35, 45, 20])[0]
                     else: # 6x8 / 3x3x3
-                        min_word_length = random.choices([6, 7], weights=[50, 50])[0]
+                        min_word_length = random.choices([6, 7, 8], weights=[35, 45, 20])[0]
                 else:
                     if wc_range == '50-100':
                         # Must be the greatest length
@@ -287,27 +293,27 @@ class SpinnerSet:
                         if '4x4' in dims:
                             min_word_length = random.choices([3, 4], weights=[75, 25])[0]
                         elif '4x6' in dims:
-                            min_word_length = random.choices([4, 5], weights=[25, 75])[0]
+                            min_word_length = random.choices([4, 5, 6], weights=[20, 50, 30])[0]
                         elif '5x7' in dims:
-                            min_word_length = random.choices([5, 6], weights=[25, 75])[0]
+                            min_word_length = random.choices([5, 6, 7], weights=[20, 50, 30])[0]
                         else:
-                            min_word_length = random.choices([6, 7], weights=[25, 75])[0]
+                            min_word_length = random.choices([6, 7, 8], weights=[20, 50, 30])[0]
                     elif wc_range == '200-300':
                         # Must be lower length
                         if '4x4' in dims:
                             min_word_length = 3
                         elif '4x6' in dims:
-                            min_word_length = 4
+                            min_word_length = random.choices([4, 5], weights=[70, 30])[0]
                         elif '5x7' in dims:
-                            min_word_length = random.choices([5, 6], weights=[75, 25])[0]
+                            min_word_length = random.choices([5, 6], weights=[70, 30])[0]
                         else:
-                            min_word_length = random.choices([6, 7], weights=[75, 25])[0]
+                            min_word_length = random.choices([6, 7], weights=[70, 30])[0]
                     else: # 300-400
                         # Must be lowest length
                         if '4x4' in dims: min_word_length = 3
-                        elif '4x6' in dims: min_word_length = 4
-                        elif '5x7' in dims: min_word_length = 5
-                        else: min_word_length = 6
+                        elif '4x6' in dims: min_word_length = random.choices([3, 4], weights=[50, 50])[0]
+                        elif '5x7' in dims: min_word_length = random.choices([4, 5], weights=[50, 50])[0]
+                        else: min_word_length = random.choices([5, 6], weights=[50, 50])[0]
 
                 # Determine board format
                 board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions)
