@@ -152,7 +152,7 @@ ACTIVE_REFILLS_LOCK = threading.Lock()
 # Bump this version whenever the solver logic changes in a way that affects
 # board word lists (e.g. AW inclusion, trie changes). This automatically
 # invalidates all pre-generated cached boards so stale ones are never served.
-BOARD_CACHE_VERSION = 7
+BOARD_CACHE_VERSION = 8
 
 def serialize_param_key(dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, use_added_words=False):
     return json.dumps({
@@ -1460,7 +1460,7 @@ class BoardGenerator:
         is_nwl_or_csw_pure = not use_aw_flag
         
         # 100% of the time, 300-400 and 500+ targets use IO-Base for pure dicts
-        if is_nwl_or_csw_pure and max_words >= 300:
+        if is_nwl_or_csw_pure and max_words > 300:
             res = self._generate_io_base_board_procedure(
                 dimensions, bonus_word, word_count_range, dictionary, min_word_length, difficulty, board_format, use_aw_flag
             )
@@ -2638,9 +2638,10 @@ class BoardGenerator:
                         final_board[pos[0]][pos[1]] = char
                         
                     # Calculate how many words pass through this position
+                    depth_limit = 5 if difficulty == "Easy" else 7
                     words_at_loc = self._solve_board(
                         final_board, opt_dict, (0, 99999), min_word_length, 
-                        max_depth=7, store_paths=False, timeout=1.0, must_include=pos, use_added_words=False
+                        max_depth=depth_limit, store_paths=False, timeout=1.0, must_include=pos, use_added_words=False
                     )
                     
                     count_at_loc = len(words_at_loc)
