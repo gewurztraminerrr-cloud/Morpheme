@@ -206,7 +206,7 @@ def pop_cached_board(param_key_str):
         print(f"[BoardGen] Error checking/popping cached board: {e}")
     return None
 
-def refill_board_cache_bg(generator_instance, param_key_str, target_count=50):
+def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
     global ACTIVE_REFILLS, ACTIVE_REFILLS_LOCK
     
     with ACTIVE_REFILLS_LOCK:
@@ -292,12 +292,12 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=50):
                         normalized_diff = "Medium"
                         
                 if achieved_diff != normalized_diff:
-                    if attempts <= 15:
-                        print(f"[BoardGen] [Refill] Discarding board (attempt {attempts}/15): achieved difficulty '{achieved_diff}' does not match target '{normalized_diff}' (ratio={ratio:.4f})")
+                    if attempts <= 2:
+                        print(f"[BoardGen] [Refill] Discarding board (attempt {attempts}/2): achieved difficulty '{achieved_diff}' does not match target '{normalized_diff}' (ratio={ratio:.4f})")
                         time.sleep(0.05)
                         continue
                     else:
-                        print(f"[BoardGen] [Refill] Exceeded 15 attempts for target difficulty '{normalized_diff}' (last ratio={ratio:.4f}). Saving board as fallback to prevent CPU loop hang.")
+                        print(f"[BoardGen] [Refill] Exceeded 2 attempts for target difficulty '{normalized_diff}' (last ratio={ratio:.4f}). Saving board as fallback to prevent CPU loop hang.")
                 
                 # Reset attempts counter on successful database insertion
                 attempts = 0
@@ -1269,7 +1269,7 @@ class BoardGenerator:
         cached_res = pop_cached_board(param_key_str)
         if cached_res:
             # Trigger background refill to replace the popped board
-            refill_board_cache_bg(self, param_key_str, target_count=50)
+            refill_board_cache_bg(self, param_key_str, target_count=3)
             return cached_res
 
         # Fallback to synchronous generation
@@ -1335,8 +1335,8 @@ class BoardGenerator:
                     depth
                 )
                 
-        # Trigger background refill to populate the cache up to 50
-        refill_board_cache_bg(self, param_key_str, target_count=50)
+        # Trigger background refill to populate the cache up to 3
+        refill_board_cache_bg(self, param_key_str, target_count=3)
         
         return (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word)
 
