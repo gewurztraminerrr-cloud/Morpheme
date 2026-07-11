@@ -132,10 +132,9 @@
         let options = [];
         if (val === 'NWL + AW' || val === 'CSW + AW') {
             options = [
-                { value: 'random', text: 'Random (40/40/20)' },
-                { value: '300-400', text: '300-400 (40%)' },
-                { value: '400-500', text: '400-500 (40%)' },
-                { value: '500+', text: '500+ (20%)' }
+                { value: '300-400', text: '300-400 (33%)' },
+                { value: '400-500', text: '400-500 (33%)' },
+                { value: '500+', text: '500+ (34%)' }
             ];
         } else {
             options = [
