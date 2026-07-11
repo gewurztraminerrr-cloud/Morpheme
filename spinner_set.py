@@ -328,6 +328,27 @@ class SpinnerSet:
                             elif '4x6' in dims: min_word_length = 4
                             elif '5x7' in dims: min_word_length = random.choices([5, 6], weights=[75, 25])[0]
                             else: min_word_length = random.choices([6, 7], weights=[75, 25])[0]
+                elif board_format == 'Equality Freq':
+                    if is_aw_effective:
+                        # AW dict with Equality Freq can hit 200-300 target
+                        wc_range = '200-300'
+                        if '4x4' in dims: min_word_length = 3
+                        elif '4x6' in dims: min_word_length = 4
+                        elif '5x7' in dims: min_word_length = 5
+                        else: min_word_length = 6
+                    else:
+                        # Non-AW Equality Freq is naturally low density; limit to 50-100 or 100-200
+                        wc_range = random.choice(['50-100', '100-200'])
+                        if wc_range == '50-100':
+                            if '4x4' in dims: min_word_length = 4
+                            elif '4x6' in dims: min_word_length = 5
+                            elif '5x7' in dims: min_word_length = 6
+                            else: min_word_length = 7
+                        else: # 100-200
+                            if '4x4' in dims: min_word_length = 3
+                            elif '4x6' in dims: min_word_length = 4
+                            elif '5x7' in dims: min_word_length = 5
+                            else: min_word_length = 6
 
                 bw_len = random.choice([6, 7, 8, 9, 10])
                 if bw_len < min_word_length:

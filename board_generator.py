@@ -152,7 +152,7 @@ ACTIVE_REFILLS_LOCK = threading.Lock()
 # Bump this version whenever the solver logic changes in a way that affects
 # board word lists (e.g. AW inclusion, trie changes). This automatically
 # invalidates all pre-generated cached boards so stale ones are never served.
-BOARD_CACHE_VERSION = 5
+BOARD_CACHE_VERSION = 6
 
 def serialize_param_key(dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, use_added_words=False):
     return json.dumps({
