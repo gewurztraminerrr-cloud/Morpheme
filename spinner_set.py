@@ -182,31 +182,42 @@ class SpinnerSet:
 
             if '4x4' in dims:
                 if min_word_length == 4:
-                    if wc_range not in ['50-100', '100-200']:
-                        wc_range = '50-100'
+                    wc_range = '50-100'
                 else: # min_word_length <= 3
-                    if wc_range in ['300-400', '400-500', '500+']:
-                        wc_range = '200-300'
+                    if wc_range not in ['100-200', '200-300']:
+                        wc_range = '100-200'
             elif '4x6' in dims:
-                if min_word_length == 5:
-                    if wc_range not in ['50-100', '100-200']:
-                        wc_range = '50-100'
+                if min_word_length == 6:
+                    wc_range = '50-100'
+                elif min_word_length == 5:
+                    wc_range = '100-200'
                 elif min_word_length == 4:
-                    if wc_range in ['300-400', '400-500', '500+']:
+                    if wc_range not in ['100-200', '200-300']:
+                        wc_range = '100-200'
+                else: # min_word_length <= 3
+                    if wc_range not in ['100-200', '200-300', '300-400']:
                         wc_range = '200-300'
             elif '5x7' in dims:
-                if min_word_length == 6:
-                    if wc_range not in ['50-100', '100-200']:
-                        wc_range = '100-200'
+                if min_word_length == 7:
+                    wc_range = '50-100'
+                elif min_word_length == 6:
+                    wc_range = '100-200'
                 elif min_word_length == 5:
-                    if wc_range in ['300-400', '400-500', '500+']:
+                    if wc_range not in ['100-200', '200-300']:
+                        wc_range = '200-300'
+                else: # min_word_length <= 4
+                    if wc_range not in ['200-300', '300-400']:
                         wc_range = '200-300'
             elif '6x8' in dims or '3x3x3' in dims:
-                if min_word_length == 7:
-                    if wc_range not in ['50-100', '100-200']:
-                        wc_range = '100-200'
+                if min_word_length == 8:
+                    wc_range = '50-100'
+                elif min_word_length == 7:
+                    wc_range = '100-200'
                 elif min_word_length == 6:
-                    if wc_range in ['300-400', '400-500', '500+']:
+                    if wc_range not in ['100-200', '200-300']:
+                        wc_range = '200-300'
+                else: # min_word_length <= 5
+                    if wc_range not in ['200-300', '300-400']:
                         wc_range = '200-300'
 
         res['min_word_length'] = min_word_length
