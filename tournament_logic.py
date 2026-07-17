@@ -132,6 +132,11 @@ class TournamentManager:
             conn = self.get_db()
             should_close = True
             
+        # Clean up any existing stale data for this round to prevent unique constraint failures
+        conn.execute('DELETE FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?', (tid, round_number))
+        conn.execute('DELETE FROM tournament_matchups WHERE tournament_id = ? AND round_number = ?', (tid, round_number))
+        conn.execute('DELETE FROM tournament_scores WHERE tournament_id = ? AND round_number = ?', (tid, round_number))
+            
         tournament = self.get_tournament_by_id(tid)
         params = json.loads(tournament['parameters'])
         
