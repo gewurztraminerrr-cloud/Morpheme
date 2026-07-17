@@ -78,7 +78,13 @@ class SpinnerSet:
                     if '+ AW' in str(dict_val) or '+AW' in str(dict_val):
                         res['use_added_words'] = True
                     else:
-                        res['use_added_words'] = (str(dict_val).upper() == 'AW')
+                        res['use_added_words'] = (str(dict_val).upper() == 'AW' or res.get('use_added_words') is True)
+                    
+                    if res.get('use_added_words') is True:
+                        clean_dict = str(dict_val).replace('+ AW', '').replace('+AW', '').strip()
+                        if clean_dict == 'AW':
+                            clean_dict = 'NWL'
+                        res['dictionary'] = f"{clean_dict} + AW"
                 else:
                     res['dictionary'] = SpinnerSet._spin_dictionary()
                     res['use_added_words'] = ('+ AW' in str(res['dictionary']) or '+AW' in str(res['dictionary']))
@@ -155,6 +161,12 @@ class SpinnerSet:
             if min_word_length > 8: min_word_length = 8
 
         wc_range = res.get('word_count_range', '100-200')
+
+        # Enforce agreement: in 4x6 rooms, only allow 6L on 50-100 word counts.
+        if '4x6' in dims:
+            if wc_range == '50-100' or min_word_length == 6:
+                wc_range = '50-100'
+                min_word_length = 6
 
         if is_aw_effective:
             # Scale target range according to min_word_length to keep rounds mathematically possible and prevent hangs

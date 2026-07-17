@@ -1370,14 +1370,19 @@ class GameRoom:
                     fparams['word_count_range'] = wc_label
                     self.next_round_spinner_params = fparams
                     
+                    dict_val = fparams.get('dictionary', 'NWL')
+                    use_aw_val = fparams.get('use_added_words', False)
+                    if use_aw_val and '+ AW' not in str(dict_val) and '+AW' not in str(dict_val):
+                        dict_val = f"{dict_val} + AW"
+                    
                     new_sp = {
-                        'dictionary': fparams.get('dictionary', 'NWL'),
+                        'dictionary': dict_val,
                         'difficulty': fparams.get('difficulty', 'Medium'),
                         'word_count_range': wc_label,
                         'board_format': fparams.get('board_format', 'Normal'),
                         'min_word_length': fparams.get('min_word_length', 3),
                         'bonus_word_length': fparams.get('bonus_word_len', 6),
-                        'use_added_words': fparams.get('use_added_words', False),
+                        'use_added_words': use_aw_val,
                         'board_dimensions': self.board_dimensions,
                         'time_limit': self.time_limit,
                         'generated_at': time.time()
@@ -1466,10 +1471,125 @@ class GameRoom:
         if self.state == 'waiting':
             humans = [p for p in self.players if not p.is_ai]
             if len(humans) > 0:
-                print(f"[GameRoom] Waking up paused room {self.room_id} because human player joined.")
-                self.state = 'intermission'
-                self.intermission_start_time = now - 50.0  # Force expiration with 10s lead-time for board search
-                self.ensure_next_board_ready()
+                print(f"[GameRoom] Waking up paused room {self.room_id} instantly because human player joined.")
+                
+                # 1. Pop any board of the same dimensions from cache immediately
+                from board_generator import pop_any_cached_board
+                fallback = pop_any_cached_board(self.board_dimensions)
+                
+                if fallback:
+                    fb, fw, fc, ff, fp, fr, fbw, fparams = fallback
+                    print(f"[GameRoom] Wakeup: Popped board from cache with {len(fw)} words!")
+                else:
+                    print(f"[GameRoom] Wakeup: Cache empty. Using emergency fallback board.")
+                    # Get emergency fallback board matching default spinner params
+                    e_format = self.spinner_params.get('board_format', 'Normal') if self.spinner_params else 'Normal'
+                    e_dict = self.spinner_params.get('dictionary', 'NWL') if self.spinner_params else 'NWL'
+                    e_use_aw = self.spinner_params.get('use_added_words', False) if self.spinner_params else False
+                    e_wc = self.spinner_params.get('word_count_range', '100-200') if self.spinner_params else '100-200'
+                    fallback = get_emergency_fallback_board(
+                        self.board_dimensions, e_format, self.time_limit,
+                        dictionary=e_dict, use_added_words=e_use_aw, target_range=e_wc
+                    )
+                    if len(fallback) >= 9:
+                        fb, fw, fc, ff, fp, fr, fbw, _, fparams = fallback
+                    else:
+                        fb, fw, fc, ff, fp, fr, fbw, _ = fallback
+                        fparams = {}
+
+                # 2. Sync spinner params
+                fparams = dict(fparams) if fparams else {}
+                dict_val = fparams.get('dictionary') or (self.spinner_params.get('dictionary') if self.spinner_params else 'NWL')
+                use_aw_val = fparams.get('use_added_words') or (self.spinner_params.get('use_added_words') if self.spinner_params else False)
+                if use_aw_val and '+ AW' not in str(dict_val) and '+AW' not in str(dict_val):
+                    dict_val = f"{dict_val} + AW"
+                
+                actual_wc = len(fw)
+                if actual_wc < 100: wc_label = '50-100'
+                elif actual_wc < 200: wc_label = '100-200'
+                elif actual_wc < 300: wc_label = '200-300'
+                elif actual_wc < 400: wc_label = '300-400'
+                elif actual_wc < 500: wc_label = '400-500'
+                else: wc_label = '500+'
+
+                new_sp = {
+                    'dictionary': dict_val,
+                    'difficulty': fparams.get('difficulty') or (self.spinner_params.get('difficulty') if self.spinner_params else 'Medium'),
+                    'word_count_range': wc_label,
+                    'board_format': ff or (self.spinner_params.get('board_format') if self.spinner_params else 'Normal'),
+                    'min_word_length': fparams.get('min_word_length') or (self.spinner_params.get('min_word_length') if self.spinner_params else 3),
+                    'bonus_word_length': fparams.get('bonus_word_len') or len(fbw) if fbw else 6,
+                    'use_added_words': use_aw_val,
+                    'board_dimensions': self.board_dimensions,
+                    'time_limit': self.time_limit,
+                    'generated_at': now,
+                    'uniqueness': fr
+                }
+                
+                # Enforce sanitization
+                new_sp = SpinnerSet.sanitize_params(new_sp, self.board_dimensions, self.time_limit >= 7200)
+
+                self.spinner_params = new_sp
+                self.next_spinner_params = new_sp
+                self.next_round_spinner_params = new_sp
+                self.spinner_params_generated = True
+                self.spinner_params_revealed = True
+                self._reveal_sync_complete = True
+                
+                # Set up active round variables
+                self.board = fb
+                self.all_words = {w for w in fw if len(w) >= new_sp['min_word_length']}
+                self.all_words_paths = {w: p for w, p in fp.items() if len(w) >= new_sp['min_word_length']}
+                self.current_board_format = new_sp['board_format']
+                self.current_word_count_range = new_sp['word_count_range']
+                self.current_difficulty = new_sp['difficulty']
+                self.current_dictionary = new_sp['dictionary']
+                self.current_min_length = new_sp['min_word_length']
+                self.use_added_words = new_sp['use_added_words']
+                self.current_uniqueness = fr
+                self.total_words_count = len(self.all_words)
+                self.initial_total_words = self.total_words_count
+                self.bonus_word = fbw or ''
+                self.bonus_cell = fc
+                self.solving_complete = True
+                
+                # Set CSW/Added words list
+                if hasattr(word_validator, 'word_validator'):
+                    if '+ AW' in str(self.current_dictionary) or '+AW' in str(self.current_dictionary) or str(self.current_dictionary).upper() in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
+                        word_validator.word_validator.ensure_csw_loaded()
+                    self.csw_only_words = [w for w in self.all_words if word_validator.word_validator.is_csw_only(w)]
+                    self.added_words = [w for w in self.all_words if word_validator.word_validator.is_added_word(w)]
+                else:
+                    self.csw_only_words = []
+                    self.added_words = []
+
+                # Scored dict
+                is_valued = ('valued' in str(self.current_board_format).lower())
+                scored_dict = {}
+                for w in self.all_words:
+                    if is_valued:
+                        scored_dict[w] = {'total': len(w), 'base': len(w)}
+                    else:
+                        length = len(w)
+                        s = 0
+                        if length <= 2: s = 0
+                        elif length <= 4: s = 1
+                        elif length == 5: s = 2
+                        elif length == 6: s = 3
+                        elif length == 7: s = 5
+                        else: s = 11
+                        scored_dict[w] = {'total': s, 'base': s}
+                self.solved_words_with_scores = scored_dict
+
+                # Set timestamps and transition state
+                self.state = 'active'
+                self.round_start_time = now
+                self.intermission_start_time = 0
+                self.starting_round = False
+                
+                # Proactively launch spinner parameter pre-generation for the NEXT round
+                self._transition_spinner_launched = False
+                
                 return True
 
         should_end = False
@@ -2126,56 +2246,16 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
     parts = dimensions.split("x")
     is_3d = len(parts) == 3
     
+    letters_pool = ["E", "A", "I", "O", "T", "R", "S", "N", "L", "C", "D", "P"]
     if is_3d:
         depth, rows, cols = map(int, parts)
-        # Use high-density 3D face pattern
-        face_pattern = [
-            ["S", "E", "R"],
-            ["P", "A", "T"],
-            ["L", "A", "N"]
-        ]
-        # Repeat pattern across all faces
-        board = []
-        for f in range(6):
-            board.append([[face_pattern[r][c] for c in range(cols)] for r in range(rows)])
+        board = [[[random.choice(letters_pool) for _ in range(cols)] for _ in range(rows)] for _ in range(6)]
     else:
         rows, cols = map(int, parts)
-        # Define high-density static grids for common dimensions
-        if rows == 4 and cols == 4:
-            board = [
-                ["S", "E", "R", "S"],
-                ["P", "A", "T", "I"],
-                ["L", "A", "N", "E"],
-                ["T", "E", "S", "T"]
-            ]
-        elif rows == 4 and cols == 6:
-            board = [
-                ["S", "E", "R", "S", "E", "R"],
-                ["P", "A", "T", "I", "N", "G"],
-                ["L", "A", "N", "E", "S", "T"],
-                ["T", "E", "S", "T", "A", "R"]
-            ]
-        elif rows == 5 and cols == 7:
-            board = [
-                ["S", "E", "R", "S", "E", "R", "S"],
-                ["P", "A", "T", "I", "N", "G", "S"],
-                ["L", "A", "N", "E", "S", "T", "A"],
-                ["T", "E", "S", "T", "A", "R", "E"],
-                ["S", "T", "A", "R", "E", "S", "T"]
-            ]
-        elif rows == 6 and cols == 8:
-            board = [
-                ["S", "E", "R", "S", "E", "R", "S", "E"],
-                ["P", "A", "T", "I", "N", "G", "S", "T"],
-                ["L", "A", "N", "E", "S", "T", "A", "R"],
-                ["T", "E", "S", "T", "A", "R", "E", "S"],
-                ["S", "T", "A", "R", "E", "S", "T", "A"],
-                ["E", "R", "S", "T", "A", "R", "E", "S"]
-            ]
-        else:
-            # General fallback for arbitrary sizes
-            letters_pool = ["E", "A", "I", "O", "T", "R", "S", "N", "L", "C", "D", "P"]
-            board = [[random.choice(letters_pool) for _ in range(cols)] for _ in range(rows)]
+        board = [[random.choice(letters_pool) for _ in range(cols)] for _ in range(rows)]
+        
+    # Sanitize letter abundances and vowel ratio to guarantee friendly and playable board
+    bg._sanitize_letter_abundances(board, depth=6 if is_3d else 1, board_format=board_format)
             
     # Run solver on the static board to get ALL valid words!
     ml_solve = 3
@@ -3994,14 +4074,19 @@ class RoomManager:
                     if cached_board_data:
                         board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word, b_params = cached_board_data
                         
+                        dict_val = b_params.get('dictionary', 'NWL')
+                        use_aw_val = b_params.get('use_added_words', False)
+                        if use_aw_val and '+ AW' not in str(dict_val) and '+AW' not in str(dict_val):
+                            dict_val = f"{dict_val} + AW"
+                        
                         # Sync new_params with the board's actual parameters
-                        new_params['dictionary'] = b_params.get('dictionary', 'NWL')
+                        new_params['dictionary'] = dict_val
                         new_params['difficulty'] = b_params.get('difficulty', 'Medium')
                         new_params['word_count_range'] = b_params.get('word_count_range', '100-200')
                         new_params['board_format'] = b_params.get('board_format', 'Normal')
                         new_params['min_word_length'] = b_params.get('min_word_length', 3)
                         new_params['bonus_word_length'] = b_params.get('bonus_word_len', 6)
-                        new_params['use_added_words'] = b_params.get('use_added_words', False)
+                        new_params['use_added_words'] = use_aw_val
                         
                         # Stage the board data in the room immediately
                         room.next_round_board = board
@@ -4099,24 +4184,25 @@ class RoomManager:
                 room.spinner_params_loading = False
 
     def check_6x8_rescue(self, room):
-        """Rescue 6x8 and 3x3x3 rooms that haven't generated a board 10s before intermission ends, or have been stuck in loading state for >20s."""
+        """Rescue watchdog for all rooms.
+        Rescues rooms stuck in 'loading' for >20s, or in intermission at 50s remaining without a board staged."""
         if not room:
             return
             
         now = time.time()
-        is_large_or_3d = room.board_dimensions in ['6x8', '3x3x3']
+        is_daily = room.time_limit >= 7200
         
-        # 1. Loading state rescue
+        # 1. Loading state rescue (stuck loading for >20s)
         is_stuck_loading = False
-        if room.state == 'loading' and is_large_or_3d:
+        if room.state == 'loading':
             elapsed = now - getattr(room, 'intermission_start_time', now)
             if elapsed > 20.0 and not getattr(room, '_did_loading_rescue', False):
                 is_stuck_loading = True
                 
-        # 2. Intermission state rescue
+        # 2. Intermission 50s remaining rescue (normal countdown rooms only)
         is_stuck_intermission = False
-        if room.state == 'intermission' and is_large_or_3d:
-            if room.time_remaining <= 10 and room.time_remaining > 0:
+        if room.state == 'intermission' and not is_daily:
+            if room.time_remaining <= 50 and room.time_remaining > 0:
                 if not room.next_round_board and not getattr(room, '_did_6x8_fallback_rescue', False):
                     is_stuck_intermission = True
                     
@@ -4132,7 +4218,7 @@ class RoomManager:
                     if room.next_round_board or getattr(room, '_did_6x8_fallback_rescue', False):
                         return
                     room._did_6x8_fallback_rescue = True
-                    print(f"[Rescue] Stuck in intermission state for {room.room_id}. Forcing immediate rescue...")
+                    print(f"[Rescue] Intermission 50s mark reached without board for {room.room_id}. Pulling cache/fallback instantly...")
                 
                 # --- PERFORM IMMEDIATE RESCUE ---
                 # Attempt to pop ANY pregenerated board from the database cache matching this dimension
@@ -4140,21 +4226,52 @@ class RoomManager:
                 bg = BoardGenerator()
                 
                 cached_res = pop_any_cached_board(room.board_dimensions)
+                if not cached_res:
+                    print(f"[Rescue] Cache empty. Pulling emergency fallback board.")
+                    e_format = room.spinner_params.get('board_format', 'Normal') if room.spinner_params else 'Normal'
+                    e_dict = room.spinner_params.get('dictionary', 'NWL') if room.spinner_params else 'NWL'
+                    e_use_aw = room.spinner_params.get('use_added_words', False) if room.spinner_params else False
+                    e_wc = room.spinner_params.get('word_count_range', '100-200') if room.spinner_params else '100-200'
+                    cached_res = get_emergency_fallback_board(
+                        room.board_dimensions, e_format, room.time_limit,
+                        dictionary=e_dict, use_added_words=e_use_aw, target_range=e_wc
+                    )
+                    
                 if cached_res:
-                    cboard, cwords, cbonus_cell, cfmt, cpaths, cratio, cbonus_word, cparams = cached_res
-                    print(f"[Rescue-Success] Popped fallback board from cache with {len(cwords)} words!")
+                    if len(cached_res) >= 9:
+                        cboard, cwords, cbonus_cell, cfmt, cpaths, cratio, cbonus_word, ctr, cparams = cached_res
+                    else:
+                        cboard, cwords, cbonus_cell, cfmt, cpaths, cratio, cbonus_word, ctr = cached_res
+                        cparams = {}
+                        
+                    print(f"[Rescue-Success] Found fallback board with {len(cwords)} words!")
                     
                     # Force apply parameters
-                    cparams = dict(cparams)
-                    # Sync spinner params with popped board
-                    room.spinner_params['dictionary'] = cparams.get('dictionary', 'NWL')
-                    room.spinner_params['difficulty'] = cparams.get('difficulty', 'Medium')
-                    room.spinner_params['word_count_range'] = cparams.get('word_count_range', '100-200')
-                    room.spinner_params['board_format'] = cparams.get('board_format', 'Normal')
-                    room.spinner_params['min_word_length'] = cparams.get('min_word_length', 6)
-                    room.spinner_params['use_added_words'] = cparams.get('use_added_words', False)
+                    cparams = dict(cparams) if cparams else {}
+                    dict_val = cparams.get('dictionary') or (room.spinner_params.get('dictionary') if room.spinner_params else 'NWL')
+                    use_aw_val = cparams.get('use_added_words') or (room.spinner_params.get('use_added_words') if room.spinner_params else False)
+                    if use_aw_val and '+ AW' not in str(dict_val) and '+AW' not in str(dict_val):
+                        dict_val = f"{dict_val} + AW"
+                        
+                    actual_wc = len(cwords)
+                    if actual_wc < 100: wc_label = '50-100'
+                    elif actual_wc < 200: wc_label = '100-200'
+                    elif actual_wc < 300: wc_label = '200-300'
+                    elif actual_wc < 400: wc_label = '300-400'
+                    elif actual_wc < 500: wc_label = '400-500'
+                    else: wc_label = '500+'
+
+                    room.spinner_params['dictionary'] = dict_val
+                    room.spinner_params['difficulty'] = cparams.get('difficulty') or (room.spinner_params.get('difficulty') if room.spinner_params else 'Medium')
+                    room.spinner_params['word_count_range'] = wc_label
+                    room.spinner_params['board_format'] = cfmt or (room.spinner_params.get('board_format') if room.spinner_params else 'Normal')
+                    room.spinner_params['min_word_length'] = cparams.get('min_word_length') or (room.spinner_params.get('min_word_length') if room.spinner_params else 3)
+                    room.spinner_params['use_added_words'] = use_aw_val
                     room.spinner_params['bonus_word_length'] = cparams.get('bonus_word_len', len(cbonus_word) if cbonus_word else 6)
                     
+                    # Enforce sanitization
+                    room.spinner_params = SpinnerSet.sanitize_params(room.spinner_params, room.board_dimensions, room.time_limit >= 7200)
+
                     room.next_spinner_params = dict(room.spinner_params)
                     room.next_round_spinner_params = dict(room.spinner_params)
                     room.spinner_params_generated = True
@@ -4881,15 +4998,20 @@ class RoomManager:
                             _fparams['word_count_range'] = wc_label
                             room.next_round_spinner_params = _fparams
                             
+                            dict_val = _fparams.get('dictionary', 'NWL')
+                            use_aw_val = _fparams.get('use_added_words', False)
+                            if use_aw_val and '+ AW' not in str(dict_val) and '+AW' not in str(dict_val):
+                                dict_val = f"{dict_val} + AW"
+                            
                             # CRITICAL SYNC: Update next_spinner_params and spinner_params to align immediately
                             new_sp = {
-                                'dictionary': _fparams.get('dictionary', 'NWL'),
+                                'dictionary': dict_val,
                                 'difficulty': _fparams.get('difficulty', 'Medium'),
                                 'word_count_range': wc_label,
                                 'board_format': _fparams.get('board_format', 'Normal'),
                                 'min_word_length': _fparams.get('min_word_length', 3),
                                 'bonus_word_length': _fparams.get('bonus_word_len', 6),
-                                'use_added_words': _fparams.get('use_added_words', False),
+                                'use_added_words': use_aw_val,
                                 'board_dimensions': room.board_dimensions,
                                 'time_limit': room.time_limit,
                                 'generated_at': time.time()
@@ -5190,14 +5312,6 @@ class RoomManager:
                 # HARD FLOOR: Always exclude 3-letter words from the 'All Words' list (User Request: "NOT 3 letter wrods")
                 min_l = room.current_min_length if hasattr(room, 'current_min_length') else 3
                 display_min = min_l
-                if room.next_round_words:
-                    actual_shortest = min(len(w) for w in room.next_round_words)
-                    if actual_shortest < display_min:
-                        print(f"[REMAINING-STABILIZER] Staging words are shorter than display_min ({display_min}). Updating display_min and current_min_length to {actual_shortest}")
-                        room.current_min_length = actual_shortest
-                        display_min = actual_shortest
-                        if room.spinner_params:
-                            room.spinner_params['min_word_length'] = actual_shortest
                 room.all_words = {w for w in (room.next_round_words or []) if len(w) >= display_min}
                 room.all_words_paths = {w: p for w, p in (room.next_round_word_paths or {}).items() if len(w) >= display_min}
                 

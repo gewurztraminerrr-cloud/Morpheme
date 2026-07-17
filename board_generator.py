@@ -781,6 +781,52 @@ class BoardGenerator:
 
         total_cells = grid_size * depth
         
+        # --- VOWEL/CONSONANT RATIO SANITIZATION ---
+        if not is_checkerboard:
+            VOWELS = {"A", "E", "I", "O", "U"}
+            is_vowel_mania = (mania_letter is not None and mania_letter in VOWELS)
+            
+            # Normal boards: max vowels is 45% of total cells
+            max_vowels = int(total_cells * 0.45)
+            # All boards (including vowel mania): max vowels is 55% of total cells (min 45% consonants floor)
+            max_vowels_mania = int(total_cells * 0.55)
+            
+            allowed_max_vowels = max_vowels_mania if is_vowel_mania else max_vowels
+            
+            # Count current vowels on board and collect non-protected vowel positions
+            vowel_positions = []
+            total_vowels_count = 0
+            for f in range(depth):
+                for r in range(rows):
+                    for c in range(cols):
+                        cell = board[f][r][c] if depth > 1 else board[r][c]
+                        cell_vowel_count = sum(1 for char in cell if char.upper() in VOWELS)
+                        total_vowels_count += cell_vowel_count
+                        
+                        if len(cell) == 1 and cell.upper() in VOWELS:
+                            pos = (f, r, c) if depth > 1 else (r, c)
+                            if pos not in protected:
+                                vowel_positions.append((pos, cell.upper()))
+                                
+            excess_vowels = total_vowels_count - allowed_max_vowels
+            if excess_vowels > 0 and vowel_positions:
+                print(f"[BoardGen] Excess vowels detected ({total_vowels_count} > {allowed_max_vowels}). Replacing {excess_vowels} vowels with consonants...")
+                random.shuffle(vowel_positions)
+                
+                consonants_pool = [c for c in "BCDFGHJKLMNPQRSTVWXYZ" if c != mania_letter]
+                c_pool = [c for c in consonants_pool if c not in {"Q", "Z", "J", "X", "K"}]
+                
+                to_replace_vowels = vowel_positions[:excess_vowels]
+                for pos, orig_vowel in to_replace_vowels:
+                    new_consonant = random.choice(c_pool)
+                    if depth > 1:
+                        f, r, c = pos
+                        board[f][r][c] = new_consonant
+                    else:
+                        r, c = pos
+                        board[r][c] = new_consonant
+                    print(f"[BoardGen] Replaced excess vowel '{orig_vowel}' at {pos} with consonant '{new_consonant}'")
+        
         letter_counts = {}
         for f in range(depth):
             for r in range(rows):
