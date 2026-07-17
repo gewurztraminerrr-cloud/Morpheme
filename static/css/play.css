@@ -1353,15 +1353,17 @@ body.theme-light-brown .player-score-val {
     border-radius: 6px;
     font-weight: 600;
     white-space: nowrap;
+    color: #ffffff !important; /* Force word text to be white */
 }
 
 .word-item.player-word {
-    background: rgba(64, 156, 255, 0.4);
+    background: rgba(64, 156, 255, 0.4) !important;
     /* Attractive blue with transparency */
-    border: 2px solid #409cff;
+    border: 2px solid #409cff !important;
     /* Blue border */
-    box-shadow: 0 0 10px rgba(64, 156, 255, 0.4);
+    box-shadow: 0 0 10px rgba(64, 156, 255, 0.4) !important;
     /* Blue glow */
+    color: #ffffff !important;
     font-weight: 700;
     /* Make it stand out */
 }
@@ -1370,7 +1372,7 @@ body.theme-light-brown .player-score-val {
     background: rgba(255, 99, 71, 0.25);
     /* Tomato Red, transparent */
     border: 1px solid rgba(255, 99, 71, 0.5);
-    color: var(--text-primary);
+    color: #ffffff !important;
 }
 
 .word-item.bonus-word,
@@ -1412,8 +1414,8 @@ body.theme-light-brown .notepad-item.bonus-word {
     /* Grayish with transparency */
     border: 1px solid rgba(128, 128, 128, 0.2);
     /* Gray border */
-    color: var(--muted-text);
-    /* Dimmed text but readable */
+    color: #ffffff !important;
+    /* White text instead of var(--muted-text) */
     opacity: 1;
     /* Remove opacity to ensure readable */
 }
@@ -2306,9 +2308,10 @@ body.theme-light-brown .word-item.missed {
 
 /* Word found by another player (Fourth Priority: Neutral) */
 .word-item.found-by-other {
-    background: rgba(var(--text-primary-rgb), 0.1);
-    border: 1px solid rgba(var(--text-primary-rgb), 0.2);
-    color: rgba(var(--text-primary-rgb), 0.8);
+    background: rgba(var(--text-primary-rgb), 0.1) !important;
+    border: 1px solid rgba(var(--text-primary-rgb), 0.2) !important;
+    color: rgba(var(--text-primary-rgb), 0.8) !important;
+    box-shadow: none !important;
 }
 
 /* Live Feed Items (Aesthetic) */

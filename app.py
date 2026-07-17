@@ -3498,7 +3498,8 @@ def get_room_state(room_id):
         room_manager.check_6x8_rescue(room)
         if room.state == 'intermission' and room.time_remaining <= 0:
             if not getattr(room, 'starting_round', False):
-                room_manager.start_next_round(room.room_id)
+                import threading
+                threading.Thread(target=room_manager.start_next_round, args=(room.room_id,), daemon=True).start()
             
         # 2. On-demand database backfill for previous day's board/history
         if room.time_limit >= 7200:
@@ -3669,8 +3670,9 @@ def get_room_state(room_id):
             elif milestone == 'start':
                 # ATOMIC GUARD: Only launch ONE transition
                 if not getattr(room, 'starting_round', False):
-                    print(f"[Milestone] 0s remaining - Starting next round for {room_id} (Synchronous API Trigger)")
-                    room_manager.start_next_round(room_id)
+                    print(f"[Milestone] 0s remaining - Starting next round for {room_id} (Asynchronous API Trigger)")
+                    import threading
+                    threading.Thread(target=room_manager.start_next_round, args=(room_id,), daemon=True).start()
 
             # 2. Collect State Under Lock (Atomic Snapshot)
             is_revealed = room.spinner_params_revealed

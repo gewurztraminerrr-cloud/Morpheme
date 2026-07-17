@@ -110,16 +110,21 @@ class TournamentManager:
                         ''', (tid, ai_id, time.time()))
                         participant_ids.append(ai_id)
 
-            # 2. Generate Round 1 Board FIRST
-            # This ensures when we set current_round=1, the data exists
-            self.start_new_round(tid, 1, conn=conn)
-
-            # 3. NOW activate the tournament and set round pointer
-            conn.execute('UPDATE tournaments SET status = ?, current_round = 1 WHERE id = ?', ('active', tid))
-            
             conn.commit()
         finally:
             conn.close()
+
+        # 2. Generate Round 1 Board FIRST (runs on its own committed connection, no active lock)
+        # This ensures when we set current_round=1, the data exists
+        self.start_new_round(tid, 1)
+
+        # 3. NOW activate the tournament and set round pointer
+        conn2 = self.get_db()
+        try:
+            conn2.execute('UPDATE tournaments SET status = ?, current_round = 1 WHERE id = ?', ('active', tid))
+            conn2.commit()
+        finally:
+            conn2.close()
 
     def start_new_round(self, tid, round_number, conn=None):
         should_close = False
@@ -283,6 +288,8 @@ class TournamentManager:
 
     def advance_tournament(self, tid, round_num):
         conn = self.get_db()
+        should_start_round = False
+        next_round = round_num + 1
         try:
             # 1. Get all matchups for this round
             matchups = conn.execute('''
@@ -349,14 +356,21 @@ class TournamentManager:
                     final_results.append({'user_id': w, 'score': score_dict.get(w, 0)})
                 self.complete_tournament(tid, final_results, conn=conn)
             else:
-                # Next round
-                next_round = round_num + 1
-                self.start_new_round(tid, next_round, conn=conn)
-                conn.execute('UPDATE tournaments SET current_round = ? WHERE id = ?', (next_round, tid))
+                should_start_round = True
                 
             conn.commit()
         finally:
             conn.close()
+
+        if should_start_round:
+            self.start_new_round(tid, next_round)
+            
+            conn2 = self.get_db()
+            try:
+                conn2.execute('UPDATE tournaments SET current_round = ? WHERE id = ?', (next_round, tid))
+                conn2.commit()
+            finally:
+                conn2.close()
 
     def get_user_matchup(self, tid, round_number, user_id):
         conn = self.get_db()

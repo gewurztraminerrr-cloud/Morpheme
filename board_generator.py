@@ -155,12 +155,21 @@ ACTIVE_REFILLS_LOCK = threading.Lock()
 BOARD_CACHE_VERSION = 12
 
 def serialize_param_key(dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, use_added_words=False):
+    d_upper = str(dictionary).upper()
+    if "+ AW" in d_upper or "+AW" in d_upper or "ADDED" in d_upper:
+        use_added_words = True
+        normalized_dict = d_upper.replace("+ AW", "").replace("+AW", "").replace("ADDED", "").strip()
+        if normalized_dict not in ["NWL", "CSW"]:
+            normalized_dict = "NWL"
+    else:
+        normalized_dict = dictionary
+
     return json.dumps({
         "v": BOARD_CACHE_VERSION,
         "dimensions": dimensions,
         "bonus_word_len": len(bonus_word) if isinstance(bonus_word, str) else (bonus_word if isinstance(bonus_word, int) else 0),
         "word_count_range": list(word_count_range) if isinstance(word_count_range, (list, tuple)) else word_count_range,
-        "dictionary": dictionary,
+        "dictionary": normalized_dict,
         "board_format": board_format,
         "min_word_length": min_word_length,
         "difficulty": difficulty,
@@ -223,6 +232,59 @@ def mark_board_hash_used(board_hash):
         except: pass
         return False
 
+def pop_any_cached_board(dimensions):
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
+    try:
+        conn = sqlite3.connect(db_path, timeout=30)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        while True:
+            cursor.execute("BEGIN IMMEDIATE TRANSACTION;")
+            dim_pattern = f'%"dimensions": "{dimensions}"%'
+            cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? ORDER BY id ASC LIMIT 1;", (dim_pattern,))
+            row = cursor.fetchone()
+            if not row:
+                cursor.execute("COMMIT;")
+                conn.close()
+                return None
+                
+            cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (row['id'],))
+            conn.commit()
+            
+            param_key_str = row['param_key']
+            board_json = row['board_json']
+            data = json.loads(board_json)
+            board = data["board"]
+            
+            board_hash = get_board_hash(board)
+            if not mark_board_hash_used(board_hash):
+                print(f"[BoardGen] Discarding cached board (layout already used globally: {board_hash})")
+                continue
+            conn.close()
+            
+            try:
+                params = json.loads(param_key_str)
+            except Exception as e:
+                print(f"[BoardGen] Error parsing param_key JSON: {e}")
+                params = {}
+                
+            all_words = data["all_words"]
+            bonus_cell = tuple(data["bonus_cell"]) if data["bonus_cell"] else None
+            board_format_ret = data["board_format_ret"]
+            
+            all_words_dict = {}
+            for w, path in data["all_words_dict"].items():
+                all_words_dict[w] = [tuple(coord) for coord in path]
+                
+            ratio = data.get("uniqueness_ratio", 0.0)
+            final_bonus_word = data.get("bonus_word", "")
+            
+            return (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word, params)
+    except Exception as e:
+        print(f"[BoardGen] Error in pop_any_cached_board: {e}")
+        return None
+
 def pop_cached_board(param_key_str):
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
     try:
@@ -270,10 +332,17 @@ def pop_cached_board(param_key_str):
         print(f"[BoardGen] Error checking/popping cached board: {e}")
     return None
 
-def refill_board_cache_bg(generator_instance, param_key_str, target_count=10):
+def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
+    """Background cache refill — THROTTLED to prevent CPU saturation on single-core VPS."""
     global ACTIVE_REFILLS, ACTIVE_REFILLS_LOCK
     
+    # Clamp target count to prevent long CPU-heavy loops on single-core servers
+    target_count = min(target_count, 2)
+    
     with ACTIVE_REFILLS_LOCK:
+        # Global concurrency cap: never run more than 1 refill thread at once
+        if len(ACTIVE_REFILLS) >= 1:
+            return
         if param_key_str in ACTIVE_REFILLS:
             return
         ACTIVE_REFILLS.add(param_key_str)
@@ -356,12 +425,7 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=10):
                         normalized_diff = "Medium"
                         
                 if achieved_diff != normalized_diff:
-                    if attempts <= 2:
-                        print(f"[BoardGen] [Refill] Discarding board (attempt {attempts}/2): achieved difficulty '{achieved_diff}' does not match target '{normalized_diff}' (ratio={ratio:.4f})")
-                        time.sleep(0.05)
-                        continue
-                    else:
-                        print(f"[BoardGen] [Refill] Exceeded 2 attempts for target difficulty '{normalized_diff}' (last ratio={ratio:.4f}). Saving board as fallback to prevent CPU loop hang.")
+                    print(f"[BoardGen] [Refill] Achieved difficulty '{achieved_diff}' differs from target '{normalized_diff}' (ratio={ratio:.4f}). Saving anyway to optimize CPU and fill cache instantly.")
                 
                 # Reset attempts counter on successful database insertion
                 attempts = 0
@@ -418,7 +482,7 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=10):
                     print(f"[BoardGen] [Refill] Error inserting to DB: {e}")
                     time.sleep(1.0)
                     
-                time.sleep(0.1)
+                time.sleep(10.0)  # Throttle: 10s between generations to avoid CPU saturation
         except Exception as e:
             print(f"[BoardGen] [Refill] Background worker error: {e}")
         finally:
@@ -1344,7 +1408,7 @@ class BoardGenerator:
         cached_res = pop_cached_board(param_key_str)
         if cached_res:
             # Trigger background refill to replace the popped board
-            refill_board_cache_bg(self, param_key_str, target_count=10)
+            refill_board_cache_bg(self, param_key_str, target_count=3)
             return cached_res
 
         # Fallback to synchronous generation
@@ -1521,7 +1585,7 @@ class BoardGenerator:
         # IO Optimization timeout: 4x4 boards need more time for high-density targets (100+)
         # USER MANDATE: Do not distribute until criteria is met. We increase timeout and attempts.
         if timeout is None:
-            timeout = 8.0 if is_emergency else 15.0
+            timeout = 5.0 if is_emergency else 15.0
         attempts = 0
         
         # For Equality Freq format, track the best board found in case of fallback
@@ -1530,29 +1594,12 @@ class BoardGenerator:
         best_equality_words_dict = None
         best_equality_embedded_path = None
         
-        # Determine if we should use the new IO and Base procedure
-        # Specifically for NWL and CSW dictionaries (no +AW)
-        is_nwl_or_csw_pure = not use_aw_flag
-        
-        # 100% of the time, 300-400 and 500+ targets use IO-Base for pure dicts
-        if is_nwl_or_csw_pure and max_words > 300:
-            res = self._generate_io_base_board_procedure(
-                dimensions, bonus_word, word_count_range, dictionary, min_word_length, difficulty, board_format, use_aw_flag
-            )
-            if res:
-                return res
+        # Track the best-effort board layout closest to the target word count range
+        best_board_data = None
+        best_distance = float('inf')
 
         while time.time() - start_time < timeout:
             attempts += 1
-            
-            # When necessary, use IO and Base on 200-300 word count for pure dicts
-            if is_nwl_or_csw_pure and max_words <= 300 and min_words >= 200 and attempts >= 6:
-                print(f"[BoardGen] Pure dict struggling for 200-300. Falling back to IO-Base procedure...")
-                res = self._generate_io_base_board_procedure(
-                    dimensions, bonus_word, word_count_range, dictionary, min_word_length, difficulty, board_format, use_aw_flag
-                )
-                if res:
-                    return res
             
             if (is_emergency and attempts > 15) or (attempts > 35):
                 min_words, max_words = 0, 99999
@@ -2120,8 +2167,9 @@ class BoardGenerator:
                 # If they do, toss the board and generate another one (continue)!
                 if difficulty in ["Medium", "Hard"] or achieved_diff in ["Medium", "Hard"]:
                     if self._has_ing_sequence(board, depth, protected_positions=embedded_path):
-                        print(f"[BoardGen] ❌ ATTEMPT {attempts}: Board has an 'ING'/'INGS' sequence on {achieved_diff} (target {difficulty}) board. TOSSING board and generating another one...")
-                        continue
+                        if attempts < 40:
+                            print(f"[BoardGen] ❌ ATTEMPT {attempts}: Board has an 'ING'/'INGS' sequence on {achieved_diff} (target {difficulty}) board. TOSSING board and generating another one...")
+                            continue
 
                 # Enforce global uniqueness: discard if board layout is already used
                 board_hash = get_board_hash(board)
@@ -2195,6 +2243,71 @@ class BoardGenerator:
                 )
             else:
                 print(f"[BoardGen] ✗ NON-COMPLIANT ({count} words). Retrying...")
+                
+                # Track best-effort layout
+                dist = 0
+                if count < min_words:
+                    dist = min_words - count
+                else:
+                    dist = count - max_words
+                    
+                if dist < best_distance:
+                    best_distance = dist
+                    try:
+                        # Solve with paths for best-effort
+                        best_words_dict = self._solve_board(
+                            board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=10.0
+                        )
+                        best_ratio = self.get_uniqueness_ratio(board, list(best_words_dict.keys()), rows, cols, dictionary, depth)
+                        
+                        best_actual_bonus = None
+                        best_bonus_cell = None
+                        if bonus_word and embedded_path and bonus_word.upper() in [w.upper() for w in best_words_dict]:
+                            best_actual_bonus = bonus_word
+                            best_bonus_cell = best_words_dict[best_actual_bonus.upper() if best_actual_bonus.upper() in best_words_dict else best_actual_bonus][0]
+                        else:
+                            suitable = [w for w in best_words_dict if 6 <= len(w) <= 10]
+                            if not suitable: suitable = [w for w in best_words_dict if len(w) >= 6]
+                            if not suitable: suitable = [w for w in best_words_dict if len(w) >= 3]
+                            requested_length = len(bonus_word) if bonus_word else 8
+                            suitable_exact = [w for w in suitable if len(w) == requested_length]
+                            if suitable_exact:
+                                best_actual_bonus = random.choice(suitable_exact)
+                            else:
+                                best_actual_bonus = sorted(suitable, key=len, reverse=True)[0] if suitable else None
+                            if best_actual_bonus:
+                                best_bonus_cell = best_words_dict[best_actual_bonus][0]
+                                
+                        if not best_bonus_cell and "bonus letter" in safe_format:
+                            best_bonus_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
+                            if depth > 1: best_bonus_cell = (random.randint(0, depth-1), best_bonus_cell[0], best_bonus_cell[1])
+                            
+                        if best_bonus_cell:
+                            best_words_dict = self._solve_board(
+                                board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=10.0, bonus_cell=best_bonus_cell
+                            )
+                            
+                        best_board_data = (
+                            board,
+                            sorted(list(best_words_dict.keys())),
+                            best_bonus_cell,
+                            board_format,
+                            best_words_dict,
+                            best_ratio,
+                            best_actual_bonus.upper() if best_actual_bonus else None
+                        )
+                    except Exception as e:
+                        print(f"[BoardGen] Error preparing best-effort metadata: {e}")
+                        
+                # Early timeout or max attempts fallback to prevent clean slate fallback
+                time_elapsed = time.time() - start_time
+                if time_elapsed > timeout - 1.2 or attempts >= 15:
+                    print(f"[BoardGen] Early exit: Nearing timeout or max attempts reached ({time_elapsed:.1f}s/attempts={attempts}). Returning best-effort (distance={best_distance}).")
+                    if best_board_data:
+                        b_layout = best_board_data[0]
+                        b_hash = get_board_hash(b_layout)
+                        mark_board_hash_used(b_hash)
+                        return best_board_data
 
         # FINAL FALLBACK (If timeout reached)
         # In a complete restart, even fallback MUST be compliant. 
@@ -2579,8 +2692,9 @@ class BoardGenerator:
             achieved_diff = self.get_difficulty_label(ratio, rows, cols, dictionary, depth, min_word_length=display_min)
             if difficulty in ["Medium", "Hard"] or achieved_diff in ["Medium", "Hard"]:
                 if self._has_ing_sequence(board, depth):
-                    print(f"[BoardGen] ❌ [Emergency] ATTEMPT {_attempt}: Board has forbidden 'ING' sequence on {achieved_diff} (target {difficulty}) board. Retrying...")
-                    continue
+                    if _attempt < 40:
+                        print(f"[BoardGen] ❌ [Emergency] ATTEMPT {_attempt}: Board has forbidden 'ING' sequence on {achieved_diff} (target {difficulty}) board. Retrying...")
+                        continue
             
             if min_words <= count <= max_words or _attempt >= 50:
                 if min_words <= count <= max_words:
@@ -2632,13 +2746,17 @@ class BoardGenerator:
             self._sanitize_forbidden_sequences(board, depth, protected_positions=protected_positions)
 
     def _generate_io_base_board_procedure(
-        self, dimensions, bonus_word, word_count_range, dictionary, min_word_length, difficulty, board_format="Normal", use_added_words=False
+        self, dimensions, bonus_word, word_count_range, dictionary, min_word_length, difficulty, board_format="Normal", use_added_words=False, timeout=None
     ):
         """
         Special Procedure: IO and Base method of generating boards for high word counts.
         """
         import time
         import random
+        
+        start_time = time.time()
+        best_board_data = None
+        best_distance = float('inf')
         
         # 1. Parse dimensions and target counts
         if dimensions == "3x3x3":
@@ -2662,6 +2780,10 @@ class BoardGenerator:
         
         # Try up to 10 times to find a compliant board
         for attempt in range(10):
+            if timeout is not None and (time.time() - start_time > timeout):
+                print(f"[BoardGen] Procedure IO-Base: Timeout reached ({timeout}s). Stopping search.")
+                break
+                
             # A. Generate Base Board composed entirely of Word Soup board generation
             # If checkerboard format is active, create checkerboard base
             is_checkerboard = "checkerboard" in str(board_format).lower()
@@ -2734,7 +2856,7 @@ class BoardGenerator:
                     depth_limit = 5 if difficulty == "Easy" else 7
                     words_at_loc = self._solve_board(
                         final_board, opt_dict, (0, 99999), min_word_length, 
-                        max_depth=depth_limit, store_paths=False, timeout=1.0, must_include=pos, use_added_words=False
+                        max_depth=depth_limit, store_paths=False, timeout=1.0, must_include=pos, use_added_words=use_added_words
                     )
                     
                     count_at_loc = len(words_at_loc)
@@ -2764,7 +2886,16 @@ class BoardGenerator:
             final_count = len(final_solve)
             print(f"[BoardGen] Procedure IO-Base attempt {attempt} finished with count {final_count} (Target: {min_words}-{max_words})")
             
-            if min_words <= final_count <= max_words:
+            ratio = self.get_uniqueness_ratio(final_board, list(final_solve.keys()), rows, cols, dictionary, depth)
+            
+            # Distance computation for best-effort tracking
+            dist = 0
+            if final_count < min_words:
+                dist = min_words - final_count
+            elif final_count > max_words:
+                dist = final_count - max_words
+                
+            if dist == 0:
                 board_hash = get_board_hash(final_board)
                 if is_board_hash_used(board_hash):
                     print(f"[BoardGen] Procedure IO-Base: Board layout already used globally ({board_hash}). TOSSING board and retrying...")
@@ -2815,7 +2946,40 @@ class BoardGenerator:
                     ratio,
                     actual_bonus,
                 )
+            else:
+                # Track best effort board
+                if dist < best_distance:
+                    best_distance = dist
+                    
+                    actual_bonus = None
+                    bonus_cell = None
+                    if bonus_word and bonus_word.upper() in final_solve:
+                        actual_bonus = bonus_word.upper()
+                        bonus_cell = final_solve[actual_bonus][0]
+                    else:
+                        suitable = [w for w in final_solve if 6 <= len(w) <= 10]
+                        if not suitable: suitable = [w for w in final_solve if len(w) >= 6]
+                        if not suitable: suitable = [w for w in final_solve if len(w) >= 3]
+                        if suitable:
+                            actual_bonus = random.choice(suitable)
+                            bonus_cell = final_solve[actual_bonus][0]
+                            
+                    best_board_data = (
+                        final_board,
+                        sorted(list(final_solve.keys())),
+                        bonus_cell,
+                        board_format,
+                        final_solve,
+                        ratio,
+                        actual_bonus,
+                    )
                 
+        if best_board_data:
+            print(f"[BoardGen] Procedure IO-Base: returning relaxed best effort board (distance={best_distance})")
+            board_hash = get_board_hash(best_board_data[0])
+            mark_board_hash_used(board_hash)
+            return best_board_data
+            
         return None
 
     def _parse_word_count_range(self, word_count_range):
@@ -3910,7 +4074,7 @@ class BoardGenerator:
 
     def _perform_decimation_sweep(self, board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, excluded, difficulty, rescue_depth=15, protected_path=None, is_checkerboard=False, board_format="Normal", use_added_words=False):
         """
-        USER REQUEST: Reduce word count by replacing high-density cells with 'dead' letters.
+        Reduce word count by replacing high-density cells with 'dead' letters.
         """
         import time
         start_time = time.time()
@@ -3922,6 +4086,20 @@ class BoardGenerator:
                 if isinstance(cell, (list, tuple)):
                     protected_cells.add(tuple(cell))
 
+        # Solve board initially with store_paths=True to build a heat map of cell popularity
+        current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=True, use_added_words=use_added_words)
+        current_count = len(current_solve)
+        if current_count <= max_words: return board
+        
+        print(f"[BoardGen] 🔨 OPTIMIZED DECIMATION SWEEP START (Current: {current_count}, Max: {max_words})")
+        
+        # Build cell contribution map
+        coord_freqs = {}
+        for w, path in current_solve.items():
+            for node in path:
+                coord_freqs[node] = coord_freqs.get(node, 0) + 1
+
+        # Collect positions and sort them by contribution to word count (highest first)
         positions = []
         for f in range(depth):
             for r in range(rows):
@@ -3929,20 +4107,13 @@ class BoardGenerator:
                     pos = (f, r, c) if depth > 1 else (r, c)
                     if pos not in excluded and pos not in protected_cells:
                         positions.append(pos)
-        random.shuffle(positions)
         
-        current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=False, use_added_words=use_added_words)
-        current_count = len(current_solve)
-        if current_count <= max_words: return board
+        # Sort positions by frequency in the solve paths (most popular first)
+        positions.sort(key=lambda p: coord_freqs.get(p, 0), reverse=True)
         
-        unique_set = self._get_difficulty_set(dictionary)
-        from word_validator import word_validator
-
-        print(f"[BoardGen] 🔨 DECIMATION SWEEP START (Current: {current_count}, Max: {max_words})")
-        dead_chars = ["Z", "X", "Q", "J", "K", "V"]
+        dead_chars = ["Z", "X", "Q", "J", "K", "V", "W", "G", "F", "B", "P", "M", "H"]
         
         for pos in positions:
-            # AW rounds require 2x solve work per iteration; give them more time
             sweep_timeout = 45.0 if use_added_words else 20.0
             if time.time() - start_time > sweep_timeout: break # Hard time limit
             f_p, r_p, c_p = (pos[0], pos[1], pos[2]) if depth > 1 else (0, pos[0], pos[1])
@@ -3954,51 +4125,34 @@ class BoardGenerator:
             
             old_char = board[f_p][r_p][c_p] if depth > 1 else board[r_p][c_p]
             
-            if difficulty == "Easy":
-                use_5plus_only = depth == 1 and ((rows == 4 and cols == 4) or (rows == 4 and cols == 6) or (rows == 6 and cols == 4))
-                initial_unique = sum(1 for w in current_solve if len(w) >= 5 and w in unique_set) if use_5plus_only else sum(1 for w in current_solve if w in unique_set)
-                best_score = -current_count - (initial_unique * 100)
-            else:
-                best_score = -current_count
-            
-            best_char = old_char
-            
-            # Try dead letters to see which breaks the most words
-            for char in ["Z", "X", "Q", "J", "K", "V", "W", "G", "F", "B", "P", "M", "H"]:
+            # Find a dead char that passes constraints
+            chosen_char = None
+            for char in dead_chars:
                 if char == old_char: continue
-                # USER REQUEST: Max 1 rare letter and Max 3 total rares
-                if self._is_rare_limited(board, char, depth):
-                    if char != (board[f_p][r_p][c_p] if depth > 1 else board[r_p][c_p]):
-                        continue
-                if self._is_abundance_limited(board, char, board_format=board_format, depth=depth):
-                    continue
+                if self._is_rare_limited(board, char, depth): continue
+                if self._is_abundance_limited(board, char, board_format=board_format, depth=depth): continue
                 if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, char, r_p, c_p, f_p, depth=depth):
                     continue
+                chosen_char = char
+                break
+                
+            if not chosen_char:
+                continue
+                
+            # Perform replacement
+            if depth > 1: board[f_p][r_p][c_p] = chosen_char
+            else: board[r_p][c_p] = chosen_char
+            
+            # Re-solve to update word count and heat map
+            current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=True, use_added_words=use_added_words)
+            current_count = len(current_solve)
+            
+            # Rebuild heat map for remaining steps
+            coord_freqs.clear()
+            for w, path in current_solve.items():
+                for node in path:
+                    coord_freqs[node] = coord_freqs.get(node, 0) + 1
                     
-                if depth > 1: board[f_p][r_p][c_p] = char
-                else: board[r_p][c_p] = char
-                
-                res = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=False, use_added_words=use_added_words)
-                new_count = len(res)
-                
-                if difficulty == "Easy":
-                    unique_to_penalize = sum(1 for w in res if len(w) >= 5 and w in unique_set) if use_5plus_only else sum(1 for w in res if w in unique_set)
-                    score = -new_count - (unique_to_penalize * 100)
-                else:
-                    score = -new_count
-
-                if score > best_score:
-                    best_score, best_char = score, char
-                
-                if difficulty != "Easy" and new_count <= max_words: break
-            
-            if depth > 1: board[f_p][r_p][c_p] = best_char
-            else: board[r_p][c_p] = best_char
-            
-            if best_char != old_char:
-                current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=False, use_added_words=use_added_words)
-                current_count = len(current_solve)
-                
             if current_count <= max_words:
                 print(f"[BoardGen] ✅ DECIMATION SUCCESSFUL: Hit {current_count} words.")
                 break

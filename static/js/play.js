@@ -629,7 +629,7 @@ function refreshPollInterval() {
     // Speed up polling significantly when transitioning or when intermission is about to end
     if (!document.hidden) {
         if (window._rapidTransitionPolling) {
-             delay = 300; // High-frequency polling at 0:00 transition
+             delay = 100; // High-frequency polling at 0:00 transition
         } else if (window.lastGameState && window.lastGameState.state === 'intermission') {
              const tr = window.lastGameState.time_remaining;
              if (tr < 2.5) {
@@ -1053,6 +1053,19 @@ async function updateGameState(incomingState = null) {
         
         window.lastGameState = state;  // Store for optimistic updates
         
+        // LOADING STATE: Room was just created and board is being generated async
+        if (state.state === 'loading') {
+            console.log('[play.js] Room is in loading state. Showing loading indicator and fast-polling...');
+            const timerVal = document.getElementById('timer-value');
+            const timerLabel = document.querySelector('.timer-label');
+            if (timerVal) timerVal.textContent = '...';
+            if (timerLabel) timerLabel.textContent = 'GENERATING BOARD';
+            // Fast-poll until board is ready
+            if (pollInterval) clearInterval(pollInterval);
+            pollInterval = setInterval(updateGameState, 500);
+            return;
+        }
+        
         // Clear rapid transition polling if state changed
         if (previousState && previousState.state !== state.state) {
             window._rapidTransitionPolling = false;
@@ -1148,7 +1161,7 @@ async function updateGameState(incomingState = null) {
             const isForCurrentRound = latest && latest.round === state.current_round;
             hasActualWinner = isForCurrentRound && (latest.score || 0) > 0;
 
-            const bonusText = state.previous_bonus_word || state.bonus_word;
+            const bonusText = state.bonus_word;
             const bonusHtml = bonusText ? `<div style="font-size: 0.85rem; color: #fff; opacity: 0.8; margin: 4px 0;">Bonus Word: <span style="color: #ffd700; font-weight: 800; letter-spacing: 1px;">${bonusText.toUpperCase()}</span></div>` : '';
 
             if (hasActualWinner && defContent && !isViewingDefinition && !isTimerExpired) {
@@ -1352,15 +1365,18 @@ async function updateGameState(incomingState = null) {
                 spectatorPanel = createSpectatorPanel();
             }
 
-            const defContent = document.getElementById('definition-content');
-            const defHeader = document.getElementById('definition-header');
-            
-            // Hide the actual definitions content and definition header
-            if (defContent) defContent.style.display = 'none';
-            if (defHeader) defHeader.style.display = 'none';
-            
-            // Show spectator panel during gameplay and intermission, overriding winner/definition messages
-            if (spectatorPanel) spectatorPanel.style.display = 'flex';
+            // Show winner announcement to spectators during intermission, otherwise show normal spectator panel
+            const showWinnerAnnouncement = (state.state === 'intermission' && hasActualWinner);
+
+            if (showWinnerAnnouncement) {
+                if (defContent) defContent.style.display = '';
+                if (defHeader) defHeader.style.display = 'none';
+                if (spectatorPanel) spectatorPanel.style.display = 'none';
+            } else {
+                if (defContent) defContent.style.display = 'none';
+                if (defHeader) defHeader.style.display = 'none';
+                if (spectatorPanel) spectatorPanel.style.display = 'flex';
+            }
 
             // Check if there is space to join
             const playerCount = (state.players && Array.isArray(state.players)) ? state.players.length : 0;
@@ -1875,7 +1891,7 @@ async function updateGameState(incomingState = null) {
                 }
 
                 const uniqueGlobalFound = [...new Set(allPlayerFoundStrs)];
-                const bonusForList = state.state === 'intermission' ? (state.previous_bonus_word || state.bonus_word) : state.bonus_word;
+                const bonusForList = state.bonus_word;
 
 
                 const roundId = `${state.room_id}_${state.current_round}`;
@@ -2432,7 +2448,7 @@ async function updateGameState(incomingState = null) {
             console.warn(`[play.js] Server state is ${state.state} with 0s left. Scheduling rapid state check in 200ms...`);
             if (!window._rapidPollCount || window._rapidPollCount < 20) {
                 window._rapidPollCount = (window._rapidPollCount || 0) + 1;
-                setTimeout(() => updateGameState(), 200);
+                setTimeout(() => updateGameState(), 100);
             }
         } else {
             window._rapidPollCount = 0;
@@ -3508,6 +3524,15 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         if (isBonus) {
             className += ' bonus-word';
         } else {
+            // Found status styling (blue highlight for player, neutral for opponent, unfound for missed)
+            if (isTargetFound) {
+                className += ' player-word';
+            } else if (isFoundByAny) {
+                className += ' found-by-other';
+            } else {
+                className += ' unfound';
+            }
+
             let baseDict = 'NWL'; // The base standard dictionary for this round
             let useAW = false;
             const s = window.lastGameState;
@@ -3883,7 +3908,7 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
     }
 
     if (!timerInterval && localEndTime > 0 && !document.hidden) {
-        timerInterval = setInterval(updateLocalTimer, 500); // Optimized from 100ms to 500ms
+        timerInterval = setInterval(updateLocalTimer, 100); // 100ms for near-instant 0:00 detection
     } else if ((localEndTime <= 0 || document.hidden) && timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
@@ -4003,16 +4028,8 @@ function updateLocalTimer() {
                 if (mouseState.visitedCells) mouseState.visitedCells.clear();
             }
         } else if (currentState === 'intermission') {
-            // If intermission ended, show loading inside board
-            const boardEl = document.getElementById('game-board');
-            if (boardEl) {
-                boardEl.innerHTML = `
-                    <div class="board-loader-container">
-                        <div class="board-loader-spinner"></div>
-                        <div class="board-loader-text">GENERATING NEXT BOARD...</div>
-                    </div>
-                `;
-            }
+            // Board comes from cache (instantaneous) — no overlay needed.
+            // Just call updateGameState immediately to get the new board.
         }
 
         updateGameState();

@@ -250,6 +250,7 @@ class SpinnerSet:
             # Loop to ensure parameters are DIFFERENT from previous (User Request)
             # We allow up to 30 attempts to find a unique combination
             best_res = None
+            res = None  # Guard: ensure res is always defined even if loop body raises on first iteration
             
             for _ in range(30):
                 # Randomize dictionary and added words configuration
@@ -299,11 +300,11 @@ class SpinnerSet:
                         else:
                             min_word_length = random.choices([6, 7, 8], weights=[20, 50, 30])[0]
                     elif wc_range == '200-300':
-                        # Must be lower length
+                        # Must be lower length (4x6 allows 6L at 10% to ensure it appears)
                         if '4x4' in dims:
                             min_word_length = 3
                         elif '4x6' in dims:
-                            min_word_length = random.choices([4, 5], weights=[70, 30])[0]
+                            min_word_length = random.choices([4, 5, 6], weights=[60, 30, 10])[0]
                         elif '5x7' in dims:
                             min_word_length = random.choices([5, 6], weights=[70, 30])[0]
                         else:
@@ -346,15 +347,16 @@ class SpinnerSet:
                         # Non-AW Equality Freq is naturally low density; limit to 50-100 or 100-200
                         wc_range = random.choice(['50-100', '100-200'])
                         if wc_range == '50-100':
+                            # Use highest min_len per dimension to correctly produce 50-100 words
                             if '4x4' in dims: min_word_length = 4
-                            elif '4x6' in dims: min_word_length = 5
-                            elif '5x7' in dims: min_word_length = 6
-                            else: min_word_length = 7
+                            elif '4x6' in dims: min_word_length = 6  # was 5, bumped to match true 50-100 threshold
+                            elif '5x7' in dims: min_word_length = 7  # was 6
+                            else: min_word_length = 8  # was 7
                         else: # 100-200
-                            if '4x4' in dims: min_word_length = 3
-                            elif '4x6' in dims: min_word_length = 4
-                            elif '5x7' in dims: min_word_length = 5
-                            else: min_word_length = 6
+                            if '4x4' in dims: min_word_length = random.choice([3, 4])
+                            elif '4x6' in dims: min_word_length = random.choices([4, 5, 6], weights=[20, 50, 30])[0]
+                            elif '5x7' in dims: min_word_length = random.choices([5, 6, 7], weights=[20, 50, 30])[0]
+                            else: min_word_length = random.choices([6, 7, 8], weights=[20, 50, 30])[0]
 
                 bw_len = random.choice([6, 7, 8, 9, 10])
                 if bw_len < min_word_length:
@@ -423,7 +425,16 @@ class SpinnerSet:
                 best_res = res # Fallback to last attempt if we somehow fail 30 times
 
             print(f"[SpinnerSet] WARNING: Could not find unique params after 30 attempts. Using last roll.")
-            return best_res or res
+            return best_res or res or {
+                'difficulty': random.choices(['Easy', 'Medium', 'Hard'], weights=[25, 50, 25])[0],
+                'dictionary': random.choice(['NWL', 'CSW']),
+                'word_count_range': '200-300',
+                'board_format': 'Normal',
+                'min_word_length': SpinnerSet._spin_min_word_length(board_dimensions),
+                'bonus_word_length': 8,
+                'use_added_words': False,
+                'generated_at': time.time()
+            }
             
         except Exception as e:
             print(f"[SpinnerSet] CRITICAL GENERATOR ERROR: {e}")
