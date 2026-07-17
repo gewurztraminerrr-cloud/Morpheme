@@ -1401,9 +1401,10 @@ class GameRoom:
         e_wc = self.spinner_params.get('word_count_range', '100-200') if self.spinner_params else '100-200'
         
         e_min_len = self.spinner_params.get('min_word_length') if self.spinner_params else None
+        e_diff = self.spinner_params.get('difficulty', 'Medium') if self.spinner_params else 'Medium'
         e_results = get_emergency_fallback_board(
             self.board_dimensions, e_format, self.time_limit,
-            dictionary=e_dict, use_added_words=e_use_aw, target_range=e_wc, min_word_length=e_min_len
+            dictionary=e_dict, use_added_words=e_use_aw, target_range=e_wc, min_word_length=e_min_len, difficulty=e_diff
         )
         
         if len(e_results) >= 9:
@@ -1489,9 +1490,10 @@ class GameRoom:
                     e_use_aw = self.spinner_params.get('use_added_words', False) if self.spinner_params else False
                     e_wc = self.spinner_params.get('word_count_range', '100-200') if self.spinner_params else '100-200'
                     e_min_len = self.spinner_params.get('min_word_length') if self.spinner_params else None
+                    e_diff = self.spinner_params.get('difficulty', 'Medium') if self.spinner_params else 'Medium'
                     fallback = get_emergency_fallback_board(
                         self.board_dimensions, e_format, self.time_limit,
-                        dictionary=e_dict, use_added_words=e_use_aw, target_range=e_wc, min_word_length=e_min_len
+                        dictionary=e_dict, use_added_words=e_use_aw, target_range=e_wc, min_word_length=e_min_len, difficulty=e_diff
                     )
                     if len(fallback) >= 9:
                         fb, fw, fc, ff, fp, fr, fbw, _, fparams = fallback
@@ -2132,7 +2134,7 @@ def calculate_word_score(word, bonus_word, board_format='Normal', path=None, bon
     from scoring import calculate_word_score as shared_calc
     return shared_calc(word, bonus_word, board_format=board_format, path=path, bonus_cell=bonus_cell, **kwargs)
 
-def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=60, dictionary='NWL', use_added_words=False, target_range=None, min_word_length=None):
+def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=60, dictionary='NWL', use_added_words=False, target_range=None, min_word_length=None, difficulty=None):
     """Dynamically generate a valid emergency fallback board that matches room dimensions and spells correct words."""
     from board_generator import BoardGenerator, serialize_param_key, pop_cached_board, refill_board_cache_bg, pop_any_cached_board
     global _room_manager_instance
@@ -2292,15 +2294,22 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
     is_3d = len(parts) == 3
     
     letters_pool = ["E", "A", "I", "O", "T", "R", "S", "N", "L", "C", "D", "P"]
-    if is_3d:
-        depth, rows, cols = map(int, parts)
-        board = [[[random.choice(letters_pool) for _ in range(cols)] for _ in range(rows)] for _ in range(6)]
-    else:
-        rows, cols = map(int, parts)
-        board = [[random.choice(letters_pool) for _ in range(cols)] for _ in range(rows)]
+    for fallback_attempt in range(50):
+        if is_3d:
+            depth, rows, cols = map(int, parts)
+            board = [[[random.choice(letters_pool) for _ in range(cols)] for _ in range(rows)] for _ in range(6)]
+        else:
+            rows, cols = map(int, parts)
+            board = [[random.choice(letters_pool) for _ in range(cols)] for _ in range(rows)]
+            
+        # Sanitize letter abundances and vowel ratio to guarantee friendly and playable board
+        bg._sanitize_letter_abundances(board, depth=6 if is_3d else 1, board_format=board_format)
         
-    # Sanitize letter abundances and vowel ratio to guarantee friendly and playable board
-    bg._sanitize_letter_abundances(board, depth=6 if is_3d else 1, board_format=board_format)
+        is_mod_hard = (difficulty in ["Medium", "Hard"]) if difficulty else True
+        if is_mod_hard and bg._has_ing_sequence(board, depth=6 if is_3d else 1):
+            print(f"[get_emergency_fallback_board] Fallback board attempt {fallback_attempt+1} had an 'ING' sequence. Retrying...")
+            continue
+        break
             
     # Run solver on the board to get ALL valid words!
     ml_solve = min_word_length
@@ -4296,9 +4305,10 @@ class RoomManager:
                     e_use_aw = room.spinner_params.get('use_added_words', False) if room.spinner_params else False
                     e_wc = room.spinner_params.get('word_count_range', '100-200') if room.spinner_params else '100-200'
                     e_min_len = room.spinner_params.get('min_word_length') if room.spinner_params else None
+                    e_diff = room.spinner_params.get('difficulty', 'Medium') if room.spinner_params else 'Medium'
                     cached_res = get_emergency_fallback_board(
                         room.board_dimensions, e_format, room.time_limit,
-                        dictionary=e_dict, use_added_words=e_use_aw, target_range=e_wc, min_word_length=e_min_len
+                        dictionary=e_dict, use_added_words=e_use_aw, target_range=e_wc, min_word_length=e_min_len, difficulty=e_diff
                     )
                     
                 if cached_res:
@@ -5275,10 +5285,11 @@ class RoomManager:
                         room.current_min_length = int(room.spinner_params.get('min_word_length', 3))
                     
                     e_min_len = room.spinner_params.get('min_word_length') if room.spinner_params else None
+                    e_diff = room.spinner_params.get('difficulty', 'Medium') if room.spinner_params else 'Medium'
                     e_results = get_emergency_fallback_board(
                         room.board_dimensions, room.current_board_format, room.time_limit,
                         dictionary=room.current_dictionary, use_added_words=getattr(room, 'use_added_words', False),
-                        target_range=room.spinner_params.get('word_count_range'), min_word_length=e_min_len
+                        target_range=room.spinner_params.get('word_count_range'), min_word_length=e_min_len, difficulty=e_diff
                     )
                     
                     if len(e_results) >= 9:

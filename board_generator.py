@@ -2212,10 +2212,9 @@ class BoardGenerator:
                 # USER MANDATE: Ensure no "ING" or "INGS" path sequences exist in Medium or Hard boards!
                 # If they do, toss the board and generate another one (continue)!
                 if difficulty in ["Medium", "Hard"] or achieved_diff in ["Medium", "Hard"]:
-                    if self._has_ing_sequence(board, depth, protected_positions=embedded_path):
-                        if attempts < 40:
-                            print(f"[BoardGen] ❌ ATTEMPT {attempts}: Board has an 'ING'/'INGS' sequence on {achieved_diff} (target {difficulty}) board. TOSSING board and generating another one...")
-                            continue
+                    if self._has_ing_sequence(board, depth):
+                        print(f"[BoardGen] ❌ ATTEMPT {attempts}: Board has an 'ING' sequence on {achieved_diff} (target {difficulty}) board. DISCARDING board immediately and starting over...")
+                        continue
 
                 # Enforce global uniqueness: discard if board layout is already used
                 board_hash = get_board_hash(board)
