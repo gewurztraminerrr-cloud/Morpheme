@@ -4720,7 +4720,7 @@ class BoardGenerator:
         if use_added_words is None:
             val_ctx = use_added_words_ctx.get()
             if val_ctx is None:
-                val_ctx = word_validator.use_added_words
+                val_ctx = False
         else:
             val_ctx = use_added_words
 
@@ -5007,7 +5007,7 @@ class BoardGenerator:
         if use_added_words is None:
             val_ctx = use_added_words_ctx.get()
             if val_ctx is None:
-                val_ctx = word_validator.use_added_words
+                val_ctx = False
         else:
             val_ctx = use_added_words
 
