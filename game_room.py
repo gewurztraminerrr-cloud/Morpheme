@@ -4365,10 +4365,10 @@ class RoomManager:
             if elapsed > 20.0 and not getattr(room, '_did_loading_rescue', False):
                 is_stuck_loading = True
                 
-        # 2. Intermission 50s remaining rescue (normal countdown rooms only)
+        # 2. Intermission 15s remaining rescue (normal countdown rooms only)
         is_stuck_intermission = False
         if room.state == 'intermission' and not is_daily:
-            if room.time_remaining <= 50 and room.time_remaining > 0:
+            if room.time_remaining <= 15 and room.time_remaining > 0:
                 if not room.next_round_board and not getattr(room, '_did_6x8_fallback_rescue', False):
                     is_stuck_intermission = True
                     
