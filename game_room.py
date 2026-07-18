@@ -1347,51 +1347,90 @@ class GameRoom:
         
         # Pop any board of the same dimensions from cache
         from board_generator import pop_any_cached_board
-        fallback = pop_any_cached_board(self.board_dimensions)
+        fallback = None
+        for _ in range(10):
+            candidate = pop_any_cached_board(self.board_dimensions)
+            if not candidate:
+                break
+            fb, fw, fc, ff, fp, fr, fbw, fparams = candidate
+            
+            f_min_l = fparams.get('min_word_length', 3) if fparams else 3
+            grid_floor = 3
+            if '4x6' in self.board_dimensions: grid_floor = 4
+            elif '5x7' in self.board_dimensions: grid_floor = 5
+            elif '6x8' in self.board_dimensions or '3x3x3' in self.board_dimensions: grid_floor = 6
+            f_min_l = max(grid_floor, int(f_min_l) if f_min_l is not None else 3)
+            
+            fw_filtered = [w for w in fw if len(w) >= f_min_l]
+            actual_cnt = len(fw_filtered)
+            
+            f_wc = fparams.get('word_count_range', '100-200') if fparams else '100-200'
+            min_accept = 50
+            try:
+                min_accept = int(str(f_wc).split('-')[0])
+            except:
+                if '50' in str(f_wc): min_accept = 50
+                elif '100' in str(f_wc): min_accept = 100
+                elif '200' in str(f_wc): min_accept = 200
+                elif '300' in str(f_wc): min_accept = 300
+                elif '400' in str(f_wc): min_accept = 400
+                elif '500' in str(f_wc): min_accept = 500
+            
+            is_aw_effective = (fparams.get('use_added_words', False) or '+ AW' in str(fparams.get('dictionary', '')).upper()) if fparams else False
+            if is_aw_effective:
+                min_accept = max(300, min_accept)
+            else:
+                min_accept = max(50, min_accept)
+                
+            if actual_cnt >= min_accept:
+                fallback = (fb, fw_filtered, fc, ff, {w: p for w, p in fp.items() if len(w) >= f_min_l}, fr, fbw, fparams)
+                break
+            else:
+                print(f"[GameRoom] ensure_next_board_ready Pop Candidate had only {actual_cnt} words of length >= {f_min_l} (needed {min_accept}). Discarding...")
+                
         if fallback:
             fb, fw, fc, ff, fp, fr, fbw, fparams = fallback
-            if fw and len(fw) >= 20:
-                print(f"[GameRoom] ensure_next_board_ready: Popped fallback cached board for {self.room_id}")
-                self.next_round_board = fb
-                self.next_round_words = fw
-                self.next_round_word_paths = fp
-                self.next_round_bonus_cell = fc
-                self.next_round_bonus = fbw or ''
-                self.next_round_format = ff
-                self.next_round_uniqueness = fr
-                if fparams:
-                    actual_wc = len(fw)
-                    if actual_wc < 100: wc_label = '50-100'
-                    elif actual_wc < 200: wc_label = '100-200'
-                    elif actual_wc < 300: wc_label = '200-300'
-                    elif actual_wc < 400: wc_label = '300-400'
-                    elif actual_wc < 500: wc_label = '400-500'
-                    else: wc_label = '500+'
-                    fparams['word_count_range'] = wc_label
-                    self.next_round_spinner_params = fparams
-                    
-                    dict_val = fparams.get('dictionary', 'NWL')
-                    use_aw_val = fparams.get('use_added_words', False)
-                    if use_aw_val and '+ AW' not in str(dict_val) and '+AW' not in str(dict_val):
-                        dict_val = f"{dict_val} + AW"
-                    
-                    new_sp = {
-                        'dictionary': dict_val,
-                        'difficulty': fparams.get('difficulty', 'Medium'),
-                        'word_count_range': wc_label,
-                        'board_format': fparams.get('board_format', 'Normal'),
-                        'min_word_length': fparams.get('min_word_length', 3),
-                        'bonus_word_length': fparams.get('bonus_word_len', 6),
-                        'use_added_words': use_aw_val,
-                        'board_dimensions': self.board_dimensions,
-                        'time_limit': self.time_limit,
-                        'generated_at': time.time()
-                    }
-                    self.next_spinner_params = new_sp
-                    self.spinner_params = new_sp
-                    self.spinner_params_generated = True
-                    self.spinner_params_revealed = True
-                return
+            print(f"[GameRoom] ensure_next_board_ready: Popped fallback cached board for {self.room_id}")
+            self.next_round_board = fb
+            self.next_round_words = fw
+            self.next_round_word_paths = fp
+            self.next_round_bonus_cell = fc
+            self.next_round_bonus = fbw or ''
+            self.next_round_format = ff
+            self.next_round_uniqueness = fr
+            if fparams:
+                actual_wc = len(fw)
+                if actual_wc < 100: wc_label = '50-100'
+                elif actual_wc < 200: wc_label = '100-200'
+                elif actual_wc < 300: wc_label = '200-300'
+                elif actual_wc < 400: wc_label = '300-400'
+                elif actual_wc < 500: wc_label = '400-500'
+                else: wc_label = '500+'
+                fparams['word_count_range'] = wc_label
+                self.next_round_spinner_params = fparams
+                
+                dict_val = fparams.get('dictionary', 'NWL')
+                use_aw_val = fparams.get('use_added_words', False)
+                if use_aw_val and '+ AW' not in str(dict_val) and '+AW' not in str(dict_val):
+                    dict_val = f"{dict_val} + AW"
+                
+                new_sp = {
+                    'dictionary': dict_val,
+                    'difficulty': fparams.get('difficulty', 'Medium'),
+                    'word_count_range': wc_label,
+                    'board_format': fparams.get('board_format', 'Normal'),
+                    'min_word_length': fparams.get('min_word_length', 3),
+                    'bonus_word_length': fparams.get('bonus_word_len', 6),
+                    'use_added_words': use_aw_val,
+                    'board_dimensions': self.board_dimensions,
+                    'time_limit': self.time_limit,
+                    'generated_at': time.time()
+                }
+                self.next_spinner_params = new_sp
+                self.spinner_params = new_sp
+                self.spinner_params_generated = True
+                self.spinner_params_revealed = True
+            return
 
         # If cache empty
         print(f"[GameRoom] ensure_next_board_ready: Cache empty. Using emergency fallback board.")
@@ -2167,7 +2206,12 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             elif '300' in str(target_range): min_accept = 300
             elif '400' in str(target_range): min_accept = 400
             elif '500' in str(target_range): min_accept = 500
-    min_accept = max(50, min_accept)
+            
+    is_aw = use_added_words or '+ AW' in str(dictionary).upper() or '+AW' in str(dictionary).upper()
+    if is_aw:
+        min_accept = max(300, min_accept)
+    else:
+        min_accept = max(50, min_accept)
     
     parts = dimensions.split("x")
     is_24h = time_limit >= 7200
@@ -2892,7 +2936,54 @@ class RoomManager:
                         from board_generator import pop_cached_board, pop_any_cached_board, serialize_param_key
                         
                         e_results = None
-                        pre_pop = pop_any_cached_board(room.board_dimensions)
+                        pre_pop = None
+                        for _ in range(10):
+                            candidate = pop_any_cached_board(room.board_dimensions)
+                            if not candidate:
+                                break
+                            r_board, r_words, r_bonus_c, r_fmt, r_dict, r_ratio, r_bonus_word, r_params = candidate
+                            if r_params:
+                                # Determine min length and target range
+                                r_min_l = r_params.get('min_word_length', 3)
+                                grid_floor = 3
+                                if '4x6' in room.board_dimensions: grid_floor = 4
+                                elif '5x7' in room.board_dimensions: grid_floor = 5
+                                elif '6x8' in room.board_dimensions or '3x3x3' in room.board_dimensions: grid_floor = 6
+                                r_min_l = max(grid_floor, int(r_min_l) if r_min_l is not None else 3)
+                                
+                                # Count scorable words
+                                r_words_filtered = [w for w in r_words if len(w) >= r_min_l]
+                                actual_cnt = len(r_words_filtered)
+                                
+                                # Determine min accept
+                                r_wc = r_params.get('word_count_range', '100-200')
+                                min_accept = 50
+                                try:
+                                    min_accept = int(str(r_wc).split('-')[0])
+                                except:
+                                    if '50' in str(r_wc): min_accept = 50
+                                    elif '100' in str(r_wc): min_accept = 100
+                                    elif '200' in str(r_wc): min_accept = 200
+                                    elif '300' in str(r_wc): min_accept = 300
+                                    elif '400' in str(r_wc): min_accept = 400
+                                    elif '500' in str(r_wc): min_accept = 500
+                                
+                                is_aw_effective = r_params.get('use_added_words', False) or '+ AW' in str(r_params.get('dictionary', '')).upper()
+                                if is_aw_effective:
+                                    min_accept = max(300, min_accept)
+                                else:
+                                    min_accept = max(50, min_accept)
+                                    
+                                if actual_cnt >= min_accept:
+                                    pre_pop = candidate
+                                    break
+                                else:
+                                    print(f"[RoomManager] Kickstart Pop-first Candidate had only {actual_cnt} words of length >= {r_min_l} (needed {min_accept}). Discarding...")
+                            else:
+                                if len(r_words) >= 50:
+                                    pre_pop = candidate
+                                    break
+                                    
                         if pre_pop:
                             r_board, r_words, r_bonus_c, r_fmt, r_dict, r_ratio, r_bonus_word, r_params = pre_pop
                             if r_params:
@@ -2930,7 +3021,27 @@ class RoomManager:
                                 m_len, room.spinner_params.get('difficulty', 'Medium'),
                                 use_added_words=use_aw_flag
                             )
-                            e_results = pop_cached_board(param_key_str)
+                            temp_pop = pop_cached_board(param_key_str)
+                            if temp_pop and len(temp_pop) >= 2:
+                                r_wc = room.spinner_params.get('word_count_range', '100-200')
+                                min_accept = 50
+                                try:
+                                    min_accept = int(str(r_wc).split('-')[0])
+                                except:
+                                    if '50' in str(r_wc): min_accept = 50
+                                    elif '100' in str(r_wc): min_accept = 100
+                                    elif '200' in str(r_wc): min_accept = 200
+                                    elif '300' in str(r_wc): min_accept = 300
+                                    elif '400' in str(r_wc): min_accept = 400
+                                    elif '500' in str(r_wc): min_accept = 500
+                                if use_aw_flag:
+                                    min_accept = max(300, min_accept)
+                                else:
+                                    min_accept = max(50, min_accept)
+                                
+                                words_filtered = [w for w in temp_pop[1] if len(w) >= m_len]
+                                if len(words_filtered) >= min_accept:
+                                    e_results = temp_pop
 
 
                         if not e_results:
@@ -3678,7 +3789,7 @@ class RoomManager:
                         elif '400' in str(target_range): min_accept = 400
                         elif '500' in str(target_range): min_accept = 500
                 if use_aw_flag:
-                    min_accept = max(100, min_accept)
+                    min_accept = max(300, min_accept)
                 else:
                     min_accept = max(50, min_accept)
 
@@ -4414,7 +4525,7 @@ class RoomManager:
                         elif '400' in str(e_wc): min_accept = 400
                         elif '500' in str(e_wc): min_accept = 500
                 if e_use_aw:
-                    min_accept = max(100, min_accept)
+                    min_accept = max(300, min_accept)
                 else:
                     min_accept = max(50, min_accept)
 
@@ -4738,7 +4849,7 @@ class RoomManager:
                             elif '400' in str(search_wc): min_accept = 400
                             elif '500' in str(search_wc): min_accept = 500
                     if use_aw_flag:
-                        min_accept = max(100, min_accept)
+                        min_accept = max(300, min_accept)
                     else:
                         min_accept = max(50, min_accept)
                         
@@ -5228,7 +5339,7 @@ class RoomManager:
                     elif '400' in str(target_range): min_accept = 400
                     elif '500' in str(target_range): min_accept = 500
             if use_aw_flag:
-                min_accept = max(100, min_accept)
+                min_accept = max(300, min_accept)
             else:
                 min_accept = max(50, min_accept)
 

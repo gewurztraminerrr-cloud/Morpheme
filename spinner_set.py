@@ -38,8 +38,8 @@ class SpinnerSet:
                 dict_name = str(res.get('dictionary', '')).upper()
                 is_aw = res.get('use_added_words') is True or '+ AW' in dict_name or '+AW' in dict_name or dict_name in ['AW', 'ADDED_WORDS']
                 if is_aw:
-                    res['word_count_range'] = '100-200'
-                    print(f"[SpinnerSet] Ironclad corrected 50-100 word count range for + AW dictionary to 100-200.")
+                    res['word_count_range'] = '300-400'
+                    print(f"[SpinnerSet] Ironclad corrected 50-100 word count range for + AW dictionary to 300-400.")
                 else:
                     dims = str(board_dimensions).lower().replace(" ", "")
                     min_word_length = res.get('min_word_length', 3)
