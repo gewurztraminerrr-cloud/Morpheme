@@ -4864,6 +4864,14 @@ class RoomManager:
             # Start board generation in background thread
             def generate_in_background():
                 nonlocal bonus_word, params, launched_generated_at
+                
+                # Capture params locally for thread safety
+                search_wc = params.get('word_count_range')
+                search_dict = params.get('dictionary')
+                search_fmt = params.get('board_format')
+                search_min = params.get('min_word_length')
+                search_diff = params.get('difficulty')
+                
                 try:
                     print(f"[RoomManager] Background board generation started for {room_id}...")
                     
@@ -4948,13 +4956,6 @@ class RoomManager:
                     
                     # STEP 1: No cache hit — proceed with live generation
 
-                    # Capture params locally for thread safety
-                    search_wc = params.get('word_count_range')
-                    search_dict = params.get('dictionary')
-                    search_fmt = params.get('board_format')
-                    search_min = params.get('min_word_length')
-                    search_diff = params.get('difficulty')
-                    
                     print(f"[RoomManager] [DEBUG-GEN] Room {room_id} calling generate_board with search_min={search_min}, range={search_wc}")
                     
                     # USER REQUEST: Zero-latency 0:00 loading.

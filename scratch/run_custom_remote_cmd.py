@@ -15,8 +15,8 @@ def main():
     child.expect([r"\$", r"#"])
     print("\nLogged in successfully!")
     
-    print("\n--- Grepping PM2 out log for RESCUE ---")
-    child.sendline("grep -i -C 2 rescue ~/.pm2/logs/morpheme-out.log | tail -n 100")
+    print("\n--- Printing PM2 error logs ---")
+    child.sendline("tail -n 100 ~/.pm2/logs/morpheme-error.log")
     child.expect([r"\$", r"#"], timeout=15)
     
     child.sendline("exit")

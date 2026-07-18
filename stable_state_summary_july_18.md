@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 18, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `09479e5`
+* **Commit ID**: `b0ff726`
 * **Branch**: `main`
 * **Tags**: `snapshot-current`, `START_OVER_POINT_JULY_18`
 * **Date**: July 18, 2026
@@ -44,7 +44,11 @@ cd /home/morpheme/morpheme && git pull origin main && pm2 restart all
 - **Problem**: At the end of intermission (`0:00` remaining), `start_next_round` was entering a loop that slept/waited for up to `1.5` seconds if the background generator had not yet finished staging the next board. Combined with the fallback cache pop lookup and startup delay, this created a noticeable 2-3 second delay reading "WAIT..." before the new round started.
 - **Solution**: We removed the `1.5` second sleep/wait loop from `start_next_round`. Since the background generator has the entire 60-second intermission to build the board, if it isn't ready at the exact `0:00` mark, we instantly proceed to the cache pop fallback. The sqlite cache query executes in a fraction of a millisecond, starting the round instantly.
 
+### 7. Background Generator Scope Bug Fix
+- **Problem**: When the server launched the background search thread, it crashed instantly with an `UnboundLocalError: cannot access local variable 'search_wc' where it is not associated with a value`. This was because python scope rules marked `search_wc` (and other parameters) as local to the entire `generate_in_background()` closure because they were assigned to in a lower section of the function, causing any reference to them in the cache validation check at the top of the function to crash.
+- **Solution**: Moved all local search parameter assignments to the very top of `generate_in_background()` so they are defined before any cache validation lookups occur.
+
 ## Verification
 * **Local** (`/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme`): Fully clean working tree. Unit test suite passes completely.
-* **GitHub** (`gewurztraminerrr-cloud/Morpheme`, branch `main`): Fully synchronized up to commit `09479e5`. Tags `snapshot-current` and `START_OVER_POINT_JULY_18` successfully pushed.
+* **GitHub** (`gewurztraminerrr-cloud/Morpheme`, branch `main`): Fully synchronized up to commit `b0ff726`. Tags `snapshot-current` and `START_OVER_POINT_JULY_18` successfully pushed.
 * **Production** (`morpheme.games`, `/home/morpheme/morpheme`): Fully updated and restarted under PM2.
