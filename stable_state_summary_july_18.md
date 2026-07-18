@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 18, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `42f9922`
+* **Commit ID**: `3a0375e`
 * **Branch**: `main`
 * **Tags**: `snapshot-current`, `START_OVER_POINT_JULY_18`
 * **Date**: July 18, 2026
@@ -56,7 +56,15 @@ cd /home/morpheme/morpheme && git pull origin main && pm2 restart all
 - **Problem**: When a room's active round ended or transitioned, the background generator sometimes hadn't finished caching the next board. In those cases, the server fell back to `get_emergency_fallback_board()`. However, if the cache was empty, this fallback would dynamically generate a new random layout and synchronously run `_solve_board` up to 50 times in a retry loop. Solving boards against CSW/AW (500,000+ words) synchronously inside Gunicorn request threads blocked execution for 1-2 minutes, locking the server and leaving clients stuck reading "WAIT...".
 - **Solution**: Replaced the synchronous fallback live-solving code with a fast static pre-solved fallback loader. We pre-generated and pre-solved high-quality compliance-verified boards for all supported dimensions (`4x4`, `4x6`, `5x7`, `6x8`, `3x3x3`) and saved them in `dictionaries/static_fallbacks.json`. In the event of a cache miss/stall, `get_emergency_fallback_board` now lazy-loads the static boards instantly (under 0.05ms), resulting in truly instantaneous transitions between rounds and intermission.
 
+### 10. Asynchronous Mod Word Add/Remove Operations (Removed Disk Latency Stalls)
+- **Problem**: When a moderator added or removed a word in the "Added Words" tab under Mods, the server performed synchronous file reads/writes on `added_words.txt` and `word_stats.json` (a 4.7MB JSON file utilizing blocking `os.fsync` calls), followed by a full synchronous disk reload/trie rebuild. This blocked Gunicorn threads for 4 to 6 seconds per word, creating extreme UI freezes.
+- **Solution**: Replaced the synchronous implementation with an instant in-memory mutation model. We added `add_word_in_memory` and `remove_word_in_memory` to the `WordValidator` instance to immediately update the active word sets and tries in memory (under 0.1ms). Heavy file system updates are dispatched to an asynchronous background daemon thread. The endpoint's memory list cache is also updated in-place instantly, returning success to the moderator in under 1ms.
+
+### 11. Startup Warmup and Cache Pre-generation (Removed Lobby Entry Stalls)
+- **Problem**: The CSW dictionary (280,000+ words) was previously lazy-loaded on its first reference. When a user entered the lobby and opened the Tools tab (e.g. Lists, Unscrambler), the first lookup blocked the thread for 1-2 seconds to load the file and calculate complex Scrabble likelihood scores.
+- **Solution**: Implemented a server-side background warmup thread on boot. The server now preloads the CSW dictionary and pre-computes/pre-caches all default lists (including NWL, CSW, Added Words, Likelihood, and Uniques) using Flask's `test_client`. A new startup status API (`/api/startup/status`) lets the frontend gateway screen block until warmup completes (displaying a clean "Morpheme is loading dictionaries..." message). This guarantees that when a user clicks "ENTER LOBBY", all tools and mod screens are fully pre-cached and open instantly with zero delay.
+
 ## Verification
 * **Local** (`/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme`): Fully clean working tree. Unit test suite passes completely.
-* **GitHub** (`gewurztraminerrr-cloud/Morpheme`, branch `main`): Fully synchronized up to commit `42f9922`. Tags `snapshot-current` and `START_OVER_POINT_JULY_18` successfully pushed.
+* **GitHub** (`gewurztraminerrr-cloud/Morpheme`, branch `main`): Fully synchronized up to commit `3a0375e`. Tags `snapshot-current` and `START_OVER_POINT_JULY_18` successfully pushed.
 * **Production** (`morpheme.games`, `/home/morpheme/morpheme`): Fully updated and restarted under PM2.

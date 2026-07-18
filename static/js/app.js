@@ -257,10 +257,47 @@ document.addEventListener('DOMContentLoaded', async () => {
             const gatewayCont = document.getElementById('loading-gateway-container');
 
             if (gatewayBtn && spinnerCont && gatewayCont) {
-                // Keep the page on loading screen, hide spinner, and show gateway button
+                // Keep the page on loading screen
                 showPage('page-loading');
-                spinnerCont.style.display = 'none';
-                gatewayCont.style.display = 'flex';
+                
+                // Show dictionary pre-caching status text
+                let loadingTextEl = document.getElementById('loading-status-text');
+                if (!loadingTextEl) {
+                    loadingTextEl = document.createElement('div');
+                    loadingTextEl.id = 'loading-status-text';
+                    loadingTextEl.style.color = '#a0aec0';
+                    loadingTextEl.style.marginTop = '15px';
+                    loadingTextEl.style.fontSize = '0.95rem';
+                    loadingTextEl.style.fontWeight = '500';
+                    loadingTextEl.style.textAlign = 'center';
+                    // Insert right above the gateway container
+                    gatewayCont.parentNode.insertBefore(loadingTextEl, gatewayCont);
+                }
+
+                // Poll /api/startup/status to make sure tools lists are fully pre-cached
+                const checkWarmup = async () => {
+                    try {
+                        const res = await fetch('/api/startup/status');
+                        const data = await res.json();
+                        if (data.warmed_up) {
+                            loadingTextEl.style.display = 'none';
+                            spinnerCont.style.display = 'none';
+                            gatewayCont.style.display = 'flex';
+                        } else {
+                            loadingTextEl.textContent = 'Morpheme is loading dictionaries...';
+                            spinnerCont.style.display = 'flex';
+                            gatewayCont.style.display = 'none';
+                            setTimeout(checkWarmup, 300);
+                        }
+                    } catch (e) {
+                        // Fallback in case of endpoint failure
+                        loadingTextEl.style.display = 'none';
+                        spinnerCont.style.display = 'none';
+                        gatewayCont.style.display = 'flex';
+                    }
+                };
+
+                await checkWarmup();
 
                 // Customize button text based on destination
                 let targetPageId = 'page-lobby';

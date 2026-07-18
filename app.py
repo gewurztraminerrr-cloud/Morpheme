@@ -606,48 +606,53 @@ def add_added_word_api():
             'is_authoritative': True
         }), 400
 
-    # Sync with Global Tally immediately (Self-healing)
-    _update_word_stats(word, "add")
-
+    # Reject if already present in Added Words list (User Request)
+    if word.upper() in word_validator.added_words:
+        print(f"[Mods] REJECTED Duplicate: '{word}' is already in the Added Words set.")
+        return jsonify({
+            'error': f"'{word}' is already present on Added Words list.",
+            'is_duplicate': True
+        }), 400
         
     try:
-        # Load existing lines to potentially remove duplicates and maintain order
-        lines = []
-        if os.path.exists(ADDED_WORDS_FILE):
-            with open(ADDED_WORDS_FILE, 'r') as f:
-                lines = [line.strip().upper() for line in f if line.strip()]
+        # Update in-memory sets instantly
+        word_validator.add_word_in_memory(word)
         
-        # Reject if already present in Added Words list (User Request)
-        # Use the authoritative WordValidator set to avoid file-system latency issues
-        if word.upper() in word_validator.added_words:
-            print(f"[Mods] REJECTED Duplicate: '{word}' is already in the Added Words set.")
-            return jsonify({
-                'error': f"'{word}' is already present on Added Words list.",
-                'is_duplicate': True
-            }), 400
-        
-        # Load existing lines to potentially remove duplicates and maintain order (Safety fallback)
-        lines = []
-        if os.path.exists(ADDED_WORDS_FILE):
-            with open(ADDED_WORDS_FILE, 'r') as f:
-                lines = [line.strip().upper() for line in f if line.strip()]
-        
-        # Final safety check against list (if cache somehow lagged)
-        if word in lines:
-             return jsonify({'error': f"'{word}' is already present on Added Words list."}), 400
-
-        # Insert at the beginning (Top of the list) for NEW words
-        lines.insert(0, word)
-        
-        # Write back full list to preserve order
-        with open(ADDED_WORDS_FILE, 'w') as f:
-            for l in lines:
-                f.write(f"{l}\n")
-                
-        word_validator.reload_added_words()
+        # Clear local/endpoint caches instantly
         TOOLS_DICT_CACHE.clear()
         LISTS_CACHE.clear()
-        print(f"[Mods] Successfully added NEW word '{word}' to top of list.")
+        
+        # Update ADDED_WORDS_LIST_CACHE in-memory so the list API is instantly updated
+        global ADDED_WORDS_LIST_CACHE, LAST_ADDED_WORDS_LIST_MTIME
+        ADDED_WORDS_LIST_CACHE = list(word_validator.added_words_list)
+        LAST_ADDED_WORDS_LIST_MTIME = time.time() + 3600.0 # Prevent reload until thread finishes
+
+        # Spawn asynchronous thread to update files on disk (prevents blocking)
+        def save_added_word_async(w):
+            try:
+                # 1. Update Added Words file
+                lines = []
+                if os.path.exists(ADDED_WORDS_FILE):
+                    with open(ADDED_WORDS_FILE, 'r') as f:
+                        lines = [line.strip().upper() for line in f if line.strip()]
+                if w not in lines:
+                    lines.insert(0, w)
+                    with open(ADDED_WORDS_FILE, 'w') as f:
+                        for l in lines:
+                            f.write(f"{l}\n")
+                
+                # 2. Sync with Global Tally stats file (heavy I/O)
+                _update_word_stats(w, "add")
+                
+                global LAST_ADDED_WORDS_LIST_MTIME
+                if os.path.exists(ADDED_WORDS_FILE):
+                    LAST_ADDED_WORDS_LIST_MTIME = os.path.getmtime(ADDED_WORDS_FILE)
+                print(f"[AsyncMods] Finished saving new word '{w}' to disk and tally.")
+            except Exception as e:
+                print(f"[AsyncMods] Error saving '{w}' to disk: {e}")
+
+        import threading
+        threading.Thread(target=save_added_word_async, args=(word,), daemon=True).start()
         
         # Trigger dynamic definition mapping and auto-saving rules
         ensure_definitions_background([word])
@@ -674,27 +679,47 @@ def remove_added_word():
         return jsonify({'error': 'Word is required'}), 400
         
     try:
-        if not os.path.exists(ADDED_WORDS_FILE):
-             return jsonify({'success': False, 'error': 'File not found'})
-            
-        with open(ADDED_WORDS_FILE, 'r') as f:
-            lines = [line.strip().upper() for line in f if line.strip()]
+        # Update in-memory sets instantly
+        word_validator.remove_word_in_memory(word)
         
-        if word in lines:
-            new_lines = [l for l in lines if l != word]
-            with open(ADDED_WORDS_FILE, 'w') as f:
-                for l in new_lines:
-                    f.write(l + '\n')
-            
-            if word_validator:
-                word_validator.reload_added_words()
-                TOOLS_DICT_CACHE.clear()
-                LISTS_CACHE.clear()
+        # Clear local/endpoint caches instantly
+        TOOLS_DICT_CACHE.clear()
+        LISTS_CACHE.clear()
+        
+        # Update ADDED_WORDS_LIST_CACHE in-memory so the list API is instantly updated
+        global ADDED_WORDS_LIST_CACHE, LAST_ADDED_WORDS_LIST_MTIME
+        ADDED_WORDS_LIST_CACHE = list(word_validator.added_words_list)
+        LAST_ADDED_WORDS_LIST_MTIME = time.time() + 3600.0 # Prevent reload until thread finishes
 
-            # Sync with Global Tally
-            _update_word_stats(word, "remove")
+        # Spawn asynchronous thread to update files on disk (prevents blocking)
+        def remove_added_word_async(w):
+            try:
+                # 1. Update Added Words file
+                lines = []
+                if os.path.exists(ADDED_WORDS_FILE):
+                    with open(ADDED_WORDS_FILE, 'r') as f:
+                        lines = [line.strip().upper() for line in f if line.strip()]
+                if w in lines:
+                    new_lines = [l for l in lines if l != w]
+                    with open(ADDED_WORDS_FILE, 'w') as f:
+                        for l in new_lines:
+                            f.write(l + '\n')
+                
+                # 2. Sync with Global Tally
+                _update_word_stats(w, "remove")
+                
+                # Update the mtime to the actual new file mtime
+                global LAST_ADDED_WORDS_LIST_MTIME
+                if os.path.exists(ADDED_WORDS_FILE):
+                    LAST_ADDED_WORDS_LIST_MTIME = os.path.getmtime(ADDED_WORDS_FILE)
+                print(f"[AsyncMods] Finished removing word '{w}' from disk and tally.")
+            except Exception as e:
+                print(f"[AsyncMods] Error removing '{w}' from disk: {e}")
 
-            return jsonify({'success': True, 'message': f'Word "{word}" removed.'})
+        import threading
+        threading.Thread(target=remove_added_word_async, args=(word,), daemon=True).start()
+
+        return jsonify({'success': True, 'message': f'Word "{word}" removed.'})
         
         return jsonify({'error': 'Word not found in the list.'}), 404
     except Exception as e:
@@ -4532,6 +4557,48 @@ def submit_contact():
         return jsonify({'error': 'Failed to send message'}), 500
 
 # --- TOOLS ENDPOINTS ---
+STARTUP_WARMUP_COMPLETE = False
+
+@app.route('/api/startup/status', methods=['GET'])
+def get_startup_status():
+    global STARTUP_WARMUP_COMPLETE
+    return jsonify({
+        'warmed_up': STARTUP_WARMUP_COMPLETE,
+        'csw_loaded': word_validator.csw_words is not None and len(word_validator.csw_words) > 0
+    })
+
+def warm_up_lists_cache():
+    global STARTUP_WARMUP_COMPLETE
+    try:
+        # Wait a few seconds to let Gunicorn master/workers start up completely without blocking
+        import time
+        time.sleep(2.0)
+        print("[Warmup] Starting Lists Cache pre-generation...")
+        
+        # 1. Authoritative pre-load of CSW dictionary to memory
+        word_validator.ensure_csw_loaded()
+        
+        # 2. Warm up tools lists by simulating requests using Flask test_client
+        with app.app_context():
+            client = app.test_client()
+            for lt in ['all', 'nwl', 'csw', 'added', 'likelihood', 'uniques']:
+                url = f'/api/tools/lists?list_type={lt}&length=all&starts_with=all'
+                print(f"[Warmup] Pre-caching lists for list_type={lt}...")
+                client.get(url)
+            
+            # Warm up Added Words list API
+            print(f"[Warmup] Pre-caching added words list...")
+            client.get('/api/added_words/list')
+            
+        STARTUP_WARMUP_COMPLETE = True
+        print("[Warmup] Lists Cache warming successfully complete!")
+    except Exception as warmup_err:
+        print(f"[Warmup] Error during warmup: {warmup_err}")
+        STARTUP_WARMUP_COMPLETE = True
+
+import threading
+threading.Thread(target=warm_up_lists_cache, daemon=True).start()
+
 TOOLS_DICT_CACHE = {}
 LAST_ADDED_WORDS_MTIME = None
 

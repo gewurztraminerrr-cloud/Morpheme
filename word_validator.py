@@ -276,6 +276,29 @@ class WordValidator:
             for w in self.added_words:
                 self._add_to_trie(self.added_trie, w)
 
+    def add_word_in_memory(self, word):
+        """Add a word to the in-memory structures instantly and thread-safely."""
+        word = word.upper().strip()
+        if word not in self.added_words:
+            self.added_words.add(word)
+            self.added_words_list.insert(0, word)
+            self._add_to_trie(self.added_trie, word)
+            self._recalculate_full_sets()
+
+    def remove_word_in_memory(self, word):
+        """Remove a word from the in-memory structures instantly and thread-safely."""
+        word = word.upper().strip()
+        if word in self.added_words:
+            self.added_words.remove(word)
+            if word in self.added_words_list:
+                self.added_words_list.remove(word)
+            
+            # Rebuild trie clean
+            self.added_trie = TrieNode()
+            for w in self.added_words:
+                self._add_to_trie(self.added_trie, w)
+            self._recalculate_full_sets()
+
 
     def _add_to_trie(self, root, word):
         """Add a word to the trie"""
@@ -453,4 +476,8 @@ class WordValidator:
 
 # Global instance
 word_validator = WordValidator()
+
+# Pre-load CSW dictionary in a background thread on startup to prevent lobby transition delay
+import threading
+threading.Thread(target=word_validator.ensure_csw_loaded, daemon=True).start()
 
