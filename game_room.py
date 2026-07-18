@@ -5641,7 +5641,7 @@ class RoomManager:
                     room.all_words = {w for w in (room.all_words or []) if len(w) >= display_min_final}
                     room.all_words_paths = {w: room.all_words_paths.get(w, []) for w in room.all_words}
                     
-                    if hasattr(room, 'solved_words_with_scores'):
+                    if getattr(room, 'solved_words_with_scores', None) is not None:
                         room.solved_words_with_scores = {w: room.solved_words_with_scores[w] for w in room.all_words if w in room.solved_words_with_scores}
 
                     target_range = getattr(room, 'current_word_count_range', '200-300' if room.time_limit >= 7200 else '100-200')
@@ -5654,7 +5654,8 @@ class RoomManager:
                             sorted_scorable = sorted(list(room.all_words), key=lambda w: (len(w), w), reverse=True)[:max_target]
                             room.all_words = set(sorted_scorable)
                             room.all_words_paths = {w: room.all_words_paths.get(w, []) for w in room.all_words}
-                            room.solved_words_with_scores = {w: room.solved_words_with_scores[w] for w in room.all_words if w in room.solved_words_with_scores}
+                            if getattr(room, 'solved_words_with_scores', None) is not None:
+                                room.solved_words_with_scores = {w: room.solved_words_with_scores[w] for w in room.all_words if w in room.solved_words_with_scores}
                             
                     # Explicitly verify the length matches what we truncated to avoid ANY downstream counting ghosts
                     room.total_words_count = len(room.all_words)
