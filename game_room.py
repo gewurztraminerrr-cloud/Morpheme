@@ -4330,20 +4330,86 @@ class RoomManager:
                             if exact_res and len(exact_res) >= 7:
                                 board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word = exact_res[:7]
                                 if all_words and len(all_words) >= 20:
-                                    cached_board_data = (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word, new_params)
-                                    print(f"[RoomManager] Solo exact cache hit for key: {exact_key[:80]}...")
+                                    f_min_l = new_params.get('min_word_length', 3)
+                                    grid_floor = 3
+                                    if '4x6' in room.board_dimensions: grid_floor = 4
+                                    elif '5x7' in room.board_dimensions: grid_floor = 5
+                                    elif '6x8' in room.board_dimensions or '3x3x3' in room.board_dimensions: grid_floor = 6
+                                    f_min_l = max(grid_floor, int(f_min_l) if f_min_l is not None else 3)
+                                    
+                                    fw_filtered = [w for w in all_words if len(w) >= f_min_l]
+                                    actual_cnt = len(fw_filtered)
+                                    
+                                    f_wc = new_params.get('word_count_range', '100-200')
+                                    min_accept = 50
+                                    try:
+                                        min_accept = int(str(f_wc).split('-')[0])
+                                    except:
+                                        if '50' in str(f_wc): min_accept = 50
+                                        elif '100' in str(f_wc): min_accept = 100
+                                        elif '200' in str(f_wc): min_accept = 200
+                                        elif '300' in str(f_wc): min_accept = 300
+                                        elif '400' in str(f_wc): min_accept = 400
+                                        elif '500' in str(f_wc): min_accept = 500
+                                    
+                                    is_aw_effective = new_params.get('use_added_words', False) or '+ AW' in str(new_params.get('dictionary', '')).upper()
+                                    if is_aw_effective:
+                                        min_accept = max(300, min_accept)
+                                    else:
+                                        min_accept = max(50, min_accept)
+                                        
+                                    if actual_cnt >= min_accept:
+                                        cached_board_data = (board, fw_filtered, bonus_cell, board_format_ret, {w: p for w, p in all_words_dict.items() if len(w) >= f_min_l}, ratio, final_bonus_word, new_params)
+                                        print(f"[RoomManager] Solo exact cache hit for key: {exact_key[:80]}...")
                         except Exception as e:
                             print(f"[RoomManager] Error querying solo exact cache: {e}")
                             
                     # 2. General fallback/multiplayer mode: try to pop ANY board of these dimensions
                     if not cached_board_data:
                         try:
-                            any_res = pop_any_cached_board(room.board_dimensions)
-                            if any_res:
+                            for _ in range(10):
+                                any_res = pop_any_cached_board(room.board_dimensions)
+                                if not any_res:
+                                    break
                                 board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word, b_params = any_res
-                                if all_words and len(all_words) >= 20:
-                                    cached_board_data = (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word, b_params)
-                                    print(f"[RoomManager] General cache hit: popped board of dimensions {room.board_dimensions} with {len(all_words)} words")
+                                if b_params:
+                                    f_min_l = b_params.get('min_word_length', 3)
+                                    grid_floor = 3
+                                    if '4x6' in room.board_dimensions: grid_floor = 4
+                                    elif '5x7' in room.board_dimensions: grid_floor = 5
+                                    elif '6x8' in room.board_dimensions or '3x3x3' in room.board_dimensions: grid_floor = 6
+                                    f_min_l = max(grid_floor, int(f_min_l) if f_min_l is not None else 3)
+                                    
+                                    fw_filtered = [w for w in all_words if len(w) >= f_min_l]
+                                    actual_cnt = len(fw_filtered)
+                                    
+                                    f_wc = b_params.get('word_count_range', '100-200')
+                                    min_accept = 50
+                                    try:
+                                        min_accept = int(str(f_wc).split('-')[0])
+                                    except:
+                                        if '50' in str(f_wc): min_accept = 50
+                                        elif '100' in str(f_wc): min_accept = 100
+                                        elif '200' in str(f_wc): min_accept = 200
+                                        elif '300' in str(f_wc): min_accept = 300
+                                        elif '400' in str(f_wc): min_accept = 400
+                                        elif '500' in str(f_wc): min_accept = 500
+                                    
+                                    is_aw_effective = b_params.get('use_added_words', False) or '+ AW' in str(b_params.get('dictionary', '')).upper()
+                                    if is_aw_effective:
+                                        min_accept = max(300, min_accept)
+                                    else:
+                                        min_accept = max(50, min_accept)
+                                        
+                                    if actual_cnt >= min_accept:
+                                        cached_board_data = (board, fw_filtered, bonus_cell, board_format_ret, {w: p for w, p in all_words_dict.items() if len(w) >= f_min_l}, ratio, final_bonus_word, b_params)
+                                        break
+                                    else:
+                                        print(f"[RoomManager] generate_spinner_params Pop Candidate had only {actual_cnt} words of length >= {f_min_l} (needed {min_accept}). Discarding...")
+                                else:
+                                    if len(all_words) >= 50:
+                                        cached_board_data = (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word, b_params)
+                                        break
                         except Exception as e:
                             print(f"[RoomManager] Error querying general cache: {e}")
                             
