@@ -11,7 +11,7 @@ from word_validator import use_added_words_ctx
 
 def test_dictionary_spinner():
     print("=== Testing Dictionary Spinner ===")
-    counts = {"NWL": 0, "CSW": 0, "AW": 0}
+    counts = {"NWL": 0, "CSW": 0, "NWL + AW": 0, "CSW + AW": 0}
     iterations = 10000
     for _ in range(iterations):
         res = SpinnerSet._spin_dictionary()
@@ -21,25 +21,27 @@ def test_dictionary_spinner():
     for key, val in counts.items():
         pct = (val / iterations) * 100
         print(f"  {key}: {val} ({pct:.2f}%)")
-        # Assert each is roughly 33% / 34% (allow 28-38% margin of error)
-        assert 28.0 <= pct <= 38.0, f"Dictionary {key} spin frequency {pct:.2f}% out of bounds"
+        # Assert each is roughly 25% (allow 20-30% margin of error)
+        assert 20.0 <= pct <= 30.0, f"Dictionary {key} spin frequency {pct:.2f}% out of bounds"
     print("Dictionary Spinner stats look correct!\n")
 
 def test_word_count_spinner():
     print("=== Testing Word Count Spinner ===")
-    counts = {"50-100": 0, "100-200": 0, "200-300": 0, "300-400": 0, "500+": 0}
+    counts = {"50-100": 0, "100-200": 0, "200-300": 0, "300-400": 0, "400-500": 0, "500+": 0}
     iterations = 10000
     for _ in range(iterations):
-        res = SpinnerSet._spin_word_count("NWL", 3, "Medium", "4x4")
+        dict_choice = SpinnerSet._spin_dictionary()
+        res = SpinnerSet._spin_word_count(dict_choice, 3, "Medium", "4x4")
         counts[res] += 1
         
     print(f"Results over {iterations} spins:")
     expected = {
-        "50-100": 9.0,
-        "100-200": 30.0,
-        "200-300": 30.0,
-        "300-400": 30.0,
-        "500+": 1.0
+        "50-100": 4.5,
+        "100-200": 15.5,
+        "200-300": 15.0,
+        "300-400": 35.0,
+        "400-500": 20.0,
+        "500+": 10.0
     }
     
     for key, val in counts.items():
@@ -47,12 +49,7 @@ def test_word_count_spinner():
         exp = expected[key]
         print(f"  {key}: {val} ({pct:.2f}%, expected {exp}%)")
         # Allow reasonable margin of error based on weight size
-        if exp == 1.0:
-            assert 0.2 <= pct <= 2.5, f"Word count range {key} frequency {pct:.2f}% out of bounds (expected ~1%)"
-        elif exp == 9.0:
-            assert 7.0 <= pct <= 11.0, f"Word count range {key} frequency {pct:.2f}% out of bounds (expected ~9%)"
-        else:
-            assert 26.0 <= pct <= 34.0, f"Word count range {key} frequency {pct:.2f}% out of bounds (expected ~30%)"
+        assert exp - 3.0 <= pct <= exp + 3.0, f"Word count range {key} frequency {pct:.2f}% out of bounds (expected ~{exp}%)"
     print("Word Count Spinner stats look correct!\n")
 
 def test_bonus_word_length_spinner():

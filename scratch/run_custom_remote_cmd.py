@@ -15,9 +15,9 @@ def main():
     child.expect([r"\$", r"#"])
     print("\nLogged in successfully!")
     
-    print("\n--- Running git pull and pm2 restart all ---")
-    child.sendline("cd /home/morpheme/morpheme && git pull origin main && pm2 restart all")
-    child.expect([r"\$", r"#"])
+    print("\n--- Grepping PM2 out log for RESCUE ---")
+    child.sendline("grep -i -C 2 rescue ~/.pm2/logs/morpheme-out.log | tail -n 100")
+    child.expect([r"\$", r"#"], timeout=15)
     
     child.sendline("exit")
     child.close()
