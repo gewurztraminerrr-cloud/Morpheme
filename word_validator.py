@@ -292,7 +292,7 @@ class WordValidator:
             self.get_use_added_words()
             val = use_added_words_ctx.get()
             if val is None:
-                val = self.use_added_words
+                val = False
         else:
             val = use_added_words
 
@@ -328,7 +328,7 @@ class WordValidator:
             self.get_use_added_words()
             val = use_added_words_ctx.get()
             if val is None:
-                val = self.use_added_words
+                val = False
         else:
             val = use_added_words
             
