@@ -5388,12 +5388,7 @@ class RoomManager:
                     room.next_round_words = None
                     room.next_round_word_paths = None
 
-            # 1. PRE-CHECK: If search skipped or missed, try cache immediately then wait briefly
-            start_wait = time.time()
-            while not getattr(room, 'next_round_board', None) and (time.time() - start_wait < 1.5):
-                time.sleep(0.1)
-            
-            # INSTANT FALLBACK: If still no board after 1.5s, pop any cached board right now
+            # INSTANT FALLBACK: If no board is ready, pop any cached board right now without waiting
             if not getattr(room, 'next_round_board', None):
                 from board_generator import pop_any_cached_board as _pop_any_snr
                 # Try popping up to 10 cached boards to find one with enough words
