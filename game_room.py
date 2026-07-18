@@ -2192,6 +2192,8 @@ def calculate_word_score(word, bonus_word, board_format='Normal', path=None, bon
     from scoring import calculate_word_score as shared_calc
     return shared_calc(word, bonus_word, board_format=board_format, path=path, bonus_cell=bonus_cell, **kwargs)
 
+_STATIC_FALLBACKS_CACHE = None
+
 def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=60, dictionary='NWL', use_added_words=False, target_range=None, min_word_length=None, difficulty=None):
     """Dynamically generate a valid emergency fallback board that matches room dimensions and spells correct words."""
     from board_generator import BoardGenerator, serialize_param_key, pop_cached_board, refill_board_cache_bg, pop_any_cached_board
@@ -2359,84 +2361,78 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                         return board, words_filtered, bonus_cell, updated_format, paths_filtered, ratio, bonus_word, ctr, params
         except Exception as e:
             print(f"[get_emergency_fallback_board] Ultimate cache fallback error: {e}")
-
-        # --- LIVE GENERATION FALLBACK ---
-        # We skip slow dynamic live generation to guarantee instant responses (under 0.01ms) and prevent server timeouts.
-        pass
     except Exception as e:
-        print(f"[get_emergency_fallback_board] Error preparing fallback: {e}")
+        print(f"[get_emergency_fallback_board] General cache fallback error: {e}")
 
-    if _room_manager_instance and hasattr(_room_manager_instance, 'board_generator'):
-        bg = _room_manager_instance.board_generator
-    else:
-        from board_generator import BoardGenerator
-        bg = BoardGenerator()
-    import random
-    
+    # --- STATIC JSON FALLBACK ---
+    global _STATIC_FALLBACKS_CACHE
+    if _STATIC_FALLBACKS_CACHE is None:
+        try:
+            import json
+            fallback_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'static_fallbacks.json')
+            if os.path.exists(fallback_path):
+                with open(fallback_path, 'r') as f:
+                    _STATIC_FALLBACKS_CACHE = json.load(f)
+            else:
+                _STATIC_FALLBACKS_CACHE = {}
+        except Exception as load_err:
+            print(f"[get_emergency_fallback_board] Error loading static_fallbacks.json: {load_err}")
+            _STATIC_FALLBACKS_CACHE = {}
+
+    key = dimensions
+    if key not in _STATIC_FALLBACKS_CACHE:
+        keys = list(_STATIC_FALLBACKS_CACHE.keys())
+        key = keys[0] if keys else None
+
+    if key and key in _STATIC_FALLBACKS_CACHE:
+        entry = _STATIC_FALLBACKS_CACHE[key]
+        board = entry['board']
+        words = entry['words']
+        paths = entry['paths']
+        
+        paths_tuples = {}
+        for w, path_coords in paths.items():
+            paths_tuples[w] = [tuple(coord) for coord in path_coords]
+
+        bonus_word = entry['bonus_word']
+        bonus_cell = tuple(entry['bonus_cell']) if entry['bonus_cell'] else ((0, 0, 0) if len(dimensions.split('x')) == 3 else (0, 0))
+        ratio = entry['uniqueness']
+
+        fmt = 'Valued Letters' if time_limit >= 7200 else board_format
+        actual_wc = len(words)
+        if actual_wc < 100: wc_range_resolved = '50-100'
+        elif actual_wc < 200: wc_range_resolved = '100-200'
+        elif actual_wc < 300: wc_range_resolved = '200-300'
+        elif actual_wc < 400: wc_range_resolved = '300-400'
+        elif actual_wc < 500: wc_range_resolved = '400-500'
+        else: wc_range_resolved = '500+'
+
+        is_aw = use_added_words or '+ AW' in str(dictionary).upper() or '+AW' in str(dictionary).upper()
+        eparams_dict = {
+            'min_word_length': min_word_length or 3,
+            'word_count_range': wc_range_resolved,
+            'board_format': fmt,
+            'dictionary': dictionary or 'NWL',
+            'use_added_words': is_aw,
+            'difficulty': difficulty or 'Medium',
+            'bonus_word_len': len(bonus_word) if bonus_word else 6
+        }
+
+        print(f"[get_emergency_fallback_board] Returning static JSON fallback board for {dimensions} with {len(words)} words.")
+        return board, words, bonus_cell, fmt, paths_tuples, ratio, bonus_word, wc_range_resolved, eparams_dict
+
+    # Last resort if no static fallback exists in cache
+    print(f"[get_emergency_fallback_board] CRITICAL: Static fallback cache empty! Returning empty mock board.")
     parts = dimensions.split("x")
     is_3d = len(parts) == 3
-    
-    letters_pool = ["E", "A", "I", "O", "T", "R", "S", "N", "L", "C", "D", "P"]
-    for fallback_attempt in range(50):
-        if is_3d:
-            depth, rows, cols = map(int, parts)
-            board = [[[random.choice(letters_pool) for _ in range(cols)] for _ in range(rows)] for _ in range(6)]
-        else:
-            rows, cols = map(int, parts)
-            board = [[random.choice(letters_pool) for _ in range(cols)] for _ in range(rows)]
-            
-        # Sanitize letter abundances and vowel ratio to guarantee friendly and playable board
-        bg._sanitize_letter_abundances(board, depth=6 if is_3d else 1, board_format=board_format)
-        
-        is_mod_hard = (difficulty in ["Medium", "Hard"]) if difficulty else True
-        if is_mod_hard and bg._has_ing_sequence(board, depth=6 if is_3d else 1):
-            print(f"[get_emergency_fallback_board] Fallback board attempt {fallback_attempt+1} had an 'ING' sequence. Retrying...")
-            continue
-            
-        # Check word count
-        ml_solve = min_word_length
-        paths = bg._solve_board(board, dictionary or "NWL", min_word_length=ml_solve, store_paths=True)
-        words = sorted(list(paths.keys()))
-        
-        if len(words) >= min_accept or fallback_attempt == 49:
-            print(f"[get_emergency_fallback_board] Fallback board generated on attempt {fallback_attempt+1} with {len(words)} words (target >= {min_accept}).")
-            break
-        else:
-            print(f"[get_emergency_fallback_board] Fallback board attempt {fallback_attempt+1} had only {len(words)} words. Retrying...")
-    
-    # Ensure there is a bonus word
-    suitable = [w for w in words if 6 <= len(w) <= 10]
-    if not suitable: suitable = [w for w in words if len(w) >= 5]
-    if not suitable: suitable = [w for w in words if len(w) >= 3]
-    bonus_word = sorted(suitable, key=len, reverse=True)[0] if suitable else "CAT"
-    
-    bonus_cell = paths[bonus_word][0] if bonus_word in paths else (0, 0)
-    if is_3d and not isinstance(bonus_cell, tuple):
+    if is_3d:
+        board = [[['E' for _ in range(3)] for _ in range(3)] for _ in range(6)]
         bonus_cell = (0, 0, 0)
-        
-    fmt = 'Valued Letters' if time_limit >= 7200 else board_format
-    ratio = bg.get_uniqueness_ratio(board, words, rows, cols, dictionary or "NWL", depth=6 if is_3d else 1)
-    
-    actual_wc = len(words)
-    if actual_wc < 100: wc_range_resolved = '50-100'
-    elif actual_wc < 200: wc_range_resolved = '100-200'
-    elif actual_wc < 300: wc_range_resolved = '200-300'
-    elif actual_wc < 400: wc_range_resolved = '300-400'
-    elif actual_wc < 500: wc_range_resolved = '400-500'
-    else: wc_range_resolved = '500+'
-    
-    eparams_dict = {
-        'min_word_length': ml_solve,
-        'word_count_range': wc_range_resolved,
-        'board_format': fmt,
-        'dictionary': dictionary or 'NWL',
-        'use_added_words': use_added_words,
-        'difficulty': 'Medium',
-        'bonus_word_len': len(bonus_word) if bonus_word else 6
-    }
-    
-    print(f"[get_emergency_fallback_board] Static board generated with {len(words)} words. Bonus Word: {bonus_word}")
-    return board, words, bonus_cell, fmt, paths, ratio, bonus_word, wc_range_resolved, eparams_dict
+    else:
+        rows, cols = map(int, parts)
+        board = [['E' for _ in range(cols)] for _ in range(rows)]
+        bonus_cell = (0, 0)
+    return board, ["EAR"], bonus_cell, board_format, {"EAR": [bonus_cell]}, 0.5, "EAR", "50-100", {}
 
 
 class RoomManager:

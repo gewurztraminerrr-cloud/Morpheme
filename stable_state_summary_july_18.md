@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 18, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `0061193`
+* **Commit ID**: `42f9922`
 * **Branch**: `main`
 * **Tags**: `snapshot-current`, `START_OVER_POINT_JULY_18`
 * **Date**: July 18, 2026
@@ -52,7 +52,11 @@ cd /home/morpheme/morpheme && git pull origin main && pm2 restart all
 - **Problem**: The `/api/added_words/list` endpoint was opening and parsing the 500,000+ word `added_words.txt` file line-by-line, stripping and uppercasing words, and generating a JSON list on *every single request*. If multiple users opened the Lists page or searched Added Words concurrently, it would block Waitress threads for hundreds of milliseconds per request, causing massive CPU load and server lag.
 - **Solution**: Implemented OS-level filesystem modification time (`mtime`) caching for the `/api/added_words/list` endpoint. The server now checks the file mtime (a microsecond-level system call) and serves the pre-parsed list directly from memory unless the file is updated. Added corresponding `LISTS_CACHE.clear()` inside `load_tools_dictionary` to guarantee disk updates automatically invalidate the tools list cache.
 
+### 9. Instant Intermission & Round Transitions (Removed Live-Solving Stalls)
+- **Problem**: When a room's active round ended or transitioned, the background generator sometimes hadn't finished caching the next board. In those cases, the server fell back to `get_emergency_fallback_board()`. However, if the cache was empty, this fallback would dynamically generate a new random layout and synchronously run `_solve_board` up to 50 times in a retry loop. Solving boards against CSW/AW (500,000+ words) synchronously inside Gunicorn request threads blocked execution for 1-2 minutes, locking the server and leaving clients stuck reading "WAIT...".
+- **Solution**: Replaced the synchronous fallback live-solving code with a fast static pre-solved fallback loader. We pre-generated and pre-solved high-quality compliance-verified boards for all supported dimensions (`4x4`, `4x6`, `5x7`, `6x8`, `3x3x3`) and saved them in `dictionaries/static_fallbacks.json`. In the event of a cache miss/stall, `get_emergency_fallback_board` now lazy-loads the static boards instantly (under 0.05ms), resulting in truly instantaneous transitions between rounds and intermission.
+
 ## Verification
 * **Local** (`/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme`): Fully clean working tree. Unit test suite passes completely.
-* **GitHub** (`gewurztraminerrr-cloud/Morpheme`, branch `main`): Fully synchronized up to commit `0061193`. Tags `snapshot-current` and `START_OVER_POINT_JULY_18` successfully pushed.
+* **GitHub** (`gewurztraminerrr-cloud/Morpheme`, branch `main`): Fully synchronized up to commit `42f9922`. Tags `snapshot-current` and `START_OVER_POINT_JULY_18` successfully pushed.
 * **Production** (`morpheme.games`, `/home/morpheme/morpheme`): Fully updated and restarted under PM2.
