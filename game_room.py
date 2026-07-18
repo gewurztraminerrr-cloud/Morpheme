@@ -3782,6 +3782,16 @@ class RoomManager:
                     display_min_start = actual_shortest
             room.all_words = {w for w in (all_words or []) if len(w) >= display_min_start}
             
+            # --- TRUNCATION ENFORCEMENT for start_round ---
+            target_range = room.spinner_params.get('word_count_range')
+            if target_range:
+                _, max_target = self.board_generator._parse_word_count_range(target_range)
+                if max_target < 99999 and len(room.all_words) > max_target:
+                    print(f"[ACCURACY-SYNC-START] Truncating Round {room.current_round} to {max_target} words to match range '{target_range}'")
+                    sorted_scorable = sorted(list(room.all_words), key=lambda w: (len(w), w), reverse=True)[:max_target]
+                    room.all_words = set(sorted_scorable)
+                    all_words_dict = {w: all_words_dict[w] for w in room.all_words if w in all_words_dict}
+            
             # CATEGORIZATION (Synchronous): Ensure these are available immediately for UI sync
             if hasattr(word_validator, 'word_validator'):
                 if str(getattr(room, 'current_dictionary', 'NWL')).upper() in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
@@ -3818,7 +3828,22 @@ class RoomManager:
             room.spinner_params['difficulty'] = room.current_difficulty
             room.current_uniqueness = u_ratio
             room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
-            room.current_word_count_range = room.spinner_params.get('word_count_range', 'Varying...')
+            
+            # Recalculate/sync the actual range
+            room.total_words_count = sum(1 for w in room.all_words if len(w) >= room.current_min_length)
+            if room.time_limit < 7200:
+                _actual_count = room.total_words_count
+                if _actual_count < 100: _wc_truth = '50-100'
+                elif _actual_count < 200: _wc_truth = '100-200'
+                elif _actual_count < 300: _wc_truth = '200-300'
+                elif _actual_count < 400: _wc_truth = '300-400'
+                elif _actual_count < 500: _wc_truth = '400-500'
+                else: _wc_truth = '500+'
+                room.current_word_count_range = _wc_truth
+                if isinstance(room.spinner_params, dict):
+                    room.spinner_params['word_count_range'] = _wc_truth
+            else:
+                room.current_word_count_range = room.spinner_params.get('word_count_range', 'Varying...')
             
             # CRITICAL SYNC: Update the UI header slot with the ground truth
             # room.spinner_params['difficulty'] = achieved_diff
