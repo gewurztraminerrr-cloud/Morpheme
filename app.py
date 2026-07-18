@@ -542,11 +542,19 @@ def remove_pronunciation():
 
 
 
+ADDED_WORDS_LIST_CACHE = None
+LAST_ADDED_WORDS_LIST_MTIME = None
+
 @app.route('/api/added_words/list', methods=['GET'])
 def list_added_words_api():
+    global ADDED_WORDS_LIST_CACHE, LAST_ADDED_WORDS_LIST_MTIME
     if not os.path.exists(ADDED_WORDS_FILE):
         return jsonify({'words': []})
     try:
+        curr_mtime = os.path.getmtime(ADDED_WORDS_FILE)
+        if ADDED_WORDS_LIST_CACHE is not None and LAST_ADDED_WORDS_LIST_MTIME == curr_mtime:
+            return jsonify({'words': ADDED_WORDS_LIST_CACHE})
+
         with open(ADDED_WORDS_FILE, 'r') as f:
             # User Request: Sort by date added, most recent first (last lines in file first)
             # We preserve unique words but maintain the latest appearance order.
@@ -558,6 +566,9 @@ def list_added_words_api():
                 if w not in seen:
                     unique_words.append(w)
                     seen.add(w)
+            
+            ADDED_WORDS_LIST_CACHE = unique_words
+            LAST_ADDED_WORDS_LIST_MTIME = curr_mtime
             return jsonify({'words': unique_words})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -4543,6 +4554,8 @@ def load_tools_dictionary(dict_name):
     if LAST_ADDED_WORDS_MTIME is not None and curr_mtime != LAST_ADDED_WORDS_MTIME:
         print("[Tools] added_words.txt changed. Clearing tools dictionary cache.")
         TOOLS_DICT_CACHE.clear()
+        global LISTS_CACHE
+        LISTS_CACHE.clear()
 
     LAST_ADDED_WORDS_MTIME = curr_mtime
 

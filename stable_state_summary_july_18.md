@@ -3,7 +3,7 @@
 This document summarizes the stable state of **Morpheme** as of July 18, 2026. All local changes, remote code on GitHub, and the live application running on `morpheme.games` are fully synchronized.
 
 ## Latest Commit Information
-* **Commit ID**: `e2d3775`
+* **Commit ID**: `0061193`
 * **Branch**: `main`
 * **Tags**: `snapshot-current`, `START_OVER_POINT_JULY_18`
 * **Date**: July 18, 2026
@@ -48,7 +48,11 @@ cd /home/morpheme/morpheme && git pull origin main && pm2 restart all
 - **Problem**: When the server launched the background search thread, it crashed instantly with an `UnboundLocalError: cannot access local variable 'search_wc' where it is not associated with a value`. This was because python scope rules marked `search_wc` (and other parameters) as local to the entire `generate_in_background()` closure because they were assigned to in a lower section of the function, causing any reference to them in the cache validation check at the top of the function to crash.
 - **Solution**: Moved all local search parameter assignments to the very top of `generate_in_background()` so they are defined before any cache validation lookups occur.
 
+### 8. Added Words List Caching Optimization
+- **Problem**: The `/api/added_words/list` endpoint was opening and parsing the 500,000+ word `added_words.txt` file line-by-line, stripping and uppercasing words, and generating a JSON list on *every single request*. If multiple users opened the Lists page or searched Added Words concurrently, it would block Waitress threads for hundreds of milliseconds per request, causing massive CPU load and server lag.
+- **Solution**: Implemented OS-level filesystem modification time (`mtime`) caching for the `/api/added_words/list` endpoint. The server now checks the file mtime (a microsecond-level system call) and serves the pre-parsed list directly from memory unless the file is updated. Added corresponding `LISTS_CACHE.clear()` inside `load_tools_dictionary` to guarantee disk updates automatically invalidate the tools list cache.
+
 ## Verification
 * **Local** (`/Users/jeffbabiak/.gemini/antigravity/scratch/morpheme`): Fully clean working tree. Unit test suite passes completely.
-* **GitHub** (`gewurztraminerrr-cloud/Morpheme`, branch `main`): Fully synchronized up to commit `e2d3775`. Tags `snapshot-current` and `START_OVER_POINT_JULY_18` successfully pushed.
+* **GitHub** (`gewurztraminerrr-cloud/Morpheme`, branch `main`): Fully synchronized up to commit `0061193`. Tags `snapshot-current` and `START_OVER_POINT_JULY_18` successfully pushed.
 * **Production** (`morpheme.games`, `/home/morpheme/morpheme`): Fully updated and restarted under PM2.
