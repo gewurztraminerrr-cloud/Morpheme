@@ -1429,7 +1429,17 @@ class GameRoom:
                 self.next_spinner_params = new_sp
                 self.spinner_params = new_sp
                 self.spinner_params_generated = True
-                self.spinner_params_revealed = True
+                
+                is_past_reveal = False
+                if self.state == 'intermission':
+                    elapsed = time.time() - self.intermission_start_time
+                    intermission_duration = 5 if self.time_limit >= 7200 else 60
+                    reveal_threshold = 15.0 if intermission_duration >= 20 else 1.0
+                    if elapsed >= reveal_threshold:
+                        is_past_reveal = True
+                else:
+                    is_past_reveal = True
+                self.spinner_params_revealed = is_past_reveal
             return
 
         # If cache empty
@@ -1501,7 +1511,17 @@ class GameRoom:
         
         self.next_spinner_params = dict(self.spinner_params) if self.spinner_params else {}
         self.spinner_params_generated = True
-        self.spinner_params_revealed = True
+        
+        is_past_reveal = False
+        if self.state == 'intermission':
+            elapsed = time.time() - self.intermission_start_time
+            intermission_duration = 5 if self.time_limit >= 7200 else 60
+            reveal_threshold = 15.0 if intermission_duration >= 20 else 1.0
+            if elapsed >= reveal_threshold:
+                is_past_reveal = True
+        else:
+            is_past_reveal = True
+        self.spinner_params_revealed = is_past_reveal
 
     def check_and_update_state(self):
         """Authoritative state machine for game rooms.
