@@ -4515,11 +4515,9 @@ class RoomManager:
                 is_stuck_loading = True
                 
         # 2. Intermission 15s remaining rescue (normal countdown rooms only)
+        # Disable intermission watchdog to prevent mid-intermission parameter changes.
+        # Fallback is handled cleanly at start_next_round transition (0s remaining).
         is_stuck_intermission = False
-        if room.state == 'intermission' and not is_daily:
-            if room.time_remaining <= 15 and room.time_remaining > 0:
-                if not room.next_round_board and not getattr(room, '_did_6x8_fallback_rescue', False):
-                    is_stuck_intermission = True
                     
         if is_stuck_loading or is_stuck_intermission:
             with room._state_lock:
