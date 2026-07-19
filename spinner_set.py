@@ -269,8 +269,20 @@ class SpinnerSet:
             res = None  # Guard: ensure res is always defined even if loop body raises on first iteration
             
             for _ in range(30):
-                # Randomize dictionary and added words configuration
-                dictionary = SpinnerSet._spin_dictionary()
+                # Randomize dictionary and added words configuration based on dimensions
+                dims = str(board_dimensions).lower().replace(" ", "")
+                if '6x8' in dims or '3x3x3' in dims:
+                    # Enforce the user's explicit weights: 6L (25%), 7L (50%), 8L (25%)
+                    min_word_length = random.choices([6, 7, 8], weights=[25, 50, 25])[0]
+                    if min_word_length == 6:
+                        # Allow + AW dictionaries on 6L since it can support high density
+                        dictionary = random.choices(['NWL', 'CSW', 'NWL + AW', 'CSW + AW'], weights=[25, 25, 25, 25])[0]
+                    else:
+                        # 7L and 8L are strictly standard NWL/CSW to prevent generator hangs on high density
+                        dictionary = random.choices(['NWL', 'CSW'], weights=[50, 50])[0]
+                else:
+                    dictionary = SpinnerSet._spin_dictionary()
+
                 is_aw_effective = (
                     '+ AW' in str(dictionary).upper()
                     or '+AW' in str(dictionary).upper()
@@ -281,25 +293,23 @@ class SpinnerSet:
                 # Difficulty (spin independently)
                 difficulty = SpinnerSet._spin_difficulty(board_dimensions, 3)
 
-                # Word count range based on dictionary (forces exactly 9% weight for 50-100!)
-                if is_aw_effective:
-                    wc_range = random.choices(['300-400', '400-500', '500+'], weights=[40, 40, 20])[0]
+                # Word count range based on dictionary & length (forces exactly 9% weight for 50-100!)
+                if '6x8' in dims or '3x3x3' in dims:
+                    if is_aw_effective:
+                        wc_range = random.choices(['300-400', '400-500', '500+'], weights=[40, 40, 20])[0]
+                    else:
+                        if min_word_length == 8:
+                            wc_range = random.choices(['50-100', '100-200'], weights=[25, 75])[0]
+                        elif min_word_length == 7:
+                            wc_range = random.choices(['100-200', '200-300'], weights=[50, 50])[0]
+                        else: # 6L
+                            wc_range = random.choices(['100-200', '200-300', '300-400'], weights=[30, 40, 30])[0]
                 else:
-                    wc_range = random.choices(['50-100', '100-200', '200-300', '300-400'], weights=[9, 31, 30, 30])[0]
+                    if is_aw_effective:
+                        wc_range = random.choices(['300-400', '400-500', '500+'], weights=[40, 40, 20])[0]
+                    else:
+                        wc_range = random.choices(['50-100', '100-200', '200-300', '300-400'], weights=[9, 31, 30, 30])[0]
 
-                # Determine minimum word length based on wc_range and dimensions
-                dims = str(board_dimensions).lower().replace(" ", "")
-                if ('6x8' in dims or '3x3x3' in dims) and not is_aw_effective:
-                    # Enforce the user's explicit weights: 6L (25%), 7L (50%), 8L (25%)
-                    min_word_length = random.choices([6, 7, 8], weights=[25, 50, 25])[0]
-                    # Select wc_range matching the length
-                    if min_word_length == 8:
-                        wc_range = random.choices(['50-100', '100-200'], weights=[25, 75])[0]
-                    elif min_word_length == 7:
-                        wc_range = random.choices(['100-200', '200-300'], weights=[50, 50])[0]
-                    else: # 6L
-                        wc_range = random.choices(['100-200', '200-300', '300-400'], weights=[30, 40, 30])[0]
-                else:
                     if is_aw_effective:
                         if '4x4' in dims:
                             min_word_length = 3
@@ -307,9 +317,7 @@ class SpinnerSet:
                             min_word_length = random.choices([3, 4], weights=[40, 60])[0]
                         elif '5x7' in dims:
                             min_word_length = random.choices([4, 5], weights=[40, 60])[0]
-                        elif '3x3x3' in dims:
-                            min_word_length = random.choices([4, 5], weights=[40, 60])[0]
-                        else: # 6x8
+                        else: # other
                             min_word_length = random.choices([5, 6], weights=[40, 60])[0]
                     else:
                         if wc_range == '50-100':
