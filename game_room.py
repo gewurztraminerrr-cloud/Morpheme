@@ -3187,6 +3187,26 @@ class RoomManager:
                         
                         e_results = None
                         pre_pop = None
+                        
+                        # Define baseline min_accept to avoid UnboundLocalError on cache miss
+                        _wc_val = room.spinner_params.get('word_count_range', '100-200') if room.spinner_params else '100-200'
+                        min_accept = 50
+                        try:
+                            min_accept = int(str(_wc_val).split('-')[0])
+                        except:
+                            if '50' in str(_wc_val): min_accept = 50
+                            elif '100' in str(_wc_val): min_accept = 100
+                            elif '200' in str(_wc_val): min_accept = 200
+                            elif '300' in str(_wc_val): min_accept = 300
+                            elif '400' in str(_wc_val): min_accept = 400
+                            elif '500' in str(_wc_val): min_accept = 500
+                        _dict_val = str(room.spinner_params.get('dictionary', 'NWL') if room.spinner_params else 'NWL').upper()
+                        _use_aw_val = (room.spinner_params.get('use_added_words', False) if room.spinner_params else False) or ('+ AW' in _dict_val) or ('+AW' in _dict_val) or (_dict_val in ['AW', 'ADDED_WORDS'])
+                        if _use_aw_val:
+                            min_accept = max(300, min_accept)
+                        else:
+                            min_accept = max(50, min_accept)
+                            
                         for _ in range(10):
                             candidate = pop_any_cached_board(room.board_dimensions)
                             if not candidate:
