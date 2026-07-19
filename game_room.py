@@ -3426,32 +3426,21 @@ class RoomManager:
                             room.bonus_cell = e_bonus_c
                             room.bonus_word = e_bonus_word or b_word
                             
-                            if e_params:
-                                print(f"[RoomManager] Aligning start_round spinner parameters to match fallback board: {e_params}")
-                                room.spinner_params['dictionary'] = e_params.get('dictionary', 'NWL')
-                                room.spinner_params['difficulty'] = e_params.get('difficulty', 'Medium')
-                                room.spinner_params['word_count_range'] = e_params.get('word_count_range', '100-200')
-                                room.spinner_params['board_format'] = e_params.get('board_format', 'Normal')
-                                room.spinner_params['min_word_length'] = e_params.get('min_word_length', 3)
-                                room.spinner_params['use_added_words'] = e_params.get('use_added_words', False)
-                                room.spinner_params['bonus_word_length'] = e_params.get('bonus_word_len', 6)
-                                m_len = int(e_params.get('min_word_length', 3))
-                            else:
-                                if e_words:
-                                    actual_shortest = min(len(w) for w in e_words)
-                                    room.spinner_params['min_word_length'] = actual_shortest
-                                    m_len = actual_shortest
-
+                            # Preserve the spun spinner_params completely to stick with what was initially determined.
+                            m_len = int(room.spinner_params.get('min_word_length', 3))
+                            
                             room.current_min_length = m_len
-                            room.current_board_format = 'Valued Letters' if is_24h else (e_params.get('board_format') if e_params else e_fmt)
+                            room.current_board_format = 'Valued Letters' if is_24h else room.spinner_params.get('board_format', 'Normal')
                             room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
                             room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
                             room.current_uniqueness = e_ratio
                             room.use_added_words = room.spinner_params.get('use_added_words', False)
                             
-                            # Filter words for length lockdown and store paths
-                            room.all_words = {w for w in (e_words or []) if len(w) >= m_len}
-                            room.all_words_paths = {w: p for w, p in (e_dict or {}).items() if len(w) >= m_len}
+                            # Filter words for length lockdown, dictionary validity, and store paths
+                            raw_dict = room.spinner_params.get('dictionary', 'NWL')
+                            raw_aw = room.spinner_params.get('use_added_words', False)
+                            room.all_words = {w for w in (e_words or []) if len(w) >= m_len and word_validator.word_validator.is_valid_word(w, raw_dict, use_added_words=raw_aw)}
+                            room.all_words_paths = {w: p for w, p in (e_dict or {}).items() if len(w) >= m_len and word_validator.word_validator.is_valid_word(w, raw_dict, use_added_words=raw_aw)}
                             
                             if hasattr(word_validator, 'word_validator'):
                                 if str(getattr(room, 'current_dictionary', 'NWL')).upper() in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
@@ -3482,7 +3471,8 @@ class RoomManager:
                             room.total_words_count = len(room.all_words)
                             room.initial_total_words = room.total_words_count
                             _kc = room.total_words_count
-                            if _kc < 100: room.current_word_count_range = '50-100'
+                            if _kc < 50: room.current_word_count_range = '50-100'   # label closest bucket; board is valid but sparse
+                            elif _kc < 100: room.current_word_count_range = '50-100'
                             elif _kc < 200: room.current_word_count_range = '100-200'
                             elif _kc < 300: room.current_word_count_range = '200-300'
                             elif _kc < 400: room.current_word_count_range = '300-400'
@@ -3519,10 +3509,16 @@ class RoomManager:
                             
                             print(f"[RoomManager] {room_id} kickstarted ACTIVE (Round 1, {m_len}L+)")
                             
+                            # Issue 4: Add Round 1 board to fingerprint history so Round 2 cannot duplicate it
+                            _r1_fp = self._get_board_fingerprint(e_board)
+                            if _r1_fp:
+                                room.board_fingerprint_history = [_r1_fp]
+                            
                             # 4. Trigger PROACTIVE search for Round 2 in background
                             room.spinner_params_generated = True
                             threading.Thread(target=self.start_board_search, args=(room_id,), daemon=True).start()
                             print(f"[RoomManager] {room_id}: Kickstart complete. Round 1 started.")
+
                     else:
                         # Default behavior: Intermission
                         room.state = 'intermission'
@@ -4244,7 +4240,9 @@ class RoomManager:
                             act_min = int(p_min) if p_min is not None else m_len
                         except:
                             act_min = m_len
-                        all_words_filtered = [w for w in all_words if len(w) >= act_min]
+                        raw_dict = room.spinner_params.get('dictionary', 'NWL')
+                        raw_aw = room.spinner_params.get('use_added_words', False)
+                        all_words_filtered = [w for w in all_words if len(w) >= act_min and word_validator.word_validator.is_valid_word(w, raw_dict, use_added_words=raw_aw)]
                         if len(all_words_filtered) >= min_accept:
                             # Accept! Truncate if count exceeds max_limit to match spun target range and prevent drift
                             if len(all_words_filtered) > max_limit:
@@ -4253,20 +4251,16 @@ class RoomManager:
                                 all_words_filtered = sorted_w
                             all_words = all_words_filtered
                             all_words_dict = {w: p for w, p in all_words_dict.items() if w in all_words}
-                            print(f"[RoomManager] Popped relaxed cached board for room {room_id} with {len(all_words)} words. Aligning params: {params}")
-                            room.spinner_params['dictionary'] = params.get('dictionary', 'NWL')
-                            room.spinner_params['difficulty'] = params.get('difficulty', 'Medium')
-                            room.spinner_params['word_count_range'] = params.get('word_count_range', '100-200')
-                            room.spinner_params['board_format'] = params.get('board_format', 'Normal')
-                            room.spinner_params['min_word_length'] = act_min
-                            room.spinner_params['use_added_words'] = params.get('use_added_words', False)
-                            room.spinner_params['bonus_word_length'] = params.get('bonus_word_len', 6)
+                            print(f"[RoomManager] Popped relaxed cached board for room {room_id} with {len(all_words)} words. Keeping spun parameters.")
                             
-                            room.current_dictionary = params.get('dictionary', 'NWL')
-                            room.current_difficulty = params.get('difficulty', 'Medium')
-                            room.current_board_format = params.get('board_format', 'Normal')
-                            room.current_min_length = act_min
-                            room.use_added_words = params.get('use_added_words', False)
+                            # Preserve the spun spinner_params completely to stick with what was initially determined.
+                            # Only set the current active properties of the room to match the spun spinner_params.
+                            room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
+                            room.current_difficulty = room.spinner_params.get('difficulty', 'Medium')
+                            room.current_board_format = room.spinner_params.get('board_format', 'Normal')
+                            room.current_min_length = room.spinner_params.get('min_word_length', 3)
+                            room.use_added_words = room.spinner_params.get('use_added_words', False)
+
                             
                             # Issue 2: Use the embedded bonus word from the cached board, not a freshly-spun one.
                             # The embedded bonus_word was verified to exist on the board during generation.
@@ -4338,13 +4332,18 @@ class RoomManager:
                 
             # ATOMICITY: Apply new round data with strict display filtering
             display_min_start = room.spinner_params.get('min_word_length', 3)
+            raw_dict = room.spinner_params.get('dictionary', 'NWL')
+            raw_aw = room.spinner_params.get('use_added_words', False)
             if all_words:
                 actual_shortest = min(len(w) for w in all_words)
                 if actual_shortest < display_min_start:
                     print(f"[RoomManager] Word generator relaxed min_word_length from {display_min_start} to {actual_shortest}. Updating room param.")
                     room.spinner_params['min_word_length'] = actual_shortest
                     display_min_start = actual_shortest
-            room.all_words = {w for w in (all_words or []) if len(w) >= display_min_start}
+            
+            room.all_words = {w for w in (all_words or []) if len(w) >= display_min_start and word_validator.word_validator.is_valid_word(w, raw_dict, use_added_words=raw_aw)}
+            all_words_dict = {w: p for w, p in (all_words_dict or {}).items() if len(w) >= display_min_start and word_validator.word_validator.is_valid_word(w, raw_dict, use_added_words=raw_aw)}
+
             
             # --- TRUNCATION ENFORCEMENT for start_round ---
             target_range = room.spinner_params.get('word_count_range')
@@ -4358,9 +4357,26 @@ class RoomManager:
                     pass
                 if len(room.all_words) > max_limit:
                     print(f"[ACCURACY-SYNC-START] Truncating Round {room.current_round} to {max_limit} words to match range '{target_range}'")
-                    sorted_scorable = sorted(list(room.all_words), key=lambda w: (len(w), w), reverse=True)[:max_limit]
+                    import random as _random
+                    seed_val = f"{room.room_id}_{room.current_round}"
+                    words_by_len = {}
+                    for w in room.all_words:
+                        l = len(w)
+                        if l not in words_by_len:
+                            words_by_len[l] = []
+                        words_by_len[l].append(w)
+                    
+                    sorted_scorable = []
+                    rng = _random.Random(seed_val)
+                    for l in sorted(words_by_len.keys(), reverse=True):
+                        group = words_by_len[l]
+                        rng.shuffle(group)
+                        sorted_scorable.extend(group)
+                    
+                    sorted_scorable = sorted_scorable[:max_limit]
                     room.all_words = set(sorted_scorable)
                     all_words_dict = {w: all_words_dict[w] for w in room.all_words if w in all_words_dict}
+
             
             # CATEGORIZATION (Synchronous): Ensure these are available immediately for UI sync
             if hasattr(word_validator, 'word_validator'):
@@ -6317,12 +6333,28 @@ class RoomManager:
                         
                         if len(room.all_words) > max_limit:
                             print(f"[ACCURACY-SYNC] Truncating Round {room.current_round} to {max_limit} words to match range '{target_range}' (limit: {max_limit})")
-                            # Sort by length desc then alpha
-                            sorted_scorable = sorted(list(room.all_words), key=lambda w: (len(w), w), reverse=True)[:max_limit]
+                            import random as _random
+                            seed_val = f"{room.room_id}_{room.current_round}"
+                            words_by_len = {}
+                            for w in room.all_words:
+                                l = len(w)
+                                if l not in words_by_len:
+                                    words_by_len[l] = []
+                                words_by_len[l].append(w)
+                            
+                            sorted_scorable = []
+                            rng = _random.Random(seed_val)
+                            for l in sorted(words_by_len.keys(), reverse=True):
+                                group = words_by_len[l]
+                                rng.shuffle(group)
+                                sorted_scorable.extend(group)
+                            
+                            sorted_scorable = sorted_scorable[:max_limit]
                             room.all_words = set(sorted_scorable)
                             room.all_words_paths = {w: room.all_words_paths.get(w, []) for w in room.all_words}
                             if getattr(room, 'solved_words_with_scores', None) is not None:
                                 room.solved_words_with_scores = {w: room.solved_words_with_scores[w] for w in room.all_words if w in room.solved_words_with_scores}
+
                             
                     # Explicitly verify the length matches what we truncated to avoid ANY downstream counting ghosts
                     room.total_words_count = len(room.all_words)

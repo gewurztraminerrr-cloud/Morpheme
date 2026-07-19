@@ -145,47 +145,11 @@ class SpinnerSet:
         wc_range = res.get('word_count_range', '100-200')
 
         if is_aw_effective:
-            # Added Words rounds: Enforce higher word counts for low min_lengths, but scale down for high min_lengths to keep them mathematically possible
-            if '4x4' in dims:
-                if min_word_length == 5:
-                    if wc_range not in ['50-100', '100-200']:
-                        wc_range = '50-100'
-                elif min_word_length == 4:
-                    if wc_range not in ['100-200', '200-300']:
-                        wc_range = '100-200'
-                else: # <= 3
-                    if wc_range not in ['300-400', '400-500', '500+']:
-                        wc_range = '300-400'
-            elif '4x6' in dims:
-                if min_word_length == 6:
-                    if wc_range not in ['50-100', '100-200']:
-                        wc_range = '50-100'
-                elif min_word_length == 5:
-                    if wc_range not in ['100-200', '200-300']:
-                        wc_range = '100-200'
-                else: # <= 4
-                    if wc_range not in ['300-400', '400-500', '500+']:
-                        wc_range = '300-400'
-            elif '5x7' in dims:
-                if min_word_length == 7:
-                    if wc_range not in ['50-100', '100-200']:
-                        wc_range = '50-100'
-                elif min_word_length == 6:
-                    if wc_range not in ['100-200', '200-300']:
-                        wc_range = '100-200'
-                else: # <= 5
-                    if wc_range not in ['300-400', '400-500', '500+']:
-                        wc_range = '300-400'
-            else: # 6x8, 3x3x3
-                if min_word_length == 8:
-                    if wc_range not in ['50-100', '100-200']:
-                        wc_range = '50-100'
-                elif min_word_length == 7:
-                    if wc_range not in ['100-200', '200-300']:
-                        wc_range = '100-200'
-                else: # <= 6
-                    if wc_range not in ['300-400', '400-500', '500+']:
-                        wc_range = '300-400'
+            # Added Words rounds: ALWAYS 300-400, 400-500, or 500+ — no exceptions.
+            # User requirement: AW dictionaries never show 50-100 or 100-200.
+            if wc_range not in ['300-400', '400-500', '500+']:
+                wc_range = '300-400'
+
         else:
             # Standard rounds
             if wc_range not in ['50-100', '100-200', '200-300', '300-400']:

@@ -222,15 +222,18 @@ def mark_board_hash_used(board_hash):
         conn.close()
         return True
     except sqlite3.IntegrityError:
-        # Already inserted by another thread/process
+        # Already inserted by another thread/process (true duplicate)
         try: conn.close()
         except: pass
         return False
     except Exception as e:
-        print(f"[BoardGen] Error marking board hash as used: {e}")
+        print(f"[BoardGen] Error marking board hash as used (database locked/error): {e}")
         try: conn.close()
         except: pass
-        return False
+        # Database lock or other system errors should NOT trigger infinite regeneration loop!
+        # Return True so the generator accepts the board and moves on.
+        return True
+
 
 def pop_any_cached_board(dimensions):
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
