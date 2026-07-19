@@ -105,6 +105,7 @@ class GameRoom:
     all_words: List[str] = field(default_factory=list)  # Fast initial word list
     previous_all_words: List[str] = field(default_factory=list) # Previous round words
     previous_board: List[List[str]] = field(default_factory=list) # Previous round board
+    board_fingerprint_history: List[str] = field(default_factory=list) # Rolling dedup history (last 10 boards)
     previous_day_history: Dict = field(default_factory=dict) # Snapshot of yesterday's game (Found/Missed)
     complete_words: List[str] = field(default_factory=list)  # Complete word list from background solving
     solved_words_with_scores: Dict[str, int] = field(default_factory=dict)  # Pre-computed word scores
@@ -4045,7 +4046,10 @@ class RoomManager:
                 room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split)
                 room.spinner_params_generated = True
             from spinner_set import SpinnerSet
-            room.spinner_params = SpinnerSet.sanitize_params(room.spinner_params, room.board_dimensions, is_24h)
+            # Issue 5: Only sanitize if params have NOT been revealed yet.
+            # Once params are locked (revealed during intermission), do NOT mutate them.
+            if not getattr(room, 'spinner_params_revealed', False):
+                room.spinner_params = SpinnerSet.sanitize_params(room.spinner_params, room.board_dimensions, is_24h)
             
             # GET BONUS WORD (Use override if available, else roll new)
             if bonus_word_override:
@@ -4178,7 +4182,26 @@ class RoomManager:
                             room.current_min_length = act_min
                             room.use_added_words = params.get('use_added_words', False)
                             
-                            res = (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word)
+                            # Issue 2: Use the embedded bonus word from the cached board, not a freshly-spun one.
+                            # The embedded bonus_word was verified to exist on the board during generation.
+                            # Only re-roll if the embedded word is absent or not in all_words.
+                            _cached_bw = final_bonus_word
+                            if _cached_bw and len(_cached_bw) >= m_len and _cached_bw in all_words_filtered:
+                                bonus_word = _cached_bw
+                                room.bonus_word = bonus_word
+                            else:
+                                # Embedded bonus word not found in filtered set — re-roll from actual words on board
+                                _bw_candidates = [w for w in all_words_filtered if len(w) == room.spinner_params.get('bonus_word_length', 8)]
+                                if not _bw_candidates:
+                                    _bw_len = max(m_len, min(len(w) for w in all_words_filtered) if all_words_filtered else 6)
+                                    _bw_candidates = [w for w in all_words_filtered if len(w) == _bw_len]
+                                if _bw_candidates:
+                                    import random as _r
+                                    bonus_word = _r.choice(_bw_candidates)
+                                    room.bonus_word = bonus_word
+                                    print(f"[RoomManager] Embedded bonus word '{_cached_bw}' not in board words; re-rolled to '{bonus_word}'")
+
+                            res = (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, bonus_word)
                             break
                         else:
                             print(f"[RoomManager] Popped candidate relaxed board discarded: had only {len(all_words_filtered)} words of length >= {act_min} (needed {min_accept}).")
@@ -4202,12 +4225,18 @@ class RoomManager:
                 
                 board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio, final_bonus_word = res
                 
-                # Compare to current board and previous round board to guarantee uniqueness
-                if getattr(room, 'board', None) != board and getattr(room, 'previous_board', None) != board:
-                    break
-                
-                print(f"[RoomManager] WARNING: Generated board in start_next_round for room {room_id} is IDENTICAL to current/previous round board. Retrying...")
-                board_attempts += 1
+                # Issue 1 & 7: Check against rolling 10-board fingerprint history, not just 1 previous board
+                _fp = self._get_board_fingerprint(board)
+                _fp_history = getattr(room, 'board_fingerprint_history', [])
+                if _fp and _fp in _fp_history:
+                    print(f"[RoomManager] WARNING: Board fingerprint ALREADY IN HISTORY for room {room_id}. Retrying...")
+                    board_attempts += 1
+                    continue
+                if getattr(room, 'board', None) == board or getattr(room, 'previous_board', None) == board:
+                    print(f"[RoomManager] WARNING: Generated board in start_round for room {room_id} is IDENTICAL to current/previous round board. Retrying...")
+                    board_attempts += 1
+                    continue
+                break
             
             if board is None:
                 print(f"[RoomManager] ERROR: Board generation failed!")
@@ -4255,6 +4284,15 @@ class RoomManager:
             # generate_board returns 'bonus_cell' coordinate as the 3rd element.
             room.board = board
             room.bonus_cell = bonus_cell
+
+            # Issue 1 & 7: Record fingerprint in rolling history (max 10 entries)
+            _new_fp = self._get_board_fingerprint(board)
+            if _new_fp:
+                if not hasattr(room, 'board_fingerprint_history') or room.board_fingerprint_history is None:
+                    room.board_fingerprint_history = []
+                room.board_fingerprint_history.append(_new_fp)
+                if len(room.board_fingerprint_history) > 10:
+                    room.board_fingerprint_history = room.board_fingerprint_history[-10:]
 
             if final_bonus_word:
                 room.bonus_word = final_bonus_word
@@ -6408,6 +6446,20 @@ class RoomManager:
         if count >= 200: return '200-300'
         if count >= 100: return '100-200'
         return '50-100'
+
+    def _get_board_fingerprint(self, board):
+        """Return a deterministic string fingerprint of a 2D or 3D board for dedup tracking."""
+        try:
+            if not board:
+                return ''
+            if isinstance(board[0][0], list):
+                # 3D board: flatten all faces
+                flat = ''.join(cell for face in board for row in face for cell in row)
+            else:
+                flat = ''.join(cell for row in board for cell in row)
+            return flat
+        except Exception:
+            return ''
 
     def _get_bonus_word(self, length=8, dictionary='NWL', alternating=False, difficulty='Medium', exclude=None):
         """Get a bonus word of specified length, optionally enforcing C/V alternating pattern for Checkerboard"""

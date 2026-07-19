@@ -245,6 +245,22 @@ class SpinnerSet:
         res['min_word_length'] = min_word_length
         res['word_count_range'] = wc_range
 
+        # Issue 4: Incompatible formats for +AW dictionaries — force Normal
+        # Checkerboard, Density, Equality Freq, Mania, Either/Or, Bounce are not compatible
+        # with +AW's very large word pools and special layout requirements.
+        if is_aw_effective:
+            cur_fmt = str(res.get('board_format', 'Normal'))
+            _aw_incompatible = (
+                'checkerboard' in cur_fmt.lower() or
+                'density' in cur_fmt.lower() or
+                'equality' in cur_fmt.lower() or
+                'mania' in cur_fmt.lower() or
+                'either' in cur_fmt.lower() or
+                'bounce' in cur_fmt.lower()
+            )
+            if _aw_incompatible:
+                res['board_format'] = 'Normal'
+
         if is_24h:
             if not is_aw_effective:
                 res['word_count_range'] = '200-300'
@@ -554,7 +570,7 @@ class SpinnerSet:
             
         result = random.choices(
             ['Normal', 'Bounce', 'Checkerboard', 'Equality Freq', 'Density', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Rotation', 'Double', 'Triple'],
-            weights=[66, 2, 12, 4, 2, 2, 2, 2, 2, 2, 2, 1, 1]
+            weights=[66, 2, 12, 4, 1, 2, 2, 2, 2, 2, 2, 1, 1]
         )[0]
         
         if result == 'Bounce':

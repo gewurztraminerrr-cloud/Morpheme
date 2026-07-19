@@ -1614,6 +1614,21 @@ async function updateGameState(incomingState = null) {
         
         // Check for state transitions (Cleanup/Misc)
         const roomChanged = previousState && state.room_id !== previousState.room_id;
+
+        // Issue 8: Detect rejoin (previousState is null but we have a stored round from sessionStorage)
+        // If round changed since we last played this room, wipe local submitted words
+        const _sessionKey = `morpheme_last_round_${state.room_id}`;
+        const _storedRound = parseInt(sessionStorage.getItem(_sessionKey) || '0', 10);
+        const _isRejoin = !previousState && state.state === 'active';
+        if (_isRejoin && _storedRound > 0 && state.current_round !== _storedRound) {
+            console.log(`[play.js] Rejoin round mismatch: was ${_storedRound}, now ${state.current_round}. Clearing local submitted words.`);
+            window._localSubmittedWords = new Set();
+            window.lastDisplayAllWordsArgs = null;
+        }
+        if (state.state === 'active') {
+            sessionStorage.setItem(_sessionKey, state.current_round);
+        }
+
         const isNewRound = (state.state === 'active' && (lastStateStr !== 'active' || roomChanged || (previousState && state.current_round !== previousState.current_round)));
         if (lastStateStr !== state.state || isNewRound) {
             if (isNewRound) {
@@ -5090,7 +5105,8 @@ function applyDensityToCell(cell, r = null, c = null, f = null, state = null) {
          } else if (cur > 0) {
              // HIGH CONTRAST GRAYSCALE: Linear ratio matching 3D implementation
              const ratio = Math.max(0, Math.min(1, cur / maxD));
-             const grayLightness = Math.round(100 - (ratio * 100)); 
+             // Issue 6: Clamp to minimum 20% lightness so tiles are never pure black (always readable)
+             const grayLightness = Math.max(20, Math.round(100 - (ratio * 100)));
              const hslColor = `hsl(0, 0%, ${grayLightness}%)`;
              
              // Trigger animation if density changed
