@@ -4245,6 +4245,14 @@ class RoomManager:
                 
                 board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio, final_bonus_word = res
                 
+                # Verify word count compliance for the resolved board candidate
+                _filtered_cnt = len([w for w in all_words if len(w) >= m_len])
+                if _filtered_cnt < min_accept and board_attempts < 4:
+                    print(f"[RoomManager] WARNING: Generated/popped board for room {room_id} has only {_filtered_cnt} words of length >= {m_len} (needed {min_accept}). Retrying...")
+                    res = None
+                    board_attempts += 1
+                    continue
+                
                 # Issue 1 & 7: Check against rolling 10-board fingerprint history, not just 1 previous board
                 _fp = self._get_board_fingerprint(board)
                 _fp_history = getattr(room, 'board_fingerprint_history', [])

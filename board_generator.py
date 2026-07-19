@@ -2375,7 +2375,7 @@ class BoardGenerator:
                         
                 # Early timeout or max attempts fallback to prevent clean slate fallback
                 time_elapsed = time.time() - start_time
-                if time_elapsed > timeout - 1.2 or attempts >= 15:
+                if time_elapsed > timeout - 1.2 or attempts >= 80:
                     print(f"[BoardGen] Early exit: Nearing timeout or max attempts reached ({time_elapsed:.1f}s/attempts={attempts}). Returning best-effort (distance={best_distance}).")
                     if best_board_data:
                         b_layout = best_board_data[0]
