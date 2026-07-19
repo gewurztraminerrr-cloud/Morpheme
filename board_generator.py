@@ -624,6 +624,9 @@ class BoardGenerator:
             if min_l > default_min:
                 if rows * cols <= 24 and min_l >= 4:
                     shift = 0.0
+                elif min_l >= 6:
+                    # For long word lengths (>=6L), the actual ratio is much lower, so do not shift upwards
+                    shift = 0.0
                 else:
                     shift = (min_l - default_min) * 0.07
         except Exception:
@@ -2194,7 +2197,8 @@ class BoardGenerator:
                     # AW rounds prioritize high word counts (300-400+) and density; bypass uniqueness checks
                     is_compliant = (min_words <= count <= max_words)
                 else:
-                    if attempts > 15:
+                    max_strict = 3 if (min_word_length and int(min_word_length) >= 6) else 15
+                    if attempts > max_strict:
                         # Prioritize word count range compliance over exact uniqueness range targets if we are struggling
                         is_compliant = (min_words <= count <= max_words)
                     else:
