@@ -275,8 +275,9 @@ class SpinnerSet:
                     # Enforce the user's explicit weights: 6L (25%), 7L (50%), 8L (25%)
                     min_word_length = random.choices([6, 7, 8], weights=[25, 50, 25])[0]
                     if min_word_length == 6:
-                        # Allow + AW dictionaries on 6L since it can support high density
-                        dictionary = random.choices(['NWL', 'CSW', 'NWL + AW', 'CSW + AW'], weights=[25, 25, 25, 25])[0]
+                        # Allow + AW dictionaries on 6L since it can support high density.
+                        # We use higher weights (80% total) for + AW to make them more frequent and visible.
+                        dictionary = random.choices(['NWL', 'CSW', 'NWL + AW', 'CSW + AW'], weights=[10, 10, 40, 40])[0]
                     else:
                         # 7L and 8L are strictly standard NWL/CSW to prevent generator hangs on high density
                         dictionary = random.choices(['NWL', 'CSW'], weights=[50, 50])[0]
