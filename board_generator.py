@@ -581,14 +581,15 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
                 try:
                     conn = sqlite3.connect(db_path, timeout=30)
                     conn.execute(
-                        "INSERT INTO pregenerated_boards (param_key, board_json, created_at) VALUES (?, ?, ?);",
-                        (param_key_str, json.dumps(board_data), time.time())
+                        "INSERT OR IGNORE INTO pregenerated_boards (param_key, board_json, created_at, board_hash) VALUES (?, ?, ?, ?);",
+                        (param_key_str, json.dumps(board_data), time.time(), board_hash)
                     )
                     conn.commit()
                     conn.close()
                 except Exception as e:
                     print(f"[BoardGen] [Refill] Error inserting to DB: {e}")
                     time.sleep(1.0)
+
                     
                 time.sleep(10.0)  # Throttle: 10s between generations to avoid CPU saturation
 
@@ -619,7 +620,8 @@ class BoardGenerator:
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     param_key TEXT NOT NULL,
                     board_json TEXT NOT NULL,
-                    created_at REAL NOT NULL
+                    created_at REAL NOT NULL,
+                    board_hash TEXT
                 );
             ''')
             conn.execute('''
@@ -629,10 +631,34 @@ class BoardGenerator:
                 );
             ''')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_param_key ON pregenerated_boards(param_key);')
+            # Unique index on board_hash — database-level guard against duplicate boards in cache
+            conn.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_pregenerated_board_hash ON pregenerated_boards(board_hash);')
+            # MIGRATION: Add board_hash column if it doesn't exist yet
+            try:
+                conn.execute('ALTER TABLE pregenerated_boards ADD COLUMN board_hash TEXT')
+                conn.commit()
+            except Exception:
+                pass  # Column already exists
+            # MIGRATION: Backfill board_hash for any existing rows that lack it
+            try:
+                rows = conn.execute('SELECT id, board_json FROM pregenerated_boards WHERE board_hash IS NULL').fetchall()
+                for row_id, board_json in rows:
+                    try:
+                        data = json.loads(board_json)
+                        h = get_board_hash(data['board'])
+                        conn.execute('UPDATE pregenerated_boards SET board_hash = ? WHERE id = ?', (h, row_id))
+                    except Exception:
+                        pass
+                if rows:
+                    conn.commit()
+                    print(f"[BoardGen] Backfilled board_hash for {len(rows)} pregenerated rows.")
+            except Exception as mig_e:
+                print(f"[BoardGen] board_hash backfill error: {mig_e}")
             conn.commit()
             conn.close()
         except Exception as e:
             print(f"[BoardGen] Error initializing pre-generated boards table: {e}")
+
 
     def _get_difficulty_set(self, dictionary_type):
         """Lazy-load and cache unique word sets for diff validation"""
