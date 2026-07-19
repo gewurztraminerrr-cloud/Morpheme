@@ -6124,6 +6124,7 @@ class RoomManager:
                 
                 # FINAL ACCURACY SYNC: Ensure the header labels exactly match the results
                 room.total_words_count = sum(1 for w in room.all_words if len(w) >= room.current_min_length)
+                room.initial_total_words = room.total_words_count
                 if room.time_limit < 7200:
                     _actual_count = room.total_words_count
                     if _actual_count < 100: _wc_truth = '50-100'
