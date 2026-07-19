@@ -33,50 +33,26 @@ class SpinnerSet:
                 res['board_format'] = 'Valued Letters'
                 res['word_count_range'] = '200-300'
                 
-            # Ironclad validation to ensure 50-100 word count is strictly restricted to greatest minimum lengths and NOT allowed for + AW
+            # Ironclad validation to ensure 50-100 word count is strictly restricted to greatest minimum lengths
             if isinstance(res, dict) and res.get('word_count_range') == '50-100':
-                dict_name = str(res.get('dictionary', '')).upper()
-                is_aw = res.get('use_added_words') is True or '+ AW' in dict_name or '+AW' in dict_name or dict_name in ['AW', 'ADDED_WORDS']
-                if is_aw:
-                    res['word_count_range'] = '300-400'
-                    print(f"[SpinnerSet] Ironclad corrected 50-100 word count range for + AW dictionary to 300-400.")
-                else:
-                    dims = str(board_dimensions).lower().replace(" ", "")
-                    min_word_length = res.get('min_word_length', 3)
-                    
-                    is_greatest = False
-                    if '4x4' in dims and min_word_length >= 5:
-                        is_greatest = True
-                    elif '4x6' in dims and min_word_length >= 6:
-                        is_greatest = True
-                    elif '5x7' in dims and min_word_length >= 7:
-                        is_greatest = True
-                    elif '6x8' in dims and min_word_length >= 8:
-                        is_greatest = True
-                    elif '3x3x3' in dims and min_word_length >= 8:
-                        is_greatest = True
-                    
-                    if not is_greatest:
-                        # If it slipped through or was loaded from a stale state, upgrade the word count range to 100-200
-                        res['word_count_range'] = '100-200'
-                        print(f"[SpinnerSet] Ironclad corrected mismatched word_count_range for dims={board_dimensions}, min_len={min_word_length} from 50-100 to 100-200.")
-            
-            # Ironclad validation to ensure 100-200 word count does not include forbidden lengths
-            if isinstance(res, dict) and res.get('word_count_range') == '100-200':
                 dims = str(board_dimensions).lower().replace(" ", "")
                 min_word_length = res.get('min_word_length', 3)
-                if '4x4' in dims and min_word_length == 3:
-                    res['min_word_length'] = random.choice([4, 5])
-                    print(f"[SpinnerSet] Wrapper adjusted 4x4 min_len for 100-200 words from 3 to {res['min_word_length']}")
-                elif '4x6' in dims and min_word_length == 4:
-                    res['min_word_length'] = random.choice([5, 6])
-                    print(f"[SpinnerSet] Wrapper adjusted 4x6 min_len for 100-200 words from 4 to {res['min_word_length']}")
-                elif '5x7' in dims and min_word_length == 5:
-                    res['min_word_length'] = random.choice([6, 7])
-                    print(f"[SpinnerSet] Wrapper adjusted 5x7 min_len for 100-200 words from 5 to {res['min_word_length']}")
-                elif '6x8' in dims and min_word_length == 6:
-                    res['min_word_length'] = random.choice([7, 8])
-                    print(f"[SpinnerSet] Wrapper adjusted 6x8 min_len for 100-200 words from 6 to {res['min_word_length']}")
+                
+                is_valid_50_100 = False
+                if '4x4' in dims and min_word_length >= 5:
+                    is_valid_50_100 = True
+                elif '4x6' in dims and min_word_length >= 6:
+                    is_valid_50_100 = True
+                elif '5x7' in dims and min_word_length >= 7:
+                    is_valid_50_100 = True
+                elif '6x8' in dims and min_word_length >= 8:
+                    is_valid_50_100 = True
+                elif '3x3x3' in dims and min_word_length >= 8:
+                    is_valid_50_100 = True
+                
+                if not is_valid_50_100:
+                    res['word_count_range'] = '100-200'
+                    print(f"[SpinnerSet] Ironclad corrected mismatched word_count_range for dims={board_dimensions}, min_len={min_word_length} from 50-100 to 100-200.")
             # Roll for Added Words configuration
             if isinstance(res, dict):
                 dict_val = res.get('dictionary')
@@ -168,38 +144,62 @@ class SpinnerSet:
 
         wc_range = res.get('word_count_range', '100-200')
 
-        # Enforce agreement: in 4x6 rooms, only allow 6L on 50-100 word counts.
-        if '4x6' in dims:
-            if wc_range == '50-100' or min_word_length == 6:
-                wc_range = '50-100'
-                min_word_length = 6
-
         if is_aw_effective:
-            # Scale target range according to min_word_length to keep rounds mathematically possible and prevent hangs
-            # BUT: NEVER allow word counts lower than 300-400 for AW rounds (strictly enforce 300-400, 400-500, or 500+).
-            if wc_range not in ['300-400', '400-500', '500+']:
-                import random
-                wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
-            # Safety caps for AW: Cap length to maximum possible that can hit 300+ words
+            # Added Words rounds: Enforce higher word counts for low min_lengths, but scale down for high min_lengths to keep them mathematically possible
             if '4x4' in dims:
-                min_word_length = 3
+                if min_word_length == 5:
+                    if wc_range not in ['50-100', '100-200']:
+                        wc_range = '50-100'
+                elif min_word_length == 4:
+                    if wc_range not in ['100-200', '200-300']:
+                        wc_range = '100-200'
+                else: # <= 3
+                    if wc_range not in ['300-400', '400-500', '500+']:
+                        wc_range = '300-400'
             elif '4x6' in dims:
-                min_word_length = min(min_word_length, 4)
+                if min_word_length == 6:
+                    if wc_range not in ['50-100', '100-200']:
+                        wc_range = '50-100'
+                elif min_word_length == 5:
+                    if wc_range not in ['100-200', '200-300']:
+                        wc_range = '100-200'
+                else: # <= 4
+                    if wc_range not in ['300-400', '400-500', '500+']:
+                        wc_range = '300-400'
             elif '5x7' in dims:
-                min_word_length = min(min_word_length, 5)
-            elif '3x3x3' in dims:
-                min_word_length = min(min_word_length, 8)
-            elif '6x8' in dims:
-                min_word_length = min(min_word_length, 8)
+                if min_word_length == 7:
+                    if wc_range not in ['50-100', '100-200']:
+                        wc_range = '50-100'
+                elif min_word_length == 6:
+                    if wc_range not in ['100-200', '200-300']:
+                        wc_range = '100-200'
+                else: # <= 5
+                    if wc_range not in ['300-400', '400-500', '500+']:
+                        wc_range = '300-400'
+            else: # 6x8, 3x3x3
+                if min_word_length == 8:
+                    if wc_range not in ['50-100', '100-200']:
+                        wc_range = '50-100'
+                elif min_word_length == 7:
+                    if wc_range not in ['100-200', '200-300']:
+                        wc_range = '100-200'
+                else: # <= 6
+                    if wc_range not in ['300-400', '400-500', '500+']:
+                        wc_range = '300-400'
         else:
+            # Standard rounds
             if wc_range not in ['50-100', '100-200', '200-300', '300-400']:
                 import random
                 wc_range = random.choices(['50-100', '100-200', '200-300', '300-400'], weights=[10, 30, 30, 30])[0]
 
             if '4x4' in dims:
-                if min_word_length >= 4:
-                    wc_range = '50-100'
-                else: # min_word_length <= 3
+                if min_word_length == 5:
+                    if wc_range not in ['50-100', '100-200']:
+                        wc_range = '50-100'
+                elif min_word_length == 4:
+                    if wc_range not in ['100-200', '200-300']:
+                        wc_range = '100-200'
+                else: # <= 3
                     if wc_range not in ['100-200', '200-300', '300-400']:
                         wc_range = '100-200'
             elif '4x6' in dims:
@@ -211,8 +211,8 @@ class SpinnerSet:
                         wc_range = '100-200'
                 elif min_word_length == 4:
                     if wc_range not in ['100-200', '200-300', '300-400']:
-                        wc_range = '100-200'
-                else: # min_word_length <= 3
+                        wc_range = '200-300'
+                else: # <= 3
                     if wc_range not in ['100-200', '200-300', '300-400']:
                         wc_range = '200-300'
             elif '5x7' in dims:
@@ -225,7 +225,7 @@ class SpinnerSet:
                 elif min_word_length == 5:
                     if wc_range not in ['100-200', '200-300', '300-400']:
                         wc_range = '200-300'
-                else: # min_word_length <= 4
+                else: # <= 4
                     if wc_range not in ['200-300', '300-400']:
                         wc_range = '200-300'
             elif '6x8' in dims or '3x3x3' in dims:
@@ -238,7 +238,7 @@ class SpinnerSet:
                 elif min_word_length == 6:
                     if wc_range not in ['100-200', '200-300', '300-400']:
                         wc_range = '200-300'
-                else: # min_word_length <= 5
+                else: # <= 5
                     if wc_range not in ['200-300', '300-400']:
                         wc_range = '200-300'
 

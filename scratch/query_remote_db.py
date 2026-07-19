@@ -12,15 +12,29 @@ def main():
     child.sendline(password)
     
     child.expect([r"\$", r"#"])
-    
-    # Run python query
-    py_cmd = "python3 -c \"import sqlite3, json; conn = sqlite3.connect('/home/morpheme/morpheme/morpheme.db'); cursor = conn.cursor(); cursor.execute('SELECT room_id, board_data, bonus_word, board_format FROM active_boards'); [print(f'Room: {r}\\nFormat: {fmt}\\nBonus: {b}\\nBoard: {bd}\\n') for r, bd, b, fmt in cursor.fetchall()]\""
-    child.sendline(py_cmd)
-    
+    # Create remote script
+    child.sendline("""cat << 'EOF' > /tmp/check_db.py
+import sqlite3
+conn = sqlite3.connect('/home/morpheme/morpheme/morpheme.db')
+cursor = conn.cursor()
+cursor.execute('SELECT COUNT(*), COUNT(CASE WHEN param_key LIKE "%AW%" THEN 1 END) FROM pregenerated_boards')
+total, aw_count = cursor.fetchone()
+print(f'Total pregenerated: {total}, AW count: {aw_count}')
+cursor.execute('SELECT DISTINCT param_key FROM pregenerated_boards')
+for r in cursor.fetchall():
+    print(r[0])
+conn.close()
+EOF
+""")
     child.expect([r"\$", r"#"])
-    print("\n--- Active Boards on Remote ---")
+    
+    # Run the script
+    child.sendline("python3 /tmp/check_db.py")
+    child.expect([r"\$", r"#"])
+    print("\n--- DB Search Results on Remote ---")
     print(child.before)
     
+    child.sendline("rm /tmp/check_db.py")
     child.sendline("exit")
     child.close()
 

@@ -17,11 +17,11 @@ def main():
             child.expect([r"\$", r"#", pexpect.EOF, pexpect.TIMEOUT], timeout=10)
             
             print("\n--- Reading tail of morpheme-out.log ---")
-            child.sendline("tail -n 30 ~/.pm2/logs/morpheme-out.log")
+            child.sendline("tail -n 150 ~/.pm2/logs/morpheme-out.log")
             child.expect([r"\$", r"#", pexpect.EOF, pexpect.TIMEOUT], timeout=10)
 
             print("\n--- Reading tail of morpheme-error.log ---")
-            child.sendline("tail -n 30 ~/.pm2/logs/morpheme-error.log")
+            child.sendline("tail -n 100 ~/.pm2/logs/morpheme-error.log")
             child.expect([r"\$", r"#", pexpect.EOF, pexpect.TIMEOUT], timeout=10)
 
             child.sendline("exit")
