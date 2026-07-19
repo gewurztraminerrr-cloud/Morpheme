@@ -5916,8 +5916,8 @@ class RoomManager:
                     revealed = room.next_spinner_params
                     board_params = getattr(room, 'next_round_spinner_params', None) or revealed
                     active_params = dict(revealed)
-                    # Carry over board-specific fields that are fine to update (uniqueness, actual difficulty achieved, word count range, and minimum length)
-                    for carry_key in ('uniqueness', 'difficulty', 'word_count_range', 'min_word_length'):
+                    # Carry over board-specific fields that are fine to update (uniqueness, actual difficulty achieved, and minimum length)
+                    for carry_key in ('uniqueness', 'difficulty', 'min_word_length'):
                         if carry_key in board_params:
                             active_params[carry_key] = board_params[carry_key]
                 else:
