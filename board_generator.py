@@ -237,6 +237,7 @@ def mark_board_hash_used(board_hash):
 
 def pop_any_cached_board(dimensions):
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
+    conn = None
     try:
         conn = sqlite3.connect(db_path, timeout=30)
         conn.row_factory = sqlite3.Row
@@ -249,8 +250,7 @@ def pop_any_cached_board(dimensions):
             row = cursor.fetchone()
             if not row:
                 cursor.execute("COMMIT;")
-                conn.close()
-                return None
+                break
                 
             cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (row['id'],))
             conn.commit()
@@ -264,8 +264,7 @@ def pop_any_cached_board(dimensions):
             if not mark_board_hash_used(board_hash):
                 print(f"[BoardGen] Discarding cached board (layout already used globally: {board_hash})")
                 continue
-            conn.close()
-            
+                
             try:
                 params = json.loads(param_key_str)
             except Exception as e:
@@ -286,7 +285,11 @@ def pop_any_cached_board(dimensions):
             return (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word, params)
     except Exception as e:
         print(f"[BoardGen] Error in pop_any_cached_board: {e}")
-        return None
+    finally:
+        if conn:
+            try: conn.close()
+            except: pass
+    return None
 
 def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len=None):
     """
@@ -300,6 +303,7 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
     Allows difficulty and word_count_range to be relaxed to avoid cache misses while keeping spinner selections stable.
     """
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
+    conn = None
     try:
         conn = sqlite3.connect(db_path, timeout=30)
         conn.row_factory = sqlite3.Row
@@ -355,7 +359,9 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
             if check_row:
                 cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (matched_row['id'],))
                 conn.commit()
-                conn.close()
+                try: conn.close()
+                except: pass
+                conn = None
                 
                 data = json.loads(check_row['board_json'])
                 board = data["board"]
@@ -386,10 +392,15 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
         conn.close()
     except Exception as e:
         print(f"[BoardGen] Error popping compatible cached board: {e}")
+    finally:
+        if conn:
+            try: conn.close()
+            except: pass
     return None
 
 def pop_cached_board(param_key_str):
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
+    conn = None
     try:
         conn = sqlite3.connect(db_path, timeout=30)
         conn.row_factory = sqlite3.Row
@@ -415,6 +426,7 @@ def pop_cached_board(param_key_str):
                 print(f"[BoardGen] Discarding cached board (layout already used globally: {board_hash})")
                 continue
             conn.close()
+            conn = None
             
             all_words = data["all_words"]
             bonus_cell = tuple(data["bonus_cell"]) if data["bonus_cell"] else None
@@ -433,6 +445,10 @@ def pop_cached_board(param_key_str):
         conn.close()
     except Exception as e:
         print(f"[BoardGen] Error checking/popping cached board: {e}")
+    finally:
+        if conn:
+            try: conn.close()
+            except: pass
     return None
 
 def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
