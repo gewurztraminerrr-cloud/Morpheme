@@ -5584,9 +5584,20 @@ class RoomManager:
                         curr_generated_at = None
                         if target_room and getattr(target_room, 'next_spinner_params', None):
                             curr_generated_at = target_room.next_spinner_params.get('generated_at')
-                        if curr_generated_at != launched_generated_at:
-                            print(f"[RoomManager] Stale board search discarded for {room_id} because parameters were re-spun (launched: {launched_generated_at}, current: {curr_generated_at})")
-                            return
+                        time_drift = abs((curr_generated_at or 0) - launched_generated_at)
+                        if time_drift > 1.0:
+                            curr_params = getattr(target_room, 'next_spinner_params', {}) or {}
+                            config_changed = False
+                            for key in ('dictionary', 'difficulty', 'board_format', 'min_word_length', 'word_count_range', 'use_added_words'):
+                                if str(curr_params.get(key)) != str(params.get(key)):
+                                    config_changed = True
+                                    break
+                            if config_changed:
+                                print(f"[RoomManager] Stale board search discarded for {room_id} because parameters were re-spun (launched: {launched_generated_at}, current: {curr_generated_at})")
+                                return
+                            else:
+                                print(f"[RoomManager] Parameter timestamps drifted by {time_drift:.4f}s but configuration is identical. Keeping board.")
+
 
                     # STALE BOARD SEARCH PROTECTION:
                     # If target_room's current_round is greater than search_round,
@@ -5621,8 +5632,17 @@ class RoomManager:
                                 curr_generated_at = None
                                 if target_room and getattr(target_room, 'next_spinner_params', None):
                                     curr_generated_at = target_room.next_spinner_params.get('generated_at')
-                                if curr_generated_at != launched_generated_at:
-                                    return
+                                time_drift = abs((curr_generated_at or 0) - launched_generated_at)
+                                if time_drift > 1.0:
+                                    curr_params = getattr(target_room, 'next_spinner_params', {}) or {}
+                                    config_changed = False
+                                    for key in ('dictionary', 'difficulty', 'board_format', 'min_word_length', 'word_count_range', 'use_added_words'):
+                                        if str(curr_params.get(key)) != str(params.get(key)):
+                                            config_changed = True
+                                            break
+                                    if config_changed:
+                                        return
+
 
                             # Stale refinement check
                             if target_room.current_round > search_round:
