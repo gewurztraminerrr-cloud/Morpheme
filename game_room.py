@@ -2479,12 +2479,20 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                             elif actual_wc < 500: ctr_resolved = '400-500'
                             else: ctr_resolved = '500+'
                             
+                            # Enforce standard dictionaries for word counts < 300
+                            caw_resolved = caw
+                            cdict_resolved = cdict
+                            if actual_wc < 300:
+                                caw_resolved = False
+                                cdict_resolved = str(cdict).replace('+ AW', '').replace('+AW', '').strip()
+                                if cdict_resolved == 'AW': cdict_resolved = 'NWL'
+
                             eparams_dict = {
                                 'min_word_length': final_min,
                                 'word_count_range': ctr_resolved,
                                 'board_format': cfmt,
-                                'dictionary': cdict,
-                                'use_added_words': caw,
+                                'dictionary': cdict_resolved,
+                                'use_added_words': caw_resolved,
                                 'difficulty': cdiff,
                                 'bonus_word_len': len(cbonus_word) if cbonus_word else 6
                             }
@@ -2516,6 +2524,15 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                         elif actual_wc < 500: ctr = '400-500'
                         else: ctr = '500+'
                         
+                        # Enforce standard dictionaries for word counts < 300
+                        use_aw_val = params.get('use_added_words', False)
+                        dict_val = params.get('dictionary', 'NWL')
+                        if actual_wc < 300:
+                            use_aw_val = False
+                            dict_val = str(dict_val).replace('+ AW', '').replace('+AW', '').strip()
+                            if dict_val == 'AW': dict_val = 'NWL'
+                        params['use_added_words'] = use_aw_val
+                        params['dictionary'] = dict_val
                         params['min_word_length'] = final_min
                         params['word_count_range'] = ctr
                         
@@ -2619,11 +2636,17 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         else: wc_range_resolved = '500+'
 
         is_aw = saved_params.get('use_added_words', False) or use_added_words or '+ AW' in str(dictionary).upper() or '+AW' in str(dictionary).upper()
+        dict_val = saved_params.get('dictionary') or dictionary or 'NWL'
+        if actual_wc_filtered < 300:
+            is_aw = False
+            dict_val = str(dict_val).replace('+ AW', '').replace('+AW', '').strip()
+            if dict_val == 'AW': dict_val = 'NWL'
+
         eparams_dict = {
             'min_word_length': final_min,
             'word_count_range': wc_range_resolved,
             'board_format': fmt,
-            'dictionary': saved_params.get('dictionary') or dictionary or 'NWL',
+            'dictionary': dict_val,
             'use_added_words': is_aw,
             'difficulty': saved_params.get('difficulty') or difficulty or 'Medium',
             'bonus_word_len': len(bonus_word) if bonus_word else 6
