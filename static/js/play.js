@@ -3517,17 +3517,22 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         }
 
         // Priority classes
-        // Color priority:
+        // Color priority for FOUND BY PLAYER:
+        //   Blue (player-word) ALWAYS takes absolute priority.
+        //   Never add a dictionary-tier class when isTargetFound — blue must not be overridden by gold (csw-only).
+        // Color priority for other words:
         //   1. NWL words → dark red (nwl-word)
         //   2. CSW-only words (in CSW, not in NWL) → gold (csw-only)
         //   3. AW-only words (not in NWL or CSW) → purple (added-word)
         if (isBonus) {
             className += ' bonus-word';
+        } else if (isTargetFound) {
+            // FIX: Player's own found words are ALWAYS blue. Never add dictionary-tier colors.
+            // csw-only (gold) must NOT override player-word (blue) for words found by the player.
+            className += ' player-word';
         } else {
-            // Found status styling (blue highlight for player, neutral for opponent, unfound for missed)
-            if (isTargetFound) {
-                className += ' player-word';
-            } else if (isFoundByAny) {
+            // For words found by others or unfound: apply found-status + dictionary-tier color
+            if (isFoundByAny) {
                 className += ' found-by-other';
             } else {
                 className += ' unfound';

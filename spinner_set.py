@@ -289,78 +289,96 @@ class SpinnerSet:
 
                 # Determine minimum word length based on wc_range and dimensions
                 dims = str(board_dimensions).lower().replace(" ", "")
-                if is_aw_effective:
-                    if '4x4' in dims:
-                        min_word_length = 3
-                    elif '4x6' in dims:
-                        min_word_length = random.choices([3, 4], weights=[40, 60])[0]
-                    elif '5x7' in dims:
-                        min_word_length = random.choices([4, 5], weights=[40, 60])[0]
-                    elif '3x3x3' in dims:
-                        min_word_length = random.choices([4, 5], weights=[40, 60])[0]
-                    else: # 6x8
-                        min_word_length = random.choices([5, 6], weights=[40, 60])[0]
+                if ('6x8' in dims or '3x3x3' in dims) and not is_aw_effective:
+                    # Enforce the user's explicit weights: 6L (25%), 7L (50%), 8L (25%)
+                    min_word_length = random.choices([6, 7, 8], weights=[25, 50, 25])[0]
+                    # Select wc_range matching the length
+                    if min_word_length == 8:
+                        wc_range = random.choices(['50-100', '100-200'], weights=[25, 75])[0]
+                    elif min_word_length == 7:
+                        wc_range = random.choices(['100-200', '200-300'], weights=[50, 50])[0]
+                    else: # 6L
+                        wc_range = random.choices(['100-200', '200-300', '300-400'], weights=[30, 40, 30])[0]
                 else:
-                    if wc_range == '50-100':
-                        # Must be the greatest length
-                        if '4x4' in dims: min_word_length = 4
-                        elif '4x6' in dims: min_word_length = 6
-                        elif '5x7' in dims: min_word_length = 7
-                        else: min_word_length = 8
-                    elif wc_range == '100-200':
-                        # Must be second greatest length (or below if rolled)
-                        if '4x4' in dims:
-                            min_word_length = random.choices([3, 4], weights=[75, 25])[0]
-                        elif '4x6' in dims:
-                            min_word_length = random.choices([4, 5, 6], weights=[20, 50, 30])[0]
-                        elif '5x7' in dims:
-                            min_word_length = random.choices([5, 6, 7], weights=[20, 50, 30])[0]
-                        else:
-                            min_word_length = random.choices([6, 7, 8], weights=[20, 50, 30])[0]
-                    elif wc_range == '200-300':
-                        # Must be lower length (4x6 allows 6L at 10% to ensure it appears)
+                    if is_aw_effective:
                         if '4x4' in dims:
                             min_word_length = 3
                         elif '4x6' in dims:
-                            min_word_length = random.choices([4, 5, 6], weights=[60, 30, 10])[0]
+                            min_word_length = random.choices([3, 4], weights=[40, 60])[0]
                         elif '5x7' in dims:
-                            min_word_length = random.choices([5, 6], weights=[70, 30])[0]
-                        else:
-                            min_word_length = random.choices([6, 7], weights=[70, 30])[0]
-                    else: # 300-400
-                        # Must be lowest length
-                        if '4x4' in dims: min_word_length = 3
-                        elif '4x6' in dims: min_word_length = random.choices([3, 4], weights=[50, 50])[0]
-                        elif '5x7' in dims: min_word_length = random.choices([4, 5], weights=[50, 50])[0]
-                        else: min_word_length = random.choices([5, 6], weights=[50, 50])[0]
+                            min_word_length = random.choices([4, 5], weights=[40, 60])[0]
+                        elif '3x3x3' in dims:
+                            min_word_length = random.choices([4, 5], weights=[40, 60])[0]
+                        else: # 6x8
+                            min_word_length = random.choices([5, 6], weights=[40, 60])[0]
+                    else:
+                        if wc_range == '50-100':
+                            # Must be the greatest length
+                            if '4x4' in dims: min_word_length = 4
+                            elif '4x6' in dims: min_word_length = 6
+                            elif '5x7' in dims: min_word_length = 7
+                            else: min_word_length = 8
+                        elif wc_range == '100-200':
+                            # Must be second greatest length (or below if rolled)
+                            if '4x4' in dims:
+                                min_word_length = random.choices([3, 4], weights=[75, 25])[0]
+                            elif '4x6' in dims:
+                                min_word_length = random.choices([4, 5, 6], weights=[20, 50, 30])[0]
+                            elif '5x7' in dims:
+                                min_word_length = random.choices([5, 6, 7], weights=[20, 50, 30])[0]
+                            else:
+                                min_word_length = random.choices([6, 7, 8], weights=[20, 50, 30])[0]
+                        elif wc_range == '200-300':
+                            # Must be lower length (4x6 allows 6L at 10% to ensure it appears)
+                            if '4x4' in dims:
+                                min_word_length = 3
+                            elif '4x6' in dims:
+                                min_word_length = random.choices([4, 5, 6], weights=[60, 30, 10])[0]
+                            elif '5x7' in dims:
+                                min_word_length = random.choices([5, 6], weights=[70, 30])[0]
+                            else:
+                                min_word_length = random.choices([6, 7], weights=[70, 30])[0]
+                        else: # 300-400
+                            # Must be lowest length
+                            if '4x4' in dims: min_word_length = 3
+                            elif '4x6' in dims: min_word_length = random.choices([3, 4], weights=[50, 50])[0]
+                            elif '5x7' in dims: min_word_length = random.choices([4, 5], weights=[50, 50])[0]
+                            else: min_word_length = random.choices([5, 6], weights=[50, 50])[0]
 
                 # Determine board format
                 board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions)
                 if board_format == 'Checkerboard':
                     if is_aw_effective:
-                        # AW dict cannot have 100-300 word counts; force normal format
-                        board_format = 'Normal'
+                        # Allow Checkerboard format in "+ AW" rounds! Keep the 300+ word count range.
+                        pass
                     else:
                         wc_range = random.choice(['100-200', '200-300'])
                         # Re-sync min_word_length for the new wc_range
+                        # FIX Issue 5: For 6x8 rooms, preserve the [6L=25%, 7L=50%, 8L=25%] user agreement.
+                        # The original code excluded 8L from Checkerboard selections (only offered [6,7]).
                         if wc_range == '100-200':
                             if '4x4' in dims: min_word_length = random.choices([3, 4], weights=[75, 25])[0]
                             elif '4x6' in dims: min_word_length = random.choices([4, 5], weights=[25, 75])[0]
                             elif '5x7' in dims: min_word_length = random.choices([5, 6], weights=[25, 75])[0]
+                            elif '6x8' in dims or '3x3x3' in dims:
+                                # Respect [6L=25%, 7L=50%, 8L=25%] even in Checkerboard
+                                min_word_length = random.choices([6, 7, 8], weights=[25, 50, 25])[0]
+                                # Checkerboard with 8L forces 50-100 count
+                                if min_word_length == 8: wc_range = '50-100'
                             else: min_word_length = random.choices([6, 7], weights=[25, 75])[0]
                         else: # 200-300
                             if '4x4' in dims: min_word_length = 3
                             elif '4x6' in dims: min_word_length = 4
                             elif '5x7' in dims: min_word_length = random.choices([5, 6], weights=[75, 25])[0]
+                            elif '6x8' in dims or '3x3x3' in dims:
+                                # Respect [6L=25%, 7L=50%, 8L=25%] — 8L needs fewer words, so pick 100-200
+                                min_word_length = random.choices([6, 7, 8], weights=[25, 50, 25])[0]
+                                if min_word_length == 8: wc_range = '100-200'
                             else: min_word_length = random.choices([6, 7], weights=[75, 25])[0]
                 elif board_format == 'Equality Freq':
                     if is_aw_effective:
-                        # AW dict with Equality Freq can hit 200-300 target
-                        wc_range = '200-300'
-                        if '4x4' in dims: min_word_length = 3
-                        elif '4x6' in dims: min_word_length = 4
-                        elif '5x7' in dims: min_word_length = 5
-                        else: min_word_length = 6
+                        # AW dict with Equality Freq must still follow 300+ word counts; keep rolled range
+                        pass
                     else:
                         # Non-AW Equality Freq is naturally low density; limit to 50-100 or 100-200
                         wc_range = random.choice(['50-100', '100-200'])
@@ -369,11 +387,17 @@ class SpinnerSet:
                             if '4x4' in dims: min_word_length = 4
                             elif '4x6' in dims: min_word_length = 6  # was 5, bumped to match true 50-100 threshold
                             elif '5x7' in dims: min_word_length = 7  # was 6
+                            elif '6x8' in dims or '3x3x3' in dims:
+                                # FIX Issue 5: Equality Freq 50-100 → 8L only (to achieve low count)
+                                min_word_length = 8
                             else: min_word_length = 8  # was 7
                         else: # 100-200
                             if '4x4' in dims: min_word_length = random.choice([3, 4])
                             elif '4x6' in dims: min_word_length = random.choices([4, 5, 6], weights=[20, 50, 30])[0]
                             elif '5x7' in dims: min_word_length = random.choices([5, 6, 7], weights=[20, 50, 30])[0]
+                            elif '6x8' in dims or '3x3x3' in dims:
+                                # FIX Issue 5: Respect [6L=25%, 7L=50%, 8L=25%] in Equality Freq 100-200
+                                min_word_length = random.choices([6, 7, 8], weights=[25, 50, 25])[0]
                             else: min_word_length = random.choices([6, 7, 8], weights=[20, 50, 30])[0]
 
                 bw_len = random.choice([6, 7, 8, 9, 10])

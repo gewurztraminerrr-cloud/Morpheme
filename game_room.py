@@ -1427,7 +1427,11 @@ class GameRoom:
                     'generated_at': time.time()
                 }
                 self.next_spinner_params = new_sp
-                self.spinner_params = new_sp
+                # FIX: Do NOT overwrite self.spinner_params here.
+                # spinner_params = CURRENT round's params (shown before reveal at 0:45).
+                # next_spinner_params = NEXT round's params (shown after reveal at 0:45).
+                # Overwriting spinner_params here would immediately change what the spinner shows
+                # mid-round or at the start of intermission (issues 6, 8, 9, 10).
                 self.spinner_params_generated = True
                 
                 is_past_reveal = False
@@ -1509,7 +1513,22 @@ class GameRoom:
                 e_scores[w] = {'total': s, 'base': s}
         self.next_round_word_scores = e_scores
         
-        self.next_spinner_params = dict(self.spinner_params) if self.spinner_params else {}
+        # Build next_spinner_params from the actual emergency board params
+        esp = {
+            'dictionary': e_params.get('dictionary', e_dict) if e_params else e_dict,
+            'difficulty': e_params.get('difficulty', 'Medium') if e_params else 'Medium',
+            'word_count_range': e_tr or '100-200',
+            'board_format': e_fmt or 'Normal',
+            'min_word_length': e_params.get('min_word_length', 3) if e_params else 3,
+            'bonus_word_length': len(e_bonus_word) if e_bonus_word else 6,
+            'use_added_words': e_use_aw,
+            'board_dimensions': self.board_dimensions,
+            'time_limit': self.time_limit,
+            'generated_at': time.time()
+        }
+        self.next_spinner_params = esp
+        # FIX: Do NOT overwrite self.spinner_params (current round's params).
+
         self.spinner_params_generated = True
         
         is_past_reveal = False
@@ -1557,8 +1576,7 @@ class GameRoom:
                     if len(fallback) >= 9:
                         fb, fw, fc, ff, fp, fr, fbw, _, fparams = fallback
                     else:
-                        fb, fw, fc, ff, fp, fr, fbw, _ = fallback
-                        fparams = {}
+                        fb, fw, fc, ff, fp, fr, fbw, fparams = fallback
 
                 # 2. Sync spinner params
                 fparams = dict(fparams) if fparams else {}
@@ -1720,6 +1738,8 @@ class GameRoom:
                 
                 self.state = 'intermission'
                 self.intermission_start_time = now
+                self.spinner_params_revealed = False
+                self._did_050_fallback_rescue = False
                 print(f"[TRANSITION] Room {self.room_id}: ACTIVE -> INTERMISSION (Time: {self.intermission_start_time}, Elapsed: {now - self.round_start_time})")
                 
                 # [PROACTIVE] Do NOT clear generated/search flags here anymore.
@@ -1992,9 +2012,137 @@ class GameRoom:
 
         # 3. Intermission state check (milestones handled by RoomManager)
         if self.state == 'intermission':
+            is_daily = (self.time_limit >= 7200)
+            if not is_daily:
+                elapsed = now - self.intermission_start_time
+                # 10s elapsed corresponds to 50s remaining (0:50) of a 60s intermission
+                if elapsed >= 10.0 and not getattr(self, '_did_050_fallback_rescue', False):
+                    # If not staged yet, trigger early fallback rescue
+                    if not self.next_round_board or not self.next_round_words:
+                        self._did_050_fallback_rescue = True
+                        print(f"[Fallback-Rescue] 0:50 remaining time reached (elapsed: {elapsed:.2f}s) without staged board for room {self.room_id}. Triggering early fallback board instantly.")
+                        self.trigger_early_fallback_rescue()
             return True
 
         return False
+
+    def trigger_early_fallback_rescue(self):
+        """USER REQUEST: If no board is ready by 0:50 remaining time during intermission,
+        grab a pregenerated board stored at random, assign its parameters, and stage it immediately."""
+        now = time.time()
+        import random
+        
+        # Pop from pre-generated cache if available
+        from board_generator import pop_any_cached_board
+        fallback = pop_any_cached_board(self.board_dimensions)
+        
+        if fallback:
+            fb, fw, fc, ff, fp, fr, fbw, fparams = fallback
+            print(f"[Fallback-Rescue] Early rescue: Popped board from cache with {len(fw)} words!")
+        else:
+            print(f"[Fallback-Rescue] Early rescue: Cache empty. Using emergency fallback board.")
+            # Get emergency fallback board matching current spinner params
+            e_format = self.spinner_params.get('board_format', 'Normal') if self.spinner_params else 'Normal'
+            e_dict = self.spinner_params.get('dictionary', 'NWL') if self.spinner_params else 'NWL'
+            e_use_aw = self.spinner_params.get('use_added_words', False) if self.spinner_params else False
+            e_wc = self.spinner_params.get('word_count_range', '100-200') if self.spinner_params else '100-200'
+            e_min_len = self.spinner_params.get('min_word_length') if self.spinner_params else None
+            e_diff = self.spinner_params.get('difficulty', 'Medium') if self.spinner_params else 'Medium'
+            
+            fallback = get_emergency_fallback_board(
+                self.board_dimensions, e_format, self.time_limit,
+                dictionary=e_dict, use_added_words=e_use_aw, target_range=e_wc, min_word_length=e_min_len, difficulty=e_diff
+            )
+            if len(fallback) >= 9:
+                fb, fw, fc, ff, fp, fr, fbw, _, fparams = fallback
+            else:
+                fb, fw, fc, ff, fp, fr, fbw, _ = fallback
+                fparams = {}
+
+        # 2. Sync spinner params
+        fparams = dict(fparams) if fparams else {}
+        dict_val = fparams.get('dictionary') or (self.spinner_params.get('dictionary') if self.spinner_params else 'NWL')
+        use_aw_val = fparams.get('use_added_words') or (self.spinner_params.get('use_added_words') if self.spinner_params else False)
+        if use_aw_val and '+ AW' not in str(dict_val) and '+AW' not in str(dict_val):
+            dict_val = f"{dict_val} + AW"
+            
+        actual_wc = len(fw)
+        if actual_wc < 100: wc_label = '50-100'
+        elif actual_wc < 200: wc_label = '100-200'
+        elif actual_wc < 300: wc_label = '200-300'
+        elif actual_wc < 400: wc_label = '300-400'
+        elif actual_wc < 500: wc_label = '400-500'
+        else: wc_label = '500+'
+
+        new_sp = {
+            'dictionary': dict_val,
+            'difficulty': fparams.get('difficulty') or (self.spinner_params.get('difficulty') if self.spinner_params else 'Medium'),
+            'word_count_range': wc_label,
+            'board_format': ff or (self.spinner_params.get('board_format') if self.spinner_params else 'Normal'),
+            'min_word_length': fparams.get('min_word_length') or (self.spinner_params.get('min_word_length') if self.spinner_params else 3),
+            'bonus_word_length': fparams.get('bonus_word_len') or len(fbw) if fbw else 6,
+            'use_added_words': use_aw_val,
+            'board_dimensions': self.board_dimensions,
+            'time_limit': self.time_limit,
+            'generated_at': now,
+            'uniqueness': fr
+        }
+        
+        # Enforce sanitization
+        new_sp = SpinnerSet.sanitize_params(new_sp, self.board_dimensions, self.time_limit >= 7200)
+
+        # Update next spinner params and current spinner params to make sure they match!
+        self.spinner_params = new_sp
+        self.next_spinner_params = new_sp
+        self.next_round_spinner_params = new_sp
+        self.spinner_params_generated = True
+        self.spinner_params_revealed = True
+        self._reveal_sync_complete = True
+
+        # Stage for the next round transition
+        self.next_round_board = fb
+        self.next_round_words = fw
+        self.next_round_word_paths = fp
+        self.next_round_bonus_cell = fc
+        self.next_round_bonus = fbw
+        self.next_round_format = ff
+        self.next_round_uniqueness = fr
+        self.next_round_total_words_count = len(fw)
+
+        # Pre-calculate next scores
+        is_valued = ('valued' in str(ff).lower())
+        scored_dict = {}
+        for w in fw:
+            if is_valued:
+                scored_dict[w] = {'total': len(w), 'base': len(w)}
+            else:
+                length = len(w)
+                s = 0
+                if length <= 2: s = 0
+                elif length <= 4: s = 1
+                elif length == 5: s = 2
+                elif length == 6: s = 3
+                elif length == 7: s = 5
+                elif length >= 8: s = 11
+                scored_dict[w] = {'total': s, 'base': s}
+        self.next_round_word_scores = scored_dict
+        self.next_round_total_points = sum(pts['total'] for pts in scored_dict.values())
+
+        # Pre-calculate counts by length
+        next_counts = {i: 0 for i in range(1, 31)}
+        display_min = new_sp.get('min_word_length', 3)
+        for w in fw:
+            l = len(w)
+            if display_min <= l <= 30:
+                next_counts[l] += 1
+        next_counts['_round'] = self.current_round + 1
+        self.next_round_counts_by_len = next_counts
+
+        # Reset search states
+        self.board_search_started = True
+        self.board_search_loading = False
+        self.board_search_started_actual = False
+        self.solving_complete = True
 
     def calculate_split_scores(self):
         """
@@ -2193,6 +2341,19 @@ def calculate_word_score(word, bonus_word, board_format='Normal', path=None, bon
     return shared_calc(word, bonus_word, board_format=board_format, path=path, bonus_cell=bonus_cell, **kwargs)
 
 _STATIC_FALLBACKS_CACHE = None
+# Track recently used static fallback board hashes to prevent board repetition.
+# Holds up to 20 board hashes; oldest are removed once the limit is hit.
+_RECENTLY_USED_FALLBACK_HASHES = []  # ordered list, most recent last
+_MAX_RECENT_FALLBACK_HASHES = 20
+
+def _record_fallback_hash_used(board_hash):
+    """Record a fallback board hash as recently used, evicting oldest if at capacity."""
+    global _RECENTLY_USED_FALLBACK_HASHES
+    if board_hash in _RECENTLY_USED_FALLBACK_HASHES:
+        _RECENTLY_USED_FALLBACK_HASHES.remove(board_hash)
+    _RECENTLY_USED_FALLBACK_HASHES.append(board_hash)
+    if len(_RECENTLY_USED_FALLBACK_HASHES) > _MAX_RECENT_FALLBACK_HASHES:
+        _RECENTLY_USED_FALLBACK_HASHES.pop(0)
 
 def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=60, dictionary='NWL', use_added_words=False, target_range=None, min_word_length=None, difficulty=None):
     """Dynamically generate a valid emergency fallback board that matches room dimensions and spells correct words."""
@@ -2385,7 +2546,39 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         key = keys[0] if keys else None
 
     if key and key in _STATIC_FALLBACKS_CACHE:
-        entry = _STATIC_FALLBACKS_CACHE[key]
+        entries = _STATIC_FALLBACKS_CACHE[key]
+        if isinstance(entries, list) and len(entries) > 0:
+            import random
+            import json as _json
+
+            # FIX Issue 2: Deduplicate static fallback selection to prevent repeating boards.
+            # Build a hash for each entry by converting the board list to a string.
+            def _entry_hash(e):
+                try:
+                    return str(e.get('board', ''))
+                except:
+                    return str(e)
+
+            # Filter entries by format if possible to match requested format
+            matching_fmt = [e for e in entries if e.get('params', {}).get('board_format', '').lower() == str(board_format).lower()]
+            candidate_pool = matching_fmt if matching_fmt else entries
+
+            # Prefer entries NOT in recently used hashes
+            fresh_pool = [e for e in candidate_pool if _entry_hash(e) not in _RECENTLY_USED_FALLBACK_HASHES]
+            if fresh_pool:
+                entry = random.choice(fresh_pool)
+            elif candidate_pool:
+                # All entries used recently — pick least-recently-used
+                entry = candidate_pool[0]  # fallback: just take first
+                print(f"[get_emergency_fallback_board] All static fallbacks for {dimensions} recently used. Cycling back to first entry.")
+            else:
+                entry = random.choice(entries)
+        else:
+            entry = entries
+        
+        # Record this board as recently used
+        _record_fallback_hash_used(_entry_hash(entry))
+
         board = entry['board']
         words = entry['words']
         paths = entry['paths']
@@ -2398,7 +2591,10 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         bonus_cell = tuple(entry['bonus_cell']) if entry['bonus_cell'] else ((0, 0, 0) if len(dimensions.split('x')) == 3 else (0, 0))
         ratio = entry['uniqueness']
 
-        fmt = 'Valued Letters' if time_limit >= 7200 else board_format
+        saved_params = entry.get('params', {})
+        # Respect Valued Letters override for daily 24h rooms
+        fmt = 'Valued Letters' if time_limit >= 7200 else (saved_params.get('board_format') or board_format or 'Normal')
+        
         actual_wc = len(words)
         if actual_wc < 100: wc_range_resolved = '50-100'
         elif actual_wc < 200: wc_range_resolved = '100-200'
@@ -2407,18 +2603,18 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         elif actual_wc < 500: wc_range_resolved = '400-500'
         else: wc_range_resolved = '500+'
 
-        is_aw = use_added_words or '+ AW' in str(dictionary).upper() or '+AW' in str(dictionary).upper()
+        is_aw = saved_params.get('use_added_words', False) or use_added_words or '+ AW' in str(dictionary).upper() or '+AW' in str(dictionary).upper()
         eparams_dict = {
-            'min_word_length': min_word_length or 3,
+            'min_word_length': saved_params.get('min_word_length') or min_word_length or 3,
             'word_count_range': wc_range_resolved,
             'board_format': fmt,
-            'dictionary': dictionary or 'NWL',
+            'dictionary': saved_params.get('dictionary') or dictionary or 'NWL',
             'use_added_words': is_aw,
-            'difficulty': difficulty or 'Medium',
+            'difficulty': saved_params.get('difficulty') or difficulty or 'Medium',
             'bonus_word_len': len(bonus_word) if bonus_word else 6
         }
 
-        print(f"[get_emergency_fallback_board] Returning static JSON fallback board for {dimensions} with {len(words)} words.")
+        print(f"[get_emergency_fallback_board] Returning static JSON fallback board for {dimensions} with {len(words)} words. Format: {fmt}.")
         return board, words, bonus_cell, fmt, paths_tuples, ratio, bonus_word, wc_range_resolved, eparams_dict
 
     # Last resort if no static fallback exists in cache
@@ -5112,6 +5308,12 @@ class RoomManager:
                     if target_room.current_round > search_round:
                         print(f"[RoomManager] Stale board search discarded for {room_id} (search_round: {search_round}, current_round: {target_room.current_round})")
                         return
+                    
+                    # 0:50 FALLBACK RESCUE PROTECTION:
+                    # If target_room has already triggered the 0:50 fallback rescue, discard this search.
+                    if getattr(target_room, '_did_050_fallback_rescue', False):
+                        print(f"[RoomManager] Background board search completed, but discarded because 0:50 fallback rescue has already occurred for {room_id}.")
+                        return
 
                     target_room.next_round_board = board # SIGNAL READY IMMEDIATELY!
                     
@@ -5200,16 +5402,21 @@ class RoomManager:
                         achieved_wc = self._get_factchecked_wc_range(len(all_words))
                         
                         if getattr(room, 'next_spinner_params', None):
-                            # room.next_spinner_params['difficulty'] = achieved_diff
                             room.next_spinner_params['board_format'] = updated_format
-                            # We intentionally DO NOT overwrite word_count_range here. 
-                            # If the solver produces 105 words for a 50-100 target, we keep the 
-                            # original intent (50-100) to ensure the UI aligns with the Spinner Animation.
                             
-                            # If already revealed, update the active spinner_params too
+                            # FIX Issues 8/9: Always sync word_count_range to match the actual board.
+                            # The old comment "keep original intent" caused the spinner to show '500+'
+                            # while the board only had 100-200 words. Update to the truth so the revealed
+                            # params match what the player actually gets.
+                            planned_wc = room.next_spinner_params.get('word_count_range', '100-200')
+                            if planned_wc != achieved_wc:
+                                print(f"[RoomManager] WC correction: planned={planned_wc} actual={achieved_wc}. Updating next_spinner_params.")
+                                room.next_spinner_params['word_count_range'] = achieved_wc
+                            
+                            # If already revealed, sync to the active spinner_params display too
                             if getattr(room, 'spinner_params_revealed', False):
-                                # room.spinner_params['difficulty'] = achieved_diff
                                 room.spinner_params['board_format'] = updated_format
+                                room.spinner_params['word_count_range'] = achieved_wc
                         # REVEAL SYNC: Pre-calculate counts by length for the revelation phase
                         # This avoids the "Remaining tab lag" where it shows previous round stats
                         # Always calculate 1-30 to ensure valid data regardless of min-length transitions
@@ -5511,6 +5718,7 @@ class RoomManager:
             # 2. STATE TRANSITION LOCK: Perform the atomic board swap
             with room._state_lock:
                 room._did_6x8_fallback_rescue = False
+                room._did_050_fallback_rescue = False
                 # Reset players active stats and roster for the next round BEFORE database save
                 # FCFS: Clear shared found lists for the upcoming round
                 room.fcfs_found_words = []

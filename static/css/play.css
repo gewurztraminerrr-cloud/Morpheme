@@ -1356,18 +1356,6 @@ body.theme-light-brown .player-score-val {
     color: #ffffff !important; /* Force word text to be white */
 }
 
-.word-item.player-word {
-    background: rgba(64, 156, 255, 0.4) !important;
-    /* Attractive blue with transparency */
-    border: 2px solid #409cff !important;
-    /* Blue border */
-    box-shadow: 0 0 10px rgba(64, 156, 255, 0.4) !important;
-    /* Blue glow */
-    color: #ffffff !important;
-    font-weight: 700;
-    /* Make it stand out */
-}
-
 .word-item.opponent-word {
     background: rgba(255, 99, 71, 0.25);
     /* Tomato Red, transparent */
@@ -1445,6 +1433,15 @@ body.theme-light-brown .notepad-item.bonus-word {
     box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
     color: #000 !important; /* Black text for better contrast on gold */
     font-weight: 800;
+}
+
+/* Found Word (Authoritative Player Found Status: Sleek Blue) */
+.word-item.player-word {
+    background: rgba(64, 156, 255, 0.4) !important;
+    border: 2px solid #409cff !important;
+    box-shadow: 0 0 10px rgba(64, 156, 255, 0.4) !important;
+    color: #ffffff !important;
+    font-weight: 700;
 }
 
 /* Active Highlight for Finding Finders */

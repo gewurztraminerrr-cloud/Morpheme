@@ -2332,11 +2332,24 @@ class BoardGenerator:
                                 board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=10.0, bonus_cell=best_bonus_cell
                             )
                             
+                        # FIX Issue 6: If board_format is 'Either/Or' but the board doesn't actually
+                        # contain a '/' tile (placement failed/timed out), return 'Normal' so the
+                        # Spinner Set accurately reflects the board — not the failed intent.
+                        actual_format_for_best = board_format
+                        if 'either/or' in str(board_format).lower():
+                            _has_eo = any(
+                                '/' in str(board[r][c]) if depth == 1 else
+                                any('/' in str(board[f][r][c]) for f in range(depth))
+                                for r in range(rows) for c in range(cols)
+                            )
+                            if not _has_eo:
+                                actual_format_for_best = 'Normal'
+                                print(f"[BoardGen] Either/Or placement failed — downgrading returned format to 'Normal'")
                         best_board_data = (
                             board,
                             sorted(list(best_words_dict.keys())),
                             best_bonus_cell,
-                            board_format,
+                            actual_format_for_best,
                             best_words_dict,
                             best_ratio,
                             best_actual_bonus.upper() if best_actual_bonus else None
