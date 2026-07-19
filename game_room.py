@@ -3467,18 +3467,12 @@ class RoomManager:
                                     kick_scores[w] = {'total': s, 'base': s}
                             room.solved_words_with_scores = kick_scores
                             
-                            # Sync counts and word_count_range label to the actual filtered set
+                            # Preserve the spun word count range completely
                             room.total_words_count = len(room.all_words)
                             room.initial_total_words = room.total_words_count
-                            _kc = room.total_words_count
-                            if _kc < 50: room.current_word_count_range = '50-100'   # label closest bucket; board is valid but sparse
-                            elif _kc < 100: room.current_word_count_range = '50-100'
-                            elif _kc < 200: room.current_word_count_range = '100-200'
-                            elif _kc < 300: room.current_word_count_range = '200-300'
-                            elif _kc < 400: room.current_word_count_range = '300-400'
-                            elif _kc < 500: room.current_word_count_range = '400-500'
-                            else: room.current_word_count_range = '500+'
-                            room.spinner_params['word_count_range'] = room.current_word_count_range
+                            room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
+
+
 
                             room.round_start_time = time.time()
                             room.state = 'active'
@@ -4424,21 +4418,10 @@ class RoomManager:
             room.current_uniqueness = u_ratio
             room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
             
-            # Recalculate/sync the actual range
+            # Recalculate/sync the actual count but preserve the spun word count range completely
             room.total_words_count = sum(1 for w in room.all_words if len(w) >= room.current_min_length)
-            if room.time_limit < 7200:
-                _actual_count = room.total_words_count
-                if _actual_count < 100: _wc_truth = '50-100'
-                elif _actual_count < 200: _wc_truth = '100-200'
-                elif _actual_count < 300: _wc_truth = '200-300'
-                elif _actual_count < 400: _wc_truth = '300-400'
-                elif _actual_count < 500: _wc_truth = '400-500'
-                else: _wc_truth = '500+'
-                room.current_word_count_range = _wc_truth
-                if isinstance(room.spinner_params, dict):
-                    room.spinner_params['word_count_range'] = _wc_truth
-            else:
-                room.current_word_count_range = room.spinner_params.get('word_count_range', 'Varying...')
+            room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
+
             
             # CRITICAL SYNC: Update the UI header slot with the ground truth
             # room.spinner_params['difficulty'] = achieved_diff
@@ -6364,17 +6347,9 @@ class RoomManager:
                 # FINAL ACCURACY SYNC: Ensure the header labels exactly match the results
                 room.total_words_count = sum(1 for w in room.all_words if len(w) >= room.current_min_length)
                 room.initial_total_words = room.total_words_count
-                if room.time_limit < 7200:
-                    _actual_count = room.total_words_count
-                    if _actual_count < 100: _wc_truth = '50-100'
-                    elif _actual_count < 200: _wc_truth = '100-200'
-                    elif _actual_count < 300: _wc_truth = '200-300'
-                    elif _actual_count < 400: _wc_truth = '300-400'
-                    elif _actual_count < 500: _wc_truth = '400-500'
-                    else: _wc_truth = '500+'
-                    room.current_word_count_range = _wc_truth
-                    if isinstance(room.spinner_params, dict):
-                        room.spinner_params['word_count_range'] = _wc_truth
+                # Preserve the spun word count range completely
+                room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
+
                 next_diff = getattr(room, 'next_round_difficulty', None)
                 if next_diff is not None:
                     room.current_difficulty = next_diff
