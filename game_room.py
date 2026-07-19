@@ -2570,35 +2570,28 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             import random
             import json as _json
 
-            # FIX Issue 2: Deduplicate static fallback selection to prevent repeating boards.
-            # Build a hash for each entry by converting the board list to a string.
-            def _entry_hash(e):
-                try:
-                    return str(e.get('board', ''))
-                except:
-                    return str(e)
+            from board_generator import get_board_hash, is_board_hash_used, mark_board_hash_used
 
             # Filter entries by format if possible to match requested format
             matching_fmt = [e for e in entries if e.get('params', {}).get('board_format', '').lower() == str(board_format).lower()]
             candidate_pool = matching_fmt if matching_fmt else entries
 
-            # Prefer entries NOT in recently used hashes
-            fresh_pool = [e for e in candidate_pool if _entry_hash(e) not in _RECENTLY_USED_FALLBACK_HASHES]
+            # Prefer entries NOT used globally in database to avoid repetition across restarts
+            fresh_pool = [e for e in candidate_pool if not is_board_hash_used(get_board_hash(e.get('board')))]
             if fresh_pool:
                 entry = random.choice(fresh_pool)
             elif candidate_pool:
-                # All entries used recently — pick least-recently-used
-                entry = candidate_pool[0]  # fallback: just take first
-                print(f"[get_emergency_fallback_board] All static fallbacks for {dimensions} recently used. Cycling back to first entry.")
+                # All entries used recently — pick a random one
+                entry = random.choice(candidate_pool)
+                print(f"[get_emergency_fallback_board] All static fallbacks for {dimensions} recently used. Picking a random candidate.")
             else:
                 entry = random.choice(entries)
         else:
             entry = entries
         
-        # Record this board as recently used
-        _record_fallback_hash_used(_entry_hash(entry))
-
         board = entry['board']
+        # Record this board layout as used in the persistent database
+        mark_board_hash_used(get_board_hash(board))
         words = entry['words']
         paths = entry['paths']
         
