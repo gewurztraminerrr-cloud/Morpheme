@@ -188,9 +188,9 @@ class SpinnerSet:
             elif '5x7' in dims:
                 min_word_length = min(min_word_length, 5)
             elif '3x3x3' in dims:
-                min_word_length = min(min_word_length, 5)
+                min_word_length = min(min_word_length, 8)
             elif '6x8' in dims:
-                min_word_length = min(min_word_length, 6)
+                min_word_length = min(min_word_length, 8)
         else:
             if wc_range not in ['50-100', '100-200', '200-300', '300-400']:
                 import random
@@ -274,13 +274,9 @@ class SpinnerSet:
                 if '6x8' in dims or '3x3x3' in dims:
                     # Enforce the user's explicit weights: 6L (25%), 7L (50%), 8L (25%)
                     min_word_length = random.choices([6, 7, 8], weights=[25, 50, 25])[0]
-                    if min_word_length == 6:
-                        # Allow + AW dictionaries on 6L since it can support high density.
-                        # We use higher weights (80% total) for + AW to make them more frequent and visible.
-                        dictionary = random.choices(['NWL', 'CSW', 'NWL + AW', 'CSW + AW'], weights=[10, 10, 40, 40])[0]
-                    else:
-                        # 7L and 8L are strictly standard NWL/CSW to prevent generator hangs on high density
-                        dictionary = random.choices(['NWL', 'CSW'], weights=[50, 50])[0]
+                    # Allow + AW dictionaries on all minimum lengths (6L, 7L, 8L) since the generator is now fast and robust.
+                    # We distribute weights so standard is 30% total, and + AW is 70% total across all lengths.
+                    dictionary = random.choices(['NWL', 'CSW', 'NWL + AW', 'CSW + AW'], weights=[15, 15, 35, 35])[0]
                 else:
                     dictionary = SpinnerSet._spin_dictionary()
 
