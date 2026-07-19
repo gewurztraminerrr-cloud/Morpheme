@@ -570,6 +570,14 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
                     "final_bonus_word": final_bonus_word
                 }
                 
+                # DEDUP GUARD: Never cache a board that has already been played.
+                # Compute its hash and check used_boards before inserting.
+                board_hash = get_board_hash(board)
+                if is_board_hash_used(board_hash):
+                    print(f"[BoardGen] [Refill] Skipping already-used board (hash={board_hash}) — generating a fresh one.")
+                    time.sleep(1.0)
+                    continue  # Loop back and generate a different board
+                
                 try:
                     conn = sqlite3.connect(db_path, timeout=30)
                     conn.execute(
@@ -583,6 +591,7 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
                     time.sleep(1.0)
                     
                 time.sleep(10.0)  # Throttle: 10s between generations to avoid CPU saturation
+
         except Exception as e:
             print(f"[BoardGen] [Refill] Background worker error: {e}")
         finally:
