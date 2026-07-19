@@ -1346,11 +1346,24 @@ class GameRoom:
             
         print(f"[GameRoom] ensure_next_board_ready: next_round_board is missing for {self.room_id}. Resolving instantly...")
         
-        # Pop any board of the same dimensions from cache
-        from board_generator import pop_any_cached_board
+        # Pop compatible board matching dimensions and revealed parameters
+        from board_generator import pop_compatible_cached_board
+        target_params = getattr(self, 'next_spinner_params', None) or getattr(self, 'spinner_params', None) or {}
+        dict_val = target_params.get('dictionary', 'NWL')
+        fmt_val = target_params.get('board_format', 'Normal')
+        min_l_val = target_params.get('min_word_length', 3)
+        use_aw_val = target_params.get('use_added_words', False) or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
+        bonus_word_len = target_params.get('bonus_word_length')
         fallback = None
         for _ in range(10):
-            candidate = pop_any_cached_board(self.board_dimensions)
+            candidate = pop_compatible_cached_board(
+                self.board_dimensions,
+                dict_val,
+                fmt_val,
+                min_l_val,
+                use_aw_val,
+                bonus_word_len=bonus_word_len
+            )
             if not candidate:
                 break
             fb, fw, fc, ff, fp, fr, fbw, fparams = candidate
@@ -1555,9 +1568,22 @@ class GameRoom:
             if len(humans) > 0:
                 print(f"[GameRoom] Waking up paused room {self.room_id} instantly because human player joined.")
                 
-                # 1. Pop any board of the same dimensions from cache immediately
-                from board_generator import pop_any_cached_board
-                fallback = pop_any_cached_board(self.board_dimensions)
+                # 1. Pop a compatible board from cache immediately
+                from board_generator import pop_compatible_cached_board
+                sp = self.spinner_params or {}
+                dict_val = sp.get('dictionary', 'NWL')
+                fmt_val = sp.get('board_format', 'Normal')
+                min_l_val = sp.get('min_word_length', 3)
+                use_aw_val = sp.get('use_added_words', False) or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
+                bonus_word_len = sp.get('bonus_word_length')
+                fallback = pop_compatible_cached_board(
+                    self.board_dimensions,
+                    dict_val,
+                    fmt_val,
+                    min_l_val,
+                    use_aw_val,
+                    bonus_word_len=bonus_word_len
+                )
                 
                 if fallback:
                     fb, fw, fc, ff, fp, fr, fbw, fparams = fallback
@@ -2034,9 +2060,22 @@ class GameRoom:
         now = time.time()
         import random
         
-        # Pop from pre-generated cache if available
-        from board_generator import pop_any_cached_board
-        fallback = pop_any_cached_board(self.board_dimensions)
+        # Pop compatible board from cache if available
+        from board_generator import pop_compatible_cached_board
+        sp = self.next_spinner_params or self.spinner_params or {}
+        dict_val = sp.get('dictionary', 'NWL')
+        fmt_val = sp.get('board_format', 'Normal')
+        min_l_val = sp.get('min_word_length', 3)
+        use_aw_val = sp.get('use_added_words', False) or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
+        bonus_word_len = sp.get('bonus_word_length')
+        fallback = pop_compatible_cached_board(
+            self.board_dimensions,
+            dict_val,
+            fmt_val,
+            min_l_val,
+            use_aw_val,
+            bonus_word_len=bonus_word_len
+        )
         
         if fallback:
             fb, fw, fc, ff, fp, fr, fbw, fparams = fallback
@@ -2501,9 +2540,16 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                 except Exception:
                     continue
 
-        # --- ULTIMATE CACHE FALLBACK (Pop any board matching dimensions) ---
+        # --- ULTIMATE CACHE FALLBACK (Pop compatible board matching dimensions and parameters) ---
         try:
-            relaxed_res = pop_any_cached_board(dimensions)
+            from board_generator import pop_compatible_cached_board
+            relaxed_res = pop_compatible_cached_board(
+                dimensions,
+                dictionary,
+                board_format,
+                min_word_length,
+                use_added_words
+            )
             if relaxed_res:
                 board, words, bonus_cell, updated_format, paths, ratio, bonus_word, params = relaxed_res
                 if words and len(words) >= 20:
@@ -3201,7 +3247,21 @@ class RoomManager:
                             min_accept = max(50, min_accept)
                             
                         for _ in range(10):
-                            candidate = pop_any_cached_board(room.board_dimensions)
+                            from board_generator import pop_compatible_cached_board
+                            sp = room.spinner_params or {}
+                            dict_val = sp.get('dictionary', 'NWL')
+                            fmt_val = sp.get('board_format', 'Normal')
+                            min_l_val = sp.get('min_word_length', 3)
+                            use_aw_val = sp.get('use_added_words', False) or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
+                            bonus_word_len = sp.get('bonus_word_length')
+                            candidate = pop_compatible_cached_board(
+                                room.board_dimensions,
+                                dict_val,
+                                fmt_val,
+                                min_l_val,
+                                use_aw_val,
+                                bonus_word_len=bonus_word_len
+                            )
                             if not candidate:
                                 break
                             r_board, r_words, r_bonus_c, r_fmt, r_dict, r_ratio, r_bonus_word, r_params = candidate
@@ -4150,7 +4210,7 @@ class RoomManager:
                         print(f"[RoomManager] Exact cache hit discarded because it had only {len(cwords_filtered)} words of length >= {m_len} (needed {min_accept}).")
                 
                 if not res:
-                    print(f"[RoomManager] Exact cache miss or discarded for room {room_id}. Trying pop_any_cached_board...")
+                    print(f"[RoomManager] Exact cache miss or discarded for room {room_id}. Trying pop_compatible_cached_board...")
                     # Try popping up to 10 candidates to find one with enough words
                     max_limit = 99999
                     if target_range:
@@ -4162,7 +4222,15 @@ class RoomManager:
                             pass
 
                     for _ in range(10):
-                        relaxed_res = pop_any_cached_board(room.board_dimensions)
+                        from board_generator import pop_compatible_cached_board
+                        relaxed_res = pop_compatible_cached_board(
+                            room.board_dimensions,
+                            room.spinner_params['dictionary'],
+                            room.spinner_params['board_format'],
+                            room.spinner_params.get('min_word_length', 3),
+                            use_aw_flag,
+                            bonus_word_len=len(bonus_word) if bonus_word else None
+                        )
                         if not relaxed_res:
                             break
                         board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word, params = relaxed_res
@@ -4943,7 +5011,15 @@ class RoomManager:
 
                 cached_res = None
                 for _ in range(10):
-                    candidate = pop_any_cached_board(room.board_dimensions)
+                    from board_generator import pop_compatible_cached_board
+                    candidate = pop_compatible_cached_board(
+                        room.board_dimensions,
+                        e_dict,
+                        e_format,
+                        search_min,
+                        e_use_aw,
+                        bonus_word_len=room.spinner_params.get('bonus_word_length') if room.spinner_params else None
+                    )
                     if not candidate:
                         break
                     _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = candidate
@@ -5284,7 +5360,15 @@ class RoomManager:
                         
                     _pre = None
                     for _ in range(10):
-                        candidate = _pop_any(room.board_dimensions)
+                        from board_generator import pop_compatible_cached_board
+                        candidate = pop_compatible_cached_board(
+                            room.board_dimensions,
+                            search_dict,
+                            search_fmt,
+                            search_min,
+                            use_aw_flag,
+                            bonus_word_len=len(bonus_word) if bonus_word else None
+                        )
                         if not candidate:
                             break
                         _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = candidate
@@ -5805,7 +5889,20 @@ class RoomManager:
                 # Try popping up to 10 cached boards to find one with enough words
                 _fallback = None
                 for _ in range(10):
-                    candidate = _pop_any_snr(room.board_dimensions)
+                    from board_generator import pop_compatible_cached_board
+                    sp = room.spinner_params or {}
+                    dict_val = sp.get('dictionary', 'NWL')
+                    fmt_val = sp.get('board_format', 'Normal')
+                    use_aw_val = sp.get('use_added_words', False) or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
+                    bonus_word_len = sp.get('bonus_word_length')
+                    candidate = pop_compatible_cached_board(
+                        room.board_dimensions,
+                        dict_val,
+                        fmt_val,
+                        m_len,
+                        use_aw_val,
+                        bonus_word_len=bonus_word_len
+                    )
                     if not candidate:
                         break
                     _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = candidate

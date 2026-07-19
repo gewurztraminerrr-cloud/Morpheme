@@ -285,6 +285,106 @@ def pop_any_cached_board(dimensions):
         print(f"[BoardGen] Error in pop_any_cached_board: {e}")
         return None
 
+def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len=None):
+    """
+    Find and pop a board from pregenerated_boards that strictly matches:
+    - dimensions
+    - normalized dictionary (NWL vs CSW)
+    - board_format
+    - min_word_length
+    - use_added_words (Added Words toggle)
+    - bonus_word_len (if provided)
+    Allows difficulty and word_count_range to be relaxed to avoid cache misses while keeping spinner selections stable.
+    """
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
+    try:
+        conn = sqlite3.connect(db_path, timeout=30)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Select all cached boards
+        cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards;")
+        rows = cursor.fetchall()
+        
+        # Normalize target dictionary
+        d_target = str(dictionary).upper().replace("+ AW", "").replace("+AW", "").replace("ADDED", "").strip()
+        if d_target not in ["NWL", "CSW"]:
+            d_target = "NWL"
+            
+        matched_row = None
+        for row in rows:
+            try:
+                params = json.loads(row['param_key'])
+            except:
+                continue
+                
+            # Check dimensions
+            if params.get('dimensions') != dimensions:
+                continue
+            # Check dictionary
+            d_param = str(params.get('dictionary', 'NWL')).upper().replace("+ AW", "").replace("+AW", "").replace("ADDED", "").strip()
+            if d_param not in ["NWL", "CSW"]:
+                d_param = "NWL"
+            if d_param != d_target:
+                continue
+            # Check use_added_words
+            p_aw = params.get('use_added_words', False)
+            if bool(p_aw) != bool(use_added_words):
+                continue
+            # Check board_format
+            if str(params.get('board_format')).upper().strip() != str(board_format).upper().strip():
+                continue
+            # Check min_word_length
+            if int(params.get('min_word_length', 3)) != int(min_word_length):
+                continue
+            # Check bonus_word_len
+            if bonus_word_len is not None and int(params.get('bonus_word_len', 0)) != int(bonus_word_len):
+                continue
+                
+            matched_row = row
+            break
+            
+        if matched_row:
+            # Pop this specific board by ID in an atomic transaction
+            cursor.execute("BEGIN IMMEDIATE TRANSACTION;")
+            cursor.execute("SELECT board_json FROM pregenerated_boards WHERE id = ?;", (matched_row['id'],))
+            check_row = cursor.fetchone()
+            if check_row:
+                cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (matched_row['id'],))
+                conn.commit()
+                conn.close()
+                
+                data = json.loads(check_row['board_json'])
+                board = data["board"]
+                
+                board_hash = get_board_hash(board)
+                if not mark_board_hash_used(board_hash):
+                    print(f"[BoardGen] Discarding compatible cached board (layout already used: {board_hash})")
+                    # Try again
+                    return pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len)
+                    
+                all_words = data["all_words"]
+                bonus_cell = tuple(data["bonus_cell"]) if data["bonus_cell"] else None
+                board_format_ret = data["board_format_ret"]
+                
+                all_words_dict = {}
+                for w, path in data["all_words_dict"].items():
+                    all_words_dict[w] = [tuple(coord) for coord in path]
+                    
+                ratio = data.get("ratio", 0.0)
+                final_bonus_word = data.get("final_bonus_word", "")
+                
+                params_obj = json.loads(matched_row['param_key'])
+                print(f"[BoardGen] Serving COMPATIBLE CACHED board: {matched_row['param_key'][:120]}...")
+                return (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word, params_obj)
+            else:
+                cursor.execute("COMMIT;")
+        
+        conn.close()
+    except Exception as e:
+        print(f"[BoardGen] Error popping compatible cached board: {e}")
+    return None
+
 def pop_cached_board(param_key_str):
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
     try:
