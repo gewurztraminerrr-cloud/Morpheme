@@ -1604,6 +1604,36 @@ def init_db():
     except Exception as e:
         print(f"[Migration] Error forcing default board sizes: {e}")
 
+    # STARTUP: Backfill used_boards from round_history to ensure all-time deduplication
+    # survives PM2 restarts. This is idempotent — INSERT OR IGNORE skips already-tracked boards.
+    try:
+        rows = conn.execute('SELECT board_json, timestamp FROM round_history').fetchall()
+        inserted = 0
+        for board_json, ts in rows:
+            try:
+                import json as _json
+                board = _json.loads(board_json)
+                # Flatten board to a hash string
+                h = ''
+                for row2 in board:
+                    for cell in row2:
+                        if isinstance(cell, str):
+                            h += cell
+                        elif isinstance(cell, list):
+                            for c in cell:
+                                h += (c if isinstance(c, str) else '')
+                h = h.upper()
+                if h.strip():
+                    conn.execute('INSERT OR IGNORE INTO used_boards (board_hash, used_at) VALUES (?, ?)', (h, ts or 0))
+                    inserted += 1
+            except Exception:
+                pass
+        conn.commit()
+        if inserted:
+            print(f"[init_db] Backfilled {inserted} board hashes from round_history into used_boards.")
+    except Exception as e:
+        print(f"[init_db] used_boards backfill error: {e}")
+
     conn.close()
 
 init_db()

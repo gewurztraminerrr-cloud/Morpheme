@@ -6821,8 +6821,18 @@ class RoomManager:
             conn.commit()
             conn.close()
             
+            # Also mark this board's hash as permanently used (survives PM2 restarts)
+            try:
+                from board_generator import get_board_hash, mark_board_hash_used
+                _bh = get_board_hash(actual_board)
+                if _bh:
+                    mark_board_hash_used(_bh)
+            except Exception as _bh_err:
+                print(f"[RoomManager] Non-fatal: Could not mark board hash after save_round_history: {_bh_err}")
+            
             room.last_saved_round = target_round
             print(f"[RoomManager] SUCCESS: Saved round history for room {room.room_id} Round {target_round}")
+
             with open(DEBUG_FLOW_PATH, 'a') as f:
                 f.write(f"{debug_log} - SUCCESS: Saved to DB\n")
         except Exception as e:
