@@ -3377,6 +3377,18 @@ class RoomManager:
                                     kick_scores[w] = {'total': s, 'base': s}
                             room.solved_words_with_scores = kick_scores
                             
+                            # Sync counts and word_count_range label to the actual filtered set
+                            room.total_words_count = len(room.all_words)
+                            room.initial_total_words = room.total_words_count
+                            _kc = room.total_words_count
+                            if _kc < 100: room.current_word_count_range = '50-100'
+                            elif _kc < 200: room.current_word_count_range = '100-200'
+                            elif _kc < 300: room.current_word_count_range = '200-300'
+                            elif _kc < 400: room.current_word_count_range = '300-400'
+                            elif _kc < 500: room.current_word_count_range = '400-500'
+                            else: room.current_word_count_range = '500+'
+                            room.spinner_params['word_count_range'] = room.current_word_count_range
+
                             room.round_start_time = time.time()
                             room.state = 'active'
                             room.current_round = 1
@@ -3483,6 +3495,18 @@ class RoomManager:
                 else: s = 11
                 kick_scores[w] = {'total': s, 'base': s}
         room.solved_words_with_scores = kick_scores
+        # Sync counts and word_count_range label to the actual filtered set
+        room.total_words_count = len(room.all_words)
+        room.initial_total_words = room.total_words_count
+        _akc = room.total_words_count
+        if _akc < 100: room.current_word_count_range = '50-100'
+        elif _akc < 200: room.current_word_count_range = '100-200'
+        elif _akc < 300: room.current_word_count_range = '200-300'
+        elif _akc < 400: room.current_word_count_range = '300-400'
+        elif _akc < 500: room.current_word_count_range = '400-500'
+        else: room.current_word_count_range = '500+'
+        room.spinner_params['word_count_range'] = room.current_word_count_range
+
         room.round_start_time = time.time()
         room.state = 'active'
         room.current_round = 1
