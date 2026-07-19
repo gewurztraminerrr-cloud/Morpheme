@@ -649,15 +649,17 @@ class BoardGenerator:
                     used_at REAL NOT NULL
                 );
             ''')
-            conn.execute('CREATE INDEX IF NOT EXISTS idx_param_key ON pregenerated_boards(param_key);')
-            # Unique index on board_hash — database-level guard against duplicate boards in cache
-            conn.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_pregenerated_board_hash ON pregenerated_boards(board_hash);')
-            # MIGRATION: Add board_hash column if it doesn't exist yet
+            # MIGRATION FIRST: Add board_hash column if it doesn't exist yet
             try:
                 conn.execute('ALTER TABLE pregenerated_boards ADD COLUMN board_hash TEXT')
                 conn.commit()
             except Exception:
                 pass  # Column already exists
+                
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_param_key ON pregenerated_boards(param_key);')
+            # Unique index on board_hash — database-level guard against duplicate boards in cache
+            conn.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_pregenerated_board_hash ON pregenerated_boards(board_hash);')
+
             # MIGRATION: Backfill board_hash for any existing rows that lack it
             try:
                 rows = conn.execute('SELECT id, board_json FROM pregenerated_boards WHERE board_hash IS NULL').fetchall()
