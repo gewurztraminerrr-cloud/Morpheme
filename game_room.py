@@ -3305,6 +3305,28 @@ class RoomManager:
                                 room.next_round_uniqueness,
                                 room.next_round_bonus
                             )
+                            # Validate the staged board meets min_accept at the required min length
+                            _enb_words = (room.next_round_words or [])
+                            _enb_filtered = [w for w in _enb_words if len(w) >= m_len]
+                            if len(_enb_filtered) < min_accept:
+                                print(f"[RoomManager] {room_id}: ensure_next_board_ready result only had {len(_enb_filtered)} words at {m_len}L+ (needed {min_accept}). Generating fresh board...")
+                                try:
+                                    _gen_res = self.board_generator.generate_board(
+                                        dimensions=room.board_dimensions,
+                                        bonus_word=b_word,
+                                        word_count_range=room.spinner_params.get('word_count_range', '100-200'),
+                                        dictionary=room.spinner_params.get('dictionary', 'NWL'),
+                                        board_format=room.spinner_params.get('board_format', 'Normal'),
+                                        min_word_length=m_len,
+                                        difficulty=room.spinner_params.get('difficulty', 'Medium'),
+                                        is_emergency=True,
+                                        use_added_words=use_aw_flag
+                                    )
+                                    if _gen_res and len(_gen_res) >= 7:
+                                        e_results = _gen_res
+                                        print(f"[RoomManager] {room_id}: Fresh-generated board has {len(_gen_res[1])} words.")
+                                except Exception as _gen_e:
+                                    print(f"[RoomManager] {room_id}: Fresh board generation failed: {_gen_e}")
                             # CLEAR next_round staging fields immediately so intermission can load a new one for round 2!
                             room.next_round_board = None
                             room.next_round_words = None
