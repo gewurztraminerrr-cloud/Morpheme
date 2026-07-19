@@ -2214,11 +2214,23 @@ class BoardGenerator:
                 achieved_diff = self.get_difficulty_label(ratio, rows, cols, dictionary, depth, min_word_length=min_word_length)
                 
                 # USER MANDATE: Ensure no "ING" or "INGS" path sequences exist in Medium or Hard boards!
-                # If they do, toss the board and generate another one (continue)!
                 if difficulty in ["Medium", "Hard"] or achieved_diff in ["Medium", "Hard"]:
                     if self._has_ing_sequence(board, depth):
-                        print(f"[BoardGen] ❌ ATTEMPT {attempts}: Board has an 'ING' sequence on {achieved_diff} (target {difficulty}) board. DISCARDING board immediately and starting over...")
-                        continue
+                        print(f"[BoardGen] 🛠️ Sequence Sanitizer: Breaking 'ING' path on attempt {attempts}")
+                        fb_upper = bonus_word.upper() if bonus_word else None
+                        protected_positions = all_words_dict.get(fb_upper) if fb_upper and fb_upper in all_words_dict else None
+                        self._guarantee_no_ing(board, depth, protected_positions=protected_positions)
+                        # Re-solve the board with the modified layout
+                        if bonus_cell:
+                            all_words_dict = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=15.0, bonus_cell=bonus_cell)
+                        else:
+                            all_words_dict = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=15.0)
+                        count = len(all_words_dict)
+                        ratio = self.get_uniqueness_ratio(board, list(all_words_dict.keys()), rows, cols, dictionary, depth)
+                        achieved_diff = self.get_difficulty_label(ratio, rows, cols, dictionary, depth, min_word_length=min_word_length)
+                        if self._has_ing_sequence(board, depth):
+                            print(f"[BoardGen] ❌ ATTEMPT {attempts}: Board STILL has 'ING' sequence after sanitizer. Discarding...")
+                            continue
 
                 # Enforce global uniqueness: discard if board layout is already used
                 board_hash = get_board_hash(board)
