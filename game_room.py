@@ -1448,13 +1448,14 @@ class GameRoom:
 
         # If cache empty
         print(f"[GameRoom] ensure_next_board_ready: Cache empty. Using emergency fallback board.")
-        e_format = self.spinner_params.get('board_format', 'Normal') if self.spinner_params else 'Normal'
-        e_dict = self.spinner_params.get('dictionary', 'NWL') if self.spinner_params else 'NWL'
-        e_use_aw = self.spinner_params.get('use_added_words', False) if self.spinner_params else False
-        e_wc = self.spinner_params.get('word_count_range', '100-200') if self.spinner_params else '100-200'
+        source_sp = self.next_spinner_params or self.spinner_params or {}
+        e_format = source_sp.get('board_format', 'Normal')
+        e_dict = source_sp.get('dictionary', 'NWL')
+        e_use_aw = source_sp.get('use_added_words', False)
+        e_wc = source_sp.get('word_count_range', '100-200')
         
-        e_min_len = self.spinner_params.get('min_word_length') if self.spinner_params else None
-        e_diff = self.spinner_params.get('difficulty', 'Medium') if self.spinner_params else 'Medium'
+        e_min_len = source_sp.get('min_word_length')
+        e_diff = source_sp.get('difficulty', 'Medium')
         e_results = get_emergency_fallback_board(
             self.board_dimensions, e_format, self.time_limit,
             dictionary=e_dict, use_added_words=e_use_aw, target_range=e_wc, min_word_length=e_min_len, difficulty=e_diff
@@ -2595,17 +2596,31 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         # Respect Valued Letters override for daily 24h rooms
         fmt = 'Valued Letters' if time_limit >= 7200 else (saved_params.get('board_format') or board_format or 'Normal')
         
-        actual_wc = len(words)
-        if actual_wc < 100: wc_range_resolved = '50-100'
-        elif actual_wc < 200: wc_range_resolved = '100-200'
-        elif actual_wc < 300: wc_range_resolved = '200-300'
-        elif actual_wc < 400: wc_range_resolved = '300-400'
-        elif actual_wc < 500: wc_range_resolved = '400-500'
+        # Enforce dimension floor and spun min length
+        floor_l = 3
+        dims_lower = str(dimensions).lower()
+        if '4x6' in dims_lower: floor_l = 4
+        elif '5x7' in dims_lower: floor_l = 5
+        elif '6x8' in dims_lower or '3x3x3' in dims_lower: floor_l = 6
+
+        final_min = max(floor_l, min_word_length or 3, int(saved_params.get('min_word_length', 3)))
+
+        # FILTER words and paths by final_min!
+        words_filtered = [w for w in words if len(w) >= final_min]
+        paths_filtered = {w: p for w, p in paths_tuples.items() if len(w) >= final_min}
+
+        # Recalculate range resolved based on actual count after filtering!
+        actual_wc_filtered = len(words_filtered)
+        if actual_wc_filtered < 100: wc_range_resolved = '50-100'
+        elif actual_wc_filtered < 200: wc_range_resolved = '100-200'
+        elif actual_wc_filtered < 300: wc_range_resolved = '200-300'
+        elif actual_wc_filtered < 400: wc_range_resolved = '300-400'
+        elif actual_wc_filtered < 500: wc_range_resolved = '400-500'
         else: wc_range_resolved = '500+'
 
         is_aw = saved_params.get('use_added_words', False) or use_added_words or '+ AW' in str(dictionary).upper() or '+AW' in str(dictionary).upper()
         eparams_dict = {
-            'min_word_length': saved_params.get('min_word_length') or min_word_length or 3,
+            'min_word_length': final_min,
             'word_count_range': wc_range_resolved,
             'board_format': fmt,
             'dictionary': saved_params.get('dictionary') or dictionary or 'NWL',
@@ -2614,8 +2629,8 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             'bonus_word_len': len(bonus_word) if bonus_word else 6
         }
 
-        print(f"[get_emergency_fallback_board] Returning static JSON fallback board for {dimensions} with {len(words)} words. Format: {fmt}.")
-        return board, words, bonus_cell, fmt, paths_tuples, ratio, bonus_word, wc_range_resolved, eparams_dict
+        print(f"[get_emergency_fallback_board] Returning static JSON fallback board for {dimensions} with {len(words_filtered)} words. Format: {fmt}, MinLen: {final_min}.")
+        return board, words_filtered, bonus_cell, fmt, paths_filtered, ratio, bonus_word, wc_range_resolved, eparams_dict
 
     # Last resort if no static fallback exists in cache
     print(f"[get_emergency_fallback_board] CRITICAL: Static fallback cache empty! Returning empty mock board.")
@@ -5891,8 +5906,9 @@ class RoomManager:
                     
                     e_min_len = room.spinner_params.get('min_word_length') if room.spinner_params else None
                     e_diff = room.spinner_params.get('difficulty', 'Medium') if room.spinner_params else 'Medium'
+                    e_fmt_target = room.spinner_params.get('board_format', 'Normal') if room.spinner_params else 'Normal'
                     e_results = get_emergency_fallback_board(
-                        room.board_dimensions, room.current_board_format, room.time_limit,
+                        room.board_dimensions, e_fmt_target, room.time_limit,
                         dictionary=room.current_dictionary, use_added_words=getattr(room, 'use_added_words', False),
                         target_range=room.spinner_params.get('word_count_range'), min_word_length=e_min_len, difficulty=e_diff
                     )
