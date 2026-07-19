@@ -4029,6 +4029,15 @@ class RoomManager:
                 if not res:
                     print(f"[RoomManager] Exact cache miss or discarded for room {room_id}. Trying pop_any_cached_board...")
                     # Try popping up to 10 candidates to find one with enough words
+                    max_limit = 99999
+                    if target_range:
+                        try:
+                            parts = str(target_range).split('-')
+                            if len(parts) == 2:
+                                max_limit = int(parts[1]) - 1
+                        except:
+                            pass
+
                     for _ in range(10):
                         relaxed_res = pop_any_cached_board(room.board_dimensions)
                         if not relaxed_res:
@@ -4041,9 +4050,13 @@ class RoomManager:
                             act_min = m_len
                         all_words_filtered = [w for w in all_words if len(w) >= act_min]
                         if len(all_words_filtered) >= min_accept:
-                            # Accept!
+                            # Accept! Truncate if count exceeds max_limit to match spun target range and prevent drift
+                            if len(all_words_filtered) > max_limit:
+                                print(f"[RoomManager] Popped relaxed cached board has {len(all_words_filtered)} words (exceeds max_limit {max_limit}). Truncating to fit range {target_range}.")
+                                sorted_w = sorted(all_words_filtered, key=lambda w: (len(w), w), reverse=True)[:max_limit]
+                                all_words_filtered = sorted_w
                             all_words = all_words_filtered
-                            all_words_dict = {w: p for w, p in all_words_dict.items() if len(w) >= act_min}
+                            all_words_dict = {w: p for w, p in all_words_dict.items() if w in all_words}
                             print(f"[RoomManager] Popped relaxed cached board for room {room_id} with {len(all_words)} words. Aligning params: {params}")
                             room.spinner_params['dictionary'] = params.get('dictionary', 'NWL')
                             room.spinner_params['difficulty'] = params.get('difficulty', 'Medium')
@@ -4107,10 +4120,16 @@ class RoomManager:
             # --- TRUNCATION ENFORCEMENT for start_round ---
             target_range = room.spinner_params.get('word_count_range')
             if target_range:
-                _, max_target = self.board_generator._parse_word_count_range(target_range)
-                if max_target < 99999 and len(room.all_words) > max_target:
-                    print(f"[ACCURACY-SYNC-START] Truncating Round {room.current_round} to {max_target} words to match range '{target_range}'")
-                    sorted_scorable = sorted(list(room.all_words), key=lambda w: (len(w), w), reverse=True)[:max_target]
+                max_limit = 99999
+                try:
+                    parts = str(target_range).split('-')
+                    if len(parts) == 2:
+                        max_limit = int(parts[1]) - 1
+                except:
+                    pass
+                if len(room.all_words) > max_limit:
+                    print(f"[ACCURACY-SYNC-START] Truncating Round {room.current_round} to {max_limit} words to match range '{target_range}'")
+                    sorted_scorable = sorted(list(room.all_words), key=lambda w: (len(w), w), reverse=True)[:max_limit]
                     room.all_words = set(sorted_scorable)
                     all_words_dict = {w: all_words_dict[w] for w in room.all_words if w in all_words_dict}
             
@@ -5088,6 +5107,15 @@ class RoomManager:
                         min_accept = max(300, min_accept)
                     else:
                         min_accept = max(50, min_accept)
+                    
+                    max_limit = 99999
+                    if search_wc:
+                        try:
+                            parts = str(search_wc).split('-')
+                            if len(parts) == 2:
+                                max_limit = int(parts[1]) - 1
+                        except:
+                            pass
                         
                     _pre = None
                     for _ in range(10):
@@ -5097,9 +5125,14 @@ class RoomManager:
                         _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = candidate
                         _fw_filtered = [w for w in _fw if len(w) >= search_min]
                         if len(_fw_filtered) >= min_accept:
+                            # Found valid cached board! Truncate if count exceeds max_limit to match spun target range and prevent drift
+                            if len(_fw_filtered) > max_limit:
+                                print(f"[pre_generate_next_round] Popped board has {len(_fw_filtered)} words (exceeds max_limit {max_limit}). Truncating to fit range {search_wc}.")
+                                sorted_w = sorted(_fw_filtered, key=lambda w: (len(w), w), reverse=True)[:max_limit]
+                                _fw_filtered = sorted_w
                             # Found valid cached board!
                             _fw = _fw_filtered
-                            _fp = {w: p for w, p in _fp.items() if len(w) >= search_min}
+                            _fp = {w: p for w, p in _fp.items() if w in _fw}
                             _pre = (_fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams)
                             break
                         else:
@@ -5595,6 +5628,15 @@ class RoomManager:
             # INSTANT FALLBACK: If no board is ready, pop any cached board right now without waiting
             if not getattr(room, 'next_round_board', None):
                 from board_generator import pop_any_cached_board as _pop_any_snr
+                max_limit = 99999
+                if target_range:
+                    try:
+                        parts = str(target_range).split('-')
+                        if len(parts) == 2:
+                            max_limit = int(parts[1]) - 1
+                    except:
+                        pass
+
                 # Try popping up to 10 cached boards to find one with enough words
                 _fallback = None
                 for _ in range(10):
@@ -5604,9 +5646,13 @@ class RoomManager:
                     _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = candidate
                     _fw_filtered = [w for w in _fw if len(w) >= m_len]
                     if len(_fw_filtered) >= min_accept:
-                        # Found valid cached board!
+                        # Found valid cached board! Truncate if count exceeds max_limit to match spun target range and prevent drift
+                        if len(_fw_filtered) > max_limit:
+                            print(f"[start_next_round] Fallback popped board has {len(_fw_filtered)} words (exceeds max_limit {max_limit}). Truncating to fit range {target_range}.")
+                            sorted_w = sorted(_fw_filtered, key=lambda w: (len(w), w), reverse=True)[:max_limit]
+                            _fw_filtered = sorted_w
                         _fw = _fw_filtered
-                        _fp = {w: p for w, p in _fp.items() if len(w) >= m_len}
+                        _fp = {w: p for w, p in _fp.items() if w in _fw}
                         _fallback = (_fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams)
                         break
                     else:
@@ -5993,12 +6039,18 @@ class RoomManager:
 
                     target_range = getattr(room, 'current_word_count_range', '200-300' if room.time_limit >= 7200 else '100-200')
                     if target_range:
-                        _, max_target = self.board_generator._parse_word_count_range(target_range)
+                        max_limit = 99999
+                        try:
+                            parts = str(target_range).split('-')
+                            if len(parts) == 2:
+                                max_limit = int(parts[1]) - 1
+                        except:
+                            pass
                         
-                        if max_target < 99999 and len(room.all_words) > max_target:
-                            print(f"[ACCURACY-SYNC] Truncating Round {room.current_round} to {max_target} words to match range '{target_range}'")
+                        if len(room.all_words) > max_limit:
+                            print(f"[ACCURACY-SYNC] Truncating Round {room.current_round} to {max_limit} words to match range '{target_range}' (limit: {max_limit})")
                             # Sort by length desc then alpha
-                            sorted_scorable = sorted(list(room.all_words), key=lambda w: (len(w), w), reverse=True)[:max_target]
+                            sorted_scorable = sorted(list(room.all_words), key=lambda w: (len(w), w), reverse=True)[:max_limit]
                             room.all_words = set(sorted_scorable)
                             room.all_words_paths = {w: room.all_words_paths.get(w, []) for w in room.all_words}
                             if getattr(room, 'solved_words_with_scores', None) is not None:
