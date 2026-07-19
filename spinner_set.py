@@ -368,34 +368,9 @@ class SpinnerSet:
                 }
                 
                 if not previous_params:
-                    # USER REQUEST: Specific initial state for the first round (Density Focused)
-                    # We must still respect dimension-based minimum lengths (especially for 6x8/3x3x3)
-                    initial_min = SpinnerSet._spin_min_word_length(board_dimensions)
-                    initial_diff = SpinnerSet._spin_difficulty(board_dimensions, initial_min)
-                    initial_wc = SpinnerSet._spin_word_count('NWL', initial_min, initial_diff, board_dimensions)
-                    
-                    if initial_wc == '100-200':
-                        if '4x4' in dims and initial_min == 3:
-                            initial_min = random.choice([4, 5])
-                        elif '4x6' in dims and initial_min == 4:
-                            initial_min = random.choice([5, 6])
-                        elif '5x7' in dims and initial_min == 5:
-                            initial_min = random.choice([6, 7])
-                        elif '6x8' in dims and initial_min == 6:
-                            initial_min = random.choice([7, 8])
-                            
-                    initial_dict = SpinnerSet._spin_dictionary()
-                    initial_use_aw = ('+ AW' in initial_dict or '+AW' in initial_dict)
-                    return {
-                        'min_word_length': initial_min,
-                        'difficulty': initial_diff,
-                        'word_count_range': initial_wc,
-                        'dictionary': initial_dict,
-                        'use_added_words': initial_use_aw,
-                        'board_format': 'Normal',
-                        'bonus_word_length': max(8, initial_min),
-                        'generated_at': time.time()
-                    }
+                    # No previous params (first round) — return immediately with the standard
+                    # 25/50/25 roll above. No special-casing needed.
+                    return res
                 
                 # VARIETY ENFORCEMENT: Avoid repeating the same board format (User Request)
                 # If we rolled the exact same format (e.g., 'Either/Or' twice), we re-roll 

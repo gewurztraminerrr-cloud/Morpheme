@@ -3310,16 +3310,21 @@ class RoomManager:
                         if pre_pop:
                             r_board, r_words, r_bonus_c, r_fmt, r_dict, r_ratio, r_bonus_word, r_params = pre_pop
                             if r_params:
-                                print(f"[RoomManager] {room_id}: Pop-first hit. Deriving spinner params from cached board: {r_params}")
-                                # Align ALL spinner params to match the cached board exactly
+                                print(f"[RoomManager] {room_id}: Pop-first hit. Aligning spinner params from cached board (preserving spun min_word_length): {r_params}")
+                                # Align dictionary, format, difficulty from the cached board —
+                                # but PRESERVE the spun min_word_length so the Spinner Set display
+                                # reflects what was randomly rolled, not what the cache happened to have.
+                                spun_min = room.spinner_params.get('min_word_length', 3)
                                 room.spinner_params['dictionary'] = r_params.get('dictionary', room.spinner_params.get('dictionary', 'NWL'))
                                 room.spinner_params['difficulty'] = r_params.get('difficulty', room.spinner_params.get('difficulty', 'Medium'))
                                 room.spinner_params['word_count_range'] = r_params.get('word_count_range', room.spinner_params.get('word_count_range', '100-200'))
                                 room.spinner_params['board_format'] = r_params.get('board_format', room.spinner_params.get('board_format', 'Normal'))
-                                room.spinner_params['min_word_length'] = r_params.get('min_word_length', room.spinner_params.get('min_word_length', 3))
+                                # Keep spun min_word_length — do NOT override from popped board
+                                room.spinner_params['min_word_length'] = spun_min
                                 room.spinner_params['use_added_words'] = r_params.get('use_added_words', False)
                                 room.spinner_params['bonus_word_length'] = r_params.get('bonus_word_len', len(r_bonus_word) if r_bonus_word else 6)
                             e_results = (r_board, r_words, r_bonus_c, r_fmt, r_dict, r_ratio, r_bonus_word)
+
                         
                         # Derive working variables from whatever params are now set
                         m_len = room.spinner_params.get('min_word_length', 3)
