@@ -3296,20 +3296,30 @@ class RoomManager:
                         
                         if e_results and len(e_results) >= 7:
                             e_board, e_words, e_bonus_c, e_fmt, e_dict, e_ratio, e_bonus_word = e_results[:7]
+                            e_params = e_results[8] if len(e_results) > 8 else None
                             
                             room.board = e_board
                             room.bonus_cell = e_bonus_c
                             room.bonus_word = e_bonus_word or b_word
-                            # Check if generator relaxed min_word_length
-                            if e_words:
-                                actual_shortest = min(len(w) for w in e_words)
-                                if actual_shortest < m_len:
-                                    print(f"[RoomManager] Word generator relaxed min_word_length from {m_len} to {actual_shortest} during kickstart. Updating room param.")
+                            
+                            if e_params:
+                                print(f"[RoomManager] Aligning start_round spinner parameters to match fallback board: {e_params}")
+                                room.spinner_params['dictionary'] = e_params.get('dictionary', 'NWL')
+                                room.spinner_params['difficulty'] = e_params.get('difficulty', 'Medium')
+                                room.spinner_params['word_count_range'] = e_params.get('word_count_range', '100-200')
+                                room.spinner_params['board_format'] = e_params.get('board_format', 'Normal')
+                                room.spinner_params['min_word_length'] = e_params.get('min_word_length', 3)
+                                room.spinner_params['use_added_words'] = e_params.get('use_added_words', False)
+                                room.spinner_params['bonus_word_length'] = e_params.get('bonus_word_len', 6)
+                                m_len = int(e_params.get('min_word_length', 3))
+                            else:
+                                if e_words:
+                                    actual_shortest = min(len(w) for w in e_words)
                                     room.spinner_params['min_word_length'] = actual_shortest
                                     m_len = actual_shortest
 
                             room.current_min_length = m_len
-                            room.current_board_format = 'Valued Letters' if is_24h else e_fmt
+                            room.current_board_format = 'Valued Letters' if is_24h else (e_params.get('board_format') if e_params else e_fmt)
                             room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
                             room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
                             room.current_uniqueness = e_ratio
@@ -3398,18 +3408,30 @@ class RoomManager:
             return
         
         e_board, e_words, e_bonus_c, e_fmt, e_dict, e_ratio, e_bonus_word = e_results[:7]
-        
-        if e_words:
-            actual_shortest = min(len(w) for w in e_words)
-            if actual_shortest < m_len:
-                room.spinner_params['min_word_length'] = actual_shortest
-                m_len = actual_shortest
+        e_params = e_results[8] if len(e_results) > 8 else None
         
         room.board = e_board
         room.bonus_cell = e_bonus_c
         room.bonus_word = e_bonus_word or getattr(room, 'bonus_word', '')
+        
+        if e_params:
+            print(f"[RoomManager] Aligning ultimate kickstart spinner parameters to match fallback board: {e_params}")
+            room.spinner_params['dictionary'] = e_params.get('dictionary', 'NWL')
+            room.spinner_params['difficulty'] = e_params.get('difficulty', 'Medium')
+            room.spinner_params['word_count_range'] = e_params.get('word_count_range', '100-200')
+            room.spinner_params['board_format'] = e_params.get('board_format', 'Normal')
+            room.spinner_params['min_word_length'] = e_params.get('min_word_length', 3)
+            room.spinner_params['use_added_words'] = e_params.get('use_added_words', False)
+            room.spinner_params['bonus_word_length'] = e_params.get('bonus_word_len', 6)
+            m_len = int(e_params.get('min_word_length', 3))
+        else:
+            if e_words:
+                actual_shortest = min(len(w) for w in e_words)
+                room.spinner_params['min_word_length'] = actual_shortest
+                m_len = actual_shortest
+
         room.current_min_length = m_len
-        room.current_board_format = 'Valued Letters' if is_24h else e_fmt
+        room.current_board_format = 'Valued Letters' if is_24h else (e_params.get('board_format') if e_params else e_fmt)
         room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
         room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
         room.current_uniqueness = e_ratio
