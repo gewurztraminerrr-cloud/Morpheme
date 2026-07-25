@@ -37,22 +37,6 @@ class SpinnerSet:
             if isinstance(res, dict) and res.get('word_count_range') == '50-100':
                 dims = str(board_dimensions).lower().replace(" ", "")
                 min_word_length = res.get('min_word_length', 3)
-                
-                is_valid_50_100 = False
-                if '4x4' in dims and min_word_length >= 5:
-                    is_valid_50_100 = True
-                elif '4x6' in dims and min_word_length >= 6:
-                    is_valid_50_100 = True
-                elif '5x7' in dims and min_word_length >= 7:
-                    is_valid_50_100 = True
-                elif '6x8' in dims and min_word_length >= 8:
-                    is_valid_50_100 = True
-                elif '3x3x3' in dims and min_word_length >= 8:
-                    is_valid_50_100 = True
-                
-                if not is_valid_50_100:
-                    res['word_count_range'] = '100-200'
-                    print(f"[SpinnerSet] Ironclad corrected mismatched word_count_range for dims={board_dimensions}, min_len={min_word_length} from 50-100 to 100-200.")
             # Roll for Added Words configuration
             if isinstance(res, dict):
                 dict_val = res.get('dictionary')
@@ -142,69 +126,14 @@ class SpinnerSet:
         elif '6x8' in dims or '3x3x3' in dims:
             if min_word_length > 8: min_word_length = 8
 
-        wc_range = res.get('word_count_range', '100-200')
-
-        if is_aw_effective:
-            # Added Words rounds: ALWAYS 300-400, 400-500, or 500+ — no exceptions.
-            # User requirement: AW dictionaries never show 50-100 or 100-200.
-            if wc_range not in ['300-400', '400-500', '500+']:
-                wc_range = '300-400'
-
-        else:
-            # Standard rounds
-            if wc_range not in ['50-100', '100-200', '200-300', '300-400']:
+        wc_range = res.get('word_count_range')
+        if not wc_range or wc_range not in ['50-100', '100-200', '200-300', '300-400', '400-500', '500+']:
+            if is_aw_effective:
                 import random
-                wc_range = random.choices(['50-100', '100-200', '200-300', '300-400'], weights=[10, 30, 30, 30])[0]
-
-            if '4x4' in dims:
-                if min_word_length == 5:
-                    if wc_range not in ['50-100', '100-200']:
-                        wc_range = '50-100'
-                elif min_word_length == 4:
-                    if wc_range not in ['100-200', '200-300']:
-                        wc_range = '100-200'
-                else: # <= 3
-                    if wc_range not in ['100-200', '200-300', '300-400']:
-                        wc_range = '100-200'
-            elif '4x6' in dims:
-                if min_word_length == 6:
-                    if wc_range not in ['50-100', '100-200']:
-                        wc_range = '50-100'
-                elif min_word_length == 5:
-                    if wc_range not in ['100-200', '200-300']:
-                        wc_range = '100-200'
-                elif min_word_length == 4:
-                    if wc_range not in ['100-200', '200-300', '300-400']:
-                        wc_range = '200-300'
-                else: # <= 3
-                    if wc_range not in ['100-200', '200-300', '300-400']:
-                        wc_range = '200-300'
-            elif '5x7' in dims:
-                if min_word_length == 7:
-                    if wc_range not in ['50-100', '100-200']:
-                        wc_range = '50-100'
-                elif min_word_length == 6:
-                    if wc_range not in ['100-200', '200-300']:
-                        wc_range = '100-200'
-                elif min_word_length == 5:
-                    if wc_range not in ['100-200', '200-300', '300-400']:
-                        wc_range = '200-300'
-                else: # <= 4
-                    if wc_range not in ['200-300', '300-400']:
-                        wc_range = '200-300'
-            elif '6x8' in dims or '3x3x3' in dims:
-                if min_word_length == 8:
-                    if wc_range not in ['50-100', '100-200']:
-                        wc_range = '50-100'
-                elif min_word_length == 7:
-                    if wc_range not in ['100-200', '200-300']:
-                        wc_range = '100-200'
-                elif min_word_length == 6:
-                    if wc_range not in ['100-200', '200-300', '300-400']:
-                        wc_range = '200-300'
-                else: # <= 5
-                    if wc_range not in ['200-300', '300-400']:
-                        wc_range = '200-300'
+                wc_range = random.choices(['300-400', '400-500', '500+'], weights=[40, 40, 20])[0]
+            else:
+                import random
+                wc_range = random.choices(['50-100', '100-200', '200-300', '300-400', '400-500', '500+'], weights=[10, 25, 25, 20, 15, 5])[0]
 
         res['min_word_length'] = min_word_length
         res['word_count_range'] = wc_range
@@ -234,8 +163,17 @@ class SpinnerSet:
                 res['min_word_length'] = 5
             elif '5x7' in dims and min_word_length >= 7:
                 res['min_word_length'] = 6
-            elif ('6x8' in dims or '3x3x3' in dims) and min_word_length >= 8:
-                res['min_word_length'] = 7
+        bw_raw = res.get('bonus_word_length')
+        try:
+            bw_val = int(bw_raw)
+            if bw_val < 6 or bw_val > 10:
+                import random
+                res['bonus_word_length'] = random.choice([6, 7, 8, 9, 10])
+            else:
+                res['bonus_word_length'] = bw_val
+        except:
+            import random
+            res['bonus_word_length'] = random.choice([6, 7, 8, 9, 10])
 
         return res
 
@@ -265,9 +203,8 @@ class SpinnerSet:
                 # Enforce explicit weights: floor (25%), middle (50%), ceiling (25%)
                 min_word_length = random.choices([floor, middle, ceiling], weights=[25, 50, 25])[0]
                 
-                # Allow + AW dictionaries on all minimum lengths (6L, 7L, 8L) since the generator is now fast and robust.
-                # We distribute weights so standard is 30% total, and + AW is 70% total across all lengths.
-                dictionary = random.choices(['NWL', 'CSW', 'NWL + AW', 'CSW + AW'], weights=[15, 15, 35, 35])[0]
+                # Equal 25% probability for each dictionary type
+                dictionary = random.choices(['NWL', 'CSW', 'NWL + AW', 'CSW + AW'], weights=[25, 25, 25, 25])[0]
 
                 is_aw_effective = (
                     '+ AW' in str(dictionary).upper()
@@ -331,29 +268,46 @@ class SpinnerSet:
                     'generated_at': time.time()
                 }
                 
-                if not previous_params:
-                    # No previous params (first round) — return immediately with the standard
-                    # 25/50/25 roll above. No special-casing needed.
-                    return res
-                
-                # VARIETY ENFORCEMENT: Avoid repeating the same board format (User Request)
-                # If we rolled the exact same format (e.g., 'Either/Or' twice), we re-roll 
-                # up to the loop limit to find a different experience.
-                # NOTE: We allow 'Normal' to repeat to maintain its intended 80% frequency.
-                if res.get('board_format') == previous_params.get('board_format'):
-                     if res.get('board_format') not in ['Normal', 'Either/Or'] and _ < 25:
-                          continue
+                if previous_params and isinstance(previous_params, dict):
+                    def get_base_fmt(f):
+                        s = str(f).lower()
+                        if 'bounce' in s: return 'bounce'
+                        if 'mania' in s: return 'mania'
+                        if 'checkerboard' in s: return 'checkerboard'
+                        if 'equality' in s: return 'equality'
+                        if 'density' in s: return 'density'
+                        if 'penalty' in s: return 'penalty'
+                        if 'either' in s: return 'either'
+                        if 'bonus' in s: return 'bonus'
+                        if 'valued' in s: return 'valued'
+                        if 'rotation' in s: return 'rotation'
+                        if 'double' in s: return 'double'
+                        if 'triple' in s: return 'triple'
+                        return 'normal'
 
-                # Uniqueness Check: Ensure at least one major parameter changed
-                major_keys = ['difficulty', 'min_word_length', 'word_count_range', 'dictionary', 'use_added_words', 'board_format']
-                is_different = False
-                for k in major_keys:
-                    if str(res.get(k)) != str(previous_params.get(k)):
-                        is_different = True
-                        break
-                
-                if is_different:
-                    return res
+                    prev_base = get_base_fmt(previous_params.get('board_format', ''))
+                    cur_base = get_base_fmt(res.get('board_format', ''))
+                    # 1. SPECIAL FORMAT ANTI-STREAK: Non-Normal formats MUST NEVER repeat back-to-back
+                    if cur_base != 'normal' and cur_base == prev_base and _ < 25:
+                        continue
+                    
+                    # 2. DICTIONARY ROTATION ANTI-STREAK: Rotate dictionary between NWL, CSW, NWL + AW, CSW + AW
+                    prev_dict = str(previous_params.get('dictionary', '')).upper()
+                    cur_dict = str(res.get('dictionary', '')).upper()
+                    if cur_dict == prev_dict and _ < 25:
+                        continue
+
+                    # 3. FULL-SET ANTI-STREAK: Reject if 2 or more parameters match previous round
+                    same_count = 0
+                    if res.get('min_word_length') == previous_params.get('min_word_length'): same_count += 1
+                    if cur_dict == prev_dict: same_count += 1
+                    if res.get('word_count_range') == previous_params.get('word_count_range'): same_count += 1
+                    if cur_base == prev_base: same_count += 1
+
+                    if same_count >= 2 and _ < 25:
+                        continue
+
+                return res
                 
                 best_res = res # Fallback to last attempt if we somehow fail 30 times
 
@@ -410,9 +364,9 @@ class SpinnerSet:
         return random.choices(choices, weights=weights)[0]
     
     @staticmethod
-    def _spin_word_count(dictionary, min_word_length, difficulty, board_dimensions):
+    def _spin_word_count(dictionary, min_word_length, difficulty, board_dimensions, use_added_words=False):
         d_upper = str(dictionary).upper()
-        if "+ AW" in d_upper or "+AW" in d_upper or "ADDED" in d_upper:
+        if use_added_words or "+ AW" in d_upper or "+AW" in d_upper or "ADDED" in d_upper:
             choices = ['300-400', '400-500', '500+']
             weights = [40, 40, 20]
         else:
@@ -440,7 +394,7 @@ class SpinnerSet:
             
         result = random.choices(
             ['Normal', 'Bounce', 'Checkerboard', 'Equality Freq', 'Density', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Rotation', 'Double', 'Triple'],
-            weights=[66, 2, 12, 4, 1, 2, 2, 2, 2, 2, 2, 1, 1]
+            weights=[66, 2, 12, 4, 2, 2, 2, 2, 2, 2, 2, 1, 1]
         )[0]
         
         if result == 'Bounce':
@@ -454,3 +408,30 @@ class SpinnerSet:
                 mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')
             return f'{mania_letter} Mania'
         return result
+
+    @staticmethod
+    def sanitize_params(params, board_dimensions='4x4', is_24h=False):
+        if not isinstance(params, dict):
+            return params
+        p = dict(params)
+        wc = p.get('word_count_range')
+        if isinstance(wc, (list, tuple)):
+            if len(wc) >= 2:
+                p['word_count_range'] = f"{wc[0]}-{wc[1]}"
+            elif len(wc) == 1:
+                p['word_count_range'] = str(wc[0])
+        elif isinstance(wc, str):
+            p['word_count_range'] = wc.replace(',', '-')
+            
+        # USER MANDATE: Only allow 300-400 words, 400-500 words, and 500+ words for "+ AW" dictionaries
+        is_aw = (
+            p.get('use_added_words') is True
+            or '+ AW' in str(p.get('dictionary', '')).upper()
+            or '+AW' in str(p.get('dictionary', '')).upper()
+            or str(p.get('dictionary', '')).upper() in ['AW', 'ADDED_WORDS', 'ALL']
+        )
+        if is_aw:
+            current_wc = str(p.get('word_count_range', ''))
+            if current_wc in ['50-100', '100-200', '200-300', '50,100', '100,200', '200,300']:
+                p['word_count_range'] = random.choices(['300-400', '400-500', '500+'], weights=[40, 40, 20])[0]
+        return p

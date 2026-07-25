@@ -518,6 +518,97 @@ window.stopGamePolling = function () {
     stopPolling();
 };
 
+/**
+ * Inject loading card CSS into <head> exactly once.
+ * Must be called before any loading-container HTML is injected into the DOM,
+ * because the CSS classes (.loading-container, .glow-spinner, etc.) are only
+ * available after this function runs.
+ */
+function ensureLoadingCardStyles() {
+    if (document.getElementById('morpheme-loading-card-styles')) return; // Already injected
+    const style = document.createElement('style');
+    style.id = 'morpheme-loading-card-styles';
+    style.textContent = `
+        @keyframes spin-glow {
+            0%   { transform: rotate(0deg);   box-shadow: 0 0 15px var(--accent-color); }
+            50%  { box-shadow: 0 0 30px var(--accent-color), inset 0 0 15px var(--accent-color); }
+            100% { transform: rotate(360deg); box-shadow: 0 0 15px var(--accent-color); }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.8; text-shadow: 0 0 8px var(--accent-color); }
+            50%       { opacity: 1;   text-shadow: 0 0 20px var(--accent-color), 0 0 30px var(--accent-color); }
+        }
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            min-height: 200px;
+            color: var(--text-primary);
+            background: rgba(10, 15, 30, 0.85);
+            border: 2px solid rgba(var(--accent-color-rgb, 0, 230, 118), 0.2);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            box-sizing: border-box;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+        .glow-spinner {
+            width: 45px;
+            height: 45px;
+            border: 3px solid rgba(255, 255, 255, 0.05);
+            border-top: 3px solid var(--accent-color);
+            border-right: 3px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin-glow 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            margin-bottom: 15px;
+        }
+        .glow-title {
+            font-weight: 800;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-primary);
+            animation: pulse-glow 2s ease-in-out infinite;
+            text-align: center;
+        }
+        .why-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-align: center;
+            max-width: 95%;
+            margin-top: 12px;
+            line-height: 1.4;
+            font-weight: 400;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 12px;
+        }
+        .status-ticker {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--accent-color);
+            margin-top: 10px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 4px 12px;
+            border-radius: 15px;
+            border: 1px solid rgba(var(--accent-color-rgb, 0, 230, 118), 0.15);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        @media (max-width: 768px) {
+            .loading-container { padding: 12px; }
+            .glow-spinner { width: 30px; height: 30px; border-width: 2px; margin-bottom: 10px; }
+            .glow-title { font-size: 0.9rem; letter-spacing: 1px; }
+            .status-ticker { font-size: 0.65rem; margin-top: 8px; padding: 2px 8px; }
+            .why-text { font-size: 0.65rem; margin-top: 8px; padding-top: 8px; line-height: 1.3; }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
 function clearGameUIAndCache() {
     console.log('[play.js] Clearing Game UI and Caches from previous match');
     
@@ -572,12 +663,19 @@ function clearGameUIAndCache() {
     
     const boardEl = document.getElementById('game-board');
     if (boardEl) {
+        ensureLoadingCardStyles();
         boardEl.innerHTML = `
-            <div class="board-loader-container">
-                <div class="board-loader-spinner"></div>
-                <div class="board-loader-text">CONNECTING TO MATRIX...</div>
+            <div class="loading-container">
+                <div class="glow-spinner"></div>
+                <div class="glow-title">Establishing Server Connection…</div>
+                <div class="status-ticker">[PROCESSING] Connecting to Morpheme server…</div>
+                <div class="why-text">Preparing your game room</div>
             </div>
         `;
+        boardEl.style.display = 'flex';
+        boardEl.style.flexDirection = 'column';
+        boardEl.style.justifyContent = 'center';
+        boardEl.style.alignItems = 'center';
     }
     
     const chatBox = document.getElementById('chat-messages');
@@ -1059,7 +1157,28 @@ async function updateGameState(incomingState = null) {
             const timerVal = document.getElementById('timer-value');
             const timerLabel = document.querySelector('.timer-label');
             if (timerVal) timerVal.textContent = '...';
-            if (timerLabel) timerLabel.textContent = 'GENERATING BOARD';
+            if (timerLabel && timerLabel.textContent !== "Time:") timerLabel.textContent = 'Time:';
+
+            const boardEl = document.getElementById('game-board');
+            if (boardEl) {
+                ensureLoadingCardStyles();
+                let loadingMsg = "GENERATING NEXT BOARD…";
+                if (state.current_board_format) {
+                    loadingMsg = `GENERATING ${state.current_board_format.toUpperCase()}…`;
+                }
+                boardEl.innerHTML = `
+                    <div class="loading-container">
+                        <div class="glow-spinner"></div>
+                        <div class="glow-title">${loadingMsg}</div>
+                        <div class="status-ticker">[PROCESSING] Building grid layout and solver trie…</div>
+                        <div class="why-text">Preparing Morpheme game board</div>
+                    </div>
+                `;
+                boardEl.style.display = 'flex';
+                boardEl.style.flexDirection = 'column';
+                boardEl.style.justifyContent = 'center';
+                boardEl.style.alignItems = 'center';
+            }
             // Fast-poll until board is ready
             if (pollInterval) clearInterval(pollInterval);
             pollInterval = setInterval(updateGameState, 500);
@@ -1161,7 +1280,7 @@ async function updateGameState(incomingState = null) {
             const isForCurrentRound = latest && latest.round === state.current_round;
             hasActualWinner = isForCurrentRound && (latest.score || 0) > 0;
 
-            const bonusText = state.bonus_word;
+            const bonusText = (state.bonus_word && String(state.bonus_word).toUpperCase() !== 'NONE') ? state.bonus_word : '';
             const bonusHtml = bonusText ? `<div style="font-size: 0.85rem; color: #fff; opacity: 0.8; margin: 4px 0;">Bonus Word: <span style="color: #ffd700; font-weight: 800; letter-spacing: 1px;">${bonusText.toUpperCase()}</span></div>` : '';
 
             if (hasActualWinner && defContent && !isViewingDefinition && !isTimerExpired) {
@@ -1582,35 +1701,7 @@ async function updateGameState(incomingState = null) {
             if (findersContainer) findersContainer.style.display = 'none';
         }
 
-        // --- HEADER PARAMETER REVEAL ANIMATION (Gold Fade) ---
-        // Triggered only when the NEW parameters for the upcoming round are revealed (at 45s remaining)
-        if (state.state === 'intermission') {
-            const hasSpinner = !!(state.spinner_params && state.spinner_params.word_count_range);
-            const currentSpinnerJSON = hasSpinner ? JSON.stringify({
-                rid: state.room_id,
-                rnd: state.current_round,
-                params: state.spinner_params
-            }) : null;
-            
-            // FIX: Only trigger reveal transition if we have reached the 0:45 remaining threshold
-            // This prevents the fade effect from happening at the very beginning of intermission.
-            const isParamRevealTransition = (hasSpinner && state.time_remaining <= 45 && lastSpinnerDataJSON !== currentSpinnerJSON);
 
-            if (isParamRevealTransition) {
-                lastSpinnerDataJSON = currentSpinnerJSON;
-                
-                // Trigger the CSS animation
-                const container = document.querySelector('.game-params');
-                if (container) {
-                    container.classList.remove('reveal-new');
-                    void container.offsetWidth; // Force reflow to allow re-triggering the animation
-                    container.classList.add('reveal-new');
-                }
-
-            }
-        } else if (state.state !== 'intermission') {
-            lastSpinnerDataJSON = null;
-        }
         
         // Check for state transitions (Cleanup/Misc)
         const roomChanged = previousState && state.room_id !== previousState.room_id;
@@ -1906,7 +1997,7 @@ async function updateGameState(incomingState = null) {
                 }
 
                 const uniqueGlobalFound = [...new Set(allPlayerFoundStrs)];
-                const bonusForList = state.bonus_word;
+                const bonusForList = state.previous_bonus_word || state.bonus_word;
 
 
                 const roundId = `${state.room_id}_${state.current_round}`;
@@ -2138,9 +2229,11 @@ async function updateGameState(incomingState = null) {
                 const totalByLen = state.total_counts_by_len || {};
                 
                 // ROUND SYNC: If the server provided a round tag, verify it matches the current round.
+                // Allow ±1 tolerance: at the exact transition moment the tag may lag by 1 poll cycle.
                 const expectedRound = state.current_round;
+                const roundDiff = totalByLen._round !== undefined ? Math.abs(totalByLen._round - expectedRound) : 0;
                 
-                if (totalByLen._round !== undefined && totalByLen._round !== expectedRound) {
+                if (totalByLen._round !== undefined && roundDiff > 1) {
                     console.warn(`[Remaining-Sync] Mismatch (Counts Round: ${totalByLen._round}, Expected: ${expectedRound}).`);
                     const targetEl = showRemainingInClues ? cluesListEl : remainingListEl;
                     if (targetEl) {
@@ -3689,7 +3782,7 @@ function updateParameters(state) {
     // Otherwise, we prefer the state's authoritative ground-truth labels.
     const factBoardDims = sp.board_dimensions || state.board_dimensions || '4x4';
     const factTimeLimit = sp.time_limit || state.time_limit || 60;
-    const preferSp = isIntermission && isRevealed;
+    const preferSp = (isIntermission && isRevealed) || (!isIntermission && sp && sp.word_count_range);
 
     const factFmt = (preferSp ? (sp.board_format || state.current_board_format) : (state.current_board_format || sp.board_format)) || 'Normal';
     const factDiff = (preferSp ? (sp.difficulty || state.current_difficulty) : (state.current_difficulty || sp.difficulty)) || 'Medium';
@@ -3699,7 +3792,13 @@ function updateParameters(state) {
     const useAW = preferSp ? (sp.use_added_words === true) : (state.use_added_words === true);
     const cleanBaseDict = baseDict.replace(/\s*\+\s*AW/i, '').replace(/\s*\+AW/i, '').trim();
     const factDict = useAW ? `${cleanBaseDict} + AW` : cleanBaseDict;
-    const factWordRange = (preferSp ? (sp.word_count_range || state.current_word_count_range) : (state.current_word_count_range || sp.word_count_range)) || 'Random';
+    let rawWordRange = (preferSp ? (sp.word_count_range || state.current_word_count_range) : (state.current_word_count_range || sp.word_count_range)) || 'Random';
+    if (Array.isArray(rawWordRange)) {
+        rawWordRange = rawWordRange.join('-');
+    } else {
+        rawWordRange = String(rawWordRange).replace(',', '-');
+    }
+    const factWordRange = rawWordRange;
     
     let factUniq = 0; 
     if (preferSp) {
@@ -3746,8 +3845,16 @@ function updateParameters(state) {
             window._displayedParams.dict = factDict;
             window._displayedParams.range = factWordRange;
             window._displayedParams.fmt = factFmt;
-            const bonusVal = parseInt(factBonus);
-            window._displayedParams.bonus = (!isNaN(bonusVal) && bonusVal > 0) ? (bonusVal + 'L') : 'None';
+            let bonusVal = parseInt(factBonus);
+            if (isNaN(bonusVal) || bonusVal <= 0) {
+                if (state.bonus_word && typeof state.bonus_word === 'string' && state.bonus_word.length >= 3 && String(state.bonus_word).toUpperCase() !== 'NONE') {
+                    bonusVal = state.bonus_word.length;
+                } else {
+                    const dStr = String(factBoardDims || '');
+                    bonusVal = dStr.includes('6x8') ? 9 : (dStr.includes('5x7') ? 8 : (dStr.includes('4x6') ? 7 : 8));
+                }
+            }
+            window._displayedParams.bonus = bonusVal + 'L';
             
             let diffLabel = factDiff;
             if (diffLabel === 'Varying...') diffLabel = 'Random';
@@ -3755,34 +3862,7 @@ function updateParameters(state) {
             else if (diffLabel === 'Expert' || diffLabel === 'Difficult') diffLabel = 'Hard';
             else if (diffLabel === 'Beginner') diffLabel = 'Easy';
             
-            // Strictly derive difficulty label from uniqueness percentage if uniqueness is present to avoid UI mismatch
-            if (newUniq > 0) {
-                if (factBoardDims === '4x4') {
-                    if (newUniq >= 0.30) diffLabel = 'Hard';
-                    else if (newUniq >= 0.16) diffLabel = 'Medium';
-                    else diffLabel = 'Easy';
-                } else if (factBoardDims === '4x6' || factBoardDims === '6x4') {
-                    if (newUniq >= 0.36) diffLabel = 'Hard';
-                    else if (newUniq >= 0.20) diffLabel = 'Medium';
-                    else diffLabel = 'Easy';
-                } else if (factBoardDims === '5x7' || factBoardDims === '7x5') {
-                    if (newUniq >= 0.45) diffLabel = 'Hard';
-                    else if (newUniq >= 0.30) diffLabel = 'Medium';
-                    else diffLabel = 'Easy';
-                } else if (factBoardDims === '6x8' || factBoardDims === '8x6') {
-                    if (newUniq >= 0.50) diffLabel = 'Hard';
-                    else if (newUniq >= 0.35) diffLabel = 'Medium';
-                    else diffLabel = 'Easy';
-                } else if (factBoardDims === '3x3x3') {
-                    if (newUniq >= 0.45) diffLabel = 'Hard';
-                    else if (newUniq >= 0.31) diffLabel = 'Medium';
-                    else diffLabel = 'Easy';
-                } else {
-                    if (newUniq >= 0.40) diffLabel = 'Hard';
-                    else if (newUniq >= 0.26) diffLabel = 'Medium';
-                    else diffLabel = 'Easy';
-                }
-            }
+            // Keep difficulty label 100% consistent with the revealed parameter (factDiff)
             
             const uniquePct = (newUniq > 0 && !diffLabel.includes('(')) ? ` (${Math.round(newUniq * 100)}%)` : "";
             window._displayedParams.diff = diffLabel + uniquePct;
@@ -4284,10 +4364,12 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         window.boardLoadingInterval = null;
     }
     
-    // IF board is empty OR has no letters, show loading spinner
-    if (!hasLetters) {
-        let loadingMsg = "GENERATING COMPLIANT BOARD...";
-        if (state && state.current_board_format) {
+    // IF board is empty OR has no letters (and NOT in intermission), show loading spinner
+    if (!hasLetters && (!state || state.state !== 'intermission')) {
+        let loadingMsg = "GENERATING NEXT BOARD...";
+        if (state && state.state === 'loading') {
+            loadingMsg = "GENERATING NEXT BOARD...";
+        } else if (state && state.current_board_format) {
             loadingMsg = `GENERATING ${state.current_board_format.toUpperCase()}...`;
         } else if (window.lastGameState && window.lastGameState.current_board_format) {
             loadingMsg = `GENERATING ${window.lastGameState.current_board_format.toUpperCase()}...`;
@@ -4323,103 +4405,8 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
             }
         }, 1200);
         
+        ensureLoadingCardStyles();
         boardEl.innerHTML = `
-            <style>
-                @keyframes spin-glow {
-                    0% { transform: rotate(0deg); box-shadow: 0 0 15px var(--accent-color); }
-                    50% { box-shadow: 0 0 30px var(--accent-color), inset 0 0 15px var(--accent-color); }
-                    100% { transform: rotate(360deg); box-shadow: 0 0 15px var(--accent-color); }
-                }
-                @keyframes pulse-glow {
-                    0%, 100% { opacity: 0.8; text-shadow: 0 0 8px var(--accent-color); }
-                    50% { opacity: 1; text-shadow: 0 0 20px var(--accent-color), 0 0 30px var(--accent-color); }
-                }
-                .loading-container {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    width: 100%;
-                    height: 100%;
-                    min-height: 100%;
-                    color: var(--text-primary);
-                    background: rgba(10, 15, 30, 0.85);
-                    border: 2px solid rgba(var(--accent-color-rgb, 0, 230, 118), 0.2);
-                    border-radius: 16px;
-                    backdrop-filter: blur(10px);
-                    padding: 20px;
-                    box-sizing: border-box;
-                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-                }
-                .glow-spinner {
-                    width: 45px;
-                    height: 45px;
-                    border: 3px solid rgba(255, 255, 255, 0.05);
-                    border-top: 3px solid var(--accent-color);
-                    border-right: 3px solid var(--accent-color);
-                    border-radius: 50%;
-                    animation: spin-glow 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-                    margin-bottom: 15px;
-                }
-                .glow-title {
-                    font-weight: 800;
-                    font-size: 1.1rem;
-                    text-transform: uppercase;
-                    letter-spacing: 2px;
-                    color: var(--text-primary);
-                    animation: pulse-glow 2s ease-in-out infinite;
-                    text-align: center;
-                }
-                .why-text {
-                    font-size: 0.75rem;
-                    color: var(--text-secondary);
-                    text-align: center;
-                    max-width: 95%;
-                    margin-top: 12px;
-                    line-height: 1.4;
-                    font-weight: 400;
-                    border-top: 1px solid rgba(255, 255, 255, 0.08);
-                    padding-top: 12px;
-                }
-                .status-ticker {
-                    font-family: monospace;
-                    font-size: 0.75rem;
-                    color: var(--accent-color);
-                    margin-top: 10px;
-                    background: rgba(0, 0, 0, 0.4);
-                    padding: 4px 12px;
-                    border-radius: 15px;
-                    border: 1px solid rgba(var(--accent-color-rgb, 0, 230, 118), 0.15);
-                    font-weight: 600;
-                    letter-spacing: 0.5px;
-                }
-                @media (max-width: 768px) {
-                    .loading-container {
-                        padding: 12px;
-                    }
-                    .glow-spinner {
-                        width: 30px;
-                        height: 30px;
-                        border-width: 2px;
-                        margin-bottom: 10px;
-                    }
-                    .glow-title {
-                        font-size: 0.9rem;
-                        letter-spacing: 1px;
-                    }
-                    .status-ticker {
-                        font-size: 0.65rem;
-                        margin-top: 8px;
-                        padding: 2px 8px;
-                    }
-                    .why-text {
-                        font-size: 0.65rem;
-                        margin-top: 8px;
-                        padding-top: 8px;
-                        line-height: 1.3;
-                    }
-                }
-            </style>
             <div class="loading-container">
                 <div class="glow-spinner"></div>
                 <div class="glow-title">${loadingMsg}</div>
@@ -5045,7 +5032,8 @@ function updateBoardCell(cell, r, c, letter, grayed, f, state = null) {
         existingStar.remove();
     }
     
-    if ((isMatch && isBonusLetterFormat) || (boardFormat.toLowerCase().includes('either') && letter.includes('/'))) {
+    const isEitherFormat = boardFormat.toLowerCase().includes('either');
+    if ((isMatch && (isBonusLetterFormat || isEitherFormat)) || (isEitherFormat && (letter.includes('/') || isMatch))) {
         cell.classList.add('bonus-highlight');
     } else {
         cell.classList.remove('bonus-highlight');
@@ -6723,11 +6711,8 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
     console.log(`[play.js] Submitting word "${word}" to room ${roomId} via ${currentInputMethod}`);
 
     // --- INSTANT LOCAL VALIDATION (zero hesitation) ---
-    // Use the word list already rendered in the words panel (window.lastDisplayAllWordsArgs[0])
-    // for an accurate instant flash. This is populated during active play via the words panel
-    // renderer, whereas preState.all_words is only sent by the server during intermission.
-    let optimisticColor = null; // 'red' | 'blue' | 'green'
-    let optimisticIsDefinitive = false; // true when local message is exact — suppress server text update
+    let optimisticColor = null; // 'red' | 'blue' | 'green' | 'purple'
+    let optimisticIsDefinitive = false;
     const preState = window.lastGameState;
     if (preState) {
         const minLen = preState.current_min_length || (preState.spinner_params ? preState.spinner_params.min_word_length : 3) || 3;
@@ -6754,49 +6739,75 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
             optimisticColor = 'purple';
             optimisticIsDefinitive = true;
         } else if (effectiveLen < minLen) {
-            // Too short — the client cannot determine dictionary validity (all_words is board-scoped only).
-            // Flash the tiles red immediately (zero hesitation) with no status text.
-            // The server will provide the single, accurate message:
-            //   "[WORD] IS TOO SHORT (MIN: XL)"  → real word, too short
-            //   "SEQUENCE IS NOT A WORD AND TOO SMALL" → not a word AND too short
-            // No text is ever replaced — it appears exactly once.
-            showValidationFeedback('', false, false, finalPath);
+            // Too short — flash INVALID immediately!
+            showValidationFeedback(`${word.toUpperCase()} IS TOO SHORT (MIN: ${minLen}L)`, false, false, finalPath);
             optimisticColor = 'red';
-            // optimisticIsDefinitive stays false — server will set the accurate text once.
-
-        } else if (finalPath && finalPath.length > 0) {
+            optimisticIsDefinitive = true;
+        } else {
             // Check dictionary validity locally using the authoritative all_words list from the game state
-            const allWords = preState.all_words || [];
+            const allWordsState = preState.all_words || [];
+            let wordList = [];
+            if (Array.isArray(allWordsState)) {
+                wordList = allWordsState;
+            } else if (allWordsState && typeof allWordsState === 'object') {
+                wordList = Object.keys(allWordsState);
+            }
 
-            if (allWords.length > 0) {
+            if (wordList.length > 0) {
                 // Word list is populated and trustworthy — check locally for instant flash.
-                const isInWordList = allWords.some(w =>
-                    (typeof w === 'object' ? (w.word || '') : w).toUpperCase() === word
+                const isInWordList = wordList.some(w =>
+                    (typeof w === 'string' ? w : (w.word || '')).toUpperCase() === word
                 );
 
                 if (isInWordList) {
-                    // Confirmed valid — flash the correct color immediately.
-                    const isBonus = preState.bonus_word && word === preState.bonus_word.toUpperCase();
-                    const showBonusMsg = isBonus && !usesEitherOrTile;
+                    // Confirmed valid — check if it's Bonus Word OR uses Bonus Letter tile
+                    const isBonusWord = preState.bonus_word && word === preState.bonus_word.toUpperCase();
+                    let usesBonusLetterTile = false;
+                    if (preState.bonus_cell && finalPath) {
+                        const bc = preState.bonus_cell;
+                        let targetF = -1, targetR = -1, targetC = -1;
+                        if (Array.isArray(bc)) {
+                            if (bc.length === 3) { targetF = Number(bc[0]); targetR = Number(bc[1]); targetC = Number(bc[2]); }
+                            else if (bc.length === 2) { targetR = Number(bc[0]); targetC = Number(bc[1]); }
+                        } else if (typeof bc === 'object') {
+                            targetF = bc.f !== undefined ? Number(bc.f) : -1;
+                            targetR = bc.r !== undefined ? Number(bc.r) : -1;
+                            targetC = bc.c !== undefined ? Number(bc.c) : -1;
+                        }
+                        for (const node of finalPath) {
+                            let f = -1, r = -1, c = -1;
+                            if (Array.isArray(node)) {
+                                if (node.length === 3) { f = Number(node[0]); r = Number(node[1]); c = Number(node[2]); }
+                                else if (node.length === 2) { r = Number(node[0]); c = Number(node[1]); }
+                            } else if (node && typeof node === 'object') {
+                                f = node.f !== undefined ? Number(node.f) : -1;
+                                r = node.r !== undefined ? Number(node.r) : -1;
+                                c = node.c !== undefined ? Number(node.c) : -1;
+                            }
+                            if (targetF !== -1 ? (f === targetF && r === targetR && c === targetC) : (r === targetR && c === targetC)) {
+                                usesBonusLetterTile = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    const isBonus = isBonusWord || usesBonusLetterTile;
+                    const showBonusMsg = isBonusWord && !usesEitherOrTile;
                     const localPts = calculateWordScoreLocally(word, finalPath);
-                    showValidationFeedback(showBonusMsg ? `BONUS WORD! (${localPts} PTS)` : `${word.toUpperCase()} VALID (${localPts} PTS)`, true, isBonus, finalPath);
+                    const msg = showBonusMsg 
+                        ? `BONUS WORD! (${localPts} PTS)`
+                        : (usesBonusLetterTile ? `${word.toUpperCase()} VALID (+3 BONUS LTR! ${localPts} PTS)` : `${word.toUpperCase()} VALID (${localPts} PTS)`);
+                    
+                    showValidationFeedback(msg, true, isBonus, finalPath);
                     optimisticColor = isBonus ? 'green' : 'blue';
                     optimisticIsDefinitive = true;
                 } else {
-                    // Not in the word list.
-                    // If this is a mouse/swipe submission with QU tiles and not already a fallback
-                    // attempt, skip the immediate red flash — the QU→Q retry will produce the
-                    // correct definitive flash on its own.
-                    const mightBeQUFallback = pathParam !== null && !_quFallback && /QU/.test(word);
-                    if (!mightBeQUFallback) {
-                        showValidationFeedback(`${word} INVALID`, false, false, finalPath);
-                        optimisticColor = 'red';
-                        optimisticIsDefinitive = true;
-                    }
-                    // else: hold off — QU fallback will handle feedback
+                    // Not in word list — instant INVALID feedback! (Zero hesitation!)
+                    showValidationFeedback(`${word.toUpperCase()} INVALID`, false, false, finalPath);
+                    optimisticColor = 'red';
+                    optimisticIsDefinitive = true;
                 }
             }
-            // Word list not yet available — server response will fire the single definitive flash.
         }
     }
 
@@ -6847,7 +6858,9 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
 
         // Determine the server's actual color result.
         const currentState = window.lastGameState;
-        const isBonus = data.success && currentState && currentState.bonus_word && data.word && data.word.toUpperCase() === currentState.bonus_word.toUpperCase();
+        const isBonusWord = data.success && currentState && currentState.bonus_word && data.word && data.word.toUpperCase() === currentState.bonus_word.toUpperCase();
+        const hasBonusLetter = data.score_details ? ((data.score_details.bonus_letter_points || 0) > 0) : false;
+        const isBonus = isBonusWord || hasBonusLetter;
         const serverIsPenalty = data.message && data.message.toUpperCase().includes('PENALTY');
         const serverIsActuallyValid = data.success && !serverIsPenalty;
         const serverIsAlreadyFound = data.message && data.message.toUpperCase().includes('ALREADY FOUND');
@@ -6858,23 +6871,26 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
             serverColor = isBonus ? 'green' : 'blue';
         }
 
+        if (!finalPath && data.path) {
+            finalPath = data.path;
+        }
+
         if (optimisticColor !== null && optimisticColor === serverColor) {
-            // Server confirmed our local check — no second tile flash.
+            // Server confirmed our local check — update text status smoothly
             const statusEl = document.getElementById('word-validation-status');
-            if (statusEl) {
-                if (data.success) {
-                    statusEl.textContent = `${(data.word || word).toUpperCase()} VALID (${data.points} PTS)`;
-                } else {
-                    if (!optimisticIsDefinitive) {
-                        statusEl.textContent = data.message || `${word.toUpperCase()} INVALID`;
-                    }
-                }
+            if (statusEl && data.success) {
+                const msg = isBonusWord 
+                    ? `BONUS WORD! (${data.points} PTS)`
+                    : (hasBonusLetter ? `${(data.word || word).toUpperCase()} VALID (+3 BONUS LTR! ${data.points} PTS)` : `${(data.word || word).toUpperCase()} VALID (${data.points} PTS)`);
+                statusEl.textContent = msg;
             }
         } else {
-            // Server result differs from local check — show correction flash.
+            // Server result differs from local check — show correction flash
             let msg;
             if (data.success) {
-                msg = `${(data.word || word).toUpperCase()} VALID (${data.points} PTS)`;
+                msg = isBonusWord 
+                    ? `BONUS WORD! (${data.points} PTS)`
+                    : (hasBonusLetter ? `${(data.word || word).toUpperCase()} VALID (+3 BONUS LTR! ${data.points} PTS)` : `${(data.word || word).toUpperCase()} VALID (${data.points} PTS)`);
             } else {
                 msg = data.message || `${word.toUpperCase()} INVALID`;
             }
@@ -7265,8 +7281,8 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
                     void cell.offsetWidth; 
                     cell.classList.add(tileFlashClass);
                     applyDensityToCell(cell);
-                    // True flash effect: 80ms — visible but not lingering
-                    const flashMs = 80;
+                    // Rapid, snappy flash effect: 120ms — instant, clean feedback upon release/submit
+                    const flashMs = 120;
                     setTimeout(() => {
                         cell.classList.remove(tileFlashClass);
                         applyDensityToCell(cell);
@@ -7286,7 +7302,7 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
             bgColor = 'rgba(0, 255, 0, 0.1)';
         }
         input.style.backgroundColor = bgColor;
-        setTimeout(() => { if (input) input.style.backgroundColor = ''; }, 1000);
+        setTimeout(() => { if (input) input.style.backgroundColor = ''; }, 300);
     }
 
     // Reset after 3 seconds

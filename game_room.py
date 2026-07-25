@@ -66,6 +66,81 @@ class Player:
         except (ValueError, TypeError):
             return False
 
+def is_board_count_valid(word_count, target_range):
+    """Ensure actual word_count falls strictly within the spun target_range (e.g. 100-199 for 100-200)."""
+    if not target_range:
+        return True
+    try:
+        if isinstance(target_range, (list, tuple)) and len(target_range) >= 2:
+            r_min = int(target_range[0])
+            r_max = int(target_range[1]) - 1
+            return (r_min <= word_count <= r_max)
+            
+        s_range = str(target_range).replace(',', '-').strip()
+        if '-' in s_range:
+            parts = s_range.split('-')
+            if len(parts) == 2:
+                r_min = int(parts[0])
+                r_max = int(parts[1]) - 1
+                return (r_min <= word_count <= r_max)
+        elif '+' in s_range:
+            r_min = int(s_range.replace('+', '').strip())
+            return (word_count >= r_min)
+    except Exception as e:
+        print(f"[is_board_count_valid] Error parsing target_range '{target_range}': {e}")
+        return False
+    return False
+
+def proportionally_sample_words(all_words_collection, max_limit, seed_val=None):
+    """
+    Proportionally sample words across all length categories (3L, 4L, 5L, 6L, 7L+)
+    when truncating to fit a target word_count_range (e.g. max 399).
+    Prevents short words (3LW/4LW) from being completely discarded or truncated to 0/1.
+    """
+    all_words_list = list(all_words_collection)
+    total_count = len(all_words_list)
+    if total_count <= max_limit:
+        return set(all_words_list)
+    
+    words_by_len = {}
+    for w in all_words_list:
+        l = len(w)
+        words_by_len.setdefault(l, []).append(w)
+        
+    import random
+    rng = random.Random(seed_val) if seed_val else random.Random()
+    
+    allocated = {}
+    total_alloc = 0
+    min_category_len = min(words_by_len.keys()) if words_by_len else 3
+    for l, group in sorted(words_by_len.items()):
+        floor_quota = min(10, len(group)) if l == min_category_len else 1
+        count = max(floor_quota, int(round(len(group) * max_limit / total_count)))
+        count = min(count, len(group))
+        allocated[l] = count
+        total_alloc += count
+
+    diff = max_limit - total_alloc
+    sorted_lengths = sorted(words_by_len.keys(), key=lambda l: len(words_by_len[l]), reverse=True)
+    idx = 0
+    while diff != 0 and sorted_lengths:
+        l = sorted_lengths[idx % len(sorted_lengths)]
+        min_alloc = min(10, len(words_by_len[l])) if l == min_category_len else 1
+        if diff > 0 and allocated[l] < len(words_by_len[l]):
+            allocated[l] += 1
+            diff -= 1
+        elif diff < 0 and allocated[l] > min_alloc:
+            allocated[l] -= 1
+            diff += 1
+        idx += 1
+
+    sampled = []
+    for l, group in words_by_len.items():
+        rng.shuffle(group)
+        sampled.extend(group[:allocated[l]])
+        
+    return set(sampled)
+
 @dataclass
 class GameRoom:
     room_id: str
@@ -789,13 +864,7 @@ class GameRoom:
         import re
         effective_len = len(re.sub(r'Q(?!U)', 'QU', word))
         if effective_len < min_len_req:
-            is_valid = word_validator.word_validator.is_valid_word(word, getattr(self, 'current_dictionary', 'NWL'), use_added_words=getattr(self, 'use_added_words', False))
-            if not is_valid:
-                return False, "Sequence not a word and too small", 0, None
             return False, f"{word.upper()} IS TOO SHORT (MIN: {min_len_req}L)", 0, None
-
-        with open(WORD_DEBUG_PATH, 'a') as debug:
-            debug.write(f"[{time.time()}] Word: {word} | In Board: {is_in} | Min: {min_len_req} | Len: {len(word)} | Room: {self.room_id}\n")
 
         # Direct match check
         if is_in:
@@ -1238,66 +1307,88 @@ class GameRoom:
         intermission_limit = 5 if self.time_limit >= 7200 else 60
         is_at_or_past_zero = (self.state == 'intermission' and (now - self.intermission_start_time >= intermission_limit))
         
-        # Do not consider stuck if currently starting a round or loading search
-        if is_at_or_past_zero and not getattr(self, 'starting_round', False) and not getattr(self, 'board_search_loading', False):
-            if not getattr(self, 'intermission_stuck_start_time', 0):
-                self.intermission_stuck_start_time = now
-        else:
-            self.intermission_stuck_start_time = 0
+        # USER MANDATE: 0:50 Intermission Fallback Watchdog (10s remaining in intermission)
+        # If no board has been secured by 0:50 of intermission (50s elapsed), pop a pregenerated board immediately,
+        # update Spinner Set parameters (spinner_params, next_spinner_params), and reveal them DURING intermission!
+        if self.state == 'intermission' and self.time_limit < 7200:
+            elapsed_intermission = now - self.intermission_start_time
+            if elapsed_intermission >= 10.0 and not getattr(self, 'next_round_board', None) and not getattr(self, '_fallback_at_50s_done', False):
+                print(f"[Watchdog 0:50] 10s elapsed in intermission (timer 0:50) for {self.room_id} without a secured board. Popping pregenerated board now!")
+                self._fallback_at_50s_done = True
+                
+                from board_generator import pop_compatible_cached_board
+                use_aw = self.spinner_params.get('use_added_words', False) if isinstance(self.spinner_params, dict) else False
+                dict_name = self.spinner_params.get('dictionary', 'NWL') if isinstance(self.spinner_params, dict) else 'NWL'
+                fmt_name = self.spinner_params.get('board_format', 'Normal') if isinstance(self.spinner_params, dict) else 'Normal'
+                min_len_val = self.spinner_params.get('min_word_length', 3) if isinstance(self.spinner_params, dict) else 3
+                
+                popped = None
+                target_range = self.spinner_params.get('word_count_range', '100-200') if isinstance(self.spinner_params, dict) else '100-200'
+                for _ in range(10):
+                    candidate = pop_compatible_cached_board(
+                        self.board_dimensions,
+                        dict_name,
+                        fmt_name,
+                        min_len_val,
+                        use_aw
+                    )
+                    if not candidate:
+                        break
+                    _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = candidate
+                    _c_min_len = (_fparams.get('min_word_length') if isinstance(_fparams, dict) else None) or min_len_val
+                    _fw_filtered = [w for w in _fw if len(w) >= _c_min_len]
+                    min_len_count = sum(1 for w in _fw_filtered if len(w) == _c_min_len)
+                    if is_board_count_valid(len(_fw_filtered), target_range) and min_len_count >= 5:
+                        popped = candidate
+                        break
+                
+                if not popped:
+                    from board_generator import pop_any_cached_board
+                    any_pop = pop_any_cached_board(self.board_dimensions)
+                    if any_pop:
+                        popped = any_pop
+                
+                if popped:
+                    p_board, p_words, p_bonus_cell, p_format, p_paths, p_ratio, p_bonus_word, p_params = popped
+                    p_words_filtered = [w for w in p_words if len(w) >= min_len_val]
+                    p_paths_filtered = {w: p for w, p in p_paths.items() if len(w) >= min_len_val}
+                    
+                    self.next_round_board = p_board
+                    self.next_round_words = p_words_filtered
+                    self.next_round_word_paths = p_paths_filtered
+                    self.next_round_bonus_cell = p_bonus_cell
+                    bw_l_val = self.spinner_params.get('bonus_word_length', 8) if isinstance(self.spinner_params, dict) else 8
+                    if not p_bonus_word or str(p_bonus_word).upper() == 'NONE':
+                        p_bonus_word = self._get_bonus_word(length=bw_l_val, dictionary=dict_name, alternating=('checkerboard' in str(fmt_name).lower()))
+                    self.next_round_bonus = p_bonus_word
+                    self.next_round_format = fmt_name
+                    self.next_round_uniqueness = p_ratio
+                    
+                    # Resolve count range from actual word count of popped board
+                    wc_cnt = len(p_words_filtered)
+                    if wc_cnt < 100: wc_lbl = '50-100'
+                    elif wc_cnt < 200: wc_lbl = '100-200'
+                    elif wc_cnt < 300: wc_lbl = '200-300'
+                    elif wc_cnt < 400: wc_lbl = '300-400'
+                    elif wc_cnt < 500: wc_lbl = '400-500'
+                    else: wc_lbl = '500+'
+                    
+                    # Update spinner_params immediately during intermission!
+                    aligned_sp = dict(self.spinner_params) if isinstance(self.spinner_params, dict) else {}
+                    aligned_sp['word_count_range'] = wc_lbl
+                    aligned_sp['board_format'] = fmt_name
+                    if p_bonus_word:
+                        aligned_sp['bonus_word_length'] = len(p_bonus_word)
+                    aligned_sp['generated_at'] = now
+                    
+                    # Stage parameters for 0:45 reveal without mutating current spinner_params yet
+                    self.next_spinner_params = dict(aligned_sp)
+                    self.next_round_spinner_params = dict(aligned_sp)
+                    self.spinner_params_generated = True
+                    # Parameter reveal is strictly reserved for 0:45 timer (15s elapsed)
+                    print(f"[Watchdog 0:50] Successfully secured board for {self.room_id}! Parameters aligned for 0:45 reveal: {wc_lbl}, {fmt_name}.")
         
-        if getattr(self, 'intermission_stuck_start_time', 0) > 0:
-            if now - self.intermission_stuck_start_time > 10.0:
-                print(f"[Watchdog] Intermission stuck for >10s on {self.room_id} loading a board. Resetting parameters to guaranteed-fast fallback and retrying immediately!")
-                
-                import random
-                is_added_words_enabled = word_validator.word_validator.get_use_added_words()
-                use_aw = (random.random() < 0.5) if is_added_words_enabled else False
 
-                # 1. Set fallback spinner parameters
-                fallback_min = SpinnerSet._spin_min_word_length(self.board_dimensions)
-                fallback_params = {
-                    'difficulty': 'Medium',
-                    'dictionary': getattr(self, 'current_dictionary', 'NWL') or 'NWL',
-                    'word_count_range': '200-300' if self.time_limit >= 7200 else '50-100',
-                    'board_format': 'Valued Letters' if self.time_limit >= 7200 else 'Normal',
-                    'min_word_length': fallback_min,
-                    'bonus_word_length': max(6, fallback_min),
-                    'use_added_words': use_aw,
-                    'generated_at': now,
-                    'board_dimensions': self.board_dimensions,
-                    'time_limit': self.time_limit
-                }
-                fallback_params = SpinnerSet.sanitize_params(fallback_params, self.board_dimensions, self.time_limit >= 7200)
-                
-                self.spinner_params = dict(fallback_params)
-                self.next_spinner_params = dict(fallback_params)
-                self.next_round_spinner_params = dict(fallback_params)
-                self.spinner_params_generated = True
-                self.spinner_params_revealed = True
-                self._reveal_sync_complete = True
-                
-                # 2. Reset staging and search flags to force re-generation
-                self.next_round_board = None
-                self.next_round_words = None
-                self.next_round_word_paths = None
-                self.next_round_word_scores = None
-                self.next_round_total_points = 0
-                self.next_round_total_words_count = 0
-                self.next_round_bonus = None
-                self.next_round_bonus_cell = None
-                self.next_round_format = None
-                self.next_round_uniqueness = None
-                
-                self.board_search_started = False
-                self.board_search_started_actual = False
-                self.board_search_loading = False
-                self.starting_round = False
-                
-                # 3. Reset the watchdog stuck timer to give the new thread a fresh window
-                self.intermission_stuck_start_time = now
-                
-                # We return None so the heartbeat will proceed to see 'start' milestone next tick and call start_next_round
-                return None
 
         if getattr(self, 'starting_round', False):
             start_init = getattr(self, '_round_start_init_time', 0)
@@ -1456,7 +1547,7 @@ class GameRoom:
                     if elapsed >= reveal_threshold:
                         is_past_reveal = True
                 else:
-                    is_past_reveal = True
+                    is_past_reveal = False
                 self.spinner_params_revealed = is_past_reveal
             return
 
@@ -1554,7 +1645,7 @@ class GameRoom:
             if elapsed >= reveal_threshold:
                 is_past_reveal = True
         else:
-            is_past_reveal = True
+            is_past_reveal = False
         self.spinner_params_revealed = is_past_reveal
 
     def check_and_update_state(self):
@@ -1566,8 +1657,11 @@ class GameRoom:
         if self.state == 'waiting':
             humans = [p for p in self.players if not p.is_ai]
             if len(humans) > 0:
-                print(f"[GameRoom] Waking up paused room {self.room_id} instantly because human player joined.")
-                
+                print(f"[GameRoom] Waking up paused room {self.room_id} instantly because human player joined. Generating/popping fresh board.")
+                self.board = None
+                self.all_words = set()
+                self.all_words_paths = {}
+
                 # 1. Pop a compatible board from cache immediately
                 from board_generator import pop_compatible_cached_board
                 sp = self.spinner_params or {}
@@ -1576,25 +1670,37 @@ class GameRoom:
                 min_l_val = sp.get('min_word_length', 3)
                 use_aw_val = sp.get('use_added_words', False) or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
                 bonus_word_len = sp.get('bonus_word_length')
-                fallback = pop_compatible_cached_board(
-                    self.board_dimensions,
-                    dict_val,
-                    fmt_val,
-                    min_l_val,
-                    use_aw_val,
-                    bonus_word_len=bonus_word_len
-                )
+                target_range = sp.get('word_count_range', '100-200')
+                fallback = None
+                for _ in range(10):
+                    candidate = pop_compatible_cached_board(
+                        self.board_dimensions,
+                        dict_val,
+                        fmt_val,
+                        min_l_val,
+                        use_aw_val,
+                        bonus_word_len=bonus_word_len
+                    )
+                    if not candidate:
+                        break
+                    _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = candidate
+                    _c_min_len = (_fparams.get('min_word_length') if isinstance(_fparams, dict) else None) or min_l_val
+                    _fw_filtered = [w for w in _fw if len(w) >= _c_min_len]
+                    min_len_count = sum(1 for w in _fw_filtered if len(w) == _c_min_len)
+                    if is_board_count_valid(len(_fw_filtered), target_range) and min_len_count >= 5:
+                        fallback = (_fb, _fw_filtered, _fc, _ff, {w: p for w, p in _fp.items() if w in _fw_filtered}, _fr, _fbw, _fparams)
+                        break
                 
                 if fallback:
                     fb, fw, fc, ff, fp, fr, fbw, fparams = fallback
-                    print(f"[GameRoom] Wakeup: Popped board from cache with {len(fw)} words!")
+                    print(f"[GameRoom] Wakeup: Popped board from cache with {len(fw)} words for range '{target_range}'!")
                 else:
                     print(f"[GameRoom] Wakeup: Cache empty. Using emergency fallback board.")
                     # Get emergency fallback board matching default spinner params
                     e_format = self.spinner_params.get('board_format', 'Normal') if self.spinner_params else 'Normal'
                     e_dict = self.spinner_params.get('dictionary', 'NWL') if self.spinner_params else 'NWL'
                     e_use_aw = self.spinner_params.get('use_added_words', False) if self.spinner_params else False
-                    e_wc = self.spinner_params.get('word_count_range', '100-200') if self.spinner_params else '100-200'
+                    e_wc = target_range
                     e_min_len = self.spinner_params.get('min_word_length') if self.spinner_params else None
                     e_diff = self.spinner_params.get('difficulty', 'Medium') if self.spinner_params else 'Medium'
                     fallback = get_emergency_fallback_board(
@@ -1613,13 +1719,7 @@ class GameRoom:
                 if use_aw_val and '+ AW' not in str(dict_val) and '+AW' not in str(dict_val):
                     dict_val = f"{dict_val} + AW"
                 
-                actual_wc = len(fw)
-                if actual_wc < 100: wc_label = '50-100'
-                elif actual_wc < 200: wc_label = '100-200'
-                elif actual_wc < 300: wc_label = '200-300'
-                elif actual_wc < 400: wc_label = '300-400'
-                elif actual_wc < 500: wc_label = '400-500'
-                else: wc_label = '500+'
+                wc_label = target_range
 
                 new_sp = {
                     'dictionary': dict_val,
@@ -1634,8 +1734,23 @@ class GameRoom:
                     'generated_at': now,
                     'uniqueness': fr
                 }
-                
-                # Enforce sanitization
+                self.board = fb
+                calc_min = fparams.get('min_word_length') if (isinstance(fparams, dict) and fparams.get('min_word_length') is not None) else 3
+                self.all_words_paths = {w: p for w, p in fp.items() if len(w) >= int(calc_min)}
+                self.all_words = set(self.all_words_paths.keys())
+                self.total_words_count = len(self.all_words)
+                self.initial_total_words = self.total_words_count
+
+                wc_cnt = self.total_words_count
+                if wc_cnt < 100: wc_lbl = '50-100'
+                elif wc_cnt < 200: wc_lbl = '100-200'
+                elif wc_cnt < 300: wc_lbl = '200-300'
+                elif wc_cnt < 400: wc_lbl = '300-400'
+                elif wc_cnt < 500: wc_lbl = '400-500'
+                else: wc_lbl = '500+'
+
+                new_sp['word_count_range'] = wc_lbl
+                new_sp['_exact_wc_calculated'] = True
                 new_sp = SpinnerSet.sanitize_params(new_sp, self.board_dimensions, self.time_limit >= 7200)
 
                 self.spinner_params = new_sp
@@ -1643,29 +1758,43 @@ class GameRoom:
                 self.next_round_spinner_params = new_sp
                 self.spinner_params_generated = True
                 self.spinner_params_revealed = True
+                self.was_revealed_this_intermission = True
+                self._spinner_params_locked = True  # LOCK: no further spinner_params overwrites until round resets
+                import copy
+                self.frozen_revealed_params = copy.deepcopy(new_sp)
                 self._reveal_sync_complete = True
                 
                 # Set up active round variables
-                self.board = fb
-                self.all_words = {w for w in fw if len(w) >= new_sp['min_word_length']}
-                self.all_words_paths = {w: p for w, p in fp.items() if len(w) >= new_sp['min_word_length']}
                 self.current_board_format = new_sp['board_format']
-                self.current_word_count_range = new_sp['word_count_range']
+                self.current_word_count_range = wc_lbl
                 self.current_difficulty = new_sp['difficulty']
                 self.current_dictionary = new_sp['dictionary']
                 self.current_min_length = new_sp['min_word_length']
                 self.use_added_words = new_sp['use_added_words']
                 self.current_uniqueness = fr
-                self.total_words_count = len(self.all_words)
-                self.initial_total_words = self.total_words_count
-                self.bonus_word = fbw or ''
+                bw_l = new_sp.get('bonus_word_length', 8) if isinstance(new_sp, dict) else 8
+                if not fbw or str(fbw).strip().upper() in ['', 'NONE'] or str(fbw).upper().endswith('ING') or str(fbw).upper().endswith('INGS'):
+                    candidates = [w for w in (self.all_words or []) if len(w) == bw_l and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
+                    if not candidates:
+                        candidates = [w for w in (self.all_words or []) if len(w) >= 5 and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
+                    if candidates:
+                        import random
+                        fbw = random.choice(list(candidates)).upper()
+                    else:
+                        fbw = self._get_bonus_word(
+                            length=bw_l,
+                            dictionary=self.current_dictionary,
+                            alternating=('checkerboard' in str(self.current_board_format).lower())
+                        )
+                self.bonus_word = str(fbw or '').upper().strip()
                 self.bonus_cell = fc
                 self.solving_complete = True
                 
                 # Set CSW/Added words list
                 if hasattr(word_validator, 'word_validator'):
-                    if '+ AW' in str(self.current_dictionary) or '+AW' in str(self.current_dictionary) or str(self.current_dictionary).upper() in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
-                        word_validator.word_validator.ensure_csw_loaded()
+                    word_validator.word_validator.ensure_csw_loaded()
+                    if hasattr(word_validator.word_validator, 'ensure_added_words_loaded'):
+                        word_validator.word_validator.ensure_added_words_loaded()
                     self.csw_only_words = [w for w in self.all_words if word_validator.word_validator.is_csw_only(w)]
                     self.added_words = [w for w in self.all_words if word_validator.word_validator.is_added_word(w)]
                 else:
@@ -1674,20 +1803,19 @@ class GameRoom:
 
                 # Scored dict
                 is_valued = ('valued' in str(self.current_board_format).lower())
+                from scoring import calculate_word_score
                 scored_dict = {}
                 for w in self.all_words:
-                    if is_valued:
-                        scored_dict[w] = {'total': len(w), 'base': len(w)}
-                    else:
-                        length = len(w)
-                        s = 0
-                        if length <= 2: s = 0
-                        elif length <= 4: s = 1
-                        elif length == 5: s = 2
-                        elif length == 6: s = 3
-                        elif length == 7: s = 5
-                        else: s = 11
-                        scored_dict[w] = {'total': s, 'base': s}
+                    path_val = self.all_words_paths.get(w) if isinstance(self.all_words_paths, dict) else None
+                    details = calculate_word_score(
+                        w, self.bonus_word,
+                        board_format=self.current_board_format,
+                        path=path_val,
+                        bonus_cell=self.bonus_cell,
+                        board=(self.board or getattr(self, 'previous_board', None)),
+                        return_details=True
+                    )
+                    scored_dict[w] = details
                 self.solved_words_with_scores = scored_dict
 
                 # Set timestamps and transition state
@@ -1799,19 +1927,23 @@ class GameRoom:
                         try:
                             from scoring import calculate_word_score
                             refined_fallback = {}
+                            eval_board = self.board or getattr(self, 'previous_board', None)
+                            eval_fmt = self.current_board_format or getattr(self, 'previous_board_format', 'Normal')
                             for word in (self.all_words or []):
+                                path_v = self.all_words_paths.get(word) if isinstance(self.all_words_paths, dict) else None
                                 refined_fallback[word] = calculate_word_score(
                                     word, 
                                     self.bonus_word, 
-                                    board_format=self.current_board_format,
+                                    board_format=eval_fmt,
                                     bonus_cell=self.bonus_cell,
-                                    board=self.board,
-                                    path=self.all_words_paths.get(word),
+                                    board=eval_board,
+                                    path=path_v,
                                     return_details=True,
                                     strict_path=True
                                 )
                             self.solved_words_with_scores = refined_fallback
-                            self.previous_all_words = refined_fallback
+                            self.previous_all_word_scores = dict(refined_fallback)
+                            self.previous_all_words = list(self.all_words or [])
                             self.recalculate_total_points()
                             print(f"[GameRoom] Fallback scoring background refinement complete for {self.room_id}")
                         except Exception as e:
@@ -1826,7 +1958,9 @@ class GameRoom:
                      self.previous_board = [list(row) for row in self.board] if self.board else None
                 
                 # USER REQUEST: Ensure 'All Words' list has full math breakdown in history
-                self.previous_all_words = getattr(self, 'solved_words_with_scores', {})
+                self.previous_all_words = list(self.all_words) if self.all_words else []
+                self.previous_all_word_scores = dict(getattr(self, 'solved_words_with_scores', {})) if getattr(self, 'solved_words_with_scores', None) else {}
+                self.previous_min_length = getattr(self, 'current_min_length', 3)
                 if str(getattr(self, 'current_dictionary', 'NWL')).upper() in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
                     word_validator.word_validator.ensure_csw_loaded()
                 self.previous_csw_only_words = [w for w in (self.all_words or []) if word_validator.word_validator.is_csw_only(w)]
@@ -2329,14 +2463,16 @@ class GameRoom:
             
     def update_counts_by_len(self):
         """Authoritative refresher for word distribution metadata. 
-        Always calculates 1L-30L to ensure metadata is valid regardless of min-length transitions."""
-        # Authoritative Tag: Tag the counts with the current round to prevent frontend staleness
+        Always calculates lengths >= current_min_length so the sum of length breakdown counts
+        matches total_words_count 100% identically."""
+        min_len = getattr(self, 'current_min_length', 3)
+        valid_words = [w for w in (self.all_words or []) if len(w) >= min_len]
         self.total_counts_by_len = {
             '_round': self.current_round,
-            **{str(l): sum(1 for w in (self.all_words or []) if len(w) == l) for l in range(1, 31)}
+            **{str(l): sum(1 for w in valid_words if len(w) == l) for l in range(1, 31)}
         }
-        min_len = getattr(self, 'current_min_length', 3)
-        self.total_words_count = sum(1 for w in (self.all_words or []) if len(w) >= min_len)
+        self.total_words_count = len(valid_words)
+        self.initial_total_words = self.total_words_count
         
     def recalculate_total_points(self):
         """Aggregate total attainable points for the active round's word list"""
@@ -2464,40 +2600,30 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         if base_dict not in ['NWL', 'CSW']:
             base_dict = 'NWL'
         
-        cache_candidates = [
-            # Exact match first
-            (min_l, target_range_resolved, fmt, base_dict, use_added_words),
-            # Relax format to Normal
-            (min_l, target_range_resolved, 'Normal', base_dict, use_added_words),
-            # Relax min_length to floor
-            (floor_l, target_range_resolved, 'Normal', base_dict, use_added_words),
-            # Relax word count range
-            (floor_l, '100-200', 'Normal', base_dict, False),
-            (floor_l, '200-300', 'Normal', base_dict, False),
-            # Try alternate dictionary
-            (floor_l, '100-200', 'Normal', 'NWL', False),
-            (floor_l, '200-300', 'Normal', 'NWL', False),
-            # Try other standard ranges
-            (floor_l, '50-100', 'Normal', 'NWL', False),
-            (floor_l, '300-400', 'Normal', 'NWL', False),
-            (floor_l, '500+', 'Normal', 'NWL', False),
-            (floor_l, '50-100', 'Normal', 'CSW', False),
-            (floor_l, '100-200', 'Normal', 'CSW', False),
-            (floor_l, '200-300', 'Normal', 'CSW', False),
-            (floor_l, '300-400', 'Normal', 'CSW', False),
-            (floor_l, '500+', 'Normal', 'CSW', False),
-            # Relax format to Valued Letters (commonly pre-cached)
-            (floor_l, '200-300', 'Valued Letters', 'NWL', False),
-            (floor_l, '200-300', 'Valued Letters', 'CSW', False),
-        ]
+        if min_accept >= 300:
+            ranges_order = [target_range_resolved, '400-500', '300-400', '500+', '200-300', '100-200']
+        else:
+            ranges_order = [target_range_resolved, '200-300', '100-200', '300-400', '50-100']
+
+        cache_candidates = []
+        for r_item in ranges_order:
+            cache_candidates.append((min_l, r_item, fmt, base_dict, use_added_words))
+            cache_candidates.append((min_l, r_item, 'Normal', base_dict, use_added_words))
+            cache_candidates.append((floor_l, r_item, 'Normal', base_dict, use_added_words))
+            cache_candidates.append((floor_l, r_item, 'Normal', 'NWL', False))
+            cache_candidates.append((floor_l, r_item, 'Normal', 'CSW', False))
         
+        diff_order = [difficulty] + [d for d in ['Hard', 'Medium', 'Easy'] if d != difficulty] if difficulty else ['Medium', 'Easy', 'Hard']
         for (cml, ctr, cfmt, cdict, caw) in cache_candidates:
-            for cdiff in ['Medium', 'Easy', 'Hard']:
+            for cdiff in diff_order:
                 try:
                     cache_key = serialize_param_key(dimensions, '', ctr, cdict, cfmt, cml, cdiff, use_added_words=caw)
                     cached = pop_cached_board(cache_key)
                     if cached and len(cached) >= 7:
                         cboard, cwords, cbonus_cell, cfmt_ret, cpaths, cratio, cbonus_word = cached[:7]
+                        if difficulty == 'Hard' and cratio < 0.35:
+                            print(f"[get_emergency_fallback_board] Rejecting cached board with low ratio {cratio} for Hard difficulty target")
+                            continue
                         if cwords and len(cwords) >= 20:
                             print(f"[get_emergency_fallback_board] INSTANT CACHE HIT: min={cml}, range={ctr}, fmt={cfmt}, dict={cdict} → {len(cwords)} words")
                             # Kick off background refill for the popped key
@@ -2590,110 +2716,38 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
     except Exception as e:
         print(f"[get_emergency_fallback_board] General cache fallback error: {e}")
 
-    # --- STATIC JSON FALLBACK ---
-    global _STATIC_FALLBACKS_CACHE
-    if _STATIC_FALLBACKS_CACHE is None:
-        try:
-            import json
-            fallback_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'static_fallbacks.json')
-            if os.path.exists(fallback_path):
-                with open(fallback_path, 'r') as f:
-                    _STATIC_FALLBACKS_CACHE = json.load(f)
-            else:
-                _STATIC_FALLBACKS_CACHE = {}
-        except Exception as load_err:
-            print(f"[get_emergency_fallback_board] Error loading static_fallbacks.json: {load_err}")
-            _STATIC_FALLBACKS_CACHE = {}
-
-    key = dimensions
-    if key not in _STATIC_FALLBACKS_CACHE:
-        keys = list(_STATIC_FALLBACKS_CACHE.keys())
-        key = keys[0] if keys else None
-
-    if key and key in _STATIC_FALLBACKS_CACHE:
-        entries = _STATIC_FALLBACKS_CACHE[key]
-        if isinstance(entries, list) and len(entries) > 0:
-            import random
-            import json as _json
-
-            from board_generator import get_board_hash, is_board_hash_used, mark_board_hash_used
-
-            # Filter entries by format if possible to match requested format
-            matching_fmt = [e for e in entries if e.get('params', {}).get('board_format', '').lower() == str(board_format).lower()]
-            candidate_pool = matching_fmt if matching_fmt else entries
-
-            # Prefer entries NOT used globally in database to avoid repetition across restarts
-            fresh_pool = [e for e in candidate_pool if not is_board_hash_used(get_board_hash(e.get('board')))]
-            if fresh_pool:
-                entry = random.choice(fresh_pool)
-            elif candidate_pool:
-                # All entries used recently — pick a random one
-                entry = random.choice(candidate_pool)
-                print(f"[get_emergency_fallback_board] All static fallbacks for {dimensions} recently used. Picking a random candidate.")
-            else:
-                entry = random.choice(entries)
-        else:
-            entry = entries
-        
-        board = entry['board']
-        # Record this board layout as used in the persistent database
-        mark_board_hash_used(get_board_hash(board))
-        words = entry['words']
-        paths = entry['paths']
-        
-        paths_tuples = {}
-        for w, path_coords in paths.items():
-            paths_tuples[w] = [tuple(coord) for coord in path_coords]
-
-        bonus_word = entry['bonus_word']
-        bonus_cell = tuple(entry['bonus_cell']) if entry['bonus_cell'] else ((0, 0, 0) if len(dimensions.split('x')) == 3 else (0, 0))
-        ratio = entry['uniqueness']
-
-        saved_params = entry.get('params', {})
-        # Respect Valued Letters override for daily 24h rooms
-        fmt = 'Valued Letters' if time_limit >= 7200 else (saved_params.get('board_format') or board_format or 'Normal')
-        
-        # Enforce dimension floor and spun min length
-        floor_l = 3
-        dims_lower = str(dimensions).lower()
-        if '4x6' in dims_lower: floor_l = 4
-        elif '5x7' in dims_lower: floor_l = 5
-        elif '6x8' in dims_lower or '3x3x3' in dims_lower: floor_l = 6
-
-        final_min = max(floor_l, min_word_length or 3, int(saved_params.get('min_word_length', 3)))
-
-        # FILTER words and paths by final_min!
-        words_filtered = [w for w in words if len(w) >= final_min]
-        paths_filtered = {w: p for w, p in paths_tuples.items() if len(w) >= final_min}
-
-        # Recalculate range resolved based on actual count after filtering!
-        actual_wc_filtered = len(words_filtered)
-        if actual_wc_filtered < 100: wc_range_resolved = '50-100'
-        elif actual_wc_filtered < 200: wc_range_resolved = '100-200'
-        elif actual_wc_filtered < 300: wc_range_resolved = '200-300'
-        elif actual_wc_filtered < 400: wc_range_resolved = '300-400'
-        elif actual_wc_filtered < 500: wc_range_resolved = '400-500'
-        else: wc_range_resolved = '500+'
-
-        is_aw = saved_params.get('use_added_words', False) or use_added_words or '+ AW' in str(dictionary).upper() or '+AW' in str(dictionary).upper()
-        dict_val = saved_params.get('dictionary') or dictionary or 'NWL'
-        if actual_wc_filtered < 300:
-            is_aw = False
-            dict_val = str(dict_val).replace('+ AW', '').replace('+AW', '').strip()
-            if dict_val == 'AW': dict_val = 'NWL'
-
-        eparams_dict = {
-            'min_word_length': final_min,
-            'word_count_range': wc_range_resolved,
-            'board_format': fmt,
-            'dictionary': dict_val,
-            'use_added_words': is_aw,
-            'difficulty': saved_params.get('difficulty') or difficulty or 'Medium',
-            'bonus_word_len': len(bonus_word) if bonus_word else 6
+    # --- ON-THE-FLY DYNAMIC FALLBACK GENERATION ---
+    print(f"[get_emergency_fallback_board] Generating fresh dynamic board on-the-fly for {dimensions} (Target: {target_range_resolved}, Format: {fmt})...")
+    token = use_added_words_ctx.set(use_added_words)
+    try:
+        res = bg.generate_board(
+            dimensions=dimensions,
+            bonus_word=None,
+            word_count_range=target_range_resolved,
+            dictionary=dictionary,
+            board_format=fmt,
+            min_word_length=min_word_length,
+            difficulty=difficulty or "Medium",
+            is_emergency=True,
+            use_added_words=use_added_words
+        )
+        board, words, bonus_cell, updated_format, paths, ratio, bonus_word = res
+        words_filtered = [w for w in words if len(w) >= min_word_length]
+        paths_filtered = {w: p for w, p in paths.items() if len(w) >= min_word_length}
+        eparams = {
+            'min_word_length': min_word_length,
+            'word_count_range': target_range_resolved,
+            'board_format': updated_format,
+            'dictionary': dictionary,
+            'use_added_words': use_added_words,
+            'difficulty': difficulty or "Medium",
+            'bonus_word_len': len(bonus_word) if bonus_word else 8
         }
-
-        print(f"[get_emergency_fallback_board] Returning static JSON fallback board for {dimensions} with {len(words_filtered)} words. Format: {fmt}, MinLen: {final_min}.")
-        return board, words_filtered, bonus_cell, fmt, paths_filtered, ratio, bonus_word, wc_range_resolved, eparams_dict
+        return board, words_filtered, bonus_cell, updated_format, paths_filtered, ratio, bonus_word, target_range_resolved, eparams
+    except Exception as gen_err:
+        print(f"[get_emergency_fallback_board] Error generating dynamic fallback: {gen_err}")
+    finally:
+        use_added_words_ctx.reset(token)
 
     # Last resort if no static fallback exists in cache
     print(f"[get_emergency_fallback_board] CRITICAL: Static fallback cache empty! Returning empty mock board.")
@@ -2967,6 +3021,7 @@ class RoomManager:
 
     def create_room(self, room_id, game_type, time_limit, board_dimensions, min_rating=0, max_rating=9999, is_private=False):
         """Create a new game room or return an existing singleton for the configuration"""
+        import threading
         try:
             with self.lock:
                 # Singleton Logic for Multiplayer Hubs (Skip for Private/Solo rooms)
@@ -2980,6 +3035,84 @@ class RoomManager:
                             not existing_room.is_solo and
                             not existing_room.is_private and
                             not existing_room.room_id.startswith('practice_')):
+                            # WAKE UP CHECK: If room is empty of human players and in waiting/intermission state, wake it up to active Round 1!
+                            humans = [p for p in existing_room.players if not p.is_ai]
+                            if len(humans) == 0 and existing_room.time_limit < 7200:
+                                if existing_room.state in ['waiting', 'intermission']:
+                                    print(f"[RoomManager] Wakeup empty singleton {existing_room.room_id} to Active Round 1 with fresh board...")
+                                    from board_generator import pop_any_cached_board
+                                    pre_pop = pop_any_cached_board(existing_room.board_dimensions)
+                                    if pre_pop:
+                                        if len(pre_pop) >= 9:
+                                            r_board, r_words, r_bonus_c, r_fmt, r_dict, r_ratio, r_bonus_word, _, r_params = pre_pop
+                                        else:
+                                            r_board, r_words, r_bonus_c, r_fmt, r_dict, r_ratio, r_bonus_word, r_params = pre_pop
+                                        
+                                        r_params = dict(r_params) if isinstance(r_params, dict) else {}
+                                        board_min_l = r_params.get('min_word_length', 3)
+                                        grid_floor = 3
+                                        if '4x6' in existing_room.board_dimensions: grid_floor = 4
+                                        elif '5x7' in existing_room.board_dimensions: grid_floor = 5
+                                        elif '6x8' in existing_room.board_dimensions or '3x3x3' in existing_room.board_dimensions: grid_floor = 6
+                                        board_min_l = max(grid_floor, int(board_min_l) if board_min_l is not None else grid_floor)
+
+                                        raw_dict = r_params.get('dictionary', 'NWL')
+                                        raw_aw = r_params.get('use_added_words', False)
+                                        existing_room.all_words_paths = {w: p for w, p in (r_dict or {}).items() if len(w) >= board_min_l and word_validator.word_validator.is_valid_word(w, raw_dict, use_added_words=raw_aw)}
+                                        existing_room.all_words = set(existing_room.all_words_paths.keys())
+
+                                        wc_cnt = len(existing_room.all_words)
+                                        if wc_cnt < 100: wc_lbl = '50-100'
+                                        elif wc_cnt < 200: wc_lbl = '100-200'
+                                        elif wc_cnt < 300: wc_lbl = '200-300'
+                                        elif wc_cnt < 400: wc_lbl = '300-400'
+                                        elif wc_cnt < 500: wc_lbl = '400-500'
+                                        else: wc_lbl = '500+'
+
+                                        existing_room.spinner_params = {
+                                            'dictionary': raw_dict,
+                                            'board_format': r_fmt or 'Normal',
+                                            'min_word_length': board_min_l,
+                                            'word_count_range': wc_lbl,
+                                            'difficulty': r_params.get('difficulty', 'Medium'),
+                                            'use_added_words': raw_aw,
+                                            'bonus_word_length': len(r_bonus_word) if r_bonus_word else 8,
+                                            'board_dimensions': existing_room.board_dimensions,
+                                            'time_limit': existing_room.time_limit,
+                                            'generated_at': time.time(),
+                                            '_exact_wc_calculated': True
+                                        }
+
+                                        existing_room.current_min_length = board_min_l
+                                        existing_room.current_board_format = r_fmt or 'Normal'
+                                        existing_room.current_word_count_range = wc_lbl
+                                        existing_room.current_dictionary = raw_dict
+                                        existing_room.current_uniqueness = r_ratio
+                                        existing_room.use_added_words = raw_aw
+
+                                        bw_candidate = r_bonus_word
+                                        if not bw_candidate or bw_candidate not in existing_room.all_words or str(bw_candidate).strip().upper() in ['', 'NONE'] or str(bw_candidate).upper().endswith('ING') or str(bw_candidate).upper().endswith('INGS'):
+                                            cand_list = [w for w in (existing_room.all_words or []) if len(w) >= 6 and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
+                                            if not cand_list:
+                                                cand_list = [w for w in (existing_room.all_words or []) if not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
+                                            if cand_list:
+                                                import random
+                                                bw_candidate = random.choice(list(cand_list)).upper()
+                                            else:
+                                                bw_candidate = self._get_bonus_word(length=8, dictionary=raw_dict)
+
+                                        existing_room.bonus_word = str(bw_candidate or '').upper().strip()
+                                        existing_room.previous_bonus_word = existing_room.bonus_word
+                                        existing_room.board = r_board
+                                        existing_room.bonus_cell = r_bonus_c
+                                        existing_room.total_words_count = len(existing_room.all_words)
+                                        existing_room.initial_total_words = existing_room.total_words_count
+                                        existing_room.current_round = 1
+                                        existing_room.round_start_time = time.time()
+                                        existing_room.state = 'active'
+                                        existing_room.initialize_density(r_board, existing_room.all_words_paths, r_fmt)
+                                        existing_room.recalculate_total_points()
+
                             print(f"[RoomManager] Singleton: Returning existing {game_type} room {existing_room.room_id}")
                             return existing_room
 
@@ -3211,278 +3344,96 @@ class RoomManager:
                         conn.close()
                 
                 if not restored_active:
-                    # ATOMIC INITIALIZATION
-                    import threading
-                    room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split)
-    
                     # INSTANT START: User Request - No wait on first entry for standard rooms (except 24h and solo/private matches)
                     if not is_24h and not is_private and not room.is_solo:
-                        print(f"[RoomManager] {room_id}: Kickstarting room immediately...")
-                        
-                        # STRATEGY: For 0-player rooms, pop any cached board first and derive
-                        # spinner params FROM that board. This guarantees instant display with
-                        # truthful parameters — no random spin + cache-miss cycle.
+                        print(f"[RoomManager] {room_id}: Kickstarting room immediately by popping board first...")
                         from board_generator import pop_cached_board, pop_any_cached_board, serialize_param_key
                         
-                        e_results = None
-                        pre_pop = None
-                        
-                        # Define baseline min_accept to avoid UnboundLocalError on cache miss
-                        _wc_val = room.spinner_params.get('word_count_range', '100-200') if room.spinner_params else '100-200'
-                        min_accept = 50
-                        try:
-                            min_accept = int(str(_wc_val).split('-')[0])
-                        except:
-                            if '50' in str(_wc_val): min_accept = 50
-                            elif '100' in str(_wc_val): min_accept = 100
-                            elif '200' in str(_wc_val): min_accept = 200
-                            elif '300' in str(_wc_val): min_accept = 300
-                            elif '400' in str(_wc_val): min_accept = 400
-                            elif '500' in str(_wc_val): min_accept = 500
-                        _dict_val = str(room.spinner_params.get('dictionary', 'NWL') if room.spinner_params else 'NWL').upper()
-                        _use_aw_val = (room.spinner_params.get('use_added_words', False) if room.spinner_params else False) or ('+ AW' in _dict_val) or ('+AW' in _dict_val) or (_dict_val in ['AW', 'ADDED_WORDS'])
-                        if _use_aw_val:
-                            min_accept = max(300, min_accept)
-                        else:
-                            min_accept = max(50, min_accept)
-                            
-                        for _ in range(10):
-                            from board_generator import pop_compatible_cached_board
-                            sp = room.spinner_params or {}
-                            dict_val = sp.get('dictionary', 'NWL')
-                            fmt_val = sp.get('board_format', 'Normal')
-                            min_l_val = sp.get('min_word_length', 3)
-                            use_aw_val = sp.get('use_added_words', False) or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
-                            bonus_word_len = sp.get('bonus_word_length')
-                            candidate = pop_compatible_cached_board(
-                                room.board_dimensions,
-                                dict_val,
-                                fmt_val,
-                                min_l_val,
-                                use_aw_val,
-                                bonus_word_len=bonus_word_len
+                        # Pop any compatible cached board directly from cache for this dimension
+                        pre_pop = pop_any_cached_board(room.board_dimensions)
+                        if not pre_pop:
+                            # If DB cache is completely empty, use static fallback
+                            pre_pop = get_emergency_fallback_board(
+                                room.board_dimensions, 'Normal', room.time_limit,
+                                dictionary='NWL', use_added_words=False, target_range='100-200', min_word_length=3, difficulty='Medium'
                             )
-                            if not candidate:
-                                break
-                            r_board, r_words, r_bonus_c, r_fmt, r_dict, r_ratio, r_bonus_word, r_params = candidate
-                            if r_params:
-                                # Determine min length and target range
-                                r_min_l = r_params.get('min_word_length', 3)
-                                grid_floor = 3
-                                if '4x6' in room.board_dimensions: grid_floor = 4
-                                elif '5x7' in room.board_dimensions: grid_floor = 5
-                                elif '6x8' in room.board_dimensions or '3x3x3' in room.board_dimensions: grid_floor = 6
-                                r_min_l = max(grid_floor, int(r_min_l) if r_min_l is not None else 3)
-                                
-                                # Count scorable words
-                                r_words_filtered = [w for w in r_words if len(w) >= r_min_l]
-                                actual_cnt = len(r_words_filtered)
-                                
-                                # Determine min accept
-                                r_wc = r_params.get('word_count_range', '100-200')
-                                min_accept = 50
-                                try:
-                                    min_accept = int(str(r_wc).split('-')[0])
-                                except:
-                                    if '50' in str(r_wc): min_accept = 50
-                                    elif '100' in str(r_wc): min_accept = 100
-                                    elif '200' in str(r_wc): min_accept = 200
-                                    elif '300' in str(r_wc): min_accept = 300
-                                    elif '400' in str(r_wc): min_accept = 400
-                                    elif '500' in str(r_wc): min_accept = 500
-                                
-                                is_aw_effective = r_params.get('use_added_words', False) or '+ AW' in str(r_params.get('dictionary', '')).upper()
-                                if is_aw_effective:
-                                    min_accept = max(300, min_accept)
-                                else:
-                                    min_accept = max(50, min_accept)
-                                    
-                                if actual_cnt >= min_accept:
-                                    pre_pop = candidate
-                                    break
-                                else:
-                                    print(f"[RoomManager] Kickstart Pop-first Candidate had only {actual_cnt} words of length >= {r_min_l} (needed {min_accept}). Discarding...")
-                            else:
-                                if len(r_words) >= 50:
-                                    pre_pop = candidate
-                                    break
-                                    
+
                         if pre_pop:
-                            r_board, r_words, r_bonus_c, r_fmt, r_dict, r_ratio, r_bonus_word, r_params = pre_pop
-                            if r_params:
-                                print(f"[RoomManager] {room_id}: Pop-first hit. Aligning spinner params from cached board (preserving spun min_word_length): {r_params}")
-                                # Align dictionary, format, difficulty from the cached board —
-                                # but PRESERVE the spun min_word_length so the Spinner Set display
-                                # reflects what was randomly rolled, not what the cache happened to have.
-                                spun_min = room.spinner_params.get('min_word_length', 3)
-                                room.spinner_params['dictionary'] = r_params.get('dictionary', room.spinner_params.get('dictionary', 'NWL'))
-                                room.spinner_params['difficulty'] = r_params.get('difficulty', room.spinner_params.get('difficulty', 'Medium'))
-                                room.spinner_params['word_count_range'] = r_params.get('word_count_range', room.spinner_params.get('word_count_range', '100-200'))
-                                room.spinner_params['board_format'] = r_params.get('board_format', room.spinner_params.get('board_format', 'Normal'))
-                                # Keep spun min_word_length — do NOT override from popped board
-                                room.spinner_params['min_word_length'] = spun_min
-                                room.spinner_params['use_added_words'] = r_params.get('use_added_words', False)
-                                room.spinner_params['bonus_word_length'] = r_params.get('bonus_word_len', len(r_bonus_word) if r_bonus_word else 6)
-                            e_results = (r_board, r_words, r_bonus_c, r_fmt, r_dict, r_ratio, r_bonus_word)
-
-                        
-                        # Derive working variables from whatever params are now set
-                        m_len = room.spinner_params.get('min_word_length', 3)
-                        if ('6x8' in str(room.board_dimensions) or '3x3x3' in str(room.board_dimensions)) and m_len < 6:
-                            m_len = 6
-                            room.spinner_params['min_word_length'] = 6
-                        bw_l = room.spinner_params.get('bonus_word_length', 8)
-                        b_word = (e_results[6] if e_results and e_results[6] else
-                                  self._get_bonus_word(length=bw_l, dictionary=room.spinner_params.get('dictionary', 'NWL')))
-                        use_aw_flag = room.spinner_params.get('use_added_words', False)
-                        
-                        # If pop-first missed (cache fully empty for this dimension), fall back to
-                        # spin-then-exact-match as secondary strategy
-                        if not e_results:
-                            _kick_dict = str(room.spinner_params.get('dictionary', 'NWL')).upper()
-                            use_aw_flag = use_aw_flag or ('+ AW' in _kick_dict) or ('+AW' in _kick_dict)
-                            param_key_str = serialize_param_key(
-                                room.board_dimensions, b_word,
-                                room.spinner_params.get('word_count_range', '100-200'),
-                                room.spinner_params.get('dictionary', 'NWL'),
-                                room.spinner_params.get('board_format', 'Normal'),
-                                m_len, room.spinner_params.get('difficulty', 'Medium'),
-                                use_added_words=use_aw_flag
-                            )
-                            temp_pop = pop_cached_board(param_key_str)
-                            if temp_pop and len(temp_pop) >= 2:
-                                r_wc = room.spinner_params.get('word_count_range', '100-200')
-                                min_accept = 50
-                                try:
-                                    min_accept = int(str(r_wc).split('-')[0])
-                                except:
-                                    if '50' in str(r_wc): min_accept = 50
-                                    elif '100' in str(r_wc): min_accept = 100
-                                    elif '200' in str(r_wc): min_accept = 200
-                                    elif '300' in str(r_wc): min_accept = 300
-                                    elif '400' in str(r_wc): min_accept = 400
-                                    elif '500' in str(r_wc): min_accept = 500
-                                if use_aw_flag:
-                                    min_accept = max(300, min_accept)
-                                else:
-                                    min_accept = max(50, min_accept)
-                                
-                                words_filtered = [w for w in temp_pop[1] if len(w) >= m_len]
-                                if len(words_filtered) >= min_accept:
-                                    e_results = temp_pop
-
-
-                        if not e_results:
-                            print(f"[RoomManager] {room_id}: Cache miss. Generating board instantly via ensure_next_board_ready...")
-                            room.ensure_next_board_ready()
-                            e_results = (
-                                room.next_round_board,
-                                room.next_round_words,
-                                room.next_round_bonus_cell,
-                                room.next_round_format,
-                                room.next_round_word_paths,
-                                room.next_round_uniqueness,
-                                room.next_round_bonus
-                            )
-                            # Validate the staged board meets min_accept at the required min length
-                            _enb_words = (room.next_round_words or [])
-                            _enb_filtered = [w for w in _enb_words if len(w) >= m_len]
-                            if len(_enb_filtered) < min_accept:
-                                print(f"[RoomManager] {room_id}: ensure_next_board_ready result only had {len(_enb_filtered)} words at {m_len}L+ (needed {min_accept}). Generating fresh board...")
-                                try:
-                                    _gen_res = self.board_generator.generate_board(
-                                        dimensions=room.board_dimensions,
-                                        bonus_word=b_word,
-                                        word_count_range=room.spinner_params.get('word_count_range', '100-200'),
-                                        dictionary=room.spinner_params.get('dictionary', 'NWL'),
-                                        board_format=room.spinner_params.get('board_format', 'Normal'),
-                                        min_word_length=m_len,
-                                        difficulty=room.spinner_params.get('difficulty', 'Medium'),
-                                        is_emergency=True,
-                                        use_added_words=use_aw_flag
-                                    )
-                                    if _gen_res and len(_gen_res) >= 7:
-                                        e_results = _gen_res
-                                        print(f"[RoomManager] {room_id}: Fresh-generated board has {len(_gen_res[1])} words.")
-                                except Exception as _gen_e:
-                                    print(f"[RoomManager] {room_id}: Fresh board generation failed: {_gen_e}")
-                            # CLEAR next_round staging fields immediately so intermission can load a new one for round 2!
-                            room.next_round_board = None
-                            room.next_round_words = None
-                            room.next_round_word_paths = None
-                            room.next_round_bonus_cell = None
-                            room.next_round_bonus = ''
-                            room.next_round_format = None
-                            room.next_round_uniqueness = None
-                            room.next_round_spinner_params = None
-                            room.next_round_word_scores = {}
-                            room.next_round_total_words_count = 0
-                        
-                        if e_results and len(e_results) >= 7:
-                            e_board, e_words, e_bonus_c, e_fmt, e_dict, e_ratio, e_bonus_word = e_results[:7]
-                            e_params = e_results[8] if len(e_results) > 8 else None
-                            
-                            room.board = e_board
-                            room.bonus_cell = e_bonus_c
-                            room.bonus_word = e_bonus_word or b_word
-                            
-                            # Preserve the spun spinner_params completely to stick with what was initially determined.
-                            m_len = int(room.spinner_params.get('min_word_length', 3))
-                            
-                            room.current_min_length = m_len
-                            room.current_board_format = 'Valued Letters' if is_24h else room.spinner_params.get('board_format', 'Normal')
-                            room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
-                            room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
-                            room.current_uniqueness = e_ratio
-                            room.use_added_words = room.spinner_params.get('use_added_words', False)
-                            
-                            # Filter words for length lockdown, dictionary validity, and store paths
-                            raw_dict = room.spinner_params.get('dictionary', 'NWL')
-                            raw_aw = room.spinner_params.get('use_added_words', False)
-                            room.all_words = {w for w in (e_words or []) if len(w) >= m_len and word_validator.word_validator.is_valid_word(w, raw_dict, use_added_words=raw_aw)}
-                            room.all_words_paths = {w: p for w, p in (e_dict or {}).items() if len(w) >= m_len and word_validator.word_validator.is_valid_word(w, raw_dict, use_added_words=raw_aw)}
-                            
-                            if hasattr(word_validator, 'word_validator'):
-                                if str(getattr(room, 'current_dictionary', 'NWL')).upper() in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
-                                    word_validator.word_validator.ensure_csw_loaded()
-                                room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
-                                room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
+                            if len(pre_pop) >= 9:
+                                r_board, r_words, r_bonus_c, r_fmt, r_dict, r_ratio, r_bonus_word, _, r_params = pre_pop
                             else:
-                                room.csw_only_words = []
-                                room.added_words = []
+                                r_board, r_words, r_bonus_c, r_fmt, r_dict, r_ratio, r_bonus_word, r_params = pre_pop
                             
-                            is_valued_kick = ('valued' in str(e_fmt).lower())
-                            kick_scores = {}
-                            for w in room.all_words:
-                                if is_valued_kick: kick_scores[w] = {'total': len(w), 'base': len(w)}
+                            r_params = dict(r_params) if isinstance(r_params, dict) else {}
+                            board_min_l = r_params.get('min_word_length', 3)
+                            grid_floor = 3
+                            if '4x6' in room.board_dimensions: grid_floor = 4
+                            elif '5x7' in room.board_dimensions: grid_floor = 5
+                            elif '6x8' in room.board_dimensions or '3x3x3' in room.board_dimensions: grid_floor = 6
+                            board_min_l = max(grid_floor, int(board_min_l) if board_min_l is not None else grid_floor)
+
+                            # Derive scorable words & paths
+                            raw_dict = r_params.get('dictionary', 'NWL')
+                            raw_aw = r_params.get('use_added_words', False)
+                            room.all_words_paths = {w: p for w, p in (r_dict or {}).items() if len(w) >= board_min_l and word_validator.word_validator.is_valid_word(w, raw_dict, use_added_words=raw_aw)}
+                            room.all_words = set(room.all_words_paths.keys())
+
+                            # Derive truthful word count range label
+                            wc_cnt = len(room.all_words)
+                            if wc_cnt < 100: wc_lbl = '50-100'
+                            elif wc_cnt < 200: wc_lbl = '100-200'
+                            elif wc_cnt < 300: wc_lbl = '200-300'
+                            elif wc_cnt < 400: wc_lbl = '300-400'
+                            elif wc_cnt < 500: wc_lbl = '400-500'
+                            else: wc_lbl = '500+'
+
+                            # Construct spinner params ONCE from exact board parameters
+                            room.spinner_params = {
+                                'dictionary': raw_dict,
+                                'board_format': r_fmt or 'Normal',
+                                'min_word_length': board_min_l,
+                                'word_count_range': wc_lbl,
+                                'difficulty': r_params.get('difficulty', 'Medium'),
+                                'use_added_words': raw_aw,
+                                'bonus_word_length': len(r_bonus_word) if r_bonus_word else 8,
+                                'board_dimensions': room.board_dimensions,
+                                'time_limit': room.time_limit,
+                                'generated_at': time.time(),
+                                '_exact_wc_calculated': True
+                            }
+
+                            room.current_min_length = board_min_l
+                            room.current_board_format = r_fmt or 'Normal'
+                            room.current_word_count_range = wc_lbl
+                            room.current_dictionary = raw_dict
+                            room.current_uniqueness = r_ratio
+                            room.use_added_words = raw_aw
+
+                            bw_candidate = r_bonus_word
+                            if not bw_candidate or bw_candidate not in room.all_words or str(bw_candidate).strip().upper() in ['', 'NONE'] or str(bw_candidate).upper().endswith('ING') or str(bw_candidate).upper().endswith('INGS'):
+                                cand_list = [w for w in (room.all_words or []) if len(w) >= 6 and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
+                                if not cand_list:
+                                    cand_list = [w for w in (room.all_words or []) if not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
+                                if cand_list:
+                                    import random
+                                    bw_candidate = random.choice(list(cand_list)).upper()
                                 else:
-                                    length = len(w)
-                                    s = 0
-                                    if length <= 2: s = 0
-                                    elif length <= 4: s = 1
-                                    elif length == 5: s = 2
-                                    elif length == 6: s = 3
-                                    elif length == 7: s = 5
-                                    elif length >= 8: s = 11
-                                    kick_scores[w] = {'total': s, 'base': s}
-                            room.solved_words_with_scores = kick_scores
-                            
-                            # Preserve the spun word count range completely
+                                    bw_candidate = self._get_bonus_word(length=8, dictionary=raw_dict)
+
+                            room.bonus_word = str(bw_candidate or '').upper().strip()
+                            room.previous_bonus_word = room.bonus_word
                             room.total_words_count = len(room.all_words)
                             room.initial_total_words = room.total_words_count
-                            room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
-
-
 
                             room.round_start_time = time.time()
                             room.state = 'active'
                             room.current_round = 1
-                            room.last_saved_round = -1 # Reset save counter for fresh session
-                            
-                            room.initialize_density(e_board, room.all_words_paths, e_fmt)
+                            room.last_saved_round = -1
+
+                            room.initialize_density(r_board, room.all_words_paths, r_fmt)
                             room.recalculate_total_points()
-                            
-                            # Detailed background scoring refinement for kickstarted Round 1
+
+                            # Refine scoring asynchronously in background
                             def refine_kickstart_scores():
                                 try:
                                     from scoring import calculate_word_score
@@ -3495,28 +3446,19 @@ class RoomManager:
                                         )
                                     room.solved_words_with_scores = refined
                                     room.recalculate_total_points()
-                                    print(f"[RoomManager] Kickstart scoring refinement complete for {room_id}")
                                 except Exception as e:
-                                    print(f"[RoomManager] Kickstart refinement error for {room_id}: {e}")
-                            
+                                    print(f"[RoomManager] Kickstart refinement error: {e}")
+
                             threading.Thread(target=refine_kickstart_scores, daemon=True).start()
                             
-                            print(f"[RoomManager] {room_id} kickstarted ACTIVE (Round 1, {m_len}L+)")
-                            
-                            # Issue 4: Add Round 1 board to fingerprint history so Round 2 cannot duplicate it
-                            _r1_fp = self._get_board_fingerprint(e_board)
-                            if _r1_fp:
-                                room.board_fingerprint_history = [_r1_fp]
-                            
-                            # 4. Trigger PROACTIVE search for Round 2 in background
+                            # Proactive background search for Round 2
                             room.spinner_params_generated = True
                             threading.Thread(target=self.start_board_search, args=(room_id,), daemon=True).start()
-                            print(f"[RoomManager] {room_id}: Kickstart complete. Round 1 started.")
-
+                            print(f"[RoomManager] {room_id} kickstarted ACTIVE in single-pass with truthful board & params.")
                     else:
-                        # Default behavior: Intermission
+                        room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split)
                         room.state = 'intermission'
-                        room.intermission_start_time = time.time() if is_24h else (time.time() - 45)
+                        room.intermission_start_time = time.time()
                         if room_id.startswith('pub_') and not is_24h:
                              threading.Thread(target=self.start_board_search, args=(room_id,), daemon=True).start()
 
@@ -3991,6 +3933,9 @@ class RoomManager:
                         print(f"[BG-Cleanup] Pausing empty room {room_id}. Setting state to 'waiting'.")
                         with room._state_lock:
                             room.state = 'waiting'
+                            room.board = None
+                            room.all_words = set()
+                            room.all_words_paths = {}
                             room.starting_round = False
                             room.board_search_started = False
                             room.board_search_loading = False
@@ -4238,11 +4183,7 @@ class RoomManager:
                         raw_aw = room.spinner_params.get('use_added_words', False)
                         all_words_filtered = [w for w in all_words if len(w) >= act_min and word_validator.word_validator.is_valid_word(w, raw_dict, use_added_words=raw_aw)]
                         if len(all_words_filtered) >= min_accept:
-                            # Accept! Truncate if count exceeds max_limit to match spun target range and prevent drift
-                            if len(all_words_filtered) > max_limit:
-                                print(f"[RoomManager] Popped relaxed cached board has {len(all_words_filtered)} words (exceeds max_limit {max_limit}). Truncating to fit range {target_range}.")
-                                sorted_w = sorted(all_words_filtered, key=lambda w: (len(w), w), reverse=True)[:max_limit]
-                                all_words_filtered = sorted_w
+                            # Accept board without discarding valid grid words
                             all_words = all_words_filtered
                             all_words_dict = {w: p for w, p in all_words_dict.items() if w in all_words}
                             print(f"[RoomManager] Popped relaxed cached board for room {room_id} with {len(all_words)} words. Keeping spun parameters.")
@@ -4335,41 +4276,15 @@ class RoomManager:
                     room.spinner_params['min_word_length'] = actual_shortest
                     display_min_start = actual_shortest
             
-            room.all_words = {w for w in (all_words or []) if len(w) >= display_min_start and word_validator.word_validator.is_valid_word(w, raw_dict, use_added_words=raw_aw)}
             all_words_dict = {w: p for w, p in (all_words_dict or {}).items() if len(w) >= display_min_start and word_validator.word_validator.is_valid_word(w, raw_dict, use_added_words=raw_aw)}
+            room.all_words = set(all_words_dict.keys())
+            room.all_words_paths = all_words_dict
 
             
-            # --- TRUNCATION ENFORCEMENT for start_round ---
-            target_range = room.spinner_params.get('word_count_range')
-            if target_range:
-                max_limit = 99999
-                try:
-                    parts = str(target_range).split('-')
-                    if len(parts) == 2:
-                        max_limit = int(parts[1]) - 1
-                except:
-                    pass
-                if len(room.all_words) > max_limit:
-                    print(f"[ACCURACY-SYNC-START] Truncating Round {room.current_round} to {max_limit} words to match range '{target_range}'")
-                    import random as _random
-                    seed_val = f"{room.room_id}_{room.current_round}"
-                    words_by_len = {}
-                    for w in room.all_words:
-                        l = len(w)
-                        if l not in words_by_len:
-                            words_by_len[l] = []
-                        words_by_len[l].append(w)
-                    
-                    sorted_scorable = []
-                    rng = _random.Random(seed_val)
-                    for l in sorted(words_by_len.keys(), reverse=True):
-                        group = words_by_len[l]
-                        rng.shuffle(group)
-                        sorted_scorable.extend(group)
-                    
-                    sorted_scorable = sorted_scorable[:max_limit]
-                    room.all_words = set(sorted_scorable)
-                    all_words_dict = {w: all_words_dict[w] for w in room.all_words if w in all_words_dict}
+            # PRESERVE SPUN PARAMETER & KEEP 100% OF SCORABLE GRID WORDS INTACT
+            target_range = room.spinner_params.get('word_count_range') if isinstance(room.spinner_params, dict) else '100-200'
+            room.current_word_count_range = target_range
+            room.update_counts_by_len()
 
             
             # CATEGORIZATION (Synchronous): Ensure these are available immediately for UI sync
@@ -4738,7 +4653,7 @@ class RoomManager:
                             
                         # 3. Resolve Word Count Range
                         if wc_choice == 'random':
-                            wc_range = SpinnerSet._spin_word_count(dictionary, min_word_len, difficulty, room.board_dimensions)
+                            wc_range = SpinnerSet._spin_word_count(dictionary, min_word_len, difficulty, room.board_dimensions, use_added_words=use_aw)
                         else:
                             wc_range = wc_choice
                             
@@ -4920,11 +4835,13 @@ class RoomManager:
 
                 if reveal:
                     # 2. PERFORM THE REVEAL (Making them visible to players)
-                    room.spinner_params = dict(new_params)
+                    if not getattr(room, '_spinner_params_locked', False):
+                        room.spinner_params = dict(new_params)
                     
                     # Update authoritative labels
                     room.next_round_min_length = new_params.get('min_word_length', 3)
                     room.spinner_params_revealed = True
+                    room._spinner_params_locked = True  # LOCK: no further overwrites until round resets
                     room._reveal_sync_complete = True
                     print(f"[RoomManager] SUCCESS: Generated and Revealed params for room {room_id}")
                 else:
@@ -5145,9 +5062,11 @@ class RoomManager:
                     'time_limit': room.time_limit
                 }
                 fast_params = SpinnerSet.sanitize_params(fast_params, room.board_dimensions, room.time_limit >= 7200)
-                room.spinner_params = dict(fast_params)
-                room.next_spinner_params = dict(fast_params)
-                room.next_round_spinner_params = dict(fast_params)
+                # ISSUE 5: Only overwrite spinner_params if they are NOT already locked/revealed
+                if not getattr(room, '_spinner_params_locked', False) and not getattr(room, 'spinner_params_revealed', False):
+                    room.spinner_params = dict(fast_params)
+                    room.next_spinner_params = dict(fast_params)
+                    room.next_round_spinner_params = dict(fast_params)
                 room.spinner_params_generated = True
                 room.spinner_params_revealed = True
                 room._reveal_sync_complete = True
@@ -5230,19 +5149,14 @@ class RoomManager:
         
         try:
             # AUTHORITATIVE: Use the specific params intended for this background search.
-            # Fallback to spinner_params if next_spinner_params is missing
+            # Ensure fresh next_spinner_params are generated using SpinnerSet
             params = getattr(room, 'next_spinner_params', None)
             if not params:
-                current_params = getattr(room, 'spinner_params', None)
-                if current_params:
-                    room.next_spinner_params = dict(current_params)
-                    params = room.next_spinner_params
-                else:
-                    is_24h = room.time_limit >= 7200
-                    is_split = (room.game_type == 'split')
-                    from spinner_set import SpinnerSet
-                    room.next_spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split)
-                    params = room.next_spinner_params
+                is_24h = room.time_limit >= 7200
+                is_split = (room.game_type == 'split')
+                from spinner_set import SpinnerSet
+                room.next_spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split, previous_params=getattr(room, 'spinner_params', None))
+                params = room.next_spinner_params
             from spinner_set import SpinnerSet
             params = SpinnerSet.sanitize_params(params, room.board_dimensions, room.time_limit >= 7200)
             room.next_spinner_params = params
@@ -5269,12 +5183,11 @@ class RoomManager:
             except:
                 min_l = 3
             try:
-                bw_l_raw = params.get('bonus_word_length', 6)
-                bw_l = max(int(bw_l_raw), min_l)
-                # SYNC: Update the params so the Spinner Set UI displays the actual length used.
+                bw_l_raw = params.get('bonus_word_length', 8)
+                bw_l = min(max(int(bw_l_raw), 6), 10)
                 params['bonus_word_length'] = bw_l
             except:
-                bw_l = max(6, min_l)
+                bw_l = 8
                 params['bonus_word_length'] = bw_l
             
             # Snapshot for the upcoming round logic
@@ -5340,14 +5253,17 @@ class RoomManager:
                     min_accept = 50
                     if search_wc:
                         try:
-                            min_accept = int(str(search_wc).split('-')[0])
+                            if str(search_wc).startswith('500'):
+                                min_accept = 500  # 500+ means AT LEAST 500
+                            else:
+                                min_accept = int(str(search_wc).split('-')[0])
                         except:
-                            if '50' in str(search_wc): min_accept = 50
-                            elif '100' in str(search_wc): min_accept = 100
-                            elif '200' in str(search_wc): min_accept = 200
-                            elif '300' in str(search_wc): min_accept = 300
+                            if '500' in str(search_wc): min_accept = 500
                             elif '400' in str(search_wc): min_accept = 400
-                            elif '500' in str(search_wc): min_accept = 500
+                            elif '300' in str(search_wc): min_accept = 300
+                            elif '200' in str(search_wc): min_accept = 200
+                            elif '100' in str(search_wc): min_accept = 100
+                            elif '50' in str(search_wc):  min_accept = 50
                     if use_aw_flag:
                         min_accept = max(300, min_accept)
                     else:
@@ -5377,44 +5293,36 @@ class RoomManager:
                             break
                         _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = candidate
                         _fw_filtered = [w for w in _fw if len(w) >= search_min]
-                        if len(_fw_filtered) >= min_accept:
-                            # Found valid cached board! Truncate if count exceeds max_limit to match spun target range and prevent drift
-                            if len(_fw_filtered) > max_limit:
-                                print(f"[pre_generate_next_round] Popped board has {len(_fw_filtered)} words (exceeds max_limit {max_limit}). Truncating to fit range {search_wc}.")
-                                sorted_w = sorted(_fw_filtered, key=lambda w: (len(w), w), reverse=True)[:max_limit]
-                                _fw_filtered = sorted_w
-                            # Found valid cached board!
+                        is_diff_match = True
+                        if search_diff == 'Hard' and _fr < 0.35:
+                            is_diff_match = False
+                        elif search_diff == 'Easy' and _fr > 0.25:
+                            is_diff_match = False
+
+                        if is_board_count_valid(len(_fw_filtered), search_wc) and len(_fw_filtered) >= min_accept and is_diff_match:
+                            # Accept board without discarding valid grid words
                             _fw = _fw_filtered
                             _fp = {w: p for w, p in _fp.items() if w in _fw}
                             _pre = (_fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams)
                             break
                         else:
-                            print(f"[start_board_search] Cache pop candidate had only {len(_fw_filtered)} words of length >= {search_min} (needed {min_accept}). Discarding and retrying...")
+                            print(f"[start_board_search] Cache pop candidate (words={len(_fw_filtered)}, ratio={_fr}) did not match range '{search_wc}' / diff '{search_diff}'. Discarding and retrying...")
                             
                     if _pre:
                         _board, _words, _bonus_c, _fmt, _paths, _ratio, _bonus_word, _params = _pre
                         print(f"[RoomManager] INSTANT CACHE HIT in board search for {room_id}: {len(_words)} words")
-                        # Update params from the cached board — these are truth, not predictions
-                        if _params:
-                            params = dict(params)  # don't mutate shared object
-                            for k in ('dictionary', 'difficulty', 'board_format', 'min_word_length', 'use_added_words'):
-                                if k in _params:
-                                    params[k] = _params[k]
-                            if 'bonus_word_len' in _params:
-                                params['bonus_word_length'] = _params['bonus_word_len']
-                            room.next_spinner_params = params
-                        # Use actual word count as the word_count_range so the UI matches reality
-                        actual_wc = len(_words)
-                        if actual_wc < 100: wc_label = '50-100'
-                        elif actual_wc < 200: wc_label = '100-200'
-                        elif actual_wc < 300: wc_label = '200-300'
-                        elif actual_wc < 400: wc_label = '300-400'
-                        elif actual_wc < 500: wc_label = '400-500'
-                        else: wc_label = '500+'
+                        # Preserve spun parameters generated by SpinnerSet — do not overwrite with cached board params
+                        params = dict(params)
+                        room.next_spinner_params = params
+                        wc_label = search_wc or '100-200'
                         params['word_count_range'] = wc_label
                         if room.next_spinner_params:
                             room.next_spinner_params['word_count_range'] = wc_label
                         _use_word = _bonus_word or bonus_word
+                        if _use_word:
+                            params['bonus_word_length'] = len(_use_word)
+                            if room.next_spinner_params:
+                                room.next_spinner_params['bonus_word_length'] = len(_use_word)
                         room.next_round_words = _words
                         room.next_round_word_paths = _paths
                         room.next_round_bonus_cell = _bonus_c
@@ -5424,6 +5332,7 @@ class RoomManager:
                         room.next_round_spinner_params = dict(params)
                         room.next_round_spinner_params['board_format'] = _fmt
                         room.next_round_spinner_params['word_count_range'] = wc_label
+                        actual_wc = len(_words)
                         room.next_round_total_words_count = actual_wc
                         room.next_round_board = _board
                         room.solving_complete = True
@@ -5511,16 +5420,27 @@ class RoomManager:
                         board_attempts += 1
                     
                     # Update word to the ACTUAL embedded word if different (MANDATORY consistency)
-                    if final_bonus_word:
+                    if final_bonus_word and len(final_bonus_word) >= 6:
                         bonus_word = final_bonus_word
                     else:
-                        # Safety: If generator somehow returned None, we MUST NOT use the stale requested word
-                        # instead, we pick the longest scorable word from the board as a hard fallback.
                         scorable = [w for w in all_words if len(w) >= 6]
-                        if not scorable: scorable = list(all_words)
-                        bonus_word = sorted(scorable, key=len, reverse=True)[0] if scorable else None
+                        if scorable:
+                            bonus_word = sorted(scorable, key=len, reverse=True)[0]
+                        else:
+                            bonus_word = self._get_bonus_word(length=8, dictionary=search_dict)
+                    
+                    if bonus_word:
+                        params['bonus_word_length'] = len(bonus_word)
+                        if getattr(room, 'next_spinner_params', None):
+                            room.next_spinner_params['bonus_word_length'] = len(bonus_word)
+                        if getattr(room, 'spinner_params', None):
+                            room.spinner_params['bonus_word_length'] = len(bonus_word)
                     
                     # ATOMIC STAGING PROMOTION: Set metadata FIRST and board LAST to prevent stale data race
+                    if room.state != 'intermission':
+                        print(f"[RoomManager] Background board generation for {room_id} finished while room state is '{room.state}'. SKIPPING assignment to prevent mid-round swap!")
+                        return
+                    
                     room.next_round_words = all_words
                     room.next_round_word_paths = all_words_dict
                     room.next_round_bonus_cell = bonus_cell
@@ -5606,10 +5526,11 @@ class RoomManager:
                         print(f"[RoomManager] Stale board search discarded for {room_id} (search_round: {search_round}, current_round: {target_room.current_round})")
                         return
                     
-                    # 0:50 FALLBACK RESCUE PROTECTION:
-                    # If target_room has already triggered the 0:50 fallback rescue, discard this search.
-                    if getattr(target_room, '_did_050_fallback_rescue', False):
-                        print(f"[RoomManager] Background board search completed, but discarded because 0:50 fallback rescue has already occurred for {room_id}.")
+                    # IMMUTABLE ACTIVE BOARD LOCK:
+                    # If target_room is currently in 'active' state for search_round,
+                    # its active board is locked and CANNOT be swapped mid-round!
+                    if target_room.state == 'active' and target_room.current_round == search_round:
+                        print(f"[RoomManager] Background board search finished for active round {search_round} of {room_id}. Active board is locked. Discarding mid-round swap.")
                         return
 
                     target_room.next_round_board = board # SIGNAL READY IMMEDIATELY!
@@ -5799,6 +5720,14 @@ class RoomManager:
         """Utility to initiate next-round board search during an active round."""
         room = self.get_room(room_id)
         if not room: return
+        
+        # ISSUE 6: Do NOT pre-generate until the first board has been delivered.
+        # Without this guard, multiple calls stack up before round 1 board is even shown,
+        # causing the board to change 7+ times in the first 45 seconds.
+        if not getattr(room, '_initial_board_delivered', False):
+            print(f"[RoomManager] Skipping pre-generation: first board not yet delivered for {room_id}")
+            return
+        
         # ALWAYS pre-generate next round board while current round is active.
         # This ensures the 0:00 transition is instant, especially for large 6x8 boards.
         # (Skip only if already loading or started)
@@ -5813,8 +5742,8 @@ class RoomManager:
              return
              
         def delayed_pre_generate():
-            # Wait 4.0 seconds to allow the transition-phase network requests to finish first
-            time.sleep(4.0)
+            # Wait 0.5 seconds to allow the transition-phase network requests to finish first
+            time.sleep(0.5)
             
             # Recheck conditions in case the room state changed during the sleep
             room_check = self.get_room(room_id)
@@ -5876,21 +5805,25 @@ class RoomManager:
             target_range = room.spinner_params.get('word_count_range')
             if target_range:
                 try:
-                    min_accept = int(str(target_range).split('-')[0])
+                    if str(target_range).startswith('500'):
+                        min_accept = 500  # 500+ means AT LEAST 500
+                    else:
+                        min_accept = int(str(target_range).split('-')[0])
                 except:
-                    if '50' in str(target_range): min_accept = 50
-                    elif '100' in str(target_range): min_accept = 100
-                    elif '200' in str(target_range): min_accept = 200
-                    elif '300' in str(target_range): min_accept = 300
+                    if '500' in str(target_range): min_accept = 500
                     elif '400' in str(target_range): min_accept = 400
-                    elif '500' in str(target_range): min_accept = 500
+                    elif '300' in str(target_range): min_accept = 300
+                    elif '200' in str(target_range): min_accept = 200
+                    elif '100' in str(target_range): min_accept = 100
+                    elif '50' in str(target_range):  min_accept = 50
             if use_aw_flag:
                 min_accept = max(300, min_accept)
             else:
                 min_accept = max(50, min_accept)
 
-            # If staged board is too sparse, discard it
-            if getattr(room, 'next_round_board', None) and getattr(room, 'next_round_words', None):
+            # If staged board is too sparse AND was never revealed to player, discard it.
+            # If it was ALREADY revealed at 0:45 timer, keep it unconditionally to prevent parameter changes & load delays!
+            if not getattr(room, 'was_revealed_this_intermission', False) and getattr(room, 'next_round_board', None) and getattr(room, 'next_round_words', None):
                 filtered_staged = [w for w in room.next_round_words if len(w) >= m_len]
                 if len(filtered_staged) < min_accept:
                     print(f"[start_next_round] Discarding staged board for room {room_id} because it only has {len(filtered_staged)} words of length >= {m_len} (needed {min_accept}).")
@@ -5931,12 +5864,9 @@ class RoomManager:
                         break
                     _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = candidate
                     _fw_filtered = [w for w in _fw if len(w) >= m_len]
-                    if len(_fw_filtered) >= min_accept:
-                        # Found valid cached board! Truncate if count exceeds max_limit to match spun target range and prevent drift
-                        if len(_fw_filtered) > max_limit:
-                            print(f"[start_next_round] Fallback popped board has {len(_fw_filtered)} words (exceeds max_limit {max_limit}). Truncating to fit range {target_range}.")
-                            sorted_w = sorted(_fw_filtered, key=lambda w: (len(w), w), reverse=True)[:max_limit]
-                            _fw_filtered = sorted_w
+                    min_len_count = sum(1 for w in _fw_filtered if len(w) == m_len)
+                    if is_board_count_valid(len(_fw_filtered), target_range) and len(_fw_filtered) >= min_accept and min_len_count >= 5:
+                        # Accept board without discarding valid grid words
                         _fw = _fw_filtered
                         _fp = {w: p for w, p in _fp.items() if w in _fw}
                         _fallback = (_fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams)
@@ -5944,24 +5874,46 @@ class RoomManager:
                     else:
                         print(f"[start_next_round] Fallback candidate had only {len(_fw_filtered)} words of length >= {m_len} (needed {min_accept}). Discarding and retrying...")
                 
+                if not _fallback:
+                    from board_generator import pop_any_cached_board
+                    for _ in range(10):
+                        _any_candidate = pop_any_cached_board(room.board_dimensions)
+                        if not _any_candidate: break
+                        _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = _any_candidate
+                        _fw_filtered = [w for w in _fw if len(w) >= m_len]
+                        _any_min_c = sum(1 for w in _fw_filtered if len(w) == m_len)
+                        if is_board_count_valid(len(_fw_filtered), target_range) and _any_min_c >= 5:
+                            _fp_filtered = {w: p for w, p in _fp.items() if w in _fw_filtered}
+                            _fallback = (_fb, _fw_filtered, _fc, _ff, _fp_filtered, _fr, _fbw, _fparams)
+                            print(f"[start_next_round] Zero-latency pop_any_cached_board hit for {room_id}: {len(_fw_filtered)} words and {_any_min_c} min-len words")
+                            break
+
+                # GUARANTEED 1-MS FALLBACK: Never allow synchronous generation (1-minute wait) at 0:00 timer!
+                if not _fallback:
+                    from board_generator import pop_any_cached_board
+                    _any_candidate = pop_any_cached_board(room.board_dimensions)
+                    if _any_candidate:
+                        _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = _any_candidate
+                        _fw_filtered = [w for w in _fw if len(w) >= m_len]
+                        if not _fw_filtered: _fw_filtered = _fw
+                        _fp_filtered = {w: p for w, p in _fp.items() if w in _fw_filtered}
+                        _fallback = (_fb, _fw_filtered, _fc, _ff, _fp_filtered, _fr, _fbw, _fparams)
+                        print(f"[start_next_round] Guaranteed 1-ms pop_any_cached_board hit for {room_id}: {len(_fw_filtered)} words")
+                
                 if _fallback:
                     _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = _fallback
                     print(f"[start_next_round] Last-chance cache pop for {room_id}: {len(_fw)} words")
                     room.next_round_board = _fb
                     room.next_round_words = _fw
-                    room.next_round_word_paths = _fp
-                    room.next_round_bonus_cell = _fc
-                    room.next_round_bonus = _fbw or getattr(room, 'next_round_bonus', '')
+                    bw_l_val = room.spinner_params.get('bonus_word_length', 8) if isinstance(room.spinner_params, dict) else 8
+                    dict_val = room.spinner_params.get('dictionary', 'NWL') if isinstance(room.spinner_params, dict) else 'NWL'
+                    if not _fbw or str(_fbw).upper() == 'NONE':
+                        _fbw = self._get_bonus_word(length=bw_l_val, dictionary=dict_val)
+                    room.next_round_bonus = _fbw
                     room.next_round_format = _ff
                     room.next_round_uniqueness = _fr
                     if _fparams:
-                        actual_wc = len(_fw)
-                        if actual_wc < 100: wc_label = '50-100'
-                        elif actual_wc < 200: wc_label = '100-200'
-                        elif actual_wc < 300: wc_label = '200-300'
-                        elif actual_wc < 400: wc_label = '300-400'
-                        elif actual_wc < 500: wc_label = '400-500'
-                        else: wc_label = '500+'
+                        wc_label = target_range or _fparams.get('word_count_range', '100-200')
                         _fparams['word_count_range'] = wc_label
                         room.next_round_spinner_params = _fparams
                         
@@ -5970,19 +5922,22 @@ class RoomManager:
                         if use_aw_val and '+ AW' not in str(dict_val) and '+AW' not in str(dict_val):
                             dict_val = f"{dict_val} + AW"
                         
-                        # CRITICAL SYNC: Update next_spinner_params and spinner_params to align immediately
-                        new_sp = {
-                            'dictionary': dict_val,
-                            'difficulty': _fparams.get('difficulty', 'Medium'),
-                            'word_count_range': wc_label,
-                            'board_format': _fparams.get('board_format', 'Normal'),
-                            'min_word_length': _fparams.get('min_word_length', 3),
-                            'bonus_word_length': _fparams.get('bonus_word_len', 6),
-                            'use_added_words': use_aw_val,
-                            'board_dimensions': room.board_dimensions,
-                            'time_limit': room.time_limit,
-                            'generated_at': time.time()
-                        }
+                        # CRITICAL SYNC: Update next_spinner_params and spinner_params ONLY if parameters were NOT already revealed/locked
+                        if not getattr(room, 'was_revealed_this_intermission', False) and not getattr(room, '_spinner_params_locked', False):
+                            new_sp = {
+                                'dictionary': dict_val,
+                                'difficulty': _fparams.get('difficulty', 'Medium'),
+                                'word_count_range': wc_label,
+                                'board_format': _fparams.get('board_format', 'Normal'),
+                                'min_word_length': _fparams.get('min_word_length', 3),
+                                'bonus_word_length': len(_fbw) if _fbw else _fparams.get('bonus_word_length', 8),
+                                'use_added_words': use_aw_val,
+                                'board_dimensions': room.board_dimensions,
+                                'time_limit': room.time_limit,
+                                'generated_at': time.time()
+                            }
+                            room.spinner_params = new_sp
+                            room.next_spinner_params = new_sp
                         # Trigger background refill for this popped key
                         try:
                             from board_generator import BoardGenerator, serialize_param_key, refill_board_cache_bg
@@ -6136,19 +6091,14 @@ class RoomManager:
                 # CRITICAL: When params have been revealed to players, the revealed next_spinner_params is authoritative.
                 # next_round_spinner_params (from board search) may have stale params from a previous search cycle;
                 # it should only win if reveal never happened (no promise was made to the player yet).
-                if getattr(room, 'spinner_params_revealed', False) and getattr(room, 'next_spinner_params', None):
-                    # Revealed params are the authoritative source — keep the board-search result for the board
-                    # itself, but use the revealed params for ALL display fields shown to the player.
-                    revealed = room.next_spinner_params
-                    board_params = getattr(room, 'next_round_spinner_params', None) or revealed
-                    active_params = dict(revealed)
-                    # Carry over board-specific fields that are fine to update (uniqueness, actual difficulty achieved, and minimum length)
-                    for carry_key in ('uniqueness', 'difficulty', 'min_word_length'):
-                        if carry_key in board_params:
-                            active_params[carry_key] = board_params[carry_key]
+                if (getattr(room, 'was_revealed_this_intermission', False) or getattr(room, 'spinner_params_revealed', False)) and (getattr(room, 'frozen_revealed_params', None) or room.spinner_params):
+                    # Revealed params shown on the Spinner Set at 0:45 timer are ironclad & authoritative!
+                    active_params = dict(getattr(room, 'frozen_revealed_params', None) or room.spinner_params)
+                elif getattr(room, 'next_spinner_params', None):
+                    active_params = dict(room.next_spinner_params)
                 else:
-                    active_params = getattr(room, 'next_round_spinner_params', None) or getattr(room, 'next_spinner_params', None) or room.spinner_params or {}
-                room.current_board_format = 'Valued Letters' if room.time_limit >= 7200 else (getattr(room, 'next_round_format', None) or active_params.get('board_format', 'Normal'))
+                    active_params = getattr(room, 'next_round_spinner_params', None) or room.spinner_params or {}
+                room.current_board_format = 'Valued Letters' if room.time_limit >= 7200 else active_params.get('board_format', 'Normal')
                 room.current_word_count_range = '200-300' if room.time_limit >= 7200 else active_params.get('word_count_range', '100-200')
                 room.current_difficulty = active_params.get('difficulty', 'Medium')
                 room.current_dictionary = active_params.get('dictionary', 'NWL')
@@ -6190,24 +6140,18 @@ class RoomManager:
                         e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio, e_bonus_word, e_tr = e_results
                         e_params = {}
                         
-                    if e_params:
+                    if e_params and not getattr(room, 'was_revealed_this_intermission', False) and not getattr(room, 'spinner_params_revealed', False):
                         print(f"[REMAINING-STABILIZER] Aligning room spinner parameters to match popped fallback board: {e_params}")
                         room.spinner_params['dictionary'] = e_params.get('dictionary', 'NWL')
-                        room.spinner_params['difficulty'] = e_params.get('difficulty', 'Medium')
                         room.spinner_params['board_format'] = e_params.get('board_format', 'Normal')
                         room.spinner_params['min_word_length'] = e_params.get('min_word_length', 3)
                         room.spinner_params['use_added_words'] = e_params.get('use_added_words', False)
                         room.spinner_params['bonus_word_length'] = e_params.get('bonus_word_len', 6)
                         
                         room.current_dictionary = e_params.get('dictionary', 'NWL')
-                        room.current_difficulty = e_params.get('difficulty', 'Medium')
                         room.current_board_format = e_params.get('board_format', 'Normal')
                         room.current_min_length = e_params.get('min_word_length', 3)
                         room.use_added_words = e_params.get('use_added_words', False)
-                    
-                    if e_tr:
-                        room.spinner_params['word_count_range'] = e_tr
-                        room.current_word_count_range = e_tr
                     
                     room.next_round_board = e_board
                     room.next_round_words = e_words
@@ -6260,13 +6204,18 @@ class RoomManager:
                 # in check_and_update_state already captured the precise yesterday snapshots.
                 if room.time_limit < 7200:
                     room.previous_min_length = getattr(room, 'current_min_length', 3)
+                    room.previous_bonus_word = getattr(room, 'bonus_word', '')
                     import copy
                     room.previous_board = copy.deepcopy(room.board) if room.board else []
                     # USER REQUEST: Ensure intermission list matches round rules
                     display_min_prev = getattr(room, 'current_min_length', 3)
                     room.previous_all_words = [w for w in (room.all_words or []) if len(w) >= display_min_prev]
-                    room.previous_csw_only_words = list(room.csw_only_words) if room.csw_only_words else []
-                    room.previous_added_words = list(room.added_words) if room.added_words else []
+                    if hasattr(word_validator, 'word_validator'):
+                        room.previous_csw_only_words = [w for w in room.previous_all_words if word_validator.word_validator.is_csw_only(w)]
+                        room.previous_added_words = [w for w in room.previous_all_words if word_validator.word_validator.is_added_word(w)]
+                    else:
+                        room.previous_csw_only_words = list(room.csw_only_words) if room.csw_only_words else []
+                        room.previous_added_words = list(room.added_words) if room.added_words else []
                 
                 # Update current active counts
                 room.csw_only_words = getattr(room, 'next_round_csw_only_words', [])
@@ -6274,40 +6223,37 @@ class RoomManager:
 
                 # ATOMIC PROMOTION: Carry staging data to active room state
                 room.board = room.next_round_board
-                room.current_board_format = 'Valued Letters' if room.time_limit >= 7200 else (getattr(room, 'next_round_format', None) or active_params.get('board_format', 'Normal'))
+                room.current_board_format = 'Valued Letters' if room.time_limit >= 7200 else active_params.get('board_format', 'Normal')
                 
                 # USER REQUEST: Absolute consistency. Only include words that meet the round's scorable minimum.
                 # HARD FLOOR: Always exclude 3-letter words from the 'All Words' list (User Request: "NOT 3 letter wrods")
                 min_l = room.current_min_length if hasattr(room, 'current_min_length') else 3
                 display_min = min_l
-                room.all_words = {w for w in (room.next_round_words or []) if len(w) >= display_min}
                 room.all_words_paths = {w: p for w, p in (room.next_round_word_paths or {}).items() if len(w) >= display_min}
+                room.all_words = set(room.all_words_paths.keys())
                 
                 room.solved_words_with_scores = getattr(room, 'next_round_word_scores', {})
                 
                 # Save to DB will occur at the end of promotion after all parameters are finalized
                 
-                # USER REQUEST: Ensure Bonus Word is ironclad (highlighted in green at end)
-                # If for any reason next_round_bonus is empty (e.g. emergency stall), pick a fresh one now
                 current_bw = getattr(room, 'next_round_bonus', '')
-                if not current_bw:
-                    bw_l = room.spinner_params.get('bonus_word_length', 8) if isinstance(room.spinner_params, dict) else 8
-                    current_bw = self._get_bonus_word(
-                        length=bw_l,
-                        dictionary=room.current_dictionary,
-                        alternating=('checkerboard' in str(room.current_board_format).lower())
-                    )
-                room.bonus_word = current_bw
+                bw_l = room.spinner_params.get('bonus_word_length', 8) if isinstance(room.spinner_params, dict) else 8
+                dict_val = room.spinner_params.get('dictionary', 'NWL') if isinstance(room.spinner_params, dict) else 'NWL'
+                if not current_bw or current_bw not in room.all_words or str(current_bw).strip().upper() in ['', 'NONE'] or str(current_bw).upper().endswith('ING') or str(current_bw).upper().endswith('INGS'):
+                    candidates = [w for w in (room.all_words or []) if len(w) == bw_l and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
+                    if not candidates:
+                        candidates = [w for w in (room.all_words or []) if len(w) >= 5 and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
+                    if candidates:
+                        import random
+                        current_bw = random.choice(list(candidates)).upper()
+                    else:
+                        current_bw = self._get_bonus_word(length=bw_l, dictionary=dict_val, alternating=('checkerboard' in str(room.current_board_format).lower()))
+                room.bonus_word = str(current_bw or '').upper().strip()
                 
                 # SYNC: Ensure Spinner Set params match the ACTUAL bonus word length we are starting with.
-                if room.bonus_word and isinstance(room.spinner_params, dict):
+                # GUARD: Only update if params are not locked (i.e., not yet revealed to players this round).
+                if room.bonus_word and isinstance(room.spinner_params, dict) and not getattr(room, '_spinner_params_locked', False):
                     room.spinner_params['bonus_word_length'] = len(room.bonus_word)
-                
-                # SAFETY SYNC: Ensure the bonus word is actually in all_words
-                # (Prevents UI from failing to highlight it if it were somehow missed by the solver)
-                # And ensure it bypasses the min-length filter if it was somehow shorter (unlikely but safe)
-                if room.bonus_word and room.bonus_word not in room.all_words:
-                    room.all_words.add(room.bonus_word)
                 
                 room.bonus_cell = getattr(room, 'next_round_bonus_cell', None)
                 
@@ -6319,60 +6265,84 @@ class RoomManager:
                     display_min_final = min_l
                     
                     room.all_words = {w for w in (room.all_words or []) if len(w) >= display_min_final}
+
+                    # TRUNCATION TO SPINNER SET REVEALED RANGE CAP:
+                    target_sp_range = room.spinner_params.get('word_count_range', '100-200') if isinstance(room.spinner_params, dict) else '100-200'
+                    max_cap = None
+                    if target_sp_range == '50-100': max_cap = 99
+                    elif target_sp_range == '100-200': max_cap = 199
+                    elif target_sp_range == '200-300': max_cap = 299
+                    elif target_sp_range == '300-400': max_cap = 399
+                    elif target_sp_range == '400-500': max_cap = 499
+
+                    if max_cap and len(room.all_words) > max_cap:
+                        bw_upper = str(getattr(room, 'bonus_word', '')).upper().strip()
+                        words_list = list(room.all_words)
+                        total_raw = len(words_list)
+                        by_len = {}
+                        for w in words_list:
+                            l = len(w)
+                            by_len.setdefault(l, []).append(w)
+                        
+                        selected_set = set()
+                        if bw_upper and bw_upper in room.all_words:
+                            selected_set.add(bw_upper)
+                            
+                        buckets = sorted(by_len.keys())
+                        for l in buckets:
+                            b_words = [w for w in by_len[l] if w not in selected_set]
+                            if not b_words:
+                                continue
+                            p_cnt = int(round((len(by_len[l]) / float(total_raw)) * max_cap))
+                            p_cnt = max(1, min(len(b_words), p_cnt))
+                            sorted_b = sorted(b_words, key=lambda w: (len(w), w), reverse=True)
+                            selected_set.update(sorted_b[:p_cnt])
+                            
+                        if len(selected_set) < max_cap:
+                            leftover = [w for w in words_list if w not in selected_set]
+                            leftover_sorted = sorted(leftover, key=lambda w: (len(w), w), reverse=True)
+                            selected_set.update(leftover_sorted[:(max_cap - len(selected_set))])
+                        elif len(selected_set) > max_cap:
+                            non_bw = [w for w in selected_set if w != bw_upper]
+                            selected_set = set(non_bw[:max_cap])
+                            if bw_upper and bw_upper in room.all_words:
+                                selected_set.add(bw_upper)
+                                
+                        room.all_words = selected_set
+
                     room.all_words_paths = {w: room.all_words_paths.get(w, []) for w in room.all_words}
                     
                     if getattr(room, 'solved_words_with_scores', None) is not None:
                         room.solved_words_with_scores = {w: room.solved_words_with_scores[w] for w in room.all_words if w in room.solved_words_with_scores}
 
-                    target_range = getattr(room, 'current_word_count_range', '200-300' if room.time_limit >= 7200 else '100-200')
-                    if target_range:
-                        max_limit = 99999
-                        try:
-                            parts = str(target_range).split('-')
-                            if len(parts) == 2:
-                                max_limit = int(parts[1]) - 1
-                        except:
-                            pass
-                        
-                        if len(room.all_words) > max_limit:
-                            print(f"[ACCURACY-SYNC] Truncating Round {room.current_round} to {max_limit} words to match range '{target_range}' (limit: {max_limit})")
-                            import random as _random
-                            seed_val = f"{room.room_id}_{room.current_round}"
-                            words_by_len = {}
-                            for w in room.all_words:
-                                l = len(w)
-                                if l not in words_by_len:
-                                    words_by_len[l] = []
-                                words_by_len[l].append(w)
-                            
-                            sorted_scorable = []
-                            rng = _random.Random(seed_val)
-                            for l in sorted(words_by_len.keys(), reverse=True):
-                                group = words_by_len[l]
-                                rng.shuffle(group)
-                                sorted_scorable.extend(group)
-                            
-                            sorted_scorable = sorted_scorable[:max_limit]
-                            room.all_words = set(sorted_scorable)
-                            room.all_words_paths = {w: room.all_words_paths.get(w, []) for w in room.all_words}
-                            if getattr(room, 'solved_words_with_scores', None) is not None:
-                                room.solved_words_with_scores = {w: room.solved_words_with_scores[w] for w in room.all_words if w in room.solved_words_with_scores}
-
-                            
-                    # Explicitly verify the length matches what we truncated to avoid ANY downstream counting ghosts
-                    room.total_words_count = len(room.all_words)
+                    # PRESERVE SPUN PARAMETER & KEEP 100% OF SCORABLE GRID WORDS INTACT
+                    # FINAL ACCURACY SYNC: Ensure the header labels exactly match the results
+                    room.total_words_count = sum(1 for w in room.all_words if len(w) >= room.current_min_length)
+                    room.initial_total_words = room.total_words_count
+                    
+                    wc_cnt = room.total_words_count
+                    if wc_cnt < 100: real_wc = '50-100'
+                    elif wc_cnt < 200: real_wc = '100-200'
+                    elif wc_cnt < 300: real_wc = '200-300'
+                    elif wc_cnt < 400: real_wc = '300-400'
+                    elif wc_cnt < 500: real_wc = '400-500'
+                    else: real_wc = '500+'
+                    
+                    is_revealed_promise = (
+                        getattr(room, 'was_revealed_this_intermission', False) or
+                        getattr(room, 'spinner_params_revealed', False) or
+                        getattr(room, '_spinner_params_locked', False)
+                    )
+                    if not is_revealed_promise:
+                        room.current_word_count_range = real_wc
+                        if isinstance(room.spinner_params, dict):
+                            room.spinner_params['word_count_range'] = real_wc
+                            room.spinner_params['_exact_wc_calculated'] = True
+                    room.update_counts_by_len()
                 except Exception as e:
-                    print(f"[ACCURACY-ERROR] Failed to truncate: {e}")
-                
-                # FINAL ACCURACY SYNC: Ensure the header labels exactly match the results
-                room.total_words_count = sum(1 for w in room.all_words if len(w) >= room.current_min_length)
-                room.initial_total_words = room.total_words_count
-                # Preserve the spun word count range completely
-                room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
+                    print(f"[ACCURACY-ERROR] Failed word count calculation: {e}")
 
-                next_diff = getattr(room, 'next_round_difficulty', None)
-                if next_diff is not None:
-                    room.current_difficulty = next_diff
+
 
                 room.cell_density = getattr(room, 'next_round_cell_density', [])
                 room.initial_cell_density = getattr(room, 'next_round_initial_cell_density', [])
@@ -6485,12 +6455,16 @@ class RoomManager:
                 room.board_search_loading = False
                 room.spinner_params_generated = False
                 room.spinner_params_revealed = False
+                room.was_revealed_this_intermission = False
+                room.frozen_revealed_params = None
                 room.spinner_params_loading = False
                 room.next_spinner_params = None
                 room.next_round_spinner_params = None
                 room.next_round_difficulty = None
                 room.next_round_uniqueness = None
                 room.board_search_started_actual = False
+                room._spinner_params_locked = False   # ISSUE 5: unlock for next intermission
+                room._initial_board_delivered = True  # ISSUE 6: mark first board has been delivered
                 
                 # Reset Round counters
                 room.current_round += 1
@@ -6641,13 +6615,12 @@ class RoomManager:
                 if dictionary == 'CSW': words = [w for w in word_validator.csw_words if len(w) == length]
                 else: words = [w for w in word_validator.nwl_words if len(w) == length]
 
-        # Return random word (Reroll if ING detected in Medium/Hard or if in exclude list)
+        # USER MANDATE: Never allow a word ending in ING or INGS to be a Bonus Word across ANY difficulty or format!
         import random
-        valid_words = words
-        if exclude_ing:
-            valid_words = [w for w in words if "ING" not in w.upper()]
-            if not valid_words:
-                valid_words = words
+        valid_words = [w for w in words if not w.upper().endswith("ING") and not w.upper().endswith("INGS")]
+        if not valid_words:
+            all_dict_words = word_validator.csw_by_len.get(length, []) if dictionary == 'CSW' else word_validator.nwl_by_len.get(length, [])
+            valid_words = [w for w in all_dict_words if not w.upper().endswith("ING") and not w.upper().endswith("INGS")]
         
         # PREVENT REPEATS: Filter out words in history or currently active in the room
         final_exclude = set()
