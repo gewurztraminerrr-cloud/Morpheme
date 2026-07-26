@@ -3939,6 +3939,12 @@ class RoomManager:
                 is_daily = (room.time_limit >= 7200)
                 humans = [p for p in room.players if not p.is_ai]
                 if len(humans) == 0 and not is_daily:
+                    # ISSUE 6 FIX: NEVER wipe the board or reset an ACTIVE room.
+                    # Active rooms may briefly show 0 humans due to join latency or roster timing.
+                    # Wiping room.board causes the watchdog to immediately start_next_round, rolling
+                    # a completely new board (the "7 boards in 45 seconds" bug).
+                    if room.state == 'active':
+                        continue  # Skip — active board is sacred, never wipe mid-round
                     if room.state != 'waiting':
                         print(f"[BG-Cleanup] Pausing empty room {room_id}. Setting state to 'waiting'.")
                         with room._state_lock:
