@@ -753,6 +753,20 @@ body.theme-light-brown .player-score-val {
     touch-action: none !important;
 }
 
+/* Loading state: fill the board area and center the loading card */
+.game-board-loading {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-height: 320px !important;
+    height: auto !important;
+    padding: 0 !important;
+    background: transparent !important;
+    box-sizing: border-box;
+}
+
 :root {
     --cell-size: 60px;
     --chat-font-size: 13px;
