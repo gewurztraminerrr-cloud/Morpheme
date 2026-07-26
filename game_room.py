@@ -2794,15 +2794,25 @@ class RoomManager:
                         is_daily = (room.time_limit >= 7200)
                         humans = [p for p in room.players if not p.is_ai]
                         if len(humans) == 0 and not is_daily:
-                            if room.state != 'waiting':
-                                print(f"[Heartbeat] Pausing empty room {room_id}. Setting state to 'waiting'.")
-                                with room._state_lock:
-                                    room.state = 'waiting'
-                                    room.starting_round = False
-                                    room.board_search_started = False
-                                    room.board_search_loading = False
-                                    room.spinner_params_generated = False
-                                    room.next_round_board = None
+                            # ISSUE 6 FIX: NEVER pause an ACTIVE round — only pause intermission/waiting.
+                            # Pausing active rooms mid-board causes board wipes and re-rolls.
+                            # Also enforce a 30-second grace period after the most recent round started
+                            # to absorb transient 0-player moments (e.g., join latency on first load).
+                            round_age = time.time() - getattr(room, 'round_start_time', 0)
+                            is_newly_active = (room.state == 'active' and round_age < 30)
+                            if room.state not in ['waiting'] and not is_newly_active:
+                                if room.state == 'active':
+                                    # Never wipe an active board — just skip milestones silently
+                                    continue
+                                if room.state != 'waiting':
+                                    print(f"[Heartbeat] Pausing empty room {room_id}. Setting state to 'waiting'.")
+                                    with room._state_lock:
+                                        room.state = 'waiting'
+                                        room.starting_round = False
+                                        room.board_search_started = False
+                                        room.board_search_loading = False
+                                        room.spinner_params_generated = False
+                                        room.next_round_board = None
                             continue
 
                         # timers/transitions
@@ -5767,10 +5777,19 @@ class RoomManager:
             print(f"[RoomManager] ERROR: Room {room_id} not found")
             return False
             
-        # SAFETY: If room is in 'waiting' but somehow triggered, allow transition
+        # SAFETY: If room is in 'waiting' but somehow triggered, allow transition ONLY if
+        # there is no active board already in play (i.e., it's a genuine lobby start).
+        # This prevents the heartbeat's empty-room pause from wiping a live board when
+        # a human player is present (transient 0-player moments, join latency, etc.).
         if room.state == 'waiting':
-             room.state = 'intermission' # Canonical path is waiting -> intermission -> active
-             room.intermission_start_time = time.time() - 60 # Force it to look expired
+            has_active_board = bool(getattr(room, 'board', None))
+            if has_active_board:
+                # Board already exists — this 'waiting' state was a false-positive from the
+                # heartbeat's empty-room pause. Abort to prevent board re-roll.
+                print(f"[RoomManager] Aborting start_next_round for {room_id}: state='waiting' but board already active (heartbeat false-positive).")
+                return False
+            room.state = 'intermission'  # Canonical path: waiting → intermission → active
+            room.intermission_start_time = time.time() - 60  # Force it to look expired
             
         # 0. ATOMIC GUARD: Ensure only ONE thread/request triggers the round start transition
         # This prevents stacking up identical wait loops on a single slow-loading board.
