@@ -519,94 +519,11 @@ window.stopGamePolling = function () {
 };
 
 /**
- * Inject loading card CSS into <head> exactly once.
- * Must be called before any loading-container HTML is injected into the DOM,
- * because the CSS classes (.loading-container, .glow-spinner, etc.) are only
- * available after this function runs.
+ * ensureLoadingCardStyles() — all styles are now in play.css as static rules.
+ * Kept as a no-op stub so existing call sites don't break.
  */
 function ensureLoadingCardStyles() {
-    if (document.getElementById('morpheme-loading-card-styles')) return; // Already injected
-    const style = document.createElement('style');
-    style.id = 'morpheme-loading-card-styles';
-    style.textContent = `
-        @keyframes spin-glow {
-            0%   { transform: rotate(0deg);   box-shadow: 0 0 15px var(--accent-color); }
-            50%  { box-shadow: 0 0 30px var(--accent-color), inset 0 0 15px var(--accent-color); }
-            100% { transform: rotate(360deg); box-shadow: 0 0 15px var(--accent-color); }
-        }
-        @keyframes pulse-glow {
-            0%, 100% { opacity: 0.8; text-shadow: 0 0 8px var(--accent-color); }
-            50%       { opacity: 1;   text-shadow: 0 0 20px var(--accent-color), 0 0 30px var(--accent-color); }
-        }
-        .loading-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            min-height: 200px;
-            color: var(--text-primary);
-            background: rgba(10, 15, 30, 0.85);
-            border: 2px solid rgba(var(--accent-color-rgb, 0, 230, 118), 0.2);
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
-            padding: 20px;
-            box-sizing: border-box;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            text-align: center;
-        }
-        .glow-spinner {
-            width: 45px;
-            height: 45px;
-            border: 3px solid rgba(255, 255, 255, 0.05);
-            border-top: 3px solid var(--accent-color);
-            border-right: 3px solid var(--accent-color);
-            border-radius: 50%;
-            animation: spin-glow 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-            margin-bottom: 15px;
-        }
-        .glow-title {
-            font-weight: 800;
-            font-size: 1.1rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--text-primary);
-            animation: pulse-glow 2s ease-in-out infinite;
-            text-align: center;
-        }
-        .why-text {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            text-align: center;
-            max-width: 95%;
-            margin-top: 12px;
-            line-height: 1.4;
-            font-weight: 400;
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-            padding-top: 12px;
-        }
-        .status-ticker {
-            font-family: monospace;
-            font-size: 0.75rem;
-            color: var(--accent-color);
-            margin-top: 10px;
-            background: rgba(0, 0, 0, 0.4);
-            padding: 4px 12px;
-            border-radius: 15px;
-            border: 1px solid rgba(var(--accent-color-rgb, 0, 230, 118), 0.15);
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-        @media (max-width: 768px) {
-            .loading-container { padding: 12px; }
-            .glow-spinner { width: 30px; height: 30px; border-width: 2px; margin-bottom: 10px; }
-            .glow-title { font-size: 0.9rem; letter-spacing: 1px; }
-            .status-ticker { font-size: 0.65rem; margin-top: 8px; padding: 2px 8px; }
-            .why-text { font-size: 0.65rem; margin-top: 8px; padding-top: 8px; line-height: 1.3; }
-        }
-    `;
-    document.head.appendChild(style);
+    // No-op: styles are in play.css (.game-board-loading, .loading-container, etc.)
 }
 
 function clearGameUIAndCache() {
