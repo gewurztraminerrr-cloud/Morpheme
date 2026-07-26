@@ -1302,10 +1302,18 @@ class GameRoom:
         """
         now = time.time()
         
+        # ISSUE 6 FIX: Never fire any milestone when state is 'waiting'.
+        # round_start_time=0 in waiting state makes state_elapsed huge (now - 0),
+        # which causes 'spinner' and 'search' milestones to trigger on every tick/poll,
+        # generating board after board and triggering start_next_round repeatedly.
+        if self.state == 'waiting':
+            return None
+        
         # stuck watchdog: check if intermission is stuck for > 10s at 0:00:00 (timer at 0 and state == intermission)
         # Determine normal intermission duration
         intermission_limit = 5 if self.time_limit >= 7200 else 60
         is_at_or_past_zero = (self.state == 'intermission' and (now - self.intermission_start_time >= intermission_limit))
+
         
         # USER MANDATE: 0:50 Intermission Fallback Watchdog (10s remaining in intermission)
         # If no board has been secured by 0:50 of intermission (50s elapsed), pop a pregenerated board immediately,
