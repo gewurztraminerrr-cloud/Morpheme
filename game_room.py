@@ -1665,6 +1665,12 @@ class GameRoom:
         if self.state == 'waiting':
             humans = [p for p in self.players if not p.is_ai]
             if len(humans) > 0:
+                # ISSUE 6 FIX: Guard against re-entry. This block runs on every heartbeat tick
+                # (every 0.1s), which wiped and regenerated the board 7+ times in 45 seconds.
+                # _wakeup_in_progress ensures we only run the wake-up sequence once.
+                if getattr(self, '_wakeup_in_progress', False):
+                    return False  # Already waking up — don't wipe/regenerate again
+                self._wakeup_in_progress = True
                 print(f"[GameRoom] Waking up paused room {self.room_id} instantly because human player joined. Generating/popping fresh board.")
                 self.board = None
                 self.all_words = set()
@@ -1831,6 +1837,8 @@ class GameRoom:
                 self.round_start_time = now
                 self.intermission_start_time = 0
                 self.starting_round = False
+                self._wakeup_in_progress = False  # ISSUE 6: clear guard now that wake-up is complete
+                self._initial_board_delivered = True  # ISSUE 6: mark board as live
                 
                 # Proactively launch spinner parameter pre-generation for the NEXT round
                 self._transition_spinner_launched = False
