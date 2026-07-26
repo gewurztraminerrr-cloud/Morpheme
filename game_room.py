@@ -4547,6 +4547,7 @@ class RoomManager:
             room.custom_end_time = 0
             room.round_start_time = time.time()
             room.state = 'active'
+            room._initial_board_delivered = True  # ISSUE 6: first board is now live
             
             # TRIGGER PRE-GENERATION: Start searching for the NEXT round immediately 
             # to hide generation latency behind the active gameplay.
@@ -5787,8 +5788,13 @@ class RoomManager:
         # there is no active board already in play (i.e., it's a genuine lobby start).
         # This prevents the heartbeat's empty-room pause from wiping a live board when
         # a human player is present (transient 0-player moments, join latency, etc.).
+        if room.state == 'active':
+            # Room is already live — nothing to do here
+            print(f"[RoomManager] Aborting start_next_round for {room_id}: room is already active.")
+            return False
         if room.state == 'waiting':
-            has_active_board = bool(getattr(room, 'board', None))
+            board = getattr(room, 'board', None)
+            has_active_board = isinstance(board, list) and len(board) > 0
             if has_active_board:
                 # Board already exists — this 'waiting' state was a false-positive from the
                 # heartbeat's empty-room pause. Abort to prevent board re-roll.
