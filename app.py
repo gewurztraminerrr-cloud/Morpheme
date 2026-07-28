@@ -3606,8 +3606,7 @@ def get_room_state(room_id):
                         if not is_24h:
                             # Start in intermission so the user has a graceful transition and doesn't jump midround!
                             with room._state_lock:
-                                room.state = 'intermission'
-                                room.intermission_start_time = time.time() - 35  # 25s remaining (extended buffer)
+                                room.intermission_start_time = time.time()
                                 room.spinner_params_generated = False
                                 if hasattr(room, '_transition_spinner_launched'): delattr(room, '_transition_spinner_launched')
                                 if hasattr(room, 'spinner_params_revealed'): delattr(room, 'spinner_params_revealed')
@@ -3781,42 +3780,51 @@ def get_room_state(room_id):
             words_to_return = []
             word_scores_to_return = {}
             if is_intermission:
-                # USER REQUEST: Absolute 'Last-Mile' Safety Net.
-                # Never allow 3L/4L words to reach the client if the Spinner says 5L+.
-                # Also enforce the global 4L floor for all solution lists.
-                cur_min = getattr(room, 'current_min_length', 3)
+                # USER REQUEST: Return completed round words, scores, and min length for Intermission
+                cur_min = getattr(room, 'previous_min_length', getattr(room, 'current_min_length', 3))
                 display_floor = cur_min
-                words_to_return = [w for w in (room.all_words or []) if len(w) >= display_floor]
-                
+
+                prev_words = getattr(room, 'previous_all_words', None)
+                prev_scores = getattr(room, 'previous_all_word_scores', None)
+                if prev_words and len(prev_words) > 0:
+                    if isinstance(prev_words, dict):
+                        raw_w_list = list(prev_words.keys())
+                        word_scores_to_return = prev_words
+                    else:
+                        raw_w_list = list(prev_words)
+                        word_scores_to_return = prev_scores if isinstance(prev_scores, dict) else getattr(room, 'solved_words_with_scores', {})
+                else:
+                    raw_w_list = list(room.all_words or [])
+                    word_scores_to_return = getattr(room, 'solved_words_with_scores', {}) or {}
+
+                words_to_return = [w for w in raw_w_list if len(w) >= display_floor]
+
                 # RE-SYNC: Ensure re-categorized lists also respect this floor using pre-cached, self-healing lists
                 if hasattr(word_validator, 'word_validator'):
                     dict_name = str(getattr(room, 'current_dictionary', 'NWL')).upper()
-                    if dict_name in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
+                    if 'CSW' in dict_name or 'AW' in dict_name or 'ALL' in dict_name or 'ADDED' in dict_name:
                         word_validator.word_validator.ensure_csw_loaded()
-                        if not getattr(room, 'csw_only_words', None) and room.all_words:
-                            room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
+                        prev_csw = getattr(room, 'previous_csw_only_words', None)
+                        if prev_csw:
+                            room.csw_only_words = list(prev_csw)
+                        elif not getattr(room, 'csw_only_words', None) and words_to_return:
+                            room.csw_only_words = [w for w in words_to_return if word_validator.word_validator.is_csw_only(w)]
                     else:
                         room.csw_only_words = []
                     room.csw_only_words = [w for w in (room.csw_only_words or []) if len(w) >= display_floor]
 
-                    if getattr(room, 'use_added_words', False) or dict_name in ['AW', 'ALL', 'ADDED_WORDS']:
-                        if not getattr(room, 'added_words', None) and room.all_words:
-                            room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
+                    if getattr(room, 'use_added_words', False) or 'AW' in dict_name or 'ALL' in dict_name or 'ADDED' in dict_name:
+                        prev_aw = getattr(room, 'previous_added_words', None)
+                        if prev_aw:
+                            room.added_words = list(prev_aw)
+                        elif not getattr(room, 'added_words', None) and words_to_return:
+                            room.added_words = [w for w in words_to_return if word_validator.word_validator.is_added_word(w)]
                     else:
                         room.added_words = []
                     room.added_words = [w for w in (room.added_words or []) if len(w) >= display_floor]
-                
-                word_scores_to_return = getattr(room, 'solved_words_with_scores', {})
+
                 # Purge scores as well
                 word_scores_to_return = {w: word_scores_to_return[w] for w in words_to_return if w in word_scores_to_return}
-                # Fallback to previous if current is somehow missing
-                if not words_to_return:
-                    prev_all = getattr(room, 'previous_all_word_scores', {}) or getattr(room, 'previous_all_words', {})
-                    if isinstance(prev_all, dict):
-                        words_to_return = list(prev_all.keys())
-                        word_scores_to_return = prev_all
-                    elif isinstance(prev_all, list):
-                        words_to_return = prev_all
             elif is_active:
                 # ACTIVE: Provide word scores for total-points calculation client-side
                 # (Avoids showing '0 total pts' when total_points_count hasn't been computed yet)
@@ -3894,11 +3902,10 @@ def get_room_state(room_id):
                 'intermission_end_time': room.intermission_end_time if room.state == 'intermission' else 0,
                 'server_time': time.time(),
                 'your_username': session.get('username'),
-                'your_user_id': session.get('user_id'),
-                'board': room.board,
+                'board': (getattr(room, 'previous_board', None) or room.board) if is_intermission else room.board,
                 'board_dimensions': room.board_dimensions,
-                'bonus_word': room.bonus_word,
-                'bonus_cell': room.bonus_cell if ('bonus letter' in str(raw_fmt).lower()) else None,
+                'bonus_word': (getattr(room, 'previous_bonus_word', None) or room.bonus_word) if is_intermission else room.bonus_word,
+                'bonus_cell': (getattr(room, 'previous_bonus_cell', None) if is_intermission else room.bonus_cell) if ('bonus letter' in str(raw_fmt).lower()) else None,
                 'all_words': words_to_return,
                 'total_words_count': (room.previous_total_words if is_intermission else actual_total),
                 'next_round_total_words_count': getattr(room, 'next_round_total_words_count', 0),
@@ -3923,7 +3930,9 @@ def get_room_state(room_id):
                 'previous_bonus_word': getattr(room, 'previous_bonus_word', ''),
                 'previous_dictionary': getattr(room, 'previous_dictionary', 'NWL'),
                 'previous_use_added_words': getattr(room, 'previous_use_added_words', False),
-                'spinner_params': {**room.spinner_params, 'uniqueness': getattr(room, 'next_round_uniqueness', None) or 0} if (is_intermission and is_revealed) else room.spinner_params,
+                'spinner_params': (
+                    getattr(room, 'frozen_revealed_params', None) or getattr(room, 'spinner_params', {}) or {}
+                ),
                 'use_added_words': getattr(room, 'use_added_words', False),
                 'current_min_length': getattr(room, 'current_min_length', 3),
                 'min_rating': getattr(room, 'min_rating', 0),
@@ -4114,6 +4123,9 @@ def submit_word(room_id):
     
     player = room.get_player(user_id)
     new_score = player.score if player else 0
+    last_sub = (player.submitted_words[-1] if (player and player.submitted_words) else {})
+    score_details = last_sub.get('score_details', {}) if isinstance(last_sub, dict) else {}
+    returned_path = last_sub.get('path') if isinstance(last_sub, dict) else path
 
     return jsonify({
         'success': success, 
@@ -4121,6 +4133,8 @@ def submit_word(room_id):
         'points': points,
         'word': final_word,
         'new_score': new_score,
+        'score_details': score_details,
+        'path': returned_path,
         'cell_density': (getattr(player, 'cell_density', None) if (player and getattr(player, 'cell_density', None)) else getattr(room, 'cell_density', None)),
         'max_cell_density': getattr(room, 'max_cell_density', 0)
     })
@@ -6923,7 +6937,7 @@ def create_solo_match():
     min_word_len = int(parameters.get('min_word_length', 3))
     if custom_word_count_range == 'random':
         from spinner_set import SpinnerSet
-        wc_range = SpinnerSet._spin_word_count(dict_name, min_word_len, target_difficulty, board_dimensions)
+        wc_range = SpinnerSet._spin_word_count(dict_name, min_word_len, target_difficulty, board_dimensions, use_added_words=use_aw_flag)
     else:
         # Use custom range provided by user
         wc_range = custom_word_count_range
@@ -7383,6 +7397,12 @@ def preload_dictionaries():
 
 # Disable memory-intensive preloading in container environment
 # threading.Thread(target=preload_dictionaries, daemon=True).start()
+
+try:
+    from board_generator import seed_pregenerated_cache_bg
+    seed_pregenerated_cache_bg()
+except Exception as e:
+    print(f"[AppInit] Error starting pregeneration bootstrapper: {e}")
 
 if __name__ == '__main__':
     # Background room advancer is now handled by RoomManager's internal thread

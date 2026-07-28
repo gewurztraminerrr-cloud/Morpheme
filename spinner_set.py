@@ -287,24 +287,8 @@ class SpinnerSet:
 
                     prev_base = get_base_fmt(previous_params.get('board_format', ''))
                     cur_base = get_base_fmt(res.get('board_format', ''))
-                    # 1. SPECIAL FORMAT ANTI-STREAK: Non-Normal formats MUST NEVER repeat back-to-back
+                    # SPECIAL FORMAT ANTI-STREAK: Non-Normal special formats must never repeat back-to-back
                     if cur_base != 'normal' and cur_base == prev_base and _ < 25:
-                        continue
-                    
-                    # 2. DICTIONARY ROTATION ANTI-STREAK: Rotate dictionary between NWL, CSW, NWL + AW, CSW + AW
-                    prev_dict = str(previous_params.get('dictionary', '')).upper()
-                    cur_dict = str(res.get('dictionary', '')).upper()
-                    if cur_dict == prev_dict and _ < 25:
-                        continue
-
-                    # 3. FULL-SET ANTI-STREAK: Reject if 2 or more parameters match previous round
-                    same_count = 0
-                    if res.get('min_word_length') == previous_params.get('min_word_length'): same_count += 1
-                    if cur_dict == prev_dict: same_count += 1
-                    if res.get('word_count_range') == previous_params.get('word_count_range'): same_count += 1
-                    if cur_base == prev_base: same_count += 1
-
-                    if same_count >= 2 and _ < 25:
                         continue
 
                 return res

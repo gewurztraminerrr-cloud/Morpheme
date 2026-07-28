@@ -1912,6 +1912,9 @@ class GameRoom:
                 self.state = 'intermission'
                 self.intermission_start_time = now
                 self.spinner_params_revealed = False
+                self.was_revealed_this_intermission = False
+                self._spinner_params_locked = False
+                self.frozen_revealed_params = None
                 self._did_050_fallback_rescue = False
                 print(f"[TRANSITION] Room {self.room_id}: ACTIVE -> INTERMISSION (Time: {self.intermission_start_time}, Elapsed: {now - self.round_start_time})")
                 
@@ -4866,14 +4869,17 @@ class RoomManager:
                     room.spinner_params_generated = True
 
                 if reveal:
-                    # 2. PERFORM THE REVEAL (Making them visible to players)
+                    # 2. PERFORM THE REVEAL (Making them visible to players at 0:45)
+                    import copy
                     if not getattr(room, '_spinner_params_locked', False):
-                        room.spinner_params = dict(new_params)
+                        room.spinner_params = copy.deepcopy(new_params)
+                        room.frozen_revealed_params = copy.deepcopy(new_params)
                     
                     # Update authoritative labels
                     room.next_round_min_length = new_params.get('min_word_length', 3)
                     room.spinner_params_revealed = True
-                    room._spinner_params_locked = True  # LOCK: no further overwrites until round resets
+                    room.was_revealed_this_intermission = True
+                    room._spinner_params_locked = True  # LOCK: no further overwrites until intermission ends!
                     room._reveal_sync_complete = True
                     print(f"[RoomManager] SUCCESS: Generated and Revealed params for room {room_id}")
                 else:
@@ -6503,7 +6509,7 @@ class RoomManager:
                 room.next_round_difficulty = None
                 room.next_round_uniqueness = None
                 room.board_search_started_actual = False
-                room._spinner_params_locked = False   # ISSUE 5: unlock for next intermission
+                room._spinner_params_locked = True   # Keep LOCKED during active round!
                 room._initial_board_delivered = True  # ISSUE 6: mark first board has been delivered
                 
                 # Reset Round counters
