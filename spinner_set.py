@@ -130,29 +130,13 @@ class SpinnerSet:
         if not wc_range or wc_range not in ['50-100', '100-200', '200-300', '300-400', '400-500', '500+']:
             if is_aw_effective:
                 import random
-                wc_range = random.choices(['300-400', '400-500', '500+'], weights=[40, 40, 20])[0]
+                wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
             else:
                 import random
-                wc_range = random.choices(['50-100', '100-200', '200-300', '300-400', '400-500', '500+'], weights=[10, 25, 25, 20, 15, 5])[0]
+                wc_range = random.choices(['50-100', '100-200', '200-300', '300-400', '500+'], weights=[9, 30, 30, 30, 1])[0]
 
         res['min_word_length'] = min_word_length
         res['word_count_range'] = wc_range
-
-        # Issue 4: Incompatible formats for +AW dictionaries — force Normal
-        # Checkerboard, Density, Equality Freq, Mania, Either/Or, Bounce are not compatible
-        # with +AW's very large word pools and special layout requirements.
-        if is_aw_effective:
-            cur_fmt = str(res.get('board_format', 'Normal'))
-            _aw_incompatible = (
-                'checkerboard' in cur_fmt.lower() or
-                'density' in cur_fmt.lower() or
-                'equality' in cur_fmt.lower() or
-                'mania' in cur_fmt.lower() or
-                'either' in cur_fmt.lower() or
-                'bounce' in cur_fmt.lower()
-            )
-            if _aw_incompatible:
-                res['board_format'] = 'Normal'
 
         if is_24h:
             if not is_aw_effective:
@@ -218,14 +202,12 @@ class SpinnerSet:
 
                 # Word count range based on dictionary & length
                 if is_aw_effective:
-                    wc_range = random.choices(['300-400', '400-500', '500+'], weights=[40, 40, 20])[0]
+                    wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
                 else:
                     if min_word_length == ceiling:
-                        wc_range = random.choices(['50-100', '100-200'], weights=[25, 75])[0]
-                    elif min_word_length == middle:
-                        wc_range = random.choices(['100-200', '200-300'], weights=[50, 50])[0]
-                    else: # floor
-                        wc_range = random.choices(['100-200', '200-300', '300-400'], weights=[30, 40, 30])[0]
+                        wc_range = random.choices(['50-100', '100-200'], weights=[70, 30])[0]
+                    else:
+                        wc_range = random.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0]
 
                 # Determine board format
                 board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions)
