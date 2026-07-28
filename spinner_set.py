@@ -135,6 +135,15 @@ class SpinnerSet:
                 import random
                 wc_range = random.choices(['50-100', '100-200', '200-300', '300-400', '500+'], weights=[9, 30, 30, 30, 1])[0]
 
+        # Enforce 4x4 feasibility for standard NWL/CSW
+        if '4x4' in dims and not is_aw_effective:
+            if min_word_length >= 5:
+                wc_range = '50-100'
+            elif min_word_length == 4 and wc_range not in ['50-100', '100-200']:
+                wc_range = '100-200'
+            elif min_word_length == 3 and wc_range not in ['100-200', '200-300']:
+                wc_range = '200-300'
+
         res['min_word_length'] = min_word_length
         res['word_count_range'] = wc_range
 
@@ -200,14 +209,25 @@ class SpinnerSet:
                 # Difficulty (spin independently)
                 difficulty = SpinnerSet._spin_difficulty(board_dimensions, 3)
 
-                # Word count range based on dictionary & length
-                if is_aw_effective:
-                    wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
-                else:
-                    if min_word_length == ceiling:
-                        wc_range = random.choices(['50-100', '100-200'], weights=[70, 30])[0]
+                # Word count range based on dictionary & dimension feasibility
+                if '4x4' in dims:
+                    if is_aw_effective:
+                        wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
                     else:
-                        wc_range = random.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0]
+                        if min_word_length == ceiling: # 5L
+                            wc_range = '50-100'
+                        elif min_word_length == middle: # 4L
+                            wc_range = random.choices(['50-100', '100-200'], weights=[40, 60])[0]
+                        else: # 3L
+                            wc_range = random.choices(['100-200', '200-300'], weights=[50, 50])[0]
+                else:
+                    if is_aw_effective:
+                        wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
+                    else:
+                        if min_word_length == ceiling:
+                            wc_range = random.choices(['50-100', '100-200'], weights=[70, 30])[0]
+                        else:
+                            wc_range = random.choices(['100-200', '200-300', '300-400', '500+'], weights=[30, 35, 30, 5])[0]
 
                 # Determine board format
                 board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions)

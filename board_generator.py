@@ -235,7 +235,7 @@ def mark_board_hash_used(board_hash):
         return True
 
 
-def pop_any_cached_board(dimensions):
+def pop_any_cached_board(dimensions, min_word_length=3, exclude_format=None):
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
     conn = None
     try:
@@ -246,8 +246,16 @@ def pop_any_cached_board(dimensions):
         while True:
             cursor.execute("BEGIN IMMEDIATE TRANSACTION;")
             dim_pattern = f'%"dimensions": "{dimensions}"%'
-            cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? ORDER BY id ASC LIMIT 1;", (dim_pattern,))
+            if exclude_format and str(exclude_format).lower() != 'normal':
+                clean_ex = str(exclude_format).split()[0].strip()
+                fmt_pattern = f'%"board_format": "%{clean_ex}%"%'
+                cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? AND param_key NOT LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern, fmt_pattern))
+            else:
+                cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern,))
             row = cursor.fetchone()
+            if not row and exclude_format:
+                cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern,))
+                row = cursor.fetchone()
             if not row:
                 cursor.execute("COMMIT;")
                 break
@@ -259,7 +267,14 @@ def pop_any_cached_board(dimensions):
             board_json = row['board_json']
             data = json.loads(board_json)
             board = data["board"]
+            all_words = data["all_words"]
             
+            min_l_int = int(min_word_length)
+            matching_min_words = sum(1 for w in all_words if len(w) == min_l_int)
+            if matching_min_words < 5:
+                print(f"[BoardGen] Discarding any_cached board for {dimensions}: only {matching_min_words} words of length {min_l_int} (needed >= 5)")
+                continue
+
             board_hash = get_board_hash(board)
             if not mark_board_hash_used(board_hash):
                 print(f"[BoardGen] Discarding cached board (layout already used globally: {board_hash})")
@@ -319,37 +334,38 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
             d_target = "NWL"
             
         matched_row = None
+        # Pass 1: Try strict match (dimensions, dict, use_aw, format, min_len)
         for row in rows:
             try:
                 params = json.loads(row['param_key'])
             except:
                 continue
-                
-            # Check dimensions
-            if params.get('dimensions') != dimensions:
-                continue
-            # Check dictionary
+            if params.get('dimensions') != dimensions: continue
             d_param = str(params.get('dictionary', 'NWL')).upper().replace("+ AW", "").replace("+AW", "").replace("ADDED", "").strip()
-            if d_param not in ["NWL", "CSW"]:
-                d_param = "NWL"
-            if d_param != d_target:
-                continue
-            # Check use_added_words
-            p_aw = params.get('use_added_words', False)
-            if bool(p_aw) != bool(use_added_words):
-                continue
-            # Check board_format
-            if str(params.get('board_format')).upper().strip() != str(board_format).upper().strip():
-                continue
-            # Check min_word_length
-            if int(params.get('min_word_length', 3)) != int(min_word_length):
-                continue
-            # Check bonus_word_len
-            if bonus_word_len is not None and int(params.get('bonus_word_len', 0)) != int(bonus_word_len):
-                continue
-                
+            if d_param not in ["NWL", "CSW"]: d_param = "NWL"
+            if d_param != d_target: continue
+            if bool(params.get('use_added_words', False)) != bool(use_added_words): continue
+            if str(params.get('board_format')).upper().strip() != str(board_format).upper().strip(): continue
+            if int(params.get('min_word_length', 3)) != int(min_word_length): continue
             matched_row = row
             break
+            
+        # Pass 2: Relax word_count_range / difficulty ONLY, keeping STRICT format, min_word_length, and dictionary
+        if not matched_row:
+            for row in rows:
+                try:
+                    params = json.loads(row['param_key'])
+                except:
+                    continue
+                if params.get('dimensions') != dimensions: continue
+                d_param = str(params.get('dictionary', 'NWL')).upper().replace("+ AW", "").replace("+AW", "").replace("ADDED", "").strip()
+                if d_param not in ["NWL", "CSW"]: d_param = "NWL"
+                if d_param != d_target: continue
+                if bool(params.get('use_added_words', False)) != bool(use_added_words): continue
+                if str(params.get('board_format', 'Normal')).upper().strip() != str(board_format).upper().strip(): continue
+                if int(params.get('min_word_length', 3)) != int(min_word_length): continue
+                matched_row = row
+                break
             
         if matched_row:
             # Pop this specific board by ID in an atomic transaction
@@ -371,8 +387,13 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
                     print(f"[BoardGen] Discarding compatible cached board (layout already used: {board_hash})")
                     # Try again
                     return pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len)
-                    
+
                 all_words = data["all_words"]
+                min_l_int = int(min_word_length)
+                matching_min_words = sum(1 for w in all_words if len(w) == min_l_int)
+                if matching_min_words < 5:
+                    print(f"[BoardGen] Discarding compatible cached board for {dimensions}: only {matching_min_words} words of length {min_l_int} (needed >= 5)")
+                    return pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len)
                 bonus_cell = tuple(data["bonus_cell"]) if data["bonus_cell"] else None
                 board_format_ret = data["board_format_ret"]
                 
@@ -474,26 +495,22 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
             # Resolve dictionary and select a random bonus word based on length
             dictionary = params["dictionary"]
             bonus_word_len = params.get("bonus_word_len", 0)
-            bonus_word = None
-            if bonus_word_len > 0:
-                import random
-                from word_validator import word_validator
-                if str(dictionary).upper() == "CSW":
-                    word_validator.ensure_csw_loaded()
-                    if params.get('use_added_words'):
-                        dictionary_set = word_validator.csw_words | word_validator.long_words | word_validator.added_words
-                    else:
-                        dictionary_set = word_validator.csw_words
+            
+            import random
+            from word_validator import word_validator
+            if str(dictionary).upper() == "CSW":
+                word_validator.ensure_csw_loaded()
+                if params.get('use_added_words'):
+                    dictionary_set = word_validator.csw_words | word_validator.long_words | word_validator.added_words
                 else:
-                    if params.get('use_added_words'):
-                        word_validator.ensure_csw_loaded()
-                        dictionary_set = word_validator.nwl_words | word_validator.csw_words | word_validator.long_words | word_validator.added_words
-                    else:
-                        dictionary_set = word_validator.nwl_words
-                potential_dict_words = [w for w in dictionary_set if len(w) == bonus_word_len]
-                if potential_dict_words:
-                    bonus_word = random.choice(potential_dict_words)
-                    
+                    dictionary_set = word_validator.csw_words
+            else:
+                if params.get('use_added_words'):
+                    word_validator.ensure_csw_loaded()
+                    dictionary_set = word_validator.nwl_words | word_validator.csw_words | word_validator.long_words | word_validator.added_words
+                else:
+                    dictionary_set = word_validator.nwl_words
+
             word_count_range = tuple(params["word_count_range"]) if isinstance(params["word_count_range"], list) else params["word_count_range"]
             board_format = params["board_format"]
             min_word_length = params["min_word_length"]
@@ -514,10 +531,14 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
                     break
                     
                 attempts += 1
+                bw_len = bonus_word_len if (bonus_word_len and bonus_word_len > 0) else random.choice([6, 7, 8, 9, 10])
+                potential_dict_words = [w for w in dictionary_set if len(w) == bw_len]
+                bonus_word = random.choice(potential_dict_words) if potential_dict_words else None
+
                 # Generate a single board using backend logic
                 use_aw_val = params.get('use_added_words', False)
                 res = generator_instance._generate_board_internal(
-                    dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, is_emergency=False, timeout=60, use_added_words=use_aw_val
+                    dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, is_emergency=False, timeout=60, use_added_words=use_aw_val, mark_used=False
                 )
                 
                 board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word = res
@@ -620,6 +641,55 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
                 
     t = threading.Thread(target=_worker, daemon=True)
     t.start()
+
+def seed_pregenerated_cache_bg():
+    """Background startup bootstrapper to pre-populate pregenerated_boards cache"""
+    def _seed():
+        import time
+        time.sleep(2.0)  # Wait for app boot
+        bg = BoardGenerator()
+        common_configs = [
+            ("4x4", "NWL", (100, 200), "Normal", 3, "Medium", False),
+            ("4x4", "CSW", (100, 200), "Normal", 3, "Medium", False),
+            ("4x4", "NWL", (100, 200), "Normal", 4, "Medium", False),
+            ("4x4", "CSW", (100, 200), "Normal", 4, "Medium", False),
+            ("4x4", "NWL", (50, 100), "Normal", 5, "Medium", False),
+            ("4x4", "CSW", (50, 100), "Normal", 5, "Medium", False),
+            ("4x4", "NWL", (200, 300), "Normal", 3, "Hard", False),
+            ("4x4", "CSW", (200, 300), "Normal", 3, "Easy", False),
+            ("4x4", "NWL", (100, 200), "Checkerboard", 3, "Medium", False),
+            ("4x4", "CSW", (100, 200), "Checkerboard", 3, "Medium", False),
+            ("4x4", "NWL", (200, 300), "Checkerboard", 3, "Medium", False),
+            ("4x4", "CSW", (200, 300), "Checkerboard", 3, "Medium", False),
+            ("4x4", "NWL", (100, 200), "Either/Or", 3, "Medium", False),
+            ("4x4", "CSW", (100, 200), "Either/Or", 3, "Medium", False),
+            ("4x4", "NWL", (100, 200), "Valued Letters", 3, "Medium", False),
+            ("4x4", "CSW", (100, 200), "Valued Letters", 3, "Medium", False),
+            ("4x4", "NWL", (100, 200), "Bounce", 3, "Medium", False),
+            ("4x4", "CSW", (100, 200), "Mania", 3, "Medium", False),
+            ("4x4", "NWL", (100, 200), "Density", 3, "Medium", False),
+            ("4x4", "CSW", (100, 200), "Bonus Letter", 3, "Medium", False),
+            ("4x4", "NWL", (100, 200), "Rotation", 3, "Medium", False),
+            ("4x4", "CSW", (100, 200), "Penalty", 3, "Medium", False),
+            ("4x4", "NWL + AW", (300, 400), "Normal", 3, "Medium", True),
+            ("4x4", "CSW + AW", (300, 400), "Normal", 3, "Medium", True),
+            ("4x4", "NWL + AW", (400, 500), "Checkerboard", 3, "Medium", True),
+            ("4x4", "CSW + AW", (400, 500), "Valued Letters", 3, "Medium", True),
+            ("4x6", "NWL", (200, 300), "Normal", 4, "Medium", False),
+            ("4x6", "CSW", (200, 300), "Checkerboard", 4, "Medium", False),
+            ("5x7", "NWL", (300, 400), "Normal", 5, "Medium", False),
+            ("5x7", "CSW", (300, 400), "Either/Or", 5, "Medium", False),
+            ("6x8", "NWL", (400, 600), "Normal", 6, "Medium", False),
+        ]
+        for dims, dict_name, wc_range, fmt, min_l, diff, use_aw in common_configs:
+            try:
+                p_key = serialize_param_key(dims, None, wc_range, dict_name, fmt, min_l, diff, use_added_words=use_aw)
+                refill_board_cache_bg(bg, p_key, target_count=2)
+                time.sleep(0.5)
+            except Exception as e:
+                print(f"[SeedBootstrapper] Error seeding {dims}: {e}")
+    import threading
+    threading.Thread(target=_seed, daemon=True).start()
 
 class BoardGenerator:
     # Class-level cache for optimal board generation method per parameter set
@@ -871,7 +941,7 @@ class BoardGenerator:
         cols = len(board[0]) if depth == 1 else len(board[0][0])
         
         # Protected set for bonus word
-        protected = set(protected_positions) if protected_positions else set()
+        protected = set(protected_positions) if (protected_positions and isinstance(protected_positions, (list, tuple, set))) else set()
         
         sanitized_count = 0
         for f in range(depth):
@@ -936,7 +1006,7 @@ class BoardGenerator:
         rows = len(board) if depth == 1 else len(board[0])
         cols = len(board[0]) if depth == 1 else len(board[0][0])
         grid_size = rows * cols
-        protected = set(protected_positions) if protected_positions else set()
+        protected = set(protected_positions) if (protected_positions and isinstance(protected_positions, (list, tuple, set))) else set()
 
         total_cells = grid_size * depth
         
@@ -1075,7 +1145,7 @@ class BoardGenerator:
         cols = len(board[0][0]) if is_3d else len(board[0])
         
         protected = set()
-        if protected_positions:
+        if protected_positions and isinstance(protected_positions, (list, tuple, set)):
             for cell in protected_positions:
                 if isinstance(cell, (list, tuple)):
                     protected.add(tuple(cell))
@@ -1170,7 +1240,7 @@ class BoardGenerator:
         C = len(board[0][0]) if is_3d else len(board[0])
         
         protected = set()
-        if protected_positions:
+        if protected_positions and isinstance(protected_positions, (list, tuple, set)):
             for cell in protected_positions:
                 if isinstance(cell, (list, tuple)):
                     protected.add(tuple(cell))
@@ -1455,7 +1525,7 @@ class BoardGenerator:
         C = len(b[0][0]) if is_3d else len(b[0])
 
         protected = set()
-        if protected_positions:
+        if protected_positions and isinstance(protected_positions, (list, tuple, set)):
             for cell in protected_positions:
                 if isinstance(cell, (list, tuple)):
                     protected.add(tuple(cell))
@@ -1686,12 +1756,13 @@ class BoardGenerator:
 
 
     def _generate_board_internal(
-        self, dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length=3, difficulty="Medium", is_emergency=False, timeout=None, use_added_words=None
+        self, dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length=3, difficulty="Medium", is_emergency=False, timeout=None, use_added_words=None, mark_used=True
     ):
         """
         Generate a valid board that meets word count requirements (100-300).
         RESTARTED: Simplified logic with ironclad compliance.
         """
+        bonus_cell = None
         original_dict_name = str(dictionary).upper() if isinstance(dictionary, str) else ""
 
         # --- NORMALIZE compound dictionary names ('NWL + AW', 'CSW + AW') ---
@@ -1770,6 +1841,7 @@ class BoardGenerator:
             else:
                 min_words, max_words = 500, 99999
                 print(f"[BoardGen] AW Dictionary: Force defaulted target range to 500+ words (grid size > 24).")
+        target_min_words, target_max_words = min_words, max_words
         print(f"[BoardGen] generate_board called for {dimensions} | Range: {word_count_range} ({min_words}-{max_words}) | MinLen: {min_word_length}L")
         
         # 1. Dimension Parsing
@@ -1806,22 +1878,8 @@ class BoardGenerator:
         while time.time() - start_time < timeout:
             attempts += 1
             
-            if (is_emergency and attempts > 15) or (attempts > 35):
-                min_words, max_words = 0, 99999
-            elif original_dict_name in ["AW", "ADDED_WORDS", "ALL"] or use_added_words_ctx.get() is True:
-                if attempts > 6:
-                    if rows * cols <= 24:
-                        if min_words < 300:
-                            print(f"[BoardGen] AW Dictionary density high on small grid. Bumping target range to 300-400 words.")
-                            min_words, max_words = 300, 400
-                    else:
-                        if min_words < 500:
-                            print(f"[BoardGen] AW Dictionary density high. Bumping target range to 500+ words.")
-                            min_words, max_words = 500, 99999
-                elif attempts > 3:
-                    if min_words < 300:
-                        print(f"[BoardGen] AW Dictionary density high. Bumping target range to 300-400 words.")
-                        min_words, max_words = 300, 400
+            # Strict range compliance: Never relax target bounds below requested floor or above ceiling
+            min_words, max_words = target_min_words, target_max_words
             
             print(f"[BoardGen] COMPLIANCE ATTEMPT {attempts} (Target: {min_words}-{max_words}, MinLen: {min_word_length})")
 
@@ -2316,7 +2374,7 @@ class BoardGenerator:
                         )
                         
                     board_hash = get_board_hash(board)
-                    if not mark_board_hash_used(board_hash):
+                    if mark_used and not mark_board_hash_used(board_hash):
                         print(f"[BoardGen] Race condition: Equality Freq fallback board hash {board_hash} was already used. Retrying...")
                         continue
                     return (
@@ -2398,8 +2456,12 @@ class BoardGenerator:
                 all_words_dict = self._solve_board(
                     board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=30.0
                 )
+                final_count = len(all_words_dict)
+                if not (min_words <= final_count <= max_words):
+                    print(f"[BoardGen] ATTEMPT {attempts}: Final solve count {final_count} does not match target range {min_words}-{max_words}. Discarding board...")
+                    continue
 
-                print(f"[BoardGen] ✓ IRONCLAD COMPLIANT BOARD FOUND ({count} words @ {min_word_length}L+) on attempt {attempts}")
+                print(f"[BoardGen] ✓ IRONCLAD COMPLIANT BOARD FOUND ({final_count} words @ {min_word_length}L+) on attempt {attempts}")
                 
                 # RECALCULATE RATIO
                 ratio = self.get_uniqueness_ratio(board, list(all_words_dict.keys()), rows, cols, dictionary, depth)
@@ -2446,7 +2508,7 @@ class BoardGenerator:
                         board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=10.0, bonus_cell=bonus_cell
                     )
 
-                if not mark_board_hash_used(board_hash):
+                if mark_used and not mark_board_hash_used(board_hash):
                     print(f"[BoardGen] Race condition: board hash {board_hash} was already used. Retrying...")
                     continue
                 return (
@@ -2934,11 +2996,33 @@ class BoardGenerator:
                             print(f"[BoardGen] [Emergency] ATTEMPT {_attempt}: Uniqueness ratio {ratio:.2f} is outside range {adj_min:.2f}-{adj_max:.2f} (base: {min_ratio:.2f}-{max_ratio:.2f}) for target {difficulty}. Retrying...")
                             continue
                 if _attempt >= 50:
-                    print(f"[BoardGen] ⚠️ EMERGENCY LOOP TIMEOUT: Failed to hit target after 50 attempts. Returning best effort with {count} words.")
+                    if count < min_words:
+                        print(f"[BoardGen] ⚠️ EMERGENCY LOOP TIMEOUT: Count {count} < target min {min_words}. Running fast density rescue sweep...")
+                        try:
+                            rescue_board = self._create_normal_board(
+                                rows, cols, LETTER_FREQ_SUPER_DENSITY, depth=depth,
+                                difficulty='Easy', dictionary=dictionary, word_count_range=word_count_range, use_added_words=use_aw_flag
+                            )
+                            rescue_solve = self._solve_board(
+                                rescue_board, dictionary, (0, 99999), display_min, store_paths=True, timeout=10.0
+                            )
+                            if len(rescue_solve) >= min_words or len(rescue_solve) > count:
+                                print(f"[BoardGen] ✅ RESCUE SUCCESSFUL: Hit {len(rescue_solve)} words.")
+                                board = rescue_board
+                                final_solve = rescue_solve
+                                count = len(final_solve)
+                        except Exception as r_err:
+                            print(f"[BoardGen] Rescue sweep error: {r_err}")
+                    else:
+                        print(f"[BoardGen] ⚠️ EMERGENCY LOOP TIMEOUT: Failed to hit target after 50 attempts. Returning best effort with {count} words.")
                 else:
                     print(f"[BoardGen] ✓ EMERGENCY COMPLIANCE SUCCESS: {count} words after {_attempt} emergency tries.")
                 # Fallback metadata
                 ratio = self.get_uniqueness_ratio(board, list(final_solve.keys()), rows, cols, dictionary, depth)
+                min_req_ratio, _ = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth, min_word_length=display_min)
+                if difficulty == "Hard" and ratio < min_req_ratio:
+                    print(f"[BoardGen] Boosting uniqueness for Hard board: current ratio {ratio:.2%}, min required {min_req_ratio:.2%}")
+                    board, final_solve, ratio = self._boost_uniqueness(board, depth, dictionary, display_min, min_req_ratio, rows, cols)
                 
                 # USER REQUEST: Ensure every board in every format has a Bonus Word
                 suitable = [w for w in final_solve if 6 <= len(w) <= 10]
@@ -3396,6 +3480,62 @@ class BoardGenerator:
                     
         return board, all_words_dict, ratio
 
+    def _boost_uniqueness(self, board, depth, dictionary, min_word_length, min_ratio, rows, cols):
+        """Actively boost the board's uniqueness ratio above min_ratio by replacing common letters with rare ones."""
+        all_words_dict = self._solve_board(
+            board, dictionary, (0, 99999), min_word_length, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=5.0
+        )
+        ratio = self.get_uniqueness_ratio(board, list(all_words_dict.keys()), rows, cols, dictionary, depth)
+        if ratio >= min_ratio:
+            return board, all_words_dict, ratio
+
+        rare_boosters = ['J', 'Z', 'X', 'Q', 'K', 'V', 'W', 'Y', 'B', 'F']
+        for iteration in range(5):
+            if ratio >= min_ratio:
+                break
+            best_cell = None
+            best_char = None
+            best_ratio = ratio
+            best_dict = all_words_dict
+
+            for r in range(rows):
+                for c in range(cols):
+                    for f in range(depth):
+                        orig = board[f][r][c] if depth > 1 else board[r][c]
+                        if orig in ['E', 'T', 'A', 'O', 'I', 'N', 'S', 'R']:
+                            for b_char in rare_boosters:
+                                if depth > 1: board[f][r][c] = b_char
+                                else: board[r][c] = b_char
+
+                                temp_dict = self._solve_board(
+                                    board, dictionary, (0, 99999), min_word_length, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=2.0
+                                )
+                                temp_ratio = self.get_uniqueness_ratio(board, list(temp_dict.keys()), rows, cols, dictionary, depth)
+                                if temp_ratio > best_ratio:
+                                    best_ratio = temp_ratio
+                                    best_cell = (f, r, c) if depth > 1 else (r, c)
+                                    best_char = b_char
+                                    best_dict = temp_dict
+                                if depth > 1: board[f][r][c] = orig
+                                else: board[r][c] = orig
+                                if temp_ratio >= min_ratio:
+                                    break
+                            if best_ratio >= min_ratio:
+                                break
+                    if best_ratio >= min_ratio:
+                        break
+
+            if best_cell and best_char:
+                if depth > 1: board[best_cell[0]][best_cell[1]][best_cell[2]] = best_char
+                else: board[best_cell[0]][best_cell[1]] = best_char
+                ratio = best_ratio
+                all_words_dict = best_dict
+                print(f"[BoardGen] Boosted uniqueness at cell {best_cell}: new ratio {ratio:.2%}")
+            else:
+                break
+
+        return board, all_words_dict, ratio
+
     def _create_normal_board(self, rows, cols, weights, depth=1, difficulty="Easy", dictionary=None, word_count_range=None, is_checkerboard=False, use_added_words=False):
         """Create board using Overwriting Word Soup method for 2D, or random letters for 3D"""
         if depth > 1:
@@ -3411,28 +3551,31 @@ class BoardGenerator:
         if dictionary:
             if isinstance(dictionary, str):
                 dict_name = dictionary.upper()
+                clean_dict_name = dict_name.replace("+ AW", "").replace("+AW", "").replace("ADDED", "").strip()
+                if clean_dict_name not in ["NWL", "CSW"]:
+                    clean_dict_name = "NWL"
                 import os
                 
                 if difficulty in ["Medium", "Hard"]:
                     # Load unique set for Medium/Hard (e.g. uniqueNWL.txt)
-                    loaded_dict = self._get_difficulty_set(dict_name)
+                    loaded_dict = self._get_difficulty_set(clean_dict_name)
                     if loaded_dict:
                         dictionary = list(loaded_dict)
-                        print(f"[BoardGen] Using UNIQUE dictionary (unique{dict_name}.txt) for {difficulty} Word Soup.")
+                        print(f"[BoardGen] Using UNIQUE dictionary (unique{clean_dict_name}.txt) for {difficulty} Word Soup.")
                     else:
-                        print(f"[BoardGen] ⚠️ Failed to load unique set for {dict_name}. Using fallback words.")
+                        print(f"[BoardGen] ⚠️ Failed to load unique set for {clean_dict_name}. Using fallback words.")
                         dictionary = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
                 else:
                     # Load full dictionary for Easy (e.g. NWL.txt)
                     base_dir = os.path.dirname(os.path.abspath(__file__))
-                    dict_file = 'added_words' if dict_name == 'AW' else dict_name
+                    dict_file = 'added_words' if clean_dict_name == 'AW' else clean_dict_name
                     path = os.path.join(base_dir, 'dictionaries', f"{dict_file}.txt")
                     try:
                         with open(path, "r") as f:
                             dictionary = [line.strip().upper() for line in f if line.strip()]
-                        print(f"[BoardGen] Using FULL dictionary ({dict_name}.txt) for Easy Word Soup.")
+                        print(f"[BoardGen] Using FULL dictionary ({clean_dict_name}.txt) for Easy Word Soup.")
                     except Exception as e:
-                        print(f"[BoardGen] Error loading full dictionary {dict_name}: {e}. Using fallback words.")
+                        print(f"[BoardGen] Error loading full dictionary {clean_dict_name}: {e}. Using fallback words.")
                         dictionary = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
                 
                 # Append custom added words if enabled
@@ -3518,9 +3661,9 @@ class BoardGenerator:
             if word_validator.added_words:
                 suitable_aw = [w.upper() for w in word_validator.added_words if min_len <= len(w) <= max_len and not w.upper().endswith("ING") and not w.upper().endswith("INGS")]
                 if suitable_aw:
-                    num_to_force = min(3, len(suitable_aw))
+                    num_to_force = min(10, len(suitable_aw))
                     forced_aw = random.sample(suitable_aw, num_to_force)
-                    print(f"[BoardGen] Force-embedding custom added words: {forced_aw}")
+                    print(f"[BoardGen] Force-embedding {len(forced_aw)} custom added words into grid: {forced_aw[:5]}...")
         
         # Remove forced words from the pool to avoid duplicates, then sample the rest
         remaining_pool = [w for w in valid_words if w not in forced_aw]
@@ -5596,7 +5739,7 @@ class BoardGenerator:
             for f in range(depth_val):
                 for r in range(rows):
                     for c in range(cols):
-                        if "/" in str(board[f][r][c]) or (f, r, c) in bonus_cells_set: continue
+                        if "/" in str(board[f][r][c]): continue
                         expected_vowel = (f + r + c) % 2 != 0
                         current_val = board[f][r][c]
                         is_actual_vowel = self._is_vowel(current_val)
@@ -5610,7 +5753,7 @@ class BoardGenerator:
             rows, cols = len(board), len(board[0])
             for r in range(rows):
                 for c in range(cols):
-                    if "/" in str(board[r][c]) or (r, c) in bonus_cells_set: continue
+                    if "/" in str(board[r][c]): continue
                     expected_vowel = (r + c) % 2 != 0
                     current_val = board[r][c]
                     is_actual_vowel = self._is_vowel(current_val)
