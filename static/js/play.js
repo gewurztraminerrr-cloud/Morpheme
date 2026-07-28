@@ -6768,6 +6768,12 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
         const serverIsPenalty = data.message && data.message.toUpperCase().includes('PENALTY');
         const serverIsActuallyValid = data.success && !serverIsPenalty;
         const serverIsAlreadyFound = data.message && data.message.toUpperCase().includes('ALREADY FOUND');
+        let serverColor = 'red';
+        if (serverIsAlreadyFound) {
+            serverColor = 'purple';
+        } else if (serverIsActuallyValid) {
+            serverColor = isBonus ? 'green' : 'blue';
+        }
 
         if (!finalPath && data.path) {
             finalPath = data.path;
@@ -6782,9 +6788,18 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
             msg = data.message || `${word.toUpperCase()} INVALID`;
         }
 
-        // Only play sound on server response if local check did NOT already play it
-        const shouldPlayServerSound = (optimisticColor === null);
-        showValidationFeedback(msg, data.success, isBonus, finalPath, shouldPlayServerSound);
+        if (optimisticColor !== null && optimisticColor === serverColor) {
+            // Local optimistic check ALREADY flashed tiles/input and played sound!
+            // Smoothly update the status text without triggering a duplicate 2nd flash.
+            const statusEl = document.getElementById('word-validation-status');
+            if (statusEl) {
+                statusEl.textContent = msg;
+            }
+        } else {
+            // Local check didn't run or server result differs from local check — trigger feedback flash
+            const shouldPlayServerSound = (optimisticColor === null);
+            showValidationFeedback(msg, data.success, isBonus, finalPath, shouldPlayServerSound);
+        }
 
 
 
