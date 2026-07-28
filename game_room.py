@@ -1831,6 +1831,7 @@ class GameRoom:
                     )
                     scored_dict[w] = details
                 self.solved_words_with_scores = scored_dict
+                self.update_counts_by_len()
 
                 # Set timestamps and transition state
                 self.state = 'active'
@@ -2479,10 +2480,8 @@ class GameRoom:
             
     def update_counts_by_len(self):
         """Authoritative refresher for word distribution metadata. 
-        Always calculates lengths >= current_min_length so the sum of length breakdown counts
-        matches total_words_count 100% identically."""
-        min_len = getattr(self, 'current_min_length', 3)
-        valid_words = [w for w in (self.all_words or []) if len(w) >= min_len]
+        Calculates counts by length for all words present on the board."""
+        valid_words = list(self.all_words or [])
         self.total_counts_by_len = {
             '_round': self.current_round,
             **{str(l): sum(1 for w in valid_words if len(w) == l) for l in range(1, 31)}
@@ -3219,6 +3218,7 @@ class RoomManager:
                                 room.current_board_format = 'Valued Letters' if is_24h else (board_format or 'Normal')
                                 room.current_uniqueness = uniqueness or 0.0
                                 room.current_word_count_range = word_count_range or ('200-300' if is_24h else '100-200')
+                                room.update_counts_by_len()
                                 
                                 # Deserialize and restore active players
                                 if active_players_json:
@@ -3555,8 +3555,7 @@ class RoomManager:
                 kick_scores[w] = {'total': s, 'base': s}
         room.solved_words_with_scores = kick_scores
         # Sync counts and word_count_range label to the actual filtered set
-        room.total_words_count = len(room.all_words)
-        room.initial_total_words = room.total_words_count
+        room.update_counts_by_len()
         _akc = room.total_words_count
         if _akc < 100: room.current_word_count_range = '50-100'
         elif _akc < 200: room.current_word_count_range = '100-200'
@@ -6375,16 +6374,10 @@ class RoomManager:
                     elif wc_cnt < 500: real_wc = '400-500'
                     else: real_wc = '500+'
                     
-                    is_revealed_promise = (
-                        getattr(room, 'was_revealed_this_intermission', False) or
-                        getattr(room, 'spinner_params_revealed', False) or
-                        getattr(room, '_spinner_params_locked', False)
-                    )
-                    if not is_revealed_promise:
-                        room.current_word_count_range = real_wc
-                        if isinstance(room.spinner_params, dict):
-                            room.spinner_params['word_count_range'] = real_wc
-                            room.spinner_params['_exact_wc_calculated'] = True
+                    room.current_word_count_range = real_wc
+                    if isinstance(room.spinner_params, dict):
+                        room.spinner_params['word_count_range'] = real_wc
+                        room.spinner_params['_exact_wc_calculated'] = True
                     room.update_counts_by_len()
                 except Exception as e:
                     print(f"[ACCURACY-ERROR] Failed word count calculation: {e}")

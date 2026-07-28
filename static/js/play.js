@@ -6705,8 +6705,8 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                     showValidationFeedback(msg, true, isBonus, finalPath);
                     optimisticColor = isBonus ? 'green' : 'blue';
                     optimisticIsDefinitive = true;
-                } else {
-                    // Not in word list — instant INVALID feedback! (Zero hesitation!)
+                } else if (allWords && allWords.length > 0) {
+                    // Not in word list — instant INVALID feedback!
                     showValidationFeedback(`${word.toUpperCase()} INVALID`, false, false, finalPath);
                     optimisticColor = 'red';
                     optimisticIsDefinitive = true;
