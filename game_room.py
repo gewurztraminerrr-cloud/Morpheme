@@ -1580,7 +1580,7 @@ class GameRoom:
             e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio, e_bonus_word, e_tr = e_results
             e_params = {}
             
-        if e_params:
+        if e_params and not getattr(self, '_spinner_params_locked', False):
             if not self.spinner_params:
                 self.spinner_params = {}
             self.spinner_params['dictionary'] = e_params.get('dictionary', 'NWL')
@@ -1596,7 +1596,7 @@ class GameRoom:
             self.current_min_length = e_params.get('min_word_length', 3)
             self.use_added_words = e_params.get('use_added_words', False)
             
-        if e_tr:
+        if e_tr and not getattr(self, '_spinner_params_locked', False):
             if not self.spinner_params:
                 self.spinner_params = {}
             self.spinner_params['word_count_range'] = e_tr
@@ -1767,16 +1767,17 @@ class GameRoom:
                 new_sp['_exact_wc_calculated'] = True
                 new_sp = SpinnerSet.sanitize_params(new_sp, self.board_dimensions, self.time_limit >= 7200)
 
-                self.spinner_params = new_sp
-                self.next_spinner_params = new_sp
-                self.next_round_spinner_params = new_sp
-                self.spinner_params_generated = True
-                self.spinner_params_revealed = True
-                self.was_revealed_this_intermission = True
-                self._spinner_params_locked = True  # LOCK: no further spinner_params overwrites until round resets
-                import copy
-                self.frozen_revealed_params = copy.deepcopy(new_sp)
-                self._reveal_sync_complete = True
+                if not getattr(self, '_spinner_params_locked', False):
+                    self.spinner_params = new_sp
+                    self.next_spinner_params = new_sp
+                    self.next_round_spinner_params = new_sp
+                    self.spinner_params_generated = True
+                    self.spinner_params_revealed = True
+                    self.was_revealed_this_intermission = True
+                    self._spinner_params_locked = True  # LOCK: no further spinner_params overwrites until round resets
+                    import copy
+                    self.frozen_revealed_params = copy.deepcopy(new_sp)
+                    self._reveal_sync_complete = True
                 
                 # Set up active round variables
                 self.current_board_format = new_sp['board_format']
