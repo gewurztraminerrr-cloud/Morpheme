@@ -6705,7 +6705,7 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                     showValidationFeedback(msg, true, isBonus, finalPath);
                     optimisticColor = isBonus ? 'green' : 'blue';
                     optimisticIsDefinitive = true;
-                } else if (allWords && allWords.length > 0) {
+                } else if (wordList && wordList.length > 0) {
                     // Not in word list — instant INVALID feedback!
                     showValidationFeedback(`${word.toUpperCase()} INVALID`, false, false, finalPath);
                     optimisticColor = 'red';
@@ -6768,38 +6768,22 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
         const serverIsPenalty = data.message && data.message.toUpperCase().includes('PENALTY');
         const serverIsActuallyValid = data.success && !serverIsPenalty;
         const serverIsAlreadyFound = data.message && data.message.toUpperCase().includes('ALREADY FOUND');
-        let serverColor = 'red';
-        if (serverIsAlreadyFound) {
-            serverColor = 'purple';
-        } else if (serverIsActuallyValid) {
-            serverColor = isBonus ? 'green' : 'blue';
-        }
 
         if (!finalPath && data.path) {
             finalPath = data.path;
         }
 
-        if (optimisticColor !== null && optimisticColor === serverColor) {
-            // Server confirmed our local check — update text status smoothly
-            const statusEl = document.getElementById('word-validation-status');
-            if (statusEl && data.success) {
-                const msg = isBonusWord 
-                    ? `BONUS WORD! (${data.points} PTS)`
-                    : (hasBonusLetter ? `${(data.word || word).toUpperCase()} VALID (+3 BONUS LTR! ${data.points} PTS)` : `${(data.word || word).toUpperCase()} VALID (${data.points} PTS)`);
-                statusEl.textContent = msg;
-            }
+        let msg;
+        if (data.success) {
+            msg = isBonusWord 
+                ? `BONUS WORD! (${data.points} PTS)`
+                : (hasBonusLetter ? `${(data.word || word).toUpperCase()} VALID (+3 BONUS LTR! ${data.points} PTS)` : `${(data.word || word).toUpperCase()} VALID (${data.points} PTS)`);
         } else {
-            // Server result differs from local check — show correction flash
-            let msg;
-            if (data.success) {
-                msg = isBonusWord 
-                    ? `BONUS WORD! (${data.points} PTS)`
-                    : (hasBonusLetter ? `${(data.word || word).toUpperCase()} VALID (+3 BONUS LTR! ${data.points} PTS)` : `${(data.word || word).toUpperCase()} VALID (${data.points} PTS)`);
-            } else {
-                msg = data.message || `${word.toUpperCase()} INVALID`;
-            }
-            showValidationFeedback(msg, data.success, isBonus, finalPath);
+            msg = data.message || `${word.toUpperCase()} INVALID`;
         }
+
+        // Always trigger definitive validation feedback (tile flash, status text, and input flash)
+        showValidationFeedback(msg, data.success, isBonus, finalPath);
 
 
 
@@ -7148,7 +7132,16 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
 
     // Flash highlighted tiles that traced the word (instead of full-screen flash)
     const shouldFlash = window.userSettings ? (window.userSettings.word_flash !== false) : true;
-    if (shouldFlash && path && path.length > 0) {
+    let targetPath = path;
+    if ((!targetPath || targetPath.length === 0) && message) {
+        const wordMatch = message.match(/^([A-Z]+)\s+/i);
+        if (wordMatch && window.lastGameState && window.lastGameState.all_words_paths) {
+            const wUpper = wordMatch[1].toUpperCase();
+            targetPath = window.lastGameState.all_words_paths[wUpper];
+        }
+    }
+
+    if (shouldFlash && targetPath && targetPath.length > 0) {
         let tileFlashClass = 'tile-flash-red';
         if (isAlreadyFound) {
             tileFlashClass = 'tile-flash-purple';
@@ -7156,7 +7149,7 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
             tileFlashClass = isBonus ? 'tile-flash-green' : 'tile-flash-blue';
         }
         
-        path.forEach(coord => {
+        targetPath.forEach(coord => {
             let r, c, f;
             if (Array.isArray(coord)) {
                 if (coord.length === 3) {
@@ -7185,8 +7178,8 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
                     void cell.offsetWidth; 
                     cell.classList.add(tileFlashClass);
                     applyDensityToCell(cell);
-                    // Rapid, snappy flash effect: 120ms — instant, clean feedback upon release/submit
-                    const flashMs = 120;
+                    // Rapid, snappy flash effect: 200ms
+                    const flashMs = 200;
                     setTimeout(() => {
                         cell.classList.remove(tileFlashClass);
                         applyDensityToCell(cell);
@@ -7199,14 +7192,19 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
     // Flash word input background
     const input = document.getElementById('word-input');
     if (input) {
-        let bgColor = 'rgba(255, 0, 0, 0.1)'; // default invalid red
+        let bgColor = 'rgba(239, 68, 68, 0.35)'; // default invalid red
         if (isAlreadyFound) {
-            bgColor = 'rgba(168, 85, 247, 0.15)'; // purple
+            bgColor = 'rgba(168, 85, 247, 0.35)'; // purple
         } else if (isActuallyValid) {
-            bgColor = 'rgba(0, 255, 0, 0.1)';
+            bgColor = isBonus ? 'rgba(34, 197, 94, 0.35)' : 'rgba(59, 130, 246, 0.35)'; // green or blue
         }
         input.style.backgroundColor = bgColor;
-        setTimeout(() => { if (input) input.style.backgroundColor = ''; }, 300);
+        input.style.transition = 'background-color 0.1s ease-in-out';
+        setTimeout(() => {
+            if (input) {
+                input.style.backgroundColor = '';
+            }
+        }, 400);
     }
 
     // Reset after 3 seconds
