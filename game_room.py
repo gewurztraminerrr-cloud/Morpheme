@@ -2641,8 +2641,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             cache_candidates.append((min_l, r_item, fmt, base_dict, use_added_words))
             cache_candidates.append((min_l, r_item, 'Normal', base_dict, use_added_words))
             cache_candidates.append((floor_l, r_item, 'Normal', base_dict, use_added_words))
-            cache_candidates.append((floor_l, r_item, 'Normal', 'NWL', False))
-            cache_candidates.append((floor_l, r_item, 'Normal', 'CSW', False))
+            cache_candidates.append((floor_l, r_item, 'Normal', base_dict, False))
         
         diff_order = [difficulty] + [d for d in ['Hard', 'Medium', 'Easy'] if d != difficulty] if difficulty else ['Medium', 'Easy', 'Hard']
         for (cml, ctr, cfmt, cdict, caw) in cache_candidates:
