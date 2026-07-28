@@ -4811,6 +4811,23 @@ class RoomManager:
                             c_b, c_w, c_c, c_f, c_p, c_r, c_bw, c_params = candidate
                             fw_filt = [w for w in c_w if len(w) >= m_len]
                             fp_filt = {w: p for w, p in c_p.items() if w in fw_filt}
+                            actual_wc = len(fw_filt)
+                            
+                            # Resolve exact range matching actual board word count
+                            is_aw = use_aw_val or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
+                            if is_aw:
+                                if actual_wc < 400: actual_wc_range = '300-400'
+                                elif actual_wc < 500: actual_wc_range = '400-500'
+                                else: actual_wc_range = '500+'
+                            else:
+                                if actual_wc < 100: actual_wc_range = '50-100'
+                                elif actual_wc < 200: actual_wc_range = '100-200'
+                                elif actual_wc < 300: actual_wc_range = '200-300'
+                                elif actual_wc < 400: actual_wc_range = '300-400'
+                                elif actual_wc < 500: actual_wc_range = '400-500'
+                                else: actual_wc_range = '500+'
+                            
+                            new_params['word_count_range'] = actual_wc_range
                             cached_board_data = (c_b, fw_filt, c_c, c_f, fp_filt, c_r, c_bw, new_params)
 
                     # 3. Stage board data and attach uniqueness ratio to new_params immediately
