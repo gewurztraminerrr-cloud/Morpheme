@@ -1374,12 +1374,18 @@ class GameRoom:
                     
                     # Resolve count range from actual word count of popped board
                     wc_cnt = len(p_words_filtered)
-                    if wc_cnt < 100: wc_lbl = '50-100'
-                    elif wc_cnt < 200: wc_lbl = '100-200'
-                    elif wc_cnt < 300: wc_lbl = '200-300'
-                    elif wc_cnt < 400: wc_lbl = '300-400'
-                    elif wc_cnt < 500: wc_lbl = '400-500'
-                    else: wc_lbl = '500+'
+                    is_aw = use_aw or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
+                    if is_aw:
+                        if wc_cnt < 400: wc_lbl = '300-400'
+                        elif wc_cnt < 500: wc_lbl = '400-500'
+                        else: wc_lbl = '500+'
+                    else:
+                        if wc_cnt < 100: wc_lbl = '50-100'
+                        elif wc_cnt < 200: wc_lbl = '100-200'
+                        elif wc_cnt < 300: wc_lbl = '200-300'
+                        elif wc_cnt < 400: wc_lbl = '300-400'
+                        elif wc_cnt < 500: wc_lbl = '400-500'
+                        else: wc_lbl = '500+'
                     
                     # Update spinner_params immediately during intermission!
                     aligned_sp = dict(self.spinner_params) if isinstance(self.spinner_params, dict) else {}
@@ -1756,12 +1762,18 @@ class GameRoom:
                 self.initial_total_words = self.total_words_count
 
                 wc_cnt = self.total_words_count
-                if wc_cnt < 100: wc_lbl = '50-100'
-                elif wc_cnt < 200: wc_lbl = '100-200'
-                elif wc_cnt < 300: wc_lbl = '200-300'
-                elif wc_cnt < 400: wc_lbl = '300-400'
-                elif wc_cnt < 500: wc_lbl = '400-500'
-                else: wc_lbl = '500+'
+                is_aw = use_aw_val or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
+                if is_aw:
+                    if wc_cnt < 400: wc_lbl = '300-400'
+                    elif wc_cnt < 500: wc_lbl = '400-500'
+                    else: wc_lbl = '500+'
+                else:
+                    if wc_cnt < 100: wc_lbl = '50-100'
+                    elif wc_cnt < 200: wc_lbl = '100-200'
+                    elif wc_cnt < 300: wc_lbl = '200-300'
+                    elif wc_cnt < 400: wc_lbl = '300-400'
+                    elif wc_cnt < 500: wc_lbl = '400-500'
+                    else: wc_lbl = '500+'
 
                 new_sp['word_count_range'] = wc_lbl
                 new_sp['_exact_wc_calculated'] = True
@@ -5019,12 +5031,18 @@ class RoomManager:
                         dict_val = f"{dict_val} + AW"
                         
                     actual_wc = len(cwords)
-                    if actual_wc < 100: wc_label = '50-100'
-                    elif actual_wc < 200: wc_label = '100-200'
-                    elif actual_wc < 300: wc_label = '200-300'
-                    elif actual_wc < 400: wc_label = '300-400'
-                    elif actual_wc < 500: wc_label = '400-500'
-                    else: wc_label = '500+'
+                    is_aw = use_aw_val or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
+                    if is_aw:
+                        if actual_wc < 400: wc_label = '300-400'
+                        elif actual_wc < 500: wc_label = '400-500'
+                        else: wc_label = '500+'
+                    else:
+                        if actual_wc < 100: wc_label = '50-100'
+                        elif actual_wc < 200: wc_label = '100-200'
+                        elif actual_wc < 300: wc_label = '200-300'
+                        elif actual_wc < 400: wc_label = '300-400'
+                        elif actual_wc < 500: wc_label = '400-500'
+                        else: wc_label = '500+'
 
                     if not getattr(room, '_spinner_params_locked', False):
                         room.spinner_params['dictionary'] = dict_val
@@ -6356,12 +6374,18 @@ class RoomManager:
                     room.initial_total_words = room.total_words_count
                     
                     wc_cnt = room.total_words_count
-                    if wc_cnt < 100: real_wc = '50-100'
-                    elif wc_cnt < 200: real_wc = '100-200'
-                    elif wc_cnt < 300: real_wc = '200-300'
-                    elif wc_cnt < 400: real_wc = '300-400'
-                    elif wc_cnt < 500: real_wc = '400-500'
-                    else: real_wc = '500+'
+                    is_aw = getattr(room, 'use_added_words', False) or '+ AW' in str(getattr(room, 'current_dictionary', '')).upper() or '+AW' in str(getattr(room, 'current_dictionary', '')).upper()
+                    if is_aw:
+                        if wc_cnt < 400: real_wc = '300-400'
+                        elif wc_cnt < 500: real_wc = '400-500'
+                        else: real_wc = '500+'
+                    else:
+                        if wc_cnt < 100: real_wc = '50-100'
+                        elif wc_cnt < 200: real_wc = '100-200'
+                        elif wc_cnt < 300: real_wc = '200-300'
+                        elif wc_cnt < 400: real_wc = '300-400'
+                        elif wc_cnt < 500: real_wc = '400-500'
+                        else: real_wc = '500+'
                     
                     room.current_word_count_range = real_wc
                     if isinstance(room.spinner_params, dict):

@@ -127,11 +127,12 @@ class SpinnerSet:
             if min_word_length > 8: min_word_length = 8
 
         wc_range = res.get('word_count_range')
-        if not wc_range or wc_range not in ['50-100', '100-200', '200-300', '300-400', '400-500', '500+']:
-            if is_aw_effective:
+        if is_aw_effective:
+            if wc_range not in ['300-400', '400-500', '500+']:
                 import random
                 wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
-            else:
+        else:
+            if not wc_range or wc_range not in ['50-100', '100-200', '200-300', '300-400', '500+']:
                 import random
                 wc_range = random.choices(['50-100', '100-200', '200-300', '300-400', '500+'], weights=[9, 30, 30, 30, 1])[0]
 
