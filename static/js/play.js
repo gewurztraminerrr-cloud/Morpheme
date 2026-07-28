@@ -6702,12 +6702,12 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                         ? `BONUS WORD! (${localPts} PTS)`
                         : (usesBonusLetterTile ? `${word.toUpperCase()} VALID (+3 BONUS LTR! ${localPts} PTS)` : `${word.toUpperCase()} VALID (${localPts} PTS)`);
                     
-                    showValidationFeedback(msg, true, isBonus, finalPath);
+                    showValidationFeedback(msg, true, isBonus, finalPath, true);
                     optimisticColor = isBonus ? 'green' : 'blue';
                     optimisticIsDefinitive = true;
                 } else if (wordList && wordList.length > 0) {
                     // Not in word list — instant INVALID feedback!
-                    showValidationFeedback(`${word.toUpperCase()} INVALID`, false, false, finalPath);
+                    showValidationFeedback(`${word.toUpperCase()} INVALID`, false, false, finalPath, true);
                     optimisticColor = 'red';
                     optimisticIsDefinitive = true;
                 }
@@ -6782,8 +6782,9 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
             msg = data.message || `${word.toUpperCase()} INVALID`;
         }
 
-        // Always trigger definitive validation feedback (tile flash, status text, and input flash)
-        showValidationFeedback(msg, data.success, isBonus, finalPath);
+        // Only play sound on server response if local check did NOT already play it
+        const shouldPlayServerSound = (optimisticColor === null);
+        showValidationFeedback(msg, data.success, isBonus, finalPath, shouldPlayServerSound);
 
 
 
@@ -7086,7 +7087,7 @@ function showGuessingPopup() {
     }, 3000);
 }
 
-function showValidationFeedback(message, isValid, isBonus = false, path = null) {
+function showValidationFeedback(message, isValid, isBonus = false, path = null, playSound = true) {
     const statusEl = document.getElementById('word-validation-status');
     if (!statusEl) return;
 
@@ -7115,11 +7116,13 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
     const isActuallyValid = isValid && !isPenalty;
     const isAlreadyFound = message && (message === 'Already found!' || message.toUpperCase().includes('ALREADY FOUND'));
 
-    // Play validation sound
-    if (isActuallyValid) {
-        BoardAudio.playSuccessSound();
-    } else {
-        BoardAudio.playFailureSound();
+    // Play validation sound only if requested (prevents double beep when optimistic check already played it)
+    if (playSound) {
+        if (isActuallyValid) {
+            BoardAudio.playSuccessSound();
+        } else {
+            BoardAudio.playFailureSound();
+        }
     }
 
     // Set text and class
@@ -7178,8 +7181,8 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
                     void cell.offsetWidth; 
                     cell.classList.add(tileFlashClass);
                     applyDensityToCell(cell);
-                    // Rapid, snappy flash effect: 200ms
-                    const flashMs = 200;
+                    // Rapid, snappy flash effect: 150ms
+                    const flashMs = 150;
                     setTimeout(() => {
                         cell.classList.remove(tileFlashClass);
                         applyDensityToCell(cell);
@@ -7189,7 +7192,7 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
         });
     }
 
-    // Flash word input background
+    // Flash word input background (150ms fast response)
     const input = document.getElementById('word-input');
     if (input) {
         let bgColor = 'rgba(239, 68, 68, 0.35)'; // default invalid red
@@ -7199,12 +7202,12 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null) 
             bgColor = isBonus ? 'rgba(34, 197, 94, 0.35)' : 'rgba(59, 130, 246, 0.35)'; // green or blue
         }
         input.style.backgroundColor = bgColor;
-        input.style.transition = 'background-color 0.1s ease-in-out';
+        input.style.transition = 'background-color 0.08s ease-in-out';
         setTimeout(() => {
             if (input) {
                 input.style.backgroundColor = '';
             }
-        }, 400);
+        }, 150);
     }
 
     // Reset after 3 seconds
