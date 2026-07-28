@@ -5026,21 +5026,21 @@ class RoomManager:
                     elif actual_wc < 500: wc_label = '400-500'
                     else: wc_label = '500+'
 
-                    room.spinner_params['dictionary'] = dict_val
-                    room.spinner_params['difficulty'] = cparams.get('difficulty') or (room.spinner_params.get('difficulty') if room.spinner_params else 'Medium')
-                    room.spinner_params['word_count_range'] = wc_label
-                    room.spinner_params['board_format'] = cfmt or (room.spinner_params.get('board_format') if room.spinner_params else 'Normal')
-                    room.spinner_params['min_word_length'] = cparams.get('min_word_length') or (room.spinner_params.get('min_word_length') if room.spinner_params else 3)
-                    room.spinner_params['use_added_words'] = use_aw_val
-                    room.spinner_params['bonus_word_length'] = cparams.get('bonus_word_len', len(cbonus_word) if cbonus_word else 6)
-                    
-                    # Enforce sanitization
-                    room.spinner_params = SpinnerSet.sanitize_params(room.spinner_params, room.board_dimensions, room.time_limit >= 7200)
+                    if not getattr(room, '_spinner_params_locked', False):
+                        room.spinner_params['dictionary'] = dict_val
+                        room.spinner_params['difficulty'] = cparams.get('difficulty') or (room.spinner_params.get('difficulty') if room.spinner_params else 'Medium')
+                        room.spinner_params['word_count_range'] = wc_label
+                        room.spinner_params['board_format'] = cfmt or (room.spinner_params.get('board_format') if room.spinner_params else 'Normal')
+                        room.spinner_params['min_word_length'] = cparams.get('min_word_length') or (room.spinner_params.get('min_word_length') if room.spinner_params else 3)
+                        room.spinner_params['use_added_words'] = use_aw_val
+                        room.spinner_params['bonus_word_length'] = cparams.get('bonus_word_len', len(cbonus_word) if cbonus_word else 6)
+                        
+                        # Enforce sanitization
+                        room.spinner_params = SpinnerSet.sanitize_params(room.spinner_params, room.board_dimensions, room.time_limit >= 7200)
 
-                    room.next_spinner_params = dict(room.spinner_params)
-                    room.next_round_spinner_params = dict(room.spinner_params)
-                    room.spinner_params_generated = True
-                    room.spinner_params_revealed = True
+                        room.next_spinner_params = dict(room.spinner_params)
+                        room.next_round_spinner_params = dict(room.spinner_params)
+                        room.spinner_params_generated = True
                     room._reveal_sync_complete = True
                     
                     if is_stuck_loading:
