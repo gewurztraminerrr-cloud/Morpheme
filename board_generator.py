@@ -803,9 +803,9 @@ class BoardGenerator:
             }
         elif rows == 4 and cols == 4 and depth == 1:
             ranges = {
-                "Easy": (0.0, 0.24),
-                "Medium": (0.25, 0.39),
-                "Hard": (0.40, 1.0)
+                "Easy": (0.0, 0.15),
+                "Medium": (0.16, 0.29),
+                "Hard": (0.30, 1.0)
             }
         elif is_4x6:
             ranges = {

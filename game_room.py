@@ -4842,8 +4842,11 @@ class RoomManager:
                     if cached_board_data:
                         board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word, b_params = cached_board_data
                         
-                        # Attach uniqueness ratio directly to new_params so header displays 'Easy (15%)'!
                         new_params['uniqueness'] = ratio
+                        dims_parts = str(room.board_dimensions).lower().split('x')
+                        r_cnt = int(dims_parts[0]) if len(dims_parts) >= 2 else 4
+                        c_cnt = int(dims_parts[1]) if len(dims_parts) >= 2 else 4
+                        new_params['difficulty'] = self.board_generator.get_difficulty_label(ratio, rows=r_cnt, cols=c_cnt, dictionary=new_params.get('dictionary', 'NWL'), min_word_length=new_params.get('min_word_length', 3))
                         if final_bonus_word:
                             new_params['bonus_word_length'] = len(final_bonus_word)
                         
