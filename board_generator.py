@@ -839,26 +839,7 @@ class BoardGenerator:
             }
             
         base_range = ranges.get(difficulty, (0.0, 1.0))
-        
-        # Calculate natural uniqueness shift based on min_word_length
-        # We use a base of 3 for all board sizes to correctly scale with evaluation length
-        default_min = 3
-        
-        shift = 0.0
-        try:
-            min_l = int(min_word_length)
-            if min_l > default_min:
-                if rows * cols <= 24 and min_l >= 4:
-                    shift = 0.0
-                elif min_l >= 6:
-                    # For long word lengths (>=6L), the actual ratio is much lower, so do not shift upwards
-                    shift = 0.0
-                else:
-                    shift = (min_l - default_min) * 0.07
-        except Exception:
-            pass
-            
-        return (max(0.0, base_range[0] + shift), min(1.0, base_range[1] + shift))
+        return base_range
 
     def get_uniqueness_ratio(self, board, all_words, rows=4, cols=4, dictionary="NWL", depth=1):
         """Calculate the uniqueness ratio for a given board and word list.
