@@ -782,69 +782,85 @@ body.theme-light-brown .player-score-val {
     align-items: center;
     justify-content: center;
     width: 100%;
-    min-height: 260px;
+    max-width: 440px;
+    min-height: 240px;
     color: var(--text-primary);
     background: rgba(10, 15, 30, 0.85);
     border: 2px solid rgba(var(--accent-color-rgb, 0, 230, 118), 0.2);
     border-radius: 16px;
     backdrop-filter: blur(10px);
-    padding: 24px 20px;
+    padding: 20px 16px;
     box-sizing: border-box;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     text-align: center;
+    overflow: hidden;
+    margin: 0 auto;
 }
 .glow-spinner {
-    width: 45px;
-    height: 45px;
+    width: 42px;
+    height: 42px;
     border: 3px solid rgba(255, 255, 255, 0.05);
     border-top: 3px solid var(--accent-color);
     border-right: 3px solid var(--accent-color);
     border-radius: 50%;
     animation: spin-glow 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     flex-shrink: 0;
 }
 .glow-title {
     font-weight: 800;
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
     color: var(--text-primary);
     animation: pulse-glow 2s ease-in-out infinite;
     text-align: center;
-    white-space: nowrap;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+    padding: 0 6px;
+    line-height: 1.35;
 }
 .why-text {
     font-size: 0.72rem;
     color: var(--text-secondary);
     text-align: center;
-    width: 90%;
+    width: 100%;
+    max-width: 90%;
     margin-top: 12px;
     line-height: 1.45;
     font-weight: 400;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding-top: 12px;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 .status-ticker {
     font-family: monospace;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     color: var(--accent-color);
     margin-top: 10px;
     background: rgba(0, 0, 0, 0.4);
-    padding: 4px 14px;
+    padding: 6px 12px;
     border-radius: 15px;
     border: 1px solid rgba(var(--accent-color-rgb, 0, 230, 118), 0.15);
     font-weight: 600;
     letter-spacing: 0.5px;
-    white-space: nowrap;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    max-width: 92%;
+    box-sizing: border-box;
+    line-height: 1.35;
 }
 @media (max-width: 768px) {
-    .game-board-loading { padding: 12px !important; min-height: 240px !important; }
-    .loading-container { padding: 16px 12px; min-height: 200px; }
-    .glow-spinner { width: 32px; height: 32px; border-width: 2px; margin-bottom: 12px; }
-    .glow-title { font-size: 0.85rem; letter-spacing: 1px; white-space: normal; }
-    .status-ticker { font-size: 0.62rem; margin-top: 8px; padding: 3px 8px; white-space: normal; }
-    .why-text { font-size: 0.62rem; margin-top: 8px; padding-top: 8px; }
+    .game-board-loading { padding: 8px !important; min-height: 220px !important; }
+    .loading-container { padding: 14px 10px; min-height: 190px; max-width: 100%; }
+    .glow-spinner { width: 32px; height: 32px; border-width: 2px; margin-bottom: 10px; }
+    .glow-title { font-size: 0.82rem; letter-spacing: 1px; white-space: normal; }
+    .status-ticker { font-size: 0.62rem; margin-top: 8px; padding: 4px 8px; white-space: normal; max-width: 96%; }
+    .why-text { font-size: 0.62rem; margin-top: 8px; padding-top: 8px; max-width: 96%; }
 }
 
 :root {
