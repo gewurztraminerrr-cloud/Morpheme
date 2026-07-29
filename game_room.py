@@ -6297,10 +6297,11 @@ class RoomManager:
                 current_bw = getattr(room, 'next_round_bonus', '')
                 bw_l = room.spinner_params.get('bonus_word_length', 8) if isinstance(room.spinner_params, dict) else 8
                 dict_val = room.spinner_params.get('dictionary', 'NWL') if isinstance(room.spinner_params, dict) else 'NWL'
-                if not current_bw or current_bw not in room.all_words or str(current_bw).strip().upper() in ['', 'NONE'] or str(current_bw).upper().endswith('ING') or str(current_bw).upper().endswith('INGS') or len(str(current_bw).strip()) < 6:
-                    candidates = [w for w in (room.all_words or []) if len(w) == bw_l and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
+                target_words = room.next_round_words or room.all_words or []
+                if not current_bw or current_bw not in target_words or str(current_bw).strip().upper() in ['', 'NONE'] or str(current_bw).upper().endswith('ING') or str(current_bw).upper().endswith('INGS') or len(str(current_bw).strip()) < 6:
+                    candidates = [w for w in target_words if len(w) == bw_l and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
                     if not candidates:
-                        candidates = [w for w in (room.all_words or []) if 6 <= len(w) <= 10 and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
+                        candidates = [w for w in target_words if 6 <= len(w) <= 10 and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
                     if candidates:
                         import random
                         current_bw = random.choice(list(candidates)).upper()
