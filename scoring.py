@@ -10,7 +10,7 @@ score_logger.setLevel(logging.INFO)
 if not score_logger.handlers:
     score_logger.addHandler(logging.NullHandler())
 
-__all__ = ['calculate_word_score', 'score_logger', 'LETTER_VALUES']
+__all__ = ['calculate_word_score', 'score_logger', 'LETTER_VALUES', 'get_valued_word_score']
 
 
 LETTER_VALUES = {
@@ -18,6 +18,23 @@ LETTER_VALUES = {
     'K': 6, 'L': 3, 'M': 4, 'N': 2, 'O': 2, 'P': 4, 'Q': 10, 'R': 2, 'S': 2, 'T': 2,
     'U': 4, 'V': 5, 'W': 5, 'X': 8, 'Y': 5, 'Z': 8
 }
+
+def get_valued_word_score(word):
+    """Calculate exact Valued Letters point sum for a word using LETTER_VALUES dictionary."""
+    if not word:
+        return 0
+    chars = list(str(word).upper())
+    score = 0
+    i = 0
+    while i < len(chars):
+        c = chars[i]
+        if c == 'Q' and i + 1 < len(chars) and chars[i + 1] == 'U':
+            score += LETTER_VALUES.get('Q', 10)
+            i += 2
+        else:
+            score += LETTER_VALUES.get(c, 1)
+            i += 1
+    return score
 
 def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None, bonus_cell=None, board=None, return_details=False, strict_path=False, **kwargs):
     """

@@ -25,7 +25,7 @@ TRACE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionar
 # We use file-based locking (fcntl) inside the I/O methods instead.
 from spinner_set import SpinnerSet
 from board_generator import BoardGenerator
-from scoring import calculate_word_score
+from scoring import calculate_word_score, get_valued_word_score
 from rating_logic import calculate_proportional_rating_change, is_player_guest
 import word_validator
 from word_validator import use_added_words_ctx
@@ -1620,7 +1620,7 @@ class GameRoom:
         is_valued_e = ('valued' in str(self.current_board_format).lower())
         e_scores = {}
         for w in e_words:
-            if is_valued_e: e_scores[w] = {'total': len(w), 'base': len(w)}
+            if is_valued_e: e_scores[w] = {'total': get_valued_word_score(w), 'base': get_valued_word_score(w)}
             else:
                 length = len(w)
                 s = 0
@@ -2322,7 +2322,7 @@ class GameRoom:
         scored_dict = {}
         for w in fw:
             if is_valued:
-                scored_dict[w] = {'total': len(w), 'base': len(w)}
+                scored_dict[w] = {'total': get_valued_word_score(w), 'base': get_valued_word_score(w)}
             else:
                 length = len(w)
                 s = 0
@@ -2525,7 +2525,7 @@ class GameRoom:
                 for w in self.all_words:
                     length = len(w)
                     if is_valued:
-                        attainable += length
+                        attainable += get_valued_word_score(w)
                     else:
                         if length <= 2:   attainable += 0
                         elif length <= 4: attainable += 1
@@ -3559,7 +3559,7 @@ class RoomManager:
         kick_scores = {}
         for w in room.all_words:
             if is_valued_kick:
-                kick_scores[w] = {'total': len(w), 'base': len(w)}
+                kick_scores[w] = {'total': get_valued_word_score(w), 'base': get_valued_word_score(w)}
             else:
                 length = len(w)
                 if length <= 4: s = 1
@@ -4407,7 +4407,7 @@ class RoomManager:
             init_scored_dict = {}
             for word in (all_words or []):
                 if is_valued_init:
-                    init_scored_dict[word] = {'total': len(word), 'base': len(word)}
+                    init_scored_dict[word] = {'total': get_valued_word_score(word), 'base': get_valued_word_score(word)}
                 else:
                     length = len(word)
                     s = 0
@@ -4857,7 +4857,7 @@ class RoomManager:
                         scored_dict = {}
                         for w in all_words:
                             if is_valued:
-                                scored_dict[w] = {'total': len(w), 'base': len(w)}
+                                scored_dict[w] = {'total': get_valued_word_score(w), 'base': get_valued_word_score(w)}
                             else:
                                 length = len(w)
                                 s = 0
@@ -5099,7 +5099,7 @@ class RoomManager:
                         scored_dict = {}
                         for w in cwords:
                             if is_valued:
-                                scored_dict[w] = {'total': len(w), 'base': len(w)}
+                                scored_dict[w] = {'total': get_valued_word_score(w), 'base': get_valued_word_score(w)}
                             else:
                                 length = len(w)
                                 s = 0
@@ -5534,8 +5534,7 @@ class RoomManager:
                     scored_dict = {}
                     for word in (all_words or []):
                         if is_valued:
-                            # Sum of letter values (LETTER_VALUES import might be needed or just hardcode for speed)
-                            scored_dict[word] = {'total': len(word), 'base': len(word)} # Crude estimate
+                            scored_dict[word] = {'total': get_valued_word_score(word), 'base': get_valued_word_score(word)}
                         else:
                             length = len(word)
                             s = 0
@@ -6250,7 +6249,7 @@ class RoomManager:
                     is_valued_e = ('valued' in str(room.current_board_format).lower())
                     e_scores = {}
                     for w in e_words:
-                        if is_valued_e: e_scores[w] = {'total': len(w), 'base': len(w)}
+                        if is_valued_e: e_scores[w] = {'total': get_valued_word_score(w), 'base': get_valued_word_score(w)}
                         else:
                             length = len(w)
                             s = 0

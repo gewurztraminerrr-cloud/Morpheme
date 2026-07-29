@@ -205,7 +205,7 @@ def debug_pwa():
 from tournament_logic import tournament_manager
 from private_match_logic import private_match_manager
 from word_validator import word_validator
-from scoring import calculate_word_score
+from scoring import calculate_word_score, get_valued_word_score
 from game_room import room_manager, STATS_PATH
 import fcntl
 
@@ -3768,7 +3768,7 @@ def get_room_state(room_id):
                     pts = 0
                     for w in room.all_words:
                         l = len(w)
-                        if is_valued: pts += l
+                        if is_valued: pts += get_valued_word_score(w)
                         elif l <= 4: pts += 1
                         elif l == 5: pts += 2
                         elif l == 6: pts += 3
