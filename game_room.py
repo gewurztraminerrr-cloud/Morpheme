@@ -4797,19 +4797,24 @@ class RoomManager:
                             room.board_dimensions, dict_val, fmt_val, m_len, use_aw_val, bonus_word_len=bw_len
                         )
                         if not candidate:
-                            cached_res = get_emergency_fallback_board(
-                                room.board_dimensions,
-                                board_format=fmt_val,
-                                time_limit=room.time_limit,
-                                dictionary=dict_val,
-                                use_added_words=use_aw_val,
-                                target_range=new_params.get('word_count_range'),
-                                min_word_length=m_len,
-                                difficulty=new_params.get('difficulty')
-                            )
-                            if cached_res:
-                                c_b, c_w, c_c, c_f, c_p, c_r, c_bw, c_tr, c_params = cached_res
-                                candidate = (c_b, c_w, c_c, fmt_val, c_p, c_r, c_bw, c_params)
+                            try:
+                                e_res = self.board_generator.generate_board(
+                                    room.board_dimensions,
+                                    None,
+                                    new_params.get('word_count_range', '100-200'),
+                                    dict_val,
+                                    fmt_val,
+                                    m_len,
+                                    new_params.get('difficulty', 'Medium'),
+                                    is_emergency=True,
+                                    use_added_words=use_aw_val
+                                )
+                                if e_res:
+                                    c_b, c_w, c_c, c_f, c_p, c_r, c_bw = e_res[0], e_res[1], e_res[2], e_res[3], e_res[4], e_res[5], e_res[6]
+                                    c_params = e_res[8] if len(e_res) > 8 else new_params
+                                    candidate = (c_b, c_w, c_c, c_f, c_p, c_r, c_bw, c_params)
+                            except Exception as ex_gen:
+                                print(f"[generate_spinner_params] Emergency generate_board error: {ex_gen}")
                         if candidate:
                             c_b, c_w, c_c, c_f, c_p, c_r, c_bw, c_params = candidate
                             fw_filt = [w for w in c_w if len(w) >= m_len]
@@ -6199,10 +6204,16 @@ class RoomManager:
                     e_min_len = room.spinner_params.get('min_word_length') if room.spinner_params else None
                     e_diff = room.spinner_params.get('difficulty', 'Medium') if room.spinner_params else 'Medium'
                     e_fmt_target = room.spinner_params.get('board_format', 'Normal') if room.spinner_params else 'Normal'
-                    e_results = get_emergency_fallback_board(
-                        room.board_dimensions, e_fmt_target, room.time_limit,
-                        dictionary=room.current_dictionary, use_added_words=getattr(room, 'use_added_words', False),
-                        target_range=room.spinner_params.get('word_count_range'), min_word_length=e_min_len, difficulty=e_diff
+                    e_results = self.board_generator.generate_board(
+                        room.board_dimensions,
+                        None,
+                        room.spinner_params.get('word_count_range', '100-200'),
+                        room.current_dictionary,
+                        e_fmt_target,
+                        e_min_len or 3,
+                        e_diff,
+                        is_emergency=True,
+                        use_added_words=getattr(room, 'use_added_words', False)
                     )
                     
                     if len(e_results) >= 9:
