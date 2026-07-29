@@ -3797,7 +3797,7 @@ def get_room_state(room_id):
                     raw_w_list = list(room.all_words or [])
                     word_scores_to_return = getattr(room, 'solved_words_with_scores', {}) or {}
 
-                words_to_return = [w for w in raw_w_list if len(w) >= display_floor]
+                words_to_return = list(raw_w_list)
 
                 # RE-SYNC: Ensure re-categorized lists also respect this floor using pre-cached, self-healing lists
                 if hasattr(word_validator, 'word_validator'):
@@ -3922,8 +3922,8 @@ def get_room_state(room_id):
                 'fcfs_found_words': list(getattr(room, 'fcfs_found_words', [])) if (is_active and is_fcfs) else [],
                 'added_words': list(room.added_words) if (getattr(room, 'added_words', None) and getattr(room, 'use_added_words', False)) else [],
                 'csw_only_words': list(room.csw_only_words) if getattr(room, 'csw_only_words', None) else [],
-                'previous_all_words': [w for w in (getattr(room, 'previous_all_words', []) or []) if len(w) >= getattr(room, 'previous_min_length', 3)],
-                'previous_all_word_scores': {w: v for w, v in (getattr(room, 'previous_all_word_scores', {}) or {}).items() if len(w) >= getattr(room, 'previous_min_length', 3)},
+                'previous_all_words': list(getattr(room, 'previous_all_words', []) or []),
+                'previous_all_word_scores': getattr(room, 'previous_all_word_scores', {}) or {},
                 'previous_board': getattr(room, 'previous_board', []),
                 'previous_csw_only_words': getattr(room, 'previous_csw_only_words', []),
                 'previous_added_words': getattr(room, 'previous_added_words', []),
