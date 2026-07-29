@@ -4058,9 +4058,31 @@ function updateLocalTimer() {
             // Just call updateGameState immediately to get the new board.
         }
 
+        // Force immediate reset of fetching guard to ensure 0:00 transition fetch is NEVER suppressed!
+        isFetchingState = false;
+        lastStateFetchTime = 0;
         updateGameState();
-        window._rapidTransitionPolling = true;
-        refreshPollInterval();
+
+        // Rapid 300ms polling loop until server state transition is confirmed
+        let transitionAttempts = 0;
+        const expectedNextState = (currentState === 'active') ? 'intermission' : 'active';
+        if (window._transitionPollTimer) clearInterval(window._transitionPollTimer);
+        window._transitionPollTimer = setInterval(() => {
+            transitionAttempts++;
+            if (window.lastGameState && window.lastGameState.state === expectedNextState) {
+                clearInterval(window._transitionPollTimer);
+                window._transitionPollTimer = null;
+                return;
+            }
+            if (transitionAttempts >= 15) { // 4.5 seconds max safety timeout
+                clearInterval(window._transitionPollTimer);
+                window._transitionPollTimer = null;
+                return;
+            }
+            isFetchingState = false;
+            lastStateFetchTime = 0;
+            updateGameState();
+        }, 300);
     }
 
     // -- Update Triple Format Music State --
