@@ -3563,34 +3563,37 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             let useAW = false;
             const s = window.lastGameState;
             if (s) {
-                if (s.state === 'intermission') {
-                    baseDict = String(s.previous_dictionary || s.current_dictionary || 'NWL').toUpperCase();
-                    useAW = (s.previous_use_added_words === true);
-                } else {
-                    baseDict = String(s.current_dictionary || 'NWL').toUpperCase();
-                    useAW = (s.use_added_words === true);
-                }
+                const dictStr = String(s.previous_dictionary || s.current_dictionary || 'NWL').toUpperCase();
+                useAW = (
+                    s.previous_use_added_words === true ||
+                    s.use_added_words === true ||
+                    dictStr.includes('+ AW') ||
+                    dictStr.includes('+AW') ||
+                    dictStr.includes('ADDED') ||
+                    (addedSet && addedSet.size > 0)
+                );
+                baseDict = dictStr.replace(/\s*\+\s*AW/i, '').replace(/\s*\+AW/i, '').trim();
             }
 
-            if (useAW) {
+            if (useAW || (addedSet && addedSet.size > 0)) {
                 // NWL+AW or CSW+AW — three tiers
                 if (isAddedWord) {
                     className += ' added-word'; // Purple: AW-only (not in NWL or CSW)
                 } else if (isCSWOnly) {
                     className += ' csw-only';   // Gold: in CSW but not NWL
                 } else {
-                    className += ' nwl-word';   // Dark red: in NWL (includes all NWL words)
+                    className += ' nwl-word';   // Sleek dark slate: in NWL
                 }
             } else if (baseDict === 'CSW') {
                 // Pure CSW round — two tiers
                 if (isCSWOnly) {
                     className += ' csw-only';   // Gold: in CSW but not NWL
                 } else {
-                    className += ' nwl-word';   // Dark red: in NWL (also in CSW)
+                    className += ' nwl-word';   // Sleek dark slate: in NWL (also in CSW)
                 }
             } else {
                 // Pure NWL or other fallback — single tier
-                className += ' nwl-word';       // Dark red for all NWL words
+                className += ' nwl-word';       // Sleek dark slate for all NWL words
             }
         }
 
