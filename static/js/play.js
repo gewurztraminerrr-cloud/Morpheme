@@ -3575,6 +3575,13 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
                 baseDict = dictStr.replace(/\s*\+\s*AW/i, '').replace(/\s*\+AW/i, '').trim();
             }
 
+            const isCSWMode = (
+                baseDict === 'CSW' ||
+                baseDict.includes('CSW') ||
+                baseDict.includes('COLLINS') ||
+                (cswOnlySet && cswOnlySet.size > 0)
+            );
+
             if (useAW || (addedSet && addedSet.size > 0)) {
                 // NWL+AW or CSW+AW — three tiers
                 if (isAddedWord) {
@@ -3584,16 +3591,20 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
                 } else {
                     className += ' nwl-word';   // Sleek dark slate: in NWL
                 }
-            } else if (baseDict === 'CSW') {
-                // Pure CSW round — two tiers
+            } else if (isCSWMode || isCSWOnly) {
+                // Pure CSW round or any CSW-only words present — two tiers
                 if (isCSWOnly) {
                     className += ' csw-only';   // Gold: in CSW but not NWL
                 } else {
                     className += ' nwl-word';   // Sleek dark slate: in NWL (also in CSW)
                 }
             } else {
-                // Pure NWL or other fallback — single tier
-                className += ' nwl-word';       // Sleek dark slate for all NWL words
+                // Pure NWL or other fallback
+                if (isCSWOnly) {
+                    className += ' csw-only';   // Gold: CSW-only word
+                } else {
+                    className += ' nwl-word';   // Sleek dark slate for standard NWL words
+                }
             }
         }
 
