@@ -216,10 +216,10 @@
                 localStorage.removeItem('tournament_play_active');
 
                 window.currentRoomId = data.room_id;
+                window.isSpectatorMode = false; // Guarantee active player mode for Solo matches
                 if (window.navigateToPage) {
                     window.navigateToPage('play');
                 }
-                // USER REQUEST FIX: Explicitly start polling so the board actually loads
                 if (window.startGamePolling) {
                     window.startGamePolling();
                 }

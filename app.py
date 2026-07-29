@@ -7029,11 +7029,13 @@ def create_solo_match():
                 p.ai_rating = bot.get('ai_rating', 1200)
                 print(f"[app.py] Added AI bot {bot['username']} to room {room_id}")
 
-    # Start first round synchronously so room state is 'active' and board is 100% ready before returning to client!
-    print(f"[app.py] Starting first round synchronously for solo room: {room_id}")
-    room_manager.start_round(room_id)
+    # USER DIRECTIVE: Dispatch board generation to background thread and return room_id INSTANTLY (0ms delay)
+    # The user enters the room immediately, and the board loads smoothly inside the room view!
+    print(f"[app.py] Dispatching round start to background thread for instant solo room entry: {room_id}")
+    import threading
+    threading.Thread(target=room_manager.start_round, args=(room_id,), daemon=True).start()
     
-    print(f"[app.py] Solo match creation complete. Returning success to client.")
+    print(f"[app.py] Solo match creation complete. Returning success to client instantly.")
     return jsonify({'success': True, 'room_id': room_id})
 
 # --- PRIVATE MATCHES ---
