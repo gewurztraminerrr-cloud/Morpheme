@@ -802,19 +802,23 @@ class GameRoom:
             is_3d_board = isinstance(self.board[0][0], list)
             
             for node in path:
-                # Handle both 2D [r, c] and 3D [f, r, c]
-                if len(node) == 3:
-                    f, r, c = node
-                    if 0 <= f < len(self.board) and 0 <= r < len(self.board[f]) and 0 <= c < len(self.board[f][r]):
-                        cell_val = str(self.board[f][r][c])
-                    else:
-                        valid_path = False; break
+                f, r, c = -1, -1, -1
+                if isinstance(node, dict):
+                    f = int(node.get('f', -1))
+                    r = int(node.get('r', -1))
+                    c = int(node.get('c', -1))
+                elif isinstance(node, (list, tuple)):
+                    if len(node) == 3: f, r, c = int(node[0]), int(node[1]), int(node[2])
+                    elif len(node) == 2: r, c = int(node[0]), int(node[1])
+
+                cell_val = ''
+                if is_3d_board and f >= 0 and f < len(self.board) and r >= 0 and r < len(self.board[f]) and c >= 0 and c < len(self.board[f][r]):
+                    cell_val = str(self.board[f][r][c])
+                elif r >= 0 and r < len(self.board) and c >= 0 and c < len(self.board[0]):
+                    cell_val = str(self.board[r][c])
                 else:
-                    r, c = node
-                    if 0 <= r < len(self.board) and 0 <= c < len(self.board[0]):
-                        cell_val = str(self.board[r][c])
-                    else:
-                        valid_path = False; break
+                    valid_path = False
+                    break
                 
                 if '/' in cell_val:
                     options = cell_val.split('/')
