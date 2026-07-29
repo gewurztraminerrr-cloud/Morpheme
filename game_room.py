@@ -4865,17 +4865,17 @@ class RoomManager:
                         scored_dict = {}
                         for w in all_words:
                             if is_valued:
-                                scored_dict[w] = {'total': get_valued_word_score(w), 'base': get_valued_word_score(w)}
+                                v_score = get_valued_word_score(w)
+                                scored_dict[w] = {'total': v_score, 'base': v_score}
                             else:
-                                length = len(w)
-                                s = 0
-                                if length <= 2: s = 0
-                                elif length <= 4: s = 1
-                                elif length == 5: s = 2
-                                elif length == 6: s = 3
-                                elif length == 7: s = 5
-                                elif length >= 8: s = 11
-                                scored_dict[w] = {'total': s, 'base': s}
+                                scored_dict[w] = calculate_word_score(
+                                    w,
+                                    bonus_word=final_bonus_word,
+                                    board_format=board_format_ret,
+                                    bonus_cell=bonus_cell,
+                                    board=board,
+                                    return_details=True
+                                )
                         room.next_round_word_scores = scored_dict
                         
                         # Mark room search states as completed
@@ -5542,17 +5542,17 @@ class RoomManager:
                     scored_dict = {}
                     for word in (all_words or []):
                         if is_valued:
-                            scored_dict[word] = {'total': get_valued_word_score(word), 'base': get_valued_word_score(word)}
+                            v_score = get_valued_word_score(word)
+                            scored_dict[word] = {'total': v_score, 'base': v_score}
                         else:
-                            length = len(word)
-                            s = 0
-                            if length <= 2: s = 0
-                            elif length <= 4: s = 1
-                            elif length == 5: s = 2
-                            elif length == 6: s = 3
-                            elif length == 7: s = 5
-                            elif length >= 8: s = 11
-                            scored_dict[word] = {'total': s, 'base': s}
+                            scored_dict[word] = calculate_word_score(
+                                word,
+                                bonus_word=bonus_word,
+                                board_format=updated_format,
+                                bonus_cell=bonus_cell,
+                                board=board,
+                                return_details=True
+                            )
                     
                     room.next_round_word_scores = scored_dict
                     room.next_round_total_points = sum(pts['total'] for pts in scored_dict.values())

@@ -2284,12 +2284,24 @@ class BoardGenerator:
                         board[cell[0]][cell[1]][cell[2]] = val
                     else:
                         board[cell[0]][cell[1]] = val
+                    bonus_cell = cell
                     print(f"[BoardGen] * Selected best Either/Or candidate at {cell} with dual-letters {val} (balance score: {balance_score:.2%})")
                     ambiguity_resolved = True
 
                 if not ambiguity_resolved:
-                    print(f"[BoardGen] ATTEMPT {attempts}: Either/Or board has ambiguity across all tested combinations. Retrying...")
-                    continue
+                    protected = set(embedded_path) if embedded_path else set()
+                    center_candidates = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in protected]
+                    if center_candidates:
+                        c_cell = center_candidates[0]
+                        orig_char = str(board[c_cell[0]][c_cell[1]]).upper()
+                        partner_char = 'E' if not self._is_vowel(orig_char) else 'S'
+                        val = f"{sorted([orig_char, partner_char])[0]}/{sorted([orig_char, partner_char])[1]}"
+                        board[c_cell[0]][c_cell[1]] = val
+                        bonus_cell = c_cell
+                        ambiguity_resolved = True
+                    else:
+                        print(f"[BoardGen] ATTEMPT {attempts}: Either/Or board has ambiguity across all tested combinations. Retrying...")
+                        continue
 
             # Re-solve after sweeps and sanitization for final confirmation
             all_words_dict = self._solve_board(
@@ -2329,21 +2341,26 @@ class BoardGenerator:
                     actual_bonus = None
                     bonus_cell = None
                     
-                    if bonus_word and embedded_path and bonus_word.upper() in [w.upper() for w in all_words_dict]:
-                        actual_bonus = bonus_word
-                        bonus_cell = all_words_dict[actual_bonus.upper() if actual_bonus.upper() in all_words_dict else actual_bonus][0]
+                    if "bonus" in safe_format or "either" in safe_format:
+                        if not bonus_cell and special_cells:
+                            bonus_cell = special_cells[0]
                     else:
-                        suitable = [w for w in all_words_dict if 6 <= len(w) <= 10]
-                        if not suitable: suitable = [w for w in all_words_dict if len(w) >= 6]
-                        if not suitable: suitable = [w for w in all_words_dict if len(w) >= 3]
-                        requested_length = len(bonus_word) if bonus_word else 8
-                        suitable_exact = [w for w in suitable if len(w) == requested_length]
-                        if suitable_exact:
-                            actual_bonus = random.choice(suitable_exact)
+                        bonus_cell = None
+                        if bonus_word and embedded_path and bonus_word.upper() in [w.upper() for w in all_words_dict]:
+                            actual_bonus = bonus_word
+                            bonus_cell = all_words_dict[actual_bonus.upper() if actual_bonus.upper() in all_words_dict else actual_bonus][0]
                         else:
-                            actual_bonus = sorted(suitable, key=len, reverse=True)[0] if suitable else None
-                        if actual_bonus:
-                            bonus_cell = all_words_dict[actual_bonus][0]
+                            suitable = [w for w in all_words_dict if 6 <= len(w) <= 10]
+                            if not suitable: suitable = [w for w in all_words_dict if len(w) >= 6]
+                            if not suitable: suitable = [w for w in all_words_dict if len(w) >= 3]
+                            requested_length = len(bonus_word) if bonus_word else 8
+                            suitable_exact = [w for w in suitable if len(w) == requested_length]
+                            if suitable_exact:
+                                actual_bonus = random.choice(suitable_exact)
+                            else:
+                                actual_bonus = sorted(suitable, key=len, reverse=True)[0] if suitable else None
+                            if actual_bonus and actual_bonus in all_words_dict:
+                                bonus_cell = all_words_dict[actual_bonus][0]
                             
                     achieved_diff = self.get_difficulty_label(ratio, rows, cols, dictionary, depth, min_word_length=min_word_length)
                     if difficulty in ["Medium", "Hard"] or achieved_diff in ["Medium", "Hard"]:
