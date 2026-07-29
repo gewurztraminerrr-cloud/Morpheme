@@ -6733,15 +6733,15 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                         }
                     }
 
-                    const isBonus = isBonusWord || usesBonusLetterTile;
+                    const isBonus = isBonusWord;
                     const showBonusMsg = isBonusWord && !usesEitherOrTile;
                     const localPts = calculateWordScoreLocally(word, finalPath);
                     const msg = showBonusMsg 
                         ? `BONUS WORD! (${localPts} PTS)`
                         : (usesBonusLetterTile ? `${word.toUpperCase()} VALID (+3 BONUS LTR! ${localPts} PTS)` : `${word.toUpperCase()} VALID (${localPts} PTS)`);
                     
-                    showValidationFeedback(msg, true, isBonus, finalPath, true);
-                    optimisticColor = isBonus ? 'green' : 'blue';
+                    showValidationFeedback(msg, true, isBonusWord, finalPath, true);
+                    optimisticColor = isBonusWord ? 'green' : 'blue';
                     optimisticIsDefinitive = true;
                 }
             }
