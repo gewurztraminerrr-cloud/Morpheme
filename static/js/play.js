@@ -3770,12 +3770,25 @@ function updateParameters(state) {
             window._displayedParams.bonus = bonusVal + 'L';
             
             let diffLabel = factDiff;
-            if (diffLabel === 'Varying...') diffLabel = 'Random';
-            else if (diffLabel === 'Normal') diffLabel = 'Medium';
-            else if (diffLabel === 'Expert' || diffLabel === 'Difficult') diffLabel = 'Hard';
-            else if (diffLabel === 'Beginner') diffLabel = 'Easy';
-            
-            // Keep difficulty label 100% consistent with the revealed parameter (factDiff)
+            if (newUniq > 0) {
+                const uVal = newUniq > 1 ? newUniq / 100.0 : newUniq;
+                const dStr = String(factBoardDims || '').toLowerCase();
+                let easyMax = 0.15;
+                let medMax = 0.29;
+                if (dStr.includes('4x6')) { easyMax = 0.25; medMax = 0.39; }
+                else if (dStr.includes('5x7')) { easyMax = 0.29; medMax = 0.44; }
+                else if (dStr.includes('6x8') || dStr.includes('cube') || dStr.includes('3x3x3')) { easyMax = 0.34; medMax = 0.49; }
+                else { easyMax = 0.15; medMax = 0.29; }
+
+                if (uVal <= easyMax) diffLabel = 'Easy';
+                else if (uVal <= medMax) diffLabel = 'Medium';
+                else diffLabel = 'Hard';
+            } else {
+                if (diffLabel === 'Varying...') diffLabel = 'Random';
+                else if (diffLabel === 'Normal') diffLabel = 'Medium';
+                else if (diffLabel === 'Expert' || diffLabel === 'Difficult') diffLabel = 'Hard';
+                else if (diffLabel === 'Beginner') diffLabel = 'Easy';
+            }
             
             const uniquePct = (newUniq > 0 && !diffLabel.includes('(')) ? ` (${Math.round(newUniq * 100)}%)` : "";
             window._displayedParams.diff = diffLabel + uniquePct;

@@ -6190,6 +6190,12 @@ class RoomManager:
                 next_uniq = getattr(room, 'next_round_uniqueness', None)
                 if next_uniq is not None:
                     room.current_uniqueness = next_uniq
+                    dims_parts = str(room.board_dimensions).lower().split('x')
+                    r_cnt = int(dims_parts[0]) if len(dims_parts) >= 2 else 4
+                    c_cnt = int(dims_parts[1]) if len(dims_parts) >= 2 else 4
+                    room.current_difficulty = self.board_generator.get_difficulty_label(
+                        next_uniq, rows=r_cnt, cols=c_cnt, dictionary=room.current_dictionary, min_word_length=raw_min
+                    )
                 try:
                     room.current_min_length = int(raw_min)
                 except:
