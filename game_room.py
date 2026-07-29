@@ -3075,7 +3075,7 @@ class RoomManager:
         finally:
             conn.close()
 
-    def create_room(self, room_id, game_type, time_limit, board_dimensions, min_rating=0, max_rating=9999, is_private=False):
+    def create_room(self, room_id, game_type, time_limit, board_dimensions, min_rating=0, max_rating=9999, is_private=False, is_solo=False, initial_solo_params=None):
         """Create a new game room or return an existing singleton for the configuration"""
         import threading
         try:
@@ -3180,9 +3180,11 @@ class RoomManager:
                     board_dimensions=board_dimensions,
                     min_rating=min_rating,
                     max_rating=max_rating,
-                    is_solo=(game_type == 'practice' or (room_id and room_id.startswith('practice_'))),
+                    is_solo=(is_solo or game_type == 'practice' or (room_id and room_id.startswith('practice_')) or (game_type and 'solo' in str(game_type).lower())),
                     is_private=is_private
                 )
+                if initial_solo_params:
+                    room.initial_solo_params = dict(initial_solo_params)
                 
                 # Capacity Check
                 if room.game_type in ['accumulative', 'solo_accumulative']:

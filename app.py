@@ -6901,7 +6901,10 @@ def create_solo_match():
     time_limit = int(parameters.get('time_limit', 60))
     board_dimensions = parameters.get('board_dimensions', '4x4')
     
-    room = room_manager.create_room(room_id, game_type, time_limit, board_dimensions, is_private=True)
+    room = room_manager.create_room(
+        room_id, game_type, time_limit, board_dimensions, is_private=True,
+        is_solo=True, initial_solo_params=dict(parameters)
+    )
     room.is_solo = True # Disables history and statistics
     room.initial_solo_params = dict(parameters)
     
