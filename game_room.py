@@ -5908,10 +5908,7 @@ class RoomManager:
                     elif '200' in str(target_range): min_accept = 200
                     elif '100' in str(target_range): min_accept = 100
                     elif '50' in str(target_range):  min_accept = 50
-            if use_aw_flag:
-                min_accept = max(300, min_accept)
-            else:
-                min_accept = max(50, min_accept)
+            min_accept = max(30, min_accept)
 
             # If staged board is too sparse AND was never revealed to player, discard it.
             # If it was ALREADY revealed at 0:45 timer, keep it unconditionally to prevent parameter changes & load delays!

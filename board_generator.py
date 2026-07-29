@@ -324,8 +324,8 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
-        # Select all cached boards
-        cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards;")
+        # Select lightweight param_key keys (exclude heavy board_json blob until matching ID is found)
+        cursor.execute("SELECT id, param_key FROM pregenerated_boards ORDER BY id DESC LIMIT 500;")
         rows = cursor.fetchall()
         
         # Normalize target dictionary
