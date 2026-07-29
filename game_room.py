@@ -1994,8 +1994,15 @@ class GameRoom:
                 self.previous_all_words = list(self.all_words) if self.all_words else []
                 self.previous_all_word_scores = dict(getattr(self, 'solved_words_with_scores', {})) if getattr(self, 'solved_words_with_scores', None) else {}
                 self.previous_min_length = getattr(self, 'current_min_length', 3)
-                self.previous_csw_only_words = list(self.csw_only_words) if getattr(self, 'csw_only_words', None) else []
-                self.previous_added_words = list(self.added_words) if getattr(self, 'added_words', None) else []
+                if getattr(self, 'csw_only_words', None) and len(self.csw_only_words) > 0:
+                    self.previous_csw_only_words = list(self.csw_only_words)
+                else:
+                    self.previous_csw_only_words = [w for w in (self.previous_all_words or []) if word_validator.word_validator.is_csw_only(w)]
+
+                if getattr(self, 'added_words', None) and len(self.added_words) > 0:
+                    self.previous_added_words = list(self.added_words)
+                else:
+                    self.previous_added_words = [w for w in (self.previous_all_words or []) if word_validator.word_validator.is_added_word(w)]
                 self.previous_bonus_word = self.bonus_word
                 self.previous_dictionary = getattr(self, 'current_dictionary', 'NWL')
                 self.previous_use_added_words = getattr(self, 'use_added_words', False)
