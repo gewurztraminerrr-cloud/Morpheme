@@ -3695,7 +3695,7 @@ function updateParameters(state) {
     // Otherwise, we prefer the state's authoritative ground-truth labels.
     const factBoardDims = sp.board_dimensions || state.board_dimensions || '4x4';
     const factTimeLimit = sp.time_limit || state.time_limit || 60;
-    const preferSp = (isIntermission && isRevealed) || (!isIntermission && sp && sp.word_count_range);
+    const preferSp = (isIntermission && isRevealed);
 
     const factFmt = (preferSp ? (sp.board_format || state.current_board_format) : (state.current_board_format || sp.board_format)) || 'Normal';
     const factDiff = (preferSp ? (sp.difficulty || state.current_difficulty) : (state.current_difficulty || sp.difficulty)) || 'Medium';
