@@ -4228,13 +4228,30 @@ class RoomManager:
                 # OPTIMIZATION: Try to get a cached board instantly for all rooms to avoid any creation delay
                 res = None
                 from board_generator import serialize_param_key, pop_cached_board, pop_any_cached_board
-                param_key_str = serialize_param_key(
-                    room.board_dimensions, bonus_word, room.spinner_params['word_count_range'],
-                    room.spinner_params['dictionary'], room.spinner_params['board_format'],
-                    room.spinner_params.get('min_word_length', 3), room.spinner_params.get('difficulty', 'Medium'),
-                    use_added_words=use_aw_flag
-                )
-                cached_res = pop_cached_board(param_key_str)
+
+                # SOLO MODE FAST PATH: Try popping any cached board for room.board_dimensions for 1ms instant board!
+                if getattr(room, 'is_solo', False):
+                    solo_pop = pop_any_cached_board(room.board_dimensions)
+                    if solo_pop:
+                        if len(solo_pop) >= 9:
+                            sboard, swords, sbonus_cell, sfmt, spaths, sratio, sbonus_word, _, sparams = solo_pop
+                        else:
+                            sboard, swords, sbonus_cell, sfmt, spaths, sratio, sbonus_word, sparams = solo_pop
+                        
+                        swords_filtered = [w for w in swords if len(w) >= m_len]
+                        spaths_filtered = {w: p for w, p in (spaths or {}).items() if len(w) >= m_len}
+                        if len(swords_filtered) >= 10:
+                            print(f"[RoomManager] INSTANT Solo cached board popped for room {room_id} in 1ms!")
+                            res = (sboard, swords_filtered, sbonus_cell, sfmt, spaths_filtered, sratio, sbonus_word)
+
+                if not res:
+                    param_key_str = serialize_param_key(
+                        room.board_dimensions, bonus_word, room.spinner_params['word_count_range'],
+                        room.spinner_params['dictionary'], room.spinner_params['board_format'],
+                        room.spinner_params.get('min_word_length', 3), room.spinner_params.get('difficulty', 'Medium'),
+                        use_added_words=use_aw_flag
+                    )
+                    cached_res = pop_cached_board(param_key_str)
                 if cached_res:
                     cwords_exact = cached_res[1]
                     cwords_filtered = [w for w in cwords_exact if len(w) >= m_len]
