@@ -1854,7 +1854,7 @@ async function updateGameState(incomingState = null) {
             }
         });
 
-        const allWords = state.all_words || [];
+        const allWords = state.state === 'intermission' ? ((state.previous_all_words && state.previous_all_words.length > 0) ? state.previous_all_words : (state.all_words || [])) : (state.all_words || []);
         const cswForList = state.state === 'intermission' ? ((state.previous_csw_only_words && state.previous_csw_only_words.length > 0) ? state.previous_csw_only_words : state.csw_only_words) : state.csw_only_words;
         const addedForList = state.state === 'intermission' ? ((state.previous_added_words && state.previous_added_words.length > 0) ? state.previous_added_words : state.added_words) : state.added_words;
 
