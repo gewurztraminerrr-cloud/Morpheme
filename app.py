@@ -6962,10 +6962,16 @@ def create_solo_match():
         parameters.get('bonus_word_length', 'random') == 'random'
     )
 
+    initial_bw_len = bonus_word_len
+    if getattr(room, 'bonus_word', None):
+        initial_bw_len = len(room.bonus_word)
+    elif getattr(room, 'next_round_bonus', None):
+        initial_bw_len = len(room.next_round_bonus)
+
     room.spinner_params = {
         'dictionary': dict_name,
         'min_word_length': int(parameters.get('min_word_length', 3)),
-        'bonus_word_length': bonus_word_len,
+        'bonus_word_length': initial_bw_len,
         'board_format': board_format,
         'difficulty': target_difficulty,
         'word_count_range': wc_range,
