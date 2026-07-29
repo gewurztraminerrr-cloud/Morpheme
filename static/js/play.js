@@ -3713,11 +3713,11 @@ function updateParameters(state) {
     }
     const factWordRange = rawWordRange;
     
-    let factUniq = 0; 
-    if (preferSp) {
-        factUniq = sp.uniqueness || 0;
-    } else {
-        factUniq = (state.current_uniqueness !== undefined && state.current_uniqueness !== null) ? state.current_uniqueness : 0;
+    let factUniq = 0;
+    if (sp && sp.uniqueness !== undefined && sp.uniqueness !== null && sp.uniqueness > 0) {
+        factUniq = sp.uniqueness;
+    } else if (state.current_uniqueness !== undefined && state.current_uniqueness !== null) {
+        factUniq = state.current_uniqueness;
     }
 
     // UPDATE POLICY:
