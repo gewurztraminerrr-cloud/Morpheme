@@ -4323,7 +4323,7 @@ class RoomManager:
                             board_format=room.spinner_params['board_format'],
                             min_word_length=room.spinner_params.get('min_word_length', 3),
                             difficulty=room.spinner_params.get('difficulty', 'Medium'),
-                            is_emergency=not getattr(room, 'is_solo', False),
+                            is_emergency=True,
                             use_added_words=use_aw_flag
                         )
                     finally:
