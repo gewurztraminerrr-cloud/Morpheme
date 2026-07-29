@@ -3401,15 +3401,42 @@ class RoomManager:
                         conn.close()
                 
                 if not restored_active:
-                    # INSTANT START: User Request - No wait on first entry for standard rooms (except 24h and solo/private matches)
-                    if not is_24h and not is_private and not room.is_solo:
+                    # INSTANT START: Kickstart room immediately by popping/generating board first
+                    if not is_24h and not is_private:
                         print(f"[RoomManager] {room_id}: Kickstarting room immediately by popping board first...")
-                        from board_generator import pop_cached_board, pop_any_cached_board, serialize_param_key
+                        from board_generator import pop_cached_board, pop_any_cached_board, pop_compatible_cached_board, serialize_param_key
                         
-                        # Pop any compatible cached board directly from cache for this dimension
-                        pre_pop = pop_any_cached_board(room.board_dimensions)
+                        pre_pop = None
+                        if room.is_solo and getattr(room, 'initial_solo_params', None):
+                            isp = room.initial_solo_params
+                            s_dict = isp.get('dictionary', 'NWL')
+                            s_fmt = isp.get('board_format', 'Normal')
+                            s_min_len = int(isp.get('min_word_length', 3))
+                            s_use_aw = False
+                            if '+ AW' in str(s_dict) or '+AW' in str(s_dict) or s_dict == 'AW':
+                                s_use_aw = True
+                                s_dict = str(s_dict).replace('+ AW', '').replace('+AW', '').strip()
+                                if s_dict == 'AW': s_dict = 'NWL'
+                            s_bw_len = int(isp.get('bonus_word_length', 8)) if str(isp.get('bonus_word_length', '')).isdigit() else 8
+                            
+                            pre_pop = pop_compatible_cached_board(room.board_dimensions, s_dict, s_fmt, s_min_len, s_use_aw, bonus_word_len=s_bw_len)
+                            if not pre_pop:
+                                try:
+                                    s_diff = isp.get('difficulty', 'Medium')
+                                    s_wc = isp.get('word_count_range', '100-200')
+                                    e_res = self.board_generator.generate_board(
+                                        room.board_dimensions, None, s_wc, s_dict, s_fmt, s_min_len, s_diff, is_emergency=True, use_added_words=s_use_aw
+                                    )
+                                    if e_res:
+                                        g_b, g_w, g_c, g_f, g_p, g_r, g_bw = e_res[0], e_res[1], e_res[2], e_res[3], e_res[4], e_res[5], e_res[6]
+                                        g_params = e_res[8] if len(e_res) > 8 else isp
+                                        pre_pop = (g_b, g_w, g_c, g_f, g_p, g_r, g_bw, g_params)
+                                except Exception as e_sgen:
+                                    print(f"[RoomManager] Solo emergency generate error: {e_sgen}")
+                        else:
+                            pre_pop = pop_any_cached_board(room.board_dimensions)
+
                         if not pre_pop:
-                            # If DB cache is completely empty, use static fallback
                             pre_pop = get_emergency_fallback_board(
                                 room.board_dimensions, 'Normal', room.time_limit,
                                 dictionary='NWL', use_added_words=False, target_range='100-200', min_word_length=3, difficulty='Medium'
