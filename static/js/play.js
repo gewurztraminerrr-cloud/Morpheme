@@ -6740,11 +6740,6 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                     showValidationFeedback(msg, true, isBonus, finalPath, true);
                     optimisticColor = isBonus ? 'green' : 'blue';
                     optimisticIsDefinitive = true;
-                } else if (wordList && wordList.length > 0) {
-                    // Not in word list — instant INVALID feedback!
-                    showValidationFeedback(`${word.toUpperCase()} INVALID`, false, false, finalPath, true);
-                    optimisticColor = 'red';
-                    optimisticIsDefinitive = true;
                 }
             }
         }
