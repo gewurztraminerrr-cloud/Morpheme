@@ -1539,7 +1539,7 @@ class GameRoom:
                     'word_count_range': wc_label,
                     'board_format': fparams.get('board_format', 'Normal'),
                     'min_word_length': fparams.get('min_word_length', 3),
-                    'bonus_word_length': fparams.get('bonus_word_len', 6),
+                    'bonus_word_length': len(fbw) if fbw else fparams.get('bonus_word_len', 6),
                     'use_added_words': use_aw_val,
                     'board_dimensions': self.board_dimensions,
                     'time_limit': self.time_limit,
@@ -1594,7 +1594,7 @@ class GameRoom:
             self.spinner_params['board_format'] = e_params.get('board_format', 'Normal')
             self.spinner_params['min_word_length'] = e_params.get('min_word_length', 3)
             self.spinner_params['use_added_words'] = e_params.get('use_added_words', False)
-            self.spinner_params['bonus_word_length'] = e_params.get('bonus_word_len', 6)
+            self.spinner_params['bonus_word_length'] = len(e_bonus_word) if e_bonus_word else e_params.get('bonus_word_len', 6)
             
             self.current_dictionary = e_params.get('dictionary', 'NWL')
             self.current_difficulty = e_params.get('difficulty', 'Medium')
@@ -1747,7 +1747,7 @@ class GameRoom:
                     'word_count_range': wc_label,
                     'board_format': ff or (self.spinner_params.get('board_format') if self.spinner_params else 'Normal'),
                     'min_word_length': fparams.get('min_word_length') or (self.spinner_params.get('min_word_length') if self.spinner_params else 3),
-                    'bonus_word_length': fparams.get('bonus_word_len') or len(fbw) if fbw else 6,
+                    'bonus_word_length': len(fbw) if fbw else (fparams.get('bonus_word_len') or 6),
                     'use_added_words': use_aw_val,
                     'board_dimensions': self.board_dimensions,
                     'time_limit': self.time_limit,
@@ -4836,6 +4836,8 @@ class RoomManager:
                         
                         # Attach uniqueness ratio directly to new_params so header displays 'Easy (15%)'!
                         new_params['uniqueness'] = ratio
+                        if final_bonus_word:
+                            new_params['bonus_word_length'] = len(final_bonus_word)
                         
                         # Stage the board data in the room immediately
                         room.next_round_board = board
@@ -6213,7 +6215,7 @@ class RoomManager:
                         room.spinner_params['board_format'] = e_params.get('board_format', 'Normal')
                         room.spinner_params['min_word_length'] = e_params.get('min_word_length', 3)
                         room.spinner_params['use_added_words'] = e_params.get('use_added_words', False)
-                        room.spinner_params['bonus_word_length'] = e_params.get('bonus_word_len', 6)
+                        room.spinner_params['bonus_word_length'] = len(e_bonus_word) if e_bonus_word else e_params.get('bonus_word_len', 6)
                         
                         room.current_dictionary = e_params.get('dictionary', 'NWL')
                         room.current_board_format = e_params.get('board_format', 'Normal')
