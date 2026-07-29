@@ -216,6 +216,7 @@
                 localStorage.removeItem('tournament_play_active');
 
                 window.currentRoomId = data.room_id;
+                localStorage.setItem('last_joined_room', data.room_id);
                 window.isSpectatorMode = false; // Guarantee active player mode for Solo matches
                 if (window.navigateToPage) {
                     window.navigateToPage('play');

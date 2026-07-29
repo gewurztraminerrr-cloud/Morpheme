@@ -1108,26 +1108,17 @@ function showPage(pageId) {
 
     // 1. Update Page Visibility
     document.querySelectorAll('.page').forEach(page => {
-        page.classList.remove('active');
-        if (page.id === pageId) {
-            // Temporarily clear ID to prevent browser's native hash auto-scroll
-            page.id = '';
+        const isMatch = (page.id === pageId) || (page.dataset && page.dataset.pageId === pageId.replace('page-', ''));
+        if (isMatch) {
             page.classList.add('active');
             page.style.opacity = '1'; // Explicitly force visibility
-            
-            // Reset scroll positions to the top
             page.scrollTop = 0;
             const layout = page.querySelector('.tools-split-layout');
             if (layout) {
                 layout.scrollLeft = 0;
             }
-
-            // Restore ID and force scroll reset to top in subsequent ticks
-            setTimeout(() => {
-                page.id = pageId;
-                window.scrollTo(0, 0);
-                page.scrollTop = 0;
-            }, 20);
+        } else {
+            page.classList.remove('active');
         }
     });
     window.scrollTo(0, 0);

@@ -101,8 +101,8 @@
     display: none;
 }
 
-#page-play.active {
-    display: flex;
+#page-play.active, .page.active#page-play {
+    display: flex !important;
     flex-direction: column;
     height: 100vh;
     height: 100dvh;
