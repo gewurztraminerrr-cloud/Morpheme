@@ -6895,10 +6895,19 @@ def create_solo_match():
     print(f"[app.py] Bots: {participants}")
     
     # 1. Create a GameRoom for Solo Practice
+    def _safe_int_param(val, default_val):
+        if val is None or str(val).lower() in ['random', 'none', 'null', 'nan']:
+            return default_val
+        try:
+            return int(val)
+        except Exception:
+            return default_val
+
+    # 1. Create a GameRoom for Solo Practice
     # Force a unique ID and mark as private to skip singleton logic
     room_id = f"practice_{session['username']}_{int(time.time())}"
     game_type = 'solo_accumulative' # Isolated mode for solo play
-    time_limit = int(parameters.get('time_limit', 60))
+    time_limit = _safe_int_param(parameters.get('time_limit'), 60)
     board_dimensions = parameters.get('board_dimensions', '4x4')
     
     room = room_manager.create_room(
@@ -6936,7 +6945,7 @@ def create_solo_match():
 
     # Point range / word count: allow user to specify, else spin a default
     custom_word_count_range = parameters.get('word_count_range', 'random')
-    min_word_len = int(parameters.get('min_word_length', 3))
+    min_word_len = _safe_int_param(parameters.get('min_word_length'), 3)
     if custom_word_count_range == 'random':
         from spinner_set import SpinnerSet
         wc_range = SpinnerSet._spin_word_count(dict_name, min_word_len, target_difficulty, board_dimensions, use_added_words=use_aw_flag)
@@ -6946,14 +6955,11 @@ def create_solo_match():
 
     # Bonus word length: spin if random (equal weights for 6-10)
     bonus_len_choice = parameters.get('bonus_word_length', 'random')
-    if bonus_len_choice == 'random' or not bonus_len_choice or str(bonus_len_choice) == '0':
+    if bonus_len_choice == 'random' or not bonus_len_choice or str(bonus_len_choice) in ['0', 'None', 'null', 'nan']:
         import random
         bonus_word_len = random.choices([6, 7, 8, 9, 10], weights=[20, 20, 20, 20, 20])[0]
     else:
-        try:
-            bonus_word_len = int(bonus_len_choice)
-        except:
-            bonus_word_len = 8
+        bonus_word_len = _safe_int_param(bonus_len_choice, 8)
 
     # Check if the user wants randomization per round
     room.randomize_spinner = (
@@ -6972,7 +6978,7 @@ def create_solo_match():
 
     room.spinner_params = {
         'dictionary': dict_name,
-        'min_word_length': int(parameters.get('min_word_length', 3)),
+        'min_word_length': min_word_len,
         'bonus_word_length': initial_bw_len,
         'board_format': board_format,
         'difficulty': target_difficulty,
