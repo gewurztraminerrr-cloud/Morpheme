@@ -6270,13 +6270,11 @@ class RoomManager:
                 # For 24-hour rooms, we do NOT overwrite these variables since the midnight transition
                 # in check_and_update_state already captured the precise yesterday snapshots.
                 if room.time_limit < 7200:
-                    room.previous_min_length = getattr(room, 'current_min_length', 3)
-                    room.previous_bonus_word = getattr(room, 'bonus_word', '')
+                    room.previous_min_length = ghost_min_len
+                    room.previous_bonus_word = (ghost_bonus or '')
                     import copy
-                    room.previous_board = copy.deepcopy(room.board) if room.board else []
-                    # USER REQUEST: Ensure intermission list matches round rules
-                    display_min_prev = getattr(room, 'current_min_length', 3)
-                    room.previous_all_words = [w for w in (room.all_words or []) if len(w) >= display_min_prev]
+                    room.previous_board = copy.deepcopy(ghost_prev_board) if ghost_prev_board else []
+                    room.previous_all_words = [w for w in (ghost_source_words or []) if len(w) >= ghost_min_len]
                     if hasattr(word_validator, 'word_validator'):
                         room.previous_csw_only_words = [w for w in room.previous_all_words if word_validator.word_validator.is_csw_only(w)]
                         room.previous_added_words = [w for w in room.previous_all_words if word_validator.word_validator.is_added_word(w)]
