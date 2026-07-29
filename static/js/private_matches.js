@@ -751,5 +751,20 @@
         }
     };
 
-    document.addEventListener('DOMContentLoaded', init);
+    // Global event delegation for Start Solo Match to ensure it works in SPA navigation
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('#start-solo-btn');
+        if (btn) {
+            e.preventDefault();
+            console.log('[private_matches.js] Global delegation intercepted Start Solo Match click');
+            startSoloMatch();
+        }
+    });
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+    window.initPrivateMatches = init;
 })();
