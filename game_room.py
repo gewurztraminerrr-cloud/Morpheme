@@ -4375,19 +4375,10 @@ class RoomManager:
             c_num = int(dims[2] if len(dims) == 3 else dims[1])
             achieved_diff = self.board_generator.get_difficulty_label(u_ratio, r_num, c_num, room.spinner_params.get('dictionary', 'NWL'), depth=d_num, board=room.board, target_difficulty=room.spinner_params.get('difficulty'), min_word_length=room.spinner_params.get('min_word_length', 3))
             room.current_difficulty = f"{achieved_diff} ({int(u_ratio * 100)}%)"
-            room.spinner_params['difficulty'] = room.current_difficulty
-            room.current_uniqueness = u_ratio
-            room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
-            
-            # Recalculate/sync the actual count but preserve the spun word count range completely
-            room.total_words_count = sum(1 for w in room.all_words if len(w) >= room.current_min_length)
-            room.current_word_count_range = room.spinner_params.get('word_count_range', '100-200')
-
-            
-            # CRITICAL SYNC: Update the UI header slot with the ground truth
-            # room.spinner_params['difficulty'] = achieved_diff
-            room.spinner_params['board_format'] = updated_format
-            room.spinner_params['uniqueness'] = u_ratio
+            if not getattr(room, '_spinner_params_locked', False):
+                room.spinner_params['difficulty'] = room.current_difficulty
+                room.spinner_params['board_format'] = updated_format
+                room.spinner_params['uniqueness'] = u_ratio
             room.spinner_params_revealed = True # Ensure they are shown
             
             print(f"[RoomManager] ROUND {room.current_round} START - Params: {room.current_difficulty}, {room.current_dictionary}, {room.current_word_count_range}")
@@ -5708,8 +5699,8 @@ class RoomManager:
                                 print(f"[RoomManager] WC correction: planned={planned_wc} actual={achieved_wc}. Updating next_spinner_params.")
                                 room.next_spinner_params['word_count_range'] = achieved_wc
                             
-                            # If already revealed, sync to the active spinner_params display too
-                            if getattr(room, 'spinner_params_revealed', False):
+                            # Only sync to active spinner_params if not yet locked for the round
+                            if not getattr(room, '_spinner_params_locked', False):
                                 room.spinner_params['board_format'] = updated_format
                                 room.spinner_params['word_count_range'] = achieved_wc
                         # REVEAL SYNC: Pre-calculate counts by length for the revelation phase
@@ -5723,7 +5714,7 @@ class RoomManager:
                         # SYNC: If the board generator picked a natural fallback bonus word of a different length, update the UI params.
                         if final_bonus_word and getattr(room, 'next_spinner_params', None):
                             room.next_spinner_params['bonus_word_length'] = len(final_bonus_word)
-                            if getattr(room, 'spinner_params_revealed', False):
+                            if not getattr(room, '_spinner_params_locked', False):
                                 room.spinner_params['bonus_word_length'] = len(final_bonus_word)
                         if getattr(room, 'next_spinner_params', None):
                             room.next_spinner_params['uniqueness'] = u_ratio

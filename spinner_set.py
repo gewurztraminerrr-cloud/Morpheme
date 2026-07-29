@@ -400,19 +400,19 @@ class SpinnerSet:
             return 'Normal'
             
         result = random.choices(
-            ['Normal', 'Bounce', 'Checkerboard', 'Equality Freq', 'Density', 'Penalty', 'Mania', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Rotation', 'Double', 'Triple'],
-            weights=[66, 2, 12, 4, 2, 2, 2, 2, 2, 2, 2, 1, 1]
+            ['Normal', 'Checkerboard', 'Equality Freq', 'Bounce', 'Density', 'Mania', 'Penalty', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Rotation', 'Double', 'Triple'],
+            weights=[66, 12, 4, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1]
         )[0]
         
         if result == 'Bounce':
             result = random.choices(['Bounce 1x', 'Bounce 2x', 'Bounce 3x'], weights=[33, 33, 34])[0]
         
         if result == 'Mania':
-            # User Request: 33% vowels, 67% consonants for Mania formats
+            # 33% vowels (A, E, I, O, U), 67% consonants
             if random.random() < 0.33:
-                mania_letter = random.choice('AEIOU')
+                mania_letter = random.choice(['A', 'E', 'I', 'O', 'U'])
             else:
-                mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')
+                mania_letter = random.choice(['B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z'])
             return f'{mania_letter} Mania'
         return result
 
