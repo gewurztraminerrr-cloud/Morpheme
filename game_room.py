@@ -943,7 +943,7 @@ class GameRoom:
                 penalty_points = -3
                 
                 # Prevent spamming the same penalty word
-                existing_words = {w['word'] for w in player.submitted_words}
+                existing_words = {(w.get('word') if isinstance(w, dict) else str(w)).upper() for w in player.submitted_words}
                 if word in existing_words:
                     return False, f"{word} ALREADY PENALIZED", 0, None
                 
@@ -966,8 +966,8 @@ class GameRoom:
         final_word = matched_word
         
         # Check if already submitted (by this player)
-        # Extract existing words from the list of dicts
-        existing_words = {w['word'] for w in player.submitted_words}
+        # Extract existing words from the list of dicts or strings safely
+        existing_words = {(w.get('word') if isinstance(w, dict) else str(w)).upper() for w in player.submitted_words}
         if final_word in existing_words:
             return False, f"{final_word} ALREADY FOUND", 0, None
         
@@ -1030,15 +1030,15 @@ class GameRoom:
             self.calculate_split_scores()
             # After recalculation, re-fetch the points
             for w_obj in player.submitted_words:
-                if w_obj['word'] == final_word:
-                    points = w_obj['points']
+                if isinstance(w_obj, dict) and w_obj.get('word') == final_word:
+                    points = w_obj.get('points', points)
                     break
         else:
             # For non-split modes (Accumulative, FCFS, Penalty), update 'points' from the recalculated object
             # to ensure user receives the correct score in the notification
             for w_obj in player.submitted_words:
-                if w_obj['word'] == final_word:
-                    points = w_obj['points']
+                if isinstance(w_obj, dict) and w_obj.get('word') == final_word:
+                    points = w_obj.get('points', points)
                     break
 
         # Persistence: Save active players for 24h rooms after successful submission
@@ -1244,6 +1244,17 @@ class GameRoom:
         """
         Recalculate player score from submitted words sequentially.
         """
+        # Normalize elements in submitted_words to ensure every entry is a dict
+        normalized_words = []
+        for w in (player.submitted_words or []):
+            if isinstance(w, dict):
+                normalized_words.append(w)
+            elif isinstance(w, str):
+                normalized_words.append({'word': w.upper(), 'time': 0, 'points': 1, 'score_details': {'total': 1}})
+            else:
+                normalized_words.append({'word': str(w).upper(), 'time': 0, 'points': 1, 'score_details': {'total': 1}})
+        player.submitted_words = normalized_words
+
         # Sort by submission time
         sorted_words = sorted(player.submitted_words, key=lambda x: x.get('time', 0))
         current_score = 0
@@ -1253,12 +1264,8 @@ class GameRoom:
         logger.debug(f"[Recalc] Re-evaluating score for {player.username}. Words: {len(player.submitted_words)} | Room FMT: {fmt}")
         
         for w_obj in sorted_words:
-            # Handle Penalty words or Split Points already stored in w_obj
-            # Priority: 
-            # 1. Use existing 'points' value if it's already recorded (essential for Split Points and Penalties)
-            # 2. Otherwise recalculate (Normal/Accumulative/FCFS fallback)
-            
             p_val = w_obj.get('points')
+            w_str = w_obj.get('word', '')
             
             if p_val is not None:
                 # Use pre-calculated value
@@ -1267,10 +1274,10 @@ class GameRoom:
                 points_details = w_obj.get('score_details', {'total': points})
             else:
                 # Use word_path from solver to avoid slow DFS for typed words (essential for round-end fluid transitions)
-                word_path = self.all_words_paths.get(w_obj['word'], w_obj.get('path'))
+                word_path = (self.all_words_paths or {}).get(w_str, w_obj.get('path'))
                 
                 points_details = calculate_word_score(
-                    w_obj['word'], 
+                    w_str, 
                     self.bonus_word, 
                     board_format=fmt,
                     path=word_path,
