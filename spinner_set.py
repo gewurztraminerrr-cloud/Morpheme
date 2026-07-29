@@ -86,24 +86,32 @@ class SpinnerSet:
             return SpinnerSet.sanitize_params(fallback, board_dimensions, is_24h)
 
     @staticmethod
-    def sanitize_params(res, board_dimensions, is_24h=False):
-        """Ironclad density/min-length sanitization to prevent impossible board generator CPU hangs."""
+    def sanitize_params(res, board_dimensions='4x4', is_24h=False):
+        """Ironclad density/min-length sanitization to enforce exact Spinner Set rules."""
         if not isinstance(res, dict):
             return res
             
+        p = dict(res)
         dims = str(board_dimensions).lower().replace(" ", "")
         
-        dict_name = str(res.get('dictionary', 'NWL')).upper()
-        # Detect compound AW dict names like 'NWL + AW' and 'CSW + AW'
+        # Normalize word_count_range string format
+        wc = p.get('word_count_range')
+        if isinstance(wc, (list, tuple)):
+            if len(wc) >= 2: p['word_count_range'] = f"{wc[0]}-{wc[1]}"
+            elif len(wc) == 1: p['word_count_range'] = str(wc[0])
+        elif isinstance(wc, str):
+            p['word_count_range'] = wc.replace(',', '-')
+
+        dict_name = str(p.get('dictionary', 'NWL')).upper()
         is_aw_effective = (
             dict_name in ['AW', 'ADDED_WORDS', 'ALL']
-            or res.get('use_added_words') is True
+            or p.get('use_added_words') is True
             or '+ AW' in dict_name
             or '+AW' in dict_name
         )
         
         try:
-            min_word_length = int(res.get('min_word_length'))
+            min_word_length = int(p.get('min_word_length'))
         except:
             min_word_length = 4 if '4x6' in dims else (5 if '5x7' in dims else (6 if '6x8' in dims or '3x3x3' in dims else 3))
 
@@ -126,7 +134,7 @@ class SpinnerSet:
         elif '6x8' in dims or '3x3x3' in dims:
             if min_word_length > 8: min_word_length = 8
 
-        wc_range = res.get('word_count_range')
+        wc_range = p.get('word_count_range')
         if is_aw_effective:
             if wc_range not in ['300-400', '400-500', '500+']:
                 import random
@@ -136,27 +144,34 @@ class SpinnerSet:
                 import random
                 wc_range = random.choices(['50-100', '100-200', '200-300', '300-400', '500+'], weights=[9, 30, 30, 30, 1])[0]
 
-        # Enforce 4x4 feasibility for standard NWL/CSW
+        # Enforce 4x4 feasibility:
+        # USER MANDATE: The ONLY Minimum letter count allowable for 50-100 words in a 4x4 room is 5L!
         if '4x4' in dims and not is_aw_effective:
-            if min_word_length >= 5:
+            if wc_range == '50-100':
+                min_word_length = 5
+            elif min_word_length >= 5:
                 wc_range = '50-100'
-            elif min_word_length == 4 and wc_range not in ['50-100', '100-200']:
-                wc_range = '100-200'
-            elif min_word_length == 3 and wc_range not in ['100-200', '200-300']:
-                wc_range = '200-300'
+            elif min_word_length == 4:
+                if wc_range not in ['100-200', '200-300']:
+                    wc_range = '100-200'
+            elif min_word_length == 3:
+                if wc_range not in ['100-200', '200-300', '300-400']:
+                    wc_range = '200-300'
 
-        res['min_word_length'] = min_word_length
-        res['word_count_range'] = wc_range
+        p['min_word_length'] = min_word_length
+        p['word_count_range'] = wc_range
 
         if is_24h:
             if not is_aw_effective:
-                res['word_count_range'] = '200-300'
+                p['word_count_range'] = '200-300'
             if '4x4' in dims and min_word_length >= 5:
-                res['min_word_length'] = 4
+                p['min_word_length'] = 4
             elif '4x6' in dims and min_word_length >= 6:
-                res['min_word_length'] = 5
+                p['min_word_length'] = 5
             elif '5x7' in dims and min_word_length >= 7:
-                res['min_word_length'] = 6
+                p['min_word_length'] = 6
+
+        return p
         bw_raw = res.get('bonus_word_length')
         try:
             bw_val = int(bw_raw)
@@ -379,29 +394,4 @@ class SpinnerSet:
             return f'{mania_letter} Mania'
         return result
 
-    @staticmethod
-    def sanitize_params(params, board_dimensions='4x4', is_24h=False):
-        if not isinstance(params, dict):
-            return params
-        p = dict(params)
-        wc = p.get('word_count_range')
-        if isinstance(wc, (list, tuple)):
-            if len(wc) >= 2:
-                p['word_count_range'] = f"{wc[0]}-{wc[1]}"
-            elif len(wc) == 1:
-                p['word_count_range'] = str(wc[0])
-        elif isinstance(wc, str):
-            p['word_count_range'] = wc.replace(',', '-')
-            
-        # USER MANDATE: Only allow 300-400 words, 400-500 words, and 500+ words for "+ AW" dictionaries
-        is_aw = (
-            p.get('use_added_words') is True
-            or '+ AW' in str(p.get('dictionary', '')).upper()
-            or '+AW' in str(p.get('dictionary', '')).upper()
-            or str(p.get('dictionary', '')).upper() in ['AW', 'ADDED_WORDS', 'ALL']
-        )
-        if is_aw:
-            current_wc = str(p.get('word_count_range', ''))
-            if current_wc in ['50-100', '100-200', '200-300', '50,100', '100,200', '200,300']:
-                p['word_count_range'] = random.choices(['300-400', '400-500', '500+'], weights=[40, 40, 20])[0]
-        return p
+
