@@ -6757,6 +6757,11 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                     showValidationFeedback(msg, true, isBonusWord, finalPath, true);
                     optimisticColor = isBonusWord ? 'green' : 'blue';
                     optimisticIsDefinitive = true;
+                } else {
+                    // Confirmed invalid locally — flash red INSTANTLY with zero latency (same 0ms response as blue flash!)
+                    showValidationFeedback(`${word.toUpperCase()} INVALID`, false, false, finalPath);
+                    optimisticColor = 'red';
+                    optimisticIsDefinitive = true;
                 }
             }
         }
