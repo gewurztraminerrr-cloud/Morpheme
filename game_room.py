@@ -1817,46 +1817,53 @@ class GameRoom:
                 self.bonus_cell = fc
                 self.solving_complete = True
                 
-                # Set CSW/Added words list
-                if hasattr(word_validator, 'word_validator'):
-                    word_validator.word_validator.ensure_csw_loaded()
-                    if hasattr(word_validator.word_validator, 'ensure_added_words_loaded'):
-                        word_validator.word_validator.ensure_added_words_loaded()
-                    self.csw_only_words = [w for w in self.all_words if word_validator.word_validator.is_csw_only(w)]
-                    self.added_words = [w for w in self.all_words if word_validator.word_validator.is_added_word(w)]
-                else:
-                    self.csw_only_words = []
-                    self.added_words = []
-
-                # Scored dict
+                # Fast-score length-based scores instantly to eliminate HTTP request blocking latency!
+                fast_scores = {}
                 is_valued = ('valued' in str(self.current_board_format).lower())
-                from scoring import calculate_word_score
-                scored_dict = {}
+                from scoring import get_valued_word_score
                 for w in self.all_words:
-                    path_val = self.all_words_paths.get(w) if isinstance(self.all_words_paths, dict) else None
-                    details = calculate_word_score(
-                        w, self.bonus_word,
-                        board_format=self.current_board_format,
-                        path=path_val,
-                        bonus_cell=self.bonus_cell,
-                        board=(self.board or getattr(self, 'previous_board', None)),
-                        return_details=True
-                    )
-                    scored_dict[w] = details
-                self.solved_words_with_scores = scored_dict
+                    if is_valued:
+                        s = get_valued_word_score(w)
+                    else:
+                        length = len(w)
+                        s = 1 if length <= 4 else (2 if length == 5 else (3 if length == 6 else (5 if length == 7 else 11)))
+                    fast_scores[w] = {'total': s, 'base': s}
+                self.solved_words_with_scores = fast_scores
+                self.csw_only_words = getattr(self, 'next_round_csw_only_words', [])
+                self.added_words = getattr(self, 'next_round_added_words', [])
                 self.update_counts_by_len()
 
-                # Set timestamps and transition state
+                # Set timestamps and transition state IMMEDIATELY (0ms latency!)
                 self.state = 'active'
                 self.round_start_time = now
                 self.intermission_start_time = 0
                 self.starting_round = False
-                self._wakeup_in_progress = False  # ISSUE 6: clear guard now that wake-up is complete
-                self._initial_board_delivered = True  # ISSUE 6: mark board as live
-                
-                # Proactively launch spinner parameter pre-generation for the NEXT round
+                self._wakeup_in_progress = False
+                self._initial_board_delivered = True
                 self._transition_spinner_launched = False
-                
+
+                # Refine detailed scoring and dictionary categorization asynchronously in background daemon thread
+                def refine_active_scoring_async():
+                    try:
+                        from scoring import calculate_word_score
+                        scored_dict = {}
+                        eval_board = self.board or getattr(self, 'previous_board', None)
+                        eval_fmt = self.current_board_format
+                        for w in self.all_words:
+                            path_val = self.all_words_paths.get(w) if isinstance(self.all_words_paths, dict) else None
+                            scored_dict[w] = calculate_word_score(
+                                w, self.bonus_word,
+                                board_format=eval_fmt,
+                                path=path_val,
+                                bonus_cell=self.bonus_cell,
+                                board=eval_board,
+                                return_details=True
+                            )
+                        self.solved_words_with_scores = scored_dict
+                    except Exception as e:
+                        print(f"[GameRoom] Async active score refinement error: {e}")
+
+                threading.Thread(target=refine_active_scoring_async, daemon=True).start()
                 return True
 
         should_end = False
