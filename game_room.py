@@ -6299,12 +6299,8 @@ class RoomManager:
                     import copy
                     room.previous_board = copy.deepcopy(ghost_prev_board) if ghost_prev_board else []
                     room.previous_all_words = [w for w in (ghost_source_words or []) if len(w) >= ghost_min_len]
-                    if hasattr(word_validator, 'word_validator'):
-                        room.previous_csw_only_words = [w for w in room.previous_all_words if word_validator.word_validator.is_csw_only(w)]
-                        room.previous_added_words = [w for w in room.previous_all_words if word_validator.word_validator.is_added_word(w)]
-                    else:
-                        room.previous_csw_only_words = list(room.csw_only_words) if room.csw_only_words else []
-                        room.previous_added_words = list(room.added_words) if room.added_words else []
+                    room.previous_csw_only_words = list(room.csw_only_words) if getattr(room, 'csw_only_words', None) else []
+                    room.previous_added_words = list(room.added_words) if getattr(room, 'added_words', None) else []
                 
                 # Update current active counts
                 room.csw_only_words = getattr(room, 'next_round_csw_only_words', [])
