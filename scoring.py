@@ -67,7 +67,7 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
     used_bonus = False
     
     # 3. Board Pathfinding (Check if word uses the bonus tile)
-    is_spec_bonus_fmt = ('bonus letter' in fmt_lower or 'either' in fmt_lower)
+    is_spec_bonus_fmt = ('bonus' in fmt_lower or 'either' in fmt_lower)
     should_skip_pathfinding = (not path and not is_spec_bonus_fmt and not bonus_cell)
 
     if board and len(board) > 0 and not should_skip_pathfinding:
@@ -76,9 +76,9 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
         # FAST PATH ITERATION
         if path and isinstance(path, (list, tuple)):
             # PRE-CALCULATE SPECIAL CELLS SET:
-            # We check for bonus_cell (only in Bonus Letter format)
+            # We check for bonus_cell (in Bonus Letter / Bonus formats)
             special_coords = set()
-            if 'bonus letter' in fmt_lower and bonus_cell:
+            if 'bonus' in fmt_lower and bonus_cell:
                  if isinstance(bonus_cell, dict):
                      special_coords.add((int(bonus_cell.get('f', -1)), int(bonus_cell.get('r', 0)), int(bonus_cell.get('c', 0))))
                  elif isinstance(bonus_cell, (list, tuple)):
@@ -94,7 +94,7 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
                     else: nf, nx, ny = -1, int(node[0]), int(node[1])
                 
                 # Check for either explicit bonus coord or an Either/Or tile
-                if 'bonus letter' in fmt_lower and (nf, nx, ny) in special_coords:
+                if 'bonus' in fmt_lower and (nf, nx, ny) in special_coords:
                     used_bonus = True; break
                 # Bounds check to prevent IndexError under any client-side path corruption
                 if is_3d:
@@ -180,7 +180,7 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
                     
                     # Check if this node hits the special bonus condition
                     # (Specified bonus cell coordinate OR an Either/Or tile)
-                    is_bonus_match = ('bonus letter' in fmt_lower and f == bf and r == bx and c == by)
+                    is_bonus_match = ('bonus' in fmt_lower and f == bf and r == bx and c == by)
                     is_either_match = ('either' in fmt_lower and '/' in cell_val)
                     now_hit = has_hit_bonus or is_bonus_match or is_either_match
                     

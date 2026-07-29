@@ -356,17 +356,21 @@ class WordValidator:
             val = use_added_words
             
         d_upper = str(dictionary).upper()
-        if d_upper == 'AW' or d_upper == 'ADDED_WORDS':
-            self.ensure_csw_loaded()
-            return word in self.nwl_words or word in self.csw_words or word in self.long_words or word in self.added_words
-        elif d_upper == 'UNIQUENWL':
-            return word in self.unique_nwl_words or (val and word in self.added_words)
-        elif d_upper == 'UNIQUECSW':
-            self.ensure_csw_loaded()
-            return word in self.unique_csw_words or (val and word in self.added_words)
-        elif d_upper == 'CSW':
+        has_aw = ('+ AW' in d_upper) or ('+AW' in d_upper) or (d_upper in ['AW', 'ADDED_WORDS'])
+        if use_added_words is None:
+            self.get_use_added_words()
+            val = use_added_words_ctx.get()
+            if val is None:
+                val = has_aw
+        else:
+            val = use_added_words or has_aw
+            
+        if 'CSW' in d_upper:
             self.ensure_csw_loaded()
             return word in self.csw_words or word in self.long_words or (val and word in self.added_words)
+        elif 'AW' in d_upper and 'NWL' not in d_upper and 'CSW' not in d_upper:
+            self.ensure_csw_loaded()
+            return word in self.nwl_words or word in self.csw_words or word in self.long_words or word in self.added_words
         else:  # NWL
             return word in self.nwl_words or word in self.long_words or (val and word in self.added_words)
     

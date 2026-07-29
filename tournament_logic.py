@@ -197,7 +197,7 @@ class TournamentManager:
         # Use tournament parameters
         target_range = params.get('word_count_range')
         if not target_range or target_range == 'None':
-             target_range = SpinnerSet._spin_word_count(dict_name, params.get('min_word_length', 3), params.get('difficulty', 'Medium'), dims)
+             target_range = SpinnerSet._spin_word_count(dict_name, params.get('min_word_length', 3), params.get('difficulty', 'Medium'), dims, use_added_words=params.get('use_added_words', False))
         
         res = bg.generate_board(
             dimensions=dims,

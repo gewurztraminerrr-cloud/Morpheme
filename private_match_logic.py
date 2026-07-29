@@ -334,7 +334,7 @@ class PrivateMatchManager:
 
         target_range = parameters.get('word_count_range', 'random')
         if target_range == 'random':
-            target_range = SpinnerSet._spin_word_count(dict_name, min_len, target_difficulty, dims)
+            target_range = SpinnerSet._spin_word_count(dict_name, min_len, target_difficulty, dims, use_added_words=use_aw_flag)
         
         fmt_check = target_format.lower()
         if bonus_len > 0:
