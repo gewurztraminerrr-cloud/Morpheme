@@ -1501,9 +1501,9 @@ class GameRoom:
             
             is_aw_effective = (fparams.get('use_added_words', False) or '+ AW' in str(fparams.get('dictionary', '')).upper()) if fparams else False
             if is_aw_effective:
-                min_accept = max(300, min_accept)
+                min_accept = 100
             else:
-                min_accept = max(50, min_accept)
+                min_accept = 15 if f_min_l >= 5 else 30
                 
             if actual_cnt >= min_accept:
                 fallback = (fb, fw_filtered, fc, ff, {w: p for w, p in fp.items() if len(w) >= f_min_l}, fr, fbw, fparams)
@@ -2615,9 +2615,9 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             
     is_aw = use_added_words or '+ AW' in str(dictionary).upper() or '+AW' in str(dictionary).upper()
     if is_aw:
-        min_accept = max(300, min_accept)
+        min_accept = 100
     else:
-        min_accept = max(50, min_accept)
+        min_accept = 15 if min_word_length >= 5 else 30
     
     parts = dimensions.split("x")
     is_24h = time_limit >= 7200
@@ -4214,9 +4214,9 @@ class RoomManager:
                         elif '400' in str(target_range): min_accept = 400
                         elif '500' in str(target_range): min_accept = 500
                 if use_aw_flag:
-                    min_accept = max(300, min_accept)
+                    min_accept = 100
                 else:
-                    min_accept = max(50, min_accept)
+                    min_accept = 20 if m_len >= 5 else 30
 
                 # OPTIMIZATION: Try to get a cached board instantly for all rooms to avoid any creation delay
                 res = None
@@ -4329,11 +4329,19 @@ class RoomManager:
                     finally:
                         use_added_words_ctx.reset(token)
                 
-                board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio, final_bonus_word = res
+                if not res:
+                    print(f"[RoomManager] Warning: generate_board returned None. Using emergency fallback board for {room_id}")
+                    res = get_emergency_fallback_board(
+                        room.board_dimensions, room.spinner_params.get('board_format', 'Normal'), room.time_limit,
+                        dictionary=room.spinner_params.get('dictionary', 'NWL'), use_added_words=use_aw_flag,
+                        target_range=room.spinner_params.get('word_count_range', '100-200'), min_word_length=m_len, difficulty='Medium'
+                    )
+                
+                board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio, final_bonus_word = res[:7]
                 
                 # Verify word count compliance for the resolved board candidate
                 _filtered_cnt = len([w for w in all_words if len(w) >= m_len])
-                if _filtered_cnt < min_accept and board_attempts < 4:
+                if _filtered_cnt < min_accept and board_attempts < 3:
                     print(f"[RoomManager] WARNING: Generated/popped board for room {room_id} has only {_filtered_cnt} words of length >= {m_len} (needed {min_accept}). Retrying...")
                     res = None
                     board_attempts += 1
@@ -4342,11 +4350,11 @@ class RoomManager:
                 # Issue 1 & 7: Check against rolling 10-board fingerprint history, not just 1 previous board
                 _fp = self._get_board_fingerprint(board)
                 _fp_history = getattr(room, 'board_fingerprint_history', [])
-                if _fp and _fp in _fp_history:
+                if _fp and _fp in _fp_history and board_attempts < 3:
                     print(f"[RoomManager] WARNING: Board fingerprint ALREADY IN HISTORY for room {room_id}. Retrying...")
                     board_attempts += 1
                     continue
-                if getattr(room, 'board', None) == board or getattr(room, 'previous_board', None) == board:
+                if (getattr(room, 'board', None) == board or getattr(room, 'previous_board', None) == board) and board_attempts < 3:
                     print(f"[RoomManager] WARNING: Generated board in start_round for room {room_id} is IDENTICAL to current/previous round board. Retrying...")
                     board_attempts += 1
                     continue
