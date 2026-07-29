@@ -4872,6 +4872,14 @@ class RoomManager:
                         room.next_round_uniqueness = ratio
                         room.next_round_total_words_count = len(all_words)
                         
+                        if hasattr(word_validator, 'word_validator'):
+                            word_validator.word_validator.ensure_csw_loaded()
+                            room.next_round_csw_only_words = [w for w in all_words if word_validator.word_validator.is_csw_only(w)]
+                            room.next_round_added_words = [w for w in all_words if word_validator.word_validator.is_added_word(w)]
+                        else:
+                            room.next_round_csw_only_words = []
+                            room.next_round_added_words = []
+                        
                         # Calculate length-based scores to prevent UI flashing
                         is_valued = ('valued' in str(board_format_ret).lower())
                         scored_dict = {}
@@ -6317,6 +6325,15 @@ class RoomManager:
                 # Update current active counts
                 room.csw_only_words = getattr(room, 'next_round_csw_only_words', [])
                 room.added_words = getattr(room, 'next_round_added_words', [])
+
+                if (not room.csw_only_words or len(room.csw_only_words) == 0) and str(getattr(room, 'current_dictionary', 'NWL')).upper() in ['CSW', 'ALL']:
+                    if hasattr(word_validator, 'word_validator'):
+                        word_validator.word_validator.ensure_csw_loaded()
+                        room.csw_only_words = [w for w in (room.next_round_words or room.all_words or []) if word_validator.word_validator.is_csw_only(w)]
+
+                if (not room.added_words or len(room.added_words) == 0) and (getattr(room, 'use_added_words', False) or '+ AW' in str(getattr(room, 'current_dictionary', '')).upper()):
+                    if hasattr(word_validator, 'word_validator'):
+                        room.added_words = [w for w in (room.next_round_words or room.all_words or []) if word_validator.word_validator.is_added_word(w)]
 
                 # ATOMIC PROMOTION: Carry staging data to active room state
                 room.board = room.next_round_board
