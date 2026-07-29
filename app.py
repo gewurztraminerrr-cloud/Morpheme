@@ -3564,8 +3564,7 @@ def get_room_state(room_id):
         room_manager.check_6x8_rescue(room)
         if room.state == 'intermission' and room.time_remaining <= 0:
             if not getattr(room, 'starting_round', False):
-                import threading
-                threading.Thread(target=room_manager.start_next_round, args=(room.room_id,), daemon=True).start()
+                room_manager.start_next_round(room.room_id)
             
         # 2. On-demand database backfill for previous day's board/history
         if room.time_limit >= 7200:

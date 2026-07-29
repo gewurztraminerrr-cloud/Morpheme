@@ -6441,64 +6441,44 @@ class RoomManager:
                 
                 # Save to DB for cheat prevention across workers and 24h room persistence
                 if room.board and len(room.board) > 0:
-                    try:
-                        import sqlite3
-                        import json
-                        import time
-                        import os
-                        conn = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db'))
-                        
-                        # Serialize active players
-                        players_data = []
-                        for p in room.players:
-                            players_data.append({
-                                'user_id': p.user_id,
-                                'username': p.username,
-                                'rating': p.rating,
-                                'submitted_words': p.submitted_words,
-                                'invalid_words': p.invalid_words,
-                                'score': p.score,
-                                'previous_round_score': p.previous_round_score,
-                                'games_played': p.games_played,
-                                'previous_submitted_words': p.previous_submitted_words,
-                                'found_bonus_word': p.found_bonus_word,
-                                'last_active': p.last_active,
-                                'input_method': p.input_method,
-                                'country_flag': p.country_flag,
-                                'joined_mid_round': p.joined_mid_round,
-                                'has_exceptional_round': p.has_exceptional_round,
-                                'is_guest': p.is_guest,
-                                'is_ai': p.is_ai,
-                                'ai_rating': p.ai_rating,
-                                'has_abandoned': p.has_abandoned
-                            })
-                        players_json = json.dumps(players_data)
-                        
-                        conn.execute('''
-                            INSERT OR REPLACE INTO active_boards (
-                                room_id, board_data, all_words, dictionary, min_length, updated_at,
-                                bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range,
-                                active_players_json
-                            )
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        ''', (
-                            room.room_id,
-                            json.dumps(room.board),
-                            json.dumps(list(room.all_words)),
-                            room.current_dictionary,
-                            room.current_min_length,
-                            time.time(),
-                            room.bonus_word or '',
-                            json.dumps(room.bonus_cell) if room.bonus_cell else None,
-                            room.current_board_format or 'Normal',
-                            room.current_uniqueness or 0.0,
-                            room.current_word_count_range or ('200-300' if room.time_limit >= 7200 else '100-200'),
-                            players_json
-                        ))
-                        conn.commit()
-                        conn.close()
-                    except Exception as db_err:
-                        print(f"[RoomManager] Error saving board to DB: {db_err}")
+                    def save_board_db_async():
+                        try:
+                            import sqlite3, json, time, os
+                            conn = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db'))
+                            players_data = []
+                            for p in room.players:
+                                players_data.append({
+                                    'user_id': p.user_id, 'username': p.username, 'rating': p.rating,
+                                    'submitted_words': p.submitted_words, 'invalid_words': p.invalid_words,
+                                    'score': p.score, 'previous_round_score': p.previous_round_score,
+                                    'games_played': p.games_played, 'previous_submitted_words': p.previous_submitted_words,
+                                    'found_bonus_word': p.found_bonus_word, 'last_active': p.last_active,
+                                    'input_method': p.input_method, 'country_flag': p.country_flag,
+                                    'joined_mid_round': p.joined_mid_round, 'has_exceptional_round': p.has_exceptional_round,
+                                    'is_guest': p.is_guest, 'is_ai': p.is_ai, 'ai_rating': p.ai_rating, 'has_abandoned': p.has_abandoned
+                                })
+                            players_json = json.dumps(players_data)
+                            conn.execute('''
+                                INSERT OR REPLACE INTO active_boards (
+                                    room_id, board_data, all_words, dictionary, min_length, updated_at,
+                                    bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range,
+                                    active_players_json
+                                )
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            ''', (
+                                room.room_id, json.dumps(room.board), json.dumps(list(room.all_words)),
+                                room.current_dictionary, room.current_min_length, time.time(),
+                                room.bonus_word or '', json.dumps(room.bonus_cell) if room.bonus_cell else None,
+                                room.current_board_format or 'Normal', room.current_uniqueness or 0.0,
+                                room.current_word_count_range or ('200-300' if room.time_limit >= 7200 else '100-200'),
+                                players_json
+                            ))
+                            conn.commit()
+                            conn.close()
+                        except Exception as db_err:
+                            print(f"[RoomManager] Error saving board to DB async: {db_err}")
+
+                    threading.Thread(target=save_board_db_async, daemon=True).start()
                 
                 # FINAL VALIDATION: If the board is STILL empty, we cannot start the round.
                 # Revert to a 10-second emergency intermission to try again.
