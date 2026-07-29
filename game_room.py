@@ -4797,7 +4797,19 @@ class RoomManager:
                             room.board_dimensions, dict_val, fmt_val, m_len, use_aw_val, bonus_word_len=bw_len
                         )
                         if not candidate:
-                            candidate = pop_any_cached_board(room.board_dimensions)
+                            cached_res = get_emergency_fallback_board(
+                                room.board_dimensions,
+                                board_format=fmt_val,
+                                time_limit=room.time_limit,
+                                dictionary=dict_val,
+                                use_added_words=use_aw_val,
+                                target_range=new_params.get('word_count_range'),
+                                min_word_length=m_len,
+                                difficulty=new_params.get('difficulty')
+                            )
+                            if cached_res:
+                                c_b, c_w, c_c, c_f, c_p, c_r, c_bw, c_tr, c_params = cached_res
+                                candidate = (c_b, c_w, c_c, fmt_val, c_p, c_r, c_bw, c_params)
                         if candidate:
                             c_b, c_w, c_c, c_f, c_p, c_r, c_bw, c_params = candidate
                             fw_filt = [w for w in c_w if len(w) >= m_len]

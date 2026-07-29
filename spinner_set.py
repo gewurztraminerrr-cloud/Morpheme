@@ -210,51 +210,14 @@ class SpinnerSet:
                 # Difficulty (spin independently)
                 difficulty = SpinnerSet._spin_difficulty(board_dimensions, 3)
 
-                # Word count range based on dictionary & dimension feasibility
-                if '4x4' in dims:
-                    if is_aw_effective:
-                        wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
-                    else:
-                        if min_word_length == ceiling: # 5L
-                            wc_range = '50-100'
-                        elif min_word_length == middle: # 4L
-                            wc_range = random.choices(['50-100', '100-200'], weights=[40, 60])[0]
-                        else: # 3L
-                            wc_range = random.choices(['100-200', '200-300'], weights=[50, 50])[0]
+                # Word count range strictly drawn from Odds Window probabilities
+                if is_aw_effective:
+                    wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
                 else:
-                    if is_aw_effective:
-                        wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
-                    else:
-                        if min_word_length == ceiling:
-                            wc_range = random.choices(['50-100', '100-200'], weights=[70, 30])[0]
-                        else:
-                            wc_range = random.choices(['100-200', '200-300', '300-400', '500+'], weights=[30, 35, 30, 5])[0]
+                    wc_range = random.choices(['50-100', '100-200', '200-300', '300-400', '500+'], weights=[9, 30, 30, 30, 1])[0]
 
                 # Determine board format
                 board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions)
-                if board_format == 'Checkerboard':
-                    if is_aw_effective:
-                        # Allow Checkerboard format in "+ AW" rounds! Keep the 300+ word count range.
-                        pass
-                    else:
-                        min_word_length = random.choices([floor, middle, ceiling], weights=[25, 50, 25])[0]
-                        if min_word_length == ceiling:
-                            wc_range = '50-100'
-                        elif min_word_length == middle:
-                            wc_range = random.choice(['100-200', '200-300'])
-                        else:
-                            wc_range = random.choice(['100-200', '200-300'])
-                elif board_format == 'Equality Freq':
-                    if is_aw_effective:
-                        # AW dict with Equality Freq must still follow 300+ word counts; keep rolled range
-                        pass
-                    else:
-                        # Non-AW Equality Freq is naturally low density; limit to 50-100 or 100-200
-                        wc_range = random.choice(['50-100', '100-200'])
-                        if wc_range == '50-100':
-                            min_word_length = ceiling
-                        else: # 100-200
-                            min_word_length = random.choices([floor, middle, ceiling], weights=[25, 50, 25])[0]
 
                 bw_len = random.choice([6, 7, 8, 9, 10])
                 if bw_len < min_word_length:
