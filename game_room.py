@@ -265,6 +265,14 @@ class GameRoom:
         return self.intermission_start_time + limit
 
     def __post_init__(self):
+        if isinstance(self.board_dimensions, (tuple, list)):
+            if len(self.board_dimensions) == 3:
+                self.board_dimensions = f"{self.board_dimensions[0]}x{self.board_dimensions[1]}x{self.board_dimensions[2]}"
+            else:
+                self.board_dimensions = f"{self.board_dimensions[0]}x{self.board_dimensions[1]}"
+        elif self.board_dimensions:
+            self.board_dimensions = str(self.board_dimensions)
+
         # Force integer types for comparisons
         self.time_limit = int(self.time_limit)
         if self.min_rating is not None: self.min_rating = int(self.min_rating)
@@ -4244,6 +4252,7 @@ class RoomManager:
                             print(f"[RoomManager] INSTANT Solo cached board popped for room {room_id} in 1ms!")
                             res = (sboard, swords_filtered, sbonus_cell, sfmt, spaths_filtered, sratio, sbonus_word)
 
+                cached_res = None
                 if not res:
                     param_key_str = serialize_param_key(
                         room.board_dimensions, bonus_word, room.spinner_params['word_count_range'],

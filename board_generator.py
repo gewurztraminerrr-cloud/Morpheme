@@ -236,6 +236,14 @@ def mark_board_hash_used(board_hash):
 
 
 def pop_any_cached_board(dimensions, min_word_length=3, exclude_format=None):
+    if isinstance(dimensions, (tuple, list)):
+        if len(dimensions) == 3:
+            dimensions = f"{dimensions[0]}x{dimensions[1]}x{dimensions[2]}"
+        else:
+            dimensions = f"{dimensions[0]}x{dimensions[1]}"
+    elif dimensions:
+        dimensions = str(dimensions)
+
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
     conn = None
     try:
@@ -307,6 +315,13 @@ def pop_any_cached_board(dimensions, min_word_length=3, exclude_format=None):
     return None
 
 def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len=None):
+    if isinstance(dimensions, (tuple, list)):
+        if len(dimensions) == 3:
+            dimensions = f"{dimensions[0]}x{dimensions[1]}x{dimensions[2]}"
+        else:
+            dimensions = f"{dimensions[0]}x{dimensions[1]}"
+    elif dimensions:
+        dimensions = str(dimensions)
     """
     Find and pop a board from pregenerated_boards that strictly matches:
     - dimensions
@@ -1739,10 +1754,14 @@ class BoardGenerator:
     def _generate_board_internal(
         self, dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length=3, difficulty="Medium", is_emergency=False, timeout=None, use_added_words=None, mark_used=True
     ):
-        """
-        Generate a valid board that meets word count requirements (100-300).
-        RESTARTED: Simplified logic with ironclad compliance.
-        """
+        if isinstance(dimensions, (tuple, list)):
+            if len(dimensions) == 3:
+                dimensions = f"{dimensions[0]}x{dimensions[1]}x{dimensions[2]}"
+            else:
+                dimensions = f"{dimensions[0]}x{dimensions[1]}"
+        elif dimensions:
+            dimensions = str(dimensions)
+
         bonus_cell = None
         original_dict_name = str(dictionary).upper() if isinstance(dictionary, str) else ""
 
