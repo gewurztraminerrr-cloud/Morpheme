@@ -1351,10 +1351,25 @@ class GameRoom:
                         break
                 
                 if not popped:
-                    from board_generator import pop_any_cached_board
-                    any_pop = pop_any_cached_board(self.board_dimensions)
-                    if any_pop:
-                        popped = any_pop
+                    try:
+                        e_diff = self.spinner_params.get('difficulty', 'Medium') if isinstance(self.spinner_params, dict) else 'Medium'
+                        gen_res = self.board_generator.generate_board(
+                            self.board_dimensions,
+                            None,
+                            target_range,
+                            dict_name,
+                            fmt_name,
+                            min_len_val,
+                            e_diff,
+                            is_emergency=True,
+                            use_added_words=use_aw
+                        )
+                        if gen_res:
+                            g_b, g_w, g_c, g_f, g_p, g_r, g_bw = gen_res[0], gen_res[1], gen_res[2], gen_res[3], gen_res[4], gen_res[5], gen_res[6]
+                            g_params = gen_res[8] if len(gen_res) > 8 else self.spinner_params
+                            popped = (g_b, g_w, g_c, g_f, g_p, g_r, g_bw, g_params)
+                    except Exception as ex_wd:
+                        print(f"[Watchdog 0:50] Emergency generate_board error: {ex_wd}")
                 
                 if popped:
                     p_board, p_words, p_bonus_cell, p_format, p_paths, p_ratio, p_bonus_word, p_params = popped
@@ -1372,30 +1387,15 @@ class GameRoom:
                     self.next_round_format = fmt_name
                     self.next_round_uniqueness = p_ratio
                     
-                    # Resolve count range from actual word count of popped board
-                    wc_cnt = len(p_words_filtered)
-                    is_aw = use_aw or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
-                    if is_aw:
-                        if wc_cnt < 400: wc_lbl = '300-400'
-                        elif wc_cnt < 500: wc_lbl = '400-500'
-                        else: wc_lbl = '500+'
-                    else:
-                        if wc_cnt < 100: wc_lbl = '50-100'
-                        elif wc_cnt < 200: wc_lbl = '100-200'
-                        elif wc_cnt < 300: wc_lbl = '200-300'
-                        elif wc_cnt < 400: wc_lbl = '300-400'
-                        elif wc_cnt < 500: wc_lbl = '400-500'
-                        else: wc_lbl = '500+'
-                    
-                    # Update spinner_params immediately during intermission!
+                    # Preserve exact rolled spinner set parameters (do NOT overwrite with fallback discrepancies)
                     aligned_sp = dict(self.spinner_params) if isinstance(self.spinner_params, dict) else {}
-                    aligned_sp['word_count_range'] = wc_lbl
                     aligned_sp['board_format'] = fmt_name
+                    aligned_sp['word_count_range'] = target_range
+                    aligned_sp['uniqueness'] = p_ratio
                     if p_bonus_word:
                         aligned_sp['bonus_word_length'] = len(p_bonus_word)
                     aligned_sp['generated_at'] = now
                     
-                    # Stage parameters for 0:45 reveal without mutating current spinner_params yet
                     self.next_spinner_params = dict(aligned_sp)
                     self.next_round_spinner_params = dict(aligned_sp)
                     self.spinner_params_generated = True
