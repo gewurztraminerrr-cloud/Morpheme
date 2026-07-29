@@ -271,7 +271,7 @@ class SpinnerSet:
                     'generated_at': time.time()
                 }
                 
-                if previous_params and isinstance(previous_params, dict):
+                if previous_params and isinstance(previous_params, dict) and _ < 25:
                     def get_base_fmt(f):
                         s = str(f).lower()
                         if 'bounce' in s: return 'bounce'
@@ -290,8 +290,28 @@ class SpinnerSet:
 
                     prev_base = get_base_fmt(previous_params.get('board_format', ''))
                     cur_base = get_base_fmt(res.get('board_format', ''))
-                    # SPECIAL FORMAT ANTI-STREAK: Non-Normal special formats must never repeat back-to-back
-                    if cur_base != 'normal' and cur_base == prev_base and _ < 25:
+                    
+                    # 1. SPECIAL FORMAT ANTI-STREAK: Non-Normal special formats must never repeat back-to-back
+                    if cur_base != 'normal' and cur_base == prev_base:
+                        continue
+
+                    # 2. MULTI-ATTRIBUTE ANTI-REPEAT: Count matching fields against previous round
+                    matches = 0
+                    if str(res.get('dictionary')).upper() == str(previous_params.get('dictionary')).upper():
+                        matches += 1
+                    if bool(res.get('use_added_words')) == bool(previous_params.get('use_added_words')):
+                        matches += 1
+                    if int(res.get('min_word_length', 3)) == int(previous_params.get('min_word_length', 3)):
+                        matches += 1
+                    if str(res.get('word_count_range')) == str(previous_params.get('word_count_range')):
+                        matches += 1
+                    if str(res.get('difficulty')) == str(previous_params.get('difficulty')):
+                        matches += 1
+                    if cur_base == prev_base:
+                        matches += 1
+
+                    # REJECT if 3 or more attributes match previous round (forces parameter variety!)
+                    if matches >= 3:
                         continue
 
                 return res
