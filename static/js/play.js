@@ -6797,7 +6797,7 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
         const currentState = window.lastGameState;
         const isBonusWord = data.success && currentState && currentState.bonus_word && data.word && data.word.toUpperCase() === currentState.bonus_word.toUpperCase();
         const hasBonusLetter = data.score_details ? ((data.score_details.bonus_letter_points || 0) > 0) : false;
-        const isBonus = isBonusWord || hasBonusLetter;
+        const isBonus = isBonusWord;
         const serverIsPenalty = data.message && data.message.toUpperCase().includes('PENALTY');
         const serverIsActuallyValid = data.success && !serverIsPenalty;
         const serverIsAlreadyFound = data.message && data.message.toUpperCase().includes('ALREADY FOUND');
@@ -6805,7 +6805,7 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
         if (serverIsAlreadyFound) {
             serverColor = 'purple';
         } else if (serverIsActuallyValid) {
-            serverColor = isBonus ? 'green' : 'blue';
+            serverColor = isBonusWord ? 'green' : 'blue';
         }
 
         if (!finalPath && data.path) {
@@ -6831,7 +6831,7 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
         } else {
             // Local check didn't run or server result differs from local check — trigger feedback flash
             const shouldPlayServerSound = (optimisticColor === null);
-            showValidationFeedback(msg, data.success, isBonus, finalPath, shouldPlayServerSound);
+            showValidationFeedback(msg, data.success, isBonusWord, finalPath, shouldPlayServerSound);
         }
 
 
