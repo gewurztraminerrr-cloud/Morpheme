@@ -616,6 +616,9 @@ function startPolling() {
 
     if (!isSameRoom) {
         clearGameUIAndCache();
+        if (activeRoomId && activeRoomId.startsWith('practice_')) {
+            window.isSpectatorMode = false;
+        }
     } else {
         console.log('[play.js] Returning to same active room. Preserving board and state.');
         if (window.lastGameState) {

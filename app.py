@@ -3387,19 +3387,12 @@ def join_room(room_id):
 
     # Check for spectator request
     data = request.get_json() or {}
-    # Unlimited players for Accumulative, 8 for others
-    if room.game_type in ['accumulative', 'solo_accumulative']:
+    # Unlimited players for Accumulative/Solo, and force player mode
+    if room.game_type in ['accumulative', 'solo_accumulative'] or getattr(room, 'is_solo', False):
         room.max_players = 9999
-    as_spectator = data.get('as_spectator', False)
-
-    if as_spectator:
-        room.add_spectator(user_id, session['username'], rating)
-        room.update_player_activity(user_id)
-        return jsonify({'success': True, 'role': 'spectator'})
-
-    # Force player mode for Accumulative
-    if room.game_type in ['accumulative', 'solo_accumulative']:
         as_spectator = False
+    else:
+        as_spectator = data.get('as_spectator', False)
 
     if as_spectator:
         room.add_spectator(user_id, session['username'], rating)
