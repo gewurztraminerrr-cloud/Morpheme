@@ -13,6 +13,9 @@ from word_validator import word_validator, use_added_words_ctx
 
 DEBUG_FLOW_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'debug_flow.log')
 
+# Default letter weights export
+LETTER_WEIGHTS = [1] * 26
+
 # Letter frequency (A-Z)
 # Medium/Hard weights - CUSTOMIZED: Peak Connectivity for 7-10L words
 # User-provided frequencies for 4x4 (A-Z)
@@ -5747,10 +5750,12 @@ class BoardGenerator:
                         v_count += 1
         return v_count
 
-    def _verify_checkerboard_safeguard(self, board, weights, bonus_cells_set):
+    def _verify_checkerboard_safeguard(self, board, weights=None, bonus_cells_set=None):
         """Final check to ensure the board strictly alternates C/V in checkerboard mode."""
         if not board:
             return
+        if weights is None:
+            weights = getattr(self, 'weights', [1] * 26)
         v_indices = [self.letters.index(v) for v in VOWELS]
         v_weights = [weights[v_idx] for v_idx in v_indices]
         c_indices = [self.letters.index(c) for c in CONSONANTS]

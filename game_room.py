@@ -4258,8 +4258,7 @@ class RoomManager:
                         
                         # SAFEGUARD: If format is Checkerboard, enforce strict C/V alternation pattern!
                         if 'checkerboard' in str(target_fmt).lower():
-                            from board_generator import LETTER_WEIGHTS
-                            self.board_generator._verify_checkerboard_safeguard(sboard, LETTER_WEIGHTS, set())
+                            self.board_generator._verify_checkerboard_safeguard(sboard)
 
                         swords_filtered = [w for w in swords if len(w) >= m_len]
                         spaths_filtered = {w: p for w, p in (spaths or {}).items() if len(w) >= m_len}
@@ -6035,8 +6034,7 @@ class RoomManager:
                     
                     # SAFEGUARD: If Checkerboard format, enforce strict C/V alternation
                     if 'checkerboard' in str(fmt_val).lower() or 'checkerboard' in str(_ff).lower():
-                        from board_generator import LETTER_WEIGHTS
-                        self.board_generator._verify_checkerboard_safeguard(_fb, LETTER_WEIGHTS, set())
+                        self.board_generator._verify_checkerboard_safeguard(_fb)
 
                     print(f"[start_next_round] Instant 1-ms cache pop for {room_id}: {len(_fw_filtered)} words")
                     room.next_round_board = _fb
