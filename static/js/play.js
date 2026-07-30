@@ -1560,11 +1560,16 @@ async function updateGameState(incomingState = null) {
             renderFCFSNotepads(state.players, state);
         } else {
             // Render previous day's board if the user is on the previous tab
-            let boardToRender = state.board;
             let grayed = state.state === 'intermission';
-            if (activeWordsTab === 'previous' && state.previous_board && state.previous_board.length > 0) {
+            let boardToRender = state.board;
+            if (state.state === 'intermission' && state.previous_board && state.previous_board.length > 0) {
                 boardToRender = state.previous_board;
-                grayed = true; // Always gray out the previous day's board
+            } else if (activeWordsTab === 'previous' && state.previous_board && state.previous_board.length > 0) {
+                boardToRender = state.previous_board;
+                grayed = true;
+            }
+            if ((!boardToRender || boardToRender.length === 0) && window.lastGameState && window.lastGameState.board) {
+                boardToRender = window.lastGameState.board;
             }
             const is3D = state.game_type === '3d' || (boardToRender && boardToRender.length === 6 && Array.isArray(boardToRender[0]) && Array.isArray(boardToRender[0][0]));
             renderBoard(boardToRender, grayed, is3D, state);
