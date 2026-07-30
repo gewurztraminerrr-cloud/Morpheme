@@ -1413,23 +1413,12 @@ class GameRoom:
                     if p_bonus_word:
                         aligned_sp['bonus_word_length'] = len(p_bonus_word)
                     aligned_sp['generated_at'] = now
-                    
-                    self.next_spinner_params = dict(aligned_sp)
-                    self.next_round_spinner_params = dict(aligned_sp)
-                    self.spinner_params_generated = True
-                    # Parameter reveal is strictly reserved for 0:45 timer (15s elapsed)
-                    print(f"[Watchdog 0:50] Successfully secured board for {self.room_id}! Parameters aligned for 0:45 reveal: {wc_lbl}, {fmt_name}.")
-        
-
-
         if getattr(self, 'starting_round', False):
-            start_init = getattr(self, '_round_start_init_time', 0)
-            timeout = 180.0 if self.time_limit >= 7200 else 25.0
-            if start_init > 0 and (now - start_init > timeout):
+            curr_init = getattr(self, '_round_start_init_time', 0)
+            timeout = 3.0
+            if curr_init > 0 and (time.time() - curr_init > timeout):
                 self.starting_round = False
                 print(f"[RoomManager] STALE starting_round detected for {self.room_id} (>{timeout}s). Resetting.")
-            else:
-                return None
             
         # 1. Start Milestone: Trigger 0.5s early to ensure next round starts slightly early
         # and the new board is ready when the client timer hits 0:00.
@@ -5998,9 +5987,8 @@ class RoomManager:
                  return False
                  
             if getattr(room, 'starting_round', False):
-                # Watchdog reset: If stalled for > 25s (fast recovery)
                 curr_init = getattr(room, '_round_start_init_time', 0)
-                timeout = 180.0 if room.time_limit >= 7200 else 25.0
+                timeout = 3.0
                 if curr_init > 0 and (time.time() - curr_init > timeout):
                      print(f"[RoomManager] Stale start detected (>{timeout}s) for {room_id}, resetting guard.")
                      room.starting_round = False
