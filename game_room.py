@@ -6021,6 +6021,12 @@ class RoomManager:
                 )
                 if not candidate:
                     candidate = pop_any_cached_board(room.board_dimensions)
+                if not candidate:
+                    print(f"[start_next_round] Cache miss for {room_id}. Generating instant emergency fallback board.")
+                    candidate = get_emergency_fallback_board(
+                        room.board_dimensions, fmt_val, room.time_limit,
+                        dictionary=dict_val, use_added_words=use_aw_val, target_range=target_range, min_word_length=m_len
+                    )
                 
                 if candidate:
                     if len(candidate) >= 9:
