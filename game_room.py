@@ -1048,9 +1048,9 @@ class GameRoom:
                     points = w_obj.get('points', points)
                     break
 
-        # Persistence: Save active players for 24h rooms after successful submission
+        # Persistence: Save active players for 24h rooms after successful submission in background thread
         if self.time_limit >= 7200:
-            self.save_active_players()
+            threading.Thread(target=self.save_active_players, daemon=True).start()
 
         return True, f"{final_word} VALID", points, final_word
 

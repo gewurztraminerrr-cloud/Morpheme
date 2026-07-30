@@ -6777,6 +6777,31 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                     showValidationFeedback(msg, true, isBonusWord, finalPath, true);
                     optimisticColor = isBonusWord ? 'green' : 'blue';
                     optimisticIsDefinitive = true;
+
+                    // Optimistic Instant UI Update: Add word to local lists immediately
+                    window._localSubmittedWords = window._localSubmittedWords || new Set();
+                    if (!window._localSubmittedWords.has(word)) {
+                        window._localSubmittedWords.add(word);
+                        window._localSubmittedWordsList = window._localSubmittedWordsList || [];
+                        window._localSubmittedWordsList.push({
+                            word: word,
+                            points: localPts,
+                            score_details: {},
+                            time: Date.now() / 1000
+                        });
+
+                        const listEl = document.getElementById('submitted-words-list');
+                        if (listEl) {
+                            const placeholder = listEl.querySelector('.placeholder');
+                            if (placeholder) placeholder.remove();
+                            let className = 'word-item player-word' + (isBonusWord ? ' bonus-word' : '');
+                            const html = `<div class="${className}" style="display:flex; justify-content:space-between; animation: slideIn 0.3s ease;">
+                                <span>${word}</span>
+                                <span style="opacity:0.8">${localPts}</span>
+                            </div>`;
+                            listEl.insertAdjacentHTML('afterbegin', html);
+                        }
+                    }
                 } else if (!isPenaltyMode) {
                     // Confirmed invalid locally in non-penalty mode — flash red and return immediately
                     showValidationFeedback(`${word.toUpperCase()} INVALID`, false, false, finalPath);
