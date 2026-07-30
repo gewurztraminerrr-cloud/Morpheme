@@ -1834,7 +1834,7 @@ class GameRoom:
                     else:
                         length = len(w)
                         s = 1 if length <= 4 else (2 if length == 5 else (3 if length == 6 else (5 if length == 7 else 11)))
-                    fast_scores[w] = {'total': s, 'base': s}
+                    fast_scores[w] = {'total': s, 'base': s, 'bonus_word_points': 0, 'bonus_letter_points': 0, 'either_or_points': 0}
                 self.solved_words_with_scores = fast_scores
                 self.csw_only_words = getattr(self, 'next_round_csw_only_words', [])
                 self.added_words = getattr(self, 'next_round_added_words', [])
@@ -2436,7 +2436,8 @@ class GameRoom:
                 'total': final_points,
                 'base': (res.get('base', 0) + count - 1) // count,
                 'bonus_word_points': (res.get('bonus_word_points', 0) + count - 1) // count,
-                'bonus_letter_points': (res.get('bonus_letter_points', 0) + count - 1) // count
+                'bonus_letter_points': (res.get('bonus_letter_points', 0) + count - 1) // count,
+                'either_or_points': (res.get('either_or_points', 0) + count - 1) // count
             }
             
             for i, (player, timestamp, w_obj) in enumerate(finders):
@@ -6323,7 +6324,7 @@ class RoomManager:
                     is_valued_e = ('valued' in str(room.current_board_format).lower())
                     e_scores = {}
                     for w in e_words:
-                        if is_valued_e: e_scores[w] = {'total': get_valued_word_score(w), 'base': get_valued_word_score(w)}
+                        if is_valued_e: e_scores[w] = {'total': get_valued_word_score(w), 'base': get_valued_word_score(w), 'bonus_word_points': 0, 'bonus_letter_points': 0, 'either_or_points': 0}
                         else:
                             length = len(w)
                             s = 0
@@ -6333,7 +6334,7 @@ class RoomManager:
                             elif length == 6: s = 3
                             elif length == 7: s = 5
                             elif length >= 8: s = 11
-                            e_scores[w] = {'total': s, 'base': s}
+                            e_scores[w] = {'total': s, 'base': s, 'bonus_word_points': 0, 'bonus_letter_points': 0, 'either_or_points': 0}
                     room.next_round_word_scores = e_scores
                 
                 # --- 3. FINAL COUNT SYNC: Ensure factual counts are promoted even if truncation was skipped ---

@@ -2015,28 +2015,29 @@ async function updateGameState(incomingState = null) {
                             ? w.score_details
                             : (state.all_word_scores && state.all_word_scores[wordUpper]);
                         
-                        let ptsDisplay = typeof w === 'string' ? (state.all_word_scores[wordUpper] || 0) : (w.points || 0);
-                        const ptsNum = (typeof pointsObj === 'object' && pointsObj !== null && pointsObj.total !== undefined) ? pointsObj.total : ptsDisplay;
+                        let ptsNum = typeof w === 'string' ? 0 : (w.points || 0);
+                        if (typeof pointsObj === 'object' && pointsObj !== null && pointsObj.total !== undefined) {
+                            ptsNum = pointsObj.total;
+                        } else if (typeof state.all_word_scores[wordUpper] === 'number') {
+                            ptsNum = state.all_word_scores[wordUpper];
+                        }
+                        
+                        let ptsDisplay = ptsNum;
 
                         if (typeof pointsObj === 'object' && pointsObj !== null) {
-                            const hasBonusLetter = (pointsObj.bonus_letter_points || 0) > 0;
-                            const hasBonusWord = (pointsObj.bonus_word_points || 0) > 0;
-                            const hasEO = (pointsObj.either_or_points || 0) > 0;
-                            
-                            if (hasBonusLetter || hasBonusWord || hasEO) {
-                                let parts = [];
-                                parts.push(pointsObj.base !== undefined ? pointsObj.base : ptsNum);
-                                if (hasBonusWord) parts.push(pointsObj.bonus_word_points);
-                                if (hasBonusLetter) parts.push(pointsObj.bonus_letter_points);
-                                if (hasEO) parts.push(pointsObj.either_or_points);
-                                
-                                if (parts.length > 1) {
-                                    ptsDisplay = `${parts.join(' + ')} = ${ptsNum}`;
+                            const bonusWordPts = pointsObj.bonus_word_points || 0;
+                            const bonusLetterPts = pointsObj.bonus_letter_points || 0;
+                            const eoPts = pointsObj.either_or_points || 0;
+                            const extra = bonusLetterPts + eoPts;
+                            const basePts = pointsObj.base !== undefined ? pointsObj.base : (ptsNum - bonusWordPts - extra);
+
+                            if (extra > 0 || bonusWordPts > 0) {
+                                const originalValue = basePts + bonusWordPts;
+                                if (extra > 0) {
+                                    ptsDisplay = `${originalValue} + ${extra} = ${ptsNum}`;
                                 } else {
-                                    ptsDisplay = ptsNum;
+                                    ptsDisplay = `${basePts} + ${bonusWordPts} = ${ptsNum}`;
                                 }
-                            } else {
-                                ptsDisplay = ptsNum;
                             }
                         }
 
