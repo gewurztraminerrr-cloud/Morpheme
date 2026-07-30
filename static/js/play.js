@@ -2523,6 +2523,8 @@ async function updateGameState(incomingState = null) {
             if (!window._rapidPollCount || window._rapidPollCount < 20) {
                 window._rapidPollCount = (window._rapidPollCount || 0) + 1;
                 setTimeout(() => updateGameState(), 100);
+            } else {
+                window._rapidPollCount = 0;
             }
         } else {
             window._rapidPollCount = 0;
