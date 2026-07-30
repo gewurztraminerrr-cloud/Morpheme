@@ -4376,24 +4376,7 @@ class RoomManager:
                             print(f"[RoomManager] Popped candidate relaxed board discarded: had only {len(all_words_filtered)} words of length >= {act_min} (needed {min_accept}).")
                 
                 if not res:
-                    token = use_added_words_ctx.set(use_aw_flag)
-                    try:
-                        res = self.board_generator.generate_board(
-                            dimensions=room.board_dimensions,
-                            bonus_word=bonus_word,
-                            word_count_range=room.spinner_params['word_count_range'],
-                            dictionary=room.spinner_params['dictionary'],
-                            board_format=room.spinner_params['board_format'],
-                            min_word_length=room.spinner_params.get('min_word_length', 3),
-                            difficulty=room.spinner_params.get('difficulty', 'Medium'),
-                            is_emergency=True,
-                            use_added_words=use_aw_flag
-                        )
-                    finally:
-                        use_added_words_ctx.reset(token)
-                
-                if not res:
-                    print(f"[RoomManager] Warning: generate_board returned None. Using emergency fallback board for {room_id}")
+                    print(f"[RoomManager] Cache miss for room {room_id}. Delivering instant emergency fallback board.")
                     res = get_emergency_fallback_board(
                         room.board_dimensions, room.spinner_params.get('board_format', 'Normal'), room.time_limit,
                         dictionary=room.spinner_params.get('dictionary', 'NWL'), use_added_words=use_aw_flag,
@@ -4401,14 +4384,7 @@ class RoomManager:
                     )
                 
                 board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio, final_bonus_word = res[:7]
-                
-                # Verify word count compliance for the resolved board candidate
-                _filtered_cnt = len([w for w in all_words if len(w) >= m_len])
-                if _filtered_cnt < min_accept and board_attempts < 3:
-                    print(f"[RoomManager] WARNING: Generated/popped board for room {room_id} has only {_filtered_cnt} words of length >= {m_len} (needed {min_accept}). Retrying...")
-                    res = None
-                    board_attempts += 1
-                    continue
+                break
                 
                 # Issue 1 & 7: Check against rolling 10-board fingerprint history, not just 1 previous board
                 _fp = self._get_board_fingerprint(board)
