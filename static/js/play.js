@@ -6923,9 +6923,8 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
         }
 
         if (optimisticColor !== null && optimisticColor === serverColor) {
-            // Local optimistic check ALREADY flashed tiles/input and played sound!
-            // Update status text with exact green styling without repeating the sound
-            showValidationFeedback(msg, data.success, isBonusWord, finalPath, false);
+            // Local optimistic check ALREADY flashed tiles/input and showed feedback!
+            // Skip redundant second flash on server response.
         } else {
             // Local check didn't run or server result differs from local check — trigger feedback flash
             const shouldPlayServerSound = (optimisticColor === null);
