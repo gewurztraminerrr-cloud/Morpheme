@@ -6354,9 +6354,13 @@ class RoomManager:
                 if room.time_limit < 7200:
                     room.previous_min_length = ghost_min_len
                     room.previous_bonus_word = (ghost_bonus or '')
+                    room.previous_bonus_cell = getattr(room, 'bonus_cell', None)
+                    room.previous_board_format = ghost_board_format
                     import copy
                     room.previous_board = copy.deepcopy(ghost_prev_board) if ghost_prev_board else []
                     room.previous_all_words = [w for w in (ghost_source_words or []) if len(w) >= ghost_min_len]
+                    room.previous_all_words_paths = dict(ghost_all_words_paths)
+                    room.previous_all_word_scores = dict(getattr(room, 'solved_words_with_scores', {}))
                     room.previous_csw_only_words = list(room.csw_only_words) if getattr(room, 'csw_only_words', None) else []
                     room.previous_added_words = list(room.added_words) if getattr(room, 'added_words', None) else []
                 
