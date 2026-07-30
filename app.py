@@ -3240,42 +3240,34 @@ def create_room():
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
-    data = request.get_json()
-    game_type = data.get('game_type')
-    time_limit = data.get('time_limit')
-    board_dimensions = data.get('board_dimensions')
-    min_rating = data.get('min_rating', 0)
-    max_rating = data.get('max_rating', 9999)
+    data = request.get_json() or {}
+    game_type = data.get('game_type', 'standard')
+    time_limit = int(data.get('time_limit') or 45)
+    board_dimensions = str(data.get('board_dimensions') or '4x4')
+    
+    try:
+        min_rating = int(data.get('min_rating') or 0)
+    except (TypeError, ValueError):
+        min_rating = 0
+        
+    try:
+        max_rating = int(data.get('max_rating') or 9999)
+    except (TypeError, ValueError):
+        max_rating = 9999
     
     # Guest Restriction: Guests cannot create custom/limited rooms
-    # Guest Restriction: Guests cannot create CUSTOM rooms with limits
     if session.get('is_guest', False):
-        try:
-            m_rat = int(min_rating or 0)
-            x_rat = int(max_rating or 9999)
-            print(f"[app.py] Guest Create Attempt: game={game_type} min={m_rat} max={x_rat}")
-            if m_rat > 0 or x_rat < 9999:
-                 return jsonify({'error': 'RANK_REJECT: Guest users are not allowed to create rooms with rating limits. Please register to unlock this feature.'}), 403
-        except (ValueError, TypeError) as e:
-            print(f"[app.py] Guest Create Error in parsing: {e}")
-            pass
-    else:
-        print(f"[app.py] Regular Create Attempt: user={session.get('username')} game={game_type} min={min_rating} max={max_rating}")
+        if min_rating > 0 or max_rating < 9999:
+            return jsonify({'error': 'RANK_REJECT: Guest users are not allowed to create rooms with rating limits. Please register to unlock this feature.'}), 403
     
-    # Create room
-    # For all public rooms, generate STABLE IDs so history persists and users find each other
-    is_public = (int(min_rating) == 0 and int(max_rating) == 9999)
-    # is_long_running = (int(time_limit) >= 600) # User Request: even 45s rooms should be stable hubs
-    
+    is_public = (min_rating == 0 and max_rating == 9999)
     if is_public and game_type not in ['fcfs', 'split']:
-        # Use deterministic ID: pub_v2_[game]_[dims]_[time]
-        # v2: Forced reset for 6x8 compliance and rare letter lockdown.
         generated_id = f"pub_v2_{game_type}_{board_dimensions}_{time_limit}".replace(' ', '_').lower()
         print(f"[app.py] Using stable v2 ID for public room: {generated_id}")
     else:
         generated_id = str(uuid.uuid4())
         
-    room = room_manager.create_room(generated_id, game_type, int(time_limit), board_dimensions, int(min_rating), int(max_rating))
+    room = room_manager.create_room(generated_id, game_type, time_limit, board_dimensions, min_rating, max_rating)
     
     # Ensure user is not in any other room
     cleanup_user_rooms(session['user_id'], exclude_room_id=room.room_id)
