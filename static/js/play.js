@@ -1930,8 +1930,25 @@ async function updateGameState(incomingState = null) {
             } else if (state.game_type !== 'fcfs') {
                 // ACTIVE STATE (Not Intermission) & Not FCFS
                 // Personal List for Standard, Split, AND Accumulative
-                const myPlayer = state.players.find(p => (p.username || "").toLowerCase().trim() === (currentUser || "").toLowerCase().trim());
-                const myWords = myPlayer ? (myPlayer.submitted_words || []) : [];
+                const currentUserIdStr = String(window.currentUserId || currentUser || '');
+                const myPlayer = state.players.find(p => 
+                    (p.username && p.username.toLowerCase().trim() === (currentUser || "").toLowerCase().trim()) ||
+                    (p.user_id && String(p.user_id) === currentUserIdStr)
+                );
+                
+                let myWords = myPlayer ? (myPlayer.submitted_words || []) : [];
+                
+                // SAFEGUARD: Preserve locally submitted words to prevent polls from wiping active words
+                if (window._localSubmittedWordsList && window._localSubmittedWordsList.length > 0) {
+                    const serverWordSet = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase()));
+                    for (const localObj of window._localSubmittedWordsList) {
+                        const lWord = (typeof localObj === 'string' ? localObj : localObj.word).toUpperCase();
+                        if (!serverWordSet.has(lWord)) {
+                            myWords.push(localObj);
+                            serverWordSet.add(lWord);
+                        }
+                    }
+                }
 
 
                 // 2. Personal Stats Only (Active)
@@ -6887,6 +6904,13 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
         if (data.success) {
             window._localSubmittedWords = window._localSubmittedWords || new Set();
             window._localSubmittedWords.add(word);
+            window._localSubmittedWordsList = window._localSubmittedWordsList || [];
+            window._localSubmittedWordsList.push({
+                word: data.word || word,
+                points: data.points || 0,
+                score_details: data.score_details || {},
+                time: Date.now() / 1000
+            });
             recordGuessResult(true, true, isSpecialSkip);
         } else {
             recordGuessResult(false, finalPath && finalPath.length > 0, isSpecialSkip);
@@ -7297,10 +7321,12 @@ async function leaveCurrentRoom() {
     if (!roomId) return;
 
     // 1. Clear local state and stop polling immediately (synchronous)
-    // This guarantees the UI updates/redirects and stops checking room state instantly
     stopPolling();
     window.currentRoomId = null;
     localStorage.removeItem('last_joined_room');
+    window._localSubmittedWords = new Set();
+    window._localSubmittedWordsList = [];
+    
     const playBtn = document.getElementById('play-btn');
     if (playBtn) {
         playBtn.disabled = true;
@@ -7308,14 +7334,13 @@ async function leaveCurrentRoom() {
         playBtn.title = "Join a room to play.";
     }
     if (window.updateManualToolState) window.updateManualToolState();
-    clearGameUIAndCache();
 
-    // 2. Await network notification to guarantee no race conditions with lobby stats
+    // 2. Non-blocking beacon/fetch to notify server of leave
     const url = `/api/room/${roomId}/leave`;
-    try {
-        await fetch(url, { method: 'POST' });
-    } catch (e) {
-        console.warn("Failed to notify server of leaving room:", e);
+    if (navigator.sendBeacon) {
+        navigator.sendBeacon(url);
+    } else {
+        fetch(url, { method: 'POST', keepalive: true }).catch(() => {});
     }
 
     // 3. Immediately refresh lobby stats if available
