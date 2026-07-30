@@ -2781,10 +2781,13 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         bonus_cell = (0, 0, 0)
     else:
         rows, cols = map(int, parts[:2])
-        # Pre-built standard letter distribution
+        # Randomly shuffled standard letter distribution to ensure unique boards
         std_letters = ["S","T","A","R","E","D","L","I","N","E","R","S","A","N","T","I","C","S","T","R","A","I","N","S","C","A","P","T","U","R","E","S","O","U","N","D","S","F","A","R","W","O","R","D","S","E","T","S"]
-        board = [[std_letters[(r*cols + c) % len(std_letters)] for c in range(cols)] for r in range(rows)]
-        bonus_cell = (0, 0)
+        offset = random.randint(0, len(std_letters) - 1)
+        shuffled = std_letters[offset:] + std_letters[:offset]
+        random.shuffle(shuffled)
+        board = [[shuffled[(r*cols + c) % len(shuffled)] for c in range(cols)] for r in range(rows)]
+        bonus_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
 
     # Solve emergency board instantly
     bg = BoardGenerator()
