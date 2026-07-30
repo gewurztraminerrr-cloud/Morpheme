@@ -2584,6 +2584,7 @@ def _record_fallback_hash_used(board_hash):
 
 def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=60, dictionary='NWL', use_added_words=False, target_range=None, min_word_length=None, difficulty=None):
     """Dynamically generate a valid emergency fallback board that matches room dimensions and spells correct words."""
+    import random
     from board_generator import BoardGenerator, serialize_param_key, pop_cached_board, refill_board_cache_bg, pop_any_cached_board
     global _room_manager_instance
     if _room_manager_instance and hasattr(_room_manager_instance, 'board_generator'):
