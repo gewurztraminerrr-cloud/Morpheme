@@ -4237,20 +4237,36 @@ class RoomManager:
                 res = None
                 from board_generator import serialize_param_key, pop_cached_board, pop_any_cached_board
 
-                # SOLO MODE FAST PATH: Try popping any cached board for room.board_dimensions for 1ms instant board!
+                # SOLO MODE FAST PATH: Try popping compatible cached board matching room format for 1ms instant board!
                 if getattr(room, 'is_solo', False):
-                    solo_pop = pop_any_cached_board(room.board_dimensions)
+                    target_fmt = room.spinner_params.get('board_format', 'Normal')
+                    from board_generator import pop_compatible_cached_board
+                    solo_pop = pop_compatible_cached_board(
+                        room.board_dimensions,
+                        room.spinner_params.get('dictionary', 'NWL'),
+                        target_fmt,
+                        room.spinner_params.get('min_word_length', 3),
+                        use_aw_flag
+                    )
+                    if not solo_pop and 'checkerboard' not in str(target_fmt).lower():
+                        solo_pop = pop_any_cached_board(room.board_dimensions)
+                    
                     if solo_pop:
                         if len(solo_pop) >= 9:
                             sboard, swords, sbonus_cell, sfmt, spaths, sratio, sbonus_word, _, sparams = solo_pop
                         else:
                             sboard, swords, sbonus_cell, sfmt, spaths, sratio, sbonus_word, sparams = solo_pop
                         
+                        # SAFEGUARD: If format is Checkerboard, enforce strict C/V alternation pattern!
+                        if 'checkerboard' in str(target_fmt).lower():
+                            from board_generator import LETTER_WEIGHTS
+                            self.board_generator._verify_checkerboard_safeguard(sboard, LETTER_WEIGHTS, set())
+
                         swords_filtered = [w for w in swords if len(w) >= m_len]
                         spaths_filtered = {w: p for w, p in (spaths or {}).items() if len(w) >= m_len}
                         if len(swords_filtered) >= 10:
-                            print(f"[RoomManager] INSTANT Solo cached board popped for room {room_id} in 1ms!")
-                            res = (sboard, swords_filtered, sbonus_cell, sfmt, spaths_filtered, sratio, sbonus_word)
+                            print(f"[RoomManager] INSTANT Solo cached board popped for room {room_id} in 1ms! (format={target_fmt})")
+                            res = (sboard, swords_filtered, sbonus_cell, target_fmt, spaths_filtered, sratio, sbonus_word)
 
                 cached_res = None
                 if not res:
@@ -5995,90 +6011,42 @@ class RoomManager:
                     elif '50' in str(target_range):  min_accept = 50
             min_accept = max(30, min_accept)
 
-            # If staged board is too sparse AND was never revealed to player, discard it.
-            # If it was ALREADY revealed at 0:45 timer, keep it unconditionally to prevent parameter changes & load delays!
-            if not getattr(room, 'was_revealed_this_intermission', False) and getattr(room, 'next_round_board', None) and getattr(room, 'next_round_words', None):
-                filtered_staged = [w for w in room.next_round_words if len(w) >= m_len]
-                if len(filtered_staged) < min_accept:
-                    print(f"[start_next_round] Discarding staged board for room {room_id} because it only has {len(filtered_staged)} words of length >= {m_len} (needed {min_accept}).")
-                    room.next_round_board = None
-                    room.next_round_words = None
-                    room.next_round_word_paths = None
-
-            # INSTANT FALLBACK: If no board is ready, pop any cached board right now without waiting
+            # INSTANT 0:00 TRANSITION: Always deliver staged board or popped cached board in <1ms!
             if not getattr(room, 'next_round_board', None):
-                from board_generator import pop_any_cached_board as _pop_any_snr
-                max_limit = 99999
-                if target_range:
-                    try:
-                        parts = str(target_range).split('-')
-                        if len(parts) == 2:
-                            max_limit = int(parts[1]) - 1
-                    except:
-                        pass
-
-                # Try popping up to 10 cached boards to find one with enough words
-                _fallback = None
-                for _ in range(10):
-                    from board_generator import pop_compatible_cached_board
-                    sp = room.spinner_params or {}
-                    dict_val = sp.get('dictionary', 'NWL')
-                    fmt_val = sp.get('board_format', 'Normal')
-                    use_aw_val = sp.get('use_added_words', False) or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
-                    bonus_word_len = sp.get('bonus_word_length')
-                    candidate = pop_compatible_cached_board(
-                        room.board_dimensions,
-                        dict_val,
-                        fmt_val,
-                        m_len,
-                        use_aw_val,
-                        bonus_word_len=bonus_word_len
-                    )
-                    if not candidate:
-                        break
-                    _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = candidate
-                    _fw_filtered = [w for w in _fw if len(w) >= m_len]
-                    min_len_count = sum(1 for w in _fw_filtered if len(w) == m_len)
-                    if is_board_count_valid(len(_fw_filtered), target_range) and len(_fw_filtered) >= min_accept and min_len_count >= 5:
-                        # Accept board without discarding valid grid words
-                        _fw = _fw_filtered
-                        _fp = {w: p for w, p in _fp.items() if w in _fw}
-                        _fallback = (_fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams)
-                        break
+                from board_generator import pop_compatible_cached_board, pop_any_cached_board
+                sp = room.spinner_params or {}
+                dict_val = sp.get('dictionary', 'NWL')
+                fmt_val = sp.get('board_format', 'Normal')
+                use_aw_val = sp.get('use_added_words', False) or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
+                bonus_word_len = sp.get('bonus_word_length')
+                
+                candidate = pop_compatible_cached_board(
+                    room.board_dimensions, dict_val, fmt_val, m_len, use_aw_val, bonus_word_len=bonus_word_len
+                )
+                if not candidate:
+                    candidate = pop_any_cached_board(room.board_dimensions)
+                
+                if candidate:
+                    if len(candidate) >= 9:
+                        _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _, _fparams = candidate
                     else:
-                        print(f"[start_next_round] Fallback candidate had only {len(_fw_filtered)} words of length >= {m_len} (needed {min_accept}). Discarding and retrying...")
-                
-                if not _fallback:
-                    from board_generator import pop_any_cached_board
-                    for _ in range(10):
-                        _any_candidate = pop_any_cached_board(room.board_dimensions)
-                        if not _any_candidate: break
-                        _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = _any_candidate
-                        _fw_filtered = [w for w in _fw if len(w) >= m_len]
-                        _any_min_c = sum(1 for w in _fw_filtered if len(w) == m_len)
-                        if is_board_count_valid(len(_fw_filtered), target_range) and _any_min_c >= 5:
-                            _fp_filtered = {w: p for w, p in _fp.items() if w in _fw_filtered}
-                            _fallback = (_fb, _fw_filtered, _fc, _ff, _fp_filtered, _fr, _fbw, _fparams)
-                            print(f"[start_next_round] Zero-latency pop_any_cached_board hit for {room_id}: {len(_fw_filtered)} words and {_any_min_c} min-len words")
-                            break
+                        _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = candidate
+                    
+                    _fw_filtered = [w for w in _fw if len(w) >= m_len]
+                    if not _fw_filtered: _fw_filtered = _fw
+                    _fp_filtered = {w: p for w, p in (_fp or {}).items() if w in _fw_filtered}
+                    
+                    # SAFEGUARD: If Checkerboard format, enforce strict C/V alternation
+                    if 'checkerboard' in str(fmt_val).lower() or 'checkerboard' in str(_ff).lower():
+                        from board_generator import LETTER_WEIGHTS
+                        self.board_generator._verify_checkerboard_safeguard(_fb, LETTER_WEIGHTS, set())
 
-                # GUARANTEED 1-MS FALLBACK: Never allow synchronous generation (1-minute wait) at 0:00 timer!
-                if not _fallback:
-                    from board_generator import pop_any_cached_board
-                    _any_candidate = pop_any_cached_board(room.board_dimensions)
-                    if _any_candidate:
-                        _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = _any_candidate
-                        _fw_filtered = [w for w in _fw if len(w) >= m_len]
-                        if not _fw_filtered: _fw_filtered = _fw
-                        _fp_filtered = {w: p for w, p in _fp.items() if w in _fw_filtered}
-                        _fallback = (_fb, _fw_filtered, _fc, _ff, _fp_filtered, _fr, _fbw, _fparams)
-                        print(f"[start_next_round] Guaranteed 1-ms pop_any_cached_board hit for {room_id}: {len(_fw_filtered)} words")
-                
-                if _fallback:
-                    _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = _fallback
-                    print(f"[start_next_round] Last-chance cache pop for {room_id}: {len(_fw)} words")
+                    print(f"[start_next_round] Instant 1-ms cache pop for {room_id}: {len(_fw_filtered)} words")
                     room.next_round_board = _fb
-                    room.next_round_words = _fw
+                    room.next_round_words = _fw_filtered
+                    room.next_round_bonus_cell = _fc
+                    room.next_round_bonus = _fbw or ''
+                    room.next_round_word_paths = _fp_filtered
                     bw_l_val = room.spinner_params.get('bonus_word_length', 8) if isinstance(room.spinner_params, dict) else 8
                     dict_val = room.spinner_params.get('dictionary', 'NWL') if isinstance(room.spinner_params, dict) else 'NWL'
                     if not _fbw or str(_fbw).upper() == 'NONE':

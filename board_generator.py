@@ -1745,6 +1745,11 @@ class BoardGenerator:
                     depth
                 )
                 
+        # Mandatory Checkerboard safeguard audit right before returning
+        if "checkerboard" in str(board_format).lower():
+            from board_generator import LETTER_WEIGHTS
+            self._verify_checkerboard_safeguard(board, LETTER_WEIGHTS, set())
+
         # Trigger background refill to populate the cache up to 3
         refill_board_cache_bg(self, param_key_str, target_count=10)
         
