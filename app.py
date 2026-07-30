@@ -3835,9 +3835,9 @@ def get_room_state(room_id):
                 is_shared_mode = (is_fcfs or not is_cur_active)
                 
                 for w in p.submitted_words:
-                    # 1. TIME CHECK: Has the bot "found" this word yet?
-                    if w.get('time', 0) > now:
-                        continue # In the future, skip entirely
+                    # 1. TIME CHECK: Only skip future-scheduled words for AI bots
+                    if p.is_ai and w.get('time', 0) > now:
+                        continue
                         
                     # 2. Add to score and bonus status since it has been found
                     pts = w.get('points', 0)
