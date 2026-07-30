@@ -3799,8 +3799,8 @@ def get_room_state(room_id):
                         prev_csw = getattr(room, 'previous_csw_only_words', None)
                         if prev_csw:
                             room.csw_only_words = list(prev_csw)
-                        elif not getattr(room, 'csw_only_words', None) and words_to_return:
-                            room.csw_only_words = [w for w in words_to_return if word_validator.word_validator.is_csw_only(w)]
+                        elif getattr(room, 'csw_only_words', None) is None:
+                            room.csw_only_words = []
                     else:
                         room.csw_only_words = []
                     room.csw_only_words = [w for w in (room.csw_only_words or []) if len(w) >= display_floor]
@@ -3809,8 +3809,8 @@ def get_room_state(room_id):
                         prev_aw = getattr(room, 'previous_added_words', None)
                         if prev_aw:
                             room.added_words = list(prev_aw)
-                        elif not getattr(room, 'added_words', None) and words_to_return:
-                            room.added_words = [w for w in words_to_return if word_validator.word_validator.is_added_word(w)]
+                        elif getattr(room, 'added_words', None) is None:
+                            room.added_words = []
                     else:
                         room.added_words = []
                     room.added_words = [w for w in (room.added_words or []) if len(w) >= display_floor]
