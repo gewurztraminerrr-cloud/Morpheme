@@ -1639,6 +1639,7 @@ async function updateGameState(incomingState = null) {
         if (_isRejoin && _storedRound > 0 && state.current_round !== _storedRound) {
             console.log(`[play.js] Rejoin round mismatch: was ${_storedRound}, now ${state.current_round}. Clearing local submitted words.`);
             window._localSubmittedWords = new Set();
+            window._localSubmittedWordsList = [];
             window.lastDisplayAllWordsArgs = null;
         }
         if (state.state === 'active') {
@@ -1650,6 +1651,7 @@ async function updateGameState(incomingState = null) {
             if (isNewRound) {
                 wrongGuessesOnBoardCount = 0;
                 window._localSubmittedWords = new Set();
+                window._localSubmittedWordsList = [];
                 // Clear word panel render cache for new round to prevent stale pre-validation
                 window.lastDisplayAllWordsArgs = null;
 
