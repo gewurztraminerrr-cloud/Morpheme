@@ -107,7 +107,7 @@ def proportionally_sample_words(all_words_collection, max_limit, seed_val=None):
         l = len(w)
         words_by_len.setdefault(l, []).append(w)
         
-    import random
+    # Using global random module
     rng = random.Random(seed_val) if seed_val else random.Random()
     
     allocated = {}
@@ -4208,7 +4208,6 @@ class RoomManager:
             # Anti-duplicate board protection loop
             board_attempts = 0
             while board_attempts < 4:
-                import random
                 random.seed()
                 
                 _sp_dict = str(room.spinner_params.get('dictionary', 'NWL')).upper()
@@ -4351,8 +4350,8 @@ class RoomManager:
                                     _bw_len = max(m_len, min(len(w) for w in all_words_filtered) if all_words_filtered else 6)
                                     _bw_candidates = [w for w in all_words_filtered if len(w) == _bw_len]
                                 if _bw_candidates:
-                                    import random as _r
-                                    bonus_word = _r.choice(_bw_candidates)
+                                    # Using global random module
+                                    bonus_word = random.choice(_bw_candidates)
                                     room.bonus_word = bonus_word
                                     print(f"[RoomManager] Embedded bonus word '{_cached_bw}' not in board words; re-rolled to '{bonus_word}'")
 
@@ -4679,7 +4678,6 @@ class RoomManager:
             
             # SPLIT POINTS RANDOMIATION
             if room.game_type == 'split':
-                import random
                 random.shuffle(room.players)
                 
             return True
@@ -4758,7 +4756,6 @@ class RoomManager:
                         # Safe-parse bonus word length: spin if random (equal weights for 6-10)
                         bonus_len_choice = initial_solo_params.get('bonus_word_length', 'random')
                         if bonus_len_choice == 'random' or not bonus_len_choice or str(bonus_len_choice) == '0':
-                            import random
                             bonus_word_len = random.choices([6, 7, 8, 9, 10], weights=[20, 20, 20, 20, 20])[0]
                         else:
                             try:
@@ -6392,7 +6389,7 @@ class RoomManager:
                     if not candidates:
                         candidates = [w for w in target_words if 6 <= len(w) <= 10 and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
                     if candidates:
-                        import random
+                        # Using global random module
                         current_bw = random.choice(list(candidates)).upper()
                     else:
                         current_bw = self._get_bonus_word(length=max(6, bw_l), dictionary=dict_val, alternating=('checkerboard' in str(room.current_board_format).lower()))
