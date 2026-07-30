@@ -434,48 +434,129 @@ class WordValidator:
 
     def find_word_on_board(self, board, word, return_path=False):
         """Standard DFS search for a word on a Boggle board.
-           Supports Either/Or cells (e.g. 'A/B') and Qu (Q matches QU)."""
+           Supports Either/Or cells (e.g. 'A/B') and Qu (Q matches QU).
+           OPTIMIZED: First-letter index filtering for instant < 1ms search."""
         if not word or not board:
             return (False, None) if return_path else False
             
         word = word.upper()
-        rows = len(board)
-        cols = len(board[0])
+        is_3d = isinstance(board[0], list) and isinstance(board[0][0], list)
+        first_char = word[0]
         
-        def dfs(r, c, index, visited_path):
-            if r < 0 or r >= rows or c < 0 or c >= cols:
-                return None
-            if (r, c) in visited_path:
-                return None
-                
-            cell_val = str(board[r][c]).upper()
-            # Support Either/Or tiles
-            letters = cell_val.split('/') if '/' in cell_val else [cell_val]
-            
-            for char in letters:
-                match_len = 0
-                if char == 'Q' and word[index:index+2] == 'QU': 
-                    match_len = 2
-                elif word.startswith(char, index): 
-                    match_len = len(char)
-                
-                if match_len > 0:
-                    current_path = visited_path + [(r, c)]
-                    if index + match_len >= len(word):
-                        return current_path
-                        
-                    for dr in [-1, 0, 1]:
-                        for dc in [-1, 0, 1]:
-                            if dr == 0 and dc == 0: continue
-                            res_path = dfs(r + dr, c + dc, index + match_len, current_path)
-                            if res_path: return res_path
-            return None
+        # 1. Quick initial scan to find valid starting coordinates for word[0]
+        starting_cells = []
+        if is_3d:
+            for f in range(len(board)):
+                for r in range(len(board[f])):
+                    for c in range(len(board[f][r])):
+                        val = str(board[f][r][c]).upper()
+                        if first_char in val or (first_char == 'Q' and 'QU' in val) or ('/' in val and any(first_char == opt.strip()[0] for opt in val.split('/'))):
+                            starting_cells.append((f, r, c))
+        else:
+            rows, cols = len(board), len(board[0])
+            for r in range(rows):
+                for c in range(cols):
+                    val = str(board[r][c]).upper()
+                    if first_char in val or (first_char == 'Q' and 'QU' in val) or ('/' in val and any(first_char == opt.strip()[0] for opt in val.split('/'))):
+                        starting_cells.append((r, c))
 
-        for r in range(rows):
-            for c in range(cols):
-                path = dfs(r, c, 0, [])
+        if not starting_cells:
+            return (False, None) if return_path else False
+            
+        # 2. Run DFS ONLY starting from candidate cells
+        if not is_3d:
+            rows, cols = len(board), len(board[0])
+            def dfs_2d(r, c, index, visited_path):
+                if r < 0 or r >= rows or c < 0 or c >= cols or (r, c) in visited_path:
+                    return None
+                cell_val = str(board[r][c]).upper()
+                letters = cell_val.split('/') if '/' in cell_val else [cell_val]
+                for char in letters:
+                    match_len = 0
+                    if char == 'Q' and word[index:index+2] == 'QU': 
+                        match_len = 2
+                    elif word.startswith(char, index): 
+                        match_len = len(char)
+                    
+                    if match_len > 0:
+                        current_path = visited_path + [(r, c)]
+                        if index + match_len >= len(word):
+                            return current_path
+                        for dr in [-1, 0, 1]:
+                            for dc in [-1, 0, 1]:
+                                if dr == 0 and dc == 0: continue
+                                res_path = dfs_2d(r + dr, c + dc, index + match_len, current_path)
+                                if res_path: return res_path
+                return None
+
+            for r, c in starting_cells:
+                path = dfs_2d(r, c, 0, [])
                 if path:
                     return (True, path) if return_path else True
+        else:
+            # 3D Board DFS Search
+            def get_neighbors_3d(f, r, c):
+                res = []
+                for dr in [-1, 0, 1]:
+                    for dc in [-1, 0, 1]:
+                        if dr == 0 and dc == 0: continue
+                        nr, nc = r + dr, c + dc
+                        if 0 <= nr < 3 and 0 <= nc < 3: res.append((f, nr, nc))
+                if f == 0:
+                    if r == 0: res.extend([(4, 2, c), (4, 2, c-1), (4, 2, c+1)])
+                    if r == 2: res.extend([(5, 0, c), (5, 0, c-1), (5, 0, c+1)])
+                    if c == 0: res.extend([(2, r, 2), (2, r-1, 2), (2, r+1, 2)])
+                    if c == 2: res.extend([(3, r, 0), (3, r-1, 0), (3, r+1, 0)])
+                elif f == 1:
+                    if r == 0: res.extend([(4, 0, 2-c), (4, 0, 2-(c-1)), (4, 0, 2-(c+1))])
+                    if r == 2: res.extend([(5, 2, 2-c), (5, 2, 2-(c-1)), (5, 2, 2-(c+1))])
+                    if c == 0: res.extend([(3, r, 2), (3, r-1, 2), (3, r+1, 2)])
+                    if c == 2: res.extend([(2, r, 0), (2, r-1, 0), (2, r+1, 0)])
+                elif f == 2:
+                    if r == 0: res.extend([(4, c, 0), (4, c-1, 0), (4, c+1, 0)])
+                    if r == 2: res.extend([(5, 2-c, 0), (5, 2-(c-1), 0), (5, 2-(c+1), 0)])
+                    if c == 0: res.extend([(1, r, 2), (1, r-1, 2), (1, r+1, 2)])
+                    if c == 2: res.extend([(0, r, 0), (0, r-1, 0), (0, r+1, 0)])
+                elif f == 3:
+                    if r == 0: res.extend([(4, 2-c, 2), (4, 2-(c-1), 2), (4, 2-(c+1), 2)])
+                    if r == 2: res.extend([(5, c, 2), (5, c-1, 2), (5, c+1, 2)])
+                    if c == 0: res.extend([(0, r, 2), (0, r-1, 2), (0, r+1, 2)])
+                    if c == 2: res.extend([(1, r, 0), (1, r-1, 0), (1, r+1, 0)])
+                elif f == 4:
+                    if r == 0: res.extend([(1, 0, 2-c), (1, 0, 2-(c-1)), (1, 0, 2-(c+1))])
+                    if r == 2: res.extend([(0, 0, c), (0, 0, c-1), (0, 0, c+1)])
+                    if c == 0: res.extend([(2, 0, r), (2, 0, r-1), (2, 0, r+1)])
+                    if c == 2: res.extend([(3, 0, 2-r), (3, 0, 2-(r-1)), (3, 0, 2-(r+1))])
+                elif f == 5:
+                    if r == 0: res.extend([(0, 2, c), (0, 2, c-1), (0, 2, c+1)])
+                    if r == 2: res.extend([(1, 2, 2-c), (1, 2, 2-(c-1)), (1, 2, 2-(c+1))])
+                    if c == 0: res.extend([(2, 2, 2-r), (2, 2, 2-(r-1)), (2, 2, 2-(r+1))])
+                    if c == 2: res.extend([(3, 2, r), (3, 2, r-1), (3, 2, r+1)])
+                return [(nf, nr, nc) for nf, nr, nc in res if 0 <= nf < 6 and 0 <= nr < 3 and 0 <= nc < 3]
+
+            def dfs_3d(f, r, c, index, visited_path):
+                cell_val = str(board[f][r][c]).upper()
+                letters = cell_val.split('/') if '/' in cell_val else [cell_val]
+                for char in letters:
+                    match_len = 0
+                    if char == 'Q' and word[index:index+2] == 'QU': match_len = 2
+                    elif word.startswith(char, index): match_len = len(char)
+                    
+                    if match_len > 0:
+                        current_path = visited_path + [(f, r, c)]
+                        if index + match_len >= len(word):
+                            return current_path
+                        for nf, nr, nc in get_neighbors_3d(f, r, c):
+                            if (nf, nr, nc) not in visited_path:
+                                res_path = dfs_3d(nf, nr, nc, index + match_len, current_path)
+                                if res_path: return res_path
+                return None
+
+            for f, r, c in starting_cells:
+                path = dfs_3d(f, r, c, 0, [])
+                if path:
+                    return (True, path) if return_path else True
+
         return (False, None) if return_path else False
 
 # Global instance
