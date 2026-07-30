@@ -120,8 +120,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     if (!createResp.ok) {
-                        const createErr = await createResp.text();
-                        throw new Error(`Creation failed (${createResp.status}): ${createErr}`);
+                        let errText = "Room creation failed";
+                        try {
+                            const errJson = await createResp.json();
+                            errText = errJson.error || errJson.message || errText;
+                        } catch(e) {
+                            errText = "Server busy, please retry in a moment.";
+                        }
+                        throw new Error(errText);
                     }
 
                     const data = await createResp.json();

@@ -3235,105 +3235,108 @@ def cleanup_user_rooms_entirely(user_id):
 
 @app.route('/api/room/create', methods=['POST'])
 def create_room():
-    with open(DEBUG_FLOW_PATH, 'a') as f:
-        f.write(f"\n[app.py] create_room called at {time.time()}\n")
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-    
-    data = request.get_json() or {}
-    game_type = data.get('game_type', 'standard')
-    time_limit = int(data.get('time_limit') or 45)
-    board_dimensions = str(data.get('board_dimensions') or '4x4')
-    
     try:
-        min_rating = int(data.get('min_rating') or 0)
-    except (TypeError, ValueError):
-        min_rating = 0
+        with open(DEBUG_FLOW_PATH, 'a') as f:
+            f.write(f"\n[app.py] create_room called at {time.time()}\n")
+        if 'user_id' not in session:
+            return jsonify({'error': 'Not authenticated'}), 401
         
-    try:
-        max_rating = int(data.get('max_rating') or 9999)
-    except (TypeError, ValueError):
-        max_rating = 9999
-    
-    # Guest Restriction: Guests cannot create custom/limited rooms
-    if session.get('is_guest', False):
-        if min_rating > 0 or max_rating < 9999:
-            return jsonify({'error': 'RANK_REJECT: Guest users are not allowed to create rooms with rating limits. Please register to unlock this feature.'}), 403
-    
-    is_public = (min_rating == 0 and max_rating == 9999)
-    if is_public and game_type not in ['fcfs', 'split']:
-        generated_id = f"pub_v2_{game_type}_{board_dimensions}_{time_limit}".replace(' ', '_').lower()
-        print(f"[app.py] Using stable v2 ID for public room: {generated_id}")
-    else:
-        generated_id = str(uuid.uuid4())
+        data = request.get_json() or {}
+        game_type = data.get('game_type', 'standard')
+        time_limit = int(data.get('time_limit') or 45)
+        board_dimensions = str(data.get('board_dimensions') or '4x4')
         
-    room = room_manager.create_room(generated_id, game_type, time_limit, board_dimensions, min_rating, max_rating)
-    
-    # Ensure user is not in any other room
-    cleanup_user_rooms(session['user_id'], exclude_room_id=room.room_id)
-    
-    # Use the actual ID (could be existing one if singleton)
-    room_id = room.room_id
-    
-    # Get configuration-specific rating
-    config_key = f"{game_type}|{board_dimensions}|{time_limit}"
-    rating = 1200  # Default
-    
-    if session.get('is_guest', False):
-        rating = 0
-    else:
-        conn = sqlite3.connect(DB_PATH, timeout=30)
-        # 24-hour rooms exception: load global rating from users table
-        is_24h = (int(time_limit) >= 7200)
-        if is_24h:
-            cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
-            row = cursor.fetchone()
-            if row:
-                rating = row[0]
-            else:
-                rating = 1200
-        else:
-            cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
-                                (session['user_id'], config_key))
-            row = cursor.fetchone()
-            if row:
-                rating = row[0]
-            else:
-                # Every room starts the user at 1200, completely unique to this room configuration
-                rating = 1200
-        conn.close()
-
-    # Get extra stats (games_played, country_flag)
-    games_played = 0
-    country_flag = '🏳️'
-    if not session.get('is_guest', False):
-        conn = sqlite3.connect(DB_PATH, timeout=30)
         try:
-             cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (session['user_id'],))
-             row = cur.fetchone()
-             if row:
-                 games_played = row[0]
-                 if row[1]: country_flag = row[1]
-        except: pass
-        conn.close()
-    
-    room.add_player(session['user_id'], session['username'], rating, 
-                    games_played=games_played, country_flag=country_flag, 
-                    is_guest=session.get('is_guest', False))
-    
-    # Start first round immediately in background for faster loading
-    # Only if this is a BRAND NEW room (no board yet)
-    if not room.board:
-        print(f"[app.py] Kickstarting first round for NEW room {room_id}")
-        room.starting_round = True
-        room._round_start_init_time = time.time()
-        import threading
-        thread = threading.Thread(target=room_manager.start_round, args=(room_id,), daemon=True)
-        thread.start()
-    else:
-        print(f"[app.py] Room {room_id} already has a board. Skipping redundant start_round.")
-    
-    return jsonify({'success': True, 'room_id': room_id})
+            min_rating = int(data.get('min_rating') or 0)
+        except (TypeError, ValueError):
+            min_rating = 0
+            
+        try:
+            max_rating = int(data.get('max_rating') or 9999)
+        except (TypeError, ValueError):
+            max_rating = 9999
+        
+        # Guest Restriction: Guests cannot create custom/limited rooms
+        if session.get('is_guest', False):
+            if min_rating > 0 or max_rating < 9999:
+                return jsonify({'error': 'RANK_REJECT: Guest users are not allowed to create rooms with rating limits. Please register to unlock this feature.'}), 403
+        
+        is_public = (min_rating == 0 and max_rating == 9999)
+        if is_public and game_type not in ['fcfs', 'split']:
+            generated_id = f"pub_v2_{game_type}_{board_dimensions}_{time_limit}".replace(' ', '_').lower()
+            print(f"[app.py] Using stable v2 ID for public room: {generated_id}")
+        else:
+            generated_id = str(uuid.uuid4())
+            
+        room = room_manager.create_room(generated_id, game_type, time_limit, board_dimensions, min_rating, max_rating)
+        
+        # Ensure user is not in any other room
+        cleanup_user_rooms(session['user_id'], exclude_room_id=room.room_id)
+        
+        # Use the actual ID (could be existing one if singleton)
+        room_id = room.room_id
+        
+        # Get configuration-specific rating
+        config_key = f"{game_type}|{board_dimensions}|{time_limit}"
+        rating = 1200  # Default
+        
+        if session.get('is_guest', False):
+            rating = 0
+        else:
+            conn = sqlite3.connect(DB_PATH, timeout=30)
+            # 24-hour rooms exception: load global rating from users table
+            is_24h = (int(time_limit) >= 7200)
+            if is_24h:
+                cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
+                row = cursor.fetchone()
+                if row:
+                    rating = row[0]
+                else:
+                    rating = 1200
+            else:
+                cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
+                                    (session['user_id'], config_key))
+                row = cursor.fetchone()
+                if row:
+                    rating = row[0]
+                else:
+                    rating = 1200
+            conn.close()
+
+        # Get extra stats (games_played, country_flag)
+        games_played = 0
+        country_flag = '🏳️'
+        if not session.get('is_guest', False):
+            conn = sqlite3.connect(DB_PATH, timeout=30)
+            try:
+                 cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (session['user_id'],))
+                 row = cur.fetchone()
+                 if row:
+                     games_played = row[0]
+                     if row[1]: country_flag = row[1]
+            except: pass
+            conn.close()
+        
+        room.add_player(session['user_id'], session['username'], rating, 
+                        games_played=games_played, country_flag=country_flag, 
+                        is_guest=session.get('is_guest', False))
+        
+        # Start first round immediately in background for faster loading
+        if not room.board:
+            print(f"[app.py] Kickstarting first round for NEW room {room_id}")
+            room.starting_round = True
+            room._round_start_init_time = time.time()
+            import threading
+            thread = threading.Thread(target=room_manager.start_round, args=(room_id,), daemon=True)
+            thread.start()
+        else:
+            print(f"[app.py] Room {room_id} already has a board. Skipping redundant start_round.")
+        
+        return jsonify({'success': True, 'room_id': room_id})
+    except Exception as e:
+        import traceback
+        print(f"[create_room] Error: {e}\n{traceback.format_exc()}")
+        return jsonify({'error': f'Room Creation Error: {str(e)}'}), 400
 
 @app.route('/api/room/<room_id>/join', methods=['POST'])
 def join_room(room_id):
