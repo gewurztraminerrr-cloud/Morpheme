@@ -1914,12 +1914,29 @@ async function updateGameState(incomingState = null) {
                         ${finderButtonHtml}
                     </div>`;
 
-                const targetUsername = selectedPlayerUsername || currentUser;
-                let targetWords = [];
-                if (targetUsername) {
-                    const targetPlayer = state.players.find(p => p.username === targetUsername);
-                    if (targetPlayer && targetPlayer.submitted_words) {
-                        targetWords = targetPlayer.submitted_words.map(w => typeof w === 'string' ? w : w.word);
+                const targetUsernameStr = (selectedPlayerUsername || currentUser || '').toLowerCase().trim();
+                const currentUserIdStr = String(window.currentUserId || '');
+                let targetPlayer = state.players ? state.players.find(p => 
+                    (p.username && p.username.toLowerCase().trim() === targetUsernameStr) ||
+                    (p.user_id && String(p.user_id) === currentUserIdStr)
+                ) : null;
+                if (!targetPlayer && state.previous_players) {
+                    targetPlayer = state.previous_players.find(p => 
+                        (p.username && p.username.toLowerCase().trim() === targetUsernameStr) ||
+                        (p.user_id && String(p.user_id) === currentUserIdStr)
+                    );
+                }
+                let targetWords = targetPlayer && targetPlayer.submitted_words ? targetPlayer.submitted_words.map(w => typeof w === 'string' ? w : w.word) : [];
+                
+                // Merge locally submitted words so all found words (including CSW & 5x7 words) are highlighted in blue
+                if (!selectedPlayerUsername && window._localSubmittedWords) {
+                    const existingSet = new Set(targetWords.map(w => w.toUpperCase()));
+                    for (const lw of window._localSubmittedWords) {
+                        const lwUpper = lw.toUpperCase();
+                        if (!existingSet.has(lwUpper)) {
+                            targetWords.push(lw);
+                            existingSet.add(lwUpper);
+                        }
                     }
                 }
 
