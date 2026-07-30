@@ -6829,8 +6829,10 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                         if (listEl) {
                             const placeholder = listEl.querySelector('.placeholder');
                             if (placeholder) placeholder.remove();
+                            let itemClassName = 'word-item player-word';
+                            if (isBonusWord) itemClassName += ' bonus-word';
                             const indicator = '<span class="found-indicator present">✓</span>';
-                            const html = `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; animation: slideIn 0.3s ease;">
+                            const html = `<div class="${itemClassName}" data-word="${word}" style="display:flex; justify-content:space-between; animation: slideIn 0.3s ease;">
                                 <span>${indicator}${word}</span>
                                 <span style="opacity:0.8">${localPts}</span>
                             </div>`;
