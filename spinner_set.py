@@ -102,13 +102,23 @@ class SpinnerSet:
         elif isinstance(wc, str):
             p['word_count_range'] = wc.replace(',', '-')
 
-        dict_name = str(p.get('dictionary', 'NWL')).upper()
+        raw_dict_name = str(p.get('dictionary', 'NWL')).upper()
         is_aw_effective = (
-            dict_name in ['AW', 'ADDED_WORDS', 'ALL']
+            raw_dict_name in ['AW', 'ADDED_WORDS', 'ALL']
             or p.get('use_added_words') is True
-            or '+ AW' in dict_name
-            or '+AW' in dict_name
+            or '+ AW' in raw_dict_name
+            or '+AW' in raw_dict_name
         )
+        clean_base_dict = raw_dict_name.replace('+ AW', '').replace('+AW', '').replace('ADDED_WORDS', '').strip()
+        if clean_base_dict in ['', 'AW', 'ALL']:
+            clean_base_dict = 'NWL'
+            
+        if is_aw_effective:
+            p['dictionary'] = f"{clean_base_dict} + AW"
+            p['use_added_words'] = True
+        else:
+            p['dictionary'] = clean_base_dict
+            p['use_added_words'] = False
         
         try:
             min_word_length = int(p.get('min_word_length'))
