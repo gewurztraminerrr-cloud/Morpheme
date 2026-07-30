@@ -6707,15 +6707,15 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
         }
 
         if (alreadyFound) {
-            // Definitively already found — flash purple immediately.
+            // Definitively already found — flash purple immediately and return
             showValidationFeedback('Already found!', false, false, finalPath);
-            optimisticColor = 'purple';
-            optimisticIsDefinitive = true;
+            clearSubmissionVisuals();
+            return;
         } else if (effectiveLen < minLen) {
-            // Too short — flash INVALID immediately!
+            // Too short — flash TOO SHORT immediately and return
             showValidationFeedback(`${word.toUpperCase()} IS TOO SHORT (MIN: ${minLen}L)`, false, false, finalPath);
-            optimisticColor = 'red';
-            optimisticIsDefinitive = true;
+            clearSubmissionVisuals();
+            return;
         } else {
             // Check dictionary validity locally using the authoritative all_words list from the game state
             const allWordsState = preState.all_words || [];
@@ -6725,6 +6725,9 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
             } else if (allWordsState && typeof allWordsState === 'object') {
                 wordList = Object.keys(allWordsState);
             }
+
+            const curFmtLow = String(preState.board_format || '').toLowerCase();
+            const isPenaltyMode = curFmtLow.includes('penalty');
 
             if (wordList.length > 0) {
                 // Word list is populated and trustworthy — check locally for instant flash.
@@ -6774,11 +6777,11 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                     showValidationFeedback(msg, true, isBonusWord, finalPath, true);
                     optimisticColor = isBonusWord ? 'green' : 'blue';
                     optimisticIsDefinitive = true;
-                } else {
-                    // Confirmed invalid locally — flash red INSTANTLY with zero latency (same 0ms response as blue flash!)
+                } else if (!isPenaltyMode) {
+                    // Confirmed invalid locally in non-penalty mode — flash red and return immediately
                     showValidationFeedback(`${word.toUpperCase()} INVALID`, false, false, finalPath);
-                    optimisticColor = 'red';
-                    optimisticIsDefinitive = true;
+                    clearSubmissionVisuals();
+                    return;
                 }
             }
         }
