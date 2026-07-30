@@ -941,9 +941,8 @@ class GameRoom:
                 if path:
                     is_penalty = True
                 else:
-                    from board_generator import BoardGenerator
-                    bg = BoardGenerator()
-                    if bg.is_word_on_board(word, self.board):
+                    is_on_b, _ = word_validator.word_validator.find_word_on_board(self.board, word)
+                    if is_on_b:
                         is_penalty = True
             
             if is_penalty:

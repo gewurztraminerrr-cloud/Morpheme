@@ -5424,10 +5424,10 @@ class BoardGenerator:
 
     def is_word_on_board(self, word, board):
         """Check if a word exists on the board (2D or 3D Surface)"""
-        if not board:
+        if not board or not word:
             return False
-        is_3d = len(board) == 6 and isinstance(board[0], list) and isinstance(board[0][0], list)
-        word = word.upper()
+        res, _ = word_validator.find_word_on_board(board, word)
+        return res
 
         def dfs_find(f, r, c, index, visited):
             if index >= len(word):
