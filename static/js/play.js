@@ -7401,13 +7401,9 @@ async function leaveCurrentRoom() {
         fetch(url, { method: 'POST', keepalive: true }).catch(() => {});
     }
 
-    // 3. Immediately refresh lobby stats if available
+    // 3. Refresh lobby stats in background without blocking
     if (typeof window.fetchLobbyStats === 'function') {
-        try {
-            await window.fetchLobbyStats();
-        } catch (e) {
-            console.warn("Failed to refresh lobby stats after leaving room:", e);
-        }
+        window.fetchLobbyStats().catch(() => {});
     }
 }
 window.leaveCurrentRoom = leaveCurrentRoom;
@@ -7429,8 +7425,8 @@ if (returnBtnEl) {
             await finishPrivateMatchTurn();
             return;
         }
-        await leaveCurrentRoom();
         showPage('page-lobby');
+        leaveCurrentRoom();
     });
 }
 
