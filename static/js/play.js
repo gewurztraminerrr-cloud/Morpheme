@@ -523,7 +523,16 @@ window.stopGamePolling = function () {
  * Kept as a no-op stub so existing call sites don't break.
  */
 function ensureLoadingCardStyles() {
-    // No-op: styles are in play.css (.game-board-loading, .loading-container, etc.)
+    const boardEl = document.getElementById('game-board');
+    if (boardEl) {
+        boardEl.style.display = 'flex';
+        boardEl.style.flexDirection = 'column';
+        boardEl.style.alignItems = 'center';
+        boardEl.style.justifyContent = 'center';
+        boardEl.style.gridTemplateColumns = 'none';
+        boardEl.style.gridTemplateRows = 'none';
+        boardEl.style.width = '100%';
+    }
 }
 
 function clearGameUIAndCache() {
@@ -1085,7 +1094,7 @@ async function updateGameState(incomingState = null) {
                     loadingMsg = `GENERATING ${state.current_board_format.toUpperCase()}…`;
                 }
                 boardEl.className = 'game-board-loading';
-                boardEl.removeAttribute('style');
+                ensureLoadingCardStyles();
                 boardEl.innerHTML = `
                     <div class="loading-container">
                         <div class="glow-spinner"></div>

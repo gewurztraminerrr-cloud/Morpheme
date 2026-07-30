@@ -759,6 +759,10 @@ body.theme-light-brown .player-score-val {
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+    grid-column: 1 / -1 !important;
+    grid-row: 1 / -1 !important;
     width: 100% !important;
     min-height: 320px !important;
     height: auto !important;
