@@ -114,7 +114,7 @@ function renderTournament(data) {
                 </div>
                 <div class="param-item">
                     <span class="param-label">Dictionary</span>
-                    <span class="param-value">${params.dictionary}${params.use_added_words ? ' + AW' : ''}</span>
+                    <span class="param-value">${String(params.dictionary || 'NWL').replace(/\+\s*AW/gi, '').replace(/\+\s*ADDED_WORDS/gi, '').trim()}${(params.use_added_words || String(params.dictionary || '').toUpperCase().includes('AW')) ? ' + AW' : ''}</span>
                 </div>
                 <div class="param-item">
                     <span class="param-label">Bonus Word</span>

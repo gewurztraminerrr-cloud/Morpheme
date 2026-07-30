@@ -1537,8 +1537,11 @@ class GameRoom:
                 
                 dict_val = fparams.get('dictionary', 'NWL')
                 use_aw_val = fparams.get('use_added_words', False)
-                if use_aw_val and '+ AW' not in str(dict_val) and '+AW' not in str(dict_val):
-                    dict_val = f"{dict_val} + AW"
+                clean_dict = str(dict_val).replace('+ AW', '').replace('+AW', '').strip()
+                if use_aw_val:
+                    dict_val = f"{clean_dict} + AW"
+                else:
+                    dict_val = clean_dict
                 
                 new_sp = {
                     'dictionary': dict_val,
