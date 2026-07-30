@@ -2776,38 +2776,66 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
     except Exception as e:
         print(f"[get_emergency_fallback_board] General cache fallback error: {e}")
 
-    # --- ON-THE-FLY DYNAMIC FALLBACK GENERATION ---
-    print(f"[get_emergency_fallback_board] Generating fresh dynamic board on-the-fly for {dimensions} (Target: {target_range_resolved}, Format: {fmt})...")
-    token = use_added_words_ctx.set(use_added_words)
-    try:
-        res = bg.generate_board(
-            dimensions=dimensions,
-            bonus_word=None,
-            word_count_range=target_range_resolved,
-            dictionary=dictionary,
-            board_format=fmt,
-            min_word_length=min_word_length,
-            difficulty=difficulty or "Medium",
-            is_emergency=True,
-            use_added_words=use_added_words
-        )
-        board, words, bonus_cell, updated_format, paths, ratio, bonus_word = res
-        words_filtered = [w for w in words if len(w) >= min_word_length]
-        paths_filtered = {w: p for w, p in paths.items() if len(w) >= min_word_length}
-        eparams = {
-            'min_word_length': min_word_length,
-            'word_count_range': target_range_resolved,
-            'board_format': updated_format,
-            'dictionary': dictionary,
-            'use_added_words': use_added_words,
-            'difficulty': difficulty or "Medium",
-            'bonus_word_len': len(bonus_word) if bonus_word else 8
-        }
-        return board, words_filtered, bonus_cell, updated_format, paths_filtered, ratio, bonus_word, target_range_resolved, eparams
-    except Exception as gen_err:
-        print(f"[get_emergency_fallback_board] Error generating dynamic fallback: {gen_err}")
-    finally:
-        use_added_words_ctx.reset(token)
+    # --- INSTANT EMERGENCY FALLBACK (Async BG refill) ---
+    print(f"[get_emergency_fallback_board] Delivering instant pre-built emergency board for {dimensions}...")
+    parts = dimensions.split("x")
+    is_3d = len(parts) == 3
+    if is_3d:
+        board = [
+            [['S', 'T', 'A'], ['R', 'E', 'D'], ['L', 'I', 'N']],
+            [['E', 'R', 'S'], ['A', 'N', 'T'], ['I', 'C', 'S']],
+            [['T', 'R', 'A'], ['I', 'N', 'S'], ['C', 'A', 'P']],
+            [['P', 'A', 'R'], ['T', 'I', 'E'], ['S', 'E', 'T']],
+            [['S', 'O', 'U'], ['N', 'D', 'S'], ['F', 'A', 'R']],
+            [['W', 'O', 'R'], ['D', 'S', 'E'], ['T', 'S', 'S']]
+        ]
+        bonus_cell = (0, 0, 0)
+    else:
+        rows, cols = map(int, parts[:2])
+        # Pre-built standard letter distribution
+        std_letters = ["S","T","A","R","E","D","L","I","N","E","R","S","A","N","T","I","C","S","T","R","A","I","N","S","C","A","P","T","U","R","E","S","O","U","N","D","S","F","A","R","W","O","R","D","S","E","T","S"]
+        board = [[std_letters[(r*cols + c) % len(std_letters)] for c in range(cols)] for r in range(rows)]
+        bonus_cell = (0, 0)
+
+    # Solve emergency board instantly
+    bg = BoardGenerator()
+    emergency_solve = bg._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=15, store_paths=True, timeout=1.0, use_added_words=use_added_words)
+    words_filtered = [w for w in emergency_solve if len(w) >= min_word_length]
+    paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
+    if not words_filtered:
+        words_filtered = ["STAR", "RED", "LINE", "SOUNDS", "STARTS", "TRAINS", "PARTS", "WORDS"]
+        paths_filtered = {w: [bonus_cell] for w in words_filtered}
+    bonus_word = words_filtered[0] if words_filtered else "STAR"
+    
+    eparams = {
+        'min_word_length': min_word_length,
+        'word_count_range': target_range_resolved,
+        'board_format': fmt,
+        'dictionary': dictionary,
+        'use_added_words': use_added_words,
+        'difficulty': difficulty or "Medium",
+        'bonus_word_len': len(bonus_word)
+    }
+
+    # Trigger background refill to populate SQLite cache for next rounds
+    def _async_bg_generate():
+        try:
+            bg.generate_board(
+                dimensions=dimensions,
+                bonus_word=None,
+                word_count_range=target_range_resolved,
+                dictionary=dictionary,
+                board_format=fmt,
+                min_word_length=min_word_length,
+                difficulty=difficulty or "Medium",
+                is_emergency=True,
+                use_added_words=use_added_words
+            )
+        except Exception as async_err:
+            print(f"[get_emergency_fallback_board] Background board generation error: {async_err}")
+
+    threading.Thread(target=_async_bg_generate, daemon=True).start()
+    return board, words_filtered, bonus_cell, fmt, paths_filtered, 0.5, bonus_word, target_range_resolved, eparams
 
     # Last resort if no static fallback exists in cache
     print(f"[get_emergency_fallback_board] CRITICAL: Static fallback cache empty! Returning empty mock board.")
