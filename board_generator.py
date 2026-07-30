@@ -2805,12 +2805,12 @@ class BoardGenerator:
             board = self._perform_rescue_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, is_checkerboard=is_checkerboard, board_format=board_format, use_added_words=use_aw_flag)
             
             display_min = min_word_length
-            final_solve = self._solve_board(board, dictionary, (0, 99999), display_min, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=30.0, use_added_words=use_aw_flag)
+            final_solve = self._solve_board(board, dictionary, (0, 99999), display_min, max_depth=25, store_paths=True, timeout=30.0, use_added_words=use_aw_flag)
             count = len(final_solve)
             
             if count > max_words:
                 board = self._perform_decimation_sweep(board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, all_excluded, difficulty, is_checkerboard=is_checkerboard, board_format=board_format, use_added_words=use_aw_flag)
-                final_solve = self._solve_board(board, dictionary, (0, 99999), display_min, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=30.0, use_added_words=use_aw_flag)
+                final_solve = self._solve_board(board, dictionary, (0, 99999), display_min, max_depth=25, store_paths=True, timeout=30.0, use_added_words=use_aw_flag)
                 count = len(final_solve)
             
             # --- FINAL SANITIZATION (protecting format tiles) ---
