@@ -1969,14 +1969,19 @@ async function updateGameState(incomingState = null) {
                     (p.user_id && String(p.user_id) === currentUserIdStr)
                 );
                 
-                let myWords = myPlayer ? (myPlayer.submitted_words || []) : [];
+                let myWords = myPlayer ? [...(myPlayer.submitted_words || [])] : [];
                 
                 // SAFEGUARD: Preserve locally submitted words to prevent polls from wiping active words
                 if (window._localSubmittedWordsList && window._localSubmittedWordsList.length > 0) {
-                    const serverWordSet = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase()));
+                    const serverWordSet = new Set();
+                    myWords.forEach(w => {
+                        const str = (typeof w === 'string' ? w : (w && w.word) || '').toUpperCase().trim();
+                        if (str) serverWordSet.add(str);
+                    });
+                    
                     for (const localObj of window._localSubmittedWordsList) {
-                        const lWord = (typeof localObj === 'string' ? localObj : localObj.word).toUpperCase();
-                        if (!serverWordSet.has(lWord)) {
+                        const lWord = (typeof localObj === 'string' ? localObj : (localObj && localObj.word) || '').toUpperCase().trim();
+                        if (lWord && !serverWordSet.has(lWord)) {
                             myWords.push(localObj);
                             serverWordSet.add(lWord);
                         }
@@ -6826,18 +6831,8 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                             time: Date.now() / 1000
                         });
 
-                        const listEl = document.getElementById('submitted-words-list');
-                        if (listEl) {
-                            const placeholder = listEl.querySelector('.placeholder');
-                            if (placeholder) placeholder.remove();
-                            let itemClassName = 'word-item player-word';
-                            if (isBonusWord) itemClassName += ' bonus-word';
-                            const indicator = '<span class="found-indicator present">✓</span>';
-                            const html = `<div class="${itemClassName}" data-word="${word}" style="display:flex; justify-content:space-between; animation: slideIn 0.3s ease;">
-                                <span>${indicator}${word}</span>
-                                <span style="opacity:0.8">${localPts}</span>
-                            </div>`;
-                            listEl.insertAdjacentHTML('afterbegin', html);
+                        if (typeof updateGameState === 'function') {
+                            updateGameState();
                         }
                     }
                 } else if (!isPenaltyMode) {
