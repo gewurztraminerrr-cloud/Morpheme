@@ -2791,10 +2791,15 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
     emergency_solve = bg._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=15, store_paths=True, timeout=1.0, use_added_words=use_added_words)
     words_filtered = [w for w in emergency_solve if len(w) >= min_word_length]
     paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
-    if not words_filtered:
-        words_filtered = ["STAR", "RED", "LINE", "SOUNDS", "STARTS", "TRAINS", "PARTS", "WORDS"]
-        paths_filtered = {w: [bonus_cell] for w in words_filtered}
-    bonus_word = words_filtered[0] if words_filtered else "STAR"
+    # MANDATE: Bonus Word MUST be between 6 and 10 letters!
+    bw_candidates = [w for w in words_filtered if 6 <= len(w) <= 10]
+    if bw_candidates:
+        bonus_word = bw_candidates[0]
+    else:
+        bonus_word = self._get_bonus_word(length=6, dictionary=dictionary)
+        if bonus_word and bonus_word not in words_filtered:
+            words_filtered.append(bonus_word)
+            paths_filtered[bonus_word] = [bonus_cell]
     
     eparams = {
         'min_word_length': min_word_length,
@@ -6708,6 +6713,13 @@ class RoomManager:
         """Get a bonus word of specified length, optionally enforcing C/V alternating pattern for Checkerboard"""
         import time
         from word_validator import word_validator
+        
+        # USER MANDATE: Bonus word length MUST be strictly between 6 and 10 letters!
+        try:
+            length = int(length)
+        except (ValueError, TypeError):
+            length = 8
+        length = max(6, min(10, length))
         
         # Determine if we should exclude ING (Medium/Hard)
         diff_upper = str(difficulty).upper()
