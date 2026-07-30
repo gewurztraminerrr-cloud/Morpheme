@@ -6354,14 +6354,19 @@ class RoomManager:
                 room.csw_only_words = getattr(room, 'next_round_csw_only_words', [])
                 room.added_words = getattr(room, 'next_round_added_words', [])
 
-                if (not room.csw_only_words or len(room.csw_only_words) == 0) and str(getattr(room, 'current_dictionary', 'NWL')).upper() in ['CSW', 'ALL']:
-                    if hasattr(word_validator, 'word_validator'):
-                        word_validator.word_validator.ensure_csw_loaded()
-                        room.csw_only_words = [w for w in (room.next_round_words or room.all_words or []) if word_validator.word_validator.is_csw_only(w)]
-
-                if (not room.added_words or len(room.added_words) == 0) and (getattr(room, 'use_added_words', False) or '+ AW' in str(getattr(room, 'current_dictionary', '')).upper()):
-                    if hasattr(word_validator, 'word_validator'):
-                        room.added_words = [w for w in (room.next_round_words or room.all_words or []) if word_validator.word_validator.is_added_word(w)]
+                # Defer heavy CSW/AW tagging so state promotion completes in < 0.1ms
+                target_words_list = list(room.next_round_words or room.all_words or [])
+                def _tag_supplemental_words(rm_ref, w_list, dict_str, use_aw):
+                    try:
+                        if ('CSW' in str(dict_str).upper() or 'ALL' in str(dict_str).upper()) and hasattr(word_validator, 'word_validator'):
+                            word_validator.word_validator.ensure_csw_loaded()
+                            rm_ref.csw_only_words = [w for w in w_list if word_validator.word_validator.is_csw_only(w)]
+                        if (use_aw or '+ AW' in str(dict_str).upper()) and hasattr(word_validator, 'word_validator'):
+                            rm_ref.added_words = [w for w in w_list if word_validator.word_validator.is_added_word(w)]
+                    except Exception as tag_err:
+                        print(f"[RoomManager] Background word tagging error: {tag_err}")
+                        
+                threading.Thread(target=_tag_supplemental_words, args=(room, target_words_list, getattr(room, 'current_dictionary', 'NWL'), getattr(room, 'use_added_words', False)), daemon=True).start()
 
                 # ATOMIC PROMOTION: Carry staging data to active room state
                 room.board = room.next_round_board
