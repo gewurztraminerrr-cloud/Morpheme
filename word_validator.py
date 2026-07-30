@@ -466,7 +466,14 @@ class WordValidator:
         # 2. Run DFS ONLY starting from candidate cells
         if not is_3d:
             rows, cols = len(board), len(board[0])
+            steps = 0
+            max_steps = 2000
+            
             def dfs_2d(r, c, index, visited_path):
+                nonlocal steps
+                steps += 1
+                if steps > max_steps:
+                    return None
                 if r < 0 or r >= rows or c < 0 or c >= cols or (r, c) in visited_path:
                     return None
                 cell_val = str(board[r][c]).upper()
@@ -490,6 +497,7 @@ class WordValidator:
                 return None
 
             for r, c in starting_cells:
+                steps = 0
                 path = dfs_2d(r, c, 0, [])
                 if path:
                     return (True, path) if return_path else True

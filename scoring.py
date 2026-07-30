@@ -192,7 +192,14 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
                         res = [(nf, nr, nc) for nf, nr, nc in res if 0 <= nf < 6 and 0 <= nr < 3 and 0 <= nc < 3]
                     return res
 
+                steps = 0
+                max_steps = 2000
+                
                 def find_through(f, r, c, index, has_hit_bonus, visited):
+                    nonlocal steps
+                    steps += 1
+                    if steps > max_steps:
+                        return False
                     cell_val = str(board[f][r][c] if is_3d else board[r][c]).upper()
                     
                     # Check if this node hits the special bonus condition
