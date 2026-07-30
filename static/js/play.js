@@ -6862,11 +6862,8 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
 
         if (optimisticColor !== null && optimisticColor === serverColor) {
             // Local optimistic check ALREADY flashed tiles/input and played sound!
-            // Smoothly update the status text without triggering a duplicate 2nd flash.
-            const statusEl = document.getElementById('word-validation-status');
-            if (statusEl) {
-                statusEl.textContent = msg;
-            }
+            // Update status text with exact green styling without repeating the sound
+            showValidationFeedback(msg, data.success, isBonusWord, finalPath, false);
         } else {
             // Local check didn't run or server result differs from local check — trigger feedback flash
             const shouldPlayServerSound = (optimisticColor === null);
@@ -7223,8 +7220,13 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null, 
     statusEl.textContent = message;
     if (isAlreadyFound) {
         statusEl.className = 'validation-status status-already-found';
+        statusEl.style.color = '#a855f7';
+    } else if (isActuallyValid) {
+        statusEl.className = 'validation-status status-valid';
+        statusEl.style.color = isBonus ? '#22c55e' : '#48bb78';
     } else {
-        statusEl.className = 'validation-status ' + (isActuallyValid ? 'status-valid' : 'status-invalid');
+        statusEl.className = 'validation-status status-invalid';
+        statusEl.style.color = '#f56565';
     }
 
     // Flash highlighted tiles that traced the word (instead of full-screen flash)
