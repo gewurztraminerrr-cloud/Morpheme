@@ -4097,8 +4097,12 @@ def submit_word(room_id):
             player.input_method = input_method
             
     try:
-        with room._state_lock:
+        acquired = room._state_lock.acquire(timeout=2.0)
+        try:
             success, message, points, final_word = room.submit_word(user_id, word, path=path)
+        finally:
+            if acquired:
+                room._state_lock.release()
     except Exception as e:
         import traceback
         with open(DEBUG_FLOW_PATH, 'a') as f:

@@ -6863,7 +6863,7 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
         // Use a timeout + keepalive to handle mobile network stalls gracefully.
         // keepalive ensures the request completes even if the page visibility changes mid-flight.
         const controller = new AbortController();
-        const fetchTimeout = setTimeout(() => controller.abort(), 12000);
+        const fetchTimeout = setTimeout(() => controller.abort(), 25000);
         let response;
         try {
             response = await fetch(`/room/${roomId}/submit_word`, {
