@@ -6858,23 +6858,35 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
     try {
         // Use a timeout + keepalive to handle mobile network stalls gracefully.
         // keepalive ensures the request completes even if the page visibility changes mid-flight.
-        const controller = new AbortController();
-        const fetchTimeout = setTimeout(() => controller.abort(), 25000);
+        // Timeout is 8s — fast enough to surface real errors, long enough for normal server load.
+        const submitBodyJson = JSON.stringify({
+            word: word,
+            input_method: currentInputMethod,
+            path: serverPath
+        });
+
         let response;
-        try {
-            response = await fetch(`/room/${roomId}/submit_word`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                keepalive: true,
-                signal: controller.signal,
-                body: JSON.stringify({
-                    word: word,
-                    input_method: currentInputMethod,
-                    path: serverPath
-                })
-            });
-        } finally {
-            clearTimeout(fetchTimeout);
+        for (let attempt = 0; attempt < 2; attempt++) {
+            const controller = new AbortController();
+            const fetchTimeout = setTimeout(() => controller.abort(), 8000);
+            try {
+                response = await fetch(`/room/${roomId}/submit_word`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    keepalive: true,
+                    signal: controller.signal,
+                    body: submitBodyJson
+                });
+            } finally {
+                clearTimeout(fetchTimeout);
+            }
+            // 503 = server lock busy (board generation in progress). Retry once after 300ms.
+            if (response.status === 503 && attempt === 0) {
+                console.warn(`[play.js] Submit got 503 (server busy) for "${word}" — retrying in 300ms`);
+                await new Promise(r => setTimeout(r, 300));
+                continue;
+            }
+            break;
         }
         const data = await response.json();
 

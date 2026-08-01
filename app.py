@@ -4098,11 +4098,15 @@ def submit_word(room_id):
             
     try:
         acquired = room._state_lock.acquire(timeout=2.0)
+        if not acquired:
+            # Lock held by another operation (board generation, round transition).
+            # Fail fast with a retryable 503 — the client will retry immediately.
+            print(f"[Submit-Warn] Lock not acquired for room {room_id} user {user_id} word '{word}' — returning 503 for client retry")
+            return jsonify({'success': False, 'message': 'Server busy, please retry', 'retry': True}), 503
         try:
             success, message, points, final_word = room.submit_word(user_id, word, path=path)
         finally:
-            if acquired:
-                room._state_lock.release()
+            room._state_lock.release()
     except Exception as e:
         import traceback
         with open(DEBUG_FLOW_PATH, 'a') as f:
@@ -7416,9 +7420,9 @@ if __name__ == '__main__':
     print('Morpheme server running on http://localhost:5001')
     try:
         from waitress import serve
-        serve(app, host='0.0.0.0', port=5001, threads=4)
+        serve(app, host='0.0.0.0', port=5001, threads=8)
     except Exception as e:
         print(f"Server startup error: {e}. Attempting fallback...")
         from waitress import serve
-        serve(app, host='0.0.0.0', port=5001, threads=2)
+        serve(app, host='0.0.0.0', port=5001, threads=4)
 
