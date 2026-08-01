@@ -5918,7 +5918,6 @@ class RoomManager:
         # (Skip only if already loading or started)
         if getattr(room, 'board_search_loading', False) or getattr(room, 'board_search_started', False):
             return
-        
         print(f"[RoomManager] PRE-GENERATING next board for room {room_id} (Scheduled after delay)")
         
         # Atomic Guard: If we are already searching or have a board ready, DO NOT RE-ROLL.
@@ -5927,18 +5926,22 @@ class RoomManager:
              return
              
         def delayed_pre_generate():
-            # Wait 0.5 seconds to allow the transition-phase network requests to finish first
-            time.sleep(0.5)
+            # Wait 0.1 seconds to allow the transition-phase network requests to finish first.
+            # (Reduced from 0.5s — transition is already complete when this thread fires.)
+            time.sleep(0.1)
             
-            # Recheck conditions in case the room state changed during the sleep
+            # Recheck conditions in case the room state changed during the sleep.
+            # Allow pre-generation from both 'active' AND 'intermission' states so that
+            # if a client polls during intermission and there's no board staged, we can still
+            # kick off generation with the full intermission window (60s) available.
             room_check = self.get_room(room_id)
-            if not room_check or room_check.state != 'active':
+            if not room_check or room_check.state not in ('active', 'intermission'):
                 return
                 
             if getattr(room_check, 'board_search_loading', False) or getattr(room_check, 'board_search_started', False) or getattr(room_check, 'next_round_board', None):
                 return
                 
-            print(f"[RoomManager] Executing delayed pre-generation for {room_id}")
+            print(f"[RoomManager] Executing pre-generation for {room_id} (state={room_check.state})")
             self.generate_spinner_params(room_id, reveal=False)
             self.start_board_search(room_id)
 
@@ -6265,33 +6268,49 @@ class RoomManager:
                     room.current_min_length = 3
 
                 # --- 2. BOARD & WORD PROMOTION ---
-                # EMERGENCY SAFETY: If for any reason staging is empty, force a fast fallback board NOW
+                # EMERGENCY SAFETY: If for any reason staging is empty, force a fast fallback board NOW.
+                # CRITICAL: Never call generate_board() synchronously here — it blocks for 10-30s.
+                # get_emergency_fallback_board() is always instant: cache-first, then pre-built board.
                 if not room.next_round_board or not room.next_round_words:
-                    print(f"[REMAINING-STABILIZER] Staging empty for {room_id} at promotion. Forcing emergency fallback board instantly.")
+                    print(f"[REMAINING-STABILIZER] Staging empty for {room_id} at promotion. Forcing INSTANT emergency fallback (cache or pre-built).")
                     if room.time_limit >= 7200:
                         room.current_board_format = 'Valued Letters'
                         room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
                         room.current_min_length = int(room.spinner_params.get('min_word_length', 3))
-                    
+
                     e_min_len = room.spinner_params.get('min_word_length') if room.spinner_params else None
                     e_diff = room.spinner_params.get('difficulty', 'Medium') if room.spinner_params else 'Medium'
                     e_fmt_target = room.spinner_params.get('board_format', 'Normal') if room.spinner_params else 'Normal'
-                    e_results = self.board_generator.generate_board(
-                        room.board_dimensions,
-                        None,
-                        room.spinner_params.get('word_count_range', '100-200'),
-                        room.current_dictionary,
-                        e_fmt_target,
-                        e_min_len or 3,
-                        e_diff,
-                        is_emergency=True,
-                        use_added_words=getattr(room, 'use_added_words', False)
+                    e_target_range = room.spinner_params.get('word_count_range', '100-200') if room.spinner_params else '100-200'
+                    # Use the always-instant emergency fallback (cache → pre-built). Never blocks.
+                    e_fallback = get_emergency_fallback_board(
+                        room.board_dimensions, e_fmt_target, room.time_limit,
+                        dictionary=room.current_dictionary,
+                        use_added_words=getattr(room, 'use_added_words', False),
+                        target_range=e_target_range,
+                        min_word_length=e_min_len or 3,
+                        difficulty=e_diff
                     )
-                    
-                    if len(e_results) >= 9:
-                        e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio, e_bonus_word, e_tr, e_params = e_results
+                    if e_fallback and len(e_fallback) >= 8:
+                        if len(e_fallback) >= 9:
+                            e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio, e_bonus_word, e_tr, e_params = e_fallback
+                        else:
+                            e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio, e_bonus_word, e_tr = e_fallback
+                            e_params = {}
                     else:
-                        e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio, e_bonus_word, e_tr = e_results
+                        # Absolute last resort: tiny pre-built board (should never reach here)
+                        print(f"[REMAINING-STABILIZER] get_emergency_fallback_board returned nothing for {room_id}. Using hardcoded micro-board.")
+                        dims_parts = room.board_dimensions.split('x')
+                        rows_n, cols_n = int(dims_parts[0]), int(dims_parts[1]) if len(dims_parts) >= 2 else (4, 4)
+                        e_board = [['S','T','A','R'],['E','D','L','I'],['N','E','R','S'],['A','N','T','S']][:rows_n]
+                        e_board = [row[:cols_n] for row in e_board]
+                        e_words = ['ANTS', 'RANT', 'RANT', 'STAR', 'TARS', 'LEND', 'REND']
+                        e_bonus_c = (0, 0)
+                        e_fmt = e_fmt_target
+                        e_paths = {}
+                        e_ratio = 0.2
+                        e_bonus_word = 'LANDERS'
+                        e_tr = e_target_range
                         e_params = {}
                         
                     if e_params and not getattr(room, 'was_revealed_this_intermission', False) and not getattr(room, 'spinner_params_revealed', False):
@@ -6647,14 +6666,15 @@ class RoomManager:
                     delattr(room, 'intermission_stuck_start_time')
                 if hasattr(room, 'intermission_stuck_time'):
                     delattr(room, 'intermission_stuck_time')
-                
-                room.custom_end_time = 0 
-                
+
+                room.custom_end_time = 0
+
                 # LAUNCH AI BOT SIMULATIONS
                 room.generate_ai_turns()
-                
-                # START PRE-GENERATION FOR N+2 NOW (Safe since all R+1 staging is cleared)
-                # USER REQUEST: Ensure this happens AFTER all cleanup to avoid race conditions.
+
+                # START PRE-GENERATION IMMEDIATELY at the very start of the active round.
+                # This gives the full 45s of the active round for generation to complete,
+                # so the board is always ready at 0:00 — never causing a blocking delay.
                 threading.Thread(target=self.pre_generate_next_round, args=(room_id,), daemon=True).start()
                 
                 # IMPORTANT: CLEAR STARTING LOCK
