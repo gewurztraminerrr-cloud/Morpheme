@@ -2011,6 +2011,11 @@ class GameRoom:
                 self.previous_all_words = list(self.all_words) if self.all_words else []
                 self.previous_all_word_scores = dict(getattr(self, 'solved_words_with_scores', {})) if getattr(self, 'solved_words_with_scores', None) else {}
                 self.previous_min_length = getattr(self, 'current_min_length', 3)
+                # BUGFIX: Snapshot paths, bonus_cell, and board_format so word-highlight clicks
+                # during intermission use the COMPLETED round's board, not the next board.
+                self.previous_all_words_paths = dict(self.all_words_paths) if isinstance(self.all_words_paths, dict) else {}
+                self.previous_bonus_cell = getattr(self, 'bonus_cell', None)
+                self.previous_board_format = getattr(self, 'current_board_format', 'Normal')
                 if getattr(self, 'csw_only_words', None) and len(self.csw_only_words) > 0:
                     self.previous_csw_only_words = list(self.csw_only_words)
                 else:
