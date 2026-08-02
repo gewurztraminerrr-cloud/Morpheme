@@ -4905,24 +4905,11 @@ class RoomManager:
                             room.board_dimensions, dict_val, fmt_val, m_len, use_aw_val, bonus_word_len=bw_len
                         )
                         if not candidate:
-                            try:
-                                e_res = self.board_generator.generate_board(
-                                    room.board_dimensions,
-                                    None,
-                                    new_params.get('word_count_range', '100-200'),
-                                    dict_val,
-                                    fmt_val,
-                                    m_len,
-                                    new_params.get('difficulty', 'Medium'),
-                                    is_emergency=True,
-                                    use_added_words=use_aw_val
-                                )
-                                if e_res:
-                                    c_b, c_w, c_c, c_f, c_p, c_r, c_bw = e_res[0], e_res[1], e_res[2], e_res[3], e_res[4], e_res[5], e_res[6]
-                                    c_params = e_res[8] if len(e_res) > 8 else new_params
-                                    candidate = (c_b, c_w, c_c, c_f, c_p, c_r, c_bw, c_params)
-                            except Exception as ex_gen:
-                                print(f"[generate_spinner_params] Emergency generate_board error: {ex_gen}")
+                            # Do NOT fall back to synchronous generate_board() here — it would hold
+                            # _state_lock for 30-60 seconds, blocking ALL submit_word calls.
+                            # start_board_search (spawned below at line ~5036) handles board
+                            # generation in a background thread without holding _state_lock.
+                            print(f"[generate_spinner_params] Cache miss for {room_id} — board gen delegated to start_board_search thread")
                         if candidate:
                             c_b, c_w, c_c, c_f, c_p, c_r, c_bw, c_params = candidate
                             fw_filt = [w for w in c_w if len(w) >= m_len]
