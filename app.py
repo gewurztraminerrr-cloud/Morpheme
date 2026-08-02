@@ -4098,12 +4098,17 @@ def submit_word(room_id):
             player.input_method = input_method
             
     try:
+        _sw_t0 = time.time()
         acquired = room._state_lock.acquire(timeout=2.0)
+        _sw_acq_ms = (time.time() - _sw_t0) * 1000
         if not acquired:
-            print(f"[Submit-Warn] Lock not acquired for room {room_id} user {user_id} word '{word}' — returning 503 for client retry")
+            print(f"[SW-TIMING] LOCK FAIL after {_sw_acq_ms:.0f}ms word='{word}' room={room_id}")
             return jsonify({'success': False, 'message': 'Server busy, please retry', 'retry': True}), 503
+        print(f"[SW-TIMING] lock acquired after {_sw_acq_ms:.0f}ms word='{word}'")
         try:
+            _sw_t1 = time.time()
             success, message, points, final_word = room.submit_word(user_id, word, path=path)
+            print(f"[SW-TIMING] submit_word() done in {(time.time()-_sw_t1)*1000:.0f}ms result={success} msg='{message}'")
         finally:
             room._state_lock.release()
     except Exception as e:
