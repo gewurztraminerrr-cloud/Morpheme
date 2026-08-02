@@ -5100,23 +5100,27 @@ function updateBoardCell(cell, r, c, letter, grayed, f, state = null) {
         }
     }
 
-    // STAR MANAGEMENT: Show star on the bonus cell regardless of board format name.
-    // A bonus cell can exist on any format (Normal, Density, Valued, etc.);
-    // the format label describes scoring style, not whether a bonus cell is present.
+    // STAR MANAGEMENT: Match the server's is_spec_bonus_fmt rule exactly.
+    // scoring.py line 87: is_spec_bonus_fmt = ('bonus' in fmt_lower or 'either' in fmt_lower)
+    // Only show the bonus star and highlight when the board format actually awards bonus points.
+    // Normal format → no star/highlight (no +3 scored server-side either).
     const existingStar = cell.querySelector('.bonus-star');
-    if (isMatch && !existingStar) {
+    const fmtLower = (boardFormat || '').toLowerCase();
+    const isBonusLetterFormat = fmtLower.includes('bonus') || fmtLower.includes('either');
+    if (isMatch && isBonusLetterFormat && !existingStar) {
         const star = document.createElement('span');
         star.className = 'bonus-star';
         star.textContent = '★';
         cell.appendChild(star);
-    } else if (!isMatch && existingStar) {
+    } else if ((!isMatch || !isBonusLetterFormat) && existingStar) {
         existingStar.remove();
     }
 
-    // Apply bonus-highlight background whenever this tile is the bonus cell.
+    // Apply bonus-highlight background only when the format awards bonus points.
     // Also highlight split-letter cells in "either" format.
-    const isEitherFormat = boardFormat.toLowerCase().includes('either');
-    if (isMatch || (isEitherFormat && letter.includes('/'))) {
+    if (isMatch && isBonusLetterFormat) {
+        cell.classList.add('bonus-highlight');
+    } else if (fmtLower.includes('either') && letter.includes('/')) {
         cell.classList.add('bonus-highlight');
     } else {
         cell.classList.remove('bonus-highlight');
