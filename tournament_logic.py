@@ -94,21 +94,9 @@ class TournamentManager:
                 conn.commit()
                 return
 
-            # If there are participants, but less than 8, fill with AI bots to ensure a full bracket
-            if len(participant_ids) < 8:
-                ai_users = conn.execute("SELECT id FROM users WHERE username LIKE 'AI_%'").fetchall()
-                ai_ids = [row['id'] for row in ai_users]
-                
-                # Register AI bots until we have 8 participants
-                for ai_id in ai_ids:
-                    if len(participant_ids) >= 8:
-                        break
-                    if ai_id not in participant_ids:
-                        conn.execute('''
-                            INSERT OR IGNORE INTO tournament_participants (tournament_id, user_id, joined_at)
-                            VALUES (?, ?, ?)
-                        ''', (tid, ai_id, time.time()))
-                        participant_ids.append(ai_id)
+            # USER REQUEST: Do NOT fill bracket with AI bots.
+            # create_matchups() uses byes (user2_id = -1) for odd participant counts.
+            pass
 
             conn.commit()
         finally:
@@ -573,6 +561,7 @@ class TournamentManager:
             FROM tournament_participants tp
             JOIN users u ON tp.user_id = u.id
             WHERE tp.tournament_id = ?
+              AND u.username NOT LIKE 'AI_%'
             ORDER BY CASE WHEN tp.status = 'active' THEN 0 ELSE 1 END, tp.final_rank ASC, u.username ASC
         ''', (tid,)).fetchall()
         
