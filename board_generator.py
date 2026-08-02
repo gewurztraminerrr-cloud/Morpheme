@@ -494,12 +494,12 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
     """Background cache refill — THROTTLED to prevent CPU saturation on single-core VPS."""
     global ACTIVE_REFILLS, ACTIVE_REFILLS_LOCK
     
-    # Clamp target count to prevent long CPU-heavy loops on single-core servers
-    target_count = min(target_count, 2)
+    # Clamp target count — 4 boards gives enough buffer for back-to-back pops
+    target_count = min(target_count, 4)
     
     with ACTIVE_REFILLS_LOCK:
-        # Global concurrency cap: never run more than 1 refill thread at once
-        if len(ACTIVE_REFILLS) >= 1:
+        # Global concurrency cap: allow 2 concurrent refill threads
+        if len(ACTIVE_REFILLS) >= 2:
             return
         if param_key_str in ACTIVE_REFILLS:
             return

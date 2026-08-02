@@ -1021,6 +1021,11 @@ async function updateGameState(incomingState = null) {
 
         if (!state) return;
 
+        // Store raw state BEFORE transposition so orientation changes can re-evaluate correctly.
+        // window.lastGameState is mutated in-place by safelyTransposeState; if we cloned from it
+        // on orientation change, a portrait→landscape rotation would leave the board transposed.
+        window.lastRawGameState = JSON.parse(JSON.stringify(state));
+
         safelyTransposeState(state);
 
         // Mobile Device Restriction: Cube is not allowed on mobile!
@@ -3985,10 +3990,15 @@ window.addEventListener('resize', () => {
             window.lastRenderedStateJSON = null;
             // If we have a current state, immediately re-process it with the new orientation.
             if (window.lastGameState) {
-                const freshState = JSON.parse(JSON.stringify(window.lastGameState));
+                // Use the raw (pre-transpose) state so we can re-transpose from scratch
+                // for the new orientation. Cloning lastGameState (post-transpose) would
+                // leave wide boards transposed when rotating to landscape.
+                const sourceState = window.lastRawGameState || window.lastGameState;
+                const freshState = JSON.parse(JSON.stringify(sourceState));
                 // Strip transposition cache so safelyTransposeState re-evaluates.
                 delete freshState._isAlreadyTransposed;
                 delete freshState._isBoardTransposedValue;
+                lastRenderedBoardJSON = null; // Force board re-render even if letters unchanged
                 if (typeof updateGameState === 'function') updateGameState(freshState);
             }
         }

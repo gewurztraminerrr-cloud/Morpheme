@@ -1339,80 +1339,71 @@ class GameRoom:
         if self.state == 'intermission' and self.time_limit < 7200:
             elapsed_intermission = now - self.intermission_start_time
             if elapsed_intermission >= 10.0 and not getattr(self, 'next_round_board', None) and not getattr(self, '_fallback_at_50s_done', False):
-                print(f"[Watchdog 0:50] 10s elapsed in intermission (timer 0:50) for {self.room_id} without a secured board. Popping pregenerated board now!")
+                print(f"[Watchdog] 10s into intermission for {self.room_id} — no board ready. Running emergency fallback.")
                 self._fallback_at_50s_done = True
-                
+
+                # Capture params immediately (fast, on Waitress thread)
                 from board_generator import pop_compatible_cached_board
-                use_aw = self.spinner_params.get('use_added_words', False) if isinstance(self.spinner_params, dict) else False
-                dict_name = self.spinner_params.get('dictionary', 'NWL') if isinstance(self.spinner_params, dict) else 'NWL'
-                fmt_name = self.spinner_params.get('board_format', 'Normal') if isinstance(self.spinner_params, dict) else 'Normal'
-                min_len_val = self.spinner_params.get('min_word_length', 3) if isinstance(self.spinner_params, dict) else 3
-                
+                _use_aw   = self.spinner_params.get('use_added_words', False) if isinstance(self.spinner_params, dict) else False
+                _dict     = self.spinner_params.get('dictionary', 'NWL')       if isinstance(self.spinner_params, dict) else 'NWL'
+                _fmt      = self.spinner_params.get('board_format', 'Normal')  if isinstance(self.spinner_params, dict) else 'Normal'
+                _min_len  = self.spinner_params.get('min_word_length', 3)      if isinstance(self.spinner_params, dict) else 3
+                _range    = self.spinner_params.get('word_count_range', '100-200') if isinstance(self.spinner_params, dict) else '100-200'
+                _diff     = self.spinner_params.get('difficulty', 'Medium')    if isinstance(self.spinner_params, dict) else 'Medium'
+                _bw_len   = self.spinner_params.get('bonus_word_length', 8)    if isinstance(self.spinner_params, dict) else 8
+                _dims     = self.board_dimensions
+                _bg       = self.board_generator
+                _room_ref = self
+
+                def _stage_board(popped):
+                    p_board, p_words, p_bonus_cell, p_format, p_paths, p_ratio, p_bonus_word, p_params = popped
+                    fw = [w for w in p_words if len(w) >= _min_len]
+                    fp = {w: v for w, v in p_paths.items() if len(w) >= _min_len}
+                    _room_ref.next_round_board = p_board
+                    _room_ref.next_round_words = fw
+                    _room_ref.next_round_word_paths = fp
+                    _room_ref.next_round_bonus_cell = p_bonus_cell
+                    bw = p_bonus_word
+                    if not bw or str(bw).upper() == 'NONE':
+                        bw = _room_ref._get_bonus_word(length=_bw_len, dictionary=_dict, alternating=('checkerboard' in str(_fmt).lower()))
+                    _room_ref.next_round_bonus = bw
+                    _room_ref.next_round_format = _fmt
+                    _room_ref.next_round_uniqueness = p_ratio
+
+                # STEP 1: Try fast cache pop (< 1ms with WAL mode) — runs on Waitress thread
                 popped = None
-                target_range = self.spinner_params.get('word_count_range', '100-200') if isinstance(self.spinner_params, dict) else '100-200'
                 for _ in range(10):
-                    candidate = pop_compatible_cached_board(
-                        self.board_dimensions,
-                        dict_name,
-                        fmt_name,
-                        min_len_val,
-                        use_aw
-                    )
+                    candidate = pop_compatible_cached_board(_dims, _dict, _fmt, _min_len, _use_aw)
                     if not candidate:
                         break
                     _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = candidate
-                    _c_min_len = (_fparams.get('min_word_length') if isinstance(_fparams, dict) else None) or min_len_val
-                    _fw_filtered = [w for w in _fw if len(w) >= _c_min_len]
-                    min_len_count = sum(1 for w in _fw_filtered if len(w) == _c_min_len)
-                    if is_board_count_valid(len(_fw_filtered), target_range) and min_len_count >= 5:
+                    _c_min = (_fparams.get('min_word_length') if isinstance(_fparams, dict) else None) or _min_len
+                    _fw_f = [w for w in _fw if len(w) >= _c_min]
+                    min_len_count = sum(1 for w in _fw_f if len(w) == _c_min)
+                    if is_board_count_valid(len(_fw_f), _range) and min_len_count >= 5:
                         popped = candidate
                         break
-                
-                if not popped:
-                    try:
-                        e_diff = self.spinner_params.get('difficulty', 'Medium') if isinstance(self.spinner_params, dict) else 'Medium'
-                        gen_res = self.board_generator.generate_board(
-                            self.board_dimensions,
-                            None,
-                            target_range,
-                            dict_name,
-                            fmt_name,
-                            min_len_val,
-                            e_diff,
-                            is_emergency=True,
-                            use_added_words=use_aw
-                        )
-                        if gen_res:
-                            g_b, g_w, g_c, g_f, g_p, g_r, g_bw = gen_res[0], gen_res[1], gen_res[2], gen_res[3], gen_res[4], gen_res[5], gen_res[6]
-                            g_params = gen_res[8] if len(gen_res) > 8 else self.spinner_params
-                            popped = (g_b, g_w, g_c, g_f, g_p, g_r, g_bw, g_params)
-                    except Exception as ex_wd:
-                        print(f"[Watchdog 0:50] Emergency generate_board error: {ex_wd}")
-                
+
                 if popped:
-                    p_board, p_words, p_bonus_cell, p_format, p_paths, p_ratio, p_bonus_word, p_params = popped
-                    p_words_filtered = [w for w in p_words if len(w) >= min_len_val]
-                    p_paths_filtered = {w: p for w, p in p_paths.items() if len(w) >= min_len_val}
-                    
-                    self.next_round_board = p_board
-                    self.next_round_words = p_words_filtered
-                    self.next_round_word_paths = p_paths_filtered
-                    self.next_round_bonus_cell = p_bonus_cell
-                    bw_l_val = self.spinner_params.get('bonus_word_length', 8) if isinstance(self.spinner_params, dict) else 8
-                    if not p_bonus_word or str(p_bonus_word).upper() == 'NONE':
-                        p_bonus_word = self._get_bonus_word(length=bw_l_val, dictionary=dict_name, alternating=('checkerboard' in str(fmt_name).lower()))
-                    self.next_round_bonus = p_bonus_word
-                    self.next_round_format = fmt_name
-                    self.next_round_uniqueness = p_ratio
-                    
-                    # Preserve exact rolled spinner set parameters (do NOT overwrite with fallback discrepancies)
-                    aligned_sp = dict(self.spinner_params) if isinstance(self.spinner_params, dict) else {}
-                    aligned_sp['board_format'] = fmt_name
-                    aligned_sp['word_count_range'] = target_range
-                    aligned_sp['uniqueness'] = p_ratio
-                    if p_bonus_word:
-                        aligned_sp['bonus_word_length'] = len(p_bonus_word)
-                    aligned_sp['generated_at'] = now
+                    # Cache hit: stage immediately (fast path)
+                    _stage_board(popped)
+                else:
+                    # STEP 2: Cache miss — spawn background thread; do NOT block Waitress thread!
+                    def _watchdog_gen():
+                        try:
+                            gen_res = _bg.generate_board(
+                                _dims, None, _range, _dict, _fmt, _min_len,
+                                _diff, is_emergency=True, use_added_words=_use_aw
+                            )
+                            if gen_res:
+                                g_b, g_w, g_c, g_f, g_p, g_r, g_bw = gen_res[:7]
+                                g_params = gen_res[8] if len(gen_res) > 8 else (_room_ref.spinner_params or {})
+                                _stage_board((g_b, g_w, g_c, g_f, g_p, g_r, g_bw, g_params))
+                        except Exception as ex_wd:
+                            print(f"[Watchdog] Emergency generate_board error: {ex_wd}")
+                    import threading
+                    threading.Thread(target=_watchdog_gen, daemon=True).start()
+
         if getattr(self, 'starting_round', False):
             curr_init = getattr(self, '_round_start_init_time', 0)
             timeout = 3.0
