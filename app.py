@@ -3702,24 +3702,56 @@ def get_room_state(room_id):
         # and transitions to intermission, bypassing any background loop polling delays!
         room.check_and_update_state()
         room_manager.check_6x8_rescue(room)
-        # LAZY LOAD YESTERDAY'S HISTORY FOR 24H ROOMS (outside lock - may do DB I/O):
+        # LAZY LOAD YESTERDAY'S HISTORY FOR 24H ROOMS (async - avoid blocking Waitress thread):
         if room.time_limit >= 7200 and (not getattr(room, 'previous_day_history', None) or len(room.previous_day_history) == 0):
-            try:
-                room_manager.get_yesterdays_history(room, room.current_round)
-            except Exception as e:
-                print(f"[app.py] Error lazy-loading yesterday's history for room {room_id}: {e}")
+            if not getattr(room, '_history_load_in_progress', False):
+                room._history_load_in_progress = True
+                def _load_history():
+                    try:
+                        room_manager.get_yesterdays_history(room, room.current_round)
+                    except Exception as e:
+                        print(f"[app.py] Error lazy-loading yesterday's history for room {room_id}: {e}")
+                    finally:
+                        room._history_load_in_progress = False
+                import threading
+                threading.Thread(target=_load_history, daemon=True).start()
 
-        # MILESTONE PROCESSING (outside lock - may take seconds for DB/spinner operations):
-        # generate_spinner_params and start_board_search have internal idempotency guards.
+        # MILESTONE PROCESSING (fully async — all spawned as background threads so the
+        # Waitress request thread is NEVER blocked by SQLite DB reads or board generation).
+        # Each milestone has an in-progress flag to prevent redundant concurrent launches.
         milestone = room.get_next_round_milestone()
         if milestone == 'spinner':
-            room_manager.generate_spinner_params(room_id, reveal=False)
+            if not getattr(room, '_spinner_gen_in_progress', False) and not getattr(room, 'spinner_params_generated', False):
+                room._spinner_gen_in_progress = True
+                def _run_spinner():
+                    try:
+                        room_manager.generate_spinner_params(room_id, reveal=False)
+                    finally:
+                        room._spinner_gen_in_progress = False
+                import threading
+                threading.Thread(target=_run_spinner, daemon=True).start()
         elif milestone == 'reveal':
-            print(f"[API] Room {room_id}: TR={room.time_remaining} - REVEALING parameters (synchronous)")
-            room_manager.generate_spinner_params(room_id, reveal=True)
+            if not getattr(room, '_reveal_gen_in_progress', False):
+                room._reveal_gen_in_progress = True
+                print(f"[API] Room {room_id}: TR={room.time_remaining} - REVEALING parameters (async)")
+                def _run_reveal():
+                    try:
+                        room_manager.generate_spinner_params(room_id, reveal=True)
+                    finally:
+                        room._reveal_gen_in_progress = False
+                import threading
+                threading.Thread(target=_run_reveal, daemon=True).start()
         elif milestone == 'search':
-            print(f"[API] Room {room_id}: TR={room.time_remaining} - STARTING board search (synchronous)")
-            room_manager.start_board_search(room_id)
+            if not getattr(room, '_search_in_progress', False):
+                room._search_in_progress = True
+                print(f"[API] Room {room_id}: TR={room.time_remaining} - STARTING board search (async)")
+                def _run_search():
+                    try:
+                        room_manager.start_board_search(room_id)
+                    finally:
+                        room._search_in_progress = False
+                import threading
+                threading.Thread(target=_run_search, daemon=True).start()
         elif milestone == 'start':
             # ATOMIC GUARD: Only launch ONE transition
             if not getattr(room, 'starting_round', False):
