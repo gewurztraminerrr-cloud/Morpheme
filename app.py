@@ -3702,9 +3702,7 @@ def get_room_state(room_id):
         # and transitions to intermission, bypassing any background loop polling delays!
         room.check_and_update_state()
         room_manager.check_6x8_rescue(room)
-        _hb_t0 = time.time()
         with room._state_lock:
-            _hb_elapsed = lambda: f"{(time.time()-_hb_t0)*1000:.1f}ms"
             # LAZY LOAD YESTERDAY'S HISTORY FOR 24H ROOMS:
             if room.time_limit >= 7200 and (not getattr(room, 'previous_day_history', None) or len(room.previous_day_history) == 0):
                 try:
@@ -3970,7 +3968,6 @@ def get_room_state(room_id):
             resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
             resp.headers['Pragma'] = 'no-cache'
             resp.headers['Expires'] = '0'
-            print(f"[TIMING] heartbeat lock held for {_hb_elapsed()} (room={room_id} state={room.state})")
             return resp
 
     except Exception as e:
@@ -4101,17 +4098,12 @@ def submit_word(room_id):
             player.input_method = input_method
             
     try:
-        _sw_t0 = time.time()
         acquired = room._state_lock.acquire(timeout=2.0)
-        _sw_acq = (time.time()-_sw_t0)*1000
         if not acquired:
-            print(f"[TIMING] submit_word LOCK ACQUIRE FAILED after {_sw_acq:.1f}ms for '{word}' room={room_id}")
+            print(f"[Submit-Warn] Lock not acquired for room {room_id} user {user_id} word '{word}' — returning 503 for client retry")
             return jsonify({'success': False, 'message': 'Server busy, please retry', 'retry': True}), 503
-        print(f"[TIMING] submit_word lock acquired after {_sw_acq:.1f}ms for '{word}' room={room_id}")
         try:
-            _sw_t1 = time.time()
             success, message, points, final_word = room.submit_word(user_id, word, path=path)
-            print(f"[TIMING] submit_word room.submit_word() took {(time.time()-_sw_t1)*1000:.1f}ms result={success} msg={message}")
         finally:
             room._state_lock.release()
     except Exception as e:

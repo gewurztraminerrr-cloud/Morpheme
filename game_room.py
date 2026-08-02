@@ -6145,10 +6145,7 @@ class RoomManager:
                 submitted_strings = [w.upper() for w in ws]
             
             # 2. STATE TRANSITION LOCK: Perform the atomic board swap
-            _lock_t0 = time.time()
             with room._state_lock:
-                _lt = lambda: f"{(time.time()-_lock_t0)*1000:.1f}ms"
-                print(f"[LOCK-TIMING] {room_id} lock acquired")
                 room._did_6x8_fallback_rescue = False
                 room._did_050_fallback_rescue = False
                 # Reset players active stats and roster for the next round BEFORE database save
@@ -6225,7 +6222,6 @@ class RoomManager:
                     room.all_words = []
                     room.complete_words = []
 
-                print(f"[LOCK-TIMING] {room_id} player-resets done @ {_lt()}")
                 # --- 1. PARAMETER PROMOTION ---
                 # We strictly favor revealed parameters to ensure the promise made at 45s (reveal) is kept at 0s (active)
                 if not getattr(room, 'spinner_params_revealed', False) and hasattr(room, 'next_spinner_params') and room.next_spinner_params:
@@ -6271,7 +6267,6 @@ class RoomManager:
                 except:
                     room.current_min_length = 3
 
-                print(f"[LOCK-TIMING] {room_id} params done @ {_lt()}")
                 # --- 2. BOARD & WORD PROMOTION ---
                 # EMERGENCY SAFETY: If for any reason staging is empty, force a fast fallback board NOW.
                 # CRITICAL: Never call generate_board() synchronously here — it blocks for 10-30s.
@@ -6369,7 +6364,6 @@ class RoomManager:
                             e_scores[w] = {'total': s, 'base': s, 'bonus_word_points': 0, 'bonus_letter_points': 0, 'either_or_points': 0}
                     room.next_round_word_scores = e_scores
                 
-                print(f"[LOCK-TIMING] {room_id} board-promotion done @ {_lt()}")
                 # --- 3. FINAL COUNT SYNC: Ensure factual counts are promoted even if truncation was skipped ---
                 # USER REQUEST: Total count should reflect scorable words only.
                 if hasattr(room, 'next_round_total_words_count') and room.next_round_total_words_count > 0:
@@ -6378,7 +6372,6 @@ class RoomManager:
                 else:
                     room.total_words_count = sum(1 for w in (room.next_round_words or []) if len(w) >= room.current_min_length)
                 
-                print(f"[LOCK-TIMING] {room_id} count-sync done @ {_lt()}")
                 # --- 4. HISTORY PROMOTION ---
                 # For 24-hour rooms, we do NOT overwrite these variables since the midnight transition
                 # in check_and_update_state already captured the precise yesterday snapshots.
@@ -6413,7 +6406,6 @@ class RoomManager:
                         
                 threading.Thread(target=_tag_supplemental_words, args=(room, target_words_list, getattr(room, 'current_dictionary', 'NWL'), getattr(room, 'use_added_words', False)), daemon=True).start()
 
-                print(f"[LOCK-TIMING] {room_id} history done @ {_lt()}")
                 # ATOMIC PROMOTION: Carry staging data to active room state
                 room.board = room.next_round_board
                 room.current_board_format = 'Valued Letters' if room.time_limit >= 7200 else active_params.get('board_format', 'Normal')
@@ -6451,7 +6443,6 @@ class RoomManager:
                 
                 room.bonus_cell = getattr(room, 'next_round_bonus_cell', None)
 
-                print(f"[LOCK-TIMING] {room_id} atomic-promotion done @ {_lt()}")
                 # --- 4. ACCURACY ENFORCEMENT (inside lock — all_words must be consistent before state='active') ---
                 # These loops run over ~100-500 words and take < 5ms — not the bottleneck.
                 _sp     = dict(room.spinner_params) if isinstance(room.spinner_params, dict) else {}
@@ -6594,7 +6585,6 @@ class RoomManager:
                 # Clear staging data immediately to prevent stale exclusion or duplicate promotion
                 room.next_round_bonus = None
                 
-                print(f"[LOCK-TIMING] {room_id} accuracy-enforcement done @ {_lt()}")
                 # --- 4. DRACONIAN STAGING CLEANUP ---
                 # EXPLICITLY nullify all next_round attributes to ensure NO stale data bleeds into the future.
                 # If the next searcher is slow, we want fresh/empty counts, not previous ones.
@@ -6646,7 +6636,6 @@ class RoomManager:
                 room.custom_end_time = 0
                 room.round_start_time = time.time()
                 room.state = 'active'
-                print(f"[LOCK-TIMING] {room_id} state=active set @ {_lt()} — LOCK RELEASING NOW")
                 room.midnight_reset_occurred = False
                 if hasattr(room, 'intermission_stuck_start_time'):
                     delattr(room, 'intermission_stuck_start_time')
