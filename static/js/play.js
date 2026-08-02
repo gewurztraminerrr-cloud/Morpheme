@@ -6853,7 +6853,9 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                     // Confirmed valid — check if it's Bonus Word OR uses Bonus Letter tile
                     const isBonusWord = preState.bonus_word && word === preState.bonus_word.toUpperCase();
                     let usesBonusLetterTile = false;
-                    if (preState.bonus_cell && finalPath) {
+                    const _bonusFmtLow = (preState.current_board_format || '').toLowerCase();
+                    const _isBonusFmt = _bonusFmtLow.includes('bonus') || _bonusFmtLow.includes('either');
+                    if (_isBonusFmt && preState.bonus_cell && finalPath) {
                         const bc = preState.bonus_cell;
                         let targetF = -1, targetR = -1, targetC = -1;
                         if (Array.isArray(bc)) {
