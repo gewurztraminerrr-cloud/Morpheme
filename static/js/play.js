@@ -257,6 +257,24 @@ function safelyTransposeState(state) {
                     }
                     state.board = transposedBoard;
 
+                    // Transpose previous_board too — during intermission renderBoard is called with
+                    // state.previous_board directly, so it must be transposed alongside state.board.
+                    // Without this, the board snaps to landscape orientation when the round ends.
+                    if (state.previous_board && state.previous_board.length > 0 && Array.isArray(state.previous_board[0])) {
+                        const pRows = state.previous_board.length;
+                        const pCols = state.previous_board[0].length;
+                        if (pRows < pCols) {
+                            const transposedPrev = [];
+                            for (let c = 0; c < pCols; c++) {
+                                transposedPrev[c] = [];
+                                for (let r = 0; r < pRows; r++) {
+                                    transposedPrev[c][r] = (state.previous_board[r] && state.previous_board[r][c] !== undefined) ? state.previous_board[r][c] : '';
+                                }
+                            }
+                            state.previous_board = transposedPrev;
+                        }
+                    }
+
                     // Transpose Cell Density grid array safely
                     if (state.cell_density && state.cell_density.length > 0 && Array.isArray(state.cell_density[0])) {
                         const transposedDensity = [];
@@ -292,6 +310,7 @@ function safelyTransposeState(state) {
     state._isAlreadyTransposed = true;
     state._isBoardTransposedValue = window.isBoardTransposed;
 }
+
 
 let activeWordsTab = 'found'; // 'found' or 'remaining'
 window._cluesShowRemaining = false;
