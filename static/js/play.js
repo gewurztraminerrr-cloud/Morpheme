@@ -5100,20 +5100,23 @@ function updateBoardCell(cell, r, c, letter, grayed, f, state = null) {
         }
     }
 
-    // STAR MANAGEMENT: Ensure star is present/absent based on live isMatch and format
+    // STAR MANAGEMENT: Show star on the bonus cell regardless of board format name.
+    // A bonus cell can exist on any format (Normal, Density, Valued, etc.);
+    // the format label describes scoring style, not whether a bonus cell is present.
     const existingStar = cell.querySelector('.bonus-star');
-    const isBonusLetterFormat = boardFormat.toLowerCase().includes('bonus letter');
-    if (isMatch && isBonusLetterFormat && !existingStar) {
+    if (isMatch && !existingStar) {
         const star = document.createElement('span');
         star.className = 'bonus-star';
         star.textContent = '★';
         cell.appendChild(star);
-    } else if ((!isMatch || !isBonusLetterFormat) && existingStar) {
+    } else if (!isMatch && existingStar) {
         existingStar.remove();
     }
-    
+
+    // Apply bonus-highlight background whenever this tile is the bonus cell.
+    // Also highlight split-letter cells in "either" format.
     const isEitherFormat = boardFormat.toLowerCase().includes('either');
-    if ((isMatch && (isBonusLetterFormat || isEitherFormat)) || (isEitherFormat && (letter.includes('/') || isMatch))) {
+    if (isMatch || (isEitherFormat && letter.includes('/'))) {
         cell.classList.add('bonus-highlight');
     } else {
         cell.classList.remove('bonus-highlight');
