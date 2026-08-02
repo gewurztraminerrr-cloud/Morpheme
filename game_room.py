@@ -4878,6 +4878,19 @@ class RoomManager:
                                         min_accept = max(50, min_accept)
                                         
                                     if actual_cnt >= min_accept:
+                                        # FIX: Update new_params word_count_range with ACTUAL count (not target)
+                                        # so frozen_revealed_params and the Spinner Set show the real board size.
+                                        is_aw_eff = new_params.get('use_added_words', False) or '+ AW' in str(new_params.get('dictionary', '')).upper()
+                                        if is_aw_eff:
+                                            actual_wc_range_exact = '300-400' if actual_cnt < 400 else ('400-500' if actual_cnt < 500 else '500+')
+                                        else:
+                                            if actual_cnt < 100: actual_wc_range_exact = '50-100'
+                                            elif actual_cnt < 200: actual_wc_range_exact = '100-200'
+                                            elif actual_cnt < 300: actual_wc_range_exact = '200-300'
+                                            elif actual_cnt < 400: actual_wc_range_exact = '300-400'
+                                            elif actual_cnt < 500: actual_wc_range_exact = '400-500'
+                                            else: actual_wc_range_exact = '500+'
+                                        new_params['word_count_range'] = actual_wc_range_exact
                                         cached_board_data = (board, fw_filtered, bonus_cell, board_format_ret, {w: p for w, p in all_words_dict.items() if len(w) >= f_min_l}, ratio, final_bonus_word, new_params)
                                         print(f"[RoomManager] Solo exact cache hit for key: {exact_key[:80]}...")
                         except Exception as e:
@@ -5803,6 +5816,12 @@ class RoomManager:
                                 print(f"[RoomManager] WC correction: planned={planned_wc} actual={achieved_wc}. Updating next_spinner_params.")
                                 room.next_spinner_params['word_count_range'] = achieved_wc
                             
+                            # FIX: Also update frozen_revealed_params so the Spinner Set display
+                            # corrects itself during intermission rather than waiting until round start.
+                            # This prevents the '500+' -> '300-400' flip the player sees at round start.
+                            if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                                room.frozen_revealed_params['word_count_range'] = achieved_wc
+                            
                             # Only sync to active spinner_params if not yet locked for the round
                             if not getattr(room, '_spinner_params_locked', False):
                                 room.spinner_params['board_format'] = updated_format
@@ -6488,6 +6507,10 @@ class RoomManager:
                 if isinstance(room.spinner_params, dict):
                     room.spinner_params['word_count_range']     = real_wc
                     room.spinner_params['_exact_wc_calculated'] = True
+                # FIX: Keep frozen_revealed_params in sync so the Spinner Set label
+                # never visibly flips at the moment the round starts.
+                if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                    room.frozen_revealed_params['word_count_range'] = real_wc
                 room.complete_words = list(room.all_words)
                 room.update_counts_by_len()
                 room.recalculate_total_points()
