@@ -6569,13 +6569,10 @@ class RoomManager:
                 room.next_round_cell_density = None
                 room.next_round_initial_cell_density = None
                 
-                # ATOMIC PROMOTION: Set round_start_time BEFORE state='active' to prevent
-                # check_and_update_state from seeing active+round_start_time=0 and immediately
-                # ending the round prematurely.
                 room.custom_end_time = 0
                 room.round_start_time = time.time()
                 room.state = 'active'
-                room.midnight_reset_occurred = False # Reset midnight reset flag for 24h rooms
+                room.midnight_reset_occurred = False
                 if hasattr(room, 'intermission_stuck_start_time'):
                     delattr(room, 'intermission_stuck_start_time')
                 if hasattr(room, 'intermission_stuck_time'):
@@ -6583,19 +6580,17 @@ class RoomManager:
 
                 room.custom_end_time = 0
 
-                # LAUNCH AI BOT SIMULATIONS
-                room.generate_ai_turns()
-
-                # START PRE-GENERATION IMMEDIATELY at the very start of the active round.
-                # This gives the full 45s of the active round for generation to complete,
-                # so the board is always ready at 0:00 — never causing a blocking delay.
-                threading.Thread(target=self.pre_generate_next_round, args=(room_id,), daemon=True).start()
-                
-                # IMPORTANT: CLEAR STARTING LOCK
+                # IMPORTANT: CLEAR STARTING LOCK — do this right before exiting
+                # so submit_word can proceed the instant the lock is released
                 room._transition_spinner_launched = False
                 room.starting_round = False
-                
+
                 print(f"[TRANSITION] Room {room_id}: INTERMISSION -> ACTIVE (Round {room.current_round}, Time: {room.round_start_time})")
+
+            # Lock released — submit_word can now proceed immediately
+            # AI turns and pre-generation run outside the lock
+            room.generate_ai_turns()
+            threading.Thread(target=self.pre_generate_next_round, args=(room_id,), daemon=True).start()
 
             # ================================================================
             # OUT-OF-LOCK SLOW COMPUTATION
