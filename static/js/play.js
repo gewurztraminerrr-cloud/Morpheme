@@ -235,10 +235,12 @@ function safelyTransposeState(state) {
     }
     
     window.isBoardTransposed = false;
-    const isMobile = (window.innerWidth <= 992) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    // Transpose whenever the display is in portrait mode (height > width) — regardless of device type.
+    // This ensures the longest board dimension always runs vertically on any portrait screen.
+    const isPortraitMode = window.innerHeight > window.innerWidth;
     
     try {
-        if (isMobile && state.board && state.board.length > 0 && Array.isArray(state.board[0])) {
+        if (isPortraitMode && state.board && state.board.length > 0 && Array.isArray(state.board[0])) {
             const isBoard3D = state.board_dimensions === '3x3x3' || (state.board.length === 6 && Array.isArray(state.board[0]) && Array.isArray(state.board[0][0]));
             if (!isBoard3D) {
                 const rows = state.board.length;
@@ -3969,6 +3971,31 @@ window.addEventListener('resize', () => {
         window.adjustSpinnerSetFontSize();
     }
 });
+
+// Orientation change: force board re-transposition when device is rotated.
+// Clears the battery-optimization cache so the next heartbeat triggers a full re-render
+// with the correct portrait/landscape transposition applied.
+(function () {
+    let _lastOrientIsPortrait = window.innerHeight > window.innerWidth;
+    function _onOrientationChange() {
+        const nowPortrait = window.innerHeight > window.innerWidth;
+        if (nowPortrait !== _lastOrientIsPortrait) {
+            _lastOrientIsPortrait = nowPortrait;
+            // Bust the render cache so the next state update re-transposes and re-renders.
+            window.lastRenderedStateJSON = null;
+            // If we have a current state, immediately re-process it with the new orientation.
+            if (window.lastGameState) {
+                const freshState = JSON.parse(JSON.stringify(window.lastGameState));
+                // Strip transposition cache so safelyTransposeState re-evaluates.
+                delete freshState._isAlreadyTransposed;
+                delete freshState._isBoardTransposedValue;
+                if (typeof updateGameState === 'function') updateGameState(freshState);
+            }
+        }
+    }
+    window.addEventListener('orientationchange', () => setTimeout(_onOrientationChange, 200));
+    window.addEventListener('resize', _onOrientationChange);
+})();
 
 function updateTimer(seconds) {
     // Legacy local timer update (called by interval)
