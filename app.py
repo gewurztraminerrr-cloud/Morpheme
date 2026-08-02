@@ -3697,11 +3697,12 @@ def get_room_state(room_id):
              return jsonify({'error': 'Room not found (expired due to inactivity)'}), 404
             
         # USER REQUEST: Ensure the server transitions EXACTLY when the client hits 0:00.
-        # By calling check_and_update_state synchronously here, the moment the client
-        # sends its rapid state poll at 0:00, the server instantly evaluates timer expiry
-        # and transitions to intermission, bypassing any background loop polling delays!
+        _hb_t0 = time.time()
         room.check_and_update_state()
+        _hb_t1 = time.time()
         room_manager.check_6x8_rescue(room)
+        _hb_t2 = time.time()
+
         # LAZY LOAD YESTERDAY'S HISTORY FOR 24H ROOMS (outside lock - may do DB I/O):
         if room.time_limit >= 7200 and (not getattr(room, 'previous_day_history', None) or len(room.previous_day_history) == 0):
             try:
@@ -3710,23 +3711,25 @@ def get_room_state(room_id):
                 print(f"[app.py] Error lazy-loading yesterday's history for room {room_id}: {e}")
 
         # MILESTONE PROCESSING (synchronous, outside lock).
-        # WAL mode on SQLite means DB reads never block on writes, so these are fast.
-        # generate_spinner_params and start_board_search have internal idempotency guards.
         milestone = room.get_next_round_milestone()
+        _hb_t3 = time.time()
         if milestone == 'spinner':
             room_manager.generate_spinner_params(room_id, reveal=False)
         elif milestone == 'reveal':
-            print(f"[API] Room {room_id}: TR={room.time_remaining} - REVEALING parameters")
             room_manager.generate_spinner_params(room_id, reveal=True)
         elif milestone == 'search':
-            print(f"[API] Room {room_id}: TR={room.time_remaining} - STARTING board search")
             room_manager.start_board_search(room_id)
         elif milestone == 'start':
-            # ATOMIC GUARD: Only launch ONE transition
             if not getattr(room, 'starting_round', False):
-                print(f"[Milestone] 0s remaining - Starting next round for {room_id} (Asynchronous API Trigger)")
                 import threading
                 threading.Thread(target=room_manager.start_next_round, args=(room_id,), daemon=True).start()
+        _hb_t4 = time.time()
+
+        ms_caus = (_hb_t1 - _hb_t0) * 1000
+        ms_rescue = (_hb_t2 - _hb_t1) * 1000
+        ms_milestone = (_hb_t4 - _hb_t3) * 1000
+        if ms_caus > 50 or ms_rescue > 50 or ms_milestone > 50:
+            print(f"[HB-TIMING] SLOW room={room_id} state={room.state} milestone={milestone} | caus={ms_caus:.0f}ms rescue={ms_rescue:.0f}ms milestone={ms_milestone:.0f}ms")
 
         # STATE SNAPSHOT (inside lock — fast attribute reads only, no I/O):
         with room._state_lock:
