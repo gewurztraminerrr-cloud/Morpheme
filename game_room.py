@@ -1763,18 +1763,8 @@ class GameRoom:
                 self.initial_total_words = self.total_words_count
 
                 wc_cnt = self.total_words_count
-                is_aw = use_aw_val or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
-                if is_aw:
-                    if wc_cnt < 400: wc_lbl = '300-400'
-                    elif wc_cnt < 500: wc_lbl = '400-500'
-                    else: wc_lbl = '500+'
-                else:
-                    if wc_cnt < 100: wc_lbl = '50-100'
-                    elif wc_cnt < 200: wc_lbl = '100-200'
-                    elif wc_cnt < 300: wc_lbl = '200-300'
-                    elif wc_cnt < 400: wc_lbl = '300-400'
-                    elif wc_cnt < 500: wc_lbl = '400-500'
-                    else: wc_lbl = '500+'
+                # AW boards use the same full scale — no '300-400' floor.
+                wc_lbl = self._get_factchecked_wc_range(wc_cnt)
 
                 new_sp['word_count_range'] = wc_lbl
                 new_sp['_exact_wc_calculated'] = True
@@ -4437,17 +4427,10 @@ class RoomManager:
             # The target range (e.g. '300-400') is what was requested; the board may
             # deliver a different count (e.g. 253). Recompute the label from the real
             # all_words set so the Spinner Set and header show the correct range.
+            # AW boards use the same full-scale buckets as non-AW — 221 words is
+            # '200-300', not '300-400', regardless of dictionary.
             _actual_wc  = len(room.all_words)
-            _is_aw_sr   = getattr(room, 'use_added_words', False) or '+ AW' in str(getattr(room, 'current_dictionary', '')).upper()
-            if _is_aw_sr:
-                _real_wc_sr = '300-400' if _actual_wc < 400 else ('400-500' if _actual_wc < 500 else '500+')
-            else:
-                if   _actual_wc < 100: _real_wc_sr = '50-100'
-                elif _actual_wc < 200: _real_wc_sr = '100-200'
-                elif _actual_wc < 300: _real_wc_sr = '200-300'
-                elif _actual_wc < 400: _real_wc_sr = '300-400'
-                elif _actual_wc < 500: _real_wc_sr = '400-500'
-                else:                  _real_wc_sr = '500+'
+            _real_wc_sr = self._get_factchecked_wc_range(_actual_wc)
             room.current_word_count_range = _real_wc_sr
             if isinstance(room.spinner_params, dict):
                 room.spinner_params['word_count_range'] = _real_wc_sr
@@ -4948,18 +4931,8 @@ class RoomManager:
                             actual_wc = len(fw_filt)
                             
                             # Resolve exact range matching actual board word count
-                            is_aw = use_aw_val or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
-                            if is_aw:
-                                if actual_wc < 400: actual_wc_range = '300-400'
-                                elif actual_wc < 500: actual_wc_range = '400-500'
-                                else: actual_wc_range = '500+'
-                            else:
-                                if actual_wc < 100: actual_wc_range = '50-100'
-                                elif actual_wc < 200: actual_wc_range = '100-200'
-                                elif actual_wc < 300: actual_wc_range = '200-300'
-                                elif actual_wc < 400: actual_wc_range = '300-400'
-                                elif actual_wc < 500: actual_wc_range = '400-500'
-                                else: actual_wc_range = '500+'
+                            # AW boards use the same full scale — 221 words is '200-300' not '300-400'.
+                            actual_wc_range = self._get_factchecked_wc_range(actual_wc)
                             
                             new_params['word_count_range'] = actual_wc_range
                             cached_board_data = (c_b, fw_filt, c_c, c_f, fp_filt, c_r, c_bw, new_params)
@@ -5187,18 +5160,8 @@ class RoomManager:
                         dict_val = f"{dict_val} + AW"
                         
                     actual_wc = len(cwords)
-                    is_aw = use_aw_val or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
-                    if is_aw:
-                        if actual_wc < 400: wc_label = '300-400'
-                        elif actual_wc < 500: wc_label = '400-500'
-                        else: wc_label = '500+'
-                    else:
-                        if actual_wc < 100: wc_label = '50-100'
-                        elif actual_wc < 200: wc_label = '100-200'
-                        elif actual_wc < 300: wc_label = '200-300'
-                        elif actual_wc < 400: wc_label = '300-400'
-                        elif actual_wc < 500: wc_label = '400-500'
-                        else: wc_label = '500+'
+                    # AW boards use the same full scale — no '300-400' floor.
+                    wc_label = self._get_factchecked_wc_range(actual_wc)
 
                     if not getattr(room, '_spinner_params_locked', False):
                         room.spinner_params['dictionary'] = dict_val
@@ -6525,20 +6488,10 @@ class RoomManager:
                 room.all_words_paths = {w: room.all_words_paths.get(w, []) for w in room.all_words}
                 room.solved_words_with_scores = {w: v for w, v in (room.solved_words_with_scores or {}).items() if w in room.all_words}
 
-                # Word count and range label
-                wc_cnt = len(room.all_words)
-                is_aw  = _use_aw or '+ AW' in str(_dict).upper() or '+AW' in str(_dict).upper()
-                if is_aw:
-                    if wc_cnt < 400:   real_wc = '300-400'
-                    elif wc_cnt < 500: real_wc = '400-500'
-                    else:              real_wc = '500+'
-                else:
-                    if wc_cnt < 100:   real_wc = '50-100'
-                    elif wc_cnt < 200: real_wc = '100-200'
-                    elif wc_cnt < 300: real_wc = '200-300'
-                    elif wc_cnt < 400: real_wc = '300-400'
-                    elif wc_cnt < 500: real_wc = '400-500'
-                    else:              real_wc = '500+'
+                # Word count and range label — AW boards use the same full scale as non-AW.
+                # 221 words on a CSW+AW board is '200-300', not '300-400'.
+                wc_cnt  = len(room.all_words)
+                real_wc = self._get_factchecked_wc_range(wc_cnt)
 
                 room.total_words_count    = wc_cnt
                 room.initial_total_words  = wc_cnt
