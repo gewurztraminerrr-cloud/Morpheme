@@ -4875,6 +4875,13 @@ class RoomManager:
                                     elif '5x7' in room.board_dimensions: grid_floor = 5
                                     elif '6x8' in room.board_dimensions or '3x3x3' in room.board_dimensions: grid_floor = 6
                                     f_min_l = max(grid_floor, int(f_min_l) if f_min_l is not None else 3)
+                                    # FIX: Write the floored min_length back into new_params so that
+                                    # frozen_revealed_params and active_params at round start use the
+                                    # SAME min_word_length that staging used for filtering.
+                                    # Without this, staging filters with min_length=6 but the round
+                                    # starts with min_length=5, causing more words to survive and the
+                                    # label to flip (e.g. staged '100-200' → round plays '200-300').
+                                    new_params['min_word_length'] = f_min_l
                                     
                                     fw_filtered = [w for w in all_words if len(w) >= f_min_l]
                                     actual_cnt = len(fw_filtered)
@@ -6258,7 +6265,10 @@ class RoomManager:
                 else:
                     active_params = getattr(room, 'next_round_spinner_params', None) or room.spinner_params or {}
                 room.current_board_format = 'Valued Letters' if room.time_limit >= 7200 else active_params.get('board_format', 'Normal')
-                room.current_word_count_range = '200-300' if room.time_limit >= 7200 else active_params.get('word_count_range', '100-200')
+                # NOTE: current_word_count_range is intentionally NOT set here from active_params.
+                # It will be computed from the actual board word count at the accuracy enforcement
+                # step below (real_wc). Setting it prematurely here to the target value causes a
+                # brief flash of the wrong label if a heartbeat fires before real_wc is ready.
                 room.current_difficulty = active_params.get('difficulty', 'Medium')
                 room.current_dictionary = active_params.get('dictionary', 'NWL')
                 room.use_added_words = active_params.get('use_added_words', False)
