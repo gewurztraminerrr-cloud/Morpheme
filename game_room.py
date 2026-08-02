@@ -6443,90 +6443,10 @@ class RoomManager:
                 
                 room.bonus_cell = getattr(room, 'next_round_bonus_cell', None)
                 
-                # --- 4. ACCURACY ENFORCEMENT: Draconian word count truncation ---
-                try:
-                    # USER REQUEST: Absolute filter for the final scorable set.
-                    # This ensures 3L and 4L words are PURGED from both the list and the score dictionary.
-                    min_l = room.current_min_length if hasattr(room, 'current_min_length') else 3
-                    display_min_final = min_l
-                    
-                    room.all_words = {w for w in (room.all_words or []) if len(w) >= display_min_final}
-
-                    # TRUNCATION TO SPINNER SET REVEALED RANGE CAP:
-                    target_sp_range = room.spinner_params.get('word_count_range', '100-200') if isinstance(room.spinner_params, dict) else '100-200'
-                    max_cap = None
-                    if target_sp_range == '50-100': max_cap = 99
-                    elif target_sp_range == '100-200': max_cap = 199
-                    elif target_sp_range == '200-300': max_cap = 299
-                    elif target_sp_range == '300-400': max_cap = 399
-                    elif target_sp_range == '400-500': max_cap = 499
-
-                    if max_cap and len(room.all_words) > max_cap:
-                        bw_upper = str(getattr(room, 'bonus_word', '')).upper().strip()
-                        words_list = list(room.all_words)
-                        total_raw = len(words_list)
-                        by_len = {}
-                        for w in words_list:
-                            l = len(w)
-                            by_len.setdefault(l, []).append(w)
-                        
-                        selected_set = set()
-                        if bw_upper and bw_upper in room.all_words:
-                            selected_set.add(bw_upper)
-                            
-                        buckets = sorted(by_len.keys())
-                        for l in buckets:
-                            b_words = [w for w in by_len[l] if w not in selected_set]
-                            if not b_words:
-                                continue
-                            p_cnt = int(round((len(by_len[l]) / float(total_raw)) * max_cap))
-                            p_cnt = max(1, min(len(b_words), p_cnt))
-                            sorted_b = sorted(b_words, key=lambda w: (len(w), w), reverse=True)
-                            selected_set.update(sorted_b[:p_cnt])
-                            
-                        if len(selected_set) < max_cap:
-                            leftover = [w for w in words_list if w not in selected_set]
-                            leftover_sorted = sorted(leftover, key=lambda w: (len(w), w), reverse=True)
-                            selected_set.update(leftover_sorted[:(max_cap - len(selected_set))])
-                        elif len(selected_set) > max_cap:
-                            non_bw = [w for w in selected_set if w != bw_upper]
-                            selected_set = set(non_bw[:max_cap])
-                            if bw_upper and bw_upper in room.all_words:
-                                selected_set.add(bw_upper)
-                                
-                        room.all_words = selected_set
-
-                    room.all_words_paths = {w: room.all_words_paths.get(w, []) for w in room.all_words}
-                    
-                    if getattr(room, 'solved_words_with_scores', None) is not None:
-                        room.solved_words_with_scores = {w: room.solved_words_with_scores[w] for w in room.all_words if w in room.solved_words_with_scores}
-
-                    # PRESERVE SPUN PARAMETER & KEEP 100% OF SCORABLE GRID WORDS INTACT
-                    # FINAL ACCURACY SYNC: Ensure the header labels exactly match the results
-                    room.total_words_count = sum(1 for w in room.all_words if len(w) >= room.current_min_length)
-                    room.initial_total_words = room.total_words_count
-                    
-                    wc_cnt = room.total_words_count
-                    is_aw = getattr(room, 'use_added_words', False) or '+ AW' in str(getattr(room, 'current_dictionary', '')).upper() or '+AW' in str(getattr(room, 'current_dictionary', '')).upper()
-                    if is_aw:
-                        if wc_cnt < 400: real_wc = '300-400'
-                        elif wc_cnt < 500: real_wc = '400-500'
-                        else: real_wc = '500+'
-                    else:
-                        if wc_cnt < 100: real_wc = '50-100'
-                        elif wc_cnt < 200: real_wc = '100-200'
-                        elif wc_cnt < 300: real_wc = '200-300'
-                        elif wc_cnt < 400: real_wc = '300-400'
-                        elif wc_cnt < 500: real_wc = '400-500'
-                        else: real_wc = '500+'
-                    
-                    room.current_word_count_range = real_wc
-                    if isinstance(room.spinner_params, dict):
-                        room.spinner_params['word_count_range'] = real_wc
-                        room.spinner_params['_exact_wc_calculated'] = True
-                    room.update_counts_by_len()
-                except Exception as e:
-                    print(f"[ACCURACY-ERROR] Failed word count calculation: {e}")
+                # --- 4. ACCURACY ENFORCEMENT deferred outside lock ---
+                # (word filtering, truncation, and count math are done AFTER this lock
+                #  exits so that submit_word is never blocked during the slow loops)
+                pass  # placeholder — real work happens in the out-of-lock block below
 
 
 
@@ -6536,10 +6456,8 @@ class RoomManager:
                 room.global_round_found_words = set()
                 room.initialize_player_densities()
                 
-                room.solving_complete = True 
-                room.complete_words = list(room.all_words) 
-                room.update_counts_by_len()
-                room.recalculate_total_points()
+                room.solving_complete = True
+                # complete_words, update_counts_by_len, recalculate_total_points run AFTER lock
                 
                 # Save to DB for cheat prevention across workers and 24h room persistence
                 if room.board and len(room.board) > 0:
@@ -6635,10 +6553,6 @@ class RoomManager:
                 # Reset Round counters
                 room.current_round += 1
                 
-                # Update word counts by length for the new round
-                room.update_counts_by_len()
-                
-                
                 # --- FINAL CLEARANCE & NEXT LOG CHAIN ---
                 # Clear staging data immediately to prevent stale exclusion or duplicate promotion
                 room.next_round_board = None 
@@ -6682,6 +6596,100 @@ class RoomManager:
                 room.starting_round = False
                 
                 print(f"[TRANSITION] Room {room_id}: INTERMISSION -> ACTIVE (Round {room.current_round}, Time: {room.round_start_time})")
+
+            # ================================================================
+            # OUT-OF-LOCK SLOW COMPUTATION
+            # Now that state='active' and the lock is released, submit_word
+            # can proceed. We finish the slow word-set work here, then apply
+            # it back with a tiny second lock.
+            # ================================================================
+            try:
+                _min_l  = room.current_min_length if hasattr(room, 'current_min_length') else 3
+                _sp     = dict(room.spinner_params) if isinstance(room.spinner_params, dict) else {}
+                _dict   = room.current_dictionary
+                _use_aw = getattr(room, 'use_added_words', False)
+                _bw_up  = str(getattr(room, 'bonus_word', '')).upper().strip()
+
+                # Work on a local copy so in-flight submits still see the promoted word set
+                _words  = set(room.all_words)
+                _paths  = dict(room.all_words_paths)
+                _scores = dict(room.solved_words_with_scores or {})
+
+                # Min-length filter
+                _words = {w for w in _words if len(w) >= _min_l}
+
+                # Range cap truncation
+                target_sp_range = _sp.get('word_count_range', '100-200')
+                max_cap = None
+                if target_sp_range == '50-100':   max_cap = 99
+                elif target_sp_range == '100-200': max_cap = 199
+                elif target_sp_range == '200-300': max_cap = 299
+                elif target_sp_range == '300-400': max_cap = 399
+                elif target_sp_range == '400-500': max_cap = 499
+
+                if max_cap and len(_words) > max_cap:
+                    _wl       = list(_words)
+                    total_raw = len(_wl)
+                    by_len    = {}
+                    for w in _wl:
+                        by_len.setdefault(len(w), []).append(w)
+                    selected = set()
+                    if _bw_up and _bw_up in _words:
+                        selected.add(_bw_up)
+                    for l in sorted(by_len.keys()):
+                        bw2 = [w for w in by_len[l] if w not in selected]
+                        if not bw2: continue
+                        pc = max(1, min(len(bw2), int(round((len(by_len[l]) / float(total_raw)) * max_cap))))
+                        selected.update(sorted(bw2, key=lambda w: (len(w), w), reverse=True)[:pc])
+                    if len(selected) < max_cap:
+                        lft = sorted([w for w in _wl if w not in selected], key=lambda w: (len(w), w), reverse=True)
+                        selected.update(lft[:(max_cap - len(selected))])
+                    elif len(selected) > max_cap:
+                        nb = [w for w in selected if w != _bw_up]
+                        selected = set(nb[:max_cap])
+                        if _bw_up and _bw_up in _words: selected.add(_bw_up)
+                    _words = selected
+
+                _paths  = {w: _paths.get(w, [])  for w in _words}
+                _scores = {w: _scores[w]          for w in _words if w in _scores}
+
+                # Word count and range label
+                wc_cnt = sum(1 for w in _words if len(w) >= _min_l)
+                is_aw  = _use_aw or '+ AW' in str(_dict).upper() or '+AW' in str(_dict).upper()
+                if is_aw:
+                    if wc_cnt < 400:   real_wc = '300-400'
+                    elif wc_cnt < 500: real_wc = '400-500'
+                    else:              real_wc = '500+'
+                else:
+                    if wc_cnt < 100:   real_wc = '50-100'
+                    elif wc_cnt < 200: real_wc = '100-200'
+                    elif wc_cnt < 300: real_wc = '200-300'
+                    elif wc_cnt < 400: real_wc = '300-400'
+                    elif wc_cnt < 500: real_wc = '400-500'
+                    else:              real_wc = '500+'
+
+            except Exception as e:
+                print(f"[ACCURACY-ERROR] Out-of-lock word count calculation failed: {e}")
+                _words   = room.all_words
+                _paths   = room.all_words_paths
+                _scores  = room.solved_words_with_scores or {}
+                wc_cnt   = len(_words)
+                real_wc  = room.current_word_count_range
+
+            # Tiny second lock — only fast field assignments, no loops
+            with room._state_lock:
+                room.all_words              = _words
+                room.all_words_paths        = _paths
+                room.solved_words_with_scores = _scores
+                room.total_words_count      = wc_cnt
+                room.initial_total_words    = wc_cnt
+                room.current_word_count_range = real_wc
+                if isinstance(room.spinner_params, dict):
+                    room.spinner_params['word_count_range']       = real_wc
+                    room.spinner_params['_exact_wc_calculated']   = True
+                room.complete_words = list(room.all_words)
+                room.update_counts_by_len()
+                room.recalculate_total_points()
 
             print(f"[RoomManager] SUCCESS: Transitioned room {room_id} to Round {room.current_round}")
             
