@@ -3702,32 +3702,33 @@ def get_room_state(room_id):
         # and transitions to intermission, bypassing any background loop polling delays!
         room.check_and_update_state()
         room_manager.check_6x8_rescue(room)
+        # LAZY LOAD YESTERDAY'S HISTORY FOR 24H ROOMS (outside lock - may do DB I/O):
+        if room.time_limit >= 7200 and (not getattr(room, 'previous_day_history', None) or len(room.previous_day_history) == 0):
+            try:
+                room_manager.get_yesterdays_history(room, room.current_round)
+            except Exception as e:
+                print(f"[app.py] Error lazy-loading yesterday's history for room {room_id}: {e}")
+
+        # MILESTONE PROCESSING (outside lock - may take seconds for DB/spinner operations):
+        # generate_spinner_params and start_board_search have internal idempotency guards.
+        milestone = room.get_next_round_milestone()
+        if milestone == 'spinner':
+            room_manager.generate_spinner_params(room_id, reveal=False)
+        elif milestone == 'reveal':
+            print(f"[API] Room {room_id}: TR={room.time_remaining} - REVEALING parameters (synchronous)")
+            room_manager.generate_spinner_params(room_id, reveal=True)
+        elif milestone == 'search':
+            print(f"[API] Room {room_id}: TR={room.time_remaining} - STARTING board search (synchronous)")
+            room_manager.start_board_search(room_id)
+        elif milestone == 'start':
+            # ATOMIC GUARD: Only launch ONE transition
+            if not getattr(room, 'starting_round', False):
+                print(f"[Milestone] 0s remaining - Starting next round for {room_id} (Asynchronous API Trigger)")
+                import threading
+                threading.Thread(target=room_manager.start_next_round, args=(room_id,), daemon=True).start()
+
+        # STATE SNAPSHOT (inside lock — fast attribute reads only, no I/O):
         with room._state_lock:
-            # LAZY LOAD YESTERDAY'S HISTORY FOR 24H ROOMS:
-            if room.time_limit >= 7200 and (not getattr(room, 'previous_day_history', None) or len(room.previous_day_history) == 0):
-                try:
-                    room_manager.get_yesterdays_history(room, room.current_round)
-                except Exception as e:
-                    print(f"[app.py] Error lazy-loading yesterday's history for room {room_id}: {e}")
-
-            # 1. Heartbeat Trigger (If TR=0/45/Search)
-            milestone = room.get_next_round_milestone()
-            if milestone == 'spinner':
-                room_manager.generate_spinner_params(room_id, reveal=False)
-            elif milestone == 'reveal':
-                print(f"[API] Room {room_id}: TR={room.time_remaining} - REVEALING parameters (synchronous)")
-                room_manager.generate_spinner_params(room_id, reveal=True)
-            elif milestone == 'search':
-                print(f"[API] Room {room_id}: TR={room.time_remaining} - STARTING board search (synchronous)")
-                room_manager.start_board_search(room_id)
-            elif milestone == 'start':
-                # ATOMIC GUARD: Only launch ONE transition
-                if not getattr(room, 'starting_round', False):
-                    print(f"[Milestone] 0s remaining - Starting next round for {room_id} (Asynchronous API Trigger)")
-                    import threading
-                    threading.Thread(target=room_manager.start_next_round, args=(room_id,), daemon=True).start()
-
-            # 2. Collect State Under Lock (Atomic Snapshot)
             is_revealed = room.spinner_params_revealed
             is_active = room.state == 'active'
             is_intermission = room.state == 'intermission'
@@ -3877,8 +3878,9 @@ def get_room_state(room_id):
 
             raw_fmt = getattr(room, 'current_board_format', 'Normal')
             is_bonus_format = ('bonus letter' in str(raw_fmt).lower() or 'either' in str(raw_fmt).lower())
-            
-            resp = jsonify({
+
+            # Build snapshot dict under lock (all room.xxx reads happen here)
+            snapshot = {
                 'room_id': room.room_id,
                 'game_type': room.game_type,
                 'state': room.state,
@@ -3962,13 +3964,13 @@ def get_room_state(room_id):
                 'chat_messages': getattr(room, 'chat_messages', []),
                 'winners_history': getattr(room, 'winners_history', []),
                 'previous_day_history': getattr(room, 'previous_day_history', {}),
-                'your_username': session.get('username')
-            })
-            
-            resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-            resp.headers['Pragma'] = 'no-cache'
-            resp.headers['Expires'] = '0'
-            return resp
+            }
+        # END LOCK — JSON serialization happens outside to avoid holding lock during encoding
+        resp = jsonify(snapshot)
+        resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        resp.headers['Pragma'] = 'no-cache'
+        resp.headers['Expires'] = '0'
+        return resp
 
     except Exception as e:
         import traceback
@@ -7424,7 +7426,7 @@ if __name__ == '__main__':
     print('Morpheme server running on http://localhost:5001')
     try:
         from waitress import serve
-        serve(app, host='0.0.0.0', port=5001, threads=8)
+        serve(app, host='0.0.0.0', port=5001, threads=32)
     except Exception as e:
         print(f"Server startup error: {e}. Attempting fallback...")
         from waitress import serve
