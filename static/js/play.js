@@ -1076,7 +1076,17 @@ async function updateGameState(incomingState = null) {
             }
         }
         
+        // INTERMISSION BOARD NORMALIZATION:
+        // During intermission, renderBoard() uses state.previous_board to display the completed
+        // round's board, while reapplyBoardHighlights() uses window.lastGameState.board for DFS
+        // path searching. If these two differ even briefly, word highlight clicks will silently
+        // fail (path found on wrong board → no cells match). Normalize here so they are identical.
+        if (state.state === 'intermission' && state.previous_board && state.previous_board.length > 0) {
+            state.board = state.previous_board;
+        }
+
         window.lastGameState = state;  // Store for optimistic updates
+
         
         // LOADING STATE: Room was just created and board is being generated async
         if (state.state === 'loading') {
