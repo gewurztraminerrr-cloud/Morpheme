@@ -4433,6 +4433,26 @@ class RoomManager:
             room.current_word_count_range = target_range
             room.update_counts_by_len()
 
+            # FIX: Override with the ACTUAL word count from the generated board.
+            # The target range (e.g. '300-400') is what was requested; the board may
+            # deliver a different count (e.g. 253). Recompute the label from the real
+            # all_words set so the Spinner Set and header show the correct range.
+            _actual_wc  = len(room.all_words)
+            _is_aw_sr   = getattr(room, 'use_added_words', False) or '+ AW' in str(getattr(room, 'current_dictionary', '')).upper()
+            if _is_aw_sr:
+                _real_wc_sr = '300-400' if _actual_wc < 400 else ('400-500' if _actual_wc < 500 else '500+')
+            else:
+                if   _actual_wc < 100: _real_wc_sr = '50-100'
+                elif _actual_wc < 200: _real_wc_sr = '100-200'
+                elif _actual_wc < 300: _real_wc_sr = '200-300'
+                elif _actual_wc < 400: _real_wc_sr = '300-400'
+                elif _actual_wc < 500: _real_wc_sr = '400-500'
+                else:                  _real_wc_sr = '500+'
+            room.current_word_count_range = _real_wc_sr
+            if isinstance(room.spinner_params, dict):
+                room.spinner_params['word_count_range'] = _real_wc_sr
+
+
             
             # CATEGORIZATION (Synchronous): Ensure these are available immediately for UI sync
             if hasattr(word_validator, 'word_validator'):
