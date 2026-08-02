@@ -250,7 +250,7 @@ def pop_any_cached_board(dimensions, min_word_length=3, exclude_format=None):
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
     conn = None
     try:
-        conn = sqlite3.connect(db_path, timeout=30)
+        conn = sqlite3.connect(db_path, timeout=0.5)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
@@ -338,7 +338,7 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
     conn = None
     try:
-        conn = sqlite3.connect(db_path, timeout=30)
+        conn = sqlite3.connect(db_path, timeout=0.5)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
@@ -441,7 +441,7 @@ def pop_cached_board(param_key_str):
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
     conn = None
     try:
-        conn = sqlite3.connect(db_path, timeout=30)
+        conn = sqlite3.connect(db_path, timeout=0.5)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
