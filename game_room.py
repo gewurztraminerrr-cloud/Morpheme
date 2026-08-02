@@ -5829,7 +5829,14 @@ class RoomManager:
                             room.next_round_word_scores = {w: room.next_round_word_scores[w] for w in all_words if w in room.next_round_word_scores}
                             
                         # Update metadata for the pending round
-                        achieved_wc = self._get_factchecked_wc_range(len(all_words))
+                        # FIX: compute achieved_wc from the MIN_LEN-filtered count so it matches
+                        # exactly what the round will play. Using len(all_words) (unfiltered) caused
+                        # the Spinner Set to promise e.g. '200-300' while the round played '100-200'
+                        # because short words were counted but later excluded by min_word_length.
+                        _sb_min_len = (room.next_spinner_params.get('min_word_length', 3)
+                                       if getattr(room, 'next_spinner_params', None) else 3)
+                        _sb_filtered_cnt = sum(1 for w in (all_words or []) if len(w) >= _sb_min_len)
+                        achieved_wc = self._get_factchecked_wc_range(_sb_filtered_cnt)
                         
                         if getattr(room, 'next_spinner_params', None):
                             room.next_spinner_params['board_format'] = updated_format
@@ -5848,6 +5855,8 @@ class RoomManager:
                             # This prevents the '500+' -> '300-400' flip the player sees at round start.
                             if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
                                 room.frozen_revealed_params['word_count_range'] = achieved_wc
+                                # Keep min_word_length in sync so round start uses the same floor
+                                room.frozen_revealed_params['min_word_length'] = _sb_min_len
                             
                             # Only sync to active spinner_params if not yet locked for the round
                             if not getattr(room, '_spinner_params_locked', False):
@@ -5873,8 +5882,8 @@ class RoomManager:
                         room.next_round_difficulty = achieved_diff
                         
                         # Authoritative recount after truncation (if any)
-                        min_len = room.next_spinner_params.get('min_word_length', 3) if getattr(room, 'next_spinner_params', None) else 3
-                        room.next_round_total_words_count = sum(1 for w in (all_words or []) if len(w) >= min_len)
+                        # Uses the same _sb_min_len computed above for achieved_wc consistency.
+                        room.next_round_total_words_count = _sb_filtered_cnt
                         print(f"[RoomManager] Background pre-gen complete for {room_id}: {achieved_diff} | {updated_format} (Count: {len(all_words)})")
                         
                     # NOTE: Do NOT update room.current_difficulty here!
