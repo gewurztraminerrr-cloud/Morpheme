@@ -4947,6 +4947,14 @@ class RoomManager:
                             actual_wc_range = self._get_factchecked_wc_range(actual_wc)
                             
                             new_params['word_count_range'] = actual_wc_range
+                            
+                            # FIX: Detect if this cached board was generated for a higher min_word_length.
+                            # If fw_filt only has 8L+ words but m_len=6, update new_params so the
+                            # Spinner Set displays Min: 8L rather than the misleading Min: 6L.
+                            if fw_filt:
+                                _cache_actual_min = min(len(w) for w in fw_filt)
+                                if _cache_actual_min > m_len:
+                                    new_params['min_word_length'] = _cache_actual_min
                             cached_board_data = (c_b, fw_filt, c_c, c_f, fp_filt, c_r, c_bw, new_params)
 
                     # 3. Stage board data and attach uniqueness ratio to new_params immediately
@@ -5812,7 +5820,21 @@ class RoomManager:
                                        if getattr(room, 'next_spinner_params', None) else 3)
                         _sb_filtered_cnt = sum(1 for w in (all_words or []) if len(w) >= _sb_min_len)
                         achieved_wc = self._get_factchecked_wc_range(_sb_filtered_cnt)
-                        
+
+                        # FIX: Detect when cached board was built for a HIGHER min_word_length.
+                        # e.g. board from cache has only 8L+ words, but Spinner Set promised 6L.
+                        # Update _sb_min_len so all downstream param stores show the real minimum.
+                        if all_words:
+                            _actual_min_board = min(len(w) for w in all_words)
+                            if _actual_min_board > _sb_min_len:
+                                print(f"[RoomManager] Min-length correction in start_board_search: "
+                                      f"planned={_sb_min_len}, actual={_actual_min_board}. Updating params.")
+                                _sb_min_len = _actual_min_board
+                                if getattr(room, 'next_spinner_params', None):
+                                    room.next_spinner_params['min_word_length'] = _sb_min_len
+                                if not getattr(room, '_spinner_params_locked', False):
+                                    room.spinner_params['min_word_length'] = _sb_min_len
+
                         if getattr(room, 'next_spinner_params', None):
                             room.next_spinner_params['board_format'] = updated_format
                             
@@ -6515,6 +6537,21 @@ class RoomManager:
                 # never visibly flips at the moment the round starts.
                 if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
                     room.frozen_revealed_params['word_count_range'] = real_wc
+
+                # FIX: Detect when cached board was generated for a HIGHER min_word_length
+                # than what the Spinner Set promised (e.g. board has no 6L/7L words but
+                # header says Min: 6L). Correct the display so players aren't misled.
+                if room.all_words:
+                    actual_min_len = min(len(w) for w in room.all_words)
+                    if actual_min_len > room.current_min_length:
+                        print(f"[RoomManager] Min-length correction in start_next_round: "
+                              f"promised={room.current_min_length}, actual={actual_min_len}. Updating header.")
+                        room.current_min_length = actual_min_len
+                        if isinstance(room.spinner_params, dict):
+                            room.spinner_params['min_word_length'] = actual_min_len
+                        if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                            room.frozen_revealed_params['min_word_length'] = actual_min_len
+
                 room.complete_words = list(room.all_words)
                 room.update_counts_by_len()
                 room.recalculate_total_points()
