@@ -4722,13 +4722,25 @@ class RoomManager:
             if reveal and getattr(room, 'spinner_params_generated', False):
                 new_params = getattr(room, 'next_spinner_params', None)
                 if new_params:
-                    # PERFORM THE REVEAL
-                    room.spinner_params = dict(new_params)
+                    # PERFORM THE REVEAL — mirror exactly what the slow-path does at line 5008-5019
+                    import copy
+                    if not getattr(room, '_spinner_params_locked', False):
+                        room.spinner_params = dict(new_params)
+                        # FIX: set frozen_revealed_params so start_board_search can update word_count_range
+                        # on it, and so start_next_round uses it as the authoritative active_params.
+                        room.frozen_revealed_params = copy.deepcopy(new_params)
                     
                     # Update authoritative labels so they change ON THE DOT at 0s (start_next_round)
                     # We store them in spinner_params for reveal, but don't promote to 'current_' yet
                     room.next_round_min_length = new_params.get('min_word_length', 3)
                     room.spinner_params_revealed = True
+                    # FIX: mark the intermission as revealed so start_next_round takes the frozen path
+                    room.was_revealed_this_intermission = True
+                    # FIX: lock spinner_params so board search thread cannot overwrite them post-reveal.
+                    # Without this lock, the board search was overwriting room.spinner_params with the
+                    # actual board params (format, wc), making previous_params predictable and causing
+                    # the anti-repeat check to always converge to the same "different" pattern.
+                    room._spinner_params_locked = True
                     room._reveal_sync_complete = True
                     print(f"[RoomManager] SUCCESS: Revealed pre-generated params for room {room_id} (15s mark)")
                     return True
