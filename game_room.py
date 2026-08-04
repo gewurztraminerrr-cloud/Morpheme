@@ -329,7 +329,14 @@ class GameRoom:
             del self.evicted_users[str(user_id)]
             print(f"[GameRoom] Cleared eviction flag for {username} on join.")
             
-        # NOTE: Abandonment penalty is fixed at exit; re-joining does not remove from quitters list.
+        # UNPAUSE: If human player joins a paused 'waiting' room, unpause it immediately
+        if self.state == 'waiting' and not is_ai:
+            print(f"[GameRoom] Human player {username} joined waiting room {self.room_id}. Unpausing room...")
+            with self._state_lock:
+                self.state = 'intermission'
+                self.intermission_start_time = time.time() - 60
+                self.spinner_params_generated = False
+                self.board_search_started = False
 
 
         
@@ -1325,6 +1332,15 @@ class GameRoom:
         # which causes 'spinner' and 'search' milestones to trigger on every tick/poll,
         # generating board after board and triggering start_next_round repeatedly.
         if self.state == 'waiting':
+            humans = [p for p in self.players if not getattr(p, 'is_ai', False)]
+            if len(humans) > 0:
+                print(f"[check_and_update_state] Unpausing waiting room {self.room_id} because {len(humans)} human player(s) present.")
+                with self._state_lock:
+                    self.state = 'intermission'
+                    self.intermission_start_time = now - 60  # Force intermission to look expired
+                    self.spinner_params_generated = False
+                    self.board_search_started = False
+                return 'start'
             return None
         
         # stuck watchdog: check if intermission is stuck for > 10s at 0:00:00 (timer at 0 and state == intermission)
