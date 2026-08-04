@@ -1766,7 +1766,7 @@ class GameRoom:
 
                 wc_cnt = self.total_words_count
                 # AW boards use the same full scale — no '300-400' floor.
-                wc_lbl = self._get_factchecked_wc_range(wc_cnt)
+                wc_lbl = self._get_factchecked_wc_range(wc_cnt, use_added_words=use_aw_val)
 
                 new_sp['word_count_range'] = wc_lbl
                 new_sp['_exact_wc_calculated'] = True
@@ -4445,7 +4445,7 @@ class RoomManager:
             # AW boards use the same full-scale buckets as non-AW — 221 words is
             # '200-300', not '300-400', regardless of dictionary.
             _actual_wc  = len(room.all_words)
-            _real_wc_sr = self._get_factchecked_wc_range(_actual_wc)
+            _real_wc_sr = self._get_factchecked_wc_range(_actual_wc, use_added_words=s_use_aw)
             room.current_word_count_range = _real_wc_sr
             if isinstance(room.spinner_params, dict):
                 room.spinner_params['word_count_range'] = _real_wc_sr
@@ -4955,7 +4955,7 @@ class RoomManager:
                             actual_wc = len(fw_filt)
                             if is_board_count_valid(actual_wc, target_sp_range):
                                 fp_filt = {w: p for w, p in c_p.items() if w in fw_filt}
-                                actual_wc_range = self._get_factchecked_wc_range(actual_wc)
+                                actual_wc_range = self._get_factchecked_wc_range(actual_wc, use_added_words=use_aw_val)
                                 new_params['word_count_range'] = actual_wc_range
                                 if fw_filt:
                                     _cache_actual_min = min(len(w) for w in fw_filt)
@@ -5195,7 +5195,7 @@ class RoomManager:
                         
                     actual_wc = len(cwords)
                     # AW boards use the same full scale — no '300-400' floor.
-                    wc_label = self._get_factchecked_wc_range(actual_wc)
+                    wc_label = self._get_factchecked_wc_range(actual_wc, use_added_words=use_aw_val)
 
                     if not getattr(room, '_spinner_params_locked', False):
                         room.spinner_params['dictionary'] = dict_val
@@ -5618,6 +5618,12 @@ class RoomManager:
                                 if rb == board:
                                     is_duplicate = True
                                     break
+                        fw_cnt = sum(1 for w in (all_words or []) if len(w) >= search_min)
+                        if fw_cnt < min_accept and board_attempts < 3:
+                            print(f"[RoomManager] Generated board has only {fw_cnt} words of len>={search_min} (needed >= {min_accept}). Retrying...")
+                            board_attempts += 1
+                            continue
+
                         if not is_duplicate:
                             break
                         
@@ -5830,10 +5836,42 @@ class RoomManager:
                         # exactly what the round will play. Using len(all_words) (unfiltered) caused
                         # the Spinner Set to promise e.g. '200-300' while the round played '100-200'
                         # because short words were counted but later excluded by min_word_length.
+                        planned_wc = room.next_spinner_params.get('word_count_range', '100-200') if getattr(room, 'next_spinner_params', None) else '100-200'
+                        max_cap = None
+                        if planned_wc == '50-100': max_cap = 99
+                        elif planned_wc == '100-200': max_cap = 199
+                        elif planned_wc == '200-300': max_cap = 299
+                        elif planned_wc == '300-400': max_cap = 399
+                        elif planned_wc == '400-500': max_cap = 499
+
+                        if max_cap and len(all_words) > max_cap:
+                            _wl = list(all_words)
+                            total_raw = len(_wl)
+                            by_len = {}
+                            for w in _wl: by_len.setdefault(len(w), []).append(w)
+                            selected = set()
+                            if bonus_word and bonus_word in all_words: selected.add(bonus_word)
+                            for l in sorted(by_len.keys()):
+                                bw2 = [w for w in by_len[l] if w not in selected]
+                                if not bw2: continue
+                                pc = max(1, min(len(bw2), int(round((len(by_len[l]) / float(total_raw)) * max_cap))))
+                                selected.update(sorted(bw2, key=lambda w: (len(w), w), reverse=True)[:pc])
+                            if len(selected) < max_cap:
+                                lft = sorted([w for w in _wl if w not in selected], key=lambda w: (len(w), w), reverse=True)
+                                selected.update(lft[:(max_cap - len(selected))])
+                            elif len(selected) > max_cap:
+                                nb = [w for w in selected if w != bonus_word]
+                                selected = set(nb[:max_cap])
+                                if bonus_word and bonus_word in all_words: selected.add(bonus_word)
+                            all_words = list(selected)
+                            room.next_round_words = all_words
+                            room.next_round_word_paths = {w: all_words_dict[w] for w in all_words if w in all_words_dict}
+                            room.next_round_total_words_count = len(all_words)
+
                         _sb_min_len = (room.next_spinner_params.get('min_word_length', 3)
                                        if getattr(room, 'next_spinner_params', None) else 3)
                         _sb_filtered_cnt = sum(1 for w in (all_words or []) if len(w) >= _sb_min_len)
-                        achieved_wc = self._get_factchecked_wc_range(_sb_filtered_cnt)
+                        achieved_wc = self._get_factchecked_wc_range(_sb_filtered_cnt, use_added_words=use_aw_flag)
 
                         # FIX: Detect when cached board was built for a HIGHER min_word_length.
                         # e.g. board from cache has only 8L+ words, but Spinner Set promised 6L.
@@ -6539,7 +6577,7 @@ class RoomManager:
                 # Word count and range label — AW boards use the same full scale as non-AW.
                 # 221 words on a CSW+AW board is '200-300', not '300-400'.
                 wc_cnt  = len(room.all_words)
-                real_wc = self._get_factchecked_wc_range(wc_cnt)
+                real_wc = self._get_factchecked_wc_range(wc_cnt, use_added_words=_use_aw)
 
                 room.total_words_count    = wc_cnt
                 room.initial_total_words  = wc_cnt
@@ -6758,15 +6796,20 @@ class RoomManager:
             with room._state_lock:
                  room.starting_round = False
     
-    def _get_factchecked_wc_range(self, count):
+    def _get_factchecked_wc_range(self, count, use_added_words=False):
         """Map actual word count to the closest standard spinner display range.
-           Matches the 50-100, 100-200, 200-300, 300-400, 400-500, and 500+ targets defined in SpinnerSet."""
+           For AW boards: 300-400, 400-500, 500+
+           For Non-AW boards (NWL / CSW): 50-100, 100-200, 200-300, 300-400, 500+"""
         if count >= 500: return '500+'
-        if count >= 400: return '400-500'
-        if count >= 300: return '300-400'
-        if count >= 200: return '200-300'
-        if count >= 100: return '100-200'
-        return '50-100'
+        if use_added_words:
+            if count >= 400: return '400-500'
+            if count >= 300: return '300-400'
+            return '300-400'
+        else:
+            if count >= 300: return '300-400'
+            if count >= 200: return '200-300'
+            if count >= 100: return '100-200'
+            return '50-100'
 
     def _get_board_fingerprint(self, board):
         """Return a deterministic string fingerprint of a 2D or 3D board for dedup tracking."""
