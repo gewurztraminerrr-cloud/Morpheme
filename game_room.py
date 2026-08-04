@@ -3204,6 +3204,8 @@ class RoomManager:
                                     print(f"[RoomManager] Wakeup empty singleton {existing_room.room_id} to Active Round 1 with fresh board...")
                                     from board_generator import pop_any_cached_board
                                     pre_pop = pop_any_cached_board(existing_room.board_dimensions)
+                                    if not pre_pop:
+                                        pre_pop = get_emergency_fallback_board(existing_room.board_dimensions, 'Normal', existing_room.time_limit)
                                     if pre_pop:
                                         if len(pre_pop) >= 9:
                                             r_board, r_words, r_bonus_c, r_fmt, r_dict, r_ratio, r_bonus_word, _, r_params = pre_pop
