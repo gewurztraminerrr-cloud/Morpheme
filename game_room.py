@@ -2766,7 +2766,38 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
     except Exception as e:
         print(f"[get_emergency_fallback_board] General cache fallback error: {e}")
 
-    # --- INSTANT EMERGENCY FALLBACK (Async BG refill) ---
+    # --- FAST LIVE GENERATION ATTEMPT BEFORE RANDOM GRID ---
+    try:
+        live_res = bg.generate_board(
+            dimensions=dimensions,
+            dictionary=dictionary,
+            board_format=fmt,
+            min_word_length=min_word_length,
+            difficulty=difficulty or "Medium",
+            timeout=3.0,
+            use_added_words=use_added_words
+        )
+        if live_res and len(live_res) >= 6:
+            l_b, l_w, l_c, l_f, l_p, l_r = live_res[:6]
+            l_bw = live_res[6] if len(live_res) >= 7 else (l_w[0] if l_w else 'PLANETS')
+            l_w_filt = [w for w in l_w if len(w) >= min_word_length]
+            if len(l_w_filt) >= 15:
+                l_p_filt = {w: p for w, p in l_p.items() if w in l_w_filt}
+                eparams = {
+                    'min_word_length': min_word_length,
+                    'word_count_range': target_range_resolved,
+                    'board_format': l_f,
+                    'dictionary': dictionary,
+                    'use_added_words': use_added_words,
+                    'difficulty': difficulty or "Medium",
+                    'bonus_word_len': len(l_bw)
+                }
+                print(f"[get_emergency_fallback_board] Fast live generator succeeded: {len(l_w_filt)} words")
+                return l_b, l_w_filt, l_c, l_f, l_p_filt, l_r, l_bw, target_range_resolved, eparams
+    except Exception as live_err:
+        print(f"[get_emergency_fallback_board] Fast live generation exception: {live_err}")
+
+    # --- INSTANT EMERGENCY FALLBACK (Random grid solve) ---
     print(f"[get_emergency_fallback_board] Delivering instant pre-built emergency board for {dimensions}...")
     parts = dimensions.split("x")
     is_3d = len(parts) == 3
@@ -2791,10 +2822,16 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         bonus_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
 
     # Solve emergency board instantly
-    bg = BoardGenerator()
     emergency_solve = bg._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=15, store_paths=True, timeout=1.0, use_added_words=use_added_words)
     words_filtered = [w for w in emergency_solve if len(w) >= min_word_length]
     paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
+
+    # CRITICAL SAFEGUARD: If min_word_length on random grid yields fewer than 15 words, solve with 3L floor
+    if len(words_filtered) < 15:
+        emergency_solve_relaxed = bg._solve_board(board, dictionary, (0, 99999), 3, max_depth=15, store_paths=True, timeout=1.0, use_added_words=use_added_words)
+        words_filtered = [w for w in emergency_solve_relaxed if len(w) >= 3]
+        paths_filtered = {w: p for w, p in emergency_solve_relaxed.items() if len(w) >= 3}
+        min_word_length = 3
     # MANDATE: Bonus Word MUST be between 6 and 10 letters!
     bw_candidates = [w for w in words_filtered if 6 <= len(w) <= 10]
     if bw_candidates:
