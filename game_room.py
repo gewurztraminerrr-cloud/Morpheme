@@ -1495,9 +1495,11 @@ class GameRoom:
             
             is_aw_effective = (fparams.get('use_added_words', False) or '+ AW' in str(fparams.get('dictionary', '')).upper()) if fparams else False
             if is_aw_effective:
-                min_accept = 100
+                min_accept = max(100, min_accept)
+            elif f_min_l >= 6:
+                min_accept = min(min_accept, 30)
             else:
-                min_accept = 15 if f_min_l >= 5 else 30
+                min_accept = max(30, min_accept)
                 
             if actual_cnt >= min_accept:
                 fallback = (fb, fw_filtered, fc, ff, {w: p for w, p in fp.items() if len(w) >= f_min_l}, fr, fbw, fparams)
@@ -2615,9 +2617,11 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             
     is_aw = use_added_words or '+ AW' in str(dictionary).upper() or '+AW' in str(dictionary).upper()
     if is_aw:
-        min_accept = 100
+        min_accept = max(100, min_accept)
+    elif min_word_length >= 6:
+        min_accept = min(min_accept, 30)
     else:
-        min_accept = 15 if min_word_length >= 5 else 30
+        min_accept = max(30, min_accept)
     
     parts = dimensions.split("x")
     is_24h = time_limit >= 7200
@@ -4252,9 +4256,11 @@ class RoomManager:
                         elif '400' in str(target_range): min_accept = 400
                         elif '500' in str(target_range): min_accept = 500
                 if use_aw_flag:
-                    min_accept = 100
+                    min_accept = max(100, min_accept)
+                elif m_len >= 6:
+                    min_accept = min(min_accept, 30)
                 else:
-                    min_accept = 20 if m_len >= 5 else 30
+                    min_accept = max(30, min_accept)
 
                 # OPTIMIZATION: Try to get a cached board instantly for all rooms to avoid any creation delay
                 res = None
