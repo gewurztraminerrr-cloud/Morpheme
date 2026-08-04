@@ -4518,7 +4518,8 @@ class RoomManager:
             # AW boards use the same full-scale buckets as non-AW — 221 words is
             # '200-300', not '300-400', regardless of dictionary.
             _actual_wc  = len(room.all_words)
-            _real_wc_sr = self._get_factchecked_wc_range(_actual_wc, use_added_words=s_use_aw)
+            _use_aw_val = room.use_added_words or (room.spinner_params.get('use_added_words', False) if isinstance(room.spinner_params, dict) else False)
+            _real_wc_sr = self._get_factchecked_wc_range(_actual_wc, use_added_words=_use_aw_val)
             room.current_word_count_range = _real_wc_sr
             if isinstance(room.spinner_params, dict):
                 room.spinner_params['word_count_range'] = _real_wc_sr
