@@ -2552,6 +2552,12 @@ class GameRoom:
             self.total_points_count = 0
             return 0
 
+    def _get_bonus_word(self, length=8, dictionary='NWL', alternating=False, difficulty='Medium', exclude=None):
+        global _room_manager_instance
+        if _room_manager_instance and hasattr(_room_manager_instance, '_get_bonus_word'):
+            return _room_manager_instance._get_bonus_word(length=length, dictionary=dictionary, alternating=alternating, difficulty=difficulty, exclude=exclude)
+        return 'PLANETS'
+
 def calculate_word_score(word, bonus_word, board_format='Normal', path=None, bonus_cell=None, **kwargs):
     """Calculate points for a word using shared utility"""
     from scoring import calculate_word_score as shared_calc
@@ -2790,7 +2796,10 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
     if bw_candidates:
         bonus_word = bw_candidates[0]
     else:
-        bonus_word = self._get_bonus_word(length=6, dictionary=dictionary)
+        if _room_manager_instance and hasattr(_room_manager_instance, '_get_bonus_word'):
+            bonus_word = _room_manager_instance._get_bonus_word(length=6, dictionary=dictionary)
+        else:
+            bonus_word = 'PLANETS'
         if bonus_word and bonus_word not in words_filtered:
             words_filtered.append(bonus_word)
             paths_filtered[bonus_word] = [bonus_cell]
@@ -5099,15 +5108,17 @@ class RoomManager:
                 bg = BoardGenerator()
                 
                 # Determine min_accept and target min_word_length
+                e_format = room.spinner_params.get('board_format', 'Normal') if room.spinner_params else 'Normal'
+                e_dict = room.spinner_params.get('dictionary', 'NWL') if room.spinner_params else 'NWL'
+                e_wc = room.spinner_params.get('word_count_range', '100-200') if room.spinner_params else '100-200'
+                e_use_aw = room.spinner_params.get('use_added_words', False) if room.spinner_params else False
                 e_min_len = room.spinner_params.get('min_word_length') if room.spinner_params else None
+                e_diff = room.spinner_params.get('difficulty', 'Medium') if room.spinner_params else 'Medium'
                 try:
                     search_min = int(e_min_len)
                 except:
                     dims = str(room.board_dimensions).lower().replace(" ", "")
                     search_min = 4 if '4x6' in dims else (5 if '5x7' in dims else (6 if '6x8' in dims or '3x3x3' in dims else 3))
-                
-                e_wc = room.spinner_params.get('word_count_range', '100-200') if room.spinner_params else '100-200'
-                e_use_aw = room.spinner_params.get('use_added_words', False) if room.spinner_params else False
                 
                 min_accept = 50
                 if e_wc:
