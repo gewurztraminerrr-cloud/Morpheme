@@ -4936,35 +4936,32 @@ class RoomManager:
                         use_aw_val = new_params.get('use_added_words', False) or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
                         m_len = new_params.get('min_word_length', 3)
                         bw_len = new_params.get('bonus_word_length', 8)
-                        candidate = pop_compatible_cached_board(
-                            room.board_dimensions, dict_val, fmt_val, m_len, use_aw_val, bonus_word_len=bw_len
-                        )
-                        if not candidate:
-                            # Do NOT fall back to synchronous generate_board() here — it would hold
-                            # _state_lock for 30-60 seconds, blocking ALL submit_word calls.
-                            # start_board_search (spawned below at line ~5036) handles board
-                            # generation in a background thread without holding _state_lock.
-                            print(f"[generate_spinner_params] Cache miss for {room_id} — board gen delegated to start_board_search thread")
-                        if candidate:
+                        target_sp_range = new_params.get('word_count_range')
+
+                        for _ in range(10):
+                            candidate = pop_compatible_cached_board(
+                                room.board_dimensions, dict_val, fmt_val, m_len, use_aw_val, bonus_word_len=bw_len
+                            )
+                            if not candidate:
+                                break
                             c_b, c_w, c_c, c_f, c_p, c_r, c_bw, c_params = candidate
                             fw_filt = [w for w in c_w if len(w) >= m_len]
-                            fp_filt = {w: p for w, p in c_p.items() if w in fw_filt}
                             actual_wc = len(fw_filt)
-                            
-                            # Resolve exact range matching actual board word count
-                            # AW boards use the same full scale — 221 words is '200-300' not '300-400'.
-                            actual_wc_range = self._get_factchecked_wc_range(actual_wc)
-                            
-                            new_params['word_count_range'] = actual_wc_range
-                            
-                            # FIX: Detect if this cached board was generated for a higher min_word_length.
-                            # If fw_filt only has 8L+ words but m_len=6, update new_params so the
-                            # Spinner Set displays Min: 8L rather than the misleading Min: 6L.
-                            if fw_filt:
-                                _cache_actual_min = min(len(w) for w in fw_filt)
-                                if _cache_actual_min > m_len:
-                                    new_params['min_word_length'] = _cache_actual_min
-                            cached_board_data = (c_b, fw_filt, c_c, c_f, fp_filt, c_r, c_bw, new_params)
+                            if is_board_count_valid(actual_wc, target_sp_range):
+                                fp_filt = {w: p for w, p in c_p.items() if w in fw_filt}
+                                actual_wc_range = self._get_factchecked_wc_range(actual_wc)
+                                new_params['word_count_range'] = actual_wc_range
+                                if fw_filt:
+                                    _cache_actual_min = min(len(w) for w in fw_filt)
+                                    if _cache_actual_min > m_len:
+                                        new_params['min_word_length'] = _cache_actual_min
+                                cached_board_data = (c_b, fw_filt, c_c, c_f, fp_filt, c_r, c_bw, new_params)
+                                break
+                            else:
+                                print(f"[generate_spinner_params] Candidate cached board had {actual_wc} words, mismatching spun range '{target_sp_range}'. Discarding.")
+
+                        if not cached_board_data:
+                            print(f"[generate_spinner_params] Cache miss/mismatch for {room_id} — board gen delegated to start_board_search thread")
 
                     # 3. Stage board data and attach uniqueness ratio to new_params immediately
                     if cached_board_data:
@@ -6757,8 +6754,9 @@ class RoomManager:
     
     def _get_factchecked_wc_range(self, count):
         """Map actual word count to the closest standard spinner display range.
-           Matches the 50-100, 100-200, 200-300, 300-400, and 500+ targets defined in SpinnerSet."""
+           Matches the 50-100, 100-200, 200-300, 300-400, 400-500, and 500+ targets defined in SpinnerSet."""
         if count >= 500: return '500+'
+        if count >= 400: return '400-500'
         if count >= 300: return '300-400'
         if count >= 200: return '200-300'
         if count >= 100: return '100-200'
