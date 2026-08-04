@@ -1392,8 +1392,15 @@ class GameRoom:
                     def _watchdog_gen():
                         try:
                             gen_res = _bg.generate_board(
-                                _dims, None, _range, _dict, _fmt, _min_len,
-                                _diff, is_emergency=True, use_added_words=_use_aw
+                                dimensions=_dims,
+                                bonus_word=None,
+                                word_count_range=_range,
+                                board_format=_fmt,
+                                dictionary=_dict,
+                                min_word_length=_min_len,
+                                difficulty=_diff,
+                                is_emergency=True,
+                                use_added_words=_use_aw
                             )
                             if gen_res:
                                 g_b, g_w, g_c, g_f, g_p, g_r, g_bw = gen_res[:7]
@@ -2768,10 +2775,13 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
 
     # --- FAST LIVE GENERATION ATTEMPT BEFORE RANDOM GRID ---
     try:
+        emergency_bw = 'PLANETS' if min_word_length < 8 else 'IDONEITY'
         live_res = bg.generate_board(
             dimensions=dimensions,
-            dictionary=dictionary,
+            bonus_word=emergency_bw,
+            word_count_range=target_range_resolved,
             board_format=fmt,
+            dictionary=dictionary,
             min_word_length=min_word_length,
             difficulty=difficulty or "Medium",
             timeout=3.0,
@@ -3507,7 +3517,15 @@ class RoomManager:
                                     s_diff = isp.get('difficulty', 'Medium')
                                     s_wc = isp.get('word_count_range', '100-200')
                                     e_res = self.board_generator.generate_board(
-                                        room.board_dimensions, None, s_wc, s_dict, s_fmt, s_min_len, s_diff, is_emergency=True, use_added_words=s_use_aw
+                                        dimensions=room.board_dimensions,
+                                        bonus_word=None,
+                                        word_count_range=s_wc,
+                                        board_format=s_fmt,
+                                        dictionary=s_dict,
+                                        min_word_length=s_min_len,
+                                        difficulty=s_diff,
+                                        is_emergency=True,
+                                        use_added_words=s_use_aw
                                     )
                                     if e_res:
                                         g_b, g_w, g_c, g_f, g_p, g_r, g_bw = e_res[0], e_res[1], e_res[2], e_res[3], e_res[4], e_res[5], e_res[6]
@@ -5339,8 +5357,8 @@ class RoomManager:
                             dimensions=room.board_dimensions,
                             bonus_word=b_word,
                             word_count_range=room.spinner_params.get('word_count_range', '100-200'),
-                            dictionary=room.spinner_params.get('dictionary', 'NWL'),
                             board_format=room.spinner_params.get('board_format', 'Normal'),
+                            dictionary=room.spinner_params.get('dictionary', 'NWL'),
                             min_word_length=6,
                             is_emergency=True,
                             use_added_words=False
