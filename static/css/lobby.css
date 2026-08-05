@@ -191,7 +191,7 @@
 .active-rooms-panel h3 {
     font-size: 0.85rem !important;
     font-weight: 700 !important;
-    margin: 0 0 8px 0 !important;
+    margin: 0 0 2px 0 !important;
     text-align: center !important;
     color: var(--text-primary) !important;
     opacity: 0.9 !important;
