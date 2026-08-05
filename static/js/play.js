@@ -3814,10 +3814,10 @@ function updateParameters(state) {
     const factBonus = sp.bonus_word_length || (state.bonus_word ? state.bonus_word.length : state.current_bonus_word_length) || 0;
     const factMinLen = sp.min_word_length || state.current_min_length || 3;
     const baseDict = sp.dictionary || state.current_dictionary || 'NWL';
-    const useAW = (sp.use_added_words === true) || (state.use_added_words === true);
+    const useAW = (sp.use_added_words === true) || (state.use_added_words === true) || (/\+\s*AW/i.test(baseDict)) || (/\+\s*AW/i.test(state.current_dictionary || ''));
     const cleanBaseDict = baseDict.replace(/\s*\+\s*AW/i, '').replace(/\s*\+AW/i, '').trim();
     const factDict = useAW ? `${cleanBaseDict} + AW` : cleanBaseDict;
-    let rawWordRange = (preferSp ? (sp.word_count_range || state.current_word_count_range) : (state.current_word_count_range || sp.word_count_range)) || 'Random';
+    let rawWordRange = sp.word_count_range || state.current_word_count_range || 'Random';
     if (Array.isArray(rawWordRange)) {
         rawWordRange = rawWordRange.join('-');
     } else {
