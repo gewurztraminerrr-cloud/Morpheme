@@ -5703,46 +5703,69 @@ body .tab-btn.active {
 }
 
 @media (max-width: 899px) {
-    /* Tournament mobile overrides — keep panels in document flow, centered and aligned */
+    /* Tournament mobile overrides — keep panels in document flow, perfectly centered, bounded to screen */
     #page-tournaments {
-        padding-left: 0px !important;
-        padding-right: 0px !important;
-        margin-left: -10px !important;
-        margin-right: -10px !important;
+        padding: 0 10px !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
         text-align: center !important;
     }
 
     .tournament-layout {
         padding: 8px 0px !important;
+        margin: 0 auto !important;
         gap: 12px !important;
         align-items: center !important;
         text-align: center !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .tournament-grid {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     .tournament-header {
-        padding: 0 8px !important;
+        padding: 0 !important;
+        margin: 0 auto !important;
         justify-content: center !important;
         align-items: center !important;
         text-align: center !important;
         width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     .tournament-header .title-group {
         align-items: center !important;
         text-align: center !important;
         width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     .tournament-header h2 {
         font-size: 1.5rem !important;
         text-align: center !important;
         width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     .tournament-card {
-        padding: 16px 8px !important;
+        padding: 16px 12px !important;
         border-radius: 12px !important;
         text-align: center !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
     }
 
     .tournament-card h3 {
