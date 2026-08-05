@@ -1542,13 +1542,6 @@ class GameRoom:
             self.next_round_uniqueness = fr
             if fparams:
                 actual_wc = len(fw)
-                if actual_wc < 100: wc_label = '50-100'
-                elif actual_wc < 200: wc_label = '100-200'
-                elif actual_wc < 300: wc_label = '200-300'
-                elif actual_wc < 400: wc_label = '300-400'
-                elif actual_wc < 500: wc_label = '400-500'
-                else: wc_label = '500+'
-                fparams['word_count_range'] = wc_label
                 self.next_round_spinner_params = fparams
                 
                 dict_val = fparams.get('dictionary', 'NWL')
@@ -1629,9 +1622,6 @@ class GameRoom:
             self.use_added_words = e_params.get('use_added_words', False)
             
         if e_tr and not getattr(self, '_spinner_params_locked', False):
-            if not self.spinner_params:
-                self.spinner_params = {}
-            self.spinner_params['word_count_range'] = e_tr
             self.current_word_count_range = e_tr
             
         self.next_round_board = e_board
@@ -1787,12 +1777,6 @@ class GameRoom:
                 self.total_words_count = len(self.all_words)
                 self.initial_total_words = self.total_words_count
 
-                wc_cnt = self.total_words_count
-                # AW boards use the same full scale — no '300-400' floor.
-                wc_lbl = self._get_factchecked_wc_range(wc_cnt, use_added_words=use_aw_val)
-
-                new_sp['word_count_range'] = wc_lbl
-                new_sp['_exact_wc_calculated'] = True
                 new_sp = SpinnerSet.sanitize_params(new_sp, self.board_dimensions, self.time_limit >= 7200)
 
                 if not getattr(self, '_spinner_params_locked', False):
@@ -5974,24 +5958,12 @@ class RoomManager:
                         if getattr(room, 'next_spinner_params', None):
                             room.next_spinner_params['board_format'] = updated_format
                             
-                            # FIX Issues 8/9: Always sync word_count_range to match the actual board.
-                            # The old comment "keep original intent" caused the spinner to show '500+'
-                            # while the board only had 100-200 words. Update to the truth so the revealed
-                            # params match what the player actually gets.
-                            planned_wc = room.next_spinner_params.get('word_count_range', '100-200')
-                            if planned_wc != achieved_wc:
-                                print(f"[RoomManager] WC correction: planned={planned_wc} actual={achieved_wc}. Updating next_spinner_params.")
-                                room.next_spinner_params['word_count_range'] = achieved_wc
-                            
-                            # Update frozen_revealed_params so the Spinner Set display matches the actual board
                             if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
-                                room.frozen_revealed_params['word_count_range'] = achieved_wc
                                 room.frozen_revealed_params['min_word_length'] = _sb_min_len
                             
                             # Only sync to active spinner_params if not yet locked for the round
                             if not getattr(room, '_spinner_params_locked', False):
                                 room.spinner_params['board_format'] = updated_format
-                                room.spinner_params['word_count_range'] = achieved_wc
                         # REVEAL SYNC: Pre-calculate counts by length for the revelation phase
                         # This avoids the "Remaining tab lag" where it shows previous round stats
                         # Always calculate 1-30 to ensure valid data regardless of min-length transitions
@@ -6663,11 +6635,6 @@ class RoomManager:
                 room.total_words_count    = wc_cnt
                 room.initial_total_words  = wc_cnt
                 room.current_word_count_range = real_wc
-                if isinstance(room.spinner_params, dict):
-                    room.spinner_params['word_count_range']     = real_wc
-                    room.spinner_params['_exact_wc_calculated'] = True
-                if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
-                    room.frozen_revealed_params['word_count_range'] = real_wc
 
                 # FIX: Detect when cached board was generated for a HIGHER min_word_length
                 # than what the Spinner Set promised (e.g. board has no 6L/7L words but
