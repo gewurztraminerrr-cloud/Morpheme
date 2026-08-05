@@ -3732,7 +3732,6 @@ class RoomManager:
         elif _akc < 400: room.current_word_count_range = '300-400'
         elif _akc < 500: room.current_word_count_range = '400-500'
         else: room.current_word_count_range = '500+'
-        room.spinner_params['word_count_range'] = room.current_word_count_range
 
         room.round_start_time = time.time()
         room.state = 'active'
@@ -4514,8 +4513,6 @@ class RoomManager:
             _use_aw_val = room.use_added_words or (room.spinner_params.get('use_added_words', False) if isinstance(room.spinner_params, dict) else False)
             _real_wc_sr = self._get_factchecked_wc_range(_actual_wc, use_added_words=_use_aw_val)
             room.current_word_count_range = _real_wc_sr
-            if isinstance(room.spinner_params, dict):
-                room.spinner_params['word_count_range'] = _real_wc_sr
 
 
             
