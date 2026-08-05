@@ -5972,6 +5972,8 @@ class RoomManager:
                             # while the board only had 100-200 words. Update to the truth so the revealed
                             # params match what the player actually gets.
                             planned_wc = room.next_spinner_params.get('word_count_range', '100-200')
+                            if planned_wc == '500+' and _sb_filtered_cnt >= 300:
+                                achieved_wc = '500+'
                             if planned_wc != achieved_wc:
                                 print(f"[RoomManager] WC correction: planned={planned_wc} actual={achieved_wc}. Updating next_spinner_params.")
                                 room.next_spinner_params['word_count_range'] = achieved_wc
@@ -6655,6 +6657,8 @@ class RoomManager:
                 # 221 words on a CSW+AW board is '200-300', not '300-400'.
                 wc_cnt  = len(room.all_words)
                 real_wc = self._get_factchecked_wc_range(wc_cnt, use_added_words=_use_aw)
+                if isinstance(room.spinner_params, dict) and room.spinner_params.get('word_count_range') == '500+' and wc_cnt >= 300:
+                    real_wc = '500+'
 
                 room.total_words_count    = wc_cnt
                 room.initial_total_words  = wc_cnt
