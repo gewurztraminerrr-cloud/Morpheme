@@ -1027,7 +1027,7 @@ function setupModalListeners() {
                 });
                 
                 // Scroll the target element into view within the modal content
-                targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 
                 // Trigger reflow to restart animation, then add the pulsing glow class
                 void targetEl.offsetWidth;
