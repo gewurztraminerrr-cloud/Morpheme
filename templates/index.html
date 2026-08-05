@@ -3334,12 +3334,12 @@
                     <div class="faq-item" id="faq-qu-tile">
                         <div class="faq-question">How does the QU tile work?</div>
                         <div class="faq-answer">
-                            <p>The <strong>QU tile</strong> is a hybrid tile designed to solve the rare Q-without-U challenge while supporting standard words.</p>
-                            <p>When evaluating valid connections on the board, the game engine automatically evaluates paths both <strong>with</strong> and <strong>without</strong> the internal <code>U</code> of the <code>QU</code> tile:</p>
+                            <p>The <strong>QU tile</strong> is a hybrid tile designed to solve Q-without-U words while supporting standard vocabulary.</p>
+                            <p>If the <code>Q</code> in a <code>QU</code> tile is used, and there is a <code>U</code> surrounding the <code>QU</code> tile, the game engine allows using the <code>Q</code> in <code>QU</code> and the <code>U</code> next to it:</p>
                             <ul style="margin-top: 8px; margin-bottom: 12px; padding-left: 20px; line-height: 1.5;">
-                                <li><strong>External U Connection:</strong> If a tile is <code>QU</code> and there is an adjacent <code>U</code> tile around it, the board logic tries both with and without the <code>U</code> in <code>QU</code>. If the <code>U</code> connected to the <code>QU</code> tile makes a word (e.g. <code>Q + U + A + I + L = QUAIL</code>), it is counted as valid.</li>
-                                <li><strong>Q-without-U Words:</strong> By allowing words like <code>QANAT</code> to be valid using a <code>QU</code> tile (bypassing its internal <code>U</code>), it is only fair that we can remove the <code>U</code> in the <code>QU</code> tile to form other words if need be (e.g. <code>Q + A + N + A + T</code>).</li>
-                                <li><strong>Intermission Board Highlighting:</strong> When a word on the <em>All Words</em> table during intermission is selected, all tiles forming that specific path (e.g. all 5 tiles: <code>Q</code>, <code>U</code>, <code>A</code>, <code>I</code>, <code>L</code>) are highlighted on the board grid.</li>
+                                <li><strong>External U Connection:</strong> In <code>INQUIRE</code>, the pathing uses the <code>Q</code> from the <code>QU</code> tile and the adjacent <code>U</code> in the second row as the <code>U</code> for <code>INQUIRE</code>, NOT the <code>U</code> in the <code>QU</code> tile. Similarly, connecting an external <code>U</code> to form <code>QUAIL</code> uses 5 total tiles (<code>Q + U + A + I + L</code>).</li>
+                                <li><strong>Q-without-U Words:</strong> By allowing words like <code>QANAT</code> to be valid with a <code>QU</code> tile (bypassing its internal <code>U</code>), it is only fair that we can remove the <code>U</code> in the <code>QU</code> tile to form other words if need be (e.g. <code>Q + A + N + A + T</code>).</li>
+                                <li><strong>Intermission Board Highlighting:</strong> Selecting a word on the <em>All Words</em> table during intermission highlights the exact tile path on the grid (e.g. all 5 tiles for <code>Q + U + A + I + L</code> light up when the adjacent <code>U</code> is used).</li>
                             </ul>
 
                             <div style="margin-top: 15px; margin-bottom: 10px; font-weight: 700; color: #a5b4fc; font-size: 0.95rem;">
@@ -3382,20 +3382,20 @@
                                     <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-primary); margin-bottom: 8px;">Pathing 2: INQUIRE</div>
                                     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; max-width: 180px; margin: 0 auto 10px auto;">
                                         <!-- Row 1 -->
-                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">I</div>
+                                        <div style="background: rgba(99, 102, 241, 0.35); border: 1px solid #6366f1; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">I</div>
                                         <div style="background: rgba(99, 102, 241, 0.35); border: 1px solid #6366f1; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">N</div>
                                         <div style="background: rgba(99, 102, 241, 0.35); border: 1px solid #6366f1; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">QU</div>
                                         <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
                                         <!-- Row 2 -->
                                         <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">A</div>
                                         <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">A</div>
-                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">U</div>
+                                        <div style="background: rgba(99, 102, 241, 0.35); border: 1px solid #6366f1; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">U</div>
                                         <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
                                         <!-- Row 3 -->
                                         <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">T</div>
                                         <div style="background: rgba(99, 102, 241, 0.35); border: 1px solid #6366f1; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">I</div>
                                         <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">L</div>
-                                        <div style="background: rgba(99, 102, 241, 0.35); border: 1px solid #6366f1; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">I</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">I</div>
                                         <!-- Row 4 -->
                                         <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
                                         <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
