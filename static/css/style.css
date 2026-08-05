@@ -5703,43 +5703,74 @@ body .tab-btn.active {
 }
 
 @media (max-width: 899px) {
-    /* Tournament mobile overrides — keep panels in document flow, no overlaps */
+    /* Tournament mobile overrides — keep panels in document flow, centered and aligned */
     #page-tournaments {
         padding-left: 0px !important;
         padding-right: 0px !important;
         margin-left: -10px !important;
         margin-right: -10px !important;
+        text-align: center !important;
     }
 
     .tournament-layout {
         padding: 8px 0px !important;
         gap: 12px !important;
+        align-items: center !important;
+        text-align: center !important;
     }
 
     .tournament-header {
         padding: 0 8px !important;
+        justify-content: center !important;
+        align-items: center !important;
+        text-align: center !important;
+        width: 100% !important;
+    }
+
+    .tournament-header .title-group {
+        align-items: center !important;
+        text-align: center !important;
+        width: 100% !important;
     }
 
     .tournament-header h2 {
         font-size: 1.5rem !important;
+        text-align: center !important;
+        width: 100% !important;
     }
 
     .tournament-card {
         padding: 16px 8px !important;
         border-radius: 12px !important;
+        text-align: center !important;
+    }
+
+    .tournament-card h3 {
+        text-align: center !important;
     }
 
     .tournament-guest-block {
         padding: 40px 8px !important;
+        text-align: center !important;
+    }
+
+    .guest-msg-card {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
     }
 
     .tournament-params-grid {
         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
         gap: 8px !important;
+        justify-content: center !important;
     }
 
     .param-item {
         flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
         gap: 3px !important;
         padding: 8px 10px !important;
         border-radius: 8px !important;
@@ -5747,11 +5778,14 @@ body .tab-btn.active {
 
     .param-value {
         font-size: 0.95rem !important;
+        text-align: center !important;
     }
 
     .panel-header {
         flex-direction: column !important;
-        align-items: flex-start !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
         gap: 8px !important;
         margin-bottom: 16px !important;
     }
@@ -5759,6 +5793,21 @@ body .tab-btn.active {
     .countdown-timer {
         font-size: 1.2rem !important;
         padding: 6px 12px !important;
+        margin: 0 auto !important;
+    }
+
+    .tournament-action-content {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+    }
+
+    .tournament-action-content button,
+    .tournament-action-content .sf-action-btn {
+        margin-left: auto !important;
+        margin-right: auto !important;
     }
 
     .t-matchups-list {
