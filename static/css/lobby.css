@@ -187,15 +187,16 @@
     min-height: 0;
 }
 
+.game-title,
 .active-rooms-panel h3 {
-    font-size: 1.0rem;
-    font-weight: 700;
-    margin: 0 0 8px 0;
-    text-align: center;
-    color: var(--text-primary);
-    opacity: 0.9;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-size: 1.0rem !important;
+    font-weight: 700 !important;
+    margin: 0 0 8px 0 !important;
+    text-align: center !important;
+    color: var(--text-primary) !important;
+    opacity: 0.9 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
 }
 
 .rating-filter-container {
