@@ -3813,9 +3813,11 @@ function updateParameters(state) {
     const factDiff = sp.difficulty || state.current_difficulty || 'Medium';
     const factBonus = sp.bonus_word_length || (state.bonus_word ? state.bonus_word.length : state.current_bonus_word_length) || 0;
     const factMinLen = sp.min_word_length || state.current_min_length || 3;
-    const baseDict = sp.dictionary || state.current_dictionary || 'NWL';
-    const useAW = (sp.use_added_words === true) || (state.use_added_words === true) || (/\+\s*AW/i.test(baseDict)) || (/\+\s*AW/i.test(state.current_dictionary || ''));
-    const cleanBaseDict = baseDict.replace(/\s*\+\s*AW/i, '').replace(/\s*\+AW/i, '').trim();
+    const rawDict = (sp && sp.dictionary) ? sp.dictionary : (state.current_dictionary || 'NWL');
+    const useAW = (sp && sp.use_added_words !== undefined) 
+        ? (sp.use_added_words === true || /\+\s*AW/i.test(sp.dictionary || ''))
+        : (state.use_added_words === true || /\+\s*AW/i.test(state.current_dictionary || ''));
+    const cleanBaseDict = rawDict.replace(/\s*\+\s*AW/i, '').replace(/\s*\+AW/i, '').replace(/ADDED_WORDS/i, '').trim() || 'NWL';
     const factDict = useAW ? `${cleanBaseDict} + AW` : cleanBaseDict;
     let rawWordRange = sp.word_count_range || state.current_word_count_range || 'Random';
     if (Array.isArray(rawWordRange)) {
