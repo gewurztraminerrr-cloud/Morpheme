@@ -1970,7 +1970,7 @@
                         </div>
 
                         <!-- Filter Controls -->
-                        <div class="combo-control-panel" style="margin-bottom: 0px;">
+                        <div class="combo-control-panel" style="margin-bottom: 0px; position: sticky; top: 0; z-index: 10; background: var(--bg-panel); backdrop-filter: blur(10px); padding-top: 10px; padding-bottom: 10px;">
                             <div class="input-row">
                                 <select id="list-length-filter" style="width: 140px;">
                                     <option value="all">Length: All</option>
@@ -2043,7 +2043,10 @@
 
                         <div class="lists-container" id="lists-container">
                             <div class="list-column" id="main-list-column" style="flex: 1;">
-                                <h3><span id="list-display-title">NWL</span> <span class="list-count" id="main-list-count"></span></h3>
+                                <h3 id="list-column-header-title" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; user-select: none;" title="Click to scroll back to top filter options">
+                                    <span><span id="list-display-title">NWL</span> <span class="list-count" id="main-list-count"></span></span>
+                                    <button id="list-scroll-top-btn" class="mod-refresh-btn" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #a5b4fc; cursor: pointer; font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 6px; transition: all 0.2s;">▲ Top Options</button>
+                                </h3>
                                 <div class="list-scroll-area-wrapper">
                                     <div class="list-scroll-area" id="main-list-results">Loading...</div>
                                     <div class="custom-scrollbar-track" id="list-scrollbar-track">

@@ -2801,6 +2801,36 @@ function setupListsTool() {
         });
     }
 
+    function scrollListsToTopOptions() {
+        const scrollArea = document.getElementById('main-list-results');
+        if (scrollArea) {
+            scrollArea.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        const listsPane = document.getElementById('tool-lists');
+        if (listsPane) {
+            listsPane.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        const toolsContent = document.querySelector('.tools-content');
+        if (toolsContent) {
+            toolsContent.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
+    const scrollTopBtn = document.getElementById('list-scroll-top-btn');
+    if (scrollTopBtn) {
+        scrollTopBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            scrollListsToTopOptions();
+        });
+    }
+
+    const listHeaderTitle = document.getElementById('list-column-header-title');
+    if (listHeaderTitle) {
+        listHeaderTitle.addEventListener('click', () => {
+            scrollListsToTopOptions();
+        });
+    }
+
     const scrollArea = document.getElementById('main-list-results');
     if (scrollArea) {
         scrollArea.addEventListener('scroll', () => {
@@ -2808,6 +2838,16 @@ function setupListsTool() {
                 renderNextWordsPage();
             }
         });
+
+        // Wheel scroll propagation: when scrolling UP at top of main-list-results, scroll parent tools-content UP
+        scrollArea.addEventListener('wheel', (e) => {
+            if (e.deltaY < 0 && scrollArea.scrollTop <= 10) {
+                const toolsContent = document.querySelector('.tools-content');
+                if (toolsContent) {
+                    toolsContent.scrollBy({ top: e.deltaY * 2, behavior: 'smooth' });
+                }
+            }
+        }, { passive: true });
 
         // Prevent copying and context menu actions on the Added Words list
         scrollArea.addEventListener('copy', (e) => {
