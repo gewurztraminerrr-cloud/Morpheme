@@ -2377,7 +2377,7 @@ class BoardGenerator:
                     actual_bonus = None
                     bonus_cell = None
                     
-                    if "bonus" in safe_format or "either" in safe_format:
+                    if "bonus letter" in safe_format or safe_format.strip() == "bonus":
                         if not bonus_cell and special_cells:
                             bonus_cell = special_cells[0]
                     else:
@@ -2508,15 +2508,12 @@ class BoardGenerator:
                 if bonus_word and embedded_path and bonus_word.upper() in [w.upper() for w in all_words_dict]:
                     # We have a successfully embedded word that survived the sweeps
                     actual_bonus = bonus_word
-                    bonus_cell = all_words_dict[actual_bonus.upper() if actual_bonus.upper() in all_words_dict else actual_bonus][0]
                 else:
-                    # Pick a "Natural" bonus word from the board (MANDATORY for all formats)
-                    # Use all_words_dict because it's the verified post-sweep solution
+                    # Pick a "Natural" bonus word from the board
                     suitable = [w for w in all_words_dict if 6 <= len(w) <= 10]
                     if not suitable: suitable = [w for w in all_words_dict if len(w) >= 6]
-                    if not suitable: suitable = [w for w in all_words_dict if len(w) >= 3] # Absolute fallback
+                    if not suitable: suitable = [w for w in all_words_dict if len(w) >= 3]
                     
-                    # USER REQUEST: Prefer requested length if available in the natural fallback
                     requested_length = len(bonus_word) if bonus_word else 8
                     suitable_exact = [w for w in suitable if len(w) == requested_length]
                     
@@ -2524,15 +2521,18 @@ class BoardGenerator:
                         actual_bonus = random.choice(suitable_exact)
                     else:
                         actual_bonus = sorted(suitable, key=len, reverse=True)[0] if suitable else None
-                        
-                    if actual_bonus:
+
+                # CRITICAL RULE: Bonus Letter and Either/Or are NEVER together.
+                # bonus_cell is ONLY generated when the format is explicitly "Bonus Letter".
+                is_bonus_letter_fmt = ("bonus letter" in safe_format) or (safe_format.strip() == "bonus")
+                if is_bonus_letter_fmt:
+                    if actual_bonus and actual_bonus in all_words_dict:
                         bonus_cell = all_words_dict[actual_bonus][0]
-                
-                # USER REQUEST: If format is Bonus Letter, we MUST have a bonus cell even if no long word found.
-                if not bonus_cell and "bonus letter" in safe_format:
-                    # Pick a random cell
-                    bonus_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
-                    if depth > 1: bonus_cell = (random.randint(0, depth-1), bonus_cell[0], bonus_cell[1])
+                    if not bonus_cell:
+                        bonus_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
+                        if depth > 1: bonus_cell = (random.randint(0, depth-1), bonus_cell[0], bonus_cell[1])
+                else:
+                    bonus_cell = None
                 
                 if difficulty in ["Medium", "Hard"] or achieved_diff in ["Medium", "Hard"]:
                     self._guarantee_no_ing(board, depth, protected_positions=embedded_path)
