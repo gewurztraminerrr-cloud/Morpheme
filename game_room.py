@@ -2692,7 +2692,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                             # Kick off background refill for the popped key
                             refill_board_cache_bg(bg, cache_key, target_count=3)
                             
-                            final_min = max(floor_l, min_word_length, int(cml))
+                            final_min = max(floor_l, min_word_length)
                             cwords_filtered = [w for w in cwords if len(w) >= final_min]
                             cpaths_filtered = {w: p for w, p in cpaths.items() if len(w) >= final_min}
                             
@@ -2743,8 +2743,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                 board, words, bonus_cell, updated_format, paths, ratio, bonus_word, params = relaxed_res
                 if words and len(words) >= 20:
                     params = dict(params) if params else {}
-                    p_min = params.get('min_word_length')
-                    final_min = max(floor_l, min_word_length, int(p_min) if p_min is not None else floor_l)
+                    final_min = max(floor_l, min_word_length)
                     
                     words_filtered = [w for w in words if len(w) >= final_min]
                     paths_filtered = {w: p for w, p in paths.items() if len(w) >= final_min}
