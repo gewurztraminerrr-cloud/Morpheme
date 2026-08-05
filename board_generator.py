@@ -3719,11 +3719,17 @@ class BoardGenerator:
         # Keep track of cells occupied by forced words to protect them from being overwritten
         protected_cells = set()
 
-        def find_random_path(length, protect=True, allow_fallback=True):
+        def find_random_path(length, protect=True, allow_fallback=True, prefer_center=False):
             # Try 50 times to find a path that doesn't overwrite protected cells
             for _ in range(50):
-                start_r = random.randint(0, rows - 1)
-                start_c = random.randint(0, cols - 1)
+                if prefer_center and rows >= 3 and cols >= 3:
+                    min_r, max_r = max(0, (rows - 1) // 4), min(rows - 1, (3 * rows) // 4)
+                    min_c, max_c = max(0, (cols - 1) // 4), min(cols - 1, (3 * cols) // 4)
+                    start_r = random.randint(min_r, max_r)
+                    start_c = random.randint(min_c, max_c)
+                else:
+                    start_r = random.randint(0, rows - 1)
+                    start_c = random.randint(0, cols - 1)
                 if protect and (start_r, start_c) in protected_cells:
                     continue
                 path = [(start_r, start_c)]
@@ -3737,21 +3743,32 @@ class BoardGenerator:
                     if not valid_neighbors:
                         possible = False
                         break
-                    path.append(random.choice(valid_neighbors))
+                    if prefer_center and len(valid_neighbors) > 1:
+                        center_r, center_c = (rows - 1) / 2.0, (cols - 1) / 2.0
+                        weights = [1.0 / (1.0 + (nr - center_r) ** 2 + (nc - center_c) ** 2) for nr, nc in valid_neighbors]
+                        path.append(random.choices(valid_neighbors, weights=weights, k=1)[0])
+                    else:
+                        path.append(random.choice(valid_neighbors))
                 if possible:
                     return path
             
             # Fallback: only allowed for forced words
             if protect and allow_fallback:
-                return find_random_path(length, protect=False, allow_fallback=False)
+                return find_random_path(length, protect=False, allow_fallback=False, prefer_center=prefer_center)
             return None
 
         # Define checkerboard path finder if needed
-        def find_checkerboard_path(word, protect=True, allow_fallback=True):
+        def find_checkerboard_path(word, protect=True, allow_fallback=True, prefer_center=False):
             # Try 40 times to find a path
             for _ in range(40):
-                start_r = random.randint(0, rows - 1)
-                start_c = random.randint(0, cols - 1)
+                if prefer_center and rows >= 3 and cols >= 3:
+                    min_r, max_r = max(0, (rows - 1) // 4), min(rows - 1, (3 * rows) // 4)
+                    min_c, max_c = max(0, (cols - 1) // 4), min(cols - 1, (3 * cols) // 4)
+                    start_r = random.randint(min_r, max_r)
+                    start_c = random.randint(min_c, max_c)
+                else:
+                    start_r = random.randint(0, rows - 1)
+                    start_c = random.randint(0, cols - 1)
                 if protect and (start_r, start_c) in protected_cells:
                     continue
                 first_is_vowel = (start_r + start_c) % 2 != 0
@@ -3776,24 +3793,30 @@ class BoardGenerator:
                     if not valid_neighbors:
                         possible = False
                         break
-                    path.append(random.choice(valid_neighbors))
+                    if prefer_center and len(valid_neighbors) > 1:
+                        center_r, center_c = (rows - 1) / 2.0, (cols - 1) / 2.0
+                        weights = [1.0 / (1.0 + (nr - center_r) ** 2 + (nc - center_c) ** 2) for nr, nc in valid_neighbors]
+                        path.append(random.choices(valid_neighbors, weights=weights, k=1)[0])
+                    else:
+                        path.append(random.choice(valid_neighbors))
                     
                 if possible:
                     return path
             
             if protect and allow_fallback:
-                return find_checkerboard_path(word, protect=False, allow_fallback=False)
+                return find_checkerboard_path(word, protect=False, allow_fallback=False, prefer_center=prefer_center)
             return None
 
         print(f"[BoardGen] Word Soup: Embedding {len(selected_words)} words on {rows}x{cols} grid (Checkerboard={is_checkerboard})...")
         for word in selected_words:
             path = None
             is_forced = (word in forced_aw)
+            prefer_center_word = is_forced or (len(selected_words) > 0 and word == selected_words[0])
             for _ in range(10): # Try 10 times to find a path
                 if is_checkerboard:
-                    path = find_checkerboard_path(word, protect=True, allow_fallback=is_forced)
+                    path = find_checkerboard_path(word, protect=True, allow_fallback=is_forced, prefer_center=prefer_center_word)
                 else:
-                    path = find_random_path(len(word), protect=True, allow_fallback=is_forced)
+                    path = find_random_path(len(word), protect=True, allow_fallback=is_forced, prefer_center=prefer_center_word)
                 if path:
                     break
             if path:
