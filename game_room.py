@@ -6571,11 +6571,6 @@ class RoomManager:
                         current_bw = self._get_bonus_word(length=max(6, bw_l), dictionary=dict_val, alternating=('checkerboard' in str(room.current_board_format).lower()))
                 room.bonus_word = str(current_bw or '').upper().strip()
                 
-                # SYNC: Ensure Spinner Set params match the ACTUAL bonus word length we are starting with.
-                # GUARD: Only update if params are not locked (i.e., not yet revealed to players this round).
-                if room.bonus_word and isinstance(room.spinner_params, dict) and not getattr(room, '_spinner_params_locked', False):
-                    room.spinner_params['bonus_word_length'] = len(room.bonus_word)
-                
                 room.bonus_cell = getattr(room, 'next_round_bonus_cell', None)
 
                 # --- 4. ACCURACY ENFORCEMENT (inside lock — all_words must be consistent before state='active') ---
@@ -6632,20 +6627,6 @@ class RoomManager:
                 room.total_words_count    = wc_cnt
                 room.initial_total_words  = wc_cnt
                 room.current_word_count_range = real_wc
-
-                # FIX: Detect when cached board was generated for a HIGHER min_word_length
-                # than what the Spinner Set promised (e.g. board has no 6L/7L words but
-                # header says Min: 6L). Correct the display so players aren't misled.
-                if room.all_words:
-                    actual_min_len = min(len(w) for w in room.all_words)
-                    if actual_min_len > room.current_min_length:
-                        print(f"[RoomManager] Min-length correction in start_next_round: "
-                              f"promised={room.current_min_length}, actual={actual_min_len}. Updating header.")
-                        room.current_min_length = actual_min_len
-                        if isinstance(room.spinner_params, dict):
-                            room.spinner_params['min_word_length'] = actual_min_len
-                        if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
-                            room.frozen_revealed_params['min_word_length'] = actual_min_len
 
                 room.complete_words = list(room.all_words)
                 room.update_counts_by_len()
