@@ -5267,8 +5267,8 @@ body .tab-btn.active {
     align-items: center;
     flex-wrap: wrap;
     gap: 10px;
-    border-bottom: 2px solid rgba(var(--text-primary-rgb), 0.1);
-    padding-bottom: 16px;
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
 }
 
 .tournament-header h2 {
@@ -5279,12 +5279,7 @@ body .tab-btn.active {
 }
 
 .tournament-status-badge {
-    padding: 6px 16px;
-    border-radius: 50px;
-    font-size: 0.8rem;
-    font-weight: 800;
-    letter-spacing: 1px;
-    text-transform: uppercase;
+    display: none !important;
 }
 
 .status-signup {
