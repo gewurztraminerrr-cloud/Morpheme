@@ -5972,18 +5972,13 @@ class RoomManager:
                             # while the board only had 100-200 words. Update to the truth so the revealed
                             # params match what the player actually gets.
                             planned_wc = room.next_spinner_params.get('word_count_range', '100-200')
-                            if planned_wc and planned_wc in ['50-100', '100-200', '200-300', '300-400', '400-500', '500+']:
-                                achieved_wc = planned_wc
                             if planned_wc != achieved_wc:
                                 print(f"[RoomManager] WC correction: planned={planned_wc} actual={achieved_wc}. Updating next_spinner_params.")
                                 room.next_spinner_params['word_count_range'] = achieved_wc
                             
-                            # FIX: Also update frozen_revealed_params so the Spinner Set display
-                            # corrects itself during intermission rather than waiting until round start.
-                            # This prevents the '500+' -> '300-400' flip the player sees at round start.
+                            # Update frozen_revealed_params so the Spinner Set display matches the actual board
                             if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
                                 room.frozen_revealed_params['word_count_range'] = achieved_wc
-                                # Keep min_word_length in sync so round start uses the same floor
                                 room.frozen_revealed_params['min_word_length'] = _sb_min_len
                             
                             # Only sync to active spinner_params if not yet locked for the round
@@ -6654,14 +6649,9 @@ class RoomManager:
                 room.solved_words_with_scores = {w: v for w, v in (room.solved_words_with_scores or {}).items() if w in room.all_words}
 
                 # Word count and range label — AW boards use the same full scale as non-AW.
-                # 221 words on a CSW+AW board is '200-300', not '300-400'.
+                # 319 words on a board is '300-400', aligning header with board count.
                 wc_cnt  = len(room.all_words)
                 real_wc = self._get_factchecked_wc_range(wc_cnt, use_added_words=_use_aw)
-                
-                # PRESERVE PROMISED RANGE: If spinner_params or frozen_revealed_params has a revealed target range, keep it!
-                promised_wc = (getattr(room, 'frozen_revealed_params', {}) or {}).get('word_count_range') or (getattr(room, 'spinner_params', {}) or {}).get('word_count_range')
-                if promised_wc and promised_wc in ['50-100', '100-200', '200-300', '300-400', '400-500', '500+']:
-                    real_wc = promised_wc
 
                 room.total_words_count    = wc_cnt
                 room.initial_total_words  = wc_cnt
@@ -6669,8 +6659,6 @@ class RoomManager:
                 if isinstance(room.spinner_params, dict):
                     room.spinner_params['word_count_range']     = real_wc
                     room.spinner_params['_exact_wc_calculated'] = True
-                # FIX: Keep frozen_revealed_params in sync so the Spinner Set label
-                # never visibly flips at the moment the round starts.
                 if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
                     room.frozen_revealed_params['word_count_range'] = real_wc
 

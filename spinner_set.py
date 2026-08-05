@@ -154,9 +154,14 @@ class SpinnerSet:
                 import random
                 wc_range = random.choices(['50-100', '100-200', '200-300', '300-400', '500+'], weights=[9, 30, 30, 30, 1])[0]
 
-        # Enforce 4x4 feasibility:
-        # USER MANDATE: The ONLY Minimum letter count allowable for 50-100 words in a 4x4 room is 5L!
-        if '4x4' in dims and not is_aw_effective:
+        # Enforce grid feasibility for word count ranges:
+        if '5x7' in dims:
+            if min_word_length >= 6 and wc_range in ['400-500', '500+']:
+                wc_range = '300-400'
+        elif '4x6' in dims:
+            if min_word_length >= 5 and wc_range in ['400-500', '500+']:
+                wc_range = '300-400'
+        elif '4x4' in dims and not is_aw_effective:
             if wc_range == '50-100':
                 min_word_length = 5
             elif min_word_length >= 5:
