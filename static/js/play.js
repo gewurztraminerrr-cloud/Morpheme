@@ -3809,15 +3809,15 @@ function updateParameters(state) {
     const factTimeLimit = sp.time_limit || state.time_limit || 60;
     const preferSp = (isIntermission && isRevealed);
 
-    const factFmt = (preferSp ? (sp.board_format || state.current_board_format) : (state.current_board_format || sp.board_format)) || 'Normal';
-    const factDiff = (preferSp ? (sp.difficulty || state.current_difficulty) : (state.current_difficulty || sp.difficulty)) || 'Medium';
-    const factBonus = preferSp ? (sp.bonus_word_length || state.current_bonus_word_length || 0) : ((state.bonus_word ? state.bonus_word.length : state.current_bonus_word_length) || sp.bonus_word_length || 0);
-    const factMinLen = (preferSp ? (sp.min_word_length || state.current_min_length) : (state.current_min_length || sp.min_word_length)) || 3;
-    const baseDict = (preferSp ? (sp.dictionary || state.current_dictionary) : (state.current_dictionary || sp.dictionary)) || 'NWL';
-    const useAW = preferSp ? (sp.use_added_words === true) : (state.use_added_words === true);
+    const factFmt = sp.board_format || state.current_board_format || 'Normal';
+    const factDiff = sp.difficulty || state.current_difficulty || 'Medium';
+    const factBonus = sp.bonus_word_length || (state.bonus_word ? state.bonus_word.length : state.current_bonus_word_length) || 0;
+    const factMinLen = sp.min_word_length || state.current_min_length || 3;
+    const baseDict = sp.dictionary || state.current_dictionary || 'NWL';
+    const useAW = (sp.use_added_words === true) || (state.use_added_words === true);
     const cleanBaseDict = baseDict.replace(/\s*\+\s*AW/i, '').replace(/\s*\+AW/i, '').trim();
     const factDict = useAW ? `${cleanBaseDict} + AW` : cleanBaseDict;
-    let rawWordRange = (preferSp ? (sp.word_count_range || state.current_word_count_range) : (state.current_word_count_range || sp.word_count_range)) || 'Random';
+    let rawWordRange = sp.word_count_range || state.current_word_count_range || 'Random';
     if (Array.isArray(rawWordRange)) {
         rawWordRange = rawWordRange.join('-');
     } else {
