@@ -467,7 +467,7 @@ class WordValidator:
         if not is_3d:
             rows, cols = len(board), len(board[0])
             steps = 0
-            max_steps = 2000
+            max_steps = 25000
             
             def dfs_2d(r, c, index, visited_path):
                 nonlocal steps

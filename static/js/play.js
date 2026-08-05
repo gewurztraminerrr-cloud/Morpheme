@@ -3817,7 +3817,7 @@ function updateParameters(state) {
     const useAW = (sp.use_added_words === true) || (state.use_added_words === true);
     const cleanBaseDict = baseDict.replace(/\s*\+\s*AW/i, '').replace(/\s*\+AW/i, '').trim();
     const factDict = useAW ? `${cleanBaseDict} + AW` : cleanBaseDict;
-    let rawWordRange = sp.word_count_range || state.current_word_count_range || 'Random';
+    let rawWordRange = (preferSp ? (sp.word_count_range || state.current_word_count_range) : (state.current_word_count_range || sp.word_count_range)) || 'Random';
     if (Array.isArray(rawWordRange)) {
         rawWordRange = rawWordRange.join('-');
     } else {
