@@ -147,182 +147,82 @@ class SpinnerSet:
         wc_range = p.get('word_count_range')
         if is_aw_effective:
             if wc_range not in ['300-400', '400-500', '500+']:
-                import random
                 wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
         else:
             if not wc_range or wc_range not in ['50-100', '100-200', '200-300', '300-400', '500+']:
-                import random
                 wc_range = random.choices(['50-100', '100-200', '200-300', '300-400', '500+'], weights=[9, 30, 30, 30, 1])[0]
-
-        # Enforce grid feasibility for word count ranges:
-        if '5x7' in dims:
-            if min_word_length >= 6 and wc_range in ['400-500', '500+']:
-                wc_range = '300-400'
-        elif '4x6' in dims:
-            if min_word_length >= 5 and wc_range in ['400-500', '500+']:
-                wc_range = '300-400'
-        elif '4x4' in dims and not is_aw_effective:
-            if wc_range == '50-100':
-                min_word_length = 5
-            elif min_word_length >= 5:
-                wc_range = '50-100'
-            elif min_word_length == 4:
-                if wc_range not in ['100-200', '200-300']:
-                    wc_range = '100-200'
-            elif min_word_length == 3:
-                if wc_range not in ['100-200', '200-300', '300-400']:
-                    wc_range = '200-300'
 
         p['min_word_length'] = min_word_length
         p['word_count_range'] = wc_range
 
         if is_24h:
+            p['board_format'] = 'Valued Letters'
             if not is_aw_effective:
                 p['word_count_range'] = '200-300'
-            if '4x4' in dims and min_word_length >= 5:
-                p['min_word_length'] = 4
-            elif '4x6' in dims and min_word_length >= 6:
-                p['min_word_length'] = 5
-            elif '5x7' in dims and min_word_length >= 7:
-                p['min_word_length'] = 6
 
-        return p
-        bw_raw = res.get('bonus_word_length')
+        bw_raw = p.get('bonus_word_length')
         try:
             bw_val = int(bw_raw)
-            if bw_val < 6 or bw_val > 10:
-                import random
-                res['bonus_word_length'] = random.choice([6, 7, 8, 9, 10])
+            if bw_val < min_word_length or bw_val > 10:
+                p['bonus_word_length'] = max(min_word_length, random.choice([6, 7, 8, 9, 10]))
             else:
-                res['bonus_word_length'] = bw_val
+                p['bonus_word_length'] = bw_val
         except:
-            import random
-            res['bonus_word_length'] = random.choice([6, 7, 8, 9, 10])
+            p['bonus_word_length'] = max(min_word_length, random.choice([6, 7, 8, 9, 10]))
 
-        return res
+        return p
 
     @staticmethod
     def _generate_params_raw(board_dimensions, is_24h=False, is_split=False, previous_params=None):
-        """Generate granular spinner parameters given dimensions (raw implementation)"""
+        """Generate granular spinner parameters matching exact Odds Window probabilities."""
         try:
-            # Loop to ensure parameters are DIFFERENT from previous (User Request)
-            # We allow up to 30 attempts to find a unique combination
-            best_res = None
-            res = None  # Guard: ensure res is always defined even if loop body raises on first iteration
+            dims = str(board_dimensions).lower().replace(" ", "")
             
-            for _ in range(30):
-                # Randomize dictionary and added words configuration based on dimensions
-                dims = str(board_dimensions).lower().replace(" ", "")
-                
-                # Determine floor, middle, ceiling min-lengths for the board dimensions
-                if '4x4' in dims:
-                    floor, middle, ceiling = 3, 4, 5
-                elif '4x6' in dims:
-                    floor, middle, ceiling = 4, 5, 6
-                elif '5x7' in dims:
-                    floor, middle, ceiling = 5, 6, 7
-                else: # 6x8, 3x3x3, etc.
-                    floor, middle, ceiling = 6, 7, 8
-                
-                # Enforce explicit weights: floor (25%), middle (50%), ceiling (25%)
-                min_word_length = random.choices([floor, middle, ceiling], weights=[25, 50, 25])[0]
-                
-                # Equal 25% probability for each dictionary type
-                dictionary = random.choices(['NWL', 'CSW', 'NWL + AW', 'CSW + AW'], weights=[25, 25, 25, 25])[0]
+            # 1. Min Word Length (25% Low | 50% Med | 25% High)
+            if '4x4' in dims:
+                min_word_length = random.choices([3, 4, 5], weights=[25, 50, 25])[0]
+            elif '4x6' in dims:
+                min_word_length = random.choices([4, 5, 6], weights=[25, 50, 25])[0]
+            elif '5x7' in dims:
+                min_word_length = random.choices([5, 6, 7], weights=[25, 50, 25])[0]
+            else: # 6x8, 3x3x3, etc.
+                min_word_length = random.choices([6, 7, 8], weights=[25, 50, 25])[0]
+            
+            # 2. Dictionary (25% NWL | 25% CSW | 25% NWL + AW | 25% CSW + AW)
+            dictionary = random.choices(['NWL', 'CSW', 'NWL + AW', 'CSW + AW'], weights=[25, 25, 25, 25])[0]
 
-                is_aw_effective = (
-                    '+ AW' in str(dictionary).upper()
-                    or '+AW' in str(dictionary).upper()
-                    or str(dictionary).upper() in ['AW', 'ADDED_WORDS', 'ALL']
-                )
-                use_added_words = is_aw_effective
+            is_aw_effective = '+ AW' in dictionary
+            use_added_words = is_aw_effective
 
-                # Difficulty (spin independently)
-                difficulty = SpinnerSet._spin_difficulty(board_dimensions, 3)
+            # 3. Difficulty (25% Easy | 50% Medium | 25% Hard)
+            difficulty = random.choices(['Easy', 'Medium', 'Hard'], weights=[25, 50, 25])[0]
 
-                # Word count range strictly drawn from Odds Window probabilities
-                if is_aw_effective:
-                    wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
-                else:
-                    wc_range = random.choices(['50-100', '100-200', '200-300', '300-400', '500+'], weights=[9, 30, 30, 30, 1])[0]
+            # 4. Word Count Range
+            if is_aw_effective:
+                wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
+            else:
+                wc_range = random.choices(['50-100', '100-200', '200-300', '300-400', '500+'], weights=[9, 30, 30, 30, 1])[0]
 
-                # Determine board format
-                board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions)
+            # 5. Board Format
+            board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions)
 
-                bw_len = random.choice([6, 7, 8, 9, 10])
-                if bw_len < min_word_length:
-                    bw_len = min_word_length
-                
-                res = {
-                    'min_word_length': min_word_length,
-                    'difficulty': difficulty,
-                    'word_count_range': wc_range or SpinnerSet._spin_word_count(dictionary, min_word_length, difficulty, board_dimensions),
-                    'dictionary': dictionary,
-                    'use_added_words': use_added_words,
-                    'board_format': board_format,
-                    'bonus_word_length': bw_len,
-                    'generated_at': time.time()
-                }
-                
-                if previous_params and isinstance(previous_params, dict) and _ < 25:
-                    def get_base_fmt(f):
-                        s = str(f).lower()
-                        if 'bounce' in s: return 'bounce'
-                        if 'mania' in s: return 'mania'
-                        if 'checkerboard' in s: return 'checkerboard'
-                        if 'equality' in s: return 'equality'
-                        if 'density' in s: return 'density'
-                        if 'penalty' in s: return 'penalty'
-                        if 'either' in s: return 'either'
-                        if 'bonus' in s: return 'bonus'
-                        if 'valued' in s: return 'valued'
-                        if 'rotation' in s: return 'rotation'
-                        if 'double' in s: return 'double'
-                        if 'triple' in s: return 'triple'
-                        return 'normal'
-
-                    prev_base = get_base_fmt(previous_params.get('board_format', ''))
-                    cur_base = get_base_fmt(res.get('board_format', ''))
-                    
-                    # 1. SPECIAL FORMAT ANTI-STREAK: Non-Normal special formats must never repeat back-to-back
-                    if cur_base != 'normal' and cur_base == prev_base:
-                        continue
-
-                    # 2. MULTI-ATTRIBUTE ANTI-REPEAT: Count matching fields against previous round
-                    matches = 0
-                    if str(res.get('dictionary')).upper() == str(previous_params.get('dictionary')).upper():
-                        matches += 1
-                    if bool(res.get('use_added_words')) == bool(previous_params.get('use_added_words')):
-                        matches += 1
-                    if int(res.get('min_word_length', 3)) == int(previous_params.get('min_word_length', 3)):
-                        matches += 1
-                    if str(res.get('word_count_range')) == str(previous_params.get('word_count_range')):
-                        matches += 1
-                    if str(res.get('difficulty')) == str(previous_params.get('difficulty')):
-                        matches += 1
-                    if cur_base == prev_base:
-                        matches += 1
-
-                    # REJECT if 3 or more attributes match previous round (forces parameter variety!)
-                    if matches >= 3:
-                        continue
-
-                return res
-                
-                best_res = res # Fallback to last attempt if we somehow fail 30 times
-
-            print(f"[SpinnerSet] WARNING: Could not find unique params after 30 attempts. Using last roll.")
-            return best_res or res or {
-                'difficulty': random.choices(['Easy', 'Medium', 'Hard'], weights=[25, 50, 25])[0],
-                'dictionary': random.choice(['NWL', 'CSW']),
-                'word_count_range': '200-300',
-                'board_format': 'Normal',
-                'min_word_length': SpinnerSet._spin_min_word_length(board_dimensions),
-                'bonus_word_length': 8,
-                'use_added_words': False,
+            # 6. Bonus Word Length
+            bw_len = random.choice([6, 7, 8, 9, 10])
+            if bw_len < min_word_length:
+                bw_len = min_word_length
+            
+            res = {
+                'min_word_length': min_word_length,
+                'difficulty': difficulty,
+                'word_count_range': wc_range,
+                'dictionary': dictionary,
+                'use_added_words': use_added_words,
+                'board_format': board_format,
+                'bonus_word_length': bw_len,
                 'generated_at': time.time()
             }
             
+            return res
         except Exception as e:
             print(f"[SpinnerSet] CRITICAL GENERATOR ERROR: {e}")
             # Emergency dynamic fallback to avoid static repetition
