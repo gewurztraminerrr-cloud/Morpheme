@@ -9464,7 +9464,7 @@ window.showFinderModal = function (word) {
                 const totalCombined = totalTally;
                 
                 let html = `
-                    <div style="padding: 10px; font-size: 0.9rem; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
+                    <div style="padding: 14px 16px; font-size: 0.95rem; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 15px; text-align: center; width: 100%; box-sizing: border-box;">
                         <strong>${wordUpper}</strong> has been found <strong>${totalCombined}</strong> times total since Morpheme began.
                     </div>
                 `;
