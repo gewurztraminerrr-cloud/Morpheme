@@ -967,6 +967,19 @@ body.theme-light-brown .field-hint {
         overflow-y: auto !important;
     }
 
+    .game-section,
+    .solo-friends-section,
+    .active-rooms-panel {
+        gap: 8px !important;
+    }
+
+    .game-title,
+    .active-rooms-panel h3,
+    .solo-friends-panel h3 {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
     .mobile-nav-btn {
         display: block !important;
         width: 100%;
