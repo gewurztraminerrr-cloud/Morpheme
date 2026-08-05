@@ -4608,11 +4608,21 @@ function setupFindCountTool() {
             moreBtn.style.borderColor = 'rgba(165, 180, 252, 0.3)';
         });
     }
+
+    const dictSelect = document.getElementById('random-words-dict-select');
+    if (dictSelect) {
+        dictSelect.addEventListener('change', () => {
+            loadRandomSuggestedWords();
+        });
+    }
 }
 
 async function loadRandomSuggestedWords() {
     const tableBody = document.getElementById('random-words-table-body');
     if (!tableBody) return;
+
+    const dictSelect = document.getElementById('random-words-dict-select');
+    const selectedDict = dictSelect ? dictSelect.value : 'ALL';
 
     tableBody.innerHTML = `
         <tr>
@@ -4623,7 +4633,7 @@ async function loadRandomSuggestedWords() {
     `;
 
     try {
-        const response = await fetch('/api/tools/random-words');
+        const response = await fetch(`/api/tools/random-words?dictionary=${encodeURIComponent(selectedDict)}`);
         const data = await response.json();
         
         if (data.error) {

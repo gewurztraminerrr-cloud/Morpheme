@@ -1483,7 +1483,15 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <button id="more-random-words-btn" style="padding: 8px 16px; font-size: 0.9rem; cursor: pointer; border-radius: 6px; border: 1px solid rgba(165, 180, 252, 0.3); background: rgba(165, 180, 252, 0.08); color: #a5b4fc; transition: all 0.2s;">More random words</button>
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <button id="more-random-words-btn" style="padding: 8px 16px; font-size: 0.9rem; cursor: pointer; border-radius: 6px; border: 1px solid rgba(165, 180, 252, 0.3); background: rgba(165, 180, 252, 0.08); color: #a5b4fc; transition: all 0.2s;">More random words</button>
+                                <select id="random-words-dict-select" style="padding: 8px 12px; font-size: 0.9rem; border-radius: 6px; border: 1px solid rgba(165, 180, 252, 0.3); background: var(--input-bg); color: var(--text-primary); cursor: pointer;" title="Select dictionary filter for random words">
+                                    <option value="ALL" selected>ALL</option>
+                                    <option value="NWL">NWL</option>
+                                    <option value="CSW">CSW</option>
+                                    <option value="AW">AW</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div id="find-count-results-container" class="hidden" style="width: 100%; margin-top: 25px;">

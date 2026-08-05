@@ -5642,15 +5642,23 @@ def tools_find_count():
 def tools_random_words():
     try:
         word_validator.ensure_csw_loaded()
+        dict_type = request.args.get('dictionary', 'ALL').upper()
         sampled = []
         for length in [5, 6, 7, 8, 9, 10]:
-            nwl_set = word_validator.nwl_by_len.get(length, [])
-            csw_set = word_validator.csw_by_len.get(length, [])
-            aw_set = [w for w in word_validator.added_words if len(w) == length]
-            combined = list(set(nwl_set) | set(csw_set) | set(aw_set))
+            if dict_type == 'NWL':
+                source_set = word_validator.nwl_by_len.get(length, [])
+            elif dict_type == 'CSW':
+                source_set = word_validator.csw_by_len.get(length, [])
+            elif dict_type == 'AW':
+                source_set = [w for w in word_validator.added_words if len(w) == length]
+            else:  # ALL
+                nwl_set = word_validator.nwl_by_len.get(length, [])
+                csw_set = word_validator.csw_by_len.get(length, [])
+                aw_set = [w for w in word_validator.added_words if len(w) == length]
+                source_set = list(set(nwl_set) | set(csw_set) | set(aw_set))
             
-            if combined:
-                sampled.append(random.choice(combined))
+            if source_set:
+                sampled.append(random.choice(source_set))
             else:
                 fallbacks = {5: 'KUDZU', 6: 'BURANS', 7: 'PLEROMA', 8: 'PRONOTUM', 9: 'MANGETOUT', 10: 'OVERSTATES'}
                 sampled.append(fallbacks.get(length, 'MORPHEME'))
