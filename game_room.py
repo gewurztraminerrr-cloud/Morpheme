@@ -1866,7 +1866,7 @@ class GameRoom:
                         eval_board = self.board or getattr(self, 'previous_board', None)
                         eval_fmt = self.current_board_format
                         for w in self.all_words:
-                            path_val = self.all_words_paths.get(w) if isinstance(self.all_words_paths, dict) else None
+                            path_val = _get_word_path(self.all_words_paths, w)
                             scored_dict[w] = calculate_word_score(
                                 w, self.bonus_word,
                                 board_format=eval_fmt,
@@ -1986,7 +1986,7 @@ class GameRoom:
                             eval_board = self.board or getattr(self, 'previous_board', None)
                             eval_fmt = self.current_board_format or getattr(self, 'previous_board_format', 'Normal')
                             for word in (self.all_words or []):
-                                path_v = self.all_words_paths.get(word) if isinstance(self.all_words_paths, dict) else None
+                                path_v = _get_word_path(self.all_words_paths, word)
                                 refined_fallback[word] = calculate_word_score(
                                     word, 
                                     self.bonus_word, 
@@ -2582,6 +2582,12 @@ class GameRoom:
         if _room_manager_instance and hasattr(_room_manager_instance, '_get_bonus_word'):
             return _room_manager_instance._get_bonus_word(length=length, dictionary=dictionary, alternating=alternating, difficulty=difficulty, exclude=exclude)
         return 'PLANETS'
+
+def _get_word_path(paths_dict, word):
+    if not isinstance(paths_dict, dict) or not word:
+        return None
+    w_str = str(word)
+    return paths_dict.get(w_str) or paths_dict.get(w_str.upper()) or paths_dict.get(w_str.lower())
 
 def calculate_word_score(word, bonus_word, board_format='Normal', path=None, bonus_cell=None, **kwargs):
     """Calculate points for a word using shared utility"""
@@ -5853,8 +5859,9 @@ class RoomManager:
                                 return
                             refined = {}
                             for word in (all_words or []):
+                                path_v = _get_word_path(all_words_dict, word)
                                 refined[word] = calculate_word_score(
-                                    word, bonus_word, path=all_words_dict.get(word),
+                                    word, bonus_word, path=path_v,
                                     board_format=updated_format, bonus_cell=bonus_cell,
                                     board=board, return_details=True, strict_path=True
                                 )

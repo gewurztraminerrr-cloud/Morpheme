@@ -194,7 +194,7 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
                     return res
 
                 steps = 0
-                max_steps = 2000
+                max_steps = 15000
                 
                 def find_through(f, r, c, index, hit_bonus, hit_eo, visited):
                     nonlocal steps
