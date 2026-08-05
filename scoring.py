@@ -83,25 +83,27 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
         
     used_bonus = False
     
-    # 3. Board Pathfinding (Check if word uses the bonus tile)
-    is_spec_bonus_fmt = ('bonus' in fmt_lower or 'either' in fmt_lower)
+    # 3. Board Pathfinding (Check if word uses the bonus tile or Either/Or tile)
+    is_spec_bonus_fmt = ('bonus' in fmt_lower or 'either' in fmt_lower or bonus_cell is not None)
     should_skip_pathfinding = (not path and not is_spec_bonus_fmt and not bonus_cell)
+
+    used_bonus_letter = False
+    used_either_or = False
 
     if board and len(board) > 0 and not should_skip_pathfinding:
         is_3d = (len(board) == 6 and isinstance(board[0], list) and isinstance(board[0][0], list))
         
+        # PRE-CALCULATE SPECIAL BONUS CELL COORDS
+        special_coords = set()
+        if bonus_cell:
+            if isinstance(bonus_cell, dict):
+                special_coords.add((int(bonus_cell.get('f', -1)), int(bonus_cell.get('r', 0)), int(bonus_cell.get('c', 0))))
+            elif isinstance(bonus_cell, (list, tuple)):
+                if len(bonus_cell) == 3: special_coords.add((int(bonus_cell[0]), int(bonus_cell[1]), int(bonus_cell[2])))
+                else: special_coords.add((-1, int(bonus_cell[0]), int(bonus_cell[1])))
+
         # FAST PATH ITERATION
         if path and isinstance(path, (list, tuple)):
-            # PRE-CALCULATE SPECIAL CELLS SET:
-            # We check for bonus_cell (in Bonus Letter / Bonus formats)
-            special_coords = set()
-            if 'bonus' in fmt_lower and bonus_cell:
-                 if isinstance(bonus_cell, dict):
-                     special_coords.add((int(bonus_cell.get('f', -1)), int(bonus_cell.get('r', 0)), int(bonus_cell.get('c', 0))))
-                 elif isinstance(bonus_cell, (list, tuple)):
-                     if len(bonus_cell) == 3: special_coords.add((int(bonus_cell[0]), int(bonus_cell[1]), int(bonus_cell[2])))
-                     else: special_coords.add((-1, int(bonus_cell[0]), int(bonus_cell[1])))
-            
             for node in path:
                 nf, nx, ny = -1, -1, -1
                 if isinstance(node, dict):
@@ -110,10 +112,11 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
                     if len(node) == 3: nf, nx, ny = int(node[0]), int(node[1]), int(node[2])
                     else: nf, nx, ny = -1, int(node[0]), int(node[1])
                 
-                # Check for either explicit bonus coord or an Either/Or tile
-                if 'bonus' in fmt_lower and (nf, nx, ny) in special_coords:
-                    used_bonus = True; break
-                # Bounds check to prevent IndexError under any client-side path corruption
+                # Check for explicit bonus cell coordinate
+                if special_coords and (nf, nx, ny) in special_coords:
+                    used_bonus_letter = True
+
+                # Bounds check
                 if is_3d:
                     if 0 <= nf < len(board) and 0 <= nx < len(board[nf]) and 0 <= ny < len(board[nf][nx]):
                         cell_val = str(board[nf][nx][ny])
@@ -125,13 +128,13 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
                     else:
                         continue
 
+                # Check for Either/Or tile
                 if 'either' in fmt_lower and '/' in cell_val:
-                    used_bonus = True; break
+                    used_either_or = True
         
-        # B. Fallback: If no path provided OR provided path missed the bonus, 
-        # do a full search to see if ANY path hits the bonus.
-        # We always check for a bonus-hitting path to default to the greatest point value.
-        if not used_bonus and is_spec_bonus_fmt:
+        # B. Fallback: If no path provided OR provided path missed special tiles, 
+        # do a full search to see if ANY valid path hits the bonus letter or either/or tile.
+        if (not used_bonus_letter or not used_either_or) and is_spec_bonus_fmt:
             word_target = word.upper()
             if not (is_3d and len(word_target) > 12):
                 bx, by, bf = -1, -1, -1
@@ -152,13 +155,11 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
                                 nr, nc = r + dr, c + dc
                                 if 0 <= nr < rows and 0 <= nc < cols: res.append((-1, nr, nc))
                     else:
-                        # Full 3D surface neighbors... (unchanged logic)
                         for dr in [-1, 0, 1]:
                             for dc in [-1, 0, 1]:
                                 if dr == 0 and dc == 0: continue
                                 nr, nc = r+dr, c+dc
                                 if 0 <= nr < 3 and 0 <= nc < 3: res.append((f, nr, nc))
-                        # Inter-face Wrap Logic (Shortened for brevity but keeping logic)
                         if f == 0:
                             if r == 0: res.extend([(4, 2, c), (4, 2, c-1), (4, 2, c+1)])
                             if r == 2: res.extend([(5, 0, c), (5, 0, c-1), (5, 0, c+1)])
@@ -195,66 +196,61 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
                 steps = 0
                 max_steps = 2000
                 
-                def find_through(f, r, c, index, has_hit_bonus, visited):
+                def find_through(f, r, c, index, hit_bonus, hit_eo, visited):
                     nonlocal steps
                     steps += 1
                     if steps > max_steps:
                         return False
                     cell_val = str(board[f][r][c] if is_3d else board[r][c]).upper()
                     
-                    # Check if this node hits the special bonus condition
-                    # (Specified bonus cell coordinate OR an Either/Or tile)
-                    is_bonus_match = ('bonus' in fmt_lower and f == bf and r == bx and c == by)
+                    is_bonus_match = (bonus_cell is not None and f == bf and r == bx and c == by)
                     is_either_match = ('either' in fmt_lower and '/' in cell_val)
-                    now_hit = has_hit_bonus or is_bonus_match or is_either_match
+                    now_bonus = hit_bonus or is_bonus_match
+                    now_eo = hit_eo or is_either_match
                     
                     letters = cell_val.split('/') if '/' in cell_val else [cell_val]
                     for char in letters:
                         match_len = 0
-                        # Special Boggle QU handling
                         if char == 'Q' and word_target.startswith('QU', index):
                             match_len = 2
                         elif word_target.startswith(char, index):
                             match_len = len(char)
                             
                         if match_len > 0:
-                            # If we've matched the full word
                             if index + match_len >= len(word_target):
-                                # MANDATORY: We only return True if this specific path HIT the bonus.
-                                # If it didn't hit, we continue searching other branches in case they do.
-                                if now_hit:
+                                nonlocal used_bonus_letter, used_either_or
+                                any_hit = False
+                                if now_bonus: used_bonus_letter = True; any_hit = True
+                                if now_eo: used_either_or = True; any_hit = True
+                                if any_hit:
                                     return True
                                 continue
                             
-                            # Recurse to neighbors
                             for nf, nr, nc in get_neighbors(f, r, c):
                                 if (nf, nr, nc) not in visited:
-                                    if find_through(nf, nr, nc, index + match_len, now_hit, visited | {(nf, nr, nc)}):
+                                    if find_through(nf, nr, nc, index + match_len, now_bonus, now_eo, visited | {(nf, nr, nc)}):
                                         return True
                     return False
 
-                # Exhaustive search across all starting positions to find a BONUS path
                 if is_3d:
                     for f in range(6):
                         for r in range(3):
                             for c in range(3):
-                                if find_through(f, r, c, 0, False, {(f, r, c)}): 
-                                    used_bonus = True; break
-                            if used_bonus: break
-                        if used_bonus: break
+                                find_through(f, r, c, 0, False, False, {(f, r, c)})
                 else:
                     for r in range(len(board)):
                         for c in range(len(board[0])):
-                            if find_through(-1, r, c, 0, False, {(-1, r, c)}): 
-                                used_bonus = True; break
-                        if used_bonus: break
+                            find_through(-1, r, c, 0, False, False, {(-1, r, c)})
 
     bonus_letter_points = 0
     either_or_points = 0
-    if used_bonus and is_spec_bonus_fmt and 'checkerboard' not in fmt_lower:
-        if 'either' in fmt_lower: either_or_points = 3
-        else: bonus_letter_points = 3
-        score += 3
+    if 'checkerboard' not in fmt_lower:
+        if used_bonus_letter:
+            bonus_letter_points = 3
+            score += 3
+        if used_either_or:
+            either_or_points = 3
+            score += 3
             
     if return_details:
         return {

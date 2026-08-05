@@ -2069,16 +2069,17 @@ async function updateGameState(incomingState = null) {
                             const bonusWordPts = pointsObj.bonus_word_points || 0;
                             const bonusLetterPts = pointsObj.bonus_letter_points || 0;
                             const eoPts = pointsObj.either_or_points || 0;
-                            const extra = bonusLetterPts + eoPts;
-                            const basePts = pointsObj.base !== undefined ? pointsObj.base : (ptsNum - bonusWordPts - extra);
+                            const basePts = pointsObj.base !== undefined ? pointsObj.base : (ptsNum - bonusWordPts - bonusLetterPts - eoPts);
 
-                            if (extra > 0 || bonusWordPts > 0) {
-                                const originalValue = basePts + bonusWordPts;
-                                if (extra > 0) {
-                                    ptsDisplay = `${originalValue} + ${extra} = ${ptsNum}`;
-                                } else {
-                                    ptsDisplay = `${basePts} + ${bonusWordPts} = ${ptsNum}`;
-                                }
+                            let parts = [basePts];
+                            if (bonusWordPts > 0) parts.push(bonusWordPts);
+                            if (bonusLetterPts > 0) parts.push(bonusLetterPts);
+                            if (eoPts > 0) parts.push(eoPts);
+
+                            if (parts.length > 1) {
+                                ptsDisplay = `${parts.join(' + ')} = ${ptsNum}`;
+                            } else {
+                                ptsDisplay = ptsNum;
                             }
                         }
 
