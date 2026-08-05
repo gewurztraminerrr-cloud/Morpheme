@@ -151,6 +151,17 @@ class SpinnerSet:
         else:
             if not wc_range or wc_range not in ['50-100', '100-200', '200-300', '300-400', '500+']:
                 wc_range = random.choices(['50-100', '100-200', '200-300', '300-400', '500+'], weights=[9, 30, 30, 30, 1])[0]
+            
+            # Enforce physical achievable ceiling caps per min_word_length on standard dictionaries
+            if min_word_length >= 8:
+                if wc_range in ['200-300', '300-400', '400-500', '500+']:
+                    wc_range = '100-200'
+            elif min_word_length >= 7:
+                if wc_range in ['300-400', '400-500', '500+']:
+                    wc_range = '200-300'
+            elif min_word_length >= 6:
+                if wc_range in ['400-500', '500+']:
+                    wc_range = '200-300'
 
         p['min_word_length'] = min_word_length
         p['word_count_range'] = wc_range

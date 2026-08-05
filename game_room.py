@@ -4513,6 +4513,10 @@ class RoomManager:
             _use_aw_val = room.use_added_words or (room.spinner_params.get('use_added_words', False) if isinstance(room.spinner_params, dict) else False)
             _real_wc_sr = self._get_factchecked_wc_range(_actual_wc, use_added_words=_use_aw_val)
             room.current_word_count_range = _real_wc_sr
+            if isinstance(room.spinner_params, dict):
+                room.spinner_params['word_count_range'] = _real_wc_sr
+            if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                room.frozen_revealed_params['word_count_range'] = _real_wc_sr
 
 
             
