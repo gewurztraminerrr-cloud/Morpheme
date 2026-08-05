@@ -6873,20 +6873,21 @@ class RoomManager:
             with room._state_lock:
                  room.starting_round = False
     
-    def _get_factchecked_wc_range(self, count, use_added_words=False):
-        """Map actual word count to the closest standard spinner display range.
-           For AW boards: 300-400, 400-500, 500+
-           For Non-AW boards (NWL / CSW): 50-100, 100-200, 200-300, 300-400, 500+"""
+    def _get_factchecked_wc_range(self, count, use_added_words=False, dictionary=None):
+        """Map actual word count to the exact corresponding standard range bucket.
+           Standard buckets: 50-100, 100-200, 200-300, 300-400, 400-500, 500+
+        """
+        try:
+            count = int(count)
+        except (ValueError, TypeError):
+            count = 0
+            
         if count >= 500: return '500+'
-        if use_added_words:
-            if count >= 400: return '400-500'
-            if count >= 300: return '300-400'
-            return '300-400'
-        else:
-            if count >= 300: return '300-400'
-            if count >= 200: return '200-300'
-            if count >= 100: return '100-200'
-            return '50-100'
+        if count >= 400: return '400-500'
+        if count >= 300: return '300-400'
+        if count >= 200: return '200-300'
+        if count >= 100: return '100-200'
+        return '50-100'
 
     def _get_board_fingerprint(self, board):
         """Return a deterministic string fingerprint of a 2D or 3D board for dedup tracking."""

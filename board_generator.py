@@ -2104,8 +2104,10 @@ class BoardGenerator:
             count = len(all_words_dict)
             print(f"[BoardGen] ATTEMPT {attempts} PRE-SWEEP: Count={count} Target={min_words}-{max_words}")
 
-            if is_emergency and count >= 10:
-                print(f"[BoardGen] EMERGENCY FAST-ACCEPT: Count={count} >= 10. Accepting board immediately in attempt {attempts}!")
+            # Accept in emergency mode if count is within target range or at least 50% of min_words
+            min_acceptable_emergency = max(30, int(min_words * 0.5)) if min_words > 0 else 30
+            if is_emergency and count >= min_acceptable_emergency and (count <= max_words or max_words >= 500):
+                print(f"[BoardGen] EMERGENCY FAST-ACCEPT: Count={count} >= {min_acceptable_emergency}. Accepting board immediately in attempt {attempts}!")
                 break
 
             # --- DYNAMIC CORRECTION (Push-Pull) ---
