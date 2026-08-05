@@ -5703,39 +5703,9 @@ body .tab-btn.active {
 }
 
 @media (max-width: 899px) {
-    /* Global mobile containment to fit every panel/element neatly within viewport */
-    header.header {
-        flex-direction: column !important;
-        align-items: center !important;
-        text-align: center !important;
-        padding: 8px 10px !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-    }
-
-    nav.nav {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        justify-content: center !important;
-        align-items: center !important;
-        gap: 6px 6px !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-        overflow-x: hidden !important;
-    }
-
-    .nav-btn {
-        font-size: 0.75rem !important;
-        padding: 6px 10px !important;
-        white-space: nowrap !important;
-        max-width: 100% !important;
-    }
-
     /* Tournament mobile overrides — keep panels in document flow, perfectly centered, bounded to screen */
     #page-tournaments {
-        padding: 0 10px !important;
+        padding: 12px 14px !important;
         margin: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
