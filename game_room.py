@@ -2791,7 +2791,10 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
 
     # --- FAST LIVE GENERATION ATTEMPT BEFORE RANDOM GRID ---
     try:
-        emergency_bw = 'PLANETS' if min_word_length < 8 else 'IDONEITY'
+        if _room_manager_instance and hasattr(_room_manager_instance, '_get_bonus_word'):
+            emergency_bw = _room_manager_instance._get_bonus_word(length=7 if min_word_length < 8 else 8, dictionary=dictionary)
+        else:
+            emergency_bw = random.choice(['DIAMOND', 'PAINTER', 'CAPTIVE', 'SILVERS', 'WEATHER', 'MONSTER', 'STATION', 'JOURNEY'])
         live_res = bg.generate_board(
             dimensions=dimensions,
             bonus_word=emergency_bw,
