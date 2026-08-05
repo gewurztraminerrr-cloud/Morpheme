@@ -5868,6 +5868,22 @@ body .tab-btn.active {
         box-sizing: border-box !important;
     }
 
+    .t-standings-list {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 8px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .t-standing-item {
+        margin: 0 auto !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
     .t-leaderboard-item {
         flex-direction: column !important;
         align-items: flex-start !important;
@@ -5882,13 +5898,64 @@ body .tab-btn.active {
 
     .replay-btn-small {
         font-size: 0.65rem !important;
-        padding: 4px 8px !important;
+        padding: 4px 6px !important;
+    }
+
+    .history-table-wrapper {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+        margin: 10px 0 !important;
+        border-radius: 8px !important;
+    }
+
+    .history-table {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        table-layout: fixed !important;
+    }
+
+    .history-table th:nth-child(1),
+    .history-table td:nth-child(1) {
+        width: 22% !important;
+        padding: 8px 3px !important;
+        font-size: 0.75rem !important;
+        text-align: center !important;
+        word-break: break-word !important;
+    }
+
+    .history-table th:nth-child(2),
+    .history-table td:nth-child(2) {
+        width: 26% !important;
+        padding: 8px 3px !important;
+        font-size: 0.75rem !important;
+        text-align: center !important;
+        word-break: break-word !important;
+    }
+
+    .history-table th:nth-child(3),
+    .history-table td:nth-child(3) {
+        width: 26% !important;
+        padding: 8px 3px !important;
+        font-size: 0.7rem !important;
+        text-align: center !important;
+        word-break: break-word !important;
+    }
+
+    .history-table th:nth-child(4),
+    .history-table td:nth-child(4) {
+        width: 26% !important;
+        padding: 8px 3px !important;
+        font-size: 0.7rem !important;
+        text-align: center !important;
+        word-break: break-word !important;
     }
 
     .history-table th,
     .history-table td {
-        padding: 10px 8px !important;
-        font-size: 0.85rem !important;
+        white-space: normal !important;
     }
 
     /* Ensure action buttons don't overflow */
