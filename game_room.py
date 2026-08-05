@@ -5146,8 +5146,9 @@ class RoomManager:
         # 1. Loading state rescue (stuck loading for >20s)
         is_stuck_loading = False
         if room.state == 'loading':
-            elapsed = now - getattr(room, 'intermission_start_time', now)
-            if elapsed > 20.0 and not getattr(room, '_did_loading_rescue', False):
+            start_t = getattr(room, 'intermission_start_time', None) or getattr(room, 'created_at', None) or now
+            elapsed = now - start_t
+            if elapsed > 10.0 and not getattr(room, '_did_loading_rescue', False):
                 is_stuck_loading = True
                 
         # 2. Intermission 15s remaining rescue (normal countdown rooms only)
