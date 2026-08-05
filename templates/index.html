@@ -3325,10 +3325,150 @@
                         <button class="faq-nav-link" data-target="faq-cube-mobile">Why is a cube size adjustable when there are no playable cubes?</button>
                         <button class="faq-nav-link" data-target="faq-spinner-mismatch">The parameters indicated on the Spinner Set did not align with the parameters shown on the next round.</button>
                         <button class="faq-nav-link" data-target="faq-exit-fullscreen">Why does dragging from the top and pressing the back arrow at the bottom not exit full screen on mobile?</button>
+                        <button class="faq-nav-link" data-target="faq-qu-tile">How does the QU tile work?</button>
                     </div>
                 </div>
 
                 <div class="faq-container">
+                    <!-- Q_qu_tile -->
+                    <div class="faq-item" id="faq-qu-tile">
+                        <div class="faq-question">How does the QU tile work?</div>
+                        <div class="faq-answer">
+                            <p>The <strong>QU tile</strong> is a hybrid tile designed to solve the rare Q-without-U challenge while supporting standard words.</p>
+                            <p>When evaluating valid connections on the board, the game engine automatically evaluates paths both <strong>with</strong> and <strong>without</strong> the internal <code>U</code> of the <code>QU</code> tile:</p>
+                            <ul style="margin-top: 8px; margin-bottom: 12px; padding-left: 20px; line-height: 1.5;">
+                                <li><strong>External U Connection:</strong> If a tile is <code>QU</code> and there is an adjacent <code>U</code> tile around it, the board logic tries both with and without the <code>U</code> in <code>QU</code>. If the <code>U</code> connected to the <code>QU</code> tile makes a word (e.g. <code>Q + U + A + I + L = QUAIL</code>), it is counted as valid.</li>
+                                <li><strong>Q-without-U Words:</strong> By allowing words like <code>QANAT</code> to be valid using a <code>QU</code> tile (bypassing its internal <code>U</code>), it is only fair that we can remove the <code>U</code> in the <code>QU</code> tile to form other words if need be (e.g. <code>Q + A + N + A + T</code>).</li>
+                                <li><strong>Intermission Board Highlighting:</strong> When a word on the <em>All Words</em> table during intermission is selected, all tiles forming that specific path (e.g. all 5 tiles: <code>Q</code>, <code>U</code>, <code>A</code>, <code>I</code>, <code>L</code>) are highlighted on the board grid.</li>
+                            </ul>
+
+                            <div style="margin-top: 15px; margin-bottom: 10px; font-weight: 700; color: #a5b4fc; font-size: 0.95rem;">
+                                Board Grid Example & 4 Possible Pathing Demonstrations:
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-top: 10px; margin-bottom: 15px;">
+                                <!-- Board 1: QANAT -->
+                                <div style="background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(165, 180, 252, 0.2); border-radius: 10px; padding: 12px; text-align: center;">
+                                    <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-primary); margin-bottom: 8px;">Pathing 1: QANAT</div>
+                                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; max-width: 180px; margin: 0 auto 10px auto;">
+                                        <!-- Row 1 -->
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">I</div>
+                                        <div style="background: rgba(16, 185, 129, 0.35); border: 1px solid #10b981; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">N</div>
+                                        <div style="background: rgba(16, 185, 129, 0.35); border: 1px solid #10b981; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">QU</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
+                                        <!-- Row 2 -->
+                                        <div style="background: rgba(16, 185, 129, 0.35); border: 1px solid #10b981; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">A</div>
+                                        <div style="background: rgba(16, 185, 129, 0.35); border: 1px solid #10b981; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">A</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">U</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
+                                        <!-- Row 3 -->
+                                        <div style="background: rgba(16, 185, 129, 0.35); border: 1px solid #10b981; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">T</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">I</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">L</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">I</div>
+                                        <!-- Row 4 -->
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">E</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">R</div>
+                                    </div>
+                                    <div style="font-family: monospace; font-size: 0.78rem; color: #a5b4fc; font-weight: 600;">
+                                        1. Q + A + N + A + T = QANAT
+                                    </div>
+                                </div>
+
+                                <!-- Board 2: INQUIRE -->
+                                <div style="background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(165, 180, 252, 0.2); border-radius: 10px; padding: 12px; text-align: center;">
+                                    <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-primary); margin-bottom: 8px;">Pathing 2: INQUIRE</div>
+                                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; max-width: 180px; margin: 0 auto 10px auto;">
+                                        <!-- Row 1 -->
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">I</div>
+                                        <div style="background: rgba(99, 102, 241, 0.35); border: 1px solid #6366f1; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">N</div>
+                                        <div style="background: rgba(99, 102, 241, 0.35); border: 1px solid #6366f1; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">QU</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
+                                        <!-- Row 2 -->
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">A</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">A</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">U</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
+                                        <!-- Row 3 -->
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">T</div>
+                                        <div style="background: rgba(99, 102, 241, 0.35); border: 1px solid #6366f1; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">I</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">L</div>
+                                        <div style="background: rgba(99, 102, 241, 0.35); border: 1px solid #6366f1; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">I</div>
+                                        <!-- Row 4 -->
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
+                                        <div style="background: rgba(99, 102, 241, 0.35); border: 1px solid #6366f1; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">E</div>
+                                        <div style="background: rgba(99, 102, 241, 0.35); border: 1px solid #6366f1; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">R</div>
+                                    </div>
+                                    <div style="font-family: monospace; font-size: 0.78rem; color: #a5b4fc; font-weight: 600;">
+                                        2. I + N + Q + U + I + R + E = INQUIRE
+                                    </div>
+                                </div>
+
+                                <!-- Board 3: QUAIL (4 Tiles - QU Tile) -->
+                                <div style="background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(165, 180, 252, 0.2); border-radius: 10px; padding: 12px; text-align: center;">
+                                    <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-primary); margin-bottom: 8px;">Pathing 3: QUAIL (4 Tiles)</div>
+                                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; max-width: 180px; margin: 0 auto 10px auto;">
+                                        <!-- Row 1 -->
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">I</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">N</div>
+                                        <div style="background: rgba(245, 158, 11, 0.35); border: 1px solid #f59e0b; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">QU</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
+                                        <!-- Row 2 -->
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">A</div>
+                                        <div style="background: rgba(245, 158, 11, 0.35); border: 1px solid #f59e0b; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">A</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">U</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
+                                        <!-- Row 3 -->
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">T</div>
+                                        <div style="background: rgba(245, 158, 11, 0.35); border: 1px solid #f59e0b; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">I</div>
+                                        <div style="background: rgba(245, 158, 11, 0.35); border: 1px solid #f59e0b; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">L</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">I</div>
+                                        <!-- Row 4 -->
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">E</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">R</div>
+                                    </div>
+                                    <div style="font-family: monospace; font-size: 0.78rem; color: #a5b4fc; font-weight: 600;">
+                                        3. (QU) + A + I + L = QUAIL
+                                    </div>
+                                </div>
+
+                                <!-- Board 4: QUAIL (5 Tiles - Q + Adjacent U) -->
+                                <div style="background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(165, 180, 252, 0.2); border-radius: 10px; padding: 12px; text-align: center;">
+                                    <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-primary); margin-bottom: 8px;">Pathing 4: QUAIL (5 Tiles)</div>
+                                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; max-width: 180px; margin: 0 auto 10px auto;">
+                                        <!-- Row 1 -->
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">I</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">N</div>
+                                        <div style="background: rgba(236, 72, 153, 0.35); border: 1px solid #ec4899; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">QU</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
+                                        <!-- Row 2 -->
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">A</div>
+                                        <div style="background: rgba(236, 72, 153, 0.35); border: 1px solid #ec4899; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">A</div>
+                                        <div style="background: rgba(236, 72, 153, 0.35); border: 1px solid #ec4899; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">U</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
+                                        <!-- Row 3 -->
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">T</div>
+                                        <div style="background: rgba(236, 72, 153, 0.35); border: 1px solid #ec4899; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">I</div>
+                                        <div style="background: rgba(236, 72, 153, 0.35); border: 1px solid #ec4899; color: #fff; padding: 8px 4px; border-radius: 4px; font-weight: 800; font-size: 0.85rem;">L</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">I</div>
+                                        <!-- Row 4 -->
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">C</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">E</div>
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;">R</div>
+                                    </div>
+                                    <div style="font-family: monospace; font-size: 0.78rem; color: #a5b4fc; font-weight: 600;">
+                                        4. Q + U + A + I + L = QUAIL
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Q_counts -->
                     <div class="faq-item" id="faq-registered-online">
                         <div class="faq-question">How many players are currently registered and online?</div>
