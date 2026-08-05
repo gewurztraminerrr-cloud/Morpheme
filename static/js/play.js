@@ -3842,8 +3842,9 @@ function updateParameters(state) {
     if (!isIntermission) {
         shouldUpdateLabels = true;
         window._lastRevealedRoundCount = currentRound; 
+        window._animTriggeredForRound = -1;
     } else {
-        if (isRevealed && !wasRevealed && (currentRound !== window._animTriggeredForRound)) {
+        if (isRevealed && !wasRevealed && (window._animTriggeredForRound !== currentRound)) {
             shouldUpdateLabels = true;
             triggerAnimation = true;
             window._animTriggeredForRound = currentRound;
@@ -3941,10 +3942,16 @@ function updateParameters(state) {
 
     if (triggerAnimation) {
         const paramContainer = document.querySelector('.game-params');
+        const labelContainer = document.querySelector('.spinner-set-label');
         if (paramContainer) {
             paramContainer.classList.remove('reveal-new');
             void paramContainer.offsetWidth; // Force reflow
             paramContainer.classList.add('reveal-new');
+        }
+        if (labelContainer) {
+            labelContainer.classList.remove('reveal-new');
+            void labelContainer.offsetWidth; // Force reflow
+            labelContainer.classList.add('reveal-new');
         }
     }
     

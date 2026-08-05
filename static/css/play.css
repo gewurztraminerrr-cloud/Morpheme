@@ -56,24 +56,27 @@
     transition: color 0.3s ease;
 }
 
-.game-params.reveal-new {
-    animation: fadeGoldToNormal 4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+.game-params.reveal-new,
+.game-params.reveal-new *,
+.spinner-set-label.reveal-new,
+.spinner-set-label.reveal-new * {
+    animation: fadeGoldToNormal 4s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
 }
 
 
 @keyframes fadeGoldToNormal {
     0% {
-        color: #ffd700; /* Instant snap to gold */
-        text-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
-        transform: scale(1.02); /* Slight pop when turning gold */
+        color: #ffd700 !important; /* Instant snap to gold */
+        text-shadow: 0 0 15px rgba(255, 215, 0, 0.9), 0 0 30px rgba(255, 215, 0, 0.6) !important;
+        transform: scale(1.03); /* Slight pop when turning gold */
     }
-    15% {
-        color: #ffd700; /* Hold gold briefly */
+    20% {
+        color: #ffd700 !important; /* Hold gold briefly */
+        text-shadow: 0 0 15px rgba(255, 215, 0, 0.9) !important;
         transform: scale(1);
     }
     100% {
-        color: var(--text-primary); /* Fade back to normal readable color faster as requested */
-        text-shadow: none;
+        text-shadow: none !important;
     }
 }
 
