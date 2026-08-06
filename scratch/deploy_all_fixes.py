@@ -19,6 +19,7 @@ def main():
         "static/js/tools.js",
         "static/js/app.js",
         "static/css/lobby.css",
+        "static/css/play.css",
         "static/css/style.css",
         "static/css/forum.css",
         "templates/index.html"
