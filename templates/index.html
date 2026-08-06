@@ -577,33 +577,57 @@
                         if (pageLoading) pageLoading.classList.add('active');
                         if (pageLogin) pageLogin.classList.remove('active');
 
-                        // Immediately start Lobby music at designated timeframe [205s, 295s] on Loading screen across all platforms
+                        // Immediately start Lobby music at designated timeframe [205s, 295s] the moment Loading screen appears
                         const tryStartLobbyMusic = function() {
                             const music = document.getElementById('lobby-music');
                             if (music) {
+                                const seekTo205 = function() {
+                                    if (music.currentTime < 205 || music.currentTime >= 295) {
+                                        try { music.currentTime = 205; } catch(e) {}
+                                    }
+                                };
+
                                 music.ontimeupdate = function() {
                                     if (music.currentTime < 205 || music.currentTime >= 295) {
                                         try { music.currentTime = 205; } catch(e) {}
                                     }
                                 };
-                                const playAtDesignatedWindow = function() {
+
+                                const attemptPlay = function() {
                                     if (music.paused) {
-                                        if (music.currentTime < 205 || music.currentTime >= 295) {
-                                            try { music.currentTime = 205; } catch(e) {}
+                                        seekTo205();
+                                        const promise = music.play();
+                                        if (promise !== undefined) {
+                                            promise.then(function() {
+                                                seekTo205();
+                                            }).catch(function(err) {
+                                                console.warn('[LobbyMusic] Autoplay blocked, waiting for gesture:', err);
+                                            });
                                         }
-                                        music.play().catch(function() {});
                                     }
                                 };
-                                playAtDesignatedWindow();
-                                const events = ['click', 'keydown', 'mousedown', 'touchstart', 'mousemove', 'pointerdown'];
+
+                                // Try playing immediately
+                                attemptPlay();
+
+                                // Also try when metadata/canplay is ready
+                                music.addEventListener('loadedmetadata', attemptPlay, { once: true });
+                                music.addEventListener('canplay', attemptPlay, { once: true });
+
+                                // Desktop/laptop & mobile gesture listeners attached to window & document
+                                const events = ['click', 'keydown', 'mousedown', 'touchstart', 'mousemove', 'pointermove', 'pointerdown', 'mouseenter', 'mouseover', 'focus'];
                                 const onGesture = function() {
-                                    playAtDesignatedWindow();
-                                    events.forEach(function(evt) {
-                                        document.removeEventListener(evt, onGesture, { capture: true });
-                                    });
+                                    attemptPlay();
+                                    if (!music.paused) {
+                                        events.forEach(function(evt) {
+                                            window.removeEventListener(evt, onGesture, { capture: true });
+                                            document.removeEventListener(evt, onGesture, { capture: true });
+                                        });
+                                    }
                                 };
                                 events.forEach(function(evt) {
-                                    document.addEventListener(evt, onGesture, { capture: true });
+                                    window.addEventListener(evt, onGesture, { capture: true, passive: true });
+                                    document.addEventListener(evt, onGesture, { capture: true, passive: true });
                                 });
                             }
                         };
