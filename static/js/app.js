@@ -462,12 +462,20 @@ function playLobbyMusicHelper(lobbyMusic, onSuccess) {
     };
 
     console.log('[LobbyMusic] Playing lobby music.');
+    const isAlreadyPlaying = !lobbyMusic.paused && lobbyMusic.currentTime >= 205 && lobbyMusic.currentTime < 295;
+
     lobbyMusic.play()
         .then(() => {
-            console.log('[LobbyMusic] Play succeeded. Seeking to 205...');
-            try {
-                lobbyMusic.currentTime = 205;
-            } catch(err) {}
+            if (!isAlreadyPlaying) {
+                console.log('[LobbyMusic] Play succeeded. Initializing seek to 205...');
+                try {
+                    if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
+                        lobbyMusic.currentTime = 205;
+                    }
+                } catch(err) {}
+            } else {
+                console.log('[LobbyMusic] Already playing continuously at currentTime:', lobbyMusic.currentTime);
+            }
             if (onSuccess) onSuccess();
         })
         .catch(err => {
