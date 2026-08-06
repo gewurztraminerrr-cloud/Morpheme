@@ -321,6 +321,7 @@ window.intermissionTileFilter = null;
 let lastRenderedBoardJSON = null;
 let lastRenderedGrayed = null;
 let lastRenderedRotation = null;
+let lastRenderedUserTranspose = null;
 let lastRenderedDensityJSON = null;
 let hasPlayedIntermissionBell = false; // Flag for next round notification
 let playersFilterMode = 'everyone'; // 'everyone', 'friends', 'me'
@@ -576,6 +577,7 @@ function clearGameUIAndCache() {
     lastRenderedBoardJSON = null;
     lastRenderedGrayed = null;
     lastRenderedRotation = null;
+    lastRenderedUserTranspose = null;
     lastRenderedDensityJSON = null;
     
     // Reset all round-specific and mode-specific word/score lists
@@ -4528,10 +4530,12 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     // Optimization: Skip if board hasn't changed
     const densityJSON = JSON.stringify((window.lastGameState && window.lastGameState.cell_density) || []);
     const boardJSON = JSON.stringify(board);
+    const isUserTransposed = !!window.isUserBoardTransposed;
     if (boardJSON === lastRenderedBoardJSON && 
         densityJSON === lastRenderedDensityJSON &&
         grayed === lastRenderedGrayed && 
         isBoardRotated === lastRenderedRotation && 
+        isUserTransposed === lastRenderedUserTranspose &&
         boardEl.classList.contains('game-board')) {
         reapplyBoardHighlights();
         if (typeof checkBoardOverflow === 'function') checkBoardOverflow();
@@ -4541,6 +4545,7 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     lastRenderedDensityJSON = densityJSON;
     lastRenderedGrayed = grayed;
     lastRenderedRotation = isBoardRotated;
+    lastRenderedUserTranspose = isUserTransposed;
 
     boardEl.className = 'game-board';
     boardEl.style.display = '';
