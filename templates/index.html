@@ -436,7 +436,7 @@
         </div>
 
         <!-- Global Audio Elements (Outside of SPA hidden containers) -->
-        <audio id="lobby-music" src="/music/lobby.mp3" preload="auto" loop></audio>
+        <audio id="lobby-music" src="/music/lobby.mp3#t=205" preload="auto" loop></audio>
         <audio id="triple-music" src="/music/triple.mp3" preload="auto" loop></audio>
 
         <style>
@@ -577,19 +577,27 @@
                         if (pageLoading) pageLoading.classList.add('active');
                         if (pageLogin) pageLogin.classList.remove('active');
 
-                        // Immediately attempt Lobby music playback INSTANTLY on Loading screen (no seek delay!)
+                        // Immediately start Lobby music at designated timeframe [205s, 295s] on Loading screen across all platforms
                         const tryStartLobbyMusic = function() {
                             const music = document.getElementById('lobby-music');
                             if (music) {
-                                const playInstant = function() {
+                                music.ontimeupdate = function() {
+                                    if (music.currentTime < 205 || music.currentTime >= 295) {
+                                        try { music.currentTime = 205; } catch(e) {}
+                                    }
+                                };
+                                const playAtDesignatedWindow = function() {
                                     if (music.paused) {
+                                        if (music.currentTime < 205 || music.currentTime >= 295) {
+                                            try { music.currentTime = 205; } catch(e) {}
+                                        }
                                         music.play().catch(function() {});
                                     }
                                 };
-                                playInstant();
+                                playAtDesignatedWindow();
                                 const events = ['click', 'keydown', 'mousedown', 'touchstart', 'mousemove', 'pointerdown'];
                                 const onGesture = function() {
-                                    playInstant();
+                                    playAtDesignatedWindow();
                                     events.forEach(function(evt) {
                                         document.removeEventListener(evt, onGesture, { capture: true });
                                     });

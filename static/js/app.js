@@ -447,22 +447,33 @@ async function fetchUserCount() {
 
 
 // Helper to play lobby music safely on both mobile and desktop.
-// - Mobile: Plays natively from 0s (no seeks) to prevent browser/OS seek stalling.
-// - Desktop/Laptop: Exact June 27 stable logic (seek to 205s and loop between 205s and 295s).
-// Helper to play lobby music safely on both mobile and desktop.
-// - Mobile: Plays natively from 0s (no seeks) to prevent browser/OS seek stalling.
-// - Desktop/Laptop: Exact June 27 stable logic (seek to 205s and loop between 205s and 295s).
+// Helper to play lobby music safely across all platforms (desktops, laptops, tablets, mobile).
+// Starts at 205s and loops continuously between 205s and 295s.
 function playLobbyMusicHelper(lobbyMusic, onSuccess) {
-    console.log('[LobbyMusic] Playing lobby music instantly.');
-    if (!lobbyMusic.paused) {
-        console.log('[LobbyMusic] Already playing continuously.');
+    // Loop between 205s and 295s
+    lobbyMusic.ontimeupdate = function () {
+        if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
+            try { 
+                lobbyMusic.currentTime = 205; 
+            } catch(err) {}
+        }
+    };
+
+    // If already playing smoothly within the [205s, 295s] timeframe, continue playback without restarting!
+    if (!lobbyMusic.paused && lobbyMusic.currentTime >= 205 && lobbyMusic.currentTime < 295) {
+        console.log('[LobbyMusic] Already playing continuously at:', lobbyMusic.currentTime);
         if (onSuccess) onSuccess();
         return;
     }
 
+    if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
+        try { lobbyMusic.currentTime = 205; } catch(err) {}
+    }
+
+    console.log('[LobbyMusic] Playing lobby music in designated window [205s, 295s].');
     lobbyMusic.play()
         .then(() => {
-            console.log('[LobbyMusic] Instant play succeeded.');
+            console.log('[LobbyMusic] Play succeeded at designated window.');
             if (onSuccess) onSuccess();
         })
         .catch(err => {
