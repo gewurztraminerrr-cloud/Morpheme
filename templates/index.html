@@ -577,36 +577,25 @@
                         if (pageLoading) pageLoading.classList.add('active');
                         if (pageLogin) pageLogin.classList.remove('active');
 
-                        // Immediately attempt Lobby music playback on Loading screen for desktop/laptop & mobile
+                        // Immediately attempt Lobby music playback INSTANTLY on Loading screen (no seek delay!)
                         const tryStartLobbyMusic = function() {
                             const music = document.getElementById('lobby-music');
-                            if (music && music.paused) {
-                                music.ontimeupdate = function() {
-                                    if (music.currentTime < 205 || music.currentTime >= 295) {
-                                        try { music.currentTime = 205; } catch(e) {}
+                            if (music) {
+                                const playInstant = function() {
+                                    if (music.paused) {
+                                        music.play().catch(function() {});
                                     }
                                 };
-                                music.play().then(function() {
-                                    if (music.currentTime < 205 || music.currentTime >= 295) {
-                                        try { music.currentTime = 205; } catch(e) {}
-                                    }
-                                }).catch(function() {
-                                    const events = ['click', 'keydown', 'mousedown', 'touchstart', 'mousemove', 'pointerdown'];
-                                    const onGesture = function() {
-                                        if (music.paused) {
-                                            music.play().then(function() {
-                                                if (music.currentTime < 205 || music.currentTime >= 295) {
-                                                    try { music.currentTime = 205; } catch(e) {}
-                                                }
-                                            }).catch(function() {});
-                                        }
-                                        events.forEach(function(evt) {
-                                            document.removeEventListener(evt, onGesture, { capture: true });
-                                        });
-                                    };
+                                playInstant();
+                                const events = ['click', 'keydown', 'mousedown', 'touchstart', 'mousemove', 'pointerdown'];
+                                const onGesture = function() {
+                                    playInstant();
                                     events.forEach(function(evt) {
-                                        document.addEventListener(evt, onGesture, { capture: true });
+                                        document.removeEventListener(evt, onGesture, { capture: true });
                                     });
+                                };
+                                events.forEach(function(evt) {
+                                    document.addEventListener(evt, onGesture, { capture: true });
                                 });
                             }
                         };

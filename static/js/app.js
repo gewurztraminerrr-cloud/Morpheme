@@ -453,30 +453,16 @@ async function fetchUserCount() {
 // - Mobile: Plays natively from 0s (no seeks) to prevent browser/OS seek stalling.
 // - Desktop/Laptop: Exact June 27 stable logic (seek to 205s and loop between 205s and 295s).
 function playLobbyMusicHelper(lobbyMusic, onSuccess) {
-    // Loop between 205s and 295s
-    lobbyMusic.ontimeupdate = function () {
-        if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
-            try { 
-                lobbyMusic.currentTime = 205; 
-            } catch(err) {}
-        }
-    };
-
-    console.log('[LobbyMusic] Playing lobby music.');
-    const isAlreadyPlaying = !lobbyMusic.paused && lobbyMusic.currentTime >= 205 && lobbyMusic.currentTime < 295;
+    console.log('[LobbyMusic] Playing lobby music instantly.');
+    if (!lobbyMusic.paused) {
+        console.log('[LobbyMusic] Already playing continuously.');
+        if (onSuccess) onSuccess();
+        return;
+    }
 
     lobbyMusic.play()
         .then(() => {
-            if (!isAlreadyPlaying) {
-                console.log('[LobbyMusic] Play succeeded. Initializing seek to 205...');
-                try {
-                    if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
-                        lobbyMusic.currentTime = 205;
-                    }
-                } catch(err) {}
-            } else {
-                console.log('[LobbyMusic] Already playing continuously at currentTime:', lobbyMusic.currentTime);
-            }
+            console.log('[LobbyMusic] Instant play succeeded.');
             if (onSuccess) onSuccess();
         })
         .catch(err => {
