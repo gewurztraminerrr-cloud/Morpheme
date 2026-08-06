@@ -59,12 +59,12 @@ window.showTool = function(toolId) {
         if (typeof loadRandomSuggestedWords === 'function') loadRandomSuggestedWords();
     }
 
-    // Scroll tools content into view vertically on mobile
+    // Scroll tools content into view horizontally to the right pane on mobile
     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isMobile) {
-        const contentEl = document.querySelector('#page-tools .tools-content');
-        if (contentEl) {
-            contentEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const layoutEl = document.querySelector('#page-tools .tools-split-layout');
+        if (layoutEl) {
+            layoutEl.scrollTo({ left: layoutEl.clientWidth, behavior: 'smooth' });
         }
     }
 };
