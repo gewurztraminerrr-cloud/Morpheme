@@ -570,71 +570,75 @@
         <script>
             (function() {
                 try {
-                    const loggedIn = localStorage.getItem('morpheme_logged_in') === 'true';
                     const pageLoading = document.getElementById('page-loading');
                     const pageLogin = document.getElementById('page-login');
+                    const loggedIn = localStorage.getItem('morpheme_logged_in') === 'true';
+                    
                     if (loggedIn) {
                         if (pageLoading) pageLoading.classList.add('active');
                         if (pageLogin) pageLogin.classList.remove('active');
-
-                        // Immediately start Lobby music at designated timeframe [205s, 295s] the moment Loading screen appears
-                        const tryStartLobbyMusic = function() {
-                            const music = document.getElementById('lobby-music');
-                            if (music) {
-                                const seekTo205 = function() {
-                                    if (music.currentTime < 205 || music.currentTime >= 295) {
-                                        try { music.currentTime = 205; } catch(e) {}
-                                    }
-                                };
-
-                                music.ontimeupdate = function() {
-                                    if (music.currentTime < 205 || music.currentTime >= 295) {
-                                        try { music.currentTime = 205; } catch(e) {}
-                                    }
-                                };
-
-                                const attemptPlay = function() {
-                                    if (music.paused) {
-                                        seekTo205();
-                                        const promise = music.play();
-                                        if (promise !== undefined) {
-                                            promise.then(function() {
-                                                seekTo205();
-                                            }).catch(function(err) {
-                                                console.warn('[LobbyMusic] Autoplay blocked, waiting for gesture:', err);
-                                            });
-                                        }
-                                    }
-                                };
-
-                                // Try playing immediately
-                                attemptPlay();
-
-                                // Also try when metadata/canplay is ready
-                                music.addEventListener('loadedmetadata', attemptPlay, { once: true });
-                                music.addEventListener('canplay', attemptPlay, { once: true });
-
-                                // Desktop/laptop & mobile gesture listeners attached to window & document
-                                const events = ['click', 'keydown', 'mousedown', 'touchstart', 'mousemove', 'pointermove', 'pointerdown', 'mouseenter', 'mouseover', 'focus'];
-                                const onGesture = function() {
-                                    attemptPlay();
-                                    if (!music.paused) {
-                                        events.forEach(function(evt) {
-                                            window.removeEventListener(evt, onGesture, { capture: true });
-                                            document.removeEventListener(evt, onGesture, { capture: true });
-                                        });
-                                    }
-                                };
-                                events.forEach(function(evt) {
-                                    window.addEventListener(evt, onGesture, { capture: true, passive: true });
-                                    document.addEventListener(evt, onGesture, { capture: true, passive: true });
-                                });
-                            }
-                        };
-                        tryStartLobbyMusic();
                     } else {
                         if (pageLoading) pageLoading.classList.remove('active');
                         if (pageLogin) pageLogin.classList.add('active');
+                    }
+
+                    // Start Lobby music at designated timeframe [205s, 295s] the literal exact moment Loading screen appears
+                    const tryStartLobbyMusic = function() {
+                        const music = document.getElementById('lobby-music');
+                        if (!music) return;
+
+                        const seekTo205 = function() {
+                            if (music.currentTime < 205 || music.currentTime >= 295) {
+                                try { music.currentTime = 205; } catch(e) {}
+                            }
+                        };
+
+                        music.ontimeupdate = function() {
+                            if (music.currentTime < 205 || music.currentTime >= 295) {
+                                try { music.currentTime = 205; } catch(e) {}
+                            }
+                        };
+
+                        const enableAudioOutput = function() {
+                            music.muted = false;
+                            seekTo205();
+                            if (music.paused) {
+                                music.play().catch(function() {});
+                            }
+                        };
+
+                        // Attempt instant unmuted play, fallback to muted play + gesture unmute
+                        seekTo205();
+                        const p = music.play();
+                        if (p !== undefined) {
+                            p.then(function() {
+                                music.muted = false;
+                                seekTo205();
+                            }).catch(function() {
+                                music.muted = true;
+                                music.play().catch(function() {});
+                            });
+                        }
+
+                        // Attach interaction listeners to window & document for instant unmuting/playback
+                        const events = ['click', 'keydown', 'mousedown', 'touchstart', 'mousemove', 'pointermove', 'pointerdown', 'mouseenter', 'mouseover', 'focus', 'wheel', 'scroll'];
+                        const onInteraction = function() {
+                            enableAudioOutput();
+                            if (!music.paused && !music.muted) {
+                                events.forEach(function(evt) {
+                                    window.removeEventListener(evt, onInteraction, { capture: true });
+                                    document.removeEventListener(evt, onInteraction, { capture: true });
+                                });
+                            }
+                        };
+                        events.forEach(function(evt) {
+                            window.addEventListener(evt, onInteraction, { capture: true, passive: true });
+                            document.addEventListener(evt, onInteraction, { capture: true, passive: true });
+                        });
+                    };
+
+                    if (loggedIn || (pageLoading && pageLoading.classList.contains('active'))) {
+                        tryStartLobbyMusic();
                     }
                 } catch(e) {
                     console.warn('LocalStorage check failed:', e);
