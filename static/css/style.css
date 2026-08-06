@@ -4665,14 +4665,14 @@ body .tab-btn.active {
     .nav {
         min-width: auto !important;
         width: 100% !important;
-        max-width: 100% !important;
         flex-shrink: 1 !important;
         display: flex !important;
         flex-direction: row !important;
-        flex-wrap: wrap !important; /* Wrap buttons to fit screen width */
-        overflow-x: hidden !important; /* Disable horizontal scrolling */
-        gap: 8px !important; 
-        justify-content: center !important; /* Center buttons neatly */
+        flex-wrap: nowrap !important; /* Force single row */
+        overflow-x: auto !important; /* Enable horizontal scrolling */
+        -webkit-overflow-scrolling: touch !important; /* Smooth momentum scrolling */
+        gap: 10px !important; 
+        justify-content: flex-start !important; /* Start from the left so scrolling works */
         align-items: center !important;
         padding: 4px 5px 8px 5px !important; /* top padding prevents translateY clip */
         box-sizing: border-box !important;
