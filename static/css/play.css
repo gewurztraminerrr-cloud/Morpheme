@@ -6431,6 +6431,7 @@ body .board-cell.tile-flash-purple * {
     max-width: 100% !important;
     box-sizing: border-box !important;
     overflow-x: hidden !important;
+    padding-right: 15px !important;
 }
 
 #setting-tab-appearance .settings-tab-grid {
@@ -6446,17 +6447,54 @@ body .board-cell.tile-flash-purple * {
     max-width: 100% !important;
     box-sizing: border-box !important;
     overflow-x: hidden !important;
+    padding: 20px 18px !important;
 }
 
-#setting-tab-appearance .theme-selector-grid,
-#setting-tab-appearance .dimension-sliders-grid,
-#setting-tab-appearance .preview-board-container,
-#setting-tab-appearance .settings-preview-box,
-#setting-tab-appearance #synesthesia-letters-grid {
+#setting-tab-appearance .theme-selector-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)) !important;
+    gap: 10px !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
     overflow-x: hidden !important;
+}
+
+#setting-tab-appearance .dimension-sliders-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+}
+
+#setting-tab-appearance .preview-board-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+    padding: 15px !important;
+    justify-content: center !important;
+}
+
+#setting-tab-appearance .settings-preview-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+}
+
+#setting-tab-appearance #synesthesia-letters-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+    padding: 10px !important;
 }
 
 #setting-tab-appearance .preview-board {
