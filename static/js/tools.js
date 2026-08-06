@@ -2876,10 +2876,10 @@ function setupListsTool() {
     initCustomScrollbar();
 }
 
-function initCustomScrollbar() {
-    const scrollArea = document.getElementById('main-list-results');
-    const track = document.getElementById('list-scrollbar-track');
-    const thumb = document.getElementById('list-scrollbar-thumb');
+function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
+    const scrollArea = typeof scrollAreaId === 'string' ? document.getElementById(scrollAreaId) : scrollAreaId;
+    const track = typeof trackId === 'string' ? document.getElementById(trackId) : trackId;
+    const thumb = typeof thumbId === 'string' ? document.getElementById(thumbId) : thumbId;
     if (!scrollArea || !track || !thumb) return;
 
     function updateThumb() {
@@ -2900,7 +2900,7 @@ function initCustomScrollbar() {
 
         const maxScrollTop = scrollHeight - clientHeight;
         const maxThumbTop = clientHeight - thumbHeight;
-        const thumbTop = (scrollTop / maxScrollTop) * maxThumbTop;
+        const thumbTop = maxScrollTop > 0 ? (scrollTop / maxScrollTop) * maxThumbTop : 0;
         thumb.style.top = `${thumbTop}px`;
     }
 
@@ -2946,7 +2946,9 @@ function initCustomScrollbar() {
 
         const scrollHeight = scrollArea.scrollHeight;
         const maxScrollTop = scrollHeight - clientHeight;
-        scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
+        if (maxThumbTop > 0) {
+            scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
+        }
 
         if (e.cancelable !== false) {
             e.preventDefault();
@@ -2970,6 +2972,7 @@ function initCustomScrollbar() {
     thumb.addEventListener('touchstart', onDragStart, { passive: false });
     document.addEventListener('touchmove', onDragMove, { passive: false });
     document.addEventListener('touchend', onDragEnd);
+    document.addEventListener('touchcancel', onDragEnd);
 
     // Click/tap on track to jump and drag
     track.addEventListener('mousedown', (e) => {
@@ -2985,7 +2988,9 @@ function initCustomScrollbar() {
 
         const scrollHeight = scrollArea.scrollHeight;
         const maxScrollTop = scrollHeight - clientHeight;
-        scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
+        if (maxThumbTop > 0) {
+            scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
+        }
 
         // Directly start drag session
         isDragging = true;
@@ -3008,7 +3013,9 @@ function initCustomScrollbar() {
 
         const scrollHeight = scrollArea.scrollHeight;
         const maxScrollTop = scrollHeight - clientHeight;
-        scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
+        if (maxThumbTop > 0) {
+            scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
+        }
 
         isDragging = true;
         thumb.classList.add('dragging');
@@ -3021,6 +3028,10 @@ function initCustomScrollbar() {
 
     // Initial position trigger
     updateThumb();
+}
+
+function initCustomScrollbar() {
+    initCustomScrollbarForElement('main-list-results', 'list-scrollbar-track', 'list-scrollbar-thumb');
 }
 
 
@@ -3260,9 +3271,10 @@ async function runSequenceSearch() {
             <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2);">
                 Found ${count} words
             </div>
-            <div style="flex: 1; overflow-y: auto; padding: 10px;">
-                <table class="group-table" style="width: 100%;">
-                    <tbody>
+            <div class="list-scroll-area-wrapper" style="position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column;">
+                <div class="seq-scroll-area list-scroll-area" id="seq-list-results" style="height: 100%; overflow-y: auto; padding: 10px;">
+                    <table class="group-table" style="width: 100%;">
+                        <tbody>
         `;
 
         // Clickable words for Sequence search
@@ -3273,12 +3285,17 @@ async function runSequenceSearch() {
         `).join('');
 
         html += `
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="custom-scrollbar-track" id="seq-scrollbar-track">
+                    <div class="custom-scrollbar-thumb" id="seq-scrollbar-thumb"></div>
+                </div>
             </div>
         `;
 
         resultsContainer.innerHTML = html;
+        initCustomScrollbarForElement('seq-list-results', 'seq-scrollbar-track', 'seq-scrollbar-thumb');
 
     } catch (err) {
         console.error("Sequence search failed:", err);
@@ -3702,9 +3719,10 @@ async function runSubanagramSearch() {
             <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); text-align: left;">
                 Found ${count} subanagrams
             </div>
-            <div style="flex: 1; overflow-y: auto; padding: 10px;">
-                <table class="group-table" style="width: 100%;">
-                    <tbody>
+            <div class="list-scroll-area-wrapper" style="position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column;">
+                <div class="sub-scroll-area list-scroll-area" id="sub-list-results" style="height: 100%; overflow-y: auto; padding: 10px;">
+                    <table class="group-table" style="width: 100%;">
+                        <tbody>
         `;
 
         // Clickable words for Subanagram search
@@ -3715,12 +3733,17 @@ async function runSubanagramSearch() {
         `).join('');
 
         html += `
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="custom-scrollbar-track" id="sub-scrollbar-track">
+                    <div class="custom-scrollbar-thumb" id="sub-scrollbar-thumb"></div>
+                </div>
             </div>
         `;
 
         resultsContainer.innerHTML = html;
+        initCustomScrollbarForElement('sub-list-results', 'sub-scrollbar-track', 'sub-scrollbar-thumb');
 
     } catch (err) {
         console.error("Subanagram search failed:", err);

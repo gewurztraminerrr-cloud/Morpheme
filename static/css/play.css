@@ -6065,7 +6065,49 @@ body .board-cell.tile-flash-purple * {
     border: 1px solid rgba(0, 210, 255, 0.6);
     box-shadow: 0 0 12px rgba(0, 210, 255, 0.5);
     width: 14px;
-    left: 1px;
+}
+
+/* Scrollbar styling for Sequence and Subanagrams scrollers */
+#seq-results-container ::-webkit-scrollbar,
+#sub-results-container ::-webkit-scrollbar,
+.seq-scroll-area::-webkit-scrollbar,
+.sub-scroll-area::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+#seq-results-container ::-webkit-scrollbar-track,
+#sub-results-container ::-webkit-scrollbar-track,
+.seq-scroll-area::-webkit-scrollbar-track,
+.sub-scroll-area::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+}
+
+#seq-results-container ::-webkit-scrollbar-thumb,
+#sub-results-container ::-webkit-scrollbar-thumb,
+.seq-scroll-area::-webkit-scrollbar-thumb,
+.sub-scroll-area::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(0, 210, 255, 0.6), rgba(58, 123, 213, 0.6));
+    border-radius: 6px;
+    border: 1px solid rgba(0, 210, 255, 0.4);
+    box-shadow: 0 0 8px rgba(0, 210, 255, 0.3);
+}
+
+#seq-results-container ::-webkit-scrollbar-thumb:hover,
+#sub-results-container ::-webkit-scrollbar-thumb:hover,
+.seq-scroll-area::-webkit-scrollbar-thumb:hover,
+.sub-scroll-area::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(0, 210, 255, 0.9), rgba(58, 123, 213, 0.9));
+    border-color: rgba(0, 210, 255, 0.8);
+}
+
+#seq-results-container *,
+#sub-results-container *,
+.seq-scroll-area,
+.sub-scroll-area {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 210, 255, 0.6) rgba(0, 0, 0, 0.2);
 }
 
 /* Find Count Tool Styles */
