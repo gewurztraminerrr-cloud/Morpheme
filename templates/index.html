@@ -570,13 +570,47 @@
         <script>
             (function() {
                 try {
-
                     const loggedIn = localStorage.getItem('morpheme_logged_in') === 'true';
                     const pageLoading = document.getElementById('page-loading');
                     const pageLogin = document.getElementById('page-login');
                     if (loggedIn) {
                         if (pageLoading) pageLoading.classList.add('active');
                         if (pageLogin) pageLogin.classList.remove('active');
+
+                        // Immediately attempt Lobby music playback on Loading screen for desktop/laptop & mobile
+                        const tryStartLobbyMusic = function() {
+                            const music = document.getElementById('lobby-music');
+                            if (music && music.paused) {
+                                music.ontimeupdate = function() {
+                                    if (music.currentTime < 205 || music.currentTime >= 295) {
+                                        try { music.currentTime = 205; } catch(e) {}
+                                    }
+                                };
+                                music.play().then(function() {
+                                    if (music.currentTime < 205 || music.currentTime >= 295) {
+                                        try { music.currentTime = 205; } catch(e) {}
+                                    }
+                                }).catch(function() {
+                                    const events = ['click', 'keydown', 'mousedown', 'touchstart', 'mousemove', 'pointerdown'];
+                                    const onGesture = function() {
+                                        if (music.paused) {
+                                            music.play().then(function() {
+                                                if (music.currentTime < 205 || music.currentTime >= 295) {
+                                                    try { music.currentTime = 205; } catch(e) {}
+                                                }
+                                            }).catch(function() {});
+                                        }
+                                        events.forEach(function(evt) {
+                                            document.removeEventListener(evt, onGesture, { capture: true });
+                                        });
+                                    };
+                                    events.forEach(function(evt) {
+                                        document.addEventListener(evt, onGesture, { capture: true });
+                                    });
+                                });
+                            }
+                        };
+                        tryStartLobbyMusic();
                     } else {
                         if (pageLoading) pageLoading.classList.remove('active');
                         if (pageLogin) pageLogin.classList.add('active');
