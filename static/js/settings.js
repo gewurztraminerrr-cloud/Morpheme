@@ -829,6 +829,14 @@ function debounce(func, wait) {
             });
         }
 
+        const mobileBackBtn = document.getElementById('settings-mobile-back-btn');
+        if (mobileBackBtn) {
+            mobileBackBtn.onclick = () => {
+                const layoutEl = document.querySelector('#page-settings .tools-split-layout');
+                if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+            };
+        }
+
         // Mobile touch swipe handling for sliding back to settings list
         const settingsContent = document.querySelector('#page-settings .tools-content');
         const settingsSidebar = document.querySelector('#page-settings .tools-sidebar');

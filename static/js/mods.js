@@ -923,6 +923,14 @@ function setupModsNavigation() {
         });
     }
 
+    const mobileBackBtn = document.getElementById('mods-mobile-back-btn');
+    if (mobileBackBtn) {
+        mobileBackBtn.onclick = () => {
+            const layoutEl = document.querySelector('#page-mods .tools-split-layout');
+            if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+        };
+    }
+
     // Mobile touch swipe handling for sliding back to mods list
     const modsContent = document.querySelector('#page-mods .tools-content');
     const modsSidebar = document.querySelector('#page-mods .tools-sidebar');
