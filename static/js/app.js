@@ -257,8 +257,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const gatewayCont = document.getElementById('loading-gateway-container');
 
             if (gatewayBtn && spinnerCont && gatewayCont) {
-                // Keep the page on loading screen
+                // Keep the page on loading screen and begin Lobby music
                 showPage('page-loading');
+                handleLobbyMusicState();
                 
                 // Show dictionary pre-caching status text
                 let loadingTextEl = document.getElementById('loading-status-text');
@@ -553,7 +554,7 @@ function playMusicOnFirstInteraction() {
 }
 
 function removeInteractionListeners() {
-    const events = ['click', 'keydown', 'mousedown', 'touchstart'];
+    const events = ['click', 'keydown', 'mousedown', 'touchstart', 'mousemove', 'pointerdown'];
     events.forEach(evt => {
         document.removeEventListener(evt, playMusicOnFirstInteraction, { capture: true });
     });
@@ -561,7 +562,7 @@ function removeInteractionListeners() {
 
 function setupFirstInteractionMusic() {
     // Add event listeners without once: true so we don't prematurely delete them on early loading clicks!
-    const events = ['click', 'keydown', 'mousedown', 'touchstart'];
+    const events = ['click', 'keydown', 'mousedown', 'touchstart', 'mousemove', 'pointerdown'];
     events.forEach(evt => {
         document.addEventListener(evt, playMusicOnFirstInteraction, { capture: true });
     });
