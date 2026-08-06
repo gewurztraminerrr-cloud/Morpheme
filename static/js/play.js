@@ -4657,41 +4657,18 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     // OPTIMIZATION: In Density mode, we want SMOOTH transitions.
     // Wiping innerHTML destroys elements and breaks CSS transitions. 
     // We only wipe if the board dimensions have changed.
-    const expectedCount = rows * cols;
-    const currentCells = boardEl.querySelectorAll('.board-cell:not(.cube-cell)'); // Only 2D cells
-    
-    if (currentCells.length === expectedCount && !is3D) {
-        // SYNC EXISTING CELLS (Supports Dynamic Shading Transitions)
-        let idx = 0;
-        for (let rOut = 0; rOut < rows; rOut++) {
-            for (let cOut = 0; cOut < cols; cOut++) {
-                let r1 = isBoardRotated ? (rows - 1 - rOut) : rOut;
-                let c1 = isBoardRotated ? (cols - 1 - cOut) : cOut;
+    boardEl.innerHTML = '';
+    for (let rOut = 0; rOut < rows; rOut++) {
+        for (let cOut = 0; cOut < cols; cOut++) {
+            let r1 = isBoardRotated ? (rows - 1 - rOut) : rOut;
+            let c1 = isBoardRotated ? (cols - 1 - cOut) : cOut;
 
-                let origR = r1;
-                let origC = window.isUserBoardTransposed ? (cols - 1 - c1) : c1;
+            let origR = r1;
+            let origC = window.isUserBoardTransposed ? (cols - 1 - c1) : c1;
 
-                const existing = currentCells[idx++];
-                if (existing && board && board[origR] && board[origR][origC] !== undefined) {
-                    updateBoardCell(existing, origR, origC, board[origR][origC], grayed, undefined, state);
-                }
-            }
-        }
-    } else {
-        // FULL RERENDER
-        boardEl.innerHTML = '';
-        for (let rOut = 0; rOut < rows; rOut++) {
-            for (let cOut = 0; cOut < cols; cOut++) {
-                let r1 = isBoardRotated ? (rows - 1 - rOut) : rOut;
-                let c1 = isBoardRotated ? (cols - 1 - cOut) : cOut;
-
-                let origR = r1;
-                let origC = window.isUserBoardTransposed ? (cols - 1 - c1) : c1;
-
-                const cellChar = (board && board[origR] && board[origR][origC] !== undefined) ? board[origR][origC] : '';
-                const cell = createBoardCell(origR, origC, cellChar, grayed, undefined, state);
-                boardEl.appendChild(cell);
-            }
+            const cellChar = (board && board[origR] && board[origR][origC] !== undefined) ? board[origR][origC] : '';
+            const cell = createBoardCell(origR, origC, cellChar, grayed, undefined, state);
+            boardEl.appendChild(cell);
         }
     }
 
@@ -7537,30 +7514,13 @@ if (returnBtnEl) {
 
 window.isUserBoardTransposed = false;
 
-const rotateBtnEl = document.getElementById('rotate-board-btn');
-if (rotateBtnEl) {
-    rotateBtnEl.addEventListener('click', () => {
-        isBoardRotated = !isBoardRotated;
-        console.log('[play.js] Board rotation toggled. Rotated:', isBoardRotated);
-        // Force re-render if we have state
-        if (window.lastGameState && window.lastGameState.board) {
-            let boardToRender = window.lastGameState.board;
-            let isIntermission = window.lastGameState.state === 'intermission';
-            if (activeWordsTab === 'previous' && window.lastGameState.previous_board && window.lastGameState.previous_board.length > 0) {
-                boardToRender = window.lastGameState.previous_board;
-                isIntermission = true;
-            }
-            const is3D = window.lastGameState.game_type === '3d' || (boardToRender && boardToRender.length === 6 && Array.isArray(boardToRender[0]) && Array.isArray(boardToRender[0][0]));
-            renderBoard(boardToRender, isIntermission, is3D);
-        }
-    });
-}
-
-const transposeBtnEl = document.getElementById('transpose-board-btn');
-if (transposeBtnEl) {
-    transposeBtnEl.addEventListener('click', () => {
+document.addEventListener('click', (e) => {
+    const transposeBtn = e.target ? e.target.closest('#transpose-board-btn') : null;
+    if (transposeBtn) {
+        e.preventDefault();
+        e.stopPropagation();
         window.isUserBoardTransposed = !window.isUserBoardTransposed;
-        console.log('[play.js] Board transpose toggled. Transposed:', window.isUserBoardTransposed);
+        console.log('[play.js] Transpose clicked! isUserBoardTransposed:', window.isUserBoardTransposed);
         if (window.lastGameState && window.lastGameState.board) {
             let boardToRender = window.lastGameState.board;
             let isIntermission = window.lastGameState.state === 'intermission';
@@ -7571,8 +7531,28 @@ if (transposeBtnEl) {
             const is3D = window.lastGameState.game_type === '3d' || (boardToRender && boardToRender.length === 6 && Array.isArray(boardToRender[0]) && Array.isArray(boardToRender[0][0]));
             renderBoard(boardToRender, isIntermission, is3D);
         }
-    });
-}
+        return;
+    }
+
+    const rotateBtn = e.target ? e.target.closest('#rotate-board-btn') : null;
+    if (rotateBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        isBoardRotated = !isBoardRotated;
+        console.log('[play.js] Rotate clicked! isBoardRotated:', isBoardRotated);
+        if (window.lastGameState && window.lastGameState.board) {
+            let boardToRender = window.lastGameState.board;
+            let isIntermission = window.lastGameState.state === 'intermission';
+            if (activeWordsTab === 'previous' && window.lastGameState.previous_board && window.lastGameState.previous_board.length > 0) {
+                boardToRender = window.lastGameState.previous_board;
+                isIntermission = true;
+            }
+            const is3D = window.lastGameState.game_type === '3d' || (boardToRender && boardToRender.length === 6 && Array.isArray(boardToRender[0]) && Array.isArray(boardToRender[0][0]));
+            renderBoard(boardToRender, isIntermission, is3D);
+        }
+        return;
+    }
+});
 
 // Definition Logic
 async function fetchDefinition(word) {
