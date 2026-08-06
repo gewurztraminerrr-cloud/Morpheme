@@ -705,6 +705,45 @@ body.theme-light-brown .player-score-val {
     display: inline-block;
 }
 
+.timer-controls-group {
+    justify-self: end !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}
+
+.timer-controls-group .rotate-btn {
+    padding: 6px 12px !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    cursor: pointer !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: var(--text-primary, #fff) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    transition: all 0.15s ease !important;
+    margin: 0 !important;
+    outline: none !important;
+}
+
+.timer-controls-group .rotate-btn:hover {
+    background: rgba(255, 255, 255, 0.3) !important;
+}
+
+.timer-controls-group #rotate-board-btn {
+    border-top-left-radius: 6px !important;
+    border-bottom-left-radius: 6px !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-right: none !important;
+}
+
+.timer-controls-group #transpose-board-btn {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-top-right-radius: 6px !important;
+    border-bottom-right-radius: 6px !important;
+}
+
 @keyframes wait-bounce {
     0%, 100% {
         transform: translateY(0);

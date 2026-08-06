@@ -4439,9 +4439,14 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     }
 
     const rotateBtn = document.getElementById('rotate-board-btn');
+    const transposeBtn = document.getElementById('transpose-board-btn');
     if (rotateBtn) {
         if (is3D) rotateBtn.classList.add('hidden');
         else rotateBtn.classList.remove('hidden');
+    }
+    if (transposeBtn) {
+        if (is3D) transposeBtn.classList.add('hidden');
+        else transposeBtn.classList.remove('hidden');
     }
 
     // Handle Empty/Loading State
@@ -4658,37 +4663,34 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     if (currentCells.length === expectedCount && !is3D) {
         // SYNC EXISTING CELLS (Supports Dynamic Shading Transitions)
         let idx = 0;
-        if (isBoardRotated) {
-            for (let r = rows - 1; r >= 0; r--) {
-                for (let c = cols - 1; c >= 0; c--) {
-                    const existing = currentCells[idx++];
-                    updateBoardCell(existing, r, c, board[r][c], grayed, undefined, state);
-                }
-            }
-        } else {
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                    const existing = currentCells[idx++];
-                    updateBoardCell(existing, r, c, board[r][c], grayed, undefined, state);
+        for (let rOut = 0; rOut < rows; rOut++) {
+            for (let cOut = 0; cOut < cols; cOut++) {
+                let r1 = isBoardRotated ? (rows - 1 - rOut) : rOut;
+                let c1 = isBoardRotated ? (cols - 1 - cOut) : cOut;
+
+                let origR = r1;
+                let origC = window.isUserBoardTransposed ? (cols - 1 - c1) : c1;
+
+                const existing = currentCells[idx++];
+                if (existing && board && board[origR] && board[origR][origC] !== undefined) {
+                    updateBoardCell(existing, origR, origC, board[origR][origC], grayed, undefined, state);
                 }
             }
         }
     } else {
         // FULL RERENDER
         boardEl.innerHTML = '';
-        if (isBoardRotated) {
-            for (let r = rows - 1; r >= 0; r--) {
-                for (let c = cols - 1; c >= 0; c--) {
-                    const cell = createBoardCell(r, c, board[r][c], grayed, undefined, state);
-                    boardEl.appendChild(cell);
-                }
-            }
-        } else {
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                    const cell = createBoardCell(r, c, board[r][c], grayed, undefined, state);
-                    boardEl.appendChild(cell);
-                }
+        for (let rOut = 0; rOut < rows; rOut++) {
+            for (let cOut = 0; cOut < cols; cOut++) {
+                let r1 = isBoardRotated ? (rows - 1 - rOut) : rOut;
+                let c1 = isBoardRotated ? (cols - 1 - cOut) : cOut;
+
+                let origR = r1;
+                let origC = window.isUserBoardTransposed ? (cols - 1 - c1) : c1;
+
+                const cellChar = (board && board[origR] && board[origR][origC] !== undefined) ? board[origR][origC] : '';
+                const cell = createBoardCell(origR, origC, cellChar, grayed, undefined, state);
+                boardEl.appendChild(cell);
             }
         }
     }
@@ -7531,12 +7533,32 @@ if (returnBtnEl) {
     });
 }
 
+window.isUserBoardTransposed = false;
+
 const rotateBtnEl = document.getElementById('rotate-board-btn');
 if (rotateBtnEl) {
     rotateBtnEl.addEventListener('click', () => {
         isBoardRotated = !isBoardRotated;
         console.log('[play.js] Board rotation toggled. Rotated:', isBoardRotated);
         // Force re-render if we have state
+        if (window.lastGameState && window.lastGameState.board) {
+            let boardToRender = window.lastGameState.board;
+            let isIntermission = window.lastGameState.state === 'intermission';
+            if (activeWordsTab === 'previous' && window.lastGameState.previous_board && window.lastGameState.previous_board.length > 0) {
+                boardToRender = window.lastGameState.previous_board;
+                isIntermission = true;
+            }
+            const is3D = window.lastGameState.game_type === '3d' || (boardToRender && boardToRender.length === 6 && Array.isArray(boardToRender[0]) && Array.isArray(boardToRender[0][0]));
+            renderBoard(boardToRender, isIntermission, is3D);
+        }
+    });
+}
+
+const transposeBtnEl = document.getElementById('transpose-board-btn');
+if (transposeBtnEl) {
+    transposeBtnEl.addEventListener('click', () => {
+        window.isUserBoardTransposed = !window.isUserBoardTransposed;
+        console.log('[play.js] Board transpose toggled. Transposed:', window.isUserBoardTransposed);
         if (window.lastGameState && window.lastGameState.board) {
             let boardToRender = window.lastGameState.board;
             let isIntermission = window.lastGameState.state === 'intermission';
