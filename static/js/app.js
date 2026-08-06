@@ -283,10 +283,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                             loadingTextEl.style.display = 'none';
                             spinnerCont.style.display = 'none';
                             gatewayCont.style.display = 'flex';
+                            document.body.classList.remove('loading-active');
                         } else {
                             loadingTextEl.textContent = 'Morpheme is loading dictionaries...';
                             spinnerCont.style.display = 'flex';
                             gatewayCont.style.display = 'none';
+                            document.body.classList.add('loading-active');
                             setTimeout(checkWarmup, 300);
                         }
                     } catch (e) {
@@ -294,9 +296,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         loadingTextEl.style.display = 'none';
                         spinnerCont.style.display = 'none';
                         gatewayCont.style.display = 'flex';
+                        document.body.classList.remove('loading-active');
                     }
                 };
 
+                document.body.classList.add('loading-active');
                 await checkWarmup();
 
                 // Customize button text based on destination
@@ -1121,6 +1125,9 @@ function showPage(pageId) {
             page.classList.remove('active');
         }
     });
+    if (pageId !== 'page-loading') {
+        document.body.classList.remove('loading-active');
+    }
     window.scrollTo(0, 0);
 
     // Standardize: Rating color bar ONLY appears on the Play page
