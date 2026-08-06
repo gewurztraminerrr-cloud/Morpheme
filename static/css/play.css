@@ -6275,35 +6275,46 @@ body .board-cell.tile-flash-purple * {
 /* Mobile Store Layout Fixes */
 @media (max-width: 900px) {
     #page-tools,
-    #page-tools .tools-split-layout {
-        overflow-x: hidden !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-    }
-    #page-tools .tools-content {
-        overflow-x: hidden !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-        padding: 4px 6px !important;
-        touch-action: pan-y !important;
-    }
+    #page-tools .tools-split-layout,
+    #page-tools .tools-content,
     #tool-store,
     #tool-store * {
-        max-width: 100% !important;
         box-sizing: border-box !important;
+        max-width: 100% !important;
+    }
+    #page-tools {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    #page-tools .tools-split-layout {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    #page-tools .tools-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        padding: 4px 0 !important;
+        margin: 0 !important;
+        touch-action: pan-y !important;
     }
     #tool-store {
         width: 100% !important;
+        max-width: 100% !important;
         overflow-x: hidden !important;
-        padding: 0 !important;
+        padding: 0 4px !important;
         margin: 0 !important;
         touch-action: pan-y !important;
     }
     #tool-store .tool-header {
         margin-bottom: 6px !important;
-        padding: 0 !important;
+        padding: 0 4px !important;
     }
     #tool-store .tool-header h2 {
         font-size: 1.15rem !important;
@@ -6319,6 +6330,7 @@ body .board-cell.tile-flash-purple * {
         flex-direction: column !important;
         grid-template-columns: none !important;
         width: 100% !important;
+        max-width: 100% !important;
         gap: 10px !important;
         margin-top: 6px !important;
         padding: 0 !important;
@@ -6328,12 +6340,12 @@ body .board-cell.tile-flash-purple * {
     #tool-store .store-item {
         display: flex !important;
         flex-direction: column !important;
-        width: 98% !important;
-        max-width: 98% !important;
+        width: 100% !important;
+        max-width: 100% !important;
         border-radius: 12px !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
-        margin: 0 auto !important;
+        margin: 0 0 10px 0 !important;
         touch-action: pan-y !important;
     }
     #tool-store .store-item-image {
@@ -6350,6 +6362,7 @@ body .board-cell.tile-flash-purple * {
     #tool-store .store-item-info {
         padding: 8px 10px !important;
         width: 100% !important;
+        max-width: 100% !important;
         box-sizing: border-box !important;
         overflow-x: hidden !important;
         gap: 4px !important;
