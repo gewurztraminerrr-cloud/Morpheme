@@ -710,27 +710,36 @@ body.theme-light-brown .player-score-val {
 }
 
 .timer-controls-group {
-    justify-self: end !important;
     display: inline-flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
     align-items: center !important;
+    margin-left: auto !important;
+    white-space: nowrap !important;
 }
 
 .timer-controls-group .rotate-btn {
-    padding: 6px 12px !important;
-    font-size: 0.75rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 6px 14px !important;
+    font-size: 0.85rem !important;
     font-weight: 700 !important;
     line-height: 1.2 !important;
     cursor: pointer !important;
-    background: rgba(255, 255, 255, 0.15) !important;
+    background: rgba(255, 255, 255, 0.18) !important;
     color: var(--text-primary, #fff) !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
     transition: all 0.15s ease !important;
     margin: 0 !important;
     outline: none !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+    height: 32px !important;
 }
 
 .timer-controls-group .rotate-btn:hover {
-    background: rgba(255, 255, 255, 0.3) !important;
+    background: rgba(255, 255, 255, 0.35) !important;
 }
 
 .timer-controls-group #rotate-board-btn {
@@ -739,6 +748,7 @@ body.theme-light-brown .player-score-val {
     border-top-right-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
     border-right: none !important;
+    margin: 0 !important;
 }
 
 .timer-controls-group #transpose-board-btn {
@@ -746,6 +756,8 @@ body.theme-light-brown .player-score-val {
     border-bottom-left-radius: 0 !important;
     border-top-right-radius: 6px !important;
     border-bottom-right-radius: 6px !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
+    margin: 0 !important;
 }
 
 @keyframes wait-bounce {
@@ -4599,22 +4611,7 @@ input[type=range]::-moz-range-track {
         display: none !important;
     }
 
-    /* Style the rotate button when it is inside the timer on mobile */
-    .timer-display .rotate-btn,
-    .timer-display #toggle-board-btn {
-        margin-left: auto !important; /* Push it to the far right of the flex container */
-        padding: 2px 8px !important; /* Smaller padding to prevent spill */
-        font-size: 0.75rem !important; /* Smaller text */
-        height: auto !important;
-        line-height: 1.2 !important; /* Prevent vertical expansion */
-        box-sizing: border-box !important;
-        border-radius: 4px !important;
-        background: rgba(var(--text-primary-rgb), 0.2) !important;
-        border: 1px solid rgba(var(--text-primary-rgb), 0.3) !important;
-        color: var(--text-primary) !important;
-        cursor: pointer !important;
-        align-self: center !important; /* Center vertically */
-    }
+
 
     /* Remove the vertical stacking order as we are now a horizontal carousel */
     .players-panel, .board-panel, .words-table-box, .definitions-panel, .chat-panel {
@@ -6337,11 +6334,12 @@ body .board-cell.tile-flash-purple * {
     .timer-controls-group {
         display: inline-flex !important;
         flex-direction: row !important;
+        flex-wrap: nowrap !important;
         align-items: center !important;
         margin-left: auto !important;
     }
     .timer-controls-group .rotate-btn {
-        display: inline-block !important;
+        display: inline-flex !important;
     }
 }
 
