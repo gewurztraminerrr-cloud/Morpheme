@@ -36,7 +36,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css?v=125">
     <link rel="stylesheet" href="/css/lobby.css?v=80">
-    <link rel="stylesheet" href="/css/play.css?v=145">
+    <link rel="stylesheet" href="/css/play.css?v=147">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=27">
     <link rel="stylesheet" href="/css/donate.css?v=1">
@@ -5066,7 +5066,7 @@
     <script src="/js/forum.js?v=54"></script>
     <script src="/js/app.js?v=70"></script>
     <script src="/js/lobby.js?v=10"></script>
-    <script src="/js/play.js?v=238"></script>
+    <script src="/js/play.js?v=239"></script>
     <script src="/js/tournaments.js?v=9"></script>
     <script src="/js/leaderboard.js?v=3"></script>
     <script src="/js/tools.js?v=82"></script>
@@ -5238,30 +5238,6 @@
                 // Move Color Chart (Color Bar) below the header (above the 3 columns)
                 if (colorBar && header && colorBar.parentElement !== pagePlay) {
                     header.insertAdjacentElement('afterend', colorBar);
-                }
-            }
-
-            // Move the toggle board button to the correct place on resize
-            const toggleBoardBtn = document.getElementById('toggle-board-btn');
-            if (toggleBoardBtn) {
-                if (window.innerWidth <= 992) {
-                    toggleBoardBtn.className = 'rotate-btn';
-                    toggleBoardBtn.style.fontSize = '';
-                    toggleBoardBtn.style.marginLeft = '';
-                    toggleBoardBtn.style.padding = '';
-                    if (timerDisplay && toggleBoardBtn.parentElement !== timerDisplay) {
-                        timerDisplay.appendChild(toggleBoardBtn);
-                    }
-                } else {
-                    toggleBoardBtn.className = 'active-room-btn';
-                    toggleBoardBtn.style.fontSize = '0.7rem';
-                    toggleBoardBtn.style.marginLeft = '10px';
-                    toggleBoardBtn.style.padding = '2px 8px';
-                    const wordsHeader = document.querySelector('.words-panel h3');
-                    if (wordsHeader && toggleBoardBtn.parentElement !== wordsHeader) {
-                        wordsHeader.appendChild(toggleBoardBtn);
-                    }
-                }
             }
         }
 
