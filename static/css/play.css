@@ -5439,14 +5439,19 @@ input[type=range]::-moz-range-track {
 
 
     /* Make timer smaller on mobile and fit contents */
-    .board-panel .timer-display {
-        padding: 5px 15px !important; /* Tight fit */
-        gap: 6px !important;
-        width: auto !important; /* Force auto width */
-        margin: 5px auto !important; /* Center the box */
-        display: flex !important; /* Ensure flex for alignment */
-        justify-content: flex-start !important; /* Keep timer on the left, preventing jump to center */
+    .board-panel .timer-display,
+    .play-header .timer-display {
+        padding: 6px 12px !important;
+        width: calc(100% - 20px) !important;
+        max-width: 420px !important;
+        margin: 5px auto !important;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        justify-content: space-between !important;
         align-items: center !important;
+        height: 38px !important;
+        box-sizing: border-box !important;
     }
 
     .board-panel .timer-display .timer-label {
@@ -6334,7 +6339,7 @@ body .board-cell.tile-flash-purple * {
         align-items: center !important;
         justify-content: space-between !important;
         width: calc(100% - 20px) !important;
-        max-width: 380px !important;
+        max-width: 420px !important;
         height: 38px !important;
         box-sizing: border-box !important;
         margin: 5px auto !important;
@@ -6366,7 +6371,9 @@ body .board-cell.tile-flash-purple * {
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
+        justify-content: flex-end !important;
         margin-left: auto !important;
+        gap: 0 !important;
         white-space: nowrap !important;
         flex-shrink: 0 !important;
     }
@@ -6375,6 +6382,7 @@ body .board-cell.tile-flash-purple * {
         height: 26px !important;
         padding: 3px 8px !important;
         font-size: 0.75rem !important;
+        margin: 0 !important;
     }
 }
 
