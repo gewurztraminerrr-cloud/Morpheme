@@ -2137,6 +2137,7 @@ body.theme-light-brown .word-item.missed {
     padding: 24px 0;
     /* Vertical only, tools manage horizontal spacing */
     overflow-y: auto;
+    overflow-x: hidden !important;
     background: rgba(var(--text-primary-rgb), 0.02);
     min-width: 0;
     /* Essential for flex inner shrinkage */
@@ -6419,11 +6420,25 @@ body .board-cell.tile-flash-purple * {
 }
 
 /* Appearance in Settings Desktop/Laptop No Horizontal Scroll */
+#setting-tab-appearance,
+#setting-tab-appearance * {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
 #setting-tab-appearance {
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
     overflow-x: hidden !important;
+}
+
+#setting-tab-appearance .settings-tab-grid {
+    width: 100% !important;
+    max-width: 100% !important;
+    grid-template-columns: 1fr !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
 }
 
 #setting-tab-appearance .setting-panel {
@@ -6435,9 +6450,16 @@ body .board-cell.tile-flash-purple * {
 
 #setting-tab-appearance .theme-selector-grid,
 #setting-tab-appearance .dimension-sliders-grid,
-#setting-tab-appearance .preview-board-container {
+#setting-tab-appearance .preview-board-container,
+#setting-tab-appearance .settings-preview-box,
+#setting-tab-appearance #synesthesia-letters-grid {
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
+    overflow-x: hidden !important;
+}
+
+#setting-tab-appearance .preview-board {
+    max-width: 100% !important;
     overflow-x: hidden !important;
 }
