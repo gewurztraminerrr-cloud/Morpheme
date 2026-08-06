@@ -1907,11 +1907,11 @@
                         </div>
 
                         <div id="combo-results" class="combo-results-container hidden">
-                            <!-- MP Section: Horizontal Groups (0MP to 5MP) -->
+                            <!-- MP Section: Horizontal Groups (0MP to 3MP) -->
                             <div class="result-section">
                                 <h3 style="color: #ffd700;">MP (Microprocedures) v2.0</h3>
                                 <div class="chart-desc">
-                                    Determining the distance away from one word to another using specific Morpheme connectivity rules (0MP to 6MP). The MP words shown in these tables are associations among existing words. Another way to help you is to make up sequences of letters to facilitate the finding of other sequences. For example, if you pretend LIVEE is a word (LIVE + E), simply add a W at the end and reverse the sequence to obtain the word WEEVIL. This is just one example. You can make up any sequence that works for you!
+                                    Determining the distance away from one word to another using specific Morpheme connectivity rules (0MP to 3MP). The MP words shown in these tables are associations among existing words. Another way to help you is to make up sequences of letters to facilitate the finding of other sequences. For example, if you pretend LIVEE is a word (LIVE + E), simply add a W at the end and reverse the sequence to obtain the word WEEVIL. This is just one example. You can make up any sequence that works for you!
                                 </div>
                                 <div class="horizontal-scroll-container" id="mp-container">
                                     <!-- Dynamic Columns (0MP, 1MP, 2MP...) will be injected here -->
@@ -3897,12 +3897,18 @@
                     <div class="faq-item" id="faq-combo-checker">
                         <div class="faq-question">What is the "Combo Checker" in the Tools tab?</div>
                         <div class="faq-answer">
-                            <p><strong>ELI5 (Explain Like I'm Five):</strong> Imagine the Combo Checker is like a
-                                word wizard that shows you how to change one word into another on the board! If you have
-                                one word and want to turn it into a new one, the wizard shows you all the tiny steps to
-                                get there. This includes <strong>insertions</strong> (adding a new letter), <strong>removals</strong> (taking a
-                                letter away), and <strong>switches</strong> (changing one letter into a different one). It's like a
-                                map that shows you the fastest way to travel from word to word!</p>
+                            <p>The <strong>Combo Checker</strong> is an advanced analytical discovery tool designed to map the connectivity between words using a precise lexicographical metric known as a <strong>Microprocedure (MP)</strong>. Rather than relying on simplified approximations ("ELI5"), Morpheme utilizes Microprocedures to provide players with a formal, mathematical framework for discovering high-scoring word transitions and board combinations.</p>
+                            
+                            <p><strong>Summary &amp; Reasoning for Microprocedures:</strong> In competitive grid word play, finding optimal word paths depends on recognizing structural morpheme relationships. Microprocedures measure the exact number of atomic editing manoeuvres required to transform one valid word into another. By quantifying connectivity from <strong>0MP to 3MP</strong>, the Combo Checker enables players to quickly identify related words, practice pattern recognition, and execute complex board maneuvers.</p>
+
+                            <p><strong>Connectivity Rules &amp; MP Manoeuvres:</strong> The Combo Checker evaluates word relationships by calculating structural distance across five specific types of Microprocedures:</p>
+                            <ul style="margin-top: 8px; margin-bottom: 12px; padding-left: 20px; line-height: 1.6;">
+                                <li><strong>0MP (Zero Microprocedures / Pure Extensions &amp; Alignments):</strong> Occurs when two words share an identical base sequence, pure prefix/suffix extensions, or extremity overlaps where no internal structural changes occur. <em>Examples:</em> <code>LIVE</code> &rarr; <code>LIVEE</code> (pure extension) or <code>FERTILE</code> &rarr; <code>LITRE</code> (overlap alignment).</li>
+                                <li><strong>Insertions (1+ MP):</strong> Adding one or more letters into the interior or structure of a word. <em>Example:</em> <code>BONITO</code> &rarr; <code>BONIATO</code> (inserting an <code>A</code> counts as 1 MP).</li>
+                                <li><strong>Deletions / Removals (1+ MP):</strong> Removing one or more letters from within a word structure. <em>Examples:</em> <code>BONIATO</code> &rarr; <code>BONITO</code> (removing <code>A</code> counts as 1 MP) or <code>CARPET</code> &rarr; <code>CAPET</code> (removing <code>R</code> counts as 1 MP).</li>
+                                <li><strong>Switches / Substitutions (1+ MP):</strong> Replacing a specific letter at a given position with a different letter. <em>Example:</em> <code>ATAXIES</code> &rarr; <code>ATAXIAS</code> (switching <code>E</code> to <code>A</code> counts as 1 MP).</li>
+                                <li><strong>Relocations / Transpositions (1+ MP):</strong> Reordering or shifting character positions within a sequence. <em>Example:</em> <code>WASTRIE</code> &rarr; <code>ASTRIDE</code> (relocating character positions counts as 1 MP).</li>
+                            </ul>
                         </div>
                     </div>
 
