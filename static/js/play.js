@@ -5007,16 +5007,18 @@ function updateBoardCell(cell, r, c, letter, grayed, f, state = null) {
     cell.className = 'board-cell' + (grayed ? ' grayed' : '');
     
     // Update dataset for identification
+    const prevR = cell.dataset.r;
+    const prevC = cell.dataset.c;
     cell.dataset.r = r;
     cell.dataset.c = c;
     if (typeof f !== 'undefined') cell.dataset.f = f;
 
-    // Check if letter OR format changed (to ensure point badges are cleared/added correctly)
+    // Check if letter OR coordinates OR format changed (to ensure point badges are cleared/added correctly)
     const currentLetter = cell.dataset.letter;
     const currentFormat = cell.dataset.renderedFormat;
     const boardFormat = (state && state.current_board_format) ? state.current_board_format : ((window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : 'Normal');
     
-    if (currentLetter !== letter || currentFormat !== boardFormat || cell.children.length <= 1) {
+    if (currentLetter !== letter || prevR !== String(r) || prevC !== String(c) || currentFormat !== boardFormat || cell.children.length <= 1) {
         cell.dataset.letter = letter;
         cell.dataset.renderedFormat = boardFormat;
         cell.innerHTML = ''; // Fresh start

@@ -6290,8 +6290,13 @@ body .board-cell.tile-flash-purple * {
         display: inline-block !important;
         font-family: 'Courier New', Courier, monospace !important;
     }
-    .timer-display .rotate-btn {
-        display: none !important;
+    .timer-controls-group {
+        display: inline-flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+    }
+    .timer-controls-group .rotate-btn {
+        display: inline-block !important;
     }
 }
 
@@ -6302,10 +6307,11 @@ body .board-cell.tile-flash-purple * {
         padding: 6px 12px !important;
         border-radius: 8px !important;
         display: flex !important;
+        flex-direction: row !important;
         align-items: center !important;
         justify-content: space-between !important;
         width: calc(100% - 20px) !important;
-        max-width: 280px !important;
+        max-width: 380px !important;
         box-sizing: border-box !important;
         margin: 5px auto !important;
         flex-shrink: 0 !important;
@@ -6322,8 +6328,13 @@ body .board-cell.tile-flash-purple * {
         width: auto !important;
         display: inline-block !important;
     }
-    .timer-display .rotate-btn {
-        display: block !important;
+    .timer-controls-group {
+        display: inline-flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+    }
+    .timer-controls-group .rotate-btn {
+        display: inline-block !important;
     }
 }
 
