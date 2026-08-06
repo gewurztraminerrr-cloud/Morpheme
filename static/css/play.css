@@ -5158,15 +5158,14 @@ input[type=range]::-moz-range-track {
     #page-lobby,
     #page-forums {
         display: none;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
         overflow-x: hidden !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
         padding: 0 !important;
         height: calc(100vh - 120px) !important;
-        overflow-y: hidden !important;
         flex-direction: column !important;
     }
 
