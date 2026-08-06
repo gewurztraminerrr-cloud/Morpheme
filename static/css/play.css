@@ -6276,31 +6276,43 @@ body .board-cell.tile-flash-purple * {
 /* Mobile Store Layout Fixes */
 @media (max-width: 900px) {
     #page-tools,
+    #page-tools *,
     #page-tools .tools-split-layout,
+    #page-tools .tools-sidebar,
     #page-tools .tools-content,
+    #page-tools .tool-pane,
     #tool-store,
-    #tool-store * {
+    #tool-store .store-grid,
+    #tool-store .store-item {
         box-sizing: border-box !important;
         max-width: 100% !important;
+        overflow-x: hidden !important;
+        touch-action: pan-y !important;
     }
     #page-tools {
         width: 100% !important;
         max-width: 100% !important;
         overflow-x: hidden !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
         padding: 0 !important;
         margin: 0 !important;
+        touch-action: pan-y !important;
     }
     #page-tools .tools-split-layout {
         width: 100% !important;
         max-width: 100% !important;
         overflow-x: hidden !important;
-        padding: 0 !important;
+        overflow-y: visible !important;
+        padding: 0 6px !important;
         margin: 0 !important;
+        touch-action: pan-y !important;
     }
     #page-tools .tools-content {
         width: 100% !important;
         max-width: 100% !important;
         overflow-x: hidden !important;
+        overflow-y: visible !important;
         padding: 4px 0 !important;
         margin: 0 !important;
         touch-action: pan-y !important;
@@ -6316,6 +6328,7 @@ body .board-cell.tile-flash-purple * {
     #tool-store .tool-header {
         margin-bottom: 6px !important;
         padding: 0 4px !important;
+        touch-action: pan-y !important;
     }
     #tool-store .tool-header h2 {
         font-size: 1.15rem !important;
@@ -6367,6 +6380,7 @@ body .board-cell.tile-flash-purple * {
         box-sizing: border-box !important;
         overflow-x: hidden !important;
         gap: 4px !important;
+        touch-action: pan-y !important;
     }
     #tool-store .store-item-header {
         display: flex !important;
@@ -6375,6 +6389,7 @@ body .board-cell.tile-flash-purple * {
         gap: 2px !important;
         width: 100% !important;
         margin-bottom: 2px !important;
+        touch-action: pan-y !important;
     }
     #tool-store .store-item-header h3 {
         font-size: 0.9rem !important;
