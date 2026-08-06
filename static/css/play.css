@@ -6249,7 +6249,7 @@ body .board-cell.tile-flash-purple * {
     }
 }
 
-/* Desktop Timer Panel (min-width: 993px) */
+/* Desktop Timer Panel & Input Section (min-width: 993px) */
 @media (min-width: 993px) {
     .timer-display {
         background: rgba(var(--text-primary-rgb), 0.1) !important;
@@ -6286,12 +6286,26 @@ body .board-cell.tile-flash-purple * {
         display: inline-block !important;
         font-family: 'Courier New', Courier, monospace !important;
     }
+    .word-input-section {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 12px !important;
+        width: 100% !important;
+    }
+    .word-input-section #submit-word-btn {
+        display: none !important;
+    }
+    .word-input-section #word-input {
+        flex: 1 1 auto !important;
+        width: 100% !important;
+    }
     .word-input-section .timer-controls-group {
         display: inline-flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
-        margin-left: 8px !important;
+        margin-left: 0 !important;
         white-space: nowrap !important;
         flex-shrink: 0 !important;
     }
