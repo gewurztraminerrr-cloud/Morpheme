@@ -20,6 +20,7 @@ def main():
         "static/js/app.js",
         "static/css/lobby.css",
         "static/css/style.css",
+        "static/css/forum.css",
         "templates/index.html"
     ]
     

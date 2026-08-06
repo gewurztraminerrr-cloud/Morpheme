@@ -9427,7 +9427,23 @@ window.showFinderModal = function (word) {
 
     if (modal && title && body) {
         const wordUpper = word.toUpperCase();
-        title.textContent = `Who found "${wordUpper}"?`;
+        
+        // Calculate base word points
+        let defaultWordVal = 0;
+        const len = wordUpper.length;
+        if (len === 3 || len === 4) defaultWordVal = 1;
+        else if (len === 5) defaultWordVal = 2;
+        else if (len === 6) defaultWordVal = 3;
+        else if (len === 7) defaultWordVal = 5;
+        else if (len === 8) defaultWordVal = 8;
+        else if (len === 9) defaultWordVal = 11;
+        else if (len >= 10) defaultWordVal = 15;
+        
+        if (window.lastGameState && window.lastGameState.bonus_word && wordUpper === String(window.lastGameState.bonus_word).toUpperCase()) {
+            defaultWordVal += len;
+        }
+
+        title.textContent = `Who found "${wordUpper}"? (${defaultWordVal} pts)`;
 
         // Use current game state to find players
         if (!window.lastGameState || !window.lastGameState.players) {
@@ -9465,7 +9481,7 @@ window.showFinderModal = function (word) {
                 
                 let html = `
                     <div style="padding: 14px 16px; font-size: 0.95rem; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 15px; text-align: center; width: 100%; box-sizing: border-box;">
-                        <strong>${wordUpper}</strong> has been found <strong>${totalCombined}</strong> times total since Morpheme began.
+                        <strong>${wordUpper}</strong> (${defaultWordVal} pts) has been found <strong>${totalCombined}</strong> times total since Morpheme began.
                     </div>
                 `;
                 
@@ -9477,6 +9493,11 @@ window.showFinderModal = function (word) {
                         const score = p.score || 0;
                         const rank = playerRankMap.get(p.username) || 999;
                         const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#fff';
+                        
+                        const swObj = p.submitted_words ? p.submitted_words.find(sw =>
+                            (typeof sw === 'object' ? sw.word : sw).toUpperCase() === wordUpper
+                        ) : null;
+                        const wordPts = (swObj && typeof swObj === 'object' && typeof swObj.points === 'number') ? swObj.points : defaultWordVal;
                         
                         // Placement Badge Styling
                         let badgeBg = 'rgba(255,255,255,0.05)';
@@ -9513,7 +9534,7 @@ window.showFinderModal = function (word) {
                                     <span style="font-weight: 700; font-size: 0.95rem;">${p.username}</span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color, #a855f7);">${score} pts</span>
+                                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color, #a855f7);">${wordPts} pts</span>
                                     <span style="opacity: 0.4; font-size: 0.8rem; font-weight: 600;">⭐ ${rating}</span>
                                 </div>
                             </div>

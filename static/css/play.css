@@ -6271,3 +6271,64 @@ body .board-cell.tile-flash-purple * {
     -ms-user-select: none !important;
     user-select: none !important;
 }
+
+/* Mobile Store Layout Fixes */
+@media (max-width: 768px) {
+    #tool-store {
+        width: 100% !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+    #tool-store .store-grid {
+        grid-template-columns: 1fr !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        gap: 16px !important;
+        overflow-x: hidden !important;
+    }
+    #tool-store .store-item {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+    #tool-store .store-item-image {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: 200px !important;
+    }
+    #tool-store .store-item-info {
+        padding: 15px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+}
+
+/* Appearance in Settings Desktop/Laptop No Horizontal Scroll */
+#setting-tab-appearance {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+}
+
+#setting-tab-appearance .setting-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+}
+
+#setting-tab-appearance .theme-selector-grid,
+#setting-tab-appearance .dimension-sliders-grid,
+#setting-tab-appearance .preview-board-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+}
