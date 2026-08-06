@@ -4542,13 +4542,15 @@ input[type=range]::-moz-range-track {
     .timer-display {
         display: flex !important;
         flex-direction: row !important;
+        flex-wrap: nowrap !important;
         justify-content: space-between !important;
         align-items: center !important;
         width: 100% !important;
-        max-width: 480px !important;
-        margin: 5px auto !important; /* Center the box itself and add small margin */
+        max-width: none !important;
+        margin: 5px 0 !important;
         padding: 5px 15px !important;
         order: 3 !important; /* Force third (below params) */
+        box-sizing: border-box !important;
     }
 
 
@@ -5442,9 +5444,9 @@ input[type=range]::-moz-range-track {
     .board-panel .timer-display,
     .play-header .timer-display {
         padding: 6px 12px !important;
-        width: calc(100% - 20px) !important;
-        max-width: 420px !important;
-        margin: 5px auto !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 5px 0 !important;
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -6329,7 +6331,9 @@ body .board-cell.tile-flash-purple * {
 
 /* Mobile Timer Panel (max-width: 992px) */
 @media (max-width: 992px) {
-    .timer-display {
+    .timer-display,
+    .board-panel .timer-display,
+    .play-header .timer-display {
         background: rgba(var(--text-primary-rgb), 0.1) !important;
         padding: 6px 12px !important;
         border-radius: 8px !important;
@@ -6338,11 +6342,11 @@ body .board-cell.tile-flash-purple * {
         flex-wrap: nowrap !important;
         align-items: center !important;
         justify-content: space-between !important;
-        width: calc(100% - 20px) !important;
-        max-width: 420px !important;
+        width: 100% !important;
+        max-width: none !important;
         height: 38px !important;
         box-sizing: border-box !important;
-        margin: 5px auto !important;
+        margin: 5px 0 !important;
         flex-shrink: 0 !important;
     }
     .timer-left-group {
@@ -6366,6 +6370,8 @@ body .board-cell.tile-flash-purple * {
         width: auto !important;
         display: inline-block !important;
     }
+    #timer-controls-group,
+    .timer-display #timer-controls-group,
     .timer-display .timer-controls-group {
         display: inline-flex !important;
         flex-direction: row !important;
@@ -6376,12 +6382,39 @@ body .board-cell.tile-flash-purple * {
         gap: 0 !important;
         white-space: nowrap !important;
         flex-shrink: 0 !important;
+        width: auto !important;
+        float: none !important;
     }
-    .timer-display .timer-controls-group .rotate-btn {
+    #rotate-board-btn,
+    #transpose-board-btn,
+    .timer-display .rotate-btn {
         display: inline-flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: center !important;
         height: 26px !important;
-        padding: 3px 8px !important;
+        padding: 3px 10px !important;
         font-size: 0.75rem !important;
+        margin: 0 !important;
+        float: none !important;
+        width: auto !important;
+        white-space: nowrap !important;
+        box-sizing: border-box !important;
+    }
+    #rotate-board-btn {
+        border-top-left-radius: 6px !important;
+        border-bottom-left-radius: 6px !important;
+        border-top-right-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        border-right: none !important;
+        margin: 0 !important;
+    }
+    #transpose-board-btn {
+        border-top-left-radius: 0 !important;
+        border-bottom-left-radius: 0 !important;
+        border-top-right-radius: 6px !important;
+        border-bottom-right-radius: 6px !important;
+        border-left: 1px solid rgba(255, 255, 255, 0.25) !important;
         margin: 0 !important;
     }
 }
