@@ -6261,9 +6261,9 @@ body .board-cell.tile-flash-purple * {
         display: flex !important;
         flex-direction: row !important;
         align-items: center !important;
-        justify-content: space-between !important;
+        justify-content: center !important;
         margin: 0 auto 15px auto !important;
-        width: 100% !important;
+        width: fit-content !important;
         max-width: 500px !important;
         box-sizing: border-box !important;
     }
@@ -6274,7 +6274,7 @@ body .board-cell.tile-flash-purple * {
         gap: 8px !important;
     }
     .timer-display .timer-label {
-        font-size: 1.2rem !important;
+        font-size: 1.3rem !important;
         font-weight: 700 !important;
         display: inline !important;
     }
@@ -6282,18 +6282,29 @@ body .board-cell.tile-flash-purple * {
         font-size: 2.0rem !important;
         font-weight: 800 !important;
         min-width: auto !important;
-        text-align: left !important;
+        text-align: center !important;
         display: inline-block !important;
         font-family: 'Courier New', Courier, monospace !important;
     }
-    .timer-controls-group {
+    .word-input-section .timer-controls-group {
         display: inline-flex !important;
         flex-direction: row !important;
+        flex-wrap: nowrap !important;
         align-items: center !important;
-        margin-left: auto !important;
+        margin-left: 8px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
     }
-    .timer-controls-group .rotate-btn {
-        display: inline-block !important;
+    .word-input-section .timer-controls-group .rotate-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 10px 16px !important;
+        font-size: 0.95rem !important;
+        font-weight: 700 !important;
+        line-height: 1.2 !important;
+        height: 44px !important;
+        box-sizing: border-box !important;
     }
 }
 
@@ -6305,10 +6316,12 @@ body .board-cell.tile-flash-purple * {
         border-radius: 8px !important;
         display: flex !important;
         flex-direction: row !important;
+        flex-wrap: nowrap !important;
         align-items: center !important;
         justify-content: space-between !important;
         width: calc(100% - 20px) !important;
         max-width: 380px !important;
+        height: 38px !important;
         box-sizing: border-box !important;
         margin: 5px auto !important;
         flex-shrink: 0 !important;
@@ -6316,8 +6329,11 @@ body .board-cell.tile-flash-purple * {
     .timer-left-group {
         display: inline-flex !important;
         flex-direction: row !important;
+        flex-wrap: nowrap !important;
         align-items: center !important;
         gap: 6px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
     }
     .timer-display .timer-label {
         font-size: 0.95rem !important;
@@ -6331,15 +6347,20 @@ body .board-cell.tile-flash-purple * {
         width: auto !important;
         display: inline-block !important;
     }
-    .timer-controls-group {
+    .timer-display .timer-controls-group {
         display: inline-flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
         margin-left: auto !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
     }
-    .timer-controls-group .rotate-btn {
+    .timer-display .timer-controls-group .rotate-btn {
         display: inline-flex !important;
+        height: 26px !important;
+        padding: 3px 8px !important;
+        font-size: 0.75rem !important;
     }
 }
 

@@ -36,7 +36,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css?v=125">
     <link rel="stylesheet" href="/css/lobby.css?v=80">
-    <link rel="stylesheet" href="/css/play.css?v=147">
+    <link rel="stylesheet" href="/css/play.css?v=148">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=27">
     <link rel="stylesheet" href="/css/donate.css?v=1">
@@ -5066,7 +5066,7 @@
     <script src="/js/forum.js?v=54"></script>
     <script src="/js/app.js?v=70"></script>
     <script src="/js/lobby.js?v=10"></script>
-    <script src="/js/play.js?v=239"></script>
+    <script src="/js/play.js?v=240"></script>
     <script src="/js/tournaments.js?v=9"></script>
     <script src="/js/leaderboard.js?v=3"></script>
     <script src="/js/tools.js?v=82"></script>
@@ -5206,7 +5206,7 @@
             const header = document.querySelector('.play-header');
             const boardPanel = document.querySelector('.board-panel');
             const timerDisplay = document.querySelector('.timer-display');
-            const rotateBtn = document.getElementById('rotate-board-btn');
+            const timerControlsGroup = document.getElementById('timer-controls-group');
             const wordInputSection = document.querySelector('.word-input-section');
             const colorBar = document.getElementById('game-color-bar');
             const playersPanel = document.getElementById('play-panel-players');
@@ -5222,6 +5222,10 @@
                 if (timerDisplay && timerDisplay.parentElement !== header) {
                     header.appendChild(timerDisplay);
                 }
+                // Move Rotate & Transpose buttons inside timerDisplay on mobile
+                if (timerControlsGroup && timerDisplay && timerControlsGroup.parentElement !== timerDisplay) {
+                    timerDisplay.appendChild(timerControlsGroup);
+                }
                 // Move Color Chart (Color Bar) back inside the left panel (Players/Chat) so it displays when swiping right
                 if (colorBar && playersPanel && colorBar.parentElement !== playersPanel) {
                     playersPanel.prepend(colorBar);
@@ -5235,9 +5239,14 @@
                 if (timerDisplay && boardPanel && timerDisplay.parentElement !== boardPanel) {
                     boardPanel.prepend(timerDisplay);
                 }
+                // Move Rotate & Transpose buttons next to Submit in wordInputSection on desktop
+                if (timerControlsGroup && wordInputSection && timerControlsGroup.parentElement !== wordInputSection) {
+                    wordInputSection.appendChild(timerControlsGroup);
+                }
                 // Move Color Chart (Color Bar) below the header (above the 3 columns)
                 if (colorBar && header && colorBar.parentElement !== pagePlay) {
                     header.insertAdjacentElement('afterend', colorBar);
+                }
             }
         }
 
