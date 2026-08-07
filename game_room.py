@@ -2652,7 +2652,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             if target_range:
                 target_range_resolved = target_range
             else:
-                target_range_resolved = '200-300' if is_24h else '100-200'
+                target_range_resolved = '300-400' if is_24h else '100-200'
         fmt = 'Valued Letters' if is_24h else board_format
         
         floor_l = 3 if '4x4' in dimensions else (4 if '4x6' in dimensions else (5 if '5x7' in dimensions else 6))
@@ -3350,7 +3350,7 @@ class RoomManager:
                                 room.bonus_cell = json.loads(bonus_cell_json) if bonus_cell_json else None
                                 room.current_board_format = 'Valued Letters' if is_24h else (board_format or 'Normal')
                                 room.current_uniqueness = uniqueness or 0.0
-                                room.current_word_count_range = word_count_range or ('200-300' if is_24h else '100-200')
+                                room.current_word_count_range = word_count_range or ('300-400' if is_24h else '100-200')
                                 room.update_counts_by_len()
                                 
                                 # Deserialize and restore active players
