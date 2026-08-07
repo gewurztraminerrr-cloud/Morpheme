@@ -27,20 +27,24 @@ window.parseUTCTimestamp = function(isoStr) {
 
 // NEW: Global Tool Switcher Helper
 window.showTool = function(toolId) {
-    const navBtns = document.querySelectorAll('.tool-nav-btn');
-    const panes = document.querySelectorAll('.tool-pane');
+    const sidebar = document.querySelector('#page-tools .tools-sidebar');
+    const content = document.querySelector('#page-tools .tools-content');
     
-    // Update buttons
-    navBtns.forEach(b => {
-        if (b.dataset.tool === toolId) b.classList.add('active');
-        else b.classList.remove('active');
-    });
+    // Update active class on buttons
+    if (sidebar) {
+        sidebar.querySelectorAll('.tool-nav-btn').forEach(b => {
+            if (b.dataset.tool === toolId) b.classList.add('active');
+            else b.classList.remove('active');
+        });
+    }
 
-    // Show pane
-    panes.forEach(p => {
-        if (p.id === `tool-${toolId}`) p.classList.add('active');
-        else p.classList.remove('active');
-    });
+    // Update active class on panes
+    if (content) {
+        content.querySelectorAll('.tool-pane').forEach(p => {
+            if (p.id === `tool-${toolId}`) p.classList.add('active');
+            else p.classList.remove('active');
+        });
+    }
 
     // Trigger lazy loads
     if (toolId === 'profile') {
@@ -70,7 +74,7 @@ window.showTool = function(toolId) {
 };
 
 function setupToolsNavigation() {
-    const sidebar = document.querySelector('.tools-sidebar');
+    const sidebar = document.querySelector('#page-tools .tools-sidebar');
     if (!sidebar) return;
 
     sidebar.addEventListener('click', (e) => {
@@ -79,40 +83,13 @@ function setupToolsNavigation() {
 
         const toolId = btn.dataset.tool;
         if (toolId) {
-            // Check if this tool is already active to prevent double-firing with inline onclick
-            const currentActive = sidebar.querySelector('.tool-nav-btn.active');
-            if (currentActive && currentActive.dataset.tool === toolId) {
-                return;
-            }
             window.showTool(toolId);
         }
     });
 
-    // Mobile Layout snapping on navigation
-    const toolsPage = document.getElementById('page-tools');
-    if (toolsPage) {
-        const observer = new MutationObserver(() => {
-            if (toolsPage.classList.contains('active')) {
-                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-                if (isMobile) {
-                    setTimeout(() => {
-                        const layoutEl = document.querySelector('#page-tools .tools-split-layout');
-                        if (layoutEl) {
-                            layoutEl.scrollLeft = 0;
-                        }
-                    }, 50);
-                }
-            }
-        });
-        observer.observe(toolsPage, {
-            attributes: true,
-            attributeFilter: ['class']
-        });
-    }
-
     // Mobile touch swipe handling for sliding back to tools list
-    const toolsContent = document.querySelector('.tools-content');
-    const toolsSidebar = document.querySelector('.tools-sidebar');
+    const toolsContent = document.querySelector('#page-tools .tools-content');
+    const toolsSidebar = document.querySelector('#page-tools .tools-sidebar');
     if (toolsContent && toolsSidebar) {
         let touchStartX = 0;
         let touchStartY = 0;
@@ -145,8 +122,6 @@ function setupToolsNavigation() {
             }
         }, { passive: true });
     }
-
-}
 }
 
 function setupComboChecker() {

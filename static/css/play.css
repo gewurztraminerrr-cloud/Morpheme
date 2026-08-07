@@ -4780,8 +4780,8 @@ input[type=range]::-moz-range-track {
         flex-direction: column !important;
         border-right: none !important;
         border-bottom: none !important;
-        padding: 18px 14px !important;
-        gap: 14px !important;
+        padding: 20px 16px !important;
+        gap: 16px !important;
         background: var(--bg-panel, #181920) !important;
         border-radius: 16px !important;
         box-sizing: border-box !important;
@@ -4794,22 +4794,22 @@ input[type=range]::-moz-range-track {
     #page-mods .tool-nav-btn,
     #page-settings .tool-nav-btn {
         width: 100% !important;
-        min-height: 72px !important;
+        min-height: 80px !important;
         height: auto !important;
         text-align: left !important;
-        padding: 16px 20px !important;
+        padding: 20px 22px !important;
         background: rgba(255, 255, 255, 0.08) !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        border-radius: 12px !important;
+        border: 1px solid rgba(255, 255, 255, 0.16) !important;
+        border-radius: 14px !important;
         box-sizing: border-box !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: flex-start !important;
         justify-content: flex-start !important;
-        gap: 6px !important;
+        gap: 8px !important;
         cursor: pointer !important;
         overflow: visible !important;
-        margin-bottom: 2px !important;
+        margin-bottom: 6px !important;
     }
 
     .tool-nav-btn.active,
@@ -5370,10 +5370,20 @@ input[type=range]::-moz-range-track {
         overflow-x: visible !important;
     }
 
-    .page-title-header {
-        padding: 0 15px !important;
-        margin: 15px 0 !important;
+    .page-title-header,
+    #page-tools .page-title-header,
+    #page-mods .page-title-header,
+    #page-settings .page-title-header {
+        display: block !important;
         font-size: 1.8rem !important;
+        font-weight: 800 !important;
+        color: var(--text-primary, #ffffff) !important;
+        padding: 0 15px !important;
+        margin: 15px 0 10px 0 !important;
+        text-align: left !important;
+        flex-shrink: 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     .settings-grid {
