@@ -45,11 +45,7 @@ def main():
     child.sendline("git fetch && git reset --hard origin/main")
     child.expect([r"\$", r"#"])
     
-    # Clear remote DB active_boards to reset round states on deploy
-    print("\n--- Clearing remote database active_boards ---")
-    child.sendline('python3 -c "import sqlite3; conn = sqlite3.connect(\'morpheme.db\'); c = conn.cursor(); c.execute(\'DELETE FROM active_boards;\'); conn.commit(); conn.close(); print(\'Remote active boards cleared successfully\')"')
-    child.expect([r"\$", r"#"])
-    
+
     # Restart PM2 process
     print("\n--- Restarting PM2 process ---")
     child.sendline("pm2 restart morpheme || pm2 start app.py --name morpheme --interpreter venv/bin/python3")
