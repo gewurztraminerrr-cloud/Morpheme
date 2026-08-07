@@ -4772,79 +4772,109 @@ input[type=range]::-moz-range-track {
         -webkit-overflow-scrolling: touch !important;
     }
 
-    .tools-sidebar {
+    .tools-sidebar,
+    #page-tools .tools-sidebar,
+    #page-mods .tools-sidebar,
+    #page-settings .tools-sidebar {
         display: flex !important;
         flex-direction: column !important;
         border-right: none !important;
         border-bottom: none !important;
-        padding: 15px 12px !important;
-        gap: 12px !important;
+        padding: 18px 14px !important;
+        gap: 14px !important;
         background: var(--bg-panel, #181920) !important;
         border-radius: 16px !important;
         box-sizing: border-box !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 
-    .tool-nav-btn {
+    .tool-nav-btn,
+    #page-tools .tool-nav-btn,
+    #page-mods .tool-nav-btn,
+    #page-settings .tool-nav-btn {
         width: 100% !important;
-        min-height: 54px !important;
+        min-height: 72px !important;
         height: auto !important;
         text-align: left !important;
-        padding: 14px 16px !important;
+        padding: 16px 20px !important;
         background: rgba(255, 255, 255, 0.08) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        border-radius: 10px !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 12px !important;
         box-sizing: border-box !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: flex-start !important;
-        justify-content: center !important;
-        gap: 4px !important;
+        justify-content: flex-start !important;
+        gap: 6px !important;
         cursor: pointer !important;
+        overflow: visible !important;
+        margin-bottom: 2px !important;
     }
 
-    .tool-nav-btn.active {
-        background: rgba(79, 172, 254, 0.2) !important;
-        border: 1px solid rgba(79, 172, 254, 0.5) !important;
+    .tool-nav-btn.active,
+    #page-tools .tool-nav-btn.active,
+    #page-mods .tool-nav-btn.active,
+    #page-settings .tool-nav-btn.active {
+        background: rgba(79, 172, 254, 0.22) !important;
+        border: 1px solid rgba(79, 172, 254, 0.6) !important;
+        box-shadow: 0 0 12px rgba(79, 172, 254, 0.2) !important;
     }
 
-    .tool-btn-title {
-        font-size: 1.05rem !important;
+    .tool-btn-title,
+    #page-tools .tool-btn-title,
+    #page-mods .tool-btn-title,
+    #page-settings .tool-btn-title {
+        font-size: 1.15rem !important;
         font-weight: 700 !important;
         color: #ffffff !important;
         opacity: 1 !important;
-        line-height: 1.3 !important;
+        line-height: 1.4 !important;
         margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+        width: 100% !important;
+        overflow: visible !important;
         filter: none !important;
     }
 
-    .tool-btn-desc {
-        font-size: 0.82rem !important;
+    .tool-btn-desc,
+    #page-tools .tool-btn-desc,
+    #page-mods .tool-btn-desc,
+    #page-settings .tool-btn-desc {
+        font-size: 0.88rem !important;
         font-weight: 400 !important;
         color: rgba(255, 255, 255, 0.75) !important;
         opacity: 0.85 !important;
-        line-height: 1.3 !important;
+        line-height: 1.4 !important;
         margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+        width: 100% !important;
+        overflow: visible !important;
         filter: none !important;
     }
 
-    .tools-content {
-        padding: 10px 0 !important;
+    .tools-content,
+    #page-tools .tools-content,
+    #page-mods .tools-content,
+    #page-settings .tools-content {
+        padding: 15px !important;
+        box-sizing: border-box !important;
+        height: 100% !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 
-    .tools-mobile-back-btn {
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 8px !important;
-        width: calc(100% - 24px) !important;
-        margin: 10px 12px 15px 12px !important;
-        padding: 12px 18px !important;
-        background: rgba(79, 172, 254, 0.18) !important;
-        border: 1px solid rgba(79, 172, 254, 0.4) !important;
-        border-radius: 10px !important;
-        color: #4facfe !important;
-        font-size: 0.95rem !important;
-        font-weight: 700 !important;
-        cursor: pointer !important;
+    .tool-pane,
+    #page-tools .tool-pane,
+    #page-mods .tool-pane,
+    #page-settings .tool-pane {
+        height: auto !important;
+        min-height: min-content !important;
+        max-height: none !important;
+        overflow: visible !important;
+        flex: unset !important;
         box-sizing: border-box !important;
     }
 
@@ -5273,7 +5303,12 @@ input[type=range]::-moz-range-track {
 
     #page-tools .tools-split-layout,
     #page-settings .tools-split-layout,
-    #page-mods .tools-split-layout,
+    #page-mods .tools-split-layout {
+        flex: 1 1 100% !important;
+        height: 100% !important;
+        min-height: 100% !important;
+    }
+
     #page-lobby .lobby-grid,
     #page-forums .forum-container {
         flex: 1 !important;

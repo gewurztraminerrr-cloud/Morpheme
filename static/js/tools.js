@@ -146,16 +146,7 @@ function setupToolsNavigation() {
         }, { passive: true });
     }
 
-    // Mobile back button inside tools content
-    const mobileBackBtn = document.getElementById('tools-mobile-back-btn');
-    if (mobileBackBtn) {
-        mobileBackBtn.addEventListener('click', () => {
-            const layoutEl = document.querySelector('#page-tools .tools-split-layout');
-            if (layoutEl) {
-                layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
-            }
-        });
-    }
+}
 }
 
 function setupComboChecker() {
