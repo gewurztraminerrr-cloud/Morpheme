@@ -1,11 +1,11 @@
 ---
-description: Revert the project to the August 2, 2026 save point. Use this when the user says "Start Over".
+description: Revert the project to the August 7, 2026 save point. Use this when the user says "Start Over".
 ---
 
 ### Revert Procedure
 
 1.  **Reset Repository to Save Point:**
-    - `git reset --hard save_point_august_2_2026`
+    - `git reset --hard save_point_august_7_2026`
 
 3.  **Clean Up Untracked Files:**
 // turbo
