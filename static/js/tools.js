@@ -401,11 +401,9 @@ window.showMiniProfile = async function (username) {
             viewFullBtn.onclick = () => {
                 modal.classList.add('hidden');
                 modal.classList.remove('forced-show');
-                const toolsBtn = document.querySelector('.nav-btn[data-page="tools"]');
-                if (toolsBtn) toolsBtn.click();
-                const profileToolBtn = document.querySelector('.tool-nav-btn[data-tool="profile"]');
-                if (profileToolBtn) profileToolBtn.click();
-                window.performProfileSearch(data.username);
+                const profileNavBtn = document.getElementById('nav-profile-btn');
+                if (profileNavBtn) profileNavBtn.click();
+                setTimeout(() => window.performProfileSearch(data.username), 50);
             };
         }
 
@@ -414,11 +412,9 @@ window.showMiniProfile = async function (username) {
             roundReviewsBtn.onclick = () => {
                 modal.classList.add('hidden');
                 modal.classList.remove('forced-show');
-                const toolsBtn = document.querySelector('.nav-btn[data-page="tools"]');
-                if (toolsBtn) toolsBtn.click();
-                const profileToolBtn = document.querySelector('.tool-nav-btn[data-tool="profile"]');
-                if (profileToolBtn) profileToolBtn.click();
-                window.performProfileSearch(data.username, 'history');
+                const profileNavBtn = document.getElementById('nav-profile-btn');
+                if (profileNavBtn) profileNavBtn.click();
+                setTimeout(() => window.performProfileSearch(data.username, 'history'), 50);
             };
         }
 
