@@ -2084,11 +2084,11 @@ body.theme-light-brown .word-item.missed {
         max-height: none !important;
     }
     .tools-sidebar {
-        flex: 0 0 300px !important;
-        width: 300px !important;
-        min-width: 300px !important;
-        max-width: 300px !important;
-        padding: 20px 8px !important;
+        flex: 0 0 360px !important;
+        width: 360px !important;
+        min-width: 360px !important;
+        max-width: 360px !important;
+        padding: 20px 12px !important;
         gap: 10px !important;
     }
     .tool-nav-btn {
