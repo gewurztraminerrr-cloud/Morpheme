@@ -519,6 +519,110 @@
     justify-content: flex-end;
 }
 
+/* Multi-Image Upload Preview Grid */
+.forum-image-preview-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 5px;
+}
+
+.preview-item-wrapper {
+    position: relative;
+    width: 85px;
+    height: 85px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--input-border);
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.preview-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.remove-preview-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(244, 63, 94, 0.9);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.remove-preview-btn:hover {
+    background: #e11d48;
+    transform: scale(1.1);
+}
+
+/* Post & Comment Multi-Image Gallery Grids */
+.post-images-grid, .comment-images-grid {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.post-images-grid.grid-count-1, .comment-images-grid.grid-count-1 {
+    grid-template-columns: 1fr;
+    max-width: 600px;
+}
+
+.post-images-grid.grid-count-2, .comment-images-grid.grid-count-2 {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 700px;
+}
+
+.post-images-grid.grid-count-3, .comment-images-grid.grid-count-3 {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 800px;
+}
+
+@media (max-width: 600px) {
+    .post-images-grid.grid-count-3, .comment-images-grid.grid-count-3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.post-image-item, .comment-image-item {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--input-border);
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-height: 350px;
+}
+
+.post-image-item img, .comment-image-item img {
+    width: 100%;
+    height: 100%;
+    max-height: 350px;
+    object-fit: cover;
+    display: block;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.post-image-item img:hover, .comment-image-item img:hover {
+    opacity: 0.9;
+    transform: scale(1.01);
+}
+
 /* Create Form */
 .forum-create-card {
     max-width: 100%;

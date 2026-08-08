@@ -5824,6 +5824,21 @@ def get_forum_categories():
     finally:
         conn.close()
 
+def parse_image_urls(val):
+    if not val:
+        return []
+    val_str = str(val).strip()
+    if val_str.startswith('['):
+        try:
+            urls = json.loads(val_str)
+            if isinstance(urls, list):
+                return [u for u in urls if isinstance(u, str) and u.strip()]
+        except Exception:
+            pass
+    if ',' in val_str:
+        return [u.strip() for u in val_str.split(',') if u.strip()]
+    return [val_str] if val_str else []
+
 @app.route('/api/forum/posts/<int:category_id>', methods=['GET'])
 def get_forum_posts(category_id):
     conn = sqlite3.connect(DB_PATH, timeout=30)
@@ -5839,7 +5854,14 @@ def get_forum_posts(category_id):
             ORDER BY last_activity DESC
             LIMIT 200
         ''', (category_id,)).fetchall()
-        return jsonify({'posts': [dict(row) for row in rows]})
+        posts = []
+        for r in rows:
+            d = dict(r)
+            urls = parse_image_urls(d.get('image_url'))
+            d['image_urls'] = urls
+            d['image_url'] = urls[0] if urls else None
+            posts.append(d)
+        return jsonify({'posts': posts})
     finally:
         conn.close()
 
@@ -5869,8 +5891,21 @@ def get_forum_user_posts(username):
             WHERE LOWER(u.username) = LOWER(?)
         ''', (username,)).fetchall()
 
-        posts = [dict(row) for row in posts_rows]
-        comments = [dict(row) for row in comments_rows]
+        posts = []
+        for row in posts_rows:
+            d = dict(row)
+            urls = parse_image_urls(d.get('image_url'))
+            d['image_urls'] = urls
+            d['image_url'] = urls[0] if urls else None
+            posts.append(d)
+
+        comments = []
+        for row in comments_rows:
+            d = dict(row)
+            urls = parse_image_urls(d.get('image_url'))
+            d['image_urls'] = urls
+            d['image_url'] = urls[0] if urls else None
+            comments.append(d)
         
         print(f"[Forum] User search for '{username}' found {len(posts)} threads and {len(comments)} replies.")
         
@@ -5887,9 +5922,6 @@ def get_forum_user_posts(username):
 
     finally:
         conn.close()
-
-
-
 
 @app.route('/api/forum/post/<int:post_id>', methods=['GET'])
 def get_forum_post_detail(post_id):
@@ -5913,10 +5945,23 @@ def get_forum_post_detail(post_id):
             WHERE c.post_id = ?
             ORDER BY c.timestamp DESC
         ''', (post_id,)).fetchall()
+
+        post_dict = dict(post)
+        p_urls = parse_image_urls(post_dict.get('image_url'))
+        post_dict['image_urls'] = p_urls
+        post_dict['image_url'] = p_urls[0] if p_urls else None
+
+        comments_list = []
+        for c in comments:
+            cd = dict(c)
+            c_urls = parse_image_urls(cd.get('image_url'))
+            cd['image_urls'] = c_urls
+            cd['image_url'] = c_urls[0] if c_urls else None
+            comments_list.append(cd)
         
         response_data = {
-            'post': dict(post),
-            'comments': [dict(c) for c in comments],
+            'post': post_dict,
+            'comments': comments_list,
             'sorting': 'newest_first'
         }
         res = jsonify(response_data)
@@ -5975,29 +6020,39 @@ def create_forum_post():
     if not category_id or not title or not content:
         return jsonify({'error': 'Missing fields'}), 400
         
-    image_url = None
-    image_bytes = None
-    ext = None
-    if 'image' in request.files:
-        file = request.files['image']
-        if file and file.filename != '' and allowed_file(file.filename):
-            image_bytes = file.read()
-            file.seek(0)
-            ext = file.filename.rsplit('.', 1)[1].lower()
+    upload_files = []
+    for key in ['images', 'image', 'images[]']:
+        for f in request.files.getlist(key):
+            if f and f.filename != '' and allowed_file(f.filename):
+                if f not in upload_files:
+                    upload_files.append(f)
+    upload_files = upload_files[:3]
 
-    # Moderate text and image combined
+    saved_urls = []
     text_to_moderate = f"Title: {title}\nContent: {content}"
-    moderation_res = moderate_content(text=text_to_moderate, image_bytes=image_bytes, mime_type=ext)
-    if moderation_res.get("inappropriate"):
-        return jsonify({'error': f"Inappropriate content detected: {moderation_res.get('reason')}"}), 400
+    
+    for idx, file in enumerate(upload_files):
+        ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'jpg'
+        image_bytes = file.read()
+        file.seek(0)
+        
+        mod_text = text_to_moderate if idx == 0 else ""
+        moderation_res = moderate_content(text=mod_text, image_bytes=image_bytes, mime_type=ext)
+        if moderation_res.get("inappropriate"):
+            return jsonify({'error': f"Inappropriate content detected in image #{idx+1}: {moderation_res.get('reason')}"}), 400
 
-    # If safe, save the image if present
-    if image_bytes:
         import uuid
         filename = f"{uuid.uuid4()}.{ext}"
         file.save(os.path.join(app.config['FORUM_UPLOAD_FOLDER'], filename))
-        image_url = f"/static/uploads/forum/{filename}"
-            
+        saved_urls.append(f"/static/uploads/forum/{filename}")
+
+    if not upload_files:
+        moderation_res = moderate_content(text=text_to_moderate)
+        if moderation_res.get("inappropriate"):
+            return jsonify({'error': f"Inappropriate content detected: {moderation_res.get('reason')}"}), 400
+
+    image_url_db = json.dumps(saved_urls) if saved_urls else None
+
     conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         # [Restriction]: Only mods can post in 'News'
@@ -6009,20 +6064,19 @@ def create_forum_post():
         cursor = conn.execute('''
             INSERT INTO forum_posts (category_id, user_id, title, content, image_url)
             VALUES (?, ?, ?, ?, ?)
-        ''', (category_id, session['user_id'], title, content, image_url))
+        ''', (category_id, session['user_id'], title, content, image_url_db))
         conn.commit()
         return jsonify({'success': True, 'post_id': cursor.lastrowid})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
         conn.close()
- 
+
 @app.route('/api/forum/comments', methods=['POST'])
 def create_forum_comment():
     if 'user_id' not in session or session.get('is_guest'):
         return jsonify({'error': 'Registered users only'}), 403
         
-    # Switch to request.form to support multipart/form-data for image uploads
     data = request.form
     post_id = data.get('post_id')
     content = data.get('content')
@@ -6030,33 +6084,43 @@ def create_forum_comment():
     if not post_id or not content:
         return jsonify({'error': 'Missing fields'}), 400
         
-    image_url = None
-    image_bytes = None
-    ext = None
-    if 'image' in request.files:
-        file = request.files['image']
-        if file and file.filename != '' and allowed_file(file.filename):
-            image_bytes = file.read()
-            file.seek(0)
-            ext = file.filename.rsplit('.', 1)[1].lower()
+    upload_files = []
+    for key in ['images', 'image', 'images[]']:
+        for f in request.files.getlist(key):
+            if f and f.filename != '' and allowed_file(f.filename):
+                if f not in upload_files:
+                    upload_files.append(f)
+    upload_files = upload_files[:3]
 
-    # Moderate comment text and image combined
-    moderation_res = moderate_content(text=content, image_bytes=image_bytes, mime_type=ext)
-    if moderation_res.get("inappropriate"):
-        return jsonify({'error': f"Inappropriate content detected: {moderation_res.get('reason')}"}), 400
+    saved_urls = []
+    for idx, file in enumerate(upload_files):
+        ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'jpg'
+        image_bytes = file.read()
+        file.seek(0)
+        
+        mod_text = content if idx == 0 else ""
+        moderation_res = moderate_content(text=mod_text, image_bytes=image_bytes, mime_type=ext)
+        if moderation_res.get("inappropriate"):
+            return jsonify({'error': f"Inappropriate content detected in image #{idx+1}: {moderation_res.get('reason')}"}), 400
 
-    if image_bytes:
         import uuid
         filename = f"reply_{uuid.uuid4()}.{ext}"
         file.save(os.path.join(app.config['FORUM_UPLOAD_FOLDER'], filename))
-        image_url = f"/static/uploads/forum/{filename}"
+        saved_urls.append(f"/static/uploads/forum/{filename}")
+
+    if not upload_files:
+        moderation_res = moderate_content(text=content)
+        if moderation_res.get("inappropriate"):
+            return jsonify({'error': f"Inappropriate content detected: {moderation_res.get('reason')}"}), 400
+
+    image_url_db = json.dumps(saved_urls) if saved_urls else None
 
     conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         conn.execute('''
             INSERT INTO forum_comments (post_id, user_id, content, image_url)
             VALUES (?, ?, ?, ?)
-        ''', (post_id, session['user_id'], content, image_url))
+        ''', (post_id, session['user_id'], content, image_url_db))
         conn.commit()
         return jsonify({'success': True})
     except Exception as e:

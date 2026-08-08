@@ -292,6 +292,8 @@ const Forum = {
     categories: [],
     currentCategoryId: null,
     currentPostId: null,
+    selectedPostFiles: [],
+    selectedCommentFiles: [],
     initialized: false,
 
     init: async function () {
@@ -427,7 +429,12 @@ const Forum = {
         const postImageInput = document.getElementById('forum-post-image');
         const postImageWrapper = document.getElementById('forum-post-image-wrapper');
         if (postImageInput) {
-            postImageInput.addEventListener('change', (e) => this.handleImagePreview(e, 'forum-image-preview'));
+            postImageInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                    this.addFiles('post', e.target.files);
+                    e.target.value = '';
+                }
+            });
         }
         if (postImageWrapper && postImageInput) {
             postImageWrapper.addEventListener('dragover', (e) => {
@@ -444,8 +451,7 @@ const Forum = {
                 postImageWrapper.style.background = 'rgba(0, 0, 0, 0.2)';
                 postImageWrapper.style.borderColor = 'var(--input-border)';
                 if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                    postImageInput.files = e.dataTransfer.files;
-                    postImageInput.dispatchEvent(new Event('change'));
+                    this.addFiles('post', e.dataTransfer.files);
                 }
             });
         }
@@ -453,7 +459,12 @@ const Forum = {
         const commentImageInput = document.getElementById('forum-comment-image');
         const commentImageWrapper = document.getElementById('forum-comment-image-wrapper');
         if (commentImageInput) {
-            commentImageInput.addEventListener('change', (e) => this.handleImagePreview(e, 'forum-comment-image-preview'));
+            commentImageInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                    this.addFiles('comment', e.target.files);
+                    e.target.value = '';
+                }
+            });
         }
         if (commentImageWrapper && commentImageInput) {
             commentImageWrapper.addEventListener('dragover', (e) => {
@@ -470,8 +481,7 @@ const Forum = {
                 commentImageWrapper.style.background = 'rgba(0, 0, 0, 0.2)';
                 commentImageWrapper.style.borderColor = 'var(--input-border)';
                 if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                    commentImageInput.files = e.dataTransfer.files;
-                    commentImageInput.dispatchEvent(new Event('change'));
+                    this.addFiles('comment', e.dataTransfer.files);
                 }
             });
         }
@@ -485,6 +495,77 @@ const Forum = {
                 if (e.key === 'Enter') this.handleUserSearch();
             });
         }
+    },
+
+    addFiles: function (type, files) {
+        const targetArray = type === 'post' ? this.selectedPostFiles : this.selectedCommentFiles;
+        let addedAny = false;
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (!file.type.startsWith('image/')) continue;
+            if (targetArray.length >= 3) {
+                alert("You can attach a maximum of 3 images per post.");
+                break;
+            }
+            if (!targetArray.some(f => f.name === file.name && f.size === file.size)) {
+                targetArray.push(file);
+                addedAny = true;
+            }
+        }
+        if (addedAny || targetArray.length === 0) {
+            this.renderImagePreviews(type);
+        }
+    },
+
+    removeFile: function (type, index) {
+        const targetArray = type === 'post' ? this.selectedPostFiles : this.selectedCommentFiles;
+        if (index >= 0 && index < targetArray.length) {
+            targetArray.splice(index, 1);
+        }
+        this.renderImagePreviews(type);
+    },
+
+    renderImagePreviews: function (type) {
+        const targetArray = type === 'post' ? this.selectedPostFiles : this.selectedCommentFiles;
+        const previewEl = document.getElementById(type === 'post' ? 'forum-image-preview' : 'forum-comment-image-preview');
+        
+        if (!previewEl) return;
+
+        if (targetArray.length === 0) {
+            previewEl.innerHTML = '';
+            previewEl.classList.add('hidden');
+            return;
+        }
+
+        previewEl.classList.remove('hidden');
+        previewEl.innerHTML = `
+            <div class="forum-image-preview-grid">
+                ${targetArray.map((file, idx) => `
+                    <div class="preview-item-wrapper" style="position: relative; display: inline-block; margin: 5px;">
+                        <img class="preview-thumb" id="preview-img-${type}-${idx}" alt="Preview ${idx+1}" style="max-width: 80px; max-height: 80px; border-radius: 4px;">
+                        <button type="button" class="remove-preview-btn" data-type="${type}" data-index="${idx}" style="position: absolute; top: -5px; right: -5px; background: red; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer;">✕</button>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        targetArray.forEach((file, idx) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const imgEl = document.getElementById(`preview-img-${type}-${idx}`);
+                if (imgEl) imgEl.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        previewEl.querySelectorAll('.remove-preview-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const t = btn.getAttribute('data-type');
+                const idx = parseInt(btn.getAttribute('data-index'), 10);
+                this.removeFile(t, idx);
+            });
+        });
     },
 
     loadCategories: async function () {
@@ -510,12 +591,6 @@ const Forum = {
             const lastView = Number(lastViewed[cat.id]) || window.sessionStartTime || Date.now();
             const hasNew = lastContent > lastView;
             
-            if (hasNew) {
-                console.debug(`[Forum Rendering] Category ${cat.name} (ID: ${cat.id}) IS GOLD: content=${lastContent}, view=${lastView}`);
-            } else {
-                console.debug(`[Forum Rendering] Category ${cat.name} (ID: ${cat.id}) IS GREY: content=${lastContent}, view=${lastView}`);
-            }
-
             return `
                 <div class="forum-cat-item ${hasNew ? 'has-new' : ''}" data-id="${cat.id}">
                     <span class="forum-cat-name">${cat.name}</span>
@@ -646,7 +721,6 @@ const Forum = {
     },
 
     renderPosts: function (posts) {
-        console.log("[Forum] renderPosts received:", posts);
         const postsList = document.getElementById('forum-posts-list');
 
         if (posts.length === 0) {
@@ -665,6 +739,7 @@ const Forum = {
             const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const isComment = post.type === 'comment';
             const postId = post.post_id || post.id;
+            const hasImages = (post.image_url || (post.image_urls && post.image_urls.length > 0));
             
             return `
                 <div class="forum-post-card" data-id="${postId}">
@@ -678,7 +753,7 @@ const Forum = {
                     <div class="post-card-excerpt">${this.escapeHtml(post.content)}</div>
                     <div class="post-stats">
                         ${isComment ? '' : `<div class="stat-item">💬 ${post.comment_count} comments</div>`}
-                        ${post.image_url ? '<div class="stat-item">🖼️ Includes image</div>' : ''}
+                        ${hasImages ? '<div class="stat-item">🖼️ Includes images</div>' : ''}
                     </div>
                 </div>
             `;
@@ -699,7 +774,6 @@ const Forum = {
         try {
             const response = await fetch(`/api/forum/post/${postId}`);
             const data = await response.json();
-            console.log(`[Forum] Rendering post ${postId} with ${data.comments.length} comments (Newest First)`);
             this.renderPostDetail(data.post, data.comments);
             this.showPostView();
         } catch (err) {
@@ -718,9 +792,8 @@ const Forum = {
             });
             const data = await response.json();
             if (data.success) {
-                // Return to list and reload everything
-                await this.loadCategories(); // Refresh side counts (though we don't show counts yet)
-                await this.selectCategory(this.currentCategoryId); // Refresh posts list for current category
+                await this.loadCategories();
+                await this.selectCategory(this.currentCategoryId);
                 this.showListView();
             } else {
                 alert(data.error || "Failed to delete post.");
@@ -751,16 +824,16 @@ const Forum = {
     },
 
     renderPostDetail: function (post, comments) {
-        // Clear/reset comment inputs for the new post
         const commentInput = document.getElementById('forum-comment-input');
         if (commentInput) commentInput.value = '';
-        const commentImageInput = document.getElementById('forum-comment-image');
-        if (commentImageInput) commentImageInput.value = '';
-        this.handleImagePreview({ target: { files: [] } }, 'forum-comment-image-preview');
+        this.selectedCommentFiles = [];
+        this.renderImagePreviews('comment');
 
         const detailEl = document.getElementById('forum-post-detail');
         const date = parseUTCTimestamp(post.timestamp);
         const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        const postUrls = post.image_urls || (post.image_url ? [post.image_url] : []);
 
         detailEl.innerHTML = `
             <div class="post-detail-header">
@@ -779,14 +852,13 @@ const Forum = {
                 </div>
             </div>
             <div class="post-content">${this.escapeHtml(post.content)}</div>
-            ${post.image_url ? `
+            ${postUrls.map(url => `
                 <div class="post-image-container">
-                    <img src="${post.image_url}" class="post-image forum-lightbox-trigger" data-url="${post.image_url}" data-caption="${this.escapeHtml(post.title)} by ${this.escapeHtml(post.username)}" alt="Post attachment" style="cursor: pointer;">
+                    <img src="${url}" class="post-image forum-lightbox-trigger" data-url="${url}" data-caption="${this.escapeHtml(post.title)} by ${this.escapeHtml(post.username)}" alt="Post attachment" style="cursor: pointer; max-width: 100%; margin: 10px 0;">
                 </div>
-            ` : ''}
+            `).join('')}
         `;
 
-        // Attach delete listener if button exists
         const deleteBtn = document.getElementById('forum-delete-post-btn');
         if (deleteBtn) {
             deleteBtn.addEventListener('click', (e) => {
@@ -795,22 +867,17 @@ const Forum = {
             });
         }
 
-        // Render comments
         const commentsListEl = document.getElementById('forum-comments-list');
-        document.getElementById('forum-comment-count').textContent = `${comments.length} comments (Newest First)`;
+        document.getElementById('forum-comment-count').textContent = `${comments.length} comments`;
 
-        // Sort comments by timestamp newest first to be absolutely sure
-        const sortedComments = [...comments].sort((a, b) => {
-            const dateA = parseUTCTimestamp(a.timestamp);
-            const dateB = parseUTCTimestamp(b.timestamp);
-            return dateB - dateA;
-        });
+        const sortedComments = [...comments].sort((a, b) => parseUTCTimestamp(b.timestamp) - parseUTCTimestamp(a.timestamp));
 
         if (sortedComments.length === 0) {
             commentsListEl.innerHTML = '<p class="forum-placeholder">No comments yet. Start the discussion!</p>';
         } else {
             commentsListEl.innerHTML = sortedComments.map(c => {
                 const cDate = parseUTCTimestamp(c.timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' });
+                const cUrls = c.image_urls || (c.image_url ? [c.image_url] : []);
                 return `
                     <div class="forum-comment">
                         <div class="comment-avatar">${c.username[0].toUpperCase()}</div>
@@ -823,17 +890,16 @@ const Forum = {
                                 ` : ''}
                             </div>
                             <div class="comment-content">${this.escapeHtml(c.content)}</div>
-                            ${c.image_url ? `
+                            ${cUrls.map(url => `
                                 <div class="comment-image-container" style="margin-top: 10px; border-radius: 8px; overflow: hidden; border: 1px solid var(--input-border); cursor: pointer;">
-                                    <img src="${c.image_url}" class="forum-lightbox-trigger" data-url="${c.image_url}" data-caption="Reply by ${this.escapeHtml(c.username)}" style="max-width: 100%; display: block;" alt="Comment attachment">
+                                    <img src="${url}" class="forum-lightbox-trigger" data-url="${url}" data-caption="Reply by ${this.escapeHtml(c.username)}" style="max-width: 100%; display: block;" alt="Comment attachment">
                                 </div>
-                            ` : ''}
+                            `).join('')}
                         </div>
                     </div>
                 `;
             }).join('');
 
-            // Attach comment delete listeners
             commentsListEl.querySelectorAll('.forum-comment-delete-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const commentId = parseInt(btn.getAttribute('data-id'));
@@ -842,7 +908,6 @@ const Forum = {
             });
         }
 
-        // Attach lightbox listeners
         const triggers = document.querySelectorAll('.forum-lightbox-trigger');
         triggers.forEach(img => {
             img.addEventListener('click', () => {
@@ -854,7 +919,6 @@ const Forum = {
             });
         });
 
-        // Show/hide comment form
         const isGuest = window.currentUserIsGuest || (window.currentUser === null);
         document.getElementById('forum-comment-form-container').classList.toggle('hidden', isGuest);
     },
@@ -864,11 +928,9 @@ const Forum = {
         const title = document.getElementById('forum-post-title').value;
         const content = document.getElementById('forum-post-content').value;
         const catId = document.getElementById('forum-post-category-id').value;
-        const imageFile = document.getElementById('forum-post-image') ? document.getElementById('forum-post-image').files[0] : null;
 
         if (!title || !content) return;
 
-        // Visual loading feedback
         const submitPostBtn = document.querySelector('#forum-post-form button[type="submit"]');
         const originalBtnText = submitPostBtn ? submitPostBtn.textContent : 'Create Post';
         if (submitPostBtn) {
@@ -881,24 +943,24 @@ const Forum = {
         formData.append('title', title);
         formData.append('content', content);
 
-        if (imageFile) {
+        for (let imageFile of this.selectedPostFiles) {
             if (imageFile.type === 'image/gif') {
                 if (imageFile.size > 2 * 1024 * 1024) {
-                    alert("GIF files must be under 2MB.");
+                    alert(`GIF file "${imageFile.name}" must be under 2MB.`);
                     if (submitPostBtn) {
                         submitPostBtn.disabled = false;
                         submitPostBtn.textContent = originalBtnText;
                     }
                     return;
                 }
-                formData.append('image', imageFile);
+                formData.append('images', imageFile);
             } else {
                 try {
                     const compressed = await this.compressImage(imageFile, 1200, 0.8);
-                    formData.append('image', compressed);
+                    formData.append('images', compressed);
                 } catch (err) {
                     console.error("[Forum] Compression failed, uploading original:", err);
-                    formData.append('image', imageFile);
+                    formData.append('images', imageFile);
                 }
             }
         }
@@ -910,12 +972,12 @@ const Forum = {
             });
             const data = await response.json();
             if (data.success) {
-                // Return to list and reload everything
                 document.getElementById('forum-post-form').reset();
-                this.handleImagePreview({ target: { files: [] } }, 'forum-image-preview'); 
+                this.selectedPostFiles = [];
+                this.renderImagePreviews('post');
                 
-                await this.loadCategories(); // Refresh ALL side buttons first
-                await this.selectCategory(this.currentCategoryId); // Then load posts for the current one
+                await this.loadCategories();
+                await this.selectCategory(this.currentCategoryId);
             } else {
                 alert(data.error || "Failed to create post.");
             }
@@ -932,11 +994,9 @@ const Forum = {
 
     handleCommentSubmit: async function () {
         const content = document.getElementById('forum-comment-input').value;
-        const imageFile = document.getElementById('forum-comment-image') ? document.getElementById('forum-comment-image').files[0] : null;
 
         if (!content) return;
 
-        // Visual loading feedback
         const submitCommentBtn = document.getElementById('forum-submit-comment');
         const originalBtnText = submitCommentBtn ? submitCommentBtn.textContent : 'Post Comment';
         if (submitCommentBtn) {
@@ -948,22 +1008,16 @@ const Forum = {
         formData.append('post_id', this.currentPostId);
         formData.append('content', content);
 
-        if (imageFile) {
+        for (let imageFile of this.selectedCommentFiles) {
             if (imageFile.type === 'image/gif') {
                 if (imageFile.size > 2 * 1024 * 1024) {
-                    alert("GIF files must be under 2MB.");
+                    alert(`GIF file "${imageFile.name}" must be under 2MB.`);
                     if (submitCommentBtn) {
                         submitCommentBtn.disabled = false;
                         submitCommentBtn.textContent = originalBtnText;
                     }
                     return;
                 }
-                formData.append('image', imageFile);
-            } else {
-                try {
-                    const compressed = await this.compressImage(imageFile, 1200, 0.8);
-                    formData.append('image', compressed);
-                } catch (err) {
                     console.error("[Forum] Compression failed, uploading original:", err);
                     formData.append('image', imageFile);
                 }
