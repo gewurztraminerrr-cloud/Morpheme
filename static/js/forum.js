@@ -437,25 +437,19 @@ const Forum = {
             });
         }
         if (postImageWrapper && postImageInput) {
-            // Click wrapper to open file picker
-            postImageWrapper.addEventListener('click', (e) => {
-                if (!e.target.closest('.remove-preview-btn') && !e.target.closest('.preview-thumb')) {
-                    postImageInput.click();
-                }
-            });
             postImageWrapper.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                postImageWrapper.querySelector('div').style.background = 'rgba(0, 0, 0, 0.4)';
-                postImageWrapper.querySelector('div').style.borderColor = 'var(--accent-color)';
+                const lbl = postImageWrapper.querySelector('label');
+                if (lbl) { lbl.style.borderColor = 'var(--accent-color)'; lbl.style.background = 'rgba(0,0,0,0.4)'; }
             });
             postImageWrapper.addEventListener('dragleave', () => {
-                postImageWrapper.querySelector('div').style.background = 'rgba(0, 0, 0, 0.2)';
-                postImageWrapper.querySelector('div').style.borderColor = 'var(--input-border)';
+                const lbl = postImageWrapper.querySelector('label');
+                if (lbl) { lbl.style.borderColor = 'var(--input-border)'; lbl.style.background = 'rgba(0,0,0,0.2)'; }
             });
             postImageWrapper.addEventListener('drop', (e) => {
                 e.preventDefault();
-                postImageWrapper.querySelector('div').style.background = 'rgba(0, 0, 0, 0.2)';
-                postImageWrapper.querySelector('div').style.borderColor = 'var(--input-border)';
+                const lbl = postImageWrapper.querySelector('label');
+                if (lbl) { lbl.style.borderColor = 'var(--input-border)'; lbl.style.background = 'rgba(0,0,0,0.2)'; }
                 if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
                     this.addFiles('post', e.dataTransfer.files);
                 }
@@ -473,25 +467,19 @@ const Forum = {
             });
         }
         if (commentImageWrapper && commentImageInput) {
-            // Click wrapper to open file picker
-            commentImageWrapper.addEventListener('click', (e) => {
-                if (!e.target.closest('.remove-preview-btn') && !e.target.closest('.preview-thumb')) {
-                    commentImageInput.click();
-                }
-            });
             commentImageWrapper.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                commentImageWrapper.querySelector('div').style.background = 'rgba(0, 0, 0, 0.4)';
-                commentImageWrapper.querySelector('div').style.borderColor = 'var(--accent-color)';
+                const lbl = commentImageWrapper.querySelector('label');
+                if (lbl) { lbl.style.borderColor = 'var(--accent-color)'; lbl.style.background = 'rgba(0,0,0,0.4)'; }
             });
             commentImageWrapper.addEventListener('dragleave', () => {
-                commentImageWrapper.querySelector('div').style.background = 'rgba(0, 0, 0, 0.2)';
-                commentImageWrapper.querySelector('div').style.borderColor = 'var(--input-border)';
+                const lbl = commentImageWrapper.querySelector('label');
+                if (lbl) { lbl.style.borderColor = 'var(--input-border)'; lbl.style.background = 'rgba(0,0,0,0.2)'; }
             });
             commentImageWrapper.addEventListener('drop', (e) => {
                 e.preventDefault();
-                commentImageWrapper.querySelector('div').style.background = 'rgba(0, 0, 0, 0.2)';
-                commentImageWrapper.querySelector('div').style.borderColor = 'var(--input-border)';
+                const lbl = commentImageWrapper.querySelector('label');
+                if (lbl) { lbl.style.borderColor = 'var(--input-border)'; lbl.style.background = 'rgba(0,0,0,0.2)'; }
                 if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
                     this.addFiles('comment', e.dataTransfer.files);
                 }
