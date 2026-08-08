@@ -537,8 +537,10 @@ const Forum = {
                     textSpan.textContent = type === 'post' 
                         ? 'Click to choose images (up to 3) or drag and drop' 
                         : '📎 Attach images (up to 3)';
+                } else if (targetArray.length < 3) {
+                    textSpan.textContent = `📎 Attached ${targetArray.length}/3 images (Click to add more)`;
                 } else {
-                    textSpan.textContent = `📎 Attached ${targetArray.length}/3 images (Click or drag to add more)`;
+                    textSpan.textContent = `📎 Maximum 3 images selected`;
                 }
             }
         }
@@ -553,12 +555,9 @@ const Forum = {
 
         previewEl.classList.remove('hidden');
         previewEl.innerHTML = `
-            <div style="margin-top: 8px; margin-bottom: 6px; font-size: 0.85rem; font-weight: 600; color: var(--accent-color);">
-                ✅ ${targetArray.length} image${targetArray.length > 1 ? 's' : ''} ready to send (Click thumbnail to enlarge, ✕ to remove):
-            </div>
             <div class="forum-image-preview-grid">
                 ${targetArray.map((file, idx) => `
-                    <div class="preview-item-wrapper" title="Click image to enlarge">
+                    <div class="preview-item-wrapper" title="Click thumbnail to enlarge">
                         <img class="preview-thumb" id="preview-img-${type}-${idx}" alt="Preview ${idx+1}">
                         <button type="button" class="remove-preview-btn" data-type="${type}" data-index="${idx}" title="Remove image">✕</button>
                     </div>
