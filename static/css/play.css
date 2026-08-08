@@ -6644,7 +6644,7 @@ body .board-cell.tile-flash-purple * {
     #tool-store .store-item-image {
         width: 100% !important;
         max-width: 100% !important;
-        height: 110px !important;
+        height: 220px !important;
         border-radius: 0 !important;
     }
     #tool-store .store-item-image img {
