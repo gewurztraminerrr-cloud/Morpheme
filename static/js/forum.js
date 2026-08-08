@@ -553,6 +553,9 @@ const Forum = {
 
         previewEl.classList.remove('hidden');
         previewEl.innerHTML = `
+            <div style="margin-top: 8px; margin-bottom: 6px; font-size: 0.85rem; font-weight: 600; color: var(--accent-color);">
+                ✅ ${targetArray.length} image${targetArray.length > 1 ? 's' : ''} ready to send (Click thumbnail to enlarge, ✕ to remove):
+            </div>
             <div class="forum-image-preview-grid">
                 ${targetArray.map((file, idx) => `
                     <div class="preview-item-wrapper" title="Click image to enlarge">

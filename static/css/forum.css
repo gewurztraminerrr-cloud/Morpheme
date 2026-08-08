@@ -587,49 +587,31 @@
 
 /* Post & Comment Multi-Image Gallery Grids */
 .post-images-grid, .comment-images-grid {
-    display: grid;
-    gap: 12px;
-    margin-top: 14px;
-    margin-bottom: 10px;
-}
-
-.post-images-grid.grid-count-1, .comment-images-grid.grid-count-1 {
-    grid-template-columns: 1fr;
-    max-width: 450px;
-}
-
-.post-images-grid.grid-count-2, .comment-images-grid.grid-count-2 {
-    grid-template-columns: repeat(2, 1fr);
-    max-width: 600px;
-}
-
-.post-images-grid.grid-count-3, .comment-images-grid.grid-count-3 {
-    grid-template-columns: repeat(3, 1fr);
-    max-width: 750px;
-}
-
-@media (max-width: 650px) {
-    .post-images-grid.grid-count-2, .comment-images-grid.grid-count-2,
-    .post-images-grid.grid-count-3, .comment-images-grid.grid-count-3 {
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    }
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    margin-bottom: 8px;
 }
 
 .post-image-item, .comment-image-item {
-    border-radius: 10px;
+    width: 110px;
+    height: 110px;
+    border-radius: 8px;
     overflow: hidden;
     border: 1px solid var(--input-border);
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.4);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s ease, border-color 0.15s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 180px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
-.post-images-grid.grid-count-1 .post-image-item,
-.comment-images-grid.grid-count-1 .comment-image-item {
-    height: 260px;
+.post-image-item:hover, .comment-image-item:hover {
+    transform: scale(1.04);
+    border-color: var(--accent-color);
 }
 
 .post-image-item img, .comment-image-item img {
@@ -638,12 +620,11 @@
     object-fit: cover;
     display: block;
     cursor: pointer;
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition: opacity 0.2s ease;
 }
 
 .post-image-item img:hover, .comment-image-item img:hover {
-    opacity: 0.9;
-    transform: scale(1.03);
+    opacity: 0.88;
 }
 
 /* Create Form */
