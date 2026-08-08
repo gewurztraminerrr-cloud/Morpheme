@@ -6898,3 +6898,58 @@ body .board-cell.tile-flash-purple * {
         padding: 15px !important;
     }
 }
+
+/* ================================================
+   LISTS TOOL — Desktop Fixed-Height Layout Fix
+   Ensures everything fits on screen without the
+   outer tool-pane scrolling (≥901px).
+   The filter bar is pinned at top; only the inner
+   list-scroll-area scrolls.
+   ================================================ */
+@media (min-width: 901px) {
+    #tool-lists {
+        height: 100% !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-lists .tool-header {
+        flex: 0 0 auto !important;
+    }
+
+    #tool-lists .combo-control-panel {
+        flex: 0 0 auto !important;
+        position: relative !important;
+        top: auto !important;
+    }
+
+    #tool-lists .lists-container {
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        height: auto !important;
+        overflow: hidden !important;
+        padding-bottom: 10px !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-lists .list-column {
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+
+    #tool-lists .list-scroll-area-wrapper {
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+
+    #tool-lists .list-scroll-area {
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        height: 100% !important;
+    }
+}
