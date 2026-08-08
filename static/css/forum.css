@@ -206,6 +206,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .forum-action-btn:hover {
@@ -517,6 +519,7 @@
 .comment-controls {
     display: flex;
     justify-content: flex-end;
+    width: 100%;
 }
 
 /* Multi-Image Upload Preview Grid */
@@ -1113,6 +1116,27 @@ body.theme-black .forum-action-btn {
     }
     #forum-user-search-input::placeholder {
         font-size: 0.72rem !important;
+    }
+
+    /* Thread title placeholder: smaller so full text is readable on mobile */
+    #forum-post-title::placeholder {
+        font-size: 0.75rem !important;
+    }
+
+    /* Post Comment button: full width to match Attach Images row */
+    #forum-submit-comment {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .comment-controls {
+        width: 100% !important;
+    }
+
+    /* Publish Thread button: full width on mobile */
+    .form-actions .forum-action-btn {
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
 }
 
