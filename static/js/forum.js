@@ -856,6 +856,18 @@ const Forum = {
         const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         const postUrls = post.image_urls || (post.image_url ? [post.image_url] : []);
+        let postImagesHtml = '';
+        if (postUrls.length > 0) {
+            postImagesHtml = `
+                <div class="post-images-grid grid-count-${postUrls.length}">
+                    ${postUrls.map((url, idx) => `
+                        <div class="post-image-item">
+                            <img src="${url}" class="post-image forum-lightbox-trigger" data-url="${url}" data-caption="${this.escapeHtml(post.title)} by ${this.escapeHtml(post.username)} (${idx+1}/${postUrls.length})" alt="Post attachment ${idx+1}" style="cursor: pointer;">
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
 
         detailEl.innerHTML = `
             <div class="post-detail-header">
@@ -874,11 +886,7 @@ const Forum = {
                 </div>
             </div>
             <div class="post-content">${this.escapeHtml(post.content)}</div>
-            ${postUrls.map(url => `
-                <div class="post-image-container">
-                    <img src="${url}" class="post-image forum-lightbox-trigger" data-url="${url}" data-caption="${this.escapeHtml(post.title)} by ${this.escapeHtml(post.username)}" alt="Post attachment" style="cursor: pointer; max-width: 100%; margin: 10px 0;">
-                </div>
-            `).join('')}
+            ${postImagesHtml}
         `;
 
         const deleteBtn = document.getElementById('forum-delete-post-btn');
@@ -900,6 +908,19 @@ const Forum = {
             commentsListEl.innerHTML = sortedComments.map(c => {
                 const cDate = parseUTCTimestamp(c.timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' });
                 const cUrls = c.image_urls || (c.image_url ? [c.image_url] : []);
+                let cImagesHtml = '';
+                if (cUrls.length > 0) {
+                    cImagesHtml = `
+                        <div class="comment-images-grid grid-count-${cUrls.length}">
+                            ${cUrls.map((url, idx) => `
+                                <div class="comment-image-item">
+                                    <img src="${url}" class="forum-lightbox-trigger" data-url="${url}" data-caption="Reply by ${this.escapeHtml(c.username)} (${idx+1}/${cUrls.length})" alt="Comment attachment ${idx+1}" style="cursor: pointer;">
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
                 return `
                     <div class="forum-comment">
                         <div class="comment-avatar">${c.username[0].toUpperCase()}</div>
@@ -912,11 +933,7 @@ const Forum = {
                                 ` : ''}
                             </div>
                             <div class="comment-content">${this.escapeHtml(c.content)}</div>
-                            ${cUrls.map(url => `
-                                <div class="comment-image-container" style="margin-top: 10px; border-radius: 8px; overflow: hidden; border: 1px solid var(--input-border); cursor: pointer;">
-                                    <img src="${url}" class="forum-lightbox-trigger" data-url="${url}" data-caption="Reply by ${this.escapeHtml(c.username)}" style="max-width: 100%; display: block;" alt="Comment attachment">
-                                </div>
-                            `).join('')}
+                            ${cImagesHtml}
                         </div>
                     </div>
                 `;
