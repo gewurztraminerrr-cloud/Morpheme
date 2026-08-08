@@ -4506,6 +4506,17 @@ input[type=range]::-moz-range-track {
         gap: 10px !important;
         align-items: center !important;
         position: relative !important; /* For absolute positioning of return button */
+
+        /* FIX: Promote to its own GPU compositing layer so the scroll-snap
+           swipe transitions on .play-grid children never cause the header
+           (Spinner Set, timer, etc.) to flash or disappear momentarily. */
+        transform: translateZ(0) !important;
+        -webkit-transform: translateZ(0) !important;
+        will-change: transform !important;
+        z-index: 20 !important;
+        isolation: isolate !important;
+        -webkit-backface-visibility: hidden !important;
+        backface-visibility: hidden !important;
     }
     .header-title-group {
         display: flex !important;
