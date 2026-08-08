@@ -528,7 +528,21 @@ const Forum = {
     renderImagePreviews: function (type) {
         const targetArray = type === 'post' ? this.selectedPostFiles : this.selectedCommentFiles;
         const previewEl = document.getElementById(type === 'post' ? 'forum-image-preview' : 'forum-comment-image-preview');
+        const wrapperEl = document.getElementById(type === 'post' ? 'forum-post-image-wrapper' : 'forum-comment-image-wrapper');
         
+        if (wrapperEl) {
+            const textSpan = wrapperEl.querySelector('.file-text');
+            if (textSpan) {
+                if (targetArray.length === 0) {
+                    textSpan.textContent = type === 'post' 
+                        ? 'Click to choose images (up to 3) or drag and drop' 
+                        : '📎 Attach images (up to 3)';
+                } else {
+                    textSpan.textContent = `📎 Attached ${targetArray.length}/3 images (Click or drag to add more)`;
+                }
+            }
+        }
+
         if (!previewEl) return;
 
         if (targetArray.length === 0) {
@@ -541,9 +555,9 @@ const Forum = {
         previewEl.innerHTML = `
             <div class="forum-image-preview-grid">
                 ${targetArray.map((file, idx) => `
-                    <div class="preview-item-wrapper" style="position: relative; display: inline-block; margin: 5px;">
-                        <img class="preview-thumb" id="preview-img-${type}-${idx}" alt="Preview ${idx+1}" style="max-width: 80px; max-height: 80px; border-radius: 4px;">
-                        <button type="button" class="remove-preview-btn" data-type="${type}" data-index="${idx}" style="position: absolute; top: -5px; right: -5px; background: red; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer;">✕</button>
+                    <div class="preview-item-wrapper" title="Click image to enlarge">
+                        <img class="preview-thumb" id="preview-img-${type}-${idx}" alt="Preview ${idx+1}">
+                        <button type="button" class="remove-preview-btn" data-type="${type}" data-index="${idx}" title="Remove image">✕</button>
                     </div>
                 `).join('')}
             </div>
@@ -553,7 +567,15 @@ const Forum = {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const imgEl = document.getElementById(`preview-img-${type}-${idx}`);
-                if (imgEl) imgEl.src = e.target.result;
+                if (imgEl) {
+                    imgEl.src = e.target.result;
+                    imgEl.addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        if (typeof window.showImageLightbox === 'function') {
+                            window.showImageLightbox(e.target.result, `Attachment Preview (${idx+1}/${targetArray.length}): ${file.name}`);
+                        }
+                    });
+                }
             };
             reader.readAsDataURL(file);
         });
