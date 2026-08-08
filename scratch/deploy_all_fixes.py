@@ -22,7 +22,10 @@ def main():
         "static/css/play.css",
         "static/css/style.css",
         "static/css/forum.css",
-        "templates/index.html"
+        "templates/index.html",
+        "static/images/boggle_classic.jpg",
+        "static/images/boggle_big.jpg",
+        "static/images/boggle_super_big.jpg",
     ]
     
     print("Uploading updated files to production server...")
