@@ -742,10 +742,10 @@
     overflow: visible;
 }
 
-.image-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+/* Never let a raw img inside the preview container go full-width */
+.image-preview > img,
+.image-preview img:not(.preview-thumb) {
+    display: none !important;
 }
 
 .form-actions {

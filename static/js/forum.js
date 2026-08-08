@@ -437,19 +437,25 @@ const Forum = {
             });
         }
         if (postImageWrapper && postImageInput) {
+            // Click wrapper to open file picker
+            postImageWrapper.addEventListener('click', (e) => {
+                if (!e.target.closest('.remove-preview-btn') && !e.target.closest('.preview-thumb')) {
+                    postImageInput.click();
+                }
+            });
             postImageWrapper.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                postImageWrapper.style.background = 'rgba(0, 0, 0, 0.4)';
-                postImageWrapper.style.borderColor = 'var(--accent-color)';
+                postImageWrapper.querySelector('div').style.background = 'rgba(0, 0, 0, 0.4)';
+                postImageWrapper.querySelector('div').style.borderColor = 'var(--accent-color)';
             });
             postImageWrapper.addEventListener('dragleave', () => {
-                postImageWrapper.style.background = 'rgba(0, 0, 0, 0.2)';
-                postImageWrapper.style.borderColor = 'var(--input-border)';
+                postImageWrapper.querySelector('div').style.background = 'rgba(0, 0, 0, 0.2)';
+                postImageWrapper.querySelector('div').style.borderColor = 'var(--input-border)';
             });
             postImageWrapper.addEventListener('drop', (e) => {
                 e.preventDefault();
-                postImageWrapper.style.background = 'rgba(0, 0, 0, 0.2)';
-                postImageWrapper.style.borderColor = 'var(--input-border)';
+                postImageWrapper.querySelector('div').style.background = 'rgba(0, 0, 0, 0.2)';
+                postImageWrapper.querySelector('div').style.borderColor = 'var(--input-border)';
                 if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
                     this.addFiles('post', e.dataTransfer.files);
                 }
@@ -467,19 +473,25 @@ const Forum = {
             });
         }
         if (commentImageWrapper && commentImageInput) {
+            // Click wrapper to open file picker
+            commentImageWrapper.addEventListener('click', (e) => {
+                if (!e.target.closest('.remove-preview-btn') && !e.target.closest('.preview-thumb')) {
+                    commentImageInput.click();
+                }
+            });
             commentImageWrapper.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                commentImageWrapper.style.background = 'rgba(0, 0, 0, 0.4)';
-                commentImageWrapper.style.borderColor = 'var(--accent-color)';
+                commentImageWrapper.querySelector('div').style.background = 'rgba(0, 0, 0, 0.4)';
+                commentImageWrapper.querySelector('div').style.borderColor = 'var(--accent-color)';
             });
             commentImageWrapper.addEventListener('dragleave', () => {
-                commentImageWrapper.style.background = 'rgba(0, 0, 0, 0.2)';
-                commentImageWrapper.style.borderColor = 'var(--input-border)';
+                commentImageWrapper.querySelector('div').style.background = 'rgba(0, 0, 0, 0.2)';
+                commentImageWrapper.querySelector('div').style.borderColor = 'var(--input-border)';
             });
             commentImageWrapper.addEventListener('drop', (e) => {
                 e.preventDefault();
-                commentImageWrapper.style.background = 'rgba(0, 0, 0, 0.2)';
-                commentImageWrapper.style.borderColor = 'var(--input-border)';
+                commentImageWrapper.querySelector('div').style.background = 'rgba(0, 0, 0, 0.2)';
+                commentImageWrapper.querySelector('div').style.borderColor = 'var(--input-border)';
                 if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
                     this.addFiles('comment', e.dataTransfer.files);
                 }
@@ -1059,8 +1071,14 @@ const Forum = {
                     }
                     return;
                 }
+                formData.append('images', imageFile);
+            } else {
+                try {
+                    const compressed = await this.compressImage(imageFile, 1200, 0.8);
+                    formData.append('images', compressed);
+                } catch (err) {
                     console.error("[Forum] Compression failed, uploading original:", err);
-                    formData.append('image', imageFile);
+                    formData.append('images', imageFile);
                 }
             }
         }
@@ -1073,9 +1091,8 @@ const Forum = {
             const data = await response.json();
             if (data.success) {
                 document.getElementById('forum-comment-input').value = '';
-                const commentImageInput = document.getElementById('forum-comment-image');
-                if (commentImageInput) commentImageInput.value = '';
-                this.handleImagePreview({ target: { files: [] } }, 'forum-comment-image-preview');
+                this.selectedCommentFiles = [];
+                this.renderImagePreviews('comment');
 
                 await this.loadCategories(); // Refresh side buttons (to clear/update gold)
                 await this.loadPostDetail(this.currentPostId);
@@ -1137,21 +1154,9 @@ const Forum = {
     },
 
     handleImagePreview: function (e, previewId) {
-        const file = e.target.files[0];
-        const previewEl = document.getElementById(previewId);
-        if (!previewEl) return;
-
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function (event) {
-                previewEl.innerHTML = `<img src="${event.target.result}" style="max-width: 100%; border-radius: 8px;">`;
-                previewEl.classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-        } else {
-            previewEl.innerHTML = '';
-            previewEl.classList.add('hidden');
-        }
+        // Delegate to renderImagePreviews — never render a full-size inline image
+        const type = (previewId && previewId.includes('comment')) ? 'comment' : 'post';
+        this.renderImagePreviews(type);
     },
 
     showListView: function () {
