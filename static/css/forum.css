@@ -524,21 +524,22 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
-    margin-top: 8px;
-    padding: 4px 0;
+    gap: 8px;
+    margin-top: 6px;
+    padding: 0;
 }
 
 .preview-item-wrapper {
     position: relative;
-    width: 75px;
-    height: 75px;
-    border-radius: 8px;
+    width: 65px;
+    height: 65px;
+    border-radius: 6px;
     overflow: hidden;
     border: 1px solid var(--input-border);
     background: rgba(0, 0, 0, 0.4);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
     transition: transform 0.15s ease, border-color 0.15s ease;
+    flex-shrink: 0;
 }
 
 .preview-item-wrapper:hover {
@@ -561,10 +562,10 @@
 
 .remove-preview-btn {
     position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 20px;
-    height: 20px;
+    top: 2px;
+    right: 2px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     background: rgba(244, 63, 94, 0.95);
     color: white;
@@ -575,7 +576,7 @@
     justify-content: center;
     font-size: 10px;
     font-weight: bold;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
     z-index: 2;
     transition: transform 0.15s ease, background 0.15s ease;
 }
@@ -590,23 +591,24 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
-    margin-top: 10px;
+    gap: 8px;
+    margin-top: 8px;
     margin-bottom: 8px;
 }
 
 .post-image-item, .comment-image-item {
-    width: 90px;
-    height: 90px;
-    border-radius: 8px;
+    width: 80px;
+    height: 80px;
+    border-radius: 6px;
     overflow: hidden;
     border: 1px solid var(--input-border);
     background: rgba(0, 0, 0, 0.4);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
     transition: transform 0.15s ease, border-color 0.15s ease;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .post-image-item:hover, .comment-image-item:hover {
@@ -734,17 +736,16 @@
 }
 
 .image-preview {
-    margin-top: 15px;
-    max-height: 250px;
-    overflow: hidden;
-    border-radius: 8px;
-    border: 1px solid var(--input-border);
+    margin-top: 8px;
+    border: none;
+    background: transparent;
+    overflow: visible;
 }
 
 .image-preview img {
-    max-width: 100%;
-    display: block;
-    margin: 0 auto;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .form-actions {
