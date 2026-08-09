@@ -2335,10 +2335,34 @@ body {
     background: rgba(var(--text-primary-rgb), 0.05);
     border-radius: 12px;
     padding: 12px;
+    padding-right: 8px;             /* room for scrollbar */
     margin-bottom: 24px;
     height: 140px;
-    overflow-y: auto;
+    overflow-y: scroll;             /* always show track so thumb is visible */
     border: 1px solid rgba(var(--text-primary-rgb), 0.05);
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Styled scrollbar thumb for About Me — all screen sizes */
+.mini-profile-description::-webkit-scrollbar {
+    width: 4px;
+}
+.mini-profile-description::-webkit-scrollbar-track {
+    background: rgba(var(--text-primary-rgb), 0.08);
+    border-radius: 10px;
+    margin: 4px 0;
+}
+.mini-profile-description::-webkit-scrollbar-thumb {
+    background: rgba(var(--text-primary-rgb), 0.35);
+    border-radius: 10px;
+    transition: background 0.2s ease;
+}
+.mini-profile-description::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-color);
+    opacity: 0.8;
+}
+.mini-profile-description::-webkit-scrollbar-thumb:active {
+    background: var(--accent-color);
 }
 
 .mini-profile-actions {
