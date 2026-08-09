@@ -872,11 +872,6 @@ const Forum = {
         }
 
         detailEl.innerHTML = `
-            ${window.currentUserIsMod ? `
-                <div class="forum-delete-post-wrapper">
-                    <button id="forum-delete-post-btn" class="forum-action-btn remove forum-delete-post-btn-style">Delete Post</button>
-                </div>
-            ` : ''}
             <div class="post-detail-header">
                 <h1 class="post-detail-title">${this.escapeHtml(post.title)}</h1>
                 <div class="post-author-box">
@@ -891,9 +886,17 @@ const Forum = {
             ${postImagesHtml}
         `;
 
+        // Static Delete Post button in HTML — show for mods, hide for others
+        const deleteContainer = document.getElementById('forum-delete-post-container');
         const deleteBtn = document.getElementById('forum-delete-post-btn');
+        if (deleteContainer) {
+            deleteContainer.style.display = window.currentUserIsMod ? 'block' : 'none';
+        }
         if (deleteBtn) {
-            deleteBtn.addEventListener('click', (e) => {
+            // Remove old listeners by cloning
+            const newBtn = deleteBtn.cloneNode(true);
+            deleteBtn.parentNode.replaceChild(newBtn, deleteBtn);
+            newBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.handlePostDelete(post.id);
             });
@@ -1150,6 +1153,10 @@ const Forum = {
     showListView: function () {
         document.querySelectorAll('.forum-view').forEach(v => v.classList.remove('active'));
         document.getElementById('forum-view-list').classList.add('active');
+
+        // Hide static Delete Post button when leaving post view
+        const deleteContainer = document.getElementById('forum-delete-post-container');
+        if (deleteContainer) deleteContainer.style.display = 'none';
 
         // On mobile devices, scroll down so they see the category title and threads
         if (window.innerWidth <= 820) {
