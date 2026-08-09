@@ -2145,6 +2145,24 @@ body.theme-light-brown .word-item.missed {
         padding: 30px !important;
         box-sizing: border-box !important;
     }
+
+    /* Store: remove the tool-pane's own padding so only tools-content's 30px applies */
+    #tool-store {
+        padding: 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    #tool-store .store-container {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+    }
+    #tool-store .store-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important;
+        gap: 20px !important;
+    }
 }
 
 .tool-btn-title {
