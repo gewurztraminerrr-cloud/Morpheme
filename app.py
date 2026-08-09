@@ -2760,9 +2760,7 @@ def get_public_profile(username):
 
     # Sort recent and exceptional
     recent_rounds = sorted(processed_all, key=lambda x: x['timestamp'], reverse=True)[:50]
-    exceptional_rounds = sorted([p for p in processed_all if 
-                               (p['performance_value'] >= 200)
-                               or (p['total_score'] >= 100)], 
+    exceptional_rounds = sorted([p for p in processed_all if p['performance_value'] >= 200],
                                key=lambda x: x['timestamp'], reverse=True)[:50]
     dynamic_max_pe = max([p['performance_value'] for p in processed_all]) if processed_all else 0
 
