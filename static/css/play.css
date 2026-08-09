@@ -5204,9 +5204,6 @@ input[type=range]::-moz-range-track {
         padding: 8px !important;
         border-radius: 16px !important;
         margin-bottom: 10px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
     }
 
     .history-walkthrough-section {

@@ -1624,65 +1624,69 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
 
             const is3D = rows === 6 && (Array.isArray(round.board[0]) && Array.isArray(round.board[0][0]) || Array.isArray(round.board[0]) && round.board[0].length === 3);
             if (is3D) {
-                // Calculate cell size dynamically to fit availWidth and availHeight
-                // Horizontal: 3 faces. Gaps: 2 * 20px = 40px (between faces).
-                // Gaps between cells: 3 faces * 2 gaps * 4px = 24px.
-                // Padding: 40px (20px left/right).
-                // Total non-cell width = 104px.
-                const nonCellW = 104;
-                const maxCellW3D = (availWidth - nonCellW) / 9;
-
-                // Vertical: 2 faces. Gaps: 1 * 20px = 20px (between faces).
-                // Gaps between cells: 2 faces * 2 gaps * 4px = 16px.
-                // Padding: 40px (20px top/bottom).
-                // Total non-cell height = 76px.
-                const nonCellH = 76;
-                const maxCellH3D = (availHeight - nonCellH) / 6;
-
-                const cellSize3D = Math.max(24, Math.floor(Math.min(maxCellW3D, maxCellH3D, 50)));
-                const fontSize3D = Math.floor(cellSize3D * 0.55) + 'px';
-
-                // On mobile: 2 columns of 3 faces each (3+3) so the board fits width.
-                // On desktop: 3 columns of 2 faces each (the classic layout).
+                // On mobile: 2 columns × 3 rows of faces. On desktop: 3 columns × 2 rows.
                 const isMobile3D = window.innerWidth <= 900;
                 const faceCols = isMobile3D ? 2 : 3;
                 const faceGap = isMobile3D ? 10 : 20;
+                const cellGap = 4;
+                const pad = isMobile3D ? 12 : 20;
+                const faceRows = isMobile3D ? 3 : 2;
 
-                boardContainer.style.display = 'grid';
-                boardContainer.style.gridTemplateColumns = `repeat(${faceCols}, max-content)`;
-                boardContainer.style.justifyContent = 'center';
-                boardContainer.style.alignContent = 'start';
-                boardContainer.style.gap = `${faceGap}px`;
-                boardContainer.style.padding = isMobile3D ? '12px' : '20px';
-                boardContainer.style.background = `rgba(0,0,0,0.2)`;
-                boardContainer.style.borderRadius = '15px';
-                boardContainer.style.overflow = 'visible';
-                boardContainer.style.width = 'fit-content';
-                boardContainer.style.margin = '0 auto';
+                // Calculate non-cell overhead for accurate cell size
+                // Horizontal: faceCols faces × 3 cells; faceGap between faces; cellGap within faces; pad on sides
+                const nonCellW = (faceCols - 1) * faceGap + faceCols * 2 * cellGap + 2 * pad;
+                const maxCellW3D = (availWidth - nonCellW) / (faceCols * 3);
 
-                boardContainer.innerHTML = round.board.map((face, fIdx) => {
+                // Vertical: faceRows faces × 3 cells
+                const nonCellH = (faceRows - 1) * faceGap + faceRows * 2 * cellGap + 2 * pad;
+                const maxCellH3D = (availHeight - nonCellH) / (faceRows * 3);
+
+                const cellSize3D = Math.max(22, Math.floor(Math.min(maxCellW3D, maxCellH3D, 50)));
+                const fontSize3D = Math.floor(cellSize3D * 0.55) + 'px';
+
+                // boardContainer = full-width block centering host (no background here)
+                boardContainer.style.cssText = '';          // clear any stale inline styles
+                boardContainer.style.display = 'block';
+                boardContainer.style.textAlign = 'center';
+
+                // Inner wrapper: inline-grid so it sizes to content → background hugs faces
+                const innerGrid = document.createElement('div');
+                innerGrid.style.display = 'inline-grid';
+                innerGrid.style.gridTemplateColumns = `repeat(${faceCols}, max-content)`;
+                innerGrid.style.gap = `${faceGap}px`;
+                innerGrid.style.padding = `${pad}px`;
+                innerGrid.style.background = 'rgba(0,0,0,0.2)';
+                innerGrid.style.borderRadius = '15px';
+                innerGrid.style.verticalAlign = 'top';
+
+                innerGrid.innerHTML = round.board.map((face, fIdx) => {
                     let faceHTML = '';
                     for (let r = 0; r < 3; r++) {
                         for (let c = 0; c < 3; c++) {
                             const val = (face[r] && face[r][c] !== undefined) ? face[r][c] : '?';
                             const displayVal = val === 'Q' ? 'QU' : val;
-                            faceHTML += `<div class="review-cell" style="width: ${cellSize3D}px; height: ${cellSize3D}px; font-size: ${fontSize3D}; border-radius: 4px; display: flex; align-items: center; justify-content: center; aspect-ratio: 1; flex-shrink: 0;">${displayVal}</div>`;
+                            faceHTML += `<div class="review-cell" style="width:${cellSize3D}px;height:${cellSize3D}px;font-size:${fontSize3D};border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${displayVal}</div>`;
                         }
                     }
                     return `
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: ${isMobile3D ? 4 : 8}px; flex-shrink: 0;">
-                            <div style="font-size: 0.6rem; color: rgba(255,255,255,0.3); font-weight: 900; text-transform: uppercase; white-space: nowrap;">Face ${fIdx}</div>
-                            <div style="display: grid; grid-template-columns: repeat(3, ${cellSize3D}px); gap: 4px; flex-shrink: 0;">
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:${isMobile3D ? 4 : 8}px;flex-shrink:0;">
+                            <div style="font-size:0.6rem;color:rgba(255,255,255,0.3);font-weight:900;text-transform:uppercase;white-space:nowrap;">Face ${fIdx}</div>
+                            <div style="display:grid;grid-template-columns:repeat(3,${cellSize3D}px);gap:${cellGap}px;flex-shrink:0;">
                                 ${faceHTML}
                             </div>
                         </div>
                     `;
                 }).join('');
+
+                boardContainer.innerHTML = '';
+                boardContainer.appendChild(innerGrid);
                 return;
             }
 
             const flatBoard = round.board.flat();
-            
+
+            // Clear any stale inline styles from a previous 3D board render
+            boardContainer.style.cssText = '';
             boardContainer.style.display = 'grid';
             boardContainer.style.gridTemplateColumns = `repeat(${cols}, ${cellSize}px)`;
             boardContainer.style.gridTemplateRows = `repeat(${rows}, ${cellSize}px)`;
