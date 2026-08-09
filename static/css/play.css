@@ -2159,10 +2159,6 @@ body.theme-light-brown .word-item.missed {
         padding: 0 !important;
         box-sizing: border-box !important;
     }
-    #tool-store .store-grid {
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important;
-        gap: 20px !important;
-    }
 }
 
 .tool-btn-title {
