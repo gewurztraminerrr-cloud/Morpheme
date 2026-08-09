@@ -341,32 +341,21 @@
 }
 
 .post-detail-title {
-    font-size: 2.2rem;
+    font-size: clamp(1.3rem, 4vw, 2.2rem);
     margin-bottom: 15px;
-    line-height: 1.2;
+    line-height: 1.25;
     color: var(--text-primary);
-}
-
-/* Delete Post button above title, title full-width — all screen sizes */
-.post-detail-title-row {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    margin-bottom: 0;
-}
-.post-detail-title-row .post-detail-title {
-    width: 100%;
-    margin-bottom: 15px;
     word-break: break-word;
     overflow-wrap: anywhere;
 }
+
+/* Delete Post button sits above thread title as a plain block element */
 .forum-delete-post-btn-style {
+    display: block;
     background: #f43f5e !important;
     font-size: 0.8rem;
-    padding: 5px 12px;
-    flex-shrink: 0;
-    align-self: flex-start;
+    padding: 5px 14px;
+    margin-bottom: 10px;
 }
 
 .post-author-box {
@@ -1258,5 +1247,4 @@ body.theme-black .forum-action-btn {
         margin-left: 0 !important;
         flex-shrink: 0 !important;
     }
-    /* title-row is already column universally; no mobile override needed */
 }

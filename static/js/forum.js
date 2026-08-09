@@ -873,12 +873,10 @@ const Forum = {
 
         detailEl.innerHTML = `
             <div class="post-detail-header">
-                <div class="post-detail-title-row">
-                    ${window.currentUserIsMod ? `
-                        <button id="forum-delete-post-btn" class="forum-action-btn remove forum-delete-post-btn-style">Delete Post</button>
-                    ` : ''}
-                    <h1 class="post-detail-title">${this.escapeHtml(post.title)}</h1>
-                </div>
+                ${window.currentUserIsMod ? `
+                    <button id="forum-delete-post-btn" class="forum-action-btn remove forum-delete-post-btn-style">Delete Post</button>
+                ` : ''}
+                <h1 class="post-detail-title">${this.escapeHtml(post.title)}</h1>
                 <div class="post-author-box">
                     <div class="author-avatar">${post.username[0].toUpperCase()}</div>
                     <div class="author-info">
