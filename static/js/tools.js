@@ -605,8 +605,28 @@ function setupProfileTool() {
     const refreshBtn = document.getElementById('profile-refresh-btn');
     if (refreshBtn) {
         refreshBtn.onclick = () => {
-            console.log("[Profile] Manual refresh triggered");
-            window.refreshProfileTool(true);
+            // Refresh whichever profile is currently on screen
+            const displayedUsername = document.getElementById('profile-username')?.innerText?.trim();
+            const targetUser = (displayedUsername && displayedUsername !== 'Player')
+                ? displayedUsername
+                : null;
+
+            if (!targetUser) {
+                // No profile loaded yet — try loading the logged-in user's profile
+                window.refreshProfileTool(true);
+                return;
+            }
+
+            // Visual spin feedback
+            refreshBtn.style.transition = 'transform 0.5s ease';
+            refreshBtn.style.transform = 'rotate(360deg)';
+            setTimeout(() => {
+                refreshBtn.style.transform = '';
+                refreshBtn.style.transition = '';
+            }, 520);
+
+            console.log(`[Profile] Manual refresh for: ${targetUser}`);
+            performProfileSearch(targetUser);
         };
     }
 }
