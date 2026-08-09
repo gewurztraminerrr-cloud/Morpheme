@@ -928,6 +928,19 @@ def get_undefined_words_api():
                     if len(parts) == 2:
                         defined_words.add(parts[0].strip().upper())
 
+        # --- Also load from wiktionary_definitions DB table ---
+        # Custom Added Words definitions are stored here (imported via import_wikdefs.py),
+        # NOT in Definitions.txt. Must check both sources.
+        try:
+            conn = sqlite3.connect(DB_PATH, timeout=10)
+            cursor = conn.cursor()
+            cursor.execute("SELECT word FROM wiktionary_definitions;")
+            for row in cursor.fetchall():
+                defined_words.add(row[0].strip().upper())
+            conn.close()
+        except Exception as db_err:
+            print(f"[Definition Management] Could not read wiktionary_definitions: {db_err}")
+
         # --- Read standard dictionaries directly from disk ---
         # word_validator.nwl_words/csw_words are lazy-loaded and may be empty
         # until a game runs; always read from disk to guarantee accuracy.
