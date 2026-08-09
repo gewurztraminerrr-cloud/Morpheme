@@ -4648,6 +4648,35 @@ def warm_up_lists_cache():
 import threading
 threading.Thread(target=warm_up_lists_cache, daemon=True).start()
 
+# ---------------------------------------------------------------------------
+# NIGHTLY CLEANUP: Null out all_words_paths for rounds older than 90 days.
+# This column stores tile-path coordinates for every valid word on a board
+# (~10 KB per row on average). After 90 days nobody reviews old replays, so
+# we shred just that one column while leaving all scores, words, WPM, etc.
+# intact. Runs once immediately at startup, then repeats every 24 hours.
+# ---------------------------------------------------------------------------
+def _prune_old_word_paths():
+    import time as _time
+    while True:
+        try:
+            with get_db() as conn:
+                result = conn.execute(
+                    """UPDATE round_history
+                          SET all_words_paths = NULL
+                        WHERE all_words_paths IS NOT NULL
+                          AND timestamp < datetime('now', '-90 days')"""
+                )
+                pruned = result.rowcount
+            if pruned > 0:
+                print(f"[Nightly Cleanup] Nulled all_words_paths on {pruned} round_history row(s) older than 90 days.")
+            else:
+                print("[Nightly Cleanup] all_words_paths pruning: nothing to clear today.")
+        except Exception as _e:
+            print(f"[Nightly Cleanup] Error pruning all_words_paths: {_e}")
+        _time.sleep(86400)  # 24 hours
+
+threading.Thread(target=_prune_old_word_paths, daemon=True).start()
+
 TOOLS_DICT_CACHE = {}
 LAST_ADDED_WORDS_MTIME = None
 

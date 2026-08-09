@@ -5,7 +5,7 @@ description: Revert the project to the August 9, 2026 save point. Use this when 
 ### Revert Procedure
 
 1.  **Reset Repository to Save Point:**
-    - `git reset --hard 2598183`
+    - `git reset --hard 744d004`
 
 2.  **Clean Up Untracked Files:**
 // turbo
@@ -21,10 +21,10 @@ description: Revert the project to the August 9, 2026 save point. Use this when 
 
 5.  **Verify Status:**
     - Navigate to `http://localhost:3000` and confirm the UI is at the August 9 stable state.
-    - Check: Delete Post button appears above thread title in Forum (static HTML), About Me scrollbar visible on full Profile page and mini-profile modal (all browsers), Forum JS/CSS at v66/v42.
+    - Check: Delete Post button appears above thread title in Forum (static HTML), About Me scrollbar visible on full Profile page and mini-profile modal (all browsers), Word Lists tab does NOT bleed below Store on desktop.
 
 ### August 9 Save Point Details
-- **Commit**: `2598183`
+- **Commit**: `744d004`
 - **Branch**: `main`
 - **GitHub**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 - **Stable State Doc**: `stable_state_august_9_2026.md` in Antigravity brain
