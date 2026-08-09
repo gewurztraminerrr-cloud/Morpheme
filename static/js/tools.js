@@ -2801,42 +2801,77 @@ function setupListsTool() {
             return;
         }
 
-        // Set title and count
+        // Get current filter state to replicate the fetch
+        const lengthSelect = document.getElementById('list-length-filter');
+        const startSelect = document.getElementById('list-start-filter');
+        const typeSelect = document.getElementById('list-type-filter');
+        const selectedType = typeSelect ? typeSelect.value : 'nwl';
+        const selectedLength = lengthSelect ? lengthSelect.value : 'all';
+        const selectedStart = startSelect ? startSelect.value : 'all';
+
+        // Set title and show modal immediately
         const titleEl = document.getElementById('list-display-title');
         if (fullListTitle) fullListTitle.textContent = (titleEl ? titleEl.textContent : 'Full List');
-        if (fullListCount) fullListCount.textContent = `${currentWordsList.length.toLocaleString()} words`;
+        if (fullListCount) fullListCount.textContent = `Loading…`;
 
-        // Render all words in a column-friendly flex layout
+        // Clear and show modal right away
         fullListResults.innerHTML = '';
         fullListResults.scrollTop = 0;
+        fullListModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
 
-        // Render progressively in chunks so the modal opens instantly
+        // Render a list of words progressively into the modal
         const MODAL_CHUNK = 500;
-        let rendered = 0;
-
-        function renderModalChunk() {
-            const chunk = currentWordsList.slice(rendered, rendered + MODAL_CHUNK);
-            if (chunk.length === 0) return;
-
-            let html = '';
-            if (currentWordsType === 'likelihood') {
-                html = chunk.map(item => `<span class="full-list-item"><span class="likelihood-score">${item.score}</span> ${item.word}</span>`).join('');
-            } else {
-                html = chunk.map(w => `<span class="full-list-item">${w}</span>`).join('');
+        function renderWordList(words, startIndex, onDone) {
+            let rendered = startIndex;
+            function chunk() {
+                const slice = words.slice(rendered, rendered + MODAL_CHUNK);
+                if (slice.length === 0) { if (onDone) onDone(); return; }
+                let html = '';
+                if (currentWordsType === 'likelihood') {
+                    html = slice.map(item => `<span class="full-list-item"><span class="likelihood-score">${item.score}</span> ${item.word}</span>`).join('');
+                } else {
+                    html = slice.map(w => `<span class="full-list-item">${w}</span>`).join('');
+                }
+                fullListResults.insertAdjacentHTML('beforeend', html);
+                rendered += slice.length;
+                setTimeout(chunk, 40);
             }
-            fullListResults.insertAdjacentHTML('beforeend', html);
-            rendered += chunk.length;
-
-            if (rendered < currentWordsList.length) {
-                setTimeout(renderModalChunk, 40);
-            }
+            chunk();
         }
 
-        renderModalChunk();
+        if (window.listsServerTruncated) {
+            // Render the already-loaded words first (instant feedback)
+            renderWordList(currentWordsList, 0, null);
 
-        // Show modal
-        fullListModal.style.display = 'flex';
-        document.body.style.overflow = 'hidden'; // Prevent background scroll
+            // Then fetch the full uncapped list from the server
+            let url = `/api/tools/lists?list_type=${selectedType}&no_limit=true`;
+            if (selectedLength && selectedLength !== 'all') url += `&length=${selectedLength}`;
+            if (selectedStart && selectedStart !== 'all') url += `&starts_with=${selectedStart}`;
+            url += `&t=${Date.now()}`;
+
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    const fullWords = data[selectedType] || [];
+                    // Only append the words beyond what was already rendered
+                    const extraWords = fullWords.slice(currentWordsList.length);
+                    if (fullListCount) fullListCount.textContent = `${fullWords.length.toLocaleString()} words`;
+                    if (extraWords.length > 0) {
+                        renderWordList(extraWords, 0, null);
+                    } else {
+                        if (fullListCount) fullListCount.textContent = `${fullWords.length.toLocaleString()} words`;
+                    }
+                })
+                .catch(err => {
+                    console.error('[Full List] Failed to fetch full word list:', err);
+                    if (fullListCount) fullListCount.textContent = `${currentWordsList.length.toLocaleString()} words (fetch failed)`;
+                });
+        } else {
+            // List was not truncated — render what we have
+            if (fullListCount) fullListCount.textContent = `${currentWordsList.length.toLocaleString()} words`;
+            renderWordList(currentWordsList, 0, null);
+        }
     }
 
     function closeFullListModal() {

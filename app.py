@@ -5028,10 +5028,11 @@ def tools_get_lists():
         length_filter = request.args.get('length')
         start_filter = request.args.get('starts_with')
         list_type = request.args.get('list_type', 'all').lower()
+        no_limit = request.args.get('no_limit', 'false').lower() == 'true'
 
-        # Check cache first
+        # Check cache first (only for capped/normal requests)
         cache_key = f"endpoint_{list_type}_{length_filter}_{start_filter}"
-        if cache_key in LISTS_CACHE:
+        if not no_limit and cache_key in LISTS_CACHE:
             return jsonify(LISTS_CACHE[cache_key])
         
         # Convert length to int if provided and not "all"
@@ -5109,6 +5110,8 @@ def tools_get_lists():
         }
 
         def cap_list(lst):
+            if no_limit:
+                return lst  # Return full list when explicitly requested
             if len(lst) > 1000:
                 response['is_truncated'] = True
                 return lst[:1000]
@@ -5177,8 +5180,9 @@ def tools_get_lists():
             # Sorted alphabetically (A-to-Z)
             response['added'] = cap_list(unique_added)
 
-        # Cache response
-        LISTS_CACHE[cache_key] = response
+        # Cache response (only for capped/normal requests to avoid polluting cache)
+        if not no_limit:
+            LISTS_CACHE[cache_key] = response
 
         return jsonify(response)
 
