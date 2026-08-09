@@ -1570,14 +1570,16 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     // 3. Render Board with Dynamic Scaling
     const boardContainer = document.getElementById(`${prefix}-board-container`);
     if (boardContainer && round.board && round.board.length > 0) {
-        // Mobile Board Transposition: Turn landscape flat boards (rows < cols) into portrait (longest side runs vertically)
+        // Mobile Board Transposition for Replay: orient so the longest side runs HORIZONTALLY
+        // (saves vertical space on mobile screens; Replay ≠ gameplay orientation)
         try {
             if (window.innerWidth <= 900 && Array.isArray(round.board[0])) {
                 const isReplay3D = round.board.length === 6 && Array.isArray(round.board[0]) && Array.isArray(round.board[0][0]);
                 if (!isReplay3D) {
                     const rows = round.board.length;
                     const cols = round.board[0].length;
-                    if (rows < cols) {
+                    // Transpose only when board is taller than wide (so longest side ends up horizontal)
+                    if (rows > cols) {
                         const transposed = [];
                         for (let c = 0; c < cols; c++) {
                             transposed[c] = [];
@@ -1640,14 +1642,23 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
                 const cellSize3D = Math.max(24, Math.floor(Math.min(maxCellW3D, maxCellH3D, 50)));
                 const fontSize3D = Math.floor(cellSize3D * 0.55) + 'px';
 
+                // On mobile: 2 columns of 3 faces each (3+3) so the board fits width.
+                // On desktop: 3 columns of 2 faces each (the classic layout).
+                const isMobile3D = window.innerWidth <= 900;
+                const faceCols = isMobile3D ? 2 : 3;
+                const faceGap = isMobile3D ? 10 : 20;
+
                 boardContainer.style.display = 'grid';
-                boardContainer.style.gridTemplateColumns = `repeat(3, max-content)`; 
+                boardContainer.style.gridTemplateColumns = `repeat(${faceCols}, max-content)`;
                 boardContainer.style.justifyContent = 'center';
-                boardContainer.style.gap = `20px`; 
-                boardContainer.style.padding = `20px`;
+                boardContainer.style.alignContent = 'start';
+                boardContainer.style.gap = `${faceGap}px`;
+                boardContainer.style.padding = isMobile3D ? '12px' : '20px';
                 boardContainer.style.background = `rgba(0,0,0,0.2)`;
-                boardContainer.style.borderRadius = `15px`;
-                boardContainer.style.overflow = 'auto';
+                boardContainer.style.borderRadius = '15px';
+                boardContainer.style.overflow = 'visible';
+                boardContainer.style.width = 'fit-content';
+                boardContainer.style.margin = '0 auto';
 
                 boardContainer.innerHTML = round.board.map((face, fIdx) => {
                     let faceHTML = '';
@@ -1659,7 +1670,7 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
                         }
                     }
                     return `
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0;">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: ${isMobile3D ? 4 : 8}px; flex-shrink: 0;">
                             <div style="font-size: 0.6rem; color: rgba(255,255,255,0.3); font-weight: 900; text-transform: uppercase; white-space: nowrap;">Face ${fIdx}</div>
                             <div style="display: grid; grid-template-columns: repeat(3, ${cellSize3D}px); gap: 4px; flex-shrink: 0;">
                                 ${faceHTML}
