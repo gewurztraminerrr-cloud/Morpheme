@@ -6945,3 +6945,37 @@ html, body {
     }
 }
 
+
+/* ============================================================
+   DYNAMIC VIEWPORT HEIGHT: Mobile Browser Chrome Fix
+   Fixes "half window / exit full screen banner" on iOS/Android.
+   100dvh adjusts in real-time when the browser bar appears;
+   100vh does not. We override the key full-screen elements here.
+   The --vh variable (set by app.js) covers older iOS devices
+   that don't support dvh yet.
+   ============================================================ */
+@supports (height: 100dvh) {
+    body {
+        min-height: 100dvh;
+    }
+    /* Full-screen overlays and modals */
+    .overlay,
+    .modal-overlay {
+        height: 100dvh;
+        width: 100dvw;
+    }
+}
+
+/* Image lightbox on mobile */
+@media (max-width: 768px) {
+    @supports (height: 100dvh) {
+        .image-lightbox-content {
+            height: 100dvh;
+            width: 100dvw;
+        }
+        .image-lightbox-content img {
+            height: 100dvh;
+            width: 100dvw;
+        }
+    }
+}

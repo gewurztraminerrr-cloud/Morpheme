@@ -18,6 +18,8 @@ def main():
         "static/js/lobby.js",
         "static/js/tools.js",
         "static/js/app.js",
+        "static/js/mods.js",
+        "static/js/tournaments.js",
         "static/css/lobby.css",
         "static/css/play.css",
         "static/css/style.css",

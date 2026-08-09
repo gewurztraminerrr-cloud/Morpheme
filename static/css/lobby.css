@@ -1270,3 +1270,20 @@ body.theme-light-brown .field-hint {
 
 
 
+
+/* ============================================================
+   DYNAMIC VIEWPORT HEIGHT: Mobile Browser Chrome Fix
+   ============================================================ */
+@supports (height: 100dvh) {
+    .lobby-grid {
+        height: calc(100dvh - 100px);
+    }
+}
+
+@media (max-width: 900px) {
+    @supports (height: 100dvh) {
+        .lobby-grid {
+            min-height: calc(100dvh - 100px);
+        }
+    }
+}

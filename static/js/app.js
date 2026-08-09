@@ -2062,11 +2062,55 @@ window.addEventListener('pagehide', (e) => {
     }
 });
 
+// === Mobile Viewport Recovery ===
+// Fixes the "half window / exit full screen banner" bug on iOS/Android PWA.
+// When the browser chrome (address bar, system banners) appears/disappears, the
+// actual visible height changes but 100vh does not adjust. We update a --vh CSS
+// variable and re-snap the Tools split layout to the correct panel.
+
+function _updateVhVariable() {
+    // Set --vh = 1% of the TRUE visible height (not the frozen 100vh).
+    // CSS can use calc(var(--vh) * 100) as a drop-in for 100dvh on older devices.
+    document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
+}
+
+function _restoreToolsLayout() {
+    // If the user had a tool open on mobile, the viewport resize caused by the
+    // browser chrome appearing may have snapped the split layout back to the
+    // sidebar (scrollLeft = 0). Re-snap instantly to the content panel.
+    const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (!isMobile) return;
+    const activeTool = document.querySelector('#page-tools .tool-nav-btn.active');
+    if (!activeTool) return;
+    const layoutEl = document.querySelector('#page-tools .tools-split-layout');
+    if (layoutEl) {
+        requestAnimationFrame(() => {
+            layoutEl.scrollTo({ left: layoutEl.scrollWidth, behavior: 'instant' });
+        });
+    }
+}
+
+// Initialize immediately and on every resize
+_updateVhVariable();
+window.addEventListener('resize', () => {
+    _updateVhVariable();
+    _restoreToolsLayout();
+});
+
 // Optional: Also notify on visibility hidden (but keep short timeout on server to be safe)
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden' && window.currentUser) {
-        // We don't necessarily want to mark offline just by switching tabs, 
+        // We don't necessarily want to mark offline just by switching tabs,
         // but it's a good time to ensure the last_active is updated or beaconed if needed.
+    }
+    if (document.visibilityState === 'visible') {
+        // App restored from background: browser chrome may have changed viewport.
+        // Give the browser 350ms to finish its layout before re-snapping.
+        _updateVhVariable();
+        setTimeout(() => {
+            _updateVhVariable();
+            _restoreToolsLayout();
+        }, 350);
     }
 });
 

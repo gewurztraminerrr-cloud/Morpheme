@@ -1252,3 +1252,19 @@ body.theme-black .forum-action-btn {
         flex-shrink: 0 !important;
     }
 }
+/* ============================================================
+   DYNAMIC VIEWPORT HEIGHT: Mobile Browser Chrome Fix
+   ============================================================ */
+@supports (height: 100dvh) {
+    .forum-container {
+        height: calc(100dvh - 120px);
+    }
+}
+
+@media (max-width: 900px) {
+    @supports (height: 100dvh) {
+        .forum-container {
+            height: calc(100dvh - 120px) !important;
+        }
+    }
+}

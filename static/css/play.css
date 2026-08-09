@@ -7028,3 +7028,32 @@ body .board-cell.tile-flash-purple * {
     background: rgba(167, 139, 250, 0.9);
     background-clip: content-box;
 }
+
+/* ============================================================
+   DYNAMIC VIEWPORT HEIGHT: Mobile Browser Chrome Fix
+   (Note: #page-play.active already has height: 100dvh inline above.
+    These override the remaining 100vh usages in play.css.)
+   ============================================================ */
+@supports (height: 100dvh) {
+    /* Full-screen modals / overlays inside play */
+    .play-fullscreen-overlay,
+    .countdown-fullscreen {
+        height: 100dvh;
+        width: 100dvw;
+    }
+
+    /* Tall scrollable panels that use 100vh offsets */
+    .play-words-list {
+        max-height: calc(100dvh - 120px);
+    }
+}
+
+@media (max-width: 900px) {
+    @supports (height: 100dvh) {
+        /* Game room content areas on mobile */
+        .play-layout,
+        .play-main-content {
+            min-height: calc(100dvh - 120px);
+        }
+    }
+}

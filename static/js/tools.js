@@ -63,12 +63,14 @@ window.showTool = function(toolId) {
         if (typeof loadRandomSuggestedWords === 'function') loadRandomSuggestedWords();
     }
 
-    // Scroll tools content into view horizontally to the right pane on mobile
+    // Scroll tools content into view horizontally to the right pane on mobile.
+    // 'instant' (not 'smooth') prevents iOS viewport-resize events from interrupting
+    // the scroll animation mid-way and snapping the panel back to the sidebar.
     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isMobile) {
         const layoutEl = document.querySelector('#page-tools .tools-split-layout');
         if (layoutEl) {
-            layoutEl.scrollTo({ left: layoutEl.clientWidth, behavior: 'smooth' });
+            layoutEl.scrollTo({ left: layoutEl.scrollWidth, behavior: 'instant' });
         }
     }
 };
@@ -122,6 +124,22 @@ function setupToolsNavigation() {
             }
         }, { passive: true });
     }
+
+    // Resize handler: when iOS browser chrome appears/disappears, the viewport
+    // size changes. If the user had a tool open, re-snap the split layout to the
+    // content panel so it doesn't appear half-open or retract to the sidebar.
+    window.addEventListener('resize', () => {
+        const isMobileResize = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (!isMobileResize) return;
+        const activeTool = document.querySelector('#page-tools .tool-nav-btn.active');
+        if (!activeTool) return;
+        const layoutEl = document.querySelector('#page-tools .tools-split-layout');
+        if (layoutEl) {
+            requestAnimationFrame(() => {
+                layoutEl.scrollTo({ left: layoutEl.scrollWidth, behavior: 'instant' });
+            });
+        }
+    });
 }
 
 function setupComboChecker() {
