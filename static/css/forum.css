@@ -347,18 +347,19 @@
     color: var(--text-primary);
 }
 
-/* Row holding the thread title + optional Delete Post button */
+/* Delete Post button above title, title full-width — all screen sizes */
 .post-detail-title-row {
     display: flex;
-    flex-direction: row-reverse;    /* button on the right, title on the left */
-    justify-content: flex-end;
+    flex-direction: column;
     align-items: flex-start;
-    gap: 14px;
+    gap: 8px;
     margin-bottom: 0;
 }
 .post-detail-title-row .post-detail-title {
-    flex: 1;
+    width: 100%;
     margin-bottom: 15px;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 .forum-delete-post-btn-style {
     background: #f43f5e !important;
@@ -366,7 +367,6 @@
     padding: 5px 12px;
     flex-shrink: 0;
     align-self: flex-start;
-    margin-top: 4px;    /* optical alignment with top of title */
 }
 
 .post-author-box {
@@ -1258,18 +1258,5 @@ body.theme-black .forum-action-btn {
         margin-left: 0 !important;
         flex-shrink: 0 !important;
     }
-    /* On mobile: Delete Post above the title, each on its own line */
-    .post-detail-title-row {
-        flex-direction: column !important;
-        gap: 8px !important;
-    }
-    .post-detail-title-row .post-detail-title {
-        width: 100% !important;
-        word-break: break-word !important;
-        overflow-wrap: anywhere !important;
-    }
-    .forum-delete-post-btn-style {
-        align-self: flex-start !important;
-        margin-top: 0 !important;
-    }
+    /* title-row is already column universally; no mobile override needed */
 }
