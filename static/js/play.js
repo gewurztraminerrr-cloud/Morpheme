@@ -1,4 +1,65 @@
+// === Game Room Panel Navigation (Mobile) ===
+// Fixes the "both panels visible simultaneously" split-screen bug.
+//
+// Root cause: scrollIntoView({behavior:'smooth'}) + scroll-behavior:smooth in CSS
+// lets iOS viewport-resize events (e.g. "exit full screen" banner) interrupt the
+// scroll animation midway, freezing the .play-grid between two snap points.
+//
+// Fix: 'instant' scroll via switchPlayPanel() + resize/visibilitychange re-snap.
+//      CSS scroll-snap-type:x mandatory still snaps native touch-swipes correctly.
+// =============================================================================
+
+window._currentPlayPanel = 'board'; // tracks which panel is currently in view
+
+window.switchPlayPanel = function(panelId) {
+    window._currentPlayPanel = panelId;
+    const el = document.getElementById('play-panel-' + panelId);
+    if (el) {
+        el.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'start' });
+    }
+};
+
+// Track which panel the user swiped to (native touch swipes bypass switchPlayPanel).
+(function _setupPlayGridScrollTracker() {
+    function _attachTracker() {
+        const playGrid = document.querySelector('.play-grid');
+        if (!playGrid) return;
+        let _scrollTimeout;
+        playGrid.addEventListener('scroll', () => {
+            clearTimeout(_scrollTimeout);
+            _scrollTimeout = setTimeout(() => {
+                const panelWidth = playGrid.clientWidth;
+                if (!panelWidth) return;
+                const idx = Math.round(playGrid.scrollLeft / panelWidth);
+                const panels = ['players', 'board', 'words'];
+                window._currentPlayPanel = panels[Math.min(idx, panels.length - 1)] || 'board';
+            }, 80);
+        }, { passive: true });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _attachTracker);
+    } else {
+        _attachTracker();
+    }
+})();
+
+// Re-snap the game panels when the viewport changes (iOS "exit full screen" banner).
+// app.js already fires _restoreToolsLayout on resize; this is the play.js equivalent.
+window.addEventListener('resize', () => {
+    const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (!isMobile) return;
+    const playGrid = document.querySelector('.play-grid');
+    if (!playGrid) return;
+    requestAnimationFrame(() => {
+        const el = document.getElementById('play-panel-' + (window._currentPlayPanel || 'board'));
+        if (el) el.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'start' });
+    });
+});
+
+// =============================================================================
+
 let isTournamentPlay = false;
+
 let isPrivateMatchPlay = false;
 let wrongGuessesOnBoardCount = 0;
 window.isPopupVisible = false;
