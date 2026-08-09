@@ -335,12 +335,15 @@ class TournamentManager:
                     conn.execute('UPDATE tournament_matchups SET winner_id = ? WHERE id = ?', (w, m['id']))
 
             # Perform eliminations
+            # final_rank = number of players still advancing + 1
+            # e.g. 8-player tournament: Round 1 losers → rank 5, Round 2 losers → rank 3
+            rank_for_eliminated = len(winners) + 1
             for uid in eliminated:
                 conn.execute('''
                     UPDATE tournament_participants 
                     SET status = 'eliminated', final_rank = ?
                     WHERE tournament_id = ? AND user_id = ?
-                ''', (total_participants, tid, uid))
+                ''', (rank_for_eliminated, tid, uid))
                 
             # Check if tournament is over
             if len(winners) <= 1:

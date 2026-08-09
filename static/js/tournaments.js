@@ -222,12 +222,14 @@ function renderTournament(data) {
             stdList.innerHTML = data.standings.map(s => {
                 const isMe = s.username === window.currentUser;
                 const statusClass = s.status; // 'active', 'eliminated', 'completed'
+                const isEliminated = s.status === 'eliminated';
                 const rankInfo = s.final_rank ? `<small style="margin-left:5px; opacity:0.7">Rank #${s.final_rank}</small>` : '';
+                const nameStyle = isEliminated ? 'text-decoration: line-through; opacity: 0.45;' : '';
 
                 return `
                     <div class="t-standing-item ${statusClass}" title="${s.status}">
                         <span class="dot"></span>
-                        ${s.username} ${isMe ? '(You)' : ''}
+                        <span style="${nameStyle}">${s.username} ${isMe ? '(You)' : ''}</span>
                         ${rankInfo}
                     </div>
                 `;
@@ -373,32 +375,15 @@ function renderActiveState(container, data, userStatus) {
                     </div>
                 `;
             } else {
-                // Both played!
+                // Both played — wait for the backend to officially close the round before declaring
                 const scoresHtml = renderScoresListHTML(myScore, oppScore, matchup.opponent_name);
-                if (myScore > oppScore) {
-                    container.innerHTML += `
-                        <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid #2ecc71; border-radius: 15px; padding: 25px; text-align: center; animation: pulse 2s infinite; max-width: 500px; margin: 0 auto;">
-                            <div style="font-size:1.8rem; color:#2ecc71; font-weight:800; margin-bottom:15px;">YOU WON! ADVANCING...</div>
-                            ${scoresHtml}
-                        </div>
-                    `;
-                } else if (oppScore > myScore) {
-                    container.innerHTML += `
-                        <div style="background: rgba(231, 76, 60, 0.1); border: 2px solid #e74c3c; border-radius: 15px; padding: 25px; text-align: center; max-width: 500px; margin: 0 auto;">
-                            <div style="font-size:1.8rem; color:#e74c3c; font-weight:800; margin-bottom:15px;">YOU LOST</div>
-                            ${scoresHtml}
-                        </div>
-                    `;
-                } else {
-                    // Tie
-                    container.innerHTML += `
-                        <div style="background: rgba(243, 156, 18, 0.1); border: 2px solid #f39c12; border-radius: 15px; padding: 25px; text-align: center; max-width: 500px; margin: 0 auto;">
-                            <div style="font-size:1.8rem; color:#f39c12; font-weight:800; margin-bottom:5px;">IT'S A TIE!</div>
-                            <div style="font-size:1.1rem; opacity:0.8; margin-bottom:15px;">Both of you got ${myScore} pts. Random winner selection pending round end.</div>
-                            ${scoresHtml}
-                        </div>
-                    `;
-                }
+                container.innerHTML += `
+                    <div style="background: rgba(243, 156, 18, 0.1); border: 1px solid #f39c12; border-radius: 12px; padding: 25px; text-align: center; max-width: 500px; margin: 0 auto;">
+                        <div style="font-size:1.8rem; color:#f39c12; font-weight:800; margin-bottom:10px;">BOTH SCORES IN</div>
+                        <p style="opacity:0.9; margin-bottom:15px;">Both players have finished. The official result will be declared once the round closes.</p>
+                        ${scoresHtml}
+                    </div>
+                `;
             }
         } else if (matchup && matchup.opponent_id === -1) {
             // Bye
