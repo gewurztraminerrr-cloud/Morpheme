@@ -2761,7 +2761,7 @@ def get_public_profile(username):
     # Sort recent and exceptional
     recent_rounds = sorted(processed_all, key=lambda x: x['timestamp'], reverse=True)[:50]
     exceptional_rounds = sorted([p for p in processed_all if 
-                               (p['performance_value'] >= 2.0)
+                               (p['performance_value'] >= 200)
                                or (p['total_score'] >= 100)], 
                                key=lambda x: x['timestamp'], reverse=True)[:50]
     dynamic_max_pe = max([p['performance_value'] for p in processed_all]) if processed_all else 0
@@ -2980,8 +2980,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         }
         performance_list.append(processed)
 
-    # SORTING BY TIMESTAMP (Recency) as requested
-    # Exceptional: by Timestamp DESC (Ratio >= 1.0 to include solo play/good rounds)
+    # Exceptional: by Timestamp DESC (Ratio >= 2.0 — double the typical word count for that board)
     exceptional = sorted([r for r in performance_list if r['ratio'] >= 2.0], key=lambda x: x['timestamp'], reverse=True)[:50]
     
     # Winning: by Timestamp DESC
